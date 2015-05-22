@@ -94,6 +94,21 @@ options:
       - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
     default: null
     version_added: "1.5"
+  log_driver:
+    description:
+      - You can specify a different logging driver for the container than for the daemon.
+        "json-file" Default logging driver for Docker. Writes JSON messages to file.
+        docker logs command is available only for this logging driver.
+        "none" disables any logging for the container. docker logs won't be available with this driver.
+        "syslog" Syslog logging driver for Docker. Writes log messages to syslog.
+        docker logs command is not available for this logging driver.
+        Requires docker >= 1.6.0.
+    required: false
+    default: json-file
+    choices:
+      - json-file
+      - none
+      - syslog
   memory_limit:
     description:
       - RAM allocated to the container as a number of bytes or as a human-readable
@@ -515,6 +530,7 @@ class DockerManager(object):
             'restart_policy': ((0, 5, 0), '1.14'),
             'extra_hosts': ((0, 7, 0), '1.3.1'),
             'pid': ((1, 0, 0), '1.17'),
+            'log_driver': ((1, 2, 0), '1.18'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -1119,6 +1135,15 @@ class DockerManager(object):
                 self.reload_reasons.append('volumes_from ({0} => {1})'.format(actual_volumes_from, expected_volumes_from))
                 differing.append(container)
 
+            # LOG_DRIVER
+
+            expected_log_driver = set(self.module.params.get('log_driver') or [])
+            actual_log_driver = set(container['HostConfig']['LogConfig'] or [])
+            if actual_log_driver != expected_log_driver:
+                self.reload_reasons.append('log_driver ({0} => {1})'.format(actual_log_driver, expected_log_driver))
+                differing.append(container)
+                continue
+
         return differing
 
     def get_deployed_containers(self):
@@ -1215,6 +1240,52 @@ class DockerManager(object):
         except Exception as e:
             self.module.fail_json(msg="Failed to pull the specified image: %s" % resource, error=repr(e))
 
+    def create_host_config(self):
+        params = {
+            'lxc_conf': self.lxc_conf,
+            'binds': self.binds,
+            'port_bindings': self.port_bindings,
+            'publish_all_ports': self.module.params.get('publish_all_ports'),
+            'privileged': self.module.params.get('privileged'),
+            'links': self.links,
+            'network_mode': self.module.params.get('net'),
+        }
+
+        optionals = {}
+        for optional_param in ('dns', 'volumes_from', 'restart_policy',
+                'restart_policy_retry', 'pid', 'extra_hosts', 'log_driver'):
+            optionals[optional_param] = self.module.params.get(optional_param)
+
+        if optionals['dns'] is not None:
+            self.ensure_capability('dns')
+            params['dns'] = optionals['dns']
+
+        if optionals['volumes_from'] is not None:
+            self.ensure_capability('volumes_from')
+            params['volumes_from'] = optionals['volumes_from']
+
+        if optionals['restart_policy'] is not None:
+            self.ensure_capability('restart_policy')
+            params['restart_policy'] = { 'Name': optionals['restart_policy'] }
+            if params['restart_policy']['Name'] == 'on-failure':
+                params['restart_policy']['MaximumRetryCount'] = optionals['restart_policy_retry']
+
+        if optionals['pid'] is not None:
+            self.ensure_capability('pid')
+            params['pid_mode'] = optionals['pid']
+
+        if optionals['extra_hosts'] is not None:
+            self.ensure_capability('extra_hosts')
+            params['extra_hosts'] = optionals['extra_hosts']
+
+        if optionals['log_driver'] is not None:
+            self.ensure_capability('log_driver')
+            log_config = docker.utils.LogConfig(type=docker.utils.LogConfig.types.JSON)
+            log_config.type = optionals['log_driver']
+            params['log_config'] = log_config
+
+        return docker.utils.create_host_config(**params)
+
     def create_containers(self, count=1):
         try:
             mem_limit = _human_to_bytes(self.module.params.get('memory_limit'))
@@ -1235,6 +1306,7 @@ class DockerManager(object):
                   'tty':          self.module.params.get('tty'),
                   'volumes_from': self.module.params.get('volumes_from'),
                   'dns':          self.module.params.get('dns'),
+                  'host_config':  self.create_host_config(),
                   }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
             params['volumes_from'] = ""
@@ -1265,45 +1337,8 @@ class DockerManager(object):
         return containers
 
     def start_containers(self, containers):
-        params = {
-            'lxc_conf': self.lxc_conf,
-            'binds': self.binds,
-            'port_bindings': self.port_bindings,
-            'publish_all_ports': self.module.params.get('publish_all_ports'),
-            'privileged': self.module.params.get('privileged'),
-            'links': self.links,
-            'network_mode': self.module.params.get('net'),
-        }
-
-        optionals = {}
-        for optional_param in ('dns', 'volumes_from', 'restart_policy',
-                'restart_policy_retry', 'pid', 'extra_hosts'):
-            optionals[optional_param] = self.module.params.get(optional_param)
-
-        if optionals['dns'] is not None:
-            self.ensure_capability('dns')
-            params['dns'] = optionals['dns']
-
-        if optionals['volumes_from'] is not None:
-            self.ensure_capability('volumes_from')
-            params['volumes_from'] = optionals['volumes_from']
-
-        if optionals['restart_policy'] is not None:
-            self.ensure_capability('restart_policy')
-            params['restart_policy'] = { 'Name': optionals['restart_policy'] }
-            if params['restart_policy']['Name'] == 'on-failure':
-                params['restart_policy']['MaximumRetryCount'] = optionals['restart_policy_retry']
-
-        if optionals['pid'] is not None:
-            self.ensure_capability('pid')
-            params['pid_mode'] = optionals['pid']
-
-        if optionals['extra_hosts'] is not None:
-            self.ensure_capability('extra_hosts')
-            params['extra_hosts'] = optionals['extra_hosts']
-
         for i in containers:
-            self.client.start(i['Id'], **params)
+            self.client.start(i)
             self.increment_counter('started')
 
     def stop_containers(self, containers):
@@ -1496,6 +1531,7 @@ def main():
             net             = dict(default=None),
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
+            log_driver      = dict(default='json-file', choices=['json-file', 'none', 'syslog']),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
