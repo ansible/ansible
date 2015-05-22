@@ -26,7 +26,7 @@ short_description: Zabbix host groups creates/deletes
 description:
    - Create host groups if they don't exist.
    - Delete existing host groups if they exist.
-version_added: "1.9"
+version_added: "1.8"
 author:
     - "(@cove)"
     - "Tony Minfei Ding"
