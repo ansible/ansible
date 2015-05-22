@@ -226,8 +226,8 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_g
     else:
         my.download_packages(my.transaction.install_set)
         my.do_transaction()
-        [res['results'].append('Installed: %s' % pkg) for pkg in my.transaction.install_set)
-        [res['results'].append('Removed: %s' % pkg) for pkg in my.transaction.remove_set)
+        [res['results'].append('Installed: %s' % pkg) for pkg in my.transaction.install_set]
+        [res['results'].append('Removed: %s' % pkg) for pkg in my.transaction.remove_set]
 
     module.exit_json(**res)
 
