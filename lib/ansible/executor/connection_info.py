@@ -88,14 +88,6 @@ class ConnectionInformation:
         if play:
             self.set_play(play)
 
-    def __repr__(self):
-        value = "CONNECTION INFO:\n"
-        fields = self._get_fields()
-        fields.sort()
-        for field in fields:
-            value += "%20s : %s\n" % (field, getattr(self, field))
-        return value
-
     def set_play(self, play):
         '''
         Configures this connection information instance with data from
@@ -199,7 +191,7 @@ class ConnectionInformation:
         for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
-                if attr_val:
+                if attr_val is not None:
                     setattr(new_info, attr, attr_val)
 
         # finally, use the MAGIC_VARIABLE_MAPPING dictionary to update this
