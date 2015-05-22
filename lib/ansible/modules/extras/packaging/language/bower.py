@@ -154,7 +154,7 @@ def main():
 
     name = module.params['name']
     offline = module.params['offline']
-    path = module.params['path']
+    path = os.path.expanduser(module.params['path'])
     state = module.params['state']
     version = module.params['version']
 
