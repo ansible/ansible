@@ -19,6 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import pwd
+import os
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
@@ -52,7 +55,7 @@ class TestConnectionInformation(unittest.TestCase):
         conn_info = ConnectionInformation(options=options)
         self.assertEqual(conn_info.connection, 'smart')
         self.assertEqual(conn_info.remote_addr, None)
-        self.assertEqual(conn_info.remote_user, 'root')
+        self.assertEqual(conn_info.remote_user, pwd.getpwuid(os.geteuid())[0])
         self.assertEqual(conn_info.password, '')
         self.assertEqual(conn_info.port, None)
         self.assertEqual(conn_info.private_key_file, C.DEFAULT_PRIVATE_KEY_FILE)
