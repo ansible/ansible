@@ -90,6 +90,14 @@ EXAMPLES = '''
         from_port: 22
         to_port: 22
         cidr_ip: 10.0.0.0/8
+      - proto: tcp
+        from_port: 443
+        to_port: 443
+        group_id: amazon-elb/sg-87654321/amazon-elb-sg
+      - proto: tcp
+        from_port: 3306
+        to_port: 3306
+        group_id: 123412341234/sg-87654321/exact-name-of-sg
       - proto: udp
         from_port: 10050
         to_port: 10050
@@ -113,6 +121,7 @@ EXAMPLES = '''
 
 try:
     import boto.ec2
+    from boto.ec2.securitygroup import SecurityGroup
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -148,6 +157,7 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     group_id or a non-None ip range.
     """
 
+    FOREIGN_SECURITY_GROUP_REGEX = '^(\S+)/(sg-\S+)/(\S+)'
     group_id = None
     group_name = None
     ip = None
@@ -158,6 +168,12 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
         module.fail_json(msg="Specify group_name OR cidr_ip, not both")
     elif 'group_id' in rule and 'group_name' in rule:
         module.fail_json(msg="Specify group_id OR group_name, not both")
+    elif 'group_id' in rule and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
+        # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
+        owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
+        group_instance = SecurityGroup(owner_id=owner_id, name=group_name, id=group_id)
+        groups[group_id] = group_instance
+        groups[group_name] = group_instance
     elif 'group_id' in rule:
         group_id = rule['group_id']
     elif 'group_name' in rule:
@@ -324,6 +340,11 @@ def main():
             for (rule, grant) in groupRules.itervalues() :
                 grantGroup = None
                 if grant.group_id:
+                    if grant.owner_id != group.owner_id:
+                        # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
+                        group_instance = SecurityGroup(owner_id=grant.owner_id, name=grant.name, id=grant.group_id)
+                        groups[grant.group_id] = group_instance
+                        groups[grant.name] = group_instance
                     grantGroup = groups[grant.group_id]
                 if not module.check_mode:
                     group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
