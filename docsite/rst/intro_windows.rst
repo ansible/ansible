@@ -129,7 +129,7 @@ Note there are a few other Ansible modules that don't start with "win" that also
 Developers: Supported modules and how it works
 ``````````````````````````````````````````````
 
-Developing ansible modules are covered in a `later section of the documentation <http://developing_modules.html>`_, with a focus on Linux/Unix.
+Developing ansible modules are covered in a `later section of the documentation <http://docs.ansible.com/developing_modules.html>`_, with a focus on Linux/Unix.
 What if you want to write Windows modules for ansible though?
 
 For Windows, ansible modules are implemented in PowerShell.  Skim those Linux/Unix module development chapters before proceeding.
