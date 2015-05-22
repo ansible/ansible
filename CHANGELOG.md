@@ -21,6 +21,7 @@ Other Notable Changes:
   - win_file.ps1
   - win_file.py
   - win_template.py
+* Fix bug using with_sequence and a count that is zero.  Also allows counting backwards isntead of forwards
 
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
