@@ -22,14 +22,11 @@
 
 import traceback
 import os
+import operator
+import functools
 import dnf
-
-try:
-    from dnf import find_unfinished_transactions, find_ts_remaining
-    from rpmUtils.miscutils import splitFilename
-    transaction_helpers = True
-except:
-    transaction_helpers = False
+import dnf.cli
+import dnf.util
 
 DOCUMENTATION = '''
 ---
@@ -181,6 +178,54 @@ def list_stuff(module, conf_file, stuff):
     else:
         return [pkg_to_dict(p) for p in dnf.subject.Subject(stuff).get_best_query(my.sack)]
 
+def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_gpg_check):
+    my = dnf_base(conf_file)
+    items = pkgspec.split(',')
+    if disablerepo:
+        for repo in disablerepo.split(','):
+            [r.disable() for r in b.repos.get_matching(repo)]
+    if enablerepo:
+        for repo in enablerepo.split(','):
+            [r.enable() for r in b.repos.get_matching(repo)]
+    my.conf.gpgcheck = disable_gpg_check
+
+    res = {}
+    res['results'] = []
+    res['msg'] = ''
+    res['rc'] = 0
+    res['changed'] = False
+
+    if not dnf.util.am_i_root():
+        res['msg'] = 'This command has to be run under the root user.'
+        res['rc'] = 1
+
+    pkg_specs, grp_specs, filenames = dnf.cli.commands.parse_spec_group_file(items)
+    if state in ['installed', 'present']:
+        # Install files.
+        local_pkgs = map(my.add_remote_rpm, filenames)
+        map(my.package_install, local_pkgs)
+        # Install groups.
+        if grp_specs:
+            my.read_comps()
+            my.env_group_install(grp_specs, dnf.const.GROUP_PACKAGE_TYPES)
+        # Install packages.
+        for pkg_spec in pkg_specs:
+            try:
+                my.install(pkg_spec)
+            except dnf.exceptions.MarkingError:
+                res['results'].append('No package %s available.' % pkg_spec)
+                res['rc'] = 1
+    if not my.resolve() and res['rc'] == 0:
+        res['msg'] += 'Nothing to do'
+        res['changed'] = False
+    else:
+        my.download_packages(my.transaction.install_set)
+        my.do_transaction()
+        [res['results'].append('Installed: %s' % pkg) for pkg in my.transaction.install_set)
+        [res['results'].append('Removed: %s' % pkg) for pkg in my.transaction.remove_set)
+
+    module.exit_json(**res)
+
 def main():
 
     # state=installed name=pkgspec
@@ -219,7 +264,6 @@ def main():
         module.exit_json(**results)
 
     else:
-        return
         pkg = params['name']
         state = params['state']
         enablerepo = params.get('enablerepo', '')
