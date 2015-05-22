@@ -15,6 +15,12 @@ Other Notable Changes:
 * Fixed a bug where sudo/su settings were not inherited from ansible.cfg correctly.
 * Fixed a bug in the rds module where a traceback may occur due to an unbound variable.
 * Fixed a bug where certain remote file systems where the SELinux context was not being properly set.
+* Re-enabled several windows modules which had been partially merged (via action plugins):
+  - win_copy.ps1
+  - win_copy.py
+  - win_file.ps1
+  - win_file.py
+  - win_template.py
 
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
