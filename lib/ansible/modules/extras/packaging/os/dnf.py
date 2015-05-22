@@ -1,7 +1,8 @@
 #!/usr/bin/python -tt
 # -*- coding: utf-8 -*-
 
-# Written by Igor Gnatenko <i.gnatenko.brain@gmail.com>
+# Copyright 2015 Cristian van Ee <cristian at cvee.org>
+# Copyright 2015 Igor Gnatenko <i.gnatenko.brain@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -96,8 +97,12 @@ options:
 
 notes: []
 # informational: requirements for nodes
-requirements: [ dnf ]
-author: '"Igor Gnatenko" <i.gnatenko.brain@gmail.com>'
+requirements:
+  - "python >= 2.6"
+  - dnf
+author:
+  - '"Igor Gnatenko (@ignatenkobrain)	" <i.gnatenko.brain@gmail.com>'
+  - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
 '''
 
 EXAMPLES = '''
@@ -154,8 +159,8 @@ def pkg_to_dict(pkg):
         'release': pkg.release,
         'version': pkg.version,
         'repo': pkg.repoid,
-        'nevra': str(pkg)
     }
+    d['nevra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(**d)
 
     if pkg.installed:
         d['dnfstate'] = 'installed'
@@ -275,5 +280,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
 
