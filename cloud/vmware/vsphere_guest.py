@@ -65,7 +65,7 @@ options:
     default: null
   state:
     description:
-      - Indicate desired state of the vm.
+      - Indicate desired state of the vm. 'reconfigured' only applies changes to 'memory_mb' and 'num_cpus' in vm_hardware parameter, and only when hot-plugging is enabled for the guest.
     default: present
     choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
   from_template:
