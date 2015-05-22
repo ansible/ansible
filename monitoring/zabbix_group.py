@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # (c) 2013-2014, Epic Games, Inc.
 #
 # This file is part of Ansible
@@ -17,7 +17,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible. If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 DOCUMENTATION = '''
 ---
@@ -27,9 +27,13 @@ description:
    - Create host groups if they don't exist.
    - Delete existing host groups if they exist.
 version_added: "1.9"
-author: Tony Minfei Ding, Harrison Gu
+author:
+    - "(@cove)"
+    - "Tony Minfei Ding"
+    - "Harrison Gu (@harrisongu)"
 requirements:
-    - zabbix-api python module
+    - "python >= 2.6"
+    - zabbix-api
 options:
     server_url:
         description:
