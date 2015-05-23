@@ -1617,7 +1617,9 @@ def _load_vars_from_folder(folder_path, results, vault_password=None):
     names.sort()
 
     # do not parse hidden files or dirs, e.g. .svn/
-    paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
+    paths = [os.path.join(folder_path, name) for name in names
+            if not name.startswith('.')
+            and os.path.splitext(name)[1] in C.YAML_FILENAME_EXTENSIONS]
     for path in paths:
         _found, results = _load_vars_from_path(path, results, vault_password=vault_password)
     return results
