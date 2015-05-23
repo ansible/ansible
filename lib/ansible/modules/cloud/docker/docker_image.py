@@ -65,6 +65,12 @@ options:
     required: false
     default: unix://var/run/docker.sock
     aliases: []
+  docker_api_version:
+    description:
+      - Remote API version to use. This defaults to the current default as
+        specified by docker-py.
+    default: docker-py default remote API version
+    version_added: "2.0"
   state:
     description:
       - Set the state of the image
@@ -137,6 +143,14 @@ if HAS_DOCKER_CLIENT:
     except ImportError:
         from docker.client import APIError as DockerAPIError
 
+    try:
+        # docker-py 1.2+
+        import docker.constants
+        DEFAULT_DOCKER_API_VERSION = docker.constants.DEFAULT_DOCKER_API_VERSION
+    except (ImportError, AttributeError):
+        # docker-py less than 1.2
+        DEFAULT_DOCKER_API_VERSION = docker.client.DEFAULT_DOCKER_API_VERSION
+
 class DockerImageManager:
 
     def __init__(self, module):
@@ -147,7 +161,10 @@ class DockerImageManager:
         self.tag = self.module.params.get('tag')
         self.nocache = self.module.params.get('nocache')
         docker_url = urlparse(module.params.get('docker_url'))
-        self.client = docker.Client(base_url=docker_url.geturl(), timeout=module.params.get('timeout'))
+        self.client = docker.Client(
+            base_url=docker_url.geturl(),
+            version=module.params.get('docker_api_version'),
+            timeout=module.params.get('timeout'))
         self.changed = False
         self.log = []
         self.error_msg = None
@@ -220,14 +237,17 @@ class DockerImageManager:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            path            = dict(required=False, default=None),
-            dockerfile      = dict(required=False, default="Dockerfile"),
-            name            = dict(required=True),
-            tag             = dict(required=False, default="latest"),
-            nocache         = dict(default=False, type='bool'),
-            state           = dict(default='present', choices=['absent', 'present', 'build']),
-            docker_url      = dict(default='unix://var/run/docker.sock'),
-            timeout         = dict(default=600, type='int'),
+            path               = dict(required=False, default=None),
+            dockerfile         = dict(required=False, default="Dockerfile"),
+            name               = dict(required=True),
+            tag                = dict(required=False, default="latest"),
+            nocache            = dict(default=False, type='bool'),
+            state              = dict(default='present', choices=['absent', 'present', 'build']),
+            docker_url         = dict(default='unix://var/run/docker.sock'),
+            docker_api_version = dict(required=False,
+                                      default=DEFAULT_DOCKER_API_VERSION,
+                                      type='str'),
+            timeout            = dict(default=600, type='int'),
         )
     )
     if not HAS_DOCKER_CLIENT:
