@@ -27,6 +27,11 @@ import os
 import yum
 import rpm
 import syslog
+import platform
+import tempfile
+import shutil
+from ansible.module_utils.urls import *
+from distutils.version import LooseVersion
 
 try:
     from yum.misc import find_unfinished_transactions, find_ts_remaining
@@ -486,6 +491,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
     res['msg'] = ''
     res['rc'] = 0
     res['changed'] = False
+    tempdir = tempfile.mkdtemp()
 
     for spec in items:
         pkg = None
@@ -508,6 +514,21 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         # URL
         elif '://' in spec:
             pkg = spec
+            # Check if Enterprise Linux 5 or less, as yum on those versions do not support installing via url
+            distribution_version = get_distribution_version()
+            distribution = platform.dist()
+            if distribution[0] == "redhat" and LooseVersion(distribution_version) < LooseVersion("6"):
+                package = os.path.join(tempdir, str(pkg.rsplit('/', 1)[1]))
+                try:
+                    rsp, info = fetch_url(module, pkg)
+                    data = rsp.read()
+                    f = open(package, 'w')
+                    f.write(data)
+                    f.close()
+                    pkg = package
+                except Exception, e:
+                    shutil.rmtree(tempdir)
+                    module.fail_json(msg="Failure downloading %s, %s" % (spec, e))
 
         #groups :(
         elif  spec.startswith('@'):
@@ -569,6 +590,11 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         cmd = yum_basecmd + ['install', pkg]
 
         if module.check_mode:
+            # Remove rpms downloaded for EL5 via url
+            try:
+                shutil.rmtree(tempdir)
+            except Exception, e:
+                module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
             module.exit_json(changed=True)
 
         changed = True
@@ -600,6 +626,12 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         # accumulate any changes
         res['changed'] |= changed
 
+    # Remove rpms downloaded for EL5 via url
+    try:
+        shutil.rmtree(tempdir)
+    except Exception, e:
+        module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
+  
     module.exit_json(**res)
 
 
