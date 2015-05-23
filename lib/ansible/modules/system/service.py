@@ -784,6 +784,9 @@ class LinuxService(Service):
                 else:
                     action = 'disable'
 
+                if self.module.check_mode:
+                    rc = 0
+                    return
                 (rc, out, err) = self.execute_command("%s %s %s"  % (self.enable_cmd, self.name, action))
                 if rc != 0:
                     if err:
