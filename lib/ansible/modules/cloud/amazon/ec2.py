@@ -1021,6 +1021,7 @@ def create_instances(module, ec2, vpc, override_count=None):
     instance_dict_array = []
     created_instance_ids = []
     for inst in running_instances:
+        inst.update()
         d = get_instance_info(inst)
         created_instance_ids.append(inst.id)
         instance_dict_array.append(d)
