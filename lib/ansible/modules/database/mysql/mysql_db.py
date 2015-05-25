@@ -111,6 +111,7 @@ import ConfigParser
 import os
 import pipes
 import stat
+import subprocess
 try:
     import MySQLdb
 except ImportError:
@@ -166,56 +167,47 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     if not all_databases:
     	cmd += " -D %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
-        gzip_path = module.get_bin_path('gzip')
-        if not gzip_path:
-            module.fail_json(msg="gzip command not found")
-        #gzip -d file (uncompress)
-        rc, stdout, stderr = module.run_command('%s -d %s' % (gzip_path, target))
-        if rc != 0:
-            return rc, stdout, stderr
-        #Import sql
-        cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
-        try:
-            rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
-            if rc != 0:
-                return rc, stdout, stderr
-        finally:
-            #gzip file back up
-            module.run_command('%s %s' % (gzip_path, os.path.splitext(target)[0]))
+        zcat_path = module.get_bin_path('zcat')
+        if not zcat_path:
+            module.fail_json(msg="zcat command not found")
+        p1 = subprocess.Popen([zcat_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout2, stderr2) = p2.communicate()
+        p1.stdout.close()
+        p1.wait()
+        if p1.returncode != 0:
+            stderr1 = p1.stderr.read()
+            return p1.returncode, '', stderr1
+        else:
+            return p2.returncode, stdout2, stderr2
     elif os.path.splitext(target)[-1] == '.bz2':
-        bzip2_path = module.get_bin_path('bzip2')
-        if not bzip2_path:
-            module.fail_json(msg="bzip2 command not found")
-        #bzip2 -d file (uncompress)
-        rc, stdout, stderr = module.run_command('%s -d %s' % (bzip2_path, target))
-        if rc != 0:
-            return rc, stdout, stderr
-        #Import sql
-        cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
-        try:
-            rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
-            if rc != 0:
-                return rc, stdout, stderr
-        finally:
-            #bzip2 file back up
-            rc, stdout, stderr = module.run_command('%s %s' % (bzip2_path, os.path.splitext(target)[0]))
+        bzcat_path = module.get_bin_path('bzcat')
+        if not bzcat_path:
+            module.fail_json(msg="bzcat command not found")
+        p1 = subprocess.Popen([bzcat_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout2, stderr2) = p2.communicate()
+        p1.stdout.close()
+        p1.wait()
+        if p1.returncode != 0:
+            stderr1 = p1.stderr.read()
+            return p1.returncode, '', stderr1
+        else:
+            return p2.returncode, stdout2, stderr2
     elif os.path.splitext(target)[-1] == '.xz':
-        xz_path = module.get_bin_path('xz')
-        if not xz_path:
-            module.fail_json(msg="xz command not found")
-        #xz -d file (uncompress)
-        rc, stdout, stderr = module.run_command('%s -d %s' % (xz_path, target))
-        if rc != 0:
-            return rc, stdout, stderr
-        #Import sql
-        cmd += " < %s" % pipes.quote(os.path.splitext(target)[0])
-        try:
-            rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
-            if rc != 0:
-                return rc, stdout, stderr
-        finally:
-            #xz file back up
-            rc, stdout, stderr = module.run_command('%s %s' % (xz_path, os.path.splitext(target)[0]))
+        xzcat_path = module.get_bin_path('xzcat')
+        if not xzcat_path:
+            module.fail_json(msg="xzcat command not found")
+        p1 = subprocess.Popen([xzcat_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout2, stderr2) = p2.communicate()
+        p1.stdout.close()
+        p1.wait()
+        if p1.returncode != 0:
+            stderr1 = p1.stderr.read()
+            return p1.returncode, '', stderr1
+        else:
+            return p2.returncode, stdout2, stderr2
     else:
         cmd += " < %s" % pipes.quote(target)
         rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
