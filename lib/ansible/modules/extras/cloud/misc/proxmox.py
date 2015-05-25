@@ -163,7 +163,6 @@ author: Sergei Antipov
 
 import os
 import time
-import logging
 
 try:
   from proxmoxer import ProxmoxAPI
@@ -287,7 +286,6 @@ def main():
   storage = module.params['storage']
   timeout = module.params['timeout']
 
-  logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(name)s: %(message)s')
   # If password not set get it from PROXMOX_PASSWORD env
   if not api_password:
     try:
