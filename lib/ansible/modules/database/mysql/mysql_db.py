@@ -172,32 +172,16 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         cmd += " --host=%s --port=%i" % (pipes.quote(host), port)
     if not all_databases:
     	cmd += " -D %s" % pipes.quote(db_name)
+
+    comp_prog_path = None
     if os.path.splitext(target)[-1] == '.gz':
         comp_prog_path = module.get_bin_path('gzip', required=True)
-        p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout2, stderr2) = p2.communicate()
-        p1.stdout.close()
-        p1.wait()
-        if p1.returncode != 0:
-            stderr1 = p1.stderr.read()
-            return p1.returncode, '', stderr1
-        else:
-            return p2.returncode, stdout2, stderr2
     elif os.path.splitext(target)[-1] == '.bz2':
         comp_prog_path = module.get_bin_path('bzip2', required=True)
-        p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        (stdout2, stderr2) = p2.communicate()
-        p1.stdout.close()
-        p1.wait()
-        if p1.returncode != 0:
-            stderr1 = p1.stderr.read()
-            return p1.returncode, '', stderr1
-        else:
-            return p2.returncode, stdout2, stderr2
     elif os.path.splitext(target)[-1] == '.xz':
         comp_prog_path = module.get_bin_path('xz', required=True)
+
+    if comp_prog_path:
         p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout2, stderr2) = p2.communicate()
@@ -211,7 +195,7 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     else:
         cmd += " < %s" % pipes.quote(target)
         rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
-    return rc, stdout, stderr
+        return rc, stdout, stderr
 
 def db_create(cursor, db, encoding, collation):
     query_params = dict(enc=encoding, collate=collation)
