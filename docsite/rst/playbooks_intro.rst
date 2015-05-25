@@ -186,7 +186,7 @@ You can also use other privilege escalation methods, like su::
       become_method: su
 
 If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-become-pass`` or
-when using the old sudo syntax ``--ask-sudo--pass`` (`-K`).  If you run a become playbook and the
+when using the old sudo syntax ``--ask-sudo-pass`` (`-K`).  If you run a become playbook and the
 playbook seems to hang, it's probably stuck at the privilege escalation prompt.
 Just `Control-C` to kill it and run it again adding the appropriate password.
 
