@@ -14,6 +14,153 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+DOCUMENTATION = '''
+---
+module: proxmox
+short_description: management of instances in Proxmox VE cluster
+description:
+  - allows you to create/delete/stop instances in Proxmox VE cluster
+options:
+  api_host:
+    description:
+      - the host of the Proxmox VE cluster
+    default: null
+    required: true
+  api_user:
+    description:
+      - the user to authenticate with
+    default: null
+    required: true
+  api_password:
+    description:
+      - the password to authenticate with
+      - you can use PROXMOX_PASSWORD environment variable
+    default: null
+    required: false
+  vmid:
+    description:
+      - the instance id
+    default: null
+    required: true
+  https_verify_ssl:
+    description:
+      - enable / disable https certificate verification
+    default: false
+    required: false
+    type: boolean
+  node:
+    description:
+      - Proxmox VE node, when new VM will be created
+      - required only for state="present"
+      - for another states will be autodiscovered
+    default: null
+    required: false
+  password:
+    description:
+      - the instance root password
+      - required only for state="present"
+    default: null
+    required: false
+  hostname:
+    description:
+      - the instance hostname
+      - required only for state="present"
+    default: null
+    required: false
+  ostemplate:
+    description:
+      - the template for VM creating
+      - required only for state="present"
+    default: null
+    required: false
+  disk:
+    description:
+      - hard disk size in GB for instance
+    default: 3
+    required: false
+  cpus:
+    description:
+      - numbers of allocated cpus for instance
+    default: 1
+    required: false
+  memory:
+    description:
+      - memory size in MB for instance
+    default: 512
+    required: false
+  swap:
+    description:
+      - swap memory size in MB for instance
+    default: 0
+    required: false
+  netif:
+    description:
+      - specifies network interfaces for the container
+    default: null
+    required: false
+    type: string
+  ip_address:
+    description:
+      - specifies the address the container will be assigned
+    default: null
+    required: false
+    type: string
+  onboot:
+    description:
+      - specifies whether a VM will be started during system bootup
+    default: false
+    required: false
+    type: boolean
+  storage:
+    description:
+      - target storage
+    default: 'local'
+    required: false
+    type: string
+  cpuunits:
+    description:
+      - CPU weight for a VM
+    default: 1000
+    required: false
+    type: integer
+  nameserver:
+    description:
+      - sets DNS server IP address for a container
+    default: null
+    required: false
+    type: string
+  searchdomain:
+    description:
+      - sets DNS search domain for a container
+    default: null
+    required: false
+    type: string
+  timeout:
+    description:
+      - timeout for operations
+    default: 30
+    required: false
+    type: integer
+  force:
+    description:
+      - forcing operations
+      - can be used only with states "present", "stopped", "restarted"
+      - with state="present" force option allow to overwrite existing container
+      - with states "stopped", "restarted" allow to force stop instance
+    default: false
+    required: false
+    type: boolean
+  state:
+    description:
+     - Indicate desired state of the instance
+    choices: ['present', 'started', 'absent', 'stopped', 'restarted']
+    default: present
+notes:
+  - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
+requirements: [ "proxmoxer", "requests" ]
+author: Sergei Antipov
+'''
+
 import os
 import time
 import logging
