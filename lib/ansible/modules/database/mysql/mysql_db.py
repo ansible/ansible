@@ -143,14 +143,20 @@ def db_dump(module, host, user, password, db_name, target, all_databases, port, 
         cmd += " --all-databases"
     else:
         cmd += " %s" % pipes.quote(db_name)
+
+    path = None
     if os.path.splitext(target)[-1] == '.gz':
-        cmd = cmd + ' | gzip > ' + pipes.quote(target)
+        path = module.get_bin_path('gzip', True)
     elif os.path.splitext(target)[-1] == '.bz2':
-        cmd = cmd + ' | bzip2 > ' + pipes.quote(target)
+        path = module.get_bin_path('bzip2', True)
     elif os.path.splitext(target)[-1] == '.xz':
-        cmd = cmd + ' | xz > ' + pipes.quote(target)
+        path = module.get_bin_path('xz', True)
+
+    if path:
+        cmd = '%s | %s > %s' % (cmd, path, pipes.quote(target))
     else:
         cmd += " > %s" % pipes.quote(target)
+
     rc, stdout, stderr = module.run_command(cmd, use_unsafe_shell=True)
     return rc, stdout, stderr
 
