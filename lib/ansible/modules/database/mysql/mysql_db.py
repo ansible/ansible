@@ -173,10 +173,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
     if not all_databases:
     	cmd += " -D %s" % pipes.quote(db_name)
     if os.path.splitext(target)[-1] == '.gz':
-        zcat_path = module.get_bin_path('zcat')
-        if not zcat_path:
-            module.fail_json(msg="zcat command not found")
-        p1 = subprocess.Popen([zcat_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        comp_prog_path = module.get_bin_path('gzip', required=True)
+        p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout2, stderr2) = p2.communicate()
         p1.stdout.close()
@@ -187,10 +185,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         else:
             return p2.returncode, stdout2, stderr2
     elif os.path.splitext(target)[-1] == '.bz2':
-        bzcat_path = module.get_bin_path('bzcat')
-        if not bzcat_path:
-            module.fail_json(msg="bzcat command not found")
-        p1 = subprocess.Popen([bzcat_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        comp_prog_path = module.get_bin_path('bzip2', required=True)
+        p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout2, stderr2) = p2.communicate()
         p1.stdout.close()
@@ -201,10 +197,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
         else:
             return p2.returncode, stdout2, stderr2
     elif os.path.splitext(target)[-1] == '.xz':
-        xzcat_path = module.get_bin_path('xzcat')
-        if not xzcat_path:
-            module.fail_json(msg="xzcat command not found")
-        p1 = subprocess.Popen([xzcat_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        comp_prog_path = module.get_bin_path('xz', required=True)
+        p1 = subprocess.Popen([comp_prog_path, '-dc', target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p2 = subprocess.Popen(cmd.split(' '), stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (stdout2, stderr2) = p2.communicate()
         p1.stdout.close()
