@@ -20,6 +20,7 @@ module: proxmox
 short_description: management of instances in Proxmox VE cluster
 description:
   - allows you to create/delete/stop instances in Proxmox VE cluster
+version_added: "2.0"
 options:
   api_host:
     description:
