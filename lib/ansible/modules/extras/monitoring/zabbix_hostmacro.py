@@ -168,12 +168,12 @@ def main():
         argument_spec=dict(
             server_url=dict(required=True, default=None, aliases=['url']),
             login_user=dict(required=True),
-            login_password=dict(required=True),
+            login_password=dict(required=True, no_log=True),
             host_name=dict(required=True),
             macro_name=dict(required=True),
             macro_value=dict(required=True),
-            state=dict(default="present"),
-            timeout=dict(default=10)
+            state=dict(default="present", choices=['present', 'absent']),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
     )
