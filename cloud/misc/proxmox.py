@@ -25,12 +25,10 @@ options:
   api_host:
     description:
       - the host of the Proxmox VE cluster
-    default: null
     required: true
   api_user:
     description:
       - the user to authenticate with
-    default: null
     required: true
   api_password:
     description:
@@ -52,26 +50,26 @@ options:
   node:
     description:
       - Proxmox VE node, when new VM will be created
-      - required only for state="present"
+      - required only for C(state=present)
       - for another states will be autodiscovered
     default: null
     required: false
   password:
     description:
       - the instance root password
-      - required only for state="present"
+      - required only for C(state=present)
     default: null
     required: false
   hostname:
     description:
       - the instance hostname
-      - required only for state="present"
+      - required only for C(state=present)
     default: null
     required: false
   ostemplate:
     description:
       - the template for VM creating
-      - required only for state="present"
+      - required only for C(state=present)
     default: null
     required: false
   disk:
@@ -145,9 +143,9 @@ options:
   force:
     description:
       - forcing operations
-      - can be used only with states "present", "stopped", "restarted"
-      - with state="present" force option allow to overwrite existing container
-      - with states "stopped", "restarted" allow to force stop instance
+      - can be used only with states C(present), C(stopped), C(restarted)
+      - with C(state=present) force option allow to overwrite existing container
+      - with states C(stopped) , C(restarted) allow to force stop instance
     default: false
     required: false
     type: boolean
@@ -159,7 +157,7 @@ options:
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
 requirements: [ "proxmoxer", "requests" ]
-author: Sergei Antipov
+author: "Sergei Antipov @UnderGreen"
 '''
 
 import os
@@ -246,11 +244,11 @@ def main():
     argument_spec = dict(
       api_host = dict(required=True),
       api_user = dict(required=True),
-      api_password = dict(),
+      api_password = dict(no_log=True),
       vmid = dict(required=True),
       https_verify_ssl = dict(type='bool', choices=BOOLEANS, default='no'),
       node = dict(),
-      password = dict(),
+      password = dict(no_log=True),
       hostname = dict(),
       ostemplate = dict(),
       disk = dict(type='int', default=3),
