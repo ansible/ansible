@@ -20,3 +20,9 @@ Bast[C:D]
 
 [auth]
 neptun auth="YWRtaW46YWRtaW4="
+
+[parse:children]
+noparse
+
+[noparse]
+goldorak
