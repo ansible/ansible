@@ -228,8 +228,16 @@ def package_status(m, pkgname, version, cache, state):
     except KeyError:
         if state == 'install':
             try:
-                if cache.get_providing_packages(pkgname):
-                    return False, True, False
+                provided_packages = cache.get_providing_packages(pkgname)
+                if provided_packages:
+		    is_installed = False
+                    # when virtual package providing only one package, look up status of target package 
+                    if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
+			package = provided_packages[0]
+                        installed, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
+                        if installed:
+                            is_installed = True
+                    return is_installed, True, False
                 m.fail_json(msg="No package matching '%s' is available" % pkgname)
             except AttributeError:
                 # python-apt version too old to detect virtual packages
