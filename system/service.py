@@ -75,7 +75,7 @@ options:
     must_exist:
         required: false
         default: true
-        version_added: "1.9"
+        version_added: "2.0"
         description:
         - Avoid a module failure if the named service does not exist. Useful
           for opportunistically starting/stopping/restarting a list of
