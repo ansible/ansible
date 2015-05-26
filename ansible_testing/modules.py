@@ -290,7 +290,6 @@ class ModuleValidator(Validator):
                 self.warnings.append('No RETURN provided')
 
         if self._python_module() and not self._just_docs():
-            self._check_interpreter()
             self._check_for_sys_exit()
             self._find_json_import()
             main = self._find_main_call()
