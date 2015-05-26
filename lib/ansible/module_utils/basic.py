@@ -972,7 +972,7 @@ class AnsibleModule(object):
                     if count == 0:
                         missing.append(check)
             if len(missing) > 0:
-                self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing))
+                self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
     def _check_argument_values(self):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
