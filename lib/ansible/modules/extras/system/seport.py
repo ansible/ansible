@@ -25,9 +25,9 @@ description:
      - Manages SELinux network port type definitions.
 version_added: "1.7.1"
 options:
-  port:
+  ports:
     description:
-      - Port number or port range
+      - Ports or port ranges, separated by a comma
     required: true
     default: null
   proto:
@@ -61,11 +61,11 @@ author: Dan Keder
 
 EXAMPLES = '''
 # Allow Apache to listen on tcp port 8888
-- seport: port=8888 proto=tcp setype=http_port_t state=present
+- seport: ports=8888 proto=tcp setype=http_port_t state=present
 # Allow sshd to listen on tcp port 8991
-- seport: port=8991 proto=tcp setype=ssh_port_t state=present
-# Allow memcached to listen on tcp ports 10000-10100
-- seport: port=10000-10100 proto=tcp setype=memcache_port_t state=present
+- seport: ports=8991 proto=tcp setype=ssh_port_t state=present
+# Allow memcached to listen on tcp ports 10000-10100 and 10112
+- seport: ports=10000-10100,10112 proto=tcp setype=memcache_port_t state=present
 '''
 
 try:
@@ -104,14 +104,14 @@ def semanage_port_exists(seport, port, proto):
     return record in seport.get_all()
 
 
-def semanage_port_add(module, port, proto, setype, do_reload, serange='s0', sestore=''):
+def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', sestore=''):
     """ Add SELinux port type definition to the policy.
 
     :type module: AnsibleModule
     :param module: Ansible module
 
-    :type port: basestring
-    :param port: Port or port range to add (example: "8080", "8080-9090")
+    :type ports: list
+    :param ports: List of ports and port ranges to add (e.g. ["8080", "8080-9090"])
 
     :type proto: basestring
     :param proto: Protocol ('tcp' or 'udp')
@@ -133,10 +133,11 @@ def semanage_port_add(module, port, proto, setype, do_reload, serange='s0', sest
     """
     try:
         seport = seobject.portRecords(sestore)
-        change = not semanage_port_exists(seport, port, proto)
-        if change and not module.check_mode:
-            seport.set_reload(do_reload)
-            seport.add(port, proto, serange, setype)
+        seport.set_reload(do_reload)
+        for port in ports:
+            change = not semanage_port_exists(seport, port, proto)
+            if change and not module.check_mode:
+                seport.add(port, proto, serange, setype)
 
     except ValueError as e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
@@ -152,14 +153,14 @@ def semanage_port_add(module, port, proto, setype, do_reload, serange='s0', sest
     return change
 
 
-def semanage_port_del(module, port, proto, do_reload, sestore=''):
+def semanage_port_del(module, ports, proto, do_reload, sestore=''):
     """ Delete SELinux port type definition from the policy.
 
     :type module: AnsibleModule
     :param module: Ansible module
 
-    :type port: basestring
-    :param port: Port or port range to delete (example: "8080", "8080-9090")
+    :type ports: list
+    :param ports: List of ports and port ranges to delete (e.g. ["8080", "8080-9090"])
 
     :type proto: basestring
     :param proto: Protocol ('tcp' or 'udp')
@@ -175,10 +176,11 @@ def semanage_port_del(module, port, proto, do_reload, sestore=''):
     """
     try:
         seport = seobject.portRecords(sestore)
-        change = not semanage_port_exists(seport, port, proto)
-        if change and not module.check_mode:
-            seport.set_reload(do_reload)
-            seport.delete(port, proto)
+        seport.set_reload(do_reload)
+        for port in ports:
+            change = not semanage_port_exists(seport, port, proto)
+            if change and not module.check_mode:
+                seport.delete(port, proto)
 
     except ValueError as e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
@@ -197,7 +199,7 @@ def semanage_port_del(module, port, proto, do_reload, sestore=''):
 def main():
     module = AnsibleModule(
         argument_spec={
-                'port': {
+                'ports': {
                     'required': True,
                 },
                 'proto': {
@@ -228,22 +230,23 @@ def main():
     if not selinux.is_selinux_enabled():
         module.fail_json(msg="SELinux is disabled on this host.")
 
-    port = module.params['port']
+    ports = [x.strip() for x in module.params['ports'].split(',')]
     proto = module.params['proto']
     setype = module.params['setype']
     state = module.params['state']
     do_reload = module.params['reload']
 
-    result = {}
-    result['port'] = port
-    result['proto'] = proto
-    result['setype'] = setype
-    result['state'] = state
+    result = {
+        'ports': ports,
+        'proto': proto,
+        'setype': setype,
+        'state': state,
+    }
 
     if state == 'present':
-        result['changed'] = semanage_port_add(module, port, proto, setype, do_reload)
+        result['changed'] = semanage_port_add(module, ports, proto, setype, do_reload)
     elif state == 'absent':
-        result['changed'] = semanage_port_del(module, port, proto, do_reload)
+        result['changed'] = semanage_port_del(module, ports, proto, do_reload)
     else:
         module.fail_json(msg='Invalid value of argument "state": {0}'.format(state))
 
