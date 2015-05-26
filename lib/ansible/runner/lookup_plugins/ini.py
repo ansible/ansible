@@ -1,4 +1,4 @@
-# (c) 2013, Jan-Piet Mens <jpmens(at)gmail.com>
+# (c) 2015, Yannig Perre <yannig.perre(at)gmail.com>
 #
 # This file is part of Ansible
 #
