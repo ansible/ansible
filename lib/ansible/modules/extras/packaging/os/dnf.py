@@ -99,7 +99,9 @@ options:
 
 notes: []
 # informational: requirements for nodes
-requirements: [ dnf ]
+requirements:
+  - dnf
+  - yum-utils (for repoquery)
 author: '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
 '''
 
@@ -144,18 +146,12 @@ def log(msg):
 def dnf_base(conf_file=None, cachedir=False):
 
     my = dnf.Base()
-    my.logging.verbose_level=0
-    my.logging.verbose_level=0
+    my.conf.debuglevel=0
     if conf_file and os.path.exists(conf_file):
-        my.config = conf_file
-    if cachedir or os.geteuid() != 0:
-     if cachedir or os.geteuid() != 0:
-         if hasattr(my, 'setCacheDir'):
-             my.setCacheDir()
-         else:
-             cachedir = cachedir.dnf.Conf()
-             my.repos.setCacheDir(cachedir)
-             my.conf.cache = 0
+        my.conf.config_file_path = conf_file
+        my.conf.read()
+    my.read_all_repos()
+    my.fill_sack()
 
     return my
 
@@ -164,7 +160,7 @@ def install_dnf_utils(module):
     if not module.check_mode:
         dnf_path = module.get_bin_path('dnf')
         if dnf_path:
-            rc, so, se = module.run_command('%s -y install dnf-plugins-core' % dnf_path)
+            rc, so, se = module.run_command('%s -y install yum-utils' % dnf_path)
             if rc == 0:
                 this_path = module.get_bin_path('repoquery')
                 global repoquery
@@ -819,9 +815,9 @@ def main():
     if params['install_repoquery'] and not repoquery and not module.check_mode:
         install_dnf_utils(module)
 
+    if not repoquery:
+        module.fail_json(msg="repoquery is required to use this module at this time. Please install the yum-utils package.")
     if params['list']:
-        if not repoquery:
-            module.fail_json(msg="repoquery is required to use list= with this module. Please install the dnf-utils package.")
         results = dict(results=list_stuff(module, params['conf_file'], params['list']))
         module.exit_json(**results)
 
