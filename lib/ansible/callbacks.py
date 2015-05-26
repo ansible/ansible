@@ -487,6 +487,10 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         stdout = results2.pop('stdout', None)
         returned_msg = results2.pop('msg', None)
 
+        results2['task'] = self.task.name
+        results2['role'] = self.task.role_name
+        results2['playbook'] = self.playbook.filename
+
         if item:
             msg = "failed: [%s] => (item=%s) => %s" % (host, item, utils.jsonify(results2))
         else:
