@@ -244,11 +244,11 @@ def main():
     argument_spec = dict(
       api_host = dict(required=True),
       api_user = dict(required=True),
-      api_password = dict(),
+      api_password = dict(no_log=True),
       vmid = dict(required=True),
       https_verify_ssl = dict(type='bool', choices=BOOLEANS, default='no'),
       node = dict(),
-      password = dict(),
+      password = dict(no_log=True),
       hostname = dict(),
       ostemplate = dict(),
       disk = dict(type='int', default=3),
