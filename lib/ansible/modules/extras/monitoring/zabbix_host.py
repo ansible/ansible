@@ -60,24 +60,28 @@ options:
         default: None
     status:
         description:
-            - 'Monitoring status of the host. Possible values are: "enabled" and "disabled".'
+            - 'Monitoring status of the host.
         required: false
+        choices: ['enabled', 'disabled']
         default: "enabled"
     state:
         description:
-            - 'Possible values are: "present" and "absent". If the host already exists, and the state is "present", it will just to update the host is the associated data is different. "absent" will remove a host if it exists.'
+            - State of the host.
+            - On C(present), it will create if host does not exist or update the host if the associated data is different.
+            - On C(absent) will remove a host if it exists.
         required: false
+        choices: ['present', 'absent']
         default: "present"
     timeout:
         description:
-            - The timeout of API request(seconds).
+            - The timeout of API request (seconds).
         default: 10
     interfaces:
         description:
             - List of interfaces to be created for the host (see example below).
-            - Available values are: dns, ip, main, port, type and useip.
-            - Please review the interface documentation for more information on the supported properties:
-            - https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface
+            - 'Available values are: dns, ip, main, port, type and useip.'
+            - Please review the interface documentation for more information on the supported properties
+            - 'https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface'
         required: false
         default: []
 '''

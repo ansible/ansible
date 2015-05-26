@@ -58,12 +58,15 @@ options:
         required: true
     state:
         description:
-            - 'Possible values are: "present" and "absent". If the macro already exists, and the state is "present", it will just to update the macro if needed.'
+            - State of the macro.
+            - On C(present), it will create if macro does not exist or update the macro if the associated data is different.
+            - On C(absent) will remove a macro if it exists.
         required: false
+        choices: ['present', 'absent']
         default: "present"
     timeout:
         description:
-            - The timeout of API request(seconds).
+            - The timeout of API request (seconds).
         default: 10
 '''
 
