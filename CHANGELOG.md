@@ -54,6 +54,7 @@ New Modules:
   * vertica_schema
   * vertica_user
   * vmware_datacenter
+  * win_environment
 
 New Inventory scripts:
   * cloudstack
