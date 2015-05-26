@@ -160,6 +160,32 @@ requirements: [ "proxmoxer", "requests" ]
 author: "Sergei Antipov @UnderGreen"
 '''
 
+EXAMPLES = '''
+# Create new container with minimal options
+- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
+# Create new container with minimal options with force(it will rewrite existing container)
+- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz' force=yes
+
+# Create new container with minimal options use environment PROXMOX_PASSWORD variable(you should export it before)
+- proxmox: vmid=100 node='uk-mc02' api_user='root@pam' api_host='node1' password='123456' hostname='example.org' ostemplate='local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
+# Start container
+- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=started
+
+# Stop container
+- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=stopped
+
+# Stop container with force
+- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' force=yes state=stopped
+
+# Restart container(stopped or mounted container you can't restart)
+- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=stopped
+
+# Remove container
+- proxmox: vmid=100 api_user='root@pam' api_password='1q2w3e' api_host='node1' state=absent
+'''
+
 import os
 import time
 
