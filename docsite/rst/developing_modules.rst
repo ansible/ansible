@@ -454,20 +454,20 @@ Module checklist
 
 * The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
 * Documentation: Make sure it exists
-  * `required` should always be present, be it true or false
-  * If `required` is false you need to document `default`, even if its 'null'
-  * `default` is not needed for `required: true`
-  * Remove unnecessary doc like `aliases: []` or `choices: []`
-  * The version is not a float number and value the current development version
-  * The verify that arguments in doc and module spec dict are identical
-  * For password / secret arguments no_log=True should be set
-  * Requirements should  be documented, using the `requirements=[]` field
-  * Author should be set, name and github id at least
-  * Made use of U() for urls, C() for files and options, I() for params, M() for modules?
-  * GPL License header
-  * Examples: make sure they are reproducible
-  * Return: document the return structure of the module
-* Does module use check_mode? Could it be modified to use it? Document it
+    * `required` should always be present, be it true or false
+    * If `required` is false you need to document `default`, even if its 'null'
+    * `default` is not needed for `required: true`
+    * Remove unnecessary doc like `aliases: []` or `choices: []`
+    * The version is not a float number and value the current development version
+    * The verify that arguments in doc and module spec dict are identical
+    * For password / secret arguments no_log=True should be set
+    * Requirements should  be documented, using the `requirements=[]` field
+    * Author should be set, name and github id at least
+    * Made use of U() for urls, C() for files and options, I() for params, M() for modules?
+    * GPL License header
+    * Does module use check_mode? Could it be modified to use it? Document it
+    * Examples: make sure they are reproducible
+    * Return: document the return structure of the module
 * Exceptions: The module must handle them. (exceptions are bugs)
     * Give out useful messages on what you were doing and you can add the exception message to that.
     * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
