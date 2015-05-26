@@ -82,7 +82,6 @@ EXAMPLES = '''
 
 import logging
 import copy
-from ansible.module_utils.basic import *
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass

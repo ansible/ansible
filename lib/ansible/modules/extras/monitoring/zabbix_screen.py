@@ -124,8 +124,6 @@ EXAMPLES = '''
   when: inventory_hostname==groups['group_name'][0]
 '''
 
-from ansible.module_utils.basic import *
-
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
     from zabbix_api import ZabbixAPIException
