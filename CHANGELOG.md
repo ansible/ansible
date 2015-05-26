@@ -37,6 +37,7 @@ New Modules:
   * maven_artifact
   * openstack: os_network
   * openstack: os_server
+  * openstack: os_server_actions
   * openstack: os_server_facts
   * openstack: os_server_volume
   * openstack: os_subnet
