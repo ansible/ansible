@@ -34,8 +34,9 @@ class ShellModule(object):
     def env_prefix(self, **kwargs):
         '''Build command prefix with environment variables.'''
         env = dict(
-            LANG     = C.DEFAULT_MODULE_LANG,
-            LC_CTYPE = C.DEFAULT_MODULE_LANG,
+            LANG        = C.DEFAULT_MODULE_LANG,
+            LC_CTYPE    = C.DEFAULT_MODULE_LANG,
+            LC_MESSAGES = C.DEFAULT_MODULE_LANG,
         )
         env.update(kwargs)
         return ' '.join(['%s=%s' % (k, pipes.quote(unicode(v))) for k,v in env.items()])
