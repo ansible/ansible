@@ -87,10 +87,10 @@ def semanage_port_exists(seport, port, proto):
 
     :param seport: Instance of seobject.portRecords
 
-    :type port: basestring
+    :type port: str
     :param port: Port or port range (example: "8080", "8080-9090")
 
-    :type proto: basestring
+    :type proto: str
     :param proto: Protocol ('tcp' or 'udp')
 
     :rtype: bool
@@ -113,19 +113,19 @@ def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', ses
     :type ports: list
     :param ports: List of ports and port ranges to add (e.g. ["8080", "8080-9090"])
 
-    :type proto: basestring
+    :type proto: str
     :param proto: Protocol ('tcp' or 'udp')
 
-    :type setype: basestring
+    :type setype: str
     :param setype: SELinux type
 
     :type do_reload: bool
     :param do_reload: Whether to reload SELinux policy after commit
 
-    :type serange: basestring
+    :type serange: str
     :param serange: SELinux MLS/MCS range (defaults to 's0')
 
-    :type sestore: basestring
+    :type sestore: str
     :param sestore: SELinux store
 
     :rtype: bool
@@ -162,13 +162,13 @@ def semanage_port_del(module, ports, proto, do_reload, sestore=''):
     :type ports: list
     :param ports: List of ports and port ranges to delete (e.g. ["8080", "8080-9090"])
 
-    :type proto: basestring
+    :type proto: str
     :param proto: Protocol ('tcp' or 'udp')
 
     :type do_reload: bool
     :param do_reload: Whether to reload SELinux policy after commit
 
-    :type sestore: basestring
+    :type sestore: str
     :param sestore: SELinux store
 
     :rtype: bool
