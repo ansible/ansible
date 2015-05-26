@@ -60,7 +60,7 @@ options:
         default: None
     status:
         description:
-            - 'Monitoring status of the host.
+            - Monitoring status of the host.
         required: false
         choices: ['enabled', 'disabled']
         default: "enabled"
