@@ -56,7 +56,7 @@ class TestInventory(unittest.TestCase):
             'thrudgelmir0', 'thrudgelmir1', 'thrudgelmir2',
             'thrudgelmir3', 'thrudgelmir4', 'thrudgelmir5',
             'Hotep-a', 'Hotep-b', 'Hotep-c',
-            'BastC', 'BastD', 'neptun', ]
+            'BastC', 'BastD', 'neptun', 'goldorak', ]
 
     #####################################
     ### Empty inventory format tests
@@ -221,6 +221,11 @@ class TestInventory(unittest.TestCase):
         inventory = self.simple_inventory()
         inventory.subset('@' + os.path.join(self.test_dir, 'restrict_pattern'))
         self.assertEqual(sorted(inventory.list_hosts()),  sorted(['thor','odin']))
+
+    def test_vars_yaml_extension(self):
+        inventory = self.simple_inventory()
+        vars = inventory.get_variables('goldorak')
+        assert vars['YAML_FILENAME_EXTENSIONS_TEST']
 
     @raises(errors.AnsibleError)
     def testinvalid_entry(self):
