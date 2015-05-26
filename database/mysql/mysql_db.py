@@ -346,11 +346,11 @@ def main():
             db_connection = MySQLdb.connect(host=module.params["login_host"], port=login_port, user=login_user, passwd=login_password, db=connect_to_db)
         cursor = db_connection.cursor()
     except Exception, e:
+        errno, errstr = e.args
         if "Unknown database" in str(e):
-                errno, errstr = e.args
                 module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
         else:
-                module.fail_json(msg="unable to connect, check login credentials (login_user, and login_password, which can be defined in ~/.my.cnf), check that mysql socket exists and mysql server is running")
+                module.fail_json(msg="unable to connect, check login credentials (login_user, and login_password, which can be defined in ~/.my.cnf), check that mysql socket exists and mysql server is running (ERROR: %s %s)" % (errno, errstr))
 
     changed = False
     if db_exists(cursor, db):
