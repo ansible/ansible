@@ -134,10 +134,12 @@ def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', ses
     try:
         seport = seobject.portRecords(sestore)
         seport.set_reload(do_reload)
+        change = False
         for port in ports:
-            change = not semanage_port_exists(seport, port, proto)
-            if change and not module.check_mode:
+            exists = semanage_port_exists(seport, port, proto)
+            if not exists and not module.check_mode:
                 seport.add(port, proto, serange, setype)
+            change = change or not exists
 
     except ValueError as e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
@@ -177,10 +179,12 @@ def semanage_port_del(module, ports, proto, do_reload, sestore=''):
     try:
         seport = seobject.portRecords(sestore)
         seport.set_reload(do_reload)
+        change = False
         for port in ports:
-            change = not semanage_port_exists(seport, port, proto)
-            if change and not module.check_mode:
+            exists = semanage_port_exists(seport, port, proto)
+            if not exists and not module.check_mode:
                 seport.delete(port, proto)
+            change = change or not exists
 
     except ValueError as e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
