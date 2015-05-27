@@ -1138,7 +1138,7 @@ class DockerManager(object):
             # LOG_DRIVER
 
             expected_log_driver = set(self.module.params.get('log_driver') or [])
-            actual_log_driver = set(container['HostConfig']['LogConfig'] or [])
+            actual_log_driver = set(container['HostConfig']['LogConfig']['Type'] or [])
             if actual_log_driver != expected_log_driver:
                 self.reload_reasons.append('log_driver ({0} => {1})'.format(actual_log_driver, expected_log_driver))
                 differing.append(container)
