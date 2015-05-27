@@ -116,6 +116,7 @@ class Homebrew(object):
     VALID_PACKAGE_CHARS = r'''
         \w                  # alphanumeric characters (i.e., [a-zA-Z0-9_])
         .                   # dots
+        /                   # slash (for taps)
         \+                  # plusses
         -                   # dashes
     '''
