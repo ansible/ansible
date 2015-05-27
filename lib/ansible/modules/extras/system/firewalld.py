@@ -67,8 +67,8 @@ options:
     required: false
     default: 0
 notes:
-   - Not tested on any debian based system.
-requirements: [ firewalld >= 0.2.11 ]
+  - Not tested on any Debian based system.
+requirements: [ 'firewalld >= 0.2.11' ]
 author: '"Adam Miller (@maxamillion)" <maxamillion@fedoraproject.org>'
 '''
 
@@ -82,7 +82,6 @@ EXAMPLES = '''
 
 import os
 import re
-import sys
 
 try:
     import firewall.config
@@ -90,14 +89,9 @@ try:
 
     from firewall.client import FirewallClient
     fw = FirewallClient()
-    if not fw.connected:
-        raise Exception('failed to connect to the firewalld daemon')
+    HAS_FIREWALLD = True
 except ImportError:
-    print "failed=True msg='firewalld required for this module'"
-    sys.exit(1)
-except Exception, e:
-    print "failed=True msg='%s'" % str(e)
-    sys.exit(1)
+    HAS_FIREWALLD = False
 
 ################
 # port handling
@@ -222,6 +216,9 @@ def main():
         ),
         supports_check_mode=True
     )
+
+    if not HAS_FIREWALLD:
+        module.fail_json(msg='firewalld required for this module')
 
     ## Pre-run version checking
     if FW_VERSION < "0.2.11":
@@ -400,6 +397,4 @@ def main():
 #################################################
 # import module snippets
 from ansible.module_utils.basic import *
-
 main()
-
