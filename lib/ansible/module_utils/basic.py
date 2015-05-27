@@ -930,7 +930,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check)
             if count > 1:
-                self.fail_json(msg="parameters are mutually exclusive: %s" % check)
+                self.fail_json(msg="parameters are mutually exclusive: %s" % (check,))
 
     def _check_required_one_of(self, spec):
         if spec is None:
@@ -948,7 +948,7 @@ class AnsibleModule(object):
             non_zero = [ c for c in counts if c > 0 ]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    self.fail_json(msg="parameters are required together: %s" % check)
+                    self.fail_json(msg="parameters are required together: %s" % (check,))
 
     def _check_required_arguments(self):
         ''' ensure all required arguments are present '''
