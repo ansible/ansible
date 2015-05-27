@@ -191,6 +191,11 @@ def stack_operation(cfn, stack_name, operation):
                           events = map(str, list(stack.describe_events())),
                           output = 'Stack %s failed' % operation)
             break
+        elif '%s_ROLLBACK_FAILED' % operation == stack.stack_status:
+            result = dict(changed=True, failed=True,
+                          events = map(str, list(stack.describe_events())),
+                          output = 'Stack %s rollback failed' % operation)
+            break
         else:
             time.sleep(5)
     return result
