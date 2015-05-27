@@ -235,7 +235,7 @@ def download_s3file(module, s3, bucket, obj, dest, retries):
     # more to get that count of loops.
     bucket = s3.lookup(bucket)
     key = bucket.lookup(obj)
-    for x in xrange(0, retries + 1):
+    for x in range(0, retries + 1):
         try:
             key.get_contents_to_filename(dest)
             module.exit_json(msg="GET operation complete", changed=True)
@@ -243,7 +243,7 @@ def download_s3file(module, s3, bucket, obj, dest, retries):
             module.fail_json(msg= str(e))
         except SSLError as e:
             # actually fail on last pass through the loop.
-            if x == retries:
+            if x >= retries:
                 module.fail_json(msg="s3 download failed; %s" % e)
             # otherwise, try again, this may be a transient timeout.
             pass
@@ -295,7 +295,7 @@ def main():
             s3_url         = dict(aliases=['S3_URL']),
             overwrite      = dict(aliases=['force'], default='always'),
             metadata       = dict(type='dict'),
-            retries        = dict(aliases=['retry'], type='str', default=0),
+            retries        = dict(aliases=['retry'], type='int', default=0),
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -313,7 +313,7 @@ def main():
     s3_url = module.params.get('s3_url')
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
-    retries = int(module.params.get('retries'))
+    retries = module.params.get('retries')
 
     if overwrite not in  ['always', 'never', 'different']: 
         if module.boolean(overwrite): 
