@@ -1479,8 +1479,9 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Set a temporart env path if a prefix is passed
         env=os.environ
+        env['LC_ALL'] = "C"
+        # Set a temporart env path if a prefix is passed
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
 
