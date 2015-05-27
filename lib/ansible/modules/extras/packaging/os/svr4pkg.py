@@ -209,15 +209,25 @@ def main():
             (rc, out, err) = package_uninstall(module, name, src, category)
             out = out[:75]
 
-    # Success, Warning, Interruption, Reboot all, Reboot this return codes
+    # Returncodes as per pkgadd(1m)
+    #    0 Successful completion
+    #    1 Fatal error.
+    #    2 Warning.
+    #    3 Interruption.
+    #    4 Administration.
+    #    5 Administration. Interaction  is  required.  Do  not  use pkgadd -n.
+    #   10 Reboot after installation of all packages.
+    #   20 Reboot after installation of this package.
+    #   99 (observed) pkgadd: ERROR: could not process datastream from </tmp/pkgutil.pkg>
     if rc in (0, 2, 3, 10, 20):
         result['changed'] = True
     # no install nor uninstall, or failed
     else:
         result['changed'] = False
 
-    # Fatal error, Administration, Administration Interaction return codes
-    if rc in (1, 4 , 5):
+    # Only return failed=False when the returncode is known to be good as there may be more
+    # undocumented failure return codes
+    if rc not in (0, 2, 10, 20):
         result['failed'] = True
     else:
         result['failed'] = False
