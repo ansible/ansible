@@ -19,7 +19,9 @@
 DOCUMENTATION = '''
 ---
 module: homebrew_cask
-author: "Daniel Jaouen (@danieljaouen)"
+author:
+    - "Daniel Jaouen (@danieljaouen)"
+    - "Enric Lluelles (@enriclluelles)"
 short_description: Install/uninstall homebrew casks.
 description:
     - Manages Homebrew casks.
@@ -35,10 +37,16 @@ options:
         choices: [ 'present', 'absent' ]
         required: false
         default: present
+    install_options:
+        description:
+            - options flags to install a package
+        required: false
+        default: null
 '''
 EXAMPLES = '''
 - homebrew_cask: name=alfred state=present
 - homebrew_cask: name=alfred state=absent
+- homebrew_cask: name=alfred state=absent install_options="appdir=/Applications"
 '''
 
 import os.path
@@ -251,10 +259,11 @@ class HomebrewCask(object):
             return cask
     # /class properties -------------------------------------------- }}}
 
-    def __init__(self, module, path=None, casks=None, state=None):
+    def __init__(self, module, path=None, casks=None, state=None,
+            install_options=None):
         self._setup_status_vars()
         self._setup_instance_vars(module=module, path=path, casks=casks,
-                                  state=state)
+                                  state=state, install_options=install_options)
 
         self._prep()
 
@@ -395,9 +404,12 @@ class HomebrewCask(object):
             )
             raise HomebrewCaskException(self.message)
 
-        cmd = [opt
-               for opt in (self.brew_path, 'cask', 'install', self.current_cask)
-               if opt]
+        opts = (
+            [self.brew_path, 'cask', 'install', self.current_cask]
+            + self.install_options
+        )
+
+        cmd = [opt for opt in opts if opt]
 
         rc, out, err = self.module.run_command(cmd, path_prefix=self.path[0])
 
@@ -478,6 +490,11 @@ def main():
                     "absent", "removed", "uninstalled",
                 ],
             ),
+            install_options=dict(
+                default=None,
+                aliases=['options'],
+                type='list',
+            )
         ),
         supports_check_mode=True,
     )
@@ -503,8 +520,13 @@ def main():
     if state in ('absent', 'removed', 'uninstalled'):
         state = 'absent'
 
+
+    p['install_options'] = p['install_options'] or []
+    install_options = ['--{0}'.format(install_option)
+                       for install_option in p['install_options']]
+
     brew_cask = HomebrewCask(module=module, path=path, casks=casks,
-                             state=state)
+                             state=state, install_options=install_options)
     (failed, changed, message) = brew_cask.run()
     if failed:
         module.fail_json(msg=message)
