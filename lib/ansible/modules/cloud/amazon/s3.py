@@ -219,14 +219,23 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata):
     except s3.provider.storage_copy_error, e:
         module.fail_json(msg= str(e))
 
-def download_s3file(module, s3, bucket, obj, dest):
-    try:
-        bucket = s3.lookup(bucket)
-        key = bucket.lookup(obj)
-        key.get_contents_to_filename(dest)
-        module.exit_json(msg="GET operation complete", changed=True)
-    except s3.provider.storage_copy_error, e:
-        module.fail_json(msg= str(e))
+def download_s3file(module, s3, bucket, obj, dest, retries):
+    # retries is the number of loops; range/xrange needs to be one
+    # more to get that count of loops.
+    bucket = s3.lookup(bucket)
+    key = bucket.lookup(obj)
+    for x in range(0, retries + 1):
+        try:
+            key.get_contents_to_filename(dest)
+            module.exit_json(msg="GET operation complete", changed=True)
+        except s3.provider.storage_copy_error, e:
+            module.fail_json(msg= str(e))
+        except SSLError as e:
+            # actually fail on last pass through the loop.
+            if x >= retries:
+                module.fail_json(msg="s3 download failed; %s" % e)
+            # otherwise, try again, this may be a transient timeout.
+            pass
 
 def download_s3str(module, s3, bucket, obj):
     try:
@@ -274,7 +283,8 @@ def main():
             expiry         = dict(default=600, aliases=['expiration']),
             s3_url         = dict(aliases=['S3_URL']),
             overwrite      = dict(aliases=['force'], default=True, type='bool'),
-            metadata      = dict(type='dict'),
+            metadata       = dict(type='dict'),
+            retries        = dict(aliases=['retry'], type='int', default=0),
         ),
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -292,6 +302,13 @@ def main():
     s3_url = module.params.get('s3_url')
     overwrite = module.params.get('overwrite')
     metadata = module.params.get('metadata')
+    retries = module.params.get('retries')
+
+    if overwrite not in  ['always', 'never', 'different']: 
+        if module.boolean(overwrite): 
+            overwrite = 'always' 
+        else: 
+            overwrite='never'
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
