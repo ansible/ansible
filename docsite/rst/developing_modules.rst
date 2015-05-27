@@ -490,6 +490,54 @@ Module checklist
 * If you are asking 'how can i have a module execute other modules' ... you want to write a role
 
 
+Windows modules checklist
+`````````````````````````
+* Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of windows
+* modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
+* look at ansible/lib/ansible/module_utils/powershell.ps1 for commmon code, avoid duplication
+* start with::
+
+    #!powershell
+
+then::
+    <GPL header>
+then::
+    # WANT_JSON
+    # POWERSHELL_COMMON
+
+* Arguments:
+    * Try and use state present and state absent like other modules
+    * You need to check that all your mandatory args are present::
+
+        If ($params.state) {
+            $state = $params.state.ToString().ToLower()
+            If (($state -ne 'started') -and ($state -ne 'stopped') -and ($state -ne 'restarted')) {
+                Fail-Json $result "state is '$state'; must be 'started', 'stopped', or 'restarted'"
+            }
+        }
+
+    * Look at existing modules for more examples of argument checking.
+
+* Results
+    * The result object should allways contain an attribute called changed set to either $true or $false
+    * Create your result object like this::
+
+        $result = New-Object psobject @{
+        changed = $false
+        other_result_attribute = $some_value
+        };
+
+        If all is well, exit with a
+        Exit-Json $result
+
+    * Ensure anything you return, including errors can be converted to json.
+    * Be aware that because exception messages could contain almost anything.
+    * ConvertTo-Json will fail if it encounters a trailing \ in a string.
+    * If all is not well use Fail-Json to exit.
+
+* Have you tested for powershell 3.0 and 4.0 compliance?
+
+
 Deprecating and making module aliases
 ``````````````````````````````````````
 
