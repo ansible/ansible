@@ -1059,7 +1059,7 @@ class OpenBsdService(Service):
 
         getdef_string = stdout.rstrip()
 
-        # Depending on the service the string returned from 'default' may be
+        # Depending on the service the string returned from 'getdef' may be
         # either a set of flags or the boolean YES/NO
         if getdef_string == "YES" or getdef_string == "NO":
             default_flags = ''
@@ -1073,7 +1073,7 @@ class OpenBsdService(Service):
 
         get_string = stdout.rstrip()
 
-        # Depending on the service the string returned from 'getdef/get' may be
+        # Depending on the service the string returned from 'get' may be
         # either a set of flags or the boolean YES/NO
         if get_string == "YES" or get_string == "NO":
             current_flags = ''
