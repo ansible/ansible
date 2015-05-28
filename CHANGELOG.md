@@ -11,6 +11,7 @@ Other Notable Changes:
 
 ## 1.9.2 "Dancing In the Street" - TBD
 
+* Security fix to get_url module to check that hostnames match certificates with https urls
 * Fixed a bug in the service module where init scripts were being incorrectly used instead of upstart/systemd.
 * Fixed a bug where sudo/su settings were not inherited from ansible.cfg correctly.
 * Fixed a bug in the rds module where a traceback may occur due to an unbound variable.
@@ -22,6 +23,7 @@ Other Notable Changes:
   - win_file.py
   - win_template.py
 * Fix bug using with_sequence and a count that is zero.  Also allows counting backwards isntead of forwards
+* Fix get_url module bug preventing use of custom ports with https urls
 
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
