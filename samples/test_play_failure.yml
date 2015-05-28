@@ -1,0 +1,9 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - fail:
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - debug: msg="you should not see me..."
