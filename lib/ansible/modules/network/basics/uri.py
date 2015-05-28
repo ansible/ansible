@@ -349,6 +349,10 @@ def uri(module, url, dest, user, password, body, body_format, method, headers, r
         module.fail_json(msg="The server requested a type of HMACDigest authentication that we are unfamiliar with.")
     except httplib2.UnimplementedHmacDigestAuthOptionError:
         module.fail_json(msg="The server requested a type of HMACDigest authentication that we are unfamiliar with.")
+    except httplib2.CertificateHostnameMismatch:
+        module.fail_json(msg="The server's certificate does not match with its hostname.")
+    except httplib2.SSLHandshakeError:
+        module.fail_json(msg="Unable to validate server's certificate against available CA certs.")
     except socket.error, e:
         module.fail_json(msg="Socket error: %s to %s" % (e, url))
 
@@ -370,7 +374,7 @@ def main():
             removes = dict(required=False, default=None),
             status_code = dict(required=False, default=[200], type='list'),
             timeout = dict(required=False, default=30, type='int'),
-            validate_certs = dict(required=False, default=False, type='bool'),
+            validate_certs = dict(required=False, default=True, type='bool'),
         ),
         check_invalid_arguments=False,
         add_file_common_args=True
