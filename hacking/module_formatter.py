@@ -33,8 +33,8 @@ import subprocess
 import cgi
 from jinja2 import Environment, FileSystemLoader
 
-import ansible.utils
-import ansible.utils.module_docs as module_docs
+from ansible.utils import module_docs
+from ansible.utils.vars import merge_hash
 
 #####################################################################################
 # constants and paths
@@ -135,7 +135,7 @@ def list_modules(module_dir, depth=0):
                 res = list_modules(d, depth + 1)
                 for key in res.keys():
                     if key in categories:
-                        categories[key] = ansible.utils.merge_hash(categories[key], res[key])
+                        categories[key] = merge_hash(categories[key], res[key])
                         res.pop(key, None)
 
                 if depth < 2:
@@ -236,11 +236,11 @@ def process_module(module, options, env, template, outputname, module_map, alias
     print "rendering: %s" % module
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
-    doc, examples, returndocs= ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
+    doc, examples, returndocs = module_docs.get_docstring(fname, verbose=options.verbose)
 
     # crash if module is missing documentation and not explicitly hidden from docs index
     if doc is None:
-        if module in ansible.utils.module_docs.BLACKLIST_MODULES:
+        if module in module_docs.BLACKLIST_MODULES:
             return "SKIPPED"
         else:
             sys.stderr.write("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
@@ -278,8 +278,9 @@ def process_module(module, options, env, template, outputname, module_map, alias
         if added and added_float < TO_OLD_TO_BE_NOTABLE:
             del doc['version_added']
 
-    for (k,v) in doc['options'].iteritems():
-        all_keys.append(k)
+    if 'options' in doc:
+        for (k,v) in doc['options'].iteritems():
+            all_keys.append(k)
 
     all_keys = sorted(all_keys)
 
