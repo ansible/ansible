@@ -102,6 +102,7 @@ options:
         "none" disables any logging for the container. docker logs won't be available with this driver.
         "syslog" Syslog logging driver for Docker. Writes log messages to syslog.
         docker logs command is not available for this logging driver.
+        If not defined explicitly, the Docker daemon's default ("json-file") will apply.
         Requires docker >= 1.6.0.
     required: false
     default: json-file
@@ -1531,7 +1532,7 @@ def main():
             net             = dict(default=None),
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
-            log_driver      = dict(default='json-file', choices=['json-file', 'none', 'syslog']),
+            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog']),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
