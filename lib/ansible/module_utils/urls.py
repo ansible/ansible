@@ -50,6 +50,15 @@ try:
 except:
     HAS_SSL=False
 
+HAS_MATCH_HOSTNAME = True
+try:
+    from ssl import match_hostname, CertificateError
+except ImportError:
+    try:
+        from backports.ssl_match_hostname import match_hostname, CertificateError
+    except ImportError:
+        HAS_MATCH_HOSTNAME = False
+
 import httplib
 import os
 import re
@@ -293,11 +302,13 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     connect_result = s.recv(4096)
                     self.validate_proxy_response(connect_result)
                     ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
+                    match_hostname(ssl_s.getpeercert(), self.hostname)
                 else:
                     self.module.fail_json(msg='Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
             else:
                 s.connect((self.hostname, self.port))
                 ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
+                match_hostname(ssl_s.getpeercert(), self.hostname)
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
@@ -311,6 +322,9 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
                     'Paths checked for this platform: %s' % ", ".join(paths_checked)
                 )
+        except CertificateError:
+            self.module.fail_json(msg="SSL Certificate does not belong to %s.  Make sure the url has a certificate that belongs to it or use validate_certs=no (insecure)" % self.hostname)
+
         try:
             # cleanup the temp file created, don't worry
             # if it fails for some reason
@@ -363,28 +377,29 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     # FIXME: change the following to use the generic_urlparse function
     #        to remove the indexed references for 'parsed'
     parsed = urlparse.urlparse(url)
-    if parsed[0] == 'https':
-        if not HAS_SSL and validate_certs:
+    if parsed[0] == 'https' and validate_certs:
+        if not HAS_SSL:
             if distribution == 'Redhat':
                 module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended. You can also install python-ssl from EPEL')
             else:
                 module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended')
+        if not HAS_MATCH_HOSTNAME:
+            module.fail_json(msg='Available SSL validation does not check that the certificate matches the hostname.  You can install backports.ssl_match_hostname or update your managed machine to python-2.7.9 or newer.  You could also use validate_certs=no, however this is unsafe and not recommended')
 
-        elif validate_certs:
-            # do the cert validation
-            netloc = parsed[1]
-            if '@' in netloc:
-                netloc = netloc.split('@', 1)[1]
-            if ':' in netloc:
-                hostname, port = netloc.split(':', 1)
-                port = int(port)
-            else:
-                hostname = netloc
-                port = 443
-            # create the SSL validation handler and
-            # add it to the list of handlers
-            ssl_handler = SSLValidationHandler(module, hostname, port)
-            handlers.append(ssl_handler)
+        # do the cert validation
+        netloc = parsed[1]
+        if '@' in netloc:
+            netloc = netloc.split('@', 1)[1]
+        if ':' in netloc:
+            hostname, port = netloc.split(':', 1)
+            port = int(port)
+        else:
+            hostname = netloc
+            port = 443
+        # create the SSL validation handler and
+        # add it to the list of handlers
+        ssl_handler = SSLValidationHandler(module, hostname, port)
+        handlers.append(ssl_handler)
 
     if parsed[0] != 'ftp':
         username = module.params.get('url_username', '')
