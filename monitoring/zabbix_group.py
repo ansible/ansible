@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: zabbix_group
 short_description: Zabbix host groups creates/deletes
 description:
-   - Create host groups if they don't exist.
+   - Create host groups if they do not exist.
    - Delete existing host groups if they exist.
 version_added: "1.8"
 author:
@@ -52,7 +52,6 @@ options:
     state:
         description:
             - Create or delete host group.
-            - Possible values are: present and absent.
         required: false
         default: "present"
         choices: [ "present", "absent" ]
