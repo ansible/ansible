@@ -127,7 +127,10 @@ def main():
     if version_found == None:
         module.fail_json(msg="Failed to get LVM version number")
     version_yesopt = mkversion(2, 2, 99) # First LVM with the "--yes" option
-    yesopt = "--yes" if version_found >= version_yesopt else ""
+    if version_found >= version_yesopt:
+        yesopt = "--yes"
+    else:
+        yesopt = ""
 
     vg = module.params['vg']
     lv = module.params['lv']
