@@ -150,27 +150,40 @@ EXAMPLES = '''
 
 
 # Create a JIRA issue
-
-- uri: url=https://your.jira.example.com/rest/api/2/issue/ 
-       method=POST user=your_username password=your_pass 
-       body="{{ lookup('file','issue.json') }}" force_basic_auth=yes 
-       status_code=201 HEADER_Content-Type="application/json"  
+- uri:
+    url: https://your.jira.example.com/rest/api/2/issue/ 
+    method: POST
+    user: your_username 
+    password: your_pass 
+    body: "{{ lookup('file','issue.json') }}"
+    force_basic_auth: yes 
+    status_code: 201
+    body_format: json 
 
 # Login to a form based webpage, then use the returned cookie to
 # access the app in later tasks
+- uri:
+    url: https://your.form.based.auth.examle.com/index.php 
+    method: POST
+    body: "name=your_username&password=your_password&enter=Sign%20in" 
+    status_code: 302
+    HEADER_Content-Type: "application/x-www-form-urlencoded"
+    register: login
 
-- uri: url=https://your.form.based.auth.examle.com/index.php 
-       method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
-       status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
-  register: login
-
-- uri: url=https://your.form.based.auth.example.com/dashboard.php
-       method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
+- uri:
+    url: https://your.form.based.auth.example.com/dashboard.php
+    method: GET
+    return_content: yes
+    HEADER_Cookie: "{{login.set_cookie}}"
             
 # Queue build of a project in Jenkins:
-
-- uri: url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
-       method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
+- uri:
+    url: "http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}" 
+    method: GET
+    user: "{{ jenkins.user }}"
+    password: "{{ jenkins.password }}"
+    force_basic_auth: yes
+    status_code: 201
 
 '''
 
