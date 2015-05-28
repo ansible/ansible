@@ -579,7 +579,7 @@ class AnsibleModule(object):
                 if len(context) > i:
                     if context[i] is not None and context[i] != cur_context[i]:
                         new_context[i] = context[i]
-                    if context[i] is None:
+                    elif context[i] is None:
                         new_context[i] = cur_context[i]
 
         if cur_context != new_context:
