@@ -29,7 +29,7 @@ requirements:
   - python-consul
   - pyhcl
   - requests
-version_added: "1.9"
+version_added: "2.0"
 author: '"Steve Gargan (@sgargan)" <steve.gargan@gmail.com>'
 options:
     mgmt_token:
