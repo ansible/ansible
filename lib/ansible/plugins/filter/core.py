@@ -40,6 +40,7 @@ import uuid
 
 import yaml
 from jinja2.filters import environmentfilter
+from jinja2.runtime import StrictUndefined
 from distutils.version import LooseVersion, StrictVersion
 from ansible.compat.six import iteritems, string_types
 
@@ -176,6 +177,19 @@ def version_compare(value, version, operator='eq', strict=False):
 def regex_escape(string):
     '''Escape all regular expressions special characters from STRING.'''
     return re.escape(string)
+
+def safe_item(d, items, default=None):
+    try:
+        value = d
+        if isinstance(items, basestring):
+            items = items.split('.')
+        for item in items:
+            value = value.get(item, default)
+        if isinstance(value, StrictUndefined):
+            return default
+        return value
+    except:
+        return default
 
 @environmentfilter
 def rand(environment, end, start=None, step=None):
@@ -436,4 +450,5 @@ class FilterModule(object):
 
             # array and dict lookups
             'extract': extract,
+            'safe_item': safe_item,
         }
