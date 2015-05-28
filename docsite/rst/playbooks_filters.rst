@@ -95,6 +95,20 @@ Jinja2 provides a useful 'default' filter, that is often a better approach to fa
 In the above example, if the variable 'some_variable' is not defined, the value used will be 5, rather than an error
 being raised.
 
+Defaulting Undefined Variables in Deep Expressions
+--------------------------------------------------
+
+Ansible provides a filter for a more complex case, where one wishes to set a default value for an expression such as::
+
+    {{ some.deep.item.in.object }}
+
+In this case, the 'default' value will still fail if the parent objects ('some', 'deep', 'item', 'in') are undefined.
+To do this safely::
+
+    {{ some | safe_item('deep.item.in.object', 'default_value') }}
+    {{ some | safe_item(['deep', 'item', 'in', 'object'])}}
+
+If 'default_value' is omitted, the filter returns null.
 
 .. _omitting_undefined_variables:
 
