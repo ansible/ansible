@@ -23,10 +23,9 @@ from six.moves import queue as Queue
 import time
 
 from ansible.errors import *
-
+from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role import ROLE_CACHE, hash_params
@@ -307,12 +306,22 @@ class StrategyBase:
         # and add the host to the group
         new_group.add_host(actual_host)
 
-    def _load_included_file(self, included_file):
+    def _load_included_file(self, included_file, iterator):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
         '''
 
-        data = self._loader.load_from_file(included_file._filename)
+        try:
+            data = self._loader.load_from_file(included_file._filename)
+        except AnsibleError, e:
+            for host in included_file._hosts:
+                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=str(e)))
+                iterator.mark_host_failed(host)
+                self._tqm._failed_hosts[host.name] = True
+                self._tqm._stats.increment('failures', host.name)
+                self._tqm.send_callback('v2_runner_on_failed', tr)
+            return []
+
         if not isinstance(data, list):
             raise AnsibleParserError("included task files must contain a list of tasks", obj=included_file._task._ds)
 
