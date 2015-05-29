@@ -407,6 +407,9 @@ def main():
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
+        required_together = (
+            ['api_key', 'api_secret', 'api_url'],
+        ),
         supports_check_mode=True
     )
 

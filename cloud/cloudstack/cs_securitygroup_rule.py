@@ -402,6 +402,10 @@ def main():
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
+        required_together = (
+            ['icmp_type', 'icmp_code'],
+            ['api_key', 'api_secret', 'api_url'],
+        ),
         mutually_exclusive = (
             ['icmp_type', 'start_port'],
             ['icmp_type', 'end_port'],
