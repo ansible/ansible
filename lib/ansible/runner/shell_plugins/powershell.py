@@ -22,7 +22,7 @@ import random
 import shlex
 import time
 
-_common_args = ['PowerShell', '-NoProfile', '-NonInteractive']
+_common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
 
 # Primarily for testing, allow explicitly specifying PowerShell version via
 # an environment variable.
@@ -52,12 +52,6 @@ def _encode_script(script, as_list=False):
     if as_list:
         return cmd_parts
     return ' '.join(cmd_parts)
-
-def _build_file_cmd(cmd_parts, quote_args=True):
-    '''Build command line to run a file, given list of file name plus args.'''
-    if quote_args:
-        cmd_parts = ['"%s"' % x for x in cmd_parts]
-    return ' '.join(_common_args + ['-ExecutionPolicy', 'Unrestricted', '-File'] + cmd_parts)
 
 class ShellModule(object):
 
@@ -124,7 +118,7 @@ class ShellModule(object):
         cmd_parts = shlex.split(cmd, posix=False)
         if not cmd_parts[0].lower().endswith('.ps1'):
             cmd_parts[0] = '%s.ps1' % cmd_parts[0]
-        script = _build_file_cmd(cmd_parts, quote_args=False)
+        script = ' '.join(['&'] + cmd_parts)
         if rm_tmp:
             rm_tmp = _escape(rm_tmp)
             script = '%s; Remove-Item "%s" -Force -Recurse;' % (script, rm_tmp)
