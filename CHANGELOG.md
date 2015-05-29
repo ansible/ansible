@@ -26,6 +26,7 @@ Other Notable Changes:
 * Fix get_url module bug preventing use of custom ports with https urls
 * Fix bug disabling repositories in the yum module.
 * Fix giving yum module a url to install a package from on RHEL/CENTOS5
+* Fix bug in dnf module preventing it from working when yum-utils was not already installed
 
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
