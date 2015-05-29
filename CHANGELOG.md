@@ -24,6 +24,8 @@ Other Notable Changes:
   - win_template.py
 * Fix bug using with_sequence and a count that is zero.  Also allows counting backwards isntead of forwards
 * Fix get_url module bug preventing use of custom ports with https urls
+* Fix bug disabling repositories in the yum module.
+* Fix giving yum module a url to install a package from on RHEL/CENTOS5
 
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
