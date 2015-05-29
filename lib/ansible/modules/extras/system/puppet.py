@@ -99,6 +99,7 @@ def main():
             facts=dict(default=None),
             facter_basename=dict(default='ansible'),
         ),
+        supports_check_mode=True,
         required_one_of=[
             ('puppetmaster', 'manifest'),
         ],
@@ -129,7 +130,7 @@ def main():
             module.fail_json(
                 msg="Puppet agent state could not be determined.")
 
-    if module.params['facts']:
+    if module.params['facts'] and not module.check_mode:
         _write_structured_data(
             _get_facter_dir(),
             module.params['facter_basename'],
@@ -139,7 +140,7 @@ def main():
         timeout=pipes.quote(p['timeout']), puppet_cmd=PUPPET_CMD)
 
     if p['puppetmaster']:
-        cmd = ("%(base_cmd) agent --onetime"
+        cmd = ("%(base_cmd)s agent --onetime"
                " --server %(puppetmaster)s"
                " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
                " --detailed-exitcodes --verbose") % dict(
@@ -147,10 +148,13 @@ def main():
                    puppetmaster=pipes.quote(p['puppetmaster']))
         if p['show_diff']:
             cmd += " --show-diff"
+        if module.check_mode:
+            cmd += " --noop"
     else:
-        cmd = ("%(base_cmd) apply --detailed-exitcodes %(manifest)s" % dict(
-               base_cmd=base_cmd,
-               manifest=pipes.quote(p['manifest'])))
+        cmd = "%s apply --detailed-exitcodes " % base_cmd
+        if module.check_mode:
+            cmd += "--noop "
+        cmd += pipes.quote(p['manifest'])
     rc, stdout, stderr = module.run_command(cmd)
 
     if rc == 0:
