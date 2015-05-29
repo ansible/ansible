@@ -96,7 +96,6 @@ class StrategyBase:
             return 0
 
     def get_hosts_remaining(self, play):
-        print("inventory get hosts: %s" % self._inventory.get_hosts(play.hosts))
         return [host for host in self._inventory.get_hosts(play.hosts) if host.name not in self._tqm._failed_hosts and host.name not in self._tqm._unreachable_hosts]
 
     def get_failed_hosts(self, play):
