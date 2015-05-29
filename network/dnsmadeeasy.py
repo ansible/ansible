@@ -87,7 +87,7 @@ notes:
   - This module returns record(s) in the "result" element when 'state' is set to 'present'. This value can be be registered and used in your playbooks.
   
 requirements: [ urllib, urllib2, hashlib, hmac ]
-author: Brice Burgess
+author: "Brice Burgess (@briceburg)"
 '''
 
 EXAMPLES = '''

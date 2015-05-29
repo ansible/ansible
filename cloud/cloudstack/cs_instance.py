@@ -25,7 +25,7 @@ short_description: Manages instances and virtual machines on Apache CloudStack b
 description:
     - Deploy, start, restart, stop and destroy instances on Apache CloudStack, Citrix CloudPlatform and Exoscale.
 version_added: '2.0'
-author: René Moser
+author: '"René Moser (@resmo)" <mail@renemoser.net>'
 options:
   name:
     description:
@@ -106,6 +106,16 @@ options:
     required: false
     default: []
     aliases: [ 'security_group' ]
+  domain:
+    description:
+      - Domain the instance is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the instance is related to.
+    required: false
+    default: null
   project:
     description:
       - Name of the project the instance to be deployed in.
@@ -154,7 +164,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Create a instance on CloudStack from an ISO
 # NOTE: Names of offerings and ISOs depending on the CloudStack configuration.
 - local_action:
@@ -252,6 +261,16 @@ ssh_key:
   returned: success
   type: string
   sample: key@work
+domain:
+  description: Domain the instance is related to.
+  returned: success
+  type: string
+  sample: example domain
+account:
+  description: Account the instance is related to.
+  returned: success
+  type: string
+  sample: example account
 project:
   description: Name of project the instance is related to.
   returned: success
@@ -352,8 +371,15 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if template and iso:
             self.module.fail_json(msg="Template are ISO are mutually exclusive.")
 
+        args                = {}
+        args['account']     = self.get_account('name')
+        args['domainid']    = self.get_domain('id')
+        args['projectid']   = self.get_project('id')
+        args['zoneid']      = self.get_zone('id')
+
         if template:
-            templates = self.cs.listTemplates(templatefilter='executable')
+            args['templatefilter'] = 'executable'
+            templates = self.cs.listTemplates(**args)
             if templates:
                 for t in templates['template']:
                     if template in [ t['displaytext'], t['name'], t['id'] ]:
@@ -361,7 +387,8 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             self.module.fail_json(msg="Template '%s' not found" % template)
 
         elif iso:
-            isos = self.cs.listIsos()
+            args['isofilter'] = 'executable'
+            isos = self.cs.listIsos(**args)
             if isos:
                 for i in isos['iso']:
                     if iso in [ i['displaytext'], i['name'], i['id'] ]:
@@ -375,7 +402,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if not disk_offering:
             return None
 
-        disk_offerings = self.cs.listDiskOfferings()
+        args                = {}
+        args['domainid']    = self.get_domain('id')
+
+        disk_offerings = self.cs.listDiskOfferings(**args)
         if disk_offerings:
             for d in disk_offerings['diskoffering']:
                 if disk_offering in [ d['displaytext'], d['name'], d['id'] ]:
@@ -388,9 +418,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if not instance:
             instance_name = self.module.params.get('name')
 
-            args = {}
-            args['projectid'] = self.get_project_id()
-            args['zoneid'] = self.get_zone_id()
+            args                = {}
+            args['account']     = self.get_account('name')
+            args['domainid']    = self.get_domain('id')
+            args['projectid']   = self.get_project('id')
+            args['zoneid']      = self.get_zone('id')
+
             instances = self.cs.listVirtualMachines(**args)
             if instances:
                 for v in instances['virtualmachine']:
@@ -405,9 +438,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if not network_names:
             return None
 
-        args = {}
-        args['zoneid'] = self.get_zone_id()
-        args['projectid'] = self.get_project_id()
+        args                = {}
+        args['account']     = self.get_account('name')
+        args['domainid']    = self.get_domain('id')
+        args['projectid']   = self.get_project('id')
+        args['zoneid']      = self.get_zone('id')
+
         networks = self.cs.listNetworks(**args)
         if not networks:
             self.module.fail_json(msg="No networks available")
@@ -458,9 +494,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
         args                        = {}
         args['templateid']          = self.get_template_or_iso_id()
-        args['zoneid']              = self.get_zone_id()
+        args['zoneid']              = self.get_zone('id')
         args['serviceofferingid']   = self.get_service_offering_id()
-        args['projectid']           = self.get_project_id()
+        args['account']             = self.get_account('name')
+        args['domainid']            = self.get_domain('id')
+        args['projectid']           = self.get_project('id')
         args['diskofferingid']      = self.get_disk_offering_id()
         args['networkids']          = self.get_network_ids()
         args['hypervisor']          = self.get_hypervisor()
@@ -498,12 +536,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_instance_update['group']               = self.module.params.get('group')
         args_instance_update['displayname']         = self.get_display_name()
         args_instance_update['userdata']            = self.get_user_data()
-        args_instance_update['ostypeid']            = self.get_os_type_id()
+        args_instance_update['ostypeid']            = self.get_os_type('id')
 
         args_ssh_key                                = {}
         args_ssh_key['id']                          = instance['id']
         args_ssh_key['keypair']                     = self.module.params.get('ssh_key')
-        args_ssh_key['projectid']                   = self.get_project_id()
+        args_ssh_key['projectid']                   = self.get_project('id')
         
         if self._has_changed(args_service_offering, instance) or \
            self._has_changed(args_instance_update, instance) or \
@@ -668,6 +706,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 self.result['display_name'] = instance['displayname']
             if 'group' in instance:
                 self.result['group'] = instance['group']
+            if 'domain' in instance:
+                self.result['domain'] = instance['domain']
+            if 'account' in instance:
+                self.result['account'] = instance['account']
             if 'project' in instance:
                 self.result['project'] = instance['project']
             if 'publicip' in instance:
@@ -732,6 +774,8 @@ def main():
             hypervisor = dict(default=None),
             security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
             affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
+            domain = dict(default=None),
+            account = dict(default=None),
             project = dict(default=None),
             user_data = dict(default=None),
             zone = dict(default=None),
@@ -740,7 +784,7 @@ def main():
             tags = dict(type='list', aliases=[ 'tag' ], default=None),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
@@ -780,6 +824,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 

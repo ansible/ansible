@@ -63,7 +63,7 @@ options:
               for newer pkgng versions, specify a the name of a repository
               configured in /usr/local/etc/pkg/repos
         required: false
-author: bleader
+author: '"bleader (@bleader)" <bleader@ratonland.org>'
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
 '''
@@ -252,9 +252,8 @@ def annotate_packages(module, pkgng_path, packages, annotation):
 
     for package in packages:
         for _annotation in annotations:
-            annotate_c += ( 1 if operation[_annotation['operation']](
-                module, pkgng_path, package,
-                _annotation['tag'], _annotation['value']) else 0 )
+            if operation[_annotation['operation']](module, pkgng_path, package, _annotation['tag'], _annotation['value']):
+                annotate_c += 1
 
     if annotate_c > 0:
         return (True, "added %s annotations." % annotate_c)

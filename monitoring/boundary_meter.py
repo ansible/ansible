@@ -34,7 +34,7 @@ short_description: Manage boundary meters
 description:
     - This module manages boundary meters
 version_added: "1.3"
-author: curtis@serverascode.com
+author: '"curtis (@ccollicutt)" <curtis@serverascode.com>'
 requirements:
     - Boundary API access
     - bprobe is required to send data, but not to register a meter
@@ -213,7 +213,7 @@ def download_request(module, name, apiid, apikey, cert_type):
                 cert_file = open(cert_file_path, 'w')
                 cert_file.write(body)
                 cert_file.close
-                os.chmod(cert_file_path, 0o600)
+                os.chmod(cert_file_path, 0600)
             except: 
                 module.fail_json("Could not write to certificate file")
 

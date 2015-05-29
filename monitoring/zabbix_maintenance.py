@@ -26,9 +26,10 @@ short_description: Create Zabbix maintenance windows
 description:
     - This module will let you create Zabbix maintenance windows.
 version_added: "1.8"
-author: Alexander Bulimov
+author: '"Alexander Bulimov (@abulimov)" <lazywolf0@gmail.com>'
 requirements:
-    - zabbix-api python module
+    - "python >= 2.6"
+    - zabbix-api
 options:
     state:
         description:
@@ -47,12 +48,10 @@ options:
         description:
             - Zabbix user name.
         required: true
-        default: null
     login_password:
         description:
             - Zabbix user password.
         required: true
-        default: null
     host_names:
         description:
             - Hosts to manage maintenance window for.
@@ -82,7 +81,6 @@ options:
         description:
             - Unique name of maintenance window.
         required: true
-        default: null
     desc:
         description:
             - Short description of maintenance window.
@@ -272,9 +270,9 @@ def main():
             host_names=dict(type='list', required=False, default=None, aliases=['host_name']),
             minutes=dict(type='int', required=False, default=10),
             host_groups=dict(type='list', required=False, default=None, aliases=['host_group']),
-            login_user=dict(required=True, default=None),
-            login_password=dict(required=True, default=None),
-            name=dict(required=True, default=None),
+            login_user=dict(required=True),
+            login_password=dict(required=True, no_log=True),
+            name=dict(required=True),
             desc=dict(required=False, default="Created by Ansible"),
             collect_data=dict(type='bool', required=False, default=True),
         ),

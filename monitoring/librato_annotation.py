@@ -29,7 +29,7 @@ short_description: create an annotation in librato
 description:
     - Create an annotation event on the given annotation stream :name. If the annotation stream does not exist, it will be created automatically
 version_added: "1.6"
-author: Seth Edwards
+author: "Seth Edwards (@sedward)" 
 requirements:
     - urllib2
     - base64
@@ -138,11 +138,11 @@ def post_annotation(module):
 
     headers = {}
     headers['Content-Type'] = 'application/json'
-    headers['Authorization'] = b"Basic " + base64.b64encode(user + b":" + api_key).strip()
+    headers['Authorization'] = "Basic " + base64.b64encode(user + ":" + api_key).strip()
     req = urllib2.Request(url, json_body, headers)
     try:
         response = urllib2.urlopen(req)
-    except urllib2.HTTPError as e:
+    except urllib2.HTTPError, e:
         module.fail_json(msg="Request Failed", reason=e.reason)
     response = response.read()
     module.exit_json(changed=True, annotation=response)

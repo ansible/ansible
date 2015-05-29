@@ -22,7 +22,9 @@
 DOCUMENTATION = '''
 ---
 module: patch
-author: Luis Alberto Perez Lazaro, Jakub Jirutka
+author:
+    - '"Jakub Jirutka (@jirutka)" <jakub@jirutka.cz>'
+    - '"Luis Alberto Perez Lazaro (@luisperlaz)" <luisperlazaro@gmail.com>'
 version_added: 1.9
 description:
     - Apply patch files using the GNU patch tool.
@@ -110,7 +112,7 @@ def apply_patch(patch_func, patch_file, basedir, dest_file=None, strip=0, dry_ru
 
     (rc, out, err) = patch_func(opts)
     if rc != 0:
-        msg = out if not err else err
+        msg = err or out
         raise PatchError(msg)
 
 

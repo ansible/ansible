@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: flowdock
 version_added: "1.2"
-author: Matt Coddington
+author: '"Matt Coddington (@mcodd)" <coddington@gmail.com>'
 short_description: Send a message to a flowdock
 description:
    - Send a message to a flowdock team inbox or chat using the push API (see https://www.flowdock.com/api/team-inbox and https://www.flowdock.com/api/chat)

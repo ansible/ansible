@@ -19,8 +19,8 @@
 DOCUMENTATION = '''
 ---
 module: logentries
-author: Ivan Vanderbyl
-short_description: Module for tracking logs via logentries.com 
+author: '"Ivan Vanderbyl (@ivanvanderbyl)" <ivan@app.io>'
+short_description: Module for tracking logs via logentries.com
 description:
     - Sends logs to LogEntries in realtime
 version_added: "1.6"

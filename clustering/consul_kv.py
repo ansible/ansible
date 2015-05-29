@@ -28,10 +28,11 @@ description:
     represents a prefix then Note that when a value is removed, the existing
     value if any is returned as part of the results.
 requirements:
+  - "python >= 2.6"
   - python-consul
   - requests
-version_added: "1.9"
-author: Steve Gargan (steve.gargan@gmail.com)
+version_added: "2.0"
+author: '"Steve Gargan (@sgargan)" <steve.gargan@gmail.com>'
 options:
     state:
         description:

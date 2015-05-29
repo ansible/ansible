@@ -24,7 +24,7 @@ short_description: Send Slack notifications
 description:
     - The M(slack) module sends notifications to U(http://slack.com) via the Incoming WebHook integration
 version_added: 1.6
-author: Ramon de la Fuente <ramon@delafuente.nl>
+author: '"Ramon de la Fuente (@ramondelafuente)" <ramon@delafuente.nl>'
 options:
   domain:
     description:
@@ -141,9 +141,9 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
     else:
         payload = dict(attachments=[dict(text=text, color=color)])
     if channel is not None:
-        if (channel[0] == '#') or (channel[0] == '@')
+        if (channel[0] == '#') or (channel[0] == '@'):
             payload['channel'] = channel
-        else 
+        else:
             payload['channel'] = '#'+channel
     if username is not None:
         payload['username'] = username

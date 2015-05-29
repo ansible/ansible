@@ -25,7 +25,7 @@ short_description: Manages instance groups on Apache CloudStack based clouds.
 description:
     - Create and remove instance groups.
 version_added: '2.0'
-author: René Moser
+author: '"René Moser (@resmo)" <mail@renemoser.net>'
 options:
   name:
     description:
@@ -56,7 +56,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Create an instance group
 - local_action:
     module: cs_instancegroup
@@ -197,7 +196,7 @@ def main():
             account = dict(default=None),
             project = dict(default=None),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
         ),
@@ -220,6 +219,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 

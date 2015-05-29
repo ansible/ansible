@@ -25,11 +25,12 @@ description:
    rules in a consul cluster via the agent. For more details on using and 
    configuring ACLs, see https://www.consul.io/docs/internals/acl.html.
 requirements:
+  - "python >= 2.6"
   - python-consul
   - pyhcl
   - requests
-version_added: "1.9"
-author: Steve Gargan (steve.gargan@gmail.com)
+version_added: "2.0"
+author: '"Steve Gargan (@sgargan)" <steve.gargan@gmail.com>'
 options:
     mgmt_token:
         description:

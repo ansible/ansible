@@ -22,7 +22,7 @@
 DOCUMENTATION = u'''
 ---
 module: bzr
-author: André Paramés
+author: '"André Paramés (@andreparames)" <git@andreparames.com>'
 version_added: "1.1"
 short_description: Deploy software (or files) from bzr branches
 description:

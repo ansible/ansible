@@ -78,8 +78,10 @@ options:
     default: null
     aliases: []
 
-requirements: [ "libcloud" ]
-author: Peter Tan <ptan@google.com>
+requirements:
+    - "python >= 2.6"
+    - "apache-libcloud"
+author: '"Peter Tan (@tanpeter)" <ptan@google.com>'
 '''
 
 EXAMPLES = '''

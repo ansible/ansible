@@ -25,7 +25,7 @@ short_description: Manage bower packages with bower
 description:
   - Manage bower packages with bower
 version_added: 1.9
-author: Michael Warkentin
+author: '"Michael Warkentin (@mwarkentin)" <mwarkentin@gmail.com>'
 options:
   name:
     description:
@@ -154,7 +154,7 @@ def main():
 
     name = module.params['name']
     offline = module.params['offline']
-    path = module.params['path']
+    path = os.path.expanduser(module.params['path'])
     state = module.params['state']
     version = module.params['version']
 

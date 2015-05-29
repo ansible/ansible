@@ -42,7 +42,7 @@ options:
 
 # informational: requirements for nodes
 requirements: [ xmpp ]
-author: Brian Coca
+author: "Brian Coca (@bcoca)"
 '''
 
 EXAMPLES = '''

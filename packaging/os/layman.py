@@ -25,12 +25,15 @@ from urllib2 import Request, urlopen, URLError
 DOCUMENTATION = '''
 ---
 module: layman
-author: Jakub Jirutka
+author: '"Jakub Jirutka (@jirutka)" <jakub@jirutka.cz>'
 version_added: "1.6"
 short_description: Manage Gentoo overlays
 description:
   - Uses Layman to manage an additional repositories for the Portage package manager on Gentoo Linux.
     Please note that Layman must be installed on a managed node prior using this module.
+requirements:
+  - "python >= 2.6"
+  - layman python module
 options:
   name:
     description:

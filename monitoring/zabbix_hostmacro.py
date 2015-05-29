@@ -26,9 +26,12 @@ short_description: Zabbix host macro creates/updates/deletes
 description:
    - manages Zabbix host macros, it can create, update or delete them.
 version_added: "2.0"
-author: Dean Hailin Song
+author: 
+    - "(@cave)"
+    - Dean Hailin Song
 requirements:
-    - zabbix-api python module
+    - "python >= 2.6"
+    - zabbix-api
 options:
     server_url:
         description:
@@ -57,12 +60,15 @@ options:
         required: true
     state:
         description:
-            - 'Possible values are: "present" and "absent". If the macro already exists, and the state is "present", it will just to update the macro if needed.'
+            - State of the macro.
+            - On C(present), it will create if macro does not exist or update the macro if the associated data is different.
+            - On C(absent) will remove a macro if it exists.
         required: false
+        choices: ['present', 'absent']
         default: "present"
     timeout:
         description:
-            - The timeout of API request(seconds).
+            - The timeout of API request (seconds).
         default: 10
 '''
 
@@ -81,7 +87,6 @@ EXAMPLES = '''
 
 import logging
 import copy
-from ansible.module_utils.basic import *
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -168,12 +173,12 @@ def main():
         argument_spec=dict(
             server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
-            login_password=dict(required=True),
+            login_password=dict(required=True, no_log=True),
             host_name=dict(required=True),
             macro_name=dict(required=True),
             macro_value=dict(required=True),
-            state=dict(default="present"),
-            timeout=dict(default=10)
+            state=dict(default="present", choices=['present', 'absent']),
+            timeout=dict(type='int', default=10)
         ),
         supports_check_mode=True
     )
