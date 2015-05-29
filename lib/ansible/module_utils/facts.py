@@ -99,8 +99,9 @@ class Facts(object):
                     ('/etc/os-release', 'SuSE'),
                     ('/etc/gentoo-release', 'Gentoo'),
                     ('/etc/os-release', 'Debian'),
+                    ('/etc/lsb-release', 'Mandriva'),
                     ('/etc/os-release', 'NA'),
-                    ('/etc/lsb-release', 'Mandriva'))
+                )
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -416,11 +417,13 @@ class Facts(object):
                                                 self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
                         elif name == 'Debian':
                             data = get_file_content(path)
-                            if 'Debian' in data or 'Raspbian' in data:
+                            if 'Ubuntu' in data:
+                                break # Ubuntu gets correct info from python functions
+                            elif 'Debian' in data or 'Raspbian' in data:
                                 release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
                                 if release:
                                     self.facts['distribution_release'] = release.groups()[0]
-                                break
+                                    break
                         elif name == 'Mandriva':
                             data = get_file_content(path)
                             if 'Mandriva' in data:
