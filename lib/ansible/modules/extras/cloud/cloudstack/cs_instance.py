@@ -326,6 +326,11 @@ tags:
   returned: success
   type: dict
   sample: '[ { "key": "foo", "value": "bar" } ]'
+hypervisor:
+  description: Hypervisor related to this instance.
+  returned: success
+  type: string
+  sample: KVM
 '''
 
 import base64
@@ -712,6 +717,8 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 self.result['account'] = instance['account']
             if 'project' in instance:
                 self.result['project'] = instance['project']
+            if 'hypervisor' in instance:
+                self.result['hypervisor'] = instance['hypervisor']
             if 'publicip' in instance:
                 self.result['public_ip'] = instance['public_ip']
             if 'passwordenabled' in instance:
@@ -771,7 +778,7 @@ def main():
             disk_offering = dict(default=None),
             disk_size = dict(type='int', default=None),
             keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
-            hypervisor = dict(default=None),
+            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM'], default=None),
             security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
             affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
             domain = dict(default=None),
