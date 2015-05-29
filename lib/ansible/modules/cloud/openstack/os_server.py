@@ -372,7 +372,14 @@ def _network_args(module, cloud):
     args = []
     nics = module.params['nics']
 
+    if type(nics) != list:
+        module.fail_json(msg='The \'nics\' parameter must be a list.')
+
     for net in _parse_nics(nics):
+        if type(net) != dict:
+            module.fail_json(
+                msg='Each entry in the \'nics\' parameter must be a dict.')
+
         if net.get('net-id'):
             args.append(net)
         elif net.get('net-name'):
