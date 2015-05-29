@@ -17,68 +17,88 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args
 
-$src= Get-Attr $params "src" $FALSE;
+$src= Get-Attr $params "src" $FALSE
 If ($src -eq $FALSE)
 {
-    Fail-Json (New-Object psobject) "missing required argument: src";
+    Fail-Json (New-Object psobject) "missing required argument: src"
 }
 
-$dest= Get-Attr $params "dest" $FALSE;
+$dest= Get-Attr $params "dest" $FALSE
 If ($dest -eq $FALSE)
 {
-    Fail-Json (New-Object psobject) "missing required argument: dest";
+    Fail-Json (New-Object psobject) "missing required argument: dest"
 }
 
-# seems to be supplied by the calling environment, but
-# probably shouldn't be a test for it existing in the params.
-# TODO investigate.
-$original_basename = Get-Attr $params "original_basename" $FALSE;
+$original_basename = Get-Attr $params "original_basename" $FALSE
 If ($original_basename -eq $FALSE)
 {
-    Fail-Json (New-Object psobject) "missing required argument: original_basename ";
+    Fail-Json (New-Object psobject) "missing required argument: original_basename "
 }
 
 $result = New-Object psobject @{
     changed = $FALSE
-};
+    original_basename = $original_basename
+}
+
+# original_basename gets set if src and dest are dirs
+# but includes subdir if the source folder contains sub folders
+# e.g. you could get subdir/foo.txt 
+
+# detect if doing recursive folder copy and create any non-existent destination sub folder
+$parent = Split-Path -Path $original_basename -Parent
+if ($parent.length -gt 0) 
+{
+    $dest_folder = Join-Path $dest $parent
+    New-Item -Force $dest_folder -Type directory
+}
 
 # if $dest is a dir, append $original_basename so the file gets copied with its intended name.
 if (Test-Path $dest -PathType Container)
 {
-    $dest = Join-Path $dest $original_basename;
+    $dest = Join-Path $dest $original_basename
 }
 
-If (Test-Path $dest)
-{
-    $dest_checksum = Get-FileChecksum ($dest);
-    $src_checksum = Get-FileChecksum ($src);
+$dest_checksum = Get-FileChecksum ($dest)
+$src_checksum = Get-FileChecksum ($src)
 
-    If (! $src_checksum.CompareTo($dest_checksum))
+If ($src_checksum.Equals($dest_checksum))
+{
+    # if both are "3" then both are folders, ok to copy 
+    If ($src_checksum.Equals("3")) 
     {
-        # New-Item -Force creates subdirs for recursive copies
-        New-Item -Force $dest -Type file;
-        Copy-Item -Path $src -Destination $dest -Force;
+       # New-Item -Force creates subdirs for recursive copies
+       New-Item -Force $dest -Type file
+       Copy-Item -Path $src -Destination $dest -Force
+       $result.operation = "folder_copy"
     }
-    $dest_checksum = Get-FileChecksum ($dest);
-    If ( $src_checksum.CompareTo($dest_checksum))
+
+}
+ElseIf (! $src_checksum.Equals($dest_checksum))
+{
+    If ($src_checksum.Equals("3")) 
     {
-        $result.changed = $TRUE;
+       Fail-Json (New-Object psobject) "If src is a folder, dest must also be a folder"
     }
-    Else
-    {
-        Fail-Json (New-Object psobject) "Failed to place file";
-    }
+    # The checksums don't match, there's something to do
+    Copy-Item -Path $src -Destination $dest -Force
+    $result.operation = "file_copy"
+}
+
+# verify before we return that the file has changed
+$dest_checksum = Get-FileChecksum ($dest)
+If ( $src_checksum.Equals($dest_checksum))
+{
+    $result.changed = $TRUE
 }
 Else
 {
-    New-Item -Force $dest -Type file;
-    Copy-Item -Path $src -Destination $dest;
-    $result.changed = $TRUE;
+    Fail-Json (New-Object psobject) "src checksum $src_checksum did not match dest_checksum $dest_checksum  Failed to place file $original_basename in $dest"
 }
+# generate return values
 
-$dest_checksum = Get-FileChecksum($dest);
-$result.checksum = $dest_checksum;
+$info = Get-Item $dest
+$result.size = $info.Length
 
-Exit-Json $result;
+Exit-Json $result
