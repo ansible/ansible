@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 #
 # This file is part of Ansible
 #
@@ -45,16 +45,57 @@ options:
         this must be a directory too. Use \\ for path separators.
     required: true
     default: null
-author: Michael DeHaan
+author: "Jon Hawkesworth (@jhawkesworth)"
 notes:
    - The "win_copy" module recursively copy facility does not scale to lots (>hundreds) of files.
      Instead, you may find it better to create files locally, perhaps using win_template, and 
-     then use win_get_url to put them in the correct location.
+     then use win_get_url to fetch them from your managed hosts into the correct location.
 '''
 
 EXAMPLES = '''
-# Example from Ansible Playbooks
+# Copy a single file
 - win_copy: src=/srv/myfiles/foo.conf dest=c:\\TEMP\\foo.conf
 
+# Copy the contents of files/temp_files dir into c:\temp\.  Includes any sub dirs under files/temp_files
+# Note the use of unix style path in the dest.  
+# This is necessary because \ is yaml escape sequence
+- win_copy: src=files/temp_files/ dest=c:/temp/
+
+# Copy the files/temp_files dir and any files or sub dirs into c:\temp
+# Copies the folder because there is no trailing / on 'files/temp_files'
+- win_copy: src=files/temp_files dest=c:/temp/
+
+'''
+RETURN = '''
+dest:
+    description: destination file/path
+    returned: changed
+    type: string
+    sample: "c:/temp/"
+src:
+    description: source file used for the copy on the target machine
+    returned: changed
+    type: string
+    sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+checksum:
+    description: checksum of the file after running copy
+    returned: success
+    type: string
+    sample: "6e642bb8dd5c2e027bf21dd923337cbb4214f827"
+size:
+    description: size of the target, after execution
+    returned: changed (single files only)
+    type: int
+    sample: 1220
+operation:
+    description: whether a single file copy took place or a folder copy
+    returned: changed (single files only)
+    type: string
+    sample: "file_copy"
+original_basename:
+    description: basename of the copied file
+    returned: changed (single files only)
+    type: string
+    sample: "foo.txt"
 '''
 

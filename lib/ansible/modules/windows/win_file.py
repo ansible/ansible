@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
+# (c) 2015, Jon Hawkesworth (@jhawkesworth) <figs@unity.demon.co.uk>
 #
 # This file is part of Ansible
 #
@@ -32,7 +32,7 @@ description:
 notes:
     - See also M(win_copy), M(win_template), M(copy), M(template), M(assemble)
 requirements: [ ]
-author: Michael DeHaan
+author: "Jon Hawkesworth (@jhawkesworth)"
 options:
   path:
     description:

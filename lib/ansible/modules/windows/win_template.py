@@ -31,22 +31,24 @@ options:
       - Location to render the template to on the remote machine.
     required: true
     default: null
-  backup:
-    description:
-      - Create a backup file including the timestamp information so you can get
-        the original file back if you somehow clobbered it incorrectly.
-    required: false
-    choices: [ "yes", "no" ]
-    default: "no"
 notes:
   - "templates are loaded with C(trim_blocks=True)."
+  - By default, windows line endings are not created in the generated file.
+  - In order to ensure windows line endings are in the generated file,
+    add the following header as the first line of your template:
+    "#jinja2: newline_sequence:'\r\n'"
+    and ensure each line of the template ends with \r\n
+  - Beware fetching files from windows machines when creating templates
+    because certain tools, such as Powershell ISE,  and regedit's export facility
+    add a Byte Order Mark as the first character of the file, which can cause tracebacks.  
+  - Use "od -cx" to examine your templates for Byte Order Marks.
 requirements: []
-author: Michael DeHaan
+author: "Jon Hawkesworth (@jhawkesworth)"
 '''
 
 EXAMPLES = '''
-# Example 
-- win_template: src=/mytemplates/foo.j2 dest=C:\\temp\\file.conf 
+# Playbook Example  (win_template can only be run inside a playbook)
+- win_template: src=/mytemplates/file.conf.j2 dest=C:\\temp\\file.conf 
 
 
 '''
