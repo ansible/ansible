@@ -66,7 +66,7 @@ class ActionModule(object):
                     conn=conn,
                     comm_ok=True,
                     result=dict(
-                        skipped=True,
+                        changed=False,
                         msg=("skipped, since %s exists" % creates)
                     )
                 )
@@ -83,7 +83,7 @@ class ActionModule(object):
                     conn=conn,
                     comm_ok=True,
                     result=dict(
-                        skipped=True,
+                        changed=False,
                         msg=("skipped, since %s does not exist" % removes)
                     )
                 )
@@ -113,13 +113,12 @@ class ActionModule(object):
 
         sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
-        if ((self.runner.sudo and self.runner.sudo_user != 'root') or
-                (self.runner.su and self.runner.su_user != 'root')):
+        if self.runner.become and self.runner.become_user != 'root':
             chmod_mode = 'a+rx'
             sudoable = False
         else:
             chmod_mode = '+rx'
-        self.runner._remote_chmod(conn, chmod_mode, tmp_src, tmp, sudoable=sudoable, su=self.runner.su)
+        self.runner._remote_chmod(conn, chmod_mode, tmp_src, tmp, sudoable=sudoable, become=self.runner.become)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self.runner._compute_environment_string(conn, inject)

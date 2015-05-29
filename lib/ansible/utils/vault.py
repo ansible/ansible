@@ -26,7 +26,18 @@ from io import BytesIO
 from subprocess import call
 from ansible import errors
 from hashlib import sha256
-from hashlib import md5
+
+# Note: Only used for loading obsolete VaultAES files.  All files are written
+# using the newer VaultAES256 which does not require md5
+try:
+    from hashlib import md5
+except ImportError:
+    try:
+        from md5 import md5
+    except ImportError:
+        # MD5 unavailable.  Possibly FIPS mode
+        md5 = None
+
 from binascii import hexlify
 from binascii import unhexlify
 from ansible import constants as C
@@ -181,6 +192,38 @@ class VaultEditor(object):
         self.password = password
         self.filename = filename
 
+    def _edit_file_helper(self, existing_data=None, cipher=None):
+        # make sure the umask is set to a sane value
+        old_umask = os.umask(0o077)
+
+        # Create a tempfile
+        _, tmp_path = tempfile.mkstemp()
+
+        if existing_data:
+            self.write_data(existing_data, tmp_path)
+
+        # drop the user into an editor on the tmp file
+        try:
+            call(self._editor_shell_command(tmp_path))
+        except OSError, e:
+           raise Exception("Failed to open editor (%s): %s" % (self._editor_shell_command(tmp_path)[0],str(e)))
+        tmpdata = self.read_data(tmp_path)
+
+        # create new vault
+        this_vault = VaultLib(self.password)
+        if cipher:
+            this_vault.cipher_name = cipher
+
+        # encrypt new data and write out to tmp
+        enc_data = this_vault.encrypt(tmpdata)
+        self.write_data(enc_data, tmp_path)
+
+        # shuffle tmp file into place
+        self.shuffle_files(tmp_path, self.filename)
+
+        # and restore umask
+        os.umask(old_umask)
+
     def create_file(self):
         """ create a new encrypted file """
 
@@ -190,15 +233,8 @@ class VaultEditor(object):
         if os.path.isfile(self.filename):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
-        # drop the user into vim on file
-        old_umask = os.umask(0077)
-        call(self._editor_shell_command(self.filename))
-        tmpdata = self.read_data(self.filename)
-        this_vault = VaultLib(self.password)
-        this_vault.cipher_name = self.cipher_name
-        enc_data = this_vault.encrypt(tmpdata)
-        self.write_data(enc_data, self.filename)
-        os.umask(old_umask)
+        # Let the user specify contents and save file
+        self._edit_file_helper(cipher=self.cipher_name)
 
     def decrypt_file(self):
 
@@ -207,7 +243,7 @@ class VaultEditor(object):
 
         if not os.path.isfile(self.filename):
             raise errors.AnsibleError("%s does not exist" % self.filename)
-        
+
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         if this_vault.is_encrypted(tmpdata):
@@ -224,35 +260,17 @@ class VaultEditor(object):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
             raise errors.AnsibleError(CRYPTO_UPGRADE)
 
-        # make sure the umask is set to a sane value
-        old_mask = os.umask(0077)
-
         # decrypt to tmpfile
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         dec_data = this_vault.decrypt(tmpdata)
-        _, tmp_path = tempfile.mkstemp()
-        self.write_data(dec_data, tmp_path)
 
-        # drop the user into vim on the tmp file
-        call(self._editor_shell_command(tmp_path))
-        new_data = self.read_data(tmp_path)
+        # let the user edit the data and save
+        self._edit_file_helper(existing_data=dec_data)
+        ###we want the cipher to default to AES256 (get rid of files
+        # encrypted with the AES cipher)
+        #self._edit_file_helper(existing_data=dec_data, cipher=this_vault.cipher_name)
 
-        # create new vault
-        new_vault = VaultLib(self.password)
-
-        # we want the cipher to default to AES256
-        #new_vault.cipher_name = this_vault.cipher_name
-
-        # encrypt new data a write out to tmp
-        enc_data = new_vault.encrypt(new_data)
-        self.write_data(enc_data, tmp_path)
-
-        # shuffle tmp file into place
-        self.shuffle_files(tmp_path, self.filename)
-
-        # and restore the old umask
-        os.umask(old_mask)
 
     def view_file(self):
 
@@ -263,8 +281,10 @@ class VaultEditor(object):
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         dec_data = this_vault.decrypt(tmpdata)
+        old_umask = os.umask(0o077)
         _, tmp_path = tempfile.mkstemp()
         self.write_data(dec_data, tmp_path)
+        os.umask(old_umask)
 
         # drop the user into pager on the tmp file
         call(self._pager_shell_command(tmp_path))
@@ -277,7 +297,7 @@ class VaultEditor(object):
 
         if not os.path.isfile(self.filename):
             raise errors.AnsibleError("%s does not exist" % self.filename)
-        
+
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         this_vault.cipher_name = self.cipher_name
@@ -352,6 +372,8 @@ class VaultAES(object):
     # http://stackoverflow.com/a/16761459
 
     def __init__(self):
+        if not md5:
+            raise errors.AnsibleError('md5 hash is unavailable (Could be due to FIPS mode).  Legacy VaultAES format is unavailable.')
         if not HAS_AES:
             raise errors.AnsibleError(CRYPTO_UPGRADE)
 

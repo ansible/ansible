@@ -18,8 +18,6 @@
 from __future__ import absolute_import
 
 import base64
-import hashlib
-import imp
 import os
 import re
 import shlex
@@ -37,15 +35,23 @@ try:
 except ImportError:
     raise errors.AnsibleError("winrm is not installed")
 
-_winrm_cache = {
-    # 'user:pwhash@host:port': <protocol instance>
-}
+HAVE_KERBEROS = False
+try:
+    import kerberos
+    HAVE_KERBEROS = True
+except ImportError:
+    pass
 
 def vvvvv(msg, host=None):
     verbose(msg, host=host, caplevel=4)
 
 class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
+
+    transport_schemes = {
+        'http': [('kerberos', 'http'), ('plaintext', 'http'), ('plaintext', 'https')],
+        'https': [('kerberos', 'https'), ('plaintext', 'https')],
+        }
 
     def __init__(self,  runner, host, port, user, password, *args, **kwargs):
         self.runner = runner
@@ -60,6 +66,10 @@ class Connection(object):
         self.shell_id = None
         self.delegate = None
 
+        # Add runas support
+        #self.become_methods_supported=['runas']
+        self.become_methods_supported=[]
+
     def _winrm_connect(self):
         '''
         Establish a WinRM connection over HTTP/HTTPS.
@@ -68,23 +78,22 @@ class Connection(object):
         vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
             (self.user, port, self.host), host=self.host)
         netloc = '%s:%d' % (self.host, port)
-        cache_key = '%s:%s@%s:%d' % (self.user, hashlib.md5(self.password).hexdigest(), self.host, port)
-        if cache_key in _winrm_cache:
-            vvvv('WINRM REUSE EXISTING CONNECTION: %s' % cache_key, host=self.host)
-            return _winrm_cache[cache_key]
-        transport_schemes = [('plaintext', 'https'), ('plaintext', 'http')] # FIXME: ssl/kerberos
-        if port == 5985:
-            transport_schemes = reversed(transport_schemes)
         exc = None
-        for transport, scheme in transport_schemes:
+        for transport, scheme in self.transport_schemes['http' if port == 5985 else 'https']:
+            if transport == 'kerberos' and (not HAVE_KERBEROS or not '@' in self.user):
+                continue
+            if transport == 'kerberos':
+                realm = self.user.split('@', 1)[1].strip() or None
+            else:
+                realm = None
             endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
             vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint),
                  host=self.host)
             protocol = Protocol(endpoint, transport=transport,
-                                username=self.user, password=self.password)
+                                username=self.user, password=self.password,
+                                realm=realm)
             try:
                 protocol.send_message('')
-                _winrm_cache[cache_key] = protocol
                 return protocol
             except WinRMTransportError, exc:
                 err_msg = str(exc)
@@ -96,7 +105,6 @@ class Connection(object):
                     if code == 401:
                         raise errors.AnsibleError("the username/password specified for this server was incorrect")
                     elif code == 411:
-                        _winrm_cache[cache_key] = protocol
                         return protocol
                 vvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self.host)
                 continue
@@ -132,7 +140,11 @@ class Connection(object):
             self.protocol = self._winrm_connect()
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable=None, in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None):
+
+        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
+
         cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
         if '-EncodedCommand' in cmd_parts:
@@ -143,7 +155,7 @@ class Connection(object):
             vvv("EXEC %s" % cmd, host=self.host)
         # For script/raw support.
         if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
-            script = powershell._build_file_cmd(cmd_parts)
+            script = powershell._build_file_cmd(cmd_parts, quote_args=False)
             cmd_parts = powershell._encode_script(script, as_list=True)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
@@ -193,7 +205,7 @@ class Connection(object):
     def fetch_file(self, in_path, out_path):
         out_path = out_path.replace('\\', '/')
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
-        buffer_size = 2**20 # 1MB chunks
+        buffer_size = 2**19 # 0.5MB chunks
         if not os.path.exists(os.path.dirname(out_path)):
             os.makedirs(os.path.dirname(out_path))
         out_file = None

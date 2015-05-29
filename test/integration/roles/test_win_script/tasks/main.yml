@@ -46,6 +46,38 @@
       - "not test_script_with_args_result|failed"
       - "test_script_with_args_result|changed"
 
+- name: run test script that takes parameters passed via splatting
+  script: test_script_with_splatting.ps1 "@{ This = 'this'; That = '{{ test_win_script_value }}'; Other = 'other'}"
+  register: test_script_with_splatting_result
+
+- name: check that script ran and received parameters via splatting
+  assert:
+    that:
+      - "test_script_with_splatting_result.rc == 0"
+      - "test_script_with_splatting_result.stdout"
+      - "test_script_with_splatting_result.stdout_lines[0] == 'this'"
+      - "test_script_with_splatting_result.stdout_lines[1] == test_win_script_value"
+      - "test_script_with_splatting_result.stdout_lines[2] == 'other'"
+      - "not test_script_with_splatting_result.stderr"
+      - "not test_script_with_splatting_result|failed"
+      - "test_script_with_splatting_result|changed"
+
+- name: run test script that takes splatted parameters from a variable
+  script: test_script_with_splatting.ps1 {{ test_win_script_splat|quote }}
+  register: test_script_with_splatting2_result
+
+- name: check that script ran and received parameters via splatting from a variable
+  assert:
+    that:
+      - "test_script_with_splatting2_result.rc == 0"
+      - "test_script_with_splatting2_result.stdout"
+      - "test_script_with_splatting2_result.stdout_lines[0] == 'THIS'"
+      - "test_script_with_splatting2_result.stdout_lines[1] == 'THAT'"
+      - "test_script_with_splatting2_result.stdout_lines[2] == 'OTHER'"
+      - "not test_script_with_splatting2_result.stderr"
+      - "not test_script_with_splatting2_result|failed"
+      - "test_script_with_splatting2_result|changed"
+
 - name: run test script that has errors
   script: test_script_with_errors.ps1
   register: test_script_with_errors_result

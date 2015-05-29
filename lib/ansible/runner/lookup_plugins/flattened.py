@@ -59,7 +59,7 @@ class LookupModule(object):
                 # if it's a list, check recursively for items that are a list
                 term = self.flatten(term, inject)
                 ret.extend(term)
-            else:   
+            else:
                 ret.append(term)
 
         return ret

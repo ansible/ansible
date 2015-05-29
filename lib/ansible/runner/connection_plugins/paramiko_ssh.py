@@ -40,10 +40,10 @@ from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
 from ansible import constants as C
-            
+
 AUTHENTICITY_MSG="""
-paramiko: The authenticity of host '%s' can't be established. 
-The %s key fingerprint is %s. 
+paramiko: The authenticity of host '%s' can't be established.
+The %s key fingerprint is %s.
 Are you sure you want to continue connecting (yes/no)?
 """
 
@@ -67,7 +67,7 @@ class MyAddPolicy(object):
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
-    def __init__(self, runner): 
+    def __init__(self, runner):
         self.runner = runner
 
     def missing_host_key(self, client, hostname, key):
@@ -81,7 +81,7 @@ class MyAddPolicy(object):
             sys.stdin = self.runner._new_stdin
             fingerprint = hexlify(key.get_fingerprint())
             ktype = key.get_name()
-            
+
             # clear out any premature input on sys.stdin
             tcflush(sys.stdin, TCIFLUSH)
 
@@ -103,7 +103,7 @@ class MyAddPolicy(object):
 
         # host keys are actually saved in close() function below
         # in order to control ordering.
-        
+
 
 # keep connection objects on a per host basis to avoid repeated attempts to reconnect
 
@@ -125,6 +125,9 @@ class Connection(object):
         self.private_key_file = private_key_file
         self.has_pipelining = False
 
+        # TODO: add pbrun, pfexec
+        self.become_methods_supported=['sudo', 'su', 'pbrun']
+
     def _cache_key(self):
         return "%s__%s__" % (self.host, self.user)
 
@@ -145,7 +148,7 @@ class Connection(object):
         vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self.user, self.port, self.host), host=self.host)
 
         ssh = paramiko.SSHClient()
-     
+
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
@@ -184,8 +187,11 @@ class Connection(object):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
+
+        if self.runner.become and sudoable and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -194,8 +200,8 @@ class Connection(object):
 
         try:
 
-            chan = self.ssh.get_transport().open_session()
             self.ssh.get_transport().set_keepalive(5)
+            chan = self.ssh.get_transport().open_session()
 
         except Exception, e:
 
@@ -204,7 +210,9 @@ class Connection(object):
                 msg += ": %s" % str(e)
             raise errors.AnsibleConnectionFailed(msg)
 
-        if not (self.runner.sudo and sudoable) and not (self.runner.su and su):
+        no_prompt_out = ''
+        no_prompt_err = ''
+        if not (self.runner.become and sudoable):
 
             if executable:
                 quoted_command = executable + ' -c ' + pipes.quote(cmd)
@@ -222,52 +230,51 @@ class Connection(object):
                 chan.get_pty(term=os.getenv('TERM', 'vt100'),
                              width=int(os.getenv('COLUMNS', 0)),
                              height=int(os.getenv('LINES', 0)))
-            if self.runner.sudo or sudoable:
-                shcmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
-            elif self.runner.su or su:
-                shcmd, prompt, success_key = utils.make_su_cmd(su_user, executable, cmd)
+            if self.runner.become and sudoable:
+                shcmd, prompt, success_key = utils.make_become_cmd(cmd, become_user, executable, self.runner.become_method, '', self.runner.become_exe)
 
             vvv("EXEC %s" % shcmd, host=self.host)
-            sudo_output = ''
+            become_output = ''
 
             try:
 
                 chan.exec_command(shcmd)
 
-                if self.runner.sudo_pass or self.runner.su_pass:
+                if self.runner.become_pass:
 
                     while True:
 
-                        if success_key in sudo_output or \
-                            (self.runner.sudo_pass and sudo_output.endswith(prompt)) or \
-                            (self.runner.su_pass and utils.su_prompts.check_su_prompt(sudo_output)):
+                        if success_key in become_output or \
+                            (prompt and become_output.endswith(prompt)) or \
+                            utils.su_prompts.check_su_prompt(become_output):
                             break
                         chunk = chan.recv(bufsize)
 
                         if not chunk:
-                            if 'unknown user' in sudo_output:
+                            if 'unknown user' in become_output:
                                 raise errors.AnsibleError(
-                                    'user %s does not exist' % sudo_user)
+                                    'user %s does not exist' % become_user)
                             else:
                                 raise errors.AnsibleError('ssh connection ' +
                                     'closed waiting for password prompt')
-                        sudo_output += chunk
+                        become_output += chunk
 
-                    if success_key not in sudo_output:
+                    if success_key not in become_output:
 
                         if sudoable:
-                            chan.sendall(self.runner.sudo_pass + '\n')
-                        elif su:
-                            chan.sendall(self.runner.su_pass + '\n')
+                            chan.sendall(self.runner.become_pass + '\n')
+                    else:
+                        no_prompt_out += become_output
+                        no_prompt_err += become_output
 
             except socket.timeout:
 
-                raise errors.AnsibleError('ssh timed out waiting for sudo.\n' + sudo_output)
+                raise errors.AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 
         stdout = ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
 
-        return (chan.recv_exit_status(), '', stdout, stderr)
+        return (chan.recv_exit_status(), '', no_prompt_out + stdout, no_prompt_out + stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
@@ -313,7 +320,7 @@ class Connection(object):
 
     def _any_keys_added(self):
 
-        added_any = False        
+        added_any = False
         for hostname, keys in self.ssh._host_keys.iteritems():
             for keytype, key in keys.iteritems():
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
@@ -322,9 +329,9 @@ class Connection(object):
         return False
 
     def _save_ssh_host_keys(self, filename):
-        ''' 
-        not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks 
-        don't complain about it :) 
+        '''
+        not using the paramiko save_ssh_host_keys function as we want to add new SSH keys at the bottom so folks
+        don't complain about it :)
         '''
 
         if not self._any_keys_added():
@@ -367,7 +374,7 @@ class Connection(object):
         if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 
             # add any new SSH host keys -- warning -- this could be slow
-            lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock") 
+            lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
@@ -409,4 +416,4 @@ class Connection(object):
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()
-        
+

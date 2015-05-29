@@ -26,12 +26,15 @@ from ansible import errors
 from ansible import utils
 from ansible import constants as C
 from ansible import __version__
+from ansible.utils.unicode import to_bytes
 
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS = "# POWERSHELL_COMMON"
 REPLACER_VERSION = "\"<<ANSIBLE_VERSION>>\""
+REPLACER_SELINUX = "<<SELINUX_SPECIAL_FILESYSTEMS>>"
+
 
 class ModuleReplacer(object):
 
@@ -40,14 +43,14 @@ class ModuleReplacer(object):
     transfer.  Rather than doing classical python imports, this allows for more
     efficient transfer in a no-bootstrapping scenario by not moving extra files
     over the wire, and also takes care of embedding arguments in the transferred
-    modules.  
+    modules.
 
     This version is done in such a way that local imports can still be
     used in the module code, so IDEs don't have to be aware of what is going on.
 
     Example:
 
-    from ansible.module_utils.basic import * 
+    from ansible.module_utils.basic import *
 
        ... will result in the insertion basic.py into the module
 
@@ -93,7 +96,7 @@ class ModuleReplacer(object):
             module_style = 'new'
         elif 'WANT_JSON' in module_data:
             module_style = 'non_native_want_json'
-      
+
         output = StringIO()
         lines = module_data.split('\n')
         snippet_names = []
@@ -151,14 +154,22 @@ class ModuleReplacer(object):
             complex_args_json = utils.jsonify(complex_args)
             # We force conversion of module_args to str because module_common calls shlex.split,
             # a standard library function that incorrectly handles Unicode input before Python 2.7.3.
+            # Note: it would be better to do all this conversion at the border
+            # (when the data is originally parsed into data structures) but
+            # it's currently coming from too many sources to make that
+            # effective.
             try:
                 encoded_args = repr(module_args.encode('utf-8'))
             except UnicodeDecodeError:
                 encoded_args = repr(module_args)
-            encoded_complex = repr(complex_args_json)
+            try:
+                encoded_complex = repr(complex_args_json.encode('utf-8'))
+            except UnicodeDecodeError:
+                encoded_complex = repr(complex_args_json.encode('utf-8'))
 
             # these strings should be part of the 'basic' snippet which is required to be included
             module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
+            module_data = module_data.replace(REPLACER_SELINUX, ','.join(C.DEFAULT_SELINUX_SPECIAL_FS))
             module_data = module_data.replace(REPLACER_ARGS, encoded_args)
             module_data = module_data.replace(REPLACER_COMPLEX, encoded_complex)
 
@@ -177,7 +188,8 @@ class ModuleReplacer(object):
                 interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
 
                 if interpreter_config in inject:
-                    lines[0] = shebang = "#!%s %s" % (inject[interpreter_config], " ".join(args[1:]))
+                    interpreter = to_bytes(inject[interpreter_config], errors='strict')
+                    lines[0] = shebang = "#!%s %s" % (interpreter, " ".join(args[1:]))
                     module_data = "\n".join(lines)
 
             return (module_data, module_style, shebang)

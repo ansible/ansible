@@ -43,6 +43,7 @@ class AsyncPoller(object):
                 self.active = True
             else:
                 skipped = skipped and res.get('skipped', False)
+                self.runner.vars_cache[host]['ansible_job_id'] = ''
                 self.results['contacted'][host] = res
         for (host, res) in results['dark'].iteritems():
             self.runner.vars_cache[host]['ansible_job_id'] = ''

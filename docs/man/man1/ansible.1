@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: ansible
 .\"    Author: :doctype:manpage
-.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
-.\"      Date: 05/26/2014
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 05/05/2015
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.7
+.\"    Source: Ansible 2.0.0
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "05/26/2014" "Ansible 1\&.7" "System administration commands"
+.TH "ANSIBLE" "1" "05/05/2015" "Ansible 2\&.0\&.0" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -170,6 +170,11 @@ Further limits the selected host/group patterns\&.
 .RS 4
 Further limits hosts with a regex pattern\&.
 .RE
+.PP
+\fB\-\-list\-hosts\fR
+.RS 4
+Outputs a list of matching hosts; does not execute anything else\&.
+.RE
 .SH "INVENTORY"
 .sp
 Ansible stores the hosts it can potentially operate on in an inventory file\&. The syntax is one host per line\&. Groups headers are allowed and are included on their own line, enclosed in square brackets that start the line\&.
@@ -188,7 +193,7 @@ Ranges of hosts are also supported\&. For more information and additional option
 .sp
 The following environment variables may be specified\&.
 .sp
-ANSIBLE_HOSTS  \(em Override the default ansible hosts file
+ANSIBLE_INVENTORY  \(em Override the default ansible inventory file
 .sp
 ANSIBLE_LIBRARY \(em Override the default ansible module library path
 .sp

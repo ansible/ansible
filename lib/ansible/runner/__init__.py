@@ -53,9 +53,9 @@ from ansible.utils import update_hash
 module_replacer = ModuleReplacer(strip_comments=False)
 
 try:
-    from hashlib import md5 as _md5
+    from hashlib import sha1
 except ImportError:
-    from md5 import md5 as _md5
+    from sha import sha as sha1
 
 HAS_ATFORK=True
 try:
@@ -102,7 +102,7 @@ class HostVars(dict):
         if host not in self.lookup:
             result = self.inventory.get_variables(host, vault_password=self.vault_password).copy()
             result.update(self.vars_cache.get(host, {}))
-            self.lookup[host] = result
+            self.lookup[host] = template.template('.', result, self.vars_cache)
         return self.lookup[host]
 
 
@@ -123,7 +123,6 @@ class Runner(object):
         remote_pass=C.DEFAULT_REMOTE_PASS,  # ex: 'password123' or None if using key
         remote_port=None,                   # if SSH on different ports
         private_key_file=C.DEFAULT_PRIVATE_KEY_FILE, # if not using keys/passwords
-        sudo_pass=C.DEFAULT_SUDO_PASS,      # ex: 'password123' or None
         background=0,                       # async poll every X seconds, else 0 for non-async
         basedir=None,                       # directory of playbook, if applicable
         setup_cache=None,                   # used to share fact data w/ other tasks
@@ -131,10 +130,12 @@ class Runner(object):
         transport=C.DEFAULT_TRANSPORT,      # 'ssh', 'paramiko', 'local'
         conditional='True',                 # run only if this fact expression evals to true
         callbacks=None,                     # used for output
-        sudo=False,                         # whether to run sudo or not
-        sudo_user=C.DEFAULT_SUDO_USER,      # ex: 'root'
         module_vars=None,                   # a playbooks internals thing
-        default_vars=None,                  # ditto
+        play_vars=None,                     #
+        play_file_vars=None,                #
+        role_vars=None,                     #
+        role_params=None,                   #
+        default_vars=None,                  #
         extra_vars=None,                    # extra vars specified with he playbook(s)
         is_playbook=False,                  # running from playbook or not?
         inventory=None,                     # reference to Inventory object
@@ -147,13 +148,15 @@ class Runner(object):
         accelerate=False,                   # use accelerated connection
         accelerate_ipv6=False,              # accelerated connection w/ IPv6
         accelerate_port=None,               # port to use with accelerated connection
-        su=False,                           # Are we running our command via su?
-        su_user=None,                       # User to su to when running command, ex: 'root'
-        su_pass=C.DEFAULT_SU_PASS,
         vault_pass=None,
         run_hosts=None,                     # an optional list of pre-calculated hosts to run on
         no_log=False,                       # option to enable/disable logging for a given task
         run_once=False,                     # option to enable/disable host bypass loop for a given task
+        become=False,                       # whether to run privilege escalation or not
+        become_method=C.DEFAULT_BECOME_METHOD,
+        become_user=C.DEFAULT_BECOME_USER,      # ex: 'root'
+        become_pass=C.DEFAULT_BECOME_PASS,      # ex: 'password123' or None
+        become_exe=C.DEFAULT_BECOME_EXE,        # ex: /usr/local/bin/sudo
         ):
 
         # used to lock multiprocess inputs and outputs at various levels
@@ -175,12 +178,17 @@ class Runner(object):
         self.inventory        = utils.default(inventory, lambda: ansible.inventory.Inventory(host_list))
 
         self.module_vars      = utils.default(module_vars, lambda: {})
+        self.play_vars        = utils.default(play_vars, lambda: {})
+        self.play_file_vars   = utils.default(play_file_vars, lambda: {})
+        self.role_vars        = utils.default(role_vars, lambda: {})
+        self.role_params      = utils.default(role_params, lambda: {})
         self.default_vars     = utils.default(default_vars, lambda: {})
         self.extra_vars       = utils.default(extra_vars, lambda: {})
 
         self.always_run       = None
         self.connector        = connection.Connector(self)
         self.conditional      = conditional
+        self.delegate_to      = None
         self.module_name      = module_name
         self.forks            = int(forks)
         self.pattern          = pattern
@@ -191,10 +199,12 @@ class Runner(object):
         self.remote_port      = remote_port
         self.private_key_file = private_key_file
         self.background       = background
-        self.sudo             = sudo
-        self.sudo_user_var    = sudo_user
-        self.sudo_user        = None
-        self.sudo_pass        = sudo_pass
+        self.become           = become
+        self.become_method    = become_method
+        self.become_user_var  = become_user
+        self.become_user      = None
+        self.become_pass      = become_pass
+        self.become_exe       = become_exe
         self.is_playbook      = is_playbook
         self.environment      = environment
         self.complex_args     = complex_args
@@ -203,32 +213,31 @@ class Runner(object):
         self.accelerate_port  = accelerate_port
         self.accelerate_ipv6  = accelerate_ipv6
         self.callbacks.runner = self
-        self.su               = su
-        self.su_user_var      = su_user
-        self.su_user          = None
-        self.su_pass          = su_pass
-        self.omit_token       = '__omit_place_holder__%s' % _md5(os.urandom(64)).hexdigest()
+        self.omit_token       = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
         self.vault_pass       = vault_pass
         self.no_log           = no_log
         self.run_once         = run_once
 
         if self.transport == 'smart':
-            # if the transport is 'smart' see if SSH can support ControlPersist if not use paramiko
+            # If the transport is 'smart', check to see if certain conditions
+            # would prevent us from using ssh, and fallback to paramiko.
             # 'smart' is the default since 1.2.1/1.3
-            cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = cmd.communicate()
-            if "Bad configuration option" in err:
+            self.transport = "ssh"
+            if sys.platform.startswith('darwin') and self.remote_pass:
+                # due to a current bug in sshpass on OSX, which can trigger
+                # a kernel panic even for non-privileged users, we revert to
+                # paramiko on that OS when a SSH password is specified
                 self.transport = "paramiko"
             else:
-                self.transport = "ssh"
+                # see if SSH can support ControlPersist if not use paramiko
+                cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (out, err) = cmd.communicate()
+                if "Bad configuration option" in err:
+                    self.transport = "paramiko"
 
         # save the original transport, in case it gets
         # changed later via options like accelerate
         self.original_transport = self.transport
-
-        # enforce complex_args as a dict
-        if type(self.complex_args) != dict:
-            raise errors.AnsibleError("args must be a dictionary, received %s (%s)" % (self.complex_args, type(self.complex_args)))
 
         # misc housekeeping
         if subset and self.inventory._subset is None:
@@ -316,16 +325,13 @@ class Runner(object):
 
     # *****************************************************
 
-    def _compute_delegate(self, host, password, remote_inject):
+    def _compute_delegate(self, password, remote_inject):
 
         """ Build a dictionary of all attributes for the delegate host """
 
         delegate = {}
 
         # allow delegated host to be templated
-        delegate['host'] = template.template(self.basedir, host,
-                                remote_inject, fail_on_undefined=True)
-
         delegate['inject'] = remote_inject.copy()
 
         # set any interpreters
@@ -337,36 +343,33 @@ class Runner(object):
             del delegate['inject'][i]
         port = C.DEFAULT_REMOTE_PORT
 
-        this_host = delegate['host']
-
         # get the vars for the delegate by its name
         try:
-            this_info = delegate['inject']['hostvars'][this_host]
+            this_info = delegate['inject']['hostvars'][self.delegate_to]
         except:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
 
         # get the real ssh_address for the delegate
         # and allow ansible_ssh_host to be templated
-        delegate['ssh_host'] = template.template(self.basedir,
-                            this_info.get('ansible_ssh_host', this_host),
-                            this_info, fail_on_undefined=True)
+        delegate['ssh_host'] = template.template(
+                                   self.basedir,
+                                   this_info.get('ansible_ssh_host', self.delegate_to),
+                                   this_info,
+                                   fail_on_undefined=True
+                               )
 
         delegate['port'] = this_info.get('ansible_ssh_port', port)
-
-        delegate['user'] = self._compute_delegate_user(this_host, delegate['inject'])
-
+        delegate['user'] = self._compute_delegate_user(self.delegate_to, delegate['inject'])
         delegate['pass'] = this_info.get('ansible_ssh_pass', password)
-        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file',
-                                        self.private_key_file)
+        delegate['private_key_file'] = this_info.get('ansible_ssh_private_key_file', self.private_key_file)
         delegate['transport'] = this_info.get('ansible_connection', self.transport)
-        delegate['sudo_pass'] = this_info.get('ansible_sudo_pass', self.sudo_pass)
+        delegate['become_pass'] = this_info.get('ansible_become_pass', this_info.get('ansible_ssh_pass', self.become_pass))
 
         # Last chance to get private_key_file from global variables.
         # this is useful if delegated host is not defined in the inventory
         if delegate['private_key_file'] is None:
-            delegate['private_key_file'] = remote_inject.get(
-                'ansible_ssh_private_key_file', None)
+            delegate['private_key_file'] = remote_inject.get('ansible_ssh_private_key_file', None)
 
         if delegate['private_key_file'] is not None:
             delegate['private_key_file'] = os.path.expanduser(delegate['private_key_file'])
@@ -386,10 +389,20 @@ class Runner(object):
         actual_user = inject.get('ansible_ssh_user', self.remote_user)
         thisuser = None
 
-        if host in inject['hostvars']:
-            if inject['hostvars'][host].get('ansible_ssh_user'):
-                # user for delegate host in inventory
-                thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+        try:
+            if host in inject['hostvars']:
+                if inject['hostvars'][host].get('ansible_ssh_user'):
+                    # user for delegate host in inventory
+                    thisuser = inject['hostvars'][host].get('ansible_ssh_user')
+            else:
+                # look up the variables for the host directly from inventory
+                host_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+                if 'ansible_ssh_user' in host_vars:
+                    thisuser = host_vars['ansible_ssh_user']
+        except errors.AnsibleError, e:
+            # the hostname was not found in the inventory, so
+            # we just ignore this and try the next method
+            pass
 
         if thisuser is None and self.remote_user:
             # user defined by play/runner
@@ -463,13 +476,13 @@ class Runner(object):
            or not conn.has_pipelining
            or not C.ANSIBLE_SSH_PIPELINING
            or C.DEFAULT_KEEP_REMOTE_FILES
-           or self.su):
+           or self.become_method == 'su'):
             self._transfer_str(conn, tmp, module_name, module_data)
 
         environment_string = self._compute_environment_string(conn, inject)
 
-        if "tmp" in tmp and ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
-            # deal with possible umask issues once sudo'ed to other user
+        if "tmp" in tmp and (self.become and self.become_user != 'root'):
+            # deal with possible umask issues once you become another user
             self._remote_chmod(conn, 'a+r', remote_module_path, tmp)
 
         cmd = ""
@@ -496,8 +509,8 @@ class Runner(object):
             else:
                 argsfile = self._transfer_str(conn, tmp, 'arguments', args)
 
-            if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
-                # deal with possible umask issues once sudo'ed to other user
+            if self.become and self.become_user != 'root':
+                # deal with possible umask issues once become another user
                 self._remote_chmod(conn, 'a+r', argsfile, tmp)
 
             if async_jid is None:
@@ -506,7 +519,7 @@ class Runner(object):
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module, argsfile]])
         else:
             if async_jid is None:
-                if conn.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES and not self.su:
+                if conn.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES and not self.become_method == 'su':
                     in_data = module_data
                 else:
                     cmd = "%s" % (remote_module_path)
@@ -518,7 +531,7 @@ class Runner(object):
 
         rm_tmp = None
         if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
-            if not self.sudo or self.su or self.sudo_user == 'root' or self.su_user == 'root':
+            if not self.become or self.become_user == 'root':
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 rm_tmp = tmp
 
@@ -528,22 +541,19 @@ class Runner(object):
         sudoable = True
         if module_name == "accelerate":
             # always run the accelerate module as the user
-            # specified in the play, not the sudo_user
+            # specified in the play, not the become_user
             sudoable = False
 
-        if self.su:
-            res = self._low_level_exec_command(conn, cmd, tmp, su=True, in_data=in_data)
-        else:
-            res = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_exec_command(conn, cmd, tmp, become=self.become, sudoable=sudoable, in_data=in_data)
 
         if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
-            if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
-            # not sudoing to root, so maybe can't delete files as that other user
+            if self.become and self.become_user != 'root':
+            # not becoming root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
                 cmd2 = conn.shell.remove(tmp, recurse=True)
                 self._low_level_exec_command(conn, cmd2, tmp, sudoable=False)
 
-        data = utils.parse_json(res['stdout'], from_remote=True)
+        data = utils.parse_json(res['stdout'], from_remote=True, no_exceptions=True)
         if 'parsed' in data and data['parsed'] == False:
             data['msg'] += res['stderr']
         return ReturnData(conn=conn, result=data)
@@ -587,24 +597,14 @@ class Runner(object):
 
     # *****************************************************
 
-    def _executor_internal(self, host, new_stdin):
-        ''' executes any module one or more times '''
-
-        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
-        host_connection = host_variables.get('ansible_connection', self.transport)
-        if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
-            port = host_variables.get('ansible_ssh_port', self.remote_port)
-            if port is None:
-                port = C.DEFAULT_REMOTE_PORT
-        else:
-            # fireball, local, etc
-            port = self.remote_port
-
+    def get_combined_cache(self):
         # merge the VARS and SETUP caches for this host
         combined_cache = self.setup_cache.copy()
-        combined_cache.setdefault(host, {}).update(self.vars_cache.get(host, {}))
+        return utils.merge_hash(combined_cache, self.vars_cache)
 
-        hostvars = HostVars(combined_cache, self.inventory, vault_password=self.vault_pass)
+    def get_inject_vars(self, host):
+        host_variables = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        combined_cache = self.get_combined_cache()
 
         # use combined_cache and host_variables to template the module_vars
         # we update the inject variables with the data we're about to template
@@ -613,28 +613,79 @@ class Runner(object):
         module_vars_inject = utils.combine_vars(self.module_vars, module_vars_inject)
         module_vars = template.template(self.basedir, self.module_vars, module_vars_inject)
 
+        # remove bad variables from the module vars, which may be in there due
+        # the way role declarations are specified in playbooks
+        if 'tags' in module_vars:
+            del module_vars['tags']
+        if 'when' in module_vars:
+            del module_vars['when']
+
+        # start building the dictionary of injected variables
         inject = {}
 
+        # default vars are the lowest priority
         inject = utils.combine_vars(inject, self.default_vars)
+        # next come inventory variables for the host
         inject = utils.combine_vars(inject, host_variables)
+        # then the setup_cache which contains facts gathered
         inject = utils.combine_vars(inject, self.setup_cache.get(host, {}))
+        # next come variables from vars and vars files
+        inject = utils.combine_vars(inject, self.play_vars)
+        inject = utils.combine_vars(inject, self.play_file_vars)
+        # next come variables from role vars/main.yml files
+        inject = utils.combine_vars(inject, self.role_vars)
+        # then come the module variables
         inject = utils.combine_vars(inject, module_vars)
+        # followed by vars_cache things (set_fact, include_vars, and
+        # vars_files which had host-specific templating done)
         inject = utils.combine_vars(inject, self.vars_cache.get(host, {}))
+        # role parameters next
+        inject = utils.combine_vars(inject, self.role_params)
+        # and finally -e vars are the highest priority
         inject = utils.combine_vars(inject, self.extra_vars)
+        # and then special vars
         inject.setdefault('ansible_ssh_user', self.remote_user)
-        inject['hostvars']    = hostvars
-        inject['group_names'] = host_variables.get('group_names', [])
-        inject['groups']      = self.inventory.groups_list()
-        inject['vars']        = self.module_vars
-        inject['defaults']    = self.default_vars
-        inject['environment'] = self.environment
+        inject['group_names']  = host_variables.get('group_names', [])
+        inject['groups']       = self.inventory.groups_list()
+        inject['vars']         = self.module_vars
+        inject['defaults']     = self.default_vars
+        inject['environment']  = self.environment
         inject['playbook_dir'] = os.path.abspath(self.basedir)
-        inject['omit']        = self.omit_token
+        inject['omit']         = self.omit_token
+        inject['combined_cache'] = combined_cache
 
-        # template this one is available, callbacks use this
-        delegate_to = self.module_vars.get('delegate_to')
-        if delegate_to:
-            self.module_vars['delegate_to'] = template.template(self.basedir, delegate_to, inject)
+        return inject
+
+    def _executor_internal(self, host, new_stdin):
+        ''' executes any module one or more times '''
+
+        # We build the proper injected dictionary for all future
+        # templating operations in this run
+        inject = self.get_inject_vars(host)
+
+        # Then we selectively merge some variable dictionaries down to a
+        # single dictionary, used to template the HostVars for this host
+        temp_vars = self.inventory.get_variables(host, vault_password=self.vault_pass)
+        temp_vars = utils.combine_vars(temp_vars, inject['combined_cache'] )
+        temp_vars = utils.combine_vars(temp_vars, {'groups': inject['groups']})
+        temp_vars = utils.combine_vars(temp_vars, self.play_vars)
+        temp_vars = utils.combine_vars(temp_vars, self.play_file_vars)
+        temp_vars = utils.combine_vars(temp_vars, self.extra_vars)
+
+        hostvars = HostVars(temp_vars, self.inventory, vault_password=self.vault_pass)
+
+        # and we save the HostVars in the injected dictionary so they
+        # may be referenced from playbooks/templates
+        inject['hostvars'] = hostvars
+
+        host_connection = inject.get('ansible_connection', self.transport)
+        if host_connection in [ 'paramiko', 'ssh', 'accelerate' ]:
+            port = hostvars.get('ansible_ssh_port', self.remote_port)
+            if port is None:
+                port = C.DEFAULT_REMOTE_PORT
+        else:
+            # fireball, local, etc
+            port = self.remote_port
 
         if self.inventory.basedir() is not None:
             inject['inventory_dir'] = self.inventory.basedir()
@@ -658,30 +709,79 @@ class Runner(object):
                 if os.path.exists(filesdir):
                     basedir = filesdir
 
-            items_terms = self.module_vars.get('items_lookup_terms', '')
-            items_terms = template.template(basedir, items_terms, inject)
-            items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
+            try:
+                items_terms = self.module_vars.get('items_lookup_terms', '')
+                items_terms = template.template(basedir, items_terms, inject)
+                items = utils.plugins.lookup_loader.get(items_plugin, runner=self, basedir=basedir).run(items_terms, inject=inject)
+            except errors.AnsibleUndefinedVariable, e:
+                if 'has no attribute' in str(e):
+                    # the undefined variable was an attribute of a variable that does
+                    # exist, so try and run this through the conditional check to see
+                    # if the user wanted to skip something on being undefined
+                    if utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=True):
+                        # the conditional check passed, so we have to fail here
+                        raise
+                    else:
+                        # the conditional failed, so we skip this task
+                        result = utils.jsonify(dict(changed=False, skipped=True))
+                        self.callbacks.on_skipped(host, None)
+                        return ReturnData(host=host, result=result)
+            except errors.AnsibleError, e:
+                raise
+            except Exception, e:
+                raise errors.AnsibleError("Unexpected error while executing task: %s" % str(e))
+
             # strip out any jinja2 template syntax within
             # the data returned by the lookup plugin
             items = utils._clean_data_struct(items, from_remote=True)
-            if type(items) != list:
-                raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
+            if items is None:
+                items = []
+            else:
+                if type(items) != list:
+                    raise errors.AnsibleError("lookup plugins have to return a list: %r" % items)
 
-            if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng' ]:
-                # hack for apt, yum, and pkgng so that with_items maps back into a single module call
-                use_these_items = []
-                for x in items:
-                    inject['item'] = x
-                    if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                        use_these_items.append(x)
-                inject['item'] = ",".join(use_these_items)
-                items = None
+                if len(items) and utils.is_list_of_strings(items) and self.module_name in [ 'apt', 'yum', 'pkgng', 'zypper' ]:
+                    # hack for apt, yum, and pkgng so that with_items maps back into a single module call
+                    use_these_items = []
+                    for x in items:
+                        inject['item'] = x
+                        if not self.conditional or utils.check_conditional(self.conditional, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
+                            use_these_items.append(x)
+                    inject['item'] = ",".join(use_these_items)
+                    items = None
 
-        # logic to replace complex args if possible
-        complex_args = self.complex_args
+        def _safe_template_complex_args(args, inject):
+            # Ensure the complex args here are a dictionary, but
+            # first template them if they contain a variable
+
+            returned_args = args
+            if isinstance(args, basestring):
+                # If the complex_args were evaluated to a dictionary and there are
+                # more keys in the templated version than the evaled version, some
+                # param inserted additional keys (the template() call also runs
+                # safe_eval on the var if it looks like it's a datastructure). If the
+                # evaled_args are not a dict, it's most likely a whole variable (ie.
+                # args: {{var}}), in which case there's no way to detect the proper
+                # count of params in the dictionary.
+
+                templated_args = template.template(self.basedir, args, inject, convert_bare=True)
+                evaled_args = utils.safe_eval(args)
+
+                if isinstance(evaled_args, dict) and len(evaled_args) > 0 and len(evaled_args) != len(templated_args):
+                    raise errors.AnsibleError("a variable tried to insert extra parameters into the args for this task")
+
+                # set the returned_args to the templated_args
+                returned_args = templated_args
+
+            # and a final check to make sure the complex args are a dict
+            if returned_args is not None and not isinstance(returned_args, dict):
+                raise errors.AnsibleError("args must be a dictionary, received %s" % returned_args)
+
+            return returned_args
 
         # logic to decide how to run things depends on whether with_items is used
         if items is None:
+            complex_args = _safe_template_complex_args(self.complex_args, inject)
             return self._executor_internal_inner(host, self.module_name, self.module_args, inject, port, complex_args=complex_args)
         elif len(items) > 0:
 
@@ -700,12 +800,8 @@ class Runner(object):
                 this_inject = inject.copy()
                 this_inject['item'] = x
 
-                # TODO: this idiom should be replaced with an up-conversion to a Jinja2 template evaluation
-                if isinstance(self.complex_args, basestring):
-                    complex_args = template.template(self.basedir, self.complex_args, this_inject, convert_bare=True)
-                    complex_args = utils.safe_eval(complex_args)
-                    if type(complex_args) != dict:
-                        raise errors.AnsibleError("args must be a dictionary, received %s" % complex_args)
+                complex_args = _safe_template_complex_args(self.complex_args, this_inject)
+
                 result = self._executor_internal_inner(
                      host,
                      self.module_name,
@@ -714,6 +810,10 @@ class Runner(object):
                      port,
                      complex_args=complex_args
                 )
+
+                if 'stdout' in result.result and 'stdout_lines' not in result.result:
+                    result.result['stdout_lines'] = result.result['stdout'].splitlines()
+
                 results.append(result.result)
                 if result.comm_ok == False:
                     all_comm_ok = False
@@ -741,11 +841,9 @@ class Runner(object):
     def _executor_internal_inner(self, host, module_name, module_args, inject, port, is_chained=False, complex_args=None):
         ''' decides how to invoke a module '''
 
-        # late processing of parameterized sudo_user (with_items,..)
-        if self.sudo_user_var is not None:
-            self.sudo_user = template.template(self.basedir, self.sudo_user_var, inject)
-        if self.su_user_var is not None:
-            self.su_user = template.template(self.basedir, self.su_user_var, inject)
+        # late processing of parameterized become_user (with_items,..)
+        if self.become_user_var is not None:
+            self.become_user = template.template(self.basedir, self.become_user_var, inject)
 
         # module_name may be dynamic (but cannot contain {{ ansible_ssh_user }})
         module_name  = template.template(self.basedir, module_name, inject)
@@ -765,9 +863,13 @@ class Runner(object):
         for cond in self.conditional:
 
             if not utils.check_conditional(cond, self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                result = utils.jsonify(dict(changed=False, skipped=True))
-                self.callbacks.on_skipped(host, inject.get('item',None))
-                return ReturnData(host=host, result=result)
+                result = dict(changed=False, skipped=True)
+                if self.no_log:
+                    result = utils.censor_unlogged_data(result)
+                    self.callbacks.on_skipped(host, result)
+                else:
+                    self.callbacks.on_skipped(host, inject.get('item',None))
+                return ReturnData(host=host, result=utils.jsonify(result))
 
         if getattr(handler, 'setup', None) is not None:
             handler.setup(module_name, inject)
@@ -781,17 +883,18 @@ class Runner(object):
         actual_transport = inject.get('ansible_connection', self.transport)
         actual_private_key_file = inject.get('ansible_ssh_private_key_file', self.private_key_file)
         actual_private_key_file = template.template(self.basedir, actual_private_key_file, inject, fail_on_undefined=True)
-        self.sudo = utils.boolean(inject.get('ansible_sudo', self.sudo))
-        self.sudo_user = inject.get('ansible_sudo_user', self.sudo_user)
-        self.sudo_pass = inject.get('ansible_sudo_pass', self.sudo_pass)
-        self.su = inject.get('ansible_su', self.su)
-        self.su_pass = inject.get('ansible_su_pass', self.su_pass)
 
-        # select default root user in case self.sudo requested
+        self.become = utils.boolean(inject.get('ansible_become', inject.get('ansible_sudo', inject.get('ansible_su', self.become))))
+        self.become_user = inject.get('ansible_become_user', inject.get('ansible_sudo_user', inject.get('ansible_su_user',self.become_user)))
+        self.become_pass = inject.get('ansible_become_pass', inject.get('ansible_sudo_pass', inject.get('ansible_su_pass', self.become_pass)))
+        self.become_exe = inject.get('ansible_become_exe', inject.get('ansible_sudo_exe', self.become_exe))
+        self.become_method = inject.get('ansible_become_method', self.become_method)
+
+        # select default root user in case self.become requested
         # but no user specified; happens e.g. in host vars when
-        # just ansible_sudo=True is specified
-        if self.sudo and self.sudo_user is None:
-            self.sudo_user = 'root'
+        # just ansible_become=True is specified
+        if self.become and self.become_user is None:
+            self.become_user = 'root'
 
         if actual_private_key_file is not None:
             actual_private_key_file = os.path.expanduser(actual_private_key_file)
@@ -812,22 +915,31 @@ class Runner(object):
 
         # the delegated host may have different SSH port configured, etc
         # and we need to transfer those, and only those, variables
-        delegate_to = inject.get('delegate_to', None)
-        if delegate_to is not None:
-            delegate = self._compute_delegate(delegate_to, actual_pass, inject)
+        self.delegate_to = inject.get('delegate_to', None)
+        if self.delegate_to:
+            self.delegate_to = template.template(self.basedir, self.delegate_to, inject)
+
+        if self.delegate_to is not None:
+            delegate = self._compute_delegate(actual_pass, inject)
             actual_transport = delegate['transport']
             actual_host = delegate['ssh_host']
             actual_port = delegate['port']
             actual_user = delegate['user']
             actual_pass = delegate['pass']
             actual_private_key_file = delegate['private_key_file']
-            self.sudo_pass = delegate['sudo_pass']
+            self.become_pass = delegate.get('become_pass',delegate.get('sudo_pass'))
             inject = delegate['inject']
+            # set resolved delegate_to into inject so modules can call _remote_checksum
+            inject['delegate_to'] = self.delegate_to
 
         # user/pass may still contain variables at this stage
         actual_user = template.template(self.basedir, actual_user, inject)
-        actual_pass = template.template(self.basedir, actual_pass, inject)
-        self.sudo_pass = template.template(self.basedir, self.sudo_pass, inject)
+        try:
+            actual_pass = template.template(self.basedir, actual_pass, inject)
+            self.become_pass = template.template(self.basedir, self.become_pass, inject)
+        except:
+            # ignore password template errors, could be triggered by password charaters #10468
+            pass
 
         # make actual_user available as __magic__ ansible_ssh_user variable
         inject['ansible_ssh_user'] = actual_user
@@ -845,9 +957,11 @@ class Runner(object):
             return ReturnData(host=host, comm_ok=False, result=result)
 
         try:
-            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file)
-            if delegate_to or host != actual_host:
-                conn.delegate = host
+            if self.delegate_to or host != actual_host:
+                delegate_host = host
+            else:
+                delegate_host = None
+            conn = self.connector.connect(actual_host, actual_port, actual_user, actual_pass, actual_transport, actual_private_key_file, delegate_host)
 
             default_shell = getattr(conn, 'default_shell', '')
             shell_type = inject.get('ansible_shell_type')
@@ -879,7 +993,7 @@ class Runner(object):
         # render module_args and complex_args templates
         try:
             # When templating module_args, we need to be careful to ensure
-            # that no variables inadvertantly (or maliciously) add params
+            # that no variables inadvertently (or maliciously) add params
             # to the list of args. We do this by counting the number of k=v
             # pairs before and after templating.
             num_args_pre = self._count_module_args(module_args, allow_dupes=True)
@@ -923,7 +1037,7 @@ class Runner(object):
 
             cond = template.template(self.basedir, until, inject, expand_lists=False)
             if not utils.check_conditional(cond,  self.basedir, inject, fail_on_undefined=self.error_on_undefined_vars):
-                retries = self.module_vars.get('retries')
+                retries = template.template(self.basedir, self.module_vars.get('retries'), inject, expand_lists=False)
                 delay   = self.module_vars.get('delay')
                 for x in range(1, int(retries) + 1):
                     # template the delay, cast to float and sleep
@@ -957,7 +1071,7 @@ class Runner(object):
             if hasattr(sys.stdout, "isatty"):
                 if "stdout" in data and sys.stdout.isatty():
                     if not string_functions.isprintable(data['stdout']):
-                        data['stdout'] = ''
+                        data['stdout'] = ''.join(c for c in data['stdout'] if string_functions.isprintable(c))
 
             if 'item' in inject:
                 result.result['item'] = inject['item']
@@ -1014,7 +1128,7 @@ class Runner(object):
         if "tmp" in tmp:
             # tmp has already been created
             return False
-        if not conn.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self.su:
+        if not conn.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self.become_method == 'su':
             # tmp is necessary to store module source code
             return True
         if not conn.has_pipelining:
@@ -1030,85 +1144,132 @@ class Runner(object):
     # *****************************************************
 
     def _low_level_exec_command(self, conn, cmd, tmp, sudoable=False,
-                                executable=None, su=False, in_data=None):
+                                executable=None, become=False, in_data=None):
         ''' execute a command string over SSH, return the output '''
+        # this can be skipped with powershell modules when there is no analog to a Windows command (like chmod)
+        if cmd:
 
-        if not cmd:
-            # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-            return dict(stdout='', stderr='')
+            if executable is None:
+                executable = C.DEFAULT_EXECUTABLE
 
-        if executable is None:
-            executable = C.DEFAULT_EXECUTABLE
+            become_user = self.become_user
 
-        sudo_user = self.sudo_user
-        su_user = self.su_user
+            # compare connection user to (su|sudo)_user and disable if the same
+            # assume connection type is local if no user attribute
+            this_user = getattr(conn, 'user', getpass.getuser())
+            if (not become and this_user == become_user):
+                sudoable = False
+                become = False
 
-        # compare connection user to (su|sudo)_user and disable if the same
-        # assume connection type is local if no user attribute
-        this_user = getattr(conn, 'user', getpass.getuser())
-        if (not su and this_user == sudo_user) or (su and this_user == su_user):
-            sudoable = False
-            su = False
-
-        if su:
             rc, stdin, stdout, stderr = conn.exec_command(cmd,
                                                           tmp,
-                                                          su=su,
-                                                          su_user=su_user,
-                                                          executable=executable,
-                                                          in_data=in_data)
-        else:
-            rc, stdin, stdout, stderr = conn.exec_command(cmd,
-                                                          tmp,
-                                                          sudo_user,
+                                                          become_user=become_user,
                                                           sudoable=sudoable,
                                                           executable=executable,
                                                           in_data=in_data)
 
-        if type(stdout) not in [ str, unicode ]:
-            out = ''.join(stdout.readlines())
-        else:
-            out = stdout
+            if type(stdout) not in [ str, unicode ]:
+                out = ''.join(stdout.readlines())
+            else:
+                out = stdout
 
-        if type(stderr) not in [ str, unicode ]:
-            err = ''.join(stderr.readlines())
-        else:
-            err = stderr
+            if type(stderr) not in [ str, unicode ]:
+                err = ''.join(stderr.readlines())
+            else:
+                err = stderr
 
-        if rc is not None:
-            return dict(rc=rc, stdout=out, stderr=err)
-        else:
-            return dict(stdout=out, stderr=err)
+            if rc is not None:
+                return dict(rc=rc, stdout=out, stderr=err)
+            else:
+                return dict(stdout=out, stderr=err)
+
+        return dict(rc=None, stdout='', stderr='')
+
 
     # *****************************************************
 
-    def _remote_chmod(self, conn, mode, path, tmp, sudoable=False, su=False):
+    def _remote_chmod(self, conn, mode, path, tmp, sudoable=False, become=False):
         ''' issue a remote chmod command '''
         cmd = conn.shell.chmod(mode, path)
-        return self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, su=su)
+        return self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable, become=become)
 
     # *****************************************************
 
-    def _remote_md5(self, conn, tmp, path):
-        ''' takes a remote md5sum without requiring python, and returns 1 if no file '''
-        cmd = conn.shell.md5(path)
-        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+    def _remote_expand_user(self, conn, path, tmp):
+        ''' takes a remote path and performs tilde expansion on the remote host '''
+        if not path.startswith('~'):
+            return path
+
+        split_path = path.split(os.path.sep, 1)
+        expand_path = split_path[0]
+        if expand_path == '~':
+            if self.become and self.become_user:
+                expand_path = '~%s' % self.become_user
+
+        cmd = conn.shell.expand_user(expand_path)
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=False, become=False)
+        initial_fragment = utils.last_non_blank_line(data['stdout'])
+
+        if not initial_fragment:
+            # Something went wrong trying to expand the path remotely.  Return
+            # the original string
+            return path
+
+        if len(split_path) > 1:
+            return conn.shell.join_path(initial_fragment, *split_path[1:])
+        else:
+            return initial_fragment
+
+    # *****************************************************
+
+    def _remote_checksum(self, conn, tmp, path, inject):
+        ''' takes a remote checksum and returns 1 if no file '''
+
+        # Lookup the python interp from the host or delegate
+
+        # host == inven_host when there is no delegate
+        host = inject['inventory_hostname']
+        if 'delegate_to' in inject:
+            delegate = inject['delegate_to']
+            if delegate:
+                # host == None when the delegate is not in inventory
+                host = None
+                # delegate set, check whether the delegate has inventory vars
+                delegate = template.template(self.basedir, delegate, inject)
+                if delegate in inject['hostvars']:
+                    # host == delegate if we need to lookup the
+                    # python_interpreter from the delegate's inventory vars
+                    host = delegate
+
+        if host:
+            python_interp = inject['hostvars'][host].get('ansible_python_interpreter', 'python')
+        else:
+            python_interp = 'python'
+
+        cmd = conn.shell.checksum(path, python_interp)
+
+        #TODO: remove this horrible hack and find way to get checksum to work with other privilege escalation methods
+        if self.become_method == 'sudo':
+            sudoable = True
+        else:
+            sudoable = False
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=sudoable)
         data2 = utils.last_non_blank_line(data['stdout'])
         try:
             if data2 == '':
                 # this may happen if the connection to the remote server
-                # failed, so just return "INVALIDMD5SUM" to avoid errors
-                return "INVALIDMD5SUM"
+                # failed, so just return "INVALIDCHECKSUM" to avoid errors
+                return "INVALIDCHECKSUM"
             else:
                 return data2.split()[0]
         except IndexError:
-            sys.stderr.write("warning: md5sum command failed unusually, please report this to the list so it can be fixed\n")
-            sys.stderr.write("command: %s\n" % md5s)
+            sys.stderr.write("warning: Calculating checksum failed unusually, please report this to the list so it can be fixed\n")
+            sys.stderr.write("command: %s\n" % cmd)
             sys.stderr.write("----\n")
             sys.stderr.write("output: %s\n" % data)
             sys.stderr.write("----\n")
             # this will signal that it changed and allow things to keep going
-            return "INVALIDMD5SUM"
+            return "INVALIDCHECKSUM"
 
     # *****************************************************
 
@@ -1116,11 +1277,11 @@ class Runner(object):
         ''' make and return a temporary path on a remote box '''
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
         use_system_tmp = False
-        if (self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root'):
+        if self.become and self.become_user != 'root':
             use_system_tmp = True
 
         tmp_mode = None
-        if self.remote_user != 'root' or ((self.sudo and self.sudo_user != 'root') or (self.su and self.su_user != 'root')):
+        if self.remote_user != 'root' or (self.become and self.become_user != 'root'):
             tmp_mode = 'a+rx'
 
         cmd = conn.shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
@@ -1184,7 +1345,11 @@ class Runner(object):
         module_suffixes = getattr(conn, 'default_suffixes', None)
         module_path = utils.plugins.module_finder.find_plugin(module_name, module_suffixes)
         if module_path is None:
-            raise errors.AnsibleFileNotFound("module %s not found in %s" % (module_name, utils.plugins.module_finder.print_paths()))
+            module_path2 = utils.plugins.module_finder.find_plugin('ping', module_suffixes)
+            if module_path2 is not None:
+                raise errors.AnsibleFileNotFound("module %s not found in configured module paths" % (module_name))
+            else:
+                raise errors.AnsibleFileNotFound("module %s not found in configured module paths.  Additionally, core modules are missing. If this is a checkout, run 'git submodule update --init --recursive' to correct this problem." % (module_name))
 
 
         # insert shared code and arguments into the module
@@ -1299,9 +1464,15 @@ class Runner(object):
             # Expose the current hostgroup to the bypassing plugins
             self.host_set = hosts
             # We aren't iterating over all the hosts in this
-            # group. So, just pick the first host in our group to
+            # group. So, just choose the "delegate_to" host if that is defined and is
+            # one of the targeted hosts, otherwise pick the first host in our group to
             # construct the conn object with.
-            result_data = self._executor(hosts[0], None).result
+            if self.delegate_to is not None and self.delegate_to in hosts:
+                host = self.delegate_to
+            else:
+                host = hosts[0]
+
+            result_data = self._executor(host, None).result
             # Create a ResultData item for each host in this group
             # using the returned result. If we didn't do this we would
             # get false reports of dark hosts.

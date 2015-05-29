@@ -30,7 +30,7 @@ Lookup Plugins
 
 Language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins.  Just like other plugin types, you can write your own.
 
-More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/runner/lookup_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/runner/lookup_plugins>`_ and figure
+More documentation on writing lookup plugins is pending, though you can jump into `lib/ansible/runner/lookup_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/runner/lookup_plugins>`_ and figure
 things out pretty easily.
 
 .. _developing_vars_plugins:
@@ -42,7 +42,7 @@ Playbook constructs like 'host_vars' and 'group_vars' work via 'vars' plugins.  
 data into ansible runs that did not come from an inventory, playbook, or command line.  Note that variables
 can also be returned from inventory, so in most cases, you won't need to write or understand vars_plugins.
 
-More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/inventory/vars_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/inventory/vars_plugins>`_ and figure
+More documentation on writing vars plugins is pending, though you can jump into `lib/ansible/inventory/vars_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/inventory/vars_plugins>`_ and figure
 things out pretty easily.
 
 If you find yourself wanting to write a vars_plugin, it's more likely you should write an inventory script instead.

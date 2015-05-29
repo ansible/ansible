@@ -10,7 +10,7 @@
 #   make deb-src -------------- produce a DEB source
 #   make deb ------------------ produce a DEB
 #   make docs ----------------- rebuild the manpages (results are checked in)
-#   make tests ---------------- run the tests
+#   make tests ---------------- run the tests (see test/README.md for requirements)
 #   make pyflakes, make pep8 -- source code checks
 
 ########################################################
@@ -34,7 +34,8 @@ PYTHON=python
 SITELIB = $(shell $(PYTHON) -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
 
 # VERSION file provides one place to update the software version
-VERSION := $(shell cat VERSION)
+VERSION := $(shell cat VERSION | cut -f1 -d' ')
+RELEASE := $(shell cat VERSION | cut -f2 -d' ')
 
 # Get the branch information from git
 ifneq ($(shell which git),)
@@ -52,8 +53,9 @@ DEBUILD_BIN ?= debuild
 DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
 DPUT_OPTS ?=
+DEB_DATE := $(shell date +"%a, %d %b %Y %T %z")
 ifeq ($(OFFICIAL),yes)
-    DEB_RELEASE = 1ppa
+    DEB_RELEASE = $(RELEASE)ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
     # DEBSIGN_KEYID is required when signing
     ifneq ($(DEBSIGN_KEYID),)
@@ -74,7 +76,7 @@ DEB_DIST ?= unstable
 RPMSPECDIR= packaging/rpm
 RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
-RPMRELEASE = 1
+RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
     RPMRELEASE = 0.git$(DATE)
 endif
@@ -86,12 +88,20 @@ MOCK_CFG ?=
 
 NOSETESTS ?= nosetests
 
+NOSETESTS3 ?= nosetests-3.3
+
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -w test/units -v
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v --with-coverage --cover-package=ansible --cover-branches
+
+newtests:
+	PYTHONPATH=./v2:./lib $(NOSETESTS) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
+
+newtests-py3:
+	PYTHONPATH=./v2:./lib $(NOSETESTS3) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
 
 authors:
 	sh hacking/authors.sh
@@ -114,7 +124,7 @@ pep8:
 	@echo "# Running PEP8 Compliance Tests"
 	@echo "#############################################"
 	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 lib/ bin/
-	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
+	# -pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
 
 pyflakes:
 	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*
@@ -143,6 +153,7 @@ clean:
 	rm -rf docs/js
 	@echo "Cleaning up authors file"
 	rm -f AUTHORS.TXT
+	find . -type f -name '*.pyc' -delete
 
 python:
 	$(PYTHON) setup.py build
@@ -207,7 +218,7 @@ debian: sdist
 	    mkdir -p deb-build/$${DIST} ; \
 	    tar -C deb-build/$${DIST} -xvf dist/$(NAME)-$(VERSION).tar.gz ; \
 	    cp -a packaging/debian deb-build/$${DIST}/$(NAME)-$(VERSION)/ ; \
-	    sed -ie "s#^$(NAME) (\([^)]*\)) \([^;]*\);#ansible (\1-$(DEB_RELEASE)~$${DIST}) $${DIST};#" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
+        sed -ie "s|%VERSION%|$(VERSION)|g;s|%RELEASE%|$(DEB_RELEASE)|;s|%DIST%|$${DIST}|g;s|%DATE%|$(DEB_DATE)|g" deb-build/$${DIST}/$(NAME)-$(VERSION)/debian/changelog ; \
 	done
 
 deb: debian

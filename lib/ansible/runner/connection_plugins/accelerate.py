@@ -50,6 +50,7 @@ class Connection(object):
         self.accport = port[1]
         self.is_connected = False
         self.has_pipelining = False
+        self.become_methods_supported=['sudo']
 
         if not self.port:
             self.port = constants.DEFAULT_REMOTE_PORT
@@ -226,11 +227,11 @@ class Connection(object):
         else:
             return response.get('rc') == 0
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False, executable='/bin/sh', in_data=None, su=None, su_user=None):
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
-        if su or su_user:
-            raise AnsibleError("Internal Error: this module does not support running commands via su")
+        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
+            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -238,8 +239,8 @@ class Connection(object):
         if executable == "":
             executable = constants.DEFAULT_EXECUTABLE
 
-        if self.runner.sudo and sudoable and sudo_user:
-            cmd, prompt, success_key = utils.make_sudo_cmd(sudo_user, executable, cmd)
+        if self.runner.become and sudoable:
+            cmd, prompt, success_key = utils.make_become_cmd(cmd, become_user, executable, self.runner.become_method, '', self.runner.become_exe)
 
         vvv("EXEC COMMAND %s" % cmd)
 
@@ -292,8 +293,8 @@ class Connection(object):
                 if fd.tell() >= fstat.st_size:
                     last = True
                 data = dict(mode='put', data=base64.b64encode(data), out_path=out_path, last=last)
-                if self.runner.sudo:
-                    data['user'] = self.runner.sudo_user
+                if self.runner.become:
+                    data['user'] = self.runner.become_user
                 data = utils.jsonify(data)
                 data = utils.encrypt(self.key, data)
 

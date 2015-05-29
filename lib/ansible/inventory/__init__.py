@@ -36,7 +36,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset',
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
                   '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
@@ -53,7 +53,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
-        self._groups_list    = {} 
+        self._groups_list    = {}
         self._pattern_cache  = {}
 
         # to be set by calling set_playbook_basedir by playbook code
@@ -420,7 +420,7 @@ class Inventory(object):
 
         group = self.get_group(groupname)
         if group is None:
-            raise Exception("group not found: %s" % groupname)
+            raise errors.AnsibleError("group not found: %s" % groupname)
 
         vars = {}
 
@@ -437,7 +437,10 @@ class Inventory(object):
 
     def get_variables(self, hostname, update_cached=False, vault_password=None):
 
-        return self.get_host(hostname).get_variables()
+        host = self.get_host(hostname)
+        if not host:
+            raise errors.AnsibleError("host not found: %s" % hostname)
+        return host.get_variables()
 
     def get_host_variables(self, hostname, update_cached=False, vault_password=None):
 

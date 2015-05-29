@@ -50,6 +50,15 @@ try:
 except:
     HAS_SSL=False
 
+HAS_MATCH_HOSTNAME = True
+try:
+    from ssl import match_hostname, CertificateError
+except ImportError:
+    try:
+        from backports.ssl_match_hostname import match_hostname, CertificateError
+    except ImportError:
+        HAS_MATCH_HOSTNAME = False
+
 import httplib
 import os
 import re
@@ -219,6 +228,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
         # Write the dummy ca cert if we are running on Mac OS X
         if platform == 'Darwin':
             os.write(tmp_fd, DUMMY_CA_CERT)
+            # Default Homebrew path for OpenSSL certs 
+            paths_checked.append('/usr/local/etc/openssl')
 
         # for all of the paths, find any  .crt or .pem files
         # and compile them into single temp file for use
@@ -250,9 +261,33 @@ class SSLValidationHandler(urllib2.BaseHandler):
         except:
             self.module.fail_json(msg='Connection to proxy failed')
 
+    def detect_no_proxy(self, url):
+        '''
+        Detect if the 'no_proxy' environment variable is set and honor those locations.
+        '''
+        env_no_proxy = os.environ.get('no_proxy')
+        if env_no_proxy:
+            env_no_proxy = env_no_proxy.split(',')
+            netloc = urlparse.urlparse(url).netloc
+
+            for host in env_no_proxy:
+                if netloc.endswith(host) or netloc.split(':')[0].endswith(host):
+                    # Our requested URL matches something in no_proxy, so don't
+                    # use the proxy for this
+                    return False
+        return True
+
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
+
+        # Detect if 'no_proxy' environment variable is set and if our URL is included
+        use_proxy = self.detect_no_proxy(req.get_full_url())
+
+        if not use_proxy:
+            # ignore proxy settings for this host request
+            return req
+
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if https_proxy:
@@ -267,11 +302,13 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     connect_result = s.recv(4096)
                     self.validate_proxy_response(connect_result)
                     ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
+                    match_hostname(ssl_s.getpeercert(), self.hostname)
                 else:
                     self.module.fail_json(msg='Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
             else:
                 s.connect((self.hostname, self.port))
                 ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
+                match_hostname(ssl_s.getpeercert(), self.hostname)
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
@@ -285,6 +322,9 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     'Use validate_certs=no or make sure your managed systems have a valid CA certificate installed. ' + \
                     'Paths checked for this platform: %s' % ", ".join(paths_checked)
                 )
+        except CertificateError:
+            self.module.fail_json(msg="SSL Certificate does not belong to %s.  Make sure the url has a certificate that belongs to it or use validate_certs=no (insecure)" % self.hostname)
+
         try:
             # cleanup the temp file created, don't worry
             # if it fails for some reason
@@ -337,27 +377,29 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     # FIXME: change the following to use the generic_urlparse function
     #        to remove the indexed references for 'parsed'
     parsed = urlparse.urlparse(url)
-    if parsed[0] == 'https':
-        if not HAS_SSL and validate_certs:
+    if parsed[0] == 'https' and validate_certs:
+        if not HAS_SSL:
             if distribution == 'Redhat':
                 module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended. You can also install python-ssl from EPEL')
             else:
                 module.fail_json(msg='SSL validation is not available in your version of python. You can use validate_certs=no, however this is unsafe and not recommended')
+        if not HAS_MATCH_HOSTNAME:
+            module.fail_json(msg='Available SSL validation does not check that the certificate matches the hostname.  You can install backports.ssl_match_hostname or update your managed machine to python-2.7.9 or newer.  You could also use validate_certs=no, however this is unsafe and not recommended')
 
-        elif validate_certs:
-            # do the cert validation
-            netloc = parsed[1]
-            if '@' in netloc:
-                netloc = netloc.split('@', 1)[1]
-            if ':' in netloc:
-                hostname, port = netloc.split(':', 1)
-            else:
-                hostname = netloc
-                port = 443
-            # create the SSL validation handler and
-            # add it to the list of handlers
-            ssl_handler = SSLValidationHandler(module, hostname, port)
-            handlers.append(ssl_handler)
+        # do the cert validation
+        netloc = parsed[1]
+        if '@' in netloc:
+            netloc = netloc.split('@', 1)[1]
+        if ':' in netloc:
+            hostname, port = netloc.split(':', 1)
+            port = int(port)
+        else:
+            hostname = netloc
+            port = 443
+        # create the SSL validation handler and
+        # add it to the list of handlers
+        ssl_handler = SSLValidationHandler(module, hostname, port)
+        handlers.append(ssl_handler)
 
     if parsed[0] != 'ftp':
         username = module.params.get('url_username', '')
@@ -396,7 +438,10 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         proxyhandler = urllib2.ProxyHandler({})
         handlers.append(proxyhandler)
 
-    handlers.append(CustomHTTPSHandler)
+    # pre-2.6 versions of python cannot use the custom https
+    # handler, since the socket class is lacking this method
+    if hasattr(socket, 'create_connection'):
+        handlers.append(CustomHTTPSHandler)
 
     opener = urllib2.build_opener(*handlers)
     urllib2.install_opener(opener)
@@ -442,6 +487,10 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     except urllib2.URLError, e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))
+    except socket.error, e:
+        info.update(dict(msg="Connection failure: %s" % str(e), status=-1))
+    except Exception, e:
+        info.update(dict(msg="An unknown error occurred: %s" % str(e), status=-1))
 
     return r, info
 

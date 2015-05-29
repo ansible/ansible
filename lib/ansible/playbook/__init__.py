@@ -21,6 +21,7 @@ import ansible.runner
 from ansible.utils.template import template
 from ansible import utils
 from ansible import errors
+from ansible.module_utils.splitter import split_args, unquote
 import ansible.callbacks
 import ansible.cache
 import os
@@ -35,6 +36,7 @@ import pipes
 # holds all other variables about a host
 SETUP_CACHE = ansible.cache.FactCache()
 VARS_CACHE  = collections.defaultdict(dict)
+RESERVED_TAGS = ['all','tagged','untagged','always']
 
 
 class PlayBook(object):
@@ -58,15 +60,12 @@ class PlayBook(object):
         timeout          = C.DEFAULT_TIMEOUT,
         remote_user      = C.DEFAULT_REMOTE_USER,
         remote_pass      = C.DEFAULT_REMOTE_PASS,
-        sudo_pass        = C.DEFAULT_SUDO_PASS,
         remote_port      = None,
         transport        = C.DEFAULT_TRANSPORT,
         private_key_file = C.DEFAULT_PRIVATE_KEY_FILE,
         callbacks        = None,
         runner_callbacks = None,
         stats            = None,
-        sudo             = False,
-        sudo_user        = C.DEFAULT_SUDO_USER,
         extra_vars       = None,
         only_tags        = None,
         skip_tags        = None,
@@ -75,11 +74,13 @@ class PlayBook(object):
         check            = False,
         diff             = False,
         any_errors_fatal = False,
-        su               = False,
-        su_user          = False,
-        su_pass          = False,
         vault_password   = False,
         force_handlers   = False,
+        # privilege escalation
+        become           = C.DEFAULT_BECOME,
+        become_method    = C.DEFAULT_BECOME_METHOD,
+        become_user      = C.DEFAULT_BECOME_USER,
+        become_pass      = None,
     ):
 
         """
@@ -90,13 +91,11 @@ class PlayBook(object):
         timeout:          connection timeout
         remote_user:      run as this user if not specified in a particular play
         remote_pass:      use this remote password (for all plays) vs using SSH keys
-        sudo_pass:        if sudo==True, and a password is required, this is the sudo password
         remote_port:      default remote port to use if not specified with the host or play
         transport:        how to connect to hosts that don't specify a transport (local, paramiko, etc)
         callbacks         output callbacks for the playbook
         runner_callbacks: more callbacks, this time for the runner API
         stats:            holds aggregrate data about events occurring to each host
-        sudo:             if not specified per play, requests all plays use sudo mode
         inventory:        can be specified instead of host_list to use a pre-existing inventory object
         check:            don't change anything, just try to detect some potential changes
         any_errors_fatal: terminate the entire execution immediately when one of the hosts has failed
@@ -137,20 +136,19 @@ class PlayBook(object):
         self.callbacks        = callbacks
         self.runner_callbacks = runner_callbacks
         self.stats            = stats
-        self.sudo             = sudo
-        self.sudo_pass        = sudo_pass
-        self.sudo_user        = sudo_user
         self.extra_vars       = extra_vars
         self.global_vars      = {}
         self.private_key_file = private_key_file
         self.only_tags        = only_tags
         self.skip_tags        = skip_tags
         self.any_errors_fatal = any_errors_fatal
-        self.su               = su
-        self.su_user          = su_user
-        self.su_pass          = su_pass
         self.vault_password   = vault_password
         self.force_handlers   = force_handlers
+
+        self.become           = become
+        self.become_method    = become_method
+        self.become_user      = become_user
+        self.become_pass      = become_pass
 
         self.callbacks.playbook = self
         self.runner_callbacks.playbook = self
@@ -209,12 +207,15 @@ class PlayBook(object):
         name and returns the merged vars along with the path
         '''
         new_vars = existing_vars.copy()
-        tokens = shlex.split(play_ds.get('include', ''))
+        tokens = split_args(play_ds.get('include', ''))
         for t in tokens[1:]:
-            (k,v) = t.split("=", 1)
-            new_vars[k] = template(basedir, v, new_vars)
+            try:
+                (k,v) = unquote(t).split("=", 1)
+                new_vars[k] = template(basedir, v, new_vars)
+            except ValueError, e:
+                raise errors.AnsibleError('included playbook variables must be in the form k=v, got: %s' % t)
 
-        return (new_vars, tokens[0])
+        return (new_vars, unquote(tokens[0]))
 
     # *****************************************************
 
@@ -310,6 +311,7 @@ class PlayBook(object):
             assert play is not None
 
             matched_tags, unmatched_tags = play.compare_tags(self.only_tags)
+
             matched_tags_all = matched_tags_all | matched_tags
             unmatched_tags_all = unmatched_tags_all | unmatched_tags
 
@@ -328,10 +330,13 @@ class PlayBook(object):
         # the user can correct the arguments.
         unknown_tags = ((set(self.only_tags) | set(self.skip_tags)) -
                         (matched_tags_all | unmatched_tags_all))
-        unknown_tags.discard('all')
+
+        for t in RESERVED_TAGS:
+            unknown_tags.discard(t)
 
         if len(unknown_tags) > 0:
-            unmatched_tags_all.discard('all')
+            for t in RESERVED_TAGS:
+                unmatched_tags_all.discard(t)
             msg = 'tag(s) not found in playbook: %s.  possible values: %s'
             unknown = ','.join(sorted(unknown_tags))
             unmatched = ','.join(sorted(unmatched_tags_all))
@@ -370,17 +375,17 @@ class PlayBook(object):
 
     # *****************************************************
 
-    def _trim_unavailable_hosts(self, hostlist=[]):
+    def _trim_unavailable_hosts(self, hostlist=[], keep_failed=False):
         ''' returns a list of hosts that haven't failed and aren't dark '''
 
-        return [ h for h in hostlist if (h not in self.stats.failures) and (h not in self.stats.dark)]
+        return [ h for h in hostlist if (keep_failed or h not in self.stats.failures) and (h not in self.stats.dark)]
 
     # *****************************************************
 
-    def _run_task_internal(self, task):
+    def _run_task_internal(self, task, include_failed=False):
         ''' run a particular module step in a playbook '''
 
-        hosts = self._trim_unavailable_hosts(self.inventory.list_hosts(task.play._play_hosts))
+        hosts = self._trim_unavailable_hosts(self.inventory.list_hosts(task.play._play_hosts), keep_failed=include_failed)
         self.inventory.restrict_to(hosts)
 
         runner = ansible.runner.Runner(
@@ -395,6 +400,10 @@ class PlayBook(object):
             remote_user=task.remote_user,
             remote_port=task.play.remote_port,
             module_vars=task.module_vars,
+            play_vars=task.play_vars,
+            play_file_vars=task.play_file_vars,
+            role_vars=task.role_vars,
+            role_params=task.role_params,
             default_vars=task.default_vars,
             extra_vars=self.extra_vars,
             private_key_file=self.private_key_file,
@@ -403,10 +412,7 @@ class PlayBook(object):
             basedir=task.play.basedir,
             conditional=task.when,
             callbacks=self.runner_callbacks,
-            sudo=task.sudo,
-            sudo_user=task.sudo_user,
             transport=task.transport,
-            sudo_pass=task.sudo_pass,
             is_playbook=True,
             check=self.check,
             diff=self.diff,
@@ -416,13 +422,14 @@ class PlayBook(object):
             accelerate_port=task.play.accelerate_port,
             accelerate_ipv6=task.play.accelerate_ipv6,
             error_on_undefined_vars=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR,
-            su=task.su,
-            su_user=task.su_user,
-            su_pass=task.su_pass,
             vault_pass = self.vault_password,
             run_hosts=hosts,
             no_log=task.no_log,
             run_once=task.run_once,
+            become=task.become,
+            become_method=task.become_method,
+            become_user=task.become_user,
+            become_pass=task.become_pass,
         )
 
         runner.module_vars.update({'play_hosts': hosts})
@@ -463,18 +470,31 @@ class PlayBook(object):
         else:
             name = task.name
 
-        self.callbacks.on_task_start(template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False), is_handler)
+        try:
+            # v1 HACK: we don't have enough information to template many names
+            # at this point.  Rather than making this work for all cases in
+            # v1, just make this degrade gracefully.  Will fix in v2
+            name = template(play.basedir, name, task.module_vars, lookup_fatal=False, filter_fatal=False)
+        except:
+            pass
+
+        self.callbacks.on_task_start(name, is_handler)
         if hasattr(self.callbacks, 'skip_task') and self.callbacks.skip_task:
             ansible.callbacks.set_task(self.callbacks, None)
             ansible.callbacks.set_task(self.runner_callbacks, None)
             return True
 
         # template ignore_errors
+        # TODO: Is this needed here?  cond is templated again in
+        # check_conditional after some more manipulations.
+        # TODO: we don't have enough information here to template cond either
+        # (see note on templating name above)
         cond = template(play.basedir, task.ignore_errors, task.module_vars, expand_lists=False)
         task.ignore_errors =  utils.check_conditional(cond, play.basedir, task.module_vars, fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR)
 
         # load up an appropriate ansible runner to run the task in parallel
-        results = self._run_task_internal(task)
+        include_failed = is_handler and play.force_handlers
+        results = self._run_task_internal(task, include_failed=include_failed)
 
         # if no hosts are matched, carry on
         hosts_remaining = True
@@ -496,7 +516,7 @@ class PlayBook(object):
         def _save_play_facts(host, facts):
             # saves play facts in SETUP_CACHE, unless the module executed was
             # set_fact, in which case we add them to the VARS_CACHE
-            if task.module_name == 'set_fact':
+            if task.module_name in ('set_fact', 'include_vars'):
                 utils.update_hash(self.VARS_CACHE, host, facts)
             else:
                 utils.update_hash(self.SETUP_CACHE, host, facts)
@@ -591,16 +611,17 @@ class PlayBook(object):
             setup_cache=self.SETUP_CACHE,
             vars_cache=self.VARS_CACHE,
             callbacks=self.runner_callbacks,
-            sudo=play.sudo,
-            sudo_user=play.sudo_user,
-            sudo_pass=self.sudo_pass,
-            su=play.su,
-            su_user=play.su_user,
-            su_pass=self.su_pass,
+            become=play.become,
+            become_method=play.become_method,
+            become_user=play.become_user,
+            become_pass=self.become_pass,
             vault_pass=self.vault_password,
             transport=play.transport,
             is_playbook=True,
             module_vars=play.vars,
+            play_vars=play.vars,
+            play_file_vars=play.vars_file_vars,
+            role_vars=play.role_vars,
             default_vars=play.default_vars,
             check=self.check,
             diff=self.diff,
@@ -632,22 +653,77 @@ class PlayBook(object):
         buf = StringIO.StringIO()
         for x in replay_hosts:
             buf.write("%s\n" % x)
-        basedir = self.inventory.basedir()
+        basedir = C.shell_expand_path(C.RETRY_FILES_SAVE_PATH)
         filename = "%s.retry" % os.path.basename(self.filename)
         filename = filename.replace(".yml","")
-        filename = os.path.join(os.path.expandvars('$HOME/'), filename)
+        filename = os.path.join(basedir, filename)
 
         try:
+            if not os.path.exists(basedir):
+                os.makedirs(basedir)
+
             fd = open(filename, 'w')
             fd.write(buf.getvalue())
             fd.close()
-            return filename
         except:
-            pass
-        return None
+            ansible.callbacks.display(
+                "\nERROR: could not create retry file. Check the value of \n"
+                + "the configuration variable 'retry_files_save_path' or set \n"
+                + "'retry_files_enabled' to False to avoid this message.\n",
+                color='red'
+            )
+            return None
+
+        return filename
 
     # *****************************************************
+    def tasks_to_run_in_play(self, play):
 
+        tasks = []
+
+        for task in play.tasks():
+            # only run the task if the requested tags match or has 'always' tag
+            u = set(['untagged'])
+            task_set = set(task.tags)
+
+            if 'always' in task.tags:
+                should_run = True
+            else:
+                if 'all' in self.only_tags:
+                    should_run = True
+                else:
+                    should_run = False
+                    if  'tagged' in self.only_tags:
+                        if task_set != u:
+                            should_run = True
+                    elif 'untagged' in self.only_tags:
+                        if task_set == u:
+                            should_run = True
+                    else:
+                        if task_set.intersection(self.only_tags):
+                            should_run = True
+
+            # Check for tags that we need to skip
+            if 'all' in self.skip_tags:
+                should_run = False
+            else:
+                if 'tagged' in self.skip_tags:
+                    if task_set != u:
+                        should_run = False
+                elif 'untagged' in self.skip_tags:
+                    if task_set == u:
+                        should_run = False
+                else:
+                    if should_run:
+                        if task_set.intersection(self.skip_tags):
+                            should_run = False
+
+            if should_run:
+                tasks.append(task)
+
+        return tasks
+
+    # *****************************************************
     def _run_play(self, play):
         ''' run a list of tasks for a given pattern, in order '''
 
@@ -700,7 +776,7 @@ class PlayBook(object):
             play._play_hosts = self._trim_unavailable_hosts(on_hosts)
             self.inventory.also_restrict_to(on_hosts)
 
-            for task in play.tasks():
+            for task in self.tasks_to_run_in_play(play):
 
                 if task.meta is not None:
                     # meta tasks can force handlers to run mid-play
@@ -710,27 +786,11 @@ class PlayBook(object):
                     # skip calling the handler till the play is finished
                     continue
 
-                # only run the task if the requested tags match
-                should_run = False
-                for x in self.only_tags:
-
-                    for y in task.tags:
-                        if x == y:
-                            should_run = True
-                            break
-
-                # Check for tags that we need to skip
-                if should_run:
-                    if any(x in task.tags for x in self.skip_tags):
-                        should_run = False
-
-                if should_run:
-
-                    if not self._run_task(play, task, False):
-                        # whether no hosts matched is fatal or not depends if it was on the initial step.
-                        # if we got exactly no hosts on the first step (setup!) then the host group
-                        # just didn't match anything and that's ok
-                        return False
+                if not self._run_task(play, task, False):
+                    # whether no hosts matched is fatal or not depends if it was on the initial step.
+                    # if we got exactly no hosts on the first step (setup!) then the host group
+                    # just didn't match anything and that's ok
+                    return False
 
                 # Get a new list of what hosts are left as available, the ones that
                 # did not go fail/dark during the task
@@ -752,7 +812,7 @@ class PlayBook(object):
 
                 # if no hosts remain, drop out
                 if not host_list:
-                    if self.force_handlers:
+                    if play.force_handlers:
                         task_errors = True
                         break
                     else:
@@ -762,7 +822,7 @@ class PlayBook(object):
             # lift restrictions after each play finishes
             self.inventory.lift_also_restriction()
 
-            if task_errors and not self.force_handlers:
+            if task_errors and not play.force_handlers:
                 # if there were failed tasks and handler execution
                 # is not forced, quit the play with an error
                 return False
@@ -797,7 +857,7 @@ class PlayBook(object):
                             play.max_fail_pct = 0
                         if (hosts_count - len(host_list)) > int((play.max_fail_pct)/100.0 * hosts_count):
                             host_list = None
-                        if not host_list and not self.force_handlers:
+                        if not host_list and not play.force_handlers:
                             self.callbacks.on_no_hosts_remaining()
                             return False
 

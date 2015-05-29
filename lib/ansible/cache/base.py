@@ -36,3 +36,6 @@ class BaseCacheModule(object):
 
     def flush(self):
         raise exceptions.NotImplementedError
+
+    def copy(self):
+        raise exceptions.NotImplementedError

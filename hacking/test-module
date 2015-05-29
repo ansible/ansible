@@ -58,7 +58,7 @@ def parse():
     parser.add_option('-D', '--debugger', dest='debugger', 
         help="path to python debugger (e.g. /usr/bin/pdb)")
     parser.add_option('-I', '--interpreter', dest='interpreter',
-        help="path to interpeter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
+        help="path to interpreter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
         metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
     parser.add_option('-c', '--check', dest='check', action='store_true',
         help="run the module in check mode")
@@ -104,7 +104,7 @@ def boilerplate_module(modfile, args, interpreter, check):
     inject = {}
     if interpreter:
         if '=' not in interpreter:
-            print 'interpeter must by in the form of ansible_python_interpreter=/usr/bin/python'
+            print 'interpreter must by in the form of ansible_python_interpreter=/usr/bin/python'
             sys.exit(1)
         interpreter_type, interpreter_path = interpreter.split('=')
         if not interpreter_type.startswith('ansible_'):

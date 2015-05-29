@@ -122,6 +122,10 @@ Further limits the selected host/group patterns.
 
 Further limits hosts with a regex pattern.
 
+*--list-hosts*::
+
+Outputs a list of matching hosts; does not execute anything else.
+
 INVENTORY
 ---------
 
@@ -149,7 +153,7 @@ ENVIRONMENT
 
 The following environment variables may be specified.
 
-ANSIBLE_HOSTS  -- Override the default ansible hosts file
+ANSIBLE_INVENTORY  -- Override the default ansible inventory file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
 
