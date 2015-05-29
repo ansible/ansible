@@ -331,6 +331,11 @@ hypervisor:
   returned: success
   type: string
   sample: KVM
+instance_name:
+  description: Internal name of the instance (ROOT admin only).
+  returned: success
+  type: string
+  sample: i-44-3992-VM
 '''
 
 import base64
@@ -719,6 +724,8 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 self.result['project'] = instance['project']
             if 'hypervisor' in instance:
                 self.result['hypervisor'] = instance['hypervisor']
+            if 'instancename' in instance:
+                self.result['instance_name'] = instance['instancename']
             if 'publicip' in instance:
                 self.result['public_ip'] = instance['public_ip']
             if 'passwordenabled' in instance:
