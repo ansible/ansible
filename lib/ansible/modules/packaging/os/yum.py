@@ -30,7 +30,6 @@ import syslog
 import platform
 import tempfile
 import shutil
-from ansible.module_utils.urls import *
 from distutils.version import LooseVersion
 
 try:
@@ -891,5 +890,7 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.urls import *
+if __name__ == '__main__':
+    main()
 
