@@ -82,10 +82,10 @@ def _write_structured_data(basedir, basename, data):
     if not os.path.exists(basedir):
         os.makedirs(basedir)
     file_path = os.path.join(basedir, "{0}.json".format(basename))
-    with os.fdopen(
-            os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o600),
-            'w') as out_file:
-        out_file.write(json.dumps(data).encode('utf8'))
+    out_file = os.fdopen(
+        os.open(file_path, os.O_CREAT | os.O_WRONLY, 0o600), 'w')
+    out_file.write(json.dumps(data).encode('utf8'))
+    out_file.close()
 
 
 def main():
@@ -116,7 +116,7 @@ def main():
         if not os.path.exists(p['manifest']):
             module.fail_json(
                 msg="Manifest file %(manifest)s not found." % dict(
-                    manifest=p['manifest'])
+                    manifest=p['manifest']))
 
     # Check if puppet is disabled here
     if p['puppetmaster']:
@@ -149,8 +149,8 @@ def main():
             cmd += " --show-diff"
     else:
         cmd = ("%(base_cmd) apply --detailed-exitcodes %(manifest)s" % dict(
-                   base_cmd=base_cmd,
-                   manifest=pipes.quote(p['manifest']))
+               base_cmd=base_cmd,
+               manifest=pipes.quote(p['manifest'])))
     rc, stdout, stderr = module.run_command(cmd)
 
     if rc == 0:
