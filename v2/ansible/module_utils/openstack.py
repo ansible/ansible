@@ -93,11 +93,7 @@ def openstack_full_argument_spec(**kwargs):
 
 
 def openstack_module_kwargs(**kwargs):
-    ret = dict(
-        required_one_of=[
-            ['cloud', 'auth'],
-        ],
-    )
+    ret = {}
     for key in ('mutually_exclusive', 'required_together', 'required_one_of'):
         if key in kwargs:
             if key in ret:
