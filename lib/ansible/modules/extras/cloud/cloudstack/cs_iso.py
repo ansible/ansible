@@ -120,7 +120,7 @@ EXAMPLES = '''
     module: cs_iso
     name: Debian 7 64-bit
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
-    os_type:    
+    os_type: Debian GNU/Linux 7(64-bit)
     checksum: 0b31bccccb048d20b551f70830bb7ad0
 
 # Remove an ISO by name
