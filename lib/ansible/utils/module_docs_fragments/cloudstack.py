@@ -27,32 +27,29 @@ options:
       - API key of the CloudStack API.
     required: false
     default: null
-    aliases: []
   api_secret:
     description:
       - Secret key of the CloudStack API.
     required: false
     default: null
-    aliases: []
   api_url:
     description:
       - URL of the CloudStack API e.g. https://cloud.example.com/client/api.
     required: false
     default: null
-    aliases: []
   api_http_method:
     description:
       - HTTP method used.
     required: false
     default: 'get'
-    aliases: []
+    choices: [ 'get', 'post' ]
 requirements:
   - "python >= 2.6"
   - cs
 notes:
   - Ansible uses the C(cs) library's configuration method if credentials are not
     provided by the options C(api_url), C(api_key), C(api_secret).
-    Configuration is read from several locations, in the following order":"
+    Configuration is read from several locations, in the following order.
     - The C(CLOUDSTACK_ENDPOINT), C(CLOUDSTACK_KEY), C(CLOUDSTACK_SECRET) and
       C(CLOUDSTACK_METHOD) environment variables.
     - A C(CLOUDSTACK_CONFIG) environment variable pointing to an C(.ini) file,
