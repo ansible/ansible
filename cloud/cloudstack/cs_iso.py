@@ -116,7 +116,6 @@ EXAMPLES = '''
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: Debian GNU/Linux 7(64-bit)
 
-
 # Register an ISO with given name if ISO md5 checksum does not already exist.
 - local_action:
     module: cs_iso
@@ -125,13 +124,11 @@ EXAMPLES = '''
     os_type:    
     checksum: 0b31bccccb048d20b551f70830bb7ad0
 
-
 # Remove an ISO by name
 - local_action:
     module: cs_iso
     name: Debian 7 64-bit
     state: absent
-
 
 # Remove an ISO by checksum
 - local_action:
@@ -331,7 +328,7 @@ def main():
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
             api_timeout = dict(type='int', default=10),
         ),
         required_together = (
