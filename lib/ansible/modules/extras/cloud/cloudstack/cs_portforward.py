@@ -402,7 +402,7 @@ def main():
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
             api_timeout = dict(type='int', default=10),
         ),
         required_together = (
