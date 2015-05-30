@@ -65,6 +65,13 @@ options:
     required: false
     type: "int"
     default: "0"
+  backup_copy:
+    description:
+      - passes --backup --version-control=numbered to patch, 
+        producing numbered backup copies
+    required: false
+    type: "bool"
+    default: "False"
 note:
   - This module requires GNU I(patch) utility to be installed on the remote host.
 '''
@@ -101,7 +108,7 @@ def is_already_applied(patch_func, patch_file, basedir, dest_file=None, strip=0)
     return rc == 0
 
 
-def apply_patch(patch_func, patch_file, basedir, dest_file=None, strip=0, dry_run=False):
+def apply_patch(patch_func, patch_file, basedir, dest_file=None, strip=0, dry_run=False, backup=False):
     opts = ['--quiet', '--forward', '--batch', '--reject-file=-',
             "--strip=%s" % strip, "--directory='%s'" % basedir,
             "--input='%s'" % patch_file]
@@ -109,6 +116,8 @@ def apply_patch(patch_func, patch_file, basedir, dest_file=None, strip=0, dry_ru
         opts.append('--dry-run')
     if dest_file:
         opts.append("'%s'" % dest_file)
+    if backup:
+        opts.append('--backup --version-control=numbered')
 
     (rc, out, err) = patch_func(opts)
     if rc != 0:
@@ -124,6 +133,8 @@ def main():
             'basedir': {},
             'strip':   {'default': 0, 'type': 'int'},
             'remote_src': {'default': False, 'type': 'bool'},
+            # don't call it "backup" since the semantics differs from the default one
+            'backup_copy': { 'default': False, 'type': 'bool' }
         },
         required_one_of=[['dest', 'basedir']],
         supports_check_mode=True
@@ -156,8 +167,8 @@ def main():
     changed = False
     if not is_already_applied(patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip):
         try:
-            apply_patch(patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip,
-                        dry_run=module.check_mode)
+            apply_patch( patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip,
+                         dry_run=module.check_mode, backup=p.backup_copy )
             changed = True
         except PatchError, e:
             module.fail_json(msg=str(e))
