@@ -20,7 +20,7 @@
 DOCUMENTATION = """
 module: consul
 short_description: "Add, modify & delete services within a consul cluster.
-  See http://conul.io for more details."
+  See http://consul.io for more details."
 description:
  - registers services and checks for an agent with a consul cluster. A service
    is some process running on the agent node that should be advertised by
