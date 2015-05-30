@@ -156,7 +156,7 @@ options:
     description:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
     required: false
-    default: true
+    default: false
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
