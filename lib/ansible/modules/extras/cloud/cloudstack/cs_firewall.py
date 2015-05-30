@@ -420,6 +420,7 @@ def main():
             api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
             api_http_method = dict(default='get'),
+            api_timeout = dict(type='int', default=10),
         ),
         required_one_of = (
             ['ip_address', 'network'],
