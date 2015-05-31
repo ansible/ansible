@@ -211,7 +211,7 @@ def main():
                     module.fail_json(msg="Refuse to remove non-empty volume group %s without force=yes"%(vg))
 
         ### resize VG
-        current_devs = [ pv['name'] for pv in pvs if pv['vg_name'] == vg ]
+        current_devs = [ os.path.realpath(pv['name']) for pv in pvs if pv['vg_name'] == vg ]
         devs_to_remove = list(set(current_devs) - set(dev_list))
         devs_to_add = list(set(dev_list) - set(current_devs))
 
