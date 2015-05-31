@@ -32,6 +32,7 @@ options:
   src:
     description:
       - If copy=yes (default), local path to archive file to copy to the target server; can be absolute or relative. If copy=no, path on the target server to existing archive file to unpack.
+      - If copy=no and src contains ://, the remote machine will download the file from the url first. (version_added 2.0)
     required: true
     default: null
   dest:
@@ -81,6 +82,9 @@ EXAMPLES = '''
 
 # Unarchive a file that is already on the remote machine
 - unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=no
+
+# Unarchive a file that needs to be downloaded
+- unarchive: src=https://example.com/example.zip dest=/usr/local/bin copy=no
 '''
 
 import re
@@ -269,6 +273,25 @@ def main():
     if not os.path.exists(src):
         if copy:
             module.fail_json(msg="Source '%s' failed to transfer" % src)
+        # If copy=false, and src= contains ://, try and download the file to a temp directory.
+        elif '://' in src:
+            tempdir = os.path.dirname(__file__)
+            package = os.path.join(tempdir, str(src.rsplit('/', 1)[1]))
+            try:
+                rsp, info = fetch_url(module, src)
+                f = open(package, 'w')
+                # Read 1kb at a time to save on ram
+                while True:
+                    data = rsp.read(1024)
+
+                    if data == "":
+                        break # End of file, break while loop
+
+                    f.write(data)
+                f.close()
+                src = package
+            except Exception, e:
+                module.fail_json(msg="Failure downloading %s, %s" % (src, e))
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
@@ -315,5 +338,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 if __name__ == '__main__':
     main()
