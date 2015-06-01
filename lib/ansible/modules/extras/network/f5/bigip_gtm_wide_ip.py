@@ -24,7 +24,7 @@ module: bigip_gtm_wide_ip
 short_description: "Manages F5 BIG-IP GTM wide ip"
 description:
     - "Manages F5 BIG-IP GTM wide ip"
-version_added: "1.9"
+version_added: "2.0"
 author: 'Michael Perzel'
 notes:
     - "Requires BIG-IP software version >= 11.4"
@@ -39,23 +39,14 @@ options:
         description:
             - BIG-IP host
         required: true
-        default: null
-        choices: []
-        aliases: []
     user:
         description:
             - BIG-IP username
         required: true
-        default: null
-        choices: []
-        aliases: []
     password:
         description:
             - BIG-IP password
         required: true
-        default: null
-        choices: []
-        aliases: []
     lb_method:
         description:
             - LB method of wide ip
@@ -65,13 +56,10 @@ options:
                       'vs_capacity', 'least_conn', 'lowest_rtt', 'lowest_hops',
                       'packet_rate', 'cpu', 'hit_ratio', 'qos', 'bps',
                       'drop_packet', 'explicit_ip', 'connection_rate', 'vs_score']
-        aliases: []
     wide_ip:
         description:
             - Wide IP name
         required: true
-        default: null
-        aliases: []
 '''
 
 EXAMPLES = '''
