@@ -764,7 +764,18 @@ def execute_install(args, options, parser):
     if role_file:
         f = open(role_file, 'r')
         if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-            roles_left = map(ansible.utils.role_yaml_parse, yaml.safe_load(f))
+            roles_left = []
+            role_content = yaml.safe_load(f)
+            for role in role_content:
+                if not 'include' in role:
+                    # NOTE: classic role parsing.
+                    roles_left.append(ansible.utils.role_yaml_parse(role=role))
+                else:
+                    # NOTE: open the new role file and parse it.
+                    with open(role['include']) as f_include:
+                        roles_included = map(ansible.utils.role_yaml_parse,
+                            yaml.safe_load(f_include))
+                        roles_left += roles_included
         else:
             # roles listed in a file, one per line
             roles_left = map(ansible.utils.role_spec_parse, f.readlines())
