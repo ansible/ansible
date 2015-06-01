@@ -135,7 +135,7 @@ class RoleRequirement(RoleDefinition):
         role_spec = role_spec.strip()
         role_version = ''
         if role_spec == "" or role_spec.startswith("#"):
-            return (None, None, None, None)
+            return None
 
         tokens = [s.strip() for s in role_spec.split(',')]
 

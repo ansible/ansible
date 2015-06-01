@@ -848,6 +848,16 @@ class TestUtils(unittest.TestCase):
                     'version' : '', 
                     'name' : 'master'
                 }
+            ),
+            (
+                # test comment
+                "# this is a comment",
+                None
+            ),
+            (
+                # test blank line
+                "",
+                None
             )
             ]
         for (spec, result) in tests:
