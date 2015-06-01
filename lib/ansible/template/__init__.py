@@ -238,14 +238,6 @@ class Templar:
             environment.filters.update(self._get_filters())
             environment.template_class = AnsibleJ2Template
 
-            # FIXME: may not be required anymore, as the basedir stuff will
-            #        be handled by the loader?
-            #if '_original_file' in vars:
-            #    basedir = os.path.dirname(vars['_original_file'])
-            #    filesdir = os.path.abspath(os.path.join(basedir, '..', 'files'))
-            #    if os.path.exists(filesdir):
-            #        basedir = filesdir
-
             try:
                 t = environment.from_string(data)
             except TemplateSyntaxError, e:

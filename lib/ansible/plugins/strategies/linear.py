@@ -211,7 +211,7 @@ class StrategyModule(StrategyBase):
                 try:
                     included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator, loader=self._loader)
                 except AnsibleError, e:
-                    return 1
+                    return False
 
                 if len(included_files) > 0:
                     noop_task = Task()
@@ -252,7 +252,7 @@ class StrategyModule(StrategyBase):
             except (IOError, EOFError), e:
                 debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
-                return 1
+                return False
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
