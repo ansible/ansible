@@ -261,7 +261,7 @@ def api_get_config(api_server):
     except:
         return None
 
-def api_lookup_role_by_name(api_server, role_name, notify=True):
+def api_lookup_role_by_name(api_server, role_name, parser, notify=True):
     """
     Uses the Galaxy API to do a lookup on the role owner/name.
     """
@@ -416,7 +416,7 @@ def get_role_metadata(role_name, options):
         else:
             return None
     except:
-        return None    
+        return None
 
 def get_galaxy_install_info(role_name, options):
     """
@@ -434,7 +434,7 @@ def get_galaxy_install_info(role_name, options):
         else:
             return None
     except:
-        return None    
+        return None
 
 def write_galaxy_install_info(role_name, role_version, options):
     """
@@ -703,7 +703,8 @@ def execute_info(args, options, parser):
                 del install_info['version']
             role_info.update(install_info)
 
-        remote_data = api_lookup_role_by_name(api_server, role, False)
+        remote_data = api_lookup_role_by_name(api_server=api_server, role_name=role,
+                                              parser=parser, notify=False)
         if remote_data:
             role_info.update(remote_data)
 
@@ -804,7 +805,8 @@ def execute_install(args, options, parser):
                     print "- the API server (%s) is not responding, please try again later." % api_server
                     sys.exit(1)
 
-                role_data = api_lookup_role_by_name(api_server, role_src)
+                role_data = api_lookup_role_by_name(api_server=api_server, role_name=role_src,
+                                                    parser=parser)
                 if not role_data:
                     print "- sorry, %s was not found on %s." % (role_src, api_server)
                     exit_without_ignore(options)
