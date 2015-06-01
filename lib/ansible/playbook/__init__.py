@@ -105,17 +105,17 @@ class PlayBook(object):
         self.SETUP_CACHE = SETUP_CACHE
         self.VARS_CACHE  = VARS_CACHE
 
-        arguments = []
+        missing_arguments = []
         if playbook is None:
-            arguments.append('playbook')
+            missing_arguments.append('playbook')
         if callbacks is None:
-            arguments.append('callbacks')
+            missing_arguments.append('callbacks')
         if runner_callbacks is None:
-            arguments.append('runner_callbacks')
+            missing_arguments.append('runner_callbacks')
         if stats is None:
-            arguments.append('stats')
-        if arguments:
-            raise Exception('PlayBook missing required arguments: %s' % ', '.join(arguments))
+            missing_arguments.append('stats')
+        if missing_arguments:
+            raise Exception('PlayBook missing required arguments: %s' % ', '.join(missing_arguments))
 
         if extra_vars is None:
             extra_vars = {}
