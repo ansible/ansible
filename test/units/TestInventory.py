@@ -14,6 +14,7 @@ class TestInventory(unittest.TestCase):
 
         self.inventory_file             = os.path.join(self.test_dir, 'simple_hosts')
         self.large_range_inventory_file = os.path.join(self.test_dir, 'large_range')
+        self.huge_range_inventory_file  = os.path.join(self.test_dir, 'huge_range')
         self.complex_inventory_file     = os.path.join(self.test_dir, 'complex_hosts')
         self.inventory_script           = os.path.join(self.test_dir, 'inventory_api.py')
         self.inventory_dir              = os.path.join(self.test_dir, 'inventory_dir')
@@ -39,6 +40,9 @@ class TestInventory(unittest.TestCase):
 
     def large_range_inventory(self):
         return Inventory(self.large_range_inventory_file)
+
+    def huge_range_inventory(self):
+        return Inventory(self.huge_range_inventory_file)
 
     def script_inventory(self):
         return Inventory(self.inventory_script)
@@ -201,6 +205,11 @@ class TestInventory(unittest.TestCase):
         inventory = self.large_range_inventory()
         hosts = inventory.list_hosts()
         self.assertEqual(sorted(hosts),  sorted('bob%03i' %i  for i in range(0, 143)))
+
+    def test_huge_range(self):
+        inventory = self.huge_range_inventory()
+        hosts = inventory.list_hosts()
+        self.assertEqual(sorted(hosts),  sorted('bob%04i' %i  for i in range(0, 10000)))
 
     def test_subset(self):
         inventory = self.simple_inventory()
