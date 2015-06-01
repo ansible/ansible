@@ -24,43 +24,30 @@ module: os_client_config
 short_description: Get OpenStack Client config
 description:
   - Get I(openstack) client config data from clouds.yaml or environment
-options:
-   regions:
-     description:
-        - Include regions in the returned data
-     required: false
-     default: 'yes'
 version_added: "2.0"
 requirements: [ os-client-config ]
 author: Monty Taylor
 '''
 
 EXAMPLES = '''
-# Inject facts about OpenStack clouds
-- os-client-config
+# Get list of clouds that do not support security groups
+- os-client-config:
+- debug: var={{ item }}
+  with_items: "{{ openstack.clouds|rejectattr('secgroup_source', 'none')|list() }}"
 '''
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            regions = dict(default=True, required=False, type='bool'),
-            action  = dict(default='list', choices=['list']),
-        ),
-    )
+    module = AnsibleModule()
     p = module.params
 
     try:
         config = os_client_config.OpenStackConfig()
-        clouds = {}
+        clouds = []
         for cloud in config.get_all_clouds():
-            if p['regions']:
-                cloud_region = clouds.get(cloud.name, {})
-                cloud_region[cloud.region] = cloud.config
-                clouds[cloud.name] = cloud_region
-            else:
-                clouds[cloud.name] = cloud.config
-        module.exit_json(clouds=clouds)
+            cloud.config['name'] = cloud.name
+            clouds.append(cloud.config)
+        module.exit_json(ansible_facts=dict(openstack=dict(clouds=clouds)))
     except exceptions.OpenStackConfigException as e:
         module.fail_json(msg=str(e)) 
 
