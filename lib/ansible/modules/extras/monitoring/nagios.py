@@ -30,6 +30,7 @@ options:
   action:
     description:
       - Action to take.
+      - servicegroup options were added in 2.0.
     required: true
     default: null
     choices: [ "downtime", "enable_alerts", "disable_alerts", "silence", "unsilence",
@@ -72,6 +73,7 @@ options:
     required: true
     default: null
   servicegroup:
+    version_added: "2.0"
     description:
       - the Servicegroup we want to set downtimes/alerts for.
       B(Required) option when using the C(servicegroup_service_downtime) amd C(servicegroup_host_downtime).
