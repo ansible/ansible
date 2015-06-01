@@ -383,9 +383,7 @@ EXAMPLES = """
 try:
     import lxc
 except ImportError:
-    msg = 'The lxc module is not importable. Check the requirements.'
-    print("failed=True msg='%s'" % msg)
-    raise SystemExit(msg)
+    HAS_LXC = False
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating
@@ -1705,6 +1703,11 @@ def main():
         ),
         supports_check_mode=False,
     )
+
+    if not HAS_LXC:
+        module.fail_json(
+            msg='The `lxc` module is not importable. Check the requirements.'
+        )
 
     lv_name = module.params.get('lv_name')
     if not lv_name:
