@@ -142,11 +142,11 @@ class Inventory(object):
 
         # get group vars from group_vars/ files and vars plugins
         for group in self.groups:
-            group.vars = utils.combine_vars(group.vars, self.get_group_variables(group.name, vault_password=self._vault_password))
+            group.vars = utils.combine_vars(self.get_group_variables(group.name, vault_password=self._vault_password), group.vars)
 
         # get host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
-            host.vars = utils.combine_vars(host.vars, self.get_host_variables(host.name, vault_password=self._vault_password))
+            host.vars = utils.combine_vars(self.get_host_variables(host.name, vault_password=self._vault_password), host.vars)
 
 
     def _match(self, str, pattern_str):
@@ -588,10 +588,10 @@ class Inventory(object):
             self._playbook_basedir = dir
             # get group vars from group_vars/ files
             for group in self.groups:
-                group.vars = utils.combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
+                group.vars = utils.combine_vars(self.get_group_vars(group, new_pb_basedir=True), group.vars)
             # get host vars from host_vars/ files
             for host in self.get_hosts():
-                host.vars = utils.combine_vars(host.vars, self.get_host_vars(host, new_pb_basedir=True))
+                host.vars = utils.combine_vars(self.get_host_vars(host, new_pb_basedir=True), host.vars)
             # invalidate cache
             self._vars_per_host = {}
             self._vars_per_group = {}
