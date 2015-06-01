@@ -33,7 +33,8 @@ options:
     required: true
     default: null
     choices: [ "downtime", "enable_alerts", "disable_alerts", "silence", "unsilence",
-               "silence_nagios", "unsilence_nagios", "command" ]
+               "silence_nagios", "unsilence_nagios", "command", "servicegroup_service_downtime",
+               "servicegroup_host_downtime" ]
   host:
     description:
       - Host to operate on in Nagios.
@@ -71,6 +72,10 @@ options:
     aliases: [ "service" ]
     required: true
     default: null
+  servicegroup:
+    description:
+      - the Servicegroup we want to set downtimes/alerts for.
+      B(Required) option when using the C(servicegroup_service_downtime) amd C(servicegroup_host_downtime).
   command:
     description:
       - The raw command to send to nagios, which
@@ -99,6 +104,12 @@ EXAMPLES = '''
 
 # schedule downtime for a few services
 - nagios: action=downtime services=frob,foobar,qeuz host={{ inventory_hostname }}
+
+# set 30 minutes downtime for all services in servicegroup foo
+- nagios: action=servicegroup_service_downtime minutes=30 servicegroup=foo host={{ inventory_hostname }}
+
+# set 30 minutes downtime for all host in servicegroup foo
+- nagios: action=servicegroup_host_downtime minutes=30 servicegroup=foo host={{ inventory_hostname }}
 
 # enable SMART disk alerts
 - nagios: action=enable_alerts service=smart host={{ inventory_hostname }}
@@ -179,7 +190,10 @@ def main():
         'silence_nagios',
         'unsilence_nagios',
         'command',
+        'servicegroup_host_downtime',
+        'servicegroup_service_downtime',
         ]
+
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -187,6 +201,7 @@ def main():
             author=dict(default='Ansible'),
             comment=dict(default='Scheduling downtime'),
             host=dict(required=False, default=None),
+            servicegroup=dict(required=False, default=None),
             minutes=dict(default=30),
             cmdfile=dict(default=which_cmdfile()),
             services=dict(default=None, aliases=['service']),
@@ -196,6 +211,7 @@ def main():
 
     action = module.params['action']
     host = module.params['host']
+    servicegroup = module.params['servicegroup']
     minutes = module.params['minutes']
     services = module.params['services']
     cmdfile = module.params['cmdfile']
@@ -220,6 +236,20 @@ def main():
         # Make sure there's an actual service selected
         if not services:
             module.fail_json(msg='no service selected to set downtime for')
+        # Make sure minutes is a number
+        try:
+            m = int(minutes)
+            if not isinstance(m, types.IntType):
+                module.fail_json(msg='minutes must be a number')
+        except Exception:
+            module.fail_json(msg='invalid entry for minutes')
+
+    ######################################################################
+
+    if action in ['servicegroup_service_downtime', 'servicegroup_host_downtime']:
+        # Make sure there's an actual servicegroup selected
+        if not servicegroup:
+            module.fail_json(msg='no servicegroup selected to set downtime for')
         # Make sure minutes is a number
         try:
             m = int(minutes)
@@ -271,6 +301,7 @@ class Nagios(object):
         self.author = kwargs['author']
         self.comment = kwargs['comment']
         self.host = kwargs['host']
+        self.servicegroup = kwargs['servicegroup']
         self.minutes = int(kwargs['minutes'])
         self.cmdfile = kwargs['cmdfile']
         self.command = kwargs['command']
@@ -862,6 +893,12 @@ class Nagios(object):
                 self.schedule_svc_downtime(self.host,
                                            services=self.services,
                                            minutes=self.minutes)
+        elif self.action == "servicegroup_host_downtime":
+            if self.servicegroup:
+                self.schedule_servicegroup_host_downtime(servicegroup = self.servicegroup, minutes = self.minutes)
+        elif self.action == "servicegroup_service_downtime":
+            if self.servicegroup:
+                self.schedule_servicegroup_svc_downtime(servicegroup = self.servicegroup, minutes = self.minutes)
 
         # toggle the host AND service alerts
         elif self.action == 'silence':
