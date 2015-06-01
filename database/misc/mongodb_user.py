@@ -87,6 +87,14 @@ options:
         required: false
         default: present
         choices: [ "present", "absent" ]
+    update_password:
+        required: false
+        default: always
+        choices: ['always', 'on_create']
+        version_added: "2.1"
+        description:
+          - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
+
 notes:
     - Requires the pymongo Python package on the remote host, version 2.4.2+. This
       can be installed using pip or the OS package manager. @see http://api.mongodb.org/python/current/installation.html
@@ -134,7 +142,15 @@ else:
 # MongoDB module specific support methods.
 #
 
+def user_find(client, user):
+    for mongo_user in client["admin"].system.users.find():
+        if mongo_user['user'] == user:
+            return mongo_user
+    return False
+
 def user_add(module, client, db_name, user, password, roles):
+    #pymono's user_add is a _create_or_update_user so we won't know if it was changed or updated
+    #without reproducing a lot of the logic in database.py of pymongo
     db = client[db_name]
     if roles is None:
         db.add_user(user, password, False)
@@ -147,9 +163,13 @@ def user_add(module, client, db_name, user, password, roles):
                 err_msg = err_msg + ' (Note: you must be on mongodb 2.4+ and pymongo 2.5+ to use the roles param)'
             module.fail_json(msg=err_msg)
 
-def user_remove(client, db_name, user):
-    db = client[db_name]
-    db.remove_user(user)
+def user_remove(module, client, db_name, user):
+    exists = user_find(client, user)
+    if exists:
+        db = client[db_name]
+        db.remove_user(user)
+    else:
+        module.exit_json(changed=False, user=user)
 
 def load_mongocnf():
     config = ConfigParser.RawConfigParser()
@@ -184,6 +204,7 @@ def main():
             ssl=dict(default=False),
             roles=dict(default=None, type='list'),
             state=dict(default='present', choices=['absent', 'present']),
+            update_password=dict(default="always", choices=["always", "on_create"]),
         )
     )
 
@@ -201,6 +222,7 @@ def main():
     ssl = module.params['ssl']
     roles = module.params['roles']
     state = module.params['state']
+    update_password = module.params['update_password']
 
     try:
     	if replica_set:
@@ -208,32 +230,30 @@ def main():
     	else:
     	   client = MongoClient(login_host, int(login_port), ssl=ssl)
 
-        # try to authenticate as a target user to check if it already exists
-        try:
-           client[db_name].authenticate(user, password)
-           if state == 'present':
-              module.exit_json(changed=False, user=user)
-        except OperationFailure:
-           if state == 'absent':
-              module.exit_json(changed=False, user=user)
-
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
             if mongocnf_creds is not False:
                 login_user = mongocnf_creds['user']
                 login_password = mongocnf_creds['password']
-        elif login_password is None and login_user is not None:
+        elif login_password is None or login_user is None:
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
         if login_user is not None and login_password is not None:
             client.admin.authenticate(login_user, login_password)
+        elif LooseVersion(PyMongoVersion) >= LooseVersion('3.0'):
+            if db_name != "admin":
+                module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
+            #else: this has to be the first admin user added
 
     except ConnectionFailure, e:
         module.fail_json(msg='unable to connect to database: %s' % str(e))
 
     if state == 'present':
-        if password is None:
-            module.fail_json(msg='password parameter required when adding a user')
+        if password is None and update_password == 'always':
+            module.fail_json(msg='password parameter required when adding a user unless update_password is set to on_create')
+
+        if update_password != 'always' and user_find(client, user):
+            password = None
 
         try:
             user_add(module, client, db_name, user, password, roles)
@@ -242,7 +262,7 @@ def main():
 
     elif state == 'absent':
         try:
-            user_remove(client, db_name, user)
+            user_remove(module, client, db_name, user)
         except OperationFailure, e:
             module.fail_json(msg='Unable to remove user: %s' % str(e))
 
