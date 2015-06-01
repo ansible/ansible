@@ -71,6 +71,10 @@ class Connection(object):
                                  "-o", "ControlPersist=60s",
                                  "-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
 
+        self.ssh_specific_args = []
+        if C.ANSIBLE_SSH_SPECIFIC_ARGS:
+            self.ssh_specific_args += shlex.split(C.ANSIBLE_SSH_SPECIFIC_ARGS)
+
         cp_in_use = False
         cp_path_set = False
         for arg in self.common_args:
@@ -277,6 +281,8 @@ class Connection(object):
             else:
                 ssh_cmd += ["-v"]
         ssh_cmd += self.common_args
+
+        ssh_cmd += self.ssh_specific_args
 
         if self.ipv6:
             ssh_cmd += ['-6']
