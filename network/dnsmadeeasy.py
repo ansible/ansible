@@ -134,6 +134,7 @@ class DME2:
         self.domain_map = None      # ["domain_name"] => ID
         self.record_map = None      # ["record_name"] => ID
         self.records = None         # ["record_ID"] => <record>
+        self.all_records = None
 
         # Lookup the domain ID if passed as a domain name vs. ID
         if not self.domain.isdigit():
@@ -191,11 +192,33 @@ class DME2:
 
         return self.records.get(record_id, False)
 
-    def getRecordByName(self, record_name):
-        if not self.record_map:
-            self._instMap('record')
+    # Try to find a single record matching this one.
+    # How we do this depends on the type of record. For instance, there
+    # can be several MX records for a single record_name while there can
+    # only be a single CNAME for a particular record_name. Note also that
+    # there can be several records with different types for a single name.
+    def getMatchingRecord(self, record_name, record_type, record_value):
+        # Get all the records if not already cached
+        if not self.all_records:
+            self.all_records = self.getRecords()
 
-        return self.getRecord(self.record_map.get(record_name, 0))
+        # TODO SRV type not yet implemented
+        if record_type in ["A", "AAAA", "CNAME", "HTTPRED", "PTR"]:
+            for result in self.all_records:
+                if result['name'] == record_name and result['type'] == record_type:
+                    return result
+            return False
+        elif record_type in ["MX", "NS", "TXT"]:
+            for result in self.all_records:
+                if record_type == "MX":
+                    value = record_value.split(" ")[1]
+                else:
+                    value = record_value
+                if result['name'] == record_name and result['type'] == record_type and result['value'] == value:
+                    return result
+            return False
+        else:
+            raise Exception('record_type not yet supported')
 
     def getRecords(self):
         return self.query(self.record_url, 'GET')['data']
@@ -262,9 +285,11 @@ def main():
                "account_secret"], module.params["domain"], module)
     state = module.params["state"]
     record_name = module.params["record_name"]
+    record_type = module.params["record_type"]
+    record_value = module.params["record_value"]
 
     # Follow Keyword Controlled Behavior
-    if not record_name:
+    if record_name is None:
         domain_records = DME.getRecords()
         if not domain_records:
             module.fail_json(
@@ -272,11 +297,15 @@ def main():
         module.exit_json(changed=False, result=domain_records)
 
     # Fetch existing record + Build new one
-    current_record = DME.getRecordByName(record_name)
+    current_record = DME.getMatchingRecord(record_name, record_type, record_value)
     new_record = {'name': record_name}
     for i in ["record_value", "record_type", "record_ttl"]:
-        if module.params[i]:
+        if not module.params[i] is None:
             new_record[i[len("record_"):]] = module.params[i]
+    # Special handling for mx record
+    if new_record["type"] == "MX":
+        new_record["mxLevel"] = new_record["value"].split(" ")[0]
+        new_record["value"] = new_record["value"].split(" ")[1]
 
     # Compare new record against existing one
     changed = False
@@ -292,7 +321,7 @@ def main():
         if not "value" in new_record:
             if not current_record:
                 module.fail_json(
-                    msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, domain))
+                    msg="A record with name '%s' does not exist for domain '%s.'" % (record_name, module.params['domain']))
             module.exit_json(changed=False, result=current_record)
 
         # create record as it does not exist
