@@ -1,0 +1,54 @@
+---
+- name: run notify with host vars
+  hosts: A:B
+  gather_facts: False
+  connection: local
+  tasks:
+    - name: notify with host vars
+      command: echo
+      notify: '{{handlers_list}}'
+  handlers:
+    - name: foo
+      command: echo
+    - name: bar
+      command: echo
+    - name: scalar
+      command: echo
+
+- name: run notify with play vars
+  hosts: A:B
+  vars:
+    handlers_list:
+      - play_foo
+  gather_facts: False
+  connection: local
+  tasks:
+    - name: notify with play vars
+      command: echo
+      notify: '{{handlers_list}}'
+  handlers:
+    - name: play_foo
+      command: echo
+
+- name: run notify with included vars
+  hosts: A:B
+  gather_facts: False
+  connection: local
+  tasks:
+    - include_vars: vars/test_notify_vars.yml
+    - name: notify with included vars
+      command: echo
+      notify: '{{handlers_list}}'
+  handlers:
+    - name: included_foo
+      command: echo
+
+- name: run notify with role default vars
+  hosts: C:D:E
+  gather_facts: False
+  connection: local
+  roles:
+    - role: test_notify
+  handlers:
+    - name: notify_host_c
+      command: echo
