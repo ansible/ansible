@@ -191,6 +191,8 @@ class Play(object):
 
         load_vars['role_names'] = ds.get('role_names', [])
 
+        load_vars['ansible_cmdline'] = " ".join(sys.argv)
+
         self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
         self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
 
