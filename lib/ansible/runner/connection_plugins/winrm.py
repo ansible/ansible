@@ -162,7 +162,9 @@ class Connection(object):
         except Exception, e:
             traceback.print_exc()
             raise errors.AnsibleError("failed to exec cmd %s" % cmd)
-        return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))
+        std_out = result.std_out.decode('cp437')
+        std_err = result.std_err.decode('cp437')
+        return (result.status_code, '', std_out, std_err)
 
     def put_file(self, in_path, out_path):
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
@@ -197,7 +199,7 @@ class Connection(object):
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
-                        raise IOError(result.std_err.encode('utf-8'))
+                        raise IOError(result.std_err.decode('cp437'))
                 except Exception:
                     traceback.print_exc()
                     raise errors.AnsibleError("failed to transfer file to %s" % out_path)
@@ -238,7 +240,7 @@ class Connection(object):
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
-                        raise IOError(result.std_err.encode('utf-8'))
+                        raise IOError(result.std_err.decode('cp437'))
                     if result.std_out.strip() == '[DIR]':
                         data = None
                     else:
