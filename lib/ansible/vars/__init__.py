@@ -124,7 +124,8 @@ class VariableManager:
 
         return result
 
-    def get_vars(self, loader, play=None, host=None, task=None, use_cache=True):
+    def get_vars(self, loader, play=None, host=None, task=None, use_cache=True,
+                 ignore_errors=True):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -193,10 +194,10 @@ class VariableManager:
                         data = dict()
                     all_vars = self._combine_vars(all_vars, data)
                 except:
-                    # FIXME: get_vars should probably be taking a flag to determine
-                    #        whether or not vars files errors should be fatal at this
-                    #        stage, or just base it on whether a host was specified?
-                    pass
+                    if ignore_errors:
+                        pass
+                    else:
+                        raise
             for role in play.get_roles():
                 all_vars = self._combine_vars(all_vars, role.get_vars())
 
