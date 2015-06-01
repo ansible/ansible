@@ -94,12 +94,16 @@ def lookup(name, *args, **kwargs):
     from ansible import utils
     instance = utils.plugins.lookup_loader.get(name.lower(), basedir=kwargs.get('basedir',None))
     tvars = kwargs.get('vars', None)
+    inject = dict()
+    if tvars is not None:
+        inject.update(tvars)
+    inject['_lookup_context'] = 'inline'
 
     wantlist = kwargs.pop('wantlist', False)
 
     if instance is not None:
         try:
-            ran = instance.run(*args, inject=tvars, **kwargs)
+            ran = instance.run(*args, inject=inject, **kwargs)
         except errors.AnsibleError:
             raise
         except jinja2.exceptions.UndefinedError, e:
