@@ -2400,7 +2400,13 @@ class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
         current_if['media'] = 'Unknown' # Mac does not give us this
         current_if['media_select'] = words[1]
         if len(words) > 2:
-            current_if['media_type'] = words[2][1:-1]
+            # MacOSX sets the media to '<unknown type>' for bridge interface
+            # and parsing splits this into two words; this if/else helps
+            if words[1] == '<unknown' and words[2] == 'type>':
+                current_if['media_select'] = 'Unknown'
+                current_if['media_type'] = 'unknown type'
+            else:
+                current_if['media_type'] = words[2][1:-1]
         if len(words) > 3:
             current_if['media_options'] = self.get_options(words[3])
 
