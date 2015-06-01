@@ -21,11 +21,11 @@
 # installs ansible and sets it up to run on cron.
 
 # usage:
-#   ansible-pull -d /var/lib/ansible \
-#                -U http://example.net/content.git [-C production] \
+#   ansible-pull -U http://example.net/content.git \
+#                [-d /var/lib/ansible] [-C production] \
 #                [path/playbook.yml]
 #
-# the -d and -U arguments are required; the -C argument is optional.
+# the -U argument is required; the -C and -d arguments are optional.
 #
 # ansible-pull accepts an optional argument to specify a playbook
 # location underneath the workdir and then searches the source repo
