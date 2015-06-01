@@ -142,7 +142,7 @@ class ModuleReplacer(object):
 
     # ******************************************************************************
 
-    def modify_module(self, module_path, complex_args, module_args, inject):
+    def modify_module(self, module_path, complex_args, module_args, check_interp, inject):
 
         with open(module_path) as f:
 
@@ -188,8 +188,24 @@ class ModuleReplacer(object):
                 interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
 
                 if interpreter_config in inject:
-                    interpreter = to_bytes(inject[interpreter_config], errors='strict')
-                    lines[0] = shebang = "#!%s %s" % (interpreter, " ".join(args[1:]))
+                    interp_list = to_bytes(inject[interpreter_config], errors='strict').split(',')
+                    interp = None
+                    fallback_interp = interp_list[0]
+
+                    # If more than a single interpreter is specified, check
+                    # each candidate value until a valid one is found.
+
+                    if len(interp_list) > 1 and check_interp is not None:
+                        try:
+                            while interp is None:
+                                candidate = interp_list.pop(0).strip()
+                                interp = check_interp(interpreter_config, candidate)
+                        except:
+                            interp = None
+
+                    if interp is None:
+                        interp = fallback_interp
+                    lines[0] = shebang = "#!%s %s" % (interp, " ".join(args[1:]))
                     module_data = "\n".join(lines)
 
             return (module_data, module_style, shebang)

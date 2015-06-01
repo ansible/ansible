@@ -463,7 +463,7 @@ class Runner(object):
         module_style,
         shebang,
         module_data
-        ) = self._configure_module(conn, module_name, args, inject, complex_args)
+        ) = self._configure_module(conn, tmp, module_name, args, inject, complex_args)
 
         # a remote tmp path may be necessary and not already created
         if self._late_needs_tmp_path(conn, tmp, module_style):
@@ -1273,6 +1273,21 @@ class Runner(object):
 
     # *****************************************************
 
+    def _remote_check_interp(self, conn, tmp, var, interp, inject):
+        ''' check whether interpreter interp is available, and if so return full path.
+            interp may be a full path or a base name.'''
+        cmd = conn.shell.check_interp(interp)
+        data = self._low_level_exec_command(conn, cmd, tmp, sudoable=True)
+        data2 = utils.last_non_blank_line(data['stdout'])
+        if 'NOTFOUND' in data2:
+            return None
+        else:
+            # Cache result in host vars cache
+            utils.update_hash(self.vars_cache, inject['inventory_hostname'], {var: data2})
+            return data2
+
+    # *****************************************************
+
     def _make_tmp_path(self, conn):
         ''' make and return a temporary path on a remote box '''
         basefile = 'ansible-tmp-%s-%s' % (time.time(), random.randint(0, 2**48))
@@ -1329,7 +1344,7 @@ class Runner(object):
         module_style,
         module_shebang,
         module_data
-        ) = self._configure_module(conn, module_name, module_args, inject, complex_args)
+        ) = self._configure_module(conn, tmp, module_name, module_args, inject, complex_args)
         module_remote_path = conn.shell.join_path(tmp, module_name)
 
         self._transfer_str(conn, tmp, module_name, module_data)
@@ -1338,7 +1353,7 @@ class Runner(object):
 
     # *****************************************************
 
-    def _configure_module(self, conn, module_name, module_args, inject, complex_args=None):
+    def _configure_module(self, conn, tmp, module_name, module_args, inject, complex_args=None):
         ''' find module and configure it '''
 
         # Search module path(s) for named module.
@@ -1354,7 +1369,9 @@ class Runner(object):
 
         # insert shared code and arguments into the module
         (module_data, module_style, module_shebang) = module_replacer.modify_module(
-            module_path, complex_args, module_args, inject
+            module_path, complex_args, module_args,
+            lambda lang, interp: self._remote_check_interp(conn, tmp, lang, interp, inject),
+            inject
         )
 
         return (module_style, module_shebang, module_data)

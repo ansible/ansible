@@ -47,6 +47,9 @@ class ShellModule(object):
         path = pipes.quote(path)
         return 'chmod %s %s' % (mode, path)
 
+    def check_interp(self, interp):
+        return '([ -x "%s" ] && echo "%s") || echo NOTFOUND' % (interp, interp)
+
     def remove(self, path, recurse=False):
         path = pipes.quote(path)
         if recurse:

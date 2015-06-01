@@ -46,7 +46,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         os.write(self.tmp_fd, TEST_MODULE_DATA)
 
         # template the module code and eval it
-        module_data, module_style, shebang = ModuleReplacer().modify_module(self.tmp_path, {}, "", {})
+        module_data, module_style, shebang = ModuleReplacer().modify_module(self.tmp_path, {}, "", None, {})
 
         d = {}
         exec(module_data, d, d)
@@ -230,7 +230,7 @@ class TestModuleUtilsBasicHelpers(unittest.TestCase):
         os.write(self.tmp_fd, TEST_MODULE_DATA)
 
         # template the module code and eval it
-        module_data, module_style, shebang = ModuleReplacer().modify_module(self.tmp_path, {}, "", {})
+        module_data, module_style, shebang = ModuleReplacer().modify_module(self.tmp_path, {}, "", None, {})
 
         d = {}
         exec(module_data, d, d)

@@ -222,7 +222,9 @@ mentioned::
       than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
       is not a 2.X series Python.  We do not use the "/usr/bin/env" mechanism as that requires the remote user's
       path to be set right and also assumes the "python" executable is named python, where the executable might
-      be named something like "python26".
+      be named something like "python26". This can be a comma-separated list of paths that will be tried
+      in turn until a valid executable is found. For example when managing a mix of Linux and \*BSD machines,
+      you can globally set "ansible_python_interpreter=/usr/local/bin/python,/usr/bin/python".
     ansible\_\*\_interpreter
       Works for anything such as ruby or perl and works just like ansible_python_interpreter.
       This replaces shebang of modules which will run on that host.
