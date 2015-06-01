@@ -102,7 +102,10 @@ class LookupModule(LookupBase):
                     try:
                         os.makedirs(pathdir, mode=0o700)
                     except OSError as e:
-                        raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
+                        # verify if the path was not created due to some race condition
+                        # https://github.com/ansible/ansible/issues/10784
+                        if e.errno != errno.EEXIST or os.stat(pathdir).st_mode != 0o700
+                            raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
                 chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
                 password = ''.join(random.choice(chars) for _ in range(length))
