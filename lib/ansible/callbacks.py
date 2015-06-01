@@ -434,8 +434,11 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             utils.write_tree_file(self.options.tree, host, utils.jsonify(result2,format=True))
 
     def on_file_diff(self, host, diff):
-        display(utils.get_diff(diff), runner=self.runner)
-        super(CliRunnerCallbacks, self).on_file_diff(host, diff)
+        if diff == {}:
+            pass
+        else:
+            display(utils.get_diff(diff), runner=self.runner)
+            super(CliRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
 
@@ -588,8 +591,11 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_async_failed(host,res,jid)
 
     def on_file_diff(self, host, diff):
-        display(utils.get_diff(diff), runner=self.runner)
-        super(PlaybookRunnerCallbacks, self).on_file_diff(host, diff)
+        if diff == {}:
+            pass
+        else:
+            display(utils.get_diff(diff), runner=self.runner)
+            super(PlaybookRunnerCallbacks, self).on_file_diff(host, diff)
 
 ########################################################################
 
