@@ -36,6 +36,7 @@ class LookupModule(object):
         self.basedir = basedir
         if 'runner' in kwargs:
             self.host_list = kwargs['runner'].inventory.host_list
+            self.vault_pass = kwargs['runner'].vault_pass
         else:
             raise errors.AnsibleError("inventory_hostnames must be used as a loop. Example: \"with_inventory_hostnames: \'all\'\"")
 
@@ -44,5 +45,5 @@ class LookupModule(object):
 
         if not isinstance(terms, list):
             raise errors.AnsibleError("with_inventory_hostnames expects a list")
-        return flatten(inventory.Inventory(self.host_list).list_hosts(terms))
+        return flatten(inventory.Inventory(self.host_list, vault_password=self.vault_pass).list_hosts(terms))
 
