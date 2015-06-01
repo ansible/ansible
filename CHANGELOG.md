@@ -11,7 +11,7 @@ Other Notable Changes:
 
 ## 1.9.2 "Dancing In the Street" - TBD
 
-* Security fix to get_url and uri modules to check that hostnames match certificates with https urls
+* Security fix to get_url and uri modules to check that hostnames match certificates with https urls (CVE-2015-3908)
 * Fixed a bug in the service module where init scripts were being incorrectly used instead of upstart/systemd.
 * Fixed a bug where sudo/su settings were not inherited from ansible.cfg correctly.
 * Fixed a bug in the rds module where a traceback may occur due to an unbound variable.
