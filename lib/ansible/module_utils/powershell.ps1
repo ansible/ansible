@@ -65,7 +65,7 @@ Function Exit-Json($obj)
         $obj = New-Object psobject
     }
 
-    echo $obj | ConvertTo-Json -Depth 99
+    echo $obj | ConvertTo-Json -Compress -Depth 99
     Exit
 }
 
@@ -89,7 +89,7 @@ Function Fail-Json($obj, $message = $null)
 
     Set-Attr $obj "msg" $message
     Set-Attr $obj "failed" $true
-    echo $obj | ConvertTo-Json -Depth 99
+    echo $obj | ConvertTo-Json -Compress -Depth 99
     Exit 1
 }
 

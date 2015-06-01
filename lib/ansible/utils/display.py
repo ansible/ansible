@@ -20,6 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import textwrap
+import os
+import random
+import subprocess
 import sys
 
 from ansible import constants as C
@@ -37,6 +40,31 @@ class Display:
         self._warns        = {}
         self._errors       = {}
 
+        self.cowsay = None
+        self.noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
+        self.set_cowsay_info()
+
+    def set_cowsay_info(self):
+
+        if not C.ANSIBLE_NOCOWS:
+            if os.path.exists("/usr/bin/cowsay"):
+                self.cowsay = "/usr/bin/cowsay"
+            elif os.path.exists("/usr/games/cowsay"):
+                self.cowsay = "/usr/games/cowsay"
+            elif os.path.exists("/usr/local/bin/cowsay"):
+                # BSD path for cowsay
+                self.cowsay = "/usr/local/bin/cowsay"
+            elif os.path.exists("/opt/local/bin/cowsay"):
+                # MacPorts path for cowsay
+                self.cowsay = "/opt/local/bin/cowsay"
+    
+            if self.cowsay and self.noncow == 'random':
+                cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (out, err) = cmd.communicate()
+                cows = out.split()
+                cows.append(False)
+                self.noncow = random.choice(cows)
+    
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         msg2 = msg
         if color:
@@ -125,12 +153,34 @@ class Display:
         Prints a header-looking line with stars taking up to 80 columns
         of width (3 columns, minimum)
         '''
+        if self.cowsay:
+            try:
+                self.banner_cowsay(msg)
+                return
+            except OSError:
+                # somebody cleverly deleted cowsay or something during the PB run.  heh.
+                pass
+
         msg = msg.strip()
         star_len = (80 - len(msg))
         if star_len < 0:
             star_len = 3
         stars = "*" * star_len
         self.display("\n%s %s" % (msg, stars), color=color)
+
+    def banner_cowsay(self, msg, color=None):
+        if ": [" in msg:
+            msg = msg.replace("[","")
+            if msg.endswith("]"):
+                msg = msg[:-1]
+        runcmd = [self.cowsay,"-W", "60"]
+        if self.noncow:
+            runcmd.append('-f')
+            runcmd.append(self.noncow)
+        runcmd.append(msg)
+        cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (out, err) = cmd.communicate()
+        self.display("%s\n" % out, color=color)
 
     def error(self, msg):
         new_msg = "\n[ERROR]: %s" % msg

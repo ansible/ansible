@@ -299,14 +299,17 @@ class TestStrategyBase(unittest.TestCase):
         mock_task._block = mock_block
         mock_task._role = None
 
+        mock_iterator = MagicMock()
+        mock_iterator.mark_host_failed.return_value = None
+
         mock_inc_file = MagicMock()
         mock_inc_file._task = mock_task
 
         mock_inc_file._filename = "test.yml"
-        res = strategy_base._load_included_file(included_file=mock_inc_file)
+        res = strategy_base._load_included_file(included_file=mock_inc_file, iterator=mock_iterator)
 
         mock_inc_file._filename = "bad.yml"
-        self.assertRaises(AnsibleParserError, strategy_base._load_included_file, included_file=mock_inc_file)
+        self.assertRaises(AnsibleParserError, strategy_base._load_included_file, included_file=mock_inc_file, iterator=mock_iterator)
 
     def test_strategy_base_run_handlers(self):
         workers = []

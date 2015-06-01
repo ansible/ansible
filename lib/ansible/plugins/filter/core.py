@@ -38,16 +38,21 @@ from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
 
 from ansible import errors
+from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap, to_unicode
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
-
-def to_nice_yaml(*a, **kw):
+def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
-    transformed = yaml.safe_dump(*a, indent=4, allow_unicode=True, default_flow_style=False, **kw)
+    transformed = yaml.dump(a, Dumper=AnsibleDumper, allow_unicode=True, **kw)
+    return to_unicode(transformed)
+
+def to_nice_yaml(a, *args, **kw):
+    '''Make verbose, human readable yaml'''
+    transformed = yaml.dump(a, Dumper=AnsibleDumper, indent=4, allow_unicode=True, default_flow_style=False, **kw)
     return to_unicode(transformed)
 
 def to_json(a, *args, **kw):
@@ -288,7 +293,7 @@ class FilterModule(object):
             'from_json': json.loads,
 
             # yaml
-            'to_yaml': yaml.safe_dump,
+            'to_yaml': to_yaml,
             'to_nice_yaml': to_nice_yaml,
             'from_yaml': yaml.safe_load,
 
