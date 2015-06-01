@@ -18,6 +18,7 @@
 
 - hosts: windows
   gather_facts: false
+  max_fail_percentage: 1
   roles: 
     - { role: test_win_raw, tags: test_win_raw }
     - { role: test_win_script, tags: test_win_script }
