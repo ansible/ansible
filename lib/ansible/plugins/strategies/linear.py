@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook.block import Block
+from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins import action_loader
 from ansible.plugins.strategies import StrategyBase
@@ -113,7 +114,6 @@ class StrategyModule(StrategyBase):
         # at this point, everything must be ITERATING_COMPLETE, so we
         # return None for all hosts in the list
         return [(host, None) for host in hosts]
-
 
     def run(self, iterator, connection_info):
         '''
@@ -208,61 +208,11 @@ class StrategyModule(StrategyBase):
                 results = self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
-                # FIXME: this needs to be somewhere else
-                class IncludedFile:
-                    def __init__(self, filename, args, task):
-                        self._filename = filename
-                        self._args     = args
-                        self._task     = task
-                        self._hosts    = []
-                    def add_host(self, host):
-                        if host not in self._hosts:
-                            self._hosts.append(host)
-                    def __eq__(self, other):
-                        return other._filename == self._filename and other._args == self._args
-                    def __repr__(self):
-                        return "%s (%s): %s" % (self._filename, self._args, self._hosts)
+                try:
+                    included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator, loader=self._loader)
+                except AnsibleError, e:
+                    return False
 
-                # FIXME: this should also be moved to the base class in a method
-                included_files = []
-                for res in host_results:
-                    if res._host in self._tqm._failed_hosts:
-                        return 1
-
-                    if res._task.action == 'include':
-                        if res._task.loop:
-                            include_results = res._result['results']
-                        else:
-                            include_results = [ res._result ]
-
-                        for include_result in include_results:
-                            # if the task result was skipped or failed, continue
-                            if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result:
-                                continue
-
-                            original_task = iterator.get_original_task(res._host, res._task)
-                            if original_task and original_task._role:
-                                include_file = self._loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_result['include'])
-                            else:
-                                include_file = self._loader.path_dwim(res._task.args.get('_raw_params'))
-
-                            include_variables = include_result.get('include_variables', dict())
-                            if 'item' in include_result:
-                                include_variables['item'] = include_result['item']
-
-                            inc_file = IncludedFile(include_file, include_variables, original_task)
-
-                            try:
-                                pos = included_files.index(inc_file)
-                                inc_file = included_files[pos]
-                            except ValueError:
-                                included_files.append(inc_file)
-
-                            inc_file.add_host(res._host)
-
-                # FIXME: should this be moved into the iterator class? Main downside would be
-                #        that accessing the TQM's callback member would be more difficult, if
-                #        we do want to send callbacks from here
                 if len(included_files) > 0:
                     noop_task = Task()
                     noop_task.action = 'meta'
@@ -274,7 +224,7 @@ class StrategyModule(StrategyBase):
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
-                            new_blocks = self._load_included_file(included_file)
+                            new_blocks = self._load_included_file(included_file, iterator=iterator)
                         except AnsibleError, e:
                             for host in included_file._hosts:
                                 iterator.mark_host_failed(host)
@@ -302,7 +252,7 @@ class StrategyModule(StrategyBase):
             except (IOError, EOFError), e:
                 debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
-                return 1
+                return False
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered

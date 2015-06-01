@@ -59,11 +59,9 @@ class Group:
             depth=self.depth,
         )
 
-        debug("serializing group, result is: %s" % result)
         return result
 
     def deserialize(self, data):
-        debug("deserializing group, data is: %s" % data)
         self.__init__()
         self.name = data.get('name')
         self.vars = data.get('vars', dict())
