@@ -154,7 +154,7 @@ class Connection(object):
         else:
             vvv("EXEC %s" % cmd, host=self.host)
         # For script/raw support.
-        if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
+        if cmd_parts and powershell._unquote(cmd_parts[0]).lower().endswith('.ps1'):
             script = powershell._build_file_cmd(cmd_parts, quote_args=False)
             cmd_parts = powershell._encode_script(script, as_list=True)
         try:
@@ -165,9 +165,10 @@ class Connection(object):
         return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))
 
     def put_file(self, in_path, out_path):
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
+        out_path = powershell._unquote(out_path)
+        vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise errors.AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
         with open(in_path) as in_file:
             in_size = os.path.getsize(in_path)
             script_template = '''
@@ -193,18 +194,19 @@ class Connection(object):
                             out_path = out_path + '.ps1'
                     b64_data = base64.b64encode(out_data)
                     script = script_template % (powershell._escape(out_path), offset, b64_data, in_size)
-                    vvvv("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self.host)
+                    vvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self.host)
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
                         raise IOError(result.std_err.encode('utf-8'))
                 except Exception:
                     traceback.print_exc()
-                    raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+                    raise errors.AnsibleError('failed to transfer file to "%s"' % out_path)
 
     def fetch_file(self, in_path, out_path):
+        in_path = powershell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.host)
+        vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self.host)
         buffer_size = 2**19 # 0.5MB chunks
         if not os.path.exists(os.path.dirname(out_path)):
             os.makedirs(os.path.dirname(out_path))
@@ -234,7 +236,7 @@ class Connection(object):
                             Exit 1;
                         }
                     ''' % dict(buffer_size=buffer_size, path=powershell._escape(in_path), offset=offset)
-                    vvvv("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self.host)
+                    vvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self.host)
                     cmd_parts = powershell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
@@ -259,7 +261,7 @@ class Connection(object):
                         offset += len(data)
                 except Exception:
                     traceback.print_exc()
-                    raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+                    raise errors.AnsibleError('failed to transfer file to "%s"' % out_path)
         finally:
             if out_file:
                 out_file.close()

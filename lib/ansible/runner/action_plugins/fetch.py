@@ -94,7 +94,7 @@ class ActionModule(object):
 
         # calculate the destination name
         if os.path.sep not in conn.shell.join_path('a', ''):
-            source_local = source.replace('\\', '/')
+            source_local = source.strip('"').replace('\\', '/')
         else:
             source_local = source
 

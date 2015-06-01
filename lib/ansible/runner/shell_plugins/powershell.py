@@ -22,13 +22,18 @@ import random
 import shlex
 import time
 
-_common_args = ['PowerShell', '-NoProfile', '-NonInteractive']
+_common_args = ['PowerShell', '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Unrestricted']
 
 # Primarily for testing, allow explicitly specifying PowerShell version via
 # an environment variable.
 _powershell_version = os.environ.get('POWERSHELL_VERSION', None)
 if _powershell_version:
     _common_args = ['PowerShell', '-Version', _powershell_version] + _common_args[1:]
+
+def _unquote(value):
+    if re.match(r'^\'.*?\'$', value) or re.match(r'^".*?"$', value):
+        return value[1:-1]
+    return value
 
 def _escape(value, include_vars=False):
     '''Return value escaped for use in PowerShell command.'''
@@ -57,7 +62,7 @@ def _build_file_cmd(cmd_parts, quote_args=True):
     '''Build command line to run a file, given list of file name plus args.'''
     if quote_args:
         cmd_parts = ['"%s"' % x for x in cmd_parts]
-    return ' '.join(_common_args + ['-ExecutionPolicy', 'Unrestricted', '-File'] + cmd_parts)
+    return ' '.join(['&'] + cmd_parts)
 
 class ShellModule(object):
 
@@ -65,24 +70,32 @@ class ShellModule(object):
         return ''
 
     def join_path(self, *args):
-        return os.path.join(*args).replace('/', '\\')
+        parts = []
+        for arg in args:
+            arg = _unquote(arg).replace('/', '\\')
+            parts.extend([a for a in arg.split('\\') if a])
+        path = '\\'.join(parts)
+        if path.startswith('~'):
+            return path
+        return '"%s"' % path
 
     def path_has_trailing_slash(self, path):
         # Allow Windows paths to be specified using either slash.
+        path = _unquote(path)
         return path.endswith('/') or path.endswith('\\')
 
     def chmod(self, mode, path):
         return ''
 
     def remove(self, path, recurse=False):
-        path = _escape(path)
+        path = _escape(_unquote(path))
         if recurse:
             return _encode_script('''Remove-Item "%s" -Force -Recurse;''' % path)
         else:
             return _encode_script('''Remove-Item "%s" -Force;''' % path)
 
     def mkdtemp(self, basefile, system=False, mode=None):
-        basefile = _escape(basefile)
+        basefile = _escape(_unquote(basefile))
         # FIXME: Support system temp path!
         return _encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
 
@@ -90,6 +103,7 @@ class ShellModule(object):
         # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
         # not seem to work remotely, though by default we are always starting
         # in the user's home directory.
+        user_home_path = _unquote(user_home_path)
         if user_home_path == '~':
             script = 'Write-Host (Get-Location).Path'
         elif user_home_path.startswith('~\\'):
@@ -99,7 +113,7 @@ class ShellModule(object):
         return _encode_script(script)
 
     def checksum(self, path, python_interp):
-        path = _escape(path)
+        path = _escape(_unquote(path))
         script = '''
             If (Test-Path -PathType Leaf "%(path)s")
             {
@@ -122,10 +136,10 @@ class ShellModule(object):
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
         cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
-        if not cmd_parts[0].lower().endswith('.ps1'):
-            cmd_parts[0] = '%s.ps1' % cmd_parts[0]
+        if not _unquote(cmd_parts[0]).lower().endswith('.ps1'):
+            cmd_parts[0] = '"%s.ps1"' % _unquote(cmd_parts[0])
         script = _build_file_cmd(cmd_parts, quote_args=False)
         if rm_tmp:
-            rm_tmp = _escape(rm_tmp)
+            rm_tmp = _escape(_unquote(rm_tmp))
             script = '%s; Remove-Item "%s" -Force -Recurse;' % (script, rm_tmp)
         return _encode_script(script)
