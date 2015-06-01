@@ -336,9 +336,16 @@ class VaultEditor(object):
     def write_data(self, data, filename):
         if os.path.isfile(filename): 
             os.remove(filename)
+
+        # make sure the umask is set to a sane value
+        old_umask = os.umask(0o077)
+
         f = open(filename, "wb")
         f.write(data)
         f.close()
+
+        # and restore umask
+        os.umask(old_umask)
 
     def shuffle_files(self, src, dest):
         # overwrite dest with src
