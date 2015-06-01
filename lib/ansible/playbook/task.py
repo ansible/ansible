@@ -189,9 +189,9 @@ class Task(object):
 
             if 'su' in ds:
                 self.become=ds['su']
+                del ds['su']
             else:
                 self.become=True
-                del ds['su']
             if 'su_user' in ds:
                 self.become_user = ds['su_user']
                 del ds['su_user']
@@ -260,7 +260,7 @@ class Task(object):
 
         self.items_lookup_plugin = ds.get('items_lookup_plugin', None)
         self.items_lookup_terms  = ds.get('items_lookup_terms', None)
-     
+
 
         self.ignore_errors = ds.get('ignore_errors', False)
         self.any_errors_fatal = ds.get('any_errors_fatal', play.any_errors_fatal)
