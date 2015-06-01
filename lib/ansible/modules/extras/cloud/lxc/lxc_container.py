@@ -173,9 +173,9 @@ options:
           - list of 'key=value' options to use when configuring a container.
         required: false
 requirements:
-  - 'lxc >= 1.0'
-  - 'python >= 2.6'
-  - 'python2-lxc >= 0.1'
+  - 'lxc >= 1.0 # OS package'
+  - 'python >= 2.6 # OS Package'
+  - 'lxc-python2 >= 0.1 # PIP Package from https://github.com/lxc/python2-lxc'
 notes:
   - Containers must have a unique name. If you attempt to create a container
     with a name that already exists in the users namespace the module will
@@ -195,7 +195,8 @@ notes:
     creating the archive.
   - If your distro does not have a package for "python2-lxc", which is a
     requirement for this module, it can be installed from source at
-    "https://github.com/lxc/python2-lxc"
+    "https://github.com/lxc/python2-lxc" or installed via pip using the package
+    name lxc-python2.
 """
 
 EXAMPLES = """
