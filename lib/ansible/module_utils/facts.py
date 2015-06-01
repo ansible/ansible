@@ -423,7 +423,7 @@ class Facts(object):
                                 release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
                                 if release:
                                     self.facts['distribution_release'] = release.groups()[0]
-                                break
+                                    break
                         elif name == 'Mandriva':
                             data = get_file_content(path)
                             if 'Mandriva' in data:

@@ -13,7 +13,7 @@ Requirements for the AWS modules are minimal.
 
 All of the modules require and are tested against recent versions of boto.  You'll need this Python module installed on your control machine.  Boto can be installed from your OS distribution or python's "pip install boto".
 
-Whereas classically ansible will execute tasks in it's host loop against multiple remote machines, most cloud-control steps occur on your local machine with reference to the regions to control.
+Whereas classically ansible will execute tasks in its host loop against multiple remote machines, most cloud-control steps occur on your local machine with reference to the regions to control.
 
 In your playbook steps we'll typically be using the following pattern for provisioning steps::
 
@@ -214,7 +214,7 @@ AWS Image Building With Ansible
 ```````````````````````````````
 
 Many users may want to have images boot to a more complete configuration rather than configuring them entirely after instantiation.  To do this,
-one of many programs can be used with Ansible playbooks to define and upload a base image, which will then get it's own AMI ID for usage with
+one of many programs can be used with Ansible playbooks to define and upload a base image, which will then get its own AMI ID for usage with
 the ec2 module or other Ansible AWS modules such as ec2_asg or the cloudformation module.   Possible tools include Packer, aminator, and Ansible's
 ec2_ami module.  
 
