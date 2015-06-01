@@ -122,19 +122,23 @@ def template(basedir, varname, templatevars, lookup_fatal=True, depth=0, expand_
                 varname = "{{%s}}" % varname
 
         if isinstance(varname, basestring):
-            if '{{' in varname or '{%' in varname:
-                try:
-                    varname = template_from_string(basedir, varname, templatevars, fail_on_undefined)
-                except errors.AnsibleError, e:
-                    raise errors.AnsibleError("Failed to template %s: %s" % (varname, str(e)))
+            try:
+                if '{{' in varname or '{%' in varname:
+                    try:
+                        varname = template_from_string(basedir, varname, templatevars, fail_on_undefined)
+                    except errors.AnsibleError, e:
+                        raise errors.AnsibleError("Failed to template %s: %s" % (varname, str(e)))
 
-                # template_from_string may return non strings for the case where the var is just
-                # a reference to a single variable, so we should re_check before we do further evals
-                if isinstance(varname, basestring):
-                    if (varname.startswith("{") and not varname.startswith("{{")) or varname.startswith("["):
-                        eval_results = utils.safe_eval(varname, locals=templatevars, include_exceptions=True)
-                        if eval_results[1] is None:
-                            varname = eval_results[0]
+                    # template_from_string may return non strings for the case where the var is just
+                    # a reference to a single variable, so we should re_check before we do further evals
+                    if isinstance(varname, basestring):
+                        if (varname.startswith("{") and not varname.startswith("{{")) or varname.startswith("["):
+                            eval_results = utils.safe_eval(varname, locals=templatevars, include_exceptions=True)
+                            if eval_results[1] is None:
+                                varname = eval_results[0]
+            except Exception, e:
+                e._ansible_srcinfo = { "basedir": basedir, "varname": varname }
+                raise
 
             return varname
 

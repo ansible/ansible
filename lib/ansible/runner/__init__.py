@@ -590,8 +590,10 @@ class Runner(object):
             msg = str(ae)
             self.callbacks.on_unreachable(host, msg)
             return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
-        except Exception:
+        except Exception, e:
             msg = traceback.format_exc()
+            if hasattr(e, "_ansible_srcinfo"):
+                msg = ("%(varname)s from %(basedir)s\n" % e._ansible_srcinfo) + msg
             self.callbacks.on_unreachable(host, msg)
             return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
 
