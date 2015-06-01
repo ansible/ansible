@@ -722,7 +722,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         # FIXME: this isn't working yet
         #with patch('os.lstat', side_effect=[mock_stat1, mock_stat2]):
-        #    with patch('os.lchmod', return_value=None, create=True) as m_os:
+        #    with patch('os.lchmod', return_value=None) as m_os:
         #        del m_os.lchmod
         #        with patch('os.path.islink', return_value=False):
         #            with patch('os.chmod', return_value=None) as m_chmod:

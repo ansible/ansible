@@ -73,24 +73,28 @@ class StrategyBase:
         self._blocked_hosts     = dict()
 
     def run(self, iterator, connection_info, result=True):
-        # save the counts on failed/unreachable hosts, as the cleanup/handler
-        # methods will clear that information during their runs
-        num_failed      = len(self._tqm._failed_hosts)
-        num_unreachable = len(self._tqm._unreachable_hosts)
+        # save the failed/unreachable hosts, as the run_handlers()
+        # method will clear that information during its execution
+        failed_hosts      = self._tqm._failed_hosts.keys()
+        unreachable_hosts = self._tqm._unreachable_hosts.keys()
 
         debug("running handlers")
         result &= self.run_handlers(iterator, connection_info)
 
+        # now update with the hosts (if any) that failed or were
+        # unreachable during the handler execution phase
+        failed_hosts      = set(failed_hosts).union(self._tqm._failed_hosts.keys())
+        unreachable_hosts = set(unreachable_hosts).union(self._tqm._unreachable_hosts.keys())
+
         # send the stats callback
         self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
 
-        if not result:
-            if num_unreachable > 0:
-                return 3
-            elif num_failed > 0:
-                return 2
-            else:
-                return 1
+        if len(unreachable_hosts) > 0:
+            return 3
+        elif len(failed_hosts) > 0:
+            return 2
+        elif not result:
+            return 1
         else:
             return 0
 
@@ -145,7 +149,7 @@ class StrategyBase:
                     task_result = result[1]
                     host = task_result._host
                     task = task_result._task
-                    if result[0] == 'host_task_failed':
+                    if result[0] == 'host_task_failed' or 'failed' in task_result._result:
                         if not task.ignore_errors:
                             debug("marking %s as failed" % host.name)
                             iterator.mark_host_failed(host)
