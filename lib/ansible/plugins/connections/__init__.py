@@ -22,6 +22,7 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+from functools import wraps
 from six import add_metaclass
 
 from ansible import constants as C
@@ -32,7 +33,16 @@ from ansible.errors import AnsibleError
 #        which may want to output display/logs too
 from ansible.utils.display import Display
 
-__all__ = ['ConnectionBase']
+__all__ = ['ConnectionBase', 'ensure_connect']
+
+
+def ensure_connect(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        self._connect()
+        return func(self, *args, **kwargs)
+    return wrapped
+
 
 @add_metaclass(ABCMeta)
 class ConnectionBase:
