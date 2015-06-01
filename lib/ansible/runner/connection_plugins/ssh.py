@@ -38,13 +38,14 @@ from ansible import utils
 class Connection(object):
     ''' ssh based connections '''
 
-    def __init__(self, runner, host, port, user, password, private_key_file, *args, **kwargs):
+    def __init__(self, runner, host, port, user, password, otp_code, private_key_file, *args, **kwargs):
         self.runner = runner
         self.host = host
         self.ipv6 = ':' in self.host
         self.port = port
         self.user = str(user)
         self.password = password
+        self.otp_code = otp_code
         self.private_key_file = private_key_file
         self.HASHED_KEY_MAGIC = "|1|"
         self.has_pipelining = True
@@ -66,11 +67,11 @@ class Connection(object):
         if extra_args is not None:
             # make sure there is no empty string added as this can produce weird errors
             self.common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
-        else:
+        
+        if (self.otp_code) or (extra_args is None):
             self.common_args += ["-o", "ControlMaster=auto",
-                                 "-o", "ControlPersist=60s",
+                                 "-o", "ControlPersist=10m",
                                  "-o", "ControlPath=\"%s\"" % (C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self.cp_dir))]
-
         cp_in_use = False
         cp_path_set = False
         for arg in self.common_args:
@@ -91,7 +92,9 @@ class Connection(object):
             self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.private_key_file)]
         elif self.runner.private_key_file is not None:
             self.common_args += ["-o", "IdentityFile=\"%s\"" % os.path.expanduser(self.runner.private_key_file)]
-        if self.password:
+        if self.otp_code:
+            self.common_args += ["-o", "ChallengeResponseAuthentication=yes"]
+        elif self.password:
             self.common_args += ["-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no"]
         else:
@@ -127,7 +130,7 @@ class Connection(object):
         return (p, stdin)
 
     def _password_cmd(self):
-        if self.password:
+        if self.password or self.otp_code:
             try:
                 p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -142,6 +145,10 @@ class Connection(object):
         if self.password:
             os.close(self.rfd)
             os.write(self.wfd, "%s\n" % self.password)
+            os.close(self.wfd)
+        if self.otp_code:
+            os.close(self.rfd)
+            os.write(self.wfd, "%s\n" % self.otp_code)
             os.close(self.wfd)
 
     def _communicate(self, p, stdin, indata, sudoable=False, prompt=None):

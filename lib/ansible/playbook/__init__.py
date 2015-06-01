@@ -60,6 +60,7 @@ class PlayBook(object):
         timeout          = C.DEFAULT_TIMEOUT,
         remote_user      = C.DEFAULT_REMOTE_USER,
         remote_pass      = C.DEFAULT_REMOTE_PASS,
+        otp_code         = None,
         remote_port      = None,
         transport        = C.DEFAULT_TRANSPORT,
         private_key_file = C.DEFAULT_PRIVATE_KEY_FILE,
@@ -131,6 +132,7 @@ class PlayBook(object):
         self.timeout          = timeout
         self.remote_user      = remote_user
         self.remote_pass      = remote_pass
+        self.otp_code         = otp_code
         self.remote_port      = remote_port
         self.transport        = transport
         self.callbacks        = callbacks
@@ -395,6 +397,7 @@ class PlayBook(object):
             module_args=task.module_args,
             forks=self.forks,
             remote_pass=self.remote_pass,
+            otp_code=self.otp_code,
             module_path=self.module_path,
             timeout=self.timeout,
             remote_user=task.remote_user,
@@ -606,6 +609,7 @@ class PlayBook(object):
             timeout=self.timeout,
             remote_user=play.remote_user,
             remote_pass=self.remote_pass,
+            otp_code=self.otp_code,
             remote_port=play.remote_port,
             private_key_file=self.private_key_file,
             setup_cache=self.SETUP_CACHE,

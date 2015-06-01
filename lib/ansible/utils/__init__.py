@@ -996,6 +996,8 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
         help='connect as this user (default=%s)' % constants.DEFAULT_REMOTE_USER)
     parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
         help='ask for SSH password')
+    parser.add_option('-O', '--ask-otpcode', default=False, dest='ask_otp_code', action='store_true',
+        help='ask for OTP Code')
     parser.add_option('--private-key', default=constants.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
         help='use this file to authenticate the connection')
     parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
@@ -1116,10 +1118,11 @@ def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_
 
     return vault_pass, new_vault_pass
 
-def ask_passwords(ask_pass=False, become_ask_pass=False, ask_vault_pass=False, become_method=C.DEFAULT_BECOME_METHOD):
+def ask_passwords(ask_pass=False, become_ask_pass=False, ask_vault_pass=False, ask_otp_code=False, become_method=C.DEFAULT_BECOME_METHOD):
     sshpass = None
     becomepass = None
     vaultpass = None
+    otp_code = None
     become_prompt = ''
 
     if ask_pass:
@@ -1141,8 +1144,13 @@ def ask_passwords(ask_pass=False, become_ask_pass=False, ask_vault_pass=False, b
         vaultpass = getpass.getpass(prompt="Vault password: ")
         if vaultpass:
             vaultpass = to_bytes(vaultpass, errors='strict', nonstring='simplerepr').strip()
+    
+    if ask_otp_code:
+        otp_code = getpass.getpass(prompt="OTP Code: ")
+        if otp_code:
+            otp_code = to_bytes(otp_code, errors='strict', nonstring='simplerepr').strip()
 
-    return (sshpass, becomepass, vaultpass)
+    return (sshpass, becomepass, vaultpass, otp_code)
 
 
 def choose_pass_prompt(options):
@@ -1167,7 +1175,6 @@ def normalize_become_options(options):
     elif options.su:
         options.become = True
         options.become_method = 'su'
-
 
 def do_encrypt(result, encrypt, salt_size=None, salt=None):
     if PASSLIB_AVAILABLE:

@@ -114,13 +114,18 @@ def main(args):
 
     if (options.ask_vault_pass and options.vault_password_file):
             parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
+    if (options.ask_pass and options.ask_otp_code):
+            parser.error("--ask-pass and --ask-otpcode are mutually exclusive")
+
 
     sshpass = None
     becomepass = None
     vault_pass = None
+    otp_code = None
 
     options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
-
+    options.ask_otp_code = options.ask_otp_code or C.DEFAULT_ASK_OTP_CODE
+    
     if options.listhosts or options.syntax or options.listtasks or options.listtags:
         (_, _, vault_pass) = utils.ask_passwords(ask_vault_pass=options.ask_vault_pass)
     else:
@@ -132,9 +137,10 @@ def main(args):
         # set pe options
         utils.normalize_become_options(options)
         prompt_method = utils.choose_pass_prompt(options)
-        (sshpass, becomepass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass,
+        (sshpass, becomepass, vault_pass, otp_code) = utils.ask_passwords(ask_pass=options.ask_pass,
                                                     become_ask_pass=options.become_ask_pass,
                                                     ask_vault_pass=options.ask_vault_pass,
+                                                    ask_otp_code=options.ask_otp_code,
                                                     become_method=prompt_method)
 
     # read vault_pass from a file
@@ -191,6 +197,7 @@ def main(args):
             forks=options.forks,
             remote_user=options.remote_user,
             remote_pass=sshpass,
+            otp_code=otp_code,
             callbacks=playbook_cb,
             runner_callbacks=runner_cb,
             stats=stats,
