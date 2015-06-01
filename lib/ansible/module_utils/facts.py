@@ -2153,7 +2153,7 @@ class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
         current_if['media'] = 'Unknown' # Mac does not give us this
         current_if['media_select'] = words[1]
         if len(words) > 2:
-            current_if['media_type'] = words[2][1:]
+            current_if['media_type'] = words[2][1:-1]
         if len(words) > 3:
             current_if['media_options'] = self.get_options(words[3])
 
