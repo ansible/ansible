@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: cs_instance
 short_description: Manages instances and virtual machines on Apache CloudStack based clouds.
 description:
-    - Deploy, start, restart, stop and destroy instances on Apache CloudStack, Citrix CloudPlatform and Exoscale.
+    - Deploy, start, restart, stop and destroy instances.
 version_added: '2.0'
 author: '"René Moser (@resmo)" <mail@renemoser.net>'
 options:
@@ -49,22 +49,29 @@ options:
     choices: [ 'deployed', 'started', 'stopped', 'restarted', 'destroyed', 'expunged', 'present', 'absent' ]
   service_offering:
     description:
-      - Name or id of the service offering of the new instance. If not set, first found service offering is used.
+      - Name or id of the service offering of the new instance.
+      - If not set, first found service offering is used.
     required: false
     default: null
   template:
     description:
-      - Name or id of the template to be used for creating the new instance. Required when using C(state=present). Mutually exclusive with C(ISO) option.
+      - Name or id of the template to be used for creating the new instance.
+      - Required when using C(state=present).
+      - Mutually exclusive with C(ISO) option.
     required: false
     default: null
   iso:
     description:
-      - Name or id of the ISO to be used for creating the new instance. Required when using C(state=present). Mutually exclusive with C(template) option.
+      - Name or id of the ISO to be used for creating the new instance.
+      - Required when using C(state=present).
+      - Mutually exclusive with C(template) option.
     required: false
     default: null
   hypervisor:
     description:
-      - Name the hypervisor to be used for creating the new instance. Relevant when using C(state=present) and option C(ISO) is used. If not set, first found hypervisor will be used.
+      - Name the hypervisor to be used for creating the new instance.
+      - Relevant when using C(state=present) and option C(ISO) is used.
+      - If not set, first found hypervisor will be used.
     required: false
     default: null
     choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM' ]
@@ -82,7 +89,7 @@ options:
     aliases: [ 'network' ]
   ip_address:
     description:
-      - IPv4 address for default instance's network during creation
+      - IPv4 address for default instance's network during creation.
     required: false
     default: null
   ip6_address:
@@ -123,7 +130,8 @@ options:
     default: null
   zone:
     description:
-      - Name of the zone in which the instance shoud be deployed. If not set, default zone is used.
+      - Name of the zone in which the instance shoud be deployed.
+      - If not set, default zone is used.
     required: false
     default: null
   ssh_key:
@@ -148,7 +156,7 @@ options:
     description:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
     required: false
-    default: true
+    default: false
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -164,7 +172,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Create a instance on CloudStack from an ISO
+# Create a instance from an ISO
 # NOTE: Names of offerings and ISOs depending on the CloudStack configuration.
 - local_action:
     module: cs_instance
@@ -181,7 +189,6 @@ EXAMPLES = '''
       - Sync Integration
       - Storage Integration
 
-
 # For changing a running instance, use the 'force' parameter
 - local_action:
     module: cs_instance
@@ -190,7 +197,6 @@ EXAMPLES = '''
     iso: Linux Debian 7 64-bit
     service_offering: 2cpu_2gb
     force: yes
-
 
 # Create or update a instance on Exoscale's public cloud
 - local_action:
@@ -202,18 +208,12 @@ EXAMPLES = '''
     tags:
       - { key: admin, value: john }
       - { key: foo,   value: bar }
-  register: vm
-
-- debug: msg='default ip {{ vm.default_ip }} and is in state {{ vm.state }}'
-
 
 # Ensure a instance has stopped
 - local_action: cs_instance name=web-vm-1 state=stopped
 
-
 # Ensure a instance is running
 - local_action: cs_instance name=web-vm-1 state=started
-
 
 # Remove a instance
 - local_action: cs_instance name=web-vm-1 state=absent
@@ -257,7 +257,7 @@ password:
   type: string
   sample: Ge2oe7Do
 ssh_key:
-  description: Name of ssh key deployed to instance.
+  description: Name of SSH key deployed to instance.
   returned: success
   type: string
   sample: key@work
@@ -282,7 +282,7 @@ default_ip:
   type: string
   sample: 10.23.37.42
 public_ip:
-  description: Public IP address with instance via static nat rule.
+  description: Public IP address with instance via static NAT rule.
   returned: success
   type: string
   sample: 1.2.3.4
@@ -326,6 +326,16 @@ tags:
   returned: success
   type: dict
   sample: '[ { "key": "foo", "value": "bar" } ]'
+hypervisor:
+  description: Hypervisor related to this instance.
+  returned: success
+  type: string
+  sample: KVM
+instance_name:
+  description: Internal name of the instance (ROOT admin only).
+  returned: success
+  type: string
+  sample: i-44-3992-VM
 '''
 
 import base64
@@ -712,6 +722,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 self.result['account'] = instance['account']
             if 'project' in instance:
                 self.result['project'] = instance['project']
+            if 'hypervisor' in instance:
+                self.result['hypervisor'] = instance['hypervisor']
+            if 'instancename' in instance:
+                self.result['instance_name'] = instance['instancename']
             if 'publicip' in instance:
                 self.result['public_ip'] = instance['public_ip']
             if 'passwordenabled' in instance:
@@ -771,7 +785,7 @@ def main():
             disk_offering = dict(default=None),
             disk_size = dict(type='int', default=None),
             keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
-            hypervisor = dict(default=None),
+            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM'], default=None),
             security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
             affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
             domain = dict(default=None),
@@ -786,7 +800,11 @@ def main():
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_together = (
+            ['api_key', 'api_secret', 'api_url'],
         ),
         supports_check_mode=True
     )

@@ -102,7 +102,6 @@ EXAMPLES = '''
     port: 80
     cidr: 1.2.3.4/32
 
-
 # Allow tcp/udp outbound added to security group 'default'
 - local_action:
     module: cs_securitygroup_rule
@@ -115,7 +114,6 @@ EXAMPLES = '''
   - tcp
   - udp
 
-
 # Allow inbound icmp from 0.0.0.0/0 added to security group 'default'
 - local_action:
     module: cs_securitygroup_rule
@@ -124,14 +122,12 @@ EXAMPLES = '''
     icmp_code: -1
     icmp_type: -1
 
-
 # Remove rule inbound port 80/tcp from 0.0.0.0/0 from security group 'default'
 - local_action:
     module: cs_securitygroup_rule
     security_group: default
     port: 80
     state: absent
-
 
 # Allow inbound port 80/tcp from security group web added to security group 'default'
 - local_action:
@@ -400,7 +396,12 @@ def main():
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_together = (
+            ['icmp_type', 'icmp_code'],
+            ['api_key', 'api_secret', 'api_url'],
         ),
         mutually_exclusive = (
             ['icmp_type', 'start_port'],

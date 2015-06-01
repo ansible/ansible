@@ -88,14 +88,12 @@ EXAMPLES = '''
     vm: web-01
     snapshot_memory: yes
 
-
 # Revert a VM to a snapshot after a failed upgrade
 - local_action:
     module: cs_vmsnapshot
     name: Snapshot before upgrade
     vm: web-01
     state: revert
-
 
 # Remove a VM snapshot after successful upgrade
 - local_action:
@@ -290,7 +288,12 @@ def main():
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_together = (
+            ['icmp_type', 'icmp_code'],
+            ['api_key', 'api_secret', 'api_url'],
         ),
         supports_check_mode=True
     )

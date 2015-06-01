@@ -115,7 +115,6 @@ EXAMPLES = '''
     port: 80
     cidr: 1.2.3.4/32
 
-
 # Allow inbound tcp/udp port 53 to 4.3.2.1
 - local_action:
     module: cs_firewall
@@ -126,7 +125,6 @@ EXAMPLES = '''
   - tcp
   - udp
 
-
 # Ensure firewall rule is removed
 - local_action:
     module: cs_firewall
@@ -136,14 +134,12 @@ EXAMPLES = '''
     cidr: 17.0.0.0/8
     state: absent
 
-
 # Allow all outbound traffic
 - local_action:
     module: cs_firewall
     network: my_network
     type: egress
     protocol: all
-
 
 # Allow only HTTP outbound traffic for an IP
 - local_action:
@@ -420,7 +416,15 @@ def main():
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_one_of = (
+            ['ip_address', 'network'],
+        ),
+        required_together = (
+            ['icmp_type', 'icmp_code'],
+            ['api_key', 'api_secret', 'api_url'],
         ),
         mutually_exclusive = (
             ['icmp_type', 'start_port'],

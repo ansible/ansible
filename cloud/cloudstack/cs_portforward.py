@@ -92,12 +92,13 @@ options:
     default: null
   project:
     description:
-      - Name of the project the c(vm) is located in.
+      - Name of the project the C(vm) is located in.
     required: false
     default: null
   zone:
     description:
-      - Name of the zone in which the virtual machine is in. If not set, default zone is used.
+      - Name of the zone in which the virtual machine is in.
+      - If not set, default zone is used.
     required: false
     default: null
   poll_async:
@@ -117,7 +118,6 @@ EXAMPLES = '''
     public_port: 80
     private_port: 8080
 
-
 # forward SSH and open firewall
 - local_action:
     module: cs_portforward
@@ -126,7 +126,6 @@ EXAMPLES = '''
     public_port: '{{ ansible_ssh_port }}'
     private_port: 22
     open_firewall: true
-
 
 # forward DNS traffic, but do not open firewall
 - local_action:
@@ -137,7 +136,6 @@ EXAMPLES = '''
     private_port: 53
     protocol: udp
     open_firewall: true
-
 
 # remove ssh port forwarding
 - local_action:
@@ -161,26 +159,26 @@ protocol:
   type: string
   sample: tcp
 private_port:
-  description: Private start port.
+  description: Start port on the virtual machine's IP address.
   returned: success
   type: int
   sample: 80
 private_end_port:
-  description: Private end port.
+  description: End port on the virtual machine's IP address.
   returned: success
   type: int
 public_port:
-  description: Public start port.
+  description: Start port on the public IP address.
   returned: success
   type: int
   sample: 80
 public_end_port:
-  description: Public end port.
+  description: End port on the public IP address.
   returned: success
   type: int
   sample: 80
 tags:
-  description: Tag srelated to the port forwarding.
+  description: Tags related to the port forwarding.
   returned: success
   type: list
   sample: []
@@ -200,7 +198,6 @@ vm_guest_ip:
   type: string
   sample: 10.101.65.152
 '''
-
 
 try:
     from cs import CloudStack, CloudStackException, read_config
@@ -405,7 +402,11 @@ def main():
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_together = (
+            ['api_key', 'api_secret', 'api_url'],
         ),
         supports_check_mode=True
     )
