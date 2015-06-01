@@ -55,12 +55,19 @@ class LookupModule(object):
             if item0.get('skipped',False) != False:
                 # this particular item is to be skipped
                 continue 
-            if not subelement in item0:
+            
+            item = item0
+            subelements = subelement.split(".")
+
+            for element in subelements:
+              if not element in item:
                 raise errors.AnsibleError("could not find '%s' key in iterated item '%s'" % (subelement, item0))
-            if not isinstance(item0[subelement], list):
-                raise errors.AnsibleError("the key %s should point to a list, got '%s'" % (subelement, item0[subelement]))
-            sublist = item0.pop(subelement, [])
-            for item1 in sublist:
+              item = item.get(element)
+
+            if not isinstance(item, list):
+              raise errors.AnsibleError("the key %s should point to a list, got '%s'" % (subelement, item))
+
+            for item1 in item:
                 ret.append((item0, item1))
 
         return ret
