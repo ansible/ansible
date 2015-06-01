@@ -108,7 +108,7 @@ author: '"Taneli Leppä (@rosmo)" <taneli@crasman.fi>'
 
 EXAMPLES = """
 - name: create gluster volume
-  gluster_volume: state=present name=test1 bricks=/bricks/brick1/g1 rebalance=yes cluster:"{{ play_hosts }}"
+  gluster_volume: state=present name=test1 bricks=/bricks/brick1/g1 rebalance=yes cluster="192.168.1.10,192.168.1.11"
   run_once: true
 
 - name: tune
@@ -127,7 +127,7 @@ EXAMPLES = """
   gluster_volume: state=absent name=test1
 
 - name: create gluster volume with multiple bricks
-  gluster_volume: state=present name=test2 bricks="/bricks/brick1/g2,/bricks/brick2/g2" cluster:"{{ play_hosts }}"
+  gluster_volume: state=present name=test2 bricks="/bricks/brick1/g2,/bricks/brick2/g2" cluster="192.168.1.10,192.168.1.11"
   run_once: true
 """
 
@@ -247,19 +247,20 @@ def wait_for_peer(host):
         time.sleep(1)
     return False
 
-def probe(host):
+def probe(host, myhostname):
     global module
     run_gluster([ 'peer', 'probe', host ])
     if not wait_for_peer(host):
-        module.fail_json(msg='failed to probe peer %s' % host)
+        module.fail_json(msg='failed to probe peer %s on %s' % (host, myhostname))
     changed = True
 
 def probe_all_peers(hosts, peers, myhostname):
     for host in hosts:
+        host = host.strip() # Clean up any extra space for exact comparison
         if host not in peers:
             # dont probe ourselves
             if myhostname != host:
-                probe(host)
+                probe(host, myhostname)
 
 def create_volume(name, stripe, replica, transport, hosts, bricks, force):
     args = [ 'volume', 'create' ]
@@ -335,7 +336,7 @@ def main():
     action = module.params['state']
     volume_name = module.params['name']
     cluster= module.params['cluster']
-    brick_paths = module.params['brick']
+    brick_paths = module.params['bricks']
     stripes = module.params['stripes']
     replicas = module.params['replicas']
     transport = module.params['transport']
@@ -346,6 +347,11 @@ def main():
 
     if not myhostname:
         myhostname = socket.gethostname()
+
+    # Clean up if last element is empty. Consider that yml can look like this:
+    #   cluster="{% for host in groups['glusterfs'] %}{{ hostvars[host]['private_ip'] }},{% endfor %}"
+    if cluster != None and cluster[-1] == '':
+        cluster = cluster[0:-1]
 
     if brick_paths != None and "," in brick_paths:
         brick_paths = brick_paths.split(",")
