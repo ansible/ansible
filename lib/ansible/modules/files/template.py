@@ -38,15 +38,6 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
-  validate:
-    description:
-      - The validation command to run before copying into place. 
-      - The path to the file to validate is passed in via '%s' which must be present as in the visudo example below.
-      - validation to run before copying into place. The command is passed 
-        securely so shell features like expansion and pipes won't work.
-    required: false
-    default: ""
-    version_added: "1.2"
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
@@ -62,6 +53,7 @@ author:
     - Ansible Core Team 
     - Michael DeHaan
 extends_documentation_fragment: files
+extends_documentation_fragment: validate
 '''
 
 EXAMPLES = '''
