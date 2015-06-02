@@ -44,6 +44,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 from ansible.plugins import shell_loader
+from ansible.utils import makedirs_safe
 
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
@@ -213,8 +214,7 @@ class Connection(ConnectionBase):
         out_path = out_path.replace('\\', '/')
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
         buffer_size = 2**19 # 0.5MB chunks
-        if not os.path.exists(os.path.dirname(out_path)):
-            os.makedirs(os.path.dirname(out_path))
+        makedirs_safe(os.path.dirname(out_path))
         out_file = None
         try:
             offset = 0
@@ -251,8 +251,7 @@ class Connection(ConnectionBase):
                     else:
                         data = base64.b64decode(result.std_out.strip())
                     if data is None:
-                        if not os.path.exists(out_path):
-                            os.makedirs(out_path)
+                        makedirs_safe(out_path)
                         break
                     else:
                         if not out_file:

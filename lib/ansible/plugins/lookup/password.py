@@ -30,6 +30,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import do_encrypt
+from ansible.utils import makedirs_safe
 
 DEFAULT_LENGTH = 20
 
@@ -98,11 +99,10 @@ class LookupModule(LookupBase):
             path = self._loader.path_dwim(relpath)
             if not os.path.exists(path):
                 pathdir = os.path.dirname(path)
-                if not os.path.isdir(pathdir):
-                    try:
-                        os.makedirs(pathdir, mode=0o700)
-                    except OSError as e:
-                        raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
+                try:
+                    makedirs_safe(pathdir, mode=0o700)
+                except OSError as e:
+                    raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
                 chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
                 password = ''.join(random.choice(chars) for _ in range(length))
