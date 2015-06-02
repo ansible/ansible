@@ -371,6 +371,9 @@ class TaskExecutor:
         # FIXME: delegate_to calculation should be done here
         # FIXME: calculation of connection params/auth stuff should be done here
 
+        if not self._connection_info.remote_addr:
+            self._connection_info.remote_addr = self._host.ipv4_address
+
         if self._task.delegate_to is not None:
             self._compute_delegate(variables)
 
