@@ -42,6 +42,7 @@ from binascii import hexlify
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
+from ansible.utils.path import makedirs_safe
 
 AUTHENTICITY_MSG="""
 paramiko: The authenticity of host '%s' can't be established.
@@ -309,8 +310,7 @@ class Connection(ConnectionBase):
             return False
 
         path = os.path.expanduser("~/.ssh")
-        if not os.path.exists(path):
-            os.makedirs(path)
+        makedirs_safe(path)
 
         f = open(filename, 'w')
 
@@ -347,8 +347,7 @@ class Connection(ConnectionBase):
             # add any new SSH host keys -- warning -- this could be slow
             lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
+            makedirs_safe(dirname)
 
             KEY_LOCK = open(lockfile, 'w')
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_EX)
