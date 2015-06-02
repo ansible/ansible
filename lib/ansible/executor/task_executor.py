@@ -83,9 +83,9 @@ class TaskExecutor:
                     changed = False
                     failed  = False
                     for item in item_results:
-                        if 'changed' in item:
+                        if 'changed' in item and item['changed']:
                            changed = True
-                        if 'failed' in item:
+                        if 'failed' in item and item['failed']:
                            failed = True
 
                     # create the overall result item, and set the changed/failed
