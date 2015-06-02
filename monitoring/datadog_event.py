@@ -86,7 +86,7 @@ def main():
             priority=dict(
                 required=False, default='normal', choices=['normal', 'low']
             ),
-            tags=dict(required=False, default=None),
+            tags=dict(required=False, default=None, type='list'),
             alert_type=dict(
                 required=False, default='info',
                 choices=['error', 'warning', 'info', 'success']
@@ -116,7 +116,7 @@ def post_event(module):
     if module.params['date_happened'] != None:
         body['date_happened'] = module.params['date_happened']
     if module.params['tags'] != None:
-        body['tags'] = module.params['tags'].split(",")
+        body['tags'] = module.params['tags']
     if module.params['aggregation_key'] != None:
         body['aggregation_key'] = module.params['aggregation_key']
     if module.params['source_type_name'] != None:
