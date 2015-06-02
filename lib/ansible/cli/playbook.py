@@ -24,7 +24,7 @@ import sys
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
@@ -69,10 +69,11 @@ class PlaybookCLI(CLI):
 
         self.options, self.args = parser.parse_args()
 
-        if len(self.args) == 0:
-            raise AnsibleOptionsError("You must specify a playbook file to run")
 
         self.parser = parser
+
+        if len(self.args) == 0:
+            raise AnsibleOptionsError("You must specify a playbook file to run")
 
         self.display.verbosity = self.options.verbosity
         self.validate_conflicts()
