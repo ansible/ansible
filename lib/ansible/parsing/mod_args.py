@@ -25,6 +25,20 @@ from ansible.errors import AnsibleParserError
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv
 
+# For filtering out modules correctly below
+RAW_PARAM_MODULES = frozenset(
+    'command',
+    'shell',
+    'script',
+    'include',
+    'include_vars',
+    'add_host',
+    'group_by',
+    'set_fact',
+    'raw',
+    'meta',
+)
+
 class ModuleArgsParser:
 
     """
@@ -264,19 +278,6 @@ class ModuleArgsParser:
                 thing = value
                 action, args = self._normalize_parameters(value, action=action, additional_args=additional_args)
 
-        # FIXME: this should probably be somewhere else
-        RAW_PARAM_MODULES = (
-            'command',
-            'shell',
-            'script',
-            'include',
-            'include_vars',
-            'add_host',
-            'group_by',
-            'set_fact',
-            'raw',
-            'meta',
-        )
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
             raise AnsibleParserError("no action detected in task", obj=self._task_ds)
