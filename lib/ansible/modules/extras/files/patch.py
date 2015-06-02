@@ -66,6 +66,7 @@ options:
     type: "int"
     default: "0"
   backup:
+    version_added: "2.0"
     description:
       - passes --backup --version-control=numbered to patch, 
         producing numbered backup copies
