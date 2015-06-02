@@ -65,7 +65,7 @@ options:
     required: false
     type: "int"
     default: "0"
-  backup_copy:
+  backup:
     description:
       - passes --backup --version-control=numbered to patch, 
         producing numbered backup copies
@@ -133,8 +133,9 @@ def main():
             'basedir': {},
             'strip':   {'default': 0, 'type': 'int'},
             'remote_src': {'default': False, 'type': 'bool'},
-            # don't call it "backup" since the semantics differs from the default one
-            'backup_copy': { 'default': False, 'type': 'bool' }
+            # NB: for 'backup' parameter, semantics is slightly different from standard
+            #     since patch will create numbered copies, not strftime("%Y-%m-%d@%H:%M:%S~")
+            'backup': { 'default': False, 'type': 'bool' }
         },
         required_one_of=[['dest', 'basedir']],
         supports_check_mode=True
@@ -168,7 +169,7 @@ def main():
     if not is_already_applied(patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip):
         try:
             apply_patch( patch_func, p.src, p.basedir, dest_file=p.dest, strip=p.strip,
-                         dry_run=module.check_mode, backup=p.backup_copy )
+                         dry_run=module.check_mode, backup=p.backup )
             changed = True
         except PatchError, e:
             module.fail_json(msg=str(e))
