@@ -1138,7 +1138,7 @@ class DockerManager(object):
 
             # LOG_DRIVER
 
-            if self.ensure_capability('log_driver', false) :
+            if self.ensure_capability('log_driver', False) :
                 expected_log_driver = self.module.params.get('log_driver') or 'json-file'
                 actual_log_driver = container['HostConfig']['LogConfig']['Type']
                 if actual_log_driver != expected_log_driver:
