@@ -129,10 +129,10 @@ def get_template(proxmox, node, storage, content_type, template):
 def get_content(proxmox, node, storage):
   return proxmox.nodes(node).storage(storage).content.get()
 
-def upload_template(module, proxmox, node, storage, content_type, realpath, timeout):
+def upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
   taskid = proxmox.nodes(node).storage(storage).upload.post(content=content_type, filename=open(realpath))
   while timeout:
-    task_status = proxmox.nodes(node).tasks(taskid).status.get()
+    task_status = proxmox.nodes(api_host.split('.')[0]).tasks(taskid).status.get()
     if task_status['status'] == 'stopped' and task_status['exitstatus'] == 'OK':
       return True
     timeout = timeout - 1
@@ -213,7 +213,7 @@ def main():
       elif not (os.path.exists(realpath) and os.path.isfile(realpath)):
         module.fail_json(msg='template file on path %s not exists' % realpath)
 
-      if upload_template(module, proxmox, node, storage, content_type, realpath, timeout):
+      if upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
         module.exit_json(changed=True, msg='template with volid=%s:%s/%s uploaded' % (storage, content_type, template))
     except Exception, e:
       module.fail_json(msg="uploading of template %s failed with exception: %s" % ( template, e ))
