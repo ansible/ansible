@@ -58,7 +58,7 @@ options:
       that filesystems get never corrupted/destroyed by mistake.
     required: false
   opts:
-    version_added: "1.9"
+    version_added: "2.0"
     description:
     - Free-form options to be passed to the lvcreate command
 notes:
