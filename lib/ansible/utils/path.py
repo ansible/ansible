@@ -20,6 +20,7 @@ __metaclass__ = type
 import os
 import stat
 from time import sleep
+from errno import EEXIST
 
 __all__ = ['is_executable', 'unfrackpath']
 
@@ -38,10 +39,9 @@ def unfrackpath(path):
 
 def makedirs_safe(path, mode=None):
     '''Safe way to create dirs in muliprocess/thread environments'''
-    while not os.path.exists(path):
+    if not os.path.exists(path):
         try:
             os.makedirs(path, mode)
         except OSError, e:
-            if e.errno != 17:
+            if e.errno != EEXIST:
                 raise
-            sleep(1)
