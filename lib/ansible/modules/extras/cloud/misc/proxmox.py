@@ -41,7 +41,7 @@ options:
       - the instance id
     default: null
     required: true
-  https_verify_ssl:
+  validate_certs:
     description:
       - enable / disable https certificate verification
     default: false
@@ -219,6 +219,7 @@ def create_instance(module, proxmox, vmid, node, disk, storage, cpus, memory, sw
                        % proxmox_node.tasks(taskid).log.get()[:1])
 
     time.sleep(1)
+  return False
 
 def start_instance(module, proxmox, vm, vmid, timeout):
   taskid = proxmox.nodes(vm[0]['node']).openvz(vmid).status.start.post()
@@ -272,7 +273,7 @@ def main():
       api_user = dict(required=True),
       api_password = dict(no_log=True),
       vmid = dict(required=True),
-      https_verify_ssl = dict(type='bool', choices=BOOLEANS, default='no'),
+      validate_certs = dict(type='bool', choices=BOOLEANS, default='no'),
       node = dict(),
       password = dict(no_log=True),
       hostname = dict(),
@@ -302,7 +303,7 @@ def main():
   api_host = module.params['api_host']
   api_password = module.params['api_password']
   vmid = module.params['vmid']
-  https_verify_ssl = module.params['https_verify_ssl']
+  validate_certs = module.params['validate_certs']
   node = module.params['node']
   disk = module.params['disk']
   cpus = module.params['cpus']
@@ -319,7 +320,7 @@ def main():
       module.fail_json(msg='You should set api_password param or use PROXMOX_PASSWORD environment variable')
 
   try:
-    proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=https_verify_ssl)
+    proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
   except Exception, e:
     module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
