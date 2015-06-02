@@ -215,12 +215,18 @@ GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 
+# module configs
+DEFAULT_MODULES_REQUIRE_ARGS = get_config(p, 'default', 'module_require_args', 'ANSIBLE_MODULES_REQUIRE_ARGS', [], islist=True)
+DEFAULT_MODULES_RAW_PARAMS   = get_config(p, 'default', 'module_raw_params', 'ANSIBLE_MODULES_RAW_PARAMS', [], islist=True)
+
+
 # non-configurable things
-MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
-DEFAULT_BECOME_PASS       = None
-DEFAULT_SUDO_PASS         = None
-DEFAULT_REMOTE_PASS       = None
-DEFAULT_SUBSET            = None
-DEFAULT_SU_PASS           = None
-VAULT_VERSION_MIN         = 1.0
-VAULT_VERSION_MAX         = 1.0
+MODULE_REQUIRE_ARGS   = [ 'command', 'shell', 'raw', 'script' ] + DEFAULT_MODULES_REQUIRE_ARGS
+RAW_PARAM_MODULES     = [ 'command', 'shell', 'script', 'include', 'include_vars', 'add_host', 'group_by', 'set_fact', 'raw', 'meta'] + DEFAULT_MODULES_RAW_PARAMS
+DEFAULT_BECOME_PASS   = None
+DEFAULT_SUDO_PASS     = None
+DEFAULT_REMOTE_PASS   = None
+DEFAULT_SUBSET        = None
+DEFAULT_SU_PASS       = None
+VAULT_VERSION_MIN     = 1.0
+VAULT_VERSION_MAX     = 1.0
