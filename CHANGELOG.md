@@ -44,6 +44,7 @@ New Modules:
   * openstack: os_subnet
   * openstack: os_volume
   * proxmox
+  * proxmox_template
   * pushover
   * pushbullet
   * rabbitmq_binding
