@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
+from time import sleep
 
 DOCUMENTATION = '''
 ---
@@ -38,6 +39,12 @@ options:
     required: true
     default: null
     choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded" ]
+  max_retries:
+    description:
+      - If there are pending actions for the service monitoried by monit Ansible will retry this
+        many times to perform the requested action. Between each retry Ansible will sleep for 1 second.
+    required: false
+    default: 10
 requirements: [ ]
 author: "Darryl Stoflet (@dstoflet)" 
 '''
@@ -50,6 +57,7 @@ EXAMPLES = '''
 def main():
     arg_spec = dict(
         name=dict(required=True),
+        max_retries=dict(default=10),
         state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'monitored', 'unmonitored', 'reloaded'])
     )
 
@@ -57,6 +65,7 @@ def main():
 
     name = module.params['name']
     state = module.params['state']
+    max_retries = module.params['max_retries']
 
     MONIT = module.get_bin_path('monit', True)
 
@@ -103,7 +112,21 @@ def main():
                 module.exit_json(changed=True, name=name, state=state)
         module.exit_json(changed=False, name=name, state=state)
 
-    running = 'running' in process_status 
+    running_status = status()
+    retries = 0
+    while 'pending' in running_status or 'initializing' in running_status:
+        if retries >= max_retries:
+            module.fail_json(
+                msg='too many retries waiting for "pending" or "initiating" to go away (%s)' % running_status,
+                retries=retries,
+                state=state
+            )
+
+        sleep(1)
+        retries += 1
+        running_status = status()
+
+    running = 'running' in status()
 
     if running and state in ['started', 'monitored']:
         module.exit_json(changed=False, name=name, state=state)
