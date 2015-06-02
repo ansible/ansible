@@ -104,6 +104,10 @@ def write_fstab(lines, dest):
     fs_w.flush()
     fs_w.close()
 
+def _escape_fstab(v):
+    """ escape space (040), ampersand (046) and backslash (134) which are invalid in fstab fields """
+    return v.replace('\\', '\\134').replace(' ', '\\040').replace('&', '\\046')
+
 def set_mount(**kwargs):
     """ set/change a mount point location in fstab """
 
@@ -126,6 +130,7 @@ def set_mount(**kwargs):
     to_write = []
     exists = False
     changed = False
+    escaped_args = dict([(k, _escape_fstab(v)) for k, v in args.iteritems()])
     for line in open(args['fstab'], 'r').readlines():
         if not line.strip():
             to_write.append(line)
@@ -142,16 +147,16 @@ def set_mount(**kwargs):
         ld = {}
         ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
 
-        if ld['name'] != args['name']:
+        if ld['name'] != escaped_args['name']:
             to_write.append(line)
             continue
 
         # it exists - now see if what we have is different
         exists = True
         for t in ('src', 'fstype','opts', 'dump', 'passno'):
-            if ld[t] != args[t]:
+            if ld[t] != escaped_args[t]:
                 changed = True
-                ld[t] = args[t]
+                ld[t] = escaped_args[t]
 
         if changed:
             to_write.append(new_line % ld)
@@ -188,6 +193,7 @@ def unset_mount(**kwargs):
 
     to_write = []
     changed = False
+    escaped_name = _escape_fstab(args['name'])
     for line in open(args['fstab'], 'r').readlines():
         if not line.strip():
             to_write.append(line)
@@ -204,7 +210,7 @@ def unset_mount(**kwargs):
         ld = {}
         ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
 
-        if ld['name'] != args['name']:
+        if ld['name'] != escaped_name:
             to_write.append(line)
             continue
 
@@ -274,8 +280,6 @@ def main():
         args['passno'] = module.params['passno']
     if module.params['opts'] is not None:
         args['opts'] = module.params['opts']
-        if ' ' in args['opts']:
-            module.fail_json(msg="unexpected space in 'opts' parameter")
     if module.params['dump'] is not None:
         args['dump'] = module.params['dump']
     if module.params['fstab'] is not None:
