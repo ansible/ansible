@@ -36,7 +36,7 @@ options:
       - you can use PROXMOX_PASSWORD environment variable
     default: null
     required: false
-  https_verify_ssl:
+  validate_certs:
     description:
       - enable / disable https certificate verification
     default: false
@@ -162,7 +162,7 @@ def main():
       api_host = dict(required=True),
       api_user = dict(required=True),
       api_password = dict(no_log=True),
-      https_verify_ssl = dict(type='bool', choices=BOOLEANS, default='no'),
+      validate_certs = dict(type='bool', choices=BOOLEANS, default='no'),
       node = dict(),
       src = dict(),
       template = dict(),
@@ -181,7 +181,7 @@ def main():
   api_user = module.params['api_user']
   api_host = module.params['api_host']
   api_password = module.params['api_password']
-  https_verify_ssl = module.params['https_verify_ssl']
+  validate_certs = module.params['validate_certs']
   node = module.params['node']
   storage = module.params['storage']
   timeout = module.params['timeout']
@@ -194,7 +194,7 @@ def main():
       module.fail_json(msg='You should set api_password param or use PROXMOX_PASSWORD environment variable')
 
   try:
-    proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=https_verify_ssl)
+    proxmox = ProxmoxAPI(api_host, user=api_user, password=api_password, verify_ssl=validate_certs)
   except Exception, e:
     module.fail_json(msg='authorization on proxmox cluster failed with exception: %s' % e)
 
