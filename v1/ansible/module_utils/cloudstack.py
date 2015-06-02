@@ -41,15 +41,22 @@ class AnsibleCloudStack:
         if not has_lib_cs:
             module.fail_json(msg="python library cs required: pip install cs")
 
+        self.result = {
+            'changed': False,
+        }
+
         self.module = module
         self._connect()
 
-        self.project_id = None
-        self.ip_address_id = None
-        self.zone_id = None
-        self.vm_id = None
-        self.os_type_id = None
+        self.domain = None
+        self.account = None
+        self.project = None
+        self.ip_address = None
+        self.zone = None
+        self.vm = None
+        self.os_type = None
         self.hypervisor = None
+        self.capabilities = None
 
 
     def _connect(self):
@@ -57,38 +64,86 @@ class AnsibleCloudStack:
         api_secret = self.module.params.get('secret_key')
         api_url = self.module.params.get('api_url')
         api_http_method = self.module.params.get('api_http_method')
+        api_timeout = self.module.params.get('api_timeout')
 
         if api_key and api_secret and api_url:
             self.cs = CloudStack(
                 endpoint=api_url,
                 key=api_key,
                 secret=api_secret,
+                timeout=api_timeout,
                 method=api_http_method
                 )
         else:
             self.cs = CloudStack(**read_config())
 
+    # TODO: rename to has_changed()
+    def _has_changed(self, want_dict, current_dict, only_keys=None):
+        for key, value in want_dict.iteritems():
 
+            # Optionally limit by a list of keys
+            if only_keys and key not in only_keys:
+                continue;
+
+            # Skip None values
+            if value is None:
+                continue;
+
+            if key in current_dict:
+
+                # API returns string for int in some cases, just to make sure
+                if isinstance(value, int):
+                    current_dict[key] = int(current_dict[key])
+                elif isinstance(value, str):
+                    current_dict[key] = str(current_dict[key])
+
+                # Only need to detect a singe change, not every item
+                if value != current_dict[key]:
+                    return True
+        return False
+
+
+    def _get_by_key(self, key=None, my_dict={}):
+        if key:
+            if key in my_dict:
+                return my_dict[key]
+            self.module.fail_json(msg="Something went wrong: %s not found" % key)
+        return my_dict
+
+
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_project_id(self):
-        if self.project_id:
-            return self.project_id
+        return self.get_project(key='id')
+
+
+    def get_project(self, key=None):
+        if self.project:
+            return self._get_by_key(key, self.project)
 
         project = self.module.params.get('project')
         if not project:
             return None
-
-        projects = self.cs.listProjects()
+        args = {}
+        args['listall'] = True
+        args['account'] = self.get_account(key='name')
+        args['domainid'] = self.get_domain(key='id')
+        projects = self.cs.listProjects(**args)
         if projects:
             for p in projects['project']:
                 if project in [ p['name'], p['displaytext'], p['id'] ]:
-                    self.project_id = p['id']
-                    return self.project_id
+                    self.project = p
+                    return self._get_by_key(key, self.project)
         self.module.fail_json(msg="project '%s' not found" % project)
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_ip_address_id(self):
-        if self.ip_address_id:
-            return self.ip_address_id
+        return self.get_ip_address(key='id')
+
+
+    def get_ip_address(self, key=None):
+        if self.ip_address:
+            return self._get_by_key(key, self.ip_address)
 
         ip_address = self.module.params.get('ip_address')
         if not ip_address:
@@ -96,58 +151,78 @@ class AnsibleCloudStack:
 
         args = {}
         args['ipaddress'] = ip_address
-        args['projectid'] = self.get_project_id()
+        args['account'] = self.get_account(key='name')
+        args['domainid'] = self.get_domain(key='id')
+        args['projectid'] = self.get_project(key='id')
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
         if not ip_addresses:
             self.module.fail_json(msg="IP address '%s' not found" % args['ipaddress'])
 
-        self.ip_address_id = ip_addresses['publicipaddress'][0]['id']
-        return self.ip_address_id
+        self.ip_address = ip_addresses['publicipaddress'][0]
+        return self._get_by_key(key, self.ip_address)
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_vm_id(self):
-        if self.vm_id:
-            return self.vm_id
+        return self.get_vm(key='id')
+
+
+    def get_vm(self, key=None):
+        if self.vm:
+            return self._get_by_key(key, self.vm)
 
         vm = self.module.params.get('vm')
         if not vm:
             self.module.fail_json(msg="Virtual machine param 'vm' is required")
 
         args = {}
-        args['projectid'] = self.get_project_id()
+        args['account'] = self.get_account(key='name')
+        args['domainid'] = self.get_domain(key='id')
+        args['projectid'] = self.get_project(key='id')
+        args['zoneid'] = self.get_zone(key='id')
         vms = self.cs.listVirtualMachines(**args)
         if vms:
             for v in vms['virtualmachine']:
-                if vm in [ v['displayname'], v['name'], v['id'] ]:
-                    self.vm_id = v['id']
-                    return self.vm_id
+                if vm in [ v['name'], v['displayname'], v['id'] ]:
+                    self.vm = v
+                    return self._get_by_key(key, self.vm)
         self.module.fail_json(msg="Virtual machine '%s' not found" % vm)
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_zone_id(self):
-        if self.zone_id:
-            return self.zone_id
+        return self.get_zone(key='id')
+
+
+    def get_zone(self, key=None):
+        if self.zone:
+            return self._get_by_key(key, self.zone)
 
         zone = self.module.params.get('zone')
         zones = self.cs.listZones()
 
         # use the first zone if no zone param given
         if not zone:
-            self.zone_id = zones['zone'][0]['id']
-            return self.zone_id
+            self.zone = zones['zone'][0]
+            return self._get_by_key(key, self.zone)
 
         if zones:
             for z in zones['zone']:
                 if zone in [ z['name'], z['id'] ]:
-                    self.zone_id = z['id']
-                    return self.zone_id
+                    self.zone = z
+                    return self._get_by_key(key, self.zone)
         self.module.fail_json(msg="zone '%s' not found" % zone)
 
 
+    # TODO: for backward compatibility only, remove if not used anymore
     def get_os_type_id(self):
-        if self.os_type_id:
-            return self.os_type_id
+        return self.get_os_type(key='id')
+
+
+    def get_os_type(self, key=None):
+        if self.os_type:
+            return self._get_by_key(key, self.zone)
 
         os_type = self.module.params.get('os_type')
         if not os_type:
@@ -157,8 +232,8 @@ class AnsibleCloudStack:
         if os_types:
             for o in os_types['ostype']:
                 if os_type in [ o['description'], o['id'] ]:
-                    self.os_type_id = o['id']
-                    return self.os_type_id
+                    self.os_type = o
+                    return self._get_by_key(key, self.os_type)
         self.module.fail_json(msg="OS type '%s' not found" % os_type)
 
 
@@ -181,6 +256,112 @@ class AnsibleCloudStack:
         self.module.fail_json(msg="Hypervisor '%s' not found" % hypervisor)
 
 
+    def get_account(self, key=None):
+        if self.account:
+            return self._get_by_key(key, self.account)
+
+        account = self.module.params.get('account')
+        if not account:
+            return None
+
+        domain = self.module.params.get('domain')
+        if not domain:
+            self.module.fail_json(msg="Account must be specified with Domain")
+
+        args = {}
+        args['name'] = account
+        args['domainid'] = self.get_domain(key='id')
+        args['listall'] = True
+        accounts = self.cs.listAccounts(**args)
+        if accounts:
+            self.account = accounts['account'][0]
+            return self._get_by_key(key, self.account)
+        self.module.fail_json(msg="Account '%s' not found" % account)
+
+
+    def get_domain(self, key=None):
+        if self.domain:
+            return self._get_by_key(key, self.domain)
+
+        domain = self.module.params.get('domain')
+        if not domain:
+            return None
+
+        args = {}
+        args['name'] = domain
+        args['listall'] = True
+        domains = self.cs.listDomains(**args)
+        if domains:
+            self.domain = domains['domain'][0]
+            return self._get_by_key(key, self.domain)
+        self.module.fail_json(msg="Domain '%s' not found" % domain)
+
+
+    def get_tags(self, resource=None):
+        existing_tags = self.cs.listTags(resourceid=resource['id'])
+        if existing_tags:
+            return existing_tags['tag']
+        return []
+
+
+    def _delete_tags(self, resource, resource_type, tags):
+        existing_tags = resource['tags']
+        tags_to_delete = []
+        for existing_tag in existing_tags:
+            if existing_tag['key'] in tags:
+                if existing_tag['value'] != tags[key]:
+                    tags_to_delete.append(existing_tag)
+            else:
+                tags_to_delete.append(existing_tag)
+        if tags_to_delete:
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                args = {}
+                args['resourceids']  = resource['id']
+                args['resourcetype'] = resource_type
+                args['tags']         = tags_to_delete
+                self.cs.deleteTags(**args)
+
+
+    def _create_tags(self, resource, resource_type, tags):
+        tags_to_create = []
+        for i, tag_entry in enumerate(tags):
+            tag = {
+                'key':   tag_entry['key'],
+                'value': tag_entry['value'],
+            }
+            tags_to_create.append(tag)
+        if tags_to_create:
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                args = {}
+                args['resourceids']  = resource['id']
+                args['resourcetype'] = resource_type
+                args['tags']         = tags_to_create
+                self.cs.createTags(**args)
+
+
+    def ensure_tags(self, resource, resource_type=None):
+        if not resource_type or not resource:
+            self.module.fail_json(msg="Error: Missing resource or resource_type for tags.")
+
+        if 'tags' in resource:
+            tags = self.module.params.get('tags')
+            if tags is not None:
+                self._delete_tags(resource, resource_type, tags)
+                self._create_tags(resource, resource_type, tags)
+                resource['tags'] = self.get_tags(resource)
+        return resource
+
+
+    def get_capabilities(self, key=None):
+        if self.capabilities:
+            return self._get_by_key(key, self.capabilities)
+        capabilities = self.cs.listCapabilities()
+        self.capabilities = capabilities['capability']
+        return self._get_by_key(key, self.capabilities)
+
+    # TODO: rename to poll_job()
     def _poll_job(self, job=None, key=None):
         if 'jobid' in job:
             while True:
