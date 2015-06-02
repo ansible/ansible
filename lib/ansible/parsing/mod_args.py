@@ -266,6 +266,7 @@ class ModuleArgsParser:
 
         # FIXME: this should probably be somewhere else
         RAW_PARAM_MODULES = (
+            'raw',
             'command',
             'shell',
             'script',
