@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: proxmox_template
 short_description: management of OS templates in Proxmox VE cluster
 description:
-  - allows you to list/upload/delete templates in Proxmox VE cluster
+  - allows you to upload/delete templates in Proxmox VE cluster
 version_added: "2.0"
 options:
   api_host:
@@ -76,7 +76,7 @@ options:
   timeout:
     description:
       - timeout for operations
-    default: 300
+    default: 30
     required: false
     type: integer
   force:
@@ -88,7 +88,7 @@ options:
   state:
     description:
      - Indicate desired state of the template
-    choices: ['present', 'absent', 'list']
+    choices: ['present', 'absent']
     default: present
 notes:
   - Requires proxmoxer and requests modules on host. This modules can be installed with pip.
@@ -108,9 +108,6 @@ EXAMPLES = '''
 
 # Delete template with minimal options
 - proxmox_template: node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' template='ubuntu-14.04-x86_64.tar.gz' state=absent
-
-# List content of storage(it returns list of dicts)
-- proxmox_template: node='uk-mc02' api_user='root@pam' api_password='1q2w3e' api_host='node1' storage='local' state=list
 '''
 
 import os
@@ -125,9 +122,6 @@ except ImportError:
 def get_template(proxmox, node, storage, content_type, template):
   return [ True for tmpl in proxmox.nodes(node).storage(storage).content.get()
           if tmpl['volid'] == '%s:%s/%s' % (storage, content_type, template) ]
-
-def get_content(proxmox, node, storage):
-  return proxmox.nodes(node).storage(storage).content.get()
 
 def upload_template(module, proxmox, api_host, node, storage, content_type, realpath, timeout):
   taskid = proxmox.nodes(node).storage(storage).upload.post(content=content_type, filename=open(realpath))
@@ -168,9 +162,9 @@ def main():
       template = dict(),
       content_type = dict(default='vztmpl', choices=['vztmpl','iso']),
       storage = dict(default='local'),
-      timeout = dict(type='int', default=300),
+      timeout = dict(type='int', default=30),
       force = dict(type='bool', choices=BOOLEANS, default='no'),
-      state = dict(default='present', choices=['present', 'absent', 'list']),
+      state = dict(default='present', choices=['present', 'absent']),
     )
   )
 
@@ -232,13 +226,6 @@ def main():
         module.exit_json(changed=True, msg='template with volid=%s:%s/%s deleted' % (storage, content_type, template))
     except Exception, e:
       module.fail_json(msg="deleting of template %s failed with exception: %s" % ( template, e ))
-
-  elif state == 'list':
-    try:
-
-      module.exit_json(changed=False, templates=get_content(proxmox, node, storage))
-    except Exception, e:
-      module.fail_json(msg="listing of templates %s failed with exception: %s" % ( template, e ))
 
 # import module snippets
 from ansible.module_utils.basic import *
