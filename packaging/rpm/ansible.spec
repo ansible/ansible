@@ -28,6 +28,7 @@ Requires: python26-jinja2
 Requires: python26-keyczar
 Requires: python26-httplib2
 Requires: python26-setuptools
+Requires: python26-six
 %endif
 
 # RHEL == 6
@@ -45,6 +46,7 @@ Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 # FEDORA > 17
@@ -57,6 +59,7 @@ Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 # SuSE/openSuSE
@@ -69,6 +72,7 @@ Requires: python-keyczar
 Requires: python-yaml
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 Requires: sshpass
