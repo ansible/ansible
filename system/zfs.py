@@ -250,7 +250,7 @@ class Zfs(object):
         if self.module.check_mode:
             self.changed = True
             return
-        properties=self.properties
+        properties = self.properties
         volsize = properties.pop('volsize', None)
         volblocksize = properties.pop('volblocksize', None)
         if "@" in self.name:
@@ -260,6 +260,10 @@ class Zfs(object):
 
         cmd = [self.module.get_bin_path('zfs', True)]
         cmd.append(action)
+
+        if createparent:
+            cmd.append('-p')
+
         if volblocksize:
             cmd.append('-b %s' % volblocksize)
         if properties:
@@ -271,7 +275,7 @@ class Zfs(object):
         cmd.append(self.name)
         (rc, err, out) = self.module.run_command(' '.join(cmd))
         if rc == 0:
-            self.changed=True
+            self.changed = True
         else:
             self.module.fail_json(msg=out)
 
@@ -345,6 +349,7 @@ def main():
             'checksum':        {'required': False, 'choices':['on', 'off', 'fletcher2', 'fletcher4', 'sha256']},
             'compression':     {'required': False, 'choices':['on', 'off', 'lzjb', 'gzip', 'gzip-1', 'gzip-2', 'gzip-3', 'gzip-4', 'gzip-5', 'gzip-6', 'gzip-7', 'gzip-8', 'gzip-9', 'lz4', 'zle']},
             'copies':          {'required': False, 'choices':['1', '2', '3']},
+            'createparent':    {'required': False, 'choices':['on', 'off']},
             'dedup':           {'required': False, 'choices':['on', 'off']},
             'devices':         {'required': False, 'choices':['on', 'off']},
             'exec':            {'required': False, 'choices':['on', 'off']},
@@ -396,7 +401,7 @@ def main():
     result['name'] = name
     result['state'] = state
 
-    zfs=Zfs(module, name, properties)
+    zfs = Zfs(module, name, properties)
 
     if state == 'present':
         if zfs.exists():
