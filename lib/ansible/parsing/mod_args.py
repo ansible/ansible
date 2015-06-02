@@ -274,6 +274,7 @@ class ModuleArgsParser:
             'add_host',
             'group_by',
             'set_fact',
+            'raw',
             'meta',
         )
         # if we didn't see any module in the task at all, it's not a task really
