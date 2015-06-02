@@ -407,12 +407,12 @@ class Connection(ConnectionBase):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
-            cmd += self._common_args
-            cmd.append(in_path,host + ":" + pipes.quote(out_path))
+            cmd.extend(self._common_args)
+            cmd.extend([in_path, '{0}:{1}'.format(host, pipes.quote(out_path))])
             indata = None
         else:
             cmd.append('sftp')
-            cmd += self._common_args
+            cmd.extend(self._common_args)
             cmd.append(host)
             indata = "put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
 
@@ -440,12 +440,12 @@ class Connection(ConnectionBase):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
-            cmd += self._common_args
-            cmd += ('{0}:{1}'.format(host, in_path), out_path)
+            cmd.extend(self._common_args)
+            cmd.extend(['{0}:{1}'.format(host, in_path), out_path])
             indata = None
         else:
             cmd.append('sftp')
-            cmd += self._common_args
+            cmd.extend(self._common_args)
             cmd.append(host)
             indata = "get {0} {1}\n".format(in_path, out_path)
 
