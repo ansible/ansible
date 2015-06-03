@@ -26,7 +26,7 @@ from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv
 
 # For filtering out modules correctly below
-RAW_PARAM_MODULES = frozenset(
+RAW_PARAM_MODULES = ([
     'command',
     'shell',
     'script',
@@ -37,7 +37,7 @@ RAW_PARAM_MODULES = frozenset(
     'set_fact',
     'raw',
     'meta',
-)
+])
 
 class ModuleArgsParser:
 
