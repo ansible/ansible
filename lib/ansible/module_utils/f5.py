@@ -64,12 +64,9 @@ def disable_ssl_cert_validation():
 
 # Fully Qualified name (with the partition)
 def fq_name(partition,name):
-    if name is None:
-        return None
-    if name[0] is '/':
-        return name
-    else:
+    if name is not None and not name.startswith('/'):
         return '/%s/%s' % (partition,name)
+    return name
 
 # Fully Qualified name (with partition) for a list 
 def fq_list_names(partition,list_names):
