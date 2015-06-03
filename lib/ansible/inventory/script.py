@@ -68,11 +68,11 @@ class InventoryScript:
             self.raw = self._loader.load(self.data)
         except Exception as e:
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results: %s" % str(e))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(self.filename, str(e)))
 
         if not isinstance(self.raw, Mapping):
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results: data needs to be formatted as a json dict" )
+            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(self.filename))
 
         self.raw  = json_dict_bytes_to_unicode(self.raw)
 
