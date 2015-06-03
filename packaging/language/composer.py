@@ -82,6 +82,14 @@ options:
         default: "yes"
         choices: [ "yes", "no" ]
         aliases: [ "optimize-autoloader" ]
+    ignore_platform_reqs:
+        version_added: "2.0"
+        description:
+            - Ignore php, hhvm, lib-* and ext-* requirements and force the installation even if the local machine does not fulfill these.
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        aliases: [ "ignore-platform-reqs" ]
 requirements:
     - php
     - composer installed in bin path (recommended /usr/local/bin)
@@ -116,14 +124,15 @@ def composer_install(module, command, options):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command             = dict(default="install", type="str", required=False),
-            working_dir         = dict(aliases=["working-dir"], required=True),
-            prefer_source       = dict(default="no", type="bool", aliases=["prefer-source"]),
-            prefer_dist         = dict(default="no", type="bool", aliases=["prefer-dist"]),
-            no_dev              = dict(default="yes", type="bool", aliases=["no-dev"]),
-            no_scripts          = dict(default="no", type="bool", aliases=["no-scripts"]),
-            no_plugins          = dict(default="no", type="bool", aliases=["no-plugins"]),
-            optimize_autoloader = dict(default="yes", type="bool", aliases=["optimize-autoloader"]),
+            command              = dict(default="install", type="str", required=False),
+            working_dir          = dict(aliases=["working-dir"], required=True),
+            prefer_source        = dict(default="no", type="bool", aliases=["prefer-source"]),
+            prefer_dist          = dict(default="no", type="bool", aliases=["prefer-dist"]),
+            no_dev               = dict(default="yes", type="bool", aliases=["no-dev"]),
+            no_scripts           = dict(default="no", type="bool", aliases=["no-scripts"]),
+            no_plugins           = dict(default="no", type="bool", aliases=["no-plugins"]),
+            optimize_autoloader  = dict(default="yes", type="bool", aliases=["optimize-autoloader"]),
+            ignore_platform_reqs = dict(default="no", type="bool", aliases=["ignore-platform-reqs"]),
         ),
         supports_check_mode=True
     )
@@ -153,6 +162,8 @@ def main():
         options.append('--no-plugins')
     if module.params['optimize_autoloader']:
         options.append('--optimize-autoloader')
+    if module.params['ignore_platform_reqs']:
+        options.append('--ignore-platform-reqs')
 
     if module.check_mode:
         options.append('--dry-run')
