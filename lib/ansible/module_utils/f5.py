@@ -50,7 +50,7 @@ def f5_parse_arguments(module):
         module.fail_json(msg="the python bigsuds module is required")
     if not module.params['validate_certs']:
         disable_ssl_cert_validation()
-    return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'])
+    return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'],module.params['validate_certs'])
 
 def bigip_api(bigip, user, password):
     api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
@@ -61,4 +61,20 @@ def disable_ssl_cert_validation():
     # From https://www.python.org/dev/peps/pep-0476/#id29
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
+
+# Fully Qualified name (with the partition)
+def fq_name(partition,name):
+    if name is None:
+        return None
+    if name[0] is '/':
+        return name
+    else:
+        return '/%s/%s' % (partition,name)
+
+# Fully Qualified name (with partition) for a list 
+def fq_list_names(partition,list_names):
+    if list_names is None:
+        return None
+    return map(lambda x: fq_name(partition,x),list_names)
+
 
