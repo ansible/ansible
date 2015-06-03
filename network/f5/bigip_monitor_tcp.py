@@ -181,35 +181,9 @@ EXAMPLES = '''
 
 '''
 
-try:
-    import bigsuds
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
-
 TEMPLATE_TYPE = DEFAULT_TEMPLATE_TYPE = 'TTYPE_TCP'
 TEMPLATE_TYPE_CHOICES = ['tcp', 'tcp_echo', 'tcp_half_open']
 DEFAULT_PARENT = DEFAULT_TEMPLATE_TYPE_CHOICE = DEFAULT_TEMPLATE_TYPE.replace('TTYPE_', '').lower()
-
-
-# ===========================================
-# bigip_monitor module generic methods.
-# these should be re-useable for other monitor types
-#
-
-def bigip_api(bigip, user, password):
-
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
-    return api
-
-
-def disable_ssl_cert_validation():
-
-    # You probably only want to do this for testing and never in production.
-    # From https://www.python.org/dev/peps/pep-0476/#id29
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
 
 
 def check_monitor_exists(module, api, monitor, parent):
@@ -234,7 +208,7 @@ def check_monitor_exists(module, api, monitor, parent):
 
 def create_monitor(api, monitor, template_attributes):
 
-    try: 
+    try:
         api.LocalLB.Monitor.create_template(templates=[{'template_name': monitor, 'template_type': TEMPLATE_TYPE}], template_attributes=[template_attributes])
     except bigsuds.OperationFailed, e:
         if "already exists" in str(e):
@@ -298,7 +272,6 @@ def set_integer_property(api, monitor, int_property):
 
 
 def update_monitor_properties(api, module, monitor, template_string_properties, template_integer_properties):
-
     changed = False
     for str_property in template_string_properties:
         if str_property['value'] is not None and not check_string_property(api, monitor, str_property):
@@ -341,15 +314,8 @@ def set_ipport(api, monitor, ipport):
 def main():
 
     # begin monitor specific stuff
-
-    module = AnsibleModule(
-        argument_spec = dict(
-            server    = dict(required=True),
-            user      = dict(required=True),
-            password  = dict(required=True),
-            validate_certs = dict(default='yes', type='bool'),
-            partition = dict(default='Common'),
-            state     = dict(default='present', choices=['present', 'absent']),
+    argument_spec=f5_argument_spec();
+    argument_spec.update(dict(
             name      = dict(required=True),
             type      = dict(default=DEFAULT_TEMPLATE_TYPE_CHOICE, choices=TEMPLATE_TYPE_CHOICES),
             parent    = dict(default=DEFAULT_PARENT),
@@ -361,21 +327,21 @@ def main():
             interval  = dict(required=False, type='int'),
             timeout   = dict(required=False, type='int'),
             time_until_up = dict(required=False, type='int', default=0)
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
         supports_check_mode=True
     )
 
-    server = module.params['server']
-    user = module.params['user']
-    password = module.params['password']
-    validate_certs = module.params['validate_certs']
-    partition = module.params['partition']
+    (server,user,password,state,partition,validate_certs) = f5_parse_arguments(module)
+
     parent_partition = module.params['parent_partition']
-    state = module.params['state']
     name = module.params['name']
     type = 'TTYPE_' + module.params['type'].upper()
-    parent = "/%s/%s" % (parent_partition, module.params['parent'])
-    monitor = "/%s/%s" % (partition, name)
+    parent = fq_name(parent_partition, module.params['parent'])
+    monitor = fq_name(partition, name)
     send = module.params['send']
     receive = module.params['receive']
     ip = module.params['ip']
@@ -390,11 +356,6 @@ def main():
 
     # end monitor specific stuff
 
-    if not validate_certs:
-        disable_ssl_cert_validation()
-
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
     api = bigip_api(server, user, password)
     monitor_exists = check_monitor_exists(module, api, monitor, parent)
 
@@ -506,5 +467,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 main()
 
