@@ -27,7 +27,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 class Become:
 
     # Privlege escalation
-    _become              = FieldAttribute(isa='bool', default=False)
+    _become              = FieldAttribute(isa='bool')
     _become_method       = FieldAttribute(isa='string')
     _become_user         = FieldAttribute(isa='string')
     _become_pass         = FieldAttribute(isa='string')
