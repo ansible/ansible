@@ -845,6 +845,8 @@ def execute_install(args, options, parser):
                     role_dependencies = role_data['dependencies']
                 else:
                     role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
+                if not role_dependencies:
+                    role_dependencies = []
                 for dep in role_dependencies:
                     if isinstance(dep, basestring):
                         dep = ansible.utils.role_spec_parse(dep)
