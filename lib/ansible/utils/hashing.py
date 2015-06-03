@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+from ansible.errors import AnsibleError
+
 
 # Note, sha1 is the only hash algorithm compatible with python2.4 and with
 # FIPS-140 mode (as of 11-2014)
@@ -63,7 +65,7 @@ def secure_hash(filename, hash_func=sha1):
             block = infile.read(blocksize)
         infile.close()
     except IOError, e:
-        raise errors.AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
+        raise AnsibleError("error while accessing the file %s, error was: %s" % (filename, e))
     return digest.hexdigest()
 
 # The checksum algorithm must match with the algorithm in ShellModule.checksum() method
