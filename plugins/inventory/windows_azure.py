@@ -51,7 +51,7 @@ try:
     from azure import WindowsAzureError
     from azure.servicemanagement import ServiceManagementService
 except ImportError as e:
-    print "failed=True msg='`azure` library required for this script'"
+    sys.stderr.write("failed=True msg='`azure` library required for this script'\n")
     sys.exit(1)
 
 
@@ -157,9 +157,8 @@ class AzureInventory(object):
             for cloud_service in self.sms.list_hosted_services():
                 self.add_deployments(cloud_service)
         except WindowsAzureError as e:
-            print "Looks like Azure's API is down:"
-            print
-            print e
+            sys.stderr.write("Looks like Azure's API is down:\n\n")
+            sys.stderr.write(e + '\n')
             sys.exit(1)
 
     def add_deployments(self, cloud_service):
@@ -169,9 +168,8 @@ class AzureInventory(object):
                 if deployment.deployment_slot == "Production":
                     self.add_deployment(cloud_service, deployment)
         except WindowsAzureError as e:
-            print "Looks like Azure's API is down:"
-            print
-            print e
+            sys.stderr.write("Looks like Azure's API is down:\n\n")
+            sys.stderr.write(e + '\n')
             sys.exit(1)
 
     def add_deployment(self, cloud_service, deployment):
