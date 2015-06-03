@@ -23,10 +23,9 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod
 
-from six import add_metaclass
+from six import with_metaclass
 
-@add_metaclass(ABCMeta)
-class InventoryParser:
+class InventoryParser(with_metaclass(ABCMeta, object)):
     '''Abstract Base Class for retrieving inventory information
 
     Any InventoryParser functions by taking an inven_source.  The caller then

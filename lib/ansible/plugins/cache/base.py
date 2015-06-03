@@ -20,11 +20,10 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod
 
-from six import add_metaclass
+from six import with_metaclass
 
 
-@add_metaclass(ABCMeta)
-class BaseCacheModule:
+class BaseCacheModule(with_metaclass(ABCMeta, object)):
 
     @abstractmethod
     def get(self, key):

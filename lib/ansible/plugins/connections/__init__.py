@@ -22,7 +22,7 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
-from six import add_metaclass
+from six import with_metaclass
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -34,8 +34,7 @@ from ansible.utils.display import Display
 
 __all__ = ['ConnectionBase']
 
-@add_metaclass(ABCMeta)
-class ConnectionBase:
+class ConnectionBase(with_metaclass(ABCMeta, object)):
     '''
     A base class for connections to contain common code.
     '''
