@@ -23,6 +23,8 @@ import os
 import subprocess
 import sys
 
+from collections import Mapping
+
 from ansible import constants as C
 from ansible.errors import *
 from ansible.inventory.host import Host
@@ -62,17 +64,22 @@ class InventoryScript:
         all_hosts = {}
 
         # not passing from_remote because data from CMDB is trusted
-        self.raw = self._loader.load(self.data)
+        try:
+            self.raw = self._loader.load(self.data)
+        except Exception as e:
+            sys.stderr.write(err + "\n")
+            raise AnsibleError("failed to parse executable inventory script results: %s" % str(e))
+
+        if not isinstance(self.raw, Mapping):
+            sys.stderr.write(err + "\n")
+            raise AnsibleError("failed to parse executable inventory script results: data needs to be formatted as a json dict" )
+
         self.raw  = json_dict_bytes_to_unicode(self.raw)
 
         all       = Group('all')
         groups    = dict(all=all)
         group     = None
 
-
-        if 'failed' in self.raw:
-            sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results: %s" % self.raw)
 
         for (group_name, data) in self.raw.items():
 
