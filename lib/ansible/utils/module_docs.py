@@ -23,6 +23,7 @@ import ast
 import yaml
 import traceback
 
+from collections import MutableMapping
 from ansible.plugins import fragment_loader
 
 # modules that are ok that they do not have documentation strings
