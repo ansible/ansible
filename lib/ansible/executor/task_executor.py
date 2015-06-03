@@ -380,7 +380,7 @@ class TaskExecutor:
         conn_type = self._connection_info.connection
         if conn_type == 'smart':
             conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self._connection_info.remote_pass:
+            if sys.platform.startswith('darwin') and self._connection_info.password:
                 # due to a current bug in sshpass on OSX, which can trigger
                 # a kernel panic even for non-privileged users, we revert to
                 # paramiko on that OS when a SSH password is specified
