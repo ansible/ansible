@@ -86,7 +86,7 @@ class Bower(object):
 
     def _exec(self, args, run_in_check_mode=False, check_rc=True):
         if not self.module.check_mode or (self.module.check_mode and run_in_check_mode):
-            cmd = ["bower"] + args
+            cmd = ["bower"] + args + ['--config.interactive=false', '--allow-root']
 
             if self.name:
                 cmd.append(self.name_version)
@@ -108,7 +108,7 @@ class Bower(object):
         return ''
 
     def list(self):
-        cmd = ['list', '--json', '--config.interactive=false', '--allow-root']
+        cmd = ['list', '--json']
 
         installed = list()
         missing = list()
