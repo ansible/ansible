@@ -44,7 +44,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 from ansible.plugins import shell_loader
-from ansible.utils import makedirs_safe
+from ansible.utils.path import makedirs_safe
 
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''

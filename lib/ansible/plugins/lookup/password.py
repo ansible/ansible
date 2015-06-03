@@ -30,7 +30,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.encrypt import do_encrypt
-from ansible.utils import makedirs_safe
+from ansible.utils.path import makedirs_safe
 
 DEFAULT_LENGTH = 20
 
