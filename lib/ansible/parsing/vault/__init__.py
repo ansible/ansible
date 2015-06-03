@@ -36,18 +36,18 @@ from hashlib import sha256
 from hashlib import md5
 from binascii import hexlify
 from binascii import unhexlify
-from six import binary_type, PY2, text_type
+from six import binary_type, PY3, text_type
 
 try:
     from six import byte2int
 except ImportError:
     # bytes2int added in six-1.4.0
-    if PY2:
-        def byte2int(bs):
-            return ord(bs[0])
-    else:
+    if PY3:
         import operator
         byte2int = operator.itemgetter(0)
+    else:
+        def byte2int(bs):
+            return ord(bs[0])
 
 from ansible import constants as C
 from ansible.utils.unicode import to_unicode, to_bytes
@@ -463,10 +463,10 @@ class VaultAES(object):
         while not finished:
             chunk, next_chunk = next_chunk, cipher.decrypt(in_file.read(1024 * bs))
             if len(next_chunk) == 0:
-                if PY2:
-                    padding_length = ord(chunk[-1])
-                else:
+                if PY3:
                     padding_length = chunk[-1]
+                else:
+                    padding_length = ord(chunk[-1])
 
                 chunk = chunk[:-padding_length]
                 finished = True
@@ -608,8 +608,8 @@ class VaultAES256(object):
 
         result = 0
         for x, y in zip(a, b):
-            if PY2:
-                result |= ord(x) ^ ord(y)
-            else:
+            if PY3:
                 result |= x ^ y
+            else:
+                result |= ord(x) ^ ord(y)
         return result == 0
