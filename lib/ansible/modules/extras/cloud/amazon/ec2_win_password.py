@@ -17,6 +17,10 @@ options:
     description:
       - path to the file containing the key pair used on the instance
     required: true
+  key_passphrase:
+    description:
+      - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3. 
+    required: false
   region:
     description:
       - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -36,6 +40,16 @@ tasks:
     instance_id: i-XXXXXX
     region: us-east-1
     key_file: "~/aws-creds/my_test_key.pem"
+
+# Example of getting a password with a password protected key
+tasks:
+- name: get the Administrator password
+  ec2_win_password:
+    profile: my-boto-profile
+    instance_id: i-XXXXXX
+    region: us-east-1
+    key_file: "~/aws-creds/my_protected_test_key.pem"
+    key_passphrase: "secret"
 '''
 
 from base64 import b64decode
@@ -54,6 +68,7 @@ def main():
     argument_spec.update(dict(
             instance_id = dict(required=True),
             key_file = dict(required=True),
+            key_passphrase = dict(default=None),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -63,6 +78,7 @@ def main():
 
     instance_id = module.params.get('instance_id')
     key_file = expanduser(module.params.get('key_file'))
+    key_passphrase = module.params.get('key_passphrase')
 
     ec2 = ec2_connect(module)
 
@@ -70,7 +86,7 @@ def main():
     decoded = b64decode(data)
 
     f = open(key_file, 'r')
-    key = RSA.importKey(f.read())
+    key = RSA.importKey(f.read(), key_passphrase)
     cipher = PKCS1_v1_5.new(key)
     sentinel = 'password decryption failed!!!'
 
