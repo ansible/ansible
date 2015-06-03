@@ -41,7 +41,10 @@ def makedirs_safe(path, mode=None):
     '''Safe way to create dirs in muliprocess/thread environments'''
     if not os.path.exists(path):
         try:
-            os.makedirs(path, mode)
+            if mode:
+                os.makedirs(path, mode)
+            else:
+                os.makedirs(path)
         except OSError, e:
             if e.errno != EEXIST:
                 raise
