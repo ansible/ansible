@@ -36,7 +36,19 @@ from hashlib import sha256
 from hashlib import md5
 from binascii import hexlify
 from binascii import unhexlify
-from six import binary_type, byte2int, PY2, text_type
+from six import binary_type, PY2, text_type
+
+try:
+    from six import byte2int
+except ImportError:
+    # bytes2int added in six-1.4.0
+    if PY2:
+        def byte2int(bs):
+            return ord(bs[0])
+    else:
+        import operator
+        byte2int = operator.itemgetter(0)
+
 from ansible import constants as C
 from ansible.utils.unicode import to_unicode, to_bytes
 
