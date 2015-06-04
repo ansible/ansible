@@ -43,6 +43,17 @@ Synopsis
 @{ desc | convert_symbols_to_format }@
 {% endfor %}
 
+
+{% if requirements %}
+Requirements
+------------
+
+{% for req in requirements %}
+  * @{ req | convert_symbols_to_format }@
+{% endfor %}
+{% endif %}
+
+
 {% if options -%}
 Options
 -------
@@ -60,7 +71,7 @@ Options
     {% for k in option_keys %}
     {% set v = options[k] %}
     <tr>
-    <td>@{ k }@</td>
+    <td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
     <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
     <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
     {% if v.get('type', 'not_bool') == 'bool' %}
@@ -68,21 +79,16 @@ Options
     {% else %}
     <td><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
     {% endif %}
-    <td>{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}{% if v['version_added'] %} (added in Ansible @{v['version_added']}@){% endif %}</td>
+    <td>{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}</td>
     </tr>
     {% endfor %}
     </table>
+
 {% endif %}
 
-{% if requirements %}
-{% for req in requirements %}
 
-.. note:: Requires @{ req | convert_symbols_to_format }@
 
-{% endfor %}
-{% endif %}
-
-{% if examples or plainexamples %}
+{% if examples or plainexamples -%}
 Examples
 --------
 
@@ -107,7 +113,7 @@ Examples
 {% endif %}
 
 
-{% if returndocs %}
+{% if returndocs -%}
 Return Values
 -------------
 
@@ -164,7 +170,10 @@ Common return values are documented here :doc:`common_return_values`, the follow
     </br></br>
 {% endif %}
 
-{% if notes %}
+{% if notes -%}
+Notes
+-----
+
 {% for note in notes %}
 .. note:: @{ note | convert_symbols_to_format }@
 {% endfor %}
