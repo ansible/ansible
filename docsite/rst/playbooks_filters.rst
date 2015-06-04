@@ -3,6 +3,7 @@ Jinja2 filters
 
 .. contents:: Topics
 
+
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
