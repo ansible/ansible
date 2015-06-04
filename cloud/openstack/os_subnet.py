@@ -173,6 +173,7 @@ def main():
         allocation_pool_start=dict(default=None),
         allocation_pool_end=dict(default=None),
         host_routes=dict(default=None, type='list'),
+        state=dict(default='present', choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs()
