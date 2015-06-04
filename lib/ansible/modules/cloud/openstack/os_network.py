@@ -66,6 +66,7 @@ def main():
         name=dict(required=True),
         shared=dict(default=False, type='bool'),
         admin_state_up=dict(default=True, type='bool'),
+        state=dict(default='present', choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs()
