@@ -203,7 +203,9 @@ class OVirtInventory(object):
         inst.get_custom_properties()
         ips = [ip.get_address() for ip in inst.get_guest_info().get_ips().get_ip()] \
             if inst.get_guest_info() is not None else []
-        stats = {y.get_name(): y.get_values().get_value()[0].get_datum() for y in inst.get_statistics().list()}
+        stats = {}
+        for stat in inst.get_statistics().list():
+            stats[stat.get_name()] = stat.get_values().get_value()[0].get_datum()
 
         return {
             'ovirt_uuid': inst.get_id(),
