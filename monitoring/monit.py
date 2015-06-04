@@ -69,14 +69,6 @@ def main():
 
     MONIT = module.get_bin_path('monit', True)
 
-    if state == 'reloaded':
-        if module.check_mode:
-            module.exit_json(changed=True)
-        rc, out, err = module.run_command('%s reload' % MONIT)
-        if rc != 0:
-            module.fail_json(msg='monit reload failed', stdout=out, stderr=err)
-        module.exit_json(changed=True, name=name, state=state)
-    
     def status():
         """Return the status of the process in monit, or the empty string if not present."""
         rc, out, err = module.run_command('%s summary' % MONIT, check_rc=True)
@@ -95,8 +87,35 @@ def main():
         module.run_command('%s %s %s' % (MONIT, command, name), check_rc=True)
         return status()
 
-    process_status = status()
-    present = process_status != ''
+    def wait_for_monit_to_stop_pending(sleep_time=1):
+        """Fails this run if there is no status or it's pending/initalizing for max_retries"""
+        running_status = status()
+        retries = 0
+
+        while running_status == '' or 'pending' in running_status or 'initializing' in running_status:
+            if retries >= max_retries:
+                module.fail_json(
+                    msg='too many retries waiting for empty, "pending", or "initiating" status to go away ({0})'.format(
+                        running_status
+                    ),
+                    retries=retries,
+                    state=state
+                )
+
+            sleep(sleep_time)
+            retries += 1
+            running_status = status()
+
+    if state == 'reloaded':
+        if module.check_mode:
+            module.exit_json(changed=True)
+        rc, out, err = module.run_command('%s reload' % MONIT)
+        if rc != 0:
+            module.fail_json(msg='monit reload failed', stdout=out, stderr=err)
+        wait_for_monit_to_stop_pending()
+        module.exit_json(changed=True, name=name, state=state)
+
+    present = status() != ''
 
     if not present and not state == 'present':
         module.fail_json(msg='%s process not presently configured with monit' % name, name=name, state=state)
@@ -112,20 +131,7 @@ def main():
                 module.exit_json(changed=True, name=name, state=state)
         module.exit_json(changed=False, name=name, state=state)
 
-    running_status = status()
-    retries = 0
-    while 'pending' in running_status or 'initializing' in running_status:
-        if retries >= max_retries:
-            module.fail_json(
-                msg='too many retries waiting for "pending" or "initiating" to go away (%s)' % running_status,
-                retries=retries,
-                state=state
-            )
-
-        sleep(1)
-        retries += 1
-        running_status = status()
-
+    wait_for_monit_to_stop_pending()
     running = 'running' in status()
 
     if running and state in ['started', 'monitored']:
