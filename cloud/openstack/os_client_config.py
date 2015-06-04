@@ -38,7 +38,7 @@ EXAMPLES = '''
 
 
 def main():
-    module = AnsibleModule()
+    module = AnsibleModule({})
     p = module.params
 
     try:
