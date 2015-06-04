@@ -62,7 +62,7 @@ class Play(Base, Taggable, Become):
 
     # Variable Attributes
     _vars_files          = FieldAttribute(isa='list', default=[])
-    _vars_prompt         = FieldAttribute(isa='dict', default=dict())
+    _vars_prompt         = FieldAttribute(isa='list', default=[])
     _vault_password      = FieldAttribute(isa='string')
 
     # Block (Task) Lists Attributes
@@ -115,6 +115,9 @@ class Play(Base, Taggable, Become):
 
             ds['remote_user'] = ds['user']
             del ds['user']
+
+        if 'vars_prompt' in ds and not isinstance(ds['vars_prompt'], list):
+            ds['vars_prompt'] = [ ds['vars_prompt'] ]
 
         return super(Play, self).preprocess_data(ds)
 

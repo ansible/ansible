@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import getpass
 import multiprocessing
 import os
 import socket
@@ -150,6 +151,50 @@ class TaskQueueManager:
 
         return loaded_plugins
 
+    def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+
+        if prompt and default is not None:
+            msg = "%s [%s]: " % (prompt, default)
+        elif prompt:
+            msg = "%s: " % prompt
+        else:
+            msg = 'input for %s: ' % varname
+
+        def do_prompt(prompt, private):
+            if sys.stdout.encoding:
+                msg = prompt.encode(sys.stdout.encoding)
+            else:
+                # when piping the output, or at other times when stdout
+                # may not be the standard file descriptor, the stdout
+                # encoding may not be set, so default to something sane
+                msg = prompt.encode(locale.getpreferredencoding())
+            if private:
+                return getpass.getpass(msg)
+            return raw_input(msg)
+
+        if confirm:
+            while True:
+                result = do_prompt(msg, private)
+                second = do_prompt("confirm " + msg, private)
+                if result == second:
+                    break
+                display("***** VALUES ENTERED DO NOT MATCH ****")
+        else:
+            result = do_prompt(msg, private)
+
+        # if result is false and default is not None
+        if not result and default is not None:
+            result = default
+
+        # FIXME: make this work with vault or whatever this old method was
+        #if encrypt:
+        #    result = utils.do_encrypt(result, encrypt, salt_size, salt)
+
+        # handle utf-8 chars
+        # FIXME: make this work
+        #result = to_unicode(result, errors='strict')
+        return result
+
     def run(self, play):
         '''
         Iterates over the roles/tasks in a play, using the given (or default)
@@ -158,6 +203,25 @@ class TaskQueueManager:
         a given task (meaning no hosts move on to the next task until all hosts
         are done with the current task).
         '''
+
+        if play.vars_prompt:
+            for var in play.vars_prompt:
+                if 'name' not in var:
+                    raise AnsibleError("'vars_prompt' item is missing 'name:'", obj=play._ds)
+
+                vname     = var['name']
+                prompt    = var.get("prompt", vname)
+                default   = var.get("default", None)
+                private   = var.get("private", True)
+
+                confirm   = var.get("confirm", False)
+                encrypt   = var.get("encrypt", None)
+                salt_size = var.get("salt_size", None)
+                salt      = var.get("salt", None)
+
+                if vname not in play.vars:
+                    self.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                    play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
 
         all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
         templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=False)
