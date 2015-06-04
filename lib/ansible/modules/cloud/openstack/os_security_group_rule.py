@@ -68,12 +68,13 @@ requirements: ["shade"]
 
 EXAMPLES = '''
 # Create a security group rule
-- os_security_group_rule: cloud=mordred
-                          security_group=group foo
-                          protocol: tcp
-                          port_range_min: 80
-                          port_range_max: 80
-                          remote_ip_prefix: 0.0.0.0/0
+- os_security_group_rule:
+    cloud: mordred
+    security_group: foo
+    protocol: tcp
+    port_range_min: 80
+    port_range_max: 80
+    remote_ip_prefix: 0.0.0.0/0
 '''
 
 
