@@ -53,7 +53,7 @@ class LookupModule(LookupBase):
 
             for path in (basedir_path, relative_path, playbook_path):
                 try:
-                    contents = self._loader._get_file_contents(path)
+                    contents, show_data = self._loader._get_file_contents(path)
                     ret.append(contents.rstrip())
                     break
                 except AnsibleParserError:
