@@ -49,6 +49,8 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the local host '''
 
+        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
+
         debug("in local.exec_command()")
         # su requires to be run from a terminal, and therefore isn't supported here (yet?)
         #if self._connection_info.su:
@@ -108,6 +110,8 @@ class Connection(ConnectionBase):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''
 
+        super(Connection, self).put_file(in_path, out_path)
+
         #vvv("PUT {0} TO {1}".format(in_path, out_path), host=self.host)
         self._display.vvv("{0} PUT {1} TO {2}".format(self._connection_info.remote_addr, in_path, out_path))
         if not os.path.exists(in_path):
@@ -123,6 +127,9 @@ class Connection(ConnectionBase):
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from local to local -- for copatibility '''
+
+        super(Connection, self).fetch_file(in_path, out_path)
+
         #vvv("FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
         self._display.vvv("{0} FETCH {1} TO {2}".format(self._connection_info.remote_addr, in_path, out_path))
         self.put_file(in_path, out_path)
