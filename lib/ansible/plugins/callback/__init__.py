@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-#from ansible.utils.display import Display
-
 __all__ = ["CallbackBase"]
 
 class CallbackBase:
