@@ -170,7 +170,7 @@ class ActionModule(ActionBase):
             self._task.args['ssh_args'] = constants.ANSIBLE_SSH_ARGS
 
         # run the module and store the result
-        result = self._execute_module('synchronize')
+        result = self._execute_module('synchronize', task_vars=task_vars)
 
         return result
 

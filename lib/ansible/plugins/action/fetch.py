@@ -61,7 +61,7 @@ class ActionModule(ActionBase):
         # use slurp if sudo and permissions are lacking
         remote_data = None
         if remote_checksum in ('1', '2') or self._connection_info.become:
-            slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), tmp=tmp)
+            slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
             if slurpres.get('rc') == 0:
                 if slurpres['encoding'] == 'base64':
                     remote_data = base64.b64decode(slurpres['content'])

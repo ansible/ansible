@@ -24,6 +24,6 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
 
         #vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
-        return self._execute_module(tmp)
+        return self._execute_module(tmp, task_vars=task_vars)
 
 

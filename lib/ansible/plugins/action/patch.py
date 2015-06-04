@@ -36,7 +36,7 @@ class ActionModule(ActionBase):
         elif remote_src:
             # everything is remote, so we just execute the module
             # without changing any of the module arguments
-            return self._execute_module()
+            return self._execute_module(task_vars=task_vars)
 
         if self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
@@ -63,4 +63,4 @@ class ActionModule(ActionBase):
             )
         )
 
-        return self._execute_module('patch', module_args=new_module_args)
+        return self._execute_module('patch', module_args=new_module_args, task_vars=task_vars)

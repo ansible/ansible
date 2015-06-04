@@ -42,7 +42,7 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
-            result = self._execute_module(module_name='stat', module_args=dict(path=creates), tmp=tmp, persist_files=True)
+            result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars, tmp=tmp, persist_files=True)
             stat = result.get('stat', None)
             if stat and stat.get('exists', False):
                 return dict(skipped=True, msg=("skipped, since %s exists" % creates))
@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains removes=filename
             # and the filename does not exist. This allows idempotence
             # of command executions.
-            result = self._execute_module(module_name='stat', module_args=dict(path=removes), tmp=tmp, persist_files=True)
+            result = self._execute_module(module_name='stat', module_args=dict(path=removes), task_vars=task_vars, tmp=tmp, persist_files=True)
             stat = result.get('stat', None)
             if stat and not stat.get('exists', False):
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))

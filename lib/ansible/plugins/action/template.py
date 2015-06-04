@@ -152,7 +152,7 @@ class ActionModule(ActionBase):
             #        res.diff = dict(before=dest_contents, after=resultant)
             #    return res
 
-            result = self._execute_module(module_name='copy', module_args=new_module_args)
+            result = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
             if result.get('changed', False):
                 result['diff'] = dict(before=dest_contents, after=resultant)
             return result
@@ -180,5 +180,5 @@ class ActionModule(ActionBase):
             #if self.runner.noop_on_check(task_vars):
             #    new_module_args['CHECKMODE'] = True
 
-            return self._execute_module(module_name='file', module_args=new_module_args)
+            return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
 
