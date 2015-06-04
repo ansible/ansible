@@ -174,15 +174,9 @@ EXAMPLES = '''
         name: myvirtualserver
 '''
 
-try:
-    import bigsuds
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
 
 # ==========================
-# bigip_node module specific
+# bigip_virtual_server module specific
 #
 
 # map of state values
@@ -191,30 +185,6 @@ STATES={'enabled': 'STATE_ENABLED',
 STATUSES={'enabled': 'SESSION_STATUS_ENABLED',
           'disabled': 'SESSION_STATUS_DISABLED',
           'offline': 'SESSION_STATUS_FORCED_DISABLED'}
-
-def bigip_api(bigip, user, password):
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
-    return api
-
-def disable_ssl_cert_validation():
-    # You probably only want to do this for testing and never in production.
-    # From https://www.python.org/dev/peps/pep-0476/#id29
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
-
-def fq_name(partition,name):
-    if name is None:
-        return None
-    if name[0] is '/':
-        return name
-    else:
-        return '/%s/%s' % (partition,name)
-
-def fq_list_names(partition,list_names):
-    if list_names is None:
-        return None
-    return map(lambda x: fq_name(partition,x),list_names)
-
 
 def vs_exists(api, vs):
     # hack to determine if pool exists
@@ -328,15 +298,10 @@ def set_description(api,name,description):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            server = dict(type='str', required=True),
-            user = dict(type='str', required=True),
-            password = dict(type='str', required=True),
-            validate_certs = dict(default='yes', type='bool'),
+    argument_spec = f5_argument_spec()
+    argument_spec.update( dict(
             state = dict(type='str', default='present',
                          choices=['present', 'absent', 'disabled', 'enabled']),
-            partition = dict(type='str', default='Common'),
             name = dict(type='str', required=True,aliases=['vs']),
             destination = dict(type='str', aliases=['address', 'ip']),
             port = dict(type='int'),
@@ -344,18 +309,15 @@ def main():
             pool=dict(type='str'),
             description = dict(type='str'),
             snat=dict(type='str')
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
         supports_check_mode=True
     )
 
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
-    server = module.params['server']
-    user = module.params['user']
-    password = module.params['password']
-    validate_certs = module.params['validate_certs']
-    state = module.params['state']
-    partition = module.params['partition']
+    (server,user,password,state,partition,validate_certs) = f5_parse_arguments(module)
     name = fq_name(partition,module.params['name'])
     destination=module.params['destination']
     port=module.params['port']
@@ -363,8 +325,6 @@ def main():
     pool=fq_name(partition,module.params['pool'])
     description = module.params['description']
     snat = module.params['snat']
-    if not validate_certs:
-        disable_ssl_cert_validation()
 
     if 1 > port > 65535:
         module.fail_json(msg="valid ports must be in range 1 - 65535")
@@ -449,5 +409,6 @@ def main():
     module.exit_json(**result)
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 main()
 
