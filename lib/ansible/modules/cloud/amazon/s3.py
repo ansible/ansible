@@ -299,6 +299,15 @@ def is_walrus(s3_url):
     else:
         return False
 
+def get_md5_digest(local_file):
+    md5 = hashlib.md5()
+    with open(local_file, 'rb') as f:
+        while True:
+            data = f.read(1024 ** 2)
+            if not data: break
+            md5.update(data)
+    return md5.hexdigest()
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -413,7 +422,7 @@ def main():
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if pathrtn is True:
             md5_remote = keysum(module, s3, bucket, obj)
-            md5_local = hashlib.md5(open(dest, 'rb').read()).hexdigest()
+            md5_local = get_md5_digest(dest)
             if md5_local == md5_remote:
                 sum_matches = True
                 if overwrite is True:
@@ -457,7 +466,8 @@ def main():
         # Lets check key state. Does it exist and if it does, compute the etag md5sum.
         if bucketrtn is True and keyrtn is True:
                 md5_remote = keysum(module, s3, bucket, obj)
-                md5_local = hashlib.md5(open(src, 'rb').read()).hexdigest()
+                md5_local = get_md5_digest(src)
+
                 if md5_local == md5_remote:
                     sum_matches = True
                     if overwrite == 'always':
