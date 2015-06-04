@@ -38,6 +38,8 @@ BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
+SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
+
 # ansible modules can be written in any language.  To simplify
 # development of Python modules, the functions available here
 # can be inserted in any module source automatically by including
@@ -181,7 +183,8 @@ def get_distribution():
     ''' return the distribution name '''
     if platform.system() == 'Linux':
         try:
-            distribution = platform.linux_distribution()[0].capitalize()
+            supported_dists = platform._supported_dists + ('arch',)
+            distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
             if not distribution and os.path.isfile('/etc/system-release'):
                 distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
                 if 'Amazon' in distribution:
@@ -334,7 +337,8 @@ class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False, supports_check_mode=False):
+        required_one_of=None, add_file_common_args=False, supports_check_mode=False,
+        required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -382,6 +386,7 @@ class AnsibleModule(object):
             self._check_argument_types()
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
+            self._check_required_if(required_if)
 
         self._set_defaults(pre=False)
         if not self.no_log:
@@ -528,10 +533,10 @@ class AnsibleModule(object):
             path = os.path.dirname(path)
         return path
 
-    def is_nfs_path(self, path):
+    def is_special_selinux_path(self, path):
         """
-        Returns a tuple containing (True, selinux_context) if the given path
-        is on a NFS mount point, otherwise the return will be (False, None).
+        Returns a tuple containing (True, selinux_context) if the given path is on a
+        NFS or other 'special' fs  mount point, otherwise the return will be (False, None).
         """
         try:
             f = open('/proc/mounts', 'r')
@@ -542,9 +547,13 @@ class AnsibleModule(object):
         path_mount_point = self.find_mount_point(path)
         for line in mount_data:
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
-            if path_mount_point == mount_point and 'nfs' in fstype:
-                nfs_context = self.selinux_context(path_mount_point)
-                return (True, nfs_context)
+
+            if path_mount_point == mount_point:
+                for fs in SELINUX_SPECIAL_FS.split(','):
+                    if fs in fstype:
+                        special_context = self.selinux_context(path_mount_point)
+                        return (True, special_context)
+
         return (False, None)
 
     def set_default_selinux_context(self, path, changed):
@@ -562,9 +571,9 @@ class AnsibleModule(object):
         # Iterate over the current context instead of the
         # argument context, which may have selevel.
 
-        (is_nfs, nfs_context) = self.is_nfs_path(path)
-        if is_nfs:
-            new_context = nfs_context
+        (is_special_se, sp_context) = self.is_special_selinux_path(path)
+        if is_special_se:
+            new_context = sp_context
         else:
             for i in range(len(cur_context)):
                 if len(context) > i:
@@ -861,6 +870,7 @@ class AnsibleModule(object):
             locale.setlocale(locale.LC_ALL, 'C')
             os.environ['LANG']     = 'C'
             os.environ['LC_CTYPE'] = 'C'
+            os.environ['LC_MESSAGES'] = 'C'
         except Exception, e:
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
@@ -950,6 +960,20 @@ class AnsibleModule(object):
         if len(missing) > 0:
             self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
 
+    def _check_required_if(self, spec):
+        ''' ensure that parameters which conditionally required are present '''
+        if spec is None:
+            return
+        for (key, val, requirements) in spec:
+            missing = []
+            if key in self.params and self.params[key] == val:
+                for check in requirements:
+                    count = self._count_terms(check)
+                    if count == 0:
+                        missing.append(check)
+            if len(missing) > 0:
+                self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
+
     def _check_argument_values(self):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
         for (k,v) in self.argument_spec.iteritems():
@@ -1009,57 +1033,60 @@ class AnsibleModule(object):
             value = self.params[k]
             is_invalid = False
 
-            if wanted == 'str':
-                if not isinstance(value, basestring):
-                    self.params[k] = str(value)
-            elif wanted == 'list':
-                if not isinstance(value, list):
-                    if isinstance(value, basestring):
-                        self.params[k] = value.split(",")
-                    elif isinstance(value, int) or isinstance(value, float):
-                        self.params[k] = [ str(value) ]
-                    else:
-                        is_invalid = True
-            elif wanted == 'dict':
-                if not isinstance(value, dict):
-                    if isinstance(value, basestring):
-                        if value.startswith("{"):
-                            try:
-                                self.params[k] = json.loads(value)
-                            except:
-                                (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
-                                if exc is not None:
-                                    self.fail_json(msg="unable to evaluate dictionary for %s" % k)
-                                self.params[k] = result
-                        elif '=' in value:
-                            self.params[k] = dict([x.strip().split("=", 1) for x in value.split(",")])
+            try:
+                if wanted == 'str':
+                    if not isinstance(value, basestring):
+                        self.params[k] = str(value)
+                elif wanted == 'list':
+                    if not isinstance(value, list):
+                        if isinstance(value, basestring):
+                            self.params[k] = value.split(",")
+                        elif isinstance(value, int) or isinstance(value, float):
+                            self.params[k] = [ str(value) ]
                         else:
-                            self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
-                    else:
-                        is_invalid = True
-            elif wanted == 'bool':
-                if not isinstance(value, bool):
-                    if isinstance(value, basestring):
-                        self.params[k] = self.boolean(value)
-                    else:
-                        is_invalid = True
-            elif wanted == 'int':
-                if not isinstance(value, int):
-                    if isinstance(value, basestring):
-                        self.params[k] = int(value)
-                    else:
-                        is_invalid = True
-            elif wanted == 'float':
-                if not isinstance(value, float):
-                    if isinstance(value, basestring):
-                        self.params[k] = float(value)
-                    else:
-                        is_invalid = True
-            else:
-                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+                            is_invalid = True
+                elif wanted == 'dict':
+                    if not isinstance(value, dict):
+                        if isinstance(value, basestring):
+                            if value.startswith("{"):
+                                try:
+                                    self.params[k] = json.loads(value)
+                                except:
+                                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
+                                    if exc is not None:
+                                        self.fail_json(msg="unable to evaluate dictionary for %s" % k)
+                                    self.params[k] = result
+                            elif '=' in value:
+                                self.params[k] = dict([x.strip().split("=", 1) for x in value.split(",")])
+                            else:
+                                self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
+                        else:
+                            is_invalid = True
+                elif wanted == 'bool':
+                    if not isinstance(value, bool):
+                        if isinstance(value, basestring):
+                            self.params[k] = self.boolean(value)
+                        else:
+                            is_invalid = True
+                elif wanted == 'int':
+                    if not isinstance(value, int):
+                        if isinstance(value, basestring):
+                            self.params[k] = int(value)
+                        else:
+                            is_invalid = True
+                elif wanted == 'float':
+                    if not isinstance(value, float):
+                        if isinstance(value, basestring):
+                            self.params[k] = float(value)
+                        else:
+                            is_invalid = True
+                else:
+                    self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
 
-            if is_invalid:
-                self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
+                if is_invalid:
+                    self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
+            except ValueError, e:
+                self.fail_json(msg="value of argument %s is not of type %s and we were unable to automatically convert" % (k, wanted))
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.iteritems():
