@@ -31,6 +31,7 @@ from ansible import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.parsing.utils.jsonify import jsonify
+from ansible.utils.unicode import to_bytes
 
 REPLACER         = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS    = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
@@ -113,7 +114,7 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
 
 # ******************************************************************************
 
-def modify_module(module_path, module_args, strip_comments=False):
+def modify_module(module_path, module_args, task_vars=dict(), strip_comments=False):
     """
     Used to insert chunks of code into modules before transfer rather than
     doing regular python imports.  This allows for more efficient transfer in
@@ -158,7 +159,6 @@ def modify_module(module_path, module_args, strip_comments=False):
 
         (module_data, module_style) = _find_snippet_imports(module_data, module_path, strip_comments)
 
-        #module_args_json = jsonify(module_args)
         module_args_json = json.dumps(module_args)
         encoded_args = repr(module_args_json.encode('utf-8'))
 
@@ -166,14 +166,11 @@ def modify_module(module_path, module_args, strip_comments=False):
         module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
         module_data = module_data.replace(REPLACER_COMPLEX, encoded_args)
 
-        # FIXME: we're not passing around an inject dictionary anymore, so
-        #        this needs to be fixed with whatever method we use for vars
-        #        like this moving forward
-        #if module_style == 'new':
-        #    facility = C.DEFAULT_SYSLOG_FACILITY
-        #    if 'ansible_syslog_facility' in inject:
-        #        facility = inject['ansible_syslog_facility']
-        #    module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
+        if module_style == 'new':
+            facility = C.DEFAULT_SYSLOG_FACILITY
+            if 'ansible_syslog_facility' in task_vars:
+                facility = task_vars['ansible_syslog_facility']
+            module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
         lines = module_data.split(b"\n", 1)
         shebang = None
@@ -183,11 +180,9 @@ def modify_module(module_path, module_args, strip_comments=False):
             interpreter = args[0]
             interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
 
-            # FIXME: more inject stuff here...
-            #from ansible.utils.unicode import to_bytes
-            #if interpreter_config in inject:
-            #    interpreter = to_bytes(inject[interpreter_config], errors='strict')
-            #    lines[0] = shebang = b"#!{0} {1}".format(interpreter, b" ".join(args[1:]))
+            if interpreter_config in task_vars:
+                interpreter = to_bytes(task_vars[interpreter_config], errors='strict')
+                lines[0] = shebang = b"#!{0} {1}".format(interpreter, b" ".join(args[1:]))
 
             lines.insert(1, ENCODING_STRING)
         else:

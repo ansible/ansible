@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
             # and the filename already exists. This allows idempotence
             # of command executions.
             module_args_tmp = "path=%s" % creates
-            result = self._execute_module(module_name='stat', module_args=dict(path=creates))
+            result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars)
             stat = result.get('stat', None)
             if stat and stat.get('exists', False):
                 return dict(skipped=True, msg=("skipped, since %s exists" % creates))
@@ -110,5 +110,5 @@ class ActionModule(ActionBase):
             #    module_args += " CHECKMODE=True"
 
         # execute the unarchive module now, with the updated args
-        return self._execute_module(module_args=new_module_args)
+        return self._execute_module(module_args=new_module_args, task_vars=task_vars)
 

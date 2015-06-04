@@ -191,7 +191,7 @@ class ActionModule(ActionBase):
 
                 # FIXME: runner shouldn't have the diff option there
                 #if self.runner.diff and not raw:
-                #    diff = self._get_diff_data(tmp, dest_file, source_full)
+                #    diff = self._get_diff_data(tmp, dest_file, source_full, task_vars)
                 #else:
                 #    diff = {}
                 diff = {}
@@ -236,7 +236,7 @@ class ActionModule(ActionBase):
                     )
                 )
 
-                module_return = self._execute_module(module_name='copy', module_args=new_module_args, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             else:
@@ -260,7 +260,7 @@ class ActionModule(ActionBase):
                 )
 
                 # Execute the file module.
-                module_return = self._execute_module(module_name='file', module_args=new_module_args, delete_remote_tmp=delete_remote_tmp)
+                module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
 
             if not module_return.get('checksum'):
@@ -304,8 +304,8 @@ class ActionModule(ActionBase):
             f.close()
         return content_tempfile
 
-    def _get_diff_data(self, tmp, destination, source):
-        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), persist_files=True)
+    def _get_diff_data(self, tmp, destination, source, task_vars):
+        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
         if 'failed' in peek_result and peek_result['failed'] or peek_result.get('rc', 0) != 0:
             return {}
 
@@ -318,7 +318,7 @@ class ActionModule(ActionBase):
         #elif peek_result['size'] > utils.MAX_FILE_SIZE_FOR_DIFF:
         #    diff['dst_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
         else:
-            dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), tmp=tmp, persist_files=True)
+            dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), task_vars=task_vars, tmp=tmp, persist_files=True)
             if 'content' in dest_result:
                 dest_contents = dest_result['content']
                 if dest_result['encoding'] == 'base64':

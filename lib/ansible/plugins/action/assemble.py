@@ -87,7 +87,7 @@ class ActionModule(ActionBase):
             return dict(failed=True, msg="src and dest are required")
 
         if boolean(remote_src):
-            return self._execute_module(tmp=tmp)
+            return self._execute_module(tmp=tmp, task_vars=task_vars)
         elif self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
@@ -109,7 +109,7 @@ class ActionModule(ActionBase):
             resultant = file(path).read()
             # FIXME: diff needs to be moved somewhere else
             #if self.runner.diff:
-            #    dest_result = self._execute_module(module_name='slurp', module_args=dict(path=dest), tmp=tmp, persist_files=True)
+            #    dest_result = self._execute_module(module_name='slurp', module_args=dict(path=dest), task_vars=task_vars, tmp=tmp, persist_files=True)
             #    if 'content' in dest_result:
             #        dest_contents = dest_result['content']
             #        if dest_result['encoding'] == 'base64':
@@ -140,7 +140,7 @@ class ActionModule(ActionBase):
             #    res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject)
             #    res.diff = dict(after=resultant)
             #    return res
-            res = self._execute_module(module_name='copy', module_args=new_module_args, tmp=tmp)
+            res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
             #res.diff = dict(after=resultant)
             return res
         else:
@@ -153,4 +153,4 @@ class ActionModule(ActionBase):
                 )
             )
 
-            return self._execute_module(module_name='file', module_args=new_module_args, tmp=tmp)
+            return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
