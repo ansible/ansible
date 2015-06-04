@@ -63,7 +63,7 @@ EXAMPLES = '''
       cloud: mordred
       state: present
       name: ansible_key
-      public_key: "{{ lookup('file','~/.ssh/id_rsa.pub') }}"
+      public_key_file: ~/.ssh/id_rsa.pub
 
 # Creates a new key pair and the private key returned after the run.
 - os_keypair:
