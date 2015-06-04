@@ -99,8 +99,9 @@ class Facts(object):
                     ('/etc/os-release', 'SuSE'),
                     ('/etc/gentoo-release', 'Gentoo'),
                     ('/etc/os-release', 'Debian'),
+                    ('/etc/lsb-release', 'Mandriva'),
                     ('/etc/os-release', 'NA'),
-                    ('/etc/lsb-release', 'Mandriva'))
+                )
     SELINUX_MODE_DICT = { 1: 'enforcing', 0: 'permissive', -1: 'disabled' }
 
     # A list of dicts.  If there is a platform with more than one
@@ -416,11 +417,13 @@ class Facts(object):
                                                 self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
                         elif name == 'Debian':
                             data = get_file_content(path)
-                            if 'Debian' in data or 'Raspbian' in data:
+                            if 'Ubuntu' in data:
+                                break # Ubuntu gets correct info from python functions
+                            elif 'Debian' in data or 'Raspbian' in data:
                                 release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
                                 if release:
                                     self.facts['distribution_release'] = release.groups()[0]
-                                break
+                                    break
                         elif name == 'Mandriva':
                             data = get_file_content(path)
                             if 'Mandriva' in data:
@@ -2160,7 +2163,7 @@ class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
         current_if['media'] = 'Unknown' # Mac does not give us this
         current_if['media_select'] = words[1]
         if len(words) > 2:
-            current_if['media_type'] = words[2][1:]
+            current_if['media_type'] = words[2][1:-1]
         if len(words) > 3:
             current_if['media_options'] = self.get_options(words[3])
 
@@ -2545,6 +2548,43 @@ class LinuxVirtual(Virtual):
         self.facts['virtualization_role'] = 'NA'
         return
 
+class FreeBSDVirtual(Virtual):
+    """
+    This is a FreeBSD-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'FreeBSD'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
+
+class OpenBSDVirtual(Virtual):
+    """
+    This is a OpenBSD-specific subclass of Virtual.  It defines
+    - virtualization_type
+    - virtualization_role
+    """
+    platform = 'OpenBSD'
+
+    def __init__(self):
+        Virtual.__init__(self)
+
+    def populate(self):
+        self.get_virtual_facts()
+        return self.facts
+
+    def get_virtual_facts(self):
+        self.facts['virtualization_type'] = ''
+        self.facts['virtualization_role'] = ''
 
 class HPUXVirtual(Virtual):
     """
