@@ -92,16 +92,19 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Connect to the host we've been initialized with"""
         pass
 
+    @ensure_connect
     @abstractmethod
     def exec_command(self, cmd, tmp_path, executable=None, in_data=None):
         """Run a command on the remote host"""
         pass
 
+    @ensure_connect
     @abstractmethod
     def put_file(self, in_path, out_path):
         """Transfer a file from local to remote"""
         pass
 
+    @ensure_connect
     @abstractmethod
     def fetch_file(self, in_path, out_path):
         """Fetch a file from remote to local"""

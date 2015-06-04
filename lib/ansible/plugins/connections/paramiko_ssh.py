@@ -41,7 +41,7 @@ from binascii import hexlify
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.plugins.connections import ConnectionBase, ensure_connect
+from ansible.plugins.connections import ConnectionBase
 from ansible.utils.path import makedirs_safe
 
 AUTHENTICITY_MSG="""
@@ -189,9 +189,10 @@ class Connection(ConnectionBase):
 
         return ssh
 
-    @ensure_connect
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
+
+        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -250,9 +251,10 @@ class Connection(ConnectionBase):
 
         return (chan.recv_exit_status(), '', no_prompt_out + stdout, no_prompt_out + stderr)
 
-    @ensure_connect
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
+
+        super(Connection, self).put_file(in_path, out_path)
 
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
 
@@ -278,9 +280,10 @@ class Connection(ConnectionBase):
             result = SFTP_CONNECTION_CACHE[cache_key] = self._connect().ssh.open_sftp()
             return result
 
-    @ensure_connect
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
+
+        super(Connection, self).fetch_file(in_path, out_path)
 
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
 
