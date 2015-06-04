@@ -4,7 +4,7 @@
 #
 # ------------------------------------------
 #
-# (c) Quentin Stafford-Fraser 2015
+# (c) Quentin Stafford-Fraser and Andy Baker 2015
 #
 # This file is part of Ansible
 #
@@ -53,6 +53,12 @@ options:
         required: true
         choices: ['mysql', 'postgresql']
 
+    password:
+        description:
+            - The password for the new database user.
+        required: false
+        default: None
+
     login_name:
         description:
             - The webfaction account to use
@@ -75,6 +81,10 @@ EXAMPLES = '''
       type: mysql
       login_name: "{{webfaction_user}}"
       login_password: "{{webfaction_passwd}}"
+
+  # Note that, for symmetry's sake, deleting a database using
+  # 'state: absent' will also delete the matching user.
+
 '''
 
 import socket
@@ -110,13 +120,17 @@ def main():
     db_map = dict([(i['name'], i) for i in db_list])
     existing_db = db_map.get(db_name)
 
+    user_list = webfaction.list_db_users(session_id)
+    user_map = dict([(i['username'], i) for i in user_list])
+    existing_user = user_map.get(db_name)
+
     result = {}
     
     # Here's where the real stuff happens
 
     if db_state == 'present':
 
-        # Does an app with this name already exist?
+        # Does an database with this name already exist?
         if existing_db:
             # Yes, but of a different type - fail
             if existing_db['db_type'] != db_type:
@@ -129,8 +143,8 @@ def main():
 
 
         if not module.check_mode:
-            # If this isn't a dry run, create the app
-            # print positional_args
+            # If this isn't a dry run, create the db
+            # and default user.
             result.update(
                 webfaction.create_db(
                     session_id, db_name, db_type, db_passwd
@@ -139,17 +153,23 @@ def main():
 
     elif db_state == 'absent':
 
-        # If the app's already not there, nothing changed.
-        if not existing_db:
-            module.exit_json(
-                changed = False,
-            )
-
+        # If this isn't a dry run...
         if not module.check_mode:
-            # If this isn't a dry run, delete the app
-            result.update(
-                webfaction.delete_db(session_id, db_name, db_type)
-            )
+  
+            if not (existing_db or existing_user):
+                module.exit_json(changed = False,)
+                
+            if existing_db:
+                # Delete the db if it exists
+                result.update(
+                    webfaction.delete_db(session_id, db_name, db_type)
+                )
+                    
+            if existing_user:
+                # Delete the default db user if it exists
+                result.update(
+                    webfaction.delete_db_user(session_id, db_name, db_type)
+                )
 
     else:
         module.fail_json(msg="Unknown state specified: {}".format(db_state))
