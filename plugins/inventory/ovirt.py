@@ -21,9 +21,7 @@ ovirt external inventory script
 =================================
 
 Generates inventory that Ansible can understand by making API requests to
-oVirt via the ovirt-engine-sdk-python library.  Full install/configuration
-instructions for the ovirt* modules can be found in the comments of
-ansible/test/ovirt_tests.py.
+oVirt via the ovirt-engine-sdk-python library.
 
 When run against a specific host, this script returns the following variables
 based on the data obtained from the ovirt_sdk Node object:
