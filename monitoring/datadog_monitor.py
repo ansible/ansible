@@ -41,15 +41,12 @@ options:
     api_key:
         description: ["Your DataDog API key."]
         required: true
-        default: null
     app_key:
         description: ["Your DataDog app key."]
         required: true
-        default: null
     state:
         description: ["The designated state of the monitor."]
         required: true
-        default: null
         choices: ['present', 'absent', 'muted', 'unmuted']
     type:
         description: ["The type of the monitor."]
@@ -63,7 +60,6 @@ options:
     name:
         description: ["The name of the alert."]
         required: true
-        default: null
     message:
         description: ["A message to include with notifications for this monitor. Email notifications can be sent to specific users by using the same '@username' notation as events."]
         required: false
