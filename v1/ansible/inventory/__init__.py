@@ -36,7 +36,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset', 
+    __slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset',
                   'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
                   '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
@@ -53,7 +53,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
-        self._groups_list    = {} 
+        self._groups_list    = {}
         self._pattern_cache  = {}
 
         # to be set by calling set_playbook_basedir by playbook code

@@ -1024,9 +1024,9 @@ def base_parser(constants=C, usage="", output_opts=False, runas_opts=False,
 
     if runas_opts:
         # priv user defaults to root later on to enable detecting when this option was given here
-        parser.add_option('-K', '--ask-sudo-pass', default=False, dest='ask_sudo_pass', action='store_true',
+        parser.add_option('-K', '--ask-sudo-pass', default=constants.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
             help='ask for sudo password (deprecated, use become)')
-        parser.add_option('--ask-su-pass', default=False, dest='ask_su_pass', action='store_true',
+        parser.add_option('--ask-su-pass', default=constants.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
             help='ask for su password (deprecated, use become)')
         parser.add_option("-s", "--sudo", default=constants.DEFAULT_SUDO, action="store_true", dest='sudo',
             help="run operations with sudo (nopasswd) (deprecated, use become)")
@@ -1617,7 +1617,9 @@ def _load_vars_from_folder(folder_path, results, vault_password=None):
     names.sort()
 
     # do not parse hidden files or dirs, e.g. .svn/
-    paths = [os.path.join(folder_path, name) for name in names if not name.startswith('.')]
+    paths = [os.path.join(folder_path, name) for name in names
+            if not name.startswith('.')
+            and os.path.splitext(name)[1] in C.YAML_FILENAME_EXTENSIONS]
     for path in paths:
         _found, results = _load_vars_from_path(path, results, vault_password=vault_password)
     return results
