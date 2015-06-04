@@ -111,6 +111,7 @@ def main():
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
             ['remote_ip_prefix', 'remote_group'],
+        ]
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
 
