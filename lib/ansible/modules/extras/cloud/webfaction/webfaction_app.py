@@ -31,7 +31,7 @@ module: webfaction_app
 short_description: Add or remove applications on a Webfaction host
 description:
     - Add or remove applications on a Webfaction host.  Further documentation at http://github.com/quentinsf/ansible-webfaction.
-author: Quentin Stafford-Fraser
+author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
     - "You can run playbooks that use this on a local machine, or on a Webfaction host, or elsewhere, since the scripts use the remote webfaction API - the location is not important. However, running them on multiple hosts I(simultaneously) is best avoided. If you don't specify I(localhost) as your host, you may want to add C(serial: 1) to the plays."

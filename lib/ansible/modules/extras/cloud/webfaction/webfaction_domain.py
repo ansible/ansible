@@ -28,7 +28,7 @@ module: webfaction_domain
 short_description: Add or remove domains and subdomains on Webfaction
 description:
     - Add or remove domains or subdomains on a Webfaction host. Further documentation at http://github.com/quentinsf/ansible-webfaction.
-author: Quentin Stafford-Fraser
+author: Quentin Stafford-Fraser (@quentinsf)
 version_added: "2.0"
 notes:
     - If you are I(deleting) domains by using C(state=absent), then note that if you specify subdomains, just those particular subdomains will be deleted.  If you don't specify subdomains, the domain will be deleted.
