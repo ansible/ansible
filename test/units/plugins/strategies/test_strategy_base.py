@@ -55,15 +55,15 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_conn_info = MagicMock()
 
-        mock_tqm._failed_hosts = []
-        mock_tqm._unreachable_hosts = []
+        mock_tqm._failed_hosts = dict()
+        mock_tqm._unreachable_hosts = dict()
         strategy_base = StrategyBase(tqm=mock_tqm)
 
-	self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info), 0)
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info), 0)
         self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info, result=False), 1)
-        mock_tqm._failed_hosts = ["host1"]
+        mock_tqm._failed_hosts = dict(host1=True)
         self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info, result=False), 2)
-        mock_tqm._unreachable_hosts = ["host1"]
+        mock_tqm._unreachable_hosts = dict(host1=True)
         self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info, result=False), 3)
 
     def test_strategy_base_get_hosts(self):
