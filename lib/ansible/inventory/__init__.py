@@ -27,7 +27,7 @@ import stat
 import subprocess
 
 from ansible import constants as C
-from ansible.errors import *
+from ansible import errors
 
 from ansible.inventory.ini import InventoryParser
 from ansible.inventory.script import InventoryScript
