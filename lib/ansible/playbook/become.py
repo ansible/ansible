@@ -30,7 +30,6 @@ class Become:
     _become              = FieldAttribute(isa='bool')
     _become_method       = FieldAttribute(isa='string')
     _become_user         = FieldAttribute(isa='string')
-    _become_pass         = FieldAttribute(isa='string')
 
     def __init__(self):
         return super(Become, self).__init__()
@@ -128,14 +127,3 @@ class Become:
             return self._get_parent_attribute('become_user')
         else:
             return self._attributes['become_user']
-
-    def _get_attr_become_password(self):
-        '''
-        Override for the 'become_password' getattr fetcher, used from Base.
-        '''
-        if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become_password')
-        else:
-            return self._attributes['become_password']
-
-
