@@ -109,7 +109,8 @@ class ConnectionInformation:
             self.become_method = play.become_method
         if play.become_user:
             self.become_user   = play.become_user
-        self.become_pass   = play.become_pass
+        if play.become_pass:
+            self.become_pass   = play.become_pass
 
         # non connection related
         self.no_log      = play.no_log
@@ -132,7 +133,6 @@ class ConnectionInformation:
         self.become        = options.become
         self.become_method = options.become_method
         self.become_user   = options.become_user
-        self.become_pass   = ''
 
         # general flags (should we move out?)
         if options.verbosity:
