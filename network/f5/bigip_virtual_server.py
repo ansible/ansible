@@ -37,23 +37,14 @@ options:
         description:
             - BIG-IP host
         required: true
-        default: null
-        choices: []
-        aliases: []
     user:
         description:
             - BIG-IP username
         required: true
-        default: null
-        choices: []
-        aliases: []
     password:
         description:
             - BIG-IP password
         required: true
-        default: null
-        choices: []
-        aliases: []
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
@@ -61,11 +52,10 @@ options:
         required: false
         default: 'yes'
         choices: ['yes', 'no']
-        version_added: 2.0
     state:
         description:
             - Pool member state
-        required: true
+        required: false
         default: present
         choices: ['present', 'absent', 'enabled', 'disabled']
         aliases: []
@@ -74,57 +64,41 @@ options:
             - Partition
         required: false
         default: 'Common'
-        choices: []
-        aliases: []
     name:
         description:
             - "Virtual server name."
         required: true
-        default: null
-        choices: []
         aliases: ['vs']
     destination:
         description:
             - "Destination IP of the virtual server (only host is currently supported) . Required when state=present and vs does not exist. Error when state=absent."
         required: true
-        default: null
-        choices: []
         aliases: ['address', 'ip']
     port:
         description:
             - "Port of the virtual server . Required when state=present and vs does not exist"
         required: true
-        default: null
-        choices: []
-        aliases: []
     all_profiles:
         description:
             - "List of all Profiles (HTTP,ClientSSL,ServerSSL,etc) that must be used by the virtual server"
         required: false
         default: null
-        choices: []
-        aliases: []
     pool:
         description:
             - "Default pool for the virtual server"
         required: false
         default: null
-        choices: []
-        aliases: []
     snat:
         description:
             - "Source network address policy"
         required: false
         default: None
-        choices: []
-        aliases: []
 
     description:
         description:
             - "Virtual server description."
         required: false
         default: null
-        choices: []
 '''
 
 EXAMPLES = '''
