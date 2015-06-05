@@ -127,6 +127,11 @@ def make_rule_key(prefix, rule, group_id, cidr_ip):
     """Creates a unique key for an individual group rule"""
     if isinstance(rule, dict):
         proto, from_port, to_port = [rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
+        #fix for 11177 
+        if proto not in ['icmp', 'tcp', 'udp'] and from_port == -1 and to_port == -1:
+            from_port = 'none'
+            to_port   = 'none'
+
     else:  # isinstance boto.ec2.securitygroup.IPPermissions
         proto, from_port, to_port = [getattr(rule, x, None) for x in ('ip_protocol', 'from_port', 'to_port')]
 
