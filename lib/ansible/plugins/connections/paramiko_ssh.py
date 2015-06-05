@@ -61,6 +61,7 @@ with warnings.catch_warnings():
     except ImportError:
         pass
 
+
 class MyAddPolicy(object):
     """
     Based on AutoAddPolicy in paramiko so we can determine when keys are added
@@ -191,6 +192,8 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
+        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
+
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
@@ -251,6 +254,8 @@ class Connection(ConnectionBase):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
 
+        super(Connection, self).put_file(in_path, out_path)
+
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
 
         if not os.path.exists(in_path):
@@ -272,11 +277,13 @@ class Connection(ConnectionBase):
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
-            result = SFTP_CONNECTION_CACHE[cache_key] = self.connect().ssh.open_sftp()
+            result = SFTP_CONNECTION_CACHE[cache_key] = self._connect().ssh.open_sftp()
             return result
 
     def fetch_file(self, in_path, out_path):
         ''' save a remote file to the specified path '''
+
+        super(Connection, self).fetch_file(in_path, out_path)
 
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
 

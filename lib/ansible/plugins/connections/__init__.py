@@ -22,6 +22,7 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
+from functools import wraps
 from six import with_metaclass
 
 from ansible import constants as C
@@ -32,7 +33,16 @@ from ansible.errors import AnsibleError
 #        which may want to output display/logs too
 from ansible.utils.display import Display
 
-__all__ = ['ConnectionBase']
+__all__ = ['ConnectionBase', 'ensure_connect']
+
+
+def ensure_connect(func):
+    @wraps(func)
+    def wrapped(self, *args, **kwargs):
+        self._connect()
+        return func(self, *args, **kwargs)
+    return wrapped
+
 
 class ConnectionBase(with_metaclass(ABCMeta, object)):
     '''
@@ -82,16 +92,19 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Connect to the host we've been initialized with"""
         pass
 
+    @ensure_connect
     @abstractmethod
     def exec_command(self, cmd, tmp_path, executable=None, in_data=None):
         """Run a command on the remote host"""
         pass
 
+    @ensure_connect
     @abstractmethod
     def put_file(self, in_path, out_path):
         """Transfer a file from local to remote"""
         pass
 
+    @ensure_connect
     @abstractmethod
     def fetch_file(self, in_path, out_path):
         """Fetch a file from remote to local"""

@@ -36,6 +36,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 
+
 class Connection(ConnectionBase):
     ''' ssh based connections '''
 
@@ -272,6 +273,8 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
+        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
+
         ssh_cmd = self._password_cmd()
         ssh_cmd += ("ssh", "-C")
         if not in_data:
@@ -392,6 +395,9 @@ class Connection(ConnectionBase):
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''
+
+        super(Connection, self).put_file(in_path, out_path)
+
         self._display.vvv("PUT {0} TO {1}".format(in_path, out_path), host=self._connection_info.remote_addr)
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
@@ -427,6 +433,9 @@ class Connection(ConnectionBase):
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from remote to local '''
+
+        super(Connection, self).fetch_file(in_path, out_path)
+
         self._display.vvv("FETCH {0} TO {1}".format(in_path, out_path), host=self._connection_info.remote_addr)
         cmd = self._password_cmd()
 
