@@ -14,10 +14,10 @@ Deprecated Modules (new ones in parens):
   * nova_compute   (os_server)
 
 New Modules:
-  * find
-  * ec2_ami_find
-  * elasticache_subnet_group
-  * ec2_win_password
+  * amazon: ec2_ami_find
+  * amazon: elasticache_subnet_group
+  * amazon: ec2_win_password
+  * amazon: iam
   * circonus_annotation
   * consul
   * consul_acl
@@ -36,6 +36,7 @@ New Modules:
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
   * cloudstack: cs_vmsnapshot
+  * find
   * maven_artifact
   * openstack: os_network
   * openstack: os_server
