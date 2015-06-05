@@ -318,9 +318,7 @@ class GalaxyCLI(CLI):
 
         roles_done = []
         roles_left = []
-        role_name = self.args.pop(0).strip()
 
-        gr = GalaxyRole(self.galaxy, role_name)
         if role_file:
             f = open(role_file, 'r')
             if role_file.endswith('.yaml') or role_file.endswith('.yml'):
@@ -360,7 +358,7 @@ class GalaxyCLI(CLI):
                 if role_src:
                     if '://' in role_src:
                         # just download a URL - version will probably be in the URL
-                        tmp_file = gr.fetch()
+                        tmp_file = role.fetch()
                     else:
                         role_data = self.api.lookup_role_by_name(role_src)
                         if not role_data:
@@ -389,7 +387,7 @@ class GalaxyCLI(CLI):
 
                         # download the role. if --no-deps was specified, we stop here,
                         # otherwise we recursively grab roles and all of their deps.
-                        tmp_file = gr.fetch(role_data)
+                        tmp_file = role.fetch(role_data)
             installed = False
             if tmp_file:
                 installed = install_role(role.name, role.version, tmp_file, options)
@@ -401,7 +399,7 @@ class GalaxyCLI(CLI):
                 # this should use new roledepenencies code
                 #if not no_deps and installed:
                 #    if not role_data:
-                #        role_data = gr.get_metadata(role.get("name"), options)
+                #        role_data = role.get_metadata(role.get("name"), options)
                 #        role_dependencies = role_data['dependencies']
                 #    else:
                 #        role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
