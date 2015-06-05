@@ -109,8 +109,6 @@ class ConnectionInformation:
             self.become_method = play.become_method
         if play.become_user:
             self.become_user   = play.become_user
-        if play.become_pass:
-            self.become_pass   = play.become_pass
 
         # non connection related
         self.no_log      = play.no_log
