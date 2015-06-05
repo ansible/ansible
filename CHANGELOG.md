@@ -16,6 +16,7 @@ Deprecated Modules (new ones in parens):
 New Modules:
   * find
   * ec2_ami_find
+  * elasticache_subnet_group
   * ec2_win_password
   * circonus_annotation
   * consul
