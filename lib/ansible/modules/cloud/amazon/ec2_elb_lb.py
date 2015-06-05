@@ -56,6 +56,11 @@ options:
     require: false
     default: None
     version_added: "1.6"
+  security_group_names:
+    description:
+      - A list of security group names to apply to the elb
+    require: false
+    default: None
   health_check:
     description:
       - An associative array of health check configuration settigs (see example)
@@ -361,7 +366,8 @@ class ElbManager(object):
         if not check_elb:
             info = {
                 'name': self.name,
-                'status': self.status
+                'status': self.status,
+                'region': self.region
             }
         else:
             try:
@@ -389,6 +395,7 @@ class ElbManager(object):
                 'out_of_service_count': 0,
                 'in_service_count': 0,
                 'unknown_instance_state_count': 0
+                'region': self.region
             }
 
             # status of instances behind the ELB
@@ -816,6 +823,7 @@ def main():
             zones={'default': None, 'required': False, 'type': 'list'},
             purge_zones={'default': False, 'required': False, 'type': 'bool'},
             security_group_ids={'default': None, 'required': False, 'type': 'list'},
+            security_group_names={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
             subnets={'default': None, 'required': False, 'type': 'list'},
             purge_subnets={'default': False, 'required': False, 'type': 'bool'},
@@ -844,6 +852,7 @@ def main():
     zones = module.params['zones']
     purge_zones = module.params['purge_zones']
     security_group_ids = module.params['security_group_ids']
+    security_group_names = module.params['security_group_names']
     health_check = module.params['health_check']
     subnets = module.params['subnets']
     purge_subnets = module.params['purge_subnets']
@@ -857,6 +866,23 @@ def main():
 
     if state == 'present' and not (zones or subnets):
         module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
+
+    if security_group_ids and security_group_names:
+        module.fail_json(msg = str("Use only one type of parameter (security_group_ids) or (security_group_names)"))
+    elif security_group_names:
+        security_group_ids = []
+        try:
+            ec2 = ec2_connect(module)
+            grp_details = ec2.get_all_security_groups()
+
+            for group_name in security_group_names:
+                if isinstance(group_name, basestring):
+                    group_name = [group_name]
+
+                group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
+                security_group_ids.extend(group_id)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
