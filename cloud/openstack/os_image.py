@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
+# Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
 # Copyright (c) 2013, Benno Joy <benno@ansible.com>
 #
 # This module is free software: you can redistribute it and/or modify
@@ -29,7 +29,7 @@ DOCUMENTATION = '''
 module: os_image
 short_description: Add/Delete images from OpenStack Cloud
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Add or Remove images from the OpenStack Image Repository
 options:
@@ -86,18 +86,21 @@ options:
    properties:
      description:
         - Additional properties to be associated with this image
-requirements: ["shade"]
+     required: false
+     default: {}
    state:
      description:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
+requirements: ["shade"]
 '''
 
 EXAMPLES = '''
 # Upload an image from a local file named cirros-0.3.0-x86_64-disk.img
 - os_image:
     auth:
+      auth_url: http://localhost/auth/v2.0
       username: admin
       password: passme
       project_name: admin
@@ -112,8 +115,6 @@ EXAMPLES = '''
       cpu_arch: x86_64
       distro: ubuntu
 '''
-
-import time
 
 
 def main():
