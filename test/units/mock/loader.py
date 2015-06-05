@@ -40,7 +40,7 @@ class DictDataLoader(DataLoader):
 
     def _get_file_contents(self, path):
         if path in self._file_mapping:
-            return self._file_mapping[path]
+            return (self._file_mapping[path], False)
         else:
             raise AnsibleParserError("file not found: %s" % path)
 
