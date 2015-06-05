@@ -153,7 +153,7 @@ class Connection(ConnectionBase):
         return self
 
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
-        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data,in_data)
+        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
 
         cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
