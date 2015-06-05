@@ -11,6 +11,7 @@ Major Changes:
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
   * quantum_network (os_network)
+  * glance_image
   * nova_compute   (os_server)
 
 New Modules:
@@ -38,6 +39,7 @@ New Modules:
   * cloudstack: cs_vmsnapshot
   * find
   * maven_artifact
+  * openstack: os_image
   * openstack: os_network
   * openstack: os_server
   * openstack: os_server_actions
