@@ -149,7 +149,7 @@ class StrategyBase:
                     task_result = result[1]
                     host = task_result._host
                     task = task_result._task
-                    if result[0] == 'host_task_failed' or 'failed' in task_result._result:
+                    if result[0] == 'host_task_failed' or task_result.is_failed():
                         if not task.ignore_errors:
                             debug("marking %s as failed" % host.name)
                             iterator.mark_host_failed(host)
