@@ -51,16 +51,21 @@ New Modules:
   * rabbitmq_binding
   * rabbitmq_exchange
   * rabbitmq_queue
-  * zabbix_host
-  * zabbix_hostmacro
-  * zabbix_screen
   * vertica_configuration
   * vertica_facts
   * vertica_role
   * vertica_schema
   * vertica_user
   * vmware_datacenter
+  * webfaction_app
+  * webfaction_db
+  * webfaction_domain
+  * webfaction_mailbox
+  * webfaction_site
   * win_environment
+  * zabbix_host
+  * zabbix_hostmacro
+  * zabbix_screen
 
 New Inventory scripts:
   * cloudstack
