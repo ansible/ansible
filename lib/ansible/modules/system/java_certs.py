@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: java_cert
-version_added: "1.8"
+version_added: "2.0"
 short_description: Uses keytool to import/remove key from java keystore(cacerts)
 description:
   - This is a wrapper module around keytool. Which can be used to import/remove certificates from a given java keystore.
@@ -35,18 +35,22 @@ options:
     description:
       - Port to connect to URL. This will be used to create server URL:PORT
     required: false
+    default: 443
   cert_path:
     description:
       - Local path to load certificate from
     required: false
+    default: null
   keystore_path:
     description:
       - Path to keystore.
     required: false
+    default: null
   keystore_pass:
     description:
       - Keystore password
     required: false
+    default: null
   state:
     description:
       - Defines action which can be either certificate import or removal.
@@ -75,6 +79,13 @@ import subprocess
 import sys
 import datetime
 import syslog
+
+def check_cert_present(module, keystore_path, keystore_pass, alias):
+    test_cmd = "keytool -noprompt -list -keystore '%s' -storepass '%s' -alias '%s'" % (keystore_path, keystore_pass, alias)
+    (rc, out, err) = self.module.run_command(test_cmd)
+    if rc == 0:
+        return True
+    return False
 
 def import_cert_url(module, url, port, keystore_path, keystore_pass, alias):
     fetch_cmd = "keytool -printcert -rfc -sslserver %s:%s" % (url, port)
@@ -121,6 +132,18 @@ def delete_cert(module, keystore_path, keystore_pass, alias):
     return module.exit_json(changed=True, msg=del_out,
         rc=rc, cmd=del_cmd, stdout_lines=del_out)
 
+def test_keytool(module):
+    ''' Test if keytool is actuall executable or not '''
+    test_cmd = "keytool"
+
+    (rc, del_out, del_err) = module.run_command(test_cmd, check_rc=True)
+
+def test_keystore(module, keystore_path):
+    ''' Check if we can access keystore as file or not '''
+    if not os.path.exists(keystore_path) and not os.path.isfile(keystore_path):
+        ## Keystore doesn't exist we want to create it
+        return module.fail_json(msg="Module require existing keystore at keystore_path '%s'" % keystore_path)
+
 def main():
     argument_spec = dict()
     argument_spec.update(dict(
@@ -128,7 +151,7 @@ def main():
             cert_path = dict(required=False),
             cert_alias = dict(required=False),
             cert_port = dict(required=False, default='443'),
-            keystore_path = dict(required=False, default='/usr/lib/jvm/java-7-oracle-amd64/jre/lib/security/cacerts'),
+            keystore_path = dict(required=False),
             keystore_pass = dict(required=False, default='changeit'),
             state = dict(required=False, default='present', choices=['present', 'absent'])
         )
@@ -151,14 +174,23 @@ def main():
     keystore_pass = module.params.get('keystore_pass')
     state = module.params.get('state')
 
+    test_keytool(module)
+    test_keystore(module, keystore_path)
+
     if state == 'absent':
-        delete_cert(module, keystore_path, keystore_pass, cert_alias)
+        if check_cert_present(module, keystore_path, keystore_pass, cert_alias):
+            delete_cert(module, keystore_path, keystore_pass, cert_alias)
+        else:
+            module.exit_json(changed=False)
 
-    if path:
-        import_cert_path(module, path, keystore_path, keystore_pass)
+    if not check_cert_present(module, keystore_path, keystore_pass, cert_alias):
+        module.exit_json(changed=False)
+    else:
+        if path:
+            import_cert_path(module, path, keystore_path, keystore_pass)
 
-    if url:
-        import_cert_url(module, url, port, keystore_path, keystore_pass, cert_alias)
+        if url:
+            import_cert_url(module, url, port, keystore_path, keystore_pass, cert_alias)
 
 # import module snippets
 from ansible.module_utils.basic import *
