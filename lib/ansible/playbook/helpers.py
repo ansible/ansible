@@ -36,7 +36,8 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
 
-    assert ds is None or isinstance(ds, list), 'block has bad type: %s' % type(ds)
+    if not isinstance(ds, (list, type(None))):
+        raise AnsibleParserError('block has bad type: "%s". Expecting "list"' % type(ds).__name__, obj=ds)
 
     block_list = []
     if ds:
@@ -67,12 +68,13 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     from ansible.playbook.handler import Handler
     from ansible.playbook.task import Task
 
-    assert isinstance(ds, list), 'task has bad type: %s' % type(ds)
+    if not isinstance(ds, list):
+        raise AnsibleParserError('task has bad type: "%s". Expected "list"' % type(ds).__name__, obj=ds)
 
     task_list = []
     for task in ds:
         if not isinstance(task, dict):
-            raise AnsibleParserError("task/handler entries must be dictionaries (got a %s)" % type(task), obj=ds)
+            raise AnsibleParserError('task/handler has bad type: "%s". Expected "dict"' % type(task).__name__, obj=task)
 
         if 'block' in task:
             t = Block.load(
@@ -105,7 +107,8 @@ def load_list_of_roles(ds, current_role_path=None, variable_manager=None, loader
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.role.include import RoleInclude
 
-    assert isinstance(ds, list), 'roles has bad type: %s' % type(ds)
+    if not isinstance(ds, list):
+        raise AnsibleParserError('roles has bad type: "%s". Expectes "list"' % type(ds).__name__, obj=ds)
 
     roles = []
     for role_def in ds:
