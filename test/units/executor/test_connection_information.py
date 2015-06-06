@@ -72,7 +72,6 @@ class TestConnectionInformation(unittest.TestCase):
         mock_play.become        = True
         mock_play.become_method = 'mock'
         mock_play.become_user   = 'mockroot'
-        mock_play.become_pass   = 'mockpass'
         mock_play.no_log        = True
         mock_play.environment   = dict(mock='mockenv')
 
@@ -86,7 +85,6 @@ class TestConnectionInformation(unittest.TestCase):
         self.assertEqual(conn_info.become, True)
         self.assertEqual(conn_info.become_method, "mock")
         self.assertEqual(conn_info.become_user, "mockroot")
-        self.assertEqual(conn_info.become_pass, "mockpass")
 
         mock_task = MagicMock()
         mock_task.connection    = 'mocktask'
