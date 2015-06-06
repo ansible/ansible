@@ -25,6 +25,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
 from ansible.utils.display import Display
+from ansible.utils.vault import read_vault_file
 
 class VaultCLI(CLI):
     """ Vault command line class """
