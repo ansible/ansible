@@ -34,12 +34,13 @@ options:
         - Name of the service.
     state:
         required: false
-        choices: [ started, stopped, restarted, reloaded ]
+        choices: [ started, stopped, restarted, reloaded, daemon_reloaded ]
         description:
           - C(started)/C(stopped) are idempotent actions that will not run
             commands unless necessary.  C(restarted) will always bounce the
             service.  C(reloaded) will always reload. B(At least one of state
             and enabled are required.)
+         - The C(daemon_reloaded) state was added in 2.0, it is exclusive for systemd.
     sleep:
         required: false
         version_added: "1.3"
@@ -279,7 +280,7 @@ class Service(object):
         # Find ps binary
         psbin = self.module.get_bin_path('ps', True)
 
-        (rc, psout, pserr) = self.execute_command('%s %s' % (psbin, psflags))
+        (rc, psout, pserr) = execute_command('%s %s' % (psbin, psflags))
         # If rc is 0, set running as appropriate
         if rc == 0:
             self.running = False
@@ -1413,7 +1414,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
+            state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded', 'daemon_reloaded']),
             sleep = dict(required=False, type='int', default=None),
             pattern = dict(required=False, default=None),
             enabled = dict(type='bool'),
@@ -1440,66 +1441,81 @@ def main():
     result = {}
     result['name'] = service.name
 
-    # Find service management tools
-    service.get_service_tools()
+    # shortcut for systemd only daemon-reloaded
+    if module.params['state'] == 'daemon_reloaded':
+        cmd = module.get_bin_path('systemctl', True)
+        svc_cmd = "%s %s %s" % (cmd, service.name, 'daemon-reloaded')
+        rc, stdout, stderr = module.run_command(svc_cmd)
+        result['msg']=stdout
+        if rc != 0:
+            result['rc'] = rc
+            if stderr:
+                result['msg']=stderr
+            module.fail_json(**result)
 
-    # Enable/disable service startup at boot if requested
-    if service.module.params['enabled'] is not None:
-        # FIXME: ideally this should detect if we need to toggle the enablement state, though
-        # it's unlikely the changed handler would need to fire in this case so it's a minor thing.
-        service.service_enable()
-        result['enabled'] = service.enable
+        result['changed']=True
 
-    if module.params['state'] is None:
-        # Not changing the running state, so bail out now.
-        result['changed'] = service.changed
-        module.exit_json(**result)
-
-    result['state'] = service.state
-
-    # Collect service status
-    if service.pattern:
-        service.check_ps()
     else:
-        service.get_service_status()
+        # Find service management tools
+        service.get_service_tools()
 
-    # Calculate if request will change service state
-    service.check_service_changed()
+        # Enable/disable service startup at boot if requested
+        if service.module.params['enabled'] is not None:
+            # FIXME: ideally this should detect if we need to toggle the enablement state, though
+            # it's unlikely the changed handler would need to fire in this case so it's a minor thing.
+            service.service_enable()
+            result['enabled'] = service.enable
 
-    # Modify service state if necessary
-    (rc, out, err) = service.modify_service_state()
+        if module.params['state'] is None:
+            # Not changing the running state, so bail out now.
+            result['changed'] = service.changed
+            module.exit_json(**result)
 
-    if rc != 0:
-        if err and "Job is already running" in err:
-            # upstart got confused, one such possibility is MySQL on Ubuntu 12.04
-            # where status may report it has no start/stop links and we could
-            # not get accurate status
-            pass
+        result['state'] = service.state
+
+        # Collect service status
+        if service.pattern:
+            service.check_ps()
         else:
-            if err:
-                module.fail_json(msg=err)
+            service.get_service_status()
+
+        # Calculate if request will change service state
+        service.check_service_changed()
+
+        # Modify service state if necessary
+        (rc, out, err) = service.modify_service_state()
+
+        if rc != 0:
+            if err and "Job is already running" in err:
+                # upstart got confused, one such possibility is MySQL on Ubuntu 12.04
+                # where status may report it has no start/stop links and we could
+                # not get accurate status
+                pass
             else:
-                module.fail_json(msg=out)
+                if err:
+                    module.fail_json(msg=err)
+                else:
+                    module.fail_json(msg=out)
 
-    result['changed'] = service.changed | service.svc_change
-    if service.module.params['enabled'] is not None:
-        result['enabled'] = service.module.params['enabled']
+        result['changed'] = service.changed | service.svc_change
+        if service.module.params['enabled'] is not None:
+            result['enabled'] = service.module.params['enabled']
 
-    if not service.module.params['state']:
-        status = service.get_service_status()
-        if status is None:
-            result['state'] = 'absent'
-        elif status is False:
-            result['state'] = 'started'
+        if not service.module.params['state']:
+            status = service.get_service_status()
+            if status is None:
+                result['state'] = 'absent'
+            elif status is False:
+                result['state'] = 'started'
+            else:
+                result['state'] = 'stopped'
         else:
-            result['state'] = 'stopped'
-    else:
-        # as we may have just bounced the service the service command may not
-        # report accurate state at this moment so just show what we ran
-        if service.module.params['state'] in ['started','restarted','running','reloaded']:
-            result['state'] = 'started'
-        else:
-            result['state'] = 'stopped'
+            # as we may have just bounced the service the service command may not
+            # report accurate state at this moment so just show what we ran
+            if service.module.params['state'] in ['started','restarted','running','reloaded']:
+                result['state'] = 'started'
+            else:
+                result['state'] = 'stopped'
 
     module.exit_json(**result)
 
