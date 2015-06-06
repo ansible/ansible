@@ -40,6 +40,7 @@ New Modules:
   * datadog_monitor
   * find
   * maven_artifact
+  * openstack: os_client_config
   * openstack: os_image
   * openstack: os_network
   * openstack: os_server
