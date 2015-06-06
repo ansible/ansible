@@ -37,6 +37,7 @@ New Modules:
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
   * cloudstack: cs_vmsnapshot
+  * datadog_monitor
   * find
   * maven_artifact
   * openstack: os_image
