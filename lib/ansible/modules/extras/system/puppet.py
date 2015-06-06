@@ -35,12 +35,12 @@ options:
     default: 30m
   puppetmaster:
     description:
-      - The hostname of the puppetmaster to contact. Must have this or manifest
+      - The hostname of the puppetmaster to contact.
     required: false
     default: None
   manifest:
     desciption:
-      - Path to the manifest file to run puppet apply on. Must have this or puppetmaster
+      - Path to the manifest file to run puppet apply on.
     required: false
     default: None
   show_diff:
@@ -64,7 +64,7 @@ author: Monty Taylor
 '''
 
 EXAMPLES = '''
-# Run puppet and fail if anything goes wrong
+# Run puppet agent and fail if anything goes wrong
 - puppet
 
 # Run puppet and timeout in 5 minutes
@@ -106,7 +106,7 @@ def main():
             facter_basename=dict(default='ansible'),
         ),
         supports_check_mode=True,
-        required_one_of=[
+        mutually_exclusive=[
             ('puppetmaster', 'manifest'),
         ],
     )
@@ -126,7 +126,7 @@ def main():
                     manifest=p['manifest']))
 
     # Check if puppet is disabled here
-    if p['puppetmaster']:
+    if not p['manifest']:
         rc, stdout, stderr = module.run_command(
             PUPPET_CMD + " config print agent_disabled_lockfile")
         if os.path.exists(stdout.strip()):
@@ -145,13 +145,14 @@ def main():
     base_cmd = "timeout -s 9 %(timeout)s %(puppet_cmd)s" % dict(
         timeout=pipes.quote(p['timeout']), puppet_cmd=PUPPET_CMD)
 
-    if p['puppetmaster']:
+    if not p['manifest']:
         cmd = ("%(base_cmd)s agent --onetime"
-               " --server %(puppetmaster)s"
                " --ignorecache --no-daemonize --no-usecacheonfailure --no-splay"
                " --detailed-exitcodes --verbose") % dict(
                    base_cmd=base_cmd,
-                   puppetmaster=pipes.quote(p['puppetmaster']))
+                   )
+        if p['puppetmaster']:
+            cmd += " -- server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
             cmd += " --show-diff"
         if module.check_mode:
