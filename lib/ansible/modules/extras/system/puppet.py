@@ -128,7 +128,7 @@ def main():
     # Check if puppet is disabled here
     if p['puppetmaster']:
         rc, stdout, stderr = module.run_command(
-            PUPPET_CMD + "config print agent_disabled_lockfile")
+            PUPPET_CMD + " config print agent_disabled_lockfile")
         if os.path.exists(stdout.strip()):
             module.fail_json(
                 msg="Puppet agent is administratively disabled.", disabled=True)
