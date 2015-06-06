@@ -49,6 +49,7 @@ New Modules:
   * openstack: os_volume
   * proxmox
   * proxmox_template
+  * puppet
   * pushover
   * pushbullet
   * rabbitmq_binding
