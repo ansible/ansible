@@ -61,6 +61,7 @@ options:
       - A list of security group names to apply to the elb
     require: false
     default: None
+    version_added: "2.0"
   health_check:
     description:
       - An associative array of health check configuration settigs (see example)
@@ -73,7 +74,7 @@ options:
     aliases: ['aws_region', 'ec2_region']
   subnets:
     description:
-      - A list of VPC subnets to use when creating ELB. Zones should be empty if using this. 
+      - A list of VPC subnets to use when creating ELB. Zones should be empty if using this.
     required: false
     default: None
     aliases: []
@@ -82,7 +83,7 @@ options:
     description:
       - Purge existing subnet on ELB that are not found in subnets
     required: false
-    default: false  
+    default: false
     version_added: "1.7"
   scheme:
     description:
@@ -152,7 +153,7 @@ EXAMPLES = """
     name: "test-vpc"
     scheme: internal
     state: present
-    subnets: 
+    subnets:
       - subnet-abcd1234
       - subnet-1a2b3c4d
     listeners:
@@ -218,7 +219,7 @@ EXAMPLES = """
         instance_port: 80
     purge_zones: yes
 
-# Creates a ELB and assigns a list of subnets to it. 
+# Creates a ELB and assigns a list of subnets to it.
 - local_action:
     module: ec2_elb_lb
     state: present
@@ -302,10 +303,10 @@ class ElbManager(object):
     """Handles ELB creation and destruction"""
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
-                 zones=None, purge_zones=None, security_group_ids=None, 
+                 zones=None, purge_zones=None, security_group_ids=None,
                  health_check=None, subnets=None, purge_subnets=None,
                  scheme="internet-facing", connection_draining_timeout=None,
-                 cross_az_load_balancing=None, 
+                 cross_az_load_balancing=None,
                  stickiness=None, region=None, **aws_connect_params):
 
         self.module = module
@@ -449,7 +450,7 @@ class ElbManager(object):
                 else:
                     info['cross_az_load_balancing'] = 'no'
 
-            # return stickiness info? 
+            # return stickiness info?
 
         return info
 
@@ -629,7 +630,7 @@ class ElbManager(object):
                 self._attach_subnets(subnets_to_attach)
             if subnets_to_detach:
                 self._detach_subnets(subnets_to_detach)
-                
+
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
         if self.zones:
@@ -734,7 +735,7 @@ class ElbManager(object):
         else:
             self._create_policy(policy_attrs['param_value'], policy_attrs['method'], policy[0])
             self.changed = True
-        
+
         self._set_listener_policy(listeners_dict, policy)
 
     def select_stickiness_policy(self):
@@ -801,7 +802,7 @@ class ElbManager(object):
 
             else:
                 self._set_listener_policy(listeners_dict)
- 
+
     def _get_health_check_target(self):
         """Compose target string from healthcheck parameters"""
         protocol = self.health_check['ping_protocol'].upper()
