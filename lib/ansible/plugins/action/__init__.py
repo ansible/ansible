@@ -161,12 +161,12 @@ class ActionBase:
             if result['rc'] == 5:
                 output = 'Authentication failure.'
             elif result['rc'] == 255 and self._connection.transport in ('ssh',):
-                # FIXME: more utils.VERBOSITY
-                #if utils.VERBOSITY > 3:
-                #    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
-                #else:
-                #    output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
-                output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
+
+                if self._connection_info.verbosity > 3:
+                    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
+                else:
+                    output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
+
             elif 'No space left on device' in result['stderr']:
                 output = result['stderr']
             else:
@@ -462,7 +462,7 @@ class ActionBase:
             err = stderr
 
         debug("done with _low_level_execute_command() (%s)" % (cmd,))
-        if rc is not None:
-            return dict(rc=rc, stdout=out, stderr=err)
-        else:
-            return dict(stdout=out, stderr=err)
+        if rc is None:
+            rc = 0
+
+        return dict(rc=rc, stdout=out, stderr=err)

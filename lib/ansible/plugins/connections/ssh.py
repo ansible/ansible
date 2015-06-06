@@ -398,13 +398,13 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        self._display.vvv("PUT {0} TO {1}".format(in_path, out_path), host=self._connection_info.remote_addr)
+        # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
+        host = self._connection_info.remote_addr
+
+        self._display.vvv("PUT {0} TO {1}".format(in_path, out_path), host=host)
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         cmd = self._password_cmd()
-
-        # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
-        host = self._connection_info.remote_addr
 
         # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
         #        not sure if it's all working yet so this remains commented out
@@ -436,11 +436,12 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        self._display.vvv("FETCH {0} TO {1}".format(in_path, out_path), host=self._connection_info.remote_addr)
-        cmd = self._password_cmd()
-
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
         host = self._connection_info.remote_addr
+
+        self._display.vvv("FETCH {0} TO {1}".format(in_path, out_path), host=host)
+        cmd = self._password_cmd()
+
 
         # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
         #        not sure if it's all working yet so this remains commented out
@@ -467,5 +468,14 @@ class Connection(ConnectionBase):
 
     def close(self):
         ''' not applicable since we're executing openssh binaries '''
+
+        if 'ControlMaster' in self._common_args:
+            cmd = ['ssh','-O','stop']
+            cmd.extend(self._common_args)
+            cmd.append(self._connection_info.remote_addr)
+
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+
         self._connected = False
 
