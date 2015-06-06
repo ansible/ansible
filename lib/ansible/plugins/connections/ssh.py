@@ -46,6 +46,9 @@ class Connection(ConnectionBase):
         self.HASHED_KEY_MAGIC = "|1|"
         self._has_pipelining = True
 
+        # FIXME: make this work, should be set from connection info
+        self._ipv6 = False
+
         # FIXME: move the lockfile locations to ActionBase?
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
         #self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
@@ -275,6 +278,8 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
 
+        host = self._connection_info.remote_addr
+
         ssh_cmd = self._password_cmd()
         ssh_cmd += ("ssh", "-C")
         if not in_data:
@@ -288,16 +293,14 @@ class Connection(ConnectionBase):
             ssh_cmd.append("-q")
         ssh_cmd += self._common_args
 
-        # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
-        #        not sure if it's all working yet so this remains commented out
-        #if self._ipv6:
-        #    ssh_cmd += ['-6']
-        ssh_cmd.append(self._connection_info.remote_addr)
+        if self._ipv6:
+            ssh_cmd += ['-6']
+        ssh_cmd.append(host)
 
         ssh_cmd.append(cmd)
-        self._display.vvv("EXEC {0}".format(' '.join(ssh_cmd)), host=self._connection_info.remote_addr)
+        self._display.vvv("EXEC {0}".format(' '.join(ssh_cmd)), host=host)
 
-        not_in_host_file = self.not_in_host_file(self._connection_info.remote_addr)
+        not_in_host_file = self.not_in_host_file(host)
 
         # FIXME: move the locations of these lock files, same as init above
         #if C.HOST_KEY_CHECKING and not_in_host_file:
@@ -400,16 +403,13 @@ class Connection(ConnectionBase):
 
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
         host = self._connection_info.remote_addr
+        if self._ipv6:
+            host = '[%s]' % host
 
         self._display.vvv("PUT {0} TO {1}".format(in_path, out_path), host=host)
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         cmd = self._password_cmd()
-
-        # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
-        #        not sure if it's all working yet so this remains commented out
-        #if self._ipv6:
-        #    host = '[%s]' % host
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
@@ -438,15 +438,12 @@ class Connection(ConnectionBase):
 
         # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
         host = self._connection_info.remote_addr
+        if self._ipv6:
+            host = '[%s]' % host
 
         self._display.vvv("FETCH {0} TO {1}".format(in_path, out_path), host=host)
         cmd = self._password_cmd()
 
-
-        # FIXME: ipv6 stuff needs to be figured out. It's in the connection info, however
-        #        not sure if it's all working yet so this remains commented out
-        #if self._ipv6:
-        #    host = '[%s]' % self._connection_info.remote_addr
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
@@ -469,13 +466,15 @@ class Connection(ConnectionBase):
     def close(self):
         ''' not applicable since we're executing openssh binaries '''
 
-        if 'ControlMaster' in self._common_args:
-            cmd = ['ssh','-O','stop']
-            cmd.extend(self._common_args)
-            cmd.append(self._connection_info.remote_addr)
+        if self._connected:
 
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
+            if 'ControlMaster' in self._common_args:
+                cmd = ['ssh','-O','stop']
+                cmd.extend(self._common_args)
+                cmd.append(self._connection_info.remote_addr)
 
-        self._connected = False
+                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout, stderr = p.communicate()
+
+            self._connected = False
 
