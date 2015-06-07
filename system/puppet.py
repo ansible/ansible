@@ -59,6 +59,11 @@ options:
       - Basename of the facter output file
     required: false
     default: ansible
+  environment:
+    desciption:
+      - Puppet environment to be used.
+    required: false
+    default: None
 requirements: [ puppet ]
 author: Monty Taylor
 '''
@@ -69,6 +74,9 @@ EXAMPLES = '''
 
 # Run puppet and timeout in 5 minutes
 - puppet: timeout=5m
+
+# Run puppet using a different environment
+- puppet: environment=testing
 '''
 
 
@@ -104,6 +112,7 @@ def main():
                 default=False, aliases=['show-diff'], type='bool'),
             facts=dict(default=None),
             facter_basename=dict(default='ansible'),
+            environment=dict(required=False, default=None),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
@@ -155,12 +164,16 @@ def main():
             cmd += " -- server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
             cmd += " --show-diff"
+        if p['environment']:
+            cmd += " --environment '%s'" % p['environment']
         if module.check_mode:
             cmd += " --noop"
         else:
             cmd += " --no-noop"
     else:
         cmd = "%s apply --detailed-exitcodes " % base_cmd
+        if p['environment']:
+            cmd += "--environment '%s' " % p['environment']
         if module.check_mode:
             cmd += "--noop "
         else:
