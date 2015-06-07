@@ -53,6 +53,15 @@ options:
       - no
     default: no
     aliases: []
+  upgrade:
+    description:
+      - If package is already installed it, try to upgrade to the latest version or to the specified version
+    required: false
+    choices:
+      - yes
+      - no
+    default: no
+    aliases: []
   version:
     description:
       - Specific version of the package to be installed
@@ -60,35 +69,13 @@ options:
     required: false
     default: null
     aliases: []
-  showlog:
-    description:
-      - Outputs the chocolatey log inside a chocolatey_log property.
-    required: false
-    choices:
-      - yes
-      - no
-    default: no
-    aliases: []
   source:
     description:
-      - Which source to install from
+      - Specify source rather than using default chocolatey repository
     require: false
-    choices:
-      - chocolatey
-      - ruby
-      - webpi
-      - windowsfeatures
-    default: chocolatey
+    default: null
     aliases: []
-  logPath:
-    description:
-      - Where to log command output to
-    require: false
-    default: c:\\ansible-playbook.log
-    aliases: []
-author:
-    - '"Trond Hindenes (@trondhindenes)" <trond@hindenes.com>'
-    - '"Peter Mounce (@petemounce)" <public@neverrunwithscissors.com>'
+author: Trond Hindenes, Peter Mounce, Pepe Barbe, Adam Keech
 '''
 
 # TODO:
@@ -111,10 +98,8 @@ EXAMPLES = '''
     name: git
     state: absent
 
-  # Install Application Request Routing v3 from webpi
-  # Logically, this requires that you install IIS first (see win_feature)
-  # To find a list of packages available via webpi source, `choco list -source webpi`
+  # Install git from specified repository
   win_chocolatey:
-    name: ARRv3
-    source: webpi
+    name: git
+    source: https://someserver/api/v2/
 '''
