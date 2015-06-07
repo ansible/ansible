@@ -46,7 +46,7 @@ To make things explicit, it is suggested that you set them if things are not run
 
     badwolf.example.com:5309
 
-Suppose you have just static IPs and want to set up some aliases that don't live in your host file, or you are connecting through tunnels.  You can do things like this::
+Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
 
     jumper ansible_ssh_port=5555 ansible_ssh_host=192.168.1.50
 
