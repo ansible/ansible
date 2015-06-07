@@ -156,10 +156,14 @@ def main():
             cmd += " --show-diff"
         if module.check_mode:
             cmd += " --noop"
+        else:
+            cmd += " --no-noop"
     else:
         cmd = "%s apply --detailed-exitcodes " % base_cmd
         if module.check_mode:
             cmd += "--noop "
+        else:
+            cmd += "--no-noop "
         cmd += pipes.quote(p['manifest'])
     rc, stdout, stderr = module.run_command(cmd)
 
