@@ -26,6 +26,7 @@ description:
     - Create, update, suspend, activate and remove projects.
 version_added: '2.0'
 author: '"René Moser (@resmo)" <mail@renemoser.net>'
+options:
   name:
     description:
       - Name of the project.
