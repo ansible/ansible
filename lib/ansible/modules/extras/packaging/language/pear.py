@@ -26,16 +26,14 @@ module: pear
 short_description: Manage pear/pecl packages
 description:
     - Manage PHP packages with the pear package manager.
+version_added: 2.0
 author:
     - "'jonathan.lestrelin' <jonathan.lestrelin@gmail.com>"
-notes: []
-requirements: []
 options:
     name:
         description:
             - Name of the package to install, upgrade, or remove.
         required: true
-        default: null
 
     state:
         description:
@@ -132,7 +130,7 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, state, packages, package_files):
+def install_packages(module, state, packages):
     install_c = 0
 
     for i, package in enumerate(packages):
@@ -178,7 +176,6 @@ def check_packages(module, packages, state):
     else:
         module.exit_json(change=False, msg="package(s) already %s" % state)
 
-import os
 
 def exe_exists(program):
     for path in os.environ["PATH"].split(os.pathsep):
@@ -220,7 +217,7 @@ def main():
             check_packages(module, pkgs, p['state'])
 
         if p['state'] in ['present', 'latest']:
-            install_packages(module, p['state'], pkgs, pkg_files)
+            install_packages(module, p['state'], pkgs)
         elif p['state'] == 'absent':
             remove_packages(module, pkgs)
 
