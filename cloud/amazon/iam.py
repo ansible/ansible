@@ -133,7 +133,7 @@ task:
     iam_type: user
     name: jdavila
     state: update
-    group: "{{ item.created_group.group_name }}"
+    groups: "{{ item.created_group.group_name }}"
   with_items: new_groups.results
 
 '''
@@ -376,7 +376,7 @@ new_name=None):
     return (groups, changed)
 
 
-def create_group(module, iam, name, path):
+def create_group(module=None, iam=None, name=None, path=None):
     changed = False
     try:
         iam.create_group(
@@ -414,8 +414,7 @@ def delete_group(module, iam, name):
         changed = True
     return changed, name
 
-
-def update_group(module, iam, name, new_name, new_path):
+def update_group(module=None, iam=None, name=None, new_name=None, new_path=None):
     changed = False
     try:
         current_group_path = iam.get_group(
@@ -667,7 +666,7 @@ def main():
             module.exit_json(changed=changed, group_name=new_group)
         elif state in ['present', 'update'] and group_exists:
             changed, updated_name, updated_path, cur_path = update_group(
-                iam, name, new_name, new_path)
+                iam=iam, name=name, new_name=new_name, new_path=new_path)
 
             if new_path and new_name:
                 module.exit_json(changed=changed, old_group_name=name,
