@@ -160,6 +160,18 @@ options:
               main project. This is equivalent to specifying the --remote flag
               to git submodule update.
 
+    verify_commit:
+        required: false
+        default: "no"
+        choices: ["yes", "no"]
+        version_added: "2.0"
+        description:
+            - if C(yes), when cloning or checking out a C(version) verify the
+            signature of a GPG signed commit. This requires C(git) version>=2.1.0
+            to be installed. The commit MUST be signed and the public key MUST
+            be trusted in the GPG trustdb.
+
+
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
@@ -298,7 +310,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     return submodules
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference, refspec):
+          reference, refspec, verify_commit):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -325,6 +337,9 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
 
     if refspec:
         module.run_command([git_path, 'fetch', remote, refspec], check_rc=True, cwd=dest)
+
+    if verify_commit:
+        verify_commit_sign(git_path, module, dest, version)
 
 def has_local_mods(module, git_path, dest, bare):
     if bare:
@@ -574,7 +589,7 @@ def submodule_update(git_path, module, dest, track_submodules):
     return (rc, out, err)
 
 
-def switch_version(git_path, module, dest, remote, version):
+def switch_version(git_path, module, dest, remote, version, verify_commit):
     cmd = ''
     if version != 'HEAD':
         if is_remote_branch(git_path, module, dest, remote, version):
@@ -599,7 +614,19 @@ def switch_version(git_path, module, dest, remote, version):
             module.fail_json(msg="Failed to checkout %s" % (version))
         else:
             module.fail_json(msg="Failed to checkout branch %s" % (branch))
+
+    if verify_commit:
+        verify_commit_sign(git_path, module, dest, version)
+
     return (rc, out1, err1)
+
+
+def verify_commit_sign(git_path, module, dest, version):
+    cmd = "%s verify-commit %s" % (git_path, version)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version)
+    return (rc, out, err)
 
 # ===========================================
 
@@ -616,6 +643,7 @@ def main():
             depth=dict(default=None, type='int'),
             clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
+            verify_commit=dict(default='no', type='bool'),
             accept_hostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, required=False),
             ssh_opts=dict(default=None, required=False),
@@ -637,6 +665,7 @@ def main():
     update    = module.params['update']
     allow_clone = module.params['clone']
     bare      = module.params['bare']
+    verify_commit = module.params['verify_commit']
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
     key_file  = module.params['key_file']
@@ -689,7 +718,7 @@ def main():
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
         repo_updated = True
     elif not update:
         # Just return having found a repo already in the dest path
@@ -729,7 +758,7 @@ def main():
     # switch to version specified regardless of whether
     # we got new revisions from the repository
     if not bare:
-        switch_version(git_path, module, dest, remote, version)
+        switch_version(git_path, module, dest, remote, version, verify_commit)
 
     # Deal with submodules
     submodules_updated = False
