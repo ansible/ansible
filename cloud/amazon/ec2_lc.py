@@ -126,6 +126,12 @@ EXAMPLES = '''
     key_name: default
     security_groups: ['group', 'group2' ]
     instance_type: t1.micro
+    volumes:
+    - device_name: /dev/sda1
+      volume_size: 100
+      device_type: io1
+      iops: 3000
+      delete_on_termination: true
 
 '''
 
