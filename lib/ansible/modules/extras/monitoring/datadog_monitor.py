@@ -187,7 +187,10 @@ def _post_monitor(module, options):
         msg = api.Monitor.create(type=module.params['type'], query=module.params['query'],
                                  name=module.params['name'], message=module.params['message'],
                                  options=options)
-        module.exit_json(changed=True, msg=msg)
+        if 'errors' in msg:
+            module.fail_json(msg=str(msg['errors']))
+        else:
+            module.exit_json(changed=True, msg=msg)
     except Exception, e:
         module.fail_json(msg=str(e))
 
@@ -197,7 +200,9 @@ def _update_monitor(module, monitor, options):
         msg = api.Monitor.update(id=monitor['id'], query=module.params['query'],
                                  name=module.params['name'], message=module.params['message'],
                                  options=options)
-        if len(set(msg) - set(monitor)) == 0:
+        if 'errors' in msg:
+            module.fail_json(msg=str(msg['errors']))
+        elif len(set(msg) - set(monitor)) == 0:
             module.exit_json(changed=False, msg=msg)
         else:
             module.exit_json(changed=True, msg=msg)
@@ -243,7 +248,7 @@ def mute_monitor(module):
          module.fail_json(msg="Monitor %s not found!" % module.params['name'])
     elif monitor['options']['silenced']:
         module.fail_json(msg="Monitor is already muted. Datadog does not allow to modify muted alerts, consider unmuting it first.")
-    elif (module.params['silenced'] is not None 
+    elif (module.params['silenced'] is not None
          and len(set(monitor['options']['silenced']) - set(module.params['silenced'])) == 0):
         module.exit_json(changed=False)
     try:
