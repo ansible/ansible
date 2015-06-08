@@ -49,6 +49,7 @@ New Modules:
   * openstack: os_server_volume
   * openstack: os_subnet
   * openstack: os_volume
+  * pear
   * proxmox
   * proxmox_template
   * puppet
