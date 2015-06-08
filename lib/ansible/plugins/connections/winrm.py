@@ -45,6 +45,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNo
 from ansible.plugins.connections import ConnectionBase
 from ansible.plugins import shell_loader
 from ansible.utils.path import makedirs_safe
+from ansible.utils.unicode import to_bytes
 
 
 class Connection(ConnectionBase):
@@ -155,7 +156,7 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
         super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
 
-        cmd = cmd.encode('utf-8')
+        cmd = to_bytes(cmd)
         cmd_parts = shlex.split(cmd, posix=False)
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
@@ -172,7 +173,9 @@ class Connection(ConnectionBase):
         except Exception as e:
             traceback.print_exc()
             raise AnsibleError("failed to exec cmd %s" % cmd)
-        return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))
+        result.std_out = to_bytes(result.std_out)
+        result.std_err = to_bytes(result.std_err)
+        return (result.status_code, '', result.std_out, result.std_err)
 
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)
