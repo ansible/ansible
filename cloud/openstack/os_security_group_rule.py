@@ -21,13 +21,12 @@ try:
 except ImportError:
     print("failed=True msg='shade is required for this module'")
 
-
 DOCUMENTATION = '''
 ---
 module: os_security_group_rule
 short_description: Add/Delete rule from an existing security group
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Add or Remove rule from an existing security group
 options:
@@ -61,7 +60,6 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
-
 requirements: ["shade"]
 '''
 # TODO(mordred): add ethertype and direction
@@ -84,7 +82,7 @@ def _security_group_rule(module, nova_client, action='create', **kwargs):
         secgroup = f(**kwargs)
     except Exception, e:
         module.fail_json(msg='Failed to %s security group rule: %s' %
-                         (action, e.message))
+                             (action, e.message))
 
 
 def _get_rule_from_group(module, secgroup):
@@ -92,12 +90,14 @@ def _get_rule_from_group(module, secgroup):
         if (rule['ip_protocol'] == module.params['protocol'] and
             rule['from_port'] == module.params['port_range_min'] and
             rule['to_port'] == module.params['port_range_max'] and
-            rule['ip_range']['cidr'] == module.params['remote_ip_prefix']):
+            (rule['ip_range']['cidr'] if 'cidr' in rule['ip_range']
+             else None) == (module.params['remote_ip_prefix'] if
+             'remote_ip_prefix' in module.params else None)):
             return rule
     return None
 
-def main():
 
+def main():
     argument_spec = openstack_full_argument_spec(
         security_group      = dict(required=True),
         protocol            = dict(default='tcp', choices=['tcp', 'udp', 'icmp']),
@@ -133,10 +133,13 @@ def main():
                                      ip_protocol=module.params['protocol'],
                                      from_port=module.params['port_range_min'],
                                      to_port=module.params['port_range_max'],
-                                     cidr=module.params['remote_ip'],
-                                     group_id=module.params['remote_group'],
+                                     cidr=module.params['remote_ip_prefix']
+                                     if 'remote_ip_prefix' in module.params else None,
+                                     group_id=module.params['remote_group']
+                                     if 'remote_group' in module.params else
+                                     None
+                )
                 changed = True
-
 
         if module.params['state'] == 'absent' and secgroup:
             rule = _get_rule_from_group(module, secgroup)
@@ -153,4 +156,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
+
 main()
