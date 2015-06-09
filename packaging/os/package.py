@@ -42,9 +42,10 @@ notes:
     - This module actually calls the pertinent package modules for each system (apt, yum, etc).
 '''
 EXAMPLES = '''
-- name: install the latest version of Vim
-  package: name=vim-minimal state=latest
+- name: install the latest version of ntpdate
+  package: name=ntpdate state=latest
 
-- name: remove the Vim package
-  package : name=vim-minimal state=absent
+# This uses a variable as this changes per distribution.
+- name: remove the apache package
+  package : name={{apache}} state=absent
 '''
