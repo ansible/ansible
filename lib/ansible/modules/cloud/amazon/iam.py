@@ -146,7 +146,7 @@ task:
     iam_type: user
     name: jdavila
     state: update
-    group: "{{ item.created_group.group_name }}"
+    groups: "{{ item.created_group.group_name }}"
   with_items: new_groups.results
 
 '''
