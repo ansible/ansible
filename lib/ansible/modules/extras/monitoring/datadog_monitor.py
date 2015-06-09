@@ -34,7 +34,7 @@ description:
 - "Manages monitors within Datadog"
 - "Options like described on http://docs.datadoghq.com/api/"
 version_added: "2.0"
-author: '"Sebastian Kornehl" <sebastian.kornehl@asideas.de>'
+author: '"Sebastian Kornehl (@skornehl)" <sebastian.kornehl@asideas.de>'
 notes: []
 requirements: [datadog]
 options:
