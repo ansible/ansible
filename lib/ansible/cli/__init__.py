@@ -222,12 +222,12 @@ class CLI(object):
                 help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None)
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
                 help="set additional variables as key=value or YAML/JSON", default=[])
-            parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
-                help='further limit selected hosts to an additional pattern')
 
         if fork_opts:
             parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
                 help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
+            parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
+                help='further limit selected hosts to an additional pattern')
 
         if vault_opts:
             parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
