@@ -55,6 +55,7 @@ class PlaybookCLI(CLI):
             diff_opts=True,
             runtask_opts=True,
             vault_opts=True,
+            fork_opts=True,
         )
 
         # ansible playbook specific opts
@@ -76,7 +77,7 @@ class PlaybookCLI(CLI):
             raise AnsibleOptionsError("You must specify a playbook file to run")
 
         self.display.verbosity = self.options.verbosity
-        self.validate_conflicts()
+        self.validate_conflicts(runas_opts=True, vault_opts=True)
 
     def run(self):
 
