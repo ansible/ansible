@@ -18,8 +18,9 @@
 
 try:
     import shade
+    HAS_SHADE = True
 except ImportError:
-    print("failed=True msg='shade is required for this module'")
+    HAS_SHADE = False
 
 
 DOCUMENTATION = '''
@@ -51,58 +52,80 @@ requirements: ["shade"]
 
 EXAMPLES = '''
 # Create a security group
-- os_security_group: cloud=mordred name=foo
-                     description=security group for foo servers
+- os_security_group:
+    cloud=mordred
+    name=foo
+    description=security group for foo servers
 '''
 
 
-def _security_group(module, nova_client, action='create', **kwargs):
-    f = getattr(nova_client.security_groups, action)
-    try:
-        secgroup = f(**kwargs)
-    except Exception, e:
-        module.fail_json(msg='Failed to %s security group %s: %s' %
-                         (action, module.params['name'], e.message))
+def _needs_update(module, secgroup):
+    """Check for differences in the updatable values.
+
+    NOTE: We don't currently allow name updates.
+    """
+    if secgroup['description'] != module.params['description']:
+        return True
+    return False
+
+
+def _system_state_change(module, secgroup):
+    state = module.params['state']
+    if state == 'present':
+        if not secgroup:
+            return True
+        return _needs_update(module, secgroup)
+    if state == 'absent' and secgroup:
+        return True
+    return False
 
 
 def main():
-
     argument_spec = openstack_full_argument_spec(
-        name              = dict(required=True),
-        description       = dict(default=None),
-        state             = dict(default='present', choices=['absent', 'present']),
+        name=dict(required=True),
+        description=dict(default=None),
+        state=dict(default='present', choices=['absent', 'present']),
     )
+
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
+
+    if not HAS_SHADE:
+        module.fail_json(msg='shade is required for this module')
+
+    name = module.params['name']
+    state = module.params['state']
+    description = module.params['description']
 
     try:
         cloud = shade.openstack_cloud(**module.params)
-        nova_client = cloud.nova_client
-        changed = False
-        secgroup = cloud.get_security_group(module.params['name'])
+        secgroup = cloud.get_security_group(name)
 
-        if module.params['state'] == 'present':
-            secgroup = cloud.get_security_group(module.params['name'])
+        if module.check_mode:
+            module.exit_json(changed=_system_state_change(module, secgroup))
+
+        if state == 'present':
             if not secgroup:
-                _security_group(module, nova_client, action='create',
-                                name=module.params['name'],
-                                description=module.params['description'])
-                changed = True
+                secgroup = cloud.create_security_group(name, description)
+                module.exit_json(changed=True, result='created',
+                                 id=secgroup['id'])
+            else:
+                if _needs_update(module, secgroup):
+                    secgroup = cloud.update_security_group(
+                        secgroup['id'], description=description)
+                    module.exit_json(changed=True, result='updated',
+                                     id=secgroup['id'])
+                else:
+                    module.exit_json(changed=False, result='success')
 
-        if secgroup and secgroup.description != module.params['description']:
-            _security_group(module, nova_client, action='update',
-                            group=secgroup.id,
-                            name=module.params['name'],
-                            description=module.params['description'])
-            changed = True
-
-        if module.params['state'] == 'absent':
-            if secgroup:
-                _security_group(module, nova_client, action='delete',
-                                group=secgroup.id)
-                changed = True
-
-        module.exit_json(changed=changed, id=module.params['name'], result="success")
+        if state == 'absent':
+            if not secgroup:
+                module.exit_json(changed=False, result='success')
+            else:
+                cloud.delete_security_group(secgroup['id'])
+                module.exit_json(changed=True, result='deleted')
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
