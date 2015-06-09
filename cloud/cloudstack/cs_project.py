@@ -167,7 +167,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
             projects = self.cs.listProjects(**args)
             if projects:
                 for p in projects['project']:
-                    if project in [ p['name'], p['id']]:
+                    if project.lower() in [ p['name'].lower(), p['id']]:
                         self.project = p
                         break
         return self.project
