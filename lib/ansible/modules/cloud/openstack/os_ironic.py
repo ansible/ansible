@@ -28,6 +28,7 @@ DOCUMENTATION = '''
 module: os_ironic
 short_description: Create/Delete Bare Metal Resources from OpenStack
 extends_documentation_fragment: openstack
+version_added: "2.0"
 description:
     - Create or Remove Ironic nodes from OpenStack.
 options:
