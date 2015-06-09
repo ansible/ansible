@@ -160,7 +160,6 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
             project = self.module.params.get('name')
 
             args                = {}
-            args['listall']     = True
             args['account']     = self.get_account(key='name')
             args['domainid']    = self.get_domain(key='id')
 
