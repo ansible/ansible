@@ -19,6 +19,7 @@ New Modules:
   * amazon: elasticache_subnet_group
   * amazon: ec2_win_password
   * amazon: iam
+  * amazon: iam_policy
   * circonus_annotation
   * consul
   * consul_acl
