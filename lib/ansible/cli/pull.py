@@ -131,7 +131,7 @@ class PullCLI(CLI):
         if path is None:
             raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
 
-        bin_path = os.path.dirname(os.path.abspath(__file__))
+        bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
         cmd = '%s/ansible localhost -i "%s" %s -m %s -a "%s"' % (
             bin_path, inv_opts, base_opts, self.options.module_name, repo_opts
         )
@@ -144,6 +144,8 @@ class PullCLI(CLI):
             self.display.display("Sleeping for %d seconds..." % self.options.sleep)
             time.sleep(self.options.sleep);
 
+        import q
+        q(cmd)
         # RUN the Checkout command
         rc, out, err = run_cmd(cmd, live=True)
 

@@ -44,7 +44,7 @@ if __name__ == '__main__':
 
     cli = None
     display = Display()
-    me = os.path.basename(__file__)
+    me = os.path.basename(sys.argv[0])
 
     try:
         if me == 'ansible-playbook':
