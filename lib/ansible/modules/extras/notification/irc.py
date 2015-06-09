@@ -47,6 +47,12 @@ options:
       - The message body.
     required: true
     default: null
+  topic:
+    description:
+      - Set the channel topic
+    required: false
+    default: null
+    version_added: 2.0
   color:
     description:
       - Text color for the message. ("none" is a valid option in 1.6 or later, in 1.6 and prior, the default color is black, not "none"). 
@@ -106,7 +112,7 @@ import ssl
 from time import sleep
 
 
-def send_msg(channel, msg, server='localhost', port='6667', key=None,
+def send_msg(channel, msg, server='localhost', port='6667', key=None, topic=None,
              nick="ansible", color='none', passwd=False, timeout=30, use_ssl=False):
     '''send message to IRC'''
 
@@ -163,6 +169,10 @@ def send_msg(channel, msg, server='localhost', port='6667', key=None,
             raise Exception('Timeout waiting for IRC JOIN response')
         sleep(0.5)
 
+    if topic is not None:
+        irc.send('TOPIC %s :%s\r\n' % (channel, topic))
+        sleep(1)
+
     irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
     sleep(1)
     irc.send('PART %s\r\n' % channel)
@@ -186,6 +196,7 @@ def main():
                                                  "blue", "black", "none"]),
             channel=dict(required=True),
             key=dict(),
+            topic=dict(),
             passwd=dict(),
             timeout=dict(type='int', default=30),
             use_ssl=dict(type='bool', default=False)
@@ -196,6 +207,7 @@ def main():
     server = module.params["server"]
     port = module.params["port"]
     nick = module.params["nick"]
+    topic = module.params["topic"]
     msg = module.params["msg"]
     color = module.params["color"]
     channel = module.params["channel"]
@@ -205,7 +217,7 @@ def main():
     use_ssl = module.params["use_ssl"]
 
     try:
-        send_msg(channel, msg, server, port, key, nick, color, passwd, timeout, use_ssl)
+        send_msg(channel, msg, server, port, key, topic, nick, color, passwd, timeout, use_ssl)
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
