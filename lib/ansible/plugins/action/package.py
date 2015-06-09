@@ -37,7 +37,7 @@ class ActionModule(ActionBase):
             except:
                 pass # could not get it from template!
 
-        if moduel is None:
+        if module is None:
             #TODO: autodetect the package manager, by invoking that specific fact snippet remotely
             pass
 
