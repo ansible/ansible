@@ -194,6 +194,10 @@ def _post_monitor(module, options):
     except Exception, e:
         module.fail_json(msg=str(e))
 
+def _equal_dicts(a, b, ignore_keys):
+    ka = set(a).difference(ignore_keys)
+    kb = set(b).difference(ignore_keys)
+    return ka == kb and all(a[k] == b[k] for k in ka)
 
 def _update_monitor(module, monitor, options):
     try:
@@ -202,7 +206,7 @@ def _update_monitor(module, monitor, options):
                                  options=options)
         if 'errors' in msg:
             module.fail_json(msg=str(msg['errors']))
-        elif len(set(msg) - set(monitor)) == 0:
+        elif _equal_dicts(msg, monitor, ['creator', 'overall_state']):
             module.exit_json(changed=False, msg=msg)
         else:
             module.exit_json(changed=True, msg=msg)
