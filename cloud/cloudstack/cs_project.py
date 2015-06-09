@@ -160,14 +160,13 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
             project = self.module.params.get('name')
 
             args                = {}
-            args['listall']     = True
             args['account']     = self.get_account(key='name')
             args['domainid']    = self.get_domain(key='id')
 
             projects = self.cs.listProjects(**args)
             if projects:
                 for p in projects['project']:
-                    if project in [ p['name'], p['id']]:
+                    if project.lower() in [ p['name'].lower(), p['id']]:
                         self.project = p
                         break
         return self.project
