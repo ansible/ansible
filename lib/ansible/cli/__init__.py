@@ -174,32 +174,34 @@ class CLI(object):
             options.become_method = 'su'
 
 
-    def validate_conflicts(self):
+    def validate_conflicts(self, vault_opts=False, runas_opts=False):
         ''' check for conflicting options '''
 
         op = self.options
 
-        # Check for vault related conflicts
-        if (op.ask_vault_pass and op.vault_password_file):
-            self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
+        if vault_opts:
+            # Check for vault related conflicts
+            if (op.ask_vault_pass and op.vault_password_file):
+                self.parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
 
 
-        # Check for privilege escalation conflicts
-        if (op.su or op.su_user or op.ask_su_pass) and \
-                    (op.sudo or op.sudo_user or op.ask_sudo_pass) or \
-            (op.su or op.su_user or op.ask_su_pass) and \
-                    (op.become or op.become_user or op.become_ask_pass) or \
-            (op.sudo or op.sudo_user or op.ask_sudo_pass) and \
-                    (op.become or op.become_user or op.become_ask_pass):
+        if runas_opts:
+            # Check for privilege escalation conflicts
+            if (op.su or op.su_user or op.ask_su_pass) and \
+                        (op.sudo or op.sudo_user or op.ask_sudo_pass) or \
+                (op.su or op.su_user or op.ask_su_pass) and \
+                        (op.become or op.become_user or op.become_ask_pass) or \
+                (op.sudo or op.sudo_user or op.ask_sudo_pass) and \
+                        (op.become or op.become_user or op.become_ask_pass):
 
-            self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
-                              "and su arguments ('-su', '--su-user', and '--ask-su-pass') "
-                              "and become arguments ('--become', '--become-user', and '--ask-become-pass')"
-                              " are exclusive of each other")
+                self.parser.error("Sudo arguments ('--sudo', '--sudo-user', and '--ask-sudo-pass') "
+                                  "and su arguments ('-su', '--su-user', and '--ask-su-pass') "
+                                  "and become arguments ('--become', '--become-user', and '--ask-become-pass')"
+                                  " are exclusive of each other")
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False,
-        async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False, epilog=None):
+        async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False, epilog=None, fork_opts=False):
         ''' create an options parser for most ansible scripts '''
 
         #FIXME: implemente epilog parsing
@@ -211,8 +213,6 @@ class CLI(object):
             help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
         if runtask_opts:
-            parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
-                help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
             parser.add_option('-i', '--inventory-file', dest='inventory',
                 help="specify inventory host file (default=%s)" % C.DEFAULT_HOST_LIST,
                 default=C.DEFAULT_HOST_LIST)
@@ -222,6 +222,10 @@ class CLI(object):
                 help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None)
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
                 help="set additional variables as key=value or YAML/JSON", default=[])
+
+        if fork_opts:
+            parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
+                help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
 
         if vault_opts:
             parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
@@ -273,7 +277,7 @@ class CLI(object):
         if connect_opts:
             parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
                 help='ask for connection password')
-            parser.add_option('--private-key', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
+            parser.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
                 help='use this file to authenticate the connection')
             parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
                 help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
@@ -281,7 +285,6 @@ class CLI(object):
                 help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
             parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
                 help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
-
 
         if async_opts:
             parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int',

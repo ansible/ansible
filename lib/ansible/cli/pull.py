@@ -21,12 +21,15 @@ import os
 import random
 import shutil
 import socket
+import sys
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.cli import CLI
 from ansible.utils.display import Display
 from ansible.utils.vault import read_vault_file
+from ansible.utils.plugins import module_finder
+from ansible.utils.cmd_functions import run_cmd
 
 ########################################################
 
@@ -48,6 +51,7 @@ class PullCLI(CLI):
             usage='%prog <host-pattern> [options]',
             connect_opts=True,
             vault_opts=True,
+            runtask_opts=True,
         )
 
         # options unique to pull
@@ -87,7 +91,7 @@ class PullCLI(CLI):
             raise AnsibleOptionsError("Unsuported repo module %s, choices are %s" % (self.options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
 
         self.display.verbosity = self.options.verbosity
-        self.validate_conflicts()
+        self.validate_conflicts(vault_opts=True)
 
     def run(self):
         ''' use Runner lib to do SSH things '''
@@ -120,12 +124,12 @@ class PullCLI(CLI):
             if self.options.accept_host_key:
                 repo_opts += ' accept_hostkey=yes'
 
-            if self.options.key_file:
-                repo_opts += ' key_file=%s' % options.key_file
+            if self.options.private_key_file:
+                repo_opts += ' key_file=%s' % self.options.private_key_file
 
-        path = utils.plugins.module_finder.find_plugin(options.module_name)
+        path = module_finder.find_plugin(self.options.module_name)
         if path is None:
-            raise AnsibleOptionsError(("module '%s' not found.\n" % options.module_name))
+            raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
 
         bin_path = os.path.dirname(os.path.abspath(__file__))
         cmd = '%s/ansible localhost -i "%s" %s -m %s -a "%s"' % (
@@ -141,7 +145,7 @@ class PullCLI(CLI):
             time.sleep(self.options.sleep);
 
         # RUN the Checkout command
-        rc, out, err = cmd_functions.run_cmd(cmd, live=True)
+        rc, out, err = run_cmd(cmd, live=True)
 
         if rc != 0:
             if self.options.force:
@@ -173,7 +177,7 @@ class PullCLI(CLI):
         os.chdir(self.options.dest)
 
         # RUN THE PLAYBOOK COMMAND
-        rc, out, err = cmd_functions.run_cmd(cmd, live=True)
+        rc, out, err = run_cmd(cmd, live=True)
 
         if self.options.purge:
             os.chdir('/')
