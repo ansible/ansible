@@ -99,14 +99,14 @@ def _get_rule_from_group(module, secgroup):
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        security_group      = dict(required=True),
-        protocol            = dict(default='tcp', choices=['tcp', 'udp', 'icmp']),
-        port_range_min      = dict(required=True),
-        port_range_max      = dict(required=True),
-        remote_ip_prefix    = dict(required=False, default=None),
+        security_group     = dict(required=True),
+        protocol           = dict(default='tcp', choices=['tcp', 'udp', 'icmp']),
+        port_range_min     = dict(required=True),
+        port_range_max     = dict(required=True),
+        remote_ip_prefix   = dict(required=False, default=None),
         # TODO(mordred): Make remote_group handle name and id
-        remote_group        = dict(required=False, default=None),
-        state               = dict(default='present', choices=['absent', 'present']),
+        remote_group       = dict(required=False, default=None),
+        state              = dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
@@ -153,4 +153,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
+
 main()
