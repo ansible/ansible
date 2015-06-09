@@ -15,7 +15,7 @@ options:
     required: true
   key_file:
     description:
-      - path to the file containing the key pair used on the instance
+      - Path to the file containing the key pair used on the instance.
     required: true
   key_passphrase:
     version_added: "2.0"
@@ -28,6 +28,18 @@ options:
     required: false
     default: null
     aliases: [ 'aws_region', 'ec2_region' ]
+  wait:
+    version_added: "2.0"
+    description:
+      - Whether or not to wait for the password to be available before returning.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    version_added: "2.0"
+    description:
+      - Number of seconds to wait before giving up.
+    default: 120
 
 extends_documentation_fragment: aws
 '''
@@ -51,12 +63,24 @@ tasks:
     region: us-east-1
     key_file: "~/aws-creds/my_protected_test_key.pem"
     key_passphrase: "secret"
+
+# Example of waiting for a password
+tasks:
+- name: get the Administrator password
+  ec2_win_password:
+    profile: my-boto-profile
+    instance_id: i-XXXXXX
+    region: us-east-1
+    key_file: "~/aws-creds/my_test_key.pem"
+    wait: yes
+    wait_timeout: 45
 '''
 
 from base64 import b64decode
 from os.path import expanduser
 from Crypto.Cipher import PKCS1_v1_5
 from Crypto.PublicKey import RSA
+import datetime
 
 try:
     import boto.ec2
@@ -70,6 +94,8 @@ def main():
             instance_id = dict(required=True),
             key_file = dict(required=True),
             key_passphrase = dict(default=None),
+            wait = dict(type='bool', default=False),
+            wait_timeout = dict(default=120),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -80,11 +106,28 @@ def main():
     instance_id = module.params.get('instance_id')
     key_file = expanduser(module.params.get('key_file'))
     key_passphrase = module.params.get('key_passphrase')
+    wait = module.params.get('wait')
+    wait_timeout = int(module.params.get('wait_timeout'))
 
     ec2 = ec2_connect(module)
 
-    data = ec2.get_password_data(instance_id)
-    decoded = b64decode(data)
+    if wait:
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(seconds=wait_timeout)
+
+        while datetime.datetime.now() < end:
+            data = ec2.get_password_data(instance_id)
+            decoded = b64decode(data)
+            if wait and not decoded:
+                time.sleep(5)
+            else:
+                break
+    else:
+        data = ec2.get_password_data(instance_id)
+        decoded = b64decode(data)
+
+    if wait and datetime.datetime.now() >= end:
+        module.fail_json(msg = "wait for password timeout after %d seconds" % wait_timeout)
 
     f = open(key_file, 'r')
     key = RSA.importKey(f.read(), key_passphrase)
@@ -92,14 +135,18 @@ def main():
     sentinel = 'password decryption failed!!!'
 
     try:
-      decrypted = cipher.decrypt(decoded, sentinel)
+        decrypted = cipher.decrypt(decoded, sentinel)
     except ValueError as e:
-      decrypted = None
+        decrypted = None
 
     if decrypted == None:
         module.exit_json(win_password='', changed=False)
     else:
-        module.exit_json(win_password=decrypted, changed=True)
+        if wait:
+            elapsed = datetime.datetime.now() - start
+            module.exit_json(win_password=decrypted, changed=True, elapsed=elapsed.seconds)
+        else:
+            module.exit_json(win_password=decrypted, changed=True)
 
 # import module snippets
 from ansible.module_utils.basic import *
