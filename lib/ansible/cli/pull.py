@@ -104,7 +104,7 @@ class PullCLI(CLI):
         # Build Checkout command
         # Now construct the ansible command
         limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
-        base_opts = '-c local --limit "%s"' % limit_opts
+        base_opts = '-c local "%s"' % limit_opts
         if self.options.verbosity > 0:
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
 
@@ -132,7 +132,7 @@ class PullCLI(CLI):
             raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-        cmd = '%s/ansible localhost -i "%s" %s -m %s -a "%s"' % (
+        cmd = '%s/ansible -i "%s" %s -m %s -a "%s"' % (
             bin_path, inv_opts, base_opts, self.options.module_name, repo_opts
         )
 

@@ -45,6 +45,7 @@ class AdHocCLI(CLI):
             check_opts=True,
             runtask_opts=True,
             vault_opts=True,
+            fork_opts=True,
         )
 
         # options unique to ansible ad-hoc
