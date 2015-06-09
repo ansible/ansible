@@ -34,7 +34,8 @@ description:
 options:
    name:
      description:
-        - Name that has to be given to the security group
+        - Name that has to be given to the security group. This module
+          requires that security group names be unique.
      required: true
    description:
      description:
@@ -54,8 +55,16 @@ EXAMPLES = '''
 # Create a security group
 - os_security_group:
     cloud=mordred
+    state=present
     name=foo
     description=security group for foo servers
+
+# Update the existing 'foo' security group description
+- os_security_group:
+    cloud=mordred
+    state=present
+    name=foo
+    description=updated description for the foo security group
 '''
 
 
