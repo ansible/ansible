@@ -124,13 +124,12 @@ class AnsibleCloudStack:
         if not project:
             return None
         args = {}
-        args['listall'] = True
         args['account'] = self.get_account(key='name')
         args['domainid'] = self.get_domain(key='id')
         projects = self.cs.listProjects(**args)
         if projects:
             for p in projects['project']:
-                if project in [ p['name'], p['displaytext'], p['id'] ]:
+                if project.lower() in [ p['name'].lower(), p['id'] ]:
                     self.project = p
                     return self._get_by_key(key, self.project)
         self.module.fail_json(msg="project '%s' not found" % project)
@@ -360,6 +359,7 @@ class AnsibleCloudStack:
         capabilities = self.cs.listCapabilities()
         self.capabilities = capabilities['capability']
         return self._get_by_key(key, self.capabilities)
+
 
     # TODO: rename to poll_job()
     def _poll_job(self, job=None, key=None):
