@@ -17,19 +17,19 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args
 
 # path
-$path = Get-Attr $params "path" $FALSE;
+$path = Get-Attr $params "path" $FALSE
 If ($path -eq $FALSE)
 {
-    $path = Get-Attr $params "dest" $FALSE;
+    $path = Get-Attr $params "dest" $FALSE
     If ($path -eq $FALSE)
     {
-        $path = Get-Attr $params "name" $FALSE;
+        $path = Get-Attr $params "name" $FALSE
         If ($path -eq $FALSE)
         {
-            Fail-Json (New-Object psobject) "missing required argument: path";
+            Fail-Json (New-Object psobject) "missing required argument: path"
         }
     }
 }
@@ -39,17 +39,14 @@ If ($path -eq $FALSE)
 # state - file, directory, touch, absent
 # (originally was: state - file, link, directory, hard, touch, absent)
 
-$state = Get-Attr $params "state" "file";
-
-#$recurse = Get-Attr $params "recurse" "no";
-
-# force - yes, no
-# $force = Get-Attr $params "force" "no";
+$state = Get-Attr $params "state" "unspecified"
+# if state is not supplied, test the $path to see if it looks like 
+# a file or a folder and set state to file or folder
 
 # result
 $result = New-Object psobject @{
     changed = $FALSE
-};
+}
 
 If ( $state -eq "touch" )
 {
@@ -61,45 +58,59 @@ If ( $state -eq "touch" )
     {
         echo $null > $file
     }
-    $result.changed = $TRUE;
+    $result.changed = $TRUE
 }
 
 If (Test-Path $path)
 {
-    $fileinfo = Get-Item $path;
+    $fileinfo = Get-Item $path
     If ( $state -eq "absent" )
     {   
-        Remove-Item -Recurse -Force $fileinfo;
-        $result.changed = $TRUE;
+        Remove-Item -Recurse -Force $fileinfo
+        $result.changed = $TRUE
     }
     Else
     {
         # Only files have the .Directory attribute.
         If ( $state -eq "directory" -and $fileinfo.Directory )
         {
-            Fail-Json (New-Object psobject) "path is not a directory";
+            Fail-Json (New-Object psobject) "path is not a directory"
         }
 
         # Only files have the .Directory attribute.
         If ( $state -eq "file" -and -not $fileinfo.Directory )
         {
-            Fail-Json (New-Object psobject) "path is not a file";
+            Fail-Json (New-Object psobject) "path is not a file"
         }
 
     }
 }
 Else
+# doesn't yet exist
 {
+    If ( $state -eq "unspecified" )
+    {
+        $basename = Split-Path -Path $path -Leaf
+        If ($basename.length -gt 0) 
+        {
+           $state = "file"
+        }
+        Else
+        {
+           $state = "directory"
+        }
+    }
+
     If ( $state -eq "directory" )
     {
         New-Item -ItemType directory -Path $path
-        $result.changed = $TRUE;
+        $result.changed = $TRUE
     }
 
     If ( $state -eq "file" )
     {
-        Fail-Json (New-Object psobject) "path will not be created";
+        Fail-Json (New-Object psobject) "path will not be created"
     }
 }
 
-Exit-Json $result;
+Exit-Json $result
