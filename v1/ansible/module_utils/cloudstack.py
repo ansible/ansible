@@ -75,8 +75,12 @@ class AnsibleCloudStack:
         else:
             self.cs = CloudStack(**read_config())
 
-    # TODO: rename to has_changed()
+    # TODO: for backward compatibility only, remove if not used anymore
     def _has_changed(self, want_dict, current_dict, only_keys=None):
+        return self.has_changed(want_dict=want_dict, current_dict=current_dict, only_keys=only_keys)
+
+
+    def has_changed(self, want_dict, current_dict, only_keys=None):
         for key, value in want_dict.iteritems():
 
             # Optionally limit by a list of keys
@@ -334,8 +338,12 @@ class AnsibleCloudStack:
         return self._get_by_key(key, self.capabilities)
 
 
-    # TODO: rename to poll_job()
+    # TODO: for backward compatibility only, remove if not used anymore
     def _poll_job(self, job=None, key=None):
+        return self.poll_job(job=job, key=key)
+
+
+    def poll_job(self, job=None, key=None):
         if 'jobid' in job:
             while True:
                 res = self.cs.queryAsyncJobResult(jobid=job['jobid'])
