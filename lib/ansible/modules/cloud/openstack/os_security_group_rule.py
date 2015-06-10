@@ -129,7 +129,7 @@ def main():
 
             if not _get_rule_from_group(module, secgroup):
                 _security_group_rule(module, nova_client, 'create',
-                                     parent_group_id=secgroup.id,
+                                     parent_group_id=secgroup['id'],
                                      ip_protocol=module.params['protocol'],
                                      from_port=module.params['port_range_min'],
                                      to_port=module.params['port_range_max'],
