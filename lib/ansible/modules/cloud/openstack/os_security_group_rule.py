@@ -88,11 +88,11 @@ def _security_group_rule(module, nova_client, action='create', **kwargs):
 
 
 def _get_rule_from_group(module, secgroup):
-    for rule in secgroup.rules:
-        if (rule['ip_protocol'] == module.params['protocol'] and
-            rule['from_port'] == module.params['port_range_min'] and
-            rule['to_port'] == module.params['port_range_max'] and
-            rule['ip_range']['cidr'] == module.params['remote_ip_prefix']):
+    for rule in secgroup['security_group_rules']:
+        if (rule['protocol'] == module.params['protocol'] and
+                rule['port_range_min'] == module.params['port_range_min'] and
+                rule['port_range_max'] == module.params['port_range_max'] and
+                rule['remote_ip_prefix'] == module.params['remote_ip_prefix']):
             return rule
     return None
 
@@ -133,8 +133,11 @@ def main():
                                      ip_protocol=module.params['protocol'],
                                      from_port=module.params['port_range_min'],
                                      to_port=module.params['port_range_max'],
-                                     cidr=module.params['remote_ip'],
-                                     group_id=module.params['remote_group'],
+                                     cidr=module.params['remote_ip_prefix']
+                                     if 'remote_ip_prefix' in module.params else None,
+                                     group_id=module.params['remote_group']
+                                     if 'remote_group' in module.params else None
+                                     )
                 changed = True
 
 
