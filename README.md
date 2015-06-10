@@ -51,7 +51,7 @@ Branch Info
 Authors
 =======
 
-Ansible was created by [Michael DeHaan](https://github.com/mpdehaan) (michael.dehaan/gmail/com) and has contributions from over 900 users (and growing).  Thanks everyone!
+Ansible was created by [Michael DeHaan](https://github.com/mpdehaan) (michael.dehaan/gmail/com) and has contributions from over 1000 users (and growing).  Thanks everyone!
 
 Ansible is sponsored by [Ansible, Inc](http://ansible.com)
 
