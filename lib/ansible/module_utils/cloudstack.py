@@ -111,11 +111,6 @@ class AnsibleCloudStack:
         return my_dict
 
 
-    # TODO: for backward compatibility only, remove if not used anymore
-    def get_project_id(self):
-        return self.get_project(key='id')
-
-
     def get_project(self, key=None):
         if self.project:
             return self._get_by_key(key, self.project)
@@ -133,11 +128,6 @@ class AnsibleCloudStack:
                     self.project = p
                     return self._get_by_key(key, self.project)
         self.module.fail_json(msg="project '%s' not found" % project)
-
-
-    # TODO: for backward compatibility only, remove if not used anymore
-    def get_ip_address_id(self):
-        return self.get_ip_address(key='id')
 
 
     def get_ip_address(self, key=None):
@@ -162,11 +152,6 @@ class AnsibleCloudStack:
         return self._get_by_key(key, self.ip_address)
 
 
-    # TODO: for backward compatibility only, remove if not used anymore
-    def get_vm_id(self):
-        return self.get_vm(key='id')
-
-
     def get_vm(self, key=None):
         if self.vm:
             return self._get_by_key(key, self.vm)
@@ -189,11 +174,6 @@ class AnsibleCloudStack:
         self.module.fail_json(msg="Virtual machine '%s' not found" % vm)
 
 
-    # TODO: for backward compatibility only, remove if not used anymore
-    def get_zone_id(self):
-        return self.get_zone(key='id')
-
-
     def get_zone(self, key=None):
         if self.zone:
             return self._get_by_key(key, self.zone)
@@ -212,11 +192,6 @@ class AnsibleCloudStack:
                     self.zone = z
                     return self._get_by_key(key, self.zone)
         self.module.fail_json(msg="zone '%s' not found" % zone)
-
-
-    # TODO: for backward compatibility only, remove if not used anymore
-    def get_os_type_id(self):
-        return self.get_os_type(key='id')
 
 
     def get_os_type(self, key=None):
