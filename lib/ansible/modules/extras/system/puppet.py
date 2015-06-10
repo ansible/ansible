@@ -65,7 +65,7 @@ options:
     required: false
     default: None
 requirements: [ puppet ]
-author: Monty Taylor
+author: "Monty Taylor (@emonty)"
 '''
 
 EXAMPLES = '''
