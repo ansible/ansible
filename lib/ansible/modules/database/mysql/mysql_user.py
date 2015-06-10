@@ -150,8 +150,6 @@ mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
 - mysql_user: name=root password=abc123 login_unix_socket=/var/run/mysqld/mysqld.sock
 
 # Example .my.cnf file for setting the root password
-# Note: don't use quotes around the password, because the mysql_user module
-# will include them in the password but the mysql client will not
 
 [client]
 user=root
