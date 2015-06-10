@@ -26,9 +26,9 @@ import sys
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.cli import CLI
+from ansible.plugins import module_loader
 from ansible.utils.display import Display
 from ansible.utils.vault import read_vault_file
-from ansible.utils.plugins import module_finder
 from ansible.utils.cmd_functions import run_cmd
 
 ########################################################
@@ -127,7 +127,7 @@ class PullCLI(CLI):
             if self.options.private_key_file:
                 repo_opts += ' key_file=%s' % self.options.private_key_file
 
-        path = module_finder.find_plugin(self.options.module_name)
+        path = module_loader.find_plugin(self.options.module_name)
         if path is None:
             raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
 
