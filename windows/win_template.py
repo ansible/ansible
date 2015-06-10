@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 module: win_template
-version_added: 1.8
+version_added: "2.0"
 short_description: Templates a file out to a remote server.
 description:
      - Templates are processed by the Jinja2 templating language
