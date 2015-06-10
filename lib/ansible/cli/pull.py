@@ -70,7 +70,9 @@ class PullCLI(CLI):
             help='adds the hostkey for the repo url if not already added')
         self.parser.add_option('-m', '--module-name', dest='module_name', default=self.DEFAULT_REPO_TYPE,
             help='Repository module name, which ansible will use to check out the repo. Default is %s.' % self.DEFAULT_REPO_TYPE)
-
+        self.parser.add_option('--verify-commit', dest='verify', default=False, action='store_true',
+            help='verify GPG signature of checked out commit, if it fails abort running the playbook.'
+                 ' This needs the corresponding VCS module to support such an operation')
 
         self.options, self.args = self.parser.parse_args()
 
@@ -126,6 +128,9 @@ class PullCLI(CLI):
 
             if self.options.private_key_file:
                 repo_opts += ' key_file=%s' % self.options.private_key_file
+
+            if self.options.verify:
+                repo_opts += ' verify_commit=yes'
 
         path = module_loader.find_plugin(self.options.module_name)
         if path is None:
