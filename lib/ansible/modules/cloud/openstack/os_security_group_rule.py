@@ -89,9 +89,12 @@ def _security_group_rule(module, nova_client, action='create', **kwargs):
 
 def _get_rule_from_group(module, secgroup):
     for rule in secgroup['security_group_rules']:
+        # No port, or -1, will be returned as None
+        port_range_min = rule['port_range_min'] or -1
+        port_range_max = rule['port_range_max'] or -1
         if (rule['protocol'] == module.params['protocol'] and
-                rule['port_range_min'] == module.params['port_range_min'] and
-                rule['port_range_max'] == module.params['port_range_max'] and
+                port_range_min == module.params['port_range_min'] and
+                port_range_max == module.params['port_range_max'] and
                 rule['remote_ip_prefix'] == module.params['remote_ip_prefix']):
             return rule
     return None
