@@ -546,7 +546,7 @@ class PlayBook(object):
                 _register_play_vars(host, result)
 
         # flag which notify handlers need to be run
-        if len(task.notify) > 0:
+        if task.notify and len(task.notify) > 0:
             for host, results in results.get('contacted',{}).iteritems():
                 if results.get('changed', False):
                     for handler_name in task.notify:
