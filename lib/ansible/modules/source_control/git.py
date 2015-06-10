@@ -167,9 +167,9 @@ options:
         version_added: "2.0"
         description:
             - if C(yes), when cloning or checking out a C(version) verify the
-            signature of a GPG signed commit. This requires C(git) version>=2.1.0
-            to be installed. The commit MUST be signed and the public key MUST
-            be trusted in the GPG trustdb.
+              signature of a GPG signed commit. This requires C(git) version>=2.1.0
+              to be installed. The commit MUST be signed and the public key MUST
+              be trusted in the GPG trustdb.
 
 
 notes:
