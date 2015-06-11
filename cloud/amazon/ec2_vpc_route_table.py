@@ -1,121 +1,75 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
+# This is a free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Ansible is distributed in the hope that it will be useful,
+# This Ansible library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
 module: ec2_vpc_route_table
-short_description: Configure route tables for AWS virtual private clouds
+short_description: Manage route tables for AWS virtual private clouds
 description:
-    - Create or removes route tables from AWS virtual private clouds.'''
-'''This module has a dependency on python-boto.
-version_added: "1.8"
+    - Manage route tables for AWS virtual private clouds
+version_added: "2.0"
+author: Robert Estelle, @erydo
 options:
   vpc_id:
     description:
-      - "The VPC in which to create the route table."
+      - VPC ID of the VPC in which to create the route table.
     required: true
   route_table_id:
     description:
-      - "The ID of the route table to update or delete."
+      - The ID of the route table to update or delete.
     required: false
     default: null
   resource_tags:
     description:
-      - 'A dictionary array of resource tags of the form: { tag1: value1,'''
-''' tag2: value2 }. Tags in this list are used to uniquely identify route'''
-''' tables within a VPC when the route_table_id is not supplied.
+      - A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }. Tags in this list are used to uniquely identify route tables within a VPC when the route_table_id is not supplied.
     required: false
     default: null
-    aliases: []
-    version_added: "1.6"
   routes:
     description:
-      - List of routes in the route table. Routes are specified'''
-''' as dicts containing the keys 'dest' and one of 'gateway_id','''
-''' 'instance_id', 'interface_id', or 'vpc_peering_connection'. '''
-''' If 'gateway_id' is specified, you can refer to the VPC's IGW '''
-''' by using the value "igw".
+      - List of routes in the route table. Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id', 'instance_id', 'interface_id', or 'vpc_peering_connection'. If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
     required: true
     aliases: []
   subnets:
     description:
-      - An array of subnets to add to this route table. Subnets may either'''
-''' be specified by subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'.
+      - An array of subnets to add to this route table. Subnets may be specified by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'.
     required: true
-    aliases: []
   propagating_vgw_ids:
     description:
-      - Enables route propagation from virtual gateways specified by ID.
+      - Enable route propagation from virtual gateways specified by ID.
     required: false
-    aliases: []
   wait:
     description:
-      - wait for the VPC to be in state 'available' before returning
+      - Wait for the VPC to be in state 'available' before returning.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-    aliases: []
   wait_timeout:
     description:
-      - how long before wait gives up, in seconds
+      - How long before wait gives up, in seconds.
     default: 300
-    aliases: []
   state:
     description:
-      - Create or terminate the VPC
-    required: true
+      - Create or destroy the VPC route table
+    required: false
     default: present
-    aliases: []
-  region:
-    description:
-      - region in which the resource exists.
-    required: false
-    default: null
-    aliases: ['aws_region', 'ec2_region']
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY'''
-''' environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY'''
-''' environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key' ]
-  validate_certs:
-    description:
-      - When set to "no", SSL certificates will not be validated for boto'''
-''' versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
-
-requirements: [ "boto" ]
-author: Robert Estelle
+    choices: [ 'present', 'absent' ]
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
-# Note: None of these examples set aws_access_key, aws_secret_key, or region.
-# It is assumed that their matching environment variables are set.
+# Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Basic creation example:
 - name: Set up public subnet route table
@@ -583,3 +537,4 @@ from ansible.module_utils.ec2 import *  # noqa
 
 if __name__ == '__main__':
     main()
+    
