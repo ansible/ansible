@@ -642,6 +642,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
 def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
+    pkgs = []
     res = {}
     res['results'] = []
     res['msg'] = ''
@@ -658,17 +659,20 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 res['results'].append('%s is not installed' % pkg)
                 continue
 
+        pkgs.append(pkg)
+
+    if pkgs:
         # run an actual yum transaction
-        cmd = yum_basecmd + ["remove", pkg]
+        cmd = yum_basecmd + ["remove"] + pkg
 
         if module.check_mode:
             module.exit_json(changed=True)
 
         rc, out, err = module.run_command(cmd)
 
-        res['rc'] += rc
+        res['rc'] = rc
         res['results'].append(out)
-        res['msg'] += err
+        res['msg'] = err
 
         # compile the results into one batch. If anything is changed 
         # then mark changed
@@ -677,12 +681,13 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         # at this point we should check to see if the pkg is no longer present
         
-        if not is_group: # we can't sensibly check for a group being uninstalled reliably
-            # look to see if the pkg shows up from is_installed. If it doesn't
-            if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos):
-                res['changed'] = True
-            else:
-                module.fail_json(**res)
+        for pkg in pkgs:
+            if not pkg.startswith('@'): # we can't sensibly check for a group being uninstalled reliably
+                # look to see if the pkg shows up from is_installed. If it doesn't
+                if not is_installed(module, repoq, pkg, conf_file, en_repos=en_repos, dis_repos=dis_repos):
+                    res['changed'] = True
+                else:
+                    module.fail_json(**res)
 
         if rc != 0:
             module.fail_json(**res)
