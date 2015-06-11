@@ -19,24 +19,23 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems, string_types
-
-import re
 
 from ansible.template import Templar
 from ansible.template.safe_eval import safe_eval
 
 __all__ = ['listify_lookup_plugin_terms']
 
-LOOKUP_REGEX = re.compile(r'lookup\s*\(')
-
+#FIXME: probably just move this into lookup plugin base class
 def listify_lookup_plugin_terms(terms, variables, loader):
 
     if isinstance(terms, basestring):
         stripped = terms.strip()
         templar = Templar(loader=loader, variables=variables)
-        terms = templar.template(terms, convert_bare=True)
 
+        #FIXME: warn/deprecation on bare vars in with_ so we can eventually remove fail on undefined override
+        terms = templar.template(terms, convert_bare=True, fail_on_undefined=False)
+
+        #TODO: check if this is needed as template should also return correct type already
         terms = safe_eval(terms)
 
         if isinstance(terms, basestring):
