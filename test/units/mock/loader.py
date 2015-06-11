@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+from ansible.errors import AnsibleParserError
 from ansible.parsing import DataLoader
 
 class DictDataLoader(DataLoader):
