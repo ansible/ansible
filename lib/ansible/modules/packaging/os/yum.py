@@ -600,6 +600,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
             module.exit_json(changed=True)
 
+        changed = True
+
         rc, out, err = module.run_command(cmd)
 
         if (rc == 1):
@@ -627,7 +629,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         # look for each pkg via obsoletes
 
         # Record change
-        res['changed'] = True
+        res['changed'] = changed
 
     # Remove rpms downloaded for EL5 via url
     try:
