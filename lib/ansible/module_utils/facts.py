@@ -417,13 +417,13 @@ class Facts(object):
                                                 self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
                         elif name == 'Debian':
                             data = get_file_content(path)
-                            if 'Ubuntu' in data:
-                                break # Ubuntu gets correct info from python functions
-                            elif 'Debian' in data or 'Raspbian' in data:
+                            if 'Debian' in data or 'Raspbian' in data:
                                 release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
                                 if release:
                                     self.facts['distribution_release'] = release.groups()[0]
                                     break
+                            elif 'Ubuntu' in data:
+                                break # Ubuntu gets correct info from python functions
                         elif name == 'Mandriva':
                             data = get_file_content(path)
                             if 'Mandriva' in data:
@@ -438,12 +438,15 @@ class Facts(object):
                         elif name == 'NA':
                             data = get_file_content(path)
                             for line in data.splitlines():
-                                distribution = re.search("^NAME=(.*)", line)
-                                if distribution:
-                                    self.facts['distribution'] = distribution.group(1).strip('"')
-                                version = re.search("^VERSION=(.*)", line)
-                                if version:
-                                    self.facts['distribution_version'] = version.group(1).strip('"')
+                                if self.facts['distribution'] == 'NA':
+                                    distribution = re.search("^NAME=(.*)", line)
+                                    if distribution:
+                                        self.facts['distribution'] = distribution.group(1).strip('"')
+                                if self.facts['distribution_version'] == 'NA':
+                                    version = re.search("^VERSION=(.*)", line)
+                                    if version:
+                                        self.facts['distribution_version'] = version.group(1).strip('"')
+
                             if self.facts['distribution'].lower() == 'coreos':
                                 data = get_file_content('/etc/coreos/update.conf')
                                 release = re.search("^GROUP=(.*)", data)
