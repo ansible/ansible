@@ -40,20 +40,19 @@ __all__ = ['Templar']
 
 # A regex for checking to see if a variable we're trying to
 # expand is just a single variable name.
-SINGLE_VAR = re.compile(r"^{{\s*(\w*)\s*}}$")
 
 # Primitive Types which we don't want Jinja to convert to strings.
 NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
-JINJA2_ALLOWED_OVERRIDES = ['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline']
+JINJA2_ALLOWED_OVERRIDES = frozenset(['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline'])
 
 class Templar:
     '''
     The main class for templating, with the main entry-point of template().
     '''
 
-    def __init__(self, loader, shared_loader_obj=None, variables=dict(), fail_on_undefined=C.DEFAULT_UNDEFINED_VAR_BEHAVIOR):
+    def __init__(self, loader, shared_loader_obj=None, variables=dict()):
         self._loader              = loader
         self._basedir             = loader.get_basedir()
         self._filters             = None
@@ -70,7 +69,12 @@ class Templar:
         # should result in fatal errors being raised
         self._fail_on_lookup_errors    = True
         self._fail_on_filter_errors    = True
-        self._fail_on_undefined_errors = fail_on_undefined
+        self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
+
+        self.environment = Environment(trim_blocks=True, undefined=StrictUndefined, extensions=self._get_extensions(), finalize=self._finalize)
+        self.environment.template_class = AnsibleJ2Template
+
+        self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
     def _count_newlines_from_end(self, in_str):
         '''
@@ -129,7 +133,7 @@ class Templar:
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -147,7 +151,7 @@ class Templar:
                     # Check to see if the string we are trying to render is just referencing a single
                     # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
-                    only_one = SINGLE_VAR.match(variable)
+                    only_one = self.SINGLE_VAR.match(variable)
                     if only_one:
                         var_name = only_one.group(1)
                         if var_name in self._available_variables:
@@ -155,10 +159,10 @@ class Templar:
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
 
-                    result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines)
+                    result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
 
                     # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                    if (result.startswith("{") and not result.startswith("{{")) or result.startswith("["):
+                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or result.startswith("["):
                         eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
                         if eval_results[1] is None:
                             result = eval_results[0]
@@ -169,11 +173,11 @@ class Templar:
                 return result
 
             elif isinstance(variable, (list, tuple)):
-                return [self.template(v, convert_bare=convert_bare) for v in variable]
+                return [self.template(v, convert_bare=convert_bare, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides) for v in variable]
             elif isinstance(variable, dict):
                 d = {}
                 for (k, v) in variable.iteritems():
-                    d[k] = self.template(v, convert_bare=convert_bare)
+                    d[k] = self.template(v, convert_bare=convert_bare, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
                 return d
             else:
                 return variable
@@ -188,7 +192,7 @@ class Templar:
         '''
         returns True if the data contains a variable pattern
         '''
-        return "$" in data or "{{" in data or '{%' in data
+        return self.environment.block_start_string in data or self.environment.variable_start_string in data
 
     def _convert_bare_variable(self, variable):
         '''
@@ -198,8 +202,8 @@ class Templar:
 
         if isinstance(variable, basestring):
             first_part = variable.split(".")[0].split("[")[0]
-            if first_part in self._available_variables and '{{' not in variable and '$' not in variable:
-                return "{{%s}}" % variable
+            if first_part in self._available_variables and self.environment.variable_start_string not in variable:
+                return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
         # so just return it as-is
@@ -230,16 +234,24 @@ class Templar:
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
-    def _do_template(self, data, preserve_trailing_newlines=False):
+    def _do_template(self, data, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
+
+        if fail_on_undefined is None:
+            fail_on_undefined = self._fail_on_undefined_errors
 
         try:
+            # allows template header overrides to change jinja2 options.
+            if overrides is None:
+                myenv = self.environment.overlay()
+            else:
+                overrides = JINJA2_ALLOWED_OVERRIDES.intersection(set(overrides))
+                myenv = self.environment.overlay(overrides)
 
-            environment = Environment(trim_blocks=True, undefined=StrictUndefined, extensions=self._get_extensions(), finalize=self._finalize)
-            environment.filters.update(self._get_filters())
-            environment.template_class = AnsibleJ2Template
+            #FIXME: add tests
+            myenv.filters.update(self._get_filters())
 
             try:
-                t = environment.from_string(data)
+                t = myenv.from_string(data)
             except TemplateSyntaxError, e:
                 raise AnsibleError("template error while templating string: %s" % str(e))
             except Exception, e:
@@ -280,8 +292,9 @@ class Templar:
 
             return res
         except (UndefinedError, AnsibleUndefinedVariable), e:
-            if self._fail_on_undefined_errors:
+            if fail_on_undefined:
                 raise
             else:
+                #TODO: return warning about undefined var
                 return data
 
