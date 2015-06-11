@@ -224,7 +224,7 @@ class TaskQueueManager:
                     play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
 
         all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
-        templar = Templar(loader=self._loader, variables=all_vars, fail_on_undefined=False)
+        templar = Templar(loader=self._loader, variables=all_vars)
 
         new_play = play.copy()
         new_play.post_validate(templar)
