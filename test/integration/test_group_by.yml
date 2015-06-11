@@ -92,7 +92,7 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_LAMA=true
 
-- hosts: '{{genus'
+- hosts: 'genus'
   gather_facts: false
   tasks:
     - name: no hosts should match this group

@@ -1,0 +1,19 @@
+- hosts: all;!localhost
+  gather_facts: false
+
+  pre_tasks:
+    - name: check that the consul agent is running locally
+      local_action: wait_for port=8500 timeout=5
+      ignore_errors: true
+      register: consul_running
+
+  roles:
+
+    - {role: test_consul_inventory,
+       when: not consul_running.failed is defined}
+
+  tasks:
+
+    - name: warn that tests are ignored if consul agent is not running
+      debug: msg="A consul agent needs to be running inorder to run the tests. To setup a vagrant cluster for use in testing see http://github.com/sgargan/consul-vagrant"
+      when: consul_running.failed is defined

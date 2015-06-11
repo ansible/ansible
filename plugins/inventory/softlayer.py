@@ -55,7 +55,7 @@ class SoftLayerInventory(object):
             self.get_all_servers()
             print self.json_format_dict(self.inventory, True)
         elif self.args.host:
-            self.get_virtual_servers(client)
+            self.get_virtual_servers()
             print self.json_format_dict(self.inventory["_meta"]["hostvars"][self.args.host], True)
 
     def to_safe(self, word):

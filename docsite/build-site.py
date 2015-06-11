@@ -88,14 +88,7 @@ if __name__ == '__main__':
         print "    Run 'make viewdocs' to build and then preview in a web browser."
         sys.exit(0)
 
-    # The 'htmldocs' make target will call this scrip twith the 'rst'
-    # parameter' We don't need to run the 'htmlman' target then.
-    if "rst" in sys.argv:
-        build_rst_docs()
-    else:
-        # By default, preform the rst->html transformation and then
-        # the asciidoc->html trasnformation
-        build_rst_docs()
+    build_rst_docs()
 
     if "view" in sys.argv:
         import webbrowser
