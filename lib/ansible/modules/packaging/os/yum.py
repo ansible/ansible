@@ -485,6 +485,7 @@ def list_stuff(module, conf_file, stuff):
 
 def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
+    pkgs = []
     res = {}
     res['results'] = []
     res['msg'] = ''
@@ -586,7 +587,10 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             # the error we're catching here
             pkg = spec
 
-        cmd = yum_basecmd + ['install', pkg]
+        pkgs.append(pkg)
+
+    if pkgs:
+        cmd = yum_basecmd + ['install'] + pkgs
 
         if module.check_mode:
             # Remove rpms downloaded for EL5 via url
@@ -596,15 +600,15 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
             module.exit_json(changed=True)
 
-        changed = True
-
         rc, out, err = module.run_command(cmd)
 
-        # Fail on invalid urls:
-        if (rc == 1 and '://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err)):
-            err = 'Package at %s could not be installed' % spec
-            module.fail_json(changed=False,msg=err,rc=1)
-        elif (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
+        if (rc == 1):
+            for spec in items:
+                # Fail on invalid urls:
+                if ('://' in spec and ('No package %s available.' % spec in out or 'Cannot open: %s. Skipping.' % spec in err)):
+                    err = 'Package at %s could not be installed' % spec
+                    module.fail_json(changed=False,msg=err,rc=1)
+        if (rc != 0 and 'Nothing to do' in err) or 'Nothing to do' in out:
             # avoid failing in the 'Nothing To Do' case
             # this may happen with an URL spec.
             # for an already installed group,
@@ -614,16 +618,16 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             out = '%s: Nothing to do' % spec
             changed = False
 
-        res['rc'] += rc
+        res['rc'] = rc
         res['results'].append(out)
         res['msg'] += err
 
         # FIXME - if we did an install - go and check the rpmdb to see if it actually installed
-        # look for the pkg in rpmdb
-        # look for the pkg via obsoletes
+        # look for each pkg in rpmdb
+        # look for each pkg via obsoletes
 
-        # accumulate any changes
-        res['changed'] |= changed
+        # Record change
+        res['changed'] = True
 
     # Remove rpms downloaded for EL5 via url
     try:
