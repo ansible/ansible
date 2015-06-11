@@ -32,6 +32,7 @@ New Modules:
   * cloudstack: cs_iso
   * cloudstack: cs_instance
   * cloudstack: cs_instancegroup
+  * cloudstack: cs_network
   * cloudstack: cs_portforward
   * cloudstack: cs_project
   * cloudstack: cs_sshkeypair
