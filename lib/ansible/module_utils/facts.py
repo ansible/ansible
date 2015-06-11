@@ -435,6 +435,9 @@ class Facts(object):
                                     self.facts['distribution_release'] = release.groups()[0]
                                 self.facts['distribution'] = name
                                 break
+                        elif name == 'Archlinux':
+                            self.facts['distribution'] = name
+                            break
                         elif name == 'NA':
                             data = get_file_content(path)
                             for line in data.splitlines():
