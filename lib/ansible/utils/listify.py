@@ -38,7 +38,7 @@ def listify_lookup_plugin_terms(terms, variables, loader):
         #TODO: check if this is needed as template should also return correct type already
         terms = safe_eval(terms)
 
-        if isinstance(terms, basestring):
+        if isinstance(terms, basestring) or not isinstance(terms, list) and not isinstance(terms, set):
             terms = [ terms ]
 
     return terms
