@@ -54,11 +54,6 @@ options:
     description:
       - cd into this directory before running the command
     required: false
-  executable:
-    description:
-      - change the shell used to execute the command. Should be an absolute
-        path to the executable.
-    required: false
   responses:
     description:
       - Mapping of expected string and string to respond with
@@ -94,7 +89,6 @@ def main():
         argument_spec=dict(
             command=dict(required=True),
             chdir=dict(),
-            executable=dict(),
             creates=dict(),
             removes=dict(),
             responses=dict(type='dict', required=True),
@@ -107,7 +101,6 @@ def main():
         module.fail_json(msg='The pexpect python module is required')
 
     chdir = module.params['chdir']
-    executable = module.params['executable']
     args = module.params['command']
     creates = module.params['creates']
     removes = module.params['removes']
@@ -156,13 +149,8 @@ def main():
 
     startd = datetime.datetime.now()
 
-    if executable:
-        cmd = '%s %s' % (executable, args)
-    else:
-        cmd = args
-
     try:
-        out, rc = pexpect.runu(cmd, timeout=timeout, withexitstatus=True,
+        out, rc = pexpect.runu(args, timeout=timeout, withexitstatus=True,
                                events=events, cwd=chdir, echo=echo)
     except pexpect.ExceptionPexpect, e:
         module.fail_json(msg='%s' % e)
