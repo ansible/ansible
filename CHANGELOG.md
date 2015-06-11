@@ -40,6 +40,7 @@ New Modules:
   * cloudstack: cs_securitygroup_rule
   * cloudstack: cs_vmsnapshot
   * datadog_monitor
+  * expect
   * find
   * maven_artifact
   * openstack: os_client_config
