@@ -33,34 +33,13 @@ LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 def listify_lookup_plugin_terms(terms, variables, loader):
 
     if isinstance(terms, basestring):
-        # someone did:
-        #    with_items: alist
-        # OR
-        #    with_items: {{ alist }}
-
         stripped = terms.strip()
         templar = Templar(loader=loader, variables=variables)
-        if not (stripped.startswith('{') or stripped.startswith('[')) and not stripped.startswith("/") and not stripped.startswith('set([') and not LOOKUP_REGEX.search(terms):
-            # if not already a list, get ready to evaluate with Jinja2
-            # not sure why the "/" is in above code :)
-            try:
-                new_terms = templar.template("{{ %s }}" % terms)
-                if isinstance(new_terms, basestring) and "{{" in new_terms:
-                    pass
-                else:
-                    terms = new_terms
-            except:
-                pass
-        else:
-            terms = templar.template(terms)
+        terms = templar.template(terms, convert_bare=True)
 
-        if '{' in terms or '[' in terms:
-            # Jinja2 already evaluated a variable to a list.
-            # Jinja2-ified list needs to be converted back to a real type
-            return safe_eval(terms)
+        terms = safe_eval(terms)
 
         if isinstance(terms, basestring):
             terms = [ terms ]
 
     return terms
-
