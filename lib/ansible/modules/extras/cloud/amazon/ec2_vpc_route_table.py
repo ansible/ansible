@@ -45,7 +45,9 @@ options:
     description:
       - List of routes in the route table. Routes are specified'''
 ''' as dicts containing the keys 'dest' and one of 'gateway_id','''
-''' 'instance_id', 'interface_id', or 'vpc_peering_connection'.
+''' 'instance_id', 'interface_id', or 'vpc_peering_connection'. '''
+''' If 'gateway_id' is specified, you can refer to the VPC's IGW '''
+''' by using the value "igw".
     required: true
     aliases: []
   subnets:
@@ -168,6 +170,10 @@ class AnsibleRouteTableException(Exception):
     pass
 
 
+class AnsibleIgwSearchException(AnsibleRouteTableException):
+    pass
+
+
 class AnsibleTagCreationException(AnsibleRouteTableException):
     pass
 
@@ -234,6 +240,29 @@ def find_subnets(vpc_conn, vpc_id, identified_subnets):
                     'Multiple subnets named "{0}"'.format(name))
 
     return subnets_by_id + subnets_by_cidr + subnets_by_name
+
+
+def find_igw(vpc_conn, vpc_id):
+    """
+    Finds the Internet gateway for the given VPC ID.
+
+    Raises an AnsibleIgwSearchException if either no IGW can be found, or more
+    than one found for the given VPC.
+
+    Note that this function is duplicated in other ec2 modules, and should
+    potentially be moved into potentially be moved into a shared module_utils
+    """
+    igw = vpc_conn.get_all_internet_gateways(
+        filters={'attachment.vpc-id': vpc_id})
+
+    if not igw:
+        return AnsibleIgwSearchException('No IGW found for VPC "{0}"'.
+                                         format(vpc_id))
+    elif len(igw) == 1:
+        return igw[0].id
+    else:
+        raise AnsibleIgwSearchException('Multiple IGWs found for VPC "{0}"'.
+                                        format(vpc_id))
 
 
 def get_resource_tags(vpc_conn, resource_id):
@@ -524,6 +553,11 @@ def main():
     routes = module.params.get('routes')
     for route_spec in routes:
         rename_key(route_spec, 'dest', 'destination_cidr_block')
+
+        if 'gateway_id' in route_spec and route_spec['gateway_id'] and \
+                route_spec['gateway_id'].lower() == 'igw':
+            igw = find_igw(vpc_conn, vpc_id)
+            route_spec['gateway_id'] = igw
 
     subnets = module.params.get('subnets')
     state = module.params.get('state', 'present')
