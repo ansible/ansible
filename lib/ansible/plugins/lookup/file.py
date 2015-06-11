@@ -27,9 +27,6 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        if not isinstance(terms, list):
-            terms = [ terms ]
-
         ret = []
         for term in terms:
             basedir_path  = self._loader.path_dwim(term)
@@ -43,13 +40,13 @@ class LookupModule(LookupBase):
             # itself (which will be relative to the current working dir)
 
             if 'role_path' in variables:
-                relative_path = self._loader.path_dwim_relative(variables['role_path'], 'files', term, check=False)
+                relative_path = self._loader.path_dwim_relative(variables['role_path'], 'files', term)
 
             # FIXME: the original file stuff still needs to be worked out, but the
             #        playbook_dir stuff should be able to be removed as it should
             #        be covered by the fact that the loader contains that info
-            #if 'playbook_dir' in variables:
-            #    playbook_path = os.path.join(variables['playbook_dir'], term)
+            if 'playbook_dir' in variables:
+                playbook_path = self._loader.path_dwim_relative(variables['playbook_dir'],'files', term)
 
             for path in (basedir_path, relative_path, playbook_path):
                 try:
