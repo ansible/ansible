@@ -99,11 +99,8 @@ class Connection(ConnectionBase):
 
         if self._connection_info.port is not None:
             self._common_args += ("-o", "Port={0}".format(self._connection_info.port))
-        # FIXME: need to get this from connection info
-        #if self.private_key_file is not None:
-        #    self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self.private_key_file)))
-        #elif self.runner.private_key_file is not None:
-        #    self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self.runner.private_key_file)))
+        if self._connection_info.private_key_file is not None:
+            self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self._connection_info.private_key_file)))
         if self._connection_info.password:
             self._common_args += ("-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no")
