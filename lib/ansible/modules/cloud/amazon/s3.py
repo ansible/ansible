@@ -64,7 +64,7 @@ options:
     version_added: "1.6"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), create (bucket) and delete (bucket).
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), create (bucket), delete (bucket), and delobj (delete object).
     required: true
     default: null
     aliases: []
@@ -125,6 +125,12 @@ EXAMPLES = '''
 
 # Delete a bucket and all contents
 - s3: bucket=mybucket mode=delete
+
+# GET an object but dont download if the file checksums match 
+- s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=different
+
+# Delete an object from a bucket
+- s3: bucket=mybucket object=/my/desired/key.txt mode=delobj
 '''
 
 import os
@@ -302,7 +308,7 @@ def main():
             encrypt        = dict(default=True, type='bool'),
             expiry         = dict(default=600, aliases=['expiration']),
             metadata       = dict(type='dict'),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr'], required=True),
+            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj'], required=True),
             object         = dict(),
             overwrite      = dict(aliases=['force'], default='always'),
             retries        = dict(aliases=['retry'], type='int', default=0),
@@ -474,7 +480,23 @@ def main():
         if bucketrtn is True and pathrtn is True and keyrtn is False:
             upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
 
-    # Support for deleting an object if we have both params.
+    # Delete an object from a bucket, not the entire bucket
+    if mode == 'delobj':
+        if obj is None:
+            module.fail_json(msg="object parameter is required", failed=True);
+        if bucket:
+            bucketrtn = bucket_check(module, s3, bucket)
+            if bucketrtn is True:
+                deletertn = delete_key(module, s3, bucket, obj)
+                if deletertn is True:
+                    module.exit_json(msg="Object %s deleted from bucket %s." % (obj, bucket), changed=True)
+            else:
+                module.fail_json(msg="Bucket does not exist.", changed=False)
+        else:
+            module.fail_json(msg="Bucket parameter is required.", failed=True)
+
+
+    # Delete an entire bucket, including all objects in the bucket
     if mode == 'delete':
         if bucket:
             bucketrtn = bucket_check(module, s3, bucket)
