@@ -125,9 +125,16 @@
         - "bare_var.results[0].item == 1"
         - "bare_var.results[1].item == 2"
 
+- name: use list with bare strings in it
+  debug: msg={{item}}
+  with_items:
+    - things2
+    - things1
+
 - name: use list with undefined var in it
   debug: msg={{item}}
   with_items: things2
+  ignore_errors: True
 
 
 # BUG #10073 nested template handling
