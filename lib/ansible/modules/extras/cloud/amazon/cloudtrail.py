@@ -92,11 +92,6 @@ EXAMPLES = """
     local_action: cloudtrail state=absent name=main region=us-east-1
 """
 
-import time
-import sys
-import os
-from collections import Counter
-
 boto_import_failed = False
 try:
     import boto
