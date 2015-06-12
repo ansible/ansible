@@ -11,6 +11,7 @@ author:
     - "Andrew Newdigate (@suprememoocow)"
     - "Dylan Silva (@thaumos)"
     - "Justin Johns"
+    - "Bruce Pennypacker"
 requirements:
     - PagerDuty API access
 options:
@@ -19,7 +20,7 @@ options:
             - Create a maintenance window or get a list of ongoing windows.
         required: true
         default: null
-        choices: [ "running", "started", "ongoing" ]
+        choices: [ "running", "started", "ongoing", "deleted" ]
         aliases: []
     name:
         description:
@@ -61,11 +62,11 @@ options:
         version_added: '1.8'
     service:
         description:
-            - PagerDuty service ID.
+            - A comma separated list of PagerDuty service IDs.
         required: false
         default: null
         choices: []
-        aliases: []
+        aliases: [ services ]
     hours:
         description:
             - Length of maintenance window in hours.
@@ -96,9 +97,6 @@ options:
         default: 'yes'
         choices: ['yes', 'no']
         version_added: 1.5.1
-
-notes:
-    - This module does not yet have support to end maintenance windows.
 '''
 
 EXAMPLES='''
@@ -132,6 +130,14 @@ EXAMPLES='''
              service=FOO123
              hours=4
              desc=deployment
+  register: pd_window
+
+# Delete the previous maintenance window
+- pagerduty: name=companyabc
+             user=example@example.com
+             passwd=password123
+             state=deleted
+             service={{ pd_window.result.maintenance_window.id }}
 '''
 
 import datetime
@@ -152,7 +158,7 @@ def ongoing(module, name, user, passwd, token):
     if info['status'] != 200:
         module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
 
-    return False, response.read()
+    return False, response.read(), False
 
 
 def create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc):
@@ -166,7 +172,8 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
         'Authorization': auth_header(user, passwd, token),
         'Content-Type' : 'application/json',
     }
-    request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': [service]}}
+    request_data = {'maintenance_window': {'start_time': start, 'end_time': end, 'description': desc, 'service_ids': service}}
+    
     if requester_id:
         request_data['requester_id'] = requester_id
     else:
@@ -178,19 +185,50 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
     if info['status'] != 200:
         module.fail_json(msg="failed to create the window: %s" % info['msg'])
 
-    return False, response.read()
+    try:
+        json_out = json.loads(response.read())
+    except:
+        json_out = ""
+
+    return False, json_out, True
+
+def delete(module, name, user, passwd, token, requester_id, service):
+    url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/" + service[0]
+    headers = {
+        'Authorization': auth_header(user, passwd, token),
+        'Content-Type' : 'application/json',
+    }
+    request_data = {}
+    
+    if requester_id:
+        request_data['requester_id'] = requester_id
+    else:
+        if token:
+            module.fail_json(msg="requester_id is required when using a token")
+
+    data = json.dumps(request_data)
+    response, info = fetch_url(module, url, data=data, headers=headers, method='DELETE')
+    if info['status'] != 200:
+        module.fail_json(msg="failed to delete the window: %s" % info['msg'])
+
+    try:
+        json_out = json.loads(response.read())
+    except:
+        json_out = ""
+
+    return False, json_out, True
 
 
 def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'started', 'ongoing']),
+        state=dict(required=True, choices=['running', 'started', 'ongoing', 'deleted']),
         name=dict(required=True),
         user=dict(required=False),
         passwd=dict(required=False),
         token=dict(required=False),
-        service=dict(required=False),
+        service=dict(required=False, type='list', aliases=["services"]),
         requester_id=dict(required=False),
         hours=dict(default='1', required=False),
         minutes=dict(default='0', required=False),
@@ -217,15 +255,21 @@ def main():
     if state == "running" or state == "started":
         if not service:
             module.fail_json(msg="service not specified")
-        (rc, out) = create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc)
+        (rc, out, changed) = create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc)
+        if rc == 0:
+            changed=True
 
     if state == "ongoing":
-        (rc, out) = ongoing(module, name, user, passwd, token)
+        (rc, out, changed) = ongoing(module, name, user, passwd, token)
+
+    if state == "deleted":
+        (rc, out, changed) = delete(module, name, user, passwd, token, requester_id, service)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
 
-    module.exit_json(msg="success", result=out)
+
+    module.exit_json(msg="success", result=out, changed=changed)
 
 # import module snippets
 from ansible.module_utils.basic import *
