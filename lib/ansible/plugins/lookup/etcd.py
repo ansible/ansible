@@ -33,7 +33,7 @@ if os.getenv('ANSIBLE_ETCD_URL') is not None:
     ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_URL']
 
 class Etcd:
-    def __init__(self, url=ANSIBLE_ETCD_URL, validate_certs):
+    def __init__(self, url=ANSIBLE_ETCD_URL, validate_certs=True):
         self.url = url
         self.baseurl = '%s/v1/keys' % (self.url)
         self.validate_certs = validate_certs
