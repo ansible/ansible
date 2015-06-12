@@ -89,7 +89,7 @@ EXAMPLES = """
       s3_key_prefix='' region=us-east-1
 
   - name: remove cloudtrail
-    local_action: cloudtrail state=absent name=main region=us-east-1
+    local_action: cloudtrail state=disabled name=main region=us-east-1
 """
 
 boto_import_failed = False
