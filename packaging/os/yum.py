@@ -663,7 +663,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     if pkgs:
         # run an actual yum transaction
-        cmd = yum_basecmd + ["remove"] + pkg
+        cmd = yum_basecmd + ["remove"] + pkgs
 
         if module.check_mode:
             module.exit_json(changed=True)
