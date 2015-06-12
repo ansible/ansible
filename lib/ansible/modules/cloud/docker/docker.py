@@ -1071,15 +1071,14 @@ class DockerManager(object):
                 for container_port, config in self.port_bindings.iteritems():
                     if isinstance(container_port, int):
                         container_port = "{0}/tcp".format(container_port)
-                    bind = {}
                     if len(config) == 1:
-                        bind['HostIp'] = "0.0.0.0"
-                        bind['HostPort'] = ""
+                        expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': ""}]
+                    elif isinstance(config[0], tuple):
+                        expected_bound_ports[container_port] = []
+                        for hostip, hostport in config:
+                            expected_bound_ports[container_port].append({ 'HostIp': hostip, 'HostPort': str(hostport)})
                     else:
-                        bind['HostIp'] = config[0]
-                        bind['HostPort'] = str(config[1])
-
-                    expected_bound_ports[container_port] = [bind]
+                        expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': str(config[1])}]
 
             actual_bound_ports = container['HostConfig']['PortBindings'] or {}
 
