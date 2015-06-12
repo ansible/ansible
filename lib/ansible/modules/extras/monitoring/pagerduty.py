@@ -158,7 +158,12 @@ def ongoing(module, name, user, passwd, token):
     if info['status'] != 200:
         module.fail_json(msg="failed to lookup the ongoing window: %s" % info['msg'])
 
-    return False, response.read(), False
+    try:
+        json_out = json.loads(response.read())
+    except:
+        json_out = ""
+
+    return False, json_out, False
 
 
 def create(module, name, user, passwd, token, requester_id, service, hours, minutes, desc):
