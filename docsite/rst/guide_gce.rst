@@ -22,7 +22,7 @@ The GCE modules all require the apache-libcloud module, which you can install fr
 Credentials
 -----------
 
-To work with the GCE modules, you'll first need to get some credentials. You can create new one from the `console <https://console.developers.google.com/>`_ by going to the "APIs and Auth" section and choosing to create a new client ID for a service account. Once you've created a new client ID and downloaded the generated private key (in the `pkcs12 format <http://en.wikipedia.org/wiki/PKCS_12>`_), you'll need to convert the key by running the following command:
+To work with the GCE modules, you'll first need to get some credentials. You can create new one from the `console <https://console.developers.google.com/>`_ by going to the "APIs and Auth" section and choosing to create a new client ID for a service account. Once you've created a new client ID and downloaded (you must click **Generate new P12 Key**) the generated private key (in the `pkcs12 format <http://en.wikipedia.org/wiki/PKCS_12>`_), you'll need to convert the key by running the following command:
 
 .. code-block:: bash
 
@@ -78,6 +78,8 @@ Create a file ``secrets.py`` looking like following, and put it in some folder w
 
     GCE_PARAMS = ('i...@project.googleusercontent.com', '/path/to/project.pem')
     GCE_KEYWORD_PARAMS = {'project': 'project_id'}
+
+Ensure to enter the email adress from the created services account and not the one from your main account.
 
 Now the modules can be used as above, but the account information can be omitted.
 
