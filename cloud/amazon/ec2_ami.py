@@ -70,7 +70,7 @@ options:
     required: false
     default: null
   device_mapping:
-    version_added: "1.9"
+    version_added: "2.0"
     description:
       - An optional list of devices with custom configurations (same block-device-mapping parameters)
     required: false
