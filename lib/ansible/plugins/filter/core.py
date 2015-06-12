@@ -42,6 +42,12 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap, to_unicode
 
+try:
+    import passlib.hash
+    HAS_PASSLIB = True
+except:
+    HAS_PASSLIB = False
+
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
 
@@ -266,8 +272,15 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
             r = SystemRandom()
             salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(16)])
 
-        saltstring =  "$%s$%s" % (cryptmethod[hashtype],salt)
-        encrypted = crypt.crypt(password,saltstring)
+        if not HAS_PASSLIB:
+            if sys.platform.startswith('darwin'):
+                raise errors.AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
+            saltstring =  "$%s$%s" % (cryptmethod[hashtype],salt)
+            encrypted = crypt.crypt(password, saltstring)
+        else:
+            cls = getattr(passlib.hash, '%s_crypt' % hashtype)
+            encrypted = cls.encrypt(password, salt=salt)
+
         return encrypted
 
     return None
