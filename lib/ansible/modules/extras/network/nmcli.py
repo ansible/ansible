@@ -25,6 +25,7 @@ module: nmcli
 author: Chris Long
 short_description: Manage Networking
 requirements: [ nmcli, dbus ]
+version_added: "2.0"
 description:
     - Manage the network devices. Create, modify, and manage, ethernet, teams, bonds, vlans etc.
 options:
@@ -39,11 +40,11 @@ options:
         choices: [ "yes", "no" ]
         description:
             - Whether the connection should start on boot.
-            - Whether the connection profile can be automatically activated ( default: yes)
+            - Whether the connection profile can be automatically activated
     conn_name:
         required: True
         description:
-            - Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]
+            - 'Where conn_name will be the name used to call the connection. when not provided a default name is generated: <type>[-<ifname>][-<num>]'
     ifname:
         required: False
         default: conn_name
@@ -60,9 +61,9 @@ options:
     mode:
         required: False
         choices: [ "balance-rr", "active-backup", "balance-xor", "broadcast", "802.3ad", "balance-tlb", "balance-alb" ]
-        default: None
+        default: balence-rr
         description:
-            - This is the type of device or network connection that you wish to create for a bond, team or bridge. (NetworkManager default: balance-rr)
+            - This is the type of device or network connection that you wish to create for a bond, team or bridge.
     master:
         required: False
         default: None
@@ -72,35 +73,35 @@ options:
         required: False
         default: None
         description:
-            - The IPv4 address to this interface using this format ie: "192.168.1.24/24"
+            - 'The IPv4 address to this interface using this format ie: "192.168.1.24/24"'
     gw4:
         required: False
         description:
-            - The IPv4 gateway for this interface using this format ie: "192.168.100.1"
+            - 'The IPv4 gateway for this interface using this format ie: "192.168.100.1"'
     dns4:
         required: False
         default: None
         description:
-            - A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: ['"8.8.8.8 8.8.4.4"']
+            - 'A list of upto 3 dns servers, ipv4 format e.g. To add two IPv4 DNS server addresses: ["8.8.8.8 8.8.4.4"]'
     ip6:
         required: False
         default: None
         description:
-            - The IPv6 address to this interface using this format ie: "abbe::cafe"
+            - 'The IPv6 address to this interface using this format ie: "abbe::cafe"'
     gw6:
         required: False
         default: None
         description:
-            - The IPv6 gateway for this interface using this format ie: "2001:db8::1"
+            - 'The IPv6 gateway for this interface using this format ie: "2001:db8::1"'
     dns6:
         required: False
         description:
-            - A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: ['"2001:4860:4860::8888 2001:4860:4860::8844"']
+            - 'A list of upto 3 dns servers, ipv6 format e.g. To add two IPv6 DNS server addresses: ["2001:4860:4860::8888 2001:4860:4860::8844"]'
     mtu:
         required: False
-        default: None
+        default: 1500
         description:
-            - The connection MTU, e.g. 9000. This can't be applied when creating the interface and is done once the interface has been created. (NetworkManager default: 1500)
+            - The connection MTU, e.g. 9000. This can't be applied when creating the interface and is done once the interface has been created.
             - Can be used when modifying Team, VLAN, Ethernet (Future plans to implement wifi, pppoe, infiniband)
     primary:
         required: False
@@ -109,24 +110,24 @@ options:
             - This is only used with bond and is the primary interface name (for "active-backup" mode), this is the usually the 'ifname'
     miimon:
         required: False
-        default: None
+        default: 100
         description:
-            - This is only used with bond - miimon (NetworkManager default: 100)
+            - This is only used with bond - miimon
     downdelay:
         required: False
         default: None
         description:
-            - This is only used with bond - downdelay (NetworkManager default: 0)
+            - This is only used with bond - downdelay
     updelay:
         required: False
         default: None
         description:
-            - This is only used with bond - updelay (NetworkManager default: 0)
+            - This is only used with bond - updelay
     arp_interval:
         required: False
         default: None
         description:
-            - This is only used with bond - ARP interval (NetworkManager default: 0)
+            - This is only used with bond - ARP interval
     arp_ip_target:
         required: False
         default: None
@@ -139,49 +140,49 @@ options:
             - This is only used with bridge and controls whether Spanning Tree Protocol (STP) is enabled for this bridge
     priority:
         required: False
-        default: None
+        default: 128
         description:
-            - This is only used with 'bridge' - sets STP priority (NetworkManager default: 128)
+            - This is only used with 'bridge' - sets STP priority
     forwarddelay:
         required: False
-        default: None
+        default: 15
         description:
-            - This is only used with bridge - [forward-delay <2-30>] STP forwarding delay, in seconds (NetworkManager default: 15)
+            - This is only used with bridge - [forward-delay <2-30>] STP forwarding delay, in seconds
     hellotime:
         required: False
-        default: None
+        default: 2
         description:
-            - This is only used with bridge - [hello-time <1-10>] STP hello time, in seconds (NetworkManager default: 2)
+            - This is only used with bridge - [hello-time <1-10>] STP hello time, in seconds
     maxage:
         required: False
-        default: None
+        default: 20
         description:
-            - This is only used with bridge - [max-age <6-42>] STP maximum message age, in seconds (NetworkManager default: 20)
+            - This is only used with bridge - [max-age <6-42>] STP maximum message age, in seconds
     ageingtime:
         required: False
-        default: None
+        default: 300
         description:
-            - This is only used with bridge - [ageing-time <0-1000000>] the Ethernet MAC address aging time, in seconds (NetworkManager default: 300)
+            - This is only used with bridge - [ageing-time <0-1000000>] the Ethernet MAC address aging time, in seconds
     mac:
         required: False
         default: None
         description:
-            - This is only used with bridge - MAC address of the bridge (note: this requires a recent kernel feature, originally introduced in 3.15 upstream kernel)
+            - 'This is only used with bridge - MAC address of the bridge (note: this requires a recent kernel feature, originally introduced in 3.15 upstream kernel)'
     slavepriority:
         required: False
-        default: None
+        default: 32
         description:
-            - This is only used with 'bridge-slave' - [<0-63>] - STP priority of this slave (default: 32)
+            - This is only used with 'bridge-slave' - [<0-63>] - STP priority of this slave
     path_cost:
         required: False
-        default: None
+        default: 100
         description:
-            - This is only used with 'bridge-slave' - [<1-65535>] - STP port cost for destinations via this slave (NetworkManager default: 100)
+            - This is only used with 'bridge-slave' - [<1-65535>] - STP port cost for destinations via this slave
     hairpin:
         required: False
-        default: None
+        default: yes
         description:
-            - This is only used with 'bridge-slave' - 'hairpin mode' for the slave, which allows frames to be sent back out through the slave the frame was received on. (NetworkManager default: yes)
+            - This is only used with 'bridge-slave' - 'hairpin mode' for the slave, which allows frames to be sent back out through the slave the frame was received on.
     vlanid:
         required: False
         default: None
