@@ -541,9 +541,9 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             # short circuit all the bs - and search for it as a pkg in is_installed
             # if you find it then we're done
             if not set(['*','?']).intersection(set(spec)):
-                pkgs = is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
-                if pkgs:
-                    res['results'].append('%s providing %s is already installed' % (pkgs[0], spec))
+                installed_pkgs = is_installed(module, repoq, spec, conf_file, en_repos=en_repos, dis_repos=dis_repos, is_pkg=True)
+                if installed_pkgs:
+                    res['results'].append('%s providing %s is already installed' % (installed_pkgs[0], spec))
                     continue
             
             # look up what pkgs provide this
