@@ -163,7 +163,7 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
 
     if not HAS_BOTO:
-      module.fail_json(msg='Alex sucks boto is required.')
+      module.fail_json(msg='boto is required.')
 
     ec2_url, access_key, secret_key, region = get_ec2_creds(module)
     aws_connect_params = dict(aws_access_key_id=access_key,
