@@ -74,6 +74,7 @@ class ActionModule(ActionBase):
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif faf:
+            #FIXME: issue deprecation warning for first_available_file, use with_first_found or lookup('first_found',...) instead
             found = False
             for fn in faf:
                 fn_orig = fn
