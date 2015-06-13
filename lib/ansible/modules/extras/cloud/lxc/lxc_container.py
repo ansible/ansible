@@ -1065,6 +1065,9 @@ class LxcContainerManagement(object):
                 self.container.stop()
                 self.state_change = True
 
+            # Run container startup
+            self._container_startup()
+
             # Check if the container needs to have an archive created.
             self._check_archive()
 
