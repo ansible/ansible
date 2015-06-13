@@ -51,42 +51,38 @@ class ActionModule(ActionBase):
 
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
+        faf     = task_vars.get('first_available_file', None)
 
-        if (source is None and 'first_available_file' not in task_vars) or dest is None:
+        if (source is None and faf is not None) or dest is None:
             return dict(failed=True, msg="src and dest are required")
 
         if tmp is None:
             tmp = self._make_tmp_path()
 
-        ##################################################################################################
-        # FIXME: this all needs to be sorted out
-        ##################################################################################################
-        # if we have first_available_file in our vars
-        # look up the files and use the first one we find as src
-        #if 'first_available_file' in task_vars:
-        #    found = False
-        #    for fn in task_vars.get('first_available_file'):
-        #        fn_orig = fn
-        #        fnt = template.template(self.runner.basedir, fn, task_vars)
-        #        fnd = utils.path_dwim(self.runner.basedir, fnt)
-        #        if not os.path.exists(fnd) and '_original_file' in task_vars:
-        #            fnd = utils.path_dwim_relative(task_vars['_original_file'], 'templates', fnt, self.runner.basedir, check=False)
-        #        if os.path.exists(fnd):
-        #            source = fnd
-        #            found = True
-        #            break
-        #    if not found:
-        #        result = dict(failed=True, msg="could not find src in first_available_file list")
-        #        return ReturnData(conn=conn, comm_ok=False, result=result)
-        #else:
-        if 1:
+        if faf:
+            #FIXME: issue deprecation warning for first_available_file, use with_first_found or lookup('first_found',...) instead
+            found = False
+            for fn in faf:
+                fn_orig = fn
+                fnt = self._templar.template(fn)
+                fnd = self._loader.path_dwim(self._task._role_._role_path, 'templates', fnt)
+
+                if not os.path.exists(fnd):
+                    of = task_vars.get('_original_file', None)
+                    if of is not None:
+                        fnd = self._loader.path_dwim(self._task._role_._role_path, 'templates', of)
+
+                if os.path.exists(fnd):
+                    source = fnd
+                    found = True
+                    break
+            if not found:
+                return dict(failed=True, msg="could not find src in first_available_file list")
+        else:
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
             else:
                 source = self._loader.path_dwim(source)
-        ##################################################################################################
-        # END FIXME
-        ##################################################################################################
 
         # Expand any user home dir specification
         dest = self._remote_expand_user(dest, tmp)
