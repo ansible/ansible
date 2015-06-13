@@ -82,7 +82,7 @@ class ActionModule(ActionBase):
                 fnd = self._loader.path_dwim_relative(self._task._role._role_path, 'files', fnt)
                 of = task_vars.get('_original_file', None)
                 if not os.path.exists(fnd) and of is not None:
-                    fnd = self._loader.path_dwim_relative(of, 'files', fnt)
+                    fnd = self._loader.path_dwim_relative(of, 'files', of)
                 if os.path.exists(fnd):
                     source = fnd
                     found = True
