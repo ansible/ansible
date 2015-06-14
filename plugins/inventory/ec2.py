@@ -1099,6 +1099,7 @@ class Ec2Inventory(object):
             if key == 'ec2_member_clusters' and value:
                 host_info['ec2_member_clusters'] = ','.join([str(i) for i in value])
             elif key == 'ec2_cache_parameter_group':
+                host_info["ec2_cache_node_ids_to_reboot"] = ','.join([str(i) for i in value['CacheNodeIdsToReboot']])
                 host_info['ec2_cache_parameter_group_name'] = value['CacheParameterGroupName']
                 host_info['ec2_cache_parameter_apply_status'] = value['ParameterApplyStatus']
             elif key == 'ec2_security_groups':
