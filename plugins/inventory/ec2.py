@@ -420,8 +420,8 @@ class Ec2Inventory(object):
             self.fail_with_error(error)
 
     def get_elasticache_clusters_by_region(self, region):
-        ''' Makes an AWS API call to the list of ElastiCache clusters in a
-            particular region.'''
+        ''' Makes an AWS API call to the list of ElastiCache clusters (with
+        nodes' info) in a particular region.'''
 
         # ElastiCache boto module doesn't provide a get_all_intances method,
         # that's why we need to call describe directly (it would be called by
@@ -429,7 +429,9 @@ class Ec2Inventory(object):
         try:
             conn = elasticache.connect_to_region(region)
             if conn:
-                response = conn.describe_cache_clusters()
+                # show_cache_node_info = True
+                # because we also want nodes' information
+                response = conn.describe_cache_clusters(None, None, None, True)
 
         except boto.exception.BotoServerError as e:
             error = e.reason
