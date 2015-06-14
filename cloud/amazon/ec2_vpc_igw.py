@@ -1,75 +1,42 @@
 #!/usr/bin/python
-# This file is part of Ansible
 #
-# Ansible is free software: you can redistribute it and/or modify
+# This is a free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# Ansible is distributed in the hope that it will be useful,
+# This Ansible library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+# along with this library.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
 module: ec2_vpc_igw
-short_description: configure AWS virtual private clouds
+short_description: Manage an AWS VPC Internet gateway
 description:
-    - Create or terminates AWS internat gateway in a virtual private cloud. '''
-'''This module has a dependency on python-boto.
-version_added: "1.8"
+    - Manage an AWS VPC Internet gateway
+version_added: "2.0"
+author: Robert Estelle, @erydo
 options:
   vpc_id:
     description:
-      - "The VPC ID for which to create or remove the Internet Gateway."
+      - The VPC ID for the VPC in which to manage the Internet Gateway.
     required: true
+    default: null
   state:
     description:
       - Create or terminate the IGW
-    required: true
+    required: false
     default: present
-    aliases: []
-  region:
-    description:
-      - region in which the resource exists.
-    required: false
-    default: null
-    aliases: ['aws_region', 'ec2_region']
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY'''
-''' environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY'''
-''' environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key' ]
-  validate_certs:
-    description:
-      - When set to "no", SSL certificates will not be validated for boto'''
-''' versions >= 2.6.0.
-    required: false
-    default: "yes"
-    choices: ["yes", "no"]
-    aliases: []
-    version_added: "1.5"
-
-requirements: [ "boto" ]
-author: Robert Estelle
+extends_documentation_fragment: aws
 '''
 
 EXAMPLES = '''
-# Note: None of these examples set aws_access_key, aws_secret_key, or region.
-# It is assumed that their matching environment variables are set.
+# Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Ensure that the VPC has an Internet Gateway.
 # The Internet Gateway ID is can be accessed via {{igw.gateway_id}} for use
@@ -147,40 +114,39 @@ def ensure_igw_present(vpc_conn, vpc_id, check_mode):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update({
-        'vpc_id': {'required': True},
-        'state': {'choices': ['present', 'absent'], 'default': 'present'},
-    })
+    argument_spec.update(
+        dict(
+            vpc_id = dict(required=True),
+            state = dict(choices=['present', 'absent'], default='present')
+        )
+    )
+
     module = AnsibleModule(
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
     if not HAS_BOTO:
         module.fail_json(msg='boto is required for this module')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-    if not region:
-        module.fail_json(msg='Region must be specified')
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
-    try:
-        vpc_conn = boto.vpc.connect_to_region(
-            region,
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key
-        )
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg=str(e))
+    if region:
+        try:
+            connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+            module.fail_json(msg=str(e))
+    else:
+        module.fail_json(msg="region must be specified")
 
     vpc_id = module.params.get('vpc_id')
     state = module.params.get('state', 'present')
 
     try:
         if state == 'present':
-            result = ensure_igw_present(vpc_conn, vpc_id,
-                                        check_mode=module.check_mode)
+            result = ensure_igw_present(connection, vpc_id, check_mode=module.check_mode)
         elif state == 'absent':
-            result = ensure_igw_absent(vpc_conn, vpc_id,
-                                       check_mode=module.check_mode)
+            result = ensure_igw_absent(connection, vpc_id, check_mode=module.check_mode)
     except AnsibleIGWException as e:
         module.fail_json(msg=str(e))
 
