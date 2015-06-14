@@ -183,14 +183,14 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         for process_name in to_take_action_on:
-            rc, out, err = run_supervisorctl(action, process_name)
+            rc, out, err = run_supervisorctl(action, process_name, check_rc=True)
             if '%s: %s' % (process_name, expected_result) not in out:
                 module.fail_json(msg=out)
 
         module.exit_json(changed=True, name=name, state=state, affected=to_take_action_on)
 
     if state == 'restarted':
-        rc, out, err = run_supervisorctl('update')
+        rc, out, err = run_supervisorctl('update', check_rc=True)
         processes = get_matched_processes()
         take_action_on_processes(processes, lambda s: True, 'restart', 'started')
 
