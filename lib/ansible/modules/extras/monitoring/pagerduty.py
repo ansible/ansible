@@ -20,7 +20,7 @@ options:
             - Create a maintenance window or get a list of ongoing windows.
         required: true
         default: null
-        choices: [ "running", "started", "ongoing", "deleted" ]
+        choices: [ "running", "started", "ongoing", "absent" ]
         aliases: []
     name:
         description:
@@ -136,7 +136,7 @@ EXAMPLES='''
 - pagerduty: name=companyabc
              user=example@example.com
              passwd=password123
-             state=deleted
+             state=absent
              service={{ pd_window.result.maintenance_window.id }}
 '''
 
@@ -197,7 +197,7 @@ def create(module, name, user, passwd, token, requester_id, service, hours, minu
 
     return False, json_out, True
 
-def delete(module, name, user, passwd, token, requester_id, service):
+def absent(module, name, user, passwd, token, requester_id, service):
     url = "https://" + name + ".pagerduty.com/api/v1/maintenance_windows/" + service[0]
     headers = {
         'Authorization': auth_header(user, passwd, token),
@@ -228,7 +228,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-        state=dict(required=True, choices=['running', 'started', 'ongoing', 'deleted']),
+        state=dict(required=True, choices=['running', 'started', 'ongoing', 'absent']),
         name=dict(required=True),
         user=dict(required=False),
         passwd=dict(required=False),
@@ -267,8 +267,8 @@ def main():
     if state == "ongoing":
         (rc, out, changed) = ongoing(module, name, user, passwd, token)
 
-    if state == "deleted":
-        (rc, out, changed) = delete(module, name, user, passwd, token, requester_id, service)
+    if state == "absent":
+        (rc, out, changed) = absent(module, name, user, passwd, token, requester_id, service)
 
     if rc != 0:
         module.fail_json(msg="failed", result=out)
