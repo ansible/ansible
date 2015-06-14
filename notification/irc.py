@@ -63,6 +63,10 @@ options:
     description:
       - Channel name
     required: true
+  nick_to:
+    description:
+      - Nick to send the message to
+    required: false
   key:
     description:
       - Channel key
@@ -113,7 +117,7 @@ from time import sleep
 
 
 def send_msg(channel, msg, server='localhost', port='6667', key=None, topic=None,
-             nick="ansible", color='none', passwd=False, timeout=30, use_ssl=False):
+             nick="ansible", nick_to=None, color='none', passwd=False, timeout=30, use_ssl=False):
     '''send message to IRC'''
 
     colornumbers = {
@@ -173,7 +177,10 @@ def send_msg(channel, msg, server='localhost', port='6667', key=None, topic=None
         irc.send('TOPIC %s :%s\r\n' % (channel, topic))
         sleep(1)
 
-    irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
+    if nick_to:
+        irc.send('PRIVMSG %s :%s\r\n' % (nick_to, message))
+    else:
+        irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
     sleep(1)
     irc.send('PART %s\r\n' % channel)
     irc.send('QUIT\r\n')
@@ -191,6 +198,7 @@ def main():
             server=dict(default='localhost'),
             port=dict(default=6667),
             nick=dict(default='ansible'),
+            nick_to=dict(),
             msg=dict(required=True),
             color=dict(default="none", choices=["yellow", "red", "green",
                                                  "blue", "black", "none"]),
@@ -208,6 +216,7 @@ def main():
     port = module.params["port"]
     nick = module.params["nick"]
     topic = module.params["topic"]
+    nick_to = module.params["nick_to"]
     msg = module.params["msg"]
     color = module.params["color"]
     channel = module.params["channel"]
@@ -217,7 +226,7 @@ def main():
     use_ssl = module.params["use_ssl"]
 
     try:
-        send_msg(channel, msg, server, port, key, topic, nick, color, passwd, timeout, use_ssl)
+        send_msg(channel, msg, server, port, key, topic, nick, nick_to, color, passwd, timeout, use_ssl)
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
