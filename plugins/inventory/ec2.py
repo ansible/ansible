@@ -250,6 +250,12 @@ class Ec2Inventory(object):
         else:
             self.all_rds_instances = False
 
+        # Return all ElastiCache replication groups? (if ElastiCache is enabled)
+        if config.has_option('ec2', 'all_elasticache_replication_groups') and self.elasticache_enabled:
+            self.all_elasticache_replication_groups = config.getboolean('ec2', 'all_elasticache_replication_groups')
+        else:
+            self.all_elasticache_replication_groups = False
+
         # Return all ElastiCache clusters? (if ElastiCache is enabled)
         if config.has_option('ec2', 'all_elasticache_clusters') and self.elasticache_enabled:
             self.all_elasticache_clusters = config.getboolean('ec2', 'all_elasticache_clusters')
@@ -295,6 +301,7 @@ class Ec2Inventory(object):
             'group_by_elasticache_engine',
             'group_by_elasticache_cluster',
             'group_by_elasticache_parameter_group',
+            'group_by_elasticache_replication_group',
         ]
         for option in group_by_options:
             if config.has_option('ec2', option):
