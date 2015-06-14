@@ -238,11 +238,13 @@ class Ec2Inventory(object):
         if config.has_option('ec2', 'elasticache'):
             self.elasticache_enabled = config.getboolean('ec2', 'elasticache')
 
-        # Return all EC2 and RDS instances (if RDS is enabled)
+        # Return all EC2 instances?
         if config.has_option('ec2', 'all_instances'):
             self.all_instances = config.getboolean('ec2', 'all_instances')
         else:
             self.all_instances = False
+
+        # Return all RDS instances? (if RDS is enabled)
         if config.has_option('ec2', 'all_rds_instances') and self.rds_enabled:
             self.all_rds_instances = config.getboolean('ec2', 'all_rds_instances')
         else:
