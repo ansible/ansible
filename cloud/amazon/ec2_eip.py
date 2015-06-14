@@ -228,7 +228,7 @@ def ensure_present(ec2, domain, address, instance_id,
     return {'changed': changed, 'public_ip': address.public_ip}
 
 
-def ensure_absent(ec2, domain, address, check_mode):
+def ensure_absent(ec2, domain, address, instance_id, check_mode):
     if not address:
         return {'changed': False}
 
@@ -279,7 +279,7 @@ def main():
                                     reuse_existing_ip_allowed,
                                     module.check_mode)
         else:
-            result = ensure_absent(ec2, domain, address, module.check_mode)
+            result = ensure_absent(ec2, domain, address, instance_id, module.check_mode)
     except (boto.exception.EC2ResponseError, EIPException) as e:
         module.fail_json(msg=str(e))
 
