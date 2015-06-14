@@ -775,7 +775,9 @@ class Ec2Inventory(object):
         # Global Tag: all ElastiCache clusters
         self.push(self.inventory, 'elasticache_clusters', cluster['CacheClusterId'])
 
-        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(cluster)
+        host_info = self.get_host_info_dict_from_describe_dict(cluster)
+
+        self.inventory["_meta"]["hostvars"][dest] = host_info
 
     def get_route53_records(self):
         ''' Get and store the map of resource records to domain names that
@@ -869,6 +871,43 @@ class Ec2Inventory(object):
                 #print value
 
         return instance_vars
+
+    def get_host_info_dict_from_describe_dict(self, describe_dict):
+        ''' Parses the dictionary returned by the API call into a flat list
+            of parameters. This method should be used only when 'describe' is
+            used directly because Boto doesn't provide specific classes. '''
+
+        host_info = {}
+        for key in describe_dict:
+            value = describe_dict[key]
+            key = self.to_safe('ec2_' + key)
+
+            # Handle complex types
+            if key == 'ec2_ConfigurationEndpoint' and value:
+                host_info['ec2_configuration_endpoint_address'] = value['Address']
+                host_info['ec2_configuration_endpoint_port'] = value['Port']
+            if key == 'ec2_Endpoint' and value:
+                host_info['ec2_endpoint_address'] = value['Address']
+                host_info['ec2_endpoint_port'] = value['Port']
+            elif key == 'ec2_CacheParameterGroup':
+                host_info['ec2_cache_parameter_group_name'] = value['CacheParameterGroupName']
+                host_info['ec2_cache_parameter_apply_status'] = value['ParameterApplyStatus']
+            elif key == 'ec2_SecurityGroups':
+                sg_ids = []
+                for sg in value:
+                    sg_ids.append(sg['SecurityGroupId'])
+                host_info["ec2_security_group_ids"] = ','.join([str(i) for i in sg_ids])
+            elif type(value) in [int, bool]:
+                host_info[key] = value
+            elif isinstance(value, six.string_types):
+                host_info[key] = value.strip()
+            elif type(value) == type(None):
+                host_info[key] = ''
+
+            else:
+                pass
+
+        return host_info
 
     def get_host_info(self):
         ''' Get variables about a specific host '''
