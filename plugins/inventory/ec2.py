@@ -1088,6 +1088,11 @@ class Ec2Inventory(object):
             if key == 'ec2_endpoint' and value:
                 host_info['ec2_endpoint_address'] = value['Address']
                 host_info['ec2_endpoint_port'] = value['Port']
+            if key == 'ec2_node_groups' and value:
+                host_info['ec2_endpoint_address'] = value[0]['PrimaryEndpoint']['Address']
+                host_info['ec2_endpoint_port'] = value[0]['PrimaryEndpoint']['Port']
+            if key == 'ec2_member_clusters' and value:
+                host_info['ec2_member_clusters'] = ','.join([str(i) for i in value])
             elif key == 'ec2_cache_parameter_group':
                 host_info['ec2_cache_parameter_group_name'] = value['CacheParameterGroupName']
                 host_info['ec2_cache_parameter_apply_status'] = value['ParameterApplyStatus']
