@@ -154,12 +154,6 @@ EXAMPLES = '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
 
-repoquery='/usr/bin/repoquery'
-if not os.path.exists(repoquery):
-    repoquery = None
-
-yumbin='/usr/bin/yum'
-
 def log(msg):
     syslog.openlog('ansible-yum', 0, syslog.LOG_USER)
     syslog.syslog(syslog.LOG_NOTICE, msg)
@@ -187,10 +181,6 @@ def install_yum_utils(module):
         yum_path = module.get_bin_path('yum')
         if yum_path:
             rc, so, se = module.run_command('%s -y install yum-utils' % yum_path) 
-            if rc == 0:
-                this_path = module.get_bin_path('repoquery')
-                global repoquery
-                repoquery = this_path
 
 def po_to_nevra(po):
 
@@ -475,10 +465,10 @@ def repolist(module, repoq, qf="%{repoid}"):
         ret = set([ p for p in out.split('\n') if p.strip() ])
     return ret
 
-def list_stuff(module, conf_file, stuff):
+def list_stuff(module, repoquerybin, conf_file, stuff):
 
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
-    repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet']
+    repoq = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
     if conf_file and os.path.exists(conf_file):
         repoq += ['-c', conf_file]
 
@@ -789,13 +779,24 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
            disable_gpg_check, exclude):
 
+    yumbin = module.get_bin_path('yum')
     # need debug level 2 to get 'Nothing to do' for groupinstall.
     yum_basecmd = [yumbin, '-d', '2', '-y']
 
-    if not repoquery:
-        repoq = None
-    else:
-        repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet']
+    # If rhn-plugin is installed and no rhn-certificate is available on the
+    # system then users will see an error message using the yum API.  Use
+    # repoquery in those cases.
+
+    my = yum_base(conf_file)
+    # A sideeffect of accessing conf is that the configuration is
+    # loaded and plugins are discovered
+    my.conf
+
+    repoq = None
+    if 'rhnplugin' in my.plugins._plugins:
+        repoquery = module.get_bin_path('repoquery', required=False)
+        if repoquery:
+            repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet']
 
     if conf_file and os.path.exists(conf_file):
         yum_basecmd += ['-c', conf_file]
@@ -816,7 +817,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if exclude:
         e_cmd = ['--exclude=%s' % exclude]
         yum_basecmd.extend(e_cmd)
-           
+
     if state in ['installed', 'present', 'latest']:
 
         if module.params.get('update_cache'):
@@ -892,10 +893,11 @@ def main():
     if params['install_repoquery'] and not repoquery and not module.check_mode:
         install_yum_utils(module)
 
+    repoquerybin = module.get_bin_path('repoquery', required=False)
     if params['list']:
-        if not repoquery:
+        if not repoquerybin:
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
-        results = dict(results=list_stuff(module, params['conf_file'], params['list']))
+        results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list']))
         module.exit_json(**results)
 
     else:
