@@ -420,7 +420,7 @@ class Ec2Inventory(object):
                     self.add_rds_instance(instance, region)
         except boto.exception.BotoServerError as e:
             error = e.reason
-            
+
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
@@ -513,7 +513,7 @@ class Ec2Inventory(object):
             errors.append(" - No Boto config found at any expected location '%s'" % ', '.join(boto_paths))
 
         return '\n'.join(errors)
-        
+
     def fail_with_error(self, err_msg):
         '''log an error to std err for ansible-playbook to consume and exit'''
         sys.stderr.write(err_msg)
@@ -1025,7 +1025,6 @@ class Ec2Inventory(object):
 
         return list(name_list)
 
-
     def get_host_info_dict_from_instance(self, instance):
         instance_vars = {}
         for key in vars(instance):
@@ -1224,7 +1223,6 @@ class Ec2Inventory(object):
         used as Ansible groups '''
 
         return re.sub("[^A-Za-z0-9\_]", "_", word)
-
 
     def json_format_dict(self, data, pretty=False):
         ''' Converts a dict to a JSON object and dumps it as a formatted
