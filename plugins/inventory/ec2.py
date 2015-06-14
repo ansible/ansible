@@ -357,6 +357,8 @@ class Ec2Inventory(object):
             self.get_instances_by_region(region)
             if self.rds_enabled:
                 self.get_rds_instances_by_region(region)
+            if self.elasticache_enabled:
+                self.get_elasticache_clusters_by_region(region)
 
         self.write_to_cache(self.inventory, self.cache_path_cache)
         self.write_to_cache(self.index, self.cache_path_index)
@@ -416,6 +418,40 @@ class Ec2Inventory(object):
             if not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
             self.fail_with_error(error)
+
+    def get_elasticache_clusters_by_region(self, region):
+        ''' Makes an AWS API call to the list of ElastiCache clusters in a
+            particular region.'''
+
+        # ElastiCache boto module doesn't provide a get_all_intances method,
+        # that's why we need to call describe directly (it would be called by
+        # the shorthand method anyway...)
+        try:
+            conn = elasticache.connect_to_region(region)
+            if conn:
+                response = conn.describe_cache_clusters()
+
+        except boto.exception.BotoServerError as e:
+            error = e.reason
+
+            if e.error_code == 'AuthFailure':
+                error = self.get_auth_error_message()
+            if not e.reason == "Forbidden":
+                error = "Looks like AWS RDS is down:\n%s" % e.message
+            self.fail_with_error(error)
+
+        try:
+            # Boto also doesn't provide wrapper classes to CacheClusters or
+            # CacheNodes. Because of that wo can't make use of the get_list
+            # method in the AWSQueryConnection. Let's do the work manually
+            clusters = response['DescribeCacheClustersResponse']['DescribeCacheClustersResult']['CacheClusters']
+
+        except KeyError as e:
+            error = "ElastiCache query to AWS failed (unexpected format)."
+            self.fail_with_error(error)
+
+        for cluster in clusters:
+            self.add_elasticache_cluster(cluster, region)
 
     def get_auth_error_message(self):
         ''' create an informative error message if there is an issue authenticating'''
