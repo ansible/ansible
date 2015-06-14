@@ -1076,6 +1076,11 @@ class Ec2Inventory(object):
             of parameters. This method should be used only when 'describe' is
             used directly because Boto doesn't provide specific classes. '''
 
+        # I really don't agree with prefixing everything with 'ec2'
+        # because EC2, RDS and ElastiCache are different services.
+        # I'm just following the pattern used until now to not break any
+        # compatibility.
+
         host_info = {}
         for key in describe_dict:
             value = describe_dict[key]
