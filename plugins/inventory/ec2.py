@@ -1096,11 +1096,17 @@ class Ec2Inventory(object):
             if key == 'ec2_node_groups' and value:
                 host_info['ec2_endpoint_address'] = value[0]['PrimaryEndpoint']['Address']
                 host_info['ec2_endpoint_port'] = value[0]['PrimaryEndpoint']['Port']
+                replica_count = 0
                 for node in value[0]['NodeGroupMembers']:
                     if node['CurrentRole'] == 'primary':
                         host_info['ec2_primary_cluster_address'] = node['ReadEndpoint']['Address']
                         host_info['ec2_primary_cluster_port'] = node['ReadEndpoint']['Port']
                         host_info['ec2_primary_cluster_id'] = node['CacheClusterId']
+                    elif node['CurrentRole'] == 'replica':
+                        host_info['ec2_replica_cluster_address_'+ str(replica_count)] = node['ReadEndpoint']['Address']
+                        host_info['ec2_replica_cluster_port_'+ str(replica_count)] = node['ReadEndpoint']['Port']
+                        host_info['ec2_replica_cluster_id_'+ str(replica_count)] = node['CacheClusterId']
+                        replica_count += 1
             if key == 'ec2_member_clusters' and value:
                 host_info['ec2_member_clusters'] = ','.join([str(i) for i in value])
             elif key == 'ec2_cache_parameter_group':
