@@ -880,19 +880,19 @@ class Ec2Inventory(object):
         host_info = {}
         for key in describe_dict:
             value = describe_dict[key]
-            key = self.to_safe('ec2_' + key)
+            key = self.to_safe('ec2_' + self.uncammelize(key))
 
             # Handle complex types
-            if key == 'ec2_ConfigurationEndpoint' and value:
+            if key == 'ec2_configuration_endpoint' and value:
                 host_info['ec2_configuration_endpoint_address'] = value['Address']
                 host_info['ec2_configuration_endpoint_port'] = value['Port']
-            if key == 'ec2_Endpoint' and value:
+            if key == 'ec2_endpoint' and value:
                 host_info['ec2_endpoint_address'] = value['Address']
                 host_info['ec2_endpoint_port'] = value['Port']
-            elif key == 'ec2_CacheParameterGroup':
+            elif key == 'ec2_cache_parameter_group':
                 host_info['ec2_cache_parameter_group_name'] = value['CacheParameterGroupName']
                 host_info['ec2_cache_parameter_apply_status'] = value['ParameterApplyStatus']
-            elif key == 'ec2_SecurityGroups':
+            elif key == 'ec2_security_groups':
                 sg_ids = []
                 for sg in value:
                     sg_ids.append(sg['SecurityGroupId'])
@@ -972,6 +972,9 @@ class Ec2Inventory(object):
         cache.write(json_data)
         cache.close()
 
+    def uncammelize(self, key):
+        temp = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', key)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', temp).lower()
 
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be
