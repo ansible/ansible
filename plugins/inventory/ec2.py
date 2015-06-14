@@ -688,6 +688,94 @@ class Ec2Inventory(object):
 
         self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
 
+    def add_elasticache_cluster(self, cluster, region):
+        ''' Adds an ElastiCache cluster to the inventory and index, as long as
+        it's nodes are addressable '''
+
+        # Only want available clusters unless all_elasticache_clusters is True
+        if not self.all_elasticache_clusters and cluster['CacheClusterStatus'] != 'available':
+            return
+
+        # Select the best destination address
+        if 'ConfigurationEndpoint' in cluster and cluster['ConfigurationEndpoint']:
+            # Memcached cluster
+            dest = cluster['ConfigurationEndpoint']['Address']
+        else:
+            # Redis sigle node cluster
+            dest = cluster['CacheNodes'][0]['Endpoint']['Address']
+
+        if not dest:
+            # Skip clusters we cannot address (e.g. private VPC subnet)
+            return
+
+        # Add to index
+        self.index[dest] = [region, cluster['CacheClusterId']]
+
+        # Inventory: Group by instance ID (always a group of 1)
+        if self.group_by_instance_id:
+            self.inventory[cluster['CacheClusterId']] = [dest]
+            if self.nested_groups:
+                self.push_group(self.inventory, 'instances', cluster['CacheClusterId'])
+
+        # Inventory: Group by region
+        if self.group_by_region:
+            self.push(self.inventory, region, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'regions', region)
+
+        # Inventory: Group by availability zone
+        if self.group_by_availability_zone:
+            self.push(self.inventory, cluster['PreferredAvailabilityZone'], dest)
+            if self.nested_groups:
+                if self.group_by_region:
+                    self.push_group(self.inventory, region, cluster['PreferredAvailabilityZone'])
+                self.push_group(self.inventory, 'zones', cluster['PreferredAvailabilityZone'])
+
+        # Inventory: Group by node type
+        if self.group_by_instance_type:
+            type_name = self.to_safe('type_' + cluster['CacheNodeType'])
+            self.push(self.inventory, type_name, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'types', type_name)
+
+        # Inventory: Group by VPC
+        # if self.group_by_vpc_id and instance.subnet_group and instance.subnet_group.vpc_id:
+        #     vpc_id_name = self.to_safe('vpc_id_' + instance.subnet_group.vpc_id)
+        #     self.push(self.inventory, vpc_id_name, dest)
+        #     if self.nested_groups:
+        #         self.push_group(self.inventory, 'vpcs', vpc_id_name)
+
+        # Inventory: Group by security group
+        if self.group_by_security_group:
+            if 'SecurityGroups' in cluster:
+                for security_group in cluster['SecurityGroups']:
+                    key = self.to_safe("security_group_" + security_group['SecurityGroupId'])
+                    self.push(self.inventory, key, dest)
+                    if self.nested_groups:
+                        self.push_group(self.inventory, 'security_groups', key)
+
+        # Inventory: Group by engine
+        if self.group_by_elasticache_engine:
+            self.push(self.inventory, self.to_safe("elasticache_" + cluster['Engine']), dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'elasticache_engines', self.to_safe(cluster['Engine']))
+
+        # Inventory: Group by parameter group
+        if self.group_by_elasticache_parameter_group:
+            self.push(self.inventory, self.to_safe("elasticache_parameter_group_" + cluster['CacheParameterGroup']['CacheParameterGroupName']), dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'elasticache_parameter_groups', self.to_safe(cluster['CacheParameterGroup']['CacheParameterGroupName']))
+
+        # Inventory: Group by replication group
+        if self.group_by_elasticache_replication_group and 'ReplicationGroupId' in cluster and cluster['ReplicationGroupId']:
+            self.push(self.inventory, self.to_safe("elasticache_replication_group_" + cluster['ReplicationGroupId']), dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'elasticache_replication_groups', self.to_safe(cluster['ReplicationGroupId']))
+
+        # Global Tag: all ElastiCache clusters
+        self.push(self.inventory, 'elasticache_clusters', cluster['CacheClusterId'])
+
+        self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(cluster)
 
     def get_route53_records(self):
         ''' Get and store the map of resource records to domain names that
