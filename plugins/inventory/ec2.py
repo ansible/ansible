@@ -121,6 +121,7 @@ from time import time
 import boto
 from boto import ec2
 from boto import rds
+from boto import elasticache
 from boto import route53
 import six
 
@@ -232,6 +233,11 @@ class Ec2Inventory(object):
         if config.has_option('ec2', 'rds'):
             self.rds_enabled = config.getboolean('ec2', 'rds')
 
+        # Include ElastiCache instances?
+        self.elasticache_enabled = True
+        if config.has_option('ec2', 'elasticache'):
+            self.elasticache_enabled = config.getboolean('ec2', 'elasticache')
+
         # Return all EC2 and RDS instances (if RDS is enabled)
         if config.has_option('ec2', 'all_instances'):
             self.all_instances = config.getboolean('ec2', 'all_instances')
@@ -241,6 +247,18 @@ class Ec2Inventory(object):
             self.all_rds_instances = config.getboolean('ec2', 'all_rds_instances')
         else:
             self.all_rds_instances = False
+
+        # Return all ElastiCache clusters? (if ElastiCache is enabled)
+        if config.has_option('ec2', 'all_elasticache_clusters') and self.elasticache_enabled:
+            self.all_elasticache_clusters = config.getboolean('ec2', 'all_elasticache_clusters')
+        else:
+            self.all_elasticache_clusters = False
+
+        # Return all ElastiCache nodes? (if ElastiCache is enabled)
+        if config.has_option('ec2', 'all_elasticache_nodes') and self.elasticache_enabled:
+            self.all_elasticache_nodes = config.getboolean('ec2', 'all_elasticache_nodes')
+        else:
+            self.all_elasticache_nodes = False
 
         # Cache related
         cache_dir = os.path.expanduser(config.get('ec2', 'cache_path'))
@@ -272,6 +290,9 @@ class Ec2Inventory(object):
             'group_by_route53_names',
             'group_by_rds_engine',
             'group_by_rds_parameter_group',
+            'group_by_elasticache_engine',
+            'group_by_elasticache_cluster',
+            'group_by_elasticache_parameter_group',
         ]
         for option in group_by_options:
             if config.has_option('ec2', option):
