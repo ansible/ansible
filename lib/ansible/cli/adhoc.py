@@ -65,6 +65,13 @@ class AdHocCLI(CLI):
 
         return True
 
+    def _play_ds(self, pattern):
+        return dict(
+            name = "Ansible Ad-Hoc",
+            hosts = pattern,
+            gather_facts = 'no',
+            tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args))), ]
+        )
 
     def run(self):
         ''' use Runner lib to do SSH things '''
@@ -117,19 +124,13 @@ class AdHocCLI(CLI):
         #    results = runner.run()
 
         # create a pseudo-play to execute the specified module via a single task
-        play_ds = dict(
-            name = "Ansible Ad-Hoc",
-            hosts = pattern,
-            gather_facts = 'no',
-            tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args))), ]
-        )
-
+        play_ds = self._play_ds(pattern)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         # now create a task queue manager to execute the play
-        tqm = None
+        self._tqm = None
         try:
-            tqm = TaskQueueManager(
+            self._tqm = TaskQueueManager(
                     inventory=inventory,
                     variable_manager=variable_manager,
                     loader=loader,
@@ -138,10 +139,10 @@ class AdHocCLI(CLI):
                     passwords=passwords,
                     stdout_callback='minimal',
                 )
-            result = tqm.run(play)
+            result = self._tqm.run(play)
         finally:
-            if tqm:
-                tqm.cleanup()
+            if self._tqm:
+                self._tqm.cleanup()
 
         return result
 
