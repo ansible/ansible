@@ -18,6 +18,9 @@
 from ansible import utils
 import urllib2
 
+from ansible.module_utils.urls import open_url, ConnectionError, SSLValidationError
+from ansible.utils.unicode import to_unicode
+
 class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
@@ -30,19 +33,25 @@ class LookupModule(object):
         if isinstance(terms, basestring):
             terms = [ terms ]
 
+        validate_certs = kwargs.get('validate_certs', True)
+
         ret = []
         for term in terms:
             try:
-                r = urllib2.Request(term)
-                response = urllib2.urlopen(r)
-            except URLError, e:
-                utils.warnings("Failed lookup url for %s : %s" % (term, str(e)))
+                response = open_url(term, validate_certs=validate_certs)
+            except urllib2.URLError as e:
+                utils.warning("Failed lookup url for %s : %s" % (term, str(e)))
                 continue
-            except HTTPError, e:
-                utils.warnings("Recieved HTTP error for %s : %s" % (term, str(e)))
+            except urllib2.HTTPError as e:
+                utils.warning("Received HTTP error for %s : %s" % (term, str(e)))
+                continue
+            except SSLValidationError as e:
+                utils.warning("Error validating the server's certificate for %s: %s" % (term, str(e)))
+                continue
+            except ConnectionError as e:
+                utils.warning("Error connecting to %s: %s" % (term, str(e)))
                 continue
 
             for line in response.read().splitlines():
-                ret.append(line)
-
+                ret.append(to_unicode(line))
         return ret

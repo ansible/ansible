@@ -17,21 +17,24 @@
 
 from ansible import utils
 import os
-import urllib2
+
 try:
     import json
 except ImportError:
     import simplejson as json
+
+from ansible.module_utils.urls import open_url
 
 # this can be made configurable, not should not use ansible.cfg
 ANSIBLE_ETCD_URL = 'http://127.0.0.1:4001'
 if os.getenv('ANSIBLE_ETCD_URL') is not None:
     ANSIBLE_ETCD_URL = os.environ['ANSIBLE_ETCD_URL']
 
-class etcd():
-    def __init__(self, url=ANSIBLE_ETCD_URL):
+class Etcd(object):
+    def __init__(self, url=ANSIBLE_ETCD_URL, validate_certs=True):
         self.url = url
         self.baseurl = '%s/v1/keys' % (self.url)
+        self.validate_certs = validate_certs
 
     def get(self, key):
         url = "%s/%s" % (self.baseurl, key)
@@ -39,7 +42,7 @@ class etcd():
         data = None
         value = ""
         try:
-            r = urllib2.urlopen(url)
+            r = open_url(url, validate_certs=self.validate_certs)
             data = r.read()
         except:
             return value
@@ -61,7 +64,6 @@ class LookupModule(object):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
-        self.etcd = etcd()
 
     def run(self, terms, inject=None, **kwargs):
 
@@ -70,9 +72,13 @@ class LookupModule(object):
         if isinstance(terms, basestring):
             terms = [ terms ]
 
+        validate_certs = kwargs.get('validate_certs', True)
+
+        etcd = Etcd(validate_certs=validate_certs)
+
         ret = []
         for term in terms:
             key = term.split()[0]
-            value = self.etcd.get(key)
+            value = etcd.get(key)
             ret.append(value)
         return ret
