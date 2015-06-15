@@ -786,12 +786,8 @@ class Ec2Inventory(object):
             if self.nested_groups:
                 self.push_group(self.inventory, 'types', type_name)
 
-        # Inventory: Group by VPC
-        # if self.group_by_vpc_id and instance.subnet_group and instance.subnet_group.vpc_id:
-        #     vpc_id_name = self.to_safe('vpc_id_' + instance.subnet_group.vpc_id)
-        #     self.push(self.inventory, vpc_id_name, dest)
-        #     if self.nested_groups:
-        #         self.push_group(self.inventory, 'vpcs', vpc_id_name)
+        # Inventory: Group by VPC (information not available in the current
+        # AWS API version for ElastiCache)
 
         # Inventory: Group by security group
         if self.group_by_security_group and not is_redis:
@@ -878,12 +874,8 @@ class Ec2Inventory(object):
             if self.nested_groups:
                 self.push_group(self.inventory, 'types', type_name)
 
-        # Inventory: Group by VPC
-        # if self.group_by_vpc_id and instance.subnet_group and instance.subnet_group.vpc_id:
-        #     vpc_id_name = self.to_safe('vpc_id_' + instance.subnet_group.vpc_id)
-        #     self.push(self.inventory, vpc_id_name, dest)
-        #     if self.nested_groups:
-        #         self.push_group(self.inventory, 'vpcs', vpc_id_name)
+        # Inventory: Group by VPC (information not available in the current
+        # AWS API version for ElastiCache)
 
         # Inventory: Group by security group
         if self.group_by_security_group:
@@ -900,17 +892,9 @@ class Ec2Inventory(object):
             if self.nested_groups:
                 self.push_group(self.inventory, 'elasticache_engines', self.to_safe("elasticache_" + cluster['Engine']))
 
-        # Inventory: Group by parameter group
-        # if self.group_by_elasticache_parameter_group:
-        #     self.push(self.inventory, self.to_safe("elasticache_parameter_group_" + cluster['CacheParameterGroup']['CacheParameterGroupName']), dest)
-        #     if self.nested_groups:
-        #         self.push_group(self.inventory, 'elasticache_parameter_groups', self.to_safe("elasticache_parameter_group_" + cluster['CacheParameterGroup']['CacheParameterGroupName']))
+        # Inventory: Group by parameter group (done at cluster level)
 
-        # Inventory: Group by replication group
-        # if self.group_by_elasticache_replication_group and 'ReplicationGroupId' in cluster and cluster['ReplicationGroupId']:
-        #     self.push(self.inventory, self.to_safe("elasticache_replication_group_" + cluster['ReplicationGroupId']), dest)
-        #     if self.nested_groups:
-        #         self.push_group(self.inventory, 'elasticache_replication_groups', self.to_safe("elasticache_" + cluster['ReplicationGroupId']))
+        # Inventory: Group by replication group (done at cluster level)
 
         # Inventory: Group by ElastiCache Cluster
         if self.group_by_elasticache_cluster:
