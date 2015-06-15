@@ -385,7 +385,7 @@ class ConnectionInformation:
         '''
         Adds 'magic' variables relating to connections to the variable dictionary provided.
         '''
-
+        #FIXME: is this reversed? why use this and not set_task_and_host_override?
         variables['ansible_connection']           = self.connection
         variables['ansible_ssh_host']             = self.remote_addr
         variables['ansible_ssh_pass']             = self.password
