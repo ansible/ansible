@@ -27,6 +27,7 @@ DOCUMENTATION = '''
 module: os_server_facts
 short_description: Retrieve facts about a compute instance
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
     - Retrieve facts about a server instance from OpenStack.
 notes:

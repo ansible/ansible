@@ -114,7 +114,7 @@ options:
 requirements:
     - "python >= 2.6"
     - "azure >= 0.7.1"
-author: John Whitbeck
+author: "John Whitbeck (@jwhitbeck)"
 '''
 
 EXAMPLES = '''

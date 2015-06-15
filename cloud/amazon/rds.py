@@ -244,7 +244,10 @@ options:
 requirements:
     - "python >= 2.6"
     - "boto"
-author: Bruce Pennypacker, Will Thames
+author: 
+    - "Bruce Pennypacker (@bpennypacker)"
+    - "Will Thames (@willthames")
+
 '''
 
 # FIXME: the command stuff needs a 'state' like alias to make things consistent -- MPD

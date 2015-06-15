@@ -39,7 +39,9 @@ options:
     description:
      - cidr of the network being created
     default: null
-author: Christopher H. Laco, Jesse Keating
+author: 
+    - "Christopher H. Laco (@claco)"
+    - "Jesse Keating (@j2sol)"
 extends_documentation_fragment: rackspace.openstack
 '''
 

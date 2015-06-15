@@ -25,7 +25,7 @@ description:
   - Can search AMIs with different owners
   - Can search by matching tag(s), by AMI name and/or other criteria
   - Results can be sorted and sliced
-author: Tom Bamford
+author: "Tom Bamford (@tombamford)"
 notes:
   - This module is not backwards compatible with the previous version of the ec2_search_ami module which worked only for Ubuntu AMIs listed on cloud-images.ubuntu.com.
   - See the example below for a suggestion of how to search by distro/release.

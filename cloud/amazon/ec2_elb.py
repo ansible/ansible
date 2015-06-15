@@ -25,7 +25,7 @@ description:
     if state=absent is passed as an argument.
   - Will be marked changed when called only if there are ELBs found to operate on.
 version_added: "1.2"
-author: John Jarvis
+author: "John Jarvis (@jarv)"
 options:
   state:
     description:

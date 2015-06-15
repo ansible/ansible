@@ -23,7 +23,7 @@
 DOCUMENTATION = '''
 ---
 module: docker_image
-author: Pavel Antonov
+author: "Pavel Antonov (@softzilla)"
 version_added: "1.5"
 short_description: manage docker images
 description:

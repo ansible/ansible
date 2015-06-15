@@ -67,7 +67,7 @@ options:
     required: true
     default: null
     aliases: ['aws_region', 'ec2_region']
-author: Scott Anderson
+author: "Scott Anderson (@tastychutney)"
 extends_documentation_fragment: aws
 '''
 

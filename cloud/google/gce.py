@@ -142,7 +142,7 @@ requirements:
     - "apache-libcloud >= 0.13.3"
 notes:
   - Either I(name) or I(instance_names) is required.
-author: Eric Johnson <erjohnso@google.com>
+author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 '''
 
 EXAMPLES = '''
