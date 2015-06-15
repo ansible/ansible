@@ -57,7 +57,7 @@ class ActionModule(ActionBase):
         async_jid   = str(random.randint(0, 999999999999))
 
         async_cmd = " ".join([str(x) for x in [async_module_path, async_jid, async_limit, remote_module_path, argsfile]])
-        result = self._low_level_execute_command(cmd=async_cmd, task_vars=task_vars, tmp=None)
+        result = self._low_level_execute_command(cmd=async_cmd, tmp=None)
 
         # clean up after
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
