@@ -447,7 +447,7 @@ class Ec2Inventory(object):
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
-                error = "Looks like AWS RDS is down:\n%s" % e.message
+                error = "Looks like AWS ElastiCache is down:\n%s" % e.message
             self.fail_with_error(error)
 
         try:
@@ -481,7 +481,7 @@ class Ec2Inventory(object):
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
-                error = "Looks like AWS RDS is down:\n%s" % e.message
+                error = "Looks like AWS ElastiCache [Replication Groups] is down:\n%s" % e.message
             self.fail_with_error(error)
 
         try:
@@ -491,7 +491,7 @@ class Ec2Inventory(object):
             replication_groups = response['DescribeReplicationGroupsResponse']['DescribeReplicationGroupsResult']['ReplicationGroups']
 
         except KeyError as e:
-            error = "ElastiCache query to AWS failed (unexpected format)."
+            error = "ElastiCache [Replication Groups] query to AWS failed (unexpected format)."
             self.fail_with_error(error)
 
         for replication_group in replication_groups:
