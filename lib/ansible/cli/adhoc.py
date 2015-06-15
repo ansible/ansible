@@ -128,9 +128,9 @@ class AdHocCLI(CLI):
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         # now create a task queue manager to execute the play
-        tqm = None
+        self._tqm = None
         try:
-            tqm = TaskQueueManager(
+            self._tqm = TaskQueueManager(
                     inventory=inventory,
                     variable_manager=variable_manager,
                     loader=loader,
@@ -139,10 +139,10 @@ class AdHocCLI(CLI):
                     passwords=passwords,
                     stdout_callback='minimal',
                 )
-            result = tqm.run(play)
+            result = self._tqm.run(play)
         finally:
-            if tqm:
-                tqm.cleanup()
+            if self._tqm:
+                self._tqm.cleanup()
 
         return result
 
