@@ -21,7 +21,9 @@
 DOCUMENTATION = '''
 ---
 module: git
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 version_added: "0.0.1"
 short_description: Deploy software (or files) from git checkouts
 description:

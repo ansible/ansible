@@ -37,7 +37,9 @@ options:
 notes:
    - "See also: M(fetch)"
 requirements: []
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 '''
 
 EXAMPLES = '''

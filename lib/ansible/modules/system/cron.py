@@ -118,7 +118,7 @@ options:
     choices: [ "reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly" ]
 requirements:
   - cron
-author: Dane Summers
+author: "Dane Summers (@dsummersl)"
 updates: [ 'Mike Grozak', 'Patrick Callahan' ]
 """
 

@@ -57,7 +57,9 @@ notes:
       "{{ var | quote }}" instead of just "{{ var }}" to make sure they don't include evil things like semicolons.
 
 requirements: [ ]
-author: Michael DeHaan
+author: 
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''

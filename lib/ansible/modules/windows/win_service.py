@@ -55,7 +55,7 @@ options:
       - restarted
     default: null
     aliases: []
-author: Chris Hoffman
+author: "Chris Hoffman (@chrishoffman)"
 '''
 
 EXAMPLES = '''

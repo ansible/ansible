@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: group
-author: Stephen Fromm
+author: "Stephen Fromm (@sfromm)"
 version_added: "0.0.2"
 short_description: Add or remove groups
 requirements: [ groupadd, groupdel, groupmod ]

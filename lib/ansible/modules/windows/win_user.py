@@ -127,7 +127,9 @@ options:
       - query
     default: present
     aliases: []
-author: Paul Durivage / Chris Church
+author: 
+    - "Paul Durivage (@angstwad)"
+    - "Chris Church (@cchurch)"
 '''
 
 EXAMPLES = '''

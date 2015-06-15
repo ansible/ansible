@@ -43,7 +43,9 @@ options:
 notes:
     - See also U(http://docs.ansible.com/playbooks_async.html)
 requirements: []
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 '''
 
 import datetime

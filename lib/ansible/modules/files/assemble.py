@@ -79,7 +79,7 @@ options:
         U(http://docs.python.org/2/library/re.html).
     required: false
     default: null
-author: Stephen Fromm
+author: "Stephen Fromm (@sfromm)"
 extends_documentation_fragment: files
 '''
 

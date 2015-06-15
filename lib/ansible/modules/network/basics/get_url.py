@@ -114,7 +114,7 @@ options:
     required: false
 # informational: requirements for nodes
 requirements: [ urllib2, urlparse ]
-author: Jan-Piet Mens
+author: "Jan-Piet Mens (@jpmens)"
 '''
 
 EXAMPLES='''

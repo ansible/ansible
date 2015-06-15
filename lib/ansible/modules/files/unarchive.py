@@ -58,7 +58,7 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     version_added: "2.0"
-author: Dylan Martin
+author: "Dylan Martin (@pileofrogs)"
 todo:
     - detect changed/unchanged for .zip files
     - handle common unarchive args, like preserve owner/timestamp etc...

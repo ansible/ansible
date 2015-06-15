@@ -81,7 +81,9 @@ notes:
        M(command) module is much more secure as it's not affected by the user's
        environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
-author: Michael DeHaan
+author: 
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''

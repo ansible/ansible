@@ -34,7 +34,7 @@ options:
     required: false
     default: "'Failed as requested from task'"
 
-author: Dag Wieers
+author: "Dag Wieers (@dagwieers)"
 '''
 
 EXAMPLES = '''

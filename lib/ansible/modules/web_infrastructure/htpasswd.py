@@ -66,7 +66,7 @@ notes:
   - "On Debian, Ubuntu, or Fedora: install I(python-passlib)."
   - "On RHEL or CentOS: Enable EPEL, then install I(python-passlib)."
 requires: [ passlib>=1.6 ]
-author: Lorin Hochstein
+author: "Lorin Hochstein (@lorin)"
 """
 
 EXAMPLES = """

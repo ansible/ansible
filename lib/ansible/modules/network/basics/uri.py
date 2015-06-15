@@ -143,7 +143,7 @@ options:
 
 # informational: requirements for nodes
 requirements: [ urlparse, httplib2 ]
-author: Romeo Theriault
+author: "Romeo Theriault (@romeotheriault)"
 '''
 
 EXAMPLES = '''
