@@ -174,9 +174,7 @@ class Connection(ConnectionBase):
             # fail early if the become password is wrong
             if self._connection_info.become and sudoable:
                 if self._connection_info.become_pass:
-                    if self.check_incorrect_password(stdout, prompt):
-                        raise AnsibleError('Incorrect %s password', self._connection_info.become_method)
-
+                    self.check_incorrect_password(stdout, prompt)
                 elif self.check_password_prompt(stdout, prompt):
                     raise AnsibleError('Missing %s password', self._connection_info.become_method)
 
@@ -324,7 +322,7 @@ class Connection(ConnectionBase):
 
             while True:
                 if self.check_become_success(become_output, success_key) or \
-                   self.check_password_prompt(become_output, prompt ):
+                   self.check_password_prompt(become_output, prompt):
                     break
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._connection_info.timeout)
                 if p.stderr in rfd:
@@ -333,8 +331,7 @@ class Connection(ConnectionBase):
                         raise AnsibleError('ssh connection closed waiting for privilege escalation password prompt')
                     become_errput += chunk
 
-                    if self.check_incorrect_password(become_errput, prompt):
-                        raise AnsibleError('Incorrect %s password', self._connection_info.become_method)
+                    self.check_incorrect_password(become_errput, prompt)
 
                 if p.stdout in rfd:
                     chunk = p.stdout.read()
