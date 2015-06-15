@@ -80,6 +80,22 @@ MAGIC_VARIABLE_MAPPING = dict(
    password         = ('ansible_ssh_pass', 'ansible_password'),
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
    shell            = ('ansible_shell_type',),
+   become           = ('ansible_become',),
+   become_method    = ('ansible_become_method',),
+   become_user      = ('ansible_become_user',),
+   become_pass      = ('ansible_become_password','ansible_become_pass'),
+   become_exe       = ('ansible_become_exe',),
+   become_flags     = ('ansible_become_flags',),
+   sudo             = ('ansible_sudo',),
+   sudo_user        = ('ansible_sudo_user',),
+   sudo_pass        = ('ansible_sudo_password',),
+   sudo_exe         = ('ansible_sudo_exe',),
+   sudo_flags       = ('ansible_sudo_flags',),
+   su               = ('ansible_su',),
+   su_user          = ('ansible_su_user',),
+   su_pass          = ('ansible_su_password',),
+   su_exe           = ('ansible_su_exe',),
+   su_flags         = ('ansible_su_flags',),
 )
 
 SU_PROMPT_LOCALIZATIONS = [
