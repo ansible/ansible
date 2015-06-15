@@ -46,10 +46,10 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, tmp_path, in_data=None):
         ''' run a command on the local host '''
 
-        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
+        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data)
 
         debug("in local.exec_command()")
         # su requires to be run from a terminal, and therefore isn't supported here (yet?)
@@ -59,7 +59,7 @@ class Connection(ConnectionBase):
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        executable = executable.split()[0] if executable else None
+        executable = self._connection_info.executable.split()[0] if self._connection_info.executable else None
 
         self._display.vvv("{0} EXEC {1}".format(self._connection_info.remote_addr, cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook

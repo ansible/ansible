@@ -24,7 +24,6 @@ __metaclass__ = type
 import pipes
 import random
 import re
-import gettext
 
 from ansible import constants as C
 from ansible.template import Templar
@@ -298,7 +297,7 @@ class ConnectionInformation:
 
         return new_info
 
-    def make_become_cmd(self, cmd, executable ):
+    def make_become_cmd(self, cmd, executable='/bin/sh'):
         """ helper function to create privilege escalation commands """
 
         prompt      = None
@@ -355,19 +354,6 @@ class ConnectionInformation:
             return (('%s -c ' % executable) + pipes.quote(becomecmd), prompt, success_key)
 
         return (cmd, prompt, success_key)
-
-    def check_become_success(self, output, success_key):
-        return success_key in output
-
-    def check_password_prompt(self, output, prompt):
-        if isinstance(prompt, basestring):
-            return output.endswith(prompt)
-        else:
-            return prompt(output)
-
-    def check_incorrect_password(self, output, prompt):
-        incorrect_password = gettext.dgettext(self.become_method, "Sorry, try again.")
-        return output.endswith(incorrect_password)
 
     def _get_fields(self):
         return [i for i in self.__dict__.keys() if i[:1] != '_']

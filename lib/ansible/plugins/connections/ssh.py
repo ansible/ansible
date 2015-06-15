@@ -174,10 +174,10 @@ class Connection(ConnectionBase):
             # fail early if the become password is wrong
             if self._connection_info.become and sudoable:
                 if self._connection_info.become_pass:
-                    if self._connection_info.check_incorrect_password(stdout, prompt):
+                    if self.check_incorrect_password(stdout, prompt):
                         raise AnsibleError('Incorrect %s password', self._connection_info.become_method)
 
-                elif self._connection_info.check_password_prompt(stdout, prompt):
+                elif self.check_password_prompt(stdout, prompt):
                     raise AnsibleError('Missing %s password', self._connection_info.become_method)
 
             if p.stdout in rfd:
@@ -260,10 +260,10 @@ class Connection(ConnectionBase):
             self._display.vvv("EXEC previous known host file not found for {0}".format(host))
         return True
 
-    def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None, sudoable=True):
+    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
-        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
 
         host = self._connection_info.remote_addr
 
@@ -287,7 +287,7 @@ class Connection(ConnectionBase):
         prompt = None
         success_key = ''
         if sudoable:
-            cmd, prompt, success_key = self._connection_info.make_become_cmd(cmd, executable)
+            cmd, prompt, success_key = self._connection_info.make_become_cmd(cmd)
 
         ssh_cmd.append(cmd)
         self._display.vvv("EXEC {0}".format(' '.join(ssh_cmd)), host=host)
@@ -323,8 +323,8 @@ class Connection(ConnectionBase):
             become_errput = ''
 
             while True:
-                if self._connection_info.check_become_success(become_output, success_key) or \
-                   self._connection_info.check_password_prompt(become_output, prompt ):
+                if self.check_become_success(become_output, success_key) or \
+                   self.check_password_prompt(become_output, prompt ):
                     break
                 rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._connection_info.timeout)
                 if p.stderr in rfd:
@@ -333,7 +333,7 @@ class Connection(ConnectionBase):
                         raise AnsibleError('ssh connection closed waiting for privilege escalation password prompt')
                     become_errput += chunk
 
-                    if self._connection_info.check_incorrect_password(become_errput, prompt):
+                    if self.check_incorrect_password(become_errput, prompt):
                         raise AnsibleError('Incorrect %s password', self._connection_info.become_method)
 
                 if p.stdout in rfd:
@@ -347,7 +347,7 @@ class Connection(ConnectionBase):
                     stdout = p.communicate()
                     raise AnsibleError('ssh connection error waiting for sudo or su password prompt')
 
-            if not self._connection_info.check_become_success(become_output, success_key):
+            if not self.check_become_success(become_output, success_key):
                 if sudoable:
                     stdin.write(self._connection_info.become_pass + '\n')
             else:
