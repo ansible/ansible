@@ -329,7 +329,7 @@ class ConnectionInformation:
                     SU_PROMPT_LOCALIZATIONS_RE = re.compile("|".join(['(\w+\'s )?' + x + ' ?: ?' for x in SU_PROMPT_LOCALIZATIONS]), flags=re.IGNORECASE)
                     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
 
-                prompt = su_prompt()
+                prompt = detect_su_prompt
                 exe = self.become_exe or self.su_exe or 'su'
                 flags = self.become_flags or self.su_flags or ''
                 becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, executable, success_cmd)
