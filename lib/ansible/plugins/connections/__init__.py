@@ -20,6 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import gettext
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from functools import wraps
@@ -97,7 +98,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     @ensure_connect
     @abstractmethod
-    def exec_command(self, cmd, tmp_path, executable=None, in_data=None, sudoable=True):
+    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
         """Run a command on the remote host"""
         pass
 
@@ -117,3 +118,17 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     def close(self):
         """Terminate the connection"""
         pass
+
+    def check_become_success(self, output, success_key):
+        return success_key in output
+
+    def check_password_prompt(self, output, prompt):
+        if isinstance(prompt, basestring):
+            return output.endswith(prompt)
+        else:
+            return prompt(output)
+
+    def check_incorrect_password(self, output, prompt):
+        incorrect_password = gettext.dgettext(self._connection_info.become_method, "Sorry, try again.")
+        return output.endswith(incorrect_password)
+
