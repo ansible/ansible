@@ -31,7 +31,7 @@ import subprocess
 
 from ansible import __version__
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.utils.unicode import to_bytes
 
 class SortedOptParser(optparse.OptionParser):
