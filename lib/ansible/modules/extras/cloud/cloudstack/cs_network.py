@@ -116,7 +116,7 @@ options:
       - Cleanup old network elements.
       - Only considered on C(state=restarted).
     required: false
-    default: null
+    default: false
   acl_type:
     description:
       - Access control type.
@@ -584,7 +584,7 @@ def main():
             vlan = dict(default=None),
             vpc = dict(default=None),
             isolated_pvlan = dict(default=None),
-            clean_up = dict(default=None),
+            clean_up = dict(type='bool', choices=BOOLEANS, default=False),
             network_domain = dict(default=None),
             state = dict(choices=['present', 'absent', 'restarted' ], default='present'),
             acl_type = dict(choices=['account', 'domain'], default='account'),
