@@ -126,6 +126,8 @@ class TestConnectionInformation(unittest.TestCase):
         su_flags    = C.DEFAULT_SU_FLAGS
         pbrun_exe   = 'pbrun'
         pbrun_flags = ''
+        pfexec_exe   = 'pfexec'
+        pfexec_flags = ''
 
         (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable=default_exe)
         self.assertEqual(cmd, default_cmd)
@@ -147,7 +149,7 @@ class TestConnectionInformation(unittest.TestCase):
 
         conn_info.become_method = 'pfexec'
         (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -c '%s %s "'"'"'echo %s; %s'"'"'"'""" % (default_exe, pbrun_exe, pbrun_flags, key, default_cmd))
+        self.assertEqual(cmd, """%s -c '%s %s "'"'"'echo %s; %s'"'"'"'""" % (default_exe, pfexec_exe, pfexec_flags, key, default_cmd))
 
         conn_info.become_method = 'bad'
         self.assertRaises(AnsibleError, conn_info.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
