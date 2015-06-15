@@ -33,6 +33,7 @@ module: os_server
 short_description: Create/Delete Compute Instances from OpenStack
 extends_documentation_fragment: openstack
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
    - Create or Remove compute instances from OpenStack.
 options:

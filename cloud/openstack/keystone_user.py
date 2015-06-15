@@ -75,7 +75,7 @@ options:
 requirements:
     - "python >= 2.6"
     -  python-keystoneclient
-author: Lorin Hochstein
+author: "Lorin Hochstein (@lorin)"
 '''
 
 EXAMPLES = '''

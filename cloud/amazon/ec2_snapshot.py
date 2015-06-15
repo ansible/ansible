@@ -75,7 +75,7 @@ options:
     required: false
     version_added: "1.9"
 
-author: Will Thames
+author: "Will Thames (@willthames)"
 extends_documentation_fragment: aws
 '''
 

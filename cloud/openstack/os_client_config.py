@@ -26,7 +26,7 @@ description:
   - Get I(openstack) client config data from clouds.yaml or environment
 version_added: "2.0"
 requirements: [ os-client-config ]
-author: Monty Taylor
+author: "Monty Taylor (@emonty)"
 '''
 
 EXAMPLES = '''

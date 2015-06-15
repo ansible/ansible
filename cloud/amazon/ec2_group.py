@@ -5,6 +5,7 @@
 DOCUMENTATION = '''
 ---
 module: ec2_group
+author: "Andrew de Quincey (@adq)"
 version_added: "1.3"
 short_description: maintain an ec2 VPC security group.
 description:

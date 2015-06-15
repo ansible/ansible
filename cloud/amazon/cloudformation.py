@@ -94,7 +94,7 @@ options:
     required: false
     version_added: "2.0"
 
-author: James S. Martin
+author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment: aws
 '''
 

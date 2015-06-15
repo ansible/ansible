@@ -182,7 +182,9 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-author: Jesse Keating, Matt Martz
+author: 
+    - "Jesse Keating (@j2sol)"
+    - "Matt Martz (@sivel)"
 notes:
   - I(exact_count) can be "destructive" if the number of running servers in
     the I(group) is larger than that specified in I(count). In such a case, the

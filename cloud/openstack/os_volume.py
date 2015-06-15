@@ -29,6 +29,7 @@ module: os_volume
 short_description: Create/Delete Cinder Volumes
 extends_documentation_fragment: openstack
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
    - Create or Remove cinder block storage volumes
 options:

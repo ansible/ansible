@@ -28,6 +28,7 @@ module: os_network
 short_description: Creates/Removes networks from OpenStack
 extends_documentation_fragment: openstack
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
    - Add or Remove network from OpenStack.
 options:
