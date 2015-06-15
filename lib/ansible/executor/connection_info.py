@@ -297,7 +297,7 @@ class ConnectionInformation:
 
         return new_info
 
-    def make_become_cmd(self, cmd, executable='/bin/sh'):
+    def make_become_cmd(self, cmd, executable=C.DEFAULT_EXECUTABLE):
         """ helper function to create privilege escalation commands """
 
         prompt      = None
