@@ -31,6 +31,9 @@ DOCUMENTATION = '''
 ---
 module: quantum_floating_ip
 version_added: "1.2"
+author:
+    - "Benno Joy (@bennojoy)"
+    - "Brad P. Crochet (@bcrochet)"
 short_description: Add/Remove floating IP from an instance
 description:
    - Add or Remove a floating IP to an instance

@@ -52,7 +52,7 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-author: Simon JAILLET
+author: "Simon JAILLET (@jails)"
 extends_documentation_fragment: rackspace
 '''
 

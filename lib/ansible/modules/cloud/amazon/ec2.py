@@ -222,7 +222,10 @@ options:
     default: null
     aliases: []
 
-author: Seth Vidal, Tim Gerla, Lester Wade
+author: 
+    - "Tim Gerla (@tgerla)"
+    - "Lester Wade (@lwade)"
+    - "Seth Vidal"
 extends_documentation_fragment: aws
 '''
 

@@ -92,7 +92,7 @@ requirements:
     - "python >= 2.6"
     - "linode-python"
     - "pycurl"
-author: Vincent Viallet
+author: "Vincent Viallet (@zbal)"
 notes:
   - LINODE_API_KEY env variable can be used instead
 '''

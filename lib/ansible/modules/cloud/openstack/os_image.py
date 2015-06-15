@@ -30,6 +30,7 @@ module: os_image
 short_description: Add/Delete images from OpenStack Cloud
 extends_documentation_fragment: openstack
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
    - Add or Remove images from the OpenStack Image Repository
 options:

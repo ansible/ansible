@@ -51,7 +51,7 @@ options:
       - Indicate desired state of the resource
     choices: ['present', 'absent']
     default: present
-author: Simon JAILLET
+author: "Simon JAILLET (@jails)"
 extends_documentation_fragment: rackspace
 '''
 

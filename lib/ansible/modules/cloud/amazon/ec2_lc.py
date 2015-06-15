@@ -26,7 +26,7 @@ notes:
     after it is changed will not modify the launch configuration on AWS. You must create a new config and assign
     it to the ASG instead."
 version_added: "1.6"
-author: Gareth Rushgrove
+author: "Gareth Rushgrove (@garethr)"
 options:
   state:
     description:

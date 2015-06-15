@@ -35,7 +35,7 @@ options:
     description:
       - Server name to retrieve facts for
     default: null
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace.openstack
 '''
 

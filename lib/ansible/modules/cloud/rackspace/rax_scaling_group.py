@@ -105,7 +105,7 @@ options:
       - Data to be uploaded to the servers config drive. This option implies
         I(config_drive). Can be a file path or a string
     version_added: 1.8
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace
 '''
 

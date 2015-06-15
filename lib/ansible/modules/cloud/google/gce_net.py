@@ -105,7 +105,7 @@ options:
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3"
-author: Eric Johnson <erjohnso@google.com>
+author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 '''
 
 EXAMPLES = '''

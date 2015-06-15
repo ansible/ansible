@@ -22,6 +22,7 @@ short_description: Create/delete an SSH key in DigitalOcean
 description:
      - Create/delete an SSH key.
 version_added: "1.6"
+author: "Michael Gregson (@mgregson)"
 options:
   state:
     description:

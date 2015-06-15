@@ -30,7 +30,8 @@ DOCUMENTATION = '''
 module: os_server_volume
 short_description: Attach/Detach Volumes from OpenStack VM's
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
    - Attach or Detach volumes from OpenStack VM's
 options:

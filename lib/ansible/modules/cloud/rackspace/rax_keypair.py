@@ -39,7 +39,7 @@ options:
       - present
       - absent
     default: present
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 notes:
   - Keypairs cannot be manipulated, only created and deleted. To "update" a
     keypair you must first delete and then recreate.

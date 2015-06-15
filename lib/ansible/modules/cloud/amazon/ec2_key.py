@@ -46,7 +46,7 @@ options:
     version_added: "1.6"
 
 extends_documentation_fragment: aws
-author: Vincent Viallet
+author: "Vincent Viallet (@zbal)"
 '''
 
 EXAMPLES = '''

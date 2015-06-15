@@ -29,6 +29,7 @@ DOCUMENTATION = '''
 ---
 module: quantum_router
 version_added: "1.2"
+author: "Benno Joy (@bennojoy)"
 short_description: Create or Remove router from openstack
 description:
    - Create or Delete routers from OpenStack

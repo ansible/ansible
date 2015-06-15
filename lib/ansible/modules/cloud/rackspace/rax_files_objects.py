@@ -92,7 +92,7 @@ options:
       - file
       - meta
     default: file
-author: Paul Durivage
+author: "Paul Durivage (@angstwad)"
 extends_documentation_fragment: rackspace
 '''
 

@@ -48,7 +48,7 @@ notes:
   - "It is recommended that plays utilizing this module be run with
     C(serial: 1) to avoid exceeding the API request limit imposed by
     the Rackspace CloudDNS API"
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace
 '''
 

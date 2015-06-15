@@ -100,7 +100,7 @@ options:
     required: true
     default: null
     aliases: ['aws_region', 'ec2_region']
-author: Carson Gee
+author: "Carson Gee (@carsongee)"
 extends_documentation_fragment: aws
 '''
 

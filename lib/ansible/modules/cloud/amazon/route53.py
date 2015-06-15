@@ -93,7 +93,7 @@ options:
     required: false
     default: false
     version_added: "1.9"
-author: Bruce Pennypacker
+author: "Bruce Pennypacker (@bpennypacker)"
 extends_documentation_fragment: aws
 '''
 
