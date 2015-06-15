@@ -162,10 +162,4 @@
 
 - name: set with_dict
   shell: echo "{{ item.key + '=' + item.value  }}"
-  register: keyval
   with_dict: "{{ mydict }}"
-
-- name: compare dict return
-  assert:
-    that:
-        - "keyval.stdout == 'mykey=myval'"
