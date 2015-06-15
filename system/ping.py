@@ -29,7 +29,9 @@ description:
      contact. It does not make sense in playbooks, but it is useful from
      C(/usr/bin/ansible)
 options: {}
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 '''
 
 EXAMPLES = '''

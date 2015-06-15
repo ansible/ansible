@@ -45,7 +45,9 @@ options:
 notes:
     - See the advanced playbooks chapter for more about using fireball mode.
 requirements: [ "zmq", "keyczar" ]
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 '''
 
 EXAMPLES = '''

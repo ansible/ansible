@@ -25,7 +25,7 @@ options:
       - Optional text to use for the prompt message.
     required: false
     default: null
-author: Tim Bielawa
+author: "Tim Bielawa (@tbielawa)"
 '''
 
 EXAMPLES = '''

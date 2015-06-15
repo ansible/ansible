@@ -92,7 +92,7 @@ notes:
    - To be able to use the migrate command, you must have south installed and added as an app in your settings
    - To be able to use the collectstatic command, you must have enabled staticfiles in your settings
 requirements: [ "virtualenv", "django" ]
-author: Scott Anderson
+author: "Scott Anderson (@tastychutney)"
 '''
 
 EXAMPLES = """

@@ -41,7 +41,7 @@ options:
     required: false
     default: yes
     aliases: []
-author: Paul Durivage
+author: "Paul Durivage (@angstwad)"
 '''
 
 EXAMPLES = '''

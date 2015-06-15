@@ -41,7 +41,9 @@ description:
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 options:
   path:
     description:

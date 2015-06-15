@@ -94,7 +94,7 @@ options:
      required: false
      version_added: "1.6"
 requirements: [ python-apt, aptitude ]
-author: Matthew Williams
+author: "Matthew Williams (@mgwilliams)"
 notes:
    - Three of the upgrade modes (C(full), C(safe) and its alias C(yes)) require C(aptitude), otherwise
      C(apt-get) suffices.
