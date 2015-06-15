@@ -40,6 +40,8 @@ from ansible.plugins.connections import ConnectionBase
 class Connection(ConnectionBase):
     ''' ssh based connections '''
 
+    become_methods = frozenset(C.BECOME_METHODS).difference(['runas'])
+
     def __init__(self, *args, **kwargs):
         # SSH connection specific init stuff
         self._common_args = []
@@ -261,7 +263,7 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
-        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data, sudoable=False)
+        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data, sudoable=sudoable)
 
         host = self._connection_info.remote_addr
 
@@ -303,13 +305,11 @@ class Connection(ConnectionBase):
         # create process
         (p, stdin) = self._run(ssh_cmd, in_data)
 
-        if prompt:
-            self._send_password()
+        self._send_password()
 
         no_prompt_out = ''
         no_prompt_err = ''
-        q(self._connection_info.password)
-        if self._connection_info.become and sudoable and self._connection_info.password:
+        if self._connection_info.become and sudoable and self._connection_info.become_pass:
             # several cases are handled for sudo privileges with password
             # * NOPASSWD (tty & no-tty): detect success_key on stdout
             # * without NOPASSWD:
@@ -349,7 +349,7 @@ class Connection(ConnectionBase):
 
             if not self._connection_info.check_become_success(become_output, success_key):
                 if sudoable:
-                    stdin.write(self._connection_info.password + '\n')
+                    stdin.write(self._connection_info.become_pass + '\n')
             else:
                 no_prompt_out += become_output
                 no_prompt_err += become_errput
