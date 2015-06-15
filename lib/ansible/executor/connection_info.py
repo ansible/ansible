@@ -370,11 +370,12 @@ class ConnectionInformation:
     def update_vars(self, variables):
         '''
         Adds 'magic' variables relating to connections to the variable dictionary provided.
+        In case users need to access from the play, this is a legacy from runner.
         '''
-        #FIXME: is this reversed? why use this and not set_task_and_host_override?
-        variables['ansible_connection']           = self.connection
-        variables['ansible_ssh_host']             = self.remote_addr
-        variables['ansible_ssh_pass']             = self.password
-        variables['ansible_ssh_port']             = self.port
-        variables['ansible_ssh_user']             = self.remote_user
-        variables['ansible_ssh_private_key_file'] = self.private_key_file
+
+        #FIXME: remove password? possibly add become/sudo settings
+        for special_var in  ['ansible_connection', 'ansible_ssh_host', 'ansible_ssh_pass', 'ansible_ssh_port', 'ansible_ssh_user', 'ansible_ssh_private_key_file']:
+            if special_var not in variables:
+                for prop, varnames in MAGIC_VARIABLE_MAPPING.items():
+                    if special_var in varnames:
+                        variables[special_var] = getattr(self, prop)
