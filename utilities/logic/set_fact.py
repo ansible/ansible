@@ -20,7 +20,7 @@
 
 DOCUMENTATION = '''
 ---
-author: Dag Wieers
+author: "Dag Wieers (@dagwieers)"
 module: set_fact
 short_description: Set host facts from a task
 description:

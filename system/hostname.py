@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: hostname
-author: Hiroaki Nakamura
+author: "Hiroaki Nakamura (@hnakamur)"
 version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]

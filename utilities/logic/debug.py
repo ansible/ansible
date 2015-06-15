@@ -38,7 +38,9 @@ options:
   var:
     description:
       - A variable name to debug.  Mutually exclusive with the 'msg' option.
-author: Dag Wieers, Michael DeHaan
+author: 
+    - "Dag Wieers (@dagwieers)"
+    - "Michael DeHaan"
 '''
 
 EXAMPLES = '''

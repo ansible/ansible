@@ -47,7 +47,7 @@ options:
     default: yes
     aliases: []
     version_added: "1.8"
-author: Bruce Pennypacker
+author: "Bruce Pennypacker (@bpennypacker)"
 '''
 
 EXAMPLES = '''

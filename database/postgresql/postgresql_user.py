@@ -137,7 +137,7 @@ notes:
      to all users. You may not specify password or role_attr_flags when the
      PUBLIC user is specified.
 requirements: [ psycopg2 ]
-author: Lorin Hochstein
+author: "Lorin Hochstein (@lorin)"
 '''
 
 EXAMPLES = '''

@@ -85,7 +85,7 @@ notes:
     - Also note that I(virtualenv) must be installed on the remote host if the
       C(virtualenv) parameter is specified.
 requirements: [ "virtualenv" ]
-author: Matt Wright
+author: "Matt Wright (@mattupstate)"
 '''
 
 EXAMPLES = '''

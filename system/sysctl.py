@@ -71,7 +71,7 @@ options:
         default: False
 notes: []
 requirements: []
-author: David "DaviXX" CHANIAL <david.chanial@gmail.com>
+author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
 '''
 
 EXAMPLES = '''

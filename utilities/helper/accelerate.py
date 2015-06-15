@@ -66,7 +66,7 @@ notes:
 requirements:
     - "python >= 2.6"
     - "python-keyczar"
-author: James Cammarata
+author: "James Cammarata (@jimi-c)"
 '''
 
 EXAMPLES = '''

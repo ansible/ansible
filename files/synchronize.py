@@ -163,7 +163,7 @@ notes:
      C(.rsync-filter) files to the source directory.
 
 
-author: Timothy Appnel
+author: "Timothy Appnel (@tima)"
 '''
 
 EXAMPLES = '''

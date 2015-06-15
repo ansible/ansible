@@ -101,7 +101,10 @@ options:
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
 requirements: []
-author: Jeroen Hoekx, John Jarvis, Andrii Radyk
+author: 
+    - "Jeroen Hoekx (@jhoekx)"
+    - "John Jarvis (@jarv)"
+    - "Andrii Radyk (@AnderEnder)"
 '''
 
 EXAMPLES = '''

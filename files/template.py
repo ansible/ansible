@@ -50,7 +50,9 @@ options:
 notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
 requirements: []
-author: Michael DeHaan
+author:
+    - Ansible Core Team 
+    - Michael DeHaan
 extends_documentation_fragment: files
 '''
 

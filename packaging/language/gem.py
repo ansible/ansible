@@ -78,7 +78,9 @@ options:
       - Allow adding build flags for gem compilation
     required: false
     version_added: "2.0"
-author: Johan Wiren
+author: 
+    - "Ansible Core Team"
+    - "Johan Wiren"
 '''
 
 EXAMPLES = '''

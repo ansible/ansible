@@ -34,7 +34,9 @@ notes:
       playbooks will follow the trend of using M(command) unless M(shell) is
       explicitly required. When running ad-hoc commands, use your best
       judgement.
-author: Michael DeHaan
+author: 
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''

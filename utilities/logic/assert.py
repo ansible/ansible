@@ -31,7 +31,9 @@ options:
       - "A string expression of the same form that can be passed to the 'when' statement"
       - "Alternatively, a list of string expressions"
     required: true
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 '''
 
 EXAMPLES = '''

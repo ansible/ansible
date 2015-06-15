@@ -35,7 +35,7 @@ options:
     required: false
     default: 'pong'
     aliases: []
-author: Chris Church
+author: "Chris Church (@cchurch)"
 '''
 
 EXAMPLES = '''

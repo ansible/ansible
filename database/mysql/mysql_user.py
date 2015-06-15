@@ -120,7 +120,7 @@ notes:
      the file."
 
 requirements: [ "MySQLdb" ]
-author: Mark Theunissen
+author: "Mark Theunissen (@marktheunissen)"
 '''
 
 EXAMPLES = """
