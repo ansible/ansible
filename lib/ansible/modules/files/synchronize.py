@@ -161,9 +161,9 @@ notes:
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - To exclude files and directories from being synchronized, you may add 
      C(.rsync-filter) files to the source directory.
-     
-     
-author: Timothy Appnel
+
+
+author: "Timothy Appnel (@tima)"
 '''
 
 EXAMPLES = '''

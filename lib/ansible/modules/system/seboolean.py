@@ -45,7 +45,7 @@ options:
 notes:
    - Not tested on any debian based system
 requirements: [ ]
-author: Stephen Fromm
+author: "Stephen Fromm (@sfromm)"
 '''
 
 EXAMPLES = '''

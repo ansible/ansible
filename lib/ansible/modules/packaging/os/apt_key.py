@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: apt_key
-author: Jayson Vantuyl & others
+author: "Jayson Vantuyl & others (@jvantuyl)"
 version_added: "1.0"
 short_description: Add or remove an apt key
 description:

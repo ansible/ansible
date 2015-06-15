@@ -50,7 +50,9 @@ options:
         will use the basename of the source file, similar to the copy module.
         Obviously this is only handy if the filenames are unique.
 requirements: []
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 '''
 
 EXAMPLES = '''

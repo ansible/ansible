@@ -121,7 +121,9 @@ options:
 notes: []
 # informational: requirements for nodes
 requirements: [ yum ]
-author: Seth Vidal
+author: 
+    - "Ansible Core Team"
+    - "Seth Vidal"
 '''
 
 EXAMPLES = '''

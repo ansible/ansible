@@ -45,7 +45,7 @@ options:
         description:
             - Path to a file created by installing the MSI to prevent from
               attempting to reinstall the package on every run
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = '''

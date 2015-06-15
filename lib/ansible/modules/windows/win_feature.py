@@ -68,7 +68,9 @@ options:
       - no
     default: null
     aliases: []
-author: Paul Durivage / Trond Hindenes
+author: 
+    - "Paul Durivage (@angstwad)"
+    - "Trond Hindenes (@trondhindenes)"
 '''
 
 EXAMPLES = '''

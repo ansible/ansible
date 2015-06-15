@@ -63,7 +63,7 @@ options:
         required: false
         default: 'yes'
         choices: ['yes', 'no']
-author: Alexander Saltanov
+author: "Alexander Saltanov (@sashka)"
 version_added: "0.7"
 requirements: [ python-apt ]
 '''

@@ -32,7 +32,9 @@ options:
     version_added: "1.5"
 notes:
   - It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
-author: Michael DeHaan
+author: 
+    - Ansible Core Team
+    - Michael DeHaan
 """
 
 EXAMPLES = '''

@@ -89,7 +89,7 @@ notes:
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
      default login of C(root) with no password.
 requirements: [ ConfigParser ]
-author: Mark Theunissen
+author: "Mark Theunissen (@marktheunissen)"
 '''
 
 EXAMPLES = '''

@@ -136,7 +136,7 @@ notes:
     another user also, R can still access database objects via these privileges.
   - When revoking privileges, C(RESTRICT) is assumed (see PostgreSQL docs).
 requirements: [psycopg2]
-author: Bernhard Weitzhofer
+author: "Bernhard Weitzhofer (@b6d)"
 """
 
 EXAMPLES = """

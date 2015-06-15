@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: user
-author: Stephen Fromm
+author: "Stephen Fromm (@sfromm)"
 version_added: "0.2"
 short_description: Manage user accounts
 requirements: [ useradd, userdel, usermod ]

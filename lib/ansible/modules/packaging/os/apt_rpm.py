@@ -44,7 +44,7 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
-author: Evgenii Terechkov
+author: "Evgenii Terechkov (@evgkrsk)"
 notes:  []
 '''
 

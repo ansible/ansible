@@ -25,7 +25,7 @@ short_description: Deploys a subversion repository.
 description:
    - Deploy given repository URL / revision to dest. If dest exists, update to the specified revision, otherwise perform a checkout.
 version_added: "0.7"
-author: Dane Summers, njharman@gmail.com
+author: "Dane Summers (@dsummersl) <njharman@gmail.com>"
 notes:
    - Requires I(svn) to be installed on the client.
 requirements: []

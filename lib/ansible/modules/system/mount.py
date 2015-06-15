@@ -79,7 +79,9 @@ options:
 
 notes: []
 requirements: []
-author: Seth Vidal
+author: 
+    - Ansible Core Team
+    - Seth Vidal
 '''
 EXAMPLES = '''
 # Mount DVD read-only

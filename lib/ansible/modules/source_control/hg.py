@@ -32,7 +32,7 @@ short_description: Manages Mercurial (hg) repositories.
 description:
     - Manages Mercurial (hg) repositories. Supports SSH, HTTP/S and local address.
 version_added: "1.0"
-author: Yeukhon Wong
+author: "Yeukhon Wong (@yeukhon)"
 options:
     repo:
         description:

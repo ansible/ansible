@@ -38,7 +38,7 @@ options:
     required: false
     default: yes
     aliases: []
-author: Chris Church
+author: "Chris Church (@cchurch)"
 '''
 
 EXAMPLES = '''

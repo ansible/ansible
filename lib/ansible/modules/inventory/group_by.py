@@ -12,7 +12,7 @@ options:
     description:
     - The variables whose values will be used as groups
     required: true
-author: Jeroen Hoekx
+author: "Jeroen Hoekx (@jhoekx)"
 notes:
   - Spaces in group names are converted to dashes '-'.
 '''

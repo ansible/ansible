@@ -25,7 +25,7 @@ import tempfile
 DOCUMENTATION = """
 ---
 module: replace
-author: Evan Kaufman
+author: "Evan Kaufman (@EvanK)"
 extends_documentation_fragment: files
 short_description: Replace all instances of a particular string in a
                    file using a back-referenced regular expression.

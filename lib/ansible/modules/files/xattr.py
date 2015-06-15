@@ -58,7 +58,7 @@ options:
       - if yes, dereferences symlinks and sets/gets attributes on symlink target,
         otherwise acts on symlink itself.
 
-author: Brian Coca
+author: "Brian Coca (@bcoca)"
 '''
 
 EXAMPLES = '''

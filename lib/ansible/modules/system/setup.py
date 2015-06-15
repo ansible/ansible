@@ -57,7 +57,9 @@ notes:
     - If the target host is Windows, you will not currently have the ability to use
       C(fact_path) or C(filter) as this is provided by a simpler implementation of the module.
       Different facts are returned for Windows hosts.
-author: Michael DeHaan
+author:
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 '''
 
 EXAMPLES = """

@@ -21,7 +21,9 @@
 DOCUMENTATION = '''
 ---
 module: service
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 version_added: "0.1"
 short_description:  Manage services.
 description:
