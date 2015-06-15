@@ -176,7 +176,7 @@ class Connection(ConnectionBase):
                 if self._connection_info.become_pass:
                     self.check_incorrect_password(stdout, prompt)
                 elif self.check_password_prompt(stdout, prompt):
-                    raise AnsibleError('Missing %s password', self._connection_info.become_method)
+                    raise AnsibleError('Missing %s password' % self._connection_info.become_method)
 
             if p.stdout in rfd:
                 dat = os.read(p.stdout.fileno(), 9000)
