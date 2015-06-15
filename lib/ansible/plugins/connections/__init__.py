@@ -129,6 +129,6 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             return prompt(output)
 
     def check_incorrect_password(self, output, prompt):
-        incorrect_password = gettext.dgettext(self._connection_info.become_method, "Sorry, try again.")
+        incorrect_password = gettext.dgettext(self._connection_info.become_method, C.BECOME_ERROR_STRINGS[self._connection_info.become_method])
         return output.endswith(incorrect_password)
 
