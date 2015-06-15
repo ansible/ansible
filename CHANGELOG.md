@@ -38,6 +38,7 @@ New Modules:
   * cloudstack: cs_sshkeypair
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
+  * cloudstack: cs_template
   * cloudstack: cs_vmsnapshot
   * datadog_monitor
   * expect
