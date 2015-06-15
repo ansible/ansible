@@ -146,10 +146,11 @@
   ignore_errors: True
   register: url_invalid_cert
 
+# Note: in v2, the previous test will outright fail so this test is different
 - assert:
     that:
-      - "url_invalid_cert.failed"
-      - "'Error validating the server' in url_invalid_cert.msg"
+      - "'kennethreitz.org' not in web_data"
+      - "not web_data"
 
 - name: Test that retrieving a url with invalid cert with validate_certs=False works
   set_fact:
