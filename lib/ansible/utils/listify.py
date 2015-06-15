@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-
+from collections import Iterable
 from ansible.template import Templar
 from ansible.template.safe_eval import safe_eval
 
@@ -38,7 +38,7 @@ def listify_lookup_plugin_terms(terms, variables, loader):
         #TODO: check if this is needed as template should also return correct type already
         terms = safe_eval(terms)
 
-        if isinstance(terms, basestring) or not isinstance(terms, list) and not isinstance(terms, set):
+        if isinstance(terms, basestring) or not isinstance(terms, Iterable):
             terms = [ terms ]
 
     return terms
