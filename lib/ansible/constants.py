@@ -104,7 +104,7 @@ YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
 # sections in config file
 DEFAULTS='defaults'
 
-# configurable things
+# generaly configurable things
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, boolean=True)
 DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', get_config(p, DEFAULTS,'inventory','ANSIBLE_INVENTORY', '/etc/ansible/hosts')))
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None)
@@ -120,8 +120,6 @@ DEFAULT_POLL_INTERVAL     = get_config(p, DEFAULTS, 'poll_interval',    'ANSIBLE
 DEFAULT_REMOTE_USER       = get_config(p, DEFAULTS, 'remote_user',      'ANSIBLE_REMOTE_USER',      active_user)
 DEFAULT_ASK_PASS          = get_config(p, DEFAULTS, 'ask_pass',  'ANSIBLE_ASK_PASS',    False, boolean=True)
 DEFAULT_PRIVATE_KEY_FILE  = shell_expand_path(get_config(p, DEFAULTS, 'private_key_file', 'ANSIBLE_PRIVATE_KEY_FILE', None))
-DEFAULT_SUDO_USER         = get_config(p, DEFAULTS, 'sudo_user',        'ANSIBLE_SUDO_USER',        'root')
-DEFAULT_ASK_SUDO_PASS     = get_config(p, DEFAULTS, 'ask_sudo_pass',    'ANSIBLE_ASK_SUDO_PASS',    False, boolean=True)
 DEFAULT_REMOTE_PORT       = get_config(p, DEFAULTS, 'remote_port',      'ANSIBLE_REMOTE_PORT',      None, integer=True)
 DEFAULT_ASK_VAULT_PASS    = get_config(p, DEFAULTS, 'ask_vault_pass',    'ANSIBLE_ASK_VAULT_PASS',    False, boolean=True)
 DEFAULT_VAULT_PASSWORD_FILE = shell_expand_path(get_config(p, DEFAULTS, 'vault_password_file', 'ANSIBLE_VAULT_PASSWORD_FILE', None))
@@ -130,36 +128,39 @@ DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       
 DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}')
 DEFAULT_SYSLOG_FACILITY   = get_config(p, DEFAULTS, 'syslog_facility',  'ANSIBLE_SYSLOG_FACILITY', 'LOG_USER')
 DEFAULT_KEEP_REMOTE_FILES = get_config(p, DEFAULTS, 'keep_remote_files', 'ANSIBLE_KEEP_REMOTE_FILES', False, boolean=True)
-DEFAULT_SUDO              = get_config(p, DEFAULTS, 'sudo', 'ANSIBLE_SUDO', False, boolean=True)
-DEFAULT_SUDO_EXE          = get_config(p, DEFAULTS, 'sudo_exe', 'ANSIBLE_SUDO_EXE', 'sudo')
-DEFAULT_SUDO_FLAGS        = get_config(p, DEFAULTS, 'sudo_flags', 'ANSIBLE_SUDO_FLAGS', '-H')
 DEFAULT_HASH_BEHAVIOUR    = get_config(p, DEFAULTS, 'hash_behaviour', 'ANSIBLE_HASH_BEHAVIOUR', 'replace')
 DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
 DEFAULT_EXECUTABLE        = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
-DEFAULT_SU_EXE            = get_config(p, DEFAULTS, 'su_exe', 'ANSIBLE_SU_EXE', 'su')
-DEFAULT_SU                = get_config(p, DEFAULTS, 'su', 'ANSIBLE_SU', False, boolean=True)
-DEFAULT_SU_FLAGS          = get_config(p, DEFAULTS, 'su_flags', 'ANSIBLE_SU_FLAGS', '')
-DEFAULT_SU_USER           = get_config(p, DEFAULTS, 'su_user', 'ANSIBLE_SU_USER', 'root')
-DEFAULT_ASK_SU_PASS       = get_config(p, DEFAULTS, 'ask_su_pass', 'ANSIBLE_ASK_SU_PASS', False, boolean=True)
 DEFAULT_GATHERING         = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHERING', 'implicit').lower()
 DEFAULT_LOG_PATH          = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
 
 # selinux
 DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf', islist=True)
 
-#TODO: get rid of ternary chain mess
+### PRIVILEGE ESCALATION ###
+# Backwards Compat
+DEFAULT_SU                = get_config(p, DEFAULTS, 'su', 'ANSIBLE_SU', False, boolean=True)
+DEFAULT_SU_USER           = get_config(p, DEFAULTS, 'su_user', 'ANSIBLE_SU_USER', 'root')
+DEFAULT_SU_EXE            = get_config(p, DEFAULTS, 'su_exe', 'ANSIBLE_SU_EXE', 'su')
+DEFAULT_SU_FLAGS          = get_config(p, DEFAULTS, 'su_flags', 'ANSIBLE_SU_FLAGS', '')
+DEFAULT_ASK_SU_PASS       = get_config(p, DEFAULTS, 'ask_su_pass', 'ANSIBLE_ASK_SU_PASS', False, boolean=True)
+DEFAULT_SUDO              = get_config(p, DEFAULTS, 'sudo', 'ANSIBLE_SUDO', False, boolean=True)
+DEFAULT_SUDO_USER         = get_config(p, DEFAULTS, 'sudo_user',        'ANSIBLE_SUDO_USER',        'root')
+DEFAULT_SUDO_EXE          = get_config(p, DEFAULTS, 'sudo_exe', 'ANSIBLE_SUDO_EXE', 'sudo')
+DEFAULT_SUDO_FLAGS        = get_config(p, DEFAULTS, 'sudo_flags', 'ANSIBLE_SUDO_FLAGS', '-H')
+DEFAULT_ASK_SUDO_PASS     = get_config(p, DEFAULTS, 'ask_sudo_pass',    'ANSIBLE_ASK_SUDO_PASS',    False, boolean=True)
+
+# Become
 BECOME_METHODS            = ['sudo','su','pbrun','pfexec','runas']
-BECOME_ERROR_STRINGS      = {'sudo': 'Sorry, try again.', 'su': 'Authentication failure', 'pbrun': '', 'pfexec': '', 'runas': ''}
-DEFAULT_BECOME            = get_config(p, 'privilege_escalation', 'become', 'ANSIBLE_BECOME',False, boolean=True)
 DEFAULT_BECOME_METHOD     = get_config(p, 'privilege_escalation', 'become_method', 'ANSIBLE_BECOME_METHOD','sudo' if DEFAULT_SUDO else 'su' if DEFAULT_SU else 'sudo' ).lower()
+DEFAULT_BECOME            = get_config(p, 'privilege_escalation', 'become', 'ANSIBLE_BECOME',False, boolean=True)
 DEFAULT_BECOME_USER       = get_config(p, 'privilege_escalation', 'become_user', 'ANSIBLE_BECOME_USER', 'root')
+DEFAULT_BECOME_EXE        = get_config(p, 'privilege_escalation', 'become_exe', 'ANSIBLE_BECOME_EXE', None)
+DEFAULT_BECOME_FLAGS      = get_config(p, 'privilege_escalation', 'become_flags', 'ANSIBLE_BECOME_FLAGS', None)
 DEFAULT_BECOME_ASK_PASS   = get_config(p, 'privilege_escalation', 'become_ask_pass', 'ANSIBLE_BECOME_ASK_PASS', False, boolean=True)
-# need to rethink impementing these 2
-DEFAULT_BECOME_EXE = None
-#DEFAULT_BECOME_EXE        = get_config(p, DEFAULTS, 'become_exe', 'ANSIBLE_BECOME_EXE','sudo' if DEFAULT_SUDO else 'su' if DEFAULT_SU else 'sudo')
-#DEFAULT_BECOME_FLAGS      = get_config(p, DEFAULTS, 'become_flags', 'ANSIBLE_BECOME_FLAGS',DEFAULT_SUDO_FLAGS if DEFAULT_SUDO else DEFAULT_SU_FLAGS if DEFAULT_SU else '-H')
 
 
+# Plugin paths
 DEFAULT_ACTION_PLUGIN_PATH     = get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', '~/.ansible/plugins/action_plugins:/usr/share/ansible_plugins/action_plugins')
 DEFAULT_CACHE_PLUGIN_PATH      = get_config(p, DEFAULTS, 'cache_plugins',      'ANSIBLE_CACHE_PLUGINS', '~/.ansible/plugins/cache_plugins:/usr/share/ansible_plugins/cache_plugins')
 DEFAULT_CALLBACK_PLUGIN_PATH   = get_config(p, DEFAULTS, 'callback_plugins',   'ANSIBLE_CALLBACK_PLUGINS', '~/.ansible/plugins/callback_plugins:/usr/share/ansible_plugins/callback_plugins')
@@ -174,6 +175,7 @@ CACHE_PLUGIN_CONNECTION        = get_config(p, DEFAULTS, 'fact_caching_connectio
 CACHE_PLUGIN_PREFIX            = get_config(p, DEFAULTS, 'fact_caching_prefix', 'ANSIBLE_CACHE_PLUGIN_PREFIX', 'ansible_facts')
 CACHE_PLUGIN_TIMEOUT           = get_config(p, DEFAULTS, 'fact_caching_timeout', 'ANSIBLE_CACHE_PLUGIN_TIMEOUT', 24 * 60 * 60, integer=True)
 
+# Display
 ANSIBLE_FORCE_COLOR            = get_config(p, DEFAULTS, 'force_color', 'ANSIBLE_FORCE_COLOR', None, boolean=True)
 ANSIBLE_NOCOLOR                = get_config(p, DEFAULTS, 'nocolor', 'ANSIBLE_NOCOLOR', None, boolean=True)
 ANSIBLE_NOCOWS                 = get_config(p, DEFAULTS, 'nocows', 'ANSIBLE_NOCOWS', None, boolean=True)
