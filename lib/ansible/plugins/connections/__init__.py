@@ -94,7 +94,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     @ensure_connect
     @abstractmethod
-    def exec_command(self, cmd, tmp_path, executable=None, in_data=None):
+    def exec_command(self, cmd, tmp_path, executable=None, in_data=None, sudoable=True):
         """Run a command on the remote host"""
         pass
 

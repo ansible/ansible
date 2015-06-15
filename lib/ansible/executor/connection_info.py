@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
 #
 # This file is part of Ansible
@@ -21,6 +23,8 @@ __metaclass__ = type
 
 import pipes
 import random
+import re
+import gettext
 
 from ansible import constants as C
 from ansible.template import Templar
@@ -28,6 +32,40 @@ from ansible.utils.boolean import boolean
 from ansible.errors import AnsibleError
 
 __all__ = ['ConnectionInformation']
+
+SU_PROMPT_LOCALIZATIONS = [
+    'Password',
+    '암호',
+    'パスワード',
+    'Adgangskode',
+    'Contraseña',
+    'Contrasenya',
+    'Hasło',
+    'Heslo',
+    'Jelszó',
+    'Lösenord',
+    'Mật khẩu',
+    'Mot de passe',
+    'Parola',
+    'Parool',
+    'Pasahitza',
+    'Passord',
+    'Passwort',
+    'Salasana',
+    'Sandi',
+    'Senha',
+    'Wachtwoord',
+    'ססמה',
+    'Лозинка',
+    'Парола',
+    'Пароль',
+    'गुप्तशब्द',
+    'शब्दकूट',
+    'సంకేతపదము',
+    'හස්පදය',
+    '密码',
+    '密碼',
+]
 
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the ConnectionInformation
@@ -43,6 +81,40 @@ MAGIC_VARIABLE_MAPPING = dict(
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
    shell            = ('ansible_shell_type',),
 )
+
+SU_PROMPT_LOCALIZATIONS = [
+    'Password',
+    '암호',
+    'パスワード',
+    'Adgangskode',
+    'Contraseña',
+    'Contrasenya',
+    'Hasło',
+    'Heslo',
+    'Jelszó',
+    'Lösenord',
+    'Mật khẩu',
+    'Mot de passe',
+    'Parola',
+    'Parool',
+    'Pasahitza',
+    'Passord',
+    'Passwort',
+    'Salasana',
+    'Sandi',
+    'Senha',
+    'Wachtwoord',
+    'ססמה',
+    'Лозинка',
+    'Парола',
+    'Пароль',
+    'गुप्तशब्द',
+    'शब्दकूट',
+    'సంకేతపదము',
+    'හස්පදය',
+    '密码',
+    '密碼',
+]
 
 class ConnectionInformation:
 
@@ -72,6 +144,14 @@ class ConnectionInformation:
         self.become_method = None
         self.become_user   = None
         self.become_pass   = passwords.get('become_pass','')
+        self.become_exe    = None
+        self.become_flags  = None
+
+        # backwards compat
+        self.sudo_exe    = None
+        self.sudo_flags  = None
+        self.su_exe      = None
+        self.su_flags    = None
 
         # general flags (should we move out?)
         self.verbosity   = 0
@@ -202,25 +282,20 @@ class ConnectionInformation:
 
         return new_info
 
-    def make_become_cmd(self, cmd, executable, become_settings=None):
+    def make_become_cmd(self, cmd, executable ):
+        """ helper function to create privilege escalation commands """
 
-        """
-        helper function to create privilege escalation commands
-        """
-
-        # FIXME: become settings should probably be stored in the connection info itself
-        if become_settings is None:
-            become_settings = {}
-
-        randbits    = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
-        success_key = 'BECOME-SUCCESS-%s' % randbits
         prompt      = None
-        becomecmd   = None
+        success_key = None
 
-        executable = executable or '$SHELL'
-
-        success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
         if self.become:
+
+            becomecmd   = None
+            randbits    = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+            success_key = 'BECOME-SUCCESS-%s' % randbits
+            executable = executable or '$SHELL'
+            success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
+
             if self.become_method == 'sudo':
                 # Rather than detect if sudo wants a password this time, -k makes sudo always ask for
                 # a password if one is required. Passing a quoted compound command to sudo (or sudo -s)
@@ -228,24 +303,33 @@ class ConnectionInformation:
                 # string to the user's shell.  We loop reading output until we see the randomly-generated
                 # sudo prompt set with the -p option.
                 prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                exe = become_settings.get('sudo_exe', C.DEFAULT_SUDO_EXE)
-                flags = become_settings.get('sudo_flags', C.DEFAULT_SUDO_FLAGS)
+                exe = self.become_exe or self.sudo_exe or 'sudo'
+                flags = self.become_flags or self.sudo_flags or ''
                 becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % \
                     (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'su':
-                exe = become_settings.get('su_exe', C.DEFAULT_SU_EXE)
-                flags = become_settings.get('su_flags', C.DEFAULT_SU_FLAGS)
+
+                def detect_su_prompt(data):
+                    SU_PROMPT_LOCALIZATIONS_RE = re.compile("|".join(['(\w+\'s )?' + x + ' ?: ?' for x in SU_PROMPT_LOCALIZATIONS]), flags=re.IGNORECASE)
+                    return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
+
+                prompt = su_prompt()
+                exe = self.become_exe or self.su_exe or 'su'
+                flags = self.become_flags or self.su_flags or ''
                 becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'pbrun':
-                exe = become_settings.get('pbrun_exe', 'pbrun')
-                flags = become_settings.get('pbrun_flags', '')
+
+                prompt='assword:'
+                exe = self.become_exe or 'pbrun'
+                flags = self.become_flags or ''
                 becomecmd = '%s -b -l %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'pfexec':
-                exe = become_settings.get('pfexec_exe', 'pbrun')
-                flags = become_settings.get('pfexec_flags', '')
+
+                exe = self.become_exe or 'pfexec'
+                flags = self.become_flags or ''
                 # No user as it uses it's own exec_attr to figure it out
                 becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
 
@@ -254,11 +338,20 @@ class ConnectionInformation:
 
             return (('%s -c ' % executable) + pipes.quote(becomecmd), prompt, success_key)
 
-        return (cmd, "", "")
+        return (cmd, prompt, success_key)
 
-    def check_become_success(self, output, become_settings):
-        #TODO: implement
-        pass
+    def check_become_success(self, output, success_key):
+        return success_key in output
+
+    def check_password_prompt(self, output, prompt):
+        if isinstance(prompt, basestring):
+            return output.endswith(prompt)
+        else:
+            return prompt(output)
+
+    def check_incorrect_password(self, output, prompt):
+        incorrect_password = gettext.dgettext(self.become_method, "Sorry, try again.")
+        return output.endswith(incorrect_password)
 
     def _get_fields(self):
         return [i for i in self.__dict__.keys() if i[:1] != '_']
