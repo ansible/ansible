@@ -60,10 +60,6 @@ class Become:
 
         self._detect_privilege_escalation_conflict(ds)
 
-        # Setting user implies setting become/sudo/su to true
-        if 'become_user' in ds and not ds.get('become', False):
-            ds['become'] = True
-
         # Privilege escalation, backwards compatibility for sudo/su
         if 'sudo' in ds or 'sudo_user' in ds:
             ds['become_method'] = 'sudo'
