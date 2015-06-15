@@ -114,7 +114,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        #vvv("PUT {0} TO {1}".format(in_path, out_path), host=self.host)
         self._display.vvv("{0} PUT {1} TO {2}".format(self._connection_info.remote_addr, in_path, out_path))
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
@@ -132,7 +131,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        #vvv("FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
         self._display.vvv("{0} FETCH {1} TO {2}".format(self._connection_info.remote_addr, in_path, out_path))
         self.put_file(in_path, out_path)
 
