@@ -63,10 +63,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         if not hasattr(self, '_connected'):
             self._connected = False
 
-    def _become_method_supported(self, become_method):
+    def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
 
-        if become_method in self.__class__.become_methods:
+        if self._connection_info.become_method in self.__class__.become_methods:
             return True
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_method)
@@ -90,7 +90,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def _connect(self):
         """Connect to the host we've been initialized with"""
-        pass
+
+        # Check if PE is supported
+        if self._connection_info.become:
+            self.__become_method_supported()
 
     @ensure_connect
     @abstractmethod
