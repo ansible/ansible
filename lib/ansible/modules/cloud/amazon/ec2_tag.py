@@ -42,7 +42,7 @@ options:
     default: null
     aliases: ['aws_region', 'ec2_region']
 
-author: Lester Wade
+author: "Lester Wade (@lwade)"
 extends_documentation_fragment: aws
 '''
 

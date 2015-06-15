@@ -31,6 +31,7 @@ DOCUMENTATION = '''
 ---
 module: quantum_floating_ip_associate
 version_added: "1.2"
+author: "Benno Joy (@bennojoy)"
 short_description: Associate or disassociate a particular floating IP with an instance
 description:
    - Associates or disassociates a specific floating IP with a particular instance

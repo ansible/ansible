@@ -110,7 +110,9 @@ options:
     version_added: "1.3"
 
 requirements: [ "boto" ]
-author: Lester Wade, Ralph Tice
+author: 
+    - "Lester Wade (@lwade)"
+    - "Ralph Tice (@ralph-tice)"
 extends_documentation_fragment: aws
 '''
 

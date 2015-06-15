@@ -72,7 +72,7 @@ options:
 requirements: [ "boto" ]
 notes:
   - 'Currently boto does not support the removal of Managed Policies, the module will not work removing/adding managed policies.'
-author: Jonathan I. Davila
+author: "Jonathan I. Davila (@defionscode)"
 extends_documentation_fragment: aws
 '''
 

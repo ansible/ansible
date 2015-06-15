@@ -107,7 +107,7 @@ options:
     default: present
     choices: ['absent', 'present', 'list']
     version_added: "1.6"
-author: Lester Wade
+author: "Lester Wade (@lwade)"
 extends_documentation_fragment: aws
 '''
 

@@ -21,7 +21,7 @@ description:
   - Can create or delete AWS Autoscaling Groups
   - Works with the ec2_lc module to manage Launch Configurations
 version_added: "1.6"
-author: Gareth Rushgrove
+author: "Gareth Rushgrove (@garethr)"
 options:
   state:
     description:

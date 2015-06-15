@@ -27,6 +27,7 @@ DOCUMENTATION = '''
 module: os_auth
 short_description: Retrieve an auth token
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
    - Retrieve an auth token from an OpenStack Cloud
 extends_documentation_fragment: openstack

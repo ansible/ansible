@@ -28,6 +28,7 @@ DOCUMENTATION = '''
 ---
 module: quantum_router_gateway
 version_added: "1.2"
+author: "Benno Joy (@bennojoy)"
 short_description: set/unset a gateway interface for the router with the specified external network
 description:
    - Creates/Removes a gateway interface from the router, used to associate a external network with a router to route external traffic.

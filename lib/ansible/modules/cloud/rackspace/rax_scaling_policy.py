@@ -73,7 +73,7 @@ options:
       - present
       - absent
     default: present
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace
 '''
 

@@ -28,6 +28,9 @@ DOCUMENTATION = '''
 ---
 module: nova_keypair
 version_added: "1.2"
+author: 
+    - "Benno Joy (@bennojoy)"
+    - "Michael DeHaan"
 short_description: Add/Delete key pair from nova
 description:
    - Add or Remove key pair from nova .

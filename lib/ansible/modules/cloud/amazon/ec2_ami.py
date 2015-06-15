@@ -87,7 +87,7 @@ options:
     default: null
     version_added: "2.0"
 
-author: Evan Duffield <eduffield@iacquire.com>
+author: "Evan Duffield (@scicoin-project) <eduffield@iacquire.com>"
 extends_documentation_fragment: aws
 '''
 

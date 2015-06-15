@@ -22,7 +22,7 @@ description:
   - Manage cache clusters in Amazon Elasticache.
   - Returns information about the specified cache cluster.
 version_added: "1.4"
-author: Jim Dalton
+author: "Jim Dalton (@jsdalton)"
 options:
   state:
     description:

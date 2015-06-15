@@ -91,7 +91,7 @@ requirements:
     - "python >= 2.6"
     - "boto >= 2.9"
 
-author: benno@ansible.com Note. Most of the code has been taken from the S3 module.
+author: "Benno Joy (@bennojoy)"
 
 '''
 

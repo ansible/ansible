@@ -260,7 +260,11 @@ options:
     default: false
     version_added: "1.9"
 
-author: Cove Schneider, Joshua Conner, Pavel Antonov, Ash Wilson
+author: 
+    - "Cove Schneider (@cove)"
+    - "Joshua Conner (@joshuaconner)"
+    - "Pavel Antonov (@softzilla)"
+    - "Ash Wilson (@smashwilson)"
 requirements:
     - "python >= 2.6"
     - "docker-py >= 0.3.0"

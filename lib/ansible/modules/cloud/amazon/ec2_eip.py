@@ -44,7 +44,7 @@ options:
     version_added: "1.6"
 
 extends_documentation_fragment: aws
-author: Lorin Hochstein <lorin@nimbisservices.com>
+author: "Lorin Hochstein (@lorin) <lorin@nimbisservices.com>"
 notes:
    - This module will return C(public_ip) on success, which will contain the
      public IP address associated with the instance.

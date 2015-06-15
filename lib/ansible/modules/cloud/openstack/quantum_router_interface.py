@@ -28,6 +28,7 @@ DOCUMENTATION = '''
 ---
 module: quantum_router_interface
 version_added: "1.2"
+author: "Benno Joy (@bennojoy)"
 short_description: Attach/Dettach a subnet's interface to a router
 description:
    - Attach/Dettach a subnet interface to a router, to provide a gateway for the subnet.
