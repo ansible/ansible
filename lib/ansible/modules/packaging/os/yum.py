@@ -843,8 +843,8 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
         res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     else:
         # should be caught by AnsibleModule argument_spec
-        module.fail_json(msg="we should never get here unless this all
-                failed", changed=False, results='', errors='unepected state')
+        module.fail_json(msg="we should never get here unless this all"
+                " failed", changed=False, results='', errors='unepected state')
 
     return res
 
