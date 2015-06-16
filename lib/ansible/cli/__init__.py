@@ -415,16 +415,16 @@ class CLI(object):
         ''' find reasonable way to display text '''
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
-            pager_print(text)
+            print(text)
         elif 'PAGER' in os.environ:
             if sys.platform == 'win32':
-                pager_print(text)
+                print(text)
             else:
                 CLI.pager_pipe(text, os.environ['PAGER'])
         elif subprocess.call('(less --version) 2> /dev/null', shell = True) == 0:
             CLI.pager_pipe(text, 'less')
         else:
-            pager_print(text)
+            print(text)
 
     @staticmethod
     def pager_pipe(text, cmd):
