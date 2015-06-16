@@ -120,7 +120,6 @@ class PlaybookExecutor:
                             if len(batch) == 0:
                                 self._tqm.send_callback('v2_playbook_on_play_start', new_play)
                                 self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
-                                result = 1
                                 break
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)

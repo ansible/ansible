@@ -122,9 +122,8 @@ class StrategyModule(StrategyBase):
         moving on to the next task
         '''
 
-        result = True
-
         # iteratate over each task, while there is one left to run
+        result     = True
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
