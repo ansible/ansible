@@ -2196,7 +2196,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
                 rc, out, err = module.run_command([uname_path, '-W'])
                 # don't bother with wpars it does not work
                 # zero means not in wpar
-                if out.split()[0] == '0':
+                if not rc and out.split()[0] == '0':
                     if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
                         entstat_path = module.get_bin_path('entstat')
                         if entstat_path:
