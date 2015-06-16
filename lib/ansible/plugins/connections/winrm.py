@@ -153,8 +153,8 @@ class Connection(ConnectionBase):
             self.protocol = self._winrm_connect()
         return self
 
-    def exec_command(self, cmd, tmp_path, executable='/bin/sh', in_data=None):
-        super(Connection, self).exec_command(cmd, tmp_path, executable=executable, in_data=in_data)
+    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
+        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
 
         cmd = to_bytes(cmd)
         cmd_parts = shlex.split(cmd, posix=False)
