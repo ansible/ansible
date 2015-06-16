@@ -17,6 +17,8 @@
 
 import utils
 import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
 import getpass
 import os
 import subprocess
