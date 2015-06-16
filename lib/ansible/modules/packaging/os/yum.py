@@ -881,6 +881,8 @@ def main():
         supports_check_mode = True
     )
 
+    params = module.params
+
     if params['list']:
         repoquerybin = ensure_yum_utils(module)
         if not repoquerybin:
@@ -892,7 +894,7 @@ def main():
         # the system then users will see an error message using the yum API.
         # Use repoquery in those cases.
 
-        my = yum_base(conf_file)
+        my = yum_base(params['conf_file'])
         # A sideeffect of accessing conf is that the configuration is
         # loaded and plugins are discovered
         my.conf
