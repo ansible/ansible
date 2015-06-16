@@ -48,9 +48,6 @@ class Connection(ConnectionBase):
         self.HASHED_KEY_MAGIC = "|1|"
         self._has_pipelining = True
 
-        # FIXME: make this work, should be set from connection info
-        self._ipv6 = False
-
         # FIXME: move the lockfile locations to ActionBase?
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
         #self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
@@ -58,6 +55,12 @@ class Connection(ConnectionBase):
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
         super(Connection, self).__init__(*args, **kwargs)
+
+        # FIXME: make this work, should be set from connection info
+        self._ipv6 = False
+        self.host = self._connection_info.remote_addr
+        if self._ipv6:
+            self.host = '[%s]' % self.host
 
     @property
     def transport(self):
@@ -154,7 +157,7 @@ class Connection(ConnectionBase):
             os.write(self.wfd, "{0}\n".format(self._connection_info.password))
             os.close(self.wfd)
 
-    def _communicate(self, p, stdin, indata, su=False, sudoable=False, prompt=None):
+    def _communicate(self, p, stdin, indata, sudoable=True):
         fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
         fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
         # We can't use p.communicate here because the ControlMaster may have stdout open as well
@@ -174,8 +177,8 @@ class Connection(ConnectionBase):
             # fail early if the become password is wrong
             if self._connection_info.become and sudoable:
                 if self._connection_info.become_pass:
-                    self.check_incorrect_password(stdout, prompt)
-                elif self.check_password_prompt(stdout, prompt):
+                    self.check_incorrect_password(stdout)
+                elif self.check_password_prompt(stdout):
                     raise AnsibleError('Missing %s password', self._connection_info.become_method)
 
             if p.stdout in rfd:
@@ -263,8 +266,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
 
-        host = self._connection_info.remote_addr
-
         ssh_cmd = self._password_cmd()
         ssh_cmd += ("ssh", "-C")
         if not in_data:
@@ -280,17 +281,15 @@ class Connection(ConnectionBase):
 
         if self._ipv6:
             ssh_cmd += ['-6']
-        ssh_cmd.append(host)
+        ssh_cmd.append(self.host)
 
-        prompt = None
-        success_key = ''
         if sudoable:
-            cmd, prompt, success_key = self._connection_info.make_become_cmd(cmd)
+            cmd, self.prompt, self.success_key = self._connection_info.make_become_cmd(cmd)
 
         ssh_cmd.append(cmd)
-        self._display.vvv("EXEC {0}".format(' '.join(ssh_cmd)), host=host)
+        self._display.vvv("EXEC {0}".format(' '.join(ssh_cmd)), host=self.host)
 
-        not_in_host_file = self.not_in_host_file(host)
+        not_in_host_file = self.not_in_host_file(self.host)
 
         # FIXME: move the locations of these lock files, same as init above
         #if C.HOST_KEY_CHECKING and not_in_host_file:
@@ -307,51 +306,10 @@ class Connection(ConnectionBase):
 
         no_prompt_out = ''
         no_prompt_err = ''
-        if self._connection_info.become and sudoable and self._connection_info.become_pass:
-            # several cases are handled for sudo privileges with password
-            # * NOPASSWD (tty & no-tty): detect success_key on stdout
-            # * without NOPASSWD:
-            #   * detect prompt on stdout (tty)
-            #   * detect prompt on stderr (no-tty)
-            fcntl.fcntl(p.stdout, fcntl.F_SETFL,
-                        fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
-            fcntl.fcntl(p.stderr, fcntl.F_SETFL,
-                        fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
-            become_output = ''
-            become_errput = ''
+        if self.prompt:
+            no_prompt_out, no_prompt_err =  self.handle_become_password(p, stdin)
 
-            while True:
-                if self.check_become_success(become_output, success_key) or \
-                   self.check_password_prompt(become_output, prompt):
-                    break
-                rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._connection_info.timeout)
-                if p.stderr in rfd:
-                    chunk = p.stderr.read()
-                    if not chunk:
-                        raise AnsibleError('ssh connection closed waiting for privilege escalation password prompt')
-                    become_errput += chunk
-
-                    self.check_incorrect_password(become_errput, prompt)
-
-                if p.stdout in rfd:
-                    chunk = p.stdout.read()
-                    if not chunk:
-                        raise AnsibleError('ssh connection closed waiting for sudo or su password prompt')
-                    become_output += chunk
-
-                if not rfd:
-                    # timeout. wrap up process communication
-                    stdout = p.communicate()
-                    raise AnsibleError('ssh connection error waiting for sudo or su password prompt')
-
-            if not self.check_become_success(become_output, success_key):
-                if sudoable:
-                    stdin.write(self._connection_info.become_pass + '\n')
-            else:
-                no_prompt_out += become_output
-                no_prompt_err += become_errput
-
-        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, sudoable=sudoable, prompt=prompt)
+        (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, sudoable=sudoable)
 
         #if C.HOST_KEY_CHECKING and not_in_host_file:
         #    # lock around the initial SSH connectivity so the user prompt about whether to add 
@@ -378,12 +336,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
-        host = self._connection_info.remote_addr
-        if self._ipv6:
-            host = '[%s]' % host
-
-        self._display.vvv("PUT {0} TO {1}".format(in_path, out_path), host=host)
+        self._display.vvv("PUT {0} TO {1}".format(in_path, out_path), host=self.host)
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         cmd = self._password_cmd()
@@ -391,12 +344,12 @@ class Connection(ConnectionBase):
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
             cmd.extend(self._common_args)
-            cmd.extend([in_path, '{0}:{1}'.format(host, pipes.quote(out_path))])
+            cmd.extend([in_path, '{0}:{1}'.format(self.host, pipes.quote(out_path))])
             indata = None
         else:
             cmd.append('sftp')
             cmd.extend(self._common_args)
-            cmd.append(host)
+            cmd.append(self.host)
             indata = "put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
 
         (p, stdin) = self._run(cmd, indata)
@@ -413,24 +366,19 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        # FIXME: make a function, used in all 3 methods EXEC/PUT/FETCH
-        host = self._connection_info.remote_addr
-        if self._ipv6:
-            host = '[%s]' % host
-
-        self._display.vvv("FETCH {0} TO {1}".format(in_path, out_path), host=host)
+        self._display.vvv("FETCH {0} TO {1}".format(in_path, out_path), host=self.host)
         cmd = self._password_cmd()
 
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
             cmd.extend(self._common_args)
-            cmd.extend(['{0}:{1}'.format(host, in_path), out_path])
+            cmd.extend(['{0}:{1}'.format(self.host, in_path), out_path])
             indata = None
         else:
             cmd.append('sftp')
             cmd.extend(self._common_args)
-            cmd.append(host)
+            cmd.append(self.host)
             indata = "get {0} {1}\n".format(in_path, out_path)
 
         p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
