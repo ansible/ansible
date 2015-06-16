@@ -310,8 +310,6 @@ def main():
     # is dest OK to receive tar file?
     if not os.path.isdir(dest):
         module.fail_json(msg="Destination '%s' is not a directory" % dest)
-    if not os.access(dest, os.W_OK):
-        module.fail_json(msg="Destination '%s' not writable" % dest)
 
     handler = pick_handler(src, dest, module)
 
