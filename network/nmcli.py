@@ -22,7 +22,7 @@
 DOCUMENTATION='''
 ---
 module: nmcli
-author: Chris Long
+author: "Chris Long (@alcamie101)"
 short_description: Manage Networking
 requirements: [ nmcli, dbus ]
 version_added: "2.0"
