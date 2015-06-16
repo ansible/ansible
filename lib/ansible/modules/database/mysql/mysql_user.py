@@ -374,7 +374,7 @@ def main():
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             user=dict(required=True, aliases=['name']),
-            password=dict(default=None),
+            password=dict(default=None, no_log=True),
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
