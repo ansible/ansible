@@ -21,7 +21,9 @@ short_description: manage CloudTrail creation and deletion
 description:
   - Creates or deletes CloudTrail configuration. Ensures logging is also enabled.
 version_added: "2.0"
-author: Ted Timmons
+author: 
+    - "Ansible Core Team"
+    - "Ted Timmons"
 requirements:
   - "boto >= 2.21"
 options:
