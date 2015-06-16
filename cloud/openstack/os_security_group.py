@@ -28,6 +28,7 @@ DOCUMENTATION = '''
 module: os_security_group
 short_description: Add/Delete security groups from an OpenStack cloud.
 extends_documentation_fragment: openstack
+author: "Monty Taylor (@emonty)"
 version_added: "2.0"
 description:
    - Add or Remove security groups from an OpenStack cloud.
@@ -47,8 +48,6 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
-
-requirements: ["shade"]
 '''
 
 EXAMPLES = '''

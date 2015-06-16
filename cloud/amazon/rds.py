@@ -244,9 +244,9 @@ options:
 requirements:
     - "python >= 2.6"
     - "boto"
-author: 
+author:
     - "Bruce Pennypacker (@bpennypacker)"
-    - "Will Thames (@willthames")
+    - "Will Thames (@willthames)"
 
 '''
 
