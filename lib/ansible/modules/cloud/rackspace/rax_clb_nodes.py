@@ -85,7 +85,7 @@ options:
     required: false
     description:
       - Weight of node
-author: Lukasz Kawczynski
+author: "Lukasz Kawczynski (@neuroid)"
 extends_documentation_fragment: rackspace
 '''
 
