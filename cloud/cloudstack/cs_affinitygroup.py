@@ -25,7 +25,7 @@ short_description: Manages affinity groups on Apache CloudStack based clouds.
 description:
     - Create and remove affinity groups.
 version_added: '2.0'
-author: '"René Moser (@resmo)" <mail@renemoser.net>'
+author: "René Moser (@resmo)"
 options:
   name:
     description:

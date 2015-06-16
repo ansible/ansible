@@ -26,7 +26,7 @@ short_description: Manage LXC Containers
 version_added: 1.8.0
 description:
   - Management of LXC containers
-author: '"Kevin Carter (@cloudnull)" <kevin.carter@rackspace.com>'
+author: "Kevin Carter (@cloudnull)"
 options:
     name:
         description:

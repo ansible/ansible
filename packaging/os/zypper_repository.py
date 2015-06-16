@@ -23,7 +23,7 @@
 DOCUMENTATION = '''
 ---
 module: zypper_repository
-author: '"Matthias Vogelgesang (@matze)" <matthias.vogelgesang@gmail.com>'
+author: "Matthias Vogelgesang (@matze)"
 version_added: "1.4"
 short_description: Add and remove Zypper repositories
 description:

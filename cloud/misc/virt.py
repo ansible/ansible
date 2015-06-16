@@ -60,8 +60,8 @@ requirements:
     - "libvirt-python"
 author:
     - "Ansible Core Team"
-    - '"Michael DeHaan (@mpdehaan)" <michael.dehaan@gmail.com>'
-    - '"Seth Vidal (@skvidal)" <skvidal@fedoraproject.org>'
+    - "Michael DeHaan"
+    - "Seth Vidal"
 '''
 
 EXAMPLES = '''

@@ -81,7 +81,7 @@ options:
 requirements:
     - "python >= 2.6"
     - "apache-libcloud"
-author: '"Peter Tan (@tanpeter)" <ptan@google.com>'
+author: "Peter Tan (@tanpeter)"
 '''
 
 EXAMPLES = '''

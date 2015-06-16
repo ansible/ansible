@@ -20,7 +20,7 @@ short_description: Gather facts about ec2 ENI interfaces in AWS
 description:
     - Gather facts about ec2 ENI interfaces in AWS
 version_added: "2.0"
-author: Rob White, wimnat [at] gmail.com, @wimnat
+author: "Rob White (@wimnat)"
 options:
   eni_id:
     description:

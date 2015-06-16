@@ -53,7 +53,7 @@ options:
       the desired subject for the email
     required: true
 
-author: '"Matt Makai (@makaimc)" <matthew.makai@gmail.com>'
+author: "Matt Makai (@makaimc)"
 '''
 
 EXAMPLES = '''
