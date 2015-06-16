@@ -20,7 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import fcntl
 import gettext
+import select
+import os
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from functools import wraps
@@ -33,6 +36,9 @@ from ansible.errors import AnsibleError
 #        the entire chain of calls to here, as there are other things
 #        which may want to output display/logs too
 from ansible.utils.display import Display
+
+from ansible.utils.debug import debug
+
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
@@ -63,6 +69,9 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             self._display = Display(verbosity=connection_info.verbosity)
         if not hasattr(self, '_connected'):
             self._connected = False
+
+        self.success_key = None
+        self.prompt = None
 
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
@@ -119,17 +128,73 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Terminate the connection"""
         pass
 
-    def check_become_success(self, output, success_key):
-        return success_key in output
+    def check_become_success(self, output):
+        return self.success_key in output
 
-    def check_password_prompt(self, output, prompt):
-        if isinstance(prompt, basestring):
-            return output.endswith(prompt)
+    def check_password_prompt(self, output):
+        if isinstance(self.prompt, basestring):
+            return output.endswith(self.prompt)
         else:
-            return prompt(output)
+            return self.prompt(output)
 
-    def check_incorrect_password(self, output, prompt):
+    def check_incorrect_password(self, output):
         incorrect_password = gettext.dgettext(self._connection_info.become_method, C.BECOME_ERROR_STRINGS[self._connection_info.become_method])
-        if output.endswith(incorrect_password):
+        if output.strip().endswith(incorrect_password):
             raise AnsibleError('Incorrect %s password' % self._connection_info.become_method)
+
+    def handle_become_password(self, p, stdin):
+        '''
+            Several cases are handled for privileges with password
+            * NOPASSWD (tty & no-tty): detect success_key on stdout
+            * without NOPASSWD:
+              * detect prompt on stdout (tty)
+              * detect prompt on stderr (no-tty)
+        '''
+
+        out = ''
+        err = ''
+
+        debug("Handling privilege escalation password prompt.")
+
+        if self._connection_info.become and self._connection_info.become_pass:
+
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
+
+            become_output = ''
+            become_errput = ''
+            while True:
+                debug('Waiting for Privilege Escalation input')
+                if self.check_become_success(become_output) or \
+                   self.check_password_prompt(become_output):
+                    break
+
+                rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._connection_info.timeout)
+                if p.stderr in rfd:
+                    chunk = p.stderr.read()
+                    if not chunk:
+                        raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
+                    become_errput += chunk
+
+                    self.check_incorrect_password(become_errput)
+
+                if p.stdout in rfd:
+                    chunk = p.stdout.read()
+                    if not chunk:
+                        raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
+                    become_output += chunk
+
+                if not rfd:
+                    # timeout. wrap up process communication
+                    stdout, stderr = p.communicate()
+                    raise AnsibleError('Connection error waiting for privilege escalation password prompt: %s' % become_output)
+
+            if not self.check_become_success(become_output):
+                debug("Sending privilege escalation password.")
+                stdin.write(self._connection_info.become_pass + '\n')
+            else:
+                out += become_output
+                err += become_errput
+
+        return out, err
 
