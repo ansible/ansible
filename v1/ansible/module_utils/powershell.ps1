@@ -151,7 +151,7 @@ Function Get-FileChecksum($path)
     {
         $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
         $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
-        [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
         $fp.Dispose();
     }
     ElseIf (Test-Path -PathType Container $path)
