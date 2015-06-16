@@ -25,7 +25,7 @@ short_description: Manages instances and virtual machines on Apache CloudStack b
 description:
     - Deploy, start, restart, stop and destroy instances.
 version_added: '2.0'
-author: '"René Moser (@resmo)" <mail@renemoser.net>'
+author: "René Moser (@resmo)"
 options:
   name:
     description:

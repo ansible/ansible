@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: rollbar_deployment
 version_added: 1.6
-author: '"Max Riveiro (@kavu)" <kavu13@gmail.com>'
+author: "Max Riveiro (@kavu)"
 short_description: Notify Rollbar about app deployments
 description:
   - Notify Rollbar about app deployments

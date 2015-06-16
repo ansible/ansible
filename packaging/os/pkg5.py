@@ -19,7 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: pkg5
-author: '"Peter Oliver (@mavit)" <ansible@mavit.org.uk>'
+author: "Peter Oliver (@mavit)"
 short_description: Manages packages with the Solaris 11 Image Packaging System
 version_added: 1.9
 description:

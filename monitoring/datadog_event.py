@@ -14,7 +14,7 @@ description:
 - "Allows to post events to DataDog (www.datadoghq.com) service."
 - "Uses http://docs.datadoghq.com/api/#events API."
 version_added: "1.3"
-author: '"Artūras `arturaz` Šlajus (@arturaz)" <x11@arturaz.net>'
+author: "Artūras `arturaz` Šlajus (@arturaz)"
 notes: []
 requirements: [urllib2]
 options:

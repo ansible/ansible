@@ -95,7 +95,7 @@ notes: []
 requirements:
   - dnf
   - yum-utils (for repoquery)
-author: '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
+author: "Cristian van Ee (@DJMuggs)"
 '''
 
 EXAMPLES = '''
