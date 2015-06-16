@@ -81,43 +81,46 @@ class DocCLI(CLI):
         text = ''
         for module in self.args:
 
-            filename = module_loader.find_plugin(module)
-            if filename is None:
-                self.display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
-                continue
-
-            if any(filename.endswith(x) for x in self.BLACKLIST_EXTS):
-                continue
-
             try:
-                doc, plainexamples, returndocs = module_docs.get_docstring(filename)
-            except:
-                self.display.vvv(traceback.print_exc())
-                self.display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
-                continue
+                filename = module_loader.find_plugin(module)
+                if filename is None:
+                    self.display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
+                    continue
 
-            if doc is not None:
+                if any(filename.endswith(x) for x in self.BLACKLIST_EXTS):
+                    continue
 
-                all_keys = []
-                for (k,v) in doc['options'].iteritems():
-                    all_keys.append(k)
-                all_keys = sorted(all_keys)
-                doc['option_keys'] = all_keys
+                try:
+                    doc, plainexamples, returndocs = module_docs.get_docstring(filename)
+                except:
+                    self.display.vvv(traceback.print_exc())
+                    self.display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
+                    continue
 
-                doc['filename']         = filename
-                doc['docuri']           = doc['module'].replace('_', '-')
-                doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
-                doc['plainexamples']    = plainexamples
-                doc['returndocs']       = returndocs
+                if doc is not None:
 
-                if self.options.show_snippet:
-                    text += DocCLI.get_snippet_text(doc)
+                    all_keys = []
+                    for (k,v) in doc['options'].iteritems():
+                        all_keys.append(k)
+                    all_keys = sorted(all_keys)
+                    doc['option_keys'] = all_keys
+
+                    doc['filename']         = filename
+                    doc['docuri']           = doc['module'].replace('_', '-')
+                    doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
+                    doc['plainexamples']    = plainexamples
+                    doc['returndocs']       = returndocs
+
+                    if self.options.show_snippet:
+                        text += DocCLI.get_snippet_text(doc)
+                    else:
+                        text += DocCLI.get_man_text(doc)
                 else:
-                    text += DocCLI.get_man_text(doc)
-            else:
-                # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
-                # probably a quoting issue.
-                self.display.warning("module %s missing documentation (or could not parse documentation)\n" % module)
+                    # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
+                    # probably a quoting issue.
+                    raise AnsibleError("Parsing produced an empty object.")
+            except Exception, e:
+                raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 
         CLI.pager(text)
         return 0
