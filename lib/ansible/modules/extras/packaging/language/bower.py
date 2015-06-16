@@ -25,7 +25,7 @@ short_description: Manage bower packages with bower
 description:
   - Manage bower packages with bower
 version_added: 1.9
-author: '"Michael Warkentin (@mwarkentin)" <mwarkentin@gmail.com>'
+author: "Michael Warkentin (@mwarkentin)"
 options:
   name:
     description:

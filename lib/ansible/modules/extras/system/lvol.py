@@ -21,8 +21,8 @@
 DOCUMENTATION = '''
 ---
 author:
-    - '"Jeroen Hoekx (@jhoekx)" <jeroen.hoekx@dsquare.be>'
-    - '"Alexander Bulimov (@abulimov)" <lazywolf0@gmail.com>'
+    - "Jeroen Hoekx (@jhoekx)" 
+    - "Alexander Bulimov (@abulimov)" 
 module: lvol
 short_description: Configure LVM logical volumes
 description:

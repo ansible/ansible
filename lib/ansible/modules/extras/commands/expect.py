@@ -73,7 +73,7 @@ notes:
   - If you want to run a command through the shell (say you are using C(<),
     C(>), C(|), etc), you must specify a shell in the command such as
     C(/bin/bash -c "/path/to/something | grep else")
-author: '"Matt Martz (@sivel)" <matt@sivel.net>'
+author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = '''

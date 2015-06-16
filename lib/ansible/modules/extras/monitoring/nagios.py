@@ -85,7 +85,7 @@ options:
     required: true
     default: null
 
-author: '"Tim Bielawa (@tbielawa)" <tbielawa@redhat.com>'
+author: "Tim Bielawa (@tbielawa)" 
 requirements: [ "Nagios" ]
 '''
 

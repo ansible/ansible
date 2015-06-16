@@ -31,8 +31,8 @@ description:
       or any OS that uses C(pkgsrc).  (Home: U(http://pkgin.net/))"
 version_added: "1.0"
 author:
-    - '"Larry Gilbert (L2G)" <larry@L2G.to>'
-    - '"Shaun Zinck (@szinck)" <shaun.zinck at gmail.com>'
+    - "Larry Gilbert (L2G)"
+    - "Shaun Zinck (@szinck)"
 notes:
     - "Known bug with pkgin < 0.8.0: if a package is removed and another
       package depends on it, the other package will be silently removed as

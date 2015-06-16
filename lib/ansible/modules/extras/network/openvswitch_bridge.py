@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: openvswitch_bridge
 version_added: 1.4
-author: '"David Stygstra (@stygstra)" <david.stygstra@gmail.com>'
+author: "David Stygstra (@stygstra)"
 short_description: Manage Open vSwitch bridges
 requirements: [ ovs-vsctl ]
 description:

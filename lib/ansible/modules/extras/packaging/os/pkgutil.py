@@ -32,7 +32,7 @@ description:
     - Pkgutil is an advanced packaging system, which resolves dependency on installation.
       It is designed for CSW packages.
 version_added: "1.3"
-author: '"Alexander Winkler (@dermute)" <mail () winkler-alexander.de>'
+author: "Alexander Winkler (@dermute)"
 options:
   name:
     description:

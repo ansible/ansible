@@ -25,7 +25,7 @@ short_description: Manage node.js packages with npm
 description:
   - Manage node.js packages with Node Package Manager (npm)
 version_added: 1.2
-author: '"Chris Hoffman (@chrishoffman)" <christopher.hoffman@gmail.com>'
+author: "Chris Hoffman (@chrishoffman)"
 options:
   name:
     description:

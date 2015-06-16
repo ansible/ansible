@@ -25,7 +25,7 @@ import syslog
 DOCUMENTATION = '''
 ---
 module: openbsd_pkg
-author: '"Patrik Lundin (@eest)" <patrik.lundin.swe@gmail.com>'
+author: "Patrik Lundin (@eest)"
 version_added: "1.1"
 short_description: Manage packages on OpenBSD.
 description:

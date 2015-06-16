@@ -39,7 +39,7 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
     version_added: 1.5.1
-author: '"Jonas Pfenniger (@zimbatm)" <zimbatm@zimbatm.com>'
+author: "Jonas Pfenniger (@zimbatm)"
 '''
 
 EXAMPLES = '''

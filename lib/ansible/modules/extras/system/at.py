@@ -59,7 +59,7 @@ options:
     default: false
 requirements:
  - at
-author: '"Richard Isaacson (@risaacson)" <richard.c.isaacson@gmail.com>'
+author: "Richard Isaacson (@risaacson)"
 '''
 
 EXAMPLES = '''

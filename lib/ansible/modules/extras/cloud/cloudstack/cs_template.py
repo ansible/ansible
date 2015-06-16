@@ -25,7 +25,7 @@ short_description: Manages templates on Apache CloudStack based clouds.
 description:
   - Register a template from URL, create a template from a ROOT volume of a stopped VM or its snapshot and delete templates.
 version_added: '2.0'
-author: '"René Moser (@resmo)" <mail@renemoser.net>'
+author: "René Moser (@resmo)"
 options:
   name:
     description:

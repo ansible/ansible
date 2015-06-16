@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: open_iscsi
-author: '"Serge van Ginderachter (@srvg)" <serge@vanginderachter.be>'
+author: "Serge van Ginderachter (@srvg)"
 version_added: "1.4"
 short_description: Manage iscsi targets with open-iscsi
 description:

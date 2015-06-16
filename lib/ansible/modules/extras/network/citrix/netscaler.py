@@ -82,7 +82,7 @@ options:
     choices: ['yes', 'no']
 
 requirements: [ "urllib", "urllib2" ]
-author: '"Nandor Sivok (@dominis)" <nandor@gawker.com>'
+author: "Nandor Sivok (@dominis)"
 '''
 
 EXAMPLES = '''
