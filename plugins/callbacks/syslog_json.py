@@ -22,7 +22,7 @@ class CallbackModule(object):
         self.logger.setLevel(logging.DEBUG)
 
         self.handler = logging.handlers.SysLogHandler(
-            address = (os.getenv('SYSLOG_SERVER','locahost'),
+            address = (os.getenv('SYSLOG_SERVER','localhost'),
                        os.getenv('SYSLOG_PORT',514)), 
             facility=logging.handlers.SysLogHandler.LOG_USER
         )
