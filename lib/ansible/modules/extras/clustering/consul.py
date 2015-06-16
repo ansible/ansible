@@ -42,7 +42,7 @@ requirements:
   - python-consul
   - requests
 version_added: "2.0"
-author: '"Steve Gargan (@sgargan)" <steve.gargan@gmail.com>'
+author: "Steve Gargan (@sgargan)" 
 options:
     state:
         description:

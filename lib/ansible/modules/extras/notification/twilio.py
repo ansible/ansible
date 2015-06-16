@@ -58,7 +58,7 @@ options:
       (multimedia message) instead of a plain SMS
     required: false
 
-author: '"Matt Makai (@makaimc)" <matthew.makai@gmail.com>'
+author: "Matt Makai (@makaimc)"
 '''
 
 EXAMPLES = '''

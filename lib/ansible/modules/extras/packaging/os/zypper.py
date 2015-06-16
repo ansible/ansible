@@ -31,7 +31,7 @@ import re
 DOCUMENTATION = '''
 ---
 module: zypper
-author: '"Patrick Callahan (@dirtyharrycallahan)" <pmc@patrickcallahan.com>'
+author: "Patrick Callahan (@dirtyharrycallahan)"
 version_added: "1.2"
 short_description: Manage packages on SUSE and openSUSE
 description:

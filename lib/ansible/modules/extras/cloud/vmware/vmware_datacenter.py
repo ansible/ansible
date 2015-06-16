@@ -25,7 +25,7 @@ short_description: Manage VMware vSphere Datacenters
 description:
     - Manage VMware vSphere Datacenters
 version_added: 2.0
-author: '"Joseph Callen (@jcpowermac)" <jcallen () csc.com>'
+author: "Joseph Callen (@jcpowermac)"
 notes:
     - Tested on vSphere 5.5
 requirements:

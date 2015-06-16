@@ -29,9 +29,9 @@ description:
     - Manage firewall with UFW.
 version_added: 1.6
 author:
-    - '"Aleksey Ovcharenko (@ovcharenko)" <aleksey.ovcharenko@gmail.com>'
-    - '"Jarno Keskikangas (@pyykkis)" <jarno.keskikangas@gmail.com>'
-    - '"Ahti Kitsik (@ahtik)" <ak@ahtik.com>'
+    - "Aleksey Ovcharenko (@ovcharenko)"
+    - "Jarno Keskikangas (@pyykkis)"
+    - "Ahti Kitsik (@ahtik)"
 notes:
     - See C(man ufw) for more examples.
 requirements:

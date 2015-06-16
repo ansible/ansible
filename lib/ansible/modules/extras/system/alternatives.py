@@ -31,8 +31,8 @@ description:
     - Useful when multiple programs are installed but provide similar functionality (e.g. different editors).
 version_added: "1.6"
 author:
-    - '"David Wittman (@DavidWittman)" <dwittman@gmail.com>'
-    - '"Gabe Mulley (@mulby)" <gabe.mulley@gmail.com>'
+    - "David Wittman (@DavidWittman)"
+    - "Gabe Mulley (@mulby)"
 options:
   name:
     description:

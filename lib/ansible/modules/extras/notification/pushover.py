@@ -48,7 +48,7 @@ options:
     description: Message priority (see u(https://pushover.net) for details.)
     required: false
 
-author: '"Jim Richardson (@weaselkeeper)" <weaselkeeper@gmail.com>'
+author: "Jim Richardson (@weaselkeeper)"
 '''
 
 EXAMPLES = '''

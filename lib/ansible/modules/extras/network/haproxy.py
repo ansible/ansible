@@ -91,7 +91,7 @@ examples:
 # enable server in 'www' backend pool with change server(s) weight
 - haproxy: state=enabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock weight=10 backend=www
 
-author: Ravi Bhure <ravibhure@gmail.com>
+author: "Ravi Bhure (@ravibhure)"
 '''
 
 import socket

@@ -2,7 +2,7 @@
 
 DOCUMENTATION = '''
 module: rabbitmq_queue
-author: '"Manuel Sousa (@manuel-sousa)" <manuel.sousa@gmail.com>'
+author: "Manuel Sousa (@manuel-sousa)" 
 version_added: "2.0"
 
 short_description: This module manages rabbitMQ queues
