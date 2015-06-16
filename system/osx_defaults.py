@@ -19,14 +19,14 @@
 DOCUMENTATION = '''
 ---
 module: osx_defaults
-author: Franck Nijhof
+author: Franck Nijhof (@frenck)
 short_description: osx_defaults allows users to read, write, and delete Mac OS X user defaults from Ansible
 description:
   - osx_defaults allows users to read, write, and delete Mac OS X user defaults from Ansible scripts.
     Mac OS X applications and other programs use the defaults system to record user preferences and other
     information that must be maintained when the applications aren't running (such as default font for new
     documents, or the position of an Info panel).
-version_added: 1.8
+version_added: "2.0"
 options:
   domain:
     description:
@@ -47,7 +47,7 @@ options:
     description:
       - Add new elements to the array for a key which has an array as its value.
     required: false
-    default: string
+    default: false
     choices: [ "true", "false" ]
   value:
     description:
