@@ -171,6 +171,14 @@ def yum_base(conf_file=None):
     my.preconf.errorlevel=0
     if conf_file and os.path.exists(conf_file):
         my.preconf.fn = conf_file
+    if os.geteuid() != 0:
+        if hasattr(my, 'setCacheDir'):
+            my.setCacheDir()
+        else:
+            cachedir = yum.misc.getCacheDir()
+            my.repos.setCacheDir(cachedir)
+            my.conf.cache = 0
+
     return my
 
 def install_yum_utils(module):
