@@ -75,7 +75,7 @@ options:
     require: false
     default: null
     aliases: []
-author: Trond Hindenes, Peter Mounce, Pepe Barbe, Adam Keech
+author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
 '''
 
 # TODO:
