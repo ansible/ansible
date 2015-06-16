@@ -51,7 +51,7 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
         ''' run a command on the local host '''
 
-        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data)
+        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
 
         debug("in local.exec_command()")
         # su requires to be run from a terminal, and therefore isn't supported here (yet?)
