@@ -82,6 +82,7 @@ New Modules:
 New Inventory scripts:
   * cloudstack
   * fleetctl
+  * serf
 
 Other Notable Changes:
 
