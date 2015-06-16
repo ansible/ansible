@@ -45,9 +45,13 @@ New Modules:
   * expect
   * find
   * maven_artifact
+  * openstack: os_ironic
+  * openstack: os_ironic_node
   * openstack: os_client_config
   * openstack: os_image
   * openstack: os_network
+  * openstack: os_object
+  * openstack: os_security_group
   * openstack: os_server
   * openstack: os_server_actions
   * openstack: os_server_facts
