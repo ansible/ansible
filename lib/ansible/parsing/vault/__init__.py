@@ -86,6 +86,11 @@ HEADER=u'$ANSIBLE_VAULT'
 CIPHER_WHITELIST=['AES', 'AES256']
 
 
+def check_prereqs():
+
+    if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+        raise errors.AnsibleError(CRYPTO_UPGRADE)
+
 class VaultLib(object):
 
     def __init__(self, password):
@@ -239,8 +244,7 @@ class VaultEditor(object):
     def create_file(self):
         """ create a new encrypted file """
 
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        check_prereqs()
 
         if os.path.isfile(self.filename):
             raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
@@ -250,8 +254,7 @@ class VaultEditor(object):
 
     def decrypt_file(self):
 
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        check_prereqs()
 
         if not os.path.isfile(self.filename):
             raise errors.AnsibleError("%s does not exist" % self.filename)
@@ -269,8 +272,7 @@ class VaultEditor(object):
 
     def edit_file(self):
 
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        check_prereqs()
 
         # decrypt to tmpfile
         tmpdata = self.read_data(self.filename)
@@ -286,8 +288,7 @@ class VaultEditor(object):
 
     def view_file(self):
 
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        check_prereqs()
 
         # decrypt to tmpfile
         tmpdata = self.read_data(self.filename)
@@ -302,8 +303,7 @@ class VaultEditor(object):
 
     def encrypt_file(self):
 
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        check_prereqs()
 
         if not os.path.isfile(self.filename):
             raise errors.AnsibleError("%s does not exist" % self.filename)
@@ -319,8 +319,7 @@ class VaultEditor(object):
 
     def rekey_file(self, new_password):
 
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        check_prereqs()
 
         # decrypt
         tmpdata = self.read_data(self.filename)
@@ -369,6 +368,48 @@ class VaultEditor(object):
         pager.append(filename)
 
         return pager
+
+class VaultFile(object):
+
+    def __init__(self, password, filename):
+        self.password = password
+
+        self.filename = filename
+        if not os.path.isfile(self.filename):
+            raise errors.AnsibleError("%s does not exist" % self.filename)
+        try:
+            self.filehandle = open(filename, "rb")
+        except Exception, e:
+            raise errors.AnsibleError("Could not open %s: %s" % (self.filename, str(e)))
+
+        _, self.tmpfile = tempfile.mkstemp()
+
+    def __del__(self):
+        self.filehandle.close()
+        os.unlink(self.tmplfile)
+
+    def is_encrypted(self):
+        peak = self.filehandler.readline()
+        if peak.startswith(HEADER):
+            return True
+        else:
+            return False
+
+    def get_decrypted(self):
+
+        check_prereqs()
+
+        if self.is_encrypted():
+            tmpdata = self.filehandle.read()
+            this_vault = VaultLib(self.password)
+            dec_data = this_vault.decrypt(tmpdata)
+            if dec_data is None:
+                raise errors.AnsibleError("Decryption failed")
+            else:
+                self.tempfile.write(dec_data)
+                return self.tmpfile
+        else:
+            return self.filename
 
 ########################################
 #               CIPHERS                #
@@ -503,8 +544,7 @@ class VaultAES256(object):
 
     def __init__(self):
 
-        if not HAS_PBKDF2 or not HAS_COUNTER or not HAS_HASH:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+        check_prereqs()
 
     def gen_key_initctr(self, password, salt):
         # 16 for AES 128, 32 for AES256
