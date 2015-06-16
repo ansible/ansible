@@ -47,15 +47,27 @@ options:
    port_range_max:
       description:
         - Ending port
-     required: true
+      required: true
    remote_ip_prefix:
       description:
         - Source IP address(es) in CIDR notation (exclusive with remote_group)
-     required: false
+      required: false
    remote_group:
       description:
         - ID of Security group to link (exclusive with remote_ip_prefix)
-     required: false
+      required: false
+   ethertype:
+      description:
+        - Must be IPv4 or IPv6, and addresses represented in CIDR must
+          match the ingress or egress rules. Not all providers support IPv6.
+      choices: ['IPv4', 'IPv6']
+      default: IPv4
+   direction:
+     description:
+        - The direction in which the security group rule is applied. Not
+          all providers support egress.
+     choices: ['egress', 'ingress']
+     default: ingress
    state:
      description:
        - Should the resource be present or absent.
@@ -78,80 +90,113 @@ EXAMPLES = '''
 '''
 
 
-def _security_group_rule(module, nova_client, action='create', **kwargs):
-    f = getattr(nova_client.security_group_rules, action)
-    try:
-        secgroup = f(**kwargs)
-    except Exception, e:
-        module.fail_json(msg='Failed to %s security group rule: %s' %
-                         (action, e.message))
+def _find_matching_rule(module, secgroup):
+    """
+    Find a rule in the group that matches the module parameters.
 
+    :returns: The matching rule dict, or None if no matches.
+    """
+    protocol = module.params['protocol']
+    port_range_min = module.params['port_range_min']
+    port_range_max = module.params['port_range_max']
+    remote_ip_prefix = module.params['remote_ip_prefix']
+    ethertype = module.params['ethertype']
+    direction = module.params['direction']
 
-def _get_rule_from_group(module, secgroup):
     for rule in secgroup['security_group_rules']:
-        # No port, or -1, will be returned as None
-        port_range_min = rule['port_range_min'] or -1
-        port_range_max = rule['port_range_max'] or -1
-        if (rule['protocol'] == module.params['protocol'] and
-                port_range_min == module.params['port_range_min'] and
-                port_range_max == module.params['port_range_max'] and
-                rule['remote_ip_prefix'] == module.params['remote_ip_prefix']):
+        # No port, or -1, will be returned from shade as None
+        rule_port_range_min = rule['port_range_min'] or -1
+        rule_port_range_max = rule['port_range_max'] or -1
+
+        if (protocol == rule['protocol']
+                and port_range_min == rule_port_range_min
+                and port_range_max == rule_port_range_max
+                and remote_ip_prefix == rule['remote_ip_prefix']
+                and ethertype == rule['ethertype']
+                and direction == rule['direction']):
             return rule
     return None
+
+
+def _system_state_change(module, secgroup):
+    state = module.params['state']
+    if secgroup:
+        rule_exists = _find_matching_rule(module, secgroup)
+    else:
+        return False
+
+    if state == 'present' and not rule_exists:
+        return True
+    if state == 'absent' and rule_exists:
+        return True
+    return False
+
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        security_group     = dict(required=True),
-        protocol           = dict(default='tcp', choices=['tcp', 'udp', 'icmp']),
-        port_range_min     = dict(required=True),
-        port_range_max     = dict(required=True),
-        remote_ip_prefix   = dict(required=False, default=None),
+        security_group   = dict(required=True),
+        protocol         = dict(default='tcp',
+                                choices=['tcp', 'udp', 'icmp']),
+        port_range_min   = dict(required=True),
+        port_range_max   = dict(required=True),
+        remote_ip_prefix = dict(required=False, default=None),
         # TODO(mordred): Make remote_group handle name and id
-        remote_group       = dict(required=False, default=None),
-        state              = dict(default='present', choices=['absent', 'present']),
+        remote_group     = dict(required=False, default=None),
+        ethertype        = dict(default='IPv4',
+                                choices=['IPv4', 'IPv6']),
+        direction        = dict(default='ingress',
+                                choices=['egress', 'ingress']),
+        state            = dict(default='present',
+                                choices=['absent', 'present']),
     )
+
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
             ['remote_ip_prefix', 'remote_group'],
         ]
     )
-    module = AnsibleModule(argument_spec, **module_kwargs)
+
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
+
+    state = module.params['state']
+    security_group = module.params['security_group']
+    changed = False
 
     try:
         cloud = shade.openstack_cloud(**module.params)
-        nova_client = cloud.nova_client
-        changed = False
+        secgroup = cloud.get_security_group(security_group)
 
-        secgroup = cloud.get_security_group(module.params['security_group'])
+        if module.check_mode:
+            module.exit_json(changed=_system_state_change(module, secgroup))
 
-        if module.params['state'] == 'present':
+        if state == 'present':
             if not secgroup:
                 module.fail_json(msg='Could not find security group %s' %
-                                 module.params['security_group'])
+                                 security_group)
 
-            if not _get_rule_from_group(module, secgroup):
-                _security_group_rule(module, nova_client, 'create',
-                                     parent_group_id=secgroup['id'],
-                                     ip_protocol=module.params['protocol'],
-                                     from_port=module.params['port_range_min'],
-                                     to_port=module.params['port_range_max'],
-                                     cidr=module.params['remote_ip_prefix']
-                                     if 'remote_ip_prefix' in module.params else None,
-                                     group_id=module.params['remote_group']
-                                     if 'remote_group' in module.params else None
-                                     )
+            if not _find_matching_rule(module, secgroup):
+                cloud.create_security_group_rule(
+                    secgroup['id'],
+                    port_range_min=module.params['port_range_min'],
+                    port_range_max=module.params['port_range_max'],
+                    protocol=module.params['protocol'],
+                    remote_ip_prefix=module.params['remote_ip_prefix'],
+                    remote_group_id=module.params['remote_group'],
+                    direction=module.params['direction'],
+                    ethertype=module.params['ethertype']
+                )
                 changed = True
 
-
-        if module.params['state'] == 'absent' and secgroup:
-            rule = _get_rule_from_group(module, secgroup)
-            if secgroup and rule:
-                _security_group_rule(module, nova_client, 'delete',
-                                     rule=rule['id'])
+        if state == 'absent' and secgroup:
+            rule = _find_matching_rule(module, secgroup)
+            if rule:
+                cloud.delete_security_group_rule(rule['id'])
                 changed = True
 
-        module.exit_json(changed=changed, result="success")
+        module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
