@@ -197,7 +197,7 @@ options:
   volumes:
     version_added: "1.5"
     description:
-      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume.
+      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume. Encrypt the volume by passing 'encrypted: true' in the volume dict.
     required: false
     default: null
     aliases: []
@@ -668,7 +668,8 @@ def create_block_device(module, ec2, volume):
                            size=volume.get('volume_size'),
                            volume_type=volume.get('device_type'),
                            delete_on_termination=volume.get('delete_on_termination', False),
-                           iops=volume.get('iops'))
+                           iops=volume.get('iops'),
+                           encrypted=volume.get('encrypted', False))
 
 def boto_supports_param_in_spot_request(ec2, param):
     """
