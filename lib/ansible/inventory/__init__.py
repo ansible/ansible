@@ -364,7 +364,7 @@ class Inventory(object):
                 for host in group.get_hosts():
                     __append_host_to_results(host)
             else:
-                if self._match(group.name, pattern):
+                if self._match(group.name, pattern) and group.name not in ('all', 'ungrouped'):
                     for host in group.get_hosts():
                         __append_host_to_results(host)
                 else:
