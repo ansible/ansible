@@ -24,7 +24,7 @@ module: vsphere_copy
 short_description: Copy a file to a vCenter datastore
 description: Upload files to a vCenter datastore
 version_added: 2.0
-author: Dag Wieers <dag@wieers.com>
+author: Dag Wieers (@dagwieers) <dag@wieers.com>
 options:
   host:
     description:
@@ -55,8 +55,8 @@ options:
       - The file to push to the datastore on the vCenter server.
     required: true
 notes:
-  - This module ought to be run from a system that can access vCenter directly.
-    Either by using C(transport: local), or using C(delegate_to).
+  - This module ought to be run from a system that can access vCenter directly and has the file to transfer.
+    It can be the normal remote target or you can change it either by using C(transport: local) or using C(delegate_to).
   - Tested on vSphere 5.5
 '''
 
