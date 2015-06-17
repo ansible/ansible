@@ -73,6 +73,9 @@ class Conditional:
         if conditional in all_vars and '-' not in unicode(all_vars[conditional]):
             conditional = all_vars[conditional]
 
+        # make sure the templar is using the variables specifed to this method
+        templar.set_available_variables(variables=all_vars)
+
         conditional = templar.template(conditional)
         if not isinstance(conditional, basestring) or conditional == "":
             return conditional
