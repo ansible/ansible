@@ -105,7 +105,9 @@ class ResultProcess(multiprocessing.Process):
                     time.sleep(0.1)
                     continue
 
-                host_name = result._host.get_name()
+                # if this task is registering a result, do it now
+                if result._task.register:
+                    self._send_result(('set_host_var', result._host, result._task.register, result._result))
 
                 # send callbacks, execute other options based on the result status
                 # FIXME: this should all be cleaned up and probably moved to a sub-function.
@@ -159,10 +161,6 @@ class ResultProcess(multiprocessing.Process):
 
                     # finally, send the ok for this task
                     self._send_result(('host_task_ok', result))
-
-                # if this task is registering a result, do it now
-                if result._task.register:
-                    self._send_result(('set_host_var', result._host, result._task.register, result._result))
 
             except queue.Empty:
                 pass
