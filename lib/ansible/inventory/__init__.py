@@ -82,7 +82,7 @@ class Inventory(object):
             if not os.path.exists(host_list):
                 inventory_plugins_dir = os.path.join(
                     os.path.dirname(C.__file__),
-                    '..', '..', 'plugins', 'inventory')
+                    'plugins', 'inventory', 'plugins')
                 for path in (os.path.join(inventory_plugins_dir, host_list),
                              os.path.join(inventory_plugins_dir, host_list + '.py')):
                     if os.path.exists(path):

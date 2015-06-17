@@ -25,7 +25,8 @@ setup(name='ansible',
       package_dir={ '': 'lib' },
       packages=find_packages('lib'),
       package_data={
-         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1'],
+         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1',
+              'plugins/inventory/plugins/*'],
       },
       scripts=[
          'bin/ansible',
