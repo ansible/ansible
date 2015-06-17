@@ -197,7 +197,7 @@ def main():
             argument_spec = dict(
             login_user=dict(default=None),
             login_password=dict(default=None),
-            login_host=dict(default="localhost"),
+            login_host=dict(default="127.0.0.1"),
             login_port=dict(default="3306"),
             login_unix_socket=dict(default=None),
             variable=dict(default=None),
@@ -233,9 +233,9 @@ def main():
         module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
     try:
         if module.params["login_unix_socket"]:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], port=module.params["login_port"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password, db="mysql")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], port=module.params["login_port"], user=login_user, passwd=login_password, db="mysql")
+            db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password, db="mysql")
         cursor = db_connection.cursor()
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
