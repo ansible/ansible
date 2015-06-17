@@ -144,7 +144,8 @@ class Inventory(object):
 
             vars_loader.add_directory(self.basedir(), with_subdir=True)
         else:
-            raise errors.AnsibleError("Unable to find an inventory file, specify one with -i ?")
+            raise errors.AnsibleError("Unable to find an inventory file (%s), "
+                                      "specify one with -i ?" % host_list)
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
