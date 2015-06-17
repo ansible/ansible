@@ -154,7 +154,9 @@ class StrategyBase:
                             debug("marking %s as failed" % host.name)
                             iterator.mark_host_failed(host)
                             self._tqm._failed_hosts[host.name] = True
-                        self._tqm._stats.increment('failures', host.name)
+                            self._tqm._stats.increment('failures', host.name)
+                        else:
+                            self._tqm._stats.increment('ok', host.name)
                         self._tqm.send_callback('v2_runner_on_failed', task_result)
                     elif result[0] == 'host_unreachable':
                         self._tqm._unreachable_hosts[host.name] = True
