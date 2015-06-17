@@ -148,7 +148,7 @@ def main():
 
         if module.params['state'] == 'present':
             if not image:
-                result = cloud.create_image(
+                image = cloud.create_image(
                     name=module.params['name'],
                     filename=module.params['filename'],
                     disk_format=module.params['disk_format'],
@@ -158,26 +158,26 @@ def main():
                 )
                 changed = True
                 if not module.params['wait']:
-                    module.exit_json(changed=changed, result=result)
-                image = cloud.get_image(name_or_id=result['id'])
+                    module.exit_json(changed=changed, image=image, id=image.id)
 
             cloud.update_image_properties(
                 image=image,
                 kernel=module.params['kernel'],
                 ramdisk=module.params['ramdisk'],
                 **module.params['properties'])
+            image = cloud.get_image(name_or_id=image.id)
+            module.exit_json(changed=changed, image=image, id=image.id)
 
         elif module.params['state'] == 'absent':
             if not image:
-                module.exit_json(changed=False, result="success")
+                changed = False
             else:
                 cloud.delete_image(
                     name_or_id=module.params['name'],
                     wait=module.params['wait'],
                     timeout=module.params['timeout'])
                 changed = True
-
-        module.exit_json(changed=changed, id=image.id, result="success")
+            module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)

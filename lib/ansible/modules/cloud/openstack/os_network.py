@@ -88,16 +88,14 @@ def main():
         if state == 'present':
             if not net:
                 net = cloud.create_network(name, shared, admin_state_up)
-                module.exit_json(changed=True, result="Created", id=net['id'])
-            else:
-                module.exit_json(changed=False, result="Success", id=net['id'])
+            module.exit_json(changed=False, network=net, id=net['id'])
 
         elif state == 'absent':
             if not net:
-                module.exit_json(changed=False, result="Success")
+                module.exit_json(changed=False)
             else:
                 cloud.delete_network(name)
-                module.exit_json(changed=True, result="Deleted")
+                module.exit_json(changed=True)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
