@@ -55,7 +55,7 @@ from suds.sudsobject import Object as SudsObject
 
 
 class VMwareInventory(object):
-
+    
     def __init__(self, guests_only=None):
         self.config = ConfigParser.SafeConfigParser()
         if os.environ.get('VMWARE_INI', ''):
