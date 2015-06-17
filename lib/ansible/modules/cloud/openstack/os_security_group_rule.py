@@ -177,8 +177,9 @@ def main():
                 module.fail_json(msg='Could not find security group %s' %
                                  security_group)
 
-            if not _find_matching_rule(module, secgroup):
-                cloud.create_security_group_rule(
+            rule = _find_matching_rule(module, secgroup):
+            if not rule:
+                rule = cloud.create_security_group_rule(
                     secgroup['id'],
                     port_range_min=module.params['port_range_min'],
                     port_range_max=module.params['port_range_max'],
@@ -189,6 +190,7 @@ def main():
                     ethertype=module.params['ethertype']
                 )
                 changed = True
+            module.exit_json(changed=changed, rule=rule, id=rule.id)
 
         if state == 'absent' and secgroup:
             rule = _find_matching_rule(module, secgroup)
@@ -196,7 +198,7 @@ def main():
                 cloud.delete_security_group_rule(rule['id'])
                 changed = True
 
-        module.exit_json(changed=changed)
+            module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
