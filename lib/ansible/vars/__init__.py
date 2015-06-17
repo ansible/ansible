@@ -219,6 +219,7 @@ class VariableManager:
             if self._inventory is not None:
                 hostvars = HostVars(vars_manager=self, inventory=self._inventory, loader=loader)
                 all_vars['hostvars'] = hostvars
+                all_vars['groups']   = self._inventory.groups_list()
 
         if task:
             if task._role:
