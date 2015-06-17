@@ -35,7 +35,7 @@ import os
 import sys
 
 # https://pypi.python.org/pypi/serfclient
-from serfclient.client import SerfClient
+from serfclient import SerfClient, EnvironmentConfig
 
 try:
     import json
@@ -46,17 +46,8 @@ _key = 'serf'
 
 
 def _serf_client():
-    kwargs = {}
-
-    rpc_addr = os.getenv('SERF_RPC_ADDR')
-    if rpc_addr:
-        kwargs['host'], kwargs['port'] = rpc_addr.split(':')
-
-    rpc_auth = os.getenv('SERF_RPC_AUTH')
-    if rpc_auth:
-        kwargs['rpc_auth'] = rpc_auth
-
-    return SerfClient(**kwargs)
+    env = EnvironmentConfig()
+    return SerfClient(host=env.host, port=env.port, rpc_auth=env.auth_key)
 
 
 def get_serf_members_data():
