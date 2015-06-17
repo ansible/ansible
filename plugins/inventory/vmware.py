@@ -305,11 +305,6 @@ class VMwareInventory(object):
         else:
             vm_group = default_group + '_vm'
 
-        if self.config.has_option('defaults', 'prefix_filter'):
-            prefix_filter = self.config.get('defaults', 'prefix_filter')
-        else:
-            prefix_filter = None
-
         # Loop through physical hosts:
         for host in HostSystem.all(self.client):
 
@@ -323,9 +318,6 @@ class VMwareInventory(object):
 
             # Loop through all VMs on physical host.
             for vm in host.vm:
-                if prefix_filter:
-                    if vm.name.startswith( prefix_filter ):
-                        continue
                 self._add_host(inv, 'all', vm.name)
                 self._add_host(inv, vm_group, vm.name)
                 vm_info = self._get_vm_info(vm)
