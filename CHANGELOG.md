@@ -45,6 +45,7 @@ New Modules:
   * dpkg_selections
   * expect
   * find
+  * hall
   * maven_artifact
   * openstack: os_ironic
   * openstack: os_ironic_node
