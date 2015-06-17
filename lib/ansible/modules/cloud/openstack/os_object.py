@@ -115,7 +115,7 @@ def main():
 
         changed = process_object(cloud, **module.params)
 
-        module.exit_json(changed=changed, result="success")
+        module.exit_json(changed=changed)
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
 

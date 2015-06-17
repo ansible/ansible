@@ -89,7 +89,7 @@ EXAMPLES = '''
 def _present_volume(module, cloud):
     if cloud.volume_exists(module.params['display_name']):
         v = cloud.get_volume(module.params['display_name'])
-        module.exit_json(changed=False, id=v['id'])
+        module.exit_json(changed=False, id=v['id'], volume=v)
 
     volume_args = dict(
         size=module.params['size'],
@@ -106,7 +106,7 @@ def _present_volume(module, cloud):
     volume = cloud.create_volume(
         wait=module.params['wait'], timeout=module.params['timeout'],
         **volume_args)
-    module.exit_json(changed=True, id=volume['id'])
+    module.exit_json(changed=True, id=volume['id'], volume=volume)
 
 
 def _absent_volume(module, cloud):
@@ -116,8 +116,8 @@ def _absent_volume(module, cloud):
             wait=module.params['wait'],
             timeout=module.params['timeout'])
     except shade.OpenStackCloudTimeout:
-        module.exit_json(changed=False, result="Volume deletion timed-out")
-    module.exit_json(changed=True, result='Volume Deleted')
+        module.exit_json(changed=False)
+    module.exit_json(changed=True)
 
 
 def main():
