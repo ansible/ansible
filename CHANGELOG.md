@@ -74,6 +74,7 @@ New Modules:
   * vertica_schema
   * vertica_user
   * vmware_datacenter
+  * vsphere_copy
   * webfaction_app
   * webfaction_db
   * webfaction_domain
