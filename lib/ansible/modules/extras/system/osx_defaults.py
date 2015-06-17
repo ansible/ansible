@@ -343,7 +343,7 @@ def main():
                                array_add=array_add, value=value, state=state, path=path)
         changed = defaults.run()
         module.exit_json(changed=changed)
-    except OSXDefaultsException as e:
+    except OSXDefaultsException, e:
         module.fail_json(msg=e.message)
 
 # /main ------------------------------------------------------------------- }}}
