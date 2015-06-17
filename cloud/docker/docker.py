@@ -59,11 +59,10 @@ options:
     version_added: "1.5"
   ports:
     description:
-      - List containing private to public port mapping specification. Use docker
-      - 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000)'
-      - where  8000 is a container port, 9000 is a host port, and 0.0.0.0 is
-      - a host interface. The container ports need to be exposed either in the 
-      - Dockerfile or via the next option.
+      - "List containing private to public port mapping specification.
+        Use docker 'CLI-style syntax: C(8000), C(9000:8000), or C(0.0.0.0:9000:8000)'
+        where 8000 is a container port, 9000 is a host port, and 0.0.0.0 is - a host interface.
+        The container ports need to be exposed either in the Dockerfile or via the C(expose) option."
     default: null
     version_added: "1.5"
   expose:
