@@ -118,12 +118,14 @@ def main():
         if state == 'present':
             if not secgroup:
                 secgroup = cloud.create_security_group(name, description)
-                module.exit_json(changed=True, id=secgroup['id'])
+                module.exit_json(
+                    changed=True, id=secgroup.id, secgroup=secgroup)
             else:
                 if _needs_update(module, secgroup):
                     secgroup = cloud.update_security_group(
                         secgroup['id'], description=description)
-                    module.exit_json(changed=True, id=secgroup['id'])
+                    module.exit_json(
+                        changed=True, id=secgroup.id, secgroup=secgroup)
                 else:
                     module.exit_json(changed=False)
 
