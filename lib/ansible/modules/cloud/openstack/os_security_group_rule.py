@@ -177,7 +177,7 @@ def main():
                 module.fail_json(msg='Could not find security group %s' %
                                  security_group)
 
-            rule = _find_matching_rule(module, secgroup):
+            rule = _find_matching_rule(module, secgroup)
             if not rule:
                 rule = cloud.create_security_group_rule(
                     secgroup['id'],
