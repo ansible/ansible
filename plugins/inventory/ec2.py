@@ -520,7 +520,10 @@ class Ec2Inventory(object):
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
             for k, v in instance.tags.items():
-                key = self.to_safe("tag_" + k + "=" + v)
+                if v:
+                    key = self.to_safe("tag_" + k + "=" + v)
+                else:
+                    key = self.to_safe("tag_" + k)
                 self.push(self.inventory, key, dest)
                 if self.nested_groups:
                     self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
