@@ -209,7 +209,10 @@ class OSXDefaults(object):
 
         # We need to convert some values so the defaults commandline understands it
         if type(self.value) is bool:
-            value = "TRUE" if self.value else "FALSE"
+            if self.value:
+                value = "TRUE"
+            else:
+                value = "FALSE"
         elif type(self.value) is int or type(self.value) is float:
             value = str(self.value)
         elif self.array_add and self.current_value is not None:
@@ -340,7 +343,7 @@ def main():
                                array_add=array_add, value=value, state=state, path=path)
         changed = defaults.run()
         module.exit_json(changed=changed)
-    except OSXDefaultsException as e:
+    except OSXDefaultsException, e:
         module.fail_json(msg=e.message)
 
 # /main ------------------------------------------------------------------- }}}
