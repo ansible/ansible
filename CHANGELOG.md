@@ -42,6 +42,7 @@ New Modules:
   * cloudstack: cs_template
   * cloudstack: cs_vmsnapshot
   * datadog_monitor
+  * dpkg_selections
   * expect
   * find
   * maven_artifact
