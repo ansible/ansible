@@ -269,14 +269,14 @@ def emerge_packages(module, packages):
         'verbose': '--verbose',
         'getbinpkg': '--getbinpkg',
         'usepkgonly': '--usepkgonly',
+        'usepkg': '--usepkg',
     }
     for flag, arg in emerge_flags.iteritems():
         if p[flag]:
             args.append(arg)
 
-    # usepkgonly implies getbinpkg
-    if p['usepkgonly'] and not p['getbinpkg']:
-        args.append('--getbinpkg')
+    if 'usepkg' in p and 'usepkgonly' in p:
+        module.fail_json(msg='Use only one of usepkg, usepkgonly')
 
     cmd, (rc, out, err) = run_emerge(module, packages, *args)
     if rc != 0:
@@ -413,6 +413,7 @@ def main():
             sync=dict(default=None, choices=['yes', 'web']),
             getbinpkg=dict(default=None, choices=['yes']),
             usepkgonly=dict(default=None, choices=['yes']),
+            usepkg=dict(default=None, choices=['yes']),
         ),
         required_one_of=[['package', 'sync', 'depclean']],
         mutually_exclusive=[['nodeps', 'onlydeps'], ['quiet', 'verbose']],
