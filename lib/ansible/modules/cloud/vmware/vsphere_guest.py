@@ -519,22 +519,74 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
-    try:
-        cluster = [k for k,
-                   v in vsphere_client.get_clusters().items() if v == cluster_name][0]
-    except IndexError, e:
-        vsphere_client.disconnect()
-        module.fail_json(msg="Cannot find Cluster named: %s" %
-                         cluster_name)
+    if esxi:
+        datacenter = esxi['datacenter']
+        esxi_hostname = esxi['hostname']
 
-    try:
-        rpmor = [k for k, v in vsphere_client.get_resource_pools(
-            from_mor=cluster).items()
-            if v == resource_pool][0]
-    except IndexError, e:
-        vsphere_client.disconnect()
-        module.fail_json(msg="Cannot find Resource Pool named: %s" %
-                         resource_pool)
+        # Datacenter managed object reference
+        dclist = [k for k,
+                 v in vsphere_client.get_datacenters().items() if v == datacenter]
+        if dclist:
+            dcmor=dclist[0]
+        else:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
+
+        dcprops = VIProperty(vsphere_client, dcmor)
+
+        # hostFolder managed reference
+        hfmor = dcprops.hostFolder._obj
+
+        # Grab the computerResource name and host properties
+        crmors = vsphere_client._retrieve_properties_traversal(
+            property_names=['name', 'host'],
+            from_node=hfmor,
+            obj_type='ComputeResource')
+
+        # Grab the host managed object reference of the esxi_hostname
+        try:
+            hostmor = [k for k,
+                       v in vsphere_client.get_hosts().items() if v == esxi_hostname][0]
+        except IndexError, e:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find esx host named: %s" % esxi_hostname)
+
+        # Grab the computeResource managed object reference of the host we are
+        # creating the VM on.
+        crmor = None
+        for cr in crmors:
+            if crmor:
+                break
+            for p in cr.PropSet:
+                if p.Name == "host":
+                    for h in p.Val.get_element_ManagedObjectReference():
+                        if h == hostmor:
+                            crmor = cr.Obj
+                            break
+                    if crmor:
+                        break
+        crprops = VIProperty(vsphere_client, crmor)
+
+        rpmor = crprops.resourcePool._obj
+    elif resource_pool:
+        try:
+            cluster = [k for k,
+                       v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+        except IndexError, e:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find Cluster named: %s" %
+                             cluster_name)
+
+        try:
+            rpmor = [k for k, v in vsphere_client.get_resource_pools(
+                from_mor=cluster).items()
+                if v == resource_pool][0]
+        except IndexError, e:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find Resource Pool named: %s" %
+                             resource_pool)
+    else:
+        module.fail_json(msg="You need to specify either esxi:[datacenter,hostname] or [cluster,resource_pool]")
 
     try:
         vmTarget = vsphere_client.get_vm_by_name(guest)
