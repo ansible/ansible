@@ -298,13 +298,18 @@ def emerge_packages(module, packages):
     changed = True
     for line in out.splitlines():
         if re.match(r'(?:>+) Emerging (?:binary )?\(1 of', line):
+            msg = 'Packages installed.'
+            break
+        elif module.check_mode and re.match(r'\[(binary|ebuild)', line):
+            msg = 'Packages would be installed.'
             break
     else:
         changed = False
+        msg = 'No packages installed.'
 
     module.exit_json(
         changed=changed, cmd=cmd, rc=rc, stdout=out, stderr=err,
-        msg='Packages installed.',
+        msg=msg,
     )
 
 
