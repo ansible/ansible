@@ -20,7 +20,7 @@ short_description: Manage route tables for AWS virtual private clouds
 description:
     - Manage route tables for AWS virtual private clouds
 version_added: "2.0"
-author: Robert Estelle, @erydo
+author: Robert Estelle (@erydo)
 options:
   vpc_id:
     description:
@@ -470,34 +470,32 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update({
-        'vpc_id': {'required': True},
-        'route_table_id': {'required': False},
-        'propagating_vgw_ids': {'type': 'list', 'required': False},
-        'resource_tags': {'type': 'dict', 'required': False},
-        'routes': {'type': 'list', 'required': False},
-        'subnets': {'type': 'list', 'required': False},
-        'state': {'choices': ['present', 'absent'], 'default': 'present'},
-    })
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
+    argument_spec.update(
+        dict(
+            vpc_id = dict(default=None, required=True),
+            route_table_id = dict(default=None, required=False),
+            propagating_vgw_ids = dict(default=None, required=False, type='list'),
+            resource_tags = dict(default=None, required=False, type='dict'),
+            routes = dict(default=None, required=False, type='list'),
+            subnets = dict(default=None, required=False, type='list'),
+            state = dict(default='present', choices=['present', 'absent'])
+        )
     )
+    
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    
     if not HAS_BOTO:
         module.fail_json(msg='boto is required for this module')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-    if not region:
-        module.fail_json(msg='Region must be specified')
-
-    try:
-        vpc_conn = boto.vpc.connect_to_region(
-            region,
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key
-        )
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg=str(e))
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    
+    if region:
+        try:
+            connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+            module.fail_json(msg=str(e))
+    else:
+        module.fail_json(msg="region must be specified")
 
     vpc_id = module.params.get('vpc_id')
     route_table_id = module.params.get('route_table_id')
@@ -510,7 +508,7 @@ def main():
 
         if 'gateway_id' in route_spec and route_spec['gateway_id'] and \
                 route_spec['gateway_id'].lower() == 'igw':
-            igw = find_igw(vpc_conn, vpc_id)
+            igw = find_igw(connection, vpc_id)
             route_spec['gateway_id'] = igw
 
     subnets = module.params.get('subnets')
@@ -519,12 +517,12 @@ def main():
     try:
         if state == 'present':
             result = ensure_route_table_present(
-                vpc_conn, vpc_id, route_table_id, resource_tags,
+                connection, vpc_id, route_table_id, resource_tags,
                 routes, subnets, propagating_vgw_ids, module.check_mode
             )
         elif state == 'absent':
             result = ensure_route_table_absent(
-                vpc_conn, vpc_id, route_table_id, resource_tags,
+                connection, vpc_id, route_table_id, resource_tags,
                 module.check_mode
             )
     except AnsibleRouteTableException as e:
