@@ -43,6 +43,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 from ansible.utils.path import makedirs_safe
+from ansible.utils.debug import debug
 
 AUTHENTICITY_MSG="""
 paramiko: The authenticity of host '%s' can't be established.
@@ -216,17 +217,20 @@ class Connection(ConnectionBase):
 
         self._display.vvv("EXEC %s" % cmd, host=self._connection_info.remote_addr)
 
+
+        if sudoable:
+            cmd, self.prompt, self.success_key = self._connection_info.make_become_cmd(cmd)
+
         no_prompt_out = ''
         no_prompt_err = ''
         become_output = ''
 
         try:
             chan.exec_command(cmd)
-            if self._connection_info.become_pass:
+            if self.prompt:
                 while True:
-                    if success_key in become_output or \
-                        (prompt and become_output.endswith(prompt)) or \
-                        utils.su_prompts.check_su_prompt(become_output):
+                    debug('Waiting for Privilege Escalation input')
+                    if self.check_become_success(become_output) or self.check_password_prompt(become_output):
                         break
                     chunk = chan.recv(bufsize)
                     if not chunk:
@@ -237,7 +241,7 @@ class Connection(ConnectionBase):
                             raise AnsibleError('ssh connection ' +
                                 'closed waiting for password prompt')
                     become_output += chunk
-                if success_key not in become_output:
+                if not self.check_become_success(become_output):
                     if self._connection_info.become:
                         chan.sendall(self._connection_info.become_pass + '\n')
                 else:
