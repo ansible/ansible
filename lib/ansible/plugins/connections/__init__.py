@@ -139,7 +139,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     def check_incorrect_password(self, output):
         incorrect_password = gettext.dgettext(self._connection_info.become_method, C.BECOME_ERROR_STRINGS[self._connection_info.become_method])
-        if output.strip().endswith(incorrect_password):
+        if incorrect_password in output:
             raise AnsibleError('Incorrect %s password' % self._connection_info.become_method)
 
     def handle_become_password(self, p, stdin):
