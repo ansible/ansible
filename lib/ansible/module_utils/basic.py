@@ -1161,10 +1161,10 @@ class AnsibleModule(object):
             except IOError, e:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, msg) #1
+                syslog.syslog(syslog.LOG_INFO, msg) #1
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, msg) #2
+            syslog.syslog(syslog.LOG_INFO, msg) #2
 
     def _set_cwd(self):
         try:
