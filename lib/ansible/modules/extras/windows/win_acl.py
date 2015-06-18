@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Phil Schwartz <schwartzmx@gmail.com>
+# (c) 2015, Phil Schwartz <schwartzmx@gmail.com>
 #
 # This file is part of Ansible
 #
