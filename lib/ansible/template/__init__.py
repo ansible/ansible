@@ -22,6 +22,7 @@ __metaclass__ = type
 import re
 
 from jinja2 import Environment
+from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
 from jinja2.utils import concat as j2_concat
 from jinja2.runtime import StrictUndefined
@@ -71,7 +72,13 @@ class Templar:
         self._fail_on_filter_errors    = True
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        self.environment = Environment(trim_blocks=True, undefined=StrictUndefined, extensions=self._get_extensions(), finalize=self._finalize)
+        self.environment = Environment(
+            trim_blocks=True,
+            undefined=StrictUndefined,
+            extensions=self._get_extensions(),
+            finalize=self._finalize,
+            loader=FileSystemLoader('.'),
+        )
         self.environment.template_class = AnsibleJ2Template
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))

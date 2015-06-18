@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2.utils import missing
 
 __all__ = ['AnsibleJ2Vars']
 
@@ -33,7 +34,7 @@ class AnsibleJ2Vars:
     To facilitate using builtin jinja2 things like range, globals are also handled here.
     '''
 
-    def __init__(self, templar, globals, *extras):
+    def __init__(self, templar, globals, locals=dict(), *extras):
         '''
         Initializes this object with a valid Templar() object, as
         well as several dictionaries of variables representing
@@ -43,9 +44,16 @@ class AnsibleJ2Vars:
         self._templar = templar
         self._globals = globals
         self._extras  = extras
+        self._locals  = dict()
+        if isinstance(locals, dict):
+            for key, val in locals.iteritems():
+                if key[:2] == 'l_' and val is not missing:
+                    self._locals[key[2:]] = val
 
     def __contains__(self, k):
         if k in self._templar._available_variables:
+            return True
+        if k in self._locals:
             return True
         for i in self._extras:
             if k in i:
@@ -59,6 +67,8 @@ class AnsibleJ2Vars:
         #from ansible.runner import HostVars
 
         if varname not in self._templar._available_variables:
+            if varname in self._locals:
+                return self._locals[varname]
             for i in self._extras:
                 if varname in i:
                     return i[varname]
@@ -84,5 +94,5 @@ class AnsibleJ2Vars:
         '''
         if locals is None:
             return self
-        return AnsibleJ2Vars(self._templar, self._globals, locals, *self._extras)
+        return AnsibleJ2Vars(self._templar, self._globals, locals=locals, *self._extras)
 
