@@ -37,8 +37,6 @@ from ansible.errors import AnsibleError
 #        which may want to output display/logs too
 from ansible.utils.display import Display
 
-from ansible.utils.debug import debug
-
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
