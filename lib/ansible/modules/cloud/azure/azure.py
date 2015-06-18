@@ -376,7 +376,7 @@ def create_virtual_machine(module, azure):
             authorized_keys_path = u'/home/%s/.ssh/authorized_keys' % user
             ssh_config.public_keys.public_keys.append(PublicKey(path=authorized_keys_path, fingerprint=fingerprint))
             # Append ssh config to linux machine config
-            linux_config.ssh = ssh_config
+            vm_config.ssh = ssh_config
 
         # Create network configuration
         network_config = ConfigurationSetInputEndpoints()
@@ -546,7 +546,7 @@ def main():
     cloud_service_raw = None
     if module.params.get('state') == 'absent':
         (changed, public_dns_name, deployment) = terminate_virtual_machine(module, azure)
-
+    
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
         if not module.params.get('name'):
