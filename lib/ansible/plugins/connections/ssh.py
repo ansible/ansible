@@ -35,7 +35,7 @@ from hashlib import sha1
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
-
+from ansible.utils.debug import debug
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
@@ -261,6 +261,21 @@ class Connection(ConnectionBase):
             self._display.vvv("EXEC previous known host file not found for {0}".format(host))
         return True
 
+    def lock_host_keys(self, lock):
+
+        if C.HOST_KEY_CHECKING and  self.not_in_host_file(self.host):
+            if lock:
+               action = fcntl.LOCK_EX
+            else:
+               action = fcntl.LOCK_UN
+
+            # lock around the initial SSH connectivity so the user prompt about whether to add
+            # the host to known hosts is not intermingled with multiprocess output.
+        # FIXME: move the locations of these lock files, same as init above, these came from runner, probably need to be in task_executor
+        #    fcntl.lockf(self.process_lockfile, action)
+        #    fcntl.lockf(self.output_lockfile, action)
+
+
     def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
@@ -289,15 +304,8 @@ class Connection(ConnectionBase):
         ssh_cmd.append(cmd)
         self._display.vvv("EXEC {0}".format(' '.join(ssh_cmd)), host=self.host)
 
-        not_in_host_file = self.not_in_host_file(self.host)
 
-        # FIXME: move the locations of these lock files, same as init above
-        #if C.HOST_KEY_CHECKING and not_in_host_file:
-        #    # lock around the initial SSH connectivity so the user prompt about whether to add 
-        #    # the host to known hosts is not intermingled with multiprocess output.
-        #    fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
-        #    fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
-
+        self.lock_host_keys(True)
 
         # create process
         (p, stdin) = self._run(ssh_cmd, in_data)
@@ -306,16 +314,67 @@ class Connection(ConnectionBase):
 
         no_prompt_out = ''
         no_prompt_err = ''
+
         if self.prompt:
-            no_prompt_out, no_prompt_err =  self.handle_become_password(p, stdin)
+            '''
+                Several cases are handled for privileges with password
+                * NOPASSWD (tty & no-tty): detect success_key on stdout
+                * without NOPASSWD:
+                  * detect prompt on stdout (tty)
+                  * detect prompt on stderr (no-tty)
+            '''
+
+            out = ''
+            err = ''
+
+            debug("Handling privilege escalation password prompt.")
+
+            if self._connection_info.become and self._connection_info.become_pass:
+
+                fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+                fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
+
+                become_output = ''
+                become_errput = ''
+                while True:
+                    debug('Waiting for Privilege Escalation input')
+                    if self.check_become_success(become_output) or self.check_password_prompt(become_output):
+                        break
+
+                    rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._connection_info.timeout)
+                    if p.stderr in rfd:
+                        chunk = p.stderr.read()
+                        if not chunk:
+                            raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
+                        become_errput += chunk
+
+                        self.check_incorrect_password(become_errput)
+
+                    if p.stdout in rfd:
+                        chunk = p.stdout.read()
+                        if not chunk:
+                            raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
+                        become_output += chunk
+
+                    if not rfd:
+                        # timeout. wrap up process communication
+                        stdout, stderr = p.communicate()
+                        raise AnsibleError('Connection error waiting for privilege escalation password prompt: %s' % become_output)
+
+                if not self.check_become_success(become_output):
+                    debug("Sending privilege escalation password.")
+                    stdin.write(self._connection_info.become_pass + '\n')
+                else:
+                    out += become_output
+                    err += become_errput
+
+            no_prompt_out = out
+            no_prompt_err =  err
 
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, sudoable=sudoable)
 
-        #if C.HOST_KEY_CHECKING and not_in_host_file:
-        #    # lock around the initial SSH connectivity so the user prompt about whether to add 
-        #    # the host to known hosts is not intermingled with multiprocess output.
-        #    fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
-        #    fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
+        self.lock_host_keys(False)
+
         controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or 'unknown configuration option: ControlPersist' in stderr
 
         if C.HOST_KEY_CHECKING:
