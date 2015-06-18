@@ -154,12 +154,6 @@ EXAMPLES = '''
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
 
-repoquery='/usr/bin/repoquery'
-if not os.path.exists(repoquery):
-    repoquery = None
-
-yumbin='/usr/bin/yum'
-
 def log(msg):
     syslog.openlog('ansible-yum', 0, syslog.LOG_USER)
     syslog.syslog(syslog.LOG_NOTICE, msg)
@@ -181,16 +175,17 @@ def yum_base(conf_file=None):
 
     return my
 
-def install_yum_utils(module):
+def ensure_yum_utils(module):
 
-    if not module.check_mode:    
+    repoquerybin = module.get_bin_path('repoquery', required=False)
+
+    if module.params['install_repoquery'] and not repoquerybin and not module.check_mode:
         yum_path = module.get_bin_path('yum')
         if yum_path:
-            rc, so, se = module.run_command('%s -y install yum-utils' % yum_path) 
-            if rc == 0:
-                this_path = module.get_bin_path('repoquery')
-                global repoquery
-                repoquery = this_path
+            rc, so, se = module.run_command('%s -y install yum-utils' % yum_path)
+        repoquerybin = module.get_bin_path('repoquery', required=False)
+
+    return repoquerybin
 
 def po_to_nevra(po):
 
@@ -333,7 +328,7 @@ def is_update(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, dis_r
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err))
             
-    return []
+    return set()
 
 def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None, dis_repos=None):
     if en_repos is None:
@@ -385,7 +380,7 @@ def what_provides(module, repoq, req_spec, conf_file,  qf=def_qf, en_repos=None,
         else:
             module.fail_json(msg='Error from repoquery: %s: %s' % (cmd, err + err2))
 
-    return []
+    return set()
 
 def transaction_exists(pkglist):
     """ 
@@ -475,10 +470,10 @@ def repolist(module, repoq, qf="%{repoid}"):
         ret = set([ p for p in out.split('\n') if p.strip() ])
     return ret
 
-def list_stuff(module, conf_file, stuff):
+def list_stuff(module, repoquerybin, conf_file, stuff):
 
     qf = "%{name}|%{epoch}|%{version}|%{release}|%{arch}|%{repoid}"
-    repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet']
+    repoq = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
     if conf_file and os.path.exists(conf_file):
         repoq += ['-c', conf_file]
 
@@ -646,8 +641,8 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         shutil.rmtree(tempdir)
     except Exception, e:
         module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
-  
-    module.exit_json(**res)
+
+    return res
 
 
 def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
@@ -701,8 +696,8 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
         if rc != 0:
             module.fail_json(**res)
-            
-    module.exit_json(**res)
+
+    return res
 
 def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
@@ -784,18 +779,14 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         else:
             res['changed'] = True
 
-    module.exit_json(**res)
+    return res
 
 def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
-           disable_gpg_check, exclude):
+           disable_gpg_check, exclude, repoq):
 
+    yumbin = module.get_bin_path('yum')
     # need debug level 2 to get 'Nothing to do' for groupinstall.
     yum_basecmd = [yumbin, '-d', '2', '-y']
-
-    if not repoquery:
-        repoq = None
-    else:
-        repoq = [repoquery, '--show-duplicates', '--plugins', '--quiet']
 
     if conf_file and os.path.exists(conf_file):
         yum_basecmd += ['-c', conf_file]
@@ -816,7 +807,7 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if exclude:
         e_cmd = ['--exclude=%s' % exclude]
         yum_basecmd.extend(e_cmd)
-           
+
     if state in ['installed', 'present', 'latest']:
 
         if module.params.get('update_cache'):
@@ -843,16 +834,19 @@ def ensure(module, state, pkgs, conf_file, enablerepo, disablerepo,
     if state in ['installed', 'present']:
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
-        install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
+        res = install(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state in ['removed', 'absent']:
-        remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
+        res = remove(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
     elif state == 'latest':
         if disable_gpg_check:
             yum_basecmd.append('--nogpgcheck')
-        latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
+        res = latest(module, pkgs, repoq, yum_basecmd, conf_file, en_repos, dis_repos)
+    else:
+        # should be caught by AnsibleModule argument_spec
+        module.fail_json(msg="we should never get here unless this all"
+                " failed", changed=False, results='', errors='unepected state')
 
-    # should be caught by AnsibleModule argument_spec
-    return dict(changed=False, failed=True, results='', errors='unexpected state')
+    return res
 
 def main():
 
@@ -887,27 +881,41 @@ def main():
         supports_check_mode = True
     )
 
-    # this should not be needed, but exists as a failsafe
     params = module.params
-    if params['install_repoquery'] and not repoquery and not module.check_mode:
-        install_yum_utils(module)
 
     if params['list']:
-        if not repoquery:
+        repoquerybin = ensure_yum_utils(module)
+        if not repoquerybin:
             module.fail_json(msg="repoquery is required to use list= with this module. Please install the yum-utils package.")
-        results = dict(results=list_stuff(module, params['conf_file'], params['list']))
-        module.exit_json(**results)
+        results = dict(results=list_stuff(module, repoquerybin, params['conf_file'], params['list']))
 
     else:
+        # If rhn-plugin is installed and no rhn-certificate is available on
+        # the system then users will see an error message using the yum API.
+        # Use repoquery in those cases.
+
+        my = yum_base(params['conf_file'])
+        # A sideeffect of accessing conf is that the configuration is
+        # loaded and plugins are discovered
+        my.conf
+        repoquery = None
+        if 'rhnplugin' in my.plugins._plugins:
+            repoquerybin = ensure_yum_utils(module)
+            if repoquerybin:
+                repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
+
         pkg = [ p.strip() for p in params['name']]
         exclude = params['exclude']
         state = params['state']
         enablerepo = params.get('enablerepo', '')
         disablerepo = params.get('disablerepo', '')
         disable_gpg_check = params['disable_gpg_check']
-        res = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check, exclude)
-        module.fail_json(msg="we should never get here unless this all failed", **res)
+        results = ensure(module, state, pkg, params['conf_file'], enablerepo,
+                     disablerepo, disable_gpg_check, exclude, repoquery)
+        if repoquery:
+            results['msg'] = '%s %s' % (results.get('msg',''), 'Warning: Due to potential bad behaviour with rhnplugin and certificates, used slower repoquery calls instead of Yum API.')
+
+    module.exit_json(**results)
 
 # import module snippets
 from ansible.module_utils.basic import *
