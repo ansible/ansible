@@ -1,7 +1,7 @@
 #!powershell
 # This file is part of Ansible
 #
-# Copyright 2014, Phil Schwartz <schwartzmx@gmail.com>
+# Copyright 2015, Phil Schwartz <schwartzmx@gmail.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -118,26 +118,45 @@ Try {
     $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     $objACL = Get-ACL $src
 
-    If ($state -eq "add") {
+    # Check if the ACE exists already in the objects ACL list
+    $match = $false
+    ForEach($rule in $objACL.Access){
+        If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($rule.IdentityReference -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) { 
+            $match = $true
+            Break
+        } 
+    }
+
+    If ($state -eq "add" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
+            Set-ACL $src $objACL
+            $result.changed = $true
         }
         Catch {
-            Fail-Json $result "an exception occured when adding the specified rule.  it may already exist."
+            Fail-Json $result "an exception occured when adding the specified rule"
+        }
+    }
+    ElseIf ($state -eq "remove" -And $match -eq $true) {
+        Try {
+            $objACL.RemoveAccessRule($objACE)
+            Set-ACL $src $objACL
+            $result.changed = $true
+        }
+        Catch {
+            Fail-Json $result "an exception occured when removing the specified rule"
         }
     }
     Else {
-        Try {
-            $objACL.RemoveAccessRule($objACE)
+        # A rule was attempting to be added but already exists
+        If ($match -eq $true) {
+            Exit-Json $result "the specified rule already exists"
         }
-        Catch {
-            Fail-Json $result "an exception occured when removing the specified rule.  it may not exist."
-        }
+        # A rule didn't exist that was trying to be removed
+        Else {
+            Exit-Json $result "the specified rule does not exist"
+        }       
     }
-
-    Set-ACL $src $objACL
-
-    $result.changed = $true
 }
 Catch {
     Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $src for $user"
