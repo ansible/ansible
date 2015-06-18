@@ -40,3 +40,6 @@
 
     - role: test_rax_cdb_database
       tags: test_rax_cdb_database
+
+    - role: test_rax_scaling_group
+      tags: test_rax_scaling_group
