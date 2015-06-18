@@ -616,6 +616,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     changes = {}
     request = VI.ReconfigVM_TaskRequestMsg()
     shutdown = False
+    poweron = vm.is_powered_on()
 
     memoryHotAddEnabled = bool(vm.properties.config.memoryHotAddEnabled)
     cpuHotAddEnabled = bool(vm.properties.config.cpuHotAddEnabled)
@@ -706,7 +707,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             module.fail_json(
                 msg="Error reconfiguring vm: %s" % task.get_error_message())
 
-        if vm.is_powered_off():
+        if vm.is_powered_off() and poweron:
             try:
                 vm.power_on(sync_run=True)
             except Exception, e:
