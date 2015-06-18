@@ -105,8 +105,16 @@ def _find_matching_rule(module, secgroup):
 
     for rule in secgroup['security_group_rules']:
         # No port, or -1, will be returned from shade as None
-        rule_port_range_min = rule['port_range_min'] or -1
-        rule_port_range_max = rule['port_range_max'] or -1
+        if rule['port_range_min'] is None:
+            rule_port_range_min = "-1"
+        else:
+            rule_port_range_min = str(rule['port_range_min'])
+
+        if rule['port_range_max'] is None:
+            rule_port_range_max = "-1"
+        else:
+            rule_port_range_max = str(rule['port_range_max'])
+
 
         if (protocol == rule['protocol']
                 and port_range_min == rule_port_range_min
