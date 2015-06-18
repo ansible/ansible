@@ -273,7 +273,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
 
             disk_config = disk_config or 'AUTO'
             if ((disk_config or lc.get('disk_config')) and
-                    disk_config != lc.get('disk_config')):
+                    disk_config != lc.get('disk_config', 'AUTO')):
                 lc_args['disk_config'] = disk_config
 
             if (meta or lc.get('meta')) and meta != lc.get('metadata'):
@@ -299,7 +299,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             if key_name != lc.get('key_name'):
                 lc_args['key_name'] = key_name
 
-            if config_drive != lc.get('config_drive'):
+            if config_drive != lc.get('config_drive', False):
                 lc_args['config_drive'] = config_drive
 
             if (user_data and
