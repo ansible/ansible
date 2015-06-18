@@ -53,6 +53,11 @@ options:
             - One or more (shell type) file glob patterns, which restrict the list of files to be returned to
               those whose basenames match at least one of the patterns specified.  Multiple patterns can be
               specified using a list.
+    contains:
+        required: false
+        default: null
+        description:
+            - One or more re patterns which should be matched against the file content 
     paths:
         required: true
         aliases: [ "name" ]
@@ -96,7 +101,7 @@ options:
         default: "False"
         choices: [ True, False ]
         description:
-            - Set this to true to follow symlinks in path.
+            - Set this to true to follow symlinks in path for systems with python 2.6+
     get_checksum:
         required: false
         default: "False"
@@ -177,6 +182,23 @@ def sizefilter(st, size):
 
     return False
 
+def contentfilter(fsname, pattern):
+    '''filter files which contain the given expression'''
+    if pattern is None: return True
+
+    try:
+       f = open(fsname)
+       prog = re.compile(pattern)
+       for line in f:
+           if prog.match (line):
+               f.close()
+               return True
+
+       f.close() 
+    except:
+       pass
+
+    return False
 
 def statinfo(st):
     return {
@@ -216,6 +238,7 @@ def main():
         argument_spec = dict(
             paths         = dict(required=True, aliases=['name'], type='list'),
             patterns      = dict(default=['*'], type='list'),
+            contains      = dict(default=None, type='str'),
             file_type     = dict(default="file", choices=['file', 'directory'], type='str'),
             age           = dict(default=None, type='str'),
             age_stamp     = dict(default="mtime", choices=['atime','mtime','ctime'], type='str'),
@@ -258,8 +281,10 @@ def main():
     looked = 0
     for npath in params['paths']:
         if os.path.isdir(npath):
-            for root,dirs,files in os.walk( npath, followlinks=params['follow'] ):
 
+            ''' ignore followlinks for python version < 2.6 '''
+            for root,dirs,files in (sys.version_info < (2,6,0) and os.walk(npath)) or \
+                                    os.walk( npath, followlinks=params['follow']):
                 looked = looked + len(files) + len(dirs)
                 for fsobj in (files + dirs):
                     fsname=os.path.normpath(os.path.join(root, fsobj))
@@ -278,7 +303,8 @@ def main():
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
                         if pfilter(fsobj, params['patterns']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
-                           sizefilter(st, size):
+                           sizefilter(st, size) and \
+                           contentfilter(fsname, params['contains']):
 
                             r.update(statinfo(st))
                             if params['get_checksum']:
