@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2014, Phil Schwartz <schwartzmx@gmail.com>
+# (c) 2015, Phil Schwartz <schwartzmx@gmail.com>
 #
 # This file is part of Ansible
 #
@@ -74,7 +74,7 @@ options:
     required: false
     default: false
     aliases: []
-author: Phil Schwartz
+author: Phil Schwartz 
 '''
 
 EXAMPLES = '''
@@ -126,4 +126,17 @@ $ ansible -i hosts -m win_unzip -a "src=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=t
       delay=15
       timeout=600
       state=started
+
+# Install PSCX to use for extracting a gz file
+  - name: Grab PSCX msi
+    win_get_url:
+      url: 'http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=20959'
+      dest: 'C:\\pscx.msi'
+  - name: Install PSCX
+    win_msi:
+      path: 'C:\\pscx.msi'
+  - name: Unzip gz log
+    win_unzip:
+      src: "C:\\Logs\\application-error-logs.gz"
+      dest: "C:\\ExtractedLogs\\application-error-logs"
 '''

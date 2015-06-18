@@ -1,7 +1,7 @@
 #!powershell
 # This file is part of Ansible
 #
-# Copyright 2014, Phil Schwartz <schwartzmx@gmail.com>
+# Copyright 2015, Phil Schwartz <schwartzmx@gmail.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,43 +80,13 @@ If ($ext -eq ".zip" -And $recurse -eq $false) {
         Fail-Json $result "Error unzipping $src to $dest"
     }
 }
-# Need PSCX
+# Requires PSCX
 Else {
-    # Requires PSCX, will be installed if it isn't found
-    # Pscx-3.2.0.msi
-    $url = "http://download-codeplex.sec.s-msft.com/Download/Release?ProjectName=pscx&DownloadId=923562&FileTime=130585918034470000&Build=20959"
-    $msi = "C:\Pscx-3.2.0.msi"
-
     # Check if PSCX is installed
     $list = Get-Module -ListAvailable
-    # If not download it and install
+
     If (-Not ($list -match "PSCX")) {
-        # Try install with chocolatey
-        Try {
-            cinst -force PSCX -y
-            $choco = $true
-        }
-        Catch {
-            $choco = $false
-        }
-        # install from downloaded msi if choco failed or is not present
-        If ($choco -eq $false) {
-            Try {
-                $client = New-Object System.Net.WebClient
-                $client.DownloadFile($url, $msi)
-            }
-            Catch {
-                Fail-Json $result "Error downloading PSCX from $url and saving as $dest"
-            }
-            Try {
-                Start-Process -FilePath msiexec.exe -ArgumentList "/i $msi /qb" -Verb Runas -PassThru -Wait | out-null
-            }
-            Catch {
-                Fail-Json $result "Error installing $msi"
-            }
-        }
-        Set-Attr $result.win_zip "pscx_status" "pscx was installed"
-        $installed = $true
+        Fail-Json "PowerShellCommunityExtensions PowerShell Module (PSCX) is required for non-'.zip' compressed archive types."
     }
     Else {
         Set-Attr $result.win_zip "pscx_status" "present"
@@ -124,17 +94,7 @@ Else {
 
     # Import
     Try {
-        If ($installed) {
-            Try {
-                Import-Module 'C:\Program Files (x86)\Powershell Community Extensions\pscx3\pscx\pscx.psd1'
-            }
-            Catch {
-                Import-Module PSCX
-            }
-        }
-        Else {
-            Import-Module PSCX
-        }
+        Import-Module PSCX
     }
     Catch {
         Fail-Json $result "Error importing module PSCX"
