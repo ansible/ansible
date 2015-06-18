@@ -25,6 +25,15 @@ short_description: Get OpenStack Client config
 description:
   - Get I(openstack) client config data from clouds.yaml or environment
 version_added: "2.0"
+notes:
+  - Facts are placed in the C(openstack.clouds) variable.
+options:
+   clouds:
+     description:
+        - List of clouds to limit the return list to. No value means return
+          information on all configured clouds
+     required: false
+     default: []
 requirements: [ os-client-config ]
 author: "Monty Taylor (@emonty)"
 '''
@@ -34,19 +43,27 @@ EXAMPLES = '''
 - os-client-config:
 - debug: var={{ item }}
   with_items: "{{ openstack.clouds|rejectattr('secgroup_source', 'none')|list() }}"
+
+# Get the information back just about the mordred cloud
+- os-client-config:
+    clouds:
+    - mordred
 '''
 
 
 def main():
-    module = AnsibleModule({})
+    module = AnsibleModule({
+        clouds=dict(required=False, default=[]),
+    })
     p = module.params
 
     try:
         config = os_client_config.OpenStackConfig()
         clouds = []
         for cloud in config.get_all_clouds():
-            cloud.config['name'] = cloud.name
-            clouds.append(cloud.config)
+            if not module.params['clouds'] or cloud.name in module.param['clouds']:
+                cloud.config['name'] = cloud.name
+                clouds.append(cloud.config)
         module.exit_json(ansible_facts=dict(openstack=dict(clouds=clouds)))
     except exceptions.OpenStackConfigException as e:
         module.fail_json(msg=str(e)) 
