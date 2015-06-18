@@ -160,8 +160,8 @@ EXAMPLES = '''
     instance: "{{ item.id }}"
     name: my_existing_volume_Name_tag
     device_name: /dev/xvdf
-    with_items: ec2.instances
-    register: ec2_vol
+  with_items: ec2.instances
+  register: ec2_vol
 
 # Remove a volume
 - ec2_vol:
