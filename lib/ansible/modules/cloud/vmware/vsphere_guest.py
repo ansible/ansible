@@ -622,7 +622,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     cpuHotRemoveEnabled = bool(vm.properties.config.cpuHotRemoveEnabled)
 
     # Change Memory
-    if vm_hardware['memory_mb']:
+    if 'memory_mb' in vm_hardware:
 
         if int(vm_hardware['memory_mb']) != vm.properties.config.hardware.memoryMB:
             spec = spec_singleton(spec, request, vm)
@@ -652,7 +652,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             changes['memory'] = vm_hardware['memory_mb']
 
     # ====( Config Memory )====#
-    if vm_hardware['num_cpus']:
+    if 'num_cpus' in vm_hardware:
         if int(vm_hardware['num_cpus']) != vm.properties.config.hardware.numCPU:
             spec = spec_singleton(spec, request, vm)
 
