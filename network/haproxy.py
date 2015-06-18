@@ -73,16 +73,19 @@ options:
       - Wait until the server reports a status of 'UP' when state=enabled, or status of 'MAINT' when state=disabled
     required: false
     default: false
+    version_added: "2.0"
   wait_retries:
     description:
       - number of times to check for status after changing the state
     required: false
     default: 20
+    version_added: "2.0"
   wait_interval:
     description:
       - number of seconds to wait between retries
     required: false
     default: 1
+    version_added: "2.0"
 '''
 
 EXAMPLES = '''
@@ -181,7 +184,7 @@ class HAProxy(object):
 
     def wait_until_status(self, pxname, svname, status):
         """
-        Wait for a server to become active (status == 'UP'). Try RETRIES times
+        Wait for a service to reach the specified status. Try RETRIES times
         with INTERVAL seconds of sleep in between. If the service has not reached
         the expected status in that time, the module will fail. If the service was 
         not found, the module will fail.
