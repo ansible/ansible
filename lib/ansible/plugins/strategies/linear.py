@@ -26,6 +26,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins import action_loader
 from ansible.plugins.strategies import StrategyBase
+from ansible.template import Templar
 from ansible.utils.debug import debug
 
 class StrategyModule(StrategyBase):
@@ -166,6 +167,7 @@ class StrategyModule(StrategyBase):
 
                     debug("getting variables")
                     task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                    templar = Templar(loader=self._loader, variables=task_vars)
                     debug("done getting variables")
 
                     # check to see if this task should be skipped, due to it being a member of a
@@ -190,7 +192,9 @@ class StrategyModule(StrategyBase):
                             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
                     else:
                         if not callback_sent:
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                            temp_task = task.copy()
+                            temp_task.name = templar.template(temp_task.get_name(), fail_on_undefined=False)
+                            self._tqm.send_callback('v2_playbook_on_task_start', temp_task, is_conditional=False)
                             callback_sent = True
 
                         self._blocked_hosts[host.get_name()] = True

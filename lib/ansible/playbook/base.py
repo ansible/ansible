@@ -281,7 +281,7 @@ class Base:
             except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
             except UndefinedError as e:
-                if templar._fail_on_undefined_errors:
+                if templar._fail_on_undefined_errors and name != 'name':
                     raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined. The error was: %s" % (name,e), obj=self.get_ds())
 
     def serialize(self):
