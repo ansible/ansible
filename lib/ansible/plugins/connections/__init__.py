@@ -130,7 +130,9 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         return self.success_key in output
 
     def check_password_prompt(self, output):
-        if isinstance(self.prompt, basestring):
+        if self.prompt in None:
+            return True
+        elif isinstance(self.prompt, basestring):
             return output.endswith(self.prompt)
         else:
             return self.prompt(output)
