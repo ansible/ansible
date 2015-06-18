@@ -84,17 +84,15 @@ def main():
         mutually_exclusive=[['public_key', 'public_key_file']])
     module = AnsibleModule(argument_spec, **module_kwargs)
 
-    if module.params['public_key_file']:
-        public_key = open(module.params['public_key_file']).read()
-    else:
-        public_key = module.params['public_key']
-
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
-
     state = module.params['state']
     name = module.params['name']
     public_key = module.params['public_key']
+
+    if module.params['public_key_file']:
+        public_key = open(module.params['public_key_file']).read()
+
+    if not HAS_SHADE:
+        module.fail_json(msg='shade is required for this module')
 
     try:
         cloud = shade.openstack_cloud(**module.params)
