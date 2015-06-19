@@ -11,11 +11,12 @@ options:
         description:
             - The DNS zone record (eg: foo.com.)
         required: true
-    command:
+    state:
         description:
             - whether or not the zone should exist or not
         required: false
         default: true
+        choices: [ "present", "absent" ]
     vpc_id:
         description:
             - The VPC ID the zone should be a part of (if this is going to be a private zone)
@@ -52,7 +53,7 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             zone=dict(required=True),
-            command=dict(default='create', choices=['create', 'delete']),
+            state=dict(default='present', choices=['present', 'absent']),
             vpc_id=dict(default=None),
             vpc_region=dict(default=None),
             comment=dict(default=''),
@@ -63,7 +64,7 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     zone_in = module.params.get('zone').lower()
-    command = module.params.get('command').lower()
+    state = module.params.get('state').lower()
     vpc_id = module.params.get('vpc_id')
     vpc_region = module.params.get('vpc_region')
     comment = module.params.get('comment')
@@ -102,7 +103,7 @@ def main():
         'comment': comment,
     }
 
-    if command == 'create' and zone_in in zones:
+    if state == 'present' and zone_in in zones:
         if private_zone:
             details = conn.get_hosted_zone(zones[zone_in])
 
@@ -128,7 +129,7 @@ def main():
         record['name'] = zone_in
         module.exit_json(changed=False, set=record)
 
-    elif command == 'create':
+    elif state == 'present':
         result = conn.create_hosted_zone(zone_in, **record)
         hosted_zone = result['CreateHostedZoneResponse']['HostedZone']
         zone_id = hosted_zone['Id'].replace('/hostedzone/', '')
@@ -136,11 +137,11 @@ def main():
         record['name'] = zone_in
         module.exit_json(changed=True, set=record)
 
-    elif command == 'delete' and zone_in in zones:
+    elif state == 'absent' and zone_in in zones:
         conn.delete_hosted_zone(zones[zone_in])
         module.exit_json(changed=True)
 
-    elif command == 'delete':
+    elif state == 'absent':
         module.exit_json(changed=False)
 
 from ansible.module_utils.basic import *
