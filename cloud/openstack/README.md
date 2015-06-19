@@ -21,6 +21,13 @@ Naming
 * If the module is one that a cloud admin and a cloud consumer could both use,
   the cloud consumer rules apply.
 
+Interface
+---------
+
+* If the resource being managed has an id, it should be returned.
+* If the resource being managed has an associated object more complex than
+  an id, it should also be returned.
+
 Interoperability
 ----------------
 
