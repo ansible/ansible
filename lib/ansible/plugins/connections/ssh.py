@@ -179,18 +179,19 @@ class Connection(ConnectionBase):
                 if self._connection_info.become_pass:
                     self.check_incorrect_password(stdout)
                 elif self.check_password_prompt(stdout):
-                    raise AnsibleError('Missing %s password', self._connection_info.become_method)
+                    raise AnsibleError('Missing %s password' % self._connection_info.become_method)
 
-            if p.stdout in rfd:
-                dat = os.read(p.stdout.fileno(), 9000)
-                stdout += dat
-                if dat == '':
-                    rpipes.remove(p.stdout)
             if p.stderr in rfd:
                 dat = os.read(p.stderr.fileno(), 9000)
                 stderr += dat
                 if dat == '':
                     rpipes.remove(p.stderr)
+            elif p.stdout in rfd:
+                dat = os.read(p.stdout.fileno(), 9000)
+                stdout += dat
+                if dat == '':
+                    rpipes.remove(p.stdout)
+
             # only break out if no pipes are left to read or
             # the pipes are completely read and
             # the process is terminated
@@ -324,9 +325,6 @@ class Connection(ConnectionBase):
                   * detect prompt on stderr (no-tty)
             '''
 
-            out = ''
-            err = ''
-
             debug("Handling privilege escalation password prompt.")
 
             if self._connection_info.become and self._connection_info.become_pass:
@@ -342,34 +340,30 @@ class Connection(ConnectionBase):
                         break
 
                     rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._connection_info.timeout)
-                    if p.stderr in rfd:
-                        chunk = p.stderr.read()
-                        if not chunk:
-                            raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
-                        become_errput += chunk
-
-                        self.check_incorrect_password(become_errput)
-
-                    if p.stdout in rfd:
-                        chunk = p.stdout.read()
-                        if not chunk:
-                            raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
-                        become_output += chunk
-
                     if not rfd:
                         # timeout. wrap up process communication
                         stdout, stderr = p.communicate()
                         raise AnsibleError('Connection error waiting for privilege escalation password prompt: %s' % become_output)
 
+                    elif p.stderr in rfd:
+                        chunk = p.stderr.read()
+                        become_errput += chunk
+                        self.check_incorrect_password(become_errput)
+
+                    elif p.stdout in rfd:
+                        chunk = p.stdout.read()
+                        become_output += chunk
+
+                    if not chunk:
+                        raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
+
                 if not self.check_become_success(become_output):
                     debug("Sending privilege escalation password.")
                     stdin.write(self._connection_info.become_pass + '\n')
                 else:
-                    out += become_output
-                    err += become_errput
+                    no_prompt_out = become_output
+                    no_prompt_err = become_errput
 
-            no_prompt_out = out
-            no_prompt_err =  err
 
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, sudoable=sudoable)
 
