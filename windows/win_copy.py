@@ -47,9 +47,15 @@ options:
     default: null
 author: "Jon Hawkesworth (@jhawkesworth)"
 notes:
-   - The "win_copy" module recursively copy facility does not scale to lots (>hundreds) of files.
-     Instead, you may find it better to create files locally, perhaps using win_template, and 
-     then use win_get_url to fetch them from your managed hosts into the correct location.
+   - The "win_copy" module is best used for small files only.
+     This module should **not** be used for files bigger than 3Mb as
+     this will result in a 500 response from the winrm host
+     and it will not be possible to connect via winrm again until the
+     windows remote management service has been restarted on the 
+     windows host.
+     Files larger than 1Mb will take minutes to transfer.
+     The recommended way to transfer large files is using win_get_url 
+     or collecting from a windows file share folder.  
 '''
 
 EXAMPLES = '''
