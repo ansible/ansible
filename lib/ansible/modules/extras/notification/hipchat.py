@@ -62,8 +62,7 @@ options:
     version_added: 1.6.0
 
 
-# informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
+requirements: [ ]
 author: "WAKAYAMA Shirou (@shirou), BOURDEL Paul (@pb8226)"
 '''
 
@@ -76,6 +75,7 @@ EXAMPLES = '''
 #
 
 MSG_URI = "https://api.hipchat.com/v1/rooms/message"
+import urllib
 
 def send_msg(module, token, room, msg_from, msg, msg_format='text',
              color='yellow', notify=False, api=MSG_URI):

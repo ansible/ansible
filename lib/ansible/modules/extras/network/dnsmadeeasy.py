@@ -86,8 +86,8 @@ notes:
   - The DNS Made Easy service requires that machines interacting with the API have the proper time and timezone set. Be sure you are within a few seconds of actual time by using NTP. 
   - This module returns record(s) in the "result" element when 'state' is set to 'present'. This value can be be registered and used in your playbooks.
   
-requirements: [ urllib, urllib2, hashlib, hmac ]
-author: Brice Burgess
+requirements: [ hashlib, hmac ]
+author: "Brice Burgess (@briceburg)"
 '''
 
 EXAMPLES = '''
@@ -112,6 +112,8 @@ EXAMPLES = '''
 # ============================================
 # DNSMadeEasy module specific support methods.
 #
+
+import urllib
 
 IMPORT_ERROR = None
 try:

@@ -81,7 +81,7 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
 
-requirements: [ "urllib", "urllib2" ]
+requirements: []
 author: "Nandor Sivok (@dominis)"
 '''
 
@@ -99,7 +99,7 @@ ansible host -m netscaler -a "nsc_host=nsc.example.com user=apiuser password=api
 
 import base64
 import socket
-
+import urllib
 
 class netscaler(object):
 

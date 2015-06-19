@@ -49,6 +49,8 @@ EXAMPLES = '''
     message=deployed {{ target }}
 '''
 
+import urllib
+
 BASE_URL = 'https://grove.io/api/notice/%s/'
 
 # ==============================================================

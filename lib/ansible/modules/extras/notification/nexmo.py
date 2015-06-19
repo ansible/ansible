@@ -71,6 +71,7 @@ EXAMPLES = """
     msg: "{{ inventory_hostname }} completed"
 """
 
+import urllib
 
 NEXMO_API = 'https://rest.nexmo.com/sms/json'
 

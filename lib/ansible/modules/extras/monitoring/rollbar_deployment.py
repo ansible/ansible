@@ -76,6 +76,7 @@ EXAMPLES = '''
                       comment='Test Deploy'
 '''
 
+import urllib
 
 def main():
 
