@@ -115,24 +115,24 @@ def main():
         if module.check_mode:
             module.exit_json(changed=_system_state_change(module, secgroup))
 
+        changed = False
         if state == 'present':
             if not secgroup:
                 secgroup = cloud.create_security_group(name, description)
-                module.exit_json(changed=True, id=secgroup['id'])
+                changed = True
             else:
                 if _needs_update(module, secgroup):
                     secgroup = cloud.update_security_group(
                         secgroup['id'], description=description)
-                    module.exit_json(changed=True, id=secgroup['id'])
-                else:
-                    module.exit_json(changed=False, id=secgroup['id'])
+                    changed = True
+            module.exit_json(
+                changed=changed, id=secgroup['id'], secgroup=secgroup)
 
         if state == 'absent':
-            if not secgroup:
-                module.exit_json(changed=False)
-            else:
+            if secgroup:
                 cloud.delete_security_group(secgroup['id'])
-                module.exit_json(changed=True)
+                changed = True
+            module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
