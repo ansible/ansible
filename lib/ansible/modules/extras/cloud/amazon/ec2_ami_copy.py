@@ -1,0 +1,211 @@
+#!/usr/bin/python
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = '''
+---
+module: ec2_ami_copy
+short_description: copies AMI between AWS regions, return new image id
+description:
+    - Copies AMI from a source region to a destination region. This module has a dependency on python-boto >= 2.5
+version_added: "1.7"
+options:
+  source_region:
+    description:
+      - the source region that AMI should be copied from
+    required: true
+    default: null
+  region:
+    description:
+      - the destination region that AMI should be copied to
+    required: true
+    default: null
+    aliases: ['aws_region', 'ec2_region', 'dest_region']
+  source_image_id:
+    description:
+      - the id of the image in source region that should be copied
+    required: true
+    default: null
+  name:
+    description:
+      - The name of the new image to copy
+    required: false
+    default: null
+  description:
+    description:
+      - An optional human-readable string describing the contents and purpose of the new AMI.
+    required: false
+    default: null
+  wait:
+    description:
+      - wait for the copied AMI to be in state 'available' before returning.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+  wait_timeout:
+    description:
+      - how long before wait gives up, in seconds
+    required: false
+    default: 1200
+  tags:
+    description:
+      - a hash/dictionary of tags to add to the new copied AMI; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    required: false
+    default: null
+
+author: Amir Moulavi <amir.moulavi@gmail.com>
+extends_documentation_fragment: aws
+'''
+
+EXAMPLES = '''
+# Basic AMI Copy
+- local_action:
+    module: ec2_ami_copy
+    source_region: eu-west-1
+    dest_region: us-east-1
+    source_image_id: ami-xxxxxxx
+    name: SuperService-new-AMI
+    description: latest patch
+    tags: '{"Name":"SuperService-new-AMI", "type":"SuperService"}'
+    wait: yes
+  register: image_id
+'''
+
+
+import sys
+import time
+
+try:
+    import boto
+    import boto.ec2
+    from boto.vpc import VPCConnection
+    HAS_BOTO = True
+except ImportError:
+    HAS_BOTO = False
+    
+if not HAS_BOTO:
+    module.fail_json(msg='boto required for this module')
+
+def copy_image(module, ec2):
+    """
+    Copies an AMI
+
+    module : AnsibleModule object
+    ec2: authenticated ec2 connection object
+    """
+
+    source_region = module.params.get('source_region')
+    source_image_id = module.params.get('source_image_id')
+    name = module.params.get('name')
+    description = module.params.get('description')
+    tags = module.params.get('tags')
+    wait_timeout = int(module.params.get('wait_timeout'))
+    wait = module.params.get('wait')
+
+    try:
+        params = {'source_region': source_region,
+                  'source_image_id': source_image_id,
+                  'name': name,
+                  'description': description
+        }
+
+        image_id = ec2.copy_image(**params).image_id
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg="%s: %s" % (e.error_code, e.error_message))
+
+    img = wait_until_image_is_recognized(module, ec2, wait_timeout, image_id, wait)
+
+    img = wait_until_image_is_copied(module, ec2, wait_timeout, img, image_id, wait)
+
+    register_tags_if_any(module, ec2, tags, image_id)
+
+    module.exit_json(msg="AMI copy operation complete", image_id=image_id, state=img.state, changed=True)
+
+
+# register tags to the copied AMI in dest_region
+def register_tags_if_any(module, ec2, tags, image_id):
+    if tags:
+        try:
+            ec2.create_tags([image_id], tags)
+        except Exception as e:
+            module.fail_json(msg=str(e))
+
+
+# wait here until the image is copied (i.e. the state becomes available
+def wait_until_image_is_copied(module, ec2, wait_timeout, img, image_id, wait):
+    wait_timeout = time.time() + wait_timeout
+    while wait and wait_timeout > time.time() and (img is None or img.state != 'available'):
+        img = ec2.get_image(image_id)
+        time.sleep(3)
+    if wait and wait_timeout <= time.time():
+        # waiting took too long
+        module.fail_json(msg="timed out waiting for image to be copied")
+    return img
+
+
+# wait until the image is recognized.
+def wait_until_image_is_recognized(module, ec2, wait_timeout, image_id, wait):
+    for i in range(wait_timeout):
+        try:
+            return ec2.get_image(image_id)
+        except boto.exception.EC2ResponseError, e:
+            # This exception we expect initially right after registering the copy with EC2 API
+            if 'InvalidAMIID.NotFound' in e.error_code and wait:
+                time.sleep(1)
+            else:
+                # On any other exception we should fail
+                module.fail_json(
+                    msg="Error while trying to find the new image. Using wait=yes and/or a longer wait_timeout may help: " + str(
+                        e))
+    else:
+        module.fail_json(msg="timed out waiting for image to be recognized")
+
+
+def main():
+    argument_spec = ec2_argument_spec()
+    argument_spec.update(dict(
+        source_region=dict(required=True),
+        source_image_id=dict(required=True),
+        name=dict(),
+        description=dict(default=""),
+        wait=dict(type='bool', default=False),
+        wait_timeout=dict(default=1200),
+        tags=dict(type='dict')))
+
+    module = AnsibleModule(argument_spec=argument_spec)
+
+    try:
+        ec2 = ec2_connect(module)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg=str(e))
+
+    try:
+        region, ec2_url, boto_params = get_aws_connection_info(module)
+        vpc = connect_to_aws(boto.vpc, region, **boto_params)
+    except boto.exception.NoAuthHandlerFound, e:
+        module.fail_json(msg = str(e))
+
+    if not region:        
+        module.fail_json(msg="region must be specified")
+
+    copy_image(module, ec2)
+
+
+# import module snippets
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
+
+main()
+
