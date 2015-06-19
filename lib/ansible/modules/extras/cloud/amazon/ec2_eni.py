@@ -25,13 +25,13 @@ options:
   eni_id:
     description:
       - The ID of the ENI
-    required = false
-    default = null
+    required: false
+    default: null
   instance_id:
     description:
       - Instance ID that you wish to attach ENI to. To detach an ENI from an instance, use 'None'.
     required: false
-    default: null 
+    default: null
   private_ip_address:
     description:
       - Private IP address.

@@ -55,8 +55,8 @@ options:
       - The file to push to the datastore on the vCenter server.
     required: true
 notes:
-  - This module ought to be run from a system that can access vCenter directly and has the file to transfer.
-    It can be the normal remote target or you can change it either by using C(transport: local) or using C(delegate_to).
+  - "This module ought to be run from a system that can access vCenter directly and has the file to transfer.
+    It can be the normal remote target or you can change it either by using C(transport: local) or using C(delegate_to)."
   - Tested on vSphere 5.5
 '''
 

@@ -20,24 +20,21 @@ module: ec2_ami_copy
 short_description: copies AMI between AWS regions, return new image id
 description:
     - Copies AMI from a source region to a destination region. This module has a dependency on python-boto >= 2.5
-version_added: "1.7"
+version_added: "2.0"
 options:
   source_region:
     description:
       - the source region that AMI should be copied from
     required: true
-    default: null
   region:
     description:
       - the destination region that AMI should be copied to
     required: true
-    default: null
     aliases: ['aws_region', 'ec2_region', 'dest_region']
   source_image_id:
     description:
       - the id of the image in source region that should be copied
     required: true
-    default: null
   name:
     description:
       - The name of the new image to copy

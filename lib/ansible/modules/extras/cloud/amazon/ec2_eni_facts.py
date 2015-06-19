@@ -25,8 +25,8 @@ options:
   eni_id:
     description:
       - The ID of the ENI. Pass this option to gather facts about a particular ENI, otherwise, all ENIs are returned.
-    required = false
-    default = null
+    required: false
+    default: null
 extends_documentation_fragment: aws
 '''
 
