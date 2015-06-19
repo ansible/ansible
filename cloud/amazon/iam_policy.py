@@ -40,7 +40,12 @@ options:
     aliases: []
   policy_document:
     description:
-      - The path to the properly json formatted policy file
+      - The path to the properly json formatted policy file (mutually exclusive with C(policy_json))
+    required: false
+    aliases: []
+  policy_json:
+    description:
+      - A properly json formatted policy as string (mutually exclusive with C(policy_document), see https://github.com/ansible/ansible/issues/7005#issuecomment-42894813 on how to use it properly)
     required: false
     aliases: []
   state:
@@ -108,6 +113,19 @@ task:
     policy_document: readonlypolicy.json
     state: present
   with_items: new_groups.results
+
+# Create a new S3 policy with prefix per user
+tasks:
+- name: Create S3 policy from template
+  iam_policy:
+    iam_type: user
+    iam_name: "{{ item.user }}"
+    policy_name: "s3_limited_access_{{ item.s3_user_prefix }}"
+    state: present
+    policy_json: " {{ lookup( 'template', 's3_policy.json.j2') }} "
+    with_items:
+      - user: s3_user
+        prefix: s3_user_prefix
 
 '''
 import json
@@ -271,6 +289,7 @@ def main():
       iam_name=dict(default=None, required=False),
       policy_name=dict(default=None, required=True),
       policy_document=dict(default=None, required=False),
+      policy_json=dict(type='str', default=None, required=False),
       skip_duplicates=dict(type='bool', default=True, required=False)
   ))
 
@@ -284,10 +303,19 @@ def main():
   name = module.params.get('iam_name')
   policy_name = module.params.get('policy_name')
   skip = module.params.get('skip_duplicates')
+
+  if module.params.get('policy_document') != None and module.params.get('policy_json') != None:
+      module.fail_json(msg='Only one of "policy_document" or "policy_json" may be set')
+
   if module.params.get('policy_document') != None:
     with open(module.params.get('policy_document'), 'r') as json_data:
           pdoc = json.dumps(json.load(json_data))
           json_data.close()
+  elif module.params.get('policy_json') != None:
+      try:
+        pdoc = json.dumps(json.loads(module.params.get('policy_json')))
+      except Exception as e:
+        module.fail_json(msg=str(e) + '\n' + module.params.get('policy_json'))
   else:
     pdoc=None
 
