@@ -73,6 +73,8 @@ New Modules:
   * rabbitmq_binding
   * rabbitmq_exchange
   * rabbitmq_queue
+  * sensu_check
+  * sensu_subscription
   * vertica_configuration
   * vertica_facts
   * vertica_role
