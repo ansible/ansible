@@ -20,7 +20,7 @@ short_description: Manage subnets in AWS virtual private clouds
 description:
     - Manage subnets in AWS virtual private clouds
 version_added: "2.0"
-author: Robert Estelle, @erydo
+author: Robert Estelle (@erydo)
 options:
   vpc_id:
     description:
@@ -36,14 +36,16 @@ options:
     description:
       - The CIDR block for the subnet. E.g. 10.0.0.0/16. Only required when state=present."
     required: false
+    default: null
   az:
     description:
       - "The availability zone for the subnet. Only required when state=present."
     required: false
+    default: null
   state:
     description:
       - Create or remove the subnet
-    required: true
+    required: false
     default: present
     choices: [ 'present', 'absent' ]
 extends_documentation_fragment: aws
@@ -196,45 +198,43 @@ def ensure_subnet_absent(vpc_conn, vpc_id, cidr, check_mode):
 
 def main():
     argument_spec = ec2_argument_spec()
-    argument_spec.update({
-        'vpc_id': {'required': True},
-        'resource_tags': {'type': 'dict', 'required': False},
-        'cidr': {'required': True},
-        'az': {},
-        'state': {'choices': ['present', 'absent'], 'default': 'present'},
-    })
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-        supports_check_mode=True,
+    argument_spec.update(
+        dict(
+            vpc_id = dict(default=None, required=True),
+            resource_tags = dict(default=None, required=False, type='dict'),
+            cidr = dict(default=None, required=True),
+            az = dict(default=None, required=False),
+            state = dict(default='present', choices=['present', 'absent'])     
+        )
     )
+    
+    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    
     if not HAS_BOTO:
         module.fail_json(msg='boto is required for this module')
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
-    if not region:
-        module.fail_json(msg='Region must be specified')
-
-    try:
-        vpc_conn = boto.vpc.connect_to_region(
-            region,
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key
-        )
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg=str(e))
+    region, ec2_url, aws_connect_params = get_aws_connection_info(module)
+    
+    if region:
+        try:
+            connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+            module.fail_json(msg=str(e))
+    else:
+        module.fail_json(msg="region must be specified")
 
     vpc_id = module.params.get('vpc_id')
     tags = module.params.get('resource_tags')
     cidr = module.params.get('cidr')
     az = module.params.get('az')
-    state = module.params.get('state', 'present')
+    state = module.params.get('state')
 
     try:
         if state == 'present':
-            result = ensure_subnet_present(vpc_conn, vpc_id, cidr, az, tags,
+            result = ensure_subnet_present(connection, vpc_id, cidr, az, tags,
                                            check_mode=module.check_mode)
         elif state == 'absent':
-            result = ensure_subnet_absent(vpc_conn, vpc_id, cidr,
+            result = ensure_subnet_absent(connection, vpc_id, cidr,
                                           check_mode=module.check_mode)
     except AnsibleVPCSubnetException as e:
         module.fail_json(msg=str(e))
