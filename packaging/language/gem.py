@@ -73,6 +73,12 @@ options:
     required: false
     default: "no"
     version_added: "1.6"
+  include_doc:
+    description:
+      - Install with or without docs.
+    required: false
+    default: "no"
+    version_added: "2.0"
   build_flags:
     description:
       - Allow adding build flags for gem compilation
@@ -189,8 +195,9 @@ def install(module):
         cmd.append('--no-user-install')
     if module.params['pre_release']:
         cmd.append('--pre')
-    cmd.append('--no-rdoc')
-    cmd.append('--no-ri')
+    if not module.params['include_doc']:
+        cmd.append('--no-rdoc')
+        cmd.append('--no-ri')
     cmd.append(module.params['gem_source'])
     if module.params['build_flags']:
         cmd.extend([ '--', module.params['build_flags'] ])
@@ -208,6 +215,7 @@ def main():
             state                = dict(required=False, default='present', choices=['present','absent','latest'], type='str'),
             user_install         = dict(required=False, default=True, type='bool'),
             pre_release          = dict(required=False, default=False, type='bool'),
+            include_doc         = dict(required=False, default=False, type-'bool'),
             version              = dict(required=False, type='str'),
             build_flags          = dict(required=False, type='str'),
         ),
