@@ -215,7 +215,7 @@ def main():
             state                = dict(required=False, default='present', choices=['present','absent','latest'], type='str'),
             user_install         = dict(required=False, default=True, type='bool'),
             pre_release          = dict(required=False, default=False, type='bool'),
-            include_doc         = dict(required=False, default=False, type-'bool'),
+            include_doc         = dict(required=False, default=False, type='bool'),
             version              = dict(required=False, type='str'),
             build_flags          = dict(required=False, type='str'),
         ),
