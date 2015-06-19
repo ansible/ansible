@@ -96,8 +96,8 @@ def _find_matching_rule(module, secgroup):
     :returns: The matching rule dict, or None if no matches.
     """
     protocol = module.params['protocol']
-    port_range_min = int(module.params['port_range_min'])
-    port_range_max = int(module.params['port_range_max'])
+    port_range_min = module.params['port_range_min']
+    port_range_max = module.params['port_range_max']
     remote_ip_prefix = module.params['remote_ip_prefix']
     ethertype = module.params['ethertype']
     direction = module.params['direction']
@@ -145,8 +145,8 @@ def main():
         security_group   = dict(required=True),
         protocol         = dict(default='tcp',
                                 choices=['tcp', 'udp', 'icmp']),
-        port_range_min   = dict(required=True),
-        port_range_max   = dict(required=True),
+        port_range_min   = dict(required=True, type='int'),
+        port_range_max   = dict(required=True, type='int'),
         remote_ip_prefix = dict(required=False, default=None),
         # TODO(mordred): Make remote_group handle name and id
         remote_group     = dict(required=False, default=None),
