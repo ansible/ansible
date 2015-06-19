@@ -25,7 +25,7 @@ options:
     description:
       - message body
     required: true
-requirements: [ urllib, urllib2, json ]
+requirements: [ json ]
 author: "Takashi Someda (@tksmd)"
 '''
 
@@ -33,15 +33,9 @@ EXAMPLES = '''
 - typetalk: client_id=12345 client_secret=12345 topic=1 msg="install completed"
 '''
 
-try:
-    import urllib
-except ImportError:
-    urllib = None
+import urllib
 
-try:
-    import urllib2
-except ImportError:
-    urllib2 = None
+import urllib2
 
 try:
     import json
@@ -96,8 +90,8 @@ def main():
         supports_check_mode=False
     )
 
-    if not (urllib and urllib2 and json):
-        module.fail_json(msg="urllib, urllib2 and json modules are required")
+    if not json:
+        module.fail_json(msg="json module is required")
 
     client_id = module.params["client_id"]
     client_secret = module.params["client_secret"]
