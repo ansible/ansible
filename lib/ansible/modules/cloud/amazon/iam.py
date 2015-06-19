@@ -157,6 +157,7 @@ import sys
 try:
     import boto
     import boto.iam
+    import boto.ec2
     HAS_BOTO = True
 except ImportError:
    HAS_BOTO = False
