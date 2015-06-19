@@ -275,7 +275,7 @@ def emerge_packages(module, packages):
         if p[flag]:
             args.append(arg)
 
-    if 'usepkg' in p and 'usepkgonly' in p:
+    if p['usepkg'] and p['usepkgonly']:
         module.fail_json(msg='Use only one of usepkg, usepkgonly')
 
     cmd, (rc, out, err) = run_emerge(module, packages, *args)
