@@ -15,6 +15,7 @@ Deprecated Modules (new ones in parens):
   * nova_compute   (os_server)
 
 New Modules:
+  * amazon: ec2_ami_copy
   * amazon: ec2_ami_find
   * amazon: ec2_eni
   * amazon: ec2_eni_facts
