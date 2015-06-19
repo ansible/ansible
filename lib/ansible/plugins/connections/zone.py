@@ -148,7 +148,10 @@ class Connection(object):
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.zone)
 
         with open(in_path, 'rb') as in_file:
-            p = self._buffered_exec_command('dd of=%s' % out_path, None, stdin=in_file)
+            try:
+                p = self._buffered_exec_command('dd of=%s' % out_path, None, stdin=in_file)
+            except OSError:
+                raise errors.AnsibleError("zone connection requires dd command in the zone")
             try:
                 stdout, stderr = p.communicate()
             except:
@@ -163,7 +166,11 @@ class Connection(object):
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.zone)
 
 
-        p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
+        try:
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
+        except OSError:
+            raise errors.AnsibleError("zone connection requires dd command in the zone")
+
 
         with open(out_path, 'wb+') as out_file:
             try:
