@@ -29,7 +29,7 @@ from ansible import errors
 from ansible.callbacks import vvv
 import ansible.constants as C
 
-BUFSIZE = 4096
+BUFSIZE = 65536
 
 class Connection(object):
     ''' Local zone based connections '''
