@@ -410,13 +410,21 @@ def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name=
 def find_datastore(module, s, datastore, config_target):
     # Verify the datastore exists and put it in brackets if it does.
     ds = None
-    for d in config_target.Datastore:
-        if (d.Datastore.Accessible and
-            (datastore and d.Datastore.Name == datastore)
-                or (not datastore)):
-            ds = d.Datastore.Datastore
-            datastore = d.Datastore.Name
-            break
+    if config_target:
+        for d in config_target.Datastore:
+            if (d.Datastore.Accessible and
+                (datastore and d.Datastore.Name == datastore)
+                    or (not datastore)):
+                ds = d.Datastore.Datastore
+                datastore = d.Datastore.Name
+                break
+    else:
+        for ds_mor, ds_name in server.get_datastores().items():
+            ds_props = VIProperty(s, ds_mor)
+            if (ds_props.summary.accessible and (datastore and ds_name == datastore)
+                    or (not datastore)):
+                ds = ds_mor
+                datastore = ds_name
     if not ds:
         s.disconnect()
         module.fail_json(msg="Datastore: %s does not appear to exist" %
