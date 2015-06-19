@@ -62,8 +62,7 @@ options:
     version_added: 1.6.0
 
 
-# informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
+requirements: [ ]
 author: "WAKAYAMA Shirou (@shirou), BOURDEL Paul (@pb8226)"
 '''
 
@@ -74,6 +73,8 @@ EXAMPLES = '''
 # ===========================================
 # HipChat module specific support methods.
 #
+
+import urllib
 
 DEFAULT_URI = "https://api.hipchat.com/v1"
 

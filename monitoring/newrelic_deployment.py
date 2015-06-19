@@ -72,8 +72,7 @@ options:
     choices: ['yes', 'no']
     version_added: 1.5.1
 
-# informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
+requirements: []
 '''
 
 EXAMPLES = '''
@@ -82,6 +81,8 @@ EXAMPLES = '''
                        user='ansible deployment'
                        revision=1.0
 '''
+
+import urllib
 
 # ===========================================
 # Module execution.
