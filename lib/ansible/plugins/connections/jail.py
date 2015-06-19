@@ -59,8 +59,6 @@ class Connection(object):
         # remove \n
         return stdout[:-1]
 
- 
-        
     def __init__(self, runner, host, port, *args, **kwargs):
         self.jail = host
         self.runner = runner
@@ -73,7 +71,7 @@ class Connection(object):
 
         self.jls_cmd = self._search_executable('jls')
         self.jexec_cmd = self._search_executable('jexec')
-        
+
         if not self.jail in self.list_jails():
             raise errors.AnsibleError("incorrect jail name %s" % self.jail)
 
@@ -137,7 +135,10 @@ class Connection(object):
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
 
         with open(in_path, 'rb') as in_file:
-            p = self._buffered_exec_command('dd of=%s' % out_path, None, stdin=in_file)
+            try:
+                p = self._buffered_exec_command('dd of=%s' % out_path, None, stdin=in_file)
+            except OSError:
+                raise errors.AnsibleError("jail connection requires dd command in the jail")
             try:
                 stdout, stderr = p.communicate()
             except:
@@ -152,7 +153,10 @@ class Connection(object):
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
 
 
-        p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
+        try:
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
+        except OSError:
+            raise errors.AnsibleError("jail connection requires dd command in the jail")
 
         with open(out_path, 'wb+') as out_file:
             try:
