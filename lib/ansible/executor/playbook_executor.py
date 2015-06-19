@@ -145,6 +145,12 @@ class PlaybookExecutor:
             if entrylist:
                 return entrylist
 
+        except Exception as e:
+            # Notify callback plugins of catastrophe
+            if self._tqm is not None:
+                self._tqm.send_callback('v2_playbook_on_exception', e)
+            # And re-raise our exception in its original context
+            raise
         finally:
             if self._tqm is not None:
                 self._cleanup()

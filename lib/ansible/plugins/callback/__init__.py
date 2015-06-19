@@ -100,3 +100,5 @@ class CallbackBase:
     def playbook_on_stats(self, stats):
         pass
 
+    def playbook_on_exception(self, exception):
+        pass
