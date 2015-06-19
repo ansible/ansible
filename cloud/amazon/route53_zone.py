@@ -5,12 +5,12 @@ module: route53_zone
 short_description: add or delete Route53 zones
 description:
     - Creates and deletes Route53 private and public zones
+version_added: "2.0"
 options:
     zone:
         description:
             - The DNS zone record (eg: foo.com.)
         required: true
-        default: null
     command:
         description:
             - whether or not the zone should exist or not
@@ -32,6 +32,7 @@ options:
         required: false
         default: ''
 extends_documentation_fragment: aws
+author: "Christopher Troup (@minichate)"
 '''
 
 import time
