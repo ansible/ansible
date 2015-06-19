@@ -47,8 +47,6 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
-
-requirements: ["shade"]
 '''
 
 EXAMPLES = '''
