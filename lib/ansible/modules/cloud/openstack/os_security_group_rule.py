@@ -93,12 +93,11 @@ EXAMPLES = '''
 def _find_matching_rule(module, secgroup):
     """
     Find a rule in the group that matches the module parameters.
-
     :returns: The matching rule dict, or None if no matches.
     """
     protocol = module.params['protocol']
-    port_range_min = module.params['port_range_min']
-    port_range_max = module.params['port_range_max']
+    port_range_min = int(module.params['port_range_min'])
+    port_range_max = int(module.params['port_range_max'])
     remote_ip_prefix = module.params['remote_ip_prefix']
     ethertype = module.params['ethertype']
     direction = module.params['direction']
@@ -106,14 +105,14 @@ def _find_matching_rule(module, secgroup):
     for rule in secgroup['security_group_rules']:
         # No port, or -1, will be returned from shade as None
         if rule['port_range_min'] is None:
-            rule_port_range_min = "-1"
+            rule_port_range_min = -1
         else:
-            rule_port_range_min = str(rule['port_range_min'])
+            rule_port_range_min = int(rule['port_range_min'])
 
         if rule['port_range_max'] is None:
-            rule_port_range_max = "-1"
+            rule_port_range_max = -1
         else:
-            rule_port_range_max = str(rule['port_range_max'])
+            rule_port_range_max = int(rule['port_range_max'])
 
 
         if (protocol == rule['protocol']
@@ -198,7 +197,7 @@ def main():
                     ethertype=module.params['ethertype']
                 )
                 changed = True
-            module.exit_json(changed=changed, rule=rule, id=rule.id)
+            module.exit_json(changed=changed, rule=rule, id=rule['id'])
 
         if state == 'absent' and secgroup:
             rule = _find_matching_rule(module, secgroup)
