@@ -183,8 +183,8 @@ def sensu_check(module, path, name, state='present', backup=False):
         import simplejson as json
 
     try:
-        with open(path) as stream:
-            config = json.load(stream)
+        stream = open(path, 'r')
+        config = json.load(stream.read())
     except IOError as e:
         if e.errno is 2:  # File not found, non-fatal
             if state == 'absent':
@@ -196,6 +196,9 @@ def sensu_check(module, path, name, state='present', backup=False):
     except ValueError:
         msg = '{path} contains invalid JSON'.format(path=path)
         module.fail_json(msg=msg)
+    finally:
+        if stream:
+            stream.close()
 
     if 'checks' not in config:
         if state == 'absent':
@@ -274,10 +277,13 @@ def sensu_check(module, path, name, state='present', backup=False):
         if backup:
             module.backup_local(path)
         try:
-            with open(path, 'w') as stream:
-                stream.write(json.dumps(config, indent=2) + '\n')
+            stream = open(path, 'w')
+            stream.write(json.dumps(config, indent=2) + '\n')
         except IOError as e:
             module.fail_json(msg=str(e))
+        finally:
+            if stream:
+                stream.close()
 
     return changed, reasons
 
