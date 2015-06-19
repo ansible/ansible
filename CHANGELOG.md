@@ -16,6 +16,7 @@ Deprecated Modules (new ones in parens):
 
 New Modules:
   * amazon: ec2_ami_find
+  * amazon: ec2_eni
   * amazon: ec2_eni_facts
   * amazon: elasticache_subnet_group
   * amazon: ec2_win_password
