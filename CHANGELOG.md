@@ -30,6 +30,7 @@ New Modules:
   * cloudtrail
   * cloudstack: cs_account
   * cloudstack: cs_affinitygroup
+  * cloudstack: cs_facts
   * cloudstack: cs_firewall
   * cloudstack: cs_iso
   * cloudstack: cs_instance
