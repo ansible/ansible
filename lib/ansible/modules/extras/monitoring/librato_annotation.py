@@ -31,7 +31,6 @@ description:
 version_added: "1.6"
 author: Seth Edwards
 requirements:
-    - urllib2
     - base64
 options:
     user:
@@ -107,11 +106,7 @@ EXAMPLES = '''
 '''
 
 
-try:
-    import urllib2
-    HAS_URLLIB2 = True
-except ImportError:
-    HAS_URLLIB2 = False
+import urllib2
 
 def post_annotation(module):
     user = module.params['user']

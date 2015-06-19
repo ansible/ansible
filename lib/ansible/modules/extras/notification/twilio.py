@@ -104,7 +104,8 @@ EXAMPLES = '''
 # =======================================
 # twilio module support methods
 #
-import urllib, urllib2
+import urllib
+import urllib2
 
 import base64
 
