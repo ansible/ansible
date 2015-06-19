@@ -120,11 +120,10 @@ def main():
     atexit.register(conn.close)
 
     remote_path = vmware_path(datastore, datacenter, dest)
-    auth = base64.encodestring('%s:%s' % (login, password))
+    auth = base64.encodestring('%s:%s' % (login, password)).rstrip()
     headers = {
         "Content-Type": "application/octet-stream",
         "Content-Length": str(len(data)),
-        "Accept": "text/plain",
         "Authorization": "Basic %s" % auth,
     }
 
