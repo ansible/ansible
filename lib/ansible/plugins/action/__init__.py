@@ -405,7 +405,7 @@ class ActionBase:
             # not valid json, lets try to capture error
             data = dict(failed=True, parsed=False)
             if 'stderr' in res and res['stderr'].startswith('Traceback'):
-                data['traceback'] = res['stderr']
+                data['exception'] = res['stderr']
             else:
                 data['msg'] = res.get('stdout', '')
                 if 'stderr' in res:
