@@ -102,6 +102,14 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''
+table_status:
+    description: The current status of the table.
+    returned: success
+    type: string
+    sample: ACTIVE
+'''
+
 try:
     import boto
     import boto.dynamodb2
