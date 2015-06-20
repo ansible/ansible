@@ -39,7 +39,7 @@ options:
   hash_key_name:
     description:
       - Name of the hash key.
-      - Required when state=present.
+      - Required when C(state=present).
     required: false
   hash_key_type:
     description:
@@ -109,10 +109,10 @@ try:
     from boto.dynamodb2.fields import HashKey, RangeKey
     from boto.dynamodb2.types import STRING, NUMBER, BINARY
     from boto.exception import BotoServerError, JSONResponseError
+    HAS_BOTO = True
 
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 DYNAMO_TYPE_MAP = {
@@ -132,8 +132,8 @@ def create_or_update_dynamo_table(connection, module):
     write_capacity = module.params.get('write_capacity')
 
     schema = [
-        HashKey(hash_key_name, map_dynamo_type(hash_key_type)),
-        RangeKey(range_key_name, map_dynamo_type(range_key_type))
+        HashKey(hash_key_name, DYNAMO_TYPE_MAP.get(hash_key_type)),
+        RangeKey(range_key_name, DYNAMO_TYPE_MAP.get(range_key_type))
     ]
     throughput = {
         'read': read_capacity,
@@ -155,13 +155,14 @@ def create_or_update_dynamo_table(connection, module):
         table = Table(table_name, connection=connection)
 
         if dynamo_table_exists(table):
-            changed = update_dynamo_table(table, throughput=throughput)
+            result['changed'] = update_dynamo_table(table, throughput=throughput, check_mode=module.check_mode)
         else:
-            Table.create(table_name, connection=connection, schema=schema, throughput=throughput)
-            changed = True
+            if not module.check_mode:
+                Table.create(table_name, connection=connection, schema=schema, throughput=throughput)
+            result['changed'] = True
 
-        result['table_status'] = table.describe()['Table']['TableStatus']
-        result['changed'] = changed
+        if not module.check_mode:
+            result['table_status'] = table.describe()['Table']['TableStatus']
 
     except BotoServerError:
         result['msg'] = 'Failed to create/update dynamo table due to error: ' + traceback.format_exc()
@@ -171,7 +172,7 @@ def create_or_update_dynamo_table(connection, module):
 
 
 def delete_dynamo_table(connection, module):
-    table_name = module.params.get('table_name')
+    table_name = module.params.get('name')
 
     result = dict(
         region=module.params.get('region'),
@@ -179,14 +180,15 @@ def delete_dynamo_table(connection, module):
     )
 
     try:
-        changed = False
         table = Table(table_name, connection=connection)
 
         if dynamo_table_exists(table):
-            table.delete()
-            changed = True
+            if not module.check_mode:
+                table.delete()
+            result['changed'] = True
 
-        result['changed'] = changed
+        else:
+            result['changed'] = False
 
     except BotoServerError:
         result['msg'] = 'Failed to delete dynamo table due to error: ' + traceback.format_exc()
@@ -207,12 +209,14 @@ def dynamo_table_exists(table):
             raise e
 
 
-def update_dynamo_table(table, throughput=None):
+def update_dynamo_table(table, throughput=None, check_mode=False):
     table.describe()  # populate table details
 
-    # AWS complains if the throughput hasn't changed
     if has_throughput_changed(table, throughput):
-        return table.update(throughput=throughput)
+        if not check_mode:
+            return table.update(throughput=throughput)
+        else:
+            return True
 
     return False
 
@@ -223,10 +227,6 @@ def has_throughput_changed(table, new_throughput):
 
     return new_throughput['read'] != table.throughput['read'] or \
            new_throughput['write'] != table.throughput['write']
-
-
-def map_dynamo_type(dynamo_type):
-    return DYNAMO_TYPE_MAP.get(dynamo_type)
 
 
 def main():
@@ -242,7 +242,12 @@ def main():
         write_capacity=dict(default=1, type='int'),
     ))
 
-    module = AnsibleModule(argument_spec=argument_spec)
+    module = AnsibleModule(
+        argument_spec=argument_spec,
+        supports_check_mode=True)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     connection = boto.dynamodb2.connect_to_region(region)
