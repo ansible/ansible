@@ -34,7 +34,7 @@ class AnsibleJ2Vars:
     To facilitate using builtin jinja2 things like range, globals are also handled here.
     '''
 
-    def __init__(self, templar, globals, locals=dict(), *extras):
+    def __init__(self, templar, globals, locals=None, *extras):
         '''
         Initializes this object with a valid Templar() object, as
         well as several dictionaries of variables representing
