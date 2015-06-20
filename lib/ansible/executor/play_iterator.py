@@ -100,6 +100,9 @@ class PlayIterator:
         for host in inventory.get_hosts(self._play.hosts):
              self._host_states[host.name] = HostState(blocks=self._blocks)
 
+        # Extend the play handlers list to include the handlers defined in roles
+        self._play.handlers.extend(play.compile_roles_handlers())
+
     def get_host_state(self, host):
         try:
             return self._host_states[host.name].copy()

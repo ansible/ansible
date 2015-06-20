@@ -172,7 +172,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = load_list_of_blocks(handler_data, play=None, role=self, loader=self._loader)
+            self._handler_blocks = load_list_of_blocks(handler_data, play=None, role=self, use_handlers=True, loader=self._loader)
 
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')

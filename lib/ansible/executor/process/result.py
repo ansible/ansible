@@ -129,6 +129,9 @@ class ResultProcess(multiprocessing.Process):
                         # So, per the docs, we reassign the list so the proxy picks up and
                         # notifies all other threads
                         for notify in result._task.notify:
+                            if result._task._role:
+                                role_name = result._task._role.get_name()
+                                notify = "%s : %s" %(role_name, notify)
                             self._send_result(('notify_handler', result._host, notify))
 
                     if result._task.loop:
