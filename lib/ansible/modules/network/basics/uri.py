@@ -155,7 +155,7 @@ EXAMPLES = '''
   register: webpage
 
 - action: fail
-  when: 'AWESOME' not in "{{ webpage.content }}"
+  when: "'illustrative' not in webpage.content"
 
 
 # Create a JIRA issue
