@@ -370,7 +370,7 @@ See an example documentation string in the checkout under `examples/DOCUMENTATIO
 
 Include it in your module file like this::
 
-    #!/usr/bin/env python
+    #!/usr/bin/python
     # Copyright header....
 
     DOCUMENTATION = '''
