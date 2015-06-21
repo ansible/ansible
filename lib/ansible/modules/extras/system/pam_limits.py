@@ -26,7 +26,7 @@ import re
 DOCUMENTATION = '''
 ---
 module: pam_limits
-version_added: "historical"
+version_added: "2.0"
 short_description: Modify Linux PAM limits
 description:
      - The M(pam_limits) module modify PAM limits, default in /etc/security/limits.conf.
@@ -36,24 +36,20 @@ options:
     description:
       - A username, @groupname, wildcard, uid/gid range.
     required: true
-    default: null
   limit_type:
     description:
       - Limit type : hard or soft.
     required: true
     choices: [ "hard", "soft" ]
-    default: null
   limit_item:
     description:
       - The limit to be set : core, data, nofile, cpu, etc.
     required: true
     choices: [ "core", "data", "fsize", "memlock", "nofile", "rss", "stack", "cpu", "nproc", "as", "maxlogins", "maxsyslogins", "priority", "locks", "sigpending", "msgqueue", "nice", "rtprio", "chroot" ]
-        default: null
   value:
     description:
       - The value of the limit.
     required: true
-    default: null
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
@@ -202,10 +198,7 @@ def main():
     nf.close()
 
     # Copy tempfile to newfile
-    shutil.copy(nf.name, f.name)
-
-    # delete tempfile
-    os.unlink(nf.name)
+    module.atomic_move(nf.name, f.name)
 
     res_args = dict(
         changed = changed, msg = message
