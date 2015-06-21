@@ -133,6 +133,7 @@ import urllib
 try:
     import boto
     import boto.iam
+    import boto.ec2
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -321,13 +322,10 @@ def main():
   else:
     pdoc=None
 
-  ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+  region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
   try:
-      iam = boto.iam.connection.IAMConnection(
-          aws_access_key_id=aws_access_key,
-          aws_secret_access_key=aws_secret_key,
-      )
+      iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
   except boto.exception.NoAuthHandlerFound, e:
       module.fail_json(msg=str(e))
 
