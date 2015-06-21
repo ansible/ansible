@@ -75,7 +75,7 @@ class Connection(ConnectionBase):
         )
         debug("done running command with Popen()")
 
-        if self.prompt:
+        if self.prompt  and self._connection_info.become_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             become_output = ''
