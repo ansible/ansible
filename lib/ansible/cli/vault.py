@@ -115,6 +115,9 @@ class VaultCLI(CLI):
         self.display.display("Encryption successful")
 
     def execute_rekey(self):
+        for f in self.args:
+            if not (os.path.isfile(f)):
+                raise AnsibleError(f + " does not exist")
         __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
         for f in self.args:
