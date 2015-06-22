@@ -258,7 +258,7 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    connection = boto.dynamodb2.connect_to_region(region)
+    connection = connect_to_aws(boto.dynamodb2, region, **aws_connect_params)
 
     state = module.params.get('state')
     if state == 'present':
