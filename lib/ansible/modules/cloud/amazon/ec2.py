@@ -625,6 +625,19 @@ def get_instance_info(inst):
         instance_info['ebs_optimized'] = False
 
     try:
+        bdm_dict = {}
+        bdm = getattr(inst, 'block_device_mapping')
+        for device_name in bdm.keys():
+            bdm_dict[device_name] = {
+                'status': bdm[device_name].status,
+                'volume_id': bdm[device_name].volume_id,
+                'delete_on_termination': bdm[device_name].delete_on_termination
+            }
+        instance_info['block_device_mapping'] = bdm_dict
+    except AttributeError:
+        instance_info['block_device_mapping'] = False
+
+    try:
         instance_info['tenancy'] = getattr(inst, 'placement_tenancy')
     except AttributeError:
         instance_info['tenancy'] = 'default'
