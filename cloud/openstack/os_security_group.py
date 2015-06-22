@@ -125,12 +125,12 @@ def main():
                         secgroup['id'], description=description)
                     changed = True
             module.exit_json(
-                changed=changed, id=secgroup.id, secgroup=secgroup)
+                changed=changed, id=secgroup['id'], secgroup=secgroup)
 
         if state == 'absent':
             if secgroup:
                 cloud.delete_security_group(secgroup['id'])
-                changed=True
+                changed = True
             module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
