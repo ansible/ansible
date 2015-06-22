@@ -16,7 +16,7 @@
 
 DOCUMENTATION = """
 ---
-module: sqs
+module: sqs_queue
 short_description: Creates or deletes AWS SQS queues.
 description:
   - Create or delete AWS SQS queues.
@@ -66,7 +66,7 @@ extends_documentation_fragment: aws
 
 EXAMPLES = '''
 # Create SQS queue
-- sqs:
+- sqs_queue:
     name: my-queue
     region: ap-southeast-2
     default_visibility_timeout: 120
@@ -76,7 +76,7 @@ EXAMPLES = '''
     receive_message_wait_time: 20
 
 # Delete SQS queue
-- sqs:
+- sqs_queue:
     name: my-queue
     region: ap-southeast-2
     state: absent
