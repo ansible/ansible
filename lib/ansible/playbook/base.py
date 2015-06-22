@@ -254,15 +254,17 @@ class Base:
                     raise AnsibleParserError("the field '%s' is required but was not set" % name)
 
             try:
-                # if the attribute contains a variable, template it now
-                value = templar.template(getattr(self, name))
-
-                # run the post-validator if present
+                # Run the post-validator if present. These methods are responsible for
+                # using the given templar to template the values, if required.
                 method = getattr(self, '_post_validate_%s' % name, None)
                 if method:
-                    value = method(attribute, value, all_vars, templar._fail_on_undefined_errors)
+                    value = method(attribute, getattr(self, name), templar)
                 else:
-                    # otherwise, just make sure the attribute is of the type it should be
+                    # if the attribute contains a variable, template it now
+                    value = templar.template(getattr(self, name))
+
+                # and make sure the attribute is of the type it should be
+                if value is not None:
                     if attribute.isa == 'string':
                         value = unicode(value)
                     elif attribute.isa == 'int':
