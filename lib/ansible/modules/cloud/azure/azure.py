@@ -53,7 +53,7 @@ options:
     default: null
   role_size:
     description:
-      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6)
+      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
     required: false
     default: Small
   endpoints:
@@ -235,6 +235,14 @@ AZURE_ROLE_SIZES = ['ExtraSmall',
                     'Standard_D12',
                     'Standard_D13',
                     'Standard_D14',
+                    'Standard_DS1',
+                    'Standard_DS2',
+                    'Standard_DS3',
+                    'Standard_DS4',
+                    'Standard_DS11',
+                    'Standard_DS12',
+                    'Standard_DS13',
+                    'Standard_DS14',
                     'Standard_G1',
                     'Standard_G2',
                     'Sandard_G3',
