@@ -26,6 +26,13 @@ $result = New-Object psobject @{
     changed = $false
 }
 
+If ($params.creates) {
+    If (Test-Path $params.creates) {
+        Exit-Json $result "The 'creates' file or directory already exists."
+    }
+
+}
+
 If ($params.src) {
     $src = $params.src.toString()
 
@@ -86,7 +93,7 @@ Else {
     $list = Get-Module -ListAvailable
 
     If (-Not ($list -match "PSCX")) {
-        Fail-Json "PowerShellCommunityExtensions PowerShell Module (PSCX) is required for non-'.zip' compressed archive types."
+        Fail-Json $result "PowerShellCommunityExtensions PowerShell Module (PSCX) is required for non-'.zip' compressed archive types."
     }
     Else {
         Set-Attr $result.win_unzip "pscx_status" "present"
@@ -122,10 +129,10 @@ Else {
     }
     Catch {
         If ($recurse) {
-            Fail-Json "Error recursively expanding $src to $dest"
+            Fail-Json $result "Error recursively expanding $src to $dest"
         }
         Else {
-            Fail-Json "Error expanding $src to $dest"
+            Fail-Json $result "Error expanding $src to $dest"
         }
     }
 }
@@ -133,11 +140,6 @@ Else {
 If ($rm -eq $true){
     Remove-Item $src -Recurse -Force
     Set-Attr $result.win_unzip "rm" "true"
-}
-
-If ($params.restart -eq "true" -Or $params.restart -eq "yes") {
-    Restart-Computer -Force
-    Set-Attr $result.win_unzip "restart" "true"
 }
 
 # Fixes a fail error message (when the task actually succeeds) for a "Convert-ToJson: The converted JSON string is in bad format"
