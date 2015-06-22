@@ -63,16 +63,11 @@ options:
       - yes
       - no
     aliases: []
-  restart:
+  creates:
     description:
-      - Restarts the computer after unzip, can be useful for hotfixes such as http://support.microsoft.com/kb/2842230 (Restarts will have to be accounted for with wait_for module)
-    choices:
-      - true
-      - false
-      - yes
-      - no
-    required: false
-    default: false
+      - If this file or directory exists the specified src will not be extracted.
+    required: no
+    default: null
     aliases: []
 author: Phil Schwartz 
 '''
@@ -88,6 +83,7 @@ $ ansible -i hosts -m win_unzip -a "src=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=t
   win_unzip:
     src: "C:\Users\Phil\Logs.bz2"
     dest: "C:\Users\Phil\OldLogs"
+    creates: "C:\Users\Phil\OldLogs"
 
 # This playbook example unzips a .zip file and recursively decompresses the contained .gz files and removes all unneeded compressed files after completion.
 ---
@@ -101,31 +97,6 @@ $ ansible -i hosts -m win_unzip -a "src=C:\\LibraryToUnzip.zip dest=C:\\Lib rm=t
         dest: C:\Application\Logs
         recurse: yes
         rm: true
-
-# Install hotfix (self-extracting .exe)
----
-- name: Install WinRM PowerShell Hotfix for Windows Server 2008 SP1
-  hosts: all
-  gather_facts: false
-  tasks:
-  - name: Grab Hotfix from URL
-    win_get_url:
-      url: 'http://hotfixv4.microsoft.com/Windows%207/Windows%20Server2008%20R2%20SP1/sp2/Fix467402/7600/free/463984_intl_x64_zip.exe'
-      dest: 'C:\\463984_intl_x64_zip.exe'
-  - name: Unzip hotfix
-    win_unzip:
-      src: "C:\\463984_intl_x64_zip.exe"
-      dest: "C:\\Hotfix"
-      recurse: true
-      restart: true
-  - name: Wait for server reboot...
-  local_action:
-    module: wait_for
-      host={{ inventory_hostname }}
-      port={{ansible_ssh_port|default(5986)}}
-      delay=15
-      timeout=600
-      state=started
 
 # Install PSCX to use for extracting a gz file
   - name: Grab PSCX msi
