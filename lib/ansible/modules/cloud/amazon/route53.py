@@ -293,7 +293,7 @@ def main():
 
     if type(value_in) is str:
         if value_in:
-            value_list = sorted(value_in.split(','))
+            value_list = sorted([s.strip() for s in value_in.split(',')])
     elif type(value_in)  is list:
         value_list = sorted(value_in)
 
