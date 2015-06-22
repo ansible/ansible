@@ -130,7 +130,7 @@ DEFAULT_SOCKET_LOCATION="/var/run/haproxy.sock"
 RECV_SIZE = 1024
 ACTION_CHOICES = ['enabled', 'disabled']
 WAIT_RETRIES=25
-WAIT_INTERVAL=1
+WAIT_INTERVAL=5
 
 ######################################################################
 class TimeoutException(Exception):
