@@ -165,11 +165,6 @@ class StrategyModule(StrategyBase):
                         # corresponding action plugin
                         pass
 
-                    debug("getting variables")
-                    task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                    templar = Templar(loader=self._loader, variables=task_vars)
-                    debug("done getting variables")
-
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
                     if task._role and task._role.has_run():
@@ -191,6 +186,11 @@ class StrategyModule(StrategyBase):
                         else:
                             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
                     else:
+                        debug("getting variables")
+                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        templar = Templar(loader=self._loader, variables=task_vars)
+                        debug("done getting variables")
+
                         if not callback_sent:
                             temp_task = task.copy()
                             temp_task.name = templar.template(temp_task.get_name(), fail_on_undefined=False)
