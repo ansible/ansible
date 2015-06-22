@@ -134,24 +134,26 @@ class Connection(object):
 
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
 
-        with open(in_path, 'rb') as in_file:
-            try:
-                p = self._buffered_exec_command('dd of=%s' % out_path, None, stdin=in_file)
-            except OSError:
-                raise errors.AnsibleError("jail connection requires dd command in the jail")
-            try:
-                stdout, stderr = p.communicate()
-            except:
-                traceback.print_exc()
-                raise errors.AnsibleError("failed to transfer file to %s" % out_path)
-            if p.returncode != 0:
-                raise errors.AnsibleError("failed to transfer file to %s:\n%s\n%s" % (out_path, stdout, stderr))
+        try:
+            with open(in_path, 'rb') as in_file:
+                try:
+                    p = self._buffered_exec_command('dd of=%s' % out_path, None, stdin=in_file)
+                except OSError:
+                    raise errors.AnsibleError("jail connection requires dd command in the jail")
+                try:
+                    stdout, stderr = p.communicate()
+                except:
+                    traceback.print_exc()
+                    raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                if p.returncode != 0:
+                    raise errors.AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+        except IOError:
+            raise errors.AnsibleError("file or module does not exist at: %s" % in_path)
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from jail to local '''
 
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
-
 
         try:
             p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
@@ -164,10 +166,10 @@ class Connection(object):
                     out_file.write(chunk)
             except:
                 traceback.print_exc()
-                raise errors.AnsibleError("failed to transfer file to %s" % out_path)
+                raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise errors.AnsibleError("failed to transfer file to %s:\n%s\n%s" % (out_path, stdout, stderr))
+                raise errors.AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
