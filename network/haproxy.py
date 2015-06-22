@@ -78,13 +78,13 @@ options:
     description:
       - number of times to check for status after changing the state
     required: false
-    default: 20
+    default: 25
     version_added: "2.0"
   wait_interval:
     description:
       - number of seconds to wait between retries
     required: false
-    default: 1
+    default: 5
     version_added: "2.0"
 '''
 
@@ -129,7 +129,7 @@ import time
 DEFAULT_SOCKET_LOCATION="/var/run/haproxy.sock"
 RECV_SIZE = 1024
 ACTION_CHOICES = ['enabled', 'disabled']
-WAIT_RETRIES=20
+WAIT_RETRIES=25
 WAIT_INTERVAL=1
 
 ######################################################################
@@ -302,9 +302,9 @@ def main():
             weight=dict(required=False, default=None),
             socket = dict(required=False, default=DEFAULT_SOCKET_LOCATION),
             shutdown_sessions=dict(required=False, default=False),
-            wait=dict(required=False, default=False),
-            wait_retries=dict(required=False, default=WAIT_RETRIES),
-            wait_interval=dict(required=False, default=WAIT_INTERVAL),
+            wait=dict(required=False, default=False, type='bool'),
+            wait_retries=dict(required=False, default=WAIT_RETRIES, type='int'),
+            wait_interval=dict(required=False, default=WAIT_INTERVAL, type='int'),
         ),
 
     )
