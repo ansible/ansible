@@ -17,6 +17,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleError
 from ansible.utils.debug import debug
 
 class Group:
@@ -99,9 +100,12 @@ class Group:
 
     def _check_children_depth(self):
 
-        for group in self.child_groups:
-            group.depth = max([self.depth+1, group.depth])
-            group._check_children_depth()
+        try:
+            for group in self.child_groups:
+                group.depth = max([self.depth+1, group.depth])
+                group._check_children_depth()
+        except RuntimeError:
+            raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
     def add_host(self, host):
 
