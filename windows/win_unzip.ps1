@@ -89,7 +89,7 @@ Else {
         Fail-Json "PowerShellCommunityExtensions PowerShell Module (PSCX) is required for non-'.zip' compressed archive types."
     }
     Else {
-        Set-Attr $result.win_zip "pscx_status" "present"
+        Set-Attr $result.win_unzip "pscx_status" "present"
     }
 
     # Import
