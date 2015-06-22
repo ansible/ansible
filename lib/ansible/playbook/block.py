@@ -260,19 +260,19 @@ class Block(Base, Become, Conditional, Taggable):
         '''
 
         value = self._attributes[attr]
-        if self._parent_block and (not value or extend):
+        if self._parent_block and (value is None or extend):
             parent_value = getattr(self._parent_block, attr)
             if extend:
                 value = self._extend_value(value, parent_value)
             else:
                 value = parent_value
-        if self._task_include and (not value or extend):
+        if self._task_include and (value is None or extend):
             parent_value = getattr(self._task_include, attr)
             if extend:
                 value = self._extend_value(value, parent_value)
             else:
                 value = parent_value
-        if self._role and (not value or extend):
+        if self._role and (value is None or extend):
             parent_value = getattr(self._role, attr)
             if extend:
                 value = self._extend_value(value, parent_value)
@@ -289,9 +289,10 @@ class Block(Base, Become, Conditional, Taggable):
                     else:
                         value = dep_value
 
-                    if value and not extend:
+                    if value is not None and not extend:
                         break
-        if self._play and (not value or extend):
+
+        if self._play and (value is None or extend):
             parent_value = getattr(self._play, attr)
             if extend:
                 value = self._extend_value(value, parent_value)
