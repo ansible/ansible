@@ -366,10 +366,6 @@ class StrategyBase:
 
         result = True
 
-        # FIXME: getting the handlers from the iterators play should be
-        #        a method on the iterator, which may also filter the list
-        #        of handlers based on the notified list
-
         for handler_block in iterator._play.handlers:
             # FIXME: handlers need to support the rescue/always portions of blocks too,
             #        but this may take some work in the iterator and gets tricky when

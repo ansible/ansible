@@ -288,7 +288,12 @@ class Role(Base, Become, Conditional, Taggable):
         return self._task_blocks[:]
 
     def get_handler_blocks(self):
-        return self._handler_blocks[:]
+        block_list = []
+        for dep in self.get_direct_dependencies():
+            dep_blocks = dep.get_handler_blocks()
+            block_list.extend(dep_blocks)
+        block_list.extend(self._handler_blocks)
+        return block_list
 
     def has_run(self):
         '''
