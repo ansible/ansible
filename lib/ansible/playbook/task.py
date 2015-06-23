@@ -136,7 +136,9 @@ class Task(Base, Conditional, Taggable, Become):
 
         loop_name = k.replace("with_", "")
         if new_ds.get('loop') is not None:
-            raise AnsibleError("duplicate loop in task: %s" % loop_name)
+            raise AnsibleError("duplicate loop in task: %s" % loop_name, obj=ds)
+        if v is None:
+            raise AnsibleError("you must specify a value when using %s" % k, obj=ds)
         new_ds['loop'] = loop_name
         new_ds['loop_args'] = v
 
