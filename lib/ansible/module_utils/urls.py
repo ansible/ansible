@@ -504,8 +504,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     r = None
     info = dict(url=url)
     try:
-        r = open_url(url, data=None, headers=None, method=None,
-                use_proxy=True, force=False, last_mod_time=None, timeout=10,
+        r = open_url(url, data=data, headers=headers, method=method,
+                use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
                 validate_certs=validate_certs, url_username=username,
                 url_password=password, http_agent=http_agent)
         info.update(r.info())
