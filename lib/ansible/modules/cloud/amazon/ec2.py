@@ -193,7 +193,15 @@ options:
     description:
       - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
     required: false
-    default: true
+    default: yes
+    choices: [ "yes", "no" ]
+  termination_protection:
+    version_added: "2.0"
+    description:
+      - Enable or Disable the Termination Protection
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
   state:
     version_added: "1.3"
     description:
@@ -791,6 +799,7 @@ def create_instances(module, ec2, vpc, override_count=None):
     exact_count = module.params.get('exact_count')
     count_tag = module.params.get('count_tag')
     source_dest_check = module.boolean(module.params.get('source_dest_check'))
+    termination_protection = module.boolean(module.params.get('termination_protection'))
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -1020,10 +1029,15 @@ def create_instances(module, ec2, vpc, override_count=None):
         for res in res_list:
             running_instances.extend(res.instances)
 
-        # Enabled by default by Amazon
-        if not source_dest_check:
+        # Enabled by default by AWS
+        if source_dest_check is False:
             for inst in res.instances:
                 inst.modify_attribute('sourceDestCheck', False)
+
+        # Disabled by default by AWS
+        if termination_protection is True:
+            for inst in res.instances:
+                inst.modify_attribute('disableApiTermination', True)
 
         # Leave this as late as possible to try and avoid InvalidInstanceID.NotFound
         if instance_tags:
@@ -1141,21 +1155,32 @@ def startstop_instances(module, ec2, instance_ids, state):
     if not isinstance(instance_ids, list) or len(instance_ids) < 1:
         module.fail_json(msg='instance_ids should be a list of instances, aborting')
 
-    # Check that our instances are not in the state we want to take them to
-    # and change them to our desired state
+    # Check (and eventually change) instances attributes and instances state
     running_instances_array = []
     for res in ec2.get_all_instances(instance_ids):
         for inst in res.instances:
-           if inst.state != state:
-               instance_dict_array.append(get_instance_info(inst))
-               try:
-                   if state == 'running':
-                       inst.start()
-                   else:
-                       inst.stop()
-               except EC2ResponseError, e:
-                   module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
-               changed = True
+
+            # Check "source_dest_check" attribute
+            if inst.get_attribute('sourceDestCheck')['sourceDestCheck'] != source_dest_check:
+                inst.modify_attribute('sourceDestCheck', source_dest_check)
+                changed = True
+
+            # Check "termination_protection" attribute
+            if inst.get_attribute('disableApiTermination')['disableApiTermination'] != termination_protection:
+                inst.modify_attribute('disableApiTermination', termination_protection)
+                changed = True
+
+            # Check instance state
+            if inst.state != state:
+                instance_dict_array.append(get_instance_info(inst))
+                try:
+                    if state == 'running':
+                        inst.start()
+                    else:
+                        inst.stop()
+                except EC2ResponseError, e:
+                    module.fail_json(msg='Unable to change state for instance {0}, error: {1}'.format(inst.id, e))
+                changed = True
 
     ## Wait for all the instances to finish starting or stopping
     wait_timeout = time.time() + wait_timeout
@@ -1207,6 +1232,7 @@ def main():
             instance_profile_name = dict(),
             instance_ids = dict(type='list', aliases=['instance_id']),
             source_dest_check = dict(type='bool', default=True),
+            termination_protection = dict(type='bool', default=False),
             state = dict(default='present', choices=['present', 'absent', 'running', 'stopped']),
             exact_count = dict(type='int', default=None),
             count_tag = dict(),
