@@ -55,8 +55,12 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         raise AnsibleError("not implemented")
 
     def preprocess_data(self, ds):
+        # role names that are simply numbers can be parsed by PyYAML
+        # as integers even when quoted, so turn it into a string type
+        if isinstance(ds, int):
+            ds = "%s" % ds
 
-        assert isinstance(ds, dict) or isinstance(ds, string_types)
+        assert isinstance(ds, dict) or isinstance(ds, string_types) or isinstance(ds, AnsibleBaseYAMLObject)
 
         if isinstance(ds, dict):
             ds = super(RoleDefinition, self).preprocess_data(ds)
