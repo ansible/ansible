@@ -177,8 +177,10 @@ class Connection(object):
 
         with open(out_path, 'wb+') as out_file:
             try:
-                for chunk in p.stdout.read(BUFSIZE):
+                chunk = p.stdout.read(BUFSIZE)
+                while chunk:
                     out_file.write(chunk)
+                    chunk = p.stdout.read(BUFSIZE)
             except:
                 traceback.print_exc()
                 raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
