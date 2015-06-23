@@ -38,8 +38,19 @@ class CallbackModule(CallbackBase):
         pass
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
-        if 'exception' in result._result and self._display.verbosity < 3:
+        if 'exception' in result._result:
+            if self._display.verbosity < 3:
+                # extract just the actual error message from the exception text
+                error = result._result['exception'].strip().split('\n')[-1]
+                msg = "An exception occurred during task execution. To see the full traceback, use -vvv. The error was: %s" % error
+            else:
+                msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception']
+
+            self._display.display(msg, color='red')
+
+            # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
+
         self._display.display("%s | FAILED! => %s" % (result._host.get_name(), result._result), color='red')
 
     def v2_runner_on_ok(self, result):
