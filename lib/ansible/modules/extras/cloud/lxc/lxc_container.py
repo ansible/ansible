@@ -708,7 +708,7 @@ class LxcContainerManagement(object):
             for option_line in container_config:
                 # Look for key in config
                 if option_line.startswith(key):
-                    _, _value = option_line.split('=')
+                    _, _value = option_line.split('=', 1)
                     config_value = ' '.join(_value.split())
                     line_index = container_config.index(option_line)
                     # If the sanitized values don't match replace them
