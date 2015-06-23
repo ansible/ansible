@@ -84,7 +84,7 @@ EXAMPLES = '''
 
 try:
     import boto.sqs
-    from boto.exception import BotoServerError
+    from boto.exception import BotoServerError, NoAuthHandlerFound
     HAS_BOTO = True
 
 except ImportError:
@@ -204,8 +204,18 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True)
 
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
+
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    connection = boto.sqs.connect_to_region(region)
+    if not region:
+        module.fail_json(msg='region must be specified')
+
+    try:
+        connection = connect_to_aws(boto.sqs, region, **aws_connect_params)
+        
+    except (NoAuthHandlerFound, StandardError), e:
+        module.fail_json(msg=str(e))
 
     state = module.params.get('state')
     if state == 'present':
