@@ -28,7 +28,7 @@ options:
   state:
     description:
       - Create or delete the queue
-    required: true
+    required: false
     choices: ['present', 'absent']
     default: 'present'
   name:
