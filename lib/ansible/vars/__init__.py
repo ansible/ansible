@@ -213,6 +213,8 @@ class VariableManager:
         # FIXME: make sure all special vars are here
         # Finally, we create special vars
 
+        all_vars['playbook_dir'] = loader.get_basedir()
+
         if host:
             all_vars['groups'] = [group.name for group in host.get_groups()]
 
