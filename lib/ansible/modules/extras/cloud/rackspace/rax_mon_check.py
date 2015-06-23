@@ -28,7 +28,7 @@ description:
   monitor. Rackspace monitoring module flow | rax_mon_entity ->
   *rax_mon_check* -> rax_mon_notification -> rax_mon_notification_plan ->
   rax_mon_alarm
-version_added: "1.9"
+version_added: "2.0"
 options:
   state:
     description:
