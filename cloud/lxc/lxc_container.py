@@ -385,6 +385,8 @@ try:
     import lxc
 except ImportError:
     HAS_LXC = False
+else:
+    HAS_LXC = True
 
 
 # LXC_COMPRESSION_MAP is a map of available compression types when creating
