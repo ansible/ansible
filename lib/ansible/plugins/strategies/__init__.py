@@ -104,6 +104,17 @@ class StrategyBase:
     def get_failed_hosts(self, play):
         return [host for host in self._inventory.get_hosts(play.hosts) if host.name in self._tqm._failed_hosts]
 
+    def add_tqm_variables(self, vars, play):
+        '''
+        Base class method to add extra variables/information to the list of task
+        vars sent through the executor engine regarding the task queue manager state.
+        '''
+
+        new_vars = vars.copy()
+        new_vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
+        new_vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
+        return new_vars
+
     def _queue_task(self, host, task, task_vars, connection_info):
         ''' handles queueing the task up to be sent to a worker '''
 
@@ -374,6 +385,7 @@ class StrategyBase:
                     for host in self._notified_handlers[handler_name]:
                         if not handler.has_triggered(host):
                             task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
+                            task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
                             self._queue_task(host, handler, task_vars, connection_info)
                             handler.flag_for_host(host)
                         self._process_pending_results(iterator)
