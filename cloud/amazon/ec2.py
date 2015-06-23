@@ -208,7 +208,7 @@ options:
   volumes:
     version_added: "1.5"
     description:
-      - a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume. Encrypt the volume by passing 'encrypted: true' in the volume dict.
+      - "a list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1 will be interpreted as a request not to create the volume. Encrypt the volume by passing 'encrypted: true' in the volume dict."
     required: false
     default: null
     aliases: []
