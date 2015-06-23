@@ -18,18 +18,20 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-import re
-import subprocess
-import shlex
-import pipes
-import random
-import select
+import gettext
 import fcntl
 import hmac
-import pwd
-import gettext
+import os
+import pipes
 import pty
+import pwd
+import random
+import re
+import select
+import shlex
+import subprocess
+import time
+
 from hashlib import sha1
 
 from ansible import constants as C
@@ -276,8 +278,52 @@ class Connection(ConnectionBase):
         #    fcntl.lockf(self.process_lockfile, action)
         #    fcntl.lockf(self.output_lockfile, action)
 
+    def exec_command(self, *args, **kwargs):
+        """
+        Wrapper around _exec_command to retry in the case of an ssh failure
 
-    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
+        Will retry if:
+        * an exception is caught
+        * ssh returns 255
+        Will not retry if
+        * remaining_tries is <2
+        * retries limit reached
+        """
+
+        remaining_tries = int(C.ANSIBLE_SSH_RETRIES) + 1
+        cmd_summary = "%s..." % args[0]
+        for attempt in xrange(remaining_tries):
+            try:
+                return_tuple = self._exec_command(*args, **kwargs)
+                # 0 = success
+                # 1-254 = remote command return code
+                # 255 = failure from the ssh command itself
+                if return_tuple[0] != 255 or attempt == (remaining_tries - 1):
+                    break
+                else:
+                    raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
+            except (AnsibleConnectionFailure, Exception) as e:
+                if attempt == remaining_tries - 1:
+                    raise e
+                else:
+                    pause = 2 ** attempt - 1
+                    if pause > 30:
+                        pause = 30
+
+                    if isinstance(e, AnsibleConnectionFailure):
+                        msg = "ssh_retry: attempt: %d, ssh return code is 255. cmd (%s), pausing for %d seconds" % (attempt, cmd_summary, pause)
+                    else:
+                        msg = "ssh_retry: attempt: %d, caught exception(%s) from cmd (%s), pausing for %d seconds" % (attempt, e, cmd_summary, pause)
+
+                    self._display.vv(msg)
+
+                    time.sleep(pause)
+                    continue
+
+
+        return return_tuple
+
+    def _exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
         super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
