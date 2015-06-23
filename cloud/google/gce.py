@@ -59,12 +59,13 @@ options:
     default: null
     aliases: []
   service_account_permissions:
-    version_added: 1.5.1
+    version_added: 2.0
     description:
       - service account permissions (see U(https://cloud.google.com/sdk/gcloud/reference/compute/instances/create), --scopes section for detailed information)
     required: false
     default: null
     aliases: []
+    choices: ["bigquery", "cloud-platform", "compute-ro", "compute-rw", "computeaccounts-ro", "computeaccounts-rw", "datastore", "logging-write", "monitoring", "sql", "sql-admin", "storage-full", "storage-ro", "storage-rw", "taskqueue", "userinfo-email"]
   pem_file:
     version_added: 1.5.1
     description:
