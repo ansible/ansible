@@ -24,8 +24,10 @@ __metaclass__ = type
 import distutils.spawn
 import traceback
 import os
+import shlex
 import subprocess
 from ansible import errors
+from ansible.utils.unicode import to_bytes
 from ansible.callbacks import vvv
 import ansible.constants as C
 
@@ -101,7 +103,11 @@ class Connection(object):
             ### TODO: Why was "-c" removed from here? (vs jail.py)
             local_cmd = [self.zlogin_cmd, self.zone, executable, cmd]
         else:
-            local_cmd = '%s "%s" %s' % (self.zlogin_cmd, self.zone, cmd)
+            # Prev to python2.7.3, shlex couldn't handle unicode type strings
+            cmd = to_bytes(cmd)
+            cmd = shlex.split(cmd)
+            local_cmd = [self.zlogin_cmd, self.zone]
+            local_cmd += cmd
         return local_cmd
 
     def _buffered_exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None, stdin=subprocess.PIPE):
@@ -119,11 +125,11 @@ class Connection(object):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # We happily ignore privilege escalation
+        # We enter zone as root so we ignore privilege escalation (probably need to fix in case we have to become a specific used [ex: postgres admin])?
         local_cmd = self._generate_cmd(executable, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.zone)
-        p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
+        p = subprocess.Popen(local_cmd, shell=False,
                              cwd=self.runner.basedir,
                              stdin=stdin,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -22,9 +22,11 @@ __metaclass__ = type
 import distutils.spawn
 import traceback
 import os
+import shlex
 import subprocess
 from ansible import errors
 from ansible import utils
+from ansible.utils.unicode import to_bytes
 from ansible.callbacks import vvv
 import ansible.constants as C
 
@@ -70,7 +72,11 @@ class Connection(object):
         if executable:
             local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
         else:
-            local_cmd = '%s "%s" %s' % (self.chroot_cmd, self.chroot, cmd)
+            # Prev to python2.7.3, shlex couldn't handle unicode type strings
+            cmd = to_bytes(cmd)
+            cmd = shlex.split(cmd)
+            local_cmd = [self.chroot_cmd, self.chroot]
+            local_cmd += cmd
         return local_cmd
 
     def _buffered_exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None, stdin=subprocess.PIPE):
@@ -88,11 +94,11 @@ class Connection(object):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # We enter chroot as root so we ignore privlege escalation?
+        # We enter zone as root so we ignore privilege escalation (probably need to fix in case we have to become a specific used [ex: postgres admin])?
         local_cmd = self._generate_cmd(executable, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.chroot)
-        p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
+        p = subprocess.Popen(local_cmd, shell=False,
                              cwd=self.runner.basedir,
                              stdin=stdin,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -136,7 +142,7 @@ class Connection(object):
         try:
             p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
         except OSError:
-            raise errors.AnsibleError("chroot connection requires dd command in the jail")
+            raise errors.AnsibleError("chroot connection requires dd command in the chroot")
 
         with open(out_path, 'wb+') as out_file:
             try:
