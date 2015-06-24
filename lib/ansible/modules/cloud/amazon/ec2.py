@@ -76,6 +76,7 @@ options:
     default: null
     aliases: []
   spot_type:
+    version_added: "2.0"
     description:
       - Type of spot request; one of "one-time" or "persistent". Defaults to "one-time" if not supplied.
     required: false
@@ -1188,7 +1189,7 @@ def main():
             zone = dict(aliases=['aws_zone', 'ec2_zone']),
             instance_type = dict(aliases=['type']),
             spot_price = dict(),
-            spot_type = dict(default='one-time'),
+            spot_type = dict(default='one-time', choices=["one-time", "persistent"]),
             image = dict(),
             kernel = dict(),
             count = dict(type='int', default='1'),
