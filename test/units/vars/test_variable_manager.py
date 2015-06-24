@@ -42,7 +42,7 @@ class TestVariableManager(unittest.TestCase):
         if 'omit' in vars:
             del vars['omit']
 
-        self.assertEqual(vars, dict())
+        self.assertEqual(vars, dict(playbook_dir='.'))
 
         self.assertEqual(
             v._merge_dicts(
