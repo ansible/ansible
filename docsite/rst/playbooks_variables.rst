@@ -614,6 +614,8 @@ Don't worry about any of this unless you think you need it.  You'll know when yo
 
 Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
 
+And finally, *role_path* will return the current role's pathname (since 1.8). This will only work inside a role.
+
 .. _variable_file_separation_details:
 
 Variable File Separation
