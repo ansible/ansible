@@ -94,6 +94,9 @@ from zipfile import ZipFile
 # String from tar that shows the tar contents are different from the
 # filesystem
 DIFFERENCE_RE = re.compile(r': (.*) differs$')
+# When downloading an archive, how much of the archive to download before
+# saving to a tempfile (64k)
+BUFSIZE = 65536
 
 class UnarchiveError(Exception):
     pass
@@ -282,7 +285,7 @@ def main():
                 f = open(package, 'w')
                 # Read 1kb at a time to save on ram
                 while True:
-                    data = rsp.read(1024)
+                    data = rsp.read(BUFSIZE)
 
                     if data == "":
                         break # End of file, break while loop
