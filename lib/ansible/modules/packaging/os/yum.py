@@ -152,6 +152,9 @@ EXAMPLES = '''
   yum: name="@Development tools" state=present
 '''
 
+# 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
+BUFSIZE = 65536
+
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
 
 def log(msg):
@@ -526,9 +529,11 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 package = os.path.join(tempdir, str(pkg.rsplit('/', 1)[1]))
                 try:
                     rsp, info = fetch_url(module, pkg)
-                    data = rsp.read()
                     f = open(package, 'w')
-                    f.write(data)
+                    data = rsp.read(BUFSIZE)
+                    while data:
+                        f.write(data)
+                        data = rsp.read(BUFSIZE)
                     f.close()
                     pkg = package
                 except Exception, e:
