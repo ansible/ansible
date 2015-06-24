@@ -126,6 +126,8 @@ class InvalidSource(Exception):
 class SourcesList(object):
     def __init__(self):
         self.files = {}  # group sources by file
+        # Repositories that we're adding -- used to implement mode param
+        self.new_repos = set()
         self.default_file = self._apt_cfg_file('Dir::Etc::sourcelist')
 
         # read sources.list if it exists
@@ -257,8 +259,9 @@ class SourcesList(object):
                 module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
-                this_mode = module.params['mode']
-                module.set_mode_if_different(filename, this_mode, False)
+                if filename in self.new_repos:
+                    this_mode = module.params['mode']
+                    module.set_mode_if_different(filename, this_mode, False)
             else:
                 del self.files[filename]
                 if os.path.exists(filename):
@@ -300,6 +303,7 @@ class SourcesList(object):
 
             files = self.files[file]
             files.append((len(files), True, True, source_new, comment_new))
+            self.new_repos.add(file)
 
     def add_source(self, line, comment='', file=None):
         source = self._parse(line, raise_if_invalid_or_disabled=True)[2]
