@@ -429,6 +429,10 @@ class ActionBase:
             debug("no command, exiting _low_level_execute_command()")
             return dict(stdout='', stderr='')
 
+        print("in _low_level_execute_command, executable is: %s" % executable)
+        if sudoable:
+            cmd = self._connection_info.make_become_cmd(cmd, executable=executable)
+
         debug("executing the command %s through the connection" % cmd)
         rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, in_data=in_data, sudoable=sudoable)
         debug("command execution done")

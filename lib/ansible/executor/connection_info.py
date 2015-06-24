@@ -161,6 +161,8 @@ class ConnectionInformation:
         self.become_pass   = passwords.get('become_pass','')
         self.become_exe    = None
         self.become_flags  = None
+        self.prompt        = None
+        self.success_key   = None
 
         # backwards compat
         self.sudo_exe    = None
@@ -317,18 +319,22 @@ class ConnectionInformation:
 
         return new_info
 
-    def make_become_cmd(self, cmd, executable=C.DEFAULT_EXECUTABLE):
+    def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """
 
         prompt      = None
         success_key = None
+
+        print("in make_become_cmd, executable is: %s" % executable)
+        if executable is None:
+            executable = C.DEFAULT_EXECUTABLE
 
         if self.become:
 
             becomecmd   = None
             randbits    = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
-            executable = executable or '$SHELL'
+            #executable = executable or '$SHELL'
             success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
 
             if self.become_method == 'sudo':
@@ -371,9 +377,11 @@ class ConnectionInformation:
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
-            return (('%s -c ' % executable) + pipes.quote(becomecmd), prompt, success_key)
+            self.prompt      = prompt
+            self.success_key = success_key
+            return ('%s -c ' % executable) + pipes.quote(becomecmd)
 
-        return (cmd, prompt, success_key)
+        return ('%s -c ' % executable) + pipes.quote(cmd)
 
     def _get_fields(self):
         return [i for i in self.__dict__.keys() if i[:1] != '_']

@@ -223,7 +223,7 @@ class Connection(ConnectionBase):
 
         try:
             chan.exec_command(cmd)
-            if self.prompt:
+            if self._connection_info.prompt:
                 while True:
                     debug('Waiting for Privilege Escalation input')
                     if self.check_become_success(become_output) or self.check_password_prompt(become_output):

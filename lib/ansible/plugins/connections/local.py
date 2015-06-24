@@ -59,9 +59,6 @@ class Connection(ConnectionBase):
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
-        if sudoable:
-            cmd, self.prompt, self.success_key = self._connection_info.make_become_cmd(cmd)
-
         self._display.vvv("{0} EXEC {1}".format(self._connection_info.remote_addr, cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook
         debug("opening command with Popen()")
@@ -75,7 +72,7 @@ class Connection(ConnectionBase):
         )
         debug("done running command with Popen()")
 
-        if self.prompt  and self._connection_info.become_pass:
+        if self._connection_info.prompt  and self._connection_info.become_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             become_output = ''
