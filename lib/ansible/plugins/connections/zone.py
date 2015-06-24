@@ -156,7 +156,7 @@ class Connection(object):
         try:
             with open(in_path, 'rb') as in_file:
                 try:
-                    p = self._buffered_exec_command('dd of=%s' % out_path, None, stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), None, stdin=in_file)
                 except OSError:
                     raise errors.AnsibleError("jail connection requires dd command in the jail")
                 try:
