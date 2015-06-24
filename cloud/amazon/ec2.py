@@ -76,6 +76,14 @@ options:
     required: false
     default: null
     aliases: []
+  spot_type:
+    version_added: "2.0"
+    description:
+      - Type of spot request; one of "one-time" or "persistent". Defaults to "one-time" if not supplied.
+    required: false
+    default: "one-time"
+    choices: [ "one-time", "persistent" ]
+    aliases: []
   image:
     description:
        - I(ami) ID to use for the instance
@@ -783,6 +791,7 @@ def create_instances(module, ec2, vpc, override_count=None):
     instance_type = module.params.get('instance_type')
     tenancy = module.params.get('tenancy')
     spot_price = module.params.get('spot_price')
+    spot_type = module.params.get('spot_type')
     image = module.params.get('image')
     if override_count:
         count = override_count
@@ -976,6 +985,7 @@ def create_instances(module, ec2, vpc, override_count=None):
 
                 params.update(dict(
                     count = count_remaining,
+                    type = spot_type,
                 ))
                 res = ec2.request_spot_instances(spot_price, **params)
 
@@ -1220,6 +1230,7 @@ def main():
             zone = dict(aliases=['aws_zone', 'ec2_zone']),
             instance_type = dict(aliases=['type']),
             spot_price = dict(),
+            spot_type = dict(default='one-time', choices=["one-time", "persistent"]),
             image = dict(),
             kernel = dict(),
             count = dict(type='int', default='1'),
