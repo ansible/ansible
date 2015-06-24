@@ -118,7 +118,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     @ensure_connect
     @abstractmethod
-    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
+    def exec_command(self, cmd, tmp_path, in_data=None, executable=None, sudoable=True):
         """Run a command on the remote host"""
         pass
 
@@ -140,15 +140,15 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         pass
 
     def check_become_success(self, output):
-        return self.success_key in output
+        return self._connection_info.success_key in output
 
     def check_password_prompt(self, output):
-        if self.prompt is None:
+        if self._connection_info.prompt is None:
             return False
-        elif isinstance(self.prompt, basestring):
-            return output.endswith(self.prompt)
+        elif isinstance(self._connection_info.prompt, basestring):
+            return output.endswith(self._connection_info.prompt)
         else:
-            return self.prompt(output)
+            return self._connection_info.prompt(output)
 
     def check_incorrect_password(self, output):
         incorrect_password = gettext.dgettext(self._connection_info.become_method, C.BECOME_ERROR_STRINGS[self._connection_info.become_method])

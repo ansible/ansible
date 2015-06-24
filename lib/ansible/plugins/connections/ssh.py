@@ -345,12 +345,8 @@ class Connection(ConnectionBase):
             ssh_cmd += ['-6']
         ssh_cmd.append(self.host)
 
-        if sudoable:
-            cmd, self.prompt, self.success_key = self._connection_info.make_become_cmd(cmd)
-
         ssh_cmd.append(cmd)
         self._display.vvv("EXEC {0}".format(' '.join(ssh_cmd)), host=self.host)
-
 
         self.lock_host_keys(True)
 
@@ -362,7 +358,7 @@ class Connection(ConnectionBase):
         no_prompt_out = ''
         no_prompt_err = ''
 
-        if self.prompt:
+        if self._connection_info.prompt:
             '''
                 Several cases are handled for privileges with password
                 * NOPASSWD (tty & no-tty): detect success_key on stdout
