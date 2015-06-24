@@ -66,7 +66,6 @@ import grp
 import pwd
 import platform
 import errno
-import tempfile
 from itertools import imap, repeat
 
 try:
@@ -113,7 +112,6 @@ try:
     from systemd import journal
     has_journal = True
 except ImportError:
-    import syslog
     has_journal = False
 
 try:
@@ -121,10 +119,10 @@ try:
 except ImportError:
     # a replacement for literal_eval that works with python 2.4. from: 
     # https://mail.python.org/pipermail/python-list/2009-September/551880.html
-    # which is essentially a cut/past from an earlier (2.6) version of python's
+    # which is essentially a cut/paste from an earlier (2.6) version of python's
     # ast.py
-    from compiler import parse
-    from compiler.ast import *
+    from compiler import ast, parse
+
     def _literal_eval(node_or_string):
         """
         Safely evaluate an expression node or a string containing a Python
@@ -135,21 +133,22 @@ except ImportError:
         _safe_names = {'None': None, 'True': True, 'False': False}
         if isinstance(node_or_string, basestring):
             node_or_string = parse(node_or_string, mode='eval')
-        if isinstance(node_or_string, Expression):
+        if isinstance(node_or_string, ast.Expression):
             node_or_string = node_or_string.node
+
         def _convert(node):
-            if isinstance(node, Const) and isinstance(node.value, (basestring, int, float, long, complex)):
-                 return node.value
-            elif isinstance(node, Tuple):
+            if isinstance(node, ast.Const) and isinstance(node.value, (basestring, int, float, long, complex)):
+                return node.value
+            elif isinstance(node, ast.Tuple):
                 return tuple(map(_convert, node.nodes))
-            elif isinstance(node, List):
+            elif isinstance(node, ast.List):
                 return list(map(_convert, node.nodes))
-            elif isinstance(node, Dict):
+            elif isinstance(node, ast.Dict):
                 return dict((_convert(k), _convert(v)) for k, v in node.items)
-            elif isinstance(node, Name):
+            elif isinstance(node, ast.Name):
                 if node.name in _safe_names:
                     return _safe_names[node.name]
-            elif isinstance(node, UnarySub):
+            elif isinstance(node, ast.UnarySub):
                 return -_convert(node.expr)
             raise ValueError('malformed string')
         return _convert(node_or_string)
@@ -680,7 +679,6 @@ class AnsibleModule(object):
                         new_underlying_stat = os.stat(path)
                         if underlying_stat.st_mode != new_underlying_stat.st_mode:
                             os.chmod(path, stat.S_IMODE(underlying_stat.st_mode))
-                        q_stat = os.stat(path)
             except OSError, e:
                 if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
@@ -709,7 +707,8 @@ class AnsibleModule(object):
                 operator = match.group('operator')
                 perms = match.group('perms')
 
-                if users == 'a': users = 'ugo'
+                if users == 'a':
+                    users = 'ugo'
 
                 for user in users:
                     mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms)
@@ -1086,7 +1085,7 @@ class AnsibleModule(object):
 
                 if is_invalid:
                     self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
-            except ValueError, e:
+            except ValueError:
                 self.fail_json(msg="value of argument %s is not of type %s and we were unable to automatically convert" % (k, wanted))
 
     def _set_defaults(self, pre=True):
@@ -1158,7 +1157,7 @@ class AnsibleModule(object):
                 journal_args.append((arg.upper(), str(log_args[arg])))
             try:
                 journal.send("%s %s" % (module, msg), **dict(journal_args))
-            except IOError, e:
+            except IOError:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
                 syslog.syslog(syslog.LOG_INFO, msg) #1
@@ -1568,7 +1567,7 @@ class AnsibleModule(object):
                 # if we're checking for prompts, do it now
                 if prompt_re:
                     if prompt_re.search(stdout) and not data:
-                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
+                        return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
                 # the process is terminated
