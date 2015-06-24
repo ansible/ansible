@@ -390,7 +390,7 @@ def create_group(module=None, iam=None, name=None, path=None):
     return name, changed
 
 
-def delete_group(module, iam, name):
+def delete_group(module=None, iam=None, name=None):
     changed = False
     try:
         iam.delete_group(name)
@@ -664,7 +664,7 @@ def main():
         group_exists = name in orig_group_list
 
         if state == 'present' and not group_exists:
-            new_group, changed = create_group(iam, name, path)
+            new_group, changed = create_group(iam=iam, name=name, path=path)
             module.exit_json(changed=changed, group_name=new_group)
         elif state in ['present', 'update'] and group_exists:
             changed, updated_name, updated_path, cur_path = update_group(
@@ -692,7 +692,7 @@ def main():
                 changed=changed, msg="Update Failed. Group %s doesn't seem to exit!" % name)
         elif state == 'absent':
             if name in orig_group_list:
-                removed_group, changed = delete_group(iam, name)
+                removed_group, changed = delete_group(iam=iam, name=name)
                 module.exit_json(changed=changed, delete_group=removed_group)
             else:
                 module.exit_json(changed=changed, msg="Group already absent")
