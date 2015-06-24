@@ -78,6 +78,7 @@ EXAMPLES = """
 
 
 import os
+import tempfile
 from distutils.version import StrictVersion
 
 try:
@@ -199,28 +200,34 @@ def main():
         module.fail_json(msg="This module requires the passlib Python library")
 
     # Check file for blank lines in effort to avoid "need more than 1 value to unpack" error.
-    f = open(path, "r")
     try:
-        lines=f.readlines()
-    finally:
-        f.close
-
-    # If the file gets edited, it returns true, so only edit the file if it has blank lines
-    strip = False
-    for line in lines:
-        if not line.strip():
-            strip = True
-
-    if strip:
-        # If check mode, create a temporary file
-        if check_mode:
-            temp = tempfile.NamedTemporaryFile()
-            path = temp.name
-        f = open(path,"w")
+        f = open(path, "r")
+    except IOError:
+        # No preexisting file to remove blank lines from
+        f = None
+    else:
         try:
-            [f.write(line) for line in lines if line.strip() ]
+            lines = f.readlines()
         finally:
-            f.close
+            f.close()
+
+        # If the file gets edited, it returns true, so only edit the file if it has blank lines
+        strip = False
+        for line in lines:
+            if not line.strip():
+                strip = True
+                break
+
+        if strip:
+            # If check mode, create a temporary file
+            if check_mode:
+                temp = tempfile.NamedTemporaryFile()
+                path = temp.name
+            f = open(path, "w")
+            try:
+                [ f.write(line) for line in lines if line.strip() ]
+            finally:
+                f.close()
 
     try:
         if state == 'present':
