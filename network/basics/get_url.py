@@ -113,7 +113,7 @@ options:
       - all arguments accepted by the M(file) module also work here
     required: false
 # informational: requirements for nodes
-requirements: [ urllib2, urlparse ]
+requirements: [ ]
 author: "Jan-Piet Mens (@jpmens)"
 '''
 
@@ -124,6 +124,8 @@ EXAMPLES='''
 - name: download file with sha256 check
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf sha256sum=b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
 '''
+
+import urlparse
 
 try:
     import hashlib
@@ -315,4 +317,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+if __name__ == '__main__':
+    main()
