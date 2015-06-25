@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: win_iis_webapppool
-version_added: "1.9"
+version_added: "2.0"
 short_description: Configures a IIS Web Application Pool.
 description:
      - Creates, Removes and configures a IIS Web Application Pool

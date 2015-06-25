@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: win_iis_virtualdirectory
-version_added: "1.9"
+version_added: "2.0"
 short_description: Configures a IIS virtual directories.
 description:
      - Creates, Removes and configures a IIS Web site
