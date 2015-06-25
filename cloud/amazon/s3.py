@@ -237,7 +237,7 @@ def get_bucket(module, s3, bucket):
 def list_keys(module, bucket_object, prefix, marker, max_keys):
     all_keys = bucket_object.get_all_keys(prefix=prefix, marker=marker, max_keys=max_keys)
 
-    keys = map((lambda x: x.key), all_keys)
+    keys = [x.key for x in all_keys]
 
     module.exit_json(msg="LIST operation complete", s3_keys=keys)
 
