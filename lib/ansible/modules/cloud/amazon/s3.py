@@ -56,6 +56,18 @@ options:
     required: false
     default: 600
     aliases: []
+  marker:
+    description:
+      - Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
+    required: false
+    default: null
+    version_added: "2.0"
+  max_keys:
+    description:
+      - Max number of results to return in list mode, set this if you want to retrieve fewer than the default 1000 keys.
+    required: false
+    default: 1000
+    version_added: "2.0"
   metadata:
     description:
       - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
@@ -64,7 +76,7 @@ options:
     version_added: "1.6"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), list (list keys), create (bucket), delete (bucket), and delobj (delete object).
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), list (list keys (2.0+)), create (bucket), delete (bucket), and delobj (delete object).
     required: true
     default: null
     aliases: []
@@ -73,6 +85,12 @@ options:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
     required: false
     default: null
+  prefix:
+    description:
+      - Limits the response to keys that begin with the specified prefix for list mode
+    required: false
+    default: null
+    version_added: "2.0"
   version:
     description:
       - Version ID of the object inside the bucket. Can be used to get a specific version of a file if versioning is enabled in the target bucket.
