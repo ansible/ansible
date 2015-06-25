@@ -587,6 +587,38 @@ def nthhost(value, query=''):
 
     return False
 
+# Returns the SLAAC address within a network for a given HW/MAC address.
+# Usage:
+#
+#  - prefix | slaac(mac)
+def slaac(value, query = ''):
+    ''' Get the SLAAC address within given network '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        if v.version != 6:
+            return False
+
+        value = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if not query:
+        return False
+
+    try:
+        mac = hwaddr(query, alias = 'slaac')
+
+        eui = netaddr.EUI(mac)
+    except:
+        return False
+
+    return eui.ipv6(value.network)
+
 
 # ---- HWaddr / MAC address filters ----
 
@@ -645,6 +677,7 @@ class FilterModule(object):
         'ipv6': ipv6,
         'ipsubnet': ipsubnet,
         'nthhost': nthhost,
+        'slaac': slaac,
 
         # MAC / HW addresses
         'hwaddr': hwaddr,
