@@ -28,6 +28,7 @@ version_added: "1.7"
 short_description: Fetches a file from a given URL
 description:
  - Fetches a file from a URL and saves to locally
+author: "Paul Durivage (@angstwad)"
 options:
   url:
     description:
@@ -49,7 +50,21 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: yes
-author: "Paul Durivage (@angstwad)"
+  username:
+    description:
+      - Basic authentication username
+    required: false
+    default: null
+  password:
+    description:
+      - Basic authentication password
+    required: false
+    default: null
+  skip_certificate_validation:
+    description:
+      - Skip SSL certificate validation if true
+    required: false
+    default: false
 '''
 
 EXAMPLES = '''
