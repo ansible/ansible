@@ -157,7 +157,7 @@ options:
       - Tells rsync to keep the partial file which should make a subsequent transfer of the rest of the file much faster.
     default: no
     required: false
-    version_added: "1.9"
+    version_added: "2.0"
 notes:
    - `rsync` must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
