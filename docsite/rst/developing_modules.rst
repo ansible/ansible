@@ -238,7 +238,8 @@ The 'group' and 'user' modules are reasonably non-trivial and showcase what this
 Key parts include always ending the module file with::
 
     from ansible.module_utils.basic import *
-    main()
+    if __name__ == '__main__':
+        main()
 
 And instantiating the module class like::
 
@@ -370,7 +371,7 @@ See an example documentation string in the checkout under `examples/DOCUMENTATIO
 
 Include it in your module file like this::
 
-    #!/usr/bin/env python
+    #!/usr/bin/python
     # Copyright header....
 
     DOCUMENTATION = '''
@@ -483,6 +484,12 @@ Module checklist
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
 * Are module actions idempotent? If not document in the descriptions or the notes
 * Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
+* Call your :func:`main` from a condtional so that it would be possible to
+  test them in the future example::
+
+    if __name__ == '__main__':
+        main()
+
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
 * Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing

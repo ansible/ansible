@@ -106,6 +106,33 @@ YAML dictionaries to supply the modules with their key=value arguments.::
             name: httpd
             state: restarted
 
+Playbooks can contain multiple plays. You may have a playbook that targets first
+the web servers, and then the database servers. For example::
+
+    ---
+    - hosts: webservers
+      remote_user: root
+
+      tasks:
+      - name: ensure apache is at the latest version
+        yum: pkg=httpd state=latest
+      - name: write the apache config file
+        template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+
+    - hosts: databases
+      remote_user: root
+
+      tasks:
+      - name: ensure postgresql is at the latest version
+        yum: name=postgresql state=latest
+      - name: ensure that postgresql is started
+        service: name=postgresql state=running
+
+You can use this method to switch between the host group you're targeting,
+the username logging into the remote servers, whether to sudo or not, and so
+forth. Plays, like tasks, run in the order specified in the playbook: top to
+bottom.
+
 Below, we'll break down what the various features of the playbook language are.
 
 .. _playbook_basics:

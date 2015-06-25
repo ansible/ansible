@@ -142,16 +142,16 @@ Function ConvertTo-Bool
     return
 }
 
-# Helper function to calculate a hash of a file in a way which powershell 3 
+# Helper function to calculate md5 of a file in a way which powershell 3 
 # and above can handle:
-Function Get-FileChecksum($path)
+Function Get-FileMd5($path)
 {
     $hash = ""
     If (Test-Path -PathType Leaf $path)
     {
-        $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
+        $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
         $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
-        [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
+        $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
         $fp.Dispose();
     }
     ElseIf (Test-Path -PathType Container $path)

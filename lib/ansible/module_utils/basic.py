@@ -45,7 +45,7 @@ SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
 # can be inserted in any module source automatically by including
 # #<<INCLUDE_ANSIBLE_MODULE_COMMON>> on a blank line by itself inside
 # of an ansible module. The source of this common code lives
-# in lib/ansible/module_common.py
+# in ansible/executor/module_common.py
 
 import locale
 import os
@@ -66,7 +66,7 @@ import grp
 import pwd
 import platform
 import errno
-import tempfile
+from itertools import imap, repeat
 
 try:
     import json
@@ -112,7 +112,6 @@ try:
     from systemd import journal
     has_journal = True
 except ImportError:
-    import syslog
     has_journal = False
 
 try:
@@ -120,10 +119,10 @@ try:
 except ImportError:
     # a replacement for literal_eval that works with python 2.4. from: 
     # https://mail.python.org/pipermail/python-list/2009-September/551880.html
-    # which is essentially a cut/past from an earlier (2.6) version of python's
+    # which is essentially a cut/paste from an earlier (2.6) version of python's
     # ast.py
-    from compiler import parse
-    from compiler.ast import *
+    from compiler import ast, parse
+
     def _literal_eval(node_or_string):
         """
         Safely evaluate an expression node or a string containing a Python
@@ -134,21 +133,22 @@ except ImportError:
         _safe_names = {'None': None, 'True': True, 'False': False}
         if isinstance(node_or_string, basestring):
             node_or_string = parse(node_or_string, mode='eval')
-        if isinstance(node_or_string, Expression):
+        if isinstance(node_or_string, ast.Expression):
             node_or_string = node_or_string.node
+
         def _convert(node):
-            if isinstance(node, Const) and isinstance(node.value, (basestring, int, float, long, complex)):
-                 return node.value
-            elif isinstance(node, Tuple):
+            if isinstance(node, ast.Const) and isinstance(node.value, (basestring, int, float, long, complex)):
+                return node.value
+            elif isinstance(node, ast.Tuple):
                 return tuple(map(_convert, node.nodes))
-            elif isinstance(node, List):
+            elif isinstance(node, ast.List):
                 return list(map(_convert, node.nodes))
-            elif isinstance(node, Dict):
+            elif isinstance(node, ast.Dict):
                 return dict((_convert(k), _convert(v)) for k, v in node.items)
-            elif isinstance(node, Name):
+            elif isinstance(node, ast.Name):
                 if node.name in _safe_names:
                     return _safe_names[node.name]
-            elif isinstance(node, UnarySub):
+            elif isinstance(node, ast.UnarySub):
                 return -_convert(node.expr)
             raise ValueError('malformed string')
         return _convert(node_or_string)
@@ -237,7 +237,7 @@ def load_platform_subclass(cls, *args, **kwargs):
     return super(cls, subclass).__new__(subclass)
 
 
-def json_dict_unicode_to_bytes(d):
+def json_dict_unicode_to_bytes(d, encoding='utf-8'):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -245,17 +245,17 @@ def json_dict_unicode_to_bytes(d):
     '''
 
     if isinstance(d, unicode):
-        return d.encode('utf-8')
+        return d.encode(encoding)
     elif isinstance(d, dict):
-        return dict(map(json_dict_unicode_to_bytes, d.iteritems()))
+        return dict(imap(json_dict_unicode_to_bytes, d.iteritems(), repeat(encoding)))
     elif isinstance(d, list):
-        return list(map(json_dict_unicode_to_bytes, d))
+        return list(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     elif isinstance(d, tuple):
-        return tuple(map(json_dict_unicode_to_bytes, d))
+        return tuple(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     else:
         return d
 
-def json_dict_bytes_to_unicode(d):
+def json_dict_bytes_to_unicode(d, encoding='utf-8'):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -263,13 +263,13 @@ def json_dict_bytes_to_unicode(d):
     '''
 
     if isinstance(d, str):
-        return unicode(d, 'utf-8')
+        return unicode(d, encoding)
     elif isinstance(d, dict):
-        return dict(map(json_dict_bytes_to_unicode, d.iteritems()))
+        return dict(imap(json_dict_bytes_to_unicode, d.iteritems(), repeat(encoding)))
     elif isinstance(d, list):
-        return list(map(json_dict_bytes_to_unicode, d))
+        return list(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
     elif isinstance(d, tuple):
-        return tuple(map(json_dict_bytes_to_unicode, d))
+        return tuple(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
     else:
         return d
 
@@ -363,9 +363,9 @@ class AnsibleModule(object):
         # reset to LANG=C if it's an invalid/unavailable locale
         self._check_locale()
 
-        (self.params, self.args) = self._load_params()
+        self.params = self._load_params()
 
-        self._legal_inputs = ['CHECKMODE', 'NO_LOG']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log']
         
         self.aliases = self._handle_aliases()
 
@@ -579,7 +579,7 @@ class AnsibleModule(object):
                 if len(context) > i:
                     if context[i] is not None and context[i] != cur_context[i]:
                         new_context[i] = context[i]
-                    if context[i] is None:
+                    elif context[i] is None:
                         new_context[i] = cur_context[i]
 
         if cur_context != new_context:
@@ -588,8 +588,8 @@ class AnsibleModule(object):
                     return True
                 rc = selinux.lsetfilecon(self._to_filesystem_str(path),
                                          str(':'.join(new_context)))
-            except OSError:
-                self.fail_json(path=path, msg='invalid selinux context', new_context=new_context, cur_context=cur_context, input_was=context)
+            except OSError, e:
+                self.fail_json(path=path, msg='invalid selinux context: %s' % str(e), new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
                 self.fail_json(path=path, msg='set selinux context failed')
             changed = True
@@ -679,7 +679,6 @@ class AnsibleModule(object):
                         new_underlying_stat = os.stat(path)
                         if underlying_stat.st_mode != new_underlying_stat.st_mode:
                             os.chmod(path, stat.S_IMODE(underlying_stat.st_mode))
-                        q_stat = os.stat(path)
             except OSError, e:
                 if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
@@ -708,7 +707,8 @@ class AnsibleModule(object):
                 operator = match.group('operator')
                 perms = match.group('perms')
 
-                if users == 'a': users = 'ugo'
+                if users == 'a':
+                    users = 'ugo'
 
                 for user in users:
                     mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms)
@@ -898,7 +898,7 @@ class AnsibleModule(object):
 
     def _check_for_check_mode(self):
         for (k,v) in self.params.iteritems():
-            if k == 'CHECKMODE':
+            if k == '_ansible_check_mode':
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
                 if self.supports_check_mode:
@@ -906,13 +906,13 @@ class AnsibleModule(object):
 
     def _check_for_no_log(self):
         for (k,v) in self.params.iteritems():
-            if k == 'NO_LOG':
+            if k == '_ansible_no_log':
                 self.no_log = self.boolean(v)
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
             # these should be in legal inputs already
-            #if k in ('CHECKMODE', 'NO_LOG'):
+            #if k in ('_ansible_check_mode', '_ansible_no_log'):
             #    continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -930,7 +930,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check)
             if count > 1:
-                self.fail_json(msg="parameters are mutually exclusive: %s" % check)
+                self.fail_json(msg="parameters are mutually exclusive: %s" % (check,))
 
     def _check_required_one_of(self, spec):
         if spec is None:
@@ -948,7 +948,7 @@ class AnsibleModule(object):
             non_zero = [ c for c in counts if c > 0 ]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    self.fail_json(msg="parameters are required together: %s" % check)
+                    self.fail_json(msg="parameters are required together: %s" % (check,))
 
     def _check_required_arguments(self):
         ''' ensure all required arguments are present '''
@@ -1085,7 +1085,7 @@ class AnsibleModule(object):
 
                 if is_invalid:
                     self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
-            except ValueError, e:
+            except ValueError:
                 self.fail_json(msg="value of argument %s is not of type %s and we were unable to automatically convert" % (k, wanted))
 
     def _set_defaults(self, pre=True):
@@ -1102,20 +1102,11 @@ class AnsibleModule(object):
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
-        args = MODULE_ARGS
-        items   = shlex.split(args)
-        params = {}
-        for x in items:
-            try:
-                (k, v) = x.split("=",1)
-            except Exception, e:
-                self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
-            if k in params:
-                self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
-            params[k] = v
-        params2 = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
-        params2.update(params)
-        return (params2, args)
+        params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
+        if params is None:
+            params = dict()
+        return params
+
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -1166,13 +1157,13 @@ class AnsibleModule(object):
                 journal_args.append((arg.upper(), str(log_args[arg])))
             try:
                 journal.send("%s %s" % (module, msg), **dict(journal_args))
-            except IOError, e:
+            except IOError:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, msg) #1
+                syslog.syslog(syslog.LOG_INFO, msg) #1
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, msg) #2
+            syslog.syslog(syslog.LOG_INFO, msg) #2
 
     def _set_cwd(self):
         try:
@@ -1236,13 +1227,17 @@ class AnsibleModule(object):
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
 
     def jsonify(self, data):
-        for encoding in ("utf-8", "latin-1", "unicode_escape"):
+        for encoding in ("utf-8", "latin-1"):
             try:
                 return json.dumps(data, encoding=encoding)
-            # Old systems using simplejson module does not support encoding keyword.
-            except TypeError, e:
-                return json.dumps(data)
-            except UnicodeDecodeError, e:
+            # Old systems using old simplejson module does not support encoding keyword.
+            except TypeError:
+                try:
+                    new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+                except UnicodeDecodeError:
+                    continue
+                return json.dumps(new_data)
+            except UnicodeDecodeError:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
 
@@ -1479,7 +1474,7 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Set a temporart env path if a prefix is passed
+        # Set a temporary env path if a prefix is passed
         env=os.environ
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
@@ -1572,7 +1567,7 @@ class AnsibleModule(object):
                 # if we're checking for prompts, do it now
                 if prompt_re:
                     if prompt_re.search(stdout) and not data:
-                         return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
+                        return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
                 # the process is terminated

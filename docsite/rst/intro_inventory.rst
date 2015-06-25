@@ -46,7 +46,7 @@ To make things explicit, it is suggested that you set them if things are not run
 
     badwolf.example.com:5309
 
-Suppose you have just static IPs and want to set up some aliases that don't live in your host file, or you are connecting through tunnels.  You can do things like this::
+Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
 
     jumper ansible_ssh_port=5555 ansible_ssh_host=192.168.1.50
 
@@ -216,7 +216,7 @@ mentioned::
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
     ansible_shell_type
-      The shell type of the target system. By default commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
+      The shell type of the target system. Commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
       The target host python path. This is useful for systems with more
       than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python

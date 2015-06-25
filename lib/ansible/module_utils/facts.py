@@ -417,13 +417,13 @@ class Facts(object):
                                                 self.facts['distribution_version'] = self.facts['distribution_version'] + '.' + release.group(1)
                         elif name == 'Debian':
                             data = get_file_content(path)
-                            if 'Ubuntu' in data:
-                                break # Ubuntu gets correct info from python functions
-                            elif 'Debian' in data or 'Raspbian' in data:
+                            if 'Debian' in data or 'Raspbian' in data:
                                 release = re.search("PRETTY_NAME=[^(]+ \(?([^)]+?)\)", data)
                                 if release:
                                     self.facts['distribution_release'] = release.groups()[0]
                                     break
+                            elif 'Ubuntu' in data:
+                                break # Ubuntu gets correct info from python functions
                         elif name == 'Mandriva':
                             data = get_file_content(path)
                             if 'Mandriva' in data:
@@ -438,12 +438,15 @@ class Facts(object):
                         elif name == 'NA':
                             data = get_file_content(path)
                             for line in data.splitlines():
-                                distribution = re.search("^NAME=(.*)", line)
-                                if distribution:
-                                    self.facts['distribution'] = distribution.group(1).strip('"')
-                                version = re.search("^VERSION=(.*)", line)
-                                if version:
-                                    self.facts['distribution_version'] = version.group(1).strip('"')
+                                if self.facts['distribution'] == 'NA':
+                                    distribution = re.search("^NAME=(.*)", line)
+                                    if distribution:
+                                        self.facts['distribution'] = distribution.group(1).strip('"')
+                                if self.facts['distribution_version'] == 'NA':
+                                    version = re.search("^VERSION=(.*)", line)
+                                    if version:
+                                        self.facts['distribution_version'] = version.group(1).strip('"')
+
                             if self.facts['distribution'].lower() == 'coreos':
                                 data = get_file_content('/etc/coreos/update.conf')
                                 release = re.search("^GROUP=(.*)", data)
@@ -474,29 +477,19 @@ class Facts(object):
                 pass
 
     def get_public_ssh_host_keys(self):
-        dsa_filename = '/etc/ssh/ssh_host_dsa_key.pub'
-        rsa_filename = '/etc/ssh/ssh_host_rsa_key.pub'
-        ecdsa_filename = '/etc/ssh/ssh_host_ecdsa_key.pub'
+        keytypes = ('dsa', 'rsa', 'ecdsa', 'ed25519')
 
         if self.facts['system'] == 'Darwin':
-            dsa_filename = '/etc/ssh_host_dsa_key.pub'
-            rsa_filename = '/etc/ssh_host_rsa_key.pub'
-            ecdsa_filename = '/etc/ssh_host_ecdsa_key.pub'
-        dsa = get_file_content(dsa_filename)
-        rsa = get_file_content(rsa_filename)
-        ecdsa = get_file_content(ecdsa_filename)
-        if dsa is None:
-            dsa = 'NA'
+            keydir = '/etc'
         else:
-            self.facts['ssh_host_key_dsa_public'] = dsa.split()[1]
-        if rsa is None:
-            rsa = 'NA'
-        else:
-            self.facts['ssh_host_key_rsa_public'] = rsa.split()[1]
-        if ecdsa is None:
-            ecdsa = 'NA'
-        else:
-            self.facts['ssh_host_key_ecdsa_public'] = ecdsa.split()[1]
+            keydir = '/etc/ssh'
+
+        for type_ in keytypes:
+            key_filename = '%s/ssh_host_%s_key.pub' % (keydir, type_)
+            keydata = get_file_content(key_filename)
+            if keydata is not None:
+                factname = 'ssh_host_key_%s_public' % type_
+                self.facts[factname] = keydata.split()[1]
 
     def get_pkg_mgr_facts(self):
         self.facts['pkg_mgr'] = 'unknown'
@@ -1271,13 +1264,14 @@ class FreeBSDHardware(Hardware):
         # Device          1M-blocks     Used    Avail Capacity
         # /dev/ada0p3        314368        0   314368     0%
         #
-        rc, out, err = module.run_command("/usr/sbin/swapinfo -m")
+        rc, out, err = module.run_command("/usr/sbin/swapinfo -k")
         lines = out.split('\n')
         if len(lines[-1]) == 0:
             lines.pop()
         data = lines[-1].split()
-        self.facts['swaptotal_mb'] = data[1]
-        self.facts['swapfree_mb'] = data[3]
+        if data[0] != 'Device':
+            self.facts['swaptotal_mb'] = int(data[1]) / 1024
+            self.facts['swapfree_mb'] = int(data[3]) / 1024
 
     @timeout(10)
     def get_mount_facts(self):
@@ -2163,7 +2157,7 @@ class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
         current_if['media'] = 'Unknown' # Mac does not give us this
         current_if['media_select'] = words[1]
         if len(words) > 2:
-            current_if['media_type'] = words[2][1:]
+            current_if['media_type'] = words[2][1:-1]
         if len(words) > 3:
             current_if['media_options'] = self.get_options(words[3])
 
@@ -2224,7 +2218,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
                 rc, out, err = module.run_command([uname_path, '-W'])
                 # don't bother with wpars it does not work
                 # zero means not in wpar
-                if out.split()[0] == '0':
+                if not rc and out.split()[0] == '0':
                     if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
                         entstat_path = module.get_bin_path('entstat')
                         if entstat_path:

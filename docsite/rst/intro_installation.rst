@@ -147,7 +147,7 @@ other than /etc/ansible/hosts:
 
 .. note::
 
-    ANSIBLE_INVENTORY is available starting at 1.9 and subtitutes the deprecated ANSIBLE_HOSTS
+    ANSIBLE_INVENTORY is available starting at 1.9 and substitutes the deprecated ANSIBLE_HOSTS
 
 You can read more about the inventory file in later parts of the manual.
 

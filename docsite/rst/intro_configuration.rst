@@ -309,7 +309,7 @@ The valid values are either 'replace' (the default) or 'merge'.
 hostfile
 ========
 
-This is a deprecated setting since 1.9, please look at :ref:`inventory` for the new setting.
+This is a deprecated setting since 1.9, please look at :ref:`inventory_file` for the new setting.
 
 .. _host_key_checking:
 
@@ -321,7 +321,7 @@ implications and wish to disable it, you may do so here by setting the value to 
 
     host_key_checking=True
 
-.. _inventory:
+.. _inventory_file:
 
 inventory
 =========

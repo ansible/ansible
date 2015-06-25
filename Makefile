@@ -136,7 +136,7 @@ clean:
 	@echo "Cleaning up byte compiled python stuff"
 	find . -type f -regex ".*\.py[co]$$" -delete
 	@echo "Cleaning up editor backup files"
-	find . -type f \( -name "*~" -or -name "#*" \) -delete
+	find . -type f  \( -name "*~" -or -name "#*" \) |grep -v test/units/inventory_test_data/group_vars/noparse/all.yml~ |xargs -n 1024 -r rm
 	find . -type f \( -name "*.swp" \) -delete
 	@echo "Cleaning up manpage stuff"
 	find ./docs/man -type f -name "*.xml" -delete

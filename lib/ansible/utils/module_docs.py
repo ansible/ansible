@@ -24,8 +24,7 @@ import yaml
 import traceback
 
 from collections import MutableMapping, MutableSet, MutableSequence
-
-from ansible import utils
+from ansible.plugins import fragment_loader
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
@@ -68,7 +67,7 @@ def get_docstring(filename, verbose=False):
 
 
                     if fragment_slug != 'doesnotexist':
-                        fragment_class = utils.plugins.fragment_loader.get(fragment_name)
+                        fragment_class = fragment_loader.get(fragment_name)
                         assert fragment_class is not None
 
                         fragment_yaml = getattr(fragment_class, fragment_var, '{}')
