@@ -152,6 +152,7 @@ from ssl import SSLError
 
 try:
     import boto
+    import boto.ec2
     from boto.s3.connection import Location
     from boto.s3.connection import OrdinaryCallingFormat
     from boto.s3.connection import S3Connection
