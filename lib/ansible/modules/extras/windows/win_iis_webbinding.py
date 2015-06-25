@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: win_iis_webbinding
-version_added: "1.9"
+version_added: "2.0"
 short_description: Configures a IIS Web site.
 description:
      - Creates, Removes and configures a binding to an existing IIS Web site
