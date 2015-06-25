@@ -24,12 +24,12 @@ import tempfile
 
 DOCUMENTATION = '''
 ---
-module: zone
+module: solaris_zone
 short_description: Manage Solaris zones
 description:
    - Create, start, stop and delete Solaris zones. This module doesn't currently allow
      changing of options for a zone that's already been created.
-version_added: "1.5"
+version_added: "2.0"
 author: Paul Markham
 requirements:
   - Solaris 10 or later
@@ -38,10 +38,10 @@ options:
     required: true
     description:
       - C(present), create the zone.
-        C(running), if the zone already exists, boot it, otherwise, create the zone
+      - C(running), if the zone already exists, boot it, otherwise, create the zone
           first, then boot it.
-        C(stopped), shutdown a zone.
-        C(absent), destroy the zone.
+      - C(stopped), shutdown a zone.
+      - C(absent), destroy the zone.
     choices: ['present', 'running', 'stopped', 'absent']
   name:
     description:
@@ -89,21 +89,21 @@ options:
 
 EXAMPLES = '''
 # Create a zone, but don't boot it
-zone: name=zone1 state=present path=/zones/zone1 whole_root=true root_password="Be9oX7OSwWoU."
+solaris_zone: name=zone1 state=present path=/zones/zone1 whole_root=true root_password="Be9oX7OSwWoU."
       config='set autoboot=true, add net, set physical=bge0, set address=10.1.1.1, end'
 
 # Create a zone and boot it
-zone: name=zone1 state=running path=/zones/zone1 whole_root=true root_password="Be9oX7OSwWoU."
+solaris_zone: name=zone1 state=running path=/zones/zone1 whole_root=true root_password="Be9oX7OSwWoU."
       config='set autoboot=true, add net, set physical=bge0, set address=10.1.1.1, end'
 
 # Boot an already created zone
-zone: name=zone1 state=running
+solaris_zone: name=zone1 state=running
 
 # Stop a zone
-zone: name=zone1 state=stopped
+solaris_zone: name=zone1 state=stopped
 
 # Destroy a zone
-zone: name=zone1 state=absent
+solaris_zone: name=zone1 state=absent
 '''
 
 class Zone(object):
@@ -331,6 +331,13 @@ def main():
             ),
         supports_check_mode=True
     )
+
+    if platform.system() == 'SunOS':
+        (major, minor) = platform.release().split('.')
+        if minor < 10:
+            module.fail_json(msg='This module requires Solaris 10 or later')
+    else:
+        module.fail_json(msg='This module requires Solaris')
 
     zone = Zone(module)
     
