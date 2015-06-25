@@ -28,13 +28,13 @@ description:
 options:
   name:
     description:
-      - The name of the virtual directory to create.
+      - The name of the virtual directory to create or remove
     required: true
     default: null
     aliases: []
   state:
     description:
-      -
+      - Whether to add or remove the specified virtual directory
     choices:
       - absent
       - present

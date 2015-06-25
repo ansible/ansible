@@ -23,6 +23,7 @@ description:
   - Can update the provisioned throughput on existing tables.
   - Returns the status of the specified table.
 author: Alan Loi (@loia)
+version_added: "2.0"
 requirements:
   - "boto >= 2.13.2"
 options:

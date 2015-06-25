@@ -20,7 +20,7 @@
 
 DOCUMENTATION = '''
 ---
-module: win_iis_website
+module: win_iis_webapplication
 version_added: "2.0"
 short_description: Configures a IIS Web application.
 description:
@@ -32,12 +32,12 @@ options:
     required: true
     default: null
     aliases: []
- site:
-   description:
-     - Name of the site on which the application is created.
-   required: true
-   default: null
-   aliases: []
+  site:
+    description:
+      - Name of the site on which the application is created.
+    required: true
+    default: null
+    aliases: []
   state:
     description:
       - State of the web application
