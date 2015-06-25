@@ -20,7 +20,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import fcntl
 import gettext
+import select
+import os
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from functools import wraps
@@ -33,6 +36,7 @@ from ansible.errors import AnsibleError
 #        the entire chain of calls to here, as there are other things
 #        which may want to output display/logs too
 from ansible.utils.display import Display
+
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
@@ -63,6 +67,9 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             self._display = Display(verbosity=connection_info.verbosity)
         if not hasattr(self, '_connected'):
             self._connected = False
+
+        self.success_key = None
+        self.prompt = None
 
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
@@ -119,17 +126,19 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Terminate the connection"""
         pass
 
-    def check_become_success(self, output, success_key):
-        return success_key in output
+    def check_become_success(self, output):
+        return self.success_key in output
 
-    def check_password_prompt(self, output, prompt):
-        if isinstance(prompt, basestring):
-            return output.endswith(prompt)
+    def check_password_prompt(self, output):
+        if self.prompt is None:
+            return False
+        elif isinstance(self.prompt, basestring):
+            return output.endswith(self.prompt)
         else:
-            return prompt(output)
+            return self.prompt(output)
 
-    def check_incorrect_password(self, output, prompt):
+    def check_incorrect_password(self, output):
         incorrect_password = gettext.dgettext(self._connection_info.become_method, C.BECOME_ERROR_STRINGS[self._connection_info.become_method])
-        if output.endswith(incorrect_password):
+        if incorrect_password in output:
             raise AnsibleError('Incorrect %s password' % self._connection_info.become_method)
 

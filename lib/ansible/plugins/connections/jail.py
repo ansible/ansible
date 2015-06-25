@@ -1,6 +1,7 @@
 # Based on local.py (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # and chroot.py     (c) 2013, Maykel Moya <mmoya@speedyrails.com>
 # (c) 2013, Michael Scherer <misc@zarb.org>
+# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -22,14 +23,17 @@ __metaclass__ = type
 import distutils.spawn
 import traceback
 import os
-import shutil
+import shlex
 import subprocess
 from ansible import errors
+from ansible.utils.unicode import to_bytes
 from ansible.callbacks import vvv
 import ansible.constants as C
 
+BUFSIZE = 65536
+
 class Connection(object):
-    ''' Local chroot based connections '''
+    ''' Local BSD Jail based connections '''
 
     def _search_executable(self, executable):
         cmd = distutils.spawn.find_executable(executable)
@@ -57,8 +61,6 @@ class Connection(object):
         # remove \n
         return stdout[:-1]
 
- 
-        
     def __init__(self, runner, host, port, *args, **kwargs):
         self.jail = host
         self.runner = runner
@@ -71,7 +73,7 @@ class Connection(object):
 
         self.jls_cmd = self._search_executable('jls')
         self.jexec_cmd = self._search_executable('jexec')
-        
+
         if not self.jail in self.list_jails():
             raise errors.AnsibleError("incorrect jail name %s" % self.jail)
 
@@ -81,9 +83,9 @@ class Connection(object):
         self.port = port
 
     def connect(self, port=None):
-        ''' connect to the chroot; nothing to do here '''
+        ''' connect to the jail; nothing to do here '''
 
-        vvv("THIS IS A LOCAL CHROOT DIR", host=self.jail)
+        vvv("THIS IS A LOCAL JAIL DIR", host=self.jail)
 
         return self
 
@@ -92,11 +94,21 @@ class Connection(object):
         if executable:
             local_cmd = [self.jexec_cmd, self.jail, executable, '-c', cmd]
         else:
-            local_cmd = '%s "%s" %s' % (self.jexec_cmd, self.jail, cmd)
+            # Prev to python2.7.3, shlex couldn't handle unicode type strings
+            cmd = to_bytes(cmd)
+            cmd = shlex.split(cmd)
+            local_cmd = [self.jexec_cmd, self.jail]
+            local_cmd += cmd
         return local_cmd
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
-        ''' run a command on the chroot '''
+    def _buffered_exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None, stdin=subprocess.PIPE):
+        ''' run a command on the jail.  This is only needed for implementing
+        put_file() get_file() so that we don't have to read the whole file
+        into memory.
+
+        compared to exec_command() it looses some niceties like being able to
+        return the process's exit code immediately.
+        '''
 
         if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
             raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
@@ -104,51 +116,68 @@ class Connection(object):
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        # Ignores privilege escalation
+        # We enter zone as root so we ignore privilege escalation (probably need to fix in case we have to become a specific used [ex: postgres admin])?
         local_cmd = self._generate_cmd(executable, cmd)
 
         vvv("EXEC %s" % (local_cmd), host=self.jail)
-        p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
+        p = subprocess.Popen(local_cmd, shell=False,
                              cwd=self.runner.basedir,
-                             stdin=subprocess.PIPE,
+                             stdin=stdin,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        return p
+
+    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
+        ''' run a command on the jail '''
+
+        p = self._buffered_exec_command(cmd, tmp_path, become_user, sudoable, executable, in_data)
 
         stdout, stderr = p.communicate()
         return (p.returncode, '', stdout, stderr)
 
-    def _normalize_path(self, path, prefix):
-        if not path.startswith(os.path.sep):
-            path = os.path.join(os.path.sep, path)
-        normpath = os.path.normpath(path)
-        return os.path.join(prefix, normpath[1:])
-
-    def _copy_file(self, in_path, out_path):
-        if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound("file or module does not exist: %s" % in_path)
-        try:
-            shutil.copyfile(in_path, out_path)
-        except shutil.Error:
-            traceback.print_exc()
-            raise errors.AnsibleError("failed to copy: %s and %s are the same" % (in_path, out_path))
-        except IOError:
-            traceback.print_exc()
-            raise errors.AnsibleError("failed to transfer file to %s" % out_path)
-
     def put_file(self, in_path, out_path):
-        ''' transfer a file from local to chroot '''
+        ''' transfer a file from local to jail '''
 
-        out_path = self._normalize_path(out_path, self.get_jail_path())
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
 
-        self._copy_file(in_path, out_path)
+        try:
+            with open(in_path, 'rb') as in_file:
+                try:
+                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), None, stdin=in_file)
+                except OSError:
+                    raise errors.AnsibleError("jail connection requires dd command in the jail")
+                try:
+                    stdout, stderr = p.communicate()
+                except:
+                    traceback.print_exc()
+                    raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                if p.returncode != 0:
+                    raise errors.AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+        except IOError:
+            raise errors.AnsibleError("file or module does not exist at: %s" % in_path)
 
     def fetch_file(self, in_path, out_path):
-        ''' fetch a file from chroot to local '''
+        ''' fetch a file from jail to local '''
 
-        in_path = self._normalize_path(in_path, self.get_jail_path())
         vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
 
-        self._copy_file(in_path, out_path)
+        try:
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
+        except OSError:
+            raise errors.AnsibleError("jail connection requires dd command in the jail")
+
+        with open(out_path, 'wb+') as out_file:
+            try:
+                chunk = p.stdout.read(BUFSIZE)
+                while chunk:
+                    out_file.write(chunk)
+                    chunk = p.stdout.read(BUFSIZE)
+            except:
+                traceback.print_exc()
+                raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                raise errors.AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
 
     def close(self):
         ''' terminate the connection; nothing to do here '''

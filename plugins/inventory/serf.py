@@ -20,14 +20,22 @@
 # Dynamic inventory script which lets you use nodes discovered by Serf
 # (https://serfdom.io/).
 #
-# Requires host to be a member of a Serf cluster and the `serfclient` Python
-# module from https://pypi.python.org/pypi/serfclient
+# Requires the `serfclient` Python module from
+# https://pypi.python.org/pypi/serfclient
+#
+# Environment variables
+# ---------------------
+#   - `SERF_RPC_ADDR`
+#   - `SERF_RPC_AUTH`
+#
+# These variables are described at https://www.serfdom.io/docs/commands/members.html#_rpc_addr
 
 import argparse
+import os
 import sys
 
 # https://pypi.python.org/pypi/serfclient
-from serfclient.client import SerfClient
+from serfclient import SerfClient, EnvironmentConfig
 
 try:
     import json
@@ -37,9 +45,13 @@ except ImportError:
 _key = 'serf'
 
 
+def _serf_client():
+    env = EnvironmentConfig()
+    return SerfClient(host=env.host, port=env.port, rpc_auth=env.auth_key)
+
+
 def get_serf_members_data():
-    serf = SerfClient()
-    return serf.members().body['Members']
+    return _serf_client().members().body['Members']
 
 
 def get_nodes(data):

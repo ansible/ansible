@@ -254,15 +254,17 @@ class Base:
                     raise AnsibleParserError("the field '%s' is required but was not set" % name)
 
             try:
-                # if the attribute contains a variable, template it now
-                value = templar.template(getattr(self, name))
-
-                # run the post-validator if present
+                # Run the post-validator if present. These methods are responsible for
+                # using the given templar to template the values, if required.
                 method = getattr(self, '_post_validate_%s' % name, None)
                 if method:
-                    value = method(attribute, value, all_vars, templar._fail_on_undefined_errors)
+                    value = method(attribute, getattr(self, name), templar)
                 else:
-                    # otherwise, just make sure the attribute is of the type it should be
+                    # if the attribute contains a variable, template it now
+                    value = templar.template(getattr(self, name))
+
+                # and make sure the attribute is of the type it should be
+                if value is not None:
                     if attribute.isa == 'string':
                         value = unicode(value)
                     elif attribute.isa == 'int':
@@ -281,7 +283,7 @@ class Base:
             except (TypeError, ValueError) as e:
                 raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
             except UndefinedError as e:
-                if templar._fail_on_undefined_errors:
+                if templar._fail_on_undefined_errors and name != 'name':
                     raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined. The error was: %s" % (name,e), obj=self.get_ds())
 
     def serialize(self):

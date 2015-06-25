@@ -187,6 +187,20 @@ class Play(Base, Taggable, Become):
             roles.append(Role.load(ri))
         return roles
 
+    def _post_validate_vars(self, attr, value, templar):
+        '''
+        Override post validation of vars on the play, as we don't want to
+        template these too early.
+        '''
+        return value
+
+    def _post_validate_vars_files(self, attr, value, templar):
+        '''
+        Override post validation of vars_files on the play, as we don't want to
+        template these too early.
+        '''
+        return value
+
     # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
 
     def _compile_roles(self):
@@ -203,6 +217,20 @@ class Play(Base, Taggable, Become):
         if len(self.roles) > 0:
             for r in self.roles:
                 block_list.extend(r.compile(play=self))
+
+        return block_list
+
+    def compile_roles_handlers(self):
+        '''
+        Handles the role handler compilation step, returning a flat list of Handlers
+        This is done for all roles in the Play.
+        '''
+
+        block_list = []
+
+        if len(self.roles) > 0:
+            for r in self.roles:
+                block_list.extend(r.get_handler_blocks())
 
         return block_list
 

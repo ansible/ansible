@@ -43,7 +43,7 @@ class TaskResult:
         return self._check_key('skipped')
 
     def is_failed(self):
-        if 'failed_when_result' in self._result:
+        if 'results' in self._result and True in [True for x in self._result['results'] if 'failed_when_result' in x]:
             return self._check_key('failed_when_result')
         else:
             return self._check_key('failed') or self._result.get('rc', 0) != 0
@@ -57,5 +57,6 @@ class TaskResult:
             for res in self._result.get('results', []):
                 if isinstance(res, dict):
                     flag |= res.get(key, False)
+            return flag
         else:
             return self._result.get(key, False)

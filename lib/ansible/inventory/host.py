@@ -49,7 +49,6 @@ class Host:
             vars=self.vars.copy(),
             ipv4_address=self.ipv4_address,
             ipv6_address=self.ipv6_address,
-            port=self.port,
             gathered_facts=self._gathered_facts,
             groups=groups,
         )
@@ -61,7 +60,6 @@ class Host:
         self.vars         = data.get('vars', dict())
         self.ipv4_address = data.get('ipv4_address', '')
         self.ipv6_address = data.get('ipv6_address', '')
-        self.port         = data.get('port')
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -79,9 +77,9 @@ class Host:
         self.ipv6_address = name
 
         if port and port != C.DEFAULT_REMOTE_PORT:
-            self.port = int(port)
+            self.set_variable('ansible_ssh_port', int(port))
         else:
-            self.port = C.DEFAULT_REMOTE_PORT
+            self.set_variable('ansible_ssh_port', C.DEFAULT_REMOTE_PORT)
 
         self._gathered_facts = False
 

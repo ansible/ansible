@@ -15,7 +15,10 @@ Deprecated Modules (new ones in parens):
   * nova_compute   (os_server)
 
 New Modules:
+  * amazon: ec2_ami_copy
   * amazon: ec2_ami_find
+  * amazon: ec2_eni
+  * amazon: ec2_eni_facts
   * amazon: elasticache_subnet_group
   * amazon: ec2_win_password
   * amazon: iam
@@ -28,6 +31,7 @@ New Modules:
   * cloudtrail
   * cloudstack: cs_account
   * cloudstack: cs_affinitygroup
+  * cloudstack: cs_facts
   * cloudstack: cs_firewall
   * cloudstack: cs_iso
   * cloudstack: cs_instance
@@ -41,18 +45,25 @@ New Modules:
   * cloudstack: cs_template
   * cloudstack: cs_vmsnapshot
   * datadog_monitor
+  * dpkg_selections
   * expect
   * find
+  * hall
   * maven_artifact
+  * openstack: os_ironic
+  * openstack: os_ironic_node
   * openstack: os_client_config
   * openstack: os_image
   * openstack: os_network
+  * openstack: os_object
+  * openstack: os_security_group
   * openstack: os_server
   * openstack: os_server_actions
   * openstack: os_server_facts
   * openstack: os_server_volume
   * openstack: os_subnet
   * openstack: os_volume
+  * osx_defaults
   * pear
   * proxmox
   * proxmox_template
@@ -62,12 +73,15 @@ New Modules:
   * rabbitmq_binding
   * rabbitmq_exchange
   * rabbitmq_queue
+  * sensu_check
+  * sensu_subscription
   * vertica_configuration
   * vertica_facts
   * vertica_role
   * vertica_schema
   * vertica_user
   * vmware_datacenter
+  * vsphere_copy
   * webfaction_app
   * webfaction_db
   * webfaction_domain
@@ -81,6 +95,7 @@ New Modules:
 New Inventory scripts:
   * cloudstack
   * fleetctl
+  * serf
 
 Other Notable Changes:
 

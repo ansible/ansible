@@ -104,6 +104,17 @@ class StrategyBase:
     def get_failed_hosts(self, play):
         return [host for host in self._inventory.get_hosts(play.hosts) if host.name in self._tqm._failed_hosts]
 
+    def add_tqm_variables(self, vars, play):
+        '''
+        Base class method to add extra variables/information to the list of task
+        vars sent through the executor engine regarding the task queue manager state.
+        '''
+
+        new_vars = vars.copy()
+        new_vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
+        new_vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
+        return new_vars
+
     def _queue_task(self, host, task, task_vars, connection_info):
         ''' handles queueing the task up to be sent to a worker '''
 
@@ -154,7 +165,9 @@ class StrategyBase:
                             debug("marking %s as failed" % host.name)
                             iterator.mark_host_failed(host)
                             self._tqm._failed_hosts[host.name] = True
-                        self._tqm._stats.increment('failures', host.name)
+                            self._tqm._stats.increment('failures', host.name)
+                        else:
+                            self._tqm._stats.increment('ok', host.name)
                         self._tqm.send_callback('v2_runner_on_failed', task_result)
                     elif result[0] == 'host_unreachable':
                         self._tqm._unreachable_hosts[host.name] = True
@@ -353,10 +366,6 @@ class StrategyBase:
 
         result = True
 
-        # FIXME: getting the handlers from the iterators play should be
-        #        a method on the iterator, which may also filter the list
-        #        of handlers based on the notified list
-
         for handler_block in iterator._play.handlers:
             # FIXME: handlers need to support the rescue/always portions of blocks too,
             #        but this may take some work in the iterator and gets tricky when
@@ -372,6 +381,7 @@ class StrategyBase:
                     for host in self._notified_handlers[handler_name]:
                         if not handler.has_triggered(host):
                             task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
+                            task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
                             self._queue_task(host, handler, task_vars, connection_info)
                             handler.flag_for_host(host)
                         self._process_pending_results(iterator)

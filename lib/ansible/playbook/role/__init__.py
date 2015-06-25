@@ -172,7 +172,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = load_list_of_blocks(handler_data, play=None, role=self, loader=self._loader)
+            self._handler_blocks = load_list_of_blocks(handler_data, play=None, role=self, use_handlers=True, loader=self._loader)
 
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')
@@ -288,7 +288,12 @@ class Role(Base, Become, Conditional, Taggable):
         return self._task_blocks[:]
 
     def get_handler_blocks(self):
-        return self._handler_blocks[:]
+        block_list = []
+        for dep in self.get_direct_dependencies():
+            dep_blocks = dep.get_handler_blocks()
+            block_list.extend(dep_blocks)
+        block_list.extend(self._handler_blocks)
+        return block_list
 
     def has_run(self):
         '''

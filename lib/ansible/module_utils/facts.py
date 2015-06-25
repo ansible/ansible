@@ -1264,13 +1264,14 @@ class FreeBSDHardware(Hardware):
         # Device          1M-blocks     Used    Avail Capacity
         # /dev/ada0p3        314368        0   314368     0%
         #
-        rc, out, err = module.run_command("/usr/sbin/swapinfo -m")
+        rc, out, err = module.run_command("/usr/sbin/swapinfo -k")
         lines = out.split('\n')
         if len(lines[-1]) == 0:
             lines.pop()
         data = lines[-1].split()
-        self.facts['swaptotal_mb'] = data[1]
-        self.facts['swapfree_mb'] = data[3]
+        if data[0] != 'Device':
+            self.facts['swaptotal_mb'] = int(data[1]) / 1024
+            self.facts['swapfree_mb'] = int(data[3]) / 1024
 
     @timeout(10)
     def get_mount_facts(self):
@@ -2217,7 +2218,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
                 rc, out, err = module.run_command([uname_path, '-W'])
                 # don't bother with wpars it does not work
                 # zero means not in wpar
-                if out.split()[0] == '0':
+                if not rc and out.split()[0] == '0':
                     if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
                         entstat_path = module.get_bin_path('entstat')
                         if entstat_path:

@@ -213,12 +213,15 @@ class VariableManager:
         # FIXME: make sure all special vars are here
         # Finally, we create special vars
 
+        all_vars['playbook_dir'] = loader.get_basedir()
+
         if host:
             all_vars['groups'] = [group.name for group in host.get_groups()]
 
             if self._inventory is not None:
                 hostvars = HostVars(vars_manager=self, inventory=self._inventory, loader=loader)
                 all_vars['hostvars'] = hostvars
+                all_vars['groups']   = self._inventory.groups_list()
 
         if task:
             if task._role:
@@ -226,6 +229,15 @@ class VariableManager:
 
         if self._inventory is not None:
             all_vars['inventory_dir'] = self._inventory.basedir()
+            if play:
+                # add the list of hosts in the play, as adjusted for limit/filters
+                # FIXME: play_hosts should be deprecated in favor of ansible_play_hosts,
+                #        however this would take work in the templating engine, so for now
+                #        we'll add both so we can give users something transitional to use
+                host_list = [x.name for x in self._inventory.get_hosts()]
+                all_vars['play_hosts'] = host_list
+                all_vars['ansible_play_hosts'] = host_list
+
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         all_vars['omit'] = self._omit_token
