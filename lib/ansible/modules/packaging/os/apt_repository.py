@@ -378,6 +378,25 @@ class UbuntuSourcesList(SourcesList):
             source = self._parse(line, raise_if_invalid_or_disabled=True)[2]
         self._remove_valid_source(source)
 
+    @property
+    def repos_urls(self):
+        _repositories = []
+        for parsed_repos in self.files.values():
+            for parsed_repo in parsed_repos:
+                enabled = parsed_repo[1]
+                source_line = parsed_repo[3]
+
+                if not enabled:
+                    continue
+
+                if source_line.startswith('ppa:'):
+                    source, ppa_owner, ppa_name = self._expand_ppa(i[3])
+                    _repositories.append(source)
+                else:
+                    _repositories.append(source_line)
+
+        return _repositories
+
 
 def get_add_ppa_signing_key_callback(module):
     def _run_command(command):
@@ -425,8 +444,13 @@ def main():
 
     sources_before = sourceslist.dump()
 
+    if repo.startswith('ppa:'):
+        expanded_repo = sourceslist._expand_ppa(repo)[0]
+    else:
+        expanded_repo = repo
+
     try:
-        if state == 'present':
+        if state == 'present' and expanded_repo not in sourceslist.repos_urls:
             sourceslist.add_source(repo)
         elif state == 'absent':
             sourceslist.remove_source(repo)
