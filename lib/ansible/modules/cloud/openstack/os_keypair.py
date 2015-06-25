@@ -41,12 +41,14 @@ options:
      default: None
    public_key:
      description:
-        - The public key that would be uploaded to nova and injected to vm's upon creation
+        - The public key that would be uploaded to nova and injected into VMs
+          upon creation.
      required: false
      default: None
    public_key_file:
      description:
-        - Path to local file containing ssh public key.  Mutually exclusive with public_key
+        - Path to local file containing ssh public key. Mutually exclusive
+          with public_key.
     required: false
     default: None
    state:
@@ -63,7 +65,7 @@ EXAMPLES = '''
       cloud: mordred
       state: present
       name: ansible_key
-      public_key_file: ~/.ssh/id_rsa.pub
+      public_key_file: /home/me/.ssh/id_rsa.pub
 
 # Creates a new key pair and the private key returned after the run.
 - os_keypair:
@@ -73,16 +75,33 @@ EXAMPLES = '''
 '''
 
 
+def _system_state_change(module, keypair):
+    state = module.params['state']
+    if state == 'present' and not keypair:
+        return True
+    if state == 'absent' and keypair:
+        return True
+    return False
+
+
 def main():
     argument_spec = openstack_full_argument_spec(
         name            = dict(required=True),
         public_key      = dict(default=None),
         public_key_file = dict(default=None),
-        state           = dict(default='present', choices=['absent', 'present']),
+        state           = dict(default='present',
+                               choices=['absent', 'present']),
     )
+
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[['public_key', 'public_key_file']])
-    module = AnsibleModule(argument_spec, **module_kwargs)
+
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
+
+    if not HAS_SHADE:
+        module.fail_json(msg='shade is required for this module')
 
     state = module.params['state']
     name = module.params['name']
@@ -90,44 +109,33 @@ def main():
 
     if module.params['public_key_file']:
         public_key = open(module.params['public_key_file']).read()
-
-    if not HAS_SHADE:
-        module.fail_json(msg='shade is required for this module')
+        public_key = public_key.rstrip()
 
     try:
         cloud = shade.openstack_cloud(**module.params)
+        keypair = cloud.get_keypair(name)
+
+        if module.check_mode:
+            module.exit_json(changed=_system_state_change(module, keypair))
 
         if state == 'present':
-            for key in cloud.list_keypairs():
-                if key.name == name:
-                    if public_key and (public_key != key.public_key):
-                        module.fail_json(
-                            msg="Key name %s present but key hash not the same"
-                                " as offered. Delete key first." % key.name
-                        )
-                    else:
-                        module.exit_json(changed=False, result="Key present")
-            try:
-                key = cloud.create_keypair(name, public_key)
-            except Exception, e:
-                module.exit_json(
-                    msg="Error in creating the keypair: %s" % e.message
-                )
-            if not public_key:
-                module.exit_json(changed=True, key=key.private_key)
-            module.exit_json(changed=True, key=None)
+            if keypair and keypair['name'] == name:
+                if public_key and (public_key != keypair['public_key']):
+                    module.fail_json(
+                        msg="Key name %s present but key hash not the same"
+                            " as offered. Delete key first." % name
+                    )
+                else:
+                    module.exit_json(changed=False, key=keypair)
+
+            new_key = cloud.create_keypair(name, public_key)
+            module.exit_json(changed=True, key=new_key)
 
         elif state == 'absent':
-            for key in cloud.list_keypairs():
-                if key.name == name:
-                    try:
-                        cloud.delete_keypair(name)
-                    except Exception, e:
-                        module.fail_json(
-                            msg="Keypair deletion has failed: %s" % e.message
-                        )
-                    module.exit_json(changed=True, result="deleted")
-            module.exit_json(changed=False, result="not present")
+            if keypair:
+                cloud.delete_keypair(name)
+                module.exit_json(changed=True)
+            module.exit_json(changed=False)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
