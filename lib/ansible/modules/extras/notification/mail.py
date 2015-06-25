@@ -115,6 +115,7 @@ options:
       - The minor mime type, can be either text or html. The major type is always text.
     default: 'plain'
     required: false
+    version_added: "2.0"
 """
 
 EXAMPLES = '''
