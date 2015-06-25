@@ -38,6 +38,8 @@ description:
        (see `setting the environment
        <http://docs.ansible.com/playbooks_environment.html>`_),
        or by using the use_proxy option.
+     - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
+       your proxy environment for both protocols is correct.
 version_added: "0.6"
 options:
   url:
