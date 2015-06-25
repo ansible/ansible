@@ -26,44 +26,45 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-If ($params.timezone) {
-    Try {
-        # Get the current timezone set
-        $currentTZ = $(C:\Windows\System32\tzutil /g)
+$timezone = Get-Attr -obj $params -name timezone -failifempty $true -resultobj $result
 
-        If ( $currentTZ -eq $params.timezone ) {
-            Exit-Json $result "$params.timezone is already set on this machine"
+Try {
+    # Get the current timezone set
+    $currentTZ = $(tzutil.exe /g)
+    If ($LASTEXITCODE -ne 0) { Throw "An error occured when getting the current machine's timezone setting." }
+
+    If ( $currentTZ -eq $timezone ) {
+        Exit-Json $result "$timezone is already set on this machine"
+    }
+    Else {
+        $tzExists = $false
+        #Check that timezone can even be set (if it is listed from tzutil as an available timezone to the machine)
+        $tzList = $(tzutil.exe /l)
+        If ($LASTEXITCODE -ne 0) { Throw "An error occured when listing the available timezones." }
+        ForEach ($tz in $tzList) {
+            If ( $tz -eq $timezone ) {
+                $tzExists = $true
+                break
+            }
+        }
+
+        If ( $tzExists ) {
+            tzutil.exe /s "$timezone"
+            If ($LASTEXITCODE -ne 0) { Throw "An error occured when setting the specified timezone with tzutil." }
+            $newTZ = $(tzutil.exe /g)
+            If ($LASTEXITCODE -ne 0) { Throw "An error occured when getting the current machine's timezone setting." }
+
+            If ( $timezone -eq $newTZ ) {
+                $result.changed = $true
+            }
         }
         Else {
-            $tzExists = $false
-            #Check that timezone can even be set (if it is listed from tzutil as an available timezone to the machine)
-            $tzList = $(C:\Windows\System32\tzutil /l)
-            ForEach ($tz in $tzList) {
-                If ( $tz -eq $params.timezone ) {
-                    $tzExists = $true
-                    break
-                }
-            }
-
-            If ( $tzExists ) {
-                C:\Windows\System32\tzutil /s "$params.timezone"
-                $newTZ = $(C:\Windows\System32\tzutil /g)
-
-                If ( $params.timezone -eq $newTZ ) {
-                    $result.changed = $true
-                }
-            }
-            Else {
-                Fail-Json $result "The specified timezone: $params.timezone isn't supported on the machine."
-            }
+            Fail-Json $result "The specified timezone: $timezone isn't supported on the machine."
         }
     }
-    Catch {
-        Fail-Json $result "Error setting timezone to: $params.timezone."
-    }
 }
-Else {
-    Fail-Json $result "Parameter: timezone is required."
+Catch {
+    Fail-Json $result "Error setting timezone to: $timezone."
 }
 
 
