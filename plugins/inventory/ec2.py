@@ -442,6 +442,9 @@ class Ec2Inventory(object):
             if dest is None:
                 dest = getattr(instance, 'tags').get(self.destination_variable, None)
 
+        self.group_by_itag_keys_value_is_instance_id(instance)
+        self.store_host_info_by_instance_id_in_hostvars(instance)
+
         if not dest:
             # Skip instances we cannot address (e.g. private VPC subnet)
             return
@@ -548,6 +551,17 @@ class Ec2Inventory(object):
 
         self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
 
+    def store_host_info_by_instance_id_in_hostvars(self, instance):
+        self.inventory["_meta"]["hostvars"][instance.id] = self.get_host_info_dict_from_instance(instance)
+
+    def group_by_itag_keys_value_is_instance_id(self, instance):
+        if self.group_by_tag_keys:
+            for k, v in instance.tags.items():
+                if v:
+                    key = self.to_safe("itag_" + k + "=" + v)
+                else:
+                    key = self.to_safe("itag_" + k)
+                self.push(self.inventory, key, instance.id)
 
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
