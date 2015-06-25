@@ -110,6 +110,7 @@ options:
       - json-file
       - none
       - syslog
+    version_added: "2.0"
   memory_limit:
     description:
       - RAM allocated to the container as a number of bytes or as a human-readable
