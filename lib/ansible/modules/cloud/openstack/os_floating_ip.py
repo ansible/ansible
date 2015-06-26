@@ -1,8 +1,6 @@
 #!/usr/bin/python
-# coding: utf-8 -*-
-
-# Copyright (c) 2014 Hewlett-Packard Development Company, L.P.
-# Copyright (c) 2013, Benno Joy <benno@ansible.com>
+# Copyright (c) 2015 Hewlett-Packard Development Company, L.P.
+# Author: Davide Guerri <davide.guerri@hp.com>
 #
 # This module is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-
 try:
     import shade
+    from shade import meta
+
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
@@ -38,19 +37,39 @@ options:
         - The name or ID of the instance to which the IP address
           should be assigned.
      required: true
-   network_name:
+   network:
      description:
-        - Name of the network from which IP has to be assigned to VM.
-          Please make sure the network is an external network.
-        - Required if ip_address is not given.
-     required: true
-     default: None
-   internal_network_name:
-     description:
-        - Name of the network of the port to associate with the floating ip.
-          Necessary when VM multiple networks.
+        - The name or ID of a neutron external network or a nova pool name.
      required: false
-     default: None
+   floating_ip_address:
+     description:
+        - A floating IP address to attach or to detach. Required only if state
+          is absent. When state is present can be used to specify a IP address
+          to attach.
+     required: false
+   reuse:
+     description:
+        - When state is present, and floating_ip_address is not present,
+          this parameter can be used to specify whether we should try to reuse
+          a floating IP address already allocated to the project.
+     required: false
+     default: false
+   fixed_address:
+     description:
+        - To which fixed IP of server the floating IP address should be
+          attached to.
+     required: false
+   wait:
+     description:
+        - When attaching a floating IP address, specify whether we should
+          wait for it to appear as attached.
+     required: false
+     default false
+   timeout:
+     description:
+        - Time to wait for an IP address to appear as attached. See wait.
+     required: false
+     default 60
    state:
      description:
        - Should the resource be present or absent.
@@ -61,136 +80,54 @@ requirements: ["shade"]
 '''
 
 EXAMPLES = '''
-# Assign a floating ip to the instance from an external network
+# Assign a floating IP to the fist interface of `cattle001` from an exiting
+# external network or nova pool. If a free floating IP is already allocated to
+# the project, it is reused; if not, a new one is created.
 - os_floating_ip:
-     cloud: mordred
+     cloud: dguerri
+     server: cattle001
+
+# Assign a new floating IP to the instance fixed ip `192.0.2.3` of
+# `cattle001`. A new floating IP from the external network (or nova pool)
+# ext_net is created.
+- os_floating_ip:
+     cloud: dguerri
      state: present
-     server: vm1
-     network_name: external_network
-     internal_network_name: internal_network
+     reuse: false
+     server: cattle001
+     network: ext_net
+     fixed_address: 192.0.2.3
+     wait: true
+     timeout: 180
+
+# Detach a floating IP address from a server
+- os_floating_ip:
+     cloud: dguerri
+     state: absent
+     floating_ip_address: 203.0.113.2
+     server: cattle001
 '''
 
 
-def _get_server_state(module, cloud):
-    info = None
-    server = cloud.get_server(module.params['server'])
-    if server:
-        info = server._info
-        status = info['status']
-        if status != 'ACTIVE' and module.params['state'] == 'present':
-            module.fail_json(
-                msg="The VM is available but not Active. State: %s" % status
-            )
-    return info, server
-
-
-def _get_port_info(neutron, module, instance_id, internal_network_name=None):
-    subnet_id = None
-    if internal_network_name:
-        kwargs = {'name': internal_network_name}
-        networks = neutron.list_networks(**kwargs)
-        network_id = networks['networks'][0]['id']
-        kwargs = {
-            'network_id': network_id,
-            'ip_version': 4
-        }
-        subnets = neutron.list_subnets(**kwargs)
-        subnet_id = subnets['subnets'][0]['id']
-
-    kwargs = {
-        'device_id': instance_id,
-    }
-    try:
-        ports = neutron.list_ports(**kwargs)
-    except Exception, e:
-        module.fail_json(msg="Error in listing ports: %s" % e.message)
-
-    if subnet_id:
-        port = next(port for port in ports['ports'] if port['fixed_ips'][0]['subnet_id'] == subnet_id)
-        port_id = port['id']
-        fixed_ip_address = port['fixed_ips'][0]['ip_address']
-    else:
-        port_id = ports['ports'][0]['id']
-        fixed_ip_address = ports['ports'][0]['fixed_ips'][0]['ip_address']
-
-    if not ports['ports']:
-        return None, None
-    return fixed_ip_address, port_id
-
-
-def _get_floating_ip(neutron, module, fixed_ip_address):
-    kwargs = {
-        'fixed_ip_address': fixed_ip_address
-    }
-    try:
-        ips = neutron.list_floatingips(**kwargs)
-    except Exception, e:
-        module.fail_json(
-            msg="Error in fetching the floatingips's %s" % e.message
-        )
-
-    if not ips['floatingips']:
-        return None, None
-
-    return (ips['floatingips'][0]['id'],
-            ips['floatingips'][0]['floating_ip_address'])
-
-
-def _create_and_associate_floating_ip(neutron, module, port_id,
-                                      net_id, fixed_ip):
-    kwargs = {
-        'port_id': port_id,
-        'floating_network_id': net_id,
-        'fixed_ip_address': fixed_ip
-    }
-
-    try:
-        result = neutron.create_floatingip({'floatingip': kwargs})
-    except Exception, e:
-        module.fail_json(
-            msg="Error in updating the floating ip address: %s" % e.message
-        )
-
-    module.exit_json(
-        changed=True,
-        result=result,
-        public_ip=result['floatingip']['floating_ip_address']
-    )
-
-
-def _get_public_net_id(neutron, module):
-    kwargs = {
-        'name': module.params['network_name'],
-    }
-    try:
-        networks = neutron.list_networks(**kwargs)
-    except Exception, e:
-        module.fail_json("Error in listing neutron networks: %s" % e.message)
-    if not networks['networks']:
+def _get_floating_ip(cloud, floating_ip_address):
+    f_ips = cloud.search_floating_ips(
+        filters={'floating_ip_address': floating_ip_address})
+    if not f_ips:
         return None
-    return networks['networks'][0]['id']
 
-
-def _update_floating_ip(neutron, module, port_id, floating_ip_id):
-    kwargs = {
-        'port_id': port_id
-    }
-    try:
-        result = neutron.update_floatingip(floating_ip_id,
-                                           {'floatingip': kwargs})
-    except Exception, e:
-        module.fail_json(
-            msg="Error in updating the floating ip address: %s" % e.message
-        )
-    module.exit_json(changed=True, result=result)
+    return f_ips[0]
 
 
 def main():
     argument_spec = openstack_full_argument_spec(
-        server                = dict(required=True),
-        network_name          = dict(required=True),
-        internal_network_name = dict(default=None),
-        state                 = dict(default='present', choices=['absent', 'present']),
+        server=dict(required=True),
+        state=dict(default='present', choices=['absent', 'present']),
+        network=dict(required=False),
+        floating_ip_address=dict(required=False),
+        reuse=dict(required=False, type='bool', default=False),
+        fixed_address=dict(required=False),
+        wait=dict(required=False, type='bool', default=False),
+        timeout=dict(required=False, type='int', default=60),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -199,47 +136,63 @@ def main():
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
 
+    server_name_or_id = module.params['server']
     state = module.params['state']
-    internal_network_name = module.params['internal_network_name']
+    network = module.params['network']
+    floating_ip_address = module.params['floating_ip_address']
+    reuse = module.params['reuse']
+    fixed_address = module.params['fixed_address']
+    wait = module.params['wait']
+    timeout = module.params['timeout']
+
+    cloud = shade.openstack_cloud(**module.params)
 
     try:
-        cloud = shade.openstack_cloud(**module.params)
-        neutron = cloud.neutron_client
-
-        server_info, server_obj = _get_server_state(module, cloud)
-        if not server_info:
-            module.fail_json(msg="The server provided cannot be found")
-
-        fixed_ip, port_id = _get_port_info(
-            neutron, module, server_info['id'], internal_network_name)
-        if not port_id:
-            module.fail_json(msg="Cannot find a port for this instance,"
-                                 " maybe fixed ip is not assigned")
-
-        floating_id, floating_ip = _get_floating_ip(neutron, module, fixed_ip)
+        server = cloud.get_server(server_name_or_id)
+        if server is None:
+            module.fail_json(
+                msg="server {0} not found".format(server_name_or_id))
 
         if state == 'present':
-            if floating_ip:
-                # This server already has a floating IP assigned
-                module.exit_json(changed=False, public_ip=floating_ip)
+            if floating_ip_address is None:
+                if reuse:
+                    f_ip = cloud.available_floating_ip(network=network)
+                else:
+                    f_ip = cloud.create_floating_ip(network=network)
+            else:
+                f_ip = _get_floating_ip(cloud, floating_ip_address)
+                if f_ip is None:
+                    module.fail_json(
+                        msg="floating IP {0} not found".format(
+                            floating_ip_address))
 
-            pub_net_id = _get_public_net_id(neutron, module)
-            if not pub_net_id:
-                module.fail_json(
-                    msg="Cannot find the public network specified"
-                )
-            _create_and_associate_floating_ip(neutron, module, port_id,
-                                              pub_net_id, fixed_ip)
+            cloud.attach_ip_to_server(
+                server_id=server['id'], floating_ip_id=f_ip['id'],
+                fixed_address=fixed_address, wait=wait, timeout=timeout)
+            # Update the floating IP status
+            f_ip = cloud.get_floating_ip(id=f_ip['id'])
+            module.exit_json(changed=True, floating_ip=f_ip)
 
         elif state == 'absent':
-            if floating_ip:
-                _update_floating_ip(neutron, module, None, floating_id)
-            module.exit_json(changed=False)
+            if floating_ip_address is None:
+                module.fail_json(msg="floating_ip_address is required")
+
+            f_ip = _get_floating_ip(cloud, floating_ip_address)
+
+            cloud.detach_ip_from_server(
+                server_id=server['id'], floating_ip_id=f_ip['id'])
+            # Update the floating IP status
+            f_ip = cloud.get_floating_ip(id=f_ip['id'])
+            module.exit_json(changed=True, floating_ip=f_ip)
 
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=e.message)
+        module.fail_json(msg=e.message, extra_data=e.extra_data)
+
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+
+
+if __name__ == '__main__':
+    main()
