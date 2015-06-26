@@ -186,8 +186,14 @@ class TaskExecutor:
                 variables['item'] = item
                 templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
                 if self._task.evaluate_conditional(templar, variables):
-                    final_items.append(item)
-            return [",".join(final_items)]
+                    if templar._contains_vars(self._task.args['name']):
+                        new_item = templar.template(self._task.args['name'])
+                        final_items.append(new_item)
+                    else:
+                        final_items.append(item)
+            joined_items = ",".join(final_items)
+            self._task.args['name'] = joined_items
+            return [joined_items]
         else:
             return items
 
