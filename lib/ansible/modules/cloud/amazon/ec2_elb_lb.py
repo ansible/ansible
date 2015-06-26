@@ -384,8 +384,32 @@ class ElbManager(object):
                 'hosted_zone_name': check_elb.canonical_hosted_zone_name,
                 'hosted_zone_id': check_elb.canonical_hosted_zone_name_id,
                 'lb_cookie_policy': lb_cookie_policy,
-                'app_cookie_policy': app_cookie_policy
+                'app_cookie_policy': app_cookie_policy,
+                'instances': [instance.id for instance in check_elb.instances],
+                'out_of_service_count': 0,
+                'in_service_count': 0,
+                'unknown_instance_state_count': 0
             }
+
+            # status of instances behind the ELB
+            if info['instances']:
+                info['instance_health'] = [ dict({
+                    "instance_id": instance_state.instance_id,
+                    "reason_code": instance_state.reason_code,
+                    "state": instance_state.state,
+                }) for instance_state in self.elb_conn.describe_instance_health(self.name)]
+            else:
+                info['instance_health'] = []
+
+            # instance state counts: InService or OutOfService
+            if info['instance_health']:
+              for instance_state in info['instance_health']:
+                  if instance_state['state'] == "InService":
+                    info['in_service_count'] += 1
+                  elif instance_state['state'] == "OutOfService":
+                    info['out_of_service_count'] += 1
+                  else:
+                    info['unknown_instance_state_count'] =+ 1
 
             if check_elb.health_check:
                 info['health_check'] = {
