@@ -108,9 +108,19 @@ options:
     required: false
     default: null
     aliases: []
+  disk_type:
+    version_added: "1.9"
+    description:
+      - type of disk provisioned
+    required: false
+    default: "pd-standard"
+    choices: ["pd-standard", "pd-ssd"]
+    aliases: []
 
-requirements: [ "libcloud" ]
-author: Eric Johnson <erjohnso@google.com>
+requirements:
+    - "python >= 2.6"
+    - "apache-libcloud >= 0.13.3"
+author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 '''
 
 EXAMPLES = '''
@@ -122,18 +132,15 @@ EXAMPLES = '''
     name: pd
 '''
 
-import sys
-
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
             ResourceExistsError, ResourceNotFoundError, ResourceInUseError
     _ = Provider.GCE
+    HAS_LIBCLOUD = True
 except ImportError:
-    print("failed=True " + \
-        "msg='libcloud with GCE support is required for this module.'")
-    sys.exit(1)
+    HAS_LIBCLOUD = False
 
 
 def main():
@@ -144,6 +151,7 @@ def main():
             mode = dict(default='READ_ONLY', choices=['READ_WRITE', 'READ_ONLY']),
             name = dict(required=True),
             size_gb = dict(default=10),
+            disk_type = dict(default='pd-standard'),
             image = dict(),
             snapshot = dict(),
             state = dict(default='present'),
@@ -153,6 +161,8 @@ def main():
             project_id = dict(),
         )
     )
+    if not HAS_LIBCLOUD:
+        module.fail_json(msg='libcloud with GCE support (0.13.3+) is required for this module')
 
     gce = gce_connect(module)
 
@@ -161,6 +171,7 @@ def main():
     mode = module.params.get('mode')
     name = module.params.get('name')
     size_gb = module.params.get('size_gb')
+    disk_type = module.params.get('disk_type')
     image = module.params.get('image')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
@@ -174,7 +185,7 @@ def main():
     disk = inst = None
     changed = is_attached = False
 
-    json_output = { 'name': name, 'zone': zone, 'state': state }
+    json_output = { 'name': name, 'zone': zone, 'state': state, 'disk_type': disk_type  }
     if detach_only:
         json_output['detach_only'] = True
         json_output['detached_from_instance'] = instance_name
@@ -233,7 +244,7 @@ def main():
             try:
                 disk = gce.create_volume(
                     size_gb, name, location=zone, image=lc_image,
-                    snapshot=lc_snapshot)
+                    snapshot=lc_snapshot, ex_disk_type=disk_type)
             except ResourceExistsError:
                 pass
             except QuotaExceededError:
@@ -275,11 +286,11 @@ def main():
             changed = True
 
     json_output['changed'] = changed
-    print json.dumps(json_output)
-    sys.exit(0)
+    module.exit_json(**json_output)
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.gce import *
 
-main()
+if __name__ == '__main__':
+    main()

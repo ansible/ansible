@@ -18,34 +18,29 @@ DOCUMENTATION = '''
 ---
 module: gc_storage
 version_added: "1.4"
-short_description: This module manages objects/buckets in Google Cloud Storage. 
+short_description: This module manages objects/buckets in Google Cloud Storage.
 description:
     - This module allows users to manage their objects/buckets in Google Cloud Storage.  It allows upload and download operations and can set some canned permissions. It also allows retrieval of URLs for objects for use in playbooks, and retrieval of string contents of objects.  This module requires setting the default project in GCS prior to playbook usage.  See U(https://developers.google.com/storage/docs/reference/v1/apiversion1) for information about setting the default project.
 
 options:
   bucket:
     description:
-      - Bucket name. 
+      - Bucket name.
     required: true
-    default: null 
-    aliases: []
   object:
     description:
       - Keyname of the object inside the bucket. Can be also be used to create "virtual directories" (see examples).
     required: false
     default: null
-    aliases: []
   src:
     description:
       - The source file path when performing a PUT operation.
     required: false
     default: null
-    aliases: []
   dest:
     description:
       - The destination file path when downloading an object/key with a GET operation.
     required: false
-    aliases: []
   force:
     description:
       - Forces an overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
@@ -56,23 +51,27 @@ options:
     description:
       - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'authenticated-read'.
     required: false
-    default: private 
+    default: private
+  headers:
+    version_added: 2.0
+    description:
+      - Headers to attach to object.
+    required: false
+    default: '{}'
   expiration:
     description:
-      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only avaialbe when public-read is the acl for the object.
+      - Time limit (in seconds) for the URL generated and returned by GCA when performing a mode=put or mode=get_url operation. This url is only available when public-read is the acl for the object.
     required: false
     default: null
-    aliases: []
   mode:
     description:
-      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and delete (bucket). 
+      - Switches the module behaviour between upload, download, get_url (return download url) , get_str (download object as string), create (bucket) and delete (bucket).
     required: true
     default: null
-    aliases: []
     choices: [ 'get', 'put', 'get_url', 'get_str', 'delete', 'create' ]
   gcs_secret_key:
     description:
-      - GCS secret key. If not set then the value of the GCS_SECRET_KEY environment variable is used. 
+      - GCS secret key. If not set then the value of the GCS_SECRET_KEY environment variable is used.
     required: true
     default: null
   gcs_access_key:
@@ -81,15 +80,20 @@ options:
     required: true
     default: null
 
-requirements: [ "boto 2.9+" ]
+requirements:
+    - "python >= 2.6"
+    - "boto >= 2.9"
 
-author: benno@ansible.com Note. Most of the code has been taken from the S3 module.
+author: "Benno Joy (@bennojoy)"
 
 '''
 
 EXAMPLES = '''
 # upload some content
 - gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt mode=put permission=public-read
+
+# upload some headers
+- gc_storage: bucket=mybucket object=key.txt src=/usr/local/myfile.txt headers='{"Content-Encoding": "gzip"}'
 
 # download some content
 - gc_storage: bucket=mybucket object=key.txt dest=/usr/local/myfile.txt mode=get
@@ -107,16 +111,15 @@ EXAMPLES = '''
 - gc_storage: bucket=mybucket mode=delete
 '''
 
-import sys
 import os
 import urlparse
 import hashlib
 
 try:
     import boto
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto 2.9+ required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 def grant_check(module, gs, obj):
     try:
@@ -223,11 +226,29 @@ def path_check(path):
     else:
         return False
 
+def transform_headers(headers):
+    """
+    Boto url-encodes values unless we convert the value to `str`, so doing
+    this prevents 'max-age=100000' from being converted to "max-age%3D100000".
+
+    :param headers: Headers to convert
+    :type  headers: dict
+    :rtype: dict
+
+    """
+
+    for key, value in headers.items():
+        headers[key] = str(value)
+    return headers
+
 def upload_gsfile(module, gs, bucket, obj, src, expiry):
     try:
         bucket = gs.lookup(bucket)
         key = bucket.new_key(obj)  
-        key.set_contents_from_filename(src)
+        key.set_contents_from_filename(
+            filename=src,
+            headers=transform_headers(module.params.get('headers'))
+        )
         key.set_acl(module.params.get('permission'))
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
@@ -343,11 +364,15 @@ def main():
             expiration     = dict(default=600, aliases=['expiry']),
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'get_url', 'get_str'], required=True),
             permission     = dict(choices=['private', 'public-read', 'authenticated-read'], default='private'),
+            headers        = dict(type='dict', default={}),
             gs_secret_key  = dict(no_log=True, required=True),
             gs_access_key  = dict(required=True),
             overwrite      = dict(default=True, type='bool', aliases=['force']),
         ),
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto 2.9+ required for this module')
 
     bucket        = module.params.get('bucket')
     obj           = module.params.get('object')
@@ -417,5 +442,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()

@@ -38,15 +38,15 @@ DOCUMENTATION = '''
 module: wait_for
 short_description: Waits for a condition before continuing.
 description:
-     - Waiting for a port to become available is useful for when services 
-       are not immediately available after their init scripts return - 
-       which is true of certain Java application servers. It is also 
+     - You can wait for a set amount of time C(timeout), this is the default if nothing is specified.
+     - Waiting for a port to become available is useful for when services
+       are not immediately available after their init scripts return
+       which is true of certain Java application servers. It is also
        useful when starting guests with the M(virt) module and
-       needing to pause until they are ready. 
+       needing to pause until they are ready.
      - This module can also be used to wait for a regex match a string to be present in a file.
-     - In 1.6 and later, this module can 
-       also be used to wait for a file to be available or absent on the 
-       filesystem.
+     - In 1.6 and later, this module can also be used to wait for a file to be available or
+       absent on the filesystem.
      - In 1.8 and later, this module can also be used to wait for active
        connections to be closed before continuing, useful if a node
        is being rotated out of a load balancer pool.
@@ -54,15 +54,19 @@ version_added: "0.7"
 options:
   host:
     description:
-      - hostname or IP address to wait for
+      - A resolvable hostname or IP address to wait for
     required: false
     default: "127.0.0.1"
-    aliases: []
   timeout:
     description:
       - maximum number of seconds to wait for
     required: false
     default: 300
+  connect_timeout:
+    description:
+      - maximum number of seconds to wait for a connection to happen before closing and retrying
+    required: false
+    default: 5
   delay:
     description:
       - number of seconds to wait before starting to poll
@@ -97,7 +101,10 @@ options:
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
 requirements: []
-author: Jeroen Hoekx, John Jarvis, Andrii Radyk
+author: 
+    - "Jeroen Hoekx (@jhoekx)"
+    - "John Jarvis (@jarv)"
+    - "Andrii Radyk (@AnderEnder)"
 '''
 
 EXAMPLES = '''
@@ -123,8 +130,9 @@ EXAMPLES = '''
 # wait until the process is finished and pid was destroyed
 - wait_for: path=/proc/3466/status state=absent
 
-# Wait 300 seconds for port 22 to become open and contain "OpenSSH", don't start checking for 10 seconds
-- local_action: wait_for port=22 host="{{ inventory_hostname }}" search_regex=OpenSSH delay=10
+# wait 300 seconds for port 22 to become open and contain "OpenSSH", don't assume the inventory_hostname is resolvable
+# and don't start checking for 10 seconds
+- local_action: wait_for port=22 host="{{ ansible_ssh_host | default(inventory_hostname) }}" search_regex=OpenSSH delay=10
 
 '''
 
@@ -332,12 +340,15 @@ def main():
     if params['exclude_hosts'] is not None and state != 'drained':
         module.fail_json(msg="exclude_hosts should only be with state=drained")
 
+
     start = datetime.datetime.now()
 
     if delay:
         time.sleep(delay)
 
-    if state in [ 'stopped', 'absent' ]:
+    if not port and not path and state != 'drained':
+        time.sleep(timeout)
+    elif state in [ 'stopped', 'absent' ]:
         ### first wait for the stop condition
         end = start + datetime.timedelta(seconds=timeout)
 
@@ -360,6 +371,8 @@ def main():
                     time.sleep(1)
                 except:
                     break
+            else:
+                time.sleep(1)
         else:
             elapsed = datetime.datetime.now() - start
             if port:
@@ -422,6 +435,8 @@ def main():
                 except:
                     time.sleep(1)
                     pass
+            else:
+                time.sleep(1)
         else:
             elapsed = datetime.datetime.now() - start
             if port:

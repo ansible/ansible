@@ -98,9 +98,9 @@ options:
     required: false
     default: null
 notes:
-   - Please note that virtualenv (U(http://www.virtualenv.org/)) must be installed on the remote host if the virtualenv parameter is specified.
+   - Please note that virtualenv (U(http://www.virtualenv.org/)) must be installed on the remote host if the virtualenv parameter is specified and the virtualenv needs to be initialized.
 requirements: [ "virtualenv", "pip" ]
-author: Matt Wright
+author: "Matt Wright (@mattupstate)"
 '''
 
 EXAMPLES = '''
@@ -112,6 +112,9 @@ EXAMPLES = '''
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'
+
+# Install (MyApp) from local tarball
+- pip: name='file:///path/to/MyApp.tar.gz'
 
 # Install (Bottle) into the specified (virtualenv), inheriting none of the globally installed modules
 - pip: name=bottle virtualenv=/my_app/venv
@@ -176,6 +179,7 @@ def _get_pip(module, env=None, executable=None):
     candidate_pip_basenames = ['pip', 'python-pip', 'pip-python']
     pip = None
     if executable is not None:
+        executable = os.path.expanduser(executable)
         if os.path.isabs(executable):
             pip = executable
         else:
@@ -252,12 +256,14 @@ def main():
 
     if env:
         env = os.path.expanduser(env)
-        virtualenv = os.path.expanduser(virtualenv_command)
-        if os.path.basename(virtualenv) == virtualenv:
-            virtualenv = module.get_bin_path(virtualenv_command, True)
         if not os.path.exists(os.path.join(env, 'bin', 'activate')):
             if module.check_mode:
                 module.exit_json(changed=True)
+
+            virtualenv = os.path.expanduser(virtualenv_command)
+            if os.path.basename(virtualenv) == virtualenv:
+                virtualenv = module.get_bin_path(virtualenv_command, True)
+
             if module.params['virtualenv_site_packages']:
                 cmd = '%s --system-site-packages %s' % (virtualenv, env)
             else:
@@ -278,7 +284,7 @@ def main():
     pip = _get_pip(module, env, module.params['executable'])
 
     cmd = '%s %s' % (pip, state_map[state])
-    
+
     # If there's a virtualenv we want things we install to be able to use other
     # installations that exist as binaries within this virtualenv. Example: we 
     # install cython and then gevent -- gevent needs to use the cython binary, 
@@ -308,7 +314,7 @@ def main():
         cmd += ' %s' % _get_full_name(name, version)
     elif requirements:
         cmd += ' -r %s' % requirements
-    
+
     this_dir = tempfile.gettempdir()
     if chdir:
         this_dir = os.path.join(this_dir, chdir)
@@ -319,7 +325,7 @@ def main():
         elif name.startswith('svn+') or name.startswith('git+') or \
                 name.startswith('hg+') or name.startswith('bzr+'):
             module.exit_json(changed=True)
-        
+
         freeze_cmd = '%s freeze' % pip
         rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=this_dir)
 

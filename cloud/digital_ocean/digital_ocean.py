@@ -22,6 +22,7 @@ short_description: Create/delete a droplet/SSH_key in DigitalOcean
 description:
      - Create/delete a droplet in DigitalOcean and optionally wait for it to be 'running', or deploy an SSH key.
 version_added: "1.3"
+author: "Vincent Viallet (@zbal)"
 options:
   command:
     description:
@@ -33,12 +34,9 @@ options:
      - Indicate desired state of the target.
     default: present
     choices: ['present', 'active', 'absent', 'deleted']
-  client_id:
-     description:
-     - DigitalOcean manager id.
-  api_key:
+  api_token:
     description:
-     - DigitalOcean api key.
+     - DigitalOcean api token.
   id:
     description:
      - Numeric, the droplet id you want to operate on.
@@ -53,16 +51,16 @@ options:
     choices: [ "yes", "no" ]
   size_id:
     description:
-     - Numeric, this is the id of the size you would like the droplet created with.
+     - This is the slug of the size you would like the droplet created with.
   image_id:
     description:
-     - Numeric, this is the id of the image you would like the droplet created with.
+     - This is the slug of the image you would like the droplet created with.
   region_id:
     description:
-     - "Numeric, this is the id of the region you would like your server to be created in."
+     - This is the slug of the region you would like your server to be created in.
   ssh_key_ids:
     description:
-     - Optional, comma separated list of ssh_key_ids that you would like to be added to the server.
+     - Optional, array of of SSH key (numeric) ID that you would like to be added to the server.
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
@@ -81,6 +79,12 @@ options:
     version_added: "1.6"
     default: "no"
     choices: [ "yes", "no" ]
+  user_data:
+    description:
+      - opaque blob of data which is made available to the droplet
+    version_added: "1.10"
+    required: false
+    default: None
   wait:
     description:
      - Wait for the droplet to be in state 'running' before returning.  If wait is "no" an ip_address may not be returned.
@@ -95,8 +99,12 @@ options:
      - The public SSH key you want to add to your account.
 
 notes:
-  - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
-requirements: [ dopy ]
+  - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
+  - As of Ansible 2.0, Version 2 of the DigitalOcean API is used.
+  - As of Ansible 2.0, the above parameters were changed significantly. If you are running 1.9.x or earlier, please use C(ansible-doc digital_ocean) to view the correct parameters for your version. Dedicated web docs will be available in the near future for the stable branch.
+requirements:
+  - "python >= 2.6"
+  - dopy
 '''
 
 
@@ -110,8 +118,7 @@ EXAMPLES = '''
       command=ssh
       name=my_ssh_key
       ssh_pub_key='ssh-rsa AAAA...'
-      client_id=XXX
-      api_key=XXX
+      api_token=XXX
 
 # Create a new Droplet
 # Will return the droplet details including the droplet id (used for idempotence)
@@ -120,11 +127,10 @@ EXAMPLES = '''
       state=present
       command=droplet
       name=mydroplet
-      client_id=XXX
-      api_key=XXX
-      size_id=1
-      region_id=2
-      image_id=3
+      api_token=XXX
+      size_id=2gb
+      region_id=ams2
+      image_id=fedora-19-x64
       wait_timeout=500
   register: my_droplet
 - debug: msg="ID is {{ my_droplet.droplet.id }}"
@@ -139,11 +145,10 @@ EXAMPLES = '''
       command=droplet
       id=123
       name=mydroplet
-      client_id=XXX
-      api_key=XXX
-      size_id=1
-      region_id=2
-      image_id=3
+      api_token=XXX
+      size_id=2gb
+      region_id=ams2
+      image_id=fedora-19-x64
       wait_timeout=500
 
 # Create a droplet with ssh key
@@ -153,29 +158,26 @@ EXAMPLES = '''
 
 - digital_ocean: >
       state=present
-      ssh_key_ids=id1,id2
+      ssh_key_ids=123,456
       name=mydroplet
-      client_id=XXX
-      api_key=XXX
-      size_id=1
-      region_id=2
-      image_id=3
+      api_token=XXX
+      size_id=2gb
+      region_id=ams2
+      image_id=fedora-19-x64
 '''
 
-import sys
 import os
 import time
+from distutils.version import LooseVersion
 
+HAS_DOPY = True
 try:
     import dopy
     from dopy.manager import DoError, DoManager
-except ImportError, e:
-    print "failed=True msg='dopy >= 0.2.3 required for this module'"
-    sys.exit(1)
-
-if dopy.__version__ < '0.2.3':
-    print "failed=True msg='dopy >= 0.2.3 required for this module'"
-    sys.exit(1)
+    if LooseVersion(dopy.__version__) < LooseVersion('0.3.2'):
+        HAS_DOPY = False
+except ImportError:
+    HAS_DOPY = False
 
 class TimeoutError(DoError):
     def __init__(self, msg, id):
@@ -231,12 +233,14 @@ class Droplet(JsonfyMixIn):
         return self.manager.destroy_droplet(self.id, scrub_data=True)
 
     @classmethod
-    def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key)
+    def setup(cls, api_token):
+        cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
-    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False):
-        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking, backups_enabled)
+    def add(cls, name, size_id, image_id, region_id, ssh_key_ids=None, virtio=True, private_networking=False, backups_enabled=False, user_data=None):
+        private_networking_lower = str(private_networking).lower()
+        backups_enabled_lower = str(backups_enabled).lower()
+        json = cls.manager.new_droplet(name, size_id, image_id, region_id, ssh_key_ids, virtio, private_networking_lower, backups_enabled_lower,user_data)
         droplet = cls(json)
         return droplet
 
@@ -276,8 +280,8 @@ class SSH(JsonfyMixIn):
         return True
 
     @classmethod
-    def setup(cls, client_id, api_key):
-        cls.manager = DoManager(client_id, api_key)
+    def setup(cls, api_token):
+        cls.manager = DoManager(None, api_token, api_version=2)
 
     @classmethod
     def find(cls, name):
@@ -307,9 +311,7 @@ def core(module):
         return v
 
     try:
-        # params['client_id'] will be None even if client_id is not passed in
-        client_id = module.params['client_id'] or os.environ['DO_CLIENT_ID']
-        api_key = module.params['api_key'] or os.environ['DO_API_KEY']
+        api_token = module.params['api_token'] or os.environ['DO_API_TOKEN'] or os.environ['DO_API_KEY']
     except KeyError, e:
         module.fail_json(msg='Unable to load %s' % e.message)
 
@@ -318,7 +320,7 @@ def core(module):
     state = module.params['state']
 
     if command == 'droplet':
-        Droplet.setup(client_id, api_key)
+        Droplet.setup(api_token)
         if state in ('active', 'present'):
 
             # First, try to find a droplet by id.
@@ -341,6 +343,7 @@ def core(module):
                     virtio=module.params['virtio'],
                     private_networking=module.params['private_networking'],
                     backups_enabled=module.params['backups_enabled'],
+                    user_data=module.params.get('user_data'),
                 )
 
             if droplet.is_powered_on():
@@ -367,10 +370,10 @@ def core(module):
                 module.exit_json(changed=False, msg='The droplet is not found.')
 
             event_json = droplet.destroy()
-            module.exit_json(changed=True, event_id=event_json['event_id'])
+            module.exit_json(changed=True)
 
     elif command == 'ssh':
-        SSH.setup(client_id, api_key)
+        SSH.setup(api_token)
         name = getkeyordie('name')
         if state in ('active', 'present'):
             key = SSH.find(name)
@@ -392,18 +395,18 @@ def main():
         argument_spec = dict(
             command = dict(choices=['droplet', 'ssh'], default='droplet'),
             state = dict(choices=['active', 'present', 'absent', 'deleted'], default='present'),
-            client_id = dict(aliases=['CLIENT_ID'], no_log=True),
-            api_key = dict(aliases=['API_KEY'], no_log=True),
+            api_token = dict(aliases=['API_TOKEN'], no_log=True),
             name = dict(type='str'),
-            size_id = dict(type='int'),
-            image_id = dict(type='int'),
-            region_id = dict(type='int'),
-            ssh_key_ids = dict(default=''),
+            size_id = dict(),
+            image_id = dict(),
+            region_id = dict(),
+            ssh_key_ids = dict(type='list'),
             virtio = dict(type='bool', default='yes'),
             private_networking = dict(type='bool', default='no'),
             backups_enabled = dict(type='bool', default='no'),
             id = dict(aliases=['droplet_id'], type='int'),
             unique_name = dict(type='bool', default='no'),
+            user_data = dict(default=None),
             wait = dict(type='bool', default=True),
             wait_timeout = dict(default=300, type='int'),
             ssh_pub_key = dict(type='str'),
@@ -420,6 +423,8 @@ def main():
             ['id', 'name'],
         ),
     )
+    if not HAS_DOPY:
+        module.fail_json(msg='dopy >= 0.3.2 required for this module')
 
     try:
         core(module)
@@ -431,4 +436,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

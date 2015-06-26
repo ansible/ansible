@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: apt_key
-author: Jayson Vantuyl & others
+author: "Jayson Vantuyl & others (@jvantuyl)"
 version_added: "1.0"
 short_description: Add or remove an apt key
 description:
@@ -36,7 +36,7 @@ options:
         required: false
         default: none
         description:
-            - identifier of key
+            - identifier of key. Including this allows check mode to correctly report the changed state.
     data:
         required: false
         default: none

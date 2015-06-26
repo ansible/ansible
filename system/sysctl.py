@@ -71,7 +71,7 @@ options:
         default: False
 notes: []
 requirements: []
-author: David "DaviXX" CHANIAL <david.chanial@gmail.com>
+author: "David CHANIAL (@davixx) <david.chanial@gmail.com>"
 '''
 
 EXAMPLES = '''
@@ -185,12 +185,20 @@ class SysctlModule(object):
     def _parse_value(self, value):
         if value is None:
             return ''
-        elif value.lower() in BOOLEANS_TRUE:
-            return '1'
-        elif value.lower() in BOOLEANS_FALSE:
-            return '0'
+        elif isinstance(value, bool):
+            if value:
+                return '1'
+            else:
+                return '0'
+        elif isinstance(value, basestring):
+            if value.lower() in BOOLEANS_TRUE:
+                return '1'
+            elif value.lower() in BOOLEANS_FALSE:
+                return '0'
+            else:
+                return value.strip()
         else:
-            return value.strip()
+            return value
 
     # ==============================================================
     #   SYSCTL COMMAND MANAGEMENT
@@ -314,7 +322,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(aliases=['key'], required=True),
-            value = dict(aliases=['val'], required=False),
+            value = dict(aliases=['val'], required=False, type='str'),
             state = dict(default='present', choices=['present', 'absent']),
             reload = dict(default=True, type='bool'),
             sysctl_set = dict(default=False, type='bool'),

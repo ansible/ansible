@@ -37,7 +37,7 @@ options:
     aliases: []
   key:
     description:
-      - The SSH public key, as a string
+      - The SSH public key(s), as a string or (since 1.9) url (https://github.com/username.keys)
     required: true
     default: null
   path:
@@ -70,14 +70,26 @@ options:
     required: false
     default: null
     version_added: "1.4"
+  exclusive:
+    description:
+      - Whether to remove all other non-specified keys from the
+        authorized_keys file. Multiple keys can be specified in a single
+        key= string value by separating them by newlines.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "1.9"
 description:
     - "Adds or removes authorized keys for particular user accounts"
-author: Brad Olson
+author: "Brad Olson (@bradobro)"
 '''
 
 EXAMPLES = '''
 # Example using key data from a local file on the management machine
 - authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+
+# Using github url as key source
+- authorized_key: user=charlie key=https://github.com/charlie.keys
 
 # Using alternate directory locations:
 - authorized_key: user=charlie
@@ -97,6 +109,10 @@ EXAMPLES = '''
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
                   key_options='no-port-forwarding,host="10.0.1.1"'
+
+# Set up authorized_keys exclusively with one key
+- authorized_key: user=root key=public_keys/doe-jane state=present
+                   exclusive=yes
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -332,25 +348,42 @@ def enforce_state(module, params):
     manage_dir  = params.get("manage_dir", True)
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
+    exclusive   = params.get("exclusive", False)
+    error_msg   = "Error getting key from: %s"
+
+    # if the key is a url, request it and use it as key source
+    if key.startswith("http"):
+        try:
+            resp, info = fetch_url(module, key)
+            if info['status'] != 200:
+                module.fail_json(msg=error_msg % key)
+            else:
+                key = resp.read()
+        except Exception:
+            module.fail_json(msg=error_msg % key)
 
     # extract individual keys into an array, skipping blank lines and comments
     key = [s for s in key.splitlines() if s and not s.startswith('#')]
-
 
     # check current state -- just get the filename, don't create file
     do_write = False
     params["keyfile"] = keyfile(module, user, do_write, path, manage_dir)
     existing_keys = readkeys(module, params["keyfile"])
 
+    # Add a place holder for keys that should exist in the state=present and
+    # exclusive=true case
+    keys_to_exist = []
+
     # Check our new keys, if any of them exist we'll continue.
     for new_key in key:
         parsed_new_key = parsekey(module, new_key)
-        if key_options is not None:
-            parsed_options = parseoptions(module, key_options)
-            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
 
         if not parsed_new_key:
             module.fail_json(msg="invalid key specified: %s" % new_key)
+
+        if key_options is not None:
+            parsed_options = parseoptions(module, key_options)
+            parsed_new_key = (parsed_new_key[0], parsed_new_key[1], parsed_options, parsed_new_key[3])
 
         present = False
         matched = False
@@ -371,6 +404,7 @@ def enforce_state(module, params):
 
         # handle idempotent state=present
         if state=="present":
+            keys_to_exist.append(parsed_new_key[0])
             if len(non_matching_keys) > 0:
                 for non_matching_key in non_matching_keys:
                     if non_matching_key[0] in existing_keys:
@@ -385,6 +419,13 @@ def enforce_state(module, params):
             if not matched:
                 continue
             del existing_keys[parsed_new_key[0]]
+            do_write = True
+
+    # remove all other keys to honor exclusive
+    if state == "present" and exclusive:
+        to_remove = frozenset(existing_keys).difference(keys_to_exist)
+        for key in to_remove:
+            del existing_keys[key]
             do_write = True
 
     if do_write:
@@ -409,6 +450,7 @@ def main():
            state       = dict(default='present', choices=['absent','present']),
            key_options = dict(required=False, type='str'),
            unique      = dict(default=False, type='bool'),
+           exclusive   = dict(default=False, type='bool'),
         ),
         supports_check_mode=True
     )
@@ -418,4 +460,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 main()

@@ -25,7 +25,7 @@ description:
     if state=absent is passed as an argument.
   - Will be marked changed when called only if there are ELBs found to operate on.
 version_added: "1.2"
-author: John Jarvis
+author: "John Jarvis (@jarv)"
 options:
   state:
     description:
@@ -99,17 +99,17 @@ post_tasks:
 """
 
 import time
-import sys
-import os
 
 try:
     import boto
     import boto.ec2
+    import boto.ec2.autoscale
     import boto.ec2.elb
     from boto.regioninfo import RegionInfo
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 class ElbManager:
     """Handles EC2 instance ELB registration and de-registration"""
@@ -130,9 +130,9 @@ class ElbManager:
         for lb in self.lbs:
             initial_state = self._get_instance_health(lb) 
             if initial_state is None:
-                # The instance isn't registered with this ELB so just 
-                # return unchanged
-                return
+                # Instance isn't registered with this load
+                # balancer. Ignore it and try the next one.
+                continue
 
             lb.deregister_instances([self.instance_id])
 
@@ -255,10 +255,13 @@ class ElbManager:
                   for elb lookup instead of returning what elbs
                   are attached to self.instance_id"""
 
+        if not ec2_elbs:
+           ec2_elbs = self._get_auto_scaling_group_lbs()
+
         try:
             elb = connect_to_aws(boto.ec2.elb, self.region, 
                                  **self.aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
 
         elbs = elb.get_all_load_balancers()
@@ -273,12 +276,38 @@ class ElbManager:
                         lbs.append(lb)
         return lbs
 
+    def _get_auto_scaling_group_lbs(self):
+        """Returns a list of ELBs associated with self.instance_id
+           indirectly through its auto scaling group membership"""
+
+        try:
+           asg = connect_to_aws(boto.ec2.autoscale, self.region, **self.aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+            self.module.fail_json(msg=str(e))
+
+        asg_instances = asg.get_all_autoscaling_instances([self.instance_id])
+        if len(asg_instances) > 1:
+           self.module.fail_json(msg="Illegal state, expected one auto scaling group instance.")
+
+        if not asg_instances:
+           asg_elbs = []
+        else:
+           asg_name = asg_instances[0].group_name
+
+           asgs = asg.get_all_groups([asg_name])
+           if len(asg_instances) != 1:
+              self.module.fail_json(msg="Illegal state, expected one auto scaling group.")
+
+           asg_elbs = asgs[0].load_balancers
+
+        return asg_elbs
+
     def _get_instance(self):
         """Returns a boto.ec2.InstanceObject for self.instance_id"""
         try:
             ec2 = connect_to_aws(boto.ec2, self.region, 
                                  **self.aws_connect_params)
-        except boto.exception.NoAuthHandlerFound, e:
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
         return ec2.get_only_instances(instance_ids=[self.instance_id])[0]
 
@@ -298,6 +327,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 

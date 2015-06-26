@@ -24,9 +24,9 @@ version_added: "1.1"
 options:
   instance:
     description:
-      - instance ID if you wish to attach the volume. 
+      - instance ID if you wish to attach the volume. Since 1.9 you can set to None to detach.
     required: false
-    default: null 
+    default: null
     aliases: []
   name:
     description:
@@ -48,6 +48,14 @@ options:
     required: false
     default: null
     aliases: []
+  volume_type:
+    description:
+      - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS). "Standard" is the old EBS default
+        and continues to remain the Ansible default for backwards compatibility. 
+    required: false
+    default: standard
+    aliases: []
+    version_added: "1.9"
   iops:
     description:
       - the provisioned IOPs you want to associate with this volume (integer).
@@ -99,7 +107,7 @@ options:
     default: present
     choices: ['absent', 'present', 'list']
     version_added: "1.6"
-author: Lester Wade
+author: "Lester Wade (@lwade)"
 extends_documentation_fragment: aws
 '''
 
@@ -128,54 +136,66 @@ EXAMPLES = '''
     image: "{{ image }}"
     wait: yes 
     count: 3
-    register: ec2
+  register: ec2
 - ec2_vol:
     instance: "{{ item.id }} " 
     volume_size: 5
     with_items: ec2.instances
-    register: ec2_vol
+  register: ec2_vol
 
-# Example: Launch an instance and then add a volue if not already present
+# Example: Launch an instance and then add a volume if not already attached
+#   * Volume will be created with the given name if not already created.
 #   * Nothing will happen if the volume is already attached.
-#   * Volume must exist in the same zone.
 
 - ec2:
     keypair: "{{ keypair }}"
     image: "{{ image }}"
     zone: YYYYYY
     id: my_instance
-    wait: yes 
+    wait: yes
     count: 1
-    register: ec2
+  register: ec2
 
 - ec2_vol:
-    instance: "{{ item.id }}" 
+    instance: "{{ item.id }}"
     name: my_existing_volume_Name_tag
     device_name: /dev/xvdf
-    with_items: ec2.instances
-    register: ec2_vol
+  with_items: ec2.instances
+  register: ec2_vol
 
 # Remove a volume
 - ec2_vol:
     id: vol-XXXXXXXX
     state: absent
 
+# Detach a volume (since 1.9)
+- ec2_vol:
+    id: vol-XXXXXXXX
+    instance: None
+
 # List volumes for an instance
 - ec2_vol:
     instance: i-XXXXXX
     state: list
+
+# Create new volume using SSD storage
+- ec2_vol:
+    instance: XXXXXX
+    volume_size: 50
+    volume_type: gp2
+    device_name: /dev/xvdf
 '''
 
-import sys
 import time
 
 from distutils.version import LooseVersion
 
 try:
     import boto.ec2
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
 
 def get_volume(module, ec2):
     name = module.params.get('name')
@@ -195,7 +215,13 @@ def get_volume(module, ec2):
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     if not vols:
-        module.fail_json(msg="Could not find volume in zone (if specified): %s" % name or id)
+        if id:
+            msg = "Could not find the volume with id: %s" % id
+            if name:
+                msg += (" and name: %s" % name)
+            module.fail_json(msg=msg)
+        else:
+            return None
     if len(vols) > 1:
         module.fail_json(msg="Found more than one volume in zone (if specified) with name: %s" % name)
     return vols[0]
@@ -213,15 +239,14 @@ def get_volumes(module, ec2):
     return vols
 
 def delete_volume(module, ec2):
-    vol = get_volume(module, ec2)
-    if not vol:
-        module.exit_json(changed=False)
-    else:
-       if vol.attachment_state() is not None: 
-           adata = vol.attach_data
-           module.fail_json(msg="Volume %s is attached to an instance %s." % (vol.id, adata.instance_id))
-       ec2.delete_volume(vol.id)
-       module.exit_json(changed=True)
+    volume_id = module.params['id']
+    try:
+        ec2.delete_volume(volume_id)
+        module.exit_json(changed=True)
+    except boto.exception.EC2ResponseError as ec2_error:
+        if ec2_error.code == 'InvalidVolume.NotFound':
+            module.exit_json(changed=False)
+        module.fail_json(msg=ec2_error.message)
 
 def boto_supports_volume_encryption():
     """
@@ -239,22 +264,20 @@ def create_volume(module, ec2, zone):
     iops = module.params.get('iops')
     encrypted = module.params.get('encrypted')
     volume_size = module.params.get('volume_size')
+    volume_type = module.params.get('volume_type')
     snapshot = module.params.get('snapshot')
     # If custom iops is defined we use volume_type "io1" rather than the default of "standard"
     if iops:
         volume_type = 'io1'
-    else:
-        volume_type = 'standard'
 
-    # If no instance supplied, try volume creation based on module parameters.
-    if name or id:
-        if not instance:
-            module.fail_json(msg = "If name or id is specified, instance must also be specified")
-        if iops or volume_size:
-            module.fail_json(msg = "Parameters are not compatible: [id or name] and [iops or volume_size]")
+    if instance == 'None' or instance == '':
+        instance = None
 
-        volume = get_volume(module, ec2)
+    volume = get_volume(module, ec2)
+    if volume:
         if volume.attachment_state() is not None:
+            if instance is None:
+                return volume
             adata = volume.attach_data
             if adata.instance_id != instance:
                 module.fail_json(msg = "Volume %s is already attached to another instance: %s"
@@ -275,8 +298,12 @@ def create_volume(module, ec2, zone):
             while volume.status != 'available':
                 time.sleep(3)
                 volume.update()
+
+            if name:
+                ec2.create_tags([volume.id], {"Name": name})
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
     return volume
 
 
@@ -316,6 +343,13 @@ def attach_volume(module, ec2, volume, instance):
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
+def detach_volume(module, ec2):
+    vol = get_volume(module, ec2)
+    if not vol or vol.attachment_state() is None:
+        module.exit_json(changed=False)
+    else:
+        vol.detach()
+        module.exit_json(changed=True)
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -324,6 +358,7 @@ def main():
             id = dict(),
             name = dict(),
             volume_size = dict(),
+            volume_type = dict(choices=['standard', 'gp2', 'io1'], default='standard'),
             iops = dict(),
             encrypted = dict(),
             device_name = dict(),
@@ -334,16 +369,23 @@ def main():
     )
     module = AnsibleModule(argument_spec=argument_spec)
 
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
+
     id = module.params.get('id')
     name = module.params.get('name')
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
+    volume_type = module.params.get('volume_type')
     iops = module.params.get('iops')
     encrypted = module.params.get('encrypted')
     device_name = module.params.get('device_name')
     zone = module.params.get('zone')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
+
+    if instance == 'None' or instance == '':
+        instance = None
 
     ec2 = ec2_connect(module)
 
@@ -372,13 +414,10 @@ def main():
 
         module.exit_json(changed=False, volumes=returned_volumes)
 
-    if id and name:
-        module.fail_json(msg="Both id and name cannot be specified")
-
     if encrypted and not boto_supports_volume_encryption():
         module.fail_json(msg="You must use boto >= v2.29.0 to use encrypted volumes")
 
-    # Here we need to get the zone info for the instance. This covers situation where 
+    # Here we need to get the zone info for the instance. This covers situation where
     # instance is specified but zone isn't.
     # Useful for playbooks chaining instance launch with volume create + attach and where the
     # zone doesn't matter to the user.
@@ -400,9 +439,8 @@ def main():
     if not volume_size and not (id or name):
         module.fail_json(msg="You must specify an existing volume with id or name or a volume_size")
 
-    if volume_size and (id or name):
-        module.fail_json(msg="Cannot specify volume_size and either one of name or id")
-
+    if volume_size and id:
+        module.fail_json(msg="Cannot specify volume_size and id")
 
     if state == 'absent':
         delete_volume(module, ec2)
@@ -411,7 +449,9 @@ def main():
         volume = create_volume(module, ec2, zone)
         if instance:
             attach_volume(module, ec2, volume, inst)
-        module.exit_json(volume_id=volume.id, device=device_name)
+        else:
+            detach_volume(module, ec2)    
+        module.exit_json(volume_id=volume.id, device=device_name, volume_type=volume.type)
 
 # import module snippets
 from ansible.module_utils.basic import *

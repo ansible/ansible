@@ -25,7 +25,7 @@ import tempfile
 DOCUMENTATION = """
 ---
 module: replace
-author: Evan Kaufman
+author: "Evan Kaufman (@EvanK)"
 extends_documentation_fragment: files
 short_description: Replace all instances of a particular string in a
                    file using a back-referenced regular expression.
@@ -152,12 +152,15 @@ def main():
     if changed and not module.check_mode:
         if params['backup'] and os.path.exists(dest):
             module.backup_local(dest)
+        if params['follow'] and os.path.islink(dest):
+            dest = os.path.realpath(dest)
         write_changes(module, result[0], dest)
 
     msg, changed = check_file_attrs(module, changed, msg)
     module.exit_json(changed=changed, msg=msg)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

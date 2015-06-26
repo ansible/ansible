@@ -22,7 +22,7 @@ module: gce_net
 version_added: "1.5"
 short_description: create/destroy GCE networks and firewall rules
 description:
-    - This module can create and destroy Google Compue Engine networks and
+    - This module can create and destroy Google Compute Engine networks and
       firewall rules U(https://developers.google.com/compute/docs/networking).
       The I(name) parameter is reserved for referencing a network while the
       I(fwname) parameter is used to reference firewall rules.
@@ -33,7 +33,7 @@ description:
 options:
   allowed:
     description:
-      - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800')
+      - the protocol:ports to allow ('tcp:80' or 'tcp:80,443' or 'tcp:80-800;udp:1-25')
     required: false
     default: null
     aliases: []
@@ -66,6 +66,13 @@ options:
     required: false
     default: null
     aliases: []
+  target_tags:
+    version_added: "1.9"
+    description:
+      - the target instance tags for creating a firewall rule
+    required: false
+    default: null
+    aliases: []
   state:
     description:
       - desired state of the persistent disk
@@ -95,8 +102,10 @@ options:
     default: null
     aliases: []
 
-requirements: [ "libcloud" ]
-author: Eric Johnson <erjohnso@google.com>
+requirements:
+    - "python >= 2.6"
+    - "apache-libcloud >= 0.13.3"
+author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 '''
 
 EXAMPLES = '''
@@ -116,22 +125,18 @@ EXAMPLES = '''
 
 '''
 
-import sys
-
 try:
     from libcloud.compute.types import Provider
     from libcloud.compute.providers import get_driver
     from libcloud.common.google import GoogleBaseError, QuotaExceededError, \
             ResourceExistsError, ResourceNotFoundError
     _ = Provider.GCE
+    HAS_LIBCLOUD = True
 except ImportError:
-    print("failed=True " + \
-            "msg='libcloud with GCE support required for this module.'")
-    sys.exit(1)
+    HAS_LIBCLOUD = False
 
-
-def format_allowed(allowed):
-    """Format the 'allowed' value so that it is GCE compatible."""
+def format_allowed_section(allowed):
+    """Format each section of the allowed list"""
     if allowed.count(":") == 0:
         protocol = allowed
         ports = []
@@ -146,8 +151,18 @@ def format_allowed(allowed):
     return_val = {"IPProtocol": protocol}
     if ports:
         return_val["ports"] = ports
-    return [return_val]
+    return return_val
 
+def format_allowed(allowed):
+    """Format the 'allowed' value so that it is GCE compatible."""
+    return_value = []
+    if allowed.count(";") == 0:
+        return [format_allowed_section(allowed)]
+    else:
+        sections = allowed.split(";")
+        for section in sections:
+            return_value.append(format_allowed_section(section))
+    return return_value
 
 def main():
     module = AnsibleModule(
@@ -156,14 +171,18 @@ def main():
             ipv4_range = dict(),
             fwname = dict(),
             name = dict(),
-            src_range = dict(),
+            src_range = dict(type='list'),
             src_tags = dict(type='list'),
+            target_tags = dict(type='list'),
             state = dict(default='present'),
             service_account_email = dict(),
             pem_file = dict(),
             project_id = dict(),
         )
     )
+
+    if not HAS_LIBCLOUD:
+        module.exit_json(msg='libcloud with GCE support (0.13.3+) required for this module')
 
     gce = gce_connect(module)
 
@@ -173,6 +192,7 @@ def main():
     name = module.params.get('name')
     src_range = module.params.get('src_range')
     src_tags = module.params.get('src_tags')
+    target_tags = module.params.get('target_tags')
     state = module.params.get('state')
 
     changed = False
@@ -218,7 +238,7 @@ def main():
 
             try:
                 gce.ex_create_firewall(fwname, allowed_list, network=name,
-                        source_ranges=src_range, source_tags=src_tags)
+                        source_ranges=src_range, source_tags=src_tags, target_tags=target_tags)
                 changed = True
             except ResourceExistsError:
                 pass
@@ -229,6 +249,7 @@ def main():
             json_output['allowed'] = allowed
             json_output['src_range'] = src_range
             json_output['src_tags'] = src_tags
+            json_output['target_tags'] = target_tags
 
     if state in ['absent', 'deleted']:
         if fwname:
@@ -262,11 +283,11 @@ def main():
                 changed = True
 
     json_output['changed'] = changed
-    print json.dumps(json_output)
-    sys.exit(0)
+    module.exit_json(**json_output)
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.gce import *
 
-main()
+if __name__ == '__main__':
+    main()

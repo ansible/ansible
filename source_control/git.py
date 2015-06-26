@@ -21,7 +21,9 @@
 DOCUMENTATION = '''
 ---
 module: git
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 version_added: "0.0.1"
 short_description: Deploy software (or files) from git checkouts
 description:
@@ -36,9 +38,9 @@ options:
         required: true
         description:
             - Absolute path of where the repository should be checked out to.
-              This parameter is required, unless C(update) is set to C(no)
-              This change was made in version 1.8. Prior to this version, the
-              C(dest) parameter was always required.
+              This parameter is required, unless C(clone) is set to C(no)
+              This change was made in version 1.8.3. Prior to this version,
+              the C(dest) parameter was always required.
     version:
         required: false
         default: "HEAD"
@@ -80,15 +82,27 @@ options:
         default: "origin"
         description:
             - Name of the remote.
+    refspec:
+        required: false
+        default: null
+        version_added: "1.9"
+        description:
+            - Add an additional refspec to be fetched.
+              If version is set to a I(SHA-1) not reachable from any branch
+              or tag, this option may be necessary to specify the ref containing
+              the I(SHA-1).
+              Uses the same syntax as the 'git fetch' command.
+              An example value could be "refs/meta/config".
     force:
         required: false
-        default: "yes"
+        default: "no"
         choices: [ "yes", "no" ]
         version_added: "0.7"
         description:
             - If C(yes), any modified files in the working
               repository will be discarded.  Prior to 0.7, this was always
-              'yes' and could not be disabled.
+              'yes' and could not be disabled.  Prior to 1.9, the default was
+              `yes`
     depth:
         required: false
         default: null
@@ -97,6 +111,13 @@ options:
             - Create a shallow clone with a history truncated to the specified
               number or revisions. The minimum possible value is C(1), otherwise
               ignored.
+    clone:
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "1.9"
+        description:
+            - If C(no), do not clone the repository if it does not exist locally
     update:
         required: false
         default: "yes"
@@ -141,6 +162,18 @@ options:
               main project. This is equivalent to specifying the --remote flag
               to git submodule update.
 
+    verify_commit:
+        required: false
+        default: "no"
+        choices: ["yes", "no"]
+        version_added: "2.0"
+        description:
+            - if C(yes), when cloning or checking out a C(version) verify the
+              signature of a GPG signed commit. This requires C(git) version>=2.1.0
+              to be installed. The commit MUST be signed and the public key MUST
+              be trusted in the GPG trustdb.
+
+
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
@@ -159,6 +192,13 @@ EXAMPLES = '''
 
 # Example just ensuring the repo checkout exists
 - git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout update=no
+
+# Example just get information about the repository whether or not it has
+# already been cloned locally.
+- git: repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout clone=no update=no
+
+# Example checkout a github repo and use refspec to fetch all pull requests
+- git: repo=https://github.com/ansible/ansible-examples.git dest=/src/ansible-examples refspec=+refs/pull/*:refs/heads/*
 '''
 
 import re
@@ -272,7 +312,7 @@ def get_submodule_versions(git_path, module, dest, version='HEAD'):
     return submodules
 
 def clone(git_path, module, repo, dest, remote, depth, version, bare,
-          reference):
+          reference, refspec, verify_commit):
     ''' makes a new git repo if it does not already exist '''
     dest_dirname = os.path.dirname(dest)
     try:
@@ -296,6 +336,12 @@ def clone(git_path, module, repo, dest, remote, depth, version, bare,
     if bare:
         if remote != 'origin':
             module.run_command([git_path, 'remote', 'add', remote, repo], check_rc=True, cwd=dest)
+
+    if refspec:
+        module.run_command([git_path, 'fetch', remote, refspec], check_rc=True, cwd=dest)
+
+    if verify_commit:
+        verify_commit_sign(git_path, module, dest, version)
 
 def has_local_mods(module, git_path, dest, bare):
     if bare:
@@ -444,35 +490,31 @@ def get_head_branch(git_path, module, dest, remote, bare=False):
     f.close()
     return branch
 
-def fetch(git_path, module, repo, dest, version, remote, bare):
+def fetch(git_path, module, repo, dest, version, remote, bare, refspec):
     ''' updates repo from remote sources '''
-    out_acc = []
-    err_acc = []
-    (rc, out0, err0) = module.run_command([git_path, 'remote', 'set-url', remote, repo], cwd=dest)
-    if rc != 0:
-        module.fail_json(msg="Failed to set a new url %s for %s: %s" % (repo, remote, out0 + err0))
-    if bare:
-        (rc, out1, err1) = module.run_command([git_path, 'fetch', remote, '+refs/heads/*:refs/heads/*'], cwd=dest)
-    else:
-        (rc, out1, err1) = module.run_command("%s fetch %s" % (git_path, remote), cwd=dest)
-    out_acc.append(out1)
-    err_acc.append(err1)
-    if rc != 0:
-        module.fail_json(msg="Failed to download remote objects and refs: %s %s" %
-                (''.join(out_acc), ''.join(err_acc)))
+    commands = [("set a new url %s for %s" % (repo, remote), [git_path, 'remote', 'set-url', remote, repo])]
+
+    fetch_str = 'download remote objects and refs'
 
     if bare:
-        (rc, out2, err2) = module.run_command([git_path, 'fetch', remote, '+refs/tags/*:refs/tags/*'], cwd=dest)
+        refspecs = ['+refs/heads/*:refs/heads/*', '+refs/tags/*:refs/tags/*']
+        if refspec:
+            refspecs.append(refspec)
+        commands.append((fetch_str, [git_path, 'fetch', remote] + refspecs))
     else:
-        (rc, out2, err2) = module.run_command("%s fetch --tags %s" % (git_path, remote), cwd=dest)
-    out_acc.append(out2)
-    err_acc.append(err2)
-    if rc != 0:
-        module.fail_json(msg="Failed to download remote objects and refs: %s %s" %
-                (''.join(out_acc), ''.join(err_acc)))
+        # unlike in bare mode, there's no way to combine the
+        # additional refspec with the default git fetch behavior,
+        # so use two commands
+        commands.append((fetch_str, [git_path, 'fetch', remote]))
+        refspecs = ['+refs/tags/*:refs/tags/*']
+        if refspec:
+            refspecs.append(refspec)
+        commands.append((fetch_str, [git_path, 'fetch', remote] + refspecs))
 
-    return (rc, ''.join(out_acc), ''.join(err_acc))
-
+    for (label,command) in commands:
+        (rc,out,err) = module.run_command(command, cwd=dest)
+        if rc != 0:
+            module.fail_json(msg="Failed to %s: %s %s" % (label, out, err))
 
 def submodules_fetch(git_path, module, remote, track_submodules, dest):
     changed = False
@@ -549,7 +591,7 @@ def submodule_update(git_path, module, dest, track_submodules):
     return (rc, out, err)
 
 
-def switch_version(git_path, module, dest, remote, version):
+def switch_version(git_path, module, dest, remote, version, verify_commit):
     cmd = ''
     if version != 'HEAD':
         if is_remote_branch(git_path, module, dest, remote, version):
@@ -574,7 +616,19 @@ def switch_version(git_path, module, dest, remote, version):
             module.fail_json(msg="Failed to checkout %s" % (version))
         else:
             module.fail_json(msg="Failed to checkout branch %s" % (branch))
+
+    if verify_commit:
+        verify_commit_sign(git_path, module, dest, version)
+
     return (rc, out1, err1)
+
+
+def verify_commit_sign(git_path, module, dest, version):
+    cmd = "%s verify-commit %s" % (git_path, version)
+    (rc, out, err) = module.run_command(cmd, cwd=dest)
+    if rc != 0:
+        module.fail_json(msg='Failed to verify GPG signature of commit/tag "%s"' % version)
+    return (rc, out, err)
 
 # ===========================================
 
@@ -585,10 +639,13 @@ def main():
             repo=dict(required=True, aliases=['name']),
             version=dict(default='HEAD'),
             remote=dict(default='origin'),
+            refspec=dict(default=None),
             reference=dict(default=None),
-            force=dict(default='yes', type='bool'),
+            force=dict(default='no', type='bool'),
             depth=dict(default=None, type='int'),
+            clone=dict(default='yes', type='bool'),
             update=dict(default='yes', type='bool'),
+            verify_commit=dict(default='no', type='bool'),
             accept_hostkey=dict(default='no', type='bool'),
             key_file=dict(default=None, required=False),
             ssh_opts=dict(default=None, required=False),
@@ -604,18 +661,21 @@ def main():
     repo      = module.params['repo']
     version   = module.params['version']
     remote    = module.params['remote']
+    refspec   = module.params['refspec']
     force     = module.params['force']
     depth     = module.params['depth']
     update    = module.params['update']
+    allow_clone = module.params['clone']
     bare      = module.params['bare']
+    verify_commit = module.params['verify_commit']
     reference = module.params['reference']
     git_path  = module.params['executable'] or module.get_bin_path('git', True)
     key_file  = module.params['key_file']
     ssh_opts  = module.params['ssh_opts']
 
     gitconfig = None
-    if not dest and update:
-        module.fail_json(msg="the destination directory must be specified unless update=no")
+    if not dest and allow_clone:
+        module.fail_json(msg="the destination directory must be specified unless clone=no")
     elif dest:
         dest = os.path.abspath(os.path.expanduser(dest))
         if bare:
@@ -651,15 +711,16 @@ def main():
     before = None
     local_mods = False
     repo_updated = None
-    if gitconfig and not os.path.exists(gitconfig) or not gitconfig and not update:
-        # if there is no git configuration, do a clone operation  unless the
-        # user requested no updates or we're doing a check mode test (in
-        # which case we do a ls-remote), otherwise clone the repo
-        if module.check_mode or not update:
+    if (dest and not os.path.exists(gitconfig)) or (not dest and not allow_clone):
+        # if there is no git configuration, do a clone operation unless:
+        # * the user requested no clone (they just want info)
+        # * we're doing a check mode test
+        # In those cases we do an ls-remote
+        if module.check_mode or not allow_clone:
             remote_head = get_remote_head(git_path, module, dest, version, repo, bare)
             module.exit_json(changed=True, before=before, after=remote_head)
         # there's no git config, so clone
-        clone(git_path, module, repo, dest, remote, depth, version, bare, reference)
+        clone(git_path, module, repo, dest, remote, depth, version, bare, reference, refspec, verify_commit)
         repo_updated = True
     elif not update:
         # Just return having found a repo already in the dest path
@@ -693,13 +754,13 @@ def main():
         if repo_updated is None:
             if module.check_mode:
                 module.exit_json(changed=True, before=before, after=remote_head)
-            fetch(git_path, module, repo, dest, version, remote, bare)
+            fetch(git_path, module, repo, dest, version, remote, bare, refspec)
             repo_updated = True
 
     # switch to version specified regardless of whether
     # we got new revisions from the repository
     if not bare:
-        switch_version(git_path, module, dest, remote, version)
+        switch_version(git_path, module, dest, remote, version, verify_commit)
 
     # Deal with submodules
     submodules_updated = False

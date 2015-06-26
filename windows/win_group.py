@@ -50,7 +50,7 @@ options:
       - absent
     default: present
     aliases: []
-author: Chris Hoffman
+author: "Chris Hoffman (@chrishoffman)"
 '''
 
 EXAMPLES = '''

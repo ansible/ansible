@@ -5,6 +5,7 @@
 DOCUMENTATION = '''
 ---
 module: ec2_group
+author: "Andrew de Quincey (@adq)"
 version_added: "1.3"
 short_description: maintain an ec2 VPC security group.
 description:
@@ -24,11 +25,11 @@ options:
     required: false
   rules:
     description:
-      - List of firewall inbound rules to enforce in this group (see example).
+      - List of firewall inbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no inbound rules will be enabled.
     required: false
   rules_egress:
     description:
-      - List of firewall outbound rules to enforce in this group (see example).
+      - List of firewall outbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
     required: false
     version_added: "1.6"
   region:
@@ -86,6 +87,14 @@ EXAMPLES = '''
         from_port: 22
         to_port: 22
         cidr_ip: 10.0.0.0/8
+      - proto: tcp
+        from_port: 443
+        to_port: 443
+        group_id: amazon-elb/sg-87654321/amazon-elb-sg
+      - proto: tcp
+        from_port: 3306
+        to_port: 3306
+        group_id: 123412341234/sg-87654321/exact-name-of-sg
       - proto: udp
         from_port: 10050
         to_port: 10050
@@ -109,16 +118,48 @@ EXAMPLES = '''
 
 try:
     import boto.ec2
+    from boto.ec2.securitygroup import SecurityGroup
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
+
+
+def make_rule_key(prefix, rule, group_id, cidr_ip):
+    """Creates a unique key for an individual group rule"""
+    if isinstance(rule, dict):
+        proto, from_port, to_port = [rule.get(x, None) for x in ('proto', 'from_port', 'to_port')]
+        #fix for 11177
+        if proto not in ['icmp', 'tcp', 'udp'] and from_port == -1 and to_port == -1:
+            from_port = 'none'
+            to_port   = 'none'
+
+    else:  # isinstance boto.ec2.securitygroup.IPPermissions
+        proto, from_port, to_port = [getattr(rule, x, None) for x in ('ip_protocol', 'from_port', 'to_port')]
+
+    key = "%s-%s-%s-%s-%s-%s" % (prefix, proto, from_port, to_port, group_id, cidr_ip)
+    return key.lower().replace('-none', '-None')
 
 
 def addRulesToLookup(rules, prefix, dict):
     for rule in rules:
         for grant in rule.grants:
-            dict["%s-%s-%s-%s-%s-%s" % (prefix, rule.ip_protocol, rule.from_port, rule.to_port,
-                                        grant.group_id, grant.cidr_ip)] = rule
+            dict[make_rule_key(prefix, rule, grant.group_id, grant.cidr_ip)] = (rule, grant)
+
+
+def validate_rule(module, rule):
+    VALID_PARAMS = ('cidr_ip',
+                    'group_id', 'group_name', 'group_desc',
+                    'proto', 'from_port', 'to_port')
+    for k in rule:
+        if k not in VALID_PARAMS:
+            module.fail_json(msg='Invalid rule parameter \'{}\''.format(k))
+
+    if 'group_id' in rule and 'cidr_ip' in rule:
+        module.fail_json(msg='Specify group_id OR cidr_ip, not both')
+    elif 'group_name' in rule and 'cidr_ip' in rule:
+        module.fail_json(msg='Specify group_name OR cidr_ip, not both')
+    elif 'group_id' in rule and 'group_name' in rule:
+        module.fail_json(msg='Specify group_id OR group_name, not both')
 
 
 def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
@@ -134,6 +175,7 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
     group_id or a non-None ip range.
     """
 
+    FOREIGN_SECURITY_GROUP_REGEX = '^(\S+)/(sg-\S+)/(\S+)'
     group_id = None
     group_name = None
     ip = None
@@ -144,16 +186,22 @@ def get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id):
         module.fail_json(msg="Specify group_name OR cidr_ip, not both")
     elif 'group_id' in rule and 'group_name' in rule:
         module.fail_json(msg="Specify group_id OR group_name, not both")
+    elif 'group_id' in rule and re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']):
+        # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
+        owner_id, group_id, group_name = re.match(FOREIGN_SECURITY_GROUP_REGEX, rule['group_id']).groups()
+        group_instance = SecurityGroup(owner_id=owner_id, name=group_name, id=group_id)
+        groups[group_id] = group_instance
+        groups[group_name] = group_instance
     elif 'group_id' in rule:
         group_id = rule['group_id']
     elif 'group_name' in rule:
         group_name = rule['group_name']
-        if group_name in groups:
-            group_id = groups[group_name].id
-        elif group_name == name:
+        if group_name == name:
             group_id = group.id
             groups[group_id] = group
             groups[group_name] = group
+        elif group_name in groups:
+            group_id = groups[group_name].id
         else:
             if not rule.get('group_desc', '').strip():
                 module.fail_json(msg="group %s will be automatically created by rule %s and no description was provided" % (group_name, rule))
@@ -188,6 +236,9 @@ def main():
         supports_check_mode=True,
     )
 
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
+
     name = module.params['name']
     description = module.params['description']
     vpc_id = module.params['vpc_id']
@@ -206,7 +257,12 @@ def main():
     groups = {}
     for curGroup in ec2.get_all_security_groups():
         groups[curGroup.id] = curGroup
-        groups[curGroup.name] = curGroup
+        if curGroup.name in groups:
+            # Prioritise groups from the current VPC
+            if vpc_id is None or curGroup.vpc_id == vpc_id:
+                groups[curGroup.name] = curGroup
+        else:
+            groups[curGroup.name] = curGroup
 
         if curGroup.name == name and (vpc_id is None or curGroup.vpc_id == vpc_id):
             group = curGroup
@@ -267,8 +323,10 @@ def main():
         addRulesToLookup(group.rules, 'in', groupRules)
 
         # Now, go through all provided rules and ensure they are there.
-        if rules:
+        if rules is not None:
             for rule in rules:
+                validate_rule(module, rule)
+
                 group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
                 if target_group_created:
                     changed = True
@@ -279,7 +337,7 @@ def main():
                     rule['to_port'] = None
 
                 # If rule already exists, don't later delete it
-                ruleId = "%s-%s-%s-%s-%s-%s" % ('in', rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
+                ruleId = make_rule_key('in', rule, group_id, ip)
                 if ruleId in groupRules:
                     del groupRules[ruleId]
                 # Otherwise, add new rule
@@ -294,22 +352,28 @@ def main():
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
-            for rule in groupRules.itervalues() :
-                for grant in rule.grants:
-                    grantGroup = None
-                    if grant.group_id:
-                        grantGroup = groups[grant.group_id]
-                    if not module.check_mode:
-                        group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
-                    changed = True
+            for (rule, grant) in groupRules.itervalues() :
+                grantGroup = None
+                if grant.group_id:
+                    if grant.owner_id != group.owner_id:
+                        # this is a foreign Security Group. Since you can't fetch it you must create an instance of it
+                        group_instance = SecurityGroup(owner_id=grant.owner_id, name=grant.name, id=grant.group_id)
+                        groups[grant.group_id] = group_instance
+                        groups[grant.name] = group_instance
+                    grantGroup = groups[grant.group_id]
+                if not module.check_mode:
+                    group.revoke(rule.ip_protocol, rule.from_port, rule.to_port, grant.cidr_ip, grantGroup)
+                changed = True
 
         # Manage egress rules
         groupRules = {}
         addRulesToLookup(group.rules_egress, 'out', groupRules)
 
         # Now, go through all provided rules and ensure they are there.
-        if rules_egress:
+        if rules_egress is not None:
             for rule in rules_egress:
+                validate_rule(module, rule)
+
                 group_id, ip, target_group_created = get_target_from_rule(module, ec2, rule, name, group, groups, vpc_id)
                 if target_group_created:
                     changed = True
@@ -320,7 +384,7 @@ def main():
                     rule['to_port'] = None
 
                 # If rule already exists, don't later delete it
-                ruleId = "%s-%s-%s-%s-%s-%s" % ('out', rule['proto'], rule['from_port'], rule['to_port'], group_id, ip)
+                ruleId = make_rule_key('out', rule, group_id, ip)
                 if ruleId in groupRules:
                     del groupRules[ruleId]
                 # Otherwise, add new rule
@@ -359,20 +423,19 @@ def main():
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules_egress:
-            for rule in groupRules.itervalues():
-                for grant in rule.grants:
-                    grantGroup = None
-                    if grant.group_id:
-                        grantGroup = groups[grant.group_id].id
-                    if not module.check_mode:
-                        ec2.revoke_security_group_egress(
-                                group_id=group.id,
-                                ip_protocol=rule.ip_protocol,
-                                from_port=rule.from_port,
-                                to_port=rule.to_port,
-                                src_group_id=grantGroup,
-                                cidr_ip=grant.cidr_ip)
-                    changed = True
+            for (rule, grant) in groupRules.itervalues():
+                grantGroup = None
+                if grant.group_id:
+                    grantGroup = groups[grant.group_id].id
+                if not module.check_mode:
+                    ec2.revoke_security_group_egress(
+                            group_id=group.id,
+                            ip_protocol=rule.ip_protocol,
+                            from_port=rule.from_port,
+                            to_port=rule.to_port,
+                            src_group_id=grantGroup,
+                            cidr_ip=grant.cidr_ip)
+                changed = True
 
     if group:
         module.exit_json(changed=changed, group_id=group.id)

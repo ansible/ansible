@@ -58,7 +58,9 @@ options:
     description:
       - how long before wait gives up, in seconds
     default: 300
-author: Christopher H. Laco, Matt Martz
+author: 
+    - "Christopher H. Laco (@claco)"
+    - "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace.openstack
 '''
 
@@ -90,11 +92,6 @@ except ImportError:
 
 def cloud_block_storage_attachments(module, state, volume, server, device,
                                     wait, wait_timeout):
-    for arg in (state, volume, server, device):
-        if not arg:
-            module.fail_json(msg='%s is required for rax_cbs_attachments' %
-                                 arg)
-
     cbs = pyrax.cloud_blockstorage
     cs = pyrax.cloudservers
 
@@ -133,7 +130,7 @@ def cloud_block_storage_attachments(module, state, volume, server, device,
                     not key.startswith('_')):
                 instance[key] = value
 
-        result = dict(changed=changed, volume=instance)
+        result = dict(changed=changed)
 
         if volume.status == 'error':
             result['msg'] = '%s failed to build' % volume.id
@@ -141,6 +138,9 @@ def cloud_block_storage_attachments(module, state, volume, server, device,
             attempts = wait_timeout / 5
             pyrax.utils.wait_until(volume, 'status', 'in-use',
                                    interval=5, attempts=attempts)
+
+        volume.get()
+        result['volume'] = rax_to_dict(volume)
 
         if 'msg' in result:
             module.fail_json(**result)
@@ -167,12 +167,7 @@ def cloud_block_storage_attachments(module, state, volume, server, device,
         elif volume.attachments:
             module.fail_json(msg='Volume is attached to another server')
 
-        for key, value in vars(volume).iteritems():
-            if (isinstance(value, NON_CALLABLES) and
-                    not key.startswith('_')):
-                instance[key] = value
-
-        result = dict(changed=changed, volume=instance)
+        result = dict(changed=changed, volume=rax_to_dict(volume))
 
         if volume.status == 'error':
             result['msg'] = '%s failed to build' % volume.id

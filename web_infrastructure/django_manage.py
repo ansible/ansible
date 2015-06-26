@@ -92,7 +92,7 @@ notes:
    - To be able to use the migrate command, you must have south installed and added as an app in your settings
    - To be able to use the collectstatic command, you must have enabled staticfiles in your settings
 requirements: [ "virtualenv", "django" ]
-author: Scott Anderson
+author: "Scott Anderson (@tastychutney)"
 '''
 
 EXAMPLES = """
@@ -218,7 +218,7 @@ def main():
     )
 
     command = module.params['command']
-    app_path = module.params['app_path']
+    app_path = os.path.expanduser(module.params['app_path'])
     virtualenv = module.params['virtualenv']
 
     for param in specific_params:
@@ -231,8 +231,6 @@ def main():
     for param in command_required_param_map.get(command, ()):
         if not module.params[param]:
             module.fail_json(msg='%s param is required for command=%s' % (param, command))
-
-    venv = module.params['virtualenv']
 
     _ensure_virtualenv(module)
 
@@ -254,7 +252,7 @@ def main():
         if module.params[param]:
             cmd = '%s %s' % (cmd, module.params[param])
 
-    rc, out, err = module.run_command(cmd, cwd=app_path)
+    rc, out, err = module.run_command(cmd, cwd=os.path.expanduser(app_path))
     if rc != 0:
         if command == 'createcachetable' and 'table' in err and 'already exists' in err:
             out = 'Already exists.'

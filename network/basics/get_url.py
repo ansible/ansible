@@ -38,6 +38,8 @@ description:
        (see `setting the environment
        <http://docs.ansible.com/playbooks_environment.html>`_),
        or by using the use_proxy option.
+     - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
+       your proxy environment for both protocols is correct.
 version_added: "0.6"
 options:
   url:
@@ -112,11 +114,9 @@ options:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
-notes:
-    - This module doesn't yet support configuration for proxies.
 # informational: requirements for nodes
-requirements: [ urllib2, urlparse ]
-author: Jan-Piet Mens
+requirements: [ ]
+author: "Jan-Piet Mens (@jpmens)"
 '''
 
 EXAMPLES='''
@@ -126,6 +126,8 @@ EXAMPLES='''
 - name: download file with sha256 check
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf sha256sum=b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
 '''
+
+import urlparse
 
 try:
     import hashlib
@@ -317,4 +319,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+if __name__ == '__main__':
+    main()

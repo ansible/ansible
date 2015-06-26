@@ -73,7 +73,20 @@ options:
     required: false
     default: "no"
     version_added: "1.6"
-author: Johan Wiren
+  include_doc:
+    description:
+      - Install with or without docs.
+    required: false
+    default: "no"
+    version_added: "2.0"
+  build_flags:
+    description:
+      - Allow adding build flags for gem compilation
+    required: false
+    version_added: "2.0"
+author: 
+    - "Ansible Core Team"
+    - "Johan Wiren"
 '''
 
 EXAMPLES = '''
@@ -182,8 +195,11 @@ def install(module):
         cmd.append('--no-user-install')
     if module.params['pre_release']:
         cmd.append('--pre')
-    cmd.append('--no-document')
+    if not module.params['include_doc']:
+        cmd.append('--no-document')
     cmd.append(module.params['gem_source'])
+    if module.params['build_flags']:
+        cmd.extend([ '--', module.params['build_flags'] ])
     module.run_command(cmd, check_rc=True)
 
 def main():
@@ -197,8 +213,10 @@ def main():
             repository           = dict(required=False, aliases=['source'], type='str'),
             state                = dict(required=False, default='present', choices=['present','absent','latest'], type='str'),
             user_install         = dict(required=False, default=True, type='bool'),
-            pre_release           = dict(required=False, default=False, type='bool'),
+            pre_release          = dict(required=False, default=False, type='bool'),
+            include_doc         = dict(required=False, default=False, type='bool'),
             version              = dict(required=False, type='str'),
+            build_flags          = dict(required=False, type='str'),
         ),
         supports_check_mode = True,
         mutually_exclusive = [ ['gem_source','repository'], ['gem_source','version'] ],

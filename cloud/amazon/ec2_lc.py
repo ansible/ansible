@@ -26,7 +26,7 @@ notes:
     after it is changed will not modify the launch configuration on AWS. You must create a new config and assign
     it to the ASG instead."
 version_added: "1.6"
-author: Gareth Rushgrove
+author: "Gareth Rushgrove (@garethr)"
 options:
   state:
     description:
@@ -93,7 +93,6 @@ options:
     description:
       - Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each instance launched in a Amazon VPC.
     required: false
-    default: false
     aliases: []
     version_added: "1.8"
   ramdisk_id:
@@ -127,11 +126,14 @@ EXAMPLES = '''
     key_name: default
     security_groups: ['group', 'group2' ]
     instance_type: t1.micro
+    volumes:
+    - device_name: /dev/sda1
+      volume_size: 100
+      device_type: io1
+      iops: 3000
+      delete_on_termination: true
 
 '''
-
-import sys
-import time
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
@@ -141,9 +143,9 @@ try:
     import boto.ec2.autoscale
     from boto.ec2.autoscale import LaunchConfiguration
     from boto.exception import BotoServerError
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 def create_block_device(module, volume):
@@ -255,17 +257,20 @@ def main():
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
             instance_monitoring=dict(default=False, type='bool'),
-            assign_public_ip=dict(default=False, type='bool')
+            assign_public_ip=dict(type='bool')
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
 
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
+
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
     try:
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
-    except boto.exception.NoAuthHandlerFound, e:
+    except (boto.exception.NoAuthHandlerFound, StandardError), e:
         module.fail_json(msg=str(e))
 
     state = module.params.get('state')

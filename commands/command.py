@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import sys
 import datetime
 import traceback
@@ -80,7 +81,9 @@ notes:
        M(command) module is much more secure as it's not affected by the user's
        environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
-author: Michael DeHaan
+author: 
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''
@@ -99,12 +102,22 @@ EXAMPLES = '''
     creates: /path/to/database
 '''
 
+# Dict of options and their defaults
+OPTIONS = {'chdir': None,
+           'creates': None,
+           'executable': None,
+           'NO_LOG': None,
+           'removes': None,
+           'warn': True,
+           }
+
 # This is a pretty complex regex, which functions as follows:
 #
 # 1. (^|\s)
 # ^ look for a space or the beginning of the line
-# 2. (creates|removes|chdir|executable|NO_LOG)=
-# ^ look for a valid param, followed by an '='
+# 2. ({options_list})=
+# ^ expanded to (chdir|creates|executable...)=
+#   look for a valid param, followed by an '='
 # 3. (?P<quote>[\'"])?
 # ^ look for an optional quote character, which can either be
 #   a single or double quote character, and store it for later
@@ -114,8 +127,11 @@ EXAMPLES = '''
 # ^ a non-escaped space or a non-escaped quote of the same kind
 #   that was matched in the first 'quote' is found, or the end of
 #   the line is reached
-
-PARAM_REGEX = re.compile(r'(^|\s)(creates|removes|chdir|executable|NO_LOG|warn)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)')
+OPTIONS_REGEX = '|'.join(OPTIONS.keys())
+PARAM_REGEX = re.compile(
+    r'(^|\s)(' + OPTIONS_REGEX +
+    r')=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)(?=\s)|$)'
+)
 
 
 def check_command(commandline):
@@ -140,20 +156,31 @@ def main():
 
     # the command module is the one ansible module that does not take key=value args
     # hence don't copy this one if you are looking to build others!
-    module = CommandModule(argument_spec=dict())
+    module = AnsibleModule(
+        argument_spec=dict(
+          _raw_params = dict(),
+          _uses_shell = dict(type='bool', default=False),
+          chdir = dict(),
+          executable = dict(),
+          creates = dict(),
+          removes = dict(),
+          warn = dict(type='bool', default=True),
+        )
+    )
 
-    shell = module.params['shell']
+    shell = module.params['_uses_shell']
     chdir = module.params['chdir']
     executable = module.params['executable']
-    args  = module.params['args']
+    args  = module.params['_raw_params']
     creates  = module.params['creates']
     removes  = module.params['removes']
-    warn = module.params.get('warn', True)
+    warn = module.params['warn']
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
+        chdir = os.path.abspath(os.path.expanduser(chdir))
         os.chdir(chdir)
 
     if creates:
@@ -217,54 +244,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.splitter import *
-
-# only the command module should ever need to do this
-# everything else should be simple key=value
-
-class CommandModule(AnsibleModule):
-
-    def _handle_aliases(self):
-        return {}
-
-    def _check_invalid_arguments(self):
-        pass
-
-    def _load_params(self):
-        ''' read the input and return a dictionary and the arguments string '''
-        args = MODULE_ARGS
-        params = {}
-        params['chdir']      = None
-        params['creates']    = None
-        params['removes']    = None
-        params['shell']      = False
-        params['executable'] = None
-        params['warn'] = True
-        if "#USE_SHELL" in args:
-            args = args.replace("#USE_SHELL", "")
-            params['shell'] = True
-
-        items = split_args(args)
-
-        for x in items:
-            quoted = x.startswith('"') and x.endswith('"') or x.startswith("'") and x.endswith("'")
-            if '=' in x and not quoted:
-                # check to see if this is a special parameter for the command
-                k, v = x.split('=', 1)
-                v = unquote(v.strip())
-                if k in ('creates', 'removes', 'chdir', 'executable', 'NO_LOG'):
-                    if k == "chdir":
-                        v = os.path.abspath(os.path.expanduser(v))
-                        if not (os.path.exists(v) and os.path.isdir(v)):
-                            self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
-                    elif k == "executable":
-                        v = os.path.abspath(os.path.expanduser(v))
-                        if not (os.path.exists(v)):
-                            self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
-                    params[k] = v
-        # Remove any of the above k=v params from the args string
-        args = PARAM_REGEX.sub('', args)
-        params['args'] = args.strip()
-
-        return (params, params['args'])
 
 main()

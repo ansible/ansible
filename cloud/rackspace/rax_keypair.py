@@ -39,7 +39,7 @@ options:
       - present
       - absent
     default: present
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 notes:
   - Keypairs cannot be manipulated, only created and deleted. To "update" a
     keypair you must first delete and then recreate.
@@ -104,7 +104,7 @@ def rax_keypair(module, name, public_key, state):
     keypair = {}
 
     if state == 'present':
-        if os.path.isfile(public_key):
+        if public_key and os.path.isfile(public_key):
             try:
                 f = open(public_key)
                 public_key = f.read()
@@ -143,7 +143,7 @@ def main():
     argument_spec = rax_argument_spec()
     argument_spec.update(
         dict(
-            name=dict(),
+            name=dict(required=True),
             public_key=dict(),
             state=dict(default='present', choices=['absent', 'present']),
         )

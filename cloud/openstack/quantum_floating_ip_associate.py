@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+import time
 try:
     from novaclient.v1_1 import client as nova_client
     try:
@@ -23,14 +24,15 @@ try:
     except ImportError:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
-    import time
+    HAVE_DEPS = True
 except ImportError:
-    print "failed=True msg='novaclient, keystone, and quantumclient (or neutronclient) client are required'"
+    HAVE_DEPS = False
 
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip_associate
 version_added: "1.2"
+author: "Benno Joy (@bennojoy)"
 short_description: Associate or disassociate a particular floating IP with an instance
 description:
    - Associates or disassociates a specific floating IP with a particular instance
@@ -75,7 +77,11 @@ options:
         - floating ip that should be assigned to the instance
      required: true
      default: None
-requirements: ["quantumclient", "neutronclient", "keystoneclient"]
+requirements:
+    - "python >= 2.6"
+    - "python-novaclient"
+    - "python-neutronclient or python-quantumclient"
+    - "python-keystoneclient"
 '''
 
 EXAMPLES = '''
@@ -186,6 +192,9 @@ def main():
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 
+    if not HAVE_DEPS:
+        module.fail_json(msg='python-novaclient, python-keystoneclient, and either python-neutronclient or python-quantumclient are required')
+
     try:
         nova = nova_client.Client(module.params['login_username'], module.params['login_password'],
                                  module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
@@ -214,5 +223,6 @@ def main():
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()
 

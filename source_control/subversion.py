@@ -25,7 +25,7 @@ short_description: Deploys a subversion repository.
 description:
    - Deploy given repository URL / revision to dest. If dest exists, update to the specified revision, otherwise perform a checkout.
 version_added: "0.7"
-author: Dane Summers, njharman@gmail.com
+author: "Dane Summers (@dsummersl) <njharman@gmail.com>"
 notes:
    - Requires I(svn) to be installed on the client.
 requirements: []
@@ -50,8 +50,9 @@ options:
   force:
     description:
       - If C(yes), modified files will be discarded. If C(no), module will fail if it encounters modified files.
+        Prior to 1.9 the default was `yes`.
     required: false
-    default: "yes"
+    default: "no"
     choices: [ "yes", "no" ]
   username:
     description:
@@ -123,7 +124,12 @@ class Subversion(object):
 		
     def export(self, force=False):
         '''Export svn repo to directory'''
-        self._exec(["export", "-r", self.revision, self.repo, self.dest])
+        cmd = ["export"]
+        if force:
+            cmd.append("--force")
+        cmd.extend(["-r", self.revision, self.repo, self.dest])
+
+        self._exec(cmd)
 
     def switch(self):
         '''Change working directory's repo.'''
@@ -147,11 +153,10 @@ class Subversion(object):
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
-        lines = self._exec(["status", self.dest])
-        # Match only revisioned files, i.e. ignore status '?'.
-        regex = re.compile(r'^[^?]')
+        lines = self._exec(["status", "--quiet", self.dest])
+        # The --quiet option will return only modified files.
         # Has local mods if more than 0 modifed revisioned files.
-        return len(filter(regex.match, lines)) > 0
+        return len(filter(len, lines)) > 0
 
     def needs_update(self):
         curr, url = self.get_revision()
@@ -173,7 +178,7 @@ def main():
             dest=dict(required=True),
             repo=dict(required=True, aliases=['name', 'repository']),
             revision=dict(default='HEAD', aliases=['rev', 'version']),
-            force=dict(default='yes', type='bool'),
+            force=dict(default='no', type='bool'),
             username=dict(required=False),
             password=dict(required=False),
             executable=dict(default=None),
@@ -194,7 +199,7 @@ def main():
     os.environ['LANG'] = 'C'
     svn = Subversion(module, dest, repo, revision, username, password, svn_path)
 
-    if not os.path.exists(dest):
+    if export or not os.path.exists(dest):
         before = None
         local_mods = False
         if module.check_mode:
@@ -202,7 +207,7 @@ def main():
         if not export:
             svn.checkout()
         else:
-            svn.export()
+            svn.export(force=force)
     elif os.path.exists("%s/.svn" % (dest, )):
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
@@ -222,9 +227,12 @@ def main():
     else:
         module.fail_json(msg="ERROR: %s folder already exists, but its not a subversion repository." % (dest, ))
 
-    after = svn.get_revision()
-    changed = before != after or local_mods
-    module.exit_json(changed=changed, before=before, after=after)
+    if export:
+        module.exit_json(changed=True)
+    else:
+        after = svn.get_revision()
+        changed = before != after or local_mods
+        module.exit_json(changed=changed, before=before, after=after)
 
 # import module snippets
 from ansible.module_utils.basic import *

@@ -46,7 +46,7 @@ options:
     version_added: "1.6"
 
 extends_documentation_fragment: aws
-author: Vincent Viallet
+author: "Vincent Viallet (@zbal)"
 '''
 
 EXAMPLES = '''
@@ -84,9 +84,9 @@ EXAMPLES = '''
 
 try:
     import boto.ec2
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 import random
 import string
@@ -106,6 +106,9 @@ def main():
         argument_spec=argument_spec,
         supports_check_mode=True,
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     name = module.params['name']
     state = module.params.get('state')

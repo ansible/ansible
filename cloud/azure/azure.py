@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: azure
 short_description: create or terminate a virtual machine in azure
 description:
-     - Creates or terminates azure instances. When created optionally waits for it to be 'running'. This module has a dependency on python-azure >= 0.7.1
+     - Creates or terminates azure instances. When created optionally waits for it to be 'running'.
 version_added: "1.7"
 options:
   name:
@@ -34,12 +34,12 @@ options:
     default: null
   subscription_id:
     description:
-      - azure subscription id. Overrides the AZURE_SUBSCRIPTION_ID environement variable.
+      - azure subscription id. Overrides the AZURE_SUBSCRIPTION_ID environment variable.
     required: false
     default: null
   management_cert_path:
     description:
-      - path to an azure management certificate associated with the subscription id. Overrides the AZURE_CERT_PATH environement variable.
+      - path to an azure management certificate associated with the subscription id. Overrides the AZURE_CERT_PATH environment variable.
     required: false
     default: null
   storage_account:
@@ -53,7 +53,7 @@ options:
     default: null
   role_size:
     description:
-      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6)
+      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
     required: false
     default: Small
   endpoints:
@@ -110,9 +110,39 @@ options:
     required: false
     default: 'present'
     aliases: []
+  reset_pass_atlogon:
+    description:
+      - Reset the admin password on first logon for windows hosts
+    required: false
+    default: "no"
+    version_added: "2.0"
+    choices: [ "yes", "no" ]
+  auto_updates:
+    description:
+      - Enable Auto Updates on Windows Machines
+    required: false
+    version_added: "2.0"
+    default: "no"
+    choices: [ "yes", "no" ]
+  enable_winrm:
+    description:
+      - Enable winrm on Windows Machines
+    required: false
+    version_added: "2.0"
+    default: "yes"
+    choices: [ "yes", "no" ]
+  os_type:
+    description:
+      - The type of the os that is gettings provisioned
+    required: false
+    version_added: "2.0"
+    default: "linux"
+    choices: [ "windows", "linux" ]
 
-requirements: [ "azure" ]
-author: John Whitbeck
+requirements:
+    - "python >= 2.6"
+    - "azure >= 0.7.1"
+author: "John Whitbeck (@jwhitbeck)"
 '''
 
 EXAMPLES = '''
@@ -136,14 +166,37 @@ EXAMPLES = '''
     module: azure
     name: my-virtual-machine
     state: absent
+
+#Create windows machine
+- hosts: all
+  connection: local
+  tasks:
+   - local_action:
+      module: azure
+      name: "ben-Winows-23"
+      hostname: "win123"
+      os_type: windows
+      enable_winrm: yes
+      subscription_id: "{{ azure_sub_id }}"
+      management_cert_path: "{{ azure_cert_path }}"
+      role_size: Small
+      image: 'bd507d3a70934695bc2128e3e5a255ba__RightImage-Windows-2012-x64-v13.5'
+      location: 'East Asia'
+      password: "xxx"
+      storage_account: benooytes
+      user: admin
+      wait: yes
+      virtual_network_name: "{{ vnet_name }}"
+
+
 '''
 
 import base64
 import datetime
 import os
-import sys
 import time
 from urlparse import urlparse
+from ansible.module_utils.facts import * # TimeoutError
 
 AZURE_LOCATIONS = ['South Central US',
                    'Central US',
@@ -173,7 +226,28 @@ AZURE_ROLE_SIZES = ['ExtraSmall',
                     'Basic_A1',
                     'Basic_A2',
                     'Basic_A3',
-                    'Basic_A4']
+                    'Basic_A4',
+                    'Standard_D1',
+                    'Standard_D2',
+                    'Standard_D3',
+                    'Standard_D4',
+                    'Standard_D11',
+                    'Standard_D12',
+                    'Standard_D13',
+                    'Standard_D14',
+                    'Standard_DS1',
+                    'Standard_DS2',
+                    'Standard_DS3',
+                    'Standard_DS4',
+                    'Standard_DS11',
+                    'Standard_DS12',
+                    'Standard_DS13',
+                    'Standard_DS14',
+                    'Standard_G1',
+                    'Standard_G2',
+                    'Standard_G3',
+                    'Standard_G4',
+                    'Standard_G5']
 
 try:
     import azure as windows_azure
@@ -181,10 +255,10 @@ try:
     from azure import WindowsAzureError, WindowsAzureMissingResourceError
     from azure.servicemanagement import (ServiceManagementService, OSVirtualHardDisk, SSH, PublicKeys,
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
-                                         ConfigurationSetInputEndpoint)
+                                         ConfigurationSetInputEndpoint, Listener, WindowsConfigurationSet)
+    HAS_AZURE = True
 except ImportError:
-    print "failed=True msg='azure required for this module'"
-    sys.exit(1)
+    HAS_AZURE = False
 
 from distutils.version import LooseVersion
 from types import MethodType
@@ -202,6 +276,23 @@ def _wait_for_completion(azure, promise, wait_timeout, msg):
 
     raise WindowsAzureError('Timed out waiting for async operation ' + msg + ' "' + str(promise.request_id) + '" to complete.')
 
+def _delete_disks_when_detached(azure, wait_timeout, disk_names):
+    def _handle_timeout(signum, frame):
+        raise TimeoutError("Timeout reached while waiting for disks to become detached.")
+
+    signal.signal(signal.SIGALRM, _handle_timeout)
+    signal.alarm(wait_timeout)
+    try:
+        while len(disk_names) > 0:
+            for disk_name in disk_names:
+                disk = azure.get_disk(disk_name)
+                if disk.attached_to is None:
+                    azure.delete_disk(disk.name, True)
+                    disk_names.remove(disk_name)
+    except WindowsAzureError, e:
+        module.fail_json(msg="failed to get or delete disk, error was: %s" % (disk_name, str(e)))
+    finally:
+        signal.alarm(0)
 
 def get_ssh_certificate_tokens(module, ssh_cert_path):
     """
@@ -229,9 +320,10 @@ def create_virtual_machine(module, azure):
     azure: authenticated azure ServiceManagementService object
 
     Returns:
-        True if a new virtual machine was created, false otherwise
+        True if a new virtual machine and/or cloud service was created, false otherwise
     """
     name = module.params.get('name')
+    os_type = module.params.get('os_type')
     hostname = module.params.get('hostname') or name + ".cloudapp.net"
     endpoints = module.params.get('endpoints').split(',')
     ssh_cert_path = module.params.get('ssh_cert_path')
@@ -245,22 +337,39 @@ def create_virtual_machine(module, azure):
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
 
+    changed = False
+
     # Check if a deployment with the same name already exists
     cloud_service_name_available = azure.check_hosted_service_name_availability(name)
-    if not cloud_service_name_available.result:
-        changed = False
-    else:
-        changed = True
-        # Create cloud service if necessary
+    if cloud_service_name_available.result:
+        # cloud service does not exist; create it
         try:
             result = azure.create_hosted_service(service_name=name, label=name, location=location)
             _wait_for_completion(azure, result, wait_timeout, "create_hosted_service")
-        except WindowsAzureError as e:
-            module.fail_json(msg="failed to create the new service name, it already exists: %s" % str(e))
+            changed = True
+        except WindowsAzureError, e:
+            module.fail_json(msg="failed to create the new service, error was: %s" % str(e))
 
-        # Create linux configuration
-        disable_ssh_password_authentication = not password
-        linux_config = LinuxConfigurationSet(hostname, user, password, disable_ssh_password_authentication)
+    try:
+        # check to see if a vm with this name exists; if so, do nothing
+        azure.get_role(name, name, name)
+    except WindowsAzureMissingResourceError:
+        # vm does not exist; create it
+        
+        if os_type == 'linux':
+            # Create linux configuration
+            disable_ssh_password_authentication = not password
+            vm_config = LinuxConfigurationSet(hostname, user, password, disable_ssh_password_authentication)
+        else:
+            #Create Windows Config
+            vm_config = WindowsConfigurationSet(hostname, password, module.params.get('reset_pass_atlogon'),\
+                                                 module.params.get('auto_updates'), None, user)
+            vm_config.domain_join = None
+            if module.params.get('enable_winrm'):
+                listener = Listener('Http')
+                vm_config.win_rm.listeners.listeners.append(listener)
+            else:
+                vm_config.win_rm = None
 
         # Add ssh certificates if specified
         if ssh_cert_path:
@@ -275,12 +384,13 @@ def create_virtual_machine(module, azure):
             authorized_keys_path = u'/home/%s/.ssh/authorized_keys' % user
             ssh_config.public_keys.public_keys.append(PublicKey(path=authorized_keys_path, fingerprint=fingerprint))
             # Append ssh config to linux machine config
-            linux_config.ssh = ssh_config
+            vm_config.ssh = ssh_config
 
         # Create network configuration
         network_config = ConfigurationSetInputEndpoints()
         network_config.configuration_set_type = 'NetworkConfiguration'
         network_config.subnet_names = []
+        network_config.public_ips = None
         for port in endpoints:
             network_config.input_endpoints.append(ConfigurationSetInputEndpoint(name='TCP-%s' % port,
                                                                                 protocol='TCP',
@@ -301,21 +411,21 @@ def create_virtual_machine(module, azure):
                                                              deployment_slot='production',
                                                              label=name,
                                                              role_name=name,
-                                                             system_config=linux_config,
+                                                             system_config=vm_config,
                                                              network_config=network_config,
                                                              os_virtual_hard_disk=os_hd,
                                                              role_size=role_size,
                                                              role_type='PersistentVMRole',
                                                              virtual_network_name=virtual_network_name)
             _wait_for_completion(azure, result, wait_timeout, "create_virtual_machine_deployment")
-        except WindowsAzureError as e:
+            changed = True
+        except WindowsAzureError, e:
             module.fail_json(msg="failed to create the new virtual machine, error was: %s" % str(e))
-
 
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
         return (changed, urlparse(deployment.url).hostname, deployment)
-    except WindowsAzureError as e:
+    except WindowsAzureError, e:
         module.fail_json(msg="failed to lookup the deployment information for %s, error was: %s" % (name, str(e)))
 
 
@@ -325,8 +435,6 @@ def terminate_virtual_machine(module, azure):
 
     module : AnsibleModule object
     azure: authenticated azure ServiceManagementService object
-
-    Not yet supported: handle deletion of attached data disks.
 
     Returns:
         True if a new virtual machine was deleted, false otherwise
@@ -345,9 +453,9 @@ def terminate_virtual_machine(module, azure):
     disk_names = []
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
-    except WindowsAzureMissingResourceError as e:
+    except WindowsAzureMissingResourceError, e:
         pass  # no such deployment or service
-    except WindowsAzureError as e:
+    except WindowsAzureError, e:
         module.fail_json(msg="failed to find the deployment, error was: %s" % str(e))
 
     # Delete deployment
@@ -360,17 +468,28 @@ def terminate_virtual_machine(module, azure):
                 role_props = azure.get_role(name, deployment.name, role.role_name)
                 if role_props.os_virtual_hard_disk.disk_name not in disk_names:
                     disk_names.append(role_props.os_virtual_hard_disk.disk_name)
+        except WindowsAzureError, e:
+            module.fail_json(msg="failed to get the role %s, error was: %s" % (role.role_name, str(e)))
 
+        try:
             result = azure.delete_deployment(name, deployment.name)
             _wait_for_completion(azure, result, wait_timeout, "delete_deployment")
+        except WindowsAzureError, e:
+            module.fail_json(msg="failed to delete the deployment %s, error was: %s" % (deployment.name, str(e)))
 
-            for disk_name in disk_names:
-                azure.delete_disk(disk_name, True)
+        # It's unclear when disks associated with terminated deployment get detatched.
+        # Thus, until the wait_timeout is reached, we continue to delete disks as they
+        # become detatched by polling the list of remaining disks and examining the state.
+        try:
+            _delete_disks_when_detached(azure, wait_timeout, disk_names)
+        except (WindowsAzureError, TimeoutError), e:
+            module.fail_json(msg=str(e))
 
+        try:
             # Now that the vm is deleted, remove the cloud service
             result = azure.delete_hosted_service(service_name=name)
             _wait_for_completion(azure, result, wait_timeout, "delete_hosted_service")
-        except WindowsAzureError as e:
+        except WindowsAzureError, e:
             module.fail_json(msg="failed to delete the service %s, error was: %s" % (name, str(e)))
         public_dns_name = urlparse(deployment.url).hostname
 
@@ -378,7 +497,7 @@ def terminate_virtual_machine(module, azure):
 
 
 def get_azure_creds(module):
-    # Check modul args for credentials, then check environment vars
+    # Check module args for credentials, then check environment vars
     subscription_id = module.params.get('subscription_id')
     if not subscription_id:
         subscription_id = os.environ.get('AZURE_SUBSCRIPTION_ID', None)
@@ -400,6 +519,7 @@ def main():
             ssh_cert_path=dict(),
             name=dict(),
             hostname=dict(),
+            os_type=dict(default='linux', choices=['linux', 'windows']),
             location=dict(choices=AZURE_LOCATIONS),
             role_size=dict(choices=AZURE_ROLE_SIZES),
             subscription_id=dict(no_log=True),
@@ -413,9 +533,14 @@ def main():
             state=dict(default='present'),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(default=600),
-            wait_timeout_redirects=dict(default=300)
+            wait_timeout_redirects=dict(default=300),
+            reset_pass_atlogon=dict(type='bool', default=False),
+            auto_updates=dict(type='bool', default=False),
+            enable_winrm=dict(type='bool', default=True),
         )
     )
+    if not HAS_AZURE:
+        module.fail_json(msg='azure python module required for this module')
     # create azure ServiceManagementService object
     subscription_id, management_cert_path = get_azure_creds(module)
 
@@ -429,7 +554,7 @@ def main():
     cloud_service_raw = None
     if module.params.get('state') == 'absent':
         (changed, public_dns_name, deployment) = terminate_virtual_machine(module, azure)
-
+    
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
         if not module.params.get('name'):
@@ -442,6 +567,8 @@ def main():
             module.fail_json(msg='location parameter is required for new instance')
         if not module.params.get('storage_account'):
             module.fail_json(msg='storage_account parameter is required for new instance')
+        if not module.params.get('password'):
+            module.fail_json(msg='password parameter is required for new instance')
         (changed, public_dns_name, deployment) = create_virtual_machine(module, azure)
 
     module.exit_json(changed=changed, public_dns_name=public_dns_name, deployment=json.loads(json.dumps(deployment, default=lambda o: o.__dict__)))
@@ -470,7 +597,7 @@ class Wrapper(object):
         while wait_timeout > time.time():
             try:
                 return f()
-            except WindowsAzureError as e:
+            except WindowsAzureError, e:
                 if not str(e).lower().find("temporary redirect") == -1:
                     time.sleep(5)
                     pass
@@ -480,5 +607,5 @@ class Wrapper(object):
 
 # import module snippets
 from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()

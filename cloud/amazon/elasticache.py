@@ -22,8 +22,7 @@ description:
   - Manage cache clusters in Amazon Elasticache.
   - Returns information about the specified cache cluster.
 version_added: "1.4"
-requirements: [ "boto" ]
-author: Jim Dalton
+author: "Jim Dalton (@jsdalton)"
 options:
   state:
     description:
@@ -58,6 +57,12 @@ options:
       - The port number on which each of the cache nodes will accept connections
     required: false
     default: 11211
+  cache_subnet_group:
+    description:
+      - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
+    required: conditional
+    default: None
+    version_added: "2.0"
   security_group_ids:
     description:
       - A list of vpc security group names to associate with this cache cluster. Only use if inside a vpc
@@ -66,7 +71,7 @@ options:
     version_added: "1.6"
   cache_security_groups:
     description:
-      - A list of cache security group names to associate with this cache cluster
+      - A list of cache security group names to associate with this cache cluster. Must be an empty list if inside a vpc
     required: false
     default: ['default']
   zone:
@@ -86,24 +91,13 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
-    required: false
-    default: None
-    aliases: ['ec2_secret_key', 'secret_key']
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: None
-    aliases: ['ec2_access_key', 'access_key']
   region:
     description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
+      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
+    required: true
+    default: null
     aliases: ['aws_region', 'ec2_region']
-
+extends_documentation_fragment: aws
 """
 
 EXAMPLES = """
@@ -137,16 +131,15 @@ EXAMPLES = """
 """
 
 import sys
-import os
 import time
 
 try:
     import boto
     from boto.elasticache.layer1 import ElastiCacheConnection
     from boto.regioninfo import RegionInfo
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 class ElastiCacheManager(object):
@@ -155,8 +148,9 @@ class ElastiCacheManager(object):
     EXIST_STATUSES = ['available', 'creating', 'rebooting', 'modifying']
 
     def __init__(self, module, name, engine, cache_engine_version, node_type,
-                 num_nodes, cache_port, cache_security_groups, security_group_ids, zone, wait,
-                 hard_modify, aws_access_key, aws_secret_key, region):
+                 num_nodes, cache_port, cache_subnet_group,
+                 cache_security_groups, security_group_ids, zone, wait,
+                 hard_modify, region, **aws_connect_kwargs):
         self.module = module
         self.name = name
         self.engine = engine
@@ -164,15 +158,15 @@ class ElastiCacheManager(object):
         self.node_type = node_type
         self.num_nodes = num_nodes
         self.cache_port = cache_port
+        self.cache_subnet_group = cache_subnet_group
         self.cache_security_groups = cache_security_groups
         self.security_group_ids = security_group_ids
         self.zone = zone
         self.wait = wait
         self.hard_modify = hard_modify
 
-        self.aws_access_key = aws_access_key
-        self.aws_secret_key = aws_secret_key
         self.region = region
+        self.aws_connect_kwargs = aws_connect_kwargs
 
         self.changed = False
         self.data = None
@@ -222,6 +216,7 @@ class ElastiCacheManager(object):
                                                       engine_version=self.cache_engine_version,
                                                       cache_security_group_names=self.cache_security_groups,
                                                       security_group_ids=self.security_group_ids,
+                                                      cache_subnet_group_name=self.cache_subnet_group,
                                                       preferred_availability_zone=self.zone,
                                                       port=self.cache_port)
         except boto.exception.BotoServerError, e:
@@ -357,7 +352,9 @@ class ElastiCacheManager(object):
             'modifying': 'available',
             'deleting': 'gone'
         }
-
+        if self.status == awaited_status:
+            # No need to wait, we're already done
+            return
         if status_map[self.status] != awaited_status:
             msg = "Invalid awaited status. '%s' cannot transition to '%s'"
             self.module.fail_json(msg=msg % (self.status, awaited_status))
@@ -422,9 +419,10 @@ class ElastiCacheManager(object):
         try:
             endpoint = "elasticache.%s.amazonaws.com" % self.region
             connect_region = RegionInfo(name=self.region, endpoint=endpoint)
-            return ElastiCacheConnection(aws_access_key_id=self.aws_access_key,
-                                         aws_secret_access_key=self.aws_secret_key,
-                                         region=connect_region)
+            return ElastiCacheConnection(
+                region=connect_region,
+                **self.aws_connect_kwargs
+            )
         except boto.exception.NoAuthHandlerFound, e:
             self.module.fail_json(msg=e.message)
 
@@ -474,6 +472,7 @@ class ElastiCacheManager(object):
 
 def main():
     argument_spec = ec2_argument_spec()
+    default = object()
     argument_spec.update(dict(
             state={'required': True, 'choices': ['present', 'absent', 'rebooted']},
             name={'required': True},
@@ -482,7 +481,8 @@ def main():
             node_type={'required': False, 'default': 'cache.m1.small'},
             num_nodes={'required': False, 'default': None, 'type': 'int'},
             cache_port={'required': False, 'default': 11211, 'type': 'int'},
-            cache_security_groups={'required': False, 'default': ['default'],
+            cache_subnet_group={'required': False, 'default': None},
+            cache_security_groups={'required': False, 'default': [default],
                                    'type': 'list'},
             security_group_ids={'required': False, 'default': [],
                                    'type': 'list'},
@@ -496,7 +496,10 @@ def main():
         argument_spec=argument_spec,
     )
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
+
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     name = module.params['name']
     state = module.params['state']
@@ -505,25 +508,34 @@ def main():
     node_type = module.params['node_type']
     num_nodes = module.params['num_nodes']
     cache_port = module.params['cache_port']
+    cache_subnet_group = module.params['cache_subnet_group']
     cache_security_groups = module.params['cache_security_groups']
     security_group_ids = module.params['security_group_ids']
     zone = module.params['zone']
     wait = module.params['wait']
     hard_modify = module.params['hard_modify']
 
+    if cache_subnet_group and cache_security_groups == [default]:
+        cache_security_groups = []
+    if cache_subnet_group and cache_security_groups:
+        module.fail_json(msg="Can't specify both cache_subnet_group and cache_security_groups")
+
+    if cache_security_groups == [default]:
+        cache_security_groups = ['default']
+
     if state == 'present' and not num_nodes:
         module.fail_json(msg="'num_nodes' is a required parameter. Please specify num_nodes > 0")
 
     if not region:
-        module.fail_json(msg=str("Either region or EC2_REGION environment variable must be set."))
+        module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     elasticache_manager = ElastiCacheManager(module, name, engine,
                                              cache_engine_version, node_type,
                                              num_nodes, cache_port,
+                                             cache_subnet_group,
                                              cache_security_groups,
                                              security_group_ids, zone, wait,
-                                             hard_modify, aws_access_key,
-                                             aws_secret_key, region)
+                                             hard_modify, region, **aws_connect_kwargs)
 
     if state == 'present':
         elasticache_manager.ensure_present()

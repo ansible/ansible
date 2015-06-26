@@ -20,6 +20,7 @@
 #
 # see examples/playbooks/uri.yml
 
+import cgi
 import shutil
 import tempfile
 import base64
@@ -64,6 +65,12 @@ options:
       - The body of the http request/response to the web service.
     required: false
     default: null
+  body_format:
+    description:
+      - The serialization format of the body. When set to json, encodes the body argument and automatically sets the Content-Type header accordingly.
+    required: false
+    choices: [ "raw", "json" ]
+    default: raw
   method:
     description:
       - The HTTP method of the request or response.
@@ -125,10 +132,19 @@ options:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated.  This should only
+        set to C(no) used on personally controlled sites using self-signed
+        certificates.  Prior to 1.9.2 the code defaulted to C(no).
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+    version_added: '1.9.2'
 
 # informational: requirements for nodes
 requirements: [ urlparse, httplib2 ]
-author: Romeo Theriault
+author: "Romeo Theriault (@romeotheriault)"
 '''
 
 EXAMPLES = '''
@@ -140,31 +156,45 @@ EXAMPLES = '''
   register: webpage
 
 - action: fail
-  when: 'AWESOME' not in "{{ webpage.content }}"
+  when: "'illustrative' not in webpage.content"
 
 
 # Create a JIRA issue
-
-- uri: url=https://your.jira.example.com/rest/api/2/issue/ 
-       method=POST user=your_username password=your_pass 
-       body="{{ lookup('file','issue.json') }}" force_basic_auth=yes 
-       status_code=201 HEADER_Content-Type="application/json"  
+- uri:
+    url: https://your.jira.example.com/rest/api/2/issue/ 
+    method: POST
+    user: your_username 
+    password: your_pass 
+    body: "{{ lookup('file','issue.json') }}"
+    force_basic_auth: yes 
+    status_code: 201
+    body_format: json 
 
 # Login to a form based webpage, then use the returned cookie to
 # access the app in later tasks
 
-- uri: url=https://your.form.based.auth.examle.com/index.php 
-       method=POST body="name=your_username&password=your_password&enter=Sign%20in" 
-       status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
+- uri:
+    url: https://your.form.based.auth.examle.com/index.php 
+    method: POST
+    body: "name=your_username&password=your_password&enter=Sign%20in" 
+    status_code: 302
+    HEADER_Content-Type: "application/x-www-form-urlencoded"
   register: login
 
-- uri: url=https://your.form.based.auth.example.com/dashboard.php
-       method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
-            
-# Queue build of a project in Jenkins:
+- uri:
+    url: https://your.form.based.auth.example.com/dashboard.php
+    method: GET
+    return_content: yes
+    HEADER_Cookie: "{{login.set_cookie}}"
 
-- uri: url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}} 
-       method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
+# Queue build of a project in Jenkins:
+- uri:
+    url: "http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}" 
+    method: GET
+    user: "{{ jenkins.user }}"
+    password: "{{ jenkins.password }}"
+    force_basic_auth: yes
+    status_code: 201
 
 '''
 
@@ -181,7 +211,6 @@ try:
     import socket
 except ImportError:
     HAS_URLPARSE = False
-
 
 def write_file(module, url, dest, content):
     # create a tempfile with some test content
@@ -238,11 +267,11 @@ def url_filename(url):
     return fn
 
 
-def uri(module, url, dest, user, password, body, method, headers, redirects, socket_timeout):
+def uri(module, url, dest, user, password, body, body_format, method, headers, redirects, socket_timeout, validate_certs):
     # To debug
     #httplib2.debug = 4
 
-    # Handle Redirects         
+    # Handle Redirects
     if redirects == "all" or redirects == "yes":
         follow_redirects = True
         follow_all_redirects = True
@@ -254,7 +283,8 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
         follow_all_redirects = False
 
     # Create a Http object and set some default options.
-    h = httplib2.Http(disable_ssl_certificate_validation=True, timeout=socket_timeout)
+    disable_validation = not validate_certs
+    h = httplib2.Http(disable_ssl_certificate_validation=disable_validation, timeout=socket_timeout)
     h.follow_all_redirects = follow_all_redirects
     h.follow_redirects = follow_redirects
     h.forward_authorization_headers = True
@@ -303,10 +333,7 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
         r['redirected'] = redirected
         r.update(resp_redir)
         r.update(resp)
-        try:
-            return r, unicode(content.decode('unicode_escape')), dest
-        except:
-            return r, content, dest
+        return r, content, dest
     except httplib2.RedirectMissingLocation:
         module.fail_json(msg="A 3xx redirect response code was provided but no Location: header was provided to point to the new location.")
     except httplib2.RedirectLimit:
@@ -323,6 +350,10 @@ def uri(module, url, dest, user, password, body, method, headers, redirects, soc
         module.fail_json(msg="The server requested a type of HMACDigest authentication that we are unfamiliar with.")
     except httplib2.UnimplementedHmacDigestAuthOptionError:
         module.fail_json(msg="The server requested a type of HMACDigest authentication that we are unfamiliar with.")
+    except httplib2.CertificateHostnameMismatch:
+        module.fail_json(msg="The server's certificate does not match with its hostname.")
+    except httplib2.SSLHandshakeError:
+        module.fail_json(msg="Unable to validate server's certificate against available CA certs.")
     except socket.error, e:
         module.fail_json(msg="Socket error: %s to %s" % (e, url))
 
@@ -335,6 +366,7 @@ def main():
             user = dict(required=False, default=None),
             password = dict(required=False, default=None),
             body = dict(required=False, default=None),
+            body_format = dict(required=False, default='raw', choices=['raw', 'json']),
             method = dict(required=False, default='GET', choices=['GET', 'POST', 'PUT', 'HEAD', 'DELETE', 'OPTIONS', 'PATCH']),
             return_content = dict(required=False, default='no', type='bool'),
             force_basic_auth = dict(required=False, default='no', type='bool'),
@@ -343,6 +375,7 @@ def main():
             removes = dict(required=False, default=None),
             status_code = dict(required=False, default=[200], type='list'),
             timeout = dict(required=False, default=30, type='int'),
+            validate_certs = dict(required=False, default=True, type='bool'),
         ),
         check_invalid_arguments=False,
         add_file_common_args=True
@@ -357,6 +390,7 @@ def main():
     user = module.params['user']
     password = module.params['password']
     body = module.params['body']
+    body_format = module.params['body_format']
     method = module.params['method']
     dest = module.params['dest']
     return_content = module.params['return_content']
@@ -366,22 +400,30 @@ def main():
     removes = module.params['removes']
     status_code = [int(x) for x in list(module.params['status_code'])]
     socket_timeout = module.params['timeout']
+    validate_certs = module.params['validate_certs']
+
+    dict_headers = {}
+
+    # If body_format is json, encodes the body (wich can be a dict or a list) and automatically sets the Content-Type header
+    if body_format == 'json':
+        body = json.dumps(body)
+        dict_headers['Content-Type'] = 'application/json'
+
 
     # Grab all the http headers. Need this hack since passing multi-values is currently a bit ugly. (e.g. headers='{"Content-Type":"application/json"}')
-    dict_headers = {}
     for key, value in module.params.iteritems():
         if key.startswith("HEADER_"):
             skey = key.replace("HEADER_", "")
             dict_headers[skey] = value
 
-  
+
     if creates is not None:
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of uri executions.
         creates = os.path.expanduser(creates)
         if os.path.exists(creates):
-            module.exit_json(stdout="skipped, since %s exists" % creates, skipped=True, changed=False, stderr=False, rc=0)
+            module.exit_json(stdout="skipped, since %s exists" % creates, changed=False, stderr=False, rc=0)
 
     if removes is not None:
         # do not run the command if the line contains removes=filename
@@ -389,7 +431,7 @@ def main():
         # of uri executions.
         v = os.path.expanduser(removes)
         if not os.path.exists(removes):
-            module.exit_json(stdout="skipped, since %s does not exist" % removes, skipped=True, changed=False, stderr=False, rc=0)
+            module.exit_json(stdout="skipped, since %s does not exist" % removes, changed=False, stderr=False, rc=0)
 
 
     # httplib2 only sends authentication after the server asks for it with a 401.
@@ -400,7 +442,7 @@ def main():
 
 
     # Make the request
-    resp, content, dest = uri(module, url, dest, user, password, body, method, dict_headers, redirects, socket_timeout)
+    resp, content, dest = uri(module, url, dest, user, password, body, body_format, method, dict_headers, redirects, socket_timeout, validate_certs)
     resp['status'] = int(resp['status'])
 
     # Write the file out if requested
@@ -422,25 +464,35 @@ def main():
     # Transmogrify the headers, replacing '-' with '_', since variables dont work with dashes.
     uresp = {}
     for key, value in resp.iteritems():
-        ukey = key.replace("-", "_")  
+        ukey = key.replace("-", "_")
         uresp[ukey] = value
 
+    # Default content_encoding to try
+    content_encoding = 'utf-8'
     if 'content_type' in uresp:
-        if uresp['content_type'].startswith('application/json') or \
-                uresp['content_type'].startswith('text/json'):
+        content_type, params = cgi.parse_header(uresp['content_type'])
+        if 'charset' in params:
+            content_encoding = params['charset']
+        u_content = unicode(content, content_encoding, errors='xmlcharrefreplace')
+        if content_type.startswith('application/json') or \
+                content_type.startswith('text/json'):
             try:
-                js = json.loads(content)
+                js = json.loads(u_content)
                 uresp['json'] = js
             except:
                 pass
+    else:
+        u_content = unicode(content, content_encoding, errors='xmlcharrefreplace')
+
     if resp['status'] not in status_code:
-        module.fail_json(msg="Status code was not " + str(status_code), content=content, **uresp)
+        module.fail_json(msg="Status code was not " + str(status_code), content=u_content, **uresp)
     elif return_content:
-        module.exit_json(changed=changed, content=content, **uresp)
+        module.exit_json(changed=changed, content=u_content, **uresp)
     else:
         module.exit_json(changed=changed, **uresp)
 
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()

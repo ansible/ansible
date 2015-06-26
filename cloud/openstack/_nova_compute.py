@@ -19,20 +19,22 @@
 
 import operator
 import os
+import time
 
 try:
     from novaclient.v1_1 import client as nova_client
-    from novaclient.v1_1 import floating_ips 
+    from novaclient.v1_1 import floating_ips
     from novaclient import exceptions
     from novaclient import utils
-    import time
+    HAS_NOVACLIENT = True
 except ImportError:
-    print("failed=True msg='novaclient is required for this module'")
+    HAS_NOVACLIENT = False
 
 DOCUMENTATION = '''
 ---
 module: nova_compute
 version_added: "1.2"
+deprecated: Deprecated in 2.0. Use os_server instead
 short_description: Create/Delete VMs from OpenStack
 description:
    - Create or Remove virtual machines from Openstack.
@@ -168,7 +170,15 @@ options:
      required: false
      default: None
      version_added: "1.6"
-requirements: ["novaclient"]
+   scheduler_hints:
+     description:
+        - Arbitrary key/value pairs to the scheduler for custom use
+     required: false
+     default: None
+     version_added: "1.9"
+requirements:
+    - "python >= 2.6"
+    - "python-novaclient"
 '''
 
 EXAMPLES = '''
@@ -294,15 +304,15 @@ def _add_floating_ip_from_pool(module, nova, server):
     # instantiate FloatingIPManager object
     floating_ip_obj = floating_ips.FloatingIPManager(nova)
 
-    # empty dict and list 
-    usable_floating_ips = {} 
+    # empty dict and list
+    usable_floating_ips = {}
     pools = []
 
     # user specified
     pools = module.params['floating_ip_pools']
 
-    # get the list of all floating IPs. Mileage may 
-    # vary according to Nova Compute configuration 
+    # get the list of all floating IPs. Mileage may
+    # vary according to Nova Compute configuration
     # per cloud provider
     all_floating_ips = floating_ip_obj.list()
 
@@ -324,7 +334,7 @@ def _add_floating_ip_from_pool(module, nova, server):
             try:
                 new_ip = nova.floating_ips.create(pool)
             except Exception, e: 
-                module.fail_json(msg = "Unable to create floating ip")
+                module.fail_json(msg = "Unable to create floating ip: %s" % (e.message))
             pool_ips.append(new_ip.ip)
         # Add to the main list
         usable_floating_ips[pool] = pool_ips
@@ -356,7 +366,7 @@ def _add_auto_floating_ip(module, nova, server):
     try:
         new_ip = nova.floating_ips.create()
     except Exception as e:
-        module.fail_json(msg = "Unable to create floating ip: %s" % (e.message))
+        module.fail_json(msg = "Unable to create floating ip: %s" % (e))
 
     try:
         server.add_floating_ip(new_ip)
@@ -378,9 +388,9 @@ def _add_floating_ip(module, nova, server):
     else:
         return server
 
-    # this may look redundant, but if there is now a 
+    # this may look redundant, but if there is now a
     # floating IP, then it needs to be obtained from
-    # a recent server object if the above code path exec'd 
+    # a recent server object if the above code path exec'd
     try:
         server = nova.servers.get(server.id)
     except Exception, e:
@@ -422,7 +432,7 @@ def _create_server(module, nova):
                 'config_drive': module.params['config_drive'],
     }
 
-    for optional_param in ('region_name', 'key_name', 'availability_zone'):
+    for optional_param in ('region_name', 'key_name', 'availability_zone', 'scheduler_hints'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
     try:
@@ -443,7 +453,7 @@ def _create_server(module, nova):
                 private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
                 public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
 
-                # now exit with info 
+                # now exit with info
                 module.exit_json(changed = True, id = server.id, private_ip=''.join(private), public_ip=''.join(public), status = server.status, info = server._info)
 
             if server.status == 'ERROR':
@@ -512,7 +522,7 @@ def _get_server_state(module, nova):
         (ip_changed, server) = _check_floating_ips(module, nova, server)
         private = openstack_find_nova_addresses(getattr(server, 'addresses'), 'fixed', 'private')
         public = openstack_find_nova_addresses(getattr(server, 'addresses'), 'floating', 'public')
-        module.exit_json(changed = ip_changed, id = server.id, public_ip = ''.join(public), private_ip = ''.join(private), info = server._info)
+        module.exit_json(changed = ip_changed, id = server.id, public_ip = public, private_ip = private, info = server._info)
     if server and module.params['state'] == 'absent':
         return True
     if module.params['state'] == 'absent':
@@ -543,6 +553,7 @@ def main():
         auto_floating_ip                = dict(default=False, type='bool'),
         floating_ips                    = dict(default=None),
         floating_ip_pools               = dict(default=None),
+        scheduler_hints                 = dict(default=None),
     ))
     module = AnsibleModule(
         argument_spec=argument_spec,
@@ -554,6 +565,9 @@ def main():
             ['flavor_id','flavor_ram'],
         ],
     )
+
+    if not HAS_NOVACLIENT:
+        module.fail_json(msg='python-novaclient is required for this module')
 
     nova = nova_client.Client(module.params['login_username'],
                               module.params['login_password'],
@@ -581,5 +595,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
-
+if __name__ == '__main__':
+    main()

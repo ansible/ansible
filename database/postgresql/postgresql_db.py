@@ -95,7 +95,7 @@ notes:
    - This module uses I(psycopg2), a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on
      the host before using this module. If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host. For Ubuntu-based systems, install the C(postgresql), C(libpq-dev), and C(python-psycopg2) packages on the remote host before using this module.
 requirements: [ psycopg2 ]
-author: Lorin Hochstein
+author: "Lorin Hochstein (@lorin)"
 '''
 
 EXAMPLES = '''
@@ -275,7 +275,7 @@ def main():
         kw["host"] = module.params["login_unix_socket"]
 
     try:
-        db_connection = psycopg2.connect(database="template1", **kw)
+        db_connection = psycopg2.connect(database="postgres", **kw)
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
             db_connection.autocommit = True

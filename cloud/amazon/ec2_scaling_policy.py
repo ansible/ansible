@@ -7,7 +7,7 @@ description:
   - Can create or delete scaling policies for autoscaling groups
   - Referenced autoscaling groups must already exist
 version_added: "1.6"
-author: Zacharie Eakin
+author: "Zacharie Eakin (@zeekin)"
 options:
   state:
     description:
@@ -23,7 +23,7 @@ options:
       - Name of the associated autoscaling group
     required: true
   adjustment_type:
-    desciption:
+    description:
       - The type of change in capacity of the autoscaling group
     required: false
     choices: ['ChangeInCapacity','ExactCapacity','PercentChangeInCapacity']
@@ -55,8 +55,6 @@ EXAMPLES = '''
 '''
 
 
-import sys
-
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
@@ -64,10 +62,9 @@ try:
     import boto.ec2.autoscale
     from boto.ec2.autoscale import ScalingPolicy
     from boto.exception import BotoServerError
-
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 def create_scaling_policy(connection, module):
@@ -91,7 +88,7 @@ def create_scaling_policy(connection, module):
 
         try:
             connection.create_scaling_policy(sp)
-            policy = connection.get_all_policies(policy_names=[sp_name])[0]
+            policy = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])[0]
             module.exit_json(changed=True, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment, cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
         except BotoServerError, e:
             module.fail_json(msg=str(e))
@@ -118,7 +115,7 @@ def create_scaling_policy(connection, module):
         try:
             if changed:
                 connection.create_scaling_policy(policy)
-                policy = connection.get_all_policies(policy_names=[sp_name])[0]
+                policy = connection.get_all_policies(as_group=asg_name,policy_names=[sp_name])[0]
             module.exit_json(changed=changed, name=policy.name, arn=policy.policy_arn, as_name=policy.as_name, scaling_adjustment=policy.scaling_adjustment, cooldown=policy.cooldown, adjustment_type=policy.adjustment_type, min_adjustment_step=policy.min_adjustment_step)
         except BotoServerError, e:
             module.fail_json(msg=str(e))
@@ -150,12 +147,14 @@ def main():
             scaling_adjustment = dict(type='int'),
             min_adjustment_step = dict(type='int'),
             cooldown = dict(type='int'),
-            region = dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
             state=dict(default='present', choices=['present', 'absent']),
         )
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
@@ -163,9 +162,7 @@ def main():
 
     try:
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
-        if not connection:
-            module.fail_json(msg="failed to connect to AWS for the given region: %s" % str(region))
-    except boto.exception.NoAuthHandlerFound, e:
+    except (boto.exception.NoAuthHandlerFound, StandardError), e:
         module.fail_json(msg = str(e))
 
     if state == 'present':

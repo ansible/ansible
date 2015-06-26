@@ -36,7 +36,7 @@ description:
        The module must be called from within the EC2 instance itself.
 notes:
     - Parameters to filter on ec2_facts may be added later.
-author: "Silviu Dicu <silviudicu@gmail.com>"
+author: "Silviu Dicu (@silviud) <silviudicu@gmail.com>"
 '''
 
 EXAMPLES = '''
@@ -63,6 +63,7 @@ class Ec2Metadata(object):
     AWS_REGIONS = ('ap-northeast-1',
                    'ap-southeast-1',
                    'ap-southeast-2',
+                   'eu-central-1',
                    'eu-west-1',
                    'sa-east-1',
                    'us-east-1',

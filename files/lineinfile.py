@@ -19,15 +19,17 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import pipes
 import re
 import os
+import pipes
 import tempfile
 
 DOCUMENTATION = """
 ---
 module: lineinfile
-author: Daniel Hokka Zakrisson, Ahti Kitsik
+author: 
+    - "Daniel Hokka Zakrissoni (@dhozac)"
+    - "Ahti Kitsik (@ahtik)"
 extends_documentation_fragment: files
 short_description: Ensure a particular line is in a file, or replace an
                    existing line using a back-referenced regular expression.
@@ -65,8 +67,7 @@ options:
     description:
       - Required for C(state=present). The line to insert/replace into the
         file. If C(backrefs) is set, may contain backreferences that will get
-        expanded with the C(regexp) capture groups if the regexp matches. The
-        backreferences should be double escaped (see examples).
+        expanded with the C(regexp) capture groups if the regexp matches.
   backrefs:
     required: false
     default: "no"
@@ -85,8 +86,9 @@ options:
     default: EOF
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        after the specified regular expression. A special value is
-        available; C(EOF) for inserting the line at the end of the file.
+        after the last match of specified regular expression. A special value is
+        available; C(EOF) for inserting the line at the end of the file. 
+        If specified regular expresion has no matches, EOF will be used instead.
         May not be used with C(backrefs).
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
@@ -94,9 +96,10 @@ options:
     version_added: "1.1"
     description:
       - Used with C(state=present). If specified, the line will be inserted
-        before the specified regular expression. A value is available;
-        C(BOF) for inserting the line at the beginning of the file.
-        May not be used with C(backrefs).
+        before the last match of specified regular expression. A value is 
+        available; C(BOF) for inserting the line at the beginning of the file.
+        If specified regular expresion has no matches, the line will be
+        inserted at the end of the file.  May not be used with C(backrefs).
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
@@ -256,9 +259,9 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         msg = 'line added'
         changed = True
     # Add it to the end of the file if requested or
-    # if insertafter=/insertbefore didn't match anything
+    # if insertafter/insertbefore didn't match anything
     # (so default behaviour is to add at the end)
-    elif insertafter == 'EOF':
+    elif insertafter == 'EOF' or index[1] == -1:
 
         # If the file is not empty then ensure there's a newline before the added line
         if len(lines)>0 and not (lines[-1].endswith('\n') or lines[-1].endswith('\r')):
@@ -267,9 +270,6 @@ def present(module, dest, regexp, line, insertafter, insertbefore, create,
         lines.append(line + os.linesep)
         msg = 'line added'
         changed = True
-    # Do nothing if insert* didn't match
-    elif index[1] == -1:
-        pass
     # insert* matched, but not the regexp
     else:
         lines.insert(index[1], line + os.linesep)
@@ -371,26 +371,6 @@ def main():
 
         line = params['line']
 
-        # The safe_eval call will remove some quoting, but not others,
-        # so we need to know if we should specifically unquote it.
-        should_unquote = not is_quoted(line)
-
-        # always add one layer of quotes
-        line = "'%s'" % line
-
-        # Replace escape sequences like '\n' while being sure 
-        # not to replace octal escape sequences (\ooo) since they
-        # match the backref syntax.
-        if backrefs:
-            line = re.sub(r'(\\[0-9]{1,3})', r'\\\1', line)
-        line = module.safe_eval(line)
-
-        # Now remove quotes around the string, if needed after
-        # removing the layer we added above
-        line = unquote(line)
-        if should_unquote:
-            line = unquote(line)
-
         present(module, dest, params['regexp'], line,
                 ins_aft, ins_bef, create, backup, backrefs)
     else:
@@ -402,5 +382,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.splitter import *
-
-main()
+if __name__ == '__main__':
+    main()

@@ -79,7 +79,7 @@ options:
     description:
       - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always requried. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
 
-author: Brian Coca
+author: "Brian Coca (@bcoca)"
 notes:
     - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
 '''
@@ -102,6 +102,14 @@ EXAMPLES = '''
   register: acl_info
 '''
 
+RETURN = '''
+acl:
+    description: Current acl on provided path (after changes, if any)
+    returned: success
+    type: list
+    sample: [ "user::rwx", "group::rwx", "other::rwx" ]
+'''
+
 def normalize_permissions(p):
     perms = ['-','-','-']
     for char in p:
@@ -111,6 +119,9 @@ def normalize_permissions(p):
             perms[1] = 'w'
         if char == 'x':
             perms[2] = 'x'
+        if char == 'X':
+            if perms[2] != 'x':  # 'x' is more permissive
+              perms[2] = 'X'
     return ''.join(perms)
 
 def split_entry(entry):

@@ -24,7 +24,7 @@ short_description: Adds or removes Red Hat software channels
 description:
     - Adds or removes Red Hat software channels
 version_added: "1.1"
-author: Vincent Van der Kussen
+author: "Vincent Van der Kussen (@vincentvdk)"
 notes:
     - this module fetches the system id from RHN. 
 requirements:
@@ -90,17 +90,17 @@ def get_systemid(client, session, sysname):
 
 # ------------------------------------------------------- #
 
-def subscribe_channels(channels, client, session, sysname, sys_id):
-    c = base_channels(client, session, sys_id)
-    c.append(channels)
-    return client.channel.software.setSystemChannels(session, sys_id, c)
+def subscribe_channels(channelname, client, session, sysname, sys_id):
+    channels = base_channels(client, session, sys_id)
+    channels.append(channelname)
+    return client.system.setChildChannels(session, sys_id, channels)
 
 # ------------------------------------------------------- #
 
-def unsubscribe_channels(channels, client, session, sysname, sys_id):
-    c = base_channels(client, session, sys_id)
-    c.remove(channels)
-    return client.channel.software.setSystemChannels(session, sys_id, c)
+def unsubscribe_channels(channelname, client, session, sysname, sys_id):
+    channels = base_channels(client, session, sys_id)
+    channels.remove(channelname)
+    return client.system.setChildChannels(session, sys_id, channels)
 
 # ------------------------------------------------------- #
 
@@ -167,3 +167,4 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 main()
+
