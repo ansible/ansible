@@ -70,8 +70,8 @@ options:
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new instance.
-      - Relevant when using C(state=present) and option C(ISO) is used.
-      - If not set, first found hypervisor will be used.
+      - Relevant when using C(state=present), but only considered if not set on ISO/template.
+      - If not set or found on ISO/template, first found hypervisor will be used.
     required: false
     default: null
     choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM' ]
@@ -520,7 +520,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['projectid']           = self.get_project('id')
         args['diskofferingid']      = self.get_disk_offering_id()
         args['networkids']          = self.get_network_ids()
-        args['hypervisor']          = self.get_hypervisor()
         args['userdata']            = self.get_user_data()
         args['keyboard']            = self.module.params.get('keyboard')
         args['ipaddress']           = self.module.params.get('ip_address')
@@ -531,6 +530,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['size']                = self.module.params.get('disk_size')
         args['securitygroupnames']  = ','.join(self.module.params.get('security_groups'))
         args['affinitygroupnames']  = ','.join(self.module.params.get('affinity_groups'))
+
+        template_iso = self.get_template_or_iso()
+        if 'hypervisor' not in template_iso:
+            args['hypervisor'] = self.get_hypervisor()
 
         instance = None
         if not self.module.check_mode:
