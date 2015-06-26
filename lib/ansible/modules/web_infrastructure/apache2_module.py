@@ -35,6 +35,7 @@ options:
      choices: ['present', 'absent']
      default: present
 
+requirements: ["a2enmod","a2dismod"]
 '''
 
 EXAMPLES = '''
