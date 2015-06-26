@@ -67,7 +67,9 @@ New Modules:
   * osx_defaults
   * pear
   * proxmox
-  * proxmox_template * puppet * pushover
+  * proxmox_template 
+  * puppet 
+  * pushover
   * pushbullet
   * rax: rax_mon_alarm
   * rax: rax_mon_check
@@ -93,6 +95,11 @@ New Modules:
   * webfaction_site
   * win_environment
   * win_scheduled_task
+  * win_iis_virtualdirectory
+  * win_iis_webapplication
+  * win_iis_webapppool
+  * win_iis_webbinding
+  * win_iis_website
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
