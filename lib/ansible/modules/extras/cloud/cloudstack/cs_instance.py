@@ -439,8 +439,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             args['account']     = self.get_account(key='name')
             args['domainid']    = self.get_domain(key='id')
             args['projectid']   = self.get_project(key='id')
-            args['zoneid']      = self.get_zone(key='id')
-
+            # Do not pass zoneid, as the instance name must be unique across zones.
             instances = self.cs.listVirtualMachines(**args)
             if instances:
                 for v in instances['virtualmachine']:
