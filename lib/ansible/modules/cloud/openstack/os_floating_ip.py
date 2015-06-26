@@ -81,19 +81,19 @@ requirements: ["shade"]
 
 EXAMPLES = '''
 # Assign a floating IP to the fist interface of `cattle001` from an exiting
-# external network or nova pool. If a free floating IP is already allocated to
-# the project, it is reused; if not, a new one is created.
+# external network or nova pool. A new floating IP from the first available
+# external network is allocated to the project.
 - os_floating_ip:
      cloud: dguerri
      server: cattle001
 
 # Assign a new floating IP to the instance fixed ip `192.0.2.3` of
-# `cattle001`. A new floating IP from the external network (or nova pool)
-# ext_net is created.
+# `cattle001`. If a free floating IP is already allocated to the project, it is
+# reused; if not, a new one is created.
 - os_floating_ip:
      cloud: dguerri
      state: present
-     reuse: false
+     reuse: yes
      server: cattle001
      network: ext_net
      fixed_address: 192.0.2.3
