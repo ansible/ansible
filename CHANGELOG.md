@@ -66,9 +66,7 @@ New Modules:
   * osx_defaults
   * pear
   * proxmox
-  * proxmox_template
-  * puppet
-  * pushover
+  * proxmox_template * puppet * pushover
   * pushbullet
   * rabbitmq_binding
   * rabbitmq_exchange
@@ -88,6 +86,7 @@ New Modules:
   * webfaction_mailbox
   * webfaction_site
   * win_environment
+  * win_scheduled_task
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
