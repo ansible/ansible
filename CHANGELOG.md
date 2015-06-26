@@ -19,8 +19,9 @@ New Modules:
   * amazon: ec2_ami_find
   * amazon: ec2_eni
   * amazon: ec2_eni_facts
-  * amazon: elasticache_subnet_group
+  * amazon: ec2_vpc_net
   * amazon: ec2_win_password
+  * amazon: elasticache_subnet_group
   * amazon: iam
   * amazon: iam_policy
   * circonus_annotation
