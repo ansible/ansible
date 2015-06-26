@@ -69,6 +69,10 @@ New Modules:
   * proxmox
   * proxmox_template * puppet * pushover
   * pushbullet
+  * rax: rax_mon_alarm
+  * rax: rax_mon_check
+  * rax: rax_mon_entity
+  * rax: rax_mon_notification
   * rabbitmq_binding
   * rabbitmq_exchange
   * rabbitmq_queue
