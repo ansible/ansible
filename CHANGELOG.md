@@ -73,6 +73,7 @@ New Modules:
   * rax: rax_mon_check
   * rax: rax_mon_entity
   * rax: rax_mon_notification
+  * rax: rax_mon_notification_plan
   * rabbitmq_binding
   * rabbitmq_exchange
   * rabbitmq_queue
