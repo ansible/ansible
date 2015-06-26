@@ -384,10 +384,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             self.module.fail_json(msg="Template are ISO are mutually exclusive.")
 
         args                = {}
-        args['account']     = self.get_account('name')
-        args['domainid']    = self.get_domain('id')
-        args['projectid']   = self.get_project('id')
-        args['zoneid']      = self.get_zone('id')
+        args['account']     = self.get_account(key='name')
+        args['domainid']    = self.get_domain(key='id')
+        args['projectid']   = self.get_project(key='id')
+        args['zoneid']      = self.get_zone(key='id')
         args['isrecursive'] = True
 
         if template:
@@ -436,10 +436,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             instance_name = self.module.params.get('name')
 
             args                = {}
-            args['account']     = self.get_account('name')
-            args['domainid']    = self.get_domain('id')
-            args['projectid']   = self.get_project('id')
-            args['zoneid']      = self.get_zone('id')
+            args['account']     = self.get_account(key='name')
+            args['domainid']    = self.get_domain(key='id')
+            args['projectid']   = self.get_project(key='id')
+            args['zoneid']      = self.get_zone(key='id')
 
             instances = self.cs.listVirtualMachines(**args)
             if instances:
@@ -456,10 +456,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             return None
 
         args                = {}
-        args['account']     = self.get_account('name')
-        args['domainid']    = self.get_domain('id')
-        args['projectid']   = self.get_project('id')
-        args['zoneid']      = self.get_zone('id')
+        args['account']     = self.get_account(key='name')
+        args['domainid']    = self.get_domain(key='id')
+        args['projectid']   = self.get_project(key='id')
+        args['zoneid']      = self.get_zone(key='id')
 
         networks = self.cs.listNetworks(**args)
         if not networks:
@@ -511,11 +511,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
         args                        = {}
         args['templateid']          = self.get_template_or_iso(key='id')
-        args['zoneid']              = self.get_zone('id')
+        args['zoneid']              = self.get_zone(key='id')
         args['serviceofferingid']   = self.get_service_offering_id()
-        args['account']             = self.get_account('name')
-        args['domainid']            = self.get_domain('id')
-        args['projectid']           = self.get_project('id')
+        args['account']             = self.get_account(key='name')
+        args['domainid']            = self.get_domain(key='id')
+        args['projectid']           = self.get_project(key='id')
         args['diskofferingid']      = self.get_disk_offering_id()
         args['networkids']          = self.get_network_ids()
         args['userdata']            = self.get_user_data()
@@ -556,12 +556,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_instance_update['group']               = self.module.params.get('group')
         args_instance_update['displayname']         = self.get_display_name()
         args_instance_update['userdata']            = self.get_user_data()
-        args_instance_update['ostypeid']            = self.get_os_type('id')
+        args_instance_update['ostypeid']            = self.get_os_type(key='id')
 
         args_ssh_key                                = {}
         args_ssh_key['id']                          = instance['id']
         args_ssh_key['keypair']                     = self.module.params.get('ssh_key')
-        args_ssh_key['projectid']                   = self.get_project('id')
+        args_ssh_key['projectid']                   = self.get_project(key='id')
         
         if self._has_changed(args_service_offering, instance) or \
            self._has_changed(args_instance_update, instance) or \
