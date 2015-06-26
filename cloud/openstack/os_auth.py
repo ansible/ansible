@@ -27,13 +27,17 @@ DOCUMENTATION = '''
 module: os_auth
 short_description: Retrieve an auth token
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
-   - Retrieve an auth token from an OpenStack Cloud
+    - Retrieve an auth token from an OpenStack Cloud
+requirements:
+    - "python >= 2.6"
+    - "shade"
 extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Authenticate to the cloud and retreive the service catalog
+# Authenticate to the cloud and retrieve the service catalog
 - os_auth:
     cloud: rax-dfw
 - debug: var=service_catalog
@@ -61,4 +65,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()

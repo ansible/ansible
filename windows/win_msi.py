@@ -46,7 +46,7 @@ options:
             - Path to a file created by installing the MSI to prevent from
               attempting to reinstall the package on every run
     wait:
-        version_added: ""
+        version_added: "2.0"
         description:
             - Specify whether to wait for install or uninstall to complete before continuing.
         choices:
@@ -55,7 +55,7 @@ options:
             - false
             - no
         default: false
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = '''

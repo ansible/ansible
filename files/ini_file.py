@@ -73,7 +73,7 @@ notes:
      Either use M(template) to create a base INI file with a C([default]) section, or use
      M(lineinfile) to add the missing line.
 requirements: [ ConfigParser ]
-author: Jan-Piet Mens
+author: "Jan-Piet Mens (@jpmens)"
 '''
 
 EXAMPLES = '''

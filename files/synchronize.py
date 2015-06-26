@@ -138,12 +138,26 @@ options:
       - put user@ for the remote paths. If you have a custom ssh config to define the remote user for a host
         that does not match the inventory user, you should set this parameter to "no".
     default: yes
+  use_ssh_args:
+    description:
+      - Use the ssh_args specified in ansible.cfg
+    default: "yes"
+    choices:
+      - "yes"
+      - "no"
+    version_added: "2.0"
   rsync_opts:
     description:
       - Specify additional rsync options by passing in an array.
     default:
     required: false
     version_added: "1.6"
+  partial:
+    description:
+      - Tells rsync to keep the partial file which should make a subsequent transfer of the rest of the file much faster.
+    default: no
+    required: false
+    version_added: "2.0"
 notes:
    - rsync must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
@@ -155,7 +169,7 @@ notes:
      C(.rsync-filter) files to the source directory.
 
 
-author: Timothy Appnel
+author: "Timothy Appnel (@tima)"
 '''
 
 EXAMPLES = '''
@@ -227,7 +241,9 @@ def main():
             group = dict(type='bool'),
             set_remote_user = dict(default='yes', type='bool'),
             rsync_timeout = dict(type='int', default=0),
-            rsync_opts = dict(type='list')
+            rsync_opts = dict(type='list'),
+            ssh_args = dict(type='str'),
+            partial = dict(default='no', type='bool'),
         ),
         supports_check_mode = True
     )
@@ -245,6 +261,7 @@ def main():
     compress = module.params['compress']
     existing_only = module.params['existing_only']
     dirs = module.params['dirs']
+    partial = module.params['partial']
     # the default of these params depends on the value of archive
     recursive = module.params['recursive']
     links = module.params['links']
@@ -254,6 +271,7 @@ def main():
     owner = module.params['owner']
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
+    ssh_args = module.params['ssh_args']
 
     cmd = '%s --delay-updates -F' % rsync
     if compress:
@@ -306,7 +324,11 @@ def main():
     else:
         private_key = '-i '+ private_key 
 
-    ssh_opts = '-S none -o StrictHostKeyChecking=no'
+    if ssh_args:
+      ssh_opts = '-S none -o StrictHostKeyChecking=no %s' % ssh_args
+    else:
+      ssh_opts = '-S none -o StrictHostKeyChecking=no'
+
     if dest_port != 22:
         cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
     else:
@@ -317,6 +339,9 @@ def main():
 
     if rsync_opts:
         cmd = cmd + " " +  " ".join(rsync_opts)
+
+    if partial:
+        cmd = cmd + " --partial"
 
     changed_marker = '<<CHANGED>>'
     cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"

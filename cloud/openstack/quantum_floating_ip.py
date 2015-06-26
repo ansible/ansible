@@ -16,6 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+import time
+
 try:
     from novaclient.v1_1 import client as nova_client
     try:
@@ -23,14 +25,17 @@ try:
     except ImportError:
         from quantumclient.quantum import client
     from keystoneclient.v2_0 import client as ksclient
-    import time
+    HAVE_DEPS = True
 except ImportError:
-    print("failed=True msg='novaclient,keystoneclient and quantumclient (or neutronclient) are required'")
+    HAVE_DEPS = False
 
 DOCUMENTATION = '''
 ---
 module: quantum_floating_ip
 version_added: "1.2"
+author:
+    - "Benno Joy (@bennojoy)"
+    - "Brad P. Crochet (@bcrochet)"
 short_description: Add/Remove floating IP from an instance
 description:
    - Add or Remove a floating IP to an instance
@@ -81,7 +86,11 @@ options:
      required: false
      default: None
      version_added: "1.5"
-requirements: ["novaclient", "quantumclient", "neutronclient", "keystoneclient"]
+requirements:
+    - "python >= 2.6"
+    - "python-novaclient"
+    - "python-neutronclient or python-quantumclient"
+    - "python-keystoneclient"
 '''
 
 EXAMPLES = '''
@@ -96,7 +105,8 @@ def _get_ksclient(module, kwargs):
         kclient = ksclient.Client(username=kwargs.get('login_username'),
                                  password=kwargs.get('login_password'),
                                  tenant_name=kwargs.get('login_tenant_name'),
-                                 auth_url=kwargs.get('auth_url'))
+                                 auth_url=kwargs.get('auth_url'),
+                                 region_name=kwargs.get('region_name'))
     except Exception, e:
         module.fail_json(msg = "Error authenticating to the keystone: %s " % e.message)
     global _os_keystone
@@ -171,7 +181,7 @@ def _get_port_info(neutron, module, instance_id, internal_network_name=None):
         return None, None
     return fixed_ip_address, port_id
 
-def _get_floating_ip(module, neutron, fixed_ip_address):
+def _get_floating_ip(module, neutron, fixed_ip_address, network_name):
     kwargs = {
             'fixed_ip_address': fixed_ip_address
     }
@@ -181,7 +191,16 @@ def _get_floating_ip(module, neutron, fixed_ip_address):
         module.fail_json(msg = "error in fetching the floatingips's %s" % e.message)
     if not ips['floatingips']:
         return None, None
-    return ips['floatingips'][0]['id'], ips['floatingips'][0]['floating_ip_address']
+    for address in ips['floatingips']:
+        if _check_ips_network(neutron, address['floating_network_id'], network_name):
+            return address['id'], address['floating_ip_address']
+    return None, None
+
+def _check_ips_network(neutron, net_id, network_name):
+    if neutron.show_network(net_id)['network']['name'] == network_name:
+        return True
+    else:
+        return False
 
 def _create_floating_ip(neutron, module, port_id, net_id, fixed_ip):
     kwargs = {
@@ -229,9 +248,12 @@ def main():
     ))
     module = AnsibleModule(argument_spec=argument_spec)
 
+    if not HAVE_DEPS:
+        module.fail_json(msg='python-novaclient, python-keystoneclient, and either python-neutronclient or python-quantumclient are required')
+
     try:
         nova = nova_client.Client(module.params['login_username'], module.params['login_password'],
-            module.params['login_tenant_name'], module.params['auth_url'], service_type='compute')
+            module.params['login_tenant_name'], module.params['auth_url'], region_name=module.params['region_name'], service_type='compute')
         neutron = _get_neutron_client(module, module.params)
     except Exception, e:
         module.fail_json(msg="Error in authenticating to nova: %s" % e.message)
@@ -244,7 +266,7 @@ def main():
     if not port_id:
         module.fail_json(msg="Cannot find a port for this instance, maybe fixed ip is not assigned")
 
-    floating_id, floating_ip = _get_floating_ip(module, neutron, fixed_ip)
+    floating_id, floating_ip = _get_floating_ip(module, neutron, fixed_ip, module.params['network_name'])
 
     if module.params['state'] == 'present':
         if floating_ip:
@@ -262,5 +284,6 @@ def main():
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()
 

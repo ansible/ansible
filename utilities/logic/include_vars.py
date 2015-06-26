@@ -10,7 +10,7 @@
 
 DOCUMENTATION = '''
 ---
-author: Benno Joy
+author: "Benno Joy (@bennojoy)"
 module: include_vars
 short_description: Load variables from files, dynamically within a task.
 description:

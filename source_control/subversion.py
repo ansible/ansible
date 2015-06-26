@@ -25,7 +25,7 @@ short_description: Deploys a subversion repository.
 description:
    - Deploy given repository URL / revision to dest. If dest exists, update to the specified revision, otherwise perform a checkout.
 version_added: "0.7"
-author: Dane Summers, njharman@gmail.com
+author: "Dane Summers (@dsummersl) <njharman@gmail.com>"
 notes:
    - Requires I(svn) to be installed on the client.
 requirements: []
@@ -153,11 +153,10 @@ class Subversion(object):
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
-        lines = self._exec(["status", self.dest])
-        # Match only revisioned files, i.e. ignore status '?'.
-        regex = re.compile(r'^[^?]')
+        lines = self._exec(["status", "--quiet", self.dest])
+        # The --quiet option will return only modified files.
         # Has local mods if more than 0 modifed revisioned files.
-        return len(filter(regex.match, lines)) > 0
+        return len(filter(len, lines)) > 0
 
     def needs_update(self):
         curr, url = self.get_revision()

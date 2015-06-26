@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: hostname
-author: Hiroaki Nakamura
+author: "Hiroaki Nakamura (@hnakamur)"
 version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
@@ -248,6 +248,8 @@ class SystemdStrategy(GenericStrategy):
         return out.strip()
 
     def set_current_hostname(self, name):
+        if len(name) > 64:
+            self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
         cmd = ['hostnamectl', '--transient', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
@@ -263,6 +265,8 @@ class SystemdStrategy(GenericStrategy):
         return out.strip()
 
     def set_permanent_hostname(self, name):
+        if len(name) > 64:
+            self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
         cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
@@ -321,10 +325,57 @@ class OpenRCStrategy(GenericStrategy):
 
 # ===========================================
 
+class OpenBSDStrategy(GenericStrategy):
+    """
+    This is a OpenBSD family Hostname manipulation strategy class - it edits
+    the /etc/myname file.
+    """
+
+    HOSTNAME_FILE = '/etc/myname'
+
+    def get_permanent_hostname(self):
+        if not os.path.isfile(self.HOSTNAME_FILE):
+            try:
+                open(self.HOSTNAME_FILE, "a").write("")
+            except IOError, err:
+                self.module.fail_json(msg="failed to write file: %s" %
+                    str(err))
+        try:
+            f = open(self.HOSTNAME_FILE)
+            try:
+                return f.read().strip()
+            finally:
+                f.close()
+        except Exception, err:
+            self.module.fail_json(msg="failed to read hostname: %s" %
+                str(err))
+
+    def set_permanent_hostname(self, name):
+        try:
+            f = open(self.HOSTNAME_FILE, 'w+')
+            try:
+                f.write("%s\n" % name)
+            finally:
+                f.close()
+        except Exception, err:
+            self.module.fail_json(msg="failed to update hostname: %s" %
+                str(err))
+
+# ===========================================
+
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
     strategy_class = SystemdStrategy
+
+class SLESHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Suse linux enterprise server '
+    distribution_version = get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("12"):
+        strategy_class = SystemdStrategy
+    else:
+        strategy_class = UnimplementedStrategy
 
 class OpenSUSEHostname(Hostname):
     platform = 'Linux'
@@ -425,6 +476,16 @@ class GentooHostname(Hostname):
     distribution = 'Gentoo base system'
     strategy_class = OpenRCStrategy
 
+class ALTLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Altlinux'
+    strategy_class = RedHatStrategy
+
+class OpenBSDHostname(Hostname):
+    platform = 'OpenBSD'
+    distribution = None
+    strategy_class = OpenBSDStrategy
+
 # ===========================================
 
 def main():
@@ -448,6 +509,6 @@ def main():
         hostname.set_permanent_hostname(name)
         changed = True
 
-    module.exit_json(changed=changed, name=name)
+    module.exit_json(changed=changed, name=name, ansible_facts=dict(ansible_hostname=name))
 
 main()

@@ -53,11 +53,9 @@ Else
 
 If ($get_md5 -and $result.stat.exists -and -not $result.stat.isdir)
 {
-    $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
-    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
-    $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
-    $fp.Dispose();
+    $hash = Get-FileChecksum($path);
     Set-Attr $result.stat "md5" $hash;
+    Set-Attr $result.stat "checksum" $hash;
 }
 
 Exit-Json $result;

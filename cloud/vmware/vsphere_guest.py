@@ -119,8 +119,10 @@ options:
 notes:
   - This module should run from a system that can access vSphere directly.
     Either by using local_action, or using delegate_to.
-author: Richard Hoop <wrhoop@gmail.com>
-requirements: [ pysphere ]
+author: "Richard Hoop (@rhoop) <wrhoop@gmail.com>"
+requirements:
+  - "python >= 2.6"
+  - pysphere
 '''
 
 
@@ -151,11 +153,18 @@ EXAMPLES = '''
         type: vmxnet3
         network: VM Network
         network_type: standard
+      nic2:
+        type: vmxnet3
+        network: dvSwitch Network
+        network_type: dvs
     vm_hardware:
       memory_mb: 2048
       num_cpus: 2
       osid: centos64Guest
       scsi: paravirtual
+      vm_cdrom:
+        type: "iso"
+        iso_path: "DatastoreName/cd-image.iso"
     esxi:
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
@@ -408,13 +417,21 @@ def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name=
 def find_datastore(module, s, datastore, config_target):
     # Verify the datastore exists and put it in brackets if it does.
     ds = None
-    for d in config_target.Datastore:
-        if (d.Datastore.Accessible and
-            (datastore and d.Datastore.Name == datastore)
-                or (not datastore)):
-            ds = d.Datastore.Datastore
-            datastore = d.Datastore.Name
-            break
+    if config_target:
+        for d in config_target.Datastore:
+            if (d.Datastore.Accessible and
+                (datastore and d.Datastore.Name == datastore)
+                    or (not datastore)):
+                ds = d.Datastore.Datastore
+                datastore = d.Datastore.Name
+                break
+    else:
+        for ds_mor, ds_name in server.get_datastores().items():
+            ds_props = VIProperty(s, ds_mor)
+            if (ds_props.summary.accessible and (datastore and ds_name == datastore)
+                    or (not datastore)):
+                ds = ds_mor
+                datastore = ds_name
     if not ds:
         s.disconnect()
         module.fail_json(msg="Datastore: %s does not appear to exist" %
@@ -517,22 +534,74 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
-    try:
-        cluster = [k for k,
-                   v in vsphere_client.get_clusters().items() if v == cluster_name][0]
-    except IndexError, e:
-        vsphere_client.disconnect()
-        module.fail_json(msg="Cannot find Cluster named: %s" %
-                         cluster_name)
+    if esxi:
+        datacenter = esxi['datacenter']
+        esxi_hostname = esxi['hostname']
 
-    try:
-        rpmor = [k for k, v in vsphere_client.get_resource_pools(
-            from_mor=cluster).items()
-            if v == resource_pool][0]
-    except IndexError, e:
-        vsphere_client.disconnect()
-        module.fail_json(msg="Cannot find Resource Pool named: %s" %
-                         resource_pool)
+        # Datacenter managed object reference
+        dclist = [k for k,
+                 v in vsphere_client.get_datacenters().items() if v == datacenter]
+        if dclist:
+            dcmor=dclist[0]
+        else:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
+
+        dcprops = VIProperty(vsphere_client, dcmor)
+
+        # hostFolder managed reference
+        hfmor = dcprops.hostFolder._obj
+
+        # Grab the computerResource name and host properties
+        crmors = vsphere_client._retrieve_properties_traversal(
+            property_names=['name', 'host'],
+            from_node=hfmor,
+            obj_type='ComputeResource')
+
+        # Grab the host managed object reference of the esxi_hostname
+        try:
+            hostmor = [k for k,
+                       v in vsphere_client.get_hosts().items() if v == esxi_hostname][0]
+        except IndexError, e:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find esx host named: %s" % esxi_hostname)
+
+        # Grab the computeResource managed object reference of the host we are
+        # creating the VM on.
+        crmor = None
+        for cr in crmors:
+            if crmor:
+                break
+            for p in cr.PropSet:
+                if p.Name == "host":
+                    for h in p.Val.get_element_ManagedObjectReference():
+                        if h == hostmor:
+                            crmor = cr.Obj
+                            break
+                    if crmor:
+                        break
+        crprops = VIProperty(vsphere_client, crmor)
+
+        rpmor = crprops.resourcePool._obj
+    elif resource_pool:
+        try:
+            cluster = [k for k,
+                       v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+        except IndexError, e:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find Cluster named: %s" %
+                             cluster_name)
+
+        try:
+            rpmor = [k for k, v in vsphere_client.get_resource_pools(
+                from_mor=cluster).items()
+                if v == resource_pool][0]
+        except IndexError, e:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find Resource Pool named: %s" %
+                             resource_pool)
+    else:
+        module.fail_json(msg="You need to specify either esxi:[datacenter,hostname] or [cluster,resource_pool]")
 
     try:
         vmTarget = vsphere_client.get_vm_by_name(guest)
@@ -562,13 +631,14 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     changes = {}
     request = VI.ReconfigVM_TaskRequestMsg()
     shutdown = False
+    poweron = vm.is_powered_on()
 
     memoryHotAddEnabled = bool(vm.properties.config.memoryHotAddEnabled)
     cpuHotAddEnabled = bool(vm.properties.config.cpuHotAddEnabled)
     cpuHotRemoveEnabled = bool(vm.properties.config.cpuHotRemoveEnabled)
 
     # Change Memory
-    if vm_hardware['memory_mb']:
+    if 'memory_mb' in vm_hardware:
 
         if int(vm_hardware['memory_mb']) != vm.properties.config.hardware.memoryMB:
             spec = spec_singleton(spec, request, vm)
@@ -598,7 +668,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             changes['memory'] = vm_hardware['memory_mb']
 
     # ====( Config Memory )====#
-    if vm_hardware['num_cpus']:
+    if 'num_cpus' in vm_hardware:
         if int(vm_hardware['num_cpus']) != vm.properties.config.hardware.numCPU:
             spec = spec_singleton(spec, request, vm)
 
@@ -652,7 +722,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             module.fail_json(
                 msg="Error reconfiguring vm: %s" % task.get_error_message())
 
-        if vm.is_powered_off():
+        if vm.is_powered_off() and poweron:
             try:
                 vm.power_on(sync_run=True)
             except Exception, e:
@@ -1319,5 +1389,6 @@ def main():
 
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
+from ansible.module_utils.basic import *
+if __name__ == '__main__':
+    main()

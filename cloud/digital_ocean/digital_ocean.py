@@ -22,6 +22,7 @@ short_description: Create/delete a droplet/SSH_key in DigitalOcean
 description:
      - Create/delete a droplet in DigitalOcean and optionally wait for it to be 'running', or deploy an SSH key.
 version_added: "1.3"
+author: "Vincent Viallet (@zbal)"
 options:
   command:
     description:
@@ -59,7 +60,7 @@ options:
      - This is the slug of the region you would like your server to be created in.
   ssh_key_ids:
     description:
-     - Optional, array of of ssh_key_ids that you would like to be added to the server.
+     - Optional, array of of SSH key (numeric) ID that you would like to be added to the server.
   virtio:
     description:
      - "Bool, turn on virtio driver in droplet for improved network and storage I/O."
@@ -99,8 +100,11 @@ options:
 
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
-  - Version 2 of DigitalOcean API is used.
-requirements: [ dopy ]
+  - As of Ansible 2.0, Version 2 of the DigitalOcean API is used.
+  - As of Ansible 2.0, the above parameters were changed significantly. If you are running 1.9.x or earlier, please use C(ansible-doc digital_ocean) to view the correct parameters for your version. Dedicated web docs will be available in the near future for the stable branch.
+requirements:
+  - "python >= 2.6"
+  - dopy
 '''
 
 
@@ -154,7 +158,7 @@ EXAMPLES = '''
 
 - digital_ocean: >
       state=present
-      ssh_key_ids=[id1,id2]
+      ssh_key_ids=123,456
       name=mydroplet
       api_token=XXX
       size_id=2gb
@@ -162,20 +166,18 @@ EXAMPLES = '''
       image_id=fedora-19-x64
 '''
 
-import sys
 import os
 import time
+from distutils.version import LooseVersion
 
+HAS_DOPY = True
 try:
     import dopy
     from dopy.manager import DoError, DoManager
-except ImportError, e:
-    print "failed=True msg='dopy >= 0.3.2 required for this module'"
-    sys.exit(1)
-
-if dopy.__version__ < '0.3.2':
-    print "failed=True msg='dopy >= 0.3.2 required for this module'"
-    sys.exit(1)
+    if LooseVersion(dopy.__version__) < LooseVersion('0.3.2'):
+        HAS_DOPY = False
+except ImportError:
+    HAS_DOPY = False
 
 class TimeoutError(DoError):
     def __init__(self, msg, id):
@@ -398,7 +400,7 @@ def main():
             size_id = dict(),
             image_id = dict(),
             region_id = dict(),
-            ssh_key_ids = dict(default=''),
+            ssh_key_ids = dict(type='list'),
             virtio = dict(type='bool', default='yes'),
             private_networking = dict(type='bool', default='no'),
             backups_enabled = dict(type='bool', default='no'),
@@ -421,6 +423,8 @@ def main():
             ['id', 'name'],
         ),
     )
+    if not HAS_DOPY:
+        module.fail_json(msg='dopy >= 0.3.2 required for this module')
 
     try:
         core(module)
@@ -432,4 +436,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

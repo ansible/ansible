@@ -34,21 +34,23 @@ module: file
 version_added: "historical"
 short_description: Sets attributes of files
 extends_documentation_fragment: files
-description: 
+description:
      - Sets attributes of files, symlinks, and directories, or removes
        files/symlinks/directories. Many other modules support the same options as
        the M(file) module - including M(copy), M(template), and M(assemble).
 notes:
     - See also M(copy), M(template), M(assemble)
 requirements: [ ]
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 options:
   path:
     description:
       - 'path to the file being managed.  Aliases: I(dest), I(name)'
     required: true
     default: []
-    aliases: ['dest', 'name'] 
+    aliases: ['dest', 'name']
   state:
     description:
       - If C(directory), all immediate subdirectories will be created if they
@@ -66,7 +68,6 @@ options:
   src:
     required: false
     default: null
-    choices: []
     description:
       - path of the file to link to (applies only to C(state=link)). Will accept absolute,
         relative and nonexisting paths. Relative paths are not expanded.
@@ -82,7 +83,7 @@ options:
     default: "no"
     choices: [ "yes", "no" ]
     description:
-      - 'force the creation of the symlinks in two cases: the source file does 
+      - 'force the creation of the symlinks in two cases: the source file does
         not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
         "path" file and create symlink to the "src" file in place of it).'
 '''
@@ -101,6 +102,9 @@ EXAMPLES = '''
 
 # touch the same file, but add/remove some permissions
 - file: path=/etc/foo.conf state=touch mode="u+rw,g-wx,o-rwx"
+
+# create a directory if it doesn't exist
+- file: path=/etc/some_directory state=directory mode=0755
 
 '''
 
@@ -150,8 +154,8 @@ def main():
             state = dict(choices=['file','directory','link','hard','touch','absent'], default=None),
             path  = dict(aliases=['dest', 'name'], required=True),
             original_basename = dict(required=False), # Internal use only, for recursive ops
-            recurse  = dict(default='no', type='bool'),
-            force = dict(required=False,default=False,type='bool'),
+            recurse  = dict(default=False, type='bool'),
+            force = dict(required=False, default=False, type='bool'),
             diff_peek = dict(default=None),
             validate = dict(required=False, default=None),
             src = dict(required=False, default=None),

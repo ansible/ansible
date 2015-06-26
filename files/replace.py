@@ -25,7 +25,7 @@ import tempfile
 DOCUMENTATION = """
 ---
 module: replace
-author: Evan Kaufman
+author: "Evan Kaufman (@EvanK)"
 extends_documentation_fragment: files
 short_description: Replace all instances of a particular string in a
                    file using a back-referenced regular expression.
@@ -160,6 +160,7 @@ def main():
     module.exit_json(changed=changed, msg=msg)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()

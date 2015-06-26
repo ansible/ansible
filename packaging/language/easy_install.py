@@ -70,6 +70,13 @@ options:
     version_added: "1.3"
     required: false
     default: null
+  state:
+    version_added: "2.0"
+    description:
+      - The desired state of the library. C(latest) ensures that the latest version is installed.
+    required: false
+    choices: [present, latest]
+    default: present
 notes:
     - Please note that the M(easy_install) module can only install Python
       libraries. Thus this module is not able to remove libraries. It is
@@ -78,19 +85,20 @@ notes:
     - Also note that I(virtualenv) must be installed on the remote host if the
       C(virtualenv) parameter is specified.
 requirements: [ "virtualenv" ]
-author: Matt Wright
+author: "Matt Wright (@mattupstate)"
 '''
 
 EXAMPLES = '''
 # Examples from Ansible Playbooks
-- easy_install: name=pip
+- easy_install: name=pip state=latest
 
 # Install Bottle into the specified virtualenv.
 - easy_install: name=bottle virtualenv=/webapps/myapp/venv
 '''
 
-def _is_package_installed(module, name, easy_install):
-    cmd = '%s --dry-run %s' % (easy_install, name)
+def _is_package_installed(module, name, easy_install, executable_arguments):
+    executable_arguments = executable_arguments + ['--dry-run']
+    cmd = '%s %s %s' % (easy_install, ' '.join(executable_arguments), name)
     rc, status_stdout, status_stderr = module.run_command(cmd)
     return not ('Reading' in status_stdout or 'Downloading' in status_stdout)
 
@@ -124,6 +132,10 @@ def _get_easy_install(module, env=None, executable=None):
 def main():
     arg_spec = dict(
         name=dict(required=True),
+        state=dict(required=False,
+                   default='present',
+                   choices=['present','latest'],
+                   type='str'),
         virtualenv=dict(default=None, required=False),
         virtualenv_site_packages=dict(default='no', type='bool'),
         virtualenv_command=dict(default='virtualenv', required=False),
@@ -137,6 +149,9 @@ def main():
     executable = module.params['executable']
     site_packages = module.params['virtualenv_site_packages']
     virtualenv_command = module.params['virtualenv_command']
+    executable_arguments = []
+    if module.params['state'] == 'latest':
+        executable_arguments.append('--upgrade')
 
     rc = 0
     err = ''
@@ -162,12 +177,12 @@ def main():
 
     cmd = None
     changed = False
-    installed = _is_package_installed(module, name, easy_install)
+    installed = _is_package_installed(module, name, easy_install, executable_arguments)
 
     if not installed:
         if module.check_mode:
             module.exit_json(changed=True)
-        cmd = '%s %s' % (easy_install, name)
+        cmd = '%s %s %s' % (easy_install, ' '.join(executable_arguments), name)
         rc_easy_inst, out_easy_inst, err_easy_inst = module.run_command(cmd)
 
         rc += rc_easy_inst

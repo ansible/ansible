@@ -21,7 +21,7 @@ description:
  - Can create or delete AWS metric alarms
  - Metrics you wish to alarm on must already exist
 version_added: "1.6"
-author: Zacharie Eakin
+author: "Zacharie Eakin (@zeekin)"
 options:
     state:
         description:
@@ -29,7 +29,7 @@ options:
         required: true
         choices: ['present', 'absent']
     name:
-        desciption:
+        description:
           - Unique name for the alarm
         required: true
     metric:
@@ -71,7 +71,7 @@ options:
         options: ['Seconds','Microseconds','Milliseconds','Bytes','Kilobytes','Megabytes','Gigabytes','Terabytes','Bits','Kilobits','Megabits','Gigabits','Terabits','Percent','Count','Bytes/Second','Kilobytes/Second','Megabytes/Second','Gigabytes/Second','Terabytes/Second','Bits/Second','Kilobits/Second','Megabits/Second','Gigabits/Second','Terabits/Second','Count/Second','None']
     description:
         description:
-          - A longer desciption of the alarm
+          - A longer description of the alarm
         required: false
     dimensions:
         description:
@@ -260,7 +260,7 @@ def main():
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
             state=dict(default='present', choices=['present', 'absent']),
-            region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            region=dict(aliases=['aws_region', 'ec2_region']),
            )
     )
 

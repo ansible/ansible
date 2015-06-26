@@ -21,6 +21,7 @@ DOCUMENTATION = '''
 ---
 module: ec2_ami_search
 short_description: Retrieve AWS AMI information for a given operating system.
+deprecated: "in favor of the ec2_ami_find module"
 version_added: "1.6"
 description:
   - Look up the most recent AMI on AWS for a given operating system.
@@ -194,7 +195,7 @@ def main():
 
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()

@@ -21,8 +21,10 @@ options:
     required: false
 notes:
     - This module bypasses the play host loop and only runs once for all the hosts in the play, if you need it
-      to iterate use a with_ directive.
-author: Seth Vidal
+      to iterate use a with\_ directive.
+author: 
+    - "Ansible Core Team"
+    - "Seth Vidal"
 '''
 
 EXAMPLES = '''

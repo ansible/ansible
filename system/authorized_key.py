@@ -81,7 +81,7 @@ options:
     version_added: "1.9"
 description:
     - "Adds or removes authorized keys for particular user accounts"
-author: Brad Olson
+author: "Brad Olson (@bradobro)"
 '''
 
 EXAMPLES = '''

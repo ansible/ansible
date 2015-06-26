@@ -22,6 +22,7 @@ short_description: Create/delete an SSH key in DigitalOcean
 description:
      - Create/delete an SSH key.
 version_added: "1.6"
+author: "Michael Gregson (@mgregson)"
 options:
   state:
     description:
@@ -47,6 +48,9 @@ options:
 notes:
   - Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
   - Version 1 of DigitalOcean API is used.
+requirements:
+  - "python >= 2.6"
+  - dopy
 '''
 
 
@@ -64,15 +68,14 @@ EXAMPLES = '''
 
 '''
 
-import sys
 import os
 import time
 
 try:
     from dopy.manager import DoError, DoManager
-except ImportError as e:
-    print "failed=True msg='dopy required for this module'"
-    sys.exit(1)
+    HAS_DOPY = True
+except ImportError:
+    HAS_DOPY = False
 
 class TimeoutError(DoError):
     def __init__(self, msg, id):
@@ -165,6 +168,8 @@ def main():
             ['id', 'name'],
         ),
     )
+    if not HAS_DOPY:
+        module.fail_json(msg='dopy required for this module')
 
     try:
         core(module)
@@ -175,5 +180,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()

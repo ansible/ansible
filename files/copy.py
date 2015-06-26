@@ -43,6 +43,7 @@ options:
     version_added: "1.1"
     description:
       - When used instead of 'src', sets the contents of a file directly to the specified value.
+        This is for simple values, for anything complex or with formatting please switch to the template module.
     required: false
     default: null
   dest:
@@ -85,7 +86,9 @@ options:
     required: false
     version_added: "1.5"
 extends_documentation_fragment: files
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 notes:
    - The "copy" module recursively copy facility does not scale to lots (>hundreds) of files.
      For alternative, see synchronize module, which is a wrapper around rsync.

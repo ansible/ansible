@@ -23,8 +23,7 @@
 DOCUMENTATION = '''
 ---
 module: docker_image
-deprecated: "functions are being rolled into the 'docker' module"
-author: Pavel Antonov
+author: "Pavel Antonov (@softzilla)"
 version_added: "1.5"
 short_description: manage docker images
 description:
@@ -36,6 +35,12 @@ options:
     required: false
     default: null
     aliases: []
+  dockerfile:
+    description:
+       - Dockerfile to use
+    required: false
+    default: Dockerfile
+    version_added: "2.0"
   name:
     description:
        - Image name to work with
@@ -60,6 +65,12 @@ options:
     required: false
     default: unix://var/run/docker.sock
     aliases: []
+  docker_api_version:
+    description:
+      - Remote API version to use. This defaults to the current default as
+        specified by docker-py.
+    default: docker-py default remote API version
+    version_added: "2.0"
   state:
     description:
       - Set the state of the image
@@ -73,7 +84,10 @@ options:
     required: false
     default: 600
     aliases: []
-requirements: [ "docker-py" ]
+requirements:
+    - "python >= 2.6"
+    - "docker-py"
+    - "requests"
 '''
 
 EXAMPLES = '''
@@ -103,32 +117,54 @@ Remove image from local docker storage:
 
 '''
 
-try:
-    import sys
-    import re
-    import json
-    import docker.client
-    from requests.exceptions import *
-    from urlparse import urlparse
-except ImportError, e:
-    print "failed=True msg='failed to import python module: %s'" % e
-    sys.exit(1)
+import re
+from urlparse import urlparse
 
 try:
-    from docker.errors import APIError as DockerAPIError
+    import json
 except ImportError:
-    from docker.client import APIError as DockerAPIError
+    import simplejson as json
+
+try:
+    from requests.exceptions import *
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+try:
+    import docker.client
+    HAS_DOCKER_CLIENT = True
+except ImportError:
+    HAS_DOCKER_CLIENT = False
+
+if HAS_DOCKER_CLIENT:
+    try:
+        from docker.errors import APIError as DockerAPIError
+    except ImportError:
+        from docker.client import APIError as DockerAPIError
+
+    try:
+        # docker-py 1.2+
+        import docker.constants
+        DEFAULT_DOCKER_API_VERSION = docker.constants.DEFAULT_DOCKER_API_VERSION
+    except (ImportError, AttributeError):
+        # docker-py less than 1.2
+        DEFAULT_DOCKER_API_VERSION = docker.client.DEFAULT_DOCKER_API_VERSION
 
 class DockerImageManager:
 
     def __init__(self, module):
         self.module = module
         self.path = self.module.params.get('path')
+        self.dockerfile = self.module.params.get('dockerfile')
         self.name = self.module.params.get('name')
         self.tag = self.module.params.get('tag')
         self.nocache = self.module.params.get('nocache')
         docker_url = urlparse(module.params.get('docker_url'))
-        self.client = docker.Client(base_url=docker_url.geturl(), timeout=module.params.get('timeout'))
+        self.client = docker.Client(
+            base_url=docker_url.geturl(),
+            version=module.params.get('docker_api_version'),
+            timeout=module.params.get('timeout'))
         self.changed = False
         self.log = []
         self.error_msg = None
@@ -137,7 +173,7 @@ class DockerImageManager:
         return "".join(self.log) if as_string else self.log
 
     def build(self):
-        stream = self.client.build(self.path, tag=':'.join([self.name, self.tag]), nocache=self.nocache, rm=True, stream=True)
+        stream = self.client.build(self.path, dockerfile=self.dockerfile, tag=':'.join([self.name, self.tag]), nocache=self.nocache, rm=True, stream=True)
         success_search = r'Successfully built ([0-9a-f]+)'
         image_id = None
         self.changed = True
@@ -201,15 +237,23 @@ class DockerImageManager:
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            path            = dict(required=False, default=None),
-            name            = dict(required=True),
-            tag             = dict(required=False, default="latest"),
-            nocache         = dict(default=False, type='bool'),
-            state           = dict(default='present', choices=['absent', 'present', 'build']),
-            docker_url      = dict(default='unix://var/run/docker.sock'),
-            timeout         = dict(default=600, type='int'),
+            path               = dict(required=False, default=None),
+            dockerfile         = dict(required=False, default="Dockerfile"),
+            name               = dict(required=True),
+            tag                = dict(required=False, default="latest"),
+            nocache            = dict(default=False, type='bool'),
+            state              = dict(default='present', choices=['absent', 'present', 'build']),
+            docker_url         = dict(default='unix://var/run/docker.sock'),
+            docker_api_version = dict(required=False,
+                                      default=DEFAULT_DOCKER_API_VERSION,
+                                      type='str'),
+            timeout            = dict(default=600, type='int'),
         )
     )
+    if not HAS_DOCKER_CLIENT:
+        module.fail_json(msg='docker-py is needed for this module')
+    if not HAS_REQUESTS:
+        module.fail_json(msg='requests is needed for this module')
 
     try:
         manager = DockerImageManager(module)
@@ -246,8 +290,8 @@ def main():
 
     except RequestException as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg=repr(e))
-        
+
 # import module snippets
 from ansible.module_utils.basic import *
-
-main()
+if __name__ == '__main__':
+    main()
