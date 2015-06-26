@@ -17,8 +17,26 @@ Filters For Formatting Data
 The following filters will take a data structure in a template and render it in a slightly different format.  These
 are occasionally useful for debugging::
 
+    {{ some_variable | to_json }}
+    {{ some_variable | to_yaml }}
+
+For human readable output, you can use::
+
     {{ some_variable | to_nice_json }}
     {{ some_variable | to_nice_yaml }}
+
+Alternatively, you may be reading in some already formatted data::
+
+    {{ some_variable | from_json }}
+    {{ some_variable | from_yaml }}
+
+for example::
+
+    tasks:
+      - shell: cat /some/path/to/file.json
+        register: result
+
+      - set_fact: myvar="{{ result.stdout | from_json }}"
 
 .. _filters_used_with_conditionals:
 
@@ -300,7 +318,11 @@ Hash types available depend on the master system running ansible,
 Other Useful Filters
 --------------------
 
-To use one value on true and another on false (since 1.9)::
+To add quotes for shell usage::
+
+    - shell: echo={{ string_value | quote }} 
+
+To use one value on true and another on false (new in version 1.9)::
 
    {{ (name == "John") | ternary('Mr','Ms') }}
 
@@ -323,6 +345,10 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 To get the real path of a link (new in version 1.8)::
 
    {{ path | realpath }}
+
+To get the relative path of a link, from a start point (new in version 1.7)::
+
+    {{ path | relpath('/etc') }}
 
 To work with Base64 encoded strings::
 
