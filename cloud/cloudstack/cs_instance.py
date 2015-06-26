@@ -355,6 +355,8 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
         self.instance = None
+        self.template = None
+        self.iso = None
 
 
     def get_service_offering_id(self):
@@ -371,7 +373,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         self.module.fail_json(msg="Service offering '%s' not found" % service_offering)
 
 
-    def get_template_or_iso_id(self):
+    def get_template_or_iso(self, key=None):
         template = self.module.params.get('template')
         iso = self.module.params.get('iso')
 
@@ -388,21 +390,28 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['zoneid']      = self.get_zone('id')
 
         if template:
+            if self.template:
+                return self._get_by_key(key, self.template)
+
             args['templatefilter'] = 'executable'
             templates = self.cs.listTemplates(**args)
             if templates:
                 for t in templates['template']:
                     if template in [ t['displaytext'], t['name'], t['id'] ]:
-                        return t['id']
+                        self.template = t
+                        return self._get_by_key(key, self.template)
             self.module.fail_json(msg="Template '%s' not found" % template)
 
         elif iso:
+            if self.iso:
+                return self._get_by_key(key, self.iso)
             args['isofilter'] = 'executable'
             isos = self.cs.listIsos(**args)
             if isos:
                 for i in isos['iso']:
                     if iso in [ i['displaytext'], i['name'], i['id'] ]:
-                        return i['id']
+                        self.iso = i
+                        return self._get_by_key(key, self.iso)
             self.module.fail_json(msg="ISO '%s' not found" % iso)
 
 
@@ -503,7 +512,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         self.result['changed'] = True
 
         args                        = {}
-        args['templateid']          = self.get_template_or_iso_id()
+        args['templateid']          = self.get_template_or_iso(key='id')
         args['zoneid']              = self.get_zone('id')
         args['serviceofferingid']   = self.get_service_offering_id()
         args['account']             = self.get_account('name')
