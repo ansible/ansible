@@ -199,8 +199,8 @@ class Task(Base, Conditional, Taggable, Become):
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 
-        if isinstance(self.args, dict):
-            all_vars.update(self.args)
+        #if isinstance(self.args, dict):
+        #    all_vars.update(self.args)
 
         if 'tags' in all_vars:
             del all_vars['tags']
