@@ -173,7 +173,8 @@ options:
               to be installed. The commit MUST be signed and the public key MUST
               be trusted in the GPG trustdb.
 
-
+requirements:
+    - git (the command line tool)
 notes:
     - "If the task seems to be hanging, first verify remote host is in C(known_hosts).
       SSH will prompt user to authorize the first contact with a remote host.  To avoid this prompt, 
