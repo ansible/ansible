@@ -292,7 +292,7 @@ will evaluate to True when check mode is enabled. For example::
     )
 
     if module.check_mode:
-        # Check if any changes would be made by don't actually make those changes
+        # Check if any changes would be made but don't actually make those changes
         module.exit_json(changed=check_if_system_state_would_be_changed())
 
 Remember that, as module developer, you are responsible for ensuring that no
