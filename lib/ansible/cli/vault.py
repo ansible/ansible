@@ -76,6 +76,9 @@ class VaultCLI(CLI):
         elif self.options.ask_vault_pass:
             self.vault_pass, _= self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
 
+        if not self.vault_pass:
+            raise AnsibleOptionsError("A password is required to use Ansible's Vault")
+
         self.execute()
 
     def execute_create(self):
