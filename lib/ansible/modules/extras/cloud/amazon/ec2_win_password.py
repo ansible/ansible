@@ -22,6 +22,7 @@ options:
     description:
       - The passphrase for the instance key pair. The key must use DES or 3DES encryption for this module to decrypt it. You can use openssl to convert your password protected keys if they do not use DES or 3DES. ex) openssl rsa -in current_key -out new_key -des3. 
     required: false
+    default: null
   region:
     description:
       - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
@@ -39,6 +40,7 @@ options:
     version_added: "2.0"
     description:
       - Number of seconds to wait before giving up.
+    required: false
     default: 120
 
 extends_documentation_fragment: aws
@@ -93,9 +95,9 @@ def main():
     argument_spec.update(dict(
             instance_id = dict(required=True),
             key_file = dict(required=True),
-            key_passphrase = dict(default=None),
-            wait = dict(type='bool', default=False),
-            wait_timeout = dict(default=120),
+            key_passphrase = dict(no_log=True, default=None, required=False),
+            wait = dict(type='bool', default=False, required=False),
+            wait_timeout = dict(default=120, required=False),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
