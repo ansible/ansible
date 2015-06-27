@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2.exceptions import UndefinedError
+
 from ansible.errors import *
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
@@ -53,9 +55,14 @@ class Conditional:
         False if any of them evaluate as such.
         '''
 
-        for conditional in self.when:
-            if not self._check_conditional(conditional, templar, all_vars):
-                return False
+        try:
+            for conditional in self.when:
+                if not self._check_conditional(conditional, templar, all_vars):
+                    return False
+        except UndefinedError, e:
+            raise AnsibleError("The conditional check '%s' failed due to an undefined variable. The error was: %s" % (conditional, e), obj=self.get_ds())
+        except Exception, e:
+            raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (conditional, e), obj=self.get_ds())
 
         return True
 
