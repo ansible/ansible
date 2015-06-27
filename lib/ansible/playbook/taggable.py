@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import string_types
+
 from ansible.errors import AnsibleError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
@@ -26,7 +28,7 @@ from ansible.template import Templar
 class Taggable:
 
     untagged = set(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[])
+    _tags = FieldAttribute(isa='list', default=[], listof=(string_types,int))
 
     def __init__(self):
         super(Taggable, self).__init__()
