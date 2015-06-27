@@ -34,7 +34,6 @@ options:
       - The username on the remote host whose authorized_keys file will be modified
     required: true
     default: null
-    aliases: []
   key:
     description:
       - The SSH public key(s), as a string or (since 1.9) url (https://github.com/username.keys)
@@ -72,9 +71,11 @@ options:
     version_added: "1.4"
   exclusive:
     description:
-      - Whether to remove all other non-specified keys from the
-        authorized_keys file. Multiple keys can be specified in a single
-        key= string value by separating them by newlines.
+      - Whether to remove all other non-specified keys from the authorized_keys file. Multiple keys
+        can be specified in a single C(key) string value by separating them by newlines.
+      - This option is not loop aware, so if you use C(with_) , it will be exclusive per iteration
+        of the loop, if you want multiple keys in the file you need to pass them all to C(key) in a
+        single batch as mentioned above.
     required: false
     choices: [ "yes", "no" ]
     default: "no"
