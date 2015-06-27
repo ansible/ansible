@@ -14,7 +14,7 @@ What Can Be Encrypted With Vault
 
 The vault feature can encrypt any structured data file used by Ansible.  This can include "group_vars/" or "host_vars/" inventory variables, variables loaded by "include_vars" or "vars_files", or variable files passed on the ansible-playbook command line with "-e @file.yml" or "-e @file.json".  Role variables and defaults are also included!
 
-Because Ansible tasks, handlers, and so on are also data, these can also be encrypted with vault.  If you'd not like to betray even the variables you are using, you can go as far as keeping individual task files entirely encrypted.  However, that might be a little too much and could annoy your coworkers :)
+Because Ansible tasks, handlers, and so on are also data, these too can be encrypted with vault.  If you'd not like to betray even the variables you are using, you can go as far as keeping individual task files entirely encrypted.  However, that might be a little too much and could annoy your coworkers :)
 
 .. _creating_files:
 
