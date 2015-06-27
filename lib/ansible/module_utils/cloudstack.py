@@ -77,6 +77,14 @@ class AnsibleCloudStack:
         else:
             self.cs = CloudStack(**read_config())
 
+
+    def get_or_fallback(self, key=None, fallback_key=None):
+        value = self.module.params.get(key)
+        if not value:
+            value = self.module.params.get(fallback_key)
+        return value
+
+
     # TODO: for backward compatibility only, remove if not used anymore
     def _has_changed(self, want_dict, current_dict, only_keys=None):
         return self.has_changed(want_dict=want_dict, current_dict=current_dict, only_keys=only_keys)
@@ -266,12 +274,13 @@ class AnsibleCloudStack:
             return None
 
         args = {}
-        args['name'] = domain
         args['listall'] = True
         domains = self.cs.listDomains(**args)
         if domains:
-            self.domain = domains['domain'][0]
-            return self._get_by_key(key, self.domain)
+            for d in domains['domain']:
+                if d['path'].lower() in [ domain.lower(), "root/" + domain.lower(), "root" + domain.lower() ]:
+                    self.domain = d
+                    return self._get_by_key(key, self.domain)
         self.module.fail_json(msg="Domain '%s' not found" % domain)
 
 
