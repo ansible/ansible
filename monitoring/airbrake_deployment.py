@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: airbrake_deployment
 version_added: "1.2"
-author: '"Bruce Pennypacker (@bpennypacker)" <bruce@pennypacker.org>'
+author: "Bruce Pennypacker (@bpennypacker)"
 short_description: Notify airbrake about app deployments
 description:
    - Notify airbrake about app deployments (see http://help.airbrake.io/kb/api-2/deploy-tracking)
@@ -61,8 +61,7 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
 
-# informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
+requirements: []
 '''
 
 EXAMPLES = '''
@@ -71,6 +70,8 @@ EXAMPLES = '''
                        user='ansible'
                        revision=4.2
 '''
+
+import urllib
 
 # ===========================================
 # Module execution.

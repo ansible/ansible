@@ -24,7 +24,7 @@ short_description: Send a SMS via nexmo
 description:
     - Send a SMS message via nexmo
 version_added: 1.6
-author: '"Matt Martz (@sivel)" <matt@sivel.net>'
+author: "Matt Martz (@sivel)"
 options:
   api_key:
     description:
@@ -71,6 +71,7 @@ EXAMPLES = """
     msg: "{{ inventory_hostname }} completed"
 """
 
+import urllib
 
 NEXMO_API = 'https://rest.nexmo.com/sms/json'
 

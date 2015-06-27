@@ -22,7 +22,7 @@ DOCUMENTATION = '''
 ---
 module: newrelic_deployment
 version_added: "1.2"
-author: '"Matt Coddington (@mcodd)" <coddington@gmail.com>'
+author: "Matt Coddington (@mcodd)"
 short_description: Notify newrelic about app deployments
 description:
    - Notify newrelic about app deployments (see https://docs.newrelic.com/docs/apm/new-relic-apm/maintenance/deployment-notifications#api)
@@ -72,8 +72,7 @@ options:
     choices: ['yes', 'no']
     version_added: 1.5.1
 
-# informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
+requirements: []
 '''
 
 EXAMPLES = '''
@@ -82,6 +81,8 @@ EXAMPLES = '''
                        user='ansible deployment'
                        revision=1.0
 '''
+
+import urllib
 
 # ===========================================
 # Module execution.

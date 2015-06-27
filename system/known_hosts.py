@@ -51,7 +51,7 @@ options:
     required: no
     default: present
 requirements: [ ]
-author: '"Matthew Vernon (@mcv21)" <mcv21@cam.ac.uk>'
+author: "Matthew Vernon (@mcv21)"
 '''
 
 EXAMPLES = '''

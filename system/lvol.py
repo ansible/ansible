@@ -21,8 +21,8 @@
 DOCUMENTATION = '''
 ---
 author:
-    - '"Jeroen Hoekx (@jhoekx)" <jeroen.hoekx@dsquare.be>'
-    - '"Alexander Bulimov (@abulimov)" <lazywolf0@gmail.com>'
+    - "Jeroen Hoekx (@jhoekx)" 
+    - "Alexander Bulimov (@abulimov)" 
 module: lvol
 short_description: Configure LVM logical volumes
 description:
@@ -57,6 +57,10 @@ options:
     - Shrink or remove operations of volumes requires this switch. Ensures that
       that filesystems get never corrupted/destroyed by mistake.
     required: false
+  opts:
+    version_added: "2.0"
+    description:
+    - Free-form options to be passed to the lvcreate command
 notes:
   - Filesystems on top of the volume are not resized.
 '''
@@ -70,6 +74,9 @@ EXAMPLES = '''
 
 # Create a logical volume the size of all remaining space in the volume group
 - lvol: vg=firefly lv=test size=100%FREE
+
+# Create a logical volume with special options
+- lvol: vg=firefly lv=test size=512g opts="-r 16"
 
 # Extend the logical volume to 1024m.
 - lvol: vg=firefly lv=test size=1024
@@ -116,6 +123,7 @@ def main():
             vg=dict(required=True),
             lv=dict(required=True),
             size=dict(),
+            opts=dict(type='str'),
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
         ),
@@ -135,10 +143,14 @@ def main():
     vg = module.params['vg']
     lv = module.params['lv']
     size = module.params['size']
+    opts = module.params['opts']
     state = module.params['state']
     force = module.boolean(module.params['force'])
     size_opt = 'L'
     size_unit = 'm'
+
+    if opts is None:
+        opts = ""
 
     if size:
         # LVCREATE(8) -l --extents option with percentage
@@ -212,7 +224,8 @@ def main():
                 changed = True
             else:
                 lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
-                rc, _, err = module.run_command("%s %s -n %s -%s %s%s %s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, vg))
+                cmd = "%s %s -n %s -%s %s%s %s %s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg)
+                rc, _, err = module.run_command(cmd)
                 if rc == 0:
                     changed = True
                 else:

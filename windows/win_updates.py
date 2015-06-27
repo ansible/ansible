@@ -41,7 +41,7 @@ options:
       - (anything that is a valid update category)
     default: critical
     aliases: []
-author: '"Peter Mounce (@petemounce)" <public@neverrunwithscissors.com>'
+author: "Peter Mounce (@petemounce)"
 '''
 
 EXAMPLES = '''

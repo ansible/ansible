@@ -25,7 +25,7 @@ short_description: Manages instances and virtual machines on Apache CloudStack b
 description:
     - Deploy, start, restart, stop and destroy instances.
 version_added: '2.0'
-author: '"René Moser (@resmo)" <mail@renemoser.net>'
+author: "René Moser (@resmo)"
 options:
   name:
     description:
@@ -70,8 +70,8 @@ options:
   hypervisor:
     description:
       - Name the hypervisor to be used for creating the new instance.
-      - Relevant when using C(state=present) and option C(ISO) is used.
-      - If not set, first found hypervisor will be used.
+      - Relevant when using C(state=present), but only considered if not set on ISO/template.
+      - If not set or found on ISO/template, first found hypervisor will be used.
     required: false
     default: null
     choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM' ]
@@ -355,6 +355,8 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
         self.instance = None
+        self.template = None
+        self.iso = None
 
 
     def get_service_offering_id(self):
@@ -371,7 +373,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         self.module.fail_json(msg="Service offering '%s' not found" % service_offering)
 
 
-    def get_template_or_iso_id(self):
+    def get_template_or_iso(self, key=None):
         template = self.module.params.get('template')
         iso = self.module.params.get('iso')
 
@@ -388,21 +390,28 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['zoneid']      = self.get_zone('id')
 
         if template:
+            if self.template:
+                return self._get_by_key(key, self.template)
+
             args['templatefilter'] = 'executable'
             templates = self.cs.listTemplates(**args)
             if templates:
                 for t in templates['template']:
                     if template in [ t['displaytext'], t['name'], t['id'] ]:
-                        return t['id']
+                        self.template = t
+                        return self._get_by_key(key, self.template)
             self.module.fail_json(msg="Template '%s' not found" % template)
 
         elif iso:
+            if self.iso:
+                return self._get_by_key(key, self.iso)
             args['isofilter'] = 'executable'
             isos = self.cs.listIsos(**args)
             if isos:
                 for i in isos['iso']:
                     if iso in [ i['displaytext'], i['name'], i['id'] ]:
-                        return i['id']
+                        self.iso = i
+                        return self._get_by_key(key, self.iso)
             self.module.fail_json(msg="ISO '%s' not found" % iso)
 
 
@@ -503,7 +512,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         self.result['changed'] = True
 
         args                        = {}
-        args['templateid']          = self.get_template_or_iso_id()
+        args['templateid']          = self.get_template_or_iso(key='id')
         args['zoneid']              = self.get_zone('id')
         args['serviceofferingid']   = self.get_service_offering_id()
         args['account']             = self.get_account('name')
@@ -511,7 +520,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['projectid']           = self.get_project('id')
         args['diskofferingid']      = self.get_disk_offering_id()
         args['networkids']          = self.get_network_ids()
-        args['hypervisor']          = self.get_hypervisor()
         args['userdata']            = self.get_user_data()
         args['keyboard']            = self.module.params.get('keyboard')
         args['ipaddress']           = self.module.params.get('ip_address')
@@ -522,6 +530,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['size']                = self.module.params.get('disk_size')
         args['securitygroupnames']  = ','.join(self.module.params.get('security_groups'))
         args['affinitygroupnames']  = ','.join(self.module.params.get('affinity_groups'))
+
+        template_iso = self.get_template_or_iso()
+        if 'hypervisor' not in template_iso:
+            args['hypervisor'] = self.get_hypervisor()
 
         instance = None
         if not self.module.check_mode:

@@ -21,7 +21,9 @@ short_description: manage CloudTrail creation and deletion
 description:
   - Creates or deletes CloudTrail configuration. Ensures logging is also enabled.
 version_added: "2.0"
-author: "Ted Timmons (@tedder)"
+author: 
+    - "Ansible Core Team"
+    - "Ted Timmons"
 requirements:
   - "boto >= 2.21"
 options:
@@ -87,21 +89,17 @@ EXAMPLES = """
       s3_key_prefix='' region=us-east-1
 
   - name: remove cloudtrail
-    local_action: cloudtrail state=absent name=main region=us-east-1
+    local_action: cloudtrail state=disabled name=main region=us-east-1
 """
 
-import time
-import sys
-import os
-from collections import Counter
-
-boto_import_failed = False
+HAS_BOTO = False
 try:
     import boto
     import boto.cloudtrail
     from boto.regioninfo import RegionInfo
+    HAS_BOTO = True
 except ImportError:
-    boto_import_failed = True
+    HAS_BOTO = False
 
 class CloudTrailManager:
     """Handles cloudtrail configuration"""
@@ -152,9 +150,6 @@ class CloudTrailManager:
 
 def main():
 
-    if not has_libcloud:
-      module.fail_json(msg='boto is required.')
-
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state={'required': True, 'choices': ['enabled', 'disabled'] },
@@ -166,6 +161,10 @@ def main():
     required_together = ( ['state', 's3_bucket_name'] )
 
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True, required_together=required_together)
+
+    if not HAS_BOTO:
+      module.fail_json(msg='boto is required.')
+
     ec2_url, access_key, secret_key, region = get_ec2_creds(module)
     aws_connect_params = dict(aws_access_key_id=access_key,
                               aws_secret_access_key=secret_key)

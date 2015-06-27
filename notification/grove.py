@@ -39,7 +39,7 @@ options:
     default: 'yes'
     choices: ['yes', 'no']
     version_added: 1.5.1
-author: '"Jonas Pfenniger (@zimbatm)" <zimbatm@zimbatm.com>'
+author: "Jonas Pfenniger (@zimbatm)"
 '''
 
 EXAMPLES = '''
@@ -48,6 +48,8 @@ EXAMPLES = '''
     service=my-app
     message=deployed {{ target }}
 '''
+
+import urllib
 
 BASE_URL = 'https://grove.io/api/notice/%s/'
 

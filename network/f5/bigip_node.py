@@ -25,7 +25,7 @@ short_description: "Manages F5 BIG-IP LTM nodes"
 description:
     - "Manages F5 BIG-IP LTM nodes via iControl SOAP API"
 version_added: "1.4"
-author: '"Matt Hite (@mhite)" <mhite@hotmail.com>'
+author: "Matt Hite (@mhite)"
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -188,27 +188,6 @@ EXAMPLES = '''
 
 '''
 
-try:
-    import bigsuds
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
-
-# ==========================
-# bigip_node module specific
-#
-
-def bigip_api(bigip, user, password):
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
-    return api
-
-def disable_ssl_cert_validation():
-    # You probably only want to do this for testing and never in production.
-    # From https://www.python.org/dev/peps/pep-0476/#id29
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
-
 def node_exists(api, address):
     # hack to determine if node exists
     result = False
@@ -283,41 +262,29 @@ def get_node_monitor_status(api, name):
 
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            server = dict(type='str', required=True),
-            user = dict(type='str', required=True),
-            password = dict(type='str', required=True),
-            validate_certs = dict(default='yes', type='bool'),
-            state = dict(type='str', default='present', choices=['present', 'absent']),
+    argument_spec=f5_argument_spec();
+    argument_spec.update(dict(
             session_state = dict(type='str', choices=['enabled', 'disabled']),
             monitor_state = dict(type='str', choices=['enabled', 'disabled']),
-            partition = dict(type='str', default='Common'),
             name = dict(type='str', required=True),
             host = dict(type='str', aliases=['address', 'ip']),
             description = dict(type='str')
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
         supports_check_mode=True
     )
 
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
+    (server,user,password,state,partition,validate_certs) = f5_parse_arguments(module)
 
-    server = module.params['server']
-    user = module.params['user']
-    password = module.params['password']
-    validate_certs = module.params['validate_certs']
-    state = module.params['state']
     session_state = module.params['session_state']
     monitor_state = module.params['monitor_state']
-    partition = module.params['partition']
     host = module.params['host']
     name = module.params['name']
-    address = "/%s/%s" % (partition, name)
+    address = fq_name(partition, name)
     description = module.params['description']
-
-    if not validate_certs:
-        disable_ssl_cert_validation()
 
     if state == 'absent' and host is not None:
         module.fail_json(msg="host parameter invalid when state=absent")
@@ -410,5 +377,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 main()
 

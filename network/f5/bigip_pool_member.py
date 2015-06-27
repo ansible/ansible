@@ -25,7 +25,7 @@ short_description: "Manages F5 BIG-IP LTM pool members"
 description:
     - "Manages F5 BIG-IP LTM pool members via iControl SOAP API"
 version_added: "1.4"
-author: '"Matt Hite (@mhite)" <mhite@hotmail.com>'
+author: "Matt Hite (@mhite)"
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -196,27 +196,6 @@ EXAMPLES = '''
 
 '''
 
-try:
-    import bigsuds
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
-
-# ===========================================
-# bigip_pool_member module specific support methods.
-#
-
-def bigip_api(bigip, user, password):
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
-    return api
-
-def disable_ssl_cert_validation():
-    # You probably only want to do this for testing and never in production.
-    # From https://www.python.org/dev/peps/pep-0476/#id29
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
-
 def pool_exists(api, pool):
     # hack to determine if pool exists
     result = False
@@ -327,49 +306,37 @@ def get_member_monitor_status(api, pool, address, port):
     return result
 
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            server = dict(type='str', required=True),
-            user = dict(type='str', required=True),
-            password = dict(type='str', required=True),
-            validate_certs = dict(default='yes', type='bool'),
-            state = dict(type='str', default='present', choices=['present', 'absent']),
+    argument_spec = f5_argument_spec();
+    argument_spec.update(dict(
             session_state = dict(type='str', choices=['enabled', 'disabled']),
             monitor_state = dict(type='str', choices=['enabled', 'disabled']),
             pool = dict(type='str', required=True),
-            partition = dict(type='str', default='Common'),
             host = dict(type='str', required=True, aliases=['address', 'name']),
             port = dict(type='int', required=True),
             connection_limit = dict(type='int'),
             description = dict(type='str'),
             rate_limit = dict(type='int'),
             ratio = dict(type='int')
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
         supports_check_mode=True
     )
 
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
-
-    server = module.params['server']
-    user = module.params['user']
-    password = module.params['password']
-    validate_certs = module.params['validate_certs']
-    state = module.params['state']
+    (server,user,password,state,partition,validate_certs) = f5_parse_arguments(module)
     session_state = module.params['session_state']
     monitor_state = module.params['monitor_state']
-    partition = module.params['partition']
-    pool = "/%s/%s" % (partition, module.params['pool'])
+    pool = fq_name(partition, module.params['pool'])
     connection_limit = module.params['connection_limit']
     description = module.params['description']
     rate_limit = module.params['rate_limit']
     ratio = module.params['ratio']
     host = module.params['host']
-    address = "/%s/%s" % (partition, host)
+    address = fq_name(partition, host)
     port = module.params['port']
 
-    if not validate_certs:
-        disable_ssl_cert_validation()
 
     # sanity check user supplied values
 
@@ -457,5 +424,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 main()
 

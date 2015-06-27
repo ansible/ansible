@@ -21,7 +21,7 @@
 
 DOCUMENTATION = '''
 ---
-author: '"Alexander Bulimov (@abulimov)" <lazywolf0@gmail.com>'
+author: "Alexander Bulimov (@abulimov)"
 module: lvg
 short_description: Configure LVM volume groups
 description:

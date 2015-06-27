@@ -20,7 +20,7 @@
 DOCUMENTATION = '''
 ---
 module: ovirt
-author: '"Vincent Van der Kussen (@vincentvdk)" <vincent at vanderkussen.org>'
+author: "Vincent Van der Kussen (@vincentvdk)"
 short_description: oVirt/RHEV platform management
 description:
     - allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform

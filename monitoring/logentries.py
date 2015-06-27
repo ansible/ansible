@@ -19,7 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: logentries
-author: '"Ivan Vanderbyl (@ivanvanderbyl)" <ivan@app.io>'
+author: "Ivan Vanderbyl (@ivanvanderbyl)"
 short_description: Module for tracking logs via logentries.com
 description:
     - Sends logs to LogEntries in realtime

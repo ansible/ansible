@@ -20,7 +20,7 @@
 
 DOCUMENTATION = '''
 ---
-author: '"Alexander Bulimov (@abulimov)" <lazywolf0@gmail.com>'
+author: "Alexander Bulimov (@abulimov)"
 module: filesystem
 short_description: Makes file system on block device
 description:

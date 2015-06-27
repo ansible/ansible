@@ -25,7 +25,7 @@ short_description: Manages security group rules on Apache CloudStack based cloud
 description:
     - Add and remove security group rules.
 version_added: '2.0'
-author: '"René Moser (@resmo)" <mail@renemoser.net>'
+author: "René Moser (@resmo)"
 options:
   security_group:
     description:

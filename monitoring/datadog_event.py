@@ -14,7 +14,7 @@ description:
 - "Allows to post events to DataDog (www.datadoghq.com) service."
 - "Uses http://docs.datadoghq.com/api/#events API."
 version_added: "1.3"
-author: '"Artūras `arturaz` Šlajus (@arturaz)" <x11@arturaz.net>'
+author: "Artūras `arturaz` Šlajus (@arturaz)"
 notes: []
 requirements: [urllib2]
 options:
@@ -71,7 +71,7 @@ datadog_event: title="Testing from ansible" text="Test!" priority="low"
 # Post an event with several tags
 datadog_event: title="Testing from ansible" text="Test!"
                api_key="6873258723457823548234234234"
-               tags=aa,bb,cc
+               tags=aa,bb,#host:{{ inventory_hostname }}
 '''
 
 import socket
@@ -86,7 +86,7 @@ def main():
             priority=dict(
                 required=False, default='normal', choices=['normal', 'low']
             ),
-            tags=dict(required=False, default=None),
+            tags=dict(required=False, default=None, type='list'),
             alert_type=dict(
                 required=False, default='info',
                 choices=['error', 'warning', 'info', 'success']
@@ -116,7 +116,7 @@ def post_event(module):
     if module.params['date_happened'] != None:
         body['date_happened'] = module.params['date_happened']
     if module.params['tags'] != None:
-        body['tags'] = module.params['tags'].split(",")
+        body['tags'] = module.params['tags']
     if module.params['aggregation_key'] != None:
         body['aggregation_key'] = module.params['aggregation_key']
     if module.params['source_type_name'] != None:

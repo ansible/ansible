@@ -25,7 +25,7 @@ short_description: Manages VM snapshots on Apache CloudStack based clouds.
 description:
     - Create, remove and revert VM from snapshots.
 version_added: '2.0'
-author: '"René Moser (@resmo)" <mail@renemoser.net>'
+author: "René Moser (@resmo)"
 options:
   name:
     description:

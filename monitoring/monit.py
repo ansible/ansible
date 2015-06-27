@@ -39,7 +39,7 @@ options:
     default: null
     choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded" ]
 requirements: [ ]
-author: '"Darryl Stoflet (@dstoflet)" <stoflet@gmail.com>'
+author: "Darryl Stoflet (@dstoflet)" 
 '''
 
 EXAMPLES = '''
@@ -77,7 +77,7 @@ def main():
             # Process 'name'    Running - restart pending
             parts = line.split()
             if len(parts) > 2 and parts[0].lower() == 'process' and parts[1] == "'%s'" % name:
-                return ' '.join(parts[2:])
+                return ' '.join(parts[2:]).lower()
         else:
             return ''
 
@@ -86,7 +86,8 @@ def main():
         module.run_command('%s %s %s' % (MONIT, command, name), check_rc=True)
         return status()
 
-    present = status() != ''
+    process_status = status()
+    present = process_status != ''
 
     if not present and not state == 'present':
         module.fail_json(msg='%s process not presently configured with monit' % name, name=name, state=state)
@@ -102,7 +103,7 @@ def main():
                 module.exit_json(changed=True, name=name, state=state)
         module.exit_json(changed=False, name=name, state=state)
 
-    running = 'running' in status()
+    running = 'running' in process_status 
 
     if running and state in ['started', 'monitored']:
         module.exit_json(changed=False, name=name, state=state)
@@ -119,7 +120,7 @@ def main():
         if module.check_mode:
             module.exit_json(changed=True)
         status = run_command('unmonitor')
-        if status in ['not monitored']:
+        if status in ['not monitored'] or 'unmonitor pending' in status:
             module.exit_json(changed=True, name=name, state=state)
         module.fail_json(msg='%s process not unmonitored' % name, status=status)
 

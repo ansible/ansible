@@ -30,7 +30,7 @@ requirements:
   - pyhcl
   - requests
 version_added: "2.0"
-author: '"Steve Gargan (@sgargan)" <steve.gargan@gmail.com>'
+author: "Steve Gargan (@sgargan)"
 options:
     mgmt_token:
         description:
