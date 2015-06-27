@@ -110,7 +110,7 @@ EXAMPLES='''
 - bundler: state=present deployment=yes
 
 # Installs gems using a Gemfile in another directory
-- bunlder: state=present gemfile=../rails_project/Gemfile
+- bundler: state=present gemfile=../rails_project/Gemfile
 
 # Updates Gemfile in another directory
 - bundler: state=latest chdir=~/rails_project
