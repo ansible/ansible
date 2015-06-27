@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import itertools
 from six import string_types
 
 from ansible.errors import AnsibleError
@@ -67,7 +68,7 @@ class Taggable:
                 else:
                     tags = set([tags])
             else:
-                tags = set(tags)
+                tags = [i for i,_ in itertools.groupby(tags)]
         else:
             # this makes intersection work for untagged
             tags = self.__class__.untagged

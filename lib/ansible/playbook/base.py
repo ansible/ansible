@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import itertools
 import uuid
 
 from functools import partial
@@ -232,6 +233,10 @@ class Base:
         new_me._loader           = self._loader
         new_me._variable_manager = self._variable_manager
 
+        # if the ds value was set on the object, copy it to the new copy too
+        if hasattr(self, '_ds'):
+            new_me._ds = self._ds
+
         return new_me
 
     def post_validate(self, templar):
@@ -340,7 +345,8 @@ class Base:
         if not isinstance(new_value, list):
             new_value = [ new_value ]
 
-        return list(set(value + new_value))
+        #return list(set(value + new_value))
+        return [i for i,_ in itertools.groupby(value + new_value)]
 
     def __getstate__(self):
         return self.serialize()
