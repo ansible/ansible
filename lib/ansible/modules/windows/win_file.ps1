@@ -56,7 +56,7 @@ If ( $state -eq "touch" )
     }
     Else
     {
-        echo $null > $file
+        echo $null > $path
     }
     $result.changed = $TRUE
 }
