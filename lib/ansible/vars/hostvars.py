@@ -26,22 +26,19 @@ __all__ = ['HostVars']
 class HostVars(dict):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, vars_manager, inventory, loader):
+    def __init__(self, vars_manager, play, inventory, loader):
         self._vars_manager = vars_manager
+        self._play         = play
         self._inventory    = inventory
         self._loader       = loader
         self._lookup       = {}
-
-        #self.update(vars_cache)
 
     def __getitem__(self, host_name):
         
         if host_name not in self._lookup:
             host = self._inventory.get_host(host_name)
-            result = self._vars_manager.get_vars(loader=self._loader, host=host)
-            #result.update(self._vars_cache.get(host, {}))
-            #templar = Templar(variables=self._vars_cache, loader=self._loader)
-            #self._lookup[host] = templar.template(result)
-            self._lookup[host_name] = result
+            result = self._vars_manager.get_vars(loader=self._loader, play=self._play, host=host)
+            templar = Templar(variables=result, loader=self._loader)
+            self._lookup[host_name] = templar.template(result)
         return self._lookup[host_name]
 
