@@ -195,7 +195,7 @@ def core(module):
             records = domain.records()
             at_record = None
             for record in records:
-                if record.name == "@":
+                if record.name == "@" and record.record_type == 'A':
                     at_record = record
 
             if not at_record.data == getkeyordie("ip"):
