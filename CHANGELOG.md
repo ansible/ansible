@@ -145,7 +145,7 @@ Major changes:
 * Added travis integration to github for basic tests, this should speed up ticket triage and merging.
 * environment: directive now can also be applied to play and is inhertited by tasks, which can still override it.
 * expanded facts and OS/distribution support for existing facts and improved performance with pypy.
-* new 'wantlist' option to lookups allows for selecting a list typed variable vs a command delimited string as the return.
+* new 'wantlist' option to lookups allows for selecting a list typed variable vs a comma delimited string as the return.
 * the shared module code for file backups now uses a timestamp resolution of seconds (previouslly minutes).
 * allow for empty inventories, this is now a warning and not an error (for those using localhost and cloud modules).
 * sped up YAML parsing in ansible by up to 25% by switching to CParser loader.
