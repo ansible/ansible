@@ -62,7 +62,7 @@ Else {
         
         $stream = New-Object System.IO.StreamReader($response.GetResponseStream())
         
-        $stream.ReadToEnd() | Set-Content -Path $dest -Force
+        $stream.ReadToEnd() | Set-Content -Path $dest -Force -ErrorAction Stop
         
         $result.changed = $true
     }
