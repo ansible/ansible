@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import string_types
+
 from ansible.errors import AnsibleError, AnsibleParserError
 
 from ansible.playbook.attribute import Attribute, FieldAttribute
@@ -57,7 +59,7 @@ class Play(Base, Taggable, Become):
 
     # Connection
     _gather_facts        = FieldAttribute(isa='string', default='smart')
-    _hosts               = FieldAttribute(isa='list', default=[], required=True)
+    _hosts               = FieldAttribute(isa='list', default=[], required=True, listof=string_types)
     _name                = FieldAttribute(isa='string', default='')
 
     # Variable Attributes
@@ -120,6 +122,28 @@ class Play(Base, Taggable, Become):
             ds['vars_prompt'] = [ ds['vars_prompt'] ]
 
         return super(Play, self).preprocess_data(ds)
+
+    def _load_hosts(self, attr, ds):
+        '''
+        Loads the hosts from the given datastructure, which might be a list
+        or a simple string. We also switch integers in this list back to strings,
+        as the YAML parser will turn things that look like numbers into numbers.
+        '''
+
+        if isinstance(ds, (string_types, int)):
+            ds = [ ds ]
+
+        if not isinstance(ds, list):
+            raise AnsibleParserError("'hosts' must be specified as a list or a single pattern", obj=ds)
+
+        # YAML parsing of things that look like numbers may have
+        # resulted in integers showing up in the list, so convert
+        # them back to strings to prevent problems
+        for idx,item in enumerate(ds):
+            if isinstance(item, int):
+                ds[idx] = "%s" % item
+
+        return ds
 
     def _load_vars(self, attr, ds):
         '''
