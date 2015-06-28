@@ -17,14 +17,13 @@
 
 ########################################################
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.cli import CLI
-from ansible.utils.display import Display
 from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
 
