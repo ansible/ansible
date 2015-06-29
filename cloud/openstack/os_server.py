@@ -90,6 +90,11 @@ options:
         - Ensure instance has public ip however the cloud wants to do that
      required: false
      default: 'yes'
+   auto_floating_ip:
+     description:
+        - If the module should automatically assign a floating IP
+     required: false
+     default: 'yes'
    floating_ips:
      description:
         - list of valid floating IPs that pre-exist to assign to this node
