@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from functools import partial
+import types
 
 try:
     import netaddr
@@ -319,7 +320,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
         return False
 
     # Check if value is a list and parse each element
-    elif isinstance(value, (list, tuple)):
+    elif isinstance(value, (list, tuple, types.GeneratorType)):
 
         _ret = []
         for element in value:
@@ -457,7 +458,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
 
 def ipwrap(value, query = ''):
     try:
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, (list, tuple, types.GeneratorType)):
             _ret = []
             for element in value:
                 if ipaddr(element, query, version = False, alias = 'ipwrap'):
