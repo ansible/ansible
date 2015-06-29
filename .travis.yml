@@ -13,5 +13,6 @@ install:
   - pip install tox
 script:
   - tox
+  - make -C docsite all
 after_success:
   - coveralls
