@@ -80,8 +80,8 @@ in your infrastructure, usage of dynamic inventory is a great idea in general.
 
 .. _staging_vs_prod:
 
-How to Differentiate  Staging vs Production
-`````````````````````````````````````````
+How to Differentiate Staging vs Production
+``````````````````````````````````````````
 
 If managing static inventory, it is frequently asked how to differentiate different types of environments.  The following example
 shows a good way to do this.  Similar methods of grouping could be adapted to dynamic inventory (for instance, consider applying the AWS
