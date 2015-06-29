@@ -1117,10 +1117,14 @@ class Ec2Inventory(object):
 
             # Target: Almost everything
             elif key == 'ec2_security_groups':
-                sg_ids = []
-                for sg in value:
-                    sg_ids.append(sg['SecurityGroupId'])
-                host_info["ec2_security_group_ids"] = ','.join([str(i) for i in sg_ids])
+
+                # Skip if SecurityGroups is None
+                # (it is possible to have the key defined but no value in it).
+                if value is not None:
+                    sg_ids = []
+                    for sg in value:
+                        sg_ids.append(sg['SecurityGroupId'])
+                    host_info["ec2_security_group_ids"] = ','.join([str(i) for i in sg_ids])
 
             # Target: Everything
             # Preserve booleans and integers
