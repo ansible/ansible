@@ -40,9 +40,10 @@ options:
       - C(present), create the zone.
       - C(running), if the zone already exists, boot it, otherwise, create the zone
           first, then boot it.
+      - C(started), synonym for C(running).
       - C(stopped), shutdown a zone.
       - C(absent), destroy the zone.
-    choices: ['present', 'running', 'stopped', 'absent']
+    choices: ['present', 'started', 'running', 'stopped', 'absent']
   name:
     description:
       - Zone name.
@@ -53,11 +54,11 @@ options:
         used otherwise.
     required: false
     default: null
-  whole_root:
+  sparse:
     description:
-      - Whether to create a whole root (C(true)) or sparse root (C(false)) zone.
+      - Whether to create a sparse (C(true)) or whole root (C(false)) zone.
     required: false
-    default: true
+    default: false
   root_password:
     description:
       - The password hash for the root account. If not specified, the zone's root account
@@ -89,11 +90,11 @@ options:
 
 EXAMPLES = '''
 # Create a zone, but don't boot it
-solaris_zone: name=zone1 state=present path=/zones/zone1 whole_root=true root_password="Be9oX7OSwWoU."
+solaris_zone: name=zone1 state=present path=/zones/zone1 sparse=true root_password="Be9oX7OSwWoU."
       config='set autoboot=true, add net, set physical=bge0, set address=10.1.1.1, end'
 
 # Create a zone and boot it
-solaris_zone: name=zone1 state=running path=/zones/zone1 whole_root=true root_password="Be9oX7OSwWoU."
+solaris_zone: name=zone1 state=running path=/zones/zone1 root_password="Be9oX7OSwWoU."
       config='set autoboot=true, add net, set physical=bge0, set address=10.1.1.1, end'
 
 # Boot an already created zone
@@ -114,7 +115,7 @@ class Zone(object):
         self.module         = module
         self.path           = self.module.params['path']
         self.name           = self.module.params['name']
-        self.whole_root     = self.module.params['whole_root']
+        self.sparse         = self.module.params['sparse']
         self.root_password  = self.module.params['root_password']
         self.timeout        = self.module.params['timeout']
         self.config         = self.module.params['config']
@@ -130,12 +131,12 @@ class Zone(object):
 
         t = tempfile.NamedTemporaryFile(delete = False)
 
-        if self.whole_root:
-            t.write('create -b %s\n' % self.create_options)
-            self.msg.append('creating whole root zone')
-        else:
+        if self.sparse:
             t.write('create %s\n' % self.create_options)
             self.msg.append('creating sparse root zone')
+        else:
+            t.write('create -b %s\n' % self.create_options)
+            self.msg.append('creating whole root zone')
 
         t.write('set zonepath=%s\n' % self.path)
 
@@ -321,9 +322,9 @@ def main():
     module = AnsibleModule(
         argument_spec      = dict(
             name           = dict(required=True),
-            state          = dict(required=True, choices=['running', 'present', 'stopped', 'absent']),
+            state          = dict(default=None, choices=['running', 'started', 'present', 'stopped', 'absent']),
             path           = dict(defalt=None),
-            whole_root     = dict(default=True, type='bool'),
+            sparse         = dict(default=False, type='bool'),
             root_password  = dict(default=None),
             timeout        = dict(default=600, type='int'),
             config         = dict(default=None, type='list'),
@@ -343,7 +344,7 @@ def main():
     
     state = module.params['state']
 
-    if state == 'running':
+    if state == 'running' or state == 'started':
         zone.state_running()
     elif state == 'present':
         zone.state_present()
