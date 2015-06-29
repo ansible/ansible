@@ -25,7 +25,7 @@ short_description: Manages security groups on Apache CloudStack based clouds.
 description:
     - Create and remove security groups.
 version_added: '2.0'
-author: René Moser
+author: "René Moser (@resmo)"
 options:
   name:
     description:
@@ -51,13 +51,11 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Create a security group
 - local_action:
     module: cs_securitygroup
     name: default
     description: default security group
-
 
 # Remove a security group
 - local_action:
@@ -94,9 +92,6 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
         self.security_group = None
 
 
@@ -104,7 +99,7 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
         if not self.security_group:
             sg_name = self.module.params.get('name')
             args = {}
-            args['projectid'] = self.get_project_id()
+            args['projectid'] = self.get_project('id')
             sgs = self.cs.listSecurityGroups(**args)
             if sgs:
                 for s in sgs['securitygroup']:
@@ -121,7 +116,7 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
 
             args = {}
             args['name'] = self.module.params.get('name')
-            args['projectid'] = self.get_project_id()
+            args['projectid'] = self.get_project('id')
             args['description'] = self.module.params.get('description')
 
             if not self.module.check_mode:
@@ -140,7 +135,7 @@ class AnsibleCloudStackSecurityGroup(AnsibleCloudStack):
 
             args = {}
             args['name'] = self.module.params.get('name')
-            args['projectid'] = self.get_project_id()
+            args['projectid'] = self.get_project('id')
 
             if not self.module.check_mode:
                 res = self.cs.deleteSecurityGroup(**args)
@@ -167,9 +162,13 @@ def main():
             state = dict(choices=['present', 'absent'], default='present'),
             project = dict(default=None),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_together = (
+            ['api_key', 'api_secret', 'api_url'],
         ),
         supports_check_mode=True
     )
@@ -190,6 +189,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 

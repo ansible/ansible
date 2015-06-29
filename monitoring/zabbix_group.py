@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# (c) 2014, René Moser <mail@renemoser.net>
+#
+# (c) 2013-2014, Epic Games, Inc.
 #
 # This file is part of Ansible
 #
@@ -22,191 +22,188 @@
 DOCUMENTATION = '''
 ---
 module: zabbix_group
-short_description: Add or remove a host group to Zabbix.
+short_description: Zabbix host groups creates/deletes
 description:
-    - This module uses the Zabbix API to add and remove host groups.
-version_added: '1.8'
-requirements: [ 'zabbix-api' ]
+   - Create host groups if they do not exist.
+   - Delete existing host groups if they exist.
+version_added: "1.8"
+author:
+    - "(@cove)"
+    - "Tony Minfei Ding"
+    - "Harrison Gu (@harrisongu)"
+requirements:
+    - "python >= 2.6"
+    - zabbix-api
 options:
-    state:
-        description:
-            - Whether the host group should be added or removed.
-        required: false
-        default: present
-        choices: [ 'present', 'absent' ]
-    host_group:
-        description:
-            - Name of the host group to be added or removed.
-        required: true
-        default: null
-        aliases: [ ]
     server_url:
         description:
-            - Url of Zabbix server, with protocol (http or https) e.g.
-              https://monitoring.example.com/zabbix. C(url) is an alias
-              for C(server_url). If not set environment variable
-              C(ZABBIX_SERVER_URL) is used.
+            - Url of Zabbix server, with protocol (http or https).
+              C(url) is an alias for C(server_url).
         required: true
-        default: null
-        aliases: [ 'url' ]
+        aliases: [ "url" ]
     login_user:
         description:
-            - Zabbix user name. If not set environment variable
-              C(ZABBIX_LOGIN_USER) is used.
+            - Zabbix user name.
         required: true
-        default: null
     login_password:
         description:
-            - Zabbix user password. If not set environment variable
-              C(ZABBIX_LOGIN_PASSWORD) is used.
+            - Zabbix user password.
         required: true
+    state:
+        description:
+            - Create or delete host group.
+        required: false
+        default: "present"
+        choices: [ "present", "absent" ]
+    timeout:
+        description:
+            - The timeout of API request(seconds).
+        default: 10
+    host_groups:
+        description:
+            - List of host groups to create or delete.
+        required: true
+        aliases: [ "host_group" ]
 notes:
-    - The module has been tested with Zabbix Server 2.2.
-author: René Moser
+    - Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.
 '''
 
 EXAMPLES = '''
----
-# Add a new host group to Zabbix
-- zabbix_group: host_group='Linux servers'
-               server_url=https://monitoring.example.com/zabbix
-               login_user=ansible
-               login_password=secure
+# Base create host groups example
+- name: Create host groups
+  local_action:
+    module: zabbix_group
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    state: present
+    host_groups:
+      - Example group1
+      - Example group2
 
-# Add a new host group, login data is provided by environment variables:
-# ZABBIX_LOGIN_USER, ZABBIX_LOGIN_PASSWORD, ZABBIX_SERVER_URL:
-- zabbix_group: host_group=Webservers
-
-# Remove a host group from Zabbix
-- zabbix_group: host_group='Linux servers'
-               state=absent
-               server_url=https://monitoring.example.com/zabbix
-               login_user=ansible
-               login_password=secure
+# Limit the Zabbix group creations to one host since Zabbix can return an error when doing concurent updates
+- name: Create host groups
+  local_action:
+    module: zabbix_group
+    server_url: http://monitor.example.com
+    login_user: username
+    login_password: password
+    state: present
+    host_groups:
+      - Example group1
+      - Example group2
+  when: inventory_hostname==groups['group_name'][0]
 '''
 
 try:
-    from zabbix_api import ZabbixAPI
+    from zabbix_api import ZabbixAPI, ZabbixAPISubClass
+    from zabbix_api import Already_Exists
+
     HAS_ZABBIX_API = True
 except ImportError:
     HAS_ZABBIX_API = False
 
 
-def create_group(zbx, host_group):
-    try:
-        result = zbx.hostgroup.create(
-            {
-                'name': host_group
-            }
-        )
-    except BaseException as e:
-        return 1, None, str(e)
-    return 0, result['groupids'], None
+class HostGroup(object):
+    def __init__(self, module, zbx):
+        self._module = module
+        self._zapi = zbx
 
+    # create host group(s) if not exists
+    def create_host_group(self, group_names):
+        try:
+            group_add_list = []
+            for group_name in group_names:
+                result = self._zapi.hostgroup.exists({'name': group_name})
+                if not result:
+                    try:
+                        if self._module.check_mode:
+                            self._module.exit_json(changed=True)
+                        self._zapi.hostgroup.create({'name': group_name})
+                        group_add_list.append(group_name)
+                    except Already_Exists:
+                        return group_add_list
+            return group_add_list
+        except Exception, e:
+            self._module.fail_json(msg="Failed to create host group(s): %s" % e)
 
-def get_group(zbx, host_group):
-    try:
-        result = zbx.hostgroup.get(
-            {
-                'filter':
-                {
-                    'name': host_group,
-                }
-            }
-        )
-    except BaseException as e:
-        return 1, None, str(e)
+    # delete host group(s)
+    def delete_host_group(self, group_ids):
+        try:
+            if self._module.check_mode:
+                self._module.exit_json(changed=True)
+            self._zapi.hostgroup.delete(group_ids)
+        except Exception, e:
+            self._module.fail_json(msg="Failed to delete host group(s), Exception: %s" % e)
 
-    return 0, result[0]['groupid'], None
+    # get group ids by name
+    def get_group_ids(self, host_groups):
+        group_ids = []
 
-
-def delete_group(zbx, group_id):
-    try:
-        zbx.hostgroup.delete([ group_id ])
-    except BaseException as e:
-        return 1, None, str(e)
-    return 0, None, None
-
-
-def check_group(zbx, host_group):
-    try:
-        result = zbx.hostgroup.exists(
-            {
-                'name': host_group
-            }
-        )
-    except BaseException as e:
-        return 1, None, str(e)
-    return 0, result, None
+        group_list = self._zapi.hostgroup.get({'output': 'extend', 'filter': {'name': host_groups}})
+        for group in group_list:
+            group_id = group['groupid']
+            group_ids.append(group_id)
+        return group_ids, group_list
 
 
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default='present', choices=['present', 'absent']),
-            host_group=dict(required=True, default=None),
-            server_url=dict(default=None, aliases=['url']),
-            login_user=dict(default=None),
-            login_password=dict(default=None),
+            server_url=dict(required=True, aliases=['url']),
+            login_user=dict(required=True),
+            login_password=dict(required=True, no_log=True),
+            host_groups=dict(required=True, aliases=['host_group']),
+            state=dict(default="present", choices=['present','absent']),
+            timeout=dict(type='int', default=10)
         ),
-        supports_check_mode=True,
+        supports_check_mode=True
     )
 
     if not HAS_ZABBIX_API:
-        module.fail_json(msg='Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)')
+        module.fail_json(msg="Missing requried zabbix-api module (check docs or install with: pip install zabbix-api)")
 
-    try:
-        login_user = module.params['login_user'] or os.environ['ZABBIX_LOGIN_USER']
-        login_password = module.params['login_password'] or os.environ['ZABBIX_LOGIN_PASSWORD']
-        server_url = module.params['server_url'] or os.environ['ZABBIX_SERVER_URL']
-    except KeyError, e:
-        module.fail_json(msg='Missing login data: %s is not set.' % e.message)
-
-    host_group = module.params['host_group']
+    server_url = module.params['server_url']
+    login_user = module.params['login_user']
+    login_password = module.params['login_password']
+    host_groups = module.params['host_groups']
     state = module.params['state']
+    timeout = module.params['timeout']
 
+    zbx = None
+
+    # login to zabbix
     try:
-        zbx = ZabbixAPI(server_url)
+        zbx = ZabbixAPI(server_url, timeout=timeout)
         zbx.login(login_user, login_password)
-    except BaseException as e:
-        module.fail_json(msg='Failed to connect to Zabbix server: %s' % e)
+    except Exception, e:
+        module.fail_json(msg="Failed to connect to Zabbix server: %s" % e)
 
-    changed = False
-    msg = ''
+    hostGroup = HostGroup(module, zbx)
 
-    if state == 'present':
-        (rc, exists, error) = check_group(zbx, host_group)
-        if rc != 0:
-            module.fail_json(msg='Failed to check host group %s existance: %s' % (host_group, error))
-        if not exists:
-            if module.check_mode:
-                changed = True
-            else:
-                (rc, group, error) = create_group(zbx, host_group)
-                if rc == 0:
-                    changed = True
-                else:
-                    module.fail_json(msg='Failed to get host group: %s' % error)
+    group_ids = []
+    group_list = []
+    if host_groups:
+        group_ids, group_list = hostGroup.get_group_ids(host_groups)
 
-    if state == 'absent':
-        (rc, exists, error) = check_group(zbx, host_group)
-        if rc != 0:
-            module.fail_json(msg='Failed to check host group %s existance: %s' % (host_group, error))
-        if exists:
-            if module.check_mode:
-                changed = True
-            else:
-                (rc, group_id, error) = get_group(zbx, host_group)
-                if rc != 0:
-                    module.fail_json(msg='Failed to get host group: %s' % error)
-
-                (rc, _, error) = delete_group(zbx, group_id)
-                if rc == 0:
-                    changed = True
-                else:
-                    module.fail_json(msg='Failed to remove host group: %s' % error)
-
-    module.exit_json(changed=changed)
+    if state == "absent":
+        # delete host groups
+        if group_ids:
+            delete_group_names = []
+            hostGroup.delete_host_group(group_ids)
+            for group in group_list:
+                delete_group_names.append(group['name'])
+            module.exit_json(changed=True,
+                             result="Successfully deleted host group(s): %s." % ",".join(delete_group_names))
+        else:
+            module.exit_json(changed=False, result="No host group(s) to delete.")
+    else:
+        # create host groups
+        group_add_list = hostGroup.create_host_group(host_groups)
+        if len(group_add_list) > 0:
+            module.exit_json(changed=True, result="Successfully created host group(s): %s" % group_add_list)
+        else:
+            module.exit_json(changed=False)
 
 from ansible.module_utils.basic import *
 main()

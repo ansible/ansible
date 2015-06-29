@@ -20,7 +20,7 @@
 DOCUMENTATION = """
 module: consul
 short_description: "Add, modify & delete services within a consul cluster.
-  See http://conul.io for more details."
+  See http://consul.io for more details."
 description:
  - registers services and checks for an agent with a consul cluster. A service
    is some process running on the agent node that should be advertised by
@@ -38,10 +38,11 @@ description:
    changed occurred. An api method is planned to supply this metadata so at that
    stage change management will be added.
 requirements:
+  - "python >= 2.6"
   - python-consul
   - requests
-version_added: "1.9"
-author: Steve Gargan (steve.gargan@gmail.com)
+version_added: "2.0"
+author: "Steve Gargan (@sgargan)" 
 options:
     state:
         description:

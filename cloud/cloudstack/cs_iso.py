@@ -25,7 +25,7 @@ short_description: Manages ISOs images on Apache CloudStack based clouds.
 description:
     - Register and remove ISO images.
 version_added: '2.0'
-author: René Moser
+author: "René Moser (@resmo)"
 options:
   name:
     description:
@@ -73,6 +73,16 @@ options:
       - Register the ISO to be bootable. Only used if C(state) is present.
     required: false
     default: true
+  domain:
+    description:
+      - Domain the ISO is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the ISO is related to.
+    required: false
+    default: null
   project:
     description:
       - Name of the project the ISO to be registered in.
@@ -99,7 +109,6 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
 # Register an ISO if ISO name does not already exist.
 - local_action:
     module: cs_iso
@@ -107,22 +116,19 @@ EXAMPLES = '''
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
     os_type: Debian GNU/Linux 7(64-bit)
 
-
 # Register an ISO with given name if ISO md5 checksum does not already exist.
 - local_action:
     module: cs_iso
     name: Debian 7 64-bit
     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
-    os_type:    
+    os_type: Debian GNU/Linux 7(64-bit)
     checksum: 0b31bccccb048d20b551f70830bb7ad0
-
 
 # Remove an ISO by name
 - local_action:
     module: cs_iso
     name: Debian 7 64-bit
     state: absent
-
 
 # Remove an ISO by checksum
 - local_action:
@@ -169,6 +175,21 @@ created:
   returned: success
   type: string
   sample: 2015-03-29T14:57:06+0200
+domain:
+  description: Domain the ISO is related to.
+  returned: success
+  type: string
+  sample: example domain
+account:
+  description: Account the ISO is related to.
+  returned: success
+  type: string
+  sample: example account
+project:
+  description: Project the ISO is related to.
+  returned: success
+  type: string
+  sample: example project
 '''
 
 try:
@@ -185,33 +206,32 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
         self.iso = None
 
     def register_iso(self):
         iso = self.get_iso()
         if not iso:
-            args = {}
-            args['zoneid'] = self.get_zone_id()
-            args['projectid'] = self.get_project_id()
 
-            args['bootable'] = self.module.params.get('bootable')
-            args['ostypeid'] = self.get_os_type_id()
+            args                            = {}
+            args['zoneid']                  = self.get_zone('id')
+            args['domainid']                = self.get_domain('id')
+            args['account']                 = self.get_account('name')
+            args['projectid']               = self.get_project('id')
+            args['bootable']                = self.module.params.get('bootable')
+            args['ostypeid']                = self.get_os_type('id')
+            args['name']                    = self.module.params.get('name')
+            args['displaytext']             = self.module.params.get('name')
+            args['checksum']                = self.module.params.get('checksum')
+            args['isdynamicallyscalable']   = self.module.params.get('is_dynamically_scalable')
+            args['isfeatured']              = self.module.params.get('is_featured')
+            args['ispublic']                = self.module.params.get('is_public')
+
             if args['bootable'] and not args['ostypeid']:
                 self.module.fail_json(msg="OS type 'os_type' is requried if 'bootable=true'.")
 
             args['url'] = self.module.params.get('url')
             if not args['url']:
                 self.module.fail_json(msg="URL is requried.")
-
-            args['name'] = self.module.params.get('name')
-            args['displaytext'] = self.module.params.get('name')
-            args['checksum'] = self.module.params.get('checksum')
-            args['isdynamicallyscalable'] = self.module.params.get('is_dynamically_scalable')
-            args['isfeatured'] = self.module.params.get('is_featured')
-            args['ispublic'] = self.module.params.get('is_public')
 
             self.result['changed'] = True
             if not self.module.check_mode:
@@ -222,11 +242,14 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
 
     def get_iso(self):
         if not self.iso:
-            args = {}
-            args['isready'] = self.module.params.get('is_ready')
-            args['isofilter'] = self.module.params.get('iso_filter')
-            args['projectid'] = self.get_project_id()
-            args['zoneid'] = self.get_zone_id()
+
+            args                = {}
+            args['isready']     = self.module.params.get('is_ready')
+            args['isofilter']   = self.module.params.get('iso_filter')
+            args['domainid']    = self.get_domain('id')
+            args['account']     = self.get_account('name')
+            args['projectid']   = self.get_project('id')
+            args['zoneid']      = self.get_zone('id')
 
             # if checksum is set, we only look on that.
             checksum = self.module.params.get('checksum')
@@ -249,10 +272,12 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
         iso = self.get_iso()
         if iso:
             self.result['changed'] = True
-            args = {}
-            args['id'] = iso['id']
-            args['projectid'] = self.get_project_id()
-            args['zoneid'] = self.get_zone_id()
+
+            args                = {}
+            args['id']          = iso['id']
+            args['projectid']   = self.get_project('id')
+            args['zoneid']      = self.get_zone('id')
+
             if not self.module.check_mode:
                 res = self.cs.deleteIso(**args)
         return iso
@@ -274,17 +299,25 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 self.result['is_ready'] = iso['isready']
             if 'created' in iso:
                 self.result['created'] = iso['created']
+            if 'project' in iso:
+                self.result['project'] = iso['project']
+            if 'domain' in iso:
+                self.result['domain'] = iso['domain']
+            if 'account' in iso:
+                self.result['account'] = iso['account']
         return self.result
 
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, default=None),
+            name = dict(required=True),
             url = dict(default=None),
             os_type = dict(default=None),
             zone = dict(default=None),
             iso_filter = dict(default='self', choices=[ 'featured', 'self', 'selfexecutable','sharedexecutable','executable', 'community' ]),
+            domain = dict(default=None),
+            account = dict(default=None),
             project = dict(default=None),
             checksum = dict(default=None),
             is_ready = dict(choices=BOOLEANS, default=False),
@@ -293,9 +326,13 @@ def main():
             is_dynamically_scalable = dict(choices=BOOLEANS, default=False),
             state = dict(choices=['present', 'absent'], default='present'),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_together = (
+            ['api_key', 'api_secret', 'api_url'],
         ),
         supports_check_mode=True
     )
@@ -316,6 +353,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 

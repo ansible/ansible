@@ -23,9 +23,9 @@ DOCUMENTATION = '''
 module: cs_instance
 short_description: Manages instances and virtual machines on Apache CloudStack based clouds.
 description:
-    - Deploy, start, restart, stop and destroy instances on Apache CloudStack, Citrix CloudPlatform and Exoscale.
+    - Deploy, start, restart, stop and destroy instances.
 version_added: '2.0'
-author: René Moser
+author: "René Moser (@resmo)"
 options:
   name:
     description:
@@ -49,22 +49,29 @@ options:
     choices: [ 'deployed', 'started', 'stopped', 'restarted', 'destroyed', 'expunged', 'present', 'absent' ]
   service_offering:
     description:
-      - Name or id of the service offering of the new instance. If not set, first found service offering is used.
+      - Name or id of the service offering of the new instance.
+      - If not set, first found service offering is used.
     required: false
     default: null
   template:
     description:
-      - Name or id of the template to be used for creating the new instance. Required when using C(state=present). Mutually exclusive with C(ISO) option.
+      - Name or id of the template to be used for creating the new instance.
+      - Required when using C(state=present).
+      - Mutually exclusive with C(ISO) option.
     required: false
     default: null
   iso:
     description:
-      - Name or id of the ISO to be used for creating the new instance. Required when using C(state=present). Mutually exclusive with C(template) option.
+      - Name or id of the ISO to be used for creating the new instance.
+      - Required when using C(state=present).
+      - Mutually exclusive with C(template) option.
     required: false
     default: null
   hypervisor:
     description:
-      - Name the hypervisor to be used for creating the new instance. Relevant when using C(state=present) and option C(ISO) is used. If not set, first found hypervisor will be used.
+      - Name the hypervisor to be used for creating the new instance.
+      - Relevant when using C(state=present), but only considered if not set on ISO/template.
+      - If not set or found on ISO/template, first found hypervisor will be used.
     required: false
     default: null
     choices: [ 'KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM' ]
@@ -82,7 +89,7 @@ options:
     aliases: [ 'network' ]
   ip_address:
     description:
-      - IPv4 address for default instance's network during creation
+      - IPv4 address for default instance's network during creation.
     required: false
     default: null
   ip6_address:
@@ -106,6 +113,16 @@ options:
     required: false
     default: []
     aliases: [ 'security_group' ]
+  domain:
+    description:
+      - Domain the instance is related to.
+    required: false
+    default: null
+  account:
+    description:
+      - Account the instance is related to.
+    required: false
+    default: null
   project:
     description:
       - Name of the project the instance to be deployed in.
@@ -113,7 +130,8 @@ options:
     default: null
   zone:
     description:
-      - Name of the zone in which the instance shoud be deployed. If not set, default zone is used.
+      - Name of the zone in which the instance shoud be deployed.
+      - If not set, default zone is used.
     required: false
     default: null
   ssh_key:
@@ -138,7 +156,7 @@ options:
     description:
       - Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
     required: false
-    default: true
+    default: false
   tags:
     description:
       - List of tags. Tags are a list of dictionaries having keys C(key) and C(value).
@@ -154,8 +172,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
----
-# Create a instance on CloudStack from an ISO
+# Create a instance from an ISO
 # NOTE: Names of offerings and ISOs depending on the CloudStack configuration.
 - local_action:
     module: cs_instance
@@ -172,7 +189,6 @@ EXAMPLES = '''
       - Sync Integration
       - Storage Integration
 
-
 # For changing a running instance, use the 'force' parameter
 - local_action:
     module: cs_instance
@@ -181,7 +197,6 @@ EXAMPLES = '''
     iso: Linux Debian 7 64-bit
     service_offering: 2cpu_2gb
     force: yes
-
 
 # Create or update a instance on Exoscale's public cloud
 - local_action:
@@ -193,18 +208,12 @@ EXAMPLES = '''
     tags:
       - { key: admin, value: john }
       - { key: foo,   value: bar }
-  register: vm
-
-- debug: msg='default ip {{ vm.default_ip }} and is in state {{ vm.state }}'
-
 
 # Ensure a instance has stopped
 - local_action: cs_instance name=web-vm-1 state=stopped
 
-
 # Ensure a instance is running
 - local_action: cs_instance name=web-vm-1 state=started
-
 
 # Remove a instance
 - local_action: cs_instance name=web-vm-1 state=absent
@@ -248,10 +257,20 @@ password:
   type: string
   sample: Ge2oe7Do
 ssh_key:
-  description: Name of ssh key deployed to instance.
+  description: Name of SSH key deployed to instance.
   returned: success
   type: string
   sample: key@work
+domain:
+  description: Domain the instance is related to.
+  returned: success
+  type: string
+  sample: example domain
+account:
+  description: Account the instance is related to.
+  returned: success
+  type: string
+  sample: example account
 project:
   description: Name of project the instance is related to.
   returned: success
@@ -263,7 +282,7 @@ default_ip:
   type: string
   sample: 10.23.37.42
 public_ip:
-  description: Public IP address with instance via static nat rule.
+  description: Public IP address with instance via static NAT rule.
   returned: success
   type: string
   sample: 1.2.3.4
@@ -307,6 +326,16 @@ tags:
   returned: success
   type: dict
   sample: '[ { "key": "foo", "value": "bar" } ]'
+hypervisor:
+  description: Hypervisor related to this instance.
+  returned: success
+  type: string
+  sample: KVM
+instance_name:
+  description: Internal name of the instance (ROOT admin only).
+  returned: success
+  type: string
+  sample: i-44-3992-VM
 '''
 
 import base64
@@ -326,6 +355,8 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
         self.instance = None
+        self.template = None
+        self.iso = None
 
 
     def get_service_offering_id(self):
@@ -342,7 +373,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         self.module.fail_json(msg="Service offering '%s' not found" % service_offering)
 
 
-    def get_template_or_iso_id(self):
+    def get_template_or_iso(self, key=None):
         template = self.module.params.get('template')
         iso = self.module.params.get('iso')
 
@@ -352,20 +383,35 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if template and iso:
             self.module.fail_json(msg="Template are ISO are mutually exclusive.")
 
+        args                = {}
+        args['account']     = self.get_account('name')
+        args['domainid']    = self.get_domain('id')
+        args['projectid']   = self.get_project('id')
+        args['zoneid']      = self.get_zone('id')
+
         if template:
-            templates = self.cs.listTemplates(templatefilter='executable')
+            if self.template:
+                return self._get_by_key(key, self.template)
+
+            args['templatefilter'] = 'executable'
+            templates = self.cs.listTemplates(**args)
             if templates:
                 for t in templates['template']:
                     if template in [ t['displaytext'], t['name'], t['id'] ]:
-                        return t['id']
+                        self.template = t
+                        return self._get_by_key(key, self.template)
             self.module.fail_json(msg="Template '%s' not found" % template)
 
         elif iso:
-            isos = self.cs.listIsos()
+            if self.iso:
+                return self._get_by_key(key, self.iso)
+            args['isofilter'] = 'executable'
+            isos = self.cs.listIsos(**args)
             if isos:
                 for i in isos['iso']:
                     if iso in [ i['displaytext'], i['name'], i['id'] ]:
-                        return i['id']
+                        self.iso = i
+                        return self._get_by_key(key, self.iso)
             self.module.fail_json(msg="ISO '%s' not found" % iso)
 
 
@@ -375,7 +421,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if not disk_offering:
             return None
 
-        disk_offerings = self.cs.listDiskOfferings()
+        args                = {}
+        args['domainid']    = self.get_domain('id')
+
+        disk_offerings = self.cs.listDiskOfferings(**args)
         if disk_offerings:
             for d in disk_offerings['diskoffering']:
                 if disk_offering in [ d['displaytext'], d['name'], d['id'] ]:
@@ -388,9 +437,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if not instance:
             instance_name = self.module.params.get('name')
 
-            args = {}
-            args['projectid'] = self.get_project_id()
-            args['zoneid'] = self.get_zone_id()
+            args                = {}
+            args['account']     = self.get_account('name')
+            args['domainid']    = self.get_domain('id')
+            args['projectid']   = self.get_project('id')
+            args['zoneid']      = self.get_zone('id')
+
             instances = self.cs.listVirtualMachines(**args)
             if instances:
                 for v in instances['virtualmachine']:
@@ -405,9 +457,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if not network_names:
             return None
 
-        args = {}
-        args['zoneid'] = self.get_zone_id()
-        args['projectid'] = self.get_project_id()
+        args                = {}
+        args['account']     = self.get_account('name')
+        args['domainid']    = self.get_domain('id')
+        args['projectid']   = self.get_project('id')
+        args['zoneid']      = self.get_zone('id')
+
         networks = self.cs.listNetworks(**args)
         if not networks:
             self.module.fail_json(msg="No networks available")
@@ -457,13 +512,14 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         self.result['changed'] = True
 
         args                        = {}
-        args['templateid']          = self.get_template_or_iso_id()
-        args['zoneid']              = self.get_zone_id()
+        args['templateid']          = self.get_template_or_iso(key='id')
+        args['zoneid']              = self.get_zone('id')
         args['serviceofferingid']   = self.get_service_offering_id()
-        args['projectid']           = self.get_project_id()
+        args['account']             = self.get_account('name')
+        args['domainid']            = self.get_domain('id')
+        args['projectid']           = self.get_project('id')
         args['diskofferingid']      = self.get_disk_offering_id()
         args['networkids']          = self.get_network_ids()
-        args['hypervisor']          = self.get_hypervisor()
         args['userdata']            = self.get_user_data()
         args['keyboard']            = self.module.params.get('keyboard')
         args['ipaddress']           = self.module.params.get('ip_address')
@@ -474,6 +530,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['size']                = self.module.params.get('disk_size')
         args['securitygroupnames']  = ','.join(self.module.params.get('security_groups'))
         args['affinitygroupnames']  = ','.join(self.module.params.get('affinity_groups'))
+
+        template_iso = self.get_template_or_iso()
+        if 'hypervisor' not in template_iso:
+            args['hypervisor'] = self.get_hypervisor()
 
         instance = None
         if not self.module.check_mode:
@@ -498,12 +558,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_instance_update['group']               = self.module.params.get('group')
         args_instance_update['displayname']         = self.get_display_name()
         args_instance_update['userdata']            = self.get_user_data()
-        args_instance_update['ostypeid']            = self.get_os_type_id()
+        args_instance_update['ostypeid']            = self.get_os_type('id')
 
         args_ssh_key                                = {}
         args_ssh_key['id']                          = instance['id']
         args_ssh_key['keypair']                     = self.module.params.get('ssh_key')
-        args_ssh_key['projectid']                   = self.get_project_id()
+        args_ssh_key['projectid']                   = self.get_project('id')
         
         if self._has_changed(args_service_offering, instance) or \
            self._has_changed(args_instance_update, instance) or \
@@ -668,8 +728,16 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 self.result['display_name'] = instance['displayname']
             if 'group' in instance:
                 self.result['group'] = instance['group']
+            if 'domain' in instance:
+                self.result['domain'] = instance['domain']
+            if 'account' in instance:
+                self.result['account'] = instance['account']
             if 'project' in instance:
                 self.result['project'] = instance['project']
+            if 'hypervisor' in instance:
+                self.result['hypervisor'] = instance['hypervisor']
+            if 'instancename' in instance:
+                self.result['instance_name'] = instance['instancename']
             if 'publicip' in instance:
                 self.result['public_ip'] = instance['public_ip']
             if 'passwordenabled' in instance:
@@ -729,9 +797,11 @@ def main():
             disk_offering = dict(default=None),
             disk_size = dict(type='int', default=None),
             keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
-            hypervisor = dict(default=None),
+            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM'], default=None),
             security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
             affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
+            domain = dict(default=None),
+            account = dict(default=None),
             project = dict(default=None),
             user_data = dict(default=None),
             zone = dict(default=None),
@@ -740,9 +810,13 @@ def main():
             tags = dict(type='list', aliases=[ 'tag' ], default=None),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_together = (
+            ['api_key', 'api_secret', 'api_url'],
         ),
         supports_check_mode=True
     )
@@ -780,6 +854,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 

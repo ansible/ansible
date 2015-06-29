@@ -25,7 +25,7 @@ short_description: Manages security group rules on Apache CloudStack based cloud
 description:
     - Add and remove security group rules.
 version_added: '2.0'
-author: René Moser
+author: "René Moser (@resmo)"
 options:
   security_group:
     description:
@@ -102,7 +102,6 @@ EXAMPLES = '''
     port: 80
     cidr: 1.2.3.4/32
 
-
 # Allow tcp/udp outbound added to security group 'default'
 - local_action:
     module: cs_securitygroup_rule
@@ -115,7 +114,6 @@ EXAMPLES = '''
   - tcp
   - udp
 
-
 # Allow inbound icmp from 0.0.0.0/0 added to security group 'default'
 - local_action:
     module: cs_securitygroup_rule
@@ -124,14 +122,12 @@ EXAMPLES = '''
     icmp_code: -1
     icmp_type: -1
 
-
 # Remove rule inbound port 80/tcp from 0.0.0.0/0 from security group 'default'
 - local_action:
     module: cs_securitygroup_rule
     security_group: default
     port: 80
     state: absent
-
 
 # Allow inbound port 80/tcp from security group web added to security group 'default'
 - local_action:
@@ -194,9 +190,6 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
     def __init__(self, module):
         AnsibleCloudStack.__init__(self, module)
-        self.result = {
-            'changed': False,
-        }
 
 
     def _tcp_udp_match(self, rule, protocol, start_port, end_port):
@@ -229,17 +222,20 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
                and cidr == rule['cidr']
 
 
+    def get_end_port(self):
+        if self.module.params.get('end_port'):
+            return self.module.params.get('end_port')
+        return self.module.params.get('start_port')
+
+
     def _get_rule(self, rules):
         user_security_group_name = self.module.params.get('user_security_group')
         cidr                     = self.module.params.get('cidr')
         protocol                 = self.module.params.get('protocol')
         start_port               = self.module.params.get('start_port')
-        end_port                 = self.module.params.get('end_port')
+        end_port                 = self.get_end_port()
         icmp_code                = self.module.params.get('icmp_code')
         icmp_type                = self.module.params.get('icmp_type')
-
-        if not end_port:
-            end_port = start_port
 
         if protocol in ['tcp', 'udp'] and not (start_port and end_port):
             self.module.fail_json(msg="no start_port or end_port set for protocol '%s'" % protocol)
@@ -268,7 +264,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
             security_group_name = self.module.params.get('security_group')
         args = {}
         args['securitygroupname'] =  security_group_name
-        args['projectid'] = self.get_project_id()
+        args['projectid'] = self.get_project('id')
         sgs = self.cs.listSecurityGroups(**args)
         if not sgs or 'securitygroup' not in sgs:
                 self.module.fail_json(msg="security group '%s' not found" % security_group_name)
@@ -295,26 +291,23 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
         args['protocol']        = self.module.params.get('protocol')
         args['startport']       = self.module.params.get('start_port')
-        args['endport']         = self.module.params.get('end_port')
+        args['endport']         = self.get_end_port()
         args['icmptype']        = self.module.params.get('icmp_type')
         args['icmpcode']        = self.module.params.get('icmp_code')
-        args['projectid']       = self.get_project_id()
+        args['projectid']       = self.get_project('id')
         args['securitygroupid'] = security_group['id']
-
-        if not args['endport']:
-            args['endport'] = args['startport']
 
         rule = None
         res  = None
-        type = self.module.params.get('type')
-        if type == 'ingress':
+        sg_type = self.module.params.get('type')
+        if sg_type == 'ingress':
             rule = self._get_rule(security_group['ingressrule'])
             if not rule:
                 self.result['changed'] = True
                 if not self.module.check_mode:
                     res = self.cs.authorizeSecurityGroupIngress(**args)
 
-        elif type == 'egress':
+        elif sg_type == 'egress':
             rule = self._get_rule(security_group['egressrule'])
             if not rule:
                 self.result['changed'] = True
@@ -327,22 +320,25 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         poll_async = self.module.params.get('poll_async')
         if res and poll_async:
             security_group = self._poll_job(res, 'securitygroup')
-        return security_group
+            key = sg_type + "rule" # ingressrule / egressrule
+            if key in security_group:
+                rule = security_group[key][0]
+        return rule
 
 
     def remove_rule(self):
         security_group = self.get_security_group()
         rule = None
         res  = None
-        type = self.module.params.get('type')
-        if type == 'ingress':
+        sg_type = self.module.params.get('type')
+        if sg_type == 'ingress':
             rule = self._get_rule(security_group['ingressrule'])
             if rule:
                 self.result['changed'] = True
                 if not self.module.check_mode:
                     res = self.cs.revokeSecurityGroupIngress(id=rule['ruleid'])
 
-        elif type == 'egress':
+        elif sg_type == 'egress':
             rule = self._get_rule(security_group['egressrule'])
             if rule:
                 self.result['changed'] = True
@@ -355,34 +351,30 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
         poll_async = self.module.params.get('poll_async')
         if res and poll_async:
             res = self._poll_job(res, 'securitygroup')
-        return security_group
+        return rule
 
 
     def get_result(self, security_group_rule):
-        type = self.module.params.get('type')
-        
-        key = 'ingressrule'
-        if type == 'egress':
-            key = 'egressrule'
 
-        self.result['type'] = type
+        self.result['type'] = self.module.params.get('type')
         self.result['security_group'] = self.module.params.get('security_group')
-
-        if key in security_group_rule and security_group_rule[key]:
-            if 'securitygroupname' in security_group_rule[key][0]:
-                self.result['user_security_group'] = security_group_rule[key][0]['securitygroupname']
-            if 'cidr' in security_group_rule[key][0]:
-                self.result['cidr'] = security_group_rule[key][0]['cidr']
-            if 'protocol' in security_group_rule[key][0]:
-                self.result['protocol'] = security_group_rule[key][0]['protocol']
-            if 'startport' in security_group_rule[key][0]:
-                self.result['start_port'] = security_group_rule[key][0]['startport']
-            if 'endport' in security_group_rule[key][0]:
-                self.result['end_port'] = security_group_rule[key][0]['endport']
-            if 'icmpcode' in security_group_rule[key][0]:
-                self.result['icmp_code'] = security_group_rule[key][0]['icmpcode']
-            if 'icmptype' in security_group_rule[key][0]:
-                self.result['icmp_type'] = security_group_rule[key][0]['icmptype']
+        
+        if security_group_rule:
+            rule = security_group_rule
+            if 'securitygroupname' in rule:
+                self.result['user_security_group'] = rule['securitygroupname']
+            if 'cidr' in rule:
+                self.result['cidr'] = rule['cidr']
+            if 'protocol' in rule:
+                self.result['protocol'] = rule['protocol']
+            if 'startport' in rule:
+                self.result['start_port'] = rule['startport']
+            if 'endport' in rule:
+                self.result['end_port'] = rule['endport']
+            if 'icmpcode' in rule:
+                self.result['icmp_code'] = rule['icmpcode']
+            if 'icmptype' in rule:
+                self.result['icmp_type'] = rule['icmptype']
         return self.result
 
 
@@ -402,9 +394,14 @@ def main():
             project = dict(default=None),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
-            api_secret = dict(default=None),
+            api_secret = dict(default=None, no_log=True),
             api_url = dict(default=None),
-            api_http_method = dict(default='get'),
+            api_http_method = dict(choices=['get', 'post'], default='get'),
+            api_timeout = dict(type='int', default=10),
+        ),
+        required_together = (
+            ['icmp_type', 'icmp_code'],
+            ['api_key', 'api_secret', 'api_url'],
         ),
         mutually_exclusive = (
             ['icmp_type', 'start_port'],
@@ -431,6 +428,9 @@ def main():
 
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
+
+    except Exception, e:
+        module.fail_json(msg='Exception: %s' % str(e))
 
     module.exit_json(**result)
 

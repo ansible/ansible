@@ -20,7 +20,7 @@
 
 DOCUMENTATION = """
 ---
-author: Dag Wieers
+author: "Dag Wieers (@dagwieers)" 
 module: mail
 short_description: Send an email
 description:
@@ -110,6 +110,12 @@ options:
       - The character set of email being sent
     default: 'us-ascii'
     required: false
+  subtype:
+    description:
+      - The minor mime type, can be either text or html. The major type is always text.
+    default: 'plain'
+    required: false
+    version_added: "2.0"
 """
 
 EXAMPLES = '''
@@ -138,6 +144,13 @@ EXAMPLES = '''
                 attach="/etc/group /tmp/pavatar2.png"
                 headers=Reply-To=john@example.com|X-Special="Something or other"
                 charset=utf8
+# Sending an e-mail using the remote machine, not the Ansible controller node
+- mail:
+    host='localhost'
+    port=25
+    to="John Smith <john.smith@example.com>"
+    subject='Ansible-report'
+    body='System {{ ansible_hostname }} has been successfully provisioned.'
 '''
 
 import os
@@ -176,7 +189,8 @@ def main():
             body = dict(default=None),
             attach = dict(default=None),
             headers = dict(default=None),
-            charset = dict(default='us-ascii')
+            charset = dict(default='us-ascii'),
+            subtype = dict(default='plain')
         )
     )
 
@@ -193,6 +207,7 @@ def main():
     attach_files = module.params.get('attach')
     headers = module.params.get('headers')
     charset = module.params.get('charset')
+    subtype = module.params.get('subtype')
     sender_phrase, sender_addr = parseaddr(sender)
 
     if not body:
@@ -252,7 +267,7 @@ def main():
     if len(cc_list) > 0:
         msg['Cc'] = ", ".join(cc_list)
 
-    part = MIMEText(body + "\n\n", _charset=charset)
+    part = MIMEText(body + "\n\n", _subtype=subtype, _charset=charset)
     msg.attach(part)
 
     if attach_files is not None:

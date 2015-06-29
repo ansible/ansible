@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 module: bigpanda
-author: BigPanda
+author: "Hagai Kariti (@hkariti)"
 short_description: Notify BigPanda about deployments
 version_added: "1.8"
 description: 
@@ -162,7 +162,7 @@ def main():
             module.exit_json(changed=True, **deployment)
         else:
             module.fail_json(msg=json.dumps(info))
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg=str(e))
 
 # import module snippets

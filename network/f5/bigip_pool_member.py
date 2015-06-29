@@ -25,7 +25,7 @@ short_description: "Manages F5 BIG-IP LTM pool members"
 description:
     - "Manages F5 BIG-IP LTM pool members via iControl SOAP API"
 version_added: "1.4"
-author: Matt Hite
+author: "Matt Hite (@mhite)"
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -39,23 +39,14 @@ options:
         description:
             - BIG-IP host
         required: true
-        default: null
-        choices: []
-        aliases: []
     user:
         description:
             - BIG-IP username
         required: true
-        default: null
-        choices: []
-        aliases: []
     password:
         description:
             - BIG-IP password
         required: true
-        default: null
-        choices: []
-        aliases: []
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
@@ -70,63 +61,58 @@ options:
         required: true
         default: present
         choices: ['present', 'absent']
-        aliases: []
+    session_state:
+        description:
+            - Set new session availability status for pool member
+        version_added: "2.0"
+        required: false
+        default: null
+        choices: ['enabled', 'disabled']
+    monitor_state:
+        description:
+            - Set monitor availability status for pool member
+        version_added: "2.0"
+        required: false
+        default: null
+        choices: ['enabled', 'disabled']
     pool:
         description:
             - Pool name. This pool must exist.
         required: true
-        default: null
-        choices: []
-        aliases: []
     partition:
         description:
             - Partition
         required: false
         default: 'Common'
-        choices: []
-        aliases: []
     host:
         description:
             - Pool member IP
         required: true
-        default: null
-        choices: []
         aliases: ['address', 'name']
     port:
         description:
             - Pool member port
         required: true
-        default: null
-        choices: []
-        aliases: []
     connection_limit:
         description:
             - Pool member connection limit. Setting this to 0 disables the limit.
         required: false
         default: null
-        choices: []
-        aliases: []
     description:
         description:
             - Pool member description
         required: false
         default: null
-        choices: []
-        aliases: []
     rate_limit:
         description:
             - Pool member rate limit (connections-per-second). Setting this to 0 disables the limit.
         required: false
         default: null
-        choices: []
-        aliases: []
     ratio:
         description:
             - Pool member ratio weight. Valid values range from 1 through 100. New pool members -- unless overriden with this value -- default to 1.
         required: false
         default: null
-        choices: []
-        aliases: []
 '''
 
 EXAMPLES = '''
@@ -180,28 +166,35 @@ EXAMPLES = '''
       host="{{ ansible_default_ipv4["address"] }}"
       port=80
 
+
+  # The BIG-IP GUI doesn't map directly to the API calls for "Pool ->
+  # Members -> State". The following states map to API monitor
+  # and session states.
+  #
+  # Enabled (all traffic allowed):
+  # monitor_state=enabled, session_state=enabled
+  # Disabled (only persistent or active connections allowed):
+  # monitor_state=enabled, session_state=disabled
+  # Forced offline (only active connections allowed):
+  # monitor_state=disabled, session_state=disabled
+  #
+  # See https://devcentral.f5.com/questions/icontrol-equivalent-call-for-b-node-down
+
+  - name: Force pool member offline
+    local_action: >
+      bigip_pool_member
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      session_state=disabled
+      monitor_state=disabled
+      pool=matthite-pool
+      partition=matthite
+      host="{{ ansible_default_ipv4["address"] }}"
+      port=80
+
 '''
-
-try:
-    import bigsuds
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
-
-# ===========================================
-# bigip_pool_member module specific support methods.
-#
-
-def bigip_api(bigip, user, password):
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
-    return api
-
-def disable_ssl_cert_validation():
-    # You probably only want to do this for testing and never in production.
-    # From https://www.python.org/dev/peps/pep-0476/#id29
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
 
 def pool_exists(api, pool):
     # hack to determine if pool exists
@@ -290,46 +283,60 @@ def set_ratio(api, pool, address, port, ratio):
     members = [{'address': address, 'port': port}]
     api.LocalLB.Pool.set_member_ratio(pool_names=[pool], members=[members], ratios=[[ratio]])
 
+def set_member_session_enabled_state(api, pool, address, port, session_state):
+    members = [{'address': address, 'port': port}]
+    session_state = ["STATE_%s" % session_state.strip().upper()]
+    api.LocalLB.Pool.set_member_session_enabled_state(pool_names=[pool], members=[members], session_states=[session_state])
+
+def get_member_session_status(api, pool, address, port):
+    members = [{'address': address, 'port': port}]
+    result = api.LocalLB.Pool.get_member_session_status(pool_names=[pool], members=[members])[0][0]
+    result = result.split("SESSION_STATUS_")[-1].lower()
+    return result
+
+def set_member_monitor_state(api, pool, address, port, monitor_state):
+    members = [{'address': address, 'port': port}]
+    monitor_state = ["STATE_%s" % monitor_state.strip().upper()]
+    api.LocalLB.Pool.set_member_monitor_state(pool_names=[pool], members=[members], monitor_states=[monitor_state])
+
+def get_member_monitor_status(api, pool, address, port):
+    members = [{'address': address, 'port': port}]
+    result = api.LocalLB.Pool.get_member_monitor_status(pool_names=[pool], members=[members])[0][0]
+    result = result.split("MONITOR_STATUS_")[-1].lower()
+    return result
+
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            server = dict(type='str', required=True),
-            user = dict(type='str', required=True),
-            password = dict(type='str', required=True),
-            validate_certs = dict(default='yes', type='bool'),
-            state = dict(type='str', default='present', choices=['present', 'absent']),
+    argument_spec = f5_argument_spec();
+    argument_spec.update(dict(
+            session_state = dict(type='str', choices=['enabled', 'disabled']),
+            monitor_state = dict(type='str', choices=['enabled', 'disabled']),
             pool = dict(type='str', required=True),
-            partition = dict(type='str', default='Common'),
             host = dict(type='str', required=True, aliases=['address', 'name']),
             port = dict(type='int', required=True),
             connection_limit = dict(type='int'),
             description = dict(type='str'),
             rate_limit = dict(type='int'),
             ratio = dict(type='int')
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
         supports_check_mode=True
     )
 
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
-
-    server = module.params['server']
-    user = module.params['user']
-    password = module.params['password']
-    validate_certs = module.params['validate_certs']
-    state = module.params['state']
-    partition = module.params['partition']
-    pool = "/%s/%s" % (partition, module.params['pool'])
+    (server,user,password,state,partition,validate_certs) = f5_parse_arguments(module)
+    session_state = module.params['session_state']
+    monitor_state = module.params['monitor_state']
+    pool = fq_name(partition, module.params['pool'])
     connection_limit = module.params['connection_limit']
     description = module.params['description']
     rate_limit = module.params['rate_limit']
     ratio = module.params['ratio']
     host = module.params['host']
-    address = "/%s/%s" % (partition, host)
+    address = fq_name(partition, host)
     port = module.params['port']
 
-    if not validate_certs:
-        disable_ssl_cert_validation()
 
     # sanity check user supplied values
 
@@ -366,6 +373,10 @@ def main():
                         set_rate_limit(api, pool, address, port, rate_limit)
                     if ratio is not None:
                         set_ratio(api, pool, address, port, ratio)
+                    if session_state is not None:
+                        set_member_session_enabled_state(api, pool, address, port, session_state)
+                    if monitor_state is not None:
+                        set_member_monitor_state(api, pool, address, port, monitor_state)
                 result = {'changed': True}
             else:
                 # pool member exists -- potentially modify attributes
@@ -385,6 +396,26 @@ def main():
                     if not module.check_mode:
                         set_ratio(api, pool, address, port, ratio)
                     result = {'changed': True}
+                if session_state is not None:
+                    session_status = get_member_session_status(api, pool, address, port)
+                    if session_state == 'enabled' and session_status == 'forced_disabled':
+                        if not module.check_mode:
+                            set_member_session_enabled_state(api, pool, address, port, session_state)
+                        result = {'changed': True}
+                    elif session_state == 'disabled' and session_status != 'force_disabled':
+                        if not module.check_mode:
+                            set_member_session_enabled_state(api, pool, address, port, session_state)
+                        result = {'changed': True}
+                if monitor_state is not None:
+                    monitor_status = get_member_monitor_status(api, pool, address, port)
+                    if monitor_state == 'enabled' and monitor_status == 'forced_down':
+                        if not module.check_mode:
+                            set_member_monitor_state(api, pool, address, port, monitor_state)
+                        result = {'changed': True}
+                    elif monitor_state == 'disabled' and monitor_status != 'forced_down':
+                        if not module.check_mode:
+                            set_member_monitor_state(api, pool, address, port, monitor_state)
+                        result = {'changed': True}
 
     except Exception, e:
         module.fail_json(msg="received exception: %s" % e)
@@ -393,5 +424,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 main()
 
