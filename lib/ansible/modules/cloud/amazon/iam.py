@@ -520,7 +520,7 @@ def main():
         groups=dict(type='list', default=None, required=False),
         state=dict(
             default=None, required=True, choices=['present', 'absent', 'update']),
-        password=dict(default=None, required=False),
+        password=dict(default=None, required=False, no_log=True),
         update_password=dict(default='always', required=False, choices=['always', 'on_create']),
         access_key_state=dict(default=None, required=False, choices=[
             'active', 'inactive', 'create', 'remove',
