@@ -78,6 +78,9 @@ import socket
 def vmware_path(datastore, datacenter, path):
     ''' Constructs a URL path that VSphere accepts reliably '''
     path = "/folder/%s" % path.lstrip("/")
+    # Due to a software bug in vSphere, it fails to handle ampersand in datacenter names
+    # The solution is to do what vSphere does (when browsing) and double-encode ampersands, maybe others ?
+    datacenter = datacenter.replace('&', '%26')
     if not path.startswith("/"):
         path = "/" + path
     params = dict( dsName = datastore )
