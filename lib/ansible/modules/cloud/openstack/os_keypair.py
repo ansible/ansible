@@ -33,6 +33,10 @@ extends_documentation_fragment: openstack
 version_added: "2.0"
 description:
    - Add or Remove key pair from OpenStack
+notes:
+   - The module returns a dictionary describing the keypair, with
+     keys including: id, name, public_key. A private_key entry may
+     also be included if a keypair was generated for you.
 options:
    name:
      description:
