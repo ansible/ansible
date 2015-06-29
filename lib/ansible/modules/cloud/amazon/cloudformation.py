@@ -51,6 +51,7 @@ options:
   template:
     description:
       - The local path of the cloudformation template. This parameter is mutually exclusive with 'template_url'. Either one of them is required if "state" parameter is "present"
+        Must give full path to the file, relative to the playbook. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json"
     required: false
     default: null
     aliases: []
@@ -107,6 +108,22 @@ EXAMPLES = '''
     region: "us-east-1" 
     disable_rollback: true
     template: "files/cloudformation-example.json"
+    template_parameters:
+      KeyName: "jmartin"
+      DiskType: "ephemeral"
+      InstanceType: "m1.small"
+      ClusterSize: 3
+    tags:
+      Stack: "ansible-cloudformation"
+
+# Basic role example
+- name: launch ansible cloudformation example
+  cloudformation:
+    stack_name: "ansible-cloudformation" 
+    state: "present"
+    region: "us-east-1" 
+    disable_rollback: true
+    template: "roles/cloudformation/files/cloudformation-example.json"
     template_parameters:
       KeyName: "jmartin"
       DiskType: "ephemeral"
