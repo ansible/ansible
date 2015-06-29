@@ -269,6 +269,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-clb"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb creation
@@ -867,6 +868,7 @@
     name: "{{ rax_clb.balancer.name }}"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 3"
