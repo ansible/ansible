@@ -100,7 +100,10 @@ class AdHocCLI(CLI):
         loader = DataLoader(vault_password=vault_pass)
         variable_manager = VariableManager()
 
-        inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
+        if self.options.inventory == '*':
+            inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=pattern + ',')
+        else:
+            inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
         variable_manager.set_inventory(inventory)
 
         hosts = inventory.list_hosts(pattern)
