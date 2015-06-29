@@ -14,3 +14,5 @@ rackspace_alt_image_name: "CentOS 6 (PVHVM)"
 rackspace_alt_image_human_id: "centos-6-pvhvm"
 
 rackspace_alt_flavor: "general1-1"
+
+rackspace_wait_timeout: 600
