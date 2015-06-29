@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import itertools
 from six import string_types
 
 from ansible.errors import AnsibleError
@@ -28,7 +27,7 @@ from ansible.template import Templar
 
 class Taggable:
 
-    untagged = set(['untagged'])
+    untagged = ['untagged']
     _tags = FieldAttribute(isa='list', default=[], listof=(string_types,int))
 
     def __init__(self):
@@ -64,11 +63,11 @@ class Taggable:
 
             if not isinstance(tags, list):
                 if tags.find(',') != -1:
-                    tags = set(tags.split(','))
+                    tags = list(set(tags.split(',')))
                 else:
-                    tags = set([tags])
+                    tags = list(set([tags]))
             else:
-                tags = [i for i,_ in itertools.groupby(tags)]
+                tags = list(set(tags))
         else:
             # this makes intersection work for untagged
             tags = self.__class__.untagged
@@ -79,7 +78,7 @@ class Taggable:
 
             if 'always' in tags or 'all' in only_tags:
                  should_run = True
-            elif tags.intersection(only_tags):
+            elif set(tags).intersection(only_tags):
                 should_run = True
             elif 'tagged' in only_tags and tags != self.__class__.untagged:
                 should_run = True
@@ -90,7 +89,7 @@ class Taggable:
             if 'all' in skip_tags:
                 if 'always' not in tags or 'always' in skip_tags:
                     should_run = False
-            elif tags.intersection(skip_tags):
+            elif set(tags).intersection(skip_tags):
                 should_run = False
             elif 'tagged' in skip_tags and tags != self.__class__.untagged:
                 should_run = False
