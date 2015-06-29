@@ -22,6 +22,7 @@ description:
   - Create or delete AWS Dynamo DB tables.
   - Can update the provisioned throughput on existing tables.
   - Returns the status of the specified table.
+version_added: "2.0"
 author: Alan Loi (@loia)
 requirements:
   - "boto >= 2.13.2"
@@ -41,6 +42,7 @@ options:
       - Name of the hash key.
       - Required when C(state=present).
     required: false
+    default: null
   hash_key_type:
     description:
       - Type of the hash key.
@@ -51,6 +53,7 @@ options:
     description:
       - Name of the range key.
     required: false
+    default: null
   range_key_type:
     description:
       - Type of the range key.
