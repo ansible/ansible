@@ -322,7 +322,7 @@ def main():
     module = AnsibleModule(
         argument_spec      = dict(
             name           = dict(required=True),
-            state          = dict(default=None, choices=['running', 'started', 'present', 'stopped', 'absent']),
+            state          = dict(required=True, choices=['running', 'started', 'present', 'stopped', 'absent']),
             path           = dict(defalt=None),
             sparse         = dict(default=False, type='bool'),
             root_password  = dict(default=None),
