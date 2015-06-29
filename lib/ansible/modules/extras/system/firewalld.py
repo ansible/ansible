@@ -41,6 +41,12 @@ options:
       - "Rich rule to add/remove to/from firewalld."
     required: false
     default: null
+  source:
+    description:
+      - 'The source/network you would like to add/remove to/from firewalld'
+    required: false
+    default: null
+    version_added: "2.0"
   zone:
     description:
       - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
