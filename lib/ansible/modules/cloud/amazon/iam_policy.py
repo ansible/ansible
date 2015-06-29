@@ -130,13 +130,12 @@ tasks:
 '''
 import json
 import urllib
-import sys
 try:
     import boto
     import boto.iam
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 def boto_exception(err):
     '''generic error message handler'''
@@ -296,6 +295,9 @@ def main():
   module = AnsibleModule(
       argument_spec=argument_spec,
   )
+
+  if not HAS_BOTO:
+    module.fail_json(msg='boto required for this module')
 
   state = module.params.get('state').lower()
   iam_type = module.params.get('iam_type').lower()
