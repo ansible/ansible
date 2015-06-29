@@ -161,7 +161,8 @@ class Zone(object):
         self.configure_ssh_keys()
 
     def configure_sysid(self):
-        os.unlink('%s/root/etc/.UNCONFIGURED' % self.path)
+        if os.path.isfile('%s/root/etc/.UNCONFIGURED' % self.path):
+            os.unlink('%s/root/etc/.UNCONFIGURED' % self.path)
 
         open('%s/root/noautoshutdown' % self.path, 'w').close()
 
