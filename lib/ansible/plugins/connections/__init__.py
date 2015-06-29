@@ -31,6 +31,7 @@ from six import with_metaclass
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.plugins import shell_loader
 
 # FIXME: this object should be created upfront and passed through
 #        the entire chain of calls to here, as there are other things
@@ -70,6 +71,18 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
         self.success_key = None
         self.prompt = None
+
+        # load the shell plugin for this action/connection
+        if connection_info.shell:
+            shell_type = connection_info.shell
+        elif hasattr(self, '_shell_type'):
+            shell_type = getattr(self, '_shell_type')
+        else:
+            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
+
+        self._shell = shell_loader.get(shell_type)
+        if not self._shell:
+            raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
 
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''

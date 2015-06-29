@@ -59,12 +59,24 @@ class ShellModule(object):
         # FIXME: Support system temp path!
         return self._encode_script('''(New-Item -Type Directory -Path $env:temp -Name "%s").FullName | Write-Host -Separator '';''' % basefile)
 
-    def md5(self, path):
+    def expand_user(self, user_home_path):
+        # PowerShell only supports "~" (not "~username").  Resolve-Path ~ does
+        # not seem to work remotely, though by default we are always starting
+        # in the user's home directory.
+        if user_home_path == '~':
+            script = 'Write-Host (Get-Location).Path'
+        elif user_home_path.startswith('~\\'):
+            script = 'Write-Host ((Get-Location).Path + "%s")' % _escape(user_home_path[1:])
+        else:
+            script = 'Write-Host "%s"' % _escape(user_home_path)
+        return self._encode_script(script)
+
+    def checksum(self, path, *args, **kwargs):
         path = self._escape(path)
         script = '''
             If (Test-Path -PathType Leaf "%(path)s")
             {
-                $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
+                $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
                 $fp = [System.IO.File]::Open("%(path)s", [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
                 [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
                 $fp.Dispose();

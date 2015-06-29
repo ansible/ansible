@@ -47,7 +47,6 @@ from ansible.plugins import shell_loader
 from ansible.utils.path import makedirs_safe
 from ansible.utils.unicode import to_bytes
 
-
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
@@ -63,8 +62,7 @@ class Connection(ConnectionBase):
         self.protocol         = None
         self.shell_id         = None
         self.delegate         = None
-
-        self._shell           = shell_loader.get('powershell')
+        self._shell_type      = 'powershell'
 
         # TODO: Add runas support
         self.become_methods_supported=[]
