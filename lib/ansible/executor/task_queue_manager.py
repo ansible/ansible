@@ -142,7 +142,7 @@ class TaskQueueManager:
                     if callback_name != stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
-                elif C.DEFAULT_CALLBACK_WHITELIST is not None and callback_name not in C.DEFAULT_CALLBACK_WHITELIST:
+                elif C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST:
                     continue
 
                 loaded_plugins.append(callback_plugin(self._display))
