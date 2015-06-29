@@ -555,6 +555,7 @@ class DockerManager(object):
             'pid': ((1, 0, 0), '1.17'),
             'log_driver': ((1, 2, 0), '1.18'),
             'host_config': ((0, 7, 0), '1.15'),
+            'cpu_set': ((0, 6, 0), '1.14'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -577,7 +578,7 @@ class DockerManager(object):
                 elif 2 <= len(parts) <= 3:
                     # default to read-write
                     ro = False
-                    # with supplied bind mode 
+                    # with supplied bind mode
                     if len(parts) == 3:
                         if parts[2] not in ['ro', 'rw']:
                             self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
@@ -1376,6 +1377,7 @@ class DockerManager(object):
                   'tty':          self.module.params.get('tty'),
                   'volumes_from': self.module.params.get('volumes_from'),
                   'dns':          self.module.params.get('dns'),
+                  'cpuset':       self.module.params.get('cpu_set'),
                   'host_config':  self.create_host_config(),
                   'user':         self.module.params.get('docker_user'),
                   }
