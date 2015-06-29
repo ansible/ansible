@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Patrik Lundin <patrik.lundin.swe@gmail.com>
+# (c) 2013, Patrik Lundin <patrik@sigterm.se>
 #
 # This file is part of Ansible
 #
