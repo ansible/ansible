@@ -130,7 +130,7 @@ class CloudStackFacts(object):
         if not filter:
             for key,path in self.fact_paths.iteritems():
                 result[key] = self._fetch(CS_METADATA_BASE_URL + "/" + path)
-                result['cloudstack_user_data'] = self._get_user_data_json()
+            result['cloudstack_user_data'] = self._get_user_data_json()
         else:
             if filter == 'cloudstack_user_data':
                 result['cloudstack_user_data'] = self._get_user_data_json()
