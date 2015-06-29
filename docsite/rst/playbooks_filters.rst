@@ -350,6 +350,11 @@ To get the relative path of a link, from a start point (new in version 1.7)::
 
     {{ path | relpath('/etc') }}
 
+To get the root and extension of a path or filename (new in version 2.0)::
+
+    # with path == 'nginx.conf' the return would be ('nginx', '.conf')
+    {{ path | splitext }}
+
 To work with Base64 encoded strings::
 
     {{ encoded | b64decode }}
