@@ -268,7 +268,7 @@ def url_filename(url):
 
 def uri(module, url, dest, user, password, body, body_format, method, headers, redirects, socket_timeout, validate_certs):
     # To debug
-    #httplib2.debug = 4
+    #httplib2.debuglevel = 4
 
     # Handle Redirects
     if redirects == "all" or redirects == "yes":
