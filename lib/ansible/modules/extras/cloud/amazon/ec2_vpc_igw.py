@@ -29,7 +29,7 @@ options:
     default: null
   region:
     description:
-      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used. See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used. See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
     required: false
     default: null
     aliases: [ 'aws_region', 'ec2_region' ]
@@ -47,7 +47,7 @@ EXAMPLES = '''
 
 # Ensure that the VPC has an Internet Gateway.
 # The Internet Gateway ID is can be accessed via {{igw.gateway_id}} for use in setting up NATs etc.
-module: ec2_vpc_igw
+ec2_vpc_igw:
   vpc_id: vpc-abcdefgh
   state: present
 register: igw
