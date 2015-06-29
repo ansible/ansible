@@ -33,10 +33,6 @@ extends_documentation_fragment: openstack
 version_added: "2.0"
 description:
    - Add or Remove key pair from OpenStack
-notes:
-   - The module returns a dictionary describing the keypair, with
-     keys including: id, name, public_key. A private_key entry may
-     also be included if a keypair was generated for you.
 options:
    name:
      description:
@@ -76,6 +72,26 @@ EXAMPLES = '''
       cloud: rax-dfw
       state: present
       name: ansible_key
+'''
+
+RETURN = '''
+id:
+    description: Unique UUID.
+    returned: success
+    type: string
+name:
+    description: Name given to the keypair.
+    returned: success
+    type: string
+public_key:
+    description: The public key value for the keypair.
+    returned: success
+    type: string
+private_key:
+    description: The private key value for the keypair.
+    returned: Only when a keypair is generated for the user (e.g., when creating one
+              and a public key is not specified).
+    type: string
 '''
 
 
