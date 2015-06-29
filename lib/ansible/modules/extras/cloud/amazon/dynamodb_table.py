@@ -120,7 +120,7 @@ try:
     from boto.dynamodb2.table import Table
     from boto.dynamodb2.fields import HashKey, RangeKey
     from boto.dynamodb2.types import STRING, NUMBER, BINARY
-    from boto.exception import BotoServerError, JSONResponseError
+    from boto.exception import BotoServerError, NoAuthHandlerFound, JSONResponseError
     HAS_BOTO = True
 
 except ImportError:
@@ -262,7 +262,14 @@ def main():
         module.fail_json(msg='boto required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    connection = connect_to_aws(boto.dynamodb2, region, **aws_connect_params)
+    if not region:
+        module.fail_json(msg='region must be specified')
+
+    try:
+        connection = connect_to_aws(boto.dynamodb2, region, **aws_connect_params)
+
+    except (NoAuthHandlerFound, StandardError), e:
+        module.fail_json(msg=str(e))
 
     state = module.params.get('state')
     if state == 'present':
@@ -275,4 +282,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()
