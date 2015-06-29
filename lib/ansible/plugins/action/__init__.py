@@ -31,7 +31,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.module_common import modify_module
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.plugins import shell_loader
 
 from ansible.utils.debug import debug
 from ansible.utils.unicode import to_bytes
@@ -52,18 +51,6 @@ class ActionBase:
         self._loader            = loader
         self._templar           = templar
         self._shared_loader_obj = shared_loader_obj
-
-        # load the shell plugin for this action/connection
-        if self._connection_info.shell:
-            shell_type = self._connection_info.shell
-        elif hasattr(connection, '_shell'):
-            shell_type = getattr(connection, '_shell')
-        else:
-            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
-
-        self._shell = shell_loader.get(shell_type)
-        if not self._shell:
-            raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
 
         self._supports_check_mode = True
 
@@ -104,7 +91,7 @@ class ActionBase:
         #    if type(enviro) != dict:
         #        raise errors.AnsibleError("environment must be a dictionary, received %s" % enviro)
 
-        return self._shell.env_prefix(**enviro)
+        return self._connection._shell.env_prefix(**enviro)
 
     def _early_needs_tmp_path(self):
         '''
@@ -151,7 +138,7 @@ class ActionBase:
         if self._connection_info.remote_user != 'root' or self._connection_info.become and self._connection_info.become_user != 'root':
             tmp_mode = 'a+rx'
 
-        cmd = self._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
+        cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         debug("executing _low_level_execute_command to create the tmp path")
         result = self._low_level_execute_command(cmd, None, sudoable=False)
         debug("done with creation of tmp path")
@@ -176,8 +163,8 @@ class ActionBase:
             raise AnsibleError(output)
 
         # FIXME: do we still need to do this?
-        #rc = self._shell.join_path(utils.last_non_blank_line(result['stdout']).strip(), '')
-        rc = self._shell.join_path(result['stdout'].strip(), '').splitlines()[-1]
+        #rc = self._connection._shell.join_path(utils.last_non_blank_line(result['stdout']).strip(), '')
+        rc = self._connection._shell.join_path(result['stdout'].strip(), '').splitlines()[-1]
 
         # Catch failure conditions, files should never be
         # written to locations in /.
@@ -190,7 +177,7 @@ class ActionBase:
         '''Remove a temporary path we created. '''
 
         if tmp_path and "-tmp-" in tmp_path:
-            cmd = self._shell.remove(tmp_path, recurse=True)
+            cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
             debug("calling _low_level_execute_command to remove the tmp path")
@@ -229,7 +216,7 @@ class ActionBase:
         Issue a remote chmod command
         '''
 
-        cmd = self._shell.chmod(mode, path)
+        cmd = self._connection._shell.chmod(mode, path)
         debug("calling _low_level_execute_command to chmod the remote path")
         res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable)
         debug("done with chmod call")
@@ -244,7 +231,7 @@ class ActionBase:
         #        variable manager data
         #python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
         python_interp = 'python'
-        cmd = self._shell.checksum(path, python_interp)
+        cmd = self._connection._shell.checksum(path, python_interp)
         debug("calling _low_level_execute_command to get the remote checksum")
         data = self._low_level_execute_command(cmd, tmp, sudoable=True)
         debug("done getting the remote checksum")
@@ -280,7 +267,7 @@ class ActionBase:
             if self._connection_info.become and self._connection_info.become_user:
                 expand_path = '~%s' % self._connection_info.become_user
 
-        cmd = self._shell.expand_user(expand_path)
+        cmd = self._connection._shell.expand_user(expand_path)
         debug("calling _low_level_execute_command to expand the remote user path")
         data = self._low_level_execute_command(cmd, tmp, sudoable=False)
         debug("done expanding the remote user path")
@@ -293,7 +280,7 @@ class ActionBase:
             return path
 
         if len(split_path) > 1:
-            return self._shell.join_path(initial_fragment, *split_path[1:])
+            return self._connection._shell.join_path(initial_fragment, *split_path[1:])
         else:
             return initial_fragment
 
@@ -346,7 +333,7 @@ class ActionBase:
         remote_module_path = None
         if not tmp and self._late_needs_tmp_path(tmp, module_style):
             tmp = self._make_tmp_path()
-            remote_module_path = self._shell.join_path(tmp, module_name)
+            remote_module_path = self._connection._shell.join_path(tmp, module_name)
 
         # FIXME: async stuff here?
         #if (module_style != 'new' or async_jid is not None or not self._connection._has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES):
@@ -379,7 +366,7 @@ class ActionBase:
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 rm_tmp = tmp
 
-        cmd = self._shell.build_module_command(environment_string, shebang, cmd, rm_tmp)
+        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, rm_tmp)
         cmd = cmd.strip()
 
         sudoable = True
@@ -396,7 +383,7 @@ class ActionBase:
             if self._connection_info.become and self._connection_info.become_user != 'root':
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
-                cmd2 = self._shell.remove(tmp, recurse=True)
+                cmd2 = self._connection._shell.remove(tmp, recurse=True)
                 self._low_level_execute_command(cmd2, tmp, sudoable=False)
 
         try:
