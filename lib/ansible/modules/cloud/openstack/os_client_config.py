@@ -52,9 +52,9 @@ EXAMPLES = '''
 
 
 def main():
-    module = AnsibleModule({
+    module = AnsibleModule(argument_spec=dict(
         clouds=dict(required=False, default=[]),
-    })
+    ))
     p = module.params
 
     try:
