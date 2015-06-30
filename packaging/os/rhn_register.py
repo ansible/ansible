@@ -61,6 +61,7 @@ options:
             - supply an profilename for use with registration
         required: False
         default: null
+        version_added: "2.0"
     channels:
         description:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
