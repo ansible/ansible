@@ -88,6 +88,11 @@ options:
             - the protocol this rule applies to
         default: null
         required: false
+    profile:
+        describtion:
+            - the profile this rule applies to
+        default: all
+        choices: ['current', 'domain', 'standard', 'all']
     force:
         description:
             - Enforces the change if a rule with different values exists
