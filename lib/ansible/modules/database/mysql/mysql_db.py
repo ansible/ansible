@@ -326,7 +326,7 @@ def main():
     if state in ['dump','import']:
         if target is None:
             module.fail_json(msg="with state=%s target is required" % (state))
-	if db == 'all':
+        if db == 'all':
             connect_to_db = 'mysql'
             db = 'mysql'
             all_databases = True
