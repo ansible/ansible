@@ -82,24 +82,36 @@
   file: path={{output_dir_test}}/afile.txt state=absent
 
 - name: create afile.txt with create_afile.sh via command
-  shell: "{{output_dir_test | expanduser}}/create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.txt"
+  command: "{{output_dir_test | expanduser}}/create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.txt"
 
 - name: verify that afile.txt is present
   file: path={{output_dir_test}}/afile.txt state=file
 
-# removes
-
-- name: remove afile.txt with remote_afile.sh via command
-  shell: "{{output_dir_test | expanduser}}/remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt"
-
-- name: verify that afile.txt is absent
-  file: path={{output_dir_test}}/afile.txt state=absent
+- name: re-run previous command using creates with globbing
+  command: "{{output_dir_test | expanduser}}/create_afile.sh {{output_dir_test | expanduser}}/afile.txt creates={{output_dir_test | expanduser}}/afile.*"
   register: command_result3
 
-- name: assert that the file was removed by the script
+- name: assert that creates with globbing is working
   assert:
     that:
       - "command_result3.changed != True"
+
+# removes
+
+- name: remove afile.txt with remote_afile.sh via command
+  command: "{{output_dir_test | expanduser}}/remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt"
+
+- name: verify that afile.txt is absent
+  file: path={{output_dir_test}}/afile.txt state=absent
+
+- name: re-run previous command using removes with globbing
+  command: "{{output_dir_test | expanduser}}/remove_afile.sh {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.*"
+  register: command_result4
+
+- name: assert that removes with globbing is working
+  assert:
+    that:
+      - "command_result4.changed != True"
 
 ##
 ## shell
@@ -161,21 +173,23 @@
 
 - name: remove afile.txt using rm
   shell: rm {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt
-  register: shell_result4
+  register: shell_result3
 
 - name: assert that using rm under shell causes a warning
   assert:
     that:
-      - "shell_result4.warnings"
+      - "shell_result3.warnings"
 
 - name: verify that afile.txt is absent
   file: path={{output_dir_test}}/afile.txt state=absent
-  register: shell_result5
+  register: shell_result4
 
 - name: assert that the file was removed by the shell
   assert:
     that:
-      - "shell_result5.changed == False"
+      - "shell_result4.changed == False"
+
+# multiline
 
 - name: execute a shell command using a literal multiline block
   args:
@@ -189,28 +203,28 @@
     | tr -s ' ' \
     | cut -f1 -d ' '
     echo "this is a second line"
-  register: shell_result6
+  register: shell_result5
 
-- debug: var=shell_result6
+- debug: var=shell_result5
 
 - name: assert the multiline shell command ran as expected
   assert:
     that:
-      - "shell_result6.changed"
-      - "shell_result6.stdout == '5575bb6b71c9558db0b6fbbf2f19909eeb4e3b98\nthis is a second line'"
+      - "shell_result5.changed"
+      - "shell_result5.stdout == '5575bb6b71c9558db0b6fbbf2f19909eeb4e3b98\nthis is a second line'"
 
 - name: execute a shell command using a literal multiline block with arguments in it
   shell: |
     executable=/bin/bash
     creates={{output_dir_test | expanduser}}/afile.txt
     echo "test"
-  register: shell_result7
+  register: shell_result6
 
 - name: assert the multiline shell command with arguments in it run as expected
   assert:
     that:
-      - "shell_result7.changed"
-      - "shell_result7.stdout == 'test'"
+      - "shell_result6.changed"
+      - "shell_result6.stdout == 'test'"
 
 - name: remove the previously created file
   file: path={{output_dir_test}}/afile.txt state=absent
