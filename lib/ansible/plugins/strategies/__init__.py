@@ -44,7 +44,7 @@ class SharedPluginLoaderObj:
     the forked processes over the queue easier
     '''
     def __init__(self):
-        self.basdirs       = _basedirs[:]
+        self.basedirs      = _basedirs[:]
         self.filter_loader = filter_loader
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
