@@ -202,7 +202,7 @@ if ((($direction.ToLower() -ne "In") -And ($direction.ToLower() -ne "Out")) -And
     $fwsettings.Add("Direction", $direction)
 };
 if ((($action.ToLower() -ne "allow") -And ($action.ToLower() -ne "block")) -And ($state -eq "present")){
-    $misArg+="Direction";
+    $misArg+="Action";
     $msg+=@("for the Action parameter only the values 'allow' and 'block' are allowed");
 } else {
     $fwsettings.Add("Action", $action)
@@ -225,6 +225,14 @@ foreach ($arg in $args){
     };
 };
 
+$profile=Get-Attr $params "profile" "all";
+if (($profile -ne 'current') -or ($profile -ne 'domain') -or ($profile -ne 'standard') -or ($profile -ne 'all') ) {
+    $misArg+="Profile";
+    $msg+=@("for the Profile parameter only the values 'current', 'domain', 'standard' or 'all' are allowed");
+} else {
+
+    $fwsettings.Add("profile", $profile)
+}
 
 if ($($($misArg|measure).count) -gt 0){
     $result=New-Object psobject @{
