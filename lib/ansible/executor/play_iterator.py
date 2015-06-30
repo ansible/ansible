@@ -242,7 +242,7 @@ class PlayIterator:
         self._host_states[host.name] = s
 
     def get_failed_hosts(self):
-        return dict((host, True) for (host, state) in self._host_states.iteritems() if state.fail_state != self.FAILED_NONE)
+        return dict((host, True) for (host, state) in self._host_states.iteritems() if state.run_state == self.ITERATING_COMPLETE and state.fail_state != self.FAILED_NONE)
 
     def get_original_task(self, host, task):
         '''
