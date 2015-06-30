@@ -56,6 +56,18 @@ options:
     required: false
     default: 600
     aliases: []
+  marker:
+    description:
+      - Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
+    required: false
+    default: null
+    version_added: "2.0"
+  max_keys:
+    description:
+      - Max number of results to return in list mode, set this if you want to retrieve fewer than the default 1000 keys.
+    required: false
+    default: 1000
+    version_added: "2.0"
   metadata:
     description:
       - Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
@@ -64,7 +76,7 @@ options:
     version_added: "1.6"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), create (bucket), delete (bucket), and delobj (delete object).
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), list (list keys (2.0+)), create (bucket), delete (bucket), and delobj (delete object).
     required: true
     default: null
     aliases: []
@@ -73,6 +85,12 @@ options:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
     required: false
     default: null
+  prefix:
+    description:
+      - Limits the response to keys that begin with the specified prefix for list mode
+    required: false
+    default: null
+    version_added: "2.0"
   version:
     description:
       - Version ID of the object inside the bucket. Can be used to get a specific version of a file if versioning is enabled in the target bucket.
@@ -128,6 +146,12 @@ EXAMPLES = '''
 
 # PUT/upload with metadata
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip,Cache-Control=no-cache'
+
+# List keys simple
+- s3: bucket=mybucket mode=list
+
+# List keys all options
+- s3: bucket=mybucket mode=list prefix=/my/desired/ marker=/my/desired/0023.txt max_keys=472
 
 # Create an empty bucket
 - s3: bucket=mybucket mode=create
@@ -204,6 +228,19 @@ def create_bucket(module, s3, bucket, location=None):
         module.fail_json(msg= str(e))
     if bucket:
         return True
+
+def get_bucket(module, s3, bucket):
+    try:
+        return s3.lookup(bucket)
+    except s3.provider.storage_response_error, e:
+        module.fail_json(msg= str(e))
+
+def list_keys(module, bucket_object, prefix, marker, max_keys):
+    all_keys = bucket_object.get_all_keys(prefix=prefix, marker=marker, max_keys=max_keys)
+
+    keys = [x.key for x in all_keys]
+
+    module.exit_json(msg="LIST operation complete", s3_keys=keys)
 
 def delete_bucket(module, s3, bucket):
     try:
@@ -330,11 +367,14 @@ def main():
             dest           = dict(default=None),
             encrypt        = dict(default=True, type='bool'),
             expiry         = dict(default=600, aliases=['expiration']),
+            marker         = dict(default=None),
+            max_keys       = dict(default=1000),
             metadata       = dict(type='dict'),
-            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj'], required=True),
+            mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
             object         = dict(),
             version        = dict(default=None),
             overwrite      = dict(aliases=['force'], default='always'),
+            prefix         = dict(default=None),
             retries        = dict(aliases=['retry'], type='int', default=0),
             s3_url         = dict(aliases=['S3_URL']),
             src            = dict(),
@@ -350,11 +390,14 @@ def main():
     expiry = int(module.params['expiry'])
     if module.params.get('dest'):
         dest = os.path.expanduser(module.params.get('dest'))
+    marker = module.params.get('marker')
+    max_keys = module.params.get('max_keys')
     metadata = module.params.get('metadata')
     mode = module.params.get('mode')
     obj = module.params.get('object')
     version = module.params.get('version')
     overwrite = module.params.get('overwrite')
+    prefix = module.params.get('prefix')
     retries = module.params.get('retries')
     s3_url = module.params.get('s3_url')
     src = module.params.get('src')
@@ -537,6 +580,16 @@ def main():
                 module.fail_json(msg="Bucket does not exist.", changed=False)
         else:
             module.fail_json(msg="Bucket parameter is required.", failed=True)
+
+    # Support for listing a set of keys
+    if mode == 'list':
+        bucket_object = get_bucket(module, s3, bucket)
+
+        # If the bucket does not exist then bail out
+        if bucket_object is None:
+            module.fail_json(msg="Target bucket (%s) cannot be found"% bucket, failed=True)
+
+        list_keys(module, bucket_object, prefix, marker, max_keys)
 
     # Need to research how to create directories without "populating" a key, so this should just do bucket creation for now.
     # WE SHOULD ENABLE SOME WAY OF CREATING AN EMPTY KEY TO CREATE "DIRECTORY" STRUCTURE, AWS CONSOLE DOES THIS.
