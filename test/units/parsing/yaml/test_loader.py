@@ -29,6 +29,11 @@ from ansible.compat.tests.mock import patch
 
 from ansible.parsing.yaml.loader import AnsibleLoader
 
+try:
+    from _yaml import ParserError
+except ImportError:
+    from yaml.parser import ParserError
+
 
 class TestAnsibleLoaderBasic(unittest.TestCase):
 
@@ -123,7 +128,7 @@ class TestAnsibleLoaderBasic(unittest.TestCase):
     def test_error_conditions(self):
         stream = StringIO("""{""")
         loader = AnsibleLoader(stream, 'myfile.yml')
-        self.assertRaises(loader.get_single_data)
+        self.assertRaises(ParserError, loader.get_single_data)
 
     def test_front_matter(self):
         stream = StringIO("""---\nfoo: bar""")
