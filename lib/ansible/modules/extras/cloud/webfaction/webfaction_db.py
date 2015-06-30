@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/python
 #
 # Create a webfaction database using Ansible and the Webfaction API
 #

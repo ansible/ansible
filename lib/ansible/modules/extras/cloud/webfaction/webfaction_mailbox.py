@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/python
 #
 # Create webfaction mailbox using Ansible and the Webfaction API
 #
