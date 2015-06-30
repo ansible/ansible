@@ -179,15 +179,15 @@ class TaskExecutor:
         Squash items down to a comma-separated list for certain modules which support it
         (typically package management modules).
         '''
-
         if len(items) > 0 and self._task.action in self.SQUASH_ACTIONS:
             final_items = []
             for item in items:
                 variables['item'] = item
                 templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
                 if self._task.evaluate_conditional(templar, variables):
-                    if templar._contains_vars(self._task.args['name']):
-                        new_item = templar.template(self._task.args['name'])
+                    name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
+                    if templar._contains_vars(name):
+                        new_item = templar.template(name)
                         final_items.append(new_item)
                     else:
                         final_items.append(item)
