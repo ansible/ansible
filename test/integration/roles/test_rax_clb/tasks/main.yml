@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_clb|failed
-      - rax_clb.msg == 'missing required arguments: name'
+      - 'rax_clb.msg == "missing required arguments: name"'
 # ============================================================
 
 
@@ -60,7 +60,7 @@
   assert:
     that:
       - rax_clb|failed
-      - rax_clb.msg == 'missing required arguments: name'
+      - 'rax_clb.msg == "missing required arguments: name"'
 # ============================================================
 
 
@@ -378,7 +378,7 @@
   assert:
     that:
       - rax_clb|failed
-      - "rax_clb.msg == 'value of type must be one of: PUBLIC,SERVICENET, got: BAD'"
+      - 'rax_clb.msg == "value of type must be one of: PUBLIC,SERVICENET, got: BAD"'
 # ============================================================
 
 
@@ -401,7 +401,7 @@
   assert:
     that:
       - rax_clb|failed
-      - "rax_clb.msg == 'value of protocol must be one of: DNS_TCP,DNS_UDP,FTP,HTTP,HTTPS,IMAPS,IMAPv4,LDAP,LDAPS,MYSQL,POP3,POP3S,SMTP,TCP,TCP_CLIENT_FIRST,UDP,UDP_STREAM,SFTP, got: BAD'"
+      - 'rax_clb.msg == "value of protocol must be one of: DNS_TCP,DNS_UDP,FTP,HTTP,HTTPS,IMAPS,IMAPv4,LDAP,LDAPS,MYSQL,POP3,POP3S,SMTP,TCP,TCP_CLIENT_FIRST,UDP,UDP_STREAM,SFTP, got: BAD"'
 # ============================================================
 
 
@@ -424,7 +424,7 @@
   assert:
     that:
       - rax_clb|failed
-      - "rax_clb.msg == 'value of algorithm must be one of: RANDOM,LEAST_CONNECTIONS,ROUND_ROBIN,WEIGHTED_LEAST_CONNECTIONS,WEIGHTED_ROUND_ROBIN, got: BAD'"
+      - 'rax_clb.msg == "value of algorithm must be one of: RANDOM,LEAST_CONNECTIONS,ROUND_ROBIN,WEIGHTED_LEAST_CONNECTIONS,WEIGHTED_ROUND_ROBIN, got: BAD"'
 # ============================================================
 
 
