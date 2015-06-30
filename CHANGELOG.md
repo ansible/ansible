@@ -24,6 +24,7 @@ New Modules:
   * amazon: elasticache_subnet_group
   * amazon: iam
   * amazon: iam_policy
+  * bundler
   * circonus_annotation
   * consul
   * consul_acl
