@@ -14,6 +14,11 @@ from fnmatch import fnmatch
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
 
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 
 BLACKLIST_DIRS = frozenset(('.git',))
 INDENT_REGEX = re.compile(r'(^[ \t]*)', flags=re.M)
@@ -32,10 +37,16 @@ class Validator(object):
         """Reset the test results"""
         self.errors = []
         self.warnings = []
+        self.traces = []
 
     @abc.abstractproperty
     def object_name(self):
         """Name of the object we validated"""
+        pass
+
+    @abc.abstractproperty
+    def object_path(self):
+        """Path of the object we validated"""
         pass
 
     @abc.abstractmethod
@@ -53,6 +64,8 @@ class Validator(object):
 
         ret = []
 
+        for trace in self.traces:
+            print(trace.replace(self._root, '').lstrip('/'))
         for error in self.errors:
             print('ERROR: %s' % error)
             ret.append(1)
@@ -299,7 +312,15 @@ class ModuleValidator(Validator):
             return
 
         if self._python_module():
+            sys_stdout = sys.stdout
+            sys_stderr = sys.stderr
+            sys.stdout = sys.stderr = StringIO()
             doc, examples, ret = get_docstring(self.path)
+            trace = sys.stdout.getvalue()
+            sys.stdout = sys_stdout
+            sys.stderr = sys.stderr
+            if trace:
+                self.traces.append(trace)
             if not bool(doc):
                 self.errors.append('Invalid or no DOCUMENTATION provided')
             if not bool(examples):
