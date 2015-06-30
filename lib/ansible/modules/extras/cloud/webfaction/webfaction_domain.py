@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/python
 #
 # Create Webfaction domains and subdomains using Ansible and the Webfaction API
 #
