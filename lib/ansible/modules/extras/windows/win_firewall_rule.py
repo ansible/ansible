@@ -91,7 +91,7 @@ options:
     profile:
         describtion:
             - the profile this rule applies to
-        default: all
+        default: current
         choices: ['current', 'domain', 'standard', 'all']
     force:
         description:
