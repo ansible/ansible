@@ -98,6 +98,7 @@ options:
     required: false
     default: public
 requirements:
+  - python >= 2.7
   - shade
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
