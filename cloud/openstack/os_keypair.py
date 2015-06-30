@@ -56,7 +56,7 @@ options:
        - Should the resource be present or absent.
      choices: [present, absent]
      default: present
-requirements: ["shade"]
+requirements: []
 '''
 
 EXAMPLES = '''
@@ -163,4 +163,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()
