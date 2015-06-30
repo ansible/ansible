@@ -225,7 +225,7 @@ foreach ($arg in $args){
     };
 };
 
-$profile=Get-Attr $params "profile" "all";
+$profile=Get-Attr $params "profile" "current";
 if (($profile -ne 'current') -or ($profile -ne 'domain') -or ($profile -ne 'standard') -or ($profile -ne 'all') ) {
     $misArg+="Profile";
     $msg+=@("for the Profile parameter only the values 'current', 'domain', 'standard' or 'all' are allowed");
