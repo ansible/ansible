@@ -121,7 +121,7 @@ class Group(object):
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
-	    return (0, '', '')
+            return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
