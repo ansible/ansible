@@ -622,7 +622,7 @@
     that:
       - rax_scaling_group|success
       - not rax_scaling_group|changed
-      - rax_scaling_group.autoscale_group.launchConfiguration.args.server['OS-DCF:diskConfig'] == 'AUTO'
+      - "rax_scaling_group.autoscale_group.launchConfiguration.args.server['OS-DCF:diskConfig'] == 'AUTO'"
 
 - name: Change disk_config 2
   rax_scaling_group:
@@ -644,7 +644,7 @@
     that:
       - rax_scaling_group|success
       - rax_scaling_group|changed
-      - rax_scaling_group.autoscale_group.launchConfiguration.args.server['OS-DCF:diskConfig'] == 'MANUAL'
+      - "rax_scaling_group.autoscale_group.launchConfiguration.args.server['OS-DCF:diskConfig'] == 'MANUAL'"
 # ============================================================
 
 

@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_clb_nodes|failed
-      - rax_clb_nodes.msg == 'missing required arguments: load_balancer_id'
+      - 'rax_clb_nodes.msg == "missing required arguments: load_balancer_id"'
 # ============================================================
 
 
