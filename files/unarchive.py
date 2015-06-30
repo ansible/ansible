@@ -303,10 +303,7 @@ def main():
     # skip working with 0 size archives
     try:
         if os.path.getsize(src) == 0:
-            res_args = {
-                'changed': False
-            }
-            module.exit_json(**res_args)
+            module.fail_json(msg="Invalid archive '%s', the file is 0 bytes" % src)
     except Exception, e:
         module.fail_json(msg="Source '%s' not readable" % src)
 
