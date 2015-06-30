@@ -120,10 +120,13 @@ class ModuleValidator(Validator):
         return False
 
     def _just_docs(self):
-        for child in self.ast.body:
-            if not isinstance(child, ast.Assign):
-                return False
-        return True
+        try:
+            for child in self.ast.body:
+                if not isinstance(child, ast.Assign):
+                    return False
+            return True
+        except AttributeError:
+            return False
 
     def _is_bottom_import_blacklisted(self):
         return self.object_name in self.BOTTOM_IMPORTS_BLACKLIST
