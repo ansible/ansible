@@ -84,7 +84,7 @@ options:
       - Allow adding build flags for gem compilation
     required: false
     version_added: "2.0"
-author: 
+author:
     - "Ansible Core Team"
     - "Johan Wiren"
 '''
@@ -196,8 +196,11 @@ def install(module):
     if module.params['pre_release']:
         cmd.append('--pre')
     if not module.params['include_doc']:
-        cmd.append('--no-rdoc')
-        cmd.append('--no-ri')
+        if major and major < 2:
+            cmd.append('--no-rdoc')
+            cmd.append('--no-ri')
+        else:
+            cmd.append('--no-document')
     cmd.append(module.params['gem_source'])
     if module.params['build_flags']:
         cmd.extend([ '--', module.params['build_flags'] ])
