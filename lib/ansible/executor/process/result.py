@@ -123,7 +123,7 @@ class ResultProcess(multiprocessing.Process):
                     self._send_result(('host_task_skipped', result))
                 else:
                     # if this task is notifying a handler, do it now
-                    if result._task.notify:
+                    if result._task.notify and result._result.get('changed', False):
                         # The shared dictionary for notified handlers is a proxy, which
                         # does not detect when sub-objects within the proxy are modified.
                         # So, per the docs, we reassign the list so the proxy picks up and
