@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_facts|failed
-      - rax_facts.msg == 'one of the following is required: address,id,name'
+      - 'rax_facts.msg == "one of the following is required: address,id,name"'
 # ============================================================
 
 
