@@ -380,7 +380,7 @@ class StrategyBase:
                         break
                     self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
                     for host in self._notified_handlers[handler_name]:
-                        if not handler.has_triggered(host):
+                        if not handler.has_triggered(host) and host.name not in self._tqm._failed_hosts:
                             task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
                             task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
                             self._queue_task(host, handler, task_vars, connection_info)
