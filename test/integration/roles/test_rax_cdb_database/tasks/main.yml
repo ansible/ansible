@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_cdb_database|failed
-      - rax_cdb_database.msg == 'missing required arguments: name,cdb_id'
+      - 'rax_cdb_database.msg == "missing required arguments: name,cdb_id"'
 # ============================================================
 
 
@@ -24,7 +24,7 @@
   assert:
     that:
       - rax_cdb_database|failed
-      - rax_cdb_database.msg == 'missing required arguments: cdb_id'
+      - 'rax_cdb_database.msg == "missing required arguments: cdb_id"'
 # ============================================================
 
 

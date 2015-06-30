@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_cbs_attachments|failed
-      - rax_cbs_attachments.msg == 'missing required arguments: server,volume,device'
+      - 'rax_cbs_attachments.msg == "missing required arguments: server,volume,device"'
 # ============================================================
 
 

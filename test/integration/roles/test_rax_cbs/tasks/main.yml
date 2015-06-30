@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_cbs|failed
-      - rax_cbs.msg == 'missing required arguments: name'
+      - 'rax_cbs.msg == "missing required arguments: name"'
 # ============================================================
 
 
@@ -165,7 +165,7 @@
   assert:
     that:
       - rax_cbs|failed
-      - "rax_cbs.msg == 'value of volume_type must be one of: SSD,SATA, got: fail'"
+      - 'rax_cbs.msg == "value of volume_type must be one of: SSD,SATA, got: fail"'
 # ============================================================
 
 
