@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 import os
+import re
 import abc
 import ast
 import sys
@@ -15,6 +16,7 @@ from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
 
 
 BLACKLIST_DIRS = frozenset(('.git',))
+INDENT_REGEX = re.compile(r'(^[ \t]*)', flags=re.M)
 
 
 class Validator(object):
@@ -143,6 +145,13 @@ class ModuleValidator(Validator):
         if ('GNU General Public License' not in self.text and
                 'version 3' not in self.text):
             self.errors.append('GPLv3 license header not found')
+
+    def _check_for_tabs(self):
+        indent = INDENT_REGEX.findall(self.text)
+        for i in indent:
+            if '\t' in i:
+                self.errors.append('indentation contains tabs')
+                break
 
     def _find_json_import(self):
         for child in self.ast.body:
@@ -294,6 +303,7 @@ class ModuleValidator(Validator):
             main = self._find_main_call()
             self._find_module_utils(main)
             self._find_has_import()
+            self._check_for_tabs()
 
         if self._powershell_module():
             self._find_ps_replacers()
