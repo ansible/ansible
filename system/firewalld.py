@@ -23,24 +23,30 @@ DOCUMENTATION = '''
 module: firewalld
 short_description: Manage arbitrary ports/services with firewalld
 description:
-  - This module allows for addition or deletion of services and ports either tcp or udp in either running or permanent firewalld rules
+  - This module allows for addition or deletion of services and ports either tcp or udp in either running or permanent firewalld rules.
 version_added: "1.4"
 options:
   service:
     description:
-      - "Name of a service to add/remove to/from firewalld - service must be listed in /etc/services"
+      - "Name of a service to add/remove to/from firewalld - service must be listed in /etc/services."
     required: false
     default: null
   port:
     description:
-      - "Name of a port to add/remove to/from firewalld must be in the form PORT/PROTOCOL"
+      - "Name of a port or port range to add/remove to/from firewalld. Must be in the form PORT/PROTOCOL or PORT-PORT/PROTOCOL for port ranges."
     required: false
     default: null
   rich_rule:
     description:
-      - "Rich rule to add/remove to/from firewalld"
+      - "Rich rule to add/remove to/from firewalld."
     required: false
     default: null
+  source:
+    description:
+      - 'The source/network you would like to add/remove to/from firewalld'
+    required: false
+    default: null
+    version_added: "2.0"
   zone:
     description:
       - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
@@ -49,7 +55,7 @@ options:
     choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block"]
   permanent:
     description:
-      - "Should this configuration be in the running firewalld configuration or persist across reboots"
+      - "Should this configuration be in the running firewalld configuration or persist across reboots."
     required: true
   immediate:
     description:
@@ -59,29 +65,30 @@ options:
     version_added: "1.9"
   state:
     description:
-      - "Should this port accept(enabled) or reject(disabled) connections"
+      - "Should this port accept(enabled) or reject(disabled) connections."
     required: true
   timeout:
     description:
-      - "The amount of time the rule should be in effect for when non-permanent"
+      - "The amount of time the rule should be in effect for when non-permanent."
     required: false
     default: 0
 notes:
-   - Not tested on any debian based system
-requirements: [ firewalld >= 0.2.11 ]
-author: Adam Miller <maxamillion@fedoraproject.org>
+  - Not tested on any Debian based system.
+requirements: [ 'firewalld >= 0.2.11' ]
+author: "Adam Miller (@maxamillion)" 
 '''
 
 EXAMPLES = '''
 - firewalld: service=https permanent=true state=enabled
 - firewalld: port=8081/tcp permanent=true state=disabled
+- firewalld: port=161-162/udp permanent=true state=enabled
 - firewalld: zone=dmz service=http permanent=true state=enabled
 - firewalld: rich_rule='rule service name="ftp" audit limit value="1/m" accept' permanent=true state=enabled
+- firewalld: source='192.168.1.0/24' zone=internal state=enabled
 '''
 
 import os
 import re
-import sys
 
 try:
     import firewall.config
@@ -89,14 +96,9 @@ try:
 
     from firewall.client import FirewallClient
     fw = FirewallClient()
-    if not fw.connected:
-        raise Exception('failed to connect to the firewalld daemon')
+    HAS_FIREWALLD = True
 except ImportError:
-    print "failed=True msg='firewalld required for this module'"
-    sys.exit(1)
-except Exception, e:
-    print "failed=True msg='%s'" % str(e)
-    sys.exit(1)
+    HAS_FIREWALLD = False
 
 ################
 # port handling
@@ -132,7 +134,27 @@ def set_port_disabled_permanent(zone, port, protocol):
     fw_settings = fw_zone.getSettings()
     fw_settings.removePort(port, protocol)
     fw_zone.update(fw_settings)
-    
+
+####################
+# source handling
+#    
+def get_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    if source in fw_settings.getSources():
+       return True
+    else:
+        return False
+
+def add_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.addSource(source)
+
+def remove_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.removeSource(source)
 
 ####################
 # service handling
@@ -214,13 +236,19 @@ def main():
             port=dict(required=False,default=None),
             rich_rule=dict(required=False,default=None),
             zone=dict(required=False,default=None),
-            permanent=dict(type='bool',required=True),
             immediate=dict(type='bool',default=False),
+            source=dict(required=False,default=None),
+            permanent=dict(type='bool',required=False,default=None),
             state=dict(choices=['enabled', 'disabled'], required=True),
             timeout=dict(type='int',required=False,default=0),
         ),
         supports_check_mode=True
     )
+    if module.params['source'] == None and module.params['permanent'] == None:
+        module.fail(msg='permanent is a required parameter')
+
+    if not HAS_FIREWALLD:
+        module.fail_json(msg='firewalld required for this module')
 
     ## Pre-run version checking
     if FW_VERSION < "0.2.11":
@@ -231,6 +259,7 @@ def main():
     msgs = []
     service = module.params['service']
     rich_rule = module.params['rich_rule']
+    source = module.params['source']
 
     if module.params['port'] != None:
         port, protocol = module.params['port'].split('/')
@@ -310,6 +339,24 @@ def main():
         if changed == True:
             msgs.append("Changed service %s to %s" % (service, desired_state))
 
+    if source != None:
+        is_enabled = get_source(zone, source)
+        if desired_state == "enabled":
+            if is_enabled == False:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                add_source(zone, source)
+                changed=True
+                msgs.append("Added %s to zone %s" % (source, zone))
+        elif desired_state == "disabled":
+            if is_enabled == True:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                remove_source(zone, source)
+                changed=True
+                msgs.append("Removed %s from zone %s" % (source, zone))
     if port != None:
         if permanent:
             is_enabled = get_port_enabled_permanent(zone, [port, protocol])
@@ -399,6 +446,4 @@ def main():
 #################################################
 # import module snippets
 from ansible.module_utils.basic import *
-
 main()
-

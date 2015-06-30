@@ -1,0 +1,388 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+DOCUMENTATION = """
+---
+module: vertica_user
+version_added: '2.0'
+short_description: Adds or removes Vertica database users and assigns roles.
+description:
+  - Adds or removes Vertica database user and, optionally, assigns roles.
+  - A user will not be removed until all the dependencies have been dropped.
+  - In such a situation, if the module tries to remove the user it
+    will fail and only remove roles granted to the user.
+options:
+  name:
+    description:
+      - Name of the user to add or remove.
+    required: true
+  profile:
+    description:
+      - Sets the user's profile.
+    required: false
+    default: null
+  resource_pool:
+    description:
+      - Sets the user's resource pool.
+    required: false
+    default: null
+  password:
+    description:
+      - The user's password encrypted by the MD5 algorithm.
+      - The password must be generated with the format C("md5" + md5[password + username]),
+        resulting in a total of 35 characters. An easy way to do this is by querying
+        the Vertica database with select 'md5'||md5('<user_password><user_name>').
+    required: false
+    default: null
+  expired:
+    description:
+      - Sets the user's password expiration.
+    required: false
+    default: null
+  ldap:
+    description:
+      - Set to true if users are authenticated via LDAP.
+      - The user will be created with password expired and set to I($ldap$).
+    required: false
+    default: null
+  roles:
+    description:
+      - Comma separated list of roles to assign to the user.
+    aliases: ['role']
+    required: false
+    default: null
+  state:
+    description:
+      - Whether to create C(present), drop C(absent) or lock C(locked) a user.
+    required: false
+    choices: ['present', 'absent', 'locked']
+    default: present
+  db:
+    description:
+      - Name of the Vertica database.
+    required: false
+    default: null
+  cluster:
+    description:
+      - Name of the Vertica cluster.
+    required: false
+    default: localhost
+  port:
+    description:
+      - Vertica cluster port to connect to.
+    required: false
+    default: 5433
+  login_user:
+    description:
+      - The username used to authenticate with.
+    required: false
+    default: dbadmin
+  login_password:
+    description:
+      - The password used to authenticate with.
+    required: false
+    default: null
+notes:
+  - The default authentication assumes that you are either logging in as or sudo'ing
+    to the C(dbadmin) account on the host.
+  - This module uses C(pyodbc), a Python ODBC database adapter. You must ensure
+    that C(unixODBC) and C(pyodbc) is installed on the host and properly configured.
+  - Configuring C(unixODBC) for Vertica requires C(Driver = /opt/vertica/lib64/libverticaodbc.so)
+    to be added to the C(Vertica) section of either C(/etc/odbcinst.ini) or C($HOME/.odbcinst.ini)
+    and both C(ErrorMessagesPath = /opt/vertica/lib64) and C(DriverManagerEncoding = UTF-16)
+    to be added to the C(Driver) section of either C(/etc/vertica.ini) or C($HOME/.vertica.ini).
+requirements: [ 'unixODBC', 'pyodbc' ]
+author: "Dariusz Owczarek (@dareko)"
+"""
+
+EXAMPLES = """
+- name: creating a new vertica user with password
+  vertica_user: name=user_name password=md5<encrypted_password> db=db_name state=present
+
+- name: creating a new vertica user authenticated via ldap with roles assigned
+  vertica_user:
+    name=user_name
+    ldap=true
+    db=db_name
+    roles=schema_name_ro
+    state=present
+"""
+
+try:
+    import pyodbc
+except ImportError:
+    pyodbc_found = False
+else:
+    pyodbc_found = True
+
+class NotSupportedError(Exception):
+    pass
+
+class CannotDropError(Exception):
+    pass
+
+# module specific functions
+
+def get_user_facts(cursor, user=''):
+    facts = {}
+    cursor.execute("""
+        select u.user_name, u.is_locked, u.lock_time,
+        p.password, p.acctexpired as is_expired,
+        u.profile_name, u.resource_pool,
+        u.all_roles, u.default_roles
+        from users u join password_auditor p on p.user_id = u.user_id
+        where not u.is_super_user
+        and (? = '' or u.user_name ilike ?)
+    """, user, user)
+    while True:
+        rows = cursor.fetchmany(100)
+        if not rows:
+            break
+        for row in rows:
+            user_key = row.user_name.lower()
+            facts[user_key] = {
+                'name': row.user_name,
+                'locked': str(row.is_locked),
+                'password': row.password,
+                'expired': str(row.is_expired),
+                'profile': row.profile_name,
+                'resource_pool': row.resource_pool,
+                'roles': [],
+                'default_roles': []}
+            if row.is_locked:
+                facts[user_key]['locked_time'] = str(row.lock_time)
+            if row.all_roles:
+                facts[user_key]['roles'] = row.all_roles.replace(' ', '').split(',')
+            if row.default_roles:
+                facts[user_key]['default_roles'] = row.default_roles.replace(' ', '').split(',')
+    return facts
+
+def update_roles(user_facts, cursor, user,
+                 existing_all, existing_default, required):
+    del_roles = list(set(existing_all) - set(required))
+    if del_roles:
+        cursor.execute("revoke {0} from {1}".format(','.join(del_roles), user))
+    new_roles = list(set(required) - set(existing_all))
+    if new_roles:
+        cursor.execute("grant {0} to {1}".format(','.join(new_roles), user))
+    if required:
+        cursor.execute("alter user {0} default role {1}".format(user, ','.join(required)))
+
+def check(user_facts, user, profile, resource_pool,
+    locked, password, expired, ldap, roles):
+    user_key = user.lower()
+    if user_key not in user_facts:
+       return False
+    if profile and profile != user_facts[user_key]['profile']:
+        return False
+    if resource_pool and resource_pool != user_facts[user_key]['resource_pool']:
+        return False
+    if locked != (user_facts[user_key]['locked'] == 'True'):
+        return False
+    if password and password != user_facts[user_key]['password']:
+        return False
+    if expired is not None and expired != (user_facts[user_key]['expired'] == 'True') or \
+       ldap is not None and ldap != (user_facts[user_key]['expired'] == 'True'):
+        return False
+    if roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or \
+        cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0):
+        return False
+    return True
+
+def present(user_facts, cursor, user, profile, resource_pool,
+    locked, password, expired, ldap, roles):
+    user_key = user.lower()
+    if user_key not in user_facts:
+        query_fragments = ["create user {0}".format(user)]
+        if locked:
+            query_fragments.append("account lock")
+        if password or ldap:
+            if password:
+                query_fragments.append("identified by '{0}'".format(password))
+            else:
+                query_fragments.append("identified by '$ldap$'")
+        if expired or ldap:
+            query_fragments.append("password expire")
+        if profile:
+            query_fragments.append("profile {0}".format(profile))
+        if resource_pool:
+            query_fragments.append("resource pool {0}".format(resource_pool))
+        cursor.execute(' '.join(query_fragments))
+        if resource_pool and resource_pool != 'general':
+            cursor.execute("grant usage on resource pool {0} to {1}".format(
+                resource_pool, user))
+        update_roles(user_facts, cursor, user, [], [], roles)
+        user_facts.update(get_user_facts(cursor, user))
+        return True
+    else:
+        changed = False
+        query_fragments = ["alter user {0}".format(user)]
+        if locked is not None and locked != (user_facts[user_key]['locked'] == 'True'):
+            if locked:
+                state = 'lock'
+            else:
+                state = 'unlock'
+            query_fragments.append("account {0}".format(state))
+            changed = True
+        if password and password != user_facts[user_key]['password']:
+            query_fragments.append("identified by '{0}'".format(password))
+            changed = True
+        if ldap:
+            if ldap != (user_facts[user_key]['expired'] == 'True'):
+                query_fragments.append("password expire")
+                changed = True                
+        elif expired is not None and expired != (user_facts[user_key]['expired'] == 'True'):
+            if expired:
+                query_fragments.append("password expire")
+                changed = True
+            else:
+                raise NotSupportedError("Unexpiring user password is not supported.")
+        if profile and profile != user_facts[user_key]['profile']:
+            query_fragments.append("profile {0}".format(profile))
+            changed = True
+        if resource_pool and resource_pool != user_facts[user_key]['resource_pool']:
+            query_fragments.append("resource pool {0}".format(resource_pool))
+            if user_facts[user_key]['resource_pool'] != 'general':
+                cursor.execute("revoke usage on resource pool {0} from {1}".format(
+                    user_facts[user_key]['resource_pool'], user))
+            if resource_pool != 'general':
+                cursor.execute("grant usage on resource pool {0} to {1}".format(
+                    resource_pool, user))
+            changed = True
+        if changed:
+            cursor.execute(' '.join(query_fragments))
+        if roles and (cmp(sorted(roles), sorted(user_facts[user_key]['roles'])) != 0 or \
+            cmp(sorted(roles), sorted(user_facts[user_key]['default_roles'])) != 0):
+            update_roles(user_facts, cursor, user,
+                user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], roles)
+            changed = True
+        if changed:
+            user_facts.update(get_user_facts(cursor, user))
+        return changed
+
+def absent(user_facts, cursor, user, roles):
+    user_key = user.lower()
+    if user_key in user_facts:
+        update_roles(user_facts, cursor, user,
+            user_facts[user_key]['roles'], user_facts[user_key]['default_roles'], [])
+        try:
+            cursor.execute("drop user {0}".format(user_facts[user_key]['name']))
+        except pyodbc.Error:
+            raise CannotDropError("Dropping user failed due to dependencies.")
+        del user_facts[user_key]
+        return True
+    else:
+        return False
+
+# module logic
+
+def main():
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            user=dict(required=True, aliases=['name']),
+            profile=dict(default=None),
+            resource_pool=dict(default=None),
+            password=dict(default=None),
+            expired=dict(type='bool', default=None),
+            ldap=dict(type='bool', default=None),
+            roles=dict(default=None, aliases=['role']),
+            state=dict(default='present', choices=['absent', 'present', 'locked']),
+            db=dict(default=None),
+            cluster=dict(default='localhost'),
+            port=dict(default='5433'),
+            login_user=dict(default='dbadmin'),
+            login_password=dict(default=None),
+        ), supports_check_mode = True)
+
+    if not pyodbc_found:
+        module.fail_json(msg="The python pyodbc module is required.")
+
+    user = module.params['user']
+    profile = module.params['profile']
+    if profile:
+        profile = profile.lower()
+    resource_pool = module.params['resource_pool']
+    if resource_pool:
+        resource_pool = resource_pool.lower()
+    password = module.params['password']
+    expired = module.params['expired']
+    ldap = module.params['ldap']
+    roles = []
+    if module.params['roles']:
+        roles = module.params['roles'].split(',')
+        roles = filter(None, roles)
+    state = module.params['state']
+    if state == 'locked':
+        locked = True
+    else:
+        locked = False
+    db = ''
+    if module.params['db']:
+        db = module.params['db']
+
+    changed = False
+
+    try:
+        dsn = (
+            "Driver=Vertica;"
+            "Server={0};"
+            "Port={1};"
+            "Database={2};"
+            "User={3};"
+            "Password={4};"
+            "ConnectionLoadBalance={5}"
+            ).format(module.params['cluster'], module.params['port'], db,
+                module.params['login_user'], module.params['login_password'], 'true')
+        db_conn = pyodbc.connect(dsn, autocommit=True)
+        cursor = db_conn.cursor()
+    except Exception, e:
+        module.fail_json(msg="Unable to connect to database: {0}.".format(e))
+
+    try:
+        user_facts = get_user_facts(cursor)
+        if module.check_mode:
+            changed = not check(user_facts, user, profile, resource_pool,
+                locked, password, expired, ldap, roles)
+        elif state == 'absent':
+            try:
+                changed = absent(user_facts, cursor, user, roles)
+            except pyodbc.Error, e:
+                module.fail_json(msg=str(e))
+        elif state in ['present', 'locked']:
+            try:
+                changed = present(user_facts, cursor, user, profile, resource_pool,
+                    locked, password, expired, ldap, roles)
+            except pyodbc.Error, e:
+                module.fail_json(msg=str(e))
+    except NotSupportedError, e:
+        module.fail_json(msg=str(e), ansible_facts={'vertica_users': user_facts})
+    except CannotDropError, e:
+        module.fail_json(msg=str(e), ansible_facts={'vertica_users': user_facts})
+    except SystemExit:
+        # avoid catching this on python 2.4
+        raise
+    except Exception, e:
+        module.fail_json(msg=e)
+
+    module.exit_json(changed=changed, user=user, ansible_facts={'vertica_users': user_facts})
+
+# import ansible utilities
+from ansible.module_utils.basic import *
+if __name__ == '__main__':
+    main()

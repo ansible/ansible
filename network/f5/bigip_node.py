@@ -25,7 +25,7 @@ short_description: "Manages F5 BIG-IP LTM nodes"
 description:
     - "Manages F5 BIG-IP LTM nodes via iControl SOAP API"
 version_added: "1.4"
-author: Matt Hite
+author: "Matt Hite (@mhite)"
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -54,12 +54,36 @@ options:
         default: null
         choices: []
         aliases: []
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 2.0
     state:
         description:
             - Pool member state
         required: true
         default: present
         choices: ['present', 'absent']
+        aliases: []
+    session_state:
+        description:
+            - Set new session availability status for node
+        version_added: "1.9"
+        required: false
+        default: null
+        choices: ['enabled', 'disabled']
+        aliases: []
+    monitor_state:
+        description:
+            - Set monitor availability status for node
+        version_added: "1.9"
+        required: false
+        default: null
+        choices: ['enabled', 'disabled']
         aliases: []
     partition:
         description:
@@ -137,22 +161,32 @@ EXAMPLES = '''
       partition=matthite
       name="{{ ansible_default_ipv4["address"] }}"
 
-'''
-
-try:
-    import bigsuds
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
-
-# ==========================
-# bigip_node module specific
+# The BIG-IP GUI doesn't map directly to the API calls for "Node ->
+# General Properties -> State". The following states map to API monitor
+# and session states.
 #
+# Enabled (all traffic allowed):
+# monitor_state=enabled, session_state=enabled
+# Disabled (only persistent or active connections allowed):
+# monitor_state=enabled, session_state=disabled
+# Forced offline (only active connections allowed):
+# monitor_state=disabled, session_state=disabled
+#
+# See https://devcentral.f5.com/questions/icontrol-equivalent-call-for-b-node-down
 
-def bigip_api(bigip, user, password):
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
-    return api
+  - name: Force node offline
+    local_action: >
+      bigip_node
+      server=lb.mydomain.com
+      user=admin
+      password=mysecret
+      state=present
+      session_state=disabled
+      monitor_state=disabled
+      partition=matthite
+      name="{{ ansible_default_ipv4["address"] }}"
+
+'''
 
 def node_exists(api, address):
     # hack to determine if node exists
@@ -201,37 +235,55 @@ def delete_node_address(api, address):
 
 def set_node_description(api, name, description):
     api.LocalLB.NodeAddressV2.set_description(nodes=[name],
-                                                  descriptions=[description])
+                                              descriptions=[description])
 
 def get_node_description(api, name):
     return api.LocalLB.NodeAddressV2.get_description(nodes=[name])[0]
 
+def set_node_session_enabled_state(api, name, session_state):
+    session_state = "STATE_%s" % session_state.strip().upper()
+    api.LocalLB.NodeAddressV2.set_session_enabled_state(nodes=[name],
+                                                        states=[session_state])
+
+def get_node_session_status(api, name):
+    result = api.LocalLB.NodeAddressV2.get_session_status(nodes=[name])[0]
+    result = result.split("SESSION_STATUS_")[-1].lower()
+    return result
+
+def set_node_monitor_state(api, name, monitor_state):
+    monitor_state = "STATE_%s" % monitor_state.strip().upper()
+    api.LocalLB.NodeAddressV2.set_monitor_state(nodes=[name],
+                                                states=[monitor_state])
+
+def get_node_monitor_status(api, name):
+    result = api.LocalLB.NodeAddressV2.get_monitor_status(nodes=[name])[0]
+    result = result.split("MONITOR_STATUS_")[-1].lower()
+    return result
+
+
 def main():
-    module = AnsibleModule(
-        argument_spec = dict(
-            server = dict(type='str', required=True),
-            user = dict(type='str', required=True),
-            password = dict(type='str', required=True),
-            state = dict(type='str', default='present', choices=['present', 'absent']),
-            partition = dict(type='str', default='Common'),
+    argument_spec=f5_argument_spec();
+    argument_spec.update(dict(
+            session_state = dict(type='str', choices=['enabled', 'disabled']),
+            monitor_state = dict(type='str', choices=['enabled', 'disabled']),
             name = dict(type='str', required=True),
             host = dict(type='str', aliases=['address', 'ip']),
             description = dict(type='str')
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
         supports_check_mode=True
     )
 
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
+    (server,user,password,state,partition,validate_certs) = f5_parse_arguments(module)
 
-    server = module.params['server']
-    user = module.params['user']
-    password = module.params['password']
-    state = module.params['state']
-    partition = module.params['partition']
+    session_state = module.params['session_state']
+    monitor_state = module.params['monitor_state']
     host = module.params['host']
     name = module.params['name']
-    address = "/%s/%s" % (partition, name)
+    address = fq_name(partition, name)
     description = module.params['description']
 
     if state == 'absent' and host is not None:
@@ -264,6 +316,13 @@ def main():
                         module.fail_json(msg="unable to create: %s" % desc)
                     else:
                         result = {'changed': True}
+                    if session_state is not None:
+                        set_node_session_enabled_state(api, address,
+                                                       session_state)
+                        result = {'changed': True}
+                    if monitor_state is not None:
+                        set_node_monitor_state(api, address, monitor_state)
+                        result = {'changed': True}
                     if description is not None:
                         set_node_description(api, address, description)
                         result = {'changed': True}
@@ -277,6 +336,34 @@ def main():
                         module.fail_json(msg="Changing the node address is " \
                                              "not supported by the API; " \
                                              "delete and recreate the node.")
+                if session_state is not None:
+                    session_status = get_node_session_status(api, address)
+                    if session_state == 'enabled' and \
+                       session_status == 'forced_disabled':
+                        if not module.check_mode:
+                            set_node_session_enabled_state(api, address,
+                                                           session_state)
+                        result = {'changed': True}
+                    elif session_state == 'disabled' and \
+                         session_status != 'force_disabled':
+                        if not module.check_mode:
+                            set_node_session_enabled_state(api, address,
+                                                           session_state)
+                        result = {'changed': True}
+                if monitor_state is not None:
+                    monitor_status = get_node_monitor_status(api, address)
+                    if monitor_state == 'enabled' and \
+                       monitor_status == 'forced_down':
+                        if not module.check_mode:
+                            set_node_monitor_state(api, address,
+                                                   monitor_state)
+                        result = {'changed': True}
+                    elif monitor_state == 'disabled' and \
+                         monitor_status != 'forced_down':
+                        if not module.check_mode:
+                            set_node_monitor_state(api, address,
+                                                   monitor_state)
+                        result = {'changed': True}
                 if description is not None:
                     if get_node_description(api, address) != description:
                         if not module.check_mode:
@@ -290,5 +377,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 main()
 

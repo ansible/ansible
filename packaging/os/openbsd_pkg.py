@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2013, Patrik Lundin <patrik.lundin.swe@gmail.com>
+# (c) 2013, Patrik Lundin <patrik@sigterm.se>
 #
 # This file is part of Ansible
 #
@@ -25,7 +25,7 @@ import syslog
 DOCUMENTATION = '''
 ---
 module: openbsd_pkg
-author: Patrik Lundin
+author: "Patrik Lundin (@eest)"
 version_added: "1.1"
 short_description: Manage packages on OpenBSD.
 description:

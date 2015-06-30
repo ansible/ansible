@@ -20,7 +20,7 @@
 DOCUMENTATION = '''
 ---
 module: ovirt
-author: Vincent Van der Kussen
+author: "Vincent Van der Kussen (@vincentvdk)"
 short_description: oVirt/RHEV platform management
 description:
     - allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform
@@ -152,7 +152,9 @@ options:
     aliases: []
     choices: ['present', 'absent', 'shutdown', 'started', 'restarted']
 
-requirements: [ "ovirt-engine-sdk" ]
+requirements:
+  - "python >= 2.6"
+  - "ovirt-engine-sdk-python"
 '''
 EXAMPLES = '''
 # Basic example provisioning from image.

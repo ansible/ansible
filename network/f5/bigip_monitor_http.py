@@ -27,7 +27,7 @@ short_description: "Manages F5 BIG-IP LTM http monitors"
 description:
     - "Manages F5 BIG-IP LTM monitors via iControl SOAP API"
 version_added: "1.4"
-author: Serge van Ginderachter
+author: "Serge van Ginderachter (@srvg)"
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -51,6 +51,14 @@ options:
             - BIG-IP password
         required: true
         default: null
+    validate_certs:
+        description:
+            - If C(no), SSL certificates will not be validated. This should only be used
+              on personally controlled sites using self-signed certificates.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: 2.0
     state:
         description:
             - Monitor state
@@ -155,26 +163,9 @@ EXAMPLES = '''
     name:               "{{ monitorname }}"
 '''
 
-try:
-    import bigsuds
-except ImportError:
-    bigsuds_found = False
-else:
-    bigsuds_found = True
-
 TEMPLATE_TYPE = 'TTYPE_HTTP'
 DEFAULT_PARENT_TYPE = 'http'
 
-
-# ===========================================
-# bigip_monitor module generic methods.
-# these should be re-useable for other monitor types
-#
-
-def bigip_api(bigip, user, password):
-
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
-    return api
 
 
 def check_monitor_exists(module, api, monitor, parent):
@@ -262,7 +253,6 @@ def set_integer_property(api, monitor, int_property):
 
 
 def update_monitor_properties(api, module, monitor, template_string_properties, template_integer_properties):
-
     changed = False
     for str_property in template_string_properties:
         if str_property['value'] is not None and not check_string_property(api, monitor, str_property):
@@ -305,14 +295,8 @@ def set_ipport(api, monitor, ipport):
 def main():
 
     # begin monitor specific stuff
-
-    module = AnsibleModule(
-        argument_spec = dict(
-            server    = dict(required=True),
-            user      = dict(required=True),
-            password  = dict(required=True),
-            partition = dict(default='Common'),
-            state     = dict(default='present', choices=['present', 'absent']),
+    argument_spec=f5_argument_spec();
+    argument_spec.update( dict(
             name      = dict(required=True),
             parent    = dict(default=DEFAULT_PARENT_TYPE),
             parent_partition = dict(default='Common'),
@@ -324,19 +308,20 @@ def main():
             interval  = dict(required=False, type='int'),
             timeout   = dict(required=False, type='int'),
             time_until_up = dict(required=False, type='int', default=0)
-        ),
+        )
+    )
+
+    module = AnsibleModule(
+        argument_spec = argument_spec,
         supports_check_mode=True
     )
 
-    server = module.params['server']
-    user = module.params['user']
-    password = module.params['password']
-    partition = module.params['partition']
+    (server,user,password,state,partition,validate_certs) = f5_parse_arguments(module)
+
     parent_partition = module.params['parent_partition']
-    state = module.params['state']
     name = module.params['name']
-    parent = "/%s/%s" % (parent_partition, module.params['parent'])
-    monitor = "/%s/%s" % (partition, name)
+    parent = fq_name(parent_partition, module.params['parent'])
+    monitor = fq_name(partition, name)
     send = module.params['send']
     receive = module.params['receive']
     receive_disable = module.params['receive_disable']
@@ -348,8 +333,6 @@ def main():
 
     # end monitor specific stuff
 
-    if not bigsuds_found:
-        module.fail_json(msg="the python bigsuds module is required")
     api = bigip_api(server, user, password)
     monitor_exists = check_monitor_exists(module, api, monitor, parent)
 
@@ -460,5 +443,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 main()
 

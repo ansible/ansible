@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: macports
-author: Jimmy Tang
+author: "Jimmy Tang (@jcftang)"
 short_description: Package manager for MacPorts
 description:
     - Manages MacPorts packages

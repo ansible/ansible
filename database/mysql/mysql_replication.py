@@ -30,6 +30,7 @@ short_description: Manage MySQL replication
 description:
     - Manages MySQL server replication, slave, master status get and change master host.
 version_added: "1.3"
+author: "Balazs Pocze (@banyek)" 
 options:
     mode:
         description:
@@ -93,7 +94,7 @@ options:
     master_ssl:
         description:
             - same as mysql variable
-        possible values: 0,1
+        choices: [ 0, 1 ]
     master_ssl_ca:
         description:
             - same as mysql variable
@@ -109,7 +110,12 @@ options:
     master_ssl_cipher:
         description:
             - same as mysql variable
-
+    master_auto_position:
+        description:
+            - does the host uses GTID based replication or not
+        required: false
+        default: null
+        version_added: "2.0"
 '''
 
 EXAMPLES = '''
@@ -239,9 +245,10 @@ def main():
             login_user=dict(default=None),
             login_password=dict(default=None),
             login_host=dict(default="localhost"),
-            login_port=dict(default="3306"),
+            login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
+            master_auto_position=dict(default=False, type='bool'),
             master_host=dict(default=None),
             master_user=dict(default=None),
             master_password=dict(default=None),
@@ -279,6 +286,7 @@ def main():
     master_ssl_cert = module.params["master_ssl_cert"]
     master_ssl_key = module.params["master_ssl_key"]
     master_ssl_cipher = module.params["master_ssl_cipher"]
+    master_auto_position = module.params["master_auto_position"]
 
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
@@ -304,10 +312,10 @@ def main():
     try:
         if module.params["login_unix_socket"]:
             db_connection = MySQLdb.connect(host=module.params["login_host"], unix_socket=module.params["login_unix_socket"], user=login_user, passwd=login_password)
-        elif module.params["login_port"] != "3306" and module.params["login_host"] == "localhost":
+        elif module.params["login_port"] != 3306 and module.params["login_host"] == "localhost":
             module.fail_json(msg="login_host is required when login_port is defined, login_host cannot be localhost when login_port is defined")
         else:
-            db_connection = MySQLdb.connect(host=module.params["login_host"], port=int(module.params["login_port"]), user=login_user, passwd=login_password)
+            db_connection = MySQLdb.connect(host=module.params["login_host"], port=module.params["login_port"], user=login_user, passwd=login_password)
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
     try:
@@ -376,6 +384,8 @@ def main():
         if master_ssl_cipher:
             chm.append("MASTER_SSL_CIPHER=%(master_ssl_cipher)s")
             chm_params['master_ssl_cipher'] = master_ssl_cipher
+        if master_auto_position:
+            chm.append("MASTER_AUTO_POSITION = 1")
         changemaster(cursor, chm, chm_params)
         module.exit_json(changed=True)
     elif mode in "startslave":

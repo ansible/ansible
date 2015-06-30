@@ -26,7 +26,7 @@ description:
    - The M(known_hosts) module lets you add or remove a host from the C(known_hosts) file. 
      This is useful if you're going to want to use the M(git) module over ssh, for example. 
      If you have a very large number of host keys to manage, you will find the M(template) module more useful.
-version_added: "1.6"
+version_added: "1.9"
 options:
   name:
     aliases: [ 'host' ]
@@ -51,7 +51,7 @@ options:
     required: no
     default: present
 requirements: [ ]
-author: Matthew Vernon
+author: "Matthew Vernon (@mcv21)"
 '''
 
 EXAMPLES = '''
@@ -82,7 +82,7 @@ def enforce_state(module, params):
     Add or remove key.
     """
 
-    host = params["host"]
+    host = params["name"]
     key = params.get("key",None)
     port = params.get("port",None)
     #expand the path parameter; otherwise module.add_path_info
@@ -128,20 +128,25 @@ def enforce_state(module, params):
                 module.fail_json(msg="Failed to read %s: %s" % \
                                      (path,str(e)))
         try:
-            outf=tempfile.NamedTemporaryFile(dir=os.path.dirname(path),
-                                             delete=False)
+            outf=tempfile.NamedTemporaryFile(dir=os.path.dirname(path))
             if inf is not None:
                 for line in inf:
                     outf.write(line)
                 inf.close()
             outf.write(key)
-            outf.close()
+            outf.flush()
             module.atomic_move(outf.name,path)
-        except IOError,e:
+        except (IOError,OSError),e:
             module.fail_json(msg="Failed to write to file %s: %s" % \
                                  (path,str(e)))
+
+        try:
+            outf.close()
+        except:
+            pass
+
         params['changed'] = True
-    
+
     return params
 
 def sanity_check(module,host,key,sshkeygen):
@@ -162,16 +167,20 @@ def sanity_check(module,host,key,sshkeygen):
     #The approach is to write the key to a temporary file,
     #and then attempt to look up the specified host in that file.
     try:
-        outf=tempfile.NamedTemporaryFile(delete=False)
+        outf=tempfile.NamedTemporaryFile()
         outf.write(key)
-        outf.close()
+        outf.flush()
     except IOError,e:
         module.fail_json(msg="Failed to write to temporary file %s: %s" % \
                              (outf.name,str(e)))
     rc,stdout,stderr=module.run_command([sshkeygen,'-F',host,
                                          '-f',outf.name],
                                         check_rc=True)
-    os.remove(outf.name)
+    try:
+        outf.close()
+    except:
+        pass
+
     if stdout=='': #host not found
         module.fail_json(msg="Host parameter does not match hashed host field in supplied key")
 
@@ -188,10 +197,14 @@ def search_for_host_key(module,host,key,path,sshkeygen):
     replace=False
     if os.path.exists(path)==False:
         return False, False
+    #openssh >=6.4 has changed ssh-keygen behaviour such that it returns
+    #1 if no host is found, whereas previously it returned 0
     rc,stdout,stderr=module.run_command([sshkeygen,'-F',host,'-f',path],
-                                 check_rc=True)
-    if stdout=='': #host not found
-        return False, False
+                                 check_rc=False)
+    if stdout=='' and stderr=='' and (rc==0 or rc==1):
+        return False, False #host not found, no other errors
+    if rc!=0: #something went wrong
+        module.fail_json(msg="ssh-keygen failed (rc=%d,stdout='%s',stderr='%s')" % (rc,stdout,stderr))
 
 #If user supplied no key, we don't want to try and replace anything with it
     if key is None:

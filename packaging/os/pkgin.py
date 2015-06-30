@@ -30,7 +30,9 @@ description:
     - "The standard package manager for SmartOS, but also usable on NetBSD
       or any OS that uses C(pkgsrc).  (Home: U(http://pkgin.net/))"
 version_added: "1.0"
-author: Shaun Zinck, Larry Gilbert
+author:
+    - "Larry Gilbert (L2G)"
+    - "Shaun Zinck (@szinck)"
 notes:
     - "Known bug with pkgin < 0.8.0: if a package is removed and another
       package depends on it, the other package will be silently removed as
@@ -76,9 +78,19 @@ def query_package(module, pkgin_path, name):
     * False      - not installed or not found
     """
 
+    # test whether '-p' (parsable) flag is supported.
+    rc, out, err = module.run_command("%s -p -v" % pkgin_path)
+
+    if rc == 0:
+        pflag = '-p'
+        splitchar = ';'
+    else:
+        pflag = ''
+        splitchar = ' '
+
     # Use "pkgin search" to find the package. The regular expression will
     # only match on the complete name.
-    rc, out, err = module.run_command("%s search \"^%s$\"" % (pkgin_path, name))
+    rc, out, err = module.run_command("%s %s search \"^%s$\"" % (pkgin_path, pflag, name))
 
     # rc will not be 0 unless the search was a success
     if rc == 0:
@@ -93,7 +105,7 @@ def query_package(module, pkgin_path, name):
         #     '<' - installed but out of date
         #     '=' - installed and up to date
         #     '>' - installed but newer than the repository version
-        pkgname_with_version, raw_state = out.split(' ')[0:2]
+        pkgname_with_version, raw_state = out.split(splitchar)[0:2]
 
         # Strip version
         # (results in sth like 'gcc47-libs')

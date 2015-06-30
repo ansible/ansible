@@ -19,7 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: homebrew_cask
-author: Daniel Jaouen
+author: "Daniel Jaouen (@danieljaouen)"
 short_description: Install/uninstall homebrew casks.
 description:
     - Manages Homebrew casks.
@@ -32,7 +32,7 @@ options:
     state:
         description:
             - state of the cask
-        choices: [ 'installed', 'uninstalled' ]
+        choices: [ 'present', 'absent' ]
         required: false
         default: present
 '''
@@ -509,5 +509,8 @@ def main():
         module.exit_json(changed=changed, msg=message)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
+from ansible.module_utils.basic import *
+
+if __name__ == '__main__':
+    main()
+

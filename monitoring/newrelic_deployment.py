@@ -22,14 +22,14 @@ DOCUMENTATION = '''
 ---
 module: newrelic_deployment
 version_added: "1.2"
-author: Matt Coddington
+author: "Matt Coddington (@mcodd)"
 short_description: Notify newrelic about app deployments
 description:
-   - Notify newrelic about app deployments (see http://newrelic.github.io/newrelic_api/NewRelicApi/Deployment.html)
+   - Notify newrelic about app deployments (see https://docs.newrelic.com/docs/apm/new-relic-apm/maintenance/deployment-notifications#api)
 options:
   token:
     description:
-      - API token.
+      - API token, to place in the x-api-key header.
     required: true
   app_name:
     description:
@@ -72,8 +72,7 @@ options:
     choices: ['yes', 'no']
     version_added: 1.5.1
 
-# informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
+requirements: []
 '''
 
 EXAMPLES = '''
@@ -82,6 +81,8 @@ EXAMPLES = '''
                        user='ansible deployment'
                        revision=1.0
 '''
+
+import urllib
 
 # ===========================================
 # Module execution.
@@ -102,6 +103,7 @@ def main():
             environment=dict(required=False),
             validate_certs = dict(default='yes', type='bool'),
         ),
+        required_one_of=[['app_name', 'application_id']],
         supports_check_mode=True
     )
 

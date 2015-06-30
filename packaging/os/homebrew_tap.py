@@ -24,7 +24,7 @@ import re
 DOCUMENTATION = '''
 ---
 module: homebrew_tap
-author: Daniel Jaouen
+author: "Daniel Jaouen (@danieljaouen)"
 short_description: Tap a Homebrew repository.
 description:
     - Tap external Homebrew repositories.
@@ -52,7 +52,7 @@ homebrew_tap: tap=homebrew/dupes,homebrew/science state=present
 
 def a_valid_tap(tap):
     '''Returns True if the tap is valid.'''
-    regex = re.compile(r'^(\S+)/(homebrew-)?(\w+)$')
+    regex = re.compile(r'^([\w-]+)/(homebrew-)?([\w-]+)$')
     return regex.match(tap)
 
 
@@ -211,5 +211,7 @@ def main():
             module.exit_json(changed=changed, msg=msg)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
+from ansible.module_utils.basic import *
+
+if __name__ == '__main__':
+    main()

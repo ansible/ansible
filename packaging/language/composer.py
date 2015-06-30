@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: composer
-author: Dimitrios Tydeas Mengidis
+author: "Dimitrios Tydeas Mengidis (@dmtrs)"
 short_description: Dependency Manager for PHP
 version_added: "1.6"
 description:
@@ -82,6 +82,14 @@ options:
         default: "yes"
         choices: [ "yes", "no" ]
         aliases: [ "optimize-autoloader" ]
+    ignore_platform_reqs:
+        version_added: "2.0"
+        description:
+            - Ignore php, hhvm, lib-* and ext-* requirements and force the installation even if the local machine does not fulfill these.
+        required: false
+        default: "no"
+        choices: [ "yes", "no" ]
+        aliases: [ "ignore-platform-reqs" ]
 requirements:
     - php
     - composer installed in bin path (recommended /usr/local/bin)
@@ -116,42 +124,49 @@ def composer_install(module, command, options):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            command             = dict(default="install", type="str", required=False),
-            working_dir         = dict(aliases=["working-dir"], required=True),
-            prefer_source       = dict(default="no", type="bool", aliases=["prefer-source"]),
-            prefer_dist         = dict(default="no", type="bool", aliases=["prefer-dist"]),
-            no_dev              = dict(default="yes", type="bool", aliases=["no-dev"]),
-            no_scripts          = dict(default="no", type="bool", aliases=["no-scripts"]),
-            no_plugins          = dict(default="no", type="bool", aliases=["no-plugins"]),
-            optimize_autoloader = dict(default="yes", type="bool", aliases=["optimize-autoloader"]),
+            command              = dict(default="install", type="str", required=False),
+            working_dir          = dict(aliases=["working-dir"], required=True),
+            prefer_source        = dict(default="no", type="bool", aliases=["prefer-source"]),
+            prefer_dist          = dict(default="no", type="bool", aliases=["prefer-dist"]),
+            no_dev               = dict(default="yes", type="bool", aliases=["no-dev"]),
+            no_scripts           = dict(default="no", type="bool", aliases=["no-scripts"]),
+            no_plugins           = dict(default="no", type="bool", aliases=["no-plugins"]),
+            optimize_autoloader  = dict(default="yes", type="bool", aliases=["optimize-autoloader"]),
+            ignore_platform_reqs = dict(default="no", type="bool", aliases=["ignore-platform-reqs"]),
         ),
         supports_check_mode=True
     )
 
-    module.params["working_dir"] = os.path.abspath(module.params["working_dir"])
+    options = []
 
-    options = set([])
     # Default options
-    options.add("--no-ansi")
-    options.add("--no-progress")
-    options.add("--no-interaction")
+    options.append('--no-ansi')
+    options.append('--no-progress')
+    options.append('--no-interaction')
 
-    if module.check_mode:
-        options.add("--dry-run")
-        del module.params['CHECKMODE']
+    options.extend(['--working-dir', os.path.abspath(module.params['working_dir'])])
 
-    # Get composer command with fallback to default  
+    # Get composer command with fallback to default
     command = module.params['command']
-    del module.params['command'];
 
     # Prepare options
-    for i in module.params:
-        opt = "--%s" % i.replace("_","-")
-        p = module.params[i]
-        if isinstance(p, (bool)) and p:
-            options.add(opt)
-        elif isinstance(p, (str)):
-            options.add("%s=%s" % (opt, p))
+    if module.params['prefer_source']:
+        options.append('--prefer-source')
+    if module.params['prefer_dist']:
+        options.append('--prefer-dist')
+    if module.params['no_dev']:
+        options.append('--no-dev')
+    if module.params['no_scripts']:
+        options.append('--no-scripts')
+    if module.params['no_plugins']:
+        options.append('--no-plugins')
+    if module.params['optimize_autoloader']:
+        options.append('--optimize-autoloader')
+    if module.params['ignore_platform_reqs']:
+        options.append('--ignore-platform-reqs')
+
+    if module.check_mode:
+        options.append('--dry-run')
 
     rc, out, err = composer_install(module, command, options)
 

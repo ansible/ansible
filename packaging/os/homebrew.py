@@ -22,7 +22,9 @@
 DOCUMENTATION = '''
 ---
 module: homebrew
-author: Andrew Dunham and Daniel Jaouen
+author:
+    - "Daniel Jaouen (@danieljaouen)"
+    - "Andrew Dunham (@andrew-d)"
 short_description: Package manager for Homebrew
 description:
     - Manages Homebrew packages
@@ -31,7 +33,8 @@ options:
     name:
         description:
             - name of package to install/remove
-        required: true
+        required: false
+        default: None
     state:
         description:
             - state of the package
@@ -48,7 +51,7 @@ options:
         description:
             - upgrade all homebrew packages
         required: false
-        default: no
+        default: "no"
         choices: [ "yes", "no" ]
     install_options:
         description:
@@ -113,6 +116,7 @@ class Homebrew(object):
     VALID_PACKAGE_CHARS = r'''
         \w                  # alphanumeric characters (i.e., [a-zA-Z0-9_])
         .                   # dots
+        /                   # slash (for taps)
         \+                  # plusses
         -                   # dashes
     '''
@@ -831,5 +835,8 @@ def main():
         module.exit_json(changed=changed, msg=message)
 
 # this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
+from ansible.module_utils.basic import *
+
+if __name__ == '__main__':
+    main()
+

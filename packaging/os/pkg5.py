@@ -19,7 +19,7 @@
 DOCUMENTATION = '''
 ---
 module: pkg5
-author: Peter Oliver
+author: "Peter Oliver (@mavit)"
 short_description: Manages packages with the Solaris 11 Image Packaging System
 version_added: 1.9
 description:
@@ -39,6 +39,13 @@ options:
     required: false
     default: present
     choices: [ present, latest, absent ]
+  accept_licenses:
+    description:
+      - Accept any licences.
+    required: false
+    default: false
+    choices: [ true, false ]
+    aliases: [ accept_licences, accept ]
 '''
 EXAMPLES = '''
 # Install Vim:
@@ -70,6 +77,11 @@ def main():
                     'removed',
                 ]
             ),
+            accept_licenses=dict(
+                choices=BOOLEANS,
+                default=False,
+                aliases=['accept_licences', 'accept'],
+            ),
         )
     )
 
@@ -89,14 +101,14 @@ def main():
             packages.append(fragment)
 
     if params['state'] in ['present', 'installed']:
-        ensure(module, 'present', packages)
+        ensure(module, 'present', packages, params)
     elif params['state'] in ['latest']:
-        ensure(module, 'latest', packages)
+        ensure(module, 'latest', packages, params)
     elif params['state'] in ['absent', 'uninstalled', 'removed']:
-        ensure(module, 'absent', packages)
+        ensure(module, 'absent', packages, params)
 
 
-def ensure(module, state, packages):
+def ensure(module, state, packages, params):
     response = {
         'results': [],
         'msg': '',
@@ -116,10 +128,21 @@ def ensure(module, state, packages):
         },
     }
 
+    if params['accept_licenses']:
+        accept_licenses = ['--accept']
+    else:
+        accept_licenses = []
+
     to_modify = filter(behaviour[state]['filter'], packages)
     if to_modify:
         rc, out, err = module.run_command(
-            ['pkg', behaviour[state]['subcommand'], '-q', '--'] + to_modify
+            [
+                'pkg', behaviour[state]['subcommand']
+            ]
+            + accept_licenses
+            + [
+                '-q', '--'
+            ] + to_modify
         )
         response['rc'] = rc
         response['results'].append(out)
@@ -133,12 +156,12 @@ def ensure(module, state, packages):
 
 def is_installed(module, package):
     rc, out, err = module.run_command(['pkg', 'list', '--', package])
-    return True if rc == 0 else False
+    return not bool(int(rc))
 
 
 def is_latest(module, package):
     rc, out, err = module.run_command(['pkg', 'list', '-u', '--', package])
-    return True if rc == 1 else False
+    return bool(int(rc))
 
 
 from ansible.module_utils.basic import *
