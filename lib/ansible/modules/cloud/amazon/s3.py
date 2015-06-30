@@ -58,6 +58,11 @@ options:
     required: false
     default: 600
     aliases: []
+  headers:
+    description:
+      - Custom headers for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
+    required: false
+    default: null
   marker:
     description:
       - Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
@@ -132,7 +137,7 @@ options:
     version_added: "1.3"
 
 requirements: [ "boto" ]
-author: 
+author:
     - "Lester Wade (@lwade)"
     - "Ralph Tice (@ralph-tice)"
 extends_documentation_fragment: aws
@@ -151,6 +156,9 @@ EXAMPLES = '''
 # PUT/upload with metadata
 - s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put metadata='Content-Encoding=gzip,Cache-Control=no-cache'
 
+# PUT/upload with custom headers
+- s3: bucket=mybucket object=/my/desired/key.txt src=/usr/local/myfile.txt mode=put headers=x-amz-grant-full-control=emailAddress=owner@example.com
+
 # List keys simple
 - s3: bucket=mybucket mode=list
 
@@ -166,7 +174,7 @@ EXAMPLES = '''
 # Delete a bucket and all contents
 - s3: bucket=mybucket mode=delete
 
-# GET an object but dont download if the file checksums match 
+# GET an object but dont download if the file checksums match
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=different
 
 # Delete an object from a bucket
@@ -288,7 +296,7 @@ def path_check(path):
         return False
 
 
-def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt):
+def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers):
     try:
         bucket = s3.lookup(bucket)
         key = bucket.new_key(obj)
@@ -296,7 +304,7 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt):
             for meta_key in metadata.keys():
                 key.set_metadata(meta_key, metadata[meta_key])
 
-        key.set_contents_from_filename(src, encrypt_key=encrypt)
+        key.set_contents_from_filename(src, encrypt_key=encrypt, headers=headers)
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
     except s3.provider.storage_copy_error, e:
@@ -363,6 +371,7 @@ def main():
             dest           = dict(default=None),
             encrypt        = dict(default=True, type='bool'),
             expiry         = dict(default=600, aliases=['expiration']),
+            headers        = dict(type='dict'),
             marker         = dict(default=None),
             max_keys       = dict(default=1000),
             metadata       = dict(type='dict'),
@@ -386,6 +395,7 @@ def main():
     expiry = int(module.params['expiry'])
     if module.params.get('dest'):
         dest = os.path.expanduser(module.params.get('dest'))
+    headers = module.params.get('headers')
     marker = module.params.get('marker')
     max_keys = module.params.get('max_keys')
     metadata = module.params.get('metadata')
@@ -398,16 +408,16 @@ def main():
     s3_url = module.params.get('s3_url')
     src = module.params.get('src')
 
-    if overwrite not in  ['always', 'never', 'different']: 
-        if module.boolean(overwrite): 
-            overwrite = 'always' 
-        else: 
+    if overwrite not in  ['always', 'never', 'different']:
+        if module.boolean(overwrite):
+            overwrite = 'always'
+        else:
             overwrite='never'
 
-    if overwrite not in  ['always', 'never', 'different']: 
-        if module.boolean(overwrite): 
-            overwrite = 'always' 
-        else: 
+    if overwrite not in  ['always', 'never', 'different']:
+        if module.boolean(overwrite):
+            overwrite = 'always'
+        else:
             overwrite='never'
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
@@ -528,24 +538,24 @@ def main():
                 if md5_local == md5_remote:
                     sum_matches = True
                     if overwrite == 'always':
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
                     else:
                         get_download_url(module, s3, bucket, obj, expiry, changed=False)
                 else:
                     sum_matches = False
                     if overwrite in ('always', 'different'):
-                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
+                        upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
                     else:
                         module.exit_json(msg="WARNING: Checksums do not match. Use overwrite parameter to force upload.")
 
         # If neither exist (based on bucket existence), we can create both.
         if bucketrtn is False and pathrtn is True:
             create_bucket(module, s3, bucket, location)
-            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
 
         # If bucket exists but key doesn't, just upload.
         if bucketrtn is True and pathrtn is True and keyrtn is False:
-            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt)
+            upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, headers)
 
     # Delete an object from a bucket, not the entire bucket
     if mode == 'delobj':
