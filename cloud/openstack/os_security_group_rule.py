@@ -18,8 +18,10 @@
 
 try:
     import shade
+    HAS_SHADE = True
 except ImportError:
-    print("failed=True msg='shade is required for this module'")
+    HAS_SHADE = False
+
 
 DOCUMENTATION = '''
 ---
@@ -87,6 +89,41 @@ EXAMPLES = '''
     remote_ip_prefix: 0.0.0.0/0
 '''
 
+RETURN = '''
+id:
+  description: Unique rule UUID.
+  type: string
+direction:
+  description: The direction in which the security group rule is applied.
+  type: string
+  sample: 'egress'
+ethertype:
+  description: One of IPv4 or IPv6.
+  type: string
+  sample: 'IPv4'
+port_range_min:
+  description: The minimum port number in the range that is matched by
+               the security group rule.
+  type: int
+  sample: 8000
+port_range_max:
+  description: The maximum port number in the range that is matched by
+               the security group rule.
+  type: int
+  sample: 8000
+protocol:
+  description: The protocol that is matched by the security group rule.
+  type: string
+  sample: 'tcp'
+remote_ip_prefix:
+  description: The remote IP prefix to be associated with this security group rule.
+  type: string
+  sample: '0.0.0.0/0'
+security_group_id:
+  description: The security group ID to associate with this security group rule.
+  type: string
+'''
+
 
 def _find_matching_rule(module, secgroup):
     """
@@ -140,10 +177,12 @@ def _system_state_change(module, secgroup):
 def main():
     argument_spec = openstack_full_argument_spec(
         security_group   = dict(required=True),
-        protocol         = dict(default='tcp',
-                                choices=['tcp', 'udp', 'icmp']),
-        port_range_min   = dict(required=True, type='int'),
-        port_range_max   = dict(required=True, type='int'),
+        # NOTE(Shrews): None is an acceptable protocol value for
+        # Neutron, but Nova will balk at this.
+        protocol         = dict(default=None,
+                                choices=[None, 'tcp', 'udp', 'icmp']),
+        port_range_min   = dict(required=False, type='int'),
+        port_range_max   = dict(required=False, type='int'),
         remote_ip_prefix = dict(required=False, default=None),
         # TODO(mordred): Make remote_group handle name and id
         remote_group     = dict(required=False, default=None),
@@ -164,6 +203,9 @@ def main():
     module = AnsibleModule(argument_spec,
                            supports_check_mode=True,
                            **module_kwargs)
+
+    if not HAS_SHADE:
+        module.fail_json(msg='shade is required for this module')
 
     state = module.params['state']
     security_group = module.params['security_group']
@@ -211,4 +253,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
 
-main()
+if __name__ == '__main__':
+    main()
