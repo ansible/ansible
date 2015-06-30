@@ -118,6 +118,8 @@ class PlaybookInclude(Base, Taggable):
                 # rejoin the parameter portion of the arguments and
                 # then use parse_kv() to get a dict of params back
                 params = parse_kv(" ".join(items[1:]))
+                if 'tags' in params:
+                    new_ds['tags'] = params.pop('tags')
                 if 'vars' in new_ds:
                     # FIXME: see fixme above regarding merging vars
                     raise AnsibleParserError("include parameters cannot be mixed with 'vars' entries for include statements", obj=ds)
