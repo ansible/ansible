@@ -539,24 +539,26 @@ class DockerManager(object):
         self.volumes = None
         if self.module.params.get('volumes'):
             self.binds = {}
-            self.volumes = {}
+            self.volumes = []
             vols = self.module.params.get('volumes')
             for vol in vols:
                 parts = vol.split(":")
+                # regular volume
+                if len(parts) == 1:
+                    self.volumes.append(parts[0])
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
-                if len(parts) == 2:
-                    self.volumes[parts[1]] = {}
-                    self.binds[parts[0]] = parts[1]
-                # with bind mode
-                elif len(parts) == 3:
-                    if parts[2] not in ['ro', 'rw']:
-                        self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
-                    ro = parts[2] == 'ro'
-                    self.volumes[parts[1]] = {}
-                    self.binds[parts[0]] = {'bind': parts[1], 'ro': ro}
-                # docker mount (e.g. /www, mounts a docker volume /www on the container at the same location)
+                elif 2 <= len(parts) <= 3:
+                    # default to read-write
+                    ro = False
+                    # with supplied bind mode 
+                    if len(parts) == 3:
+                        if parts[2] not in ['ro', 'rw']:
+                            self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
+                        else:
+                            ro = parts[2] == 'ro'
+                    self.binds[parts[0]] = {'bind': parts[1], 'ro': ro }
                 else:
-                    self.volumes[parts[0]] = {}
+                    self.module.fail_json(msg='volumes support 1 to 3 arguments')
 
         self.lxc_conf = None
         if self.module.params.get('lxc_conf'):
