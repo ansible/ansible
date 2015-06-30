@@ -29,7 +29,7 @@ from ansible.inventory.group import Group
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role import ROLE_CACHE, hash_params
-from ansible.plugins import filter_loader, lookup_loader, module_loader
+from ansible.plugins import _basedirs, filter_loader, lookup_loader, module_loader
 from ansible.utils.debug import debug
 
 
@@ -44,6 +44,7 @@ class SharedPluginLoaderObj:
     the forked processes over the queue easier
     '''
     def __init__(self):
+        self.basdirs       = _basedirs[:]
         self.filter_loader = filter_loader
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader

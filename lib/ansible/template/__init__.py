@@ -29,7 +29,7 @@ from jinja2.runtime import StrictUndefined
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
-from ansible.plugins import filter_loader, lookup_loader
+from ansible.plugins import _basedirs, filter_loader, lookup_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
@@ -60,6 +60,8 @@ class Templar:
         self._available_variables = variables
 
         if shared_loader_obj:
+            global _basedirs
+            _basedirs = shared_loader_obj.basedirs[:]
             self._filter_loader = getattr(shared_loader_obj, 'filter_loader')
             self._lookup_loader = getattr(shared_loader_obj, 'lookup_loader')
         else:
