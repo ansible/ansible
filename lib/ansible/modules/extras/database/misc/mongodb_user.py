@@ -225,10 +225,10 @@ def main():
     update_password = module.params['update_password']
 
     try:
-    	if replica_set:
-    	   client = MongoClient(login_host, int(login_port), replicaset=replica_set, ssl=ssl)
-    	else:
-    	   client = MongoClient(login_host, int(login_port), ssl=ssl)
+        if replica_set:
+            client = MongoClient(login_host, int(login_port), replicaset=replica_set, ssl=ssl)
+        else:
+            client = MongoClient(login_host, int(login_port), ssl=ssl)
 
         if login_user is None and login_password is None:
             mongocnf_creds = load_mongocnf()
