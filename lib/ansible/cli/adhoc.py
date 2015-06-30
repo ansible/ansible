@@ -25,6 +25,7 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.cli import CLI
 from ansible.utils.display import Display
+from ansible.cli.role_apply import role_apply
 from ansible.utils.vault import read_vault_file
 from ansible.vars import VariableManager
 
@@ -53,7 +54,9 @@ class AdHocCLI(CLI):
             help="module arguments", default=C.DEFAULT_MODULE_ARGS)
         self.parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
-            default=C.DEFAULT_MODULE_NAME)
+            default=None)
+        self.parser.add_option('-r', '--role-name', dest='role_name',
+            help="role name to execute")
 
         self.options, self.args = self.parser.parse_args()
 
@@ -111,6 +114,17 @@ class AdHocCLI(CLI):
             for host in hosts:
                 self.display.display('    %s' % host)
             return 0
+
+        if self.options.role_name:
+            if self.options.module_name:
+                raise AnsibleOptionsError(
+                    "You can't pass both a role (%s) "
+                    "and a module (%s) to execute"
+                    % (self.options.role_name, self.options.module_name))
+            role_apply(hosts, [self.options.role_name], show_playbook=True)
+            return 0
+        elif self.options.module_name is None:
+            self.options.module_name = C.DEFAULT_MODULE_NAME
 
         if self.options.module_name in C.MODULE_REQUIRE_ARGS and not self.options.module_args:
             raise AnsibleOptionsError("No argument passed to %s module" % self.options.module_name)
