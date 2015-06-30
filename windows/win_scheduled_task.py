@@ -33,7 +33,6 @@ options:
   enabled:
     description:
       - Enable/disable the task
-    required: false
     choices:
       - yes
       - no
@@ -41,7 +40,6 @@ options:
   state:
     description:
       - State that the task should become
-    required: false
     choices:
       - present
       - absent
@@ -55,7 +53,6 @@ options:
     choices:
       - daily
       - weekly
-    required: false
   time:
     description:
       - Time to execute scheduled task
@@ -64,7 +61,6 @@ options:
     description:
       - Folder path of scheduled task
     default: '\'
-    required: false
 '''
 
 EXAMPLES = '''
