@@ -121,7 +121,7 @@ class Subversion(object):
     def checkout(self):
         '''Creates new svn working directory if it does not already exist.'''
         self._exec(["checkout", "-r", self.revision, self.repo, self.dest])
-		
+
     def export(self, force=False):
         '''Export svn repo to directory'''
         cmd = ["export"]
