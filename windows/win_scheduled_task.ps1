@@ -33,40 +33,133 @@ else
 {
     Fail-Json $result "missing required argument: name"
 }
+if ($params.state)
+{
+    $state = $params.state
+}
+else
+{
+    Fail-Json $result "missing required argument: state"
+}
 if ($params.enabled)
 {
   $enabled = $params.enabled | ConvertTo-Bool
 }
 else
 {
-  $enabled = $true
+  $enabled = $true #default
 }
-$target_state = @{$true = "Enabled"; $false="Disabled"}[$enabled]
+if ($params.description)
+{
+  $description = $params.description
+}
+else
+{
+  $description = " "  #default
+}
+if ($params.execute)
+{
+  $execute = $params.execute
+}
+elseif ($state -eq "present")
+{
+  Fail-Json $result "missing required argument: execute"
+}
+if ($params.path)
+{
+  $path = "\{0}\" -f $params.path
+}
+else
+{
+  $path = "\"  #default
+}
+if ($params.frequency)
+{
+  $frequency = $params.frequency
+}
+elseif($state -eq "present")
+{
+  Fail-Json $result "missing required argument: frequency"
+}
+if ($params.time)
+{
+  $time = $params.time
+}
+elseif($state -eq "present")
+{
+  Fail-Json $result "missing required argument: time"
+}
+
+$exists = $true
+#hack to determine if task exists
+try {
+    $task = Get-ScheduledTask -TaskName $name -TaskPath $path
+}
+catch {
+    $exists = $false | ConvertTo-Bool
+}
+Set-Attr $result "exists" "$exists"
+
 
 try
 {
-  $tasks = Get-ScheduledTask -TaskPath $name
-  $tasks_needing_changing = $tasks |? { $_.State -ne $target_state }
-  if (-not($tasks_needing_changing -eq $null))
-  {
-    if ($enabled)
-    {
-      $tasks_needing_changing | Enable-ScheduledTask
+    if ($frequency){
+        if ($frequency -eq "daily") {
+            $trigger =  New-ScheduledTaskTrigger -Daily -At $time
+        }
+        elseif (frequency -eq "weekly"){
+            $trigger =  New-ScheduledTaskTrigger -Weekly -At $time
+        }
+        else {
+            Fail-Json $result "frequency must be daily or weekly"
+        }
     }
-    else
-    {
-      $tasks_needing_changing | Disable-ScheduledTask
-    }
-    Set-Attr $result "tasks_changed" ($tasks_needing_changing | foreach { $_.TaskPath + $_.TaskName })
-    $result.changed = $true
-  }
-  else
-  {
-    Set-Attr $result "tasks_changed" @()
-    $result.changed = $false
-  }
 
-  Exit-Json $result;
+    if ($state -eq "absent" -and $exists -eq $true) {
+        Unregister-ScheduledTask -TaskName $name -Confirm:$false
+        $result.changed = $true
+        Set-Attr $result "msg" "Deleted task $name"
+        Exit-Json $result
+    }
+    elseif ($state -eq "absent" -and $exists -eq $false) {
+        Set-Attr $result "msg" "Task $name does not exist"
+        Exit-Json $result
+    }
+
+    if ($state -eq "present" -and $exists -eq $false){
+        $action = New-ScheduledTaskAction -Execute $execute
+        Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path
+        $task = Get-ScheduledTask -TaskName $name
+        Set-Attr $result "msg" "Added new task $name"
+        $result.changed = $true
+    }
+    elseif($state -eq "present" -and $exists -eq $true) {
+        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $execute) {
+            #No change in the task yet
+            Set-Attr $result "msg" "No change in task $name"
+        }
+        else {
+            Unregister-ScheduledTask -TaskName $name -Confirm:$false
+            $action = New-ScheduledTaskAction -Execute $execute
+            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path
+            $task = Get-ScheduledTask -TaskName $name
+            Set-Attr $result "msg" "Updated task $name"
+            $result.changed = $true
+        }
+    }
+
+    if ($state -eq "present" -and $enabled -eq $true -and $task.State -ne "Ready" ){
+        $task | Enable-ScheduledTask
+        Set-Attr $result "msg" "Enabled task $name"
+        $result.changed = $true
+    }
+    elseif ($state -eq "present" -and $enabled -eq $false -and $task.State -ne "Disabled"){
+        $task | Disable-ScheduledTask
+        Set-Attr $result "msg" "Disabled task $name"
+        $result.changed = $true
+    }
+
+    Exit-Json $result;
 }
 catch
 {
