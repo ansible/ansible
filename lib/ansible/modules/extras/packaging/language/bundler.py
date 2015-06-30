@@ -107,7 +107,7 @@ options:
         information
     required: false
     default: null
-author: Tim Hoiberg
+author: "Tim Hoiberg (@thoiberg)"
 '''
 
 EXAMPLES='''
@@ -207,4 +207,5 @@ def main():
 
 
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
