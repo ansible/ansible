@@ -68,7 +68,7 @@ class Taggable:
                 else:
                     tags = set([tags])
             else:
-                tags = [i for i,_ in itertools.groupby(tags)]
+                tags = set([i for i,_ in itertools.groupby(tags)])
         else:
             # this makes intersection work for untagged
             tags = self.__class__.untagged
