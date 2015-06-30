@@ -310,7 +310,8 @@ class ModuleValidator(Validator):
             self._find_ps_docs_py_file()
 
         self._check_for_gpl3_header()
-        self._check_interpreter(powershell=self._powershell_module())
+        if not self._just_docs():
+            self._check_interpreter(powershell=self._powershell_module())
 
 
 class PythonPackageValidator(Validator):
