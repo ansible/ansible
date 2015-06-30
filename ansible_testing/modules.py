@@ -11,7 +11,7 @@ import argparse
 
 from fnmatch import fnmatch
 
-from ansible.module_common import REPLACER_WINDOWS
+from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
 
 
