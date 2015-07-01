@@ -25,25 +25,25 @@ DOCUMENTATION = '''
 ---
 module: win_regedit
 version_added: "2.0"
-short_description: Add, Edit, or Remove Registry Key
+short_description: Add, Edit, or Remove Registry Value
 description:
-    - Add, Edit, or Remove Registry Key using ItemProperties Cmdlets
+    - Add, Edit, or Remove Registry Value using ItemProperties Cmdlets
 options:
   name:
     description:
-      - Name of Registry Key
+      - Name of Registry Value
     required: true
     default: null
     aliases: []
-  value:
+  data:
     description:
-      - Value of Registry Key
+      - Registry Value Data
     required: false
     default: null
     aliases: []
-  valuetype:
+  type:
     description:
-      - Type of Registry Key
+      - Registry Value Data Type
     required: false
     choices:
       - binary
@@ -56,13 +56,13 @@ options:
     aliases: []
   path:
     description:
-      - Path of Registry Key
+      - Path of Registry Value
     required: true
     default: null
     aliases: []
   state:
     description:
-      - State of Registry Key
+      - State of Registry Value
     required: false
     choices:
       - present
@@ -73,29 +73,28 @@ author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''
 
 EXAMPLES = '''
-  # Add Registry Key (Default is String)
+  # Add Registry Value (Default is String)
   win_regedit:
-    name: testkey
-    value: 1337
+    name: testvalue
+    data: 1337
     path: HKCU:\Software\MyCompany
 
-  # Add Registry Key with Type DWord
+  # Add Registry Value with Type DWord
   win_regedit:
-    name: testkey
-    value: 1337
-    valuetype: dword
+    name: testvalue
+    data: 1337
+    type: dword
     path: HKCU:\Software\MyCompany
 
-  # Edit Registry Key called testkey
+  # Edit Registry Value called testvalue
   win_regedit:
-    name: testkey
-    value: 8008
+    name: testvalue
+    data: 8008
     path: HKCU:\Software\MyCompany
 
-  # Remove Registry Key called testkey
+  # Remove Registry Value called testvalue
   win_regedit:
-    name: testkey
+    name: testvalue
     path: HKCU:\Software\MyCompany
     state: absent
 '''
-
