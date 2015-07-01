@@ -388,6 +388,8 @@ def main():
                 environment_error = '''
                 You may need to ignore hostname missmatches by passing
                 -e 'host_key_checking=False' through the command line.
+                If this does not resolve the issue please open an issue
+                at ansible/ansible-modules-core and ping michaeljs1990
                 '''
                 module.exit_json(failed=True, chaged=manager.has_changed(), msg="SSLError: " + str(e) + environment_error)
         # General error for non darwin users
