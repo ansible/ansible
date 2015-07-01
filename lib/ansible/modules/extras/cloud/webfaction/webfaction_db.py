@@ -4,7 +4,9 @@
 #
 # ------------------------------------------
 #
-# (c) Quentin Stafford-Fraser and Andy Baker 2015
+# (c) Quentin Stafford-Fraser 2015, with contributions gratefully acknowledged from:
+#     * Andy Baker
+#     * Federico Tarantini
 #
 # This file is part of Ansible
 #
@@ -68,6 +70,11 @@ options:
         description:
             - The webfaction password to use
         required: true
+
+    machine:
+        description:
+            - The machine name to use (optional for accounts with only one machine)
+        required: false
 '''
 
 EXAMPLES = '''
@@ -81,6 +88,7 @@ EXAMPLES = '''
       type: mysql
       login_name: "{{webfaction_user}}"
       login_password: "{{webfaction_passwd}}"
+      machine: "{{webfaction_machine}}"
 
   # Note that, for symmetry's sake, deleting a database using
   # 'state: absent' will also delete the matching user.
@@ -103,6 +111,7 @@ def main():
             password = dict(required=False, default=None),
             login_name = dict(required=True),
             login_password = dict(required=True),
+            machine = dict(required=False, default=False),
         ),
         supports_check_mode=True
     )
@@ -111,10 +120,17 @@ def main():
     db_type  = module.params['type']
     db_passwd = module.params['password']
 
-    session_id, account = webfaction.login(
-        module.params['login_name'],
-        module.params['login_password']
-    )
+    if module.params['machine']:
+        session_id, account = webfaction.login(
+            module.params['login_name'],
+            module.params['login_password'],
+            module.params['machine']
+        )
+    else:
+        session_id, account = webfaction.login(
+            module.params['login_name'],
+            module.params['login_password']
+        )
 
     db_list = webfaction.list_dbs(session_id)
     db_map = dict([(i['name'], i) for i in db_list])
@@ -130,7 +146,7 @@ def main():
 
     if db_state == 'present':
 
-        # Does an database with this name already exist?
+        # Does a database with this name already exist?
         if existing_db:
             # Yes, but of a different type - fail
             if existing_db['db_type'] != db_type:
