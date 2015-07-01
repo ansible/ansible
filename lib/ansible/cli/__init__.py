@@ -206,6 +206,10 @@ class CLI(object):
                                   " are exclusive of each other")
 
     @staticmethod
+    def expand_tilde(option, opt, value, parser):
+        setattr(parser.values, option.dest, os.path.expanduser(value))
+
+    @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False,
         async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False, epilog=None, fork_opts=False):
         ''' create an options parser for most ansible scripts '''
@@ -221,11 +225,12 @@ class CLI(object):
         if runtask_opts:
             parser.add_option('-i', '--inventory-file', dest='inventory',
                 help="specify inventory host file (default=%s)" % C.DEFAULT_HOST_LIST,
-                default=C.DEFAULT_HOST_LIST)
+                default=C.DEFAULT_HOST_LIST, action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
                 help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-M', '--module-path', dest='module_path',
-                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None)
+                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None,
+                action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
                 help="set additional variables as key=value or YAML/JSON", default=[])
 
@@ -239,8 +244,8 @@ class CLI(object):
             parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
                 help='ask for vault password')
             parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
-                dest='vault_password_file', help="vault password file")
-
+                dest='vault_password_file', help="vault password file", action="callback",
+                callback=CLI.expand_tilde, type=str)
 
         if subset_opts:
             parser.add_option('-t', '--tags', dest='tags', default='all',
