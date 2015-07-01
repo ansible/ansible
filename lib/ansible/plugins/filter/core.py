@@ -316,6 +316,7 @@ class FilterModule(object):
             'expanduser': partial(unicode_wrap, os.path.expanduser),
             'realpath': partial(unicode_wrap, os.path.realpath),
             'relpath': partial(unicode_wrap, os.path.relpath),
+            'splitext': partial(unicode_wrap, os.path.splitext),
 
             # failure testing
             'failed'  : failed,
