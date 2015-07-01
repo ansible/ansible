@@ -32,30 +32,30 @@ short_description: Add/Delete a keypair from OpenStack
 extends_documentation_fragment: openstack
 version_added: "2.0"
 description:
-   - Add or Remove key pair from OpenStack
+  - Add or Remove key pair from OpenStack
 options:
-   name:
-     description:
-        - Name that has to be given to the key pair
-     required: true
-     default: None
-   public_key:
-     description:
-        - The public key that would be uploaded to nova and injected into VMs
-          upon creation.
-     required: false
-     default: None
-   public_key_file:
-     description:
-        - Path to local file containing ssh public key. Mutually exclusive
-          with public_key.
+  name:
+    description:
+      - Name that has to be given to the key pair
+    required: true
+    default: None
+  public_key:
+    description:
+      - The public key that would be uploaded to nova and injected into VMs
+        upon creation.
     required: false
     default: None
-   state:
-     description:
-       - Should the resource be present or absent.
-     choices: [present, absent]
-     default: present
+  public_key_file:
+    description:
+      - Path to local file containing ssh public key. Mutually exclusive
+        with public_key.
+    required: false
+    default: None
+  state:
+    description:
+      - Should the resource be present or absent.
+    choices: [present, absent]
+    default: present
 requirements: []
 '''
 
