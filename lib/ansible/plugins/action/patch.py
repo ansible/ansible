@@ -47,7 +47,7 @@ class ActionModule(ActionBase):
         if tmp is None or "-tmp-" not in tmp:
             tmp = self._make_tmp_path()
 
-        tmp_src = self._shell.join_path(tmp, os.path.basename(src))
+        tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
         self._connection.put_file(src, tmp_src)
 
         if self._connection_info.become and self._connection_info.become_user != 'root':
