@@ -222,39 +222,44 @@ def get_profiles(api,name):
 
 
 def set_profiles(api,name,profiles_list):
-    if profiles_list is None:
-        return False
-    current_profiles=map(lambda x:x['profile_name'], get_profiles(api,name))
-    to_add_profiles=[]
-    for x in profiles_list:
-        if x not in current_profiles:
-            to_add_profiles.append({'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': x})
-    to_del_profiles=[]
-    for x in current_profiles:
-        if (x not in profiles_list) and (x!= "/Common/tcp"):
-            to_del_profiles.append({'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': x})
-    changed=False
-    if len(to_del_profiles)>0:
-        api.LocalLB.VirtualServer.remove_profile(virtual_servers = [name],profiles = [to_del_profiles])
-        changed=True
-    if len(to_add_profiles)>0:
-        api.LocalLB.VirtualServer.add_profile(virtual_servers = [name],profiles= [to_add_profiles])
-        changed=True
-    return changed
-
+    updated=False
+    try:
+        if profiles_list is None:
+            return False
+        current_profiles=map(lambda x:x['profile_name'], get_profiles(api,name))
+        to_add_profiles=[]
+        for x in profiles_list:
+            if x not in current_profiles:
+                to_add_profiles.append({'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': x})
+        to_del_profiles=[]
+        for x in current_profiles:
+            if (x not in profiles_list) and (x!= "/Common/tcp"):
+                to_del_profiles.append({'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': x})
+        if len(to_del_profiles)>0:
+            api.LocalLB.VirtualServer.remove_profile(virtual_servers = [name],profiles = [to_del_profiles])
+            updated=True
+        if len(to_add_profiles)>0:
+            api.LocalLB.VirtualServer.add_profile(virtual_servers = [name],profiles= [to_add_profiles])
+            updated=True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting profiles : %s' % e)
 
 def set_snat(api,name,snat):
-    current_state=get_snat_type(api,name)
-    update = False
-    if snat is None:
-        return update
-    if snat == 'None' and current_state != 'SRC_TRANS_NONE':
-        api.LocalLB.VirtualServer.set_source_address_translation_none(virtual_servers = [name])
-        update = True
-    if snat == 'Automap' and current_state != 'SRC_TRANS_AUTOMAP':
-        api.LocalLB.VirtualServer.set_source_address_translation_automap(virtual_servers = [name])
-        update = True
-    return update
+    updated = False
+    try:
+        current_state=get_snat_type(api,name)
+        if snat is None:
+            return update
+        if snat == 'None' and current_state != 'SRC_TRANS_NONE':
+            api.LocalLB.VirtualServer.set_source_address_translation_none(virtual_servers = [name])
+            updated = True
+        if snat == 'Automap' and current_state != 'SRC_TRANS_AUTOMAP':
+            api.LocalLB.VirtualServer.set_source_address_translation_automap(virtual_servers = [name])
+            updated = True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting snat : %s' % e)
 
 def get_snat_type(api,name):
     return api.LocalLB.VirtualServer.get_source_address_translation_type(virtual_servers = [name])[0]
@@ -264,37 +269,46 @@ def get_pool(api,name):
     return api.LocalLB.VirtualServer.get_default_pool_name(virtual_servers = [name])[0]
 
 def set_pool(api,name,pool):
-    current_pool = get_pool (api,name)
     updated=False
-    if pool is not None and (pool != current_pool):
-        api.LocalLB.VirtualServer.set_default_pool_name(virtual_servers = [name],default_pools = [pool])
-        updated=True
-    return updated
-
+    try:
+        current_pool = get_pool (api,name)
+        if pool is not None and (pool != current_pool):
+            api.LocalLB.VirtualServer.set_default_pool_name(virtual_servers = [name],default_pools = [pool])
+            updated=True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting pool : %s' % e)
 
 
 def get_destination(api,name):
     return api.LocalLB.VirtualServer.get_destination_v2(virtual_servers = [name])[0]
 
 def set_destination(api,name,destination,port):
-    current_destination = get_destination(api,name)
     updated=False
-    if (destination is not None and port is not None) and (destination != current_destination['address'] or port != current_destination['port']):
-        api.LocalLB.VirtualServer.set_destination_v2(virtual_servers = [name],destinations=[{'address': destination, 'port':port}])
-        updated=True
-    return updated
+    try:
+        current_destination = get_destination(api,name)
+        if (destination is not None and port is not None) and (destination != current_destination['address'] or port != current_destination['port']):
+            api.LocalLB.VirtualServer.set_destination_v2(virtual_servers = [name],destinations=[{'address': destination, 'port':port}])
+            updated=True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting destination : %s'% e )
+
 
 
 def get_description(api,name):
     return api.LocalLB.VirtualServer.get_description(virtual_servers = [name])[0]
 
 def set_description(api,name,description):
-    current_description = get_description(api,name)
     updated=False
-    if description is not None and current_description != description:
-        api.LocalLB.VirtualServer.set_description(virtual_servers =[name],descriptions=[description])
-        updated=True
-    return updated
+    try:
+        current_description = get_description(api,name)
+        if description is not None and current_description != description:
+            api.LocalLB.VirtualServer.set_description(virtual_servers =[name],descriptions=[description])
+            updated=True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting description : %s ' % e)
 
 
 def main():
@@ -368,7 +382,7 @@ def main():
                         if "already exists" in str(e):
                             update = True
                         else:
-                            raise
+                            raise Exception('Error on creating Virtual Server : %s' % e)
                     else:
                         set_profiles(api,name,all_profiles)
                         set_snat(api,name,snat)
@@ -382,13 +396,16 @@ def main():
                 # VS exists
                 if not module.check_mode:
                     # Have a transaction for all the changes
-                    api.System.Session.start_transaction()
-                    result['changed']|=set_destination(api,name,fq_name(partition,destination),port)
-                    result['changed']|=set_pool(api,name,pool)
-                    result['changed']|=set_description(api,name,description)
-                    result['changed']|=set_snat(api,name,snat)
-                    result['changed']|=set_profiles(api,name,all_profiles)
-                    api.System.Session.submit_transaction()
+                    try:
+                        api.System.Session.start_transaction()
+                        result['changed']|=set_destination(api,name,fq_name(partition,destination),port)
+                        result['changed']|=set_pool(api,name,pool)
+                        result['changed']|=set_description(api,name,description)
+                        result['changed']|=set_snat(api,name,snat)
+                        result['changed']|=set_profiles(api,name,all_profiles)
+                        api.System.Session.submit_transaction()
+                    except Exception,e:
+                        raise Exception("Error on updating Virtual Server : %s" % e)
                 else:
                     # check-mode return value
                     result = {'changed': True}
