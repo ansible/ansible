@@ -121,8 +121,8 @@ class ActionModule(ActionBase):
             #            dest_contents = base64.b64decode(dest_contents)
             #        else:
             #            raise Exception("unknown encoding, failed: %s" % dest_result.result)
- 
-            xfered = self._transfer_data(self._shell.join_path(tmp, 'source'), resultant)
+
+            xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
             # fix file permissions when the copy is done as a different user
             if self._connection_info.become and self._connection_info.become_user != 'root':

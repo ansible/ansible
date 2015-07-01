@@ -115,8 +115,8 @@ class ActionModule(ActionBase):
 
             # If it's recursive copy, destination is always a dir,
             # explicitly mark it so (note - copy module relies on this).
-            if not self._shell.path_has_trailing_slash(dest):
-                dest = self._shell.join_path(dest, '')
+            if not self._connection._shell.path_has_trailing_slash(dest):
+                dest = self._connection._shell.join_path(dest, '')
         else:
             source_files.append((source, os.path.basename(source)))
 
@@ -151,10 +151,10 @@ class ActionModule(ActionBase):
             # This is kind of optimization - if user told us destination is
             # dir, do path manipulation right away, otherwise we still check
             # for dest being a dir via remote call below.
-            if self._shell.path_has_trailing_slash(dest):
-                dest_file = self._shell.join_path(dest, source_rel)
+            if self._connection._shell.path_has_trailing_slash(dest):
+                dest_file = self._connection._shell.join_path(dest, source_rel)
             else:
-                dest_file = self._shell.join_path(dest)
+                dest_file = self._connection._shell.join_path(dest)
 
             # Attempt to get the remote checksum
             remote_checksum = self._remote_checksum(tmp, dest_file)
@@ -167,7 +167,7 @@ class ActionModule(ActionBase):
                     return dict(failed=True, msg="can not use content with a dir as dest")
                 else:
                     # Append the relative source location to the destination and retry remote_checksum
-                    dest_file = self._shell.join_path(dest, source_rel)
+                    dest_file = self._connection._shell.join_path(dest, source_rel)
                     remote_checksum = self._remote_checksum(tmp, dest_file)
 
             if remote_checksum != '1' and not force:
