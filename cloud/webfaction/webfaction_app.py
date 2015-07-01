@@ -7,7 +7,9 @@
 #
 # ------------------------------------------
 #
-# (c) Quentin Stafford-Fraser 2015
+# (c) Quentin Stafford-Fraser 2015, with contributions gratefully acknowledged from:
+#     * Andy Baker
+#     * Federico Tarantini
 #
 # This file is part of Ansible
 #
@@ -80,6 +82,12 @@ options:
         description:
             - The webfaction password to use
         required: true
+
+    machine:
+        description:
+            - The machine name to use (optional for accounts with only one machine)
+        required: false
+
 '''
 
 EXAMPLES = '''
@@ -90,6 +98,7 @@ EXAMPLES = '''
       type=mod_wsgi35-python27 
       login_name={{webfaction_user}}
       login_password={{webfaction_passwd}}
+      machine={{webfaction_machine}}
 '''
 
 import xmlrpclib
@@ -108,6 +117,7 @@ def main():
             port_open = dict(required=False, choices=BOOLEANS, default=False),
             login_name = dict(required=True),
             login_password = dict(required=True),
+            machine = dict(required=False, default=False),
         ),
         supports_check_mode=True
     )
@@ -115,10 +125,17 @@ def main():
     app_type = module.params['type']
     app_state = module.params['state']
 
-    session_id, account = webfaction.login(
-        module.params['login_name'],
-        module.params['login_password']
-    )
+    if module.params['machine']:
+        session_id, account = webfaction.login(
+            module.params['login_name'],
+            module.params['login_password'],
+            module.params['machine']
+        )
+    else:
+        session_id, account = webfaction.login(
+            module.params['login_name'],
+            module.params['login_password']
+        )
 
     app_list = webfaction.list_apps(session_id)
     app_map = dict([(i['name'], i) for i in app_list])
