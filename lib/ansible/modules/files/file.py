@@ -271,26 +271,30 @@ def main():
                 module.exit_json(changed=True)
             changed = True
             curpath = ''
-            # Split the path so we can apply filesystem attributes recursively
-            # from the root (/) directory for absolute paths or the base path
-            # of a relative path.  We can then walk the appropriate directory
-            # path to apply attributes.
-            for dirname in path.strip('/').split('/'):
-                curpath = '/'.join([curpath, dirname])
-                # Remove leading slash if we're creating a relative path
-                if not os.path.isabs(path):
-                    curpath = curpath.lstrip('/')
-                if not os.path.exists(curpath):
-                    try:
-                        os.mkdir(curpath)
-                    except OSError, ex:
-                        # Possibly something else created the dir since the os.path.exists
-                        # check above. As long as it's a dir, we don't need to error out.
-                        if not (ex.errno == errno.EEXISTS and os.isdir(curpath)):
-                            raise
-                    tmp_file_args = file_args.copy()
-                    tmp_file_args['path']=curpath
-                    changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
+
+            try:
+                # Split the path so we can apply filesystem attributes recursively
+                # from the root (/) directory for absolute paths or the base path
+                # of a relative path.  We can then walk the appropriate directory
+                # path to apply attributes.
+                for dirname in path.strip('/').split('/'):
+                    curpath = '/'.join([curpath, dirname])
+                    # Remove leading slash if we're creating a relative path
+                    if not os.path.isabs(path):
+                        curpath = curpath.lstrip('/')
+                    if not os.path.exists(curpath):
+                        try:
+                            os.mkdir(curpath)
+                        except OSError, ex:
+                            # Possibly something else created the dir since the os.path.exists
+                            # check above. As long as it's a dir, we don't need to error out.
+                            if not (ex.errno == errno.EEXISTS and os.isdir(curpath)):
+                                raise
+                        tmp_file_args = file_args.copy()
+                        tmp_file_args['path']=curpath
+                        changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
+            except Exception, e:
+                module.fail_json(path=path, msg='There was an issue creating %s as requested: %s' % (curpath, str(e)))
 
         # We already know prev_state is not 'absent', therefore it exists in some form.
         elif prev_state != 'directory':
