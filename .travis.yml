@@ -13,6 +13,6 @@ install:
   - pip install tox PyYAML Jinja2 sphinx
 script:
   - tox
-  - make -C docsite all
+  #- make -C docsite all
 after_success:
   - coveralls
