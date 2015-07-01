@@ -24,10 +24,9 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
-        # FIXME: need to rework the noop stuff still
-        #if self.runner.noop_on_check(inject):
-        #    # in --check mode, always skip this module execution
-        #    return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True))
+        if self._connection_info.check_mode:
+            # in --check mode, always skip this module execution
+            return dict(skipped=True)
 
         executable = self._task.args.get('executable')
         result = self._low_level_execute_command(self._task.args.get('_raw_params'), tmp=tmp, executable=executable)

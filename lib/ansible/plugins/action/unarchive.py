@@ -78,10 +78,8 @@ class ActionModule(ActionBase):
         # fix file permissions when the copy is done as a different user
         if copy:
             if self._connection_info.become and self._connection_info.become_user != 'root':
-                # FIXME: noop stuff needs to be reworked
-                #if not self.runner.noop_on_check(task_vars):
-                #    self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
-                self._remote_chmod(tmp, 'a+r', tmp_src)
+                if not self._connection_info.check_mode:
+                    self._remote_chmod(tmp, 'a+r', tmp_src)
 
             # Build temporary module_args.
             new_module_args = self._task.args.copy()
@@ -92,11 +90,6 @@ class ActionModule(ActionBase):
                 ),
             )
 
-            # make sure checkmod is passed on correctly
-            # FIXME: noop again, probably doesn't need to be done here anymore?
-            #if self.runner.noop_on_check(task_vars):
-            #    new_module_args['CHECKMODE'] = True
-
         else:
             new_module_args = self._task.args.copy()
             new_module_args.update(
@@ -104,10 +97,6 @@ class ActionModule(ActionBase):
                     original_basename=os.path.basename(source),
                 ),
             )
-            # make sure checkmod is passed on correctly
-            # FIXME: noop again, probably doesn't need to be done here anymore?
-            #if self.runner.noop_on_check(task_vars):
-            #    module_args += " CHECKMODE=True"
 
         # execute the unarchive module now, with the updated args
         return self._execute_module(module_args=new_module_args, task_vars=task_vars)

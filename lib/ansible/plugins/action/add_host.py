@@ -31,9 +31,8 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
-        # FIXME: is this necessary in v2?
-        #if self.runner.noop_on_check(inject):
-        #    return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
+        if self._connection_info.check_mode:
+            return dict(skipped=True, msg='check mode not supported for this module')
 
         # Parse out any hostname:port patterns
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))

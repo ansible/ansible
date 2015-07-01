@@ -191,13 +191,13 @@ class ActionModule(ActionBase):
                 #    diff = {}
                 diff = {}
 
-                # FIXME: noop stuff
-                #if self.runner.noop_on_check(inject):
-                #    self._remove_tempfile_if_content_defined(content, content_tempfile)
-                #    diffs.append(diff)
-                #    changed = True
-                #    module_result = dict(changed=True)
-                #    continue
+                if self._connection_info.check_mode:
+                    self._remove_tempfile_if_content_defined(content, content_tempfile)
+                    # FIXME: diff stuff
+                    #diffs.append(diff)
+                    changed = True
+                    module_return = dict(changed=True)
+                    continue
 
                 # Define a remote directory that we will copy the file to.
                 tmp_src = tmp + 'source'

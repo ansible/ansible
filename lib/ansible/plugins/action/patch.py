@@ -51,10 +51,8 @@ class ActionModule(ActionBase):
         self._connection.put_file(src, tmp_src)
 
         if self._connection_info.become and self._connection_info.become_user != 'root':
-            # FIXME: noop stuff here
-            #if not self.runner.noop_on_check(inject):
-            #    self._remote_chmod('a+r', tmp_src, tmp)
-            self._remote_chmod('a+r', tmp_src, tmp)
+            if not self._connection_info.check_mode:
+                self._remote_chmod('a+r', tmp_src, tmp)
 
         new_module_args = self._task.args.copy()
         new_module_args.update(

@@ -133,14 +133,8 @@ class ActionModule(ActionBase):
                 )
             )
 
-            # FIXME: checkmode stuff
-            #if self.runner.noop_on_check(inject):
-            #    return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, after=resultant))
-            #else:
-            #    res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject)
-            #    res.diff = dict(after=resultant)
-            #    return res
             res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
+            # FIXME: diff stuff
             #res.diff = dict(after=resultant)
             return res
         else:

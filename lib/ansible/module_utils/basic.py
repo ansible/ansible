@@ -908,11 +908,11 @@ class AnsibleModule(object):
 
     def _check_for_check_mode(self):
         for (k,v) in self.params.iteritems():
-            if k == '_ansible_check_mode':
+            if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
-                if self.supports_check_mode:
-                    self.check_mode = True
+                self.check_mode = True
+                break
 
     def _check_for_no_log(self):
         for (k,v) in self.params.iteritems():

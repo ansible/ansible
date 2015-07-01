@@ -36,9 +36,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         ''' handler for fetch operations '''
 
-        # FIXME: is this even required anymore?
-        #if self.runner.noop_on_check(inject):
-        #    return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not (yet) supported for this module'))
+        if self._connection_info.check_mode:
+            return dict(skipped=True, msg='check mode not (yet) supported for this module')
 
         source            = self._task.args.get('src', None)
         dest              = self._task.args.get('dest', None)

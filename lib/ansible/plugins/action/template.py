@@ -139,15 +139,6 @@ class ActionModule(ActionBase):
                 ),
             )
 
-            # FIXME: noop stuff needs to be sorted out
-            #if self.runner.noop_on_check(task_vars):
-            #    return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))
-            #else:
-            #    res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, task_vars=task_vars, complex_args=complex_args)
-            #    if res.result.get('changed', False):
-            #        res.diff = dict(before=dest_contents, after=resultant)
-            #    return res
-
             result = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
             if result.get('changed', False):
                 result['diff'] = dict(before=dest_contents, after=resultant)
@@ -168,13 +159,6 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
-
-            # FIXME: this may not be required anymore, as the checkmod params
-            #        should be in the regular module args?
-            # be sure to task_vars the check mode param into the module args and
-            # rely on the file module to report its changed status
-            #if self.runner.noop_on_check(task_vars):
-            #    new_module_args['CHECKMODE'] = True
 
             return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
 
