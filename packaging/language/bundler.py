@@ -40,18 +40,22 @@ options:
     default: present
   chdir:
     description:
-      - The directory to execute the bundler commands from. This directoy needs to contain a valid Gemfile or .bundle/ directory
+      - The directory to execute the bundler commands from. This directoy
+        needs to contain a valid Gemfile or .bundle/ directory
     required: false
     default: temporary working directory
   exclude_groups:
     description:
-      - A list of Gemfile groups to exclude during operations. This only applies when state is C(present). Bundler considers this a 'remembered' 
-      property for the Gemfile and will automatically exclude groups in future operations even if C(exclude_groups) is not set
+      - A list of Gemfile groups to exclude during operations. This only
+        applies when state is C(present). Bundler considers this
+        a 'remembered' property for the Gemfile and will automatically exclude
+        groups in future operations even if C(exclude_groups) is not set
     required: false
     default: null
   clean:
     description:
-      - Only applies if state is C(present). If set removes any gems on the target host that are not in the gemfile
+      - Only applies if state is C(present). If set removes any gems on the
+        target host that are not in the gemfile
     required: false
     choices: [yes, no]
     default: "no"
@@ -68,8 +72,9 @@ options:
     default: "no"
   deployment_mode:
     description:
-      - Only applies if state is C(present). If set it will only install gems that are in the default or production groups. Requires a Gemfile.lock
-      file to have been created prior
+      - Only applies if state is C(present). If set it will only install gems
+        that are in the default or production groups. Requires a Gemfile.lock
+        file to have been created prior
     required: false
     choices: [yes, no]
     default: "no"
@@ -81,19 +86,25 @@ options:
     default: "yes"
   gem_path:
     description:
-      - Only applies if state is C(present). Specifies the directory to install the gems into. If C(chdir) is set then this path is relative to C(chdir)
-      required: false
-      default: RubyGems gem paths
+      - Only applies if state is C(present). Specifies the directory to
+        install the gems into. If C(chdir) is set then this path is relative to
+        C(chdir)
+    required: false
+    default: RubyGems gem paths
   binstub_directory:
     description:
-      - Only applies if state is C(present). Specifies the directory to install any gem bins files to. When executed the bin files will run within
-      the context of the Gemfile and fail if any required gem dependencies are not installed. If C(chdir) is set then this path is relative to C(chdir)
+      - Only applies if state is C(present). Specifies the directory to
+        install any gem bins files to. When executed the bin files will run
+        within the context of the Gemfile and fail if any required gem
+        dependencies are not installed. If C(chdir) is set then this path is
+        relative to C(chdir)
     required: false
     default: null
   extra_args:
     description:
-      - A space separated string of additional commands that can be applied to the Bundler command. Refer to the Bundler documentation for more
-      information
+      - A space separated string of additional commands that can be applied to
+        the Bundler command. Refer to the Bundler documentation for more
+        information
     required: false
     default: null
 author: Tim Hoiberg

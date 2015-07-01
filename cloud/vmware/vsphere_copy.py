@@ -149,6 +149,7 @@ def main():
     else:
         module.fail_json(msg='Failed to upload', status=resp.status, reason=resp.reason, length=resp.length, version=resp.version, headers=resp.getheaders(), chunked=resp.chunked, url=url)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# Import module snippets
+from ansible.module_utils.basic import *
+
 main()
