@@ -715,7 +715,10 @@ def delete_db_instance_or_snapshot(module, conn):
         if instance_name:
             if snapshot:
                 params["skip_final_snapshot"] = False
-                params["final_snapshot_id"] = snapshot
+                if has_rds2:
+                    params["final_db_snapshot_identifier"] = snapshot
+                else:
+                    params["final_snapshot_id"] = snapshot
             else:
                 params["skip_final_snapshot"] = True
             result = conn.delete_db_instance(instance_name, **params)
