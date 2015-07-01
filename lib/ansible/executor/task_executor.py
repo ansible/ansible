@@ -181,11 +181,11 @@ class TaskExecutor:
         '''
         if len(items) > 0 and self._task.action in self.SQUASH_ACTIONS:
             final_items = []
+            name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
             for item in items:
                 variables['item'] = item
                 templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
                 if self._task.evaluate_conditional(templar, variables):
-                    name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
                     if templar._contains_vars(name):
                         new_item = templar.template(name)
                         final_items.append(new_item)
