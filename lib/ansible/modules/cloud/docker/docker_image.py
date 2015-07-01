@@ -371,6 +371,29 @@ def main():
 
         module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
 
+    except SSLError as e:
+        if get_platform() == "Darwin" and "DOCKER_HOST" in os.environ:
+            # Ensure that the environment variables has been set
+            if "DOCKER_HOST" not in os.environ:
+                environment_error = '''
+                It looks like you have not set your docker environment
+                variables. Please ensure that you have set the requested
+                variables as instructed when running boot2docker up. If
+                they are set in .bash_profile you will need to symlink
+                it to .bashrc.
+                '''
+                module.exit_json(failed=True, chaged=manager.has_changed(), msg="SSLError: " + str(e) + environment_error)
+            # If the above is true it's likely the hostname does not match
+            else:
+                environment_error = '''
+                You may need to ignore hostname missmatches by passing
+                -e 'host_key_checking=False' through the command line.
+                '''
+                module.exit_json(failed=True, chaged=manager.has_changed(), msg="SSLError: " + str(e) + environment_error)
+        # General error for non darwin users
+        else:
+            module.exit_json(failed=True, chaged=manager.has_changed(), msg="SSLError: " + str(e))
+
     except DockerAPIError as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
 
