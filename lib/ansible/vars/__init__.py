@@ -197,8 +197,10 @@ class VariableManager:
                     #        whether or not vars files errors should be fatal at this
                     #        stage, or just base it on whether a host was specified?
                     pass
-            for role in play.get_roles():
-                all_vars = self._combine_vars(all_vars, role.get_vars())
+
+            if not C.DEFAULT_PRIVATE_ROLE_VARS:
+                for role in play.get_roles():
+                    all_vars = self._combine_vars(all_vars, role.get_vars())
 
         if host:
             all_vars = self._combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
