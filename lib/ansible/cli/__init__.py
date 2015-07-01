@@ -171,7 +171,7 @@ class CLI(object):
             self.options.become_method = 'sudo'
         elif self.options.su:
             self.options.become = True
-            options.become_method = 'su'
+            self.options.become_method = 'su'
 
 
     def validate_conflicts(self, vault_opts=False, runas_opts=False):
