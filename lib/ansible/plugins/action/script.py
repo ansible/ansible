@@ -71,7 +71,7 @@ class ActionModule(ActionBase):
             source = self._loader.path_dwim(source)
 
         # transfer the file to a remote tmp location
-        tmp_src = self._shell.join_path(tmp, os.path.basename(source))
+        tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
         self._connection.put_file(source, tmp_src)
 
         sudoable = True
