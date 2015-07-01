@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import shutil
 import stat
 import grp
@@ -280,7 +281,13 @@ def main():
                 if not os.path.isabs(path):
                     curpath = curpath.lstrip('/')
                 if not os.path.exists(curpath):
-                    os.mkdir(curpath)
+                    try:
+                        os.mkdir(curpath)
+                    except OSError, ex:
+                        # Possibly something else created the dir since the os.path.exists
+                        # check above. As long as it's a dir, we don't need to error out.
+                        if not (ex.errno == errno.EEXISTS and os.isdir(curpath)):
+                            raise
                     tmp_file_args = file_args.copy()
                     tmp_file_args['path']=curpath
                     changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
