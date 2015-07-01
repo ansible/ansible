@@ -108,21 +108,24 @@ class CLI(object):
         vault_pass = None
         new_vault_pass = None
 
-        if ask_vault_pass:
-            vault_pass = getpass.getpass(prompt="Vault password: ")
+        try:
+            if ask_vault_pass:
+                vault_pass = getpass.getpass(prompt="Vault password: ")
 
-        if ask_vault_pass and confirm_vault:
-            vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
-            if vault_pass != vault_pass2:
-                raise errors.AnsibleError("Passwords do not match")
+            if ask_vault_pass and confirm_vault:
+                vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
+                if vault_pass != vault_pass2:
+                    raise errors.AnsibleError("Passwords do not match")
 
-        if ask_new_vault_pass:
-            new_vault_pass = getpass.getpass(prompt="New Vault password: ")
+            if ask_new_vault_pass:
+                new_vault_pass = getpass.getpass(prompt="New Vault password: ")
 
-        if ask_new_vault_pass and confirm_new:
-            new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
-            if new_vault_pass != new_vault_pass2:
-                raise errors.AnsibleError("Passwords do not match")
+            if ask_new_vault_pass and confirm_new:
+                new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
+                if new_vault_pass != new_vault_pass2:
+                    raise errors.AnsibleError("Passwords do not match")
+        except EOFError:
+            pass
 
         # enforce no newline chars at the end of passwords
         if vault_pass:
@@ -141,20 +144,23 @@ class CLI(object):
         becomepass = None
         become_prompt = ''
 
-        if op.ask_pass:
-            sshpass = getpass.getpass(prompt="SSH password: ")
-            become_prompt = "%s password[defaults to SSH password]: " % op.become_method.upper()
-            if sshpass:
-                sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
-        else:
-            become_prompt = "%s password: " % op.become_method.upper()
+        try:
+            if op.ask_pass:
+                sshpass = getpass.getpass(prompt="SSH password: ")
+                become_prompt = "%s password[defaults to SSH password]: " % op.become_method.upper()
+                if sshpass:
+                    sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
+            else:
+                become_prompt = "%s password: " % op.become_method.upper()
 
-        if op.become_ask_pass:
-            becomepass = getpass.getpass(prompt=become_prompt)
-            if op.ask_pass and becomepass == '':
-                becomepass = sshpass
-            if becomepass:
-                becomepass = to_bytes(becomepass)
+            if op.become_ask_pass:
+                becomepass = getpass.getpass(prompt=become_prompt)
+                if op.ask_pass and becomepass == '':
+                    becomepass = sshpass
+                if becomepass:
+                    becomepass = to_bytes(becomepass)
+        except EOFError:
+            pass
 
         return (sshpass, becomepass)
 
