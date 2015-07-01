@@ -139,7 +139,7 @@ import shlex
 class keydict(dict):
 
     """ a dictionary that maintains the order of keys as they are added """
-    
+
     # http://stackoverflow.com/questions/2328235/pythonextend-the-dict-class
 
     def __init__(self, *args, **kw):
@@ -147,7 +147,7 @@ class keydict(dict):
         self.itemlist = super(keydict,self).keys()
     def __setitem__(self, key, value):
         self.itemlist.append(key)
-        super(keydict,self).__setitem__(key, value)        
+        super(keydict,self).__setitem__(key, value)
     def __iter__(self):
         return iter(self.itemlist)
     def keys(self):
@@ -155,7 +155,7 @@ class keydict(dict):
     def values(self):
         return [self[key] for key in self]
     def itervalues(self):
-        return (self[key] for key in self)    
+        return (self[key] for key in self)
 
 def keyfile(module, user, write=False, path=None, manage_dir=True):
     """
@@ -168,6 +168,13 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     :param bool manage_dir: if True, create and set ownership of the parent dir of the authorized_keys file
     :return: full path string to authorized_keys for user
     """
+
+    if module.check_mode:
+        if path is None:
+            module.fail_json(msg="You must provide full path to key file in check mode")
+        else:
+            keysfile = path
+            return keysfile
 
     try:
         user_entry = pwd.getpwnam(user)
@@ -215,8 +222,8 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     return keysfile
 
 def parseoptions(module, options):
-    ''' 
-    reads a string containing ssh-key options 
+    '''
+    reads a string containing ssh-key options
     and returns a dictionary of those options
     '''
     options_dict = keydict() #ordered dict
@@ -247,7 +254,7 @@ def parsekey(module, raw_key):
         'ssh-ed25519',
         'ecdsa-sha2-nistp256',
         'ecdsa-sha2-nistp384',
-        'ecdsa-sha2-nistp521', 
+        'ecdsa-sha2-nistp521',
         'ssh-dss',
         'ssh-rsa',
     ]
