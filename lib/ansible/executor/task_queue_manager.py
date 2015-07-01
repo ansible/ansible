@@ -74,6 +74,9 @@ class TaskQueueManager:
 
         self._final_q = multiprocessing.Queue()
 
+        # load callback plugins
+        self._callback_plugins = self._load_callbacks(self._stdout_callback)
+
         # create the pool of worker threads, based on the number of forks specified
         try:
             fileno = sys.stdin.fileno()
@@ -203,9 +206,6 @@ class TaskQueueManager:
         a given task (meaning no hosts move on to the next task until all hosts
         are done with the current task).
         '''
-
-        # load callback plugins
-        self._callback_plugins = self._load_callbacks(self._stdout_callback)
 
         if play.vars_prompt:
             for var in play.vars_prompt:
