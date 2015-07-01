@@ -36,8 +36,8 @@ class ActionModule(ActionBase):
             tmp = self._make_tmp_path()
 
         module_name = self._task.action
-        async_module_path  = self._shell.join_path(tmp, 'async_wrapper')
-        remote_module_path = self._shell.join_path(tmp, module_name)
+        async_module_path  = self._connection._shell.join_path(tmp, 'async_wrapper')
+        remote_module_path = self._connection._shell.join_path(tmp, module_name)
 
         env_string = self._compute_environment_string()
 
@@ -51,7 +51,7 @@ class ActionModule(ActionBase):
         self._transfer_data(async_module_path, async_module_data)
         self._remote_chmod(tmp, 'a+rx', async_module_path)
 
-        argsfile = self._transfer_data(self._shell.join_path(tmp, 'arguments'), json.dumps(self._task.args))
+        argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), json.dumps(self._task.args))
 
         async_limit = self._task.async
         async_jid   = str(random.randint(0, 999999999999))
