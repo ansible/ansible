@@ -230,10 +230,10 @@ def package_status(m, pkgname, version, cache, state):
             try:
                 provided_packages = cache.get_providing_packages(pkgname)
                 if provided_packages:
-		    is_installed = False
+                    is_installed = False
                     # when virtual package providing only one package, look up status of target package 
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
-			package = provided_packages[0]
+                        package = provided_packages[0]
                         installed, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
                         if installed:
                             is_installed = True
