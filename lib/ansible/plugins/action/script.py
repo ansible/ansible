@@ -28,11 +28,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
 
-        # FIXME: noop stuff still needs to be sorted out
-        #if self.runner.noop_on_check(inject):
-        #    # in check mode, always skip this module
-        #    return ReturnData(conn=conn, comm_ok=True,
-        #                      result=dict(skipped=True, msg='check mode not supported for this module'))
+        if self._connection_info.check_mode:
+            return dict(skipped=True, msg='check mode not supported for this module')
 
         if not tmp:
             tmp = self._make_tmp_path()

@@ -28,9 +28,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         ''' transfer the given module name, plus the async module, then run it '''
 
-        # FIXME: noop stuff needs to be sorted ut
-        #if self.runner.noop_on_check(inject):
-        #    return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not supported for this module'))
+        if self._connection_info.check_mode:
+            return dict(skipped=True, msg='check mode not supported for this module')
 
         if not tmp:
             tmp = self._make_tmp_path()
