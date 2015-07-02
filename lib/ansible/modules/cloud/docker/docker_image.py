@@ -407,7 +407,7 @@ def main():
         module.exit_json(failed=failed, changed=manager.has_changed(), msg=msg, image_id=image_id)
 
     except SSLError as e:
-        if get_platform() == "Darwin" and "DOCKER_HOST" in os.environ:
+        if get_platform() == "Darwin":
             # Ensure that the environment variables has been set
             if "DOCKER_HOST" not in os.environ:
                 environment_error = '''
