@@ -1997,7 +1997,7 @@ class GenericBsdIfconfigNetwork(Network):
 
         return interface['v4'], interface['v6']
 
-    def get_interfaces_info(self, ifconfig_path):
+    def get_interfaces_info(self, ifconfig_path, ifconfig_options='-a'):
         interfaces = {}
         current_if = {}
         ips = dict(
@@ -2007,7 +2007,7 @@ class GenericBsdIfconfigNetwork(Network):
         # FreeBSD, DragonflyBSD, NetBSD, OpenBSD and OS X all implicitly add '-a'
         # when running the command 'ifconfig'.
         # Solaris must explicitly run the command 'ifconfig -a'.
-        rc, out, err = module.run_command([ifconfig_path, '-a'])
+        rc, out, err = module.run_command([ifconfig_path, ifconfig_options])
 
         for line in out.split('\n'):
 
@@ -2177,14 +2177,14 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
     platform = 'AIX'
 
     # AIX 'ifconfig -a' does not have three words in the interface line
-    def get_interfaces_info(self, ifconfig_path):
+    def get_interfaces_info(self, ifconfig_path, ifconfig_options):
         interfaces = {}
         current_if = {}
         ips = dict(
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
         )
-        rc, out, err = module.run_command([ifconfig_path, '-a'])
+        rc, out, err = module.run_command([ifconfig_path, ifconfig_options])
 
         for line in out.split('\n'):
 
@@ -2263,6 +2263,10 @@ class OpenBSDNetwork(GenericBsdIfconfigNetwork, Network):
     It uses the GenericBsdIfconfigNetwork.
     """
     platform = 'OpenBSD'
+
+    # OpenBSD 'ifconfig -a' does not have information about aliases
+    def get_interfaces_info(self, ifconfig_path, ifconfig_options='-aA'):
+       return super(OpenBSDNetwork, self).get_interfaces_info(ifconfig_path, ifconfig_options)
 
     # Return macaddress instead of lladdr
     def parse_lladdr_line(self, words, current_if, ips):
