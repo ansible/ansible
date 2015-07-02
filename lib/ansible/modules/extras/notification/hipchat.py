@@ -5,7 +5,7 @@ DOCUMENTATION = '''
 ---
 module: hipchat
 version_added: "1.2"
-short_description: Send a message to hipchat
+short_description: Send a message to hipchat.
 description:
    - Send a message to hipchat
 options:
@@ -56,7 +56,7 @@ options:
     version_added: 1.5.1
   api:
     description:
-      - API url if using a self-hosted hipchat server
+      - API url if using a self-hosted hipchat server. For hipchat api version 2 use C(/v2) path in URI
     required: false
     default: 'https://api.hipchat.com/v1/rooms/message'
     version_added: 1.6.0
@@ -67,7 +67,15 @@ author: "WAKAYAMA Shirou (@shirou), BOURDEL Paul (@pb8226)"
 '''
 
 EXAMPLES = '''
-- hipchat: token=AAAAAA room=notify msg="Ansible task finished"
+- hipchat:  room=notify msg="Ansible task finished"
+
+# Use Hipchat API version 2
+
+- hipchat: 
+    api: "https://api.hipchat.com/v2/"
+    token: OAUTH2_TOKEN
+    room: notify 
+    msg: "Ansible task finished"
 '''
 
 # ===========================================
@@ -109,7 +117,7 @@ def send_msg(module, token, room, msg_from, msg, msg_format='text',
 
 
 def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
-             color='yellow', notify=False, api=MSG_URI_V2):
+             color='yellow', notify=False, api=NOTIFY_URI_V2):
     '''sending message to hipchat v2 server'''
     print "Sending message to v2 server"
 
@@ -119,13 +127,11 @@ def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
     body['message'] = msg
     body['color'] = color
     body['message_format'] = msg_format
+    params['notify'] = notify
 
-    if notify:
-        POST_URL = api + NOTIFY_URI_V2
-    else:
-        POST_URL = api + MSG_URI_V2
-
-    url = POST_URL.replace('{id_or_name}',room)
+    POST_URL = api + NOTIFY_URI_V2
+    
+    url = POST_URL.replace('{id_or_name}', room)
     data = json.dumps(body)
 
     if module.check_mode:
