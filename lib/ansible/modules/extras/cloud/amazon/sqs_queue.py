@@ -21,6 +21,7 @@ short_description: Creates or deletes AWS SQS queues.
 description:
   - Create or delete AWS SQS queues.
   - Update attributes on existing queues.
+version_added: "2.0"
 author: Alan Loi (@loia)
 requirements:
   - "boto >= 2.33.0"
@@ -39,22 +40,27 @@ options:
     description:
       - The default visibility timeout in seconds.
     required: false
+    default: null
   message_retention_period:
     description:
       - The message retention period in seconds.
     required: false
+    default: null
   maximum_message_size:
     description:
       - The maximum message size in bytes.
     required: false
+    default: null
   delivery_delay:
     description:
       - The delivery delay in seconds.
     required: false
+    default: null
   receive_message_wait_time:
     description:
       - The receive message wait time in seconds.
     required: false
+    default: null
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
