@@ -393,11 +393,11 @@ class ElbManager(object):
 
             # status of instances behind the ELB
             if info['instances']:
-                info['instance_health'] = [ dict({
-                    "instance_id": instance_state.instance_id,
-                    "reason_code": instance_state.reason_code,
-                    "state": instance_state.state,
-                }) for instance_state in self.elb_conn.describe_instance_health(self.name)]
+                info['instance_health'] = [ dict(
+                    instance_id = instance_state.instance_id,
+                    reason_code = instance_state.reason_code,
+                    state = instance_state.state
+                ) for instance_state in self.elb_conn.describe_instance_health(self.name)]
             else:
                 info['instance_health'] = []
 
@@ -409,7 +409,7 @@ class ElbManager(object):
                   elif instance_state['state'] == "OutOfService":
                     info['out_of_service_count'] += 1
                   else:
-                    info['unknown_instance_state_count'] =+ 1
+                    info['unknown_instance_state_count'] += 1
 
             if check_elb.health_check:
                 info['health_check'] = {
