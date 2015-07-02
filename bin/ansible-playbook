@@ -310,7 +310,7 @@ def main(args):
                 return 3
 
         except errors.AnsibleError, e:
-            display("ERROR: %s" % e, color='red')
+            display(u"ERROR: %s" % utils.unicode.to_unicode(e, nonstring='simplerepr'), color='red')
             return 1
 
     return 0
@@ -323,7 +323,7 @@ if __name__ == "__main__":
     try:
         sys.exit(main(sys.argv[1:]))
     except errors.AnsibleError, e:
-        display("ERROR: %s" % e, color='red', stderr=True)
+        display(u"ERROR: %s" % utils.unicode.to_unicode(e, nonstring='simplerepr'), color='red', stderr=True)
         sys.exit(1)
     except KeyboardInterrupt, ke:
         display("ERROR: interrupted", color='red', stderr=True)
