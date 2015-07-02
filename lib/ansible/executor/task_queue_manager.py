@@ -75,6 +75,9 @@ class TaskQueueManager:
 
         self._final_q = multiprocessing.Queue()
 
+        # load callback plugins
+        self._callback_plugins = self._load_callbacks(self._stdout_callback)
+
         # create the pool of worker threads, based on the number of forks specified
         try:
             fileno = sys.stdin.fileno()
