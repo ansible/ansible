@@ -265,7 +265,7 @@ class TaskExecutor:
         for attempt in range(retries):
             if attempt > 0:
                 # FIXME: this should use the callback/message passing mechanism
-                print("FAILED - RETRYING: %s (%d retries left)" % (self._task, retries-attempt))
+                print("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result))
                 result['attempts'] = attempt + 1
 
             debug("running the handler")
