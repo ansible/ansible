@@ -24,6 +24,7 @@ from termios import tcflush, TCIFLUSH
 import datetime
 import sys
 import time
+import locale
 
 
 class ActionModule(object):
@@ -101,7 +102,7 @@ class ActionModule(object):
                 # Clear out any unflushed buffered input which would
                 # otherwise be consumed by raw_input() prematurely.
                 tcflush(sys.stdin, TCIFLUSH)
-                self.result['user_input'] = raw_input(self.prompt.encode(sys.stdout.encoding))
+                self.result['user_input'] = raw_input(self.prompt.encode(sys.stdout.encoding or locale.getpreferredencoding()))
         except KeyboardInterrupt:
             while True:
                 print '\nAction? (a)bort/(c)ontinue: '
