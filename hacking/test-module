@@ -35,6 +35,7 @@ import subprocess
 import traceback
 import optparse
 import ansible.utils as utils
+from ansible.parsing.utils.jsonify import jsonify
 import ansible.module_common as module_common
 import ansible.constants as C
 
@@ -75,7 +76,7 @@ def write_argsfile(argstring, json=False):
     argsfile = open(argspath, 'w')
     if json:
         args = utils.parse_kv(argstring)
-        argstring = utils.jsonify(args)
+        argstring = jsonify(args)
     argsfile.write(argstring)
     argsfile.close()
     return argspath
@@ -150,7 +151,7 @@ def runtest( modfile, argspath):
         print "RAW OUTPUT"
         print out
         print err
-        results = utils.parse_json(out)
+        results = json.loads(out)
     except:
         print "***********************************"
         print "INVALID OUTPUT FORMAT"
@@ -160,7 +161,7 @@ def runtest( modfile, argspath):
 
     print "***********************************"
     print "PARSED OUTPUT"
-    print utils.jsonify(results,format=True)
+    print jsonify(results,format=True)
 
 def rundebug(debugger, modfile, argspath):
     """Run interactively with console debugger."""
