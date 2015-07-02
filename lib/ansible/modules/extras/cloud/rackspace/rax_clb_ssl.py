@@ -78,7 +78,7 @@ extends_documentation_fragment: rackspace
 EXAMPLES = '''
 - name: Enable SSL termination on a load balancer
   rax_clb_ssl:
-    balancer_name: the_loadbalancer
+    loadbalancer: the_loadbalancer
     state: present
     private_key: "{{ lookup('file', 'credentials/server.key' ) }}"
     certificate: "{{ lookup('file', 'credentials/server.crt' ) }}"
@@ -88,7 +88,7 @@ EXAMPLES = '''
 
 - name: Disable SSL termination
   rax_clb_ssl:
-    balancer_name: "{{ registered_lb.balancer.id }}"
+    loadbalancer: "{{ registered_lb.balancer.id }}"
     state: absent
     wait: true
 '''
