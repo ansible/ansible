@@ -225,13 +225,13 @@ foreach ($arg in $args){
     };
 };
 
-$profile=Get-Attr $params "profile" "current";
-if (($profile -ne 'current') -or ($profile -ne 'domain') -or ($profile -ne 'standard') -or ($profile -ne 'all') ) {
+$winprofile=Get-Attr $params "profile" "current";
+if (($winprofile -ne 'current') -or ($winprofile -ne 'domain') -or ($winprofile -ne 'standard') -or ($winprofile -ne 'all') ) {
     $misArg+="Profile";
     $msg+=@("for the Profile parameter only the values 'current', 'domain', 'standard' or 'all' are allowed");
 } else {
 
-    $fwsettings.Add("profile", $profile)
+    $fwsettings.Add("profile", $winprofile)
 }
 
 if ($($($misArg|measure).count) -gt 0){
