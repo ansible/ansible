@@ -154,12 +154,18 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
             needs_change = True
 
         if needs_change:
-            balancer.add_ssl_termination(**ssl_attrs)
+            try:
+                balancer.add_ssl_termination(**ssl_attrs)
+            except pyrax.exceptions.PyraxException, e:
+                module.fail_json(msg='%s' % e.message)
             changed = True
     elif state == 'absent':
         # Remove SSL termination if it's already configured.
         if existing_ssl:
-            balancer.delete_ssl_termination()
+            try:
+                balancer.delete_ssl_termination()
+            except pyrax.exceptions.PyraxException, e:
+                module.fail_json(msg='%s' % e.message)
             changed = True
 
     if https_redirect is not None and balancer.httpsRedirect != https_redirect:
@@ -168,7 +174,10 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
             # while the SSL termination changes above are being applied.
             pyrax.utils.wait_for_build(balancer, interval=5, attempts=attempts)
 
-        balancer.update(httpsRedirect=https_redirect)
+        try:
+            balancer.update(httpsRedirect=https_redirect)
+        except pyrax.exceptions.PyraxException, e:
+            module.fail_json(msg='%s' % e.message)
         changed = True
 
     if changed and wait:
