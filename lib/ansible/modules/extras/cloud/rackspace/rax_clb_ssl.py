@@ -203,7 +203,7 @@ def cloud_load_balancer_ssl(module, loadbalancer, state, enabled, private_key,
         changed=changed,
         https_redirect=balancer.httpsRedirect,
         ssl_termination=new_ssl,
-        balancer=balancer
+        balancer=rax_to_dict(balancer, 'clb')
     )
     success = True
 
