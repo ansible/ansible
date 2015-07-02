@@ -116,9 +116,11 @@ options:
             - "Source network address policy"
         required: false
         default: None
-        choices: []
-        aliases: []
-
+    default_persistence_profile:
+        description:
+            - "Default Profile which manages the session persistence"
+        required: false
+        default: None
     description:
         description:
             - "Virtual server description."
@@ -317,6 +319,28 @@ def set_description(api,name,description):
     except bigsuds.OperationFailed, e:
         raise Exception('Error on setting description : %s ' % e)
 
+def get_persistence_profiles(api,name):
+    return api.LocalLB.VirtualServer.get_persistence_profile(virtual_servers = [name])[0]
+
+def set_default_persistence_profiles(api,name,persistence_profile):
+    updated=False
+    if persistence_profile is None:
+        return updated
+    try:
+        current_persistence_profiles = get_persistence_profiles(api,name)
+        default=None
+        for profile in current_persistence_profiles:
+            if profile['default_profile']:
+                default=profile['profile_name']
+                break
+        if default is not None and default != persistence_profile:
+            api.LocalLB.VirtualServer.remove_persistence_profile(virtual_servers=[name],profiles=[[{'profile_name':default,'default_profile' : True}]])
+        if default != persistence_profile:
+            api.LocalLB.VirtualServer.add_persistence_profile(virtual_servers=[name],profiles=[[{'profile_name':persistence_profile,'default_profile' : True}]])
+            updated=True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting default persistence profile : %s' % e)
 
 def main():
     argument_spec = f5_argument_spec()
@@ -329,7 +353,8 @@ def main():
             all_profiles = dict(type='list'),
             pool=dict(type='str'),
             description = dict(type='str'),
-            snat=dict(type='str')
+            snat=dict(type='str'),
+            default_persistence_profile=dict(type='str')
         )
     )
 
@@ -346,6 +371,7 @@ def main():
     pool=fq_name(partition,module.params['pool'])
     description = module.params['description']
     snat = module.params['snat']
+    default_persistence_profile=fq_name(partition,module.params['default_persistence_profile'])
 
     if 1 > port > 65535:
         module.fail_json(msg="valid ports must be in range 1 - 65535")
@@ -387,6 +413,7 @@ def main():
                         set_profiles(api,name,all_profiles)
                         set_snat(api,name,snat)
                         set_description(api,name,description)
+                        set_default_persistence_profiles(api,name,default_persistence_profile)
                         result = {'changed': True}
                     except bigsuds.OperationFailed, e:
                             raise Exception('Error on creating Virtual Server : %s' % e)
@@ -406,6 +433,7 @@ def main():
                         result['changed']|=set_description(api,name,description)
                         result['changed']|=set_snat(api,name,snat)
                         result['changed']|=set_profiles(api,name,all_profiles)
+                        result['changed']|=set_default_persistence_profiles(api,name,default_persistence_profile)
                         api.System.Session.submit_transaction()
                     except Exception,e:
                         raise Exception("Error on updating Virtual Server : %s" % e)
