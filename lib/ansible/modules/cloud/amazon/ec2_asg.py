@@ -43,7 +43,7 @@ options:
   launch_config_name:
     description:
       - Name of the Launch configuration to use for the group. See the ec2_lc module for managing these.
-    required: false
+    required: true
   min_size:
     description:
       - Minimum number of instances in group
