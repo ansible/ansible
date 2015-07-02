@@ -202,16 +202,23 @@ def vs_exists(api, vs):
 
 def vs_create(api,name,destination,port,pool):
     _profiles=[[{'profile_context': 'PROFILE_CONTEXT_TYPE_ALL', 'profile_name': 'tcp'}]]
+    created = False
+    # a bit of a hack to handle concurrent runs of this module.
+    # even though we've checked the vs doesn't exist,
+    # it may exist by the time we run create_vs().
+    # this catches the exception and does something smart
+    # about it!
     try:
         api.LocalLB.VirtualServer.create(
             definitions = [{'name': [name], 'address': [destination], 'port': port, 'protocol': 'PROTOCOL_TCP'}],
             wildmasks = ['255.255.255.255'],
             resources = [{'type': 'RESOURCE_TYPE_POOL', 'default_pool_name': pool}],
             profiles = _profiles)
-        result = True 
-        desc = 0
-    except Exception, e :
-        print e.args
+        created = True
+        return created
+    except bigsudsOperationFailed, e :
+        if "already exists" not in str(e):
+            raise Exception('Error on creating Virtual Server : %s' % e)
 
 def vs_remove(api,name):
     api.LocalLB.VirtualServer.delete_virtual_server(virtual_servers = [name ])
@@ -377,16 +384,12 @@ def main():
                     # about it!
                     try:
                         vs_create(api,name,destination,port,pool)
-                        result = {'changed': True}
-                    except bigsuds.OperationFailed, e:
-                        if "already exists" in str(e):
-                            update = True
-                        else:
-                            raise Exception('Error on creating Virtual Server : %s' % e)
-                    else:
                         set_profiles(api,name,all_profiles)
                         set_snat(api,name,snat)
                         set_description(api,name,description)
+                        result = {'changed': True}
+                    except bigsuds.OperationFailed, e:
+                            raise Exception('Error on creating Virtual Server : %s' % e)
                 else:
                     # check-mode return value
                     result = {'changed': True}
