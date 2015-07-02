@@ -39,7 +39,7 @@ class TestPlay(unittest.TestCase):
 
     def test_empty_play(self):
         p = Play.load(dict())
-        self.assertEqual(str(p), "PLAY: ")
+        self.assertEqual(str(p), '')
 
     def test_basic_play(self):
         p = Play.load(dict(
