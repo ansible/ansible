@@ -63,8 +63,43 @@ options:
     description:
       - URL of docker host to issue commands to
     required: false
-    default: unix://var/run/docker.sock
+    default: ${DOCKER_HOST} or unix://var/run/docker.sock
     aliases: []
+  use_tls:
+    description:
+      - Whether to use tls to connect to the docker server.  "no" means not to
+        use tls (and ignore any other tls related parameters). "encrypt" means
+        to use tls to encrypt the connection to the server.  "verify" means to
+        also verify that the server's certificate is valid for the server
+        (this both verifies the certificate against the CA and that the
+        certificate was issued for that host. If this is unspecified, tls will
+        only be used if one of the other tls options require it.
+    choices: [ "no", "encrypt", "verify" ]
+    version_added: "1.9"
+  tls_client_cert:
+    description:
+      - Path to the PEM-encoded certificate used to authenticate docker client.
+        If specified tls_client_key must be valid
+    default: ${DOCKER_CERT_PATH}/cert.pem
+    version_added: "1.9"
+  tls_client_key:
+    description:
+      - Path to the PEM-encoded key used to authenticate docker client. If
+        specified tls_client_cert must be valid
+    default: ${DOCKER_CERT_PATH}/key.pem
+    version_added: "1.9"
+  tls_ca_cert:
+    description:
+      - Path to a PEM-encoded certificate authority to secure the Docker connection.
+        This has no effect if use_tls is encrypt.
+    default: ${DOCKER_CERT_PATH}/ca.pem
+    version_added: "1.9"
+  tls_hostname:
+    description:
+      - A hostname to check matches what's supplied in the docker server's
+        certificate.  If unspecified, the hostname is taken from the docker_url.
+    default: Taken from docker_url
+    version_added: "1.9"
   docker_api_version:
     description:
       - Remote API version to use. This defaults to the current default as
