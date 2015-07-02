@@ -2734,12 +2734,16 @@ def get_all_facts(module):
     for (k, v) in facts.items():
         setup_options["ansible_%s" % k.replace('-', '_')] = v
 
-    # Look for the path to the facter and ohai binary and set
+    # Look for the path to the facter, cfacter, and ohai binaries and set
     # the variable to that path.
 
     facter_path = module.get_bin_path('facter')
+    cfacter_path = module.get_bin_path('cfacter')
     ohai_path = module.get_bin_path('ohai')
 
+    # Prefer to use cfacter if available
+    if cfacter_path is not None:
+        facter_path = cfacter_path
     # if facter is installed, and we can use --json because
     # ruby-json is ALSO installed, include facter data in the JSON
 
