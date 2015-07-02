@@ -21,7 +21,7 @@ module: rax_clb_ssl
 short_description: Manage SSL termination for a Rackspace Cloud Load Balancer.
 description:
 - Set up, reconfigure, or remove SSL termination for an existing load balancer.
-version_added: "1.9"
+version_added: "2.0"
 options:
   loadbalancer:
     description:
