@@ -140,7 +140,7 @@ def key_for_hostname(hostname):
 
     # use new AES keys every 2 hours, which means fireball must not allow running for longer either
     if not os.path.exists(key_path) or (time.time() - os.path.getmtime(key_path) > 60*60*2):
-        key = AesKey.Generate()
+        key = AesKey.Generate(size=256)
         fd = os.open(key_path, os.O_WRONLY | os.O_CREAT, int(C.ACCELERATE_KEYS_FILE_PERMS, 8))
         fh = os.fdopen(fd, 'w')
         fh.write(str(key))
@@ -155,7 +155,7 @@ def key_for_hostname(hostname):
         return key
 
 def encrypt(key, msg):
-    return key.Encrypt(msg)
+    return key.Encrypt(msg.encode('utf-8'))
 
 def decrypt(key, msg):
     try:
