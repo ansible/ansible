@@ -20,6 +20,7 @@
 DOCUMENTATION = '''
 ---
 module: win_fw
+version_added: "2.0"
 author: Timothy Vandenbrande
 short_description: Windows firewall automation
 description:
