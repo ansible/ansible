@@ -78,6 +78,9 @@ import socket
 def vmware_path(datastore, datacenter, path):
     ''' Constructs a URL path that VSphere accepts reliably '''
     path = "/folder/%s" % path.lstrip("/")
+    # Due to a software bug in vSphere, it fails to handle ampersand in datacenter names
+    # The solution is to do what vSphere does (when browsing) and double-encode ampersands, maybe others ?
+    datacenter = datacenter.replace('&', '%26')
     if not path.startswith("/"):
         path = "/" + path
     params = dict( dsName = datastore )
@@ -146,6 +149,7 @@ def main():
     else:
         module.fail_json(msg='Failed to upload', status=resp.status, reason=resp.reason, length=resp.length, version=resp.version, headers=resp.getheaders(), chunked=resp.chunked, url=url)
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
+# Import module snippets
+from ansible.module_utils.basic import *
+
 main()
