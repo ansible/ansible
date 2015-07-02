@@ -9,7 +9,13 @@ New Modules:
 
 Other Notable Changes:
 
-## 1.9.2 "Dancing In the Street" - TBD
+## 1.9.3 "Dancing In the Street" - TBD
+
+* Fixes a bug related to keyczar messing up encodings internally, resulting in decrypted
+  messages coming out as empty strings.
+* AES Keys generated for use in accelerated mode are now 256-bit by default instead of 128.
+
+## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
 * Security fixes to check that hostnames match certificates with https urls (CVE-2015-3908)
   - get_url and uri modules
