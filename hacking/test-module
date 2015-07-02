@@ -36,6 +36,7 @@ import traceback
 import optparse
 import ansible.utils as utils
 from ansible.parsing.utils.jsonify import jsonify
+from ansible.parsing.splitter import parse_kv
 import ansible.module_common as module_common
 import ansible.constants as C
 
@@ -75,7 +76,7 @@ def write_argsfile(argstring, json=False):
     argspath = os.path.expanduser("~/.ansible_test_module_arguments")
     argsfile = open(argspath, 'w')
     if json:
-        args = utils.parse_kv(argstring)
+        args = parse_kv(argstring)
         argstring = jsonify(args)
     argsfile.write(argstring)
     argsfile.close()
