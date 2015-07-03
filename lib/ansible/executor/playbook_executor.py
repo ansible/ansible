@@ -122,9 +122,6 @@ class PlaybookExecutor:
                         entry['plays'].append(p)
 
                     else:
-                        # make sure the tqm has callbacks loaded
-                        self._tqm.load_callbacks()
-
                         # we are actually running plays
                         for batch in self._get_serialized_batches(new_play):
                             if len(batch) == 0:
