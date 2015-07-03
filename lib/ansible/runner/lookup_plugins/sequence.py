@@ -203,8 +203,7 @@ class LookupModule(object):
                     )
 
                 self.sanity_check()
-
-                if self.start != self.end:
+                if self.stride != 0:
                     results.extend(self.generate_sequence())
             except AnsibleError:
                 raise

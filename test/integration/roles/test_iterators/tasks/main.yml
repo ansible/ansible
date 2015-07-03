@@ -81,10 +81,16 @@
   with_sequence: count=0
   register: count_of_zero
 
+- name: test with_sequence count 1
+  set_fact: "{{ 'x' + item }}={{ item }}"
+  with_sequence: count=1
+  register: count_of_one
+
 - assert:
     that:
         - count_of_zero | skipped
         - not count_of_zero | failed
+        - not count_of_one | skipped
 
 # WITH_RANDOM_CHOICE
 
