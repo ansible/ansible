@@ -80,8 +80,8 @@ options:
       - 'Note: This does not upgrade a specific package, use state=latest for that.'
     version_added: "1.1"
     required: false
-    default: "yes"
-    choices: [ "yes", "safe", "full", "dist"]
+    default: "no"
+    choices: [ "no", "yes", "safe", "full", "dist"]
   dpkg_options:
     description:
       - Add dpkg options to apt command. Defaults to '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
@@ -548,7 +548,7 @@ def main():
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['yes', 'safe', 'full', 'dist']),
+            upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS)
         ),
         mutually_exclusive = [['package', 'upgrade', 'deb']],
@@ -572,6 +572,10 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+
+    if p['upgrade'] == 'no':
+        p['upgrade'] = None
+
     if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
         module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
 
