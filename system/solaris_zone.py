@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# (c) 2013, Paul Markham <pmarkham@netrefinery.com>
+# (c) 2015, Paul Markham <pmarkham@netrefinery.com>
 #
 # This file is part of Ansible
 #
@@ -37,13 +37,18 @@ options:
   state:
     required: true
     description:
-      - C(present), create the zone.
-      - C(running), if the zone already exists, boot it, otherwise, create the zone
-          first, then boot it.
+      - C(present), configure and install the zone.
+      - C(installed), synonym for C(present).
+      - C(running), if the zone already exists, boot it, otherwise, configure and install
+          the zone first, then boot it.
       - C(started), synonym for C(running).
       - C(stopped), shutdown a zone.
       - C(absent), destroy the zone.
-    choices: ['present', 'started', 'running', 'stopped', 'absent']
+      - C(configured), configure the ready so that it's to be attached.
+      - C(attached), attach a zone, but do not boot it.
+      - C(detach), stop and detach a zone
+    choices: ['present', 'installed', 'started', 'running', 'stopped', 'absent', 'configured', 'attached', 'detached']
+    default: present
   name:
     description:
       - Zone name.
@@ -68,19 +73,25 @@ options:
   config:
     required: false
     description:
-      - 'The zonecfg configuration commands for this zone, separated by commas, e.g.
-        "set auto-boot=true,add net,set physical=bge0,set address=10.1.1.1,end"
-        See the Solaris Systems Administrator guide for a list of all configuration commands
-        that can be used.'
+      - 'The zonecfg configuration commands for this zone. See zonecfg(1M) for the valid options
+        and syntax. Typically this is a list of options separated by semi-colons or new lines, e.g.
+        "set auto-boot=true;add net;set physical=bge0;set address=10.1.1.1;end"'
     required: false
-    default: null
+    default: empty string
   create_options:
     required: false
     description:
-      - 'Extra options to the zonecfg create command. For example, this can be used to create a
-        Solaris 11 kernel zone'
+      - 'Extra options to the zonecfg(1M) create command.'
     required: false
-    default: null
+    default: empty string
+  attach_options:
+    required: false
+    description:
+      - 'Extra options to the zoneadm attach command. For example, this can be used to specify
+        whether a minimum or full update of packages is required and if any packages need to
+        be deleted. For valid values, see zoneadm(1M)'
+    required: false
+    default: empty string
   timeout:
     description:
       - Timeout, in seconds, for zone to boot.
@@ -89,15 +100,15 @@ options:
 '''
 
 EXAMPLES = '''
-# Create a zone, but don't boot it
+# Create and install a zone, but don't boot it
 solaris_zone: name=zone1 state=present path=/zones/zone1 sparse=true root_password="Be9oX7OSwWoU."
-      config='set autoboot=true, add net, set physical=bge0, set address=10.1.1.1, end'
+      config='set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Create a zone and boot it
+# Create and install a zone and boot it
 solaris_zone: name=zone1 state=running path=/zones/zone1 root_password="Be9oX7OSwWoU."
-      config='set autoboot=true, add net, set physical=bge0, set address=10.1.1.1, end'
+      config='set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
 
-# Boot an already created zone
+# Boot an already installed zone
 solaris_zone: name=zone1 state=running
 
 # Stop a zone
@@ -105,6 +116,16 @@ solaris_zone: name=zone1 state=stopped
 
 # Destroy a zone
 solaris_zone: name=zone1 state=absent
+
+# Detach a zone
+solaris_zone: name=zone1 state=detached
+
+# Configure a zone, ready to be attached
+solaris_zone: name=zone1 state=configured path=/zones/zone1 root_password="Be9oX7OSwWoU."
+      config='set autoboot=true; add net; set physical=bge0; set address=10.1.1.1; end'
+
+# Attach a zone
+solaris_zone: name=zone1 state=attached attach_options='-u'
 '''
 
 class Zone(object):
@@ -120,45 +141,60 @@ class Zone(object):
         self.timeout        = self.module.params['timeout']
         self.config         = self.module.params['config']
         self.create_options = self.module.params['create_options']
+        self.attach_options = self.module.params['attach_options']
 
         self.zoneadm_cmd    = self.module.get_bin_path('zoneadm', True)
         self.zonecfg_cmd    = self.module.get_bin_path('zonecfg', True)
         self.ssh_keygen_cmd = self.module.get_bin_path('ssh-keygen', True)
 
-    def create(self):
+    def configure(self):
         if not self.path:
             self.module.fail_json(msg='Missing required argument: path')
 
-        t = tempfile.NamedTemporaryFile(delete = False)
+        if not self.module.check_mode:
+            t = tempfile.NamedTemporaryFile(delete = False)
 
-        if self.sparse:
-            t.write('create %s\n' % self.create_options)
-            self.msg.append('creating sparse root zone')
-        else:
-            t.write('create -b %s\n' % self.create_options)
-            self.msg.append('creating whole root zone')
+            if self.sparse:
+                t.write('create %s\n' % self.create_options)
+                self.msg.append('creating sparse-root zone')
+            else:
+                t.write('create -b %s\n' % self.create_options)
+                self.msg.append('creating whole-root zone')
 
-        t.write('set zonepath=%s\n' % self.path)
+            t.write('set zonepath=%s\n' % self.path)
+            t.write('%s\n' % self.config)
+            t.close()
 
-        if self.config:
-            for line in self.config:
-                t.write('%s\n' % line)
-        t.close()
+            cmd = '%s -z %s -f %s' % (self.zonecfg_cmd, self.name, t.name)
+            (rc, out, err) = self.module.run_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Failed to create zone. %s' % (out + err))
+            os.unlink(t.name)
 
-        cmd = '%s -z %s -f %s' % (self.zonecfg_cmd, self.name, t.name)
-        (rc, out, err) = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg='Failed to create zone. %s' % (out + err))
-        os.unlink(t.name)
+        self.changed = True
+        self.msg.append('zone configured')
 
-        cmd = '%s -z %s install' % (self.zoneadm_cmd, self.name)
-        (rc, out, err) = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg='Failed to install zone. %s' % (out + err))
+    def install(self):
+        if not self.module.check_mode:
+            cmd = '%s -z %s install' % (self.zoneadm_cmd, self.name)
+            (rc, out, err) = self.module.run_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Failed to install zone. %s' % (out + err))
+            self.configure_sysid()
+            self.configure_password()
+            self.configure_ssh_keys()
+        self.changed = True
+        self.msg.append('zone installed')
 
-        self.configure_sysid()
-        self.configure_password()
-        self.configure_ssh_keys()
+    def uninstall(self):
+        if self.is_installed():
+            if not self.module.check_mode:
+                cmd = '%s -z %s uninstall -F' % (self.zoneadm_cmd, self.name)
+                (rc, out, err) = self.module.run_command(cmd)
+                if rc != 0:
+                    self.module.fail_json(msg='Failed to uninstall zone. %s' % (out + err))
+            self.changed = True
+            self.msg.append('zone uninstalled')
 
     def configure_sysid(self):
         if os.path.isfile('%s/root/etc/.UNCONFIGURED' % self.path):
@@ -208,51 +244,82 @@ class Zone(object):
             lines = f.readlines()
             f.close()
 
-            for i in range(0, len(lines)):     
-                fields = lines[i].split(':')   
+            for i in range(0, len(lines)):
+                fields = lines[i].split(':')
                 if fields[0] == 'root':
-                    fields[1] = self.root_password 
+                    fields[1] = self.root_password
                     lines[i] = ':'.join(fields)
 
             f = open(shadow, 'w')
             for line in lines:
-                f.write(line)              
+                f.write(line)
             f.close()
-            
+
     def boot(self):
-        cmd = '%s -z %s boot' % (self.zoneadm_cmd, self.name)
-        (rc, out, err) = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg='Failed to boot zone. %s' % (out + err))
+        if not self.module.check_mode:
+            cmd = '%s -z %s boot' % (self.zoneadm_cmd, self.name)
+            (rc, out, err) = self.module.run_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Failed to boot zone. %s' % (out + err))
 
-        """
-        The boot command can return before the zone has fully booted. This is especially
-        true on the first boot when the zone initializes the SMF services. Unless the zone
-        has fully booted, subsequent tasks in the playbook may fail as services aren't running yet.
-        Wait until the zone's console login is running; once that's running, consider the zone booted.
-        """
+            """
+            The boot command can return before the zone has fully booted. This is especially
+            true on the first boot when the zone initializes the SMF services. Unless the zone
+            has fully booted, subsequent tasks in the playbook may fail as services aren't running yet.
+            Wait until the zone's console login is running; once that's running, consider the zone booted.
+            """
 
-        elapsed = 0
-        while True:
-            if elapsed > self.timeout:
-                self.module.fail_json(msg='timed out waiting for zone to boot')
-            rc = os.system('ps -z %s -o args|grep "/usr/lib/saf/ttymon.*-d /dev/console" > /dev/null 2>/dev/null' % self.name)
-            if rc == 0:
-                break
-            time.sleep(10)
-            elapsed += 10
+            elapsed = 0
+            while True:
+                if elapsed > self.timeout:
+                    self.module.fail_json(msg='timed out waiting for zone to boot')
+                rc = os.system('ps -z %s -o args|grep "/usr/lib/saf/ttymon.*-d /dev/console" > /dev/null 2>/dev/null' % self.name)
+                if rc == 0:
+                    break
+                time.sleep(10)
+                elapsed += 10
+        self.changed = True
+        self.msg.append('zone booted')
 
     def destroy(self):
-        cmd = '%s -z %s delete -F' % (self.zonecfg_cmd, self.name)
-        (rc, out, err) = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg='Failed to delete zone. %s' % (out + err))
+        if self.is_running():
+            self.stop()
+        if self.is_installed():
+            self.uninstall()
+        if not self.module.check_mode:
+            cmd = '%s -z %s delete -F' % (self.zonecfg_cmd, self.name)
+            (rc, out, err) = self.module.run_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Failed to delete zone. %s' % (out + err))
+        self.changed = True
+        self.msg.append('zone deleted')
 
     def stop(self):
-        cmd = '%s -z %s halt' % (self.zoneadm_cmd, self.name)
-        (rc, out, err) = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg='Failed to stop zone. %s' % (out + err))
+        if not self.module.check_mode:
+            cmd = '%s -z %s halt' % (self.zoneadm_cmd, self.name)
+            (rc, out, err) = self.module.run_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Failed to stop zone. %s' % (out + err))
+        self.changed = True
+        self.msg.append('zone stopped')
+
+    def detach(self):
+        if not self.module.check_mode:
+            cmd = '%s -z %s detach' % (self.zoneadm_cmd, self.name)
+            (rc, out, err) = self.module.run_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Failed to detach zone. %s' % (out + err))
+        self.changed = True
+        self.msg.append('zone detached')
+
+    def attach(self):
+        if not self.module.check_mode:
+            cmd = '%s -z %s attach %s' % (self.zoneadm_cmd, self.name, self.attach_options)
+            (rc, out, err) = self.module.run_command(cmd)
+            if rc != 0:
+                self.module.fail_json(msg='Failed to attach zone. %s' % (out + err))
+        self.changed = True
+        self.msg.append('zone attached')
 
     def exists(self):
         cmd = '%s -z %s list' % (self.zoneadm_cmd, self.name)
@@ -262,74 +329,85 @@ class Zone(object):
         else:
             return False
 
-    def running(self):
+    def is_running(self):
+        return self.status() == 'running'
+
+    def is_installed(self):
+        return self.status() == 'installed'
+
+    def is_configured(self):
+        return self.status() == 'configured'
+
+    def status(self):
         cmd = '%s -z %s list -p' % (self.zoneadm_cmd, self.name)
         (rc, out, err) = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg='Failed to determine zone state. %s' % (out + err))
-
-        if out.split(':')[2] == 'running':
-            return True
-        else:
-            return False
-
+        return out.split(':')[2]
 
     def state_present(self):
         if self.exists():
             self.msg.append('zone already exists')
         else:
-            if not self.module.check_mode:
-                self.create()
-            self.changed = True
-            self.msg.append('zone created')
+            self.configure()
+            self.install()
 
     def state_running(self):
         self.state_present()
-        if self.running():
+        if self.is_running():
             self.msg.append('zone already running')
         else:
-            if not self.module.check_mode:
-                self.boot()
-            self.changed = True
-            self.msg.append('zone booted')
+            self.boot()
 
     def state_stopped(self):
         if self.exists():
-            if self.running():
-                if not self.module.check_mode:
-                    self.stop()
-                self.changed = True
-                self.msg.append('zone stopped')
-            else:
-                self.msg.append('zone not running')
+            self.stop()
         else:
             self.module.fail_json(msg='zone does not exist')
 
     def state_absent(self):
         if self.exists():
-            self.state_stopped()
-            if not self.module.check_mode:
-                self.destroy()
-            self.changed = True
-            self.msg.append('zone deleted')
+            if self.is_running():
+                self.stop()
+            self.destroy()
         else:
             self.msg.append('zone does not exist')
 
-    def exit_with_msg(self):
-        msg = ', '.join(self.msg)
-        self.module.exit_json(changed=self.changed, msg=msg)
+    def state_configured(self):
+        if self.exists():
+            self.msg.append('zone already exists')
+        else:
+            self.configure()
+
+    def state_detached(self):
+        if not self.exists():
+            self.module.fail_json(msg='zone does not exist')
+        if self.is_configured():
+            self.msg.append('zone already detached')
+        else:
+            self.stop()
+            self.detach()
+
+    def state_attached(self):
+        if not self.exists():
+            self.msg.append('zone does not exist')
+        if self.is_configured():
+            self.attach()
+        else:
+            self.msg.append('zone already attached')
 
 def main():
     module = AnsibleModule(
         argument_spec      = dict(
             name           = dict(required=True),
-            state          = dict(required=True, choices=['running', 'started', 'present', 'stopped', 'absent']),
+            state          = dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
             path           = dict(defalt=None),
             sparse         = dict(default=False, type='bool'),
             root_password  = dict(default=None),
             timeout        = dict(default=600, type='int'),
-            config         = dict(default=None, type='list'),
+            config         = dict(default=''),
             create_options = dict(default=''),
+            attach_options = dict(default=''),
             ),
         supports_check_mode=True
     )
@@ -342,21 +420,27 @@ def main():
         module.fail_json(msg='This module requires Solaris')
 
     zone = Zone(module)
-    
+
     state = module.params['state']
 
     if state == 'running' or state == 'started':
         zone.state_running()
-    elif state == 'present':
+    elif state == 'present' or state == 'installed':
         zone.state_present()
     elif state == 'stopped':
         zone.state_stopped()
     elif state == 'absent':
         zone.state_absent()
+    elif state == 'configured':
+        zone.state_configured()
+    elif state == 'detached':
+        zone.state_detached()
+    elif state == 'attached':
+        zone.state_attached()
     else:
         module.fail_json(msg='Invalid state: %s' % state)
 
-    zone.exit_with_msg()
+    module.exit_json(changed=zone.changed, msg=', '.join(zone.msg))
 
 from ansible.module_utils.basic import *
 main()
