@@ -66,10 +66,6 @@ options:
       - The checksum property.
     required: False
     choices: ['on','off',fletcher2,fletcher4,sha256]
-  clone:
-    description:
-      - Name of the snapshot to clone
-   required: False
   compression:
     description:
       - The compression property.
@@ -119,6 +115,10 @@ options:
       - The normalization property.
     required: False
     choices: [none,formC,formD,formKC,formKD]
+  origin:
+    description:
+      - Name of the snapshot to clone
+    required: False
   primarycache:
     description:
       - The primarycache property.
@@ -225,6 +225,12 @@ EXAMPLES = '''
 
 # Create a new file system called myfs2 with snapdir enabled
 - zfs: name=rpool/myfs2 state=present snapdir=enabled
+
+# Create a new file system by cloning a snapshot
+- zfs: name=rpool/cloned_fs state=present origin=rpool/myfs@mysnapshot
+
+# Destroy a filesystem
+- zfs: name=rpool/myfs state=absent
 '''
 
 
@@ -257,10 +263,10 @@ class Zfs(object):
         properties = self.properties
         volsize = properties.pop('volsize', None)
         volblocksize = properties.pop('volblocksize', None)
-        clone = properties.pop('clone', None)
+        origin = properties.pop('origin', None)
         if "@" in self.name:
             action = 'snapshot'
-        elif clone:
+        elif origin:
             action = 'clone'
         else:
             action = 'create'
@@ -279,8 +285,8 @@ class Zfs(object):
         if volsize:
             cmd.append('-V')
             cmd.append(volsize)
-        if clone:
-            cmd.append(clone)
+        if origin:
+            cmd.append(origin)
         cmd.append(self.name)
         (rc, err, out) = self.module.run_command(' '.join(cmd))
         if rc == 0:
@@ -356,7 +362,6 @@ def main():
             'canmount':        {'required': False, 'choices':['on', 'off', 'noauto']},
             'casesensitivity': {'required': False, 'choices':['sensitive', 'insensitive', 'mixed']},
             'checksum':        {'required': False, 'choices':['on', 'off', 'fletcher2', 'fletcher4', 'sha256']},
-            'clone':           {'required': False},
             'compression':     {'required': False, 'choices':['on', 'off', 'lzjb', 'gzip', 'gzip-1', 'gzip-2', 'gzip-3', 'gzip-4', 'gzip-5', 'gzip-6', 'gzip-7', 'gzip-8', 'gzip-9', 'lz4', 'zle']},
             'copies':          {'required': False, 'choices':['1', '2', '3']},
             'createparent':    {'required': False, 'choices':['on', 'off']},
@@ -370,6 +375,7 @@ def main():
             'mountpoint':      {'required': False},
             'nbmand':          {'required': False, 'choices':['on', 'off']},
             'normalization':   {'required': False, 'choices':['none', 'formC', 'formD', 'formKC', 'formKD']},
+            'origin':          {'required': False},
             'primarycache':    {'required': False, 'choices':['all', 'none', 'metadata']},
             'quota':           {'required': False},
             'readonly':        {'required': False, 'choices':['on', 'off']},
