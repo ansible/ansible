@@ -66,6 +66,10 @@ options:
       - The checksum property.
     required: False
     choices: ['on','off',fletcher2,fletcher4,sha256]
+  clone:
+    description:
+      - Name of the snapshot to clone
+   required: False
   compression:
     description:
       - The compression property.
@@ -253,8 +257,11 @@ class Zfs(object):
         properties = self.properties
         volsize = properties.pop('volsize', None)
         volblocksize = properties.pop('volblocksize', None)
+        clone = properties.pop('clone', None)
         if "@" in self.name:
             action = 'snapshot'
+        elif clone:
+            action = 'clone'
         else:
             action = 'create'
 
@@ -272,6 +279,8 @@ class Zfs(object):
         if volsize:
             cmd.append('-V')
             cmd.append(volsize)
+        if clone:
+            cmd.append(clone)
         cmd.append(self.name)
         (rc, err, out) = self.module.run_command(' '.join(cmd))
         if rc == 0:
@@ -347,6 +356,7 @@ def main():
             'canmount':        {'required': False, 'choices':['on', 'off', 'noauto']},
             'casesensitivity': {'required': False, 'choices':['sensitive', 'insensitive', 'mixed']},
             'checksum':        {'required': False, 'choices':['on', 'off', 'fletcher2', 'fletcher4', 'sha256']},
+            'clone':           {'required': False},
             'compression':     {'required': False, 'choices':['on', 'off', 'lzjb', 'gzip', 'gzip-1', 'gzip-2', 'gzip-3', 'gzip-4', 'gzip-5', 'gzip-6', 'gzip-7', 'gzip-8', 'gzip-9', 'lz4', 'zle']},
             'copies':          {'required': False, 'choices':['1', '2', '3']},
             'createparent':    {'required': False, 'choices':['on', 'off']},
