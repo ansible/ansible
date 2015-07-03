@@ -31,6 +31,7 @@
 # These variables are described at https://www.serfdom.io/docs/commands/members.html#_rpc_addr
 
 import argparse
+import collections
 import os
 import sys
 
@@ -58,6 +59,16 @@ def get_nodes(data):
     return [node['Name'] for node in data]
 
 
+def get_groups(data):
+    groups = collections.defaultdict(list)
+
+    for node in data:
+        for key, value in node['Tags'].items():
+            groups[value].append(node['Name'])
+
+    return groups
+
+
 def get_meta(data):
     meta = {'hostvars': {}}
     for node in data:
@@ -68,8 +79,11 @@ def get_meta(data):
 def print_list():
     data = get_serf_members_data()
     nodes = get_nodes(data)
+    groups = get_groups(data)
     meta = get_meta(data)
-    print(json.dumps({_key: nodes, '_meta': meta}))
+    inventory_data = {_key: nodes, '_meta': meta}
+    inventory_data.update(groups)
+    print(json.dumps(inventory_data))
 
 
 def print_host(host):
