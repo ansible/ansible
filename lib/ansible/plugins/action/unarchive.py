@@ -22,6 +22,7 @@ import os
 import pipes
 
 from ansible.plugins.action import ActionBase
+from ansible.utils.boolean import boolean
 
 
 class ActionModule(ActionBase):
@@ -33,7 +34,7 @@ class ActionModule(ActionBase):
 
         source  = self._task.args.get('src', None)
         dest    = self._task.args.get('dest', None)
-        copy    = self._task.args.get('copy', True)
+        copy    = boolean(self._task.args.get('copy', True))
         creates = self._task.args.get('creates', None)
 
         if source is None or dest is None:
