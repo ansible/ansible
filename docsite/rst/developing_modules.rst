@@ -484,7 +484,7 @@ Module checklist
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
 * Are module actions idempotent? If not document in the descriptions or the notes
 * Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
-* Call your :func:`main` from a condtional so that it would be possible to
+* Call your :func:`main` from a conditional so that it would be possible to
   test them in the future example::
 
     if __name__ == '__main__':
