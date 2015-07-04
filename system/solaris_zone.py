@@ -32,7 +32,7 @@ description:
 version_added: "2.0"
 author: Paul Markham
 requirements:
-  - Solaris 10 or later
+  - Solaris 10
 options:
   state:
     required: true
@@ -46,7 +46,7 @@ options:
       - C(absent), destroy the zone.
       - C(configured), configure the ready so that it's to be attached.
       - C(attached), attach a zone, but do not boot it.
-      - C(detach), stop and detach a zone
+      - C(detached), shutdown and detach a zone
     choices: ['present', 'installed', 'started', 'running', 'stopped', 'absent', 'configured', 'attached', 'detached']
     default: present
   name:
