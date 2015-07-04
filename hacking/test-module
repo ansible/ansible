@@ -35,6 +35,8 @@ import subprocess
 import traceback
 import optparse
 import ansible.utils as utils
+from ansible.parsing.utils.jsonify import jsonify
+from ansible.parsing.splitter import parse_kv
 import ansible.module_common as module_common
 import ansible.constants as C
 
@@ -74,8 +76,8 @@ def write_argsfile(argstring, json=False):
     argspath = os.path.expanduser("~/.ansible_test_module_arguments")
     argsfile = open(argspath, 'w')
     if json:
-        args = utils.parse_kv(argstring)
-        argstring = utils.jsonify(args)
+        args = parse_kv(argstring)
+        argstring = jsonify(args)
     argsfile.write(argstring)
     argsfile.close()
     return argspath
@@ -150,7 +152,7 @@ def runtest( modfile, argspath):
         print "RAW OUTPUT"
         print out
         print err
-        results = utils.parse_json(out)
+        results = json.loads(out)
     except:
         print "***********************************"
         print "INVALID OUTPUT FORMAT"
@@ -160,7 +162,7 @@ def runtest( modfile, argspath):
 
     print "***********************************"
     print "PARSED OUTPUT"
-    print utils.jsonify(results,format=True)
+    print jsonify(results,format=True)
 
 def rundebug(debugger, modfile, argspath):
     """Run interactively with console debugger."""
@@ -175,7 +177,7 @@ def main():
     options, args = parse()
     (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter, options.check)
 
-    argspath=None
+    argspath = None
     if module_style != 'new':
         if module_style == 'non_native_want_json':
             argspath = write_argsfile(options.module_args, json=True)
