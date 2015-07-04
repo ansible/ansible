@@ -51,7 +51,7 @@ options:
   template:
     description:
       - The local path of the cloudformation template. This parameter is mutually exclusive with 'template_url'. Either one of them is required if "state" parameter is "present"
-        Must give full path to the file, relative to the playbook. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json"
+        Must give full path to the file, relative to the working directory. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json"
     required: false
     default: null
     aliases: []
