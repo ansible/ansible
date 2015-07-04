@@ -61,6 +61,8 @@ class TaskQueueManager:
         self._stats            = AggregateStats()
         self.passwords         = passwords
         self._stdout_callback  = stdout_callback
+
+        self._callbacks_loaded = False
         self._callback_plugins = []
 
         # a special flag to help us exit cleanly
@@ -123,6 +125,9 @@ class TaskQueueManager:
         only one such callback plugin will be loaded.
         '''
 
+        if self._callbacks_loaded:
+            return
+
         stdout_callback_loaded = False
         if self._stdout_callback is None:
             self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
@@ -147,6 +152,8 @@ class TaskQueueManager:
                 self._callback_plugins.append(callback_plugin(self._display))
             else:
                 self._callback_plugins.append(callback_plugin())
+
+        self._callbacks_loaded = True
 
     def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
@@ -200,6 +207,9 @@ class TaskQueueManager:
         a given task (meaning no hosts move on to the next task until all hosts
         are done with the current task).
         '''
+
+        if not self._callbacks_loaded:
+            self.load_callbacks()
 
         if play.vars_prompt:
             for var in play.vars_prompt:
