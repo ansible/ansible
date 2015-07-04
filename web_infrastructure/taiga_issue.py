@@ -26,7 +26,7 @@ description:
   - Creates/deletes an issue in a Taiga Project Management Platform (U(https://taiga.io)).
   - An issue is identified by the combination of project, issue subject and issue type.
   - This module implements the creation or deletion of issues (not the update).
-version_added: "1.9"
+version_added: "2.0"
 options:
   taiga_host:
     description:
