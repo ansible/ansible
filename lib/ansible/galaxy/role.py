@@ -49,7 +49,7 @@ class GalaxyRole(object):
 
         self.name = name
         self.version = version
-        self.src = src
+        self.src = src or name
         self.scm = scm
 
         self.path = (os.path.join(galaxy.roles_path, self.name))
@@ -178,17 +178,16 @@ class GalaxyRole(object):
 
         return False
 
-    def fetch(self, target, role_data):
+    def fetch(self, role_data):
         """
-        Downloads the archived role from github to a temp location, extracts
-        it, and then copies the extracted role to the role library path.
+        Downloads the archived role from github to a temp location
         """
 
         # first grab the file and save it to a temp location
-        if self.src:
-            archive_url = self.src
+        if "github_user" in role_data and "github_repo" in role_data:
+            archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
         else:
-            archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], target)
+            archive_url = self.src
         self.display.display("- downloading role from %s" % archive_url)
 
         try:
