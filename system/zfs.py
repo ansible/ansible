@@ -119,6 +119,7 @@ options:
     description:
       - Name of the snapshot to clone
     required: False
+    version_added: "2.0"
   primarycache:
     description:
       - The primarycache property.
