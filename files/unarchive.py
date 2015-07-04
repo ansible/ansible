@@ -300,6 +300,13 @@ def main():
     if not os.access(src, os.R_OK):
         module.fail_json(msg="Source '%s' not readable" % src)
 
+    # skip working with 0 size archives
+    try:
+        if os.path.getsize(src) == 0:
+            module.fail_json(msg="Invalid archive '%s', the file is 0 bytes" % src)
+    except Exception, e:
+        module.fail_json(msg="Source '%s' not readable" % src)
+
     # is dest OK to receive tar file?
     if not os.path.isdir(dest):
         module.fail_json(msg="Destination '%s' is not a directory" % dest)
