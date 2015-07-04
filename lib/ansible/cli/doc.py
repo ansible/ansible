@@ -61,6 +61,8 @@ class DocCLI(CLI):
 
     def run(self):
 
+        super(DocCLI, self).run()
+
         if self.options.module_path is not None:
             for i in self.options.module_path.split(os.pathsep):
                 module_loader.add_directory(i)

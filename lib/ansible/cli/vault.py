@@ -70,6 +70,8 @@ class VaultCLI(CLI):
 
     def run(self):
 
+        super(VaultCLI, self).run()
+
         if self.options.vault_password_file:
             # read vault_pass from a file
             self.vault_pass = read_vault_file(self.options.vault_password_file)

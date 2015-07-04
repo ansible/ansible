@@ -98,6 +98,8 @@ class PullCLI(CLI):
     def run(self):
         ''' use Runner lib to do SSH things '''
 
+        super(PullCLI, self).run()
+
         # log command line
         now = datetime.datetime.now()
         self.display.display(now.strftime("Starting Ansible Pull at %F %T"))
