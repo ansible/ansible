@@ -59,7 +59,7 @@ options:
     description:
       - The issue severity. Must exist previously.
     required: False
-    default: New
+    default: Normal
   description:
     description:
       - The issue description.
