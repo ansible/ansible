@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import os
@@ -25,6 +25,8 @@ import sys
 
 from six.moves import configparser
 from string import ascii_letters, digits
+
+from ansible.errors import AnsibleOptionsError
 
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
@@ -81,9 +83,8 @@ def load_config_file():
             try:
                 p.read(path)
             except configparser.Error as e:
-                print("Error reading config file: \n{0}".format(e))
-                sys.exit(1)
-            return p
+                raise AnsibleOptionsError("Error reading config file: \n{0}".format(e))
+            return p, path
     return None
 
 def shell_expand_path(path):
@@ -93,7 +94,7 @@ def shell_expand_path(path):
         path = os.path.expanduser(os.path.expandvars(path))
     return path
 
-p = load_config_file()
+p, CONFIG_FILE = load_config_file()
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
 

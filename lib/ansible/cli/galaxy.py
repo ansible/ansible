@@ -124,6 +124,8 @@ class GalaxyCLI(CLI):
 
     def run(self):
 
+        super(GalaxyCLI, self).run()
+
         # if not offline, get connect to galaxy api
         if self.action in ("info","install") or (self.action == 'init' and not self.options.offline):
             api_server = self.options.api_server

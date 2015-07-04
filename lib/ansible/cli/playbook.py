@@ -81,6 +81,8 @@ class PlaybookCLI(CLI):
 
     def run(self):
 
+        super(PlaybookCLI, self).run()
+
         # Note: slightly wrong, this is written so that implicit localhost
         # Manage passwords
         sshpass    = None

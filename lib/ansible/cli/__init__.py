@@ -99,7 +99,9 @@ class CLI(object):
         raise Exception("Need to implement!")
 
     def run(self):
-        raise Exception("Need to implement!")
+
+        if self.options.verbosity > 0:
+            self.display.display("Using %s as config file" % C.CONFIG_FILE)
 
     @staticmethod
     def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):

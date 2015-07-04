@@ -76,6 +76,9 @@ class AdHocCLI(CLI):
     def run(self):
         ''' use Runner lib to do SSH things '''
 
+        super(AdHocCLI, self).run()
+
+
         # only thing left should be host pattern
         pattern = self.args[0]
 
