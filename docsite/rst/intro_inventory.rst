@@ -107,7 +107,6 @@ Groups of Groups, and Group Variables
 +++++++++++++++++++++++++++++++++++++
 
 It is also possible to make groups of groups using the ``:children`` suffix. Just like above, you can apply variables using ``:vars``.
-These variables can be used by /usr/bin/ansible-playbook, but not /usr/bin/ansible::
 
    [atlanta]
    host1
