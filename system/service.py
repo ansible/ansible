@@ -885,7 +885,7 @@ class LinuxService(Service):
         if self.svc_cmd and self.svc_cmd.endswith('rc-service') and self.action == 'start' and self.crashed:
             self.execute_command("%s zap" % svc_cmd, daemonize=True)
 
-        if self.action is not "restart":
+        if self.action != "restart":
             if svc_cmd != '':
                 # upstart or systemd or OpenRC
                 rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, arguments), daemonize=True)
@@ -993,11 +993,11 @@ class FreeBsdService(Service):
 
     def service_control(self):
 
-        if self.action is "start":
+        if self.action == "start":
             self.action = "onestart"
-        if self.action is "stop":
+        if self.action == "stop":
             self.action = "onestop"
-        if self.action is "reload":
+        if self.action == "reload":
             self.action = "onereload"
 
         return self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
@@ -1203,9 +1203,9 @@ class NetBsdService(Service):
             self.running = True
 
     def service_control(self):
-        if self.action is "start":
+        if self.action == "start":
             self.action = "onestart"
-        if self.action is "stop":
+        if self.action == "stop":
             self.action = "onestop"
 
         self.svc_cmd = "%s" % self.svc_initscript
