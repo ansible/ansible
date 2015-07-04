@@ -80,8 +80,8 @@ except ImportError:
 else:
     bigsuds_found = True
 
-def bigip_api(bigip, user, password):
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
+def bigip_api(server, user, password):
+    api = bigsuds.BIGIP(hostname=server, username=user, password=password)
     return api
 
 def get_wide_ip_lb_method(api, wide_ip):
