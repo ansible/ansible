@@ -63,8 +63,6 @@ class TaskQueueManager:
         self._stdout_callback  = stdout_callback
         self._callback_plugins = []
 
-        self.load_callbacks()
-
         # a special flag to help us exit cleanly
         self._terminated = False
 
