@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 from six.moves import queue
@@ -37,6 +37,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
 
 from ansible.utils.debug import debug
+from ansible.inventory.host import Host
 
 __all__ = ['ResultProcess']
 
@@ -99,6 +100,7 @@ class ResultProcess(multiprocessing.Process):
             atfork()
 
         while True:
+
             try:
                 result = self._read_worker_result()
                 if result is None:
@@ -156,11 +158,19 @@ class ResultProcess(multiprocessing.Process):
                             self._send_result(('add_group', result._host, result_item))
                         elif 'ansible_facts' in result_item:
                             # if this task is registering facts, do that now
+
+                            if result._task.delegate_to is not None:
+                                # push facts to delegated host if setj
+                                fact_host = Host(name=result._task.delegate_to)
+                                fact_host.set_gathered_facts(True)
+                            else:
+                                fact_host = result._host
+
                             if result._task.action in ('set_fact', 'include_vars'):
                                 for (key, value) in result_item['ansible_facts'].iteritems():
-                                    self._send_result(('set_host_var', result._host, key, value))
+                                    self._send_result(('set_host_var', fact_host, key, value))
                             else:
-                                self._send_result(('set_host_facts', result._host, result_item['ansible_facts']))
+                                self._send_result(('set_host_facts', fact_host, result_item['ansible_facts']))
 
                     # finally, send the ok for this task
                     self._send_result(('host_task_ok', result))
