@@ -85,7 +85,7 @@ def load_config_file():
             except configparser.Error as e:
                 raise AnsibleOptionsError("Error reading config file: \n{0}".format(e))
             return p, path
-    return None
+    return None, ''
 
 def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
