@@ -41,6 +41,8 @@ class TestVariableManager(unittest.TestCase):
         vars = v.get_vars(loader=fake_loader, use_cache=False)
         if 'omit' in vars:
             del vars['omit']
+        if 'vars' in vars:
+            del vars['vars']
 
         self.assertEqual(vars, dict(playbook_dir='.'))
 
