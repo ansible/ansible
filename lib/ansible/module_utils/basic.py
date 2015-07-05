@@ -392,8 +392,8 @@ class AnsibleModule(object):
             }
         if not bypass_checks:
             self._check_required_arguments()
-            self._check_argument_values()
             self._check_argument_types()
+            self._check_argument_values()
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
             self._check_required_if(required_if)
