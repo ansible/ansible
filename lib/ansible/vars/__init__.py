@@ -243,8 +243,7 @@ class VariableManager:
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         all_vars['omit'] = self._omit_token
-
-        #all_vars['vars'] = all_vars.copy()
+        all_vars['vars'] = all_vars
 
         #CACHED_VARS[cache_entry] = all_vars
 
