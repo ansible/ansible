@@ -339,7 +339,7 @@ class ConnectionInformation:
                 prompt='assword:'
                 exe = self.become_exe or 'pbrun'
                 flags = self.become_flags or ''
-                becomecmd = '%s -b -l %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
+                becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'pfexec':
 
