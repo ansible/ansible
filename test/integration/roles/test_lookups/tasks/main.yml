@@ -125,7 +125,72 @@
         - "bare_var.results[0].item == 1"
         - "bare_var.results[1].item == 2"
 
+- name: use list with bare strings in it
+  debug: msg={{item}}
+  with_items:
+    - things2
+    - things1
+
 - name: use list with undefined var in it
   debug: msg={{item}}
   with_items: things2
+  ignore_errors: True
 
+
+# BUG #10073 nested template handling
+
+- name: set variable that clashes
+  set_fact:
+      LOGNAME: foobar
+
+
+- name: get LOGNAME environment var value
+  shell: echo {{ '$LOGNAME' }}
+  register: known_var_value
+
+- name: do the lookup for env LOGNAME
+  set_fact:
+    test_val: "{{ lookup('env', 'LOGNAME') }}"
+
+- debug: var=test_val
+
+- name: compare values
+  assert:
+    that:
+        - "test_val == known_var_value.stdout"
+
+
+- name: set with_dict
+  shell: echo "{{ item.key + '=' + item.value  }}"
+  with_dict: "{{ mydict }}"
+
+# URL Lookups
+
+- name: Test that retrieving a url works
+  set_fact:
+    web_data: "{{ lookup('url', 'https://gist.githubusercontent.com/abadger/9858c22712f62a8effff/raw/43dd47ea691c90a5fa7827892c70241913351963/test') }}"
+
+- name: Assert that the url was retrieved
+  assert:
+    that:
+      - "'one' in web_data"
+
+- name: Test that retrieving a url with invalid cert fails
+  set_fact:
+    web_data: "{{ lookup('url', 'https://kennethreitz.org/') }}"
+  ignore_errors: True
+  register: url_invalid_cert
+
+- assert:
+    that:
+      - "url_invalid_cert.failed"
+      - "'Error validating the server' in url_invalid_cert.msg"
+
+- name: Test that retrieving a url with invalid cert with validate_certs=False works
+  set_fact:
+    web_data: "{{ lookup('url', 'https://kennethreitz.org/', validate_certs=False) }}"
+  register: url_no_validate_cert
+
+- assert:
+    that:
+      - "'kennethreitz.org' in web_data"

@@ -1,3 +1,5 @@
+
+
 # UNINSTALL 'python-apt'
 #  The `apt` module has the smarts to auto-install `python-apt`.  To test, we
 #  will first uninstall `python-apt`.
@@ -101,3 +103,38 @@
         - "apt_result.changed"
         - "dpkg_result.rc == 0"
 
+- name: check hello version
+  shell: dpkg -s hello | grep Version | sed -r 's/Version:\s+([a-zA-Z0-9.-]+)\s*$/\1/'
+  register: hello_version
+- name: check hello architecture
+  shell: dpkg -s hello | grep Architecture | sed -r 's/Architecture:\s+([a-zA-Z0-9.-]+)\s*$/\1/'
+  register: hello_architecture
+
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+
+- name: install deb file
+  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  register: apt_initial
+
+- name: install deb file again
+  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb"
+  register: apt_secondary
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "apt_initial.changed"
+        - "not apt_secondary.changed"
+
+- name: uninstall hello with apt
+  apt: pkg=hello state=absent purge=yes
+
+- name: force install of deb
+  apt: deb="/var/cache/apt/archives/hello_{{ hello_version.stdout }}_{{ hello_architecture.stdout }}.deb" force=true
+  register: dpkg_force
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "dpkg_force.changed"

@@ -1,8 +1,19 @@
 - include_vars: default.yml
 
 - name: Create test user
+  sudo: true
   user:
     name: "{{ sudo_test_user }}"
+
+- name: test becoming user
+  shell: whoami
+  sudo: True
+  sudo_user: "{{ sudo_test_user }}"
+  register: results
+
+- assert:
+    that:
+      - "results.stdout == '{{ sudo_test_user }}'"
 
 - name: tilde expansion honors sudo in file
   sudo: True
@@ -56,6 +67,7 @@
       - "results.stat.path|dirname|basename == '{{ sudo_test_user }}'"
 
 - name: Remove test user and their home dir
+  sudo: true
   user:
     name: "{{ sudo_test_user }}"
     state: "absent"

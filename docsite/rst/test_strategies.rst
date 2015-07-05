@@ -114,14 +114,14 @@ Testing Lifecycle
 
 If writing some degree of basic validation of your application into your playbooks, they will run every time you deploy.
 
-As such, deploying into a local development VM and a stage environment will both validate that things are according to plan
+As such, deploying into a local development VM and a staging environment will both validate that things are according to plan
 ahead of your production deploy.
 
 Your workflow may be something like this::
 
     - Use the same playbook all the time with embedded tests in development
-    - Use the playbook to deploy to a stage environment (with the same playbooks) that simulates production
-    - Run an integration test battery written by your QA team against stage
+    - Use the playbook to deploy to a staging environment (with the same playbooks) that simulates production
+    - Run an integration test battery written by your QA team against staging
     - Deploy to production, with the same integrated tests.
 
 Something like an integration test battery should be written by your QA team if you are a production webservice.  This would include
@@ -213,7 +213,7 @@ If desired, the above techniques may be extended to enable continuous deployment
 The workflow may look like this::
 
     - Write and use automation to deploy local development VMs
-    - Have a CI system like Jenkins deploy to a stage environment on every code change
+    - Have a CI system like Jenkins deploy to a staging environment on every code change
     - The deploy job calls testing scripts to pass/fail a build on every deploy
     - If the deploy job succeeds, it runs the same deploy playbook against production inventory
 
@@ -241,7 +241,7 @@ as part of a Continuous Integration/Continuous Delivery pipeline, as is covered 
 
 The focus should not be on infrastructure testing, but on application testing, so we strongly encourage getting together with your
 QA team and ask what sort of tests would make sense to run every time you deploy development VMs, and which sort of tests they would like
-to run against the stage environment on every deploy.  Obviously at the development stage, unit tests are great too.  But don't unit
+to run against the staging environment on every deploy.  Obviously at the development stage, unit tests are great too.  But don't unit
 test your playbook.  Ansible describes states of resources declaratively, so you don't have to.  If there are cases where you want
 to be sure of something though, that's great, and things like stat/assert are great go-to modules for that purpose.
 

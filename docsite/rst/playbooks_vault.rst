@@ -3,9 +3,9 @@ Vault
 
 .. contents:: Topics
 
-New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping encrypted data in source control.
+New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
 
-To enable this feature, a command line tool, `ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used.
+To enable this feature, a command line tool, `ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used. Alternately, you may specify the location of a password file in your  ansible.cfg file. This option requires no command line flag usage.
 
 .. _what_can_be_encrypted_with_vault:
 
@@ -72,6 +72,17 @@ If you have existing files that you no longer want to keep encrypted, you can pe
 
     ansible-vault decrypt foo.yml bar.yml baz.yml
 
+.. _viewing_files:
+
+Viewing Encrypted Files
+```````````````````````
+
+*Available since Ansible 1.8*
+
+If you want to view the contents of an encrypted file without editing it, you can use the `ansible-vault view` command::
+
+    ansible-vault view foo.yml bar.yml baz.yml
+
 .. _running_a_playbook_with_vault:
 
 Running a Playbook With Vault
@@ -81,7 +92,7 @@ To run a playbook that contains vault-encrypted data files, you must pass one of
 
     ansible-playbook site.yml --ask-vault-pass
 
-This prompt will then be used to decrypt (in memory only) any vault encrypted files that are accessed.  Currently this requires that all passwords be encrypted with the same password.
+This prompt will then be used to decrypt (in memory only) any vault encrypted files that are accessed.  Currently this requires that all files be encrypted with the same password.
 
 Alternatively, passwords can be specified with a file or a script, the script version will require Ansible 1.7 or later.  When using this flag, ensure permissions on the file are such that no one else can access your key and do not add your key to source control::
 

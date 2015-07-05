@@ -24,7 +24,7 @@ For information about writing your own dynamic inventory source, see :doc:`devel
 Example: The Cobbler External Inventory Script
 ``````````````````````````````````````````````
 
-It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <http://cobbler.github.com>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now lead by James Cammarata, who also works for Ansible, Inc).
+It is expected that many Ansible users with a reasonable amount of physical hardware may also be `Cobbler <http://cobbler.github.com>`_ users.  (note: Cobbler was originally written by Michael DeHaan and is now led by James Cammarata, who also works for Ansible, Inc).
 
 While primarily used to kickoff OS installations and manage DHCP and DNS, Cobbler has a generic
 layer that allows it to represent data for multiple configuration management systems (even at the same time), and has
@@ -140,9 +140,9 @@ Security Group
 Tags
   Each instance can have a variety of key/value pairs associated with it called Tags. The most common tag key is 'Name', though anything is possible. Each key/value pair is its own group of instances, again with special characters converted to underscores, in the format ``tag_KEY_VALUE``
   e.g.
-  ``tag_Name_Web``
-  ``tag_Name_redis-master-001``
-  ``tag_aws_cloudformation_logical-id_WebServerGroup``
+  ``tag_Name_Web`` can be used as is
+  ``tag_Name_redis-master-001`` becomes ``tag_Name_redis_master_001``
+  ``tag_aws_cloudformation_logical-id_WebServerGroup`` becomes ``tag_aws_cloudformation_logical_id_WebServerGroup``
 
 When the Ansible is interacting with a specific server, the EC2 inventory script is called again with the ``--host HOST`` option. This looks up the HOST in the index cache to get the instance ID, and then makes an API call to AWS to get information about that specific instance. It then makes information about that instance available as variables to your playbooks. Each variable is prefixed by ``ec2_``. Here are some of the variables available:
 

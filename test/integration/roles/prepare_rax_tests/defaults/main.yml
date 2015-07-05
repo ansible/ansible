@@ -1,0 +1,18 @@
+---
+rackspace_region: IAD
+rackspace_image_human_id: "ubuntu-1404-lts-trusty-tahr-pvhvm"
+rackspace_image_id: "753a7703-4960-488b-aab4-a3cdd4b276dc"
+rackspace_image_name: "Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)"
+rackspace_flavor: "performance1-1"
+
+rackspace_keypair_pub: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDymofzvt86DUA6XSSxc7eDHwUNvcOSmUWjB76jFvhYc6PbS5QmTzBtCka1ORdaW0Z2i3EjfFvzA8WvuY3qP/FpIVDL25ZqZHgxSfGN5pbJ2tAeXK165kNPXBuuISrMhmdLFbRZNn6PwKHEmtrtfEQ3w6ay9+MhqlEr0OX2r6bCXLj+f50QnQXamU6Fm4IpkTsb60osvHNi569Dd8cADEv92oLZpNMa8/MPGnlipjauhzNtEDTUeZwtrAQUXe6CzJ0QmIlyKDglDZLuAKU/VRumo1FRsn4AwJnVsbP2CHBPkbNoYt6LhQiQqXypEIWGmIln0dlO6gZTr3dYC4BVGREl"
+
+resource_prefix: "ansible-testing"
+
+rackspace_alt_image_id: "e5575e1a-a519-4e21-9a6b-41207833bd39"
+rackspace_alt_image_name: "CentOS 6 (PVHVM)"
+rackspace_alt_image_human_id: "centos-6-pvhvm"
+
+rackspace_alt_flavor: "general1-1"
+
+rackspace_wait_timeout: 600

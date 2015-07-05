@@ -13,7 +13,7 @@ Requirements for the AWS modules are minimal.
 
 All of the modules require and are tested against recent versions of boto.  You'll need this Python module installed on your control machine.  Boto can be installed from your OS distribution or python's "pip install boto".
 
-Whereas classically ansible will execute tasks in it's host loop against multiple remote machines, most cloud-control steps occur on your local machine with reference to the regions to control.
+Whereas classically ansible will execute tasks in its host loop against multiple remote machines, most cloud-control steps occur on your local machine with reference to the regions to control.
 
 In your playbook steps we'll typically be using the following pattern for provisioning steps::
 
@@ -107,7 +107,7 @@ From this, we'll use the add_host module to dynamically create a host group cons
           register: ec2
     
        - name: Add all instance public IPs to host group
-         add_host: hostname={{ item.public_ip }} groupname=ec2hosts
+         add_host: hostname={{ item.public_ip }} groups=ec2hosts
          with_items: ec2.instances
 
 With the host group now created, a second play at the bottom of the the same provisioning playbook file might now have some configuration steps::
@@ -157,7 +157,7 @@ it will be automatically discoverable via a dynamic group like so::
 Using this philosophy can be a great way to keep systems separated by the function they perform.
 
 In this example, if we wanted to define variables that are automatically applied to each machine tagged with the 'class' of 'webserver', 'group_vars'
-in ansible can be used.  See :doc:`splitting_out_vars`.
+in ansible can be used.  See :ref:`splitting_out_vars`.
 
 Similar groups are available for regions and other classifications, and can be similarly assigned variables using the same mechanism.
 
@@ -214,7 +214,7 @@ AWS Image Building With Ansible
 ```````````````````````````````
 
 Many users may want to have images boot to a more complete configuration rather than configuring them entirely after instantiation.  To do this,
-one of many programs can be used with Ansible playbooks to define and upload a base image, which will then get it's own AMI ID for usage with
+one of many programs can be used with Ansible playbooks to define and upload a base image, which will then get its own AMI ID for usage with
 the ec2 module or other Ansible AWS modules such as ec2_asg or the cloudformation module.   Possible tools include Packer, aminator, and Ansible's
 ec2_ami module.  
 
