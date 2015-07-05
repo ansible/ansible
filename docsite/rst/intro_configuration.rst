@@ -1,5 +1,5 @@
-The Ansible Configuration File
-++++++++++++++++++++++++++++++
+Configuration file
+++++++++++++++++++
 
 .. contents:: Topics
 
