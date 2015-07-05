@@ -211,12 +211,12 @@ class DataLoader():
         if os.path.exists(source2):
             self.set_basedir(cur_basedir)
             return source2
+        self.set_basedir(cur_basedir)
 
         obvious_local_path = self.path_dwim(source)
         if os.path.exists(obvious_local_path):
-            self.set_basedir(cur_basedir)
+            #self.set_basedir(cur_basedir)
             return obvious_local_path
 
-        self.set_basedir(cur_basedir)
-        return source2 # which does not exist
+        return source2
 
