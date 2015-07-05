@@ -43,10 +43,11 @@ from ansible.utils.display import Display
 if __name__ == '__main__':
 
     cli = None
-    display = Display()
     me = os.path.basename(sys.argv[0])
 
     try:
+        display = Display()
+
         if me == 'ansible-playbook':
             from ansible.cli.playbook import PlaybookCLI as mycli
         elif me == 'ansible':
