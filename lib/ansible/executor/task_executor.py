@@ -231,8 +231,17 @@ class TaskExecutor:
             debug("when evaulation failed, skipping this task")
             return dict(changed=False, skipped=True, skip_reason='Conditional check failed')
 
-        # Now we do final validation on the task, which sets all fields to their final values
+        # Now we do final validation on the task, which sets all fields to their final values.
+        # In the case of debug tasks, we save any 'var' params and restore them after validating
+        # so that variables are not replaced too early.
+        prev_var = None
+        if self._task.action == 'debug' and 'var' in self._task.args:
+            prev_var = self._task.args.pop('var')
+
         self._task.post_validate(templar=templar)
+
+        if prev_var is not None:
+            self._task.args['var'] = prev_var
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
