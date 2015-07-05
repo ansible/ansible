@@ -601,6 +601,8 @@ class Facts(object):
         self.facts['date_time']['time'] = now.strftime('%H:%M:%S')
         self.facts['date_time']['iso8601_micro'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         self.facts['date_time']['iso8601'] = now.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.facts['date_time']['iso8601_basic'] = now.strftime("%Y%m%dT%H%M%S%f")
+        self.facts['date_time']['iso8601_basic_short'] = now.strftime("%Y%m%dT%H%M%S")
         self.facts['date_time']['tz'] = time.strftime("%Z")
         self.facts['date_time']['tz_offset'] = time.strftime("%z")
 
