@@ -1253,7 +1253,7 @@ def make_become_cmd(cmd, user, shell, method, flags=None, exe=None):
         prompt = 'assword:'
         exe = exe or 'pbrun'
         flags = flags or ''
-        becomecmd = '%s -b -l %s -u %s "%s"' % (exe, flags, user, pipes.quote('echo %s; %s' % (success_key,cmd)))
+        becomecmd = '%s -b %s -u %s "%s"' % (exe, flags, user, pipes.quote('echo %s; %s' % (success_key,cmd)))
 
     elif method == 'pfexec':
         exe = exe or 'pfexec'
