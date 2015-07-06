@@ -39,6 +39,7 @@ options:
     description:
       - The Hosted Zone ID of the DNS zone to modify
     required: false
+    version_added: 2.0
     default: null
     aliases: []
   record:
