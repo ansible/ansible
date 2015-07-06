@@ -30,8 +30,8 @@ $result = New-Object psobject @{
 If ($params.src) {
     $src = $params.src.toString()
 
-    If (-Not (Test-Path -Path $src -PathType Leaf -Or Test-Path -Path $src -PathType Container)) {
-        Fail-Json $result "$src is not a valid file or directory on the host"
+    If (-Not (Test-Path -Path $src)) {
+        Fail-Json $result "$src file or directory does not exist on the host"
     }
 }
 Else {
