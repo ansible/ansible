@@ -40,16 +40,18 @@ options:
    protocol:
       description:
         - IP protocol
-      choices: ['tcp', 'udp', 'icmp']
-      default: tcp
+      choices: ['tcp', 'udp', 'icmp', None]
+      default: None
    port_range_min:
       description:
         - Starting port
-      required: true
+      required: false
+      default: None
    port_range_max:
       description:
         - Ending port
-      required: true
+      required: false
+      default: None
    remote_ip_prefix:
       description:
         - Source IP address(es) in CIDR notation (exclusive with remote_group)
