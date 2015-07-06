@@ -49,7 +49,6 @@ except ImportError:
         def byte2int(bs):
             return ord(bs[0])
 
-from ansible import constants as C
 from ansible.utils.unicode import to_unicode, to_bytes
 
 
