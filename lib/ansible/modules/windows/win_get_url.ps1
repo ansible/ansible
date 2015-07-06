@@ -40,9 +40,9 @@ Else {
     Fail-Json $result "missing required argument: dest"
 }
 
-$force = Get-Attr -obj $params -name "force" "no"
+$force = Get-Attr -obj $params -name "force" "no" | ConvertTo-Bool
 
-If ($force -eq "yes" -or -not (Test-Path $dest)) {
+If ($force -or -not (Test-Path $dest)) {
     $client = New-Object System.Net.WebClient
 
     Try {
