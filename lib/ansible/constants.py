@@ -22,10 +22,12 @@ __metaclass__ = type
 import os
 import pwd
 import sys
-
-from six.moves import configparser
 from string import ascii_letters, digits
 
+from six import string_types
+from six.moves import configparser
+
+from ansible.parsing.splitter import unquote
 from ansible.errors import AnsibleOptionsError
 
 # copied from utils, avoid circular reference fun :)
@@ -49,8 +51,10 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
         elif floating:
             value = float(value)
         elif islist:
-            if isinstance(value, basestring):
+            if isinstance(value, string_types):
                 value = [x.strip() for x in value.split(',')]
+        elif isinstance(value, string_types):
+            value = unquote(value)
     return value
 
 def _get_config(p, section, key, env_var, default):
