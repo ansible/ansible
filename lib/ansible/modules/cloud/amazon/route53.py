@@ -238,13 +238,13 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-def get_zone_by_name(conn, module, zone_name, want_private):
-    """Finds a zone by name"""
+def get_zone_by_name(conn, module, zone_name, want_private, zone_id):
+    """Finds a zone by name or zone_id"""
     for zone in conn.get_zones():
         # only save this zone id if the private status of the zone matches
         # the private_zone_in boolean specified in the params
         private_zone = module.boolean(zone.config.get('PrivateZone', False))
-        if private_zone == want_private and zone.name == zone_name:
+        if private_zone == want_private and ((zone.name == zone_name and zone_id == None) or zone.id.replace('/hostedzone/', '') == zone_id):
             return zone
     return None
 
@@ -268,7 +268,7 @@ def main():
     argument_spec.update(dict(
             command              = dict(choices=['get', 'create', 'delete'], required=True),
             zone                 = dict(required=True),
-            hosted_zone_id       = dict(required=False),
+            hosted_zone_id       = dict(required=False, default=None),
             record               = dict(required=True),
             ttl                  = dict(required=False, default=3600),
             type                 = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
