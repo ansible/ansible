@@ -103,7 +103,7 @@ import xml.etree.ElementTree as ET
 
 try:
     import boto.ec2
-    from boto.s3.connection import OrdinaryCallingFormat
+    from boto.s3.connection import OrdinaryCallingFormat, Location
     from boto.s3.tagging import Tags, TagSet
     from boto.exception import BotoServerError, S3CreateError, S3ResponseError
     HAS_BOTO = True
@@ -248,7 +248,7 @@ def create_bucket(connection, module):
         else:
             current_tags_dict = dict((t.key, t.value) for t in current_tags[0])
 
-        if sorted(current_tags_dict) != sorted(tags):
+        if current_tags_dict != tags:
             try:
                 if tags:
                     bucket.set_tags(create_tags_container(tags))
@@ -386,7 +386,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
-main()
+if __name__ == '__main__':
+    main()
