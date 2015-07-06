@@ -35,6 +35,12 @@ options:
     required: true
     default: null
     aliases: []
+  hosted_zone_id:
+    description:
+      - The Hosted Zone ID of the DNS zone to modify
+    required: false
+    version_added: 2.0
+    default: null
   record:
     description:
       - The full DNS record to create or delete
@@ -195,6 +201,28 @@ EXAMPLES = '''
       alias=True
       alias_hosted_zone_id="{{ elb_zone_id }}"
 
+# Add an AAAA record with Hosted Zone ID.  Note that because there are colons in the value
+# that the entire parameter list must be quoted:
+- route53:
+      command: "create"
+      zone: "foo.com"
+      hostes_zone_id: "Z2AABBCCDDEEFF"
+      record: "localhost.foo.com"
+      type: "AAAA"
+      ttl: "7200"
+      value: "::1"
+      
+# Add an AAAA record with Hosted Zone ID.  Note that because there are colons in the value
+# that the entire parameter list must be quoted:
+- route53:
+      command: "create"
+      zone: "foo.com"
+      hostes_zone_id: "Z2AABBCCDDEEFF"
+      record: "localhost.foo.com"
+      type: "AAAA"
+      ttl: "7200"
+      value: "::1"
+      
 # Use a routing policy to distribute traffic:
 - route53:
       command: "create"
@@ -222,13 +250,13 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-def get_zone_by_name(conn, module, zone_name, want_private):
-    """Finds a zone by name"""
+def get_zone_by_name(conn, module, zone_name, want_private, zone_id):
+    """Finds a zone by name or zone_id"""
     for zone in conn.get_zones():
         # only save this zone id if the private status of the zone matches
         # the private_zone_in boolean specified in the params
         private_zone = module.boolean(zone.config.get('PrivateZone', False))
-        if private_zone == want_private and zone.name == zone_name:
+        if private_zone == want_private and ((zone.name == zone_name and zone_id == None) or zone.id.replace('/hostedzone/', '') == zone_id):
             return zone
     return None
 
@@ -252,6 +280,7 @@ def main():
     argument_spec.update(dict(
             command              = dict(choices=['get', 'create', 'delete'], required=True),
             zone                 = dict(required=True),
+            hosted_zone_id       = dict(required=False, default=None),
             record               = dict(required=True),
             ttl                  = dict(required=False, type='int', default=3600),
             type                 = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
@@ -275,6 +304,7 @@ def main():
 
     command_in              = module.params.get('command')
     zone_in                 = module.params.get('zone').lower()
+    hosted_zone_id_in       = module.params.get('hosted_zone_id')
     ttl_in                  = module.params.get('ttl')
     record_in               = module.params.get('record').lower()
     type_in                 = module.params.get('type')
@@ -321,7 +351,7 @@ def main():
         module.fail_json(msg = e.error_message)
 
     # Find the named zone ID
-    zone = get_zone_by_name(conn, module, zone_in, private_zone_in)
+    zone = get_zone_by_name(conn, module, zone_in, private_zone_in, hosted_zone_id_in)
 
     # Verify that the requested zone is already defined in Route53
     if zone is None:
@@ -355,11 +385,15 @@ def main():
             record['ttl'] = rset.ttl
             record['value'] = ','.join(sorted(rset.resource_records))
             record['values'] = sorted(rset.resource_records)
+            if hosted_zone_id_in:
+                record['hosted_zone_id'] = hosted_zone_id_in
             record['identifier'] = rset.identifier
             record['weight'] = rset.weight
             record['region'] = rset.region
             record['failover'] = rset.failover
             record['health_check'] = rset.health_check
+            if hosted_zone_id_in:
+                record['hosted_zone_id'] = hosted_zone_id_in
             if rset.alias_dns_name:
               record['alias'] = True
               record['value'] = rset.alias_dns_name
