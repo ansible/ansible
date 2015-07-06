@@ -41,7 +41,6 @@ options:
     required: false
     version_added: 2.0
     default: null
-    aliases: []
   record:
     description:
       - The full DNS record to create or delete
