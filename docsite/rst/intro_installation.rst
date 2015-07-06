@@ -8,8 +8,8 @@ Installation
 Getting Ansible
 ```````````````
 
-You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
-you have a github account.  This is also where we keep the issue tracker for sharing
+You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
+you have a GitHub account.  This is also where we keep the issue tracker for sharing
 bugs and feature ideas.
 
 .. _what_will_be_installed:
