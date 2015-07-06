@@ -320,7 +320,7 @@ def main():
         this_dir = os.path.join(this_dir, chdir)
 
     if module.check_mode:
-        if env or extra_args or requirements or state == 'latest' or not name:
+        if extra_args or requirements or state == 'latest' or not name:
             module.exit_json(changed=True)
         elif name.startswith('svn+') or name.startswith('git+') or \
                 name.startswith('hg+') or name.startswith('bzr+'):

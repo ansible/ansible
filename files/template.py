@@ -47,6 +47,14 @@ options:
     required: false
     default: ""
     version_added: "1.2"
+  force:
+    description:
+      - the default is C(yes), which will replace the remote file when contents
+        are different than the source.  If C(no), the file will only be transferred
+        if the destination does not exist.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
 notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
 requirements: []

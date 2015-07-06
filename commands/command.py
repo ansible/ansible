@@ -21,6 +21,7 @@
 import copy
 import sys
 import datetime
+import glob
 import traceback
 import re
 import shlex
@@ -47,12 +48,12 @@ options:
     aliases: []
   creates:
     description:
-      - a filename, when it already exists, this step will B(not) be run.
+      - a filename or glob pattern, when it already exists, this step will B(not) be run.
     required: no
     default: null
   removes:
     description:
-      - a filename, when it does not exist, this step will B(not) be run.
+      - a filename or glob pattern, when it does not exist, this step will B(not) be run.
     version_added: "0.8"
     required: no
     default: null
@@ -188,7 +189,7 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of command executions.
         v = os.path.expanduser(creates)
-        if os.path.exists(v):
+        if glob.glob(v):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s exists" % v,
@@ -202,7 +203,7 @@ def main():
     # and the filename does not exist.  This allows idempotence
     # of command executions.
         v = os.path.expanduser(removes)
-        if not os.path.exists(v):
+        if not glob.glob(v):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % v,

@@ -92,6 +92,23 @@ options:
       - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
     default: null
     version_added: "1.5"
+  log_driver:
+    description:
+      - You can specify a different logging driver for the container than for the daemon.
+        "json-file" Default logging driver for Docker. Writes JSON messages to file.
+        docker logs command is available only for this logging driver.
+        "none" disables any logging for the container. docker logs won't be available with this driver.
+        "syslog" Syslog logging driver for Docker. Writes log messages to syslog.
+        docker logs command is not available for this logging driver.
+        If not defined explicitly, the Docker daemon's default ("json-file") will apply.
+        Requires docker >= 1.6.0.
+    required: false
+    default: json-file
+    choices:
+      - json-file
+      - none
+      - syslog
+    version_added: "2.0"
   memory_limit:
     description:
       - RAM allocated to the container as a number of bytes or as a human-readable
@@ -174,7 +191,8 @@ options:
     default: null
   detach:
     description:
-      - Enable detached mode to leave the container running in background.
+      - Enable detached mode to leave the container running in background. If
+        disabled, fail unless the process exits cleanly.
     default: true
   state:
     description:
@@ -510,6 +528,7 @@ class DockerManager(object):
             'restart_policy': ((0, 5, 0), '1.14'),
             'extra_hosts': ((0, 7, 0), '1.3.1'),
             'pid': ((1, 0, 0), '1.17'),
+            'log_driver': ((1, 2, 0), '1.18'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -521,24 +540,26 @@ class DockerManager(object):
         self.volumes = None
         if self.module.params.get('volumes'):
             self.binds = {}
-            self.volumes = {}
+            self.volumes = []
             vols = self.module.params.get('volumes')
             for vol in vols:
                 parts = vol.split(":")
+                # regular volume
+                if len(parts) == 1:
+                    self.volumes.append(parts[0])
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
-                if len(parts) == 2:
-                    self.volumes[parts[1]] = {}
-                    self.binds[parts[0]] = parts[1]
-                # with bind mode
-                elif len(parts) == 3:
-                    if parts[2] not in ['ro', 'rw']:
-                        self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
-                    ro = parts[2] == 'ro'
-                    self.volumes[parts[1]] = {}
-                    self.binds[parts[0]] = {'bind': parts[1], 'ro': ro}
-                # docker mount (e.g. /www, mounts a docker volume /www on the container at the same location)
+                elif 2 <= len(parts) <= 3:
+                    # default to read-write
+                    ro = False
+                    # with supplied bind mode 
+                    if len(parts) == 3:
+                        if parts[2] not in ['ro', 'rw']:
+                            self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
+                        else:
+                            ro = parts[2] == 'ro'
+                    self.binds[parts[0]] = {'bind': parts[1], 'ro': ro }
                 else:
-                    self.volumes[parts[0]] = {}
+                    self.module.fail_json(msg='volumes support 1 to 3 arguments')
 
         self.lxc_conf = None
         if self.module.params.get('lxc_conf'):
@@ -1045,15 +1066,14 @@ class DockerManager(object):
                 for container_port, config in self.port_bindings.iteritems():
                     if isinstance(container_port, int):
                         container_port = "{0}/tcp".format(container_port)
-                    bind = {}
                     if len(config) == 1:
-                        bind['HostIp'] = "0.0.0.0"
-                        bind['HostPort'] = ""
+                        expected_bound_ports[container_port] = [{'HostIp': "0.0.0.0", 'HostPort': ""}]
+                    elif isinstance(config[0], tuple):
+                        expected_bound_ports[container_port] = []
+                        for hostip, hostport in config:
+                            expected_bound_ports[container_port].append({ 'HostIp': hostip, 'HostPort': str(hostport)})
                     else:
-                        bind['HostIp'] = config[0]
-                        bind['HostPort'] = str(config[1])
-
-                    expected_bound_ports[container_port] = [bind]
+                        expected_bound_ports[container_port] = [{'HostIp': config[0], 'HostPort': str(config[1])}]
 
             actual_bound_ports = container['HostConfig']['PortBindings'] or {}
 
@@ -1090,8 +1110,8 @@ class DockerManager(object):
 
             # NETWORK MODE
 
-            expected_netmode = self.module.params.get('net') or ''
-            actual_netmode = container['HostConfig']['NetworkMode']
+            expected_netmode = self.module.params.get('net') or 'bridge'
+            actual_netmode = container['HostConfig']['NetworkMode'] or 'bridge'
             if actual_netmode != expected_netmode:
                 self.reload_reasons.append('net ({0} => {1})'.format(actual_netmode, expected_netmode))
                 differing.append(container)
@@ -1113,6 +1133,16 @@ class DockerManager(object):
             if actual_volumes_from != expected_volumes_from:
                 self.reload_reasons.append('volumes_from ({0} => {1})'.format(actual_volumes_from, expected_volumes_from))
                 differing.append(container)
+
+            # LOG_DRIVER
+
+            if self.ensure_capability('log_driver', False) :
+                expected_log_driver = self.module.params.get('log_driver') or 'json-file'
+                actual_log_driver = container['HostConfig']['LogConfig']['Type']
+                if actual_log_driver != expected_log_driver:
+                    self.reload_reasons.append('log_driver ({0} => {1})'.format(actual_log_driver, expected_log_driver))
+                    differing.append(container)
+                    continue
 
         return differing
 
@@ -1210,44 +1240,7 @@ class DockerManager(object):
         except Exception as e:
             self.module.fail_json(msg="Failed to pull the specified image: %s" % resource, error=repr(e))
 
-    def create_containers(self, count=1):
-        try:
-            mem_limit = _human_to_bytes(self.module.params.get('memory_limit'))
-        except ValueError as e:
-            self.module.fail_json(msg=str(e))
-
-        params = {'image':        self.module.params.get('image'),
-                  'command':      self.module.params.get('command'),
-                  'ports':        self.exposed_ports,
-                  'volumes':      self.volumes,
-                  'mem_limit':    mem_limit,
-                  'environment':  self.env,
-                  'hostname':     self.module.params.get('hostname'),
-                  'domainname':   self.module.params.get('domainname'),
-                  'detach':       self.module.params.get('detach'),
-                  'name':         self.module.params.get('name'),
-                  'stdin_open':   self.module.params.get('stdin_open'),
-                  'tty':          self.module.params.get('tty'),
-                  }
-
-        def do_create(count, params):
-            results = []
-            for _ in range(count):
-                result = self.client.create_container(**params)
-                self.increment_counter('created')
-                results.append(result)
-
-            return results
-
-        try:
-            containers = do_create(count, params)
-        except:
-            self.pull_image()
-            containers = do_create(count, params)
-
-        return containers
-
-    def start_containers(self, containers):
+    def create_host_config(self):
         params = {
             'lxc_conf': self.lxc_conf,
             'binds': self.binds,
@@ -1260,7 +1253,7 @@ class DockerManager(object):
 
         optionals = {}
         for optional_param in ('dns', 'volumes_from', 'restart_policy',
-                'restart_policy_retry', 'pid', 'extra_hosts'):
+                'restart_policy_retry', 'pid', 'extra_hosts', 'log_driver'):
             optionals[optional_param] = self.module.params.get(optional_param)
 
         if optionals['dns'] is not None:
@@ -1285,9 +1278,63 @@ class DockerManager(object):
             self.ensure_capability('extra_hosts')
             params['extra_hosts'] = optionals['extra_hosts']
 
+        if optionals['log_driver'] is not None:
+            self.ensure_capability('log_driver')
+            log_config = docker.utils.LogConfig(type=docker.utils.LogConfig.types.JSON)
+            log_config.type = optionals['log_driver']
+            params['log_config'] = log_config
+
+        return docker.utils.create_host_config(**params)
+
+    def create_containers(self, count=1):
+        try:
+            mem_limit = _human_to_bytes(self.module.params.get('memory_limit'))
+        except ValueError as e:
+            self.module.fail_json(msg=str(e))
+
+        params = {'image':        self.module.params.get('image'),
+                  'command':      self.module.params.get('command'),
+                  'ports':        self.exposed_ports,
+                  'volumes':      self.volumes,
+                  'mem_limit':    mem_limit,
+                  'environment':  self.env,
+                  'hostname':     self.module.params.get('hostname'),
+                  'domainname':   self.module.params.get('domainname'),
+                  'detach':       self.module.params.get('detach'),
+                  'name':         self.module.params.get('name'),
+                  'stdin_open':   self.module.params.get('stdin_open'),
+                  'tty':          self.module.params.get('tty'),
+                  'host_config':  self.create_host_config(),
+                  }
+
+        def do_create(count, params):
+            results = []
+            for _ in range(count):
+                result = self.client.create_container(**params)
+                self.increment_counter('created')
+                results.append(result)
+
+            return results
+
+        try:
+            containers = do_create(count, params)
+        except:
+            self.pull_image()
+            containers = do_create(count, params)
+
+        return containers
+
+    def start_containers(self, containers):
         for i in containers:
-            self.client.start(i['Id'], **params)
+            self.client.start(i)
             self.increment_counter('started')
+
+            if not self.module.params.get('detach'):
+                status = self.client.wait(i['Id'])
+                if status != 0:
+                    output = self.client.logs(i['Id'], stdout=True, stderr=True,
+                                              stream=False, timestamps=False)
+                    self.module.fail_json(status=status, msg=output)
 
     def stop_containers(self, containers):
         for i in containers:
@@ -1479,6 +1526,7 @@ def main():
             net             = dict(default=None),
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
+            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog']),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
@@ -1536,7 +1584,7 @@ def main():
                          summary=manager.counters,
                          containers=containers.changed,
                          reload_reasons=manager.get_reload_reason_message(),
-                         ansible_facts=_ansible_facts(containers.changed))
+                         ansible_facts=_ansible_facts(manager.get_inspect_containers(containers.changed)))
 
     except DockerAPIError as e:
         module.fail_json(changed=manager.has_changed(), msg="Docker API Error: %s" % e.explanation)

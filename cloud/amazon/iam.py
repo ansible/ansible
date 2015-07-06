@@ -146,6 +146,7 @@ import sys
 try:
     import boto
     import boto.iam
+    import boto.ec2
     HAS_BOTO = True
 except ImportError:
    HAS_BOTO = False
@@ -390,7 +391,7 @@ def create_group(module=None, iam=None, name=None, path=None):
     return name, changed
 
 
-def delete_group(module, iam, name):
+def delete_group(module=None, iam=None, name=None):
     changed = False
     try:
         iam.delete_group(name)
@@ -508,7 +509,7 @@ def main():
         groups=dict(type='list', default=None, required=False),
         state=dict(
             default=None, required=True, choices=['present', 'absent', 'update']),
-        password=dict(default=None, required=False),
+        password=dict(default=None, required=False, no_log=True),
         update_password=dict(default='always', required=False, choices=['always', 'on_create']),
         access_key_state=dict(default=None, required=False, choices=[
             'active', 'inactive', 'create', 'remove',
@@ -565,13 +566,10 @@ def main():
         module.fail_json(changed=False, msg="iam_type: role, cannot currently be updated, "
                              "please specificy present or absent")
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     try:
-        iam = boto.iam.connection.IAMConnection(
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key,
-        )
+        iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
 
@@ -664,7 +662,7 @@ def main():
         group_exists = name in orig_group_list
 
         if state == 'present' and not group_exists:
-            new_group, changed = create_group(iam, name, path)
+            new_group, changed = create_group(iam=iam, name=name, path=path)
             module.exit_json(changed=changed, group_name=new_group)
         elif state in ['present', 'update'] and group_exists:
             changed, updated_name, updated_path, cur_path = update_group(
@@ -692,7 +690,7 @@ def main():
                 changed=changed, msg="Update Failed. Group %s doesn't seem to exit!" % name)
         elif state == 'absent':
             if name in orig_group_list:
-                removed_group, changed = delete_group(iam, name)
+                removed_group, changed = delete_group(iam=iam, name=name)
                 module.exit_json(changed=changed, delete_group=removed_group)
             else:
                 module.exit_json(changed=changed, msg="Group already absent")
