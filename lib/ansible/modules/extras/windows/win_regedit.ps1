@@ -25,13 +25,22 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If ($params.name)
+If ($params.key)
 {
-    $registryValueName = $params.name
+    $registryKey = $params.key
 }
 Else
 {
-    Fail-Json $result "missing required argument: name"
+    Fail-Json $result "missing required argument: key"
+}
+
+If ($params.value)
+{
+    $registryValue = $params.value
+}
+Else
+{
+    $registryValue = $null
 }
 
 If ($params.state)
@@ -49,16 +58,16 @@ Else
 
 If ($params.data)
 {
-    $registryValueData = $params.data
+    $registryData = $params.data
 }
-ElseIf ($state -eq "present")
+ElseIf ($state -eq "present" -and $registryValue -ne $null)
 {
     Fail-Json $result "missing required argument: data"
 }
 
-If ($params.type)
+If ($params.datatype)
 {
-    $registryDataType = $params.type.ToString().ToLower()
+    $registryDataType = $params.datatype.ToString().ToLower()
     $validRegistryDataTypes = "binary", "dword", "expandstring", "multistring", "string", "qword"
     If ($validRegistryDataTypes -notcontains $registryDataType)
     {
@@ -68,15 +77,6 @@ If ($params.type)
 Else
 {
     $registryDataType = "string"
-}
-
-If ($params.path)
-{
-    $registryValuePath = $params.path
-}
-Else
-{
-    Fail-Json $result "missing required argument: path"
 }
 
 Function Test-RegistryValueData {
@@ -96,16 +96,17 @@ Function Test-RegistryValueData {
 }
 
 if($state -eq "present") {
-    if (Test-Path $registryValuePath) {
-        if (Test-RegistryValueData -Path $registryValuePath -Value $registryValueName)
+    if ((Test-Path $registryKey) -and $registryValue -ne $null)
+    {
+        if (Test-RegistryValueData -Path $registryKey -Value $registryValue)
         {
-            # Changes Type and Value
-            If ((Get-Item $registryValuePath).GetValueKind($registryValueName) -ne $registryDataType)
+            # Changes Data and DataType
+            if ((Get-Item $registryKey).GetValueKind($registryValue) -ne $registryDataType)
             {
                 Try
                 {
-                    Remove-ItemProperty -Path $registryValuePath -Name $registryValueName
-                    New-ItemProperty -Path $registryValuePath -Name $registryValueName -Value $registryValueData -PropertyType $registryDataType
+                    Remove-ItemProperty -Path $registryKey -Name $registryValue
+                    New-ItemProperty -Path $registryKey -Name $registryValue -Value $registryData -PropertyType $registryDataType
                     $result.changed = $true
                 }
                 Catch
@@ -113,11 +114,11 @@ if($state -eq "present") {
                     Fail-Json $result $_.Exception.Message
                 }
             }
-            # Only Changes Value
-            ElseIf ((Get-ItemProperty -Path $registryValuePath | Select-Object -ExpandProperty $registryValueName) -ne $registryValueData) 
+            # Changes Only Data
+            elseif ((Get-ItemProperty -Path $registryKey | Select-Object -ExpandProperty $registryValue) -ne $registryData) 
             {
                 Try {
-                    Set-ItemProperty -Path $registryValuePath -Name $registryValueName -Value $registryValueData
+                    Set-ItemProperty -Path $registryKey -Name $registryValue -Value $registryData
                     $result.changed = $true
                 }
                 Catch
@@ -130,7 +131,7 @@ if($state -eq "present") {
         {
             Try
             {
-                New-ItemProperty -Path $registryValuePath -Name $registryValueName -Value $registryValueData -PropertyType $registryDataType
+                New-ItemProperty -Path $registryKey -Name $registryValue -Value $registryData -PropertyType $registryDataType
                 $result.changed = $true
             }
             Catch
@@ -139,12 +140,17 @@ if($state -eq "present") {
             }
         }
     }
-    else
+    elseif(-not (Test-Path $registryKey))
     {
         Try 
         {
-            New-Item $registryValuePath -Force | New-ItemProperty -Name $registryValueName -Value $registryValueData -Force -PropertyType $registryDataType
+            $newRegistryKey = New-Item $registryKey -Force
             $result.changed = $true
+
+            if($registryValue -ne $null) {
+                $newRegistryKey | New-ItemProperty -Name $registryValue -Value $registryData -Force -PropertyType $registryDataType
+                $result.changed = $true
+            }
         }
         Catch
         {
@@ -154,12 +160,23 @@ if($state -eq "present") {
 }
 else
 {
-    if (Test-Path $registryValuePath)
+    if (Test-Path $registryKey)
     {
-        if (Test-RegistryValueData -Path $registryValuePath -Value $registryValueName) {
+        if ($registryValue -eq $null) {
             Try
             {
-                Remove-ItemProperty -Path $registryValuePath -Name $registryValueName
+                Remove-Item -Path $registryKey -Recurse
+                $result.changed = $true
+            }
+            Catch
+            {
+                Fail-Json $result $_.Exception.Message
+            }
+        }
+        elseif (Test-RegistryValueData -Path $registryKey -Value $registryValue) {
+            Try
+            {
+                Remove-ItemProperty -Path $registryKey -Name $registryValue
                 $result.changed = $true
             }
             Catch
@@ -171,4 +188,3 @@ else
 }
 
 Exit-Json $result
-
