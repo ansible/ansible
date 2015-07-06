@@ -78,7 +78,6 @@ options:
 
 requirements: ["shade"]
 '''
-# TODO(mordred): add ethertype and direction
 
 EXAMPLES = '''
 # Create a security group rule
@@ -88,6 +87,38 @@ EXAMPLES = '''
     protocol: tcp
     port_range_min: 80
     port_range_max: 80
+    remote_ip_prefix: 0.0.0.0/0
+
+# Create a security group rule for ping
+- os_security_group_rule:
+    cloud: mordred
+    security_group: foo
+    protocol: icmp
+    remote_ip_prefix: 0.0.0.0/0
+
+# Another way to create the ping rule
+- os_security_group_rule:
+    cloud: mordred
+    security_group: foo
+    protocol: icmp
+    port_range_min: -1
+    port_range_max: -1
+    remote_ip_prefix: 0.0.0.0/0
+
+# Create a TCP rule covering all ports
+- os_security_group_rule:
+    cloud: mordred
+    security_group: foo
+    protocol: tcp
+    port_range_min: 1
+    port_range_max: 65535
+    remote_ip_prefix: 0.0.0.0/0
+
+# Another way to create the TCP rule above (defaults to all ports)
+- os_security_group_rule:
+    cloud: mordred
+    security_group: foo
+    protocol: tcp
     remote_ip_prefix: 0.0.0.0/0
 '''
 
@@ -127,37 +158,72 @@ security_group_id:
 '''
 
 
+def _ports_match(protocol, module_min, module_max, rule_min, rule_max):
+    """
+    Capture the complex port matching logic.
+
+    The port values coming in for the module might be -1 (for ICMP),
+    which will work only for Nova, but this is handled by shade. Likewise,
+    they might be None, which works for Neutron, but not Nova. This too is
+    handled by shade. Since shade will consistently return these port
+    values as None, we need to convert any -1 values input to the module
+    to None here for comparison.
+
+    For TCP and UDP protocols, None values for both min and max are
+    represented as the range 1-65535 for Nova, but remain None for
+    Neutron. Shade returns the full range when Nova is the backend (since
+    that is how Nova stores them), and None values for Neutron. If None
+    values are input to the module for both values, then we need to adjust
+    for comparison.
+    """
+
+    # Check if the user is supplying -1 for ICMP.
+    if protocol == 'icmp':
+        if module_min and int(module_min) == -1:
+            module_min = None
+        if module_max and int(module_max) == -1:
+            module_max = None
+
+    # Check if user is supplying None values for full TCP/UDP port range.
+    if protocol in ['tcp', 'udp'] and module_min is None and module_max is None:
+        if (rule_min and int(rule_min) == 1
+                and rule_max and int(rule_max) == 65535):
+            # (None, None) == (1, 65535)
+            return True
+
+    # Sanity check to make sure we don't have type comparison issues.
+    if module_min:
+        module_min = int(module_min)
+    if module_max:
+        module_max = int(module_max)
+    if rule_min:
+        rule_min = int(rule_min)
+    if rule_max:
+        rule_max = int(rule_max)
+
+    return module_min == rule_min and module_max == rule_max
+
+
 def _find_matching_rule(module, secgroup):
     """
     Find a rule in the group that matches the module parameters.
     :returns: The matching rule dict, or None if no matches.
     """
     protocol = module.params['protocol']
-    port_range_min = module.params['port_range_min']
-    port_range_max = module.params['port_range_max']
     remote_ip_prefix = module.params['remote_ip_prefix']
     ethertype = module.params['ethertype']
     direction = module.params['direction']
 
     for rule in secgroup['security_group_rules']:
-        # No port, or -1, will be returned from shade as None
-        if rule['port_range_min'] is None:
-            rule_port_range_min = -1
-        else:
-            rule_port_range_min = int(rule['port_range_min'])
-
-        if rule['port_range_max'] is None:
-            rule_port_range_max = -1
-        else:
-            rule_port_range_max = int(rule['port_range_max'])
-
-
         if (protocol == rule['protocol']
-                and port_range_min == rule_port_range_min
-                and port_range_max == rule_port_range_max
                 and remote_ip_prefix == rule['remote_ip_prefix']
                 and ethertype == rule['ethertype']
-                and direction == rule['direction']):
+                and direction == rule['direction']
+                and _ports_match(protocol,
+                                 module.params['port_range_min'],
+                                 module.params['port_range_max'],
+                                 rule['port_range_min'],
+                                 rule['port_range_max'])):
             return rule
     return None
 
