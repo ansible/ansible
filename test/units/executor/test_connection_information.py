@@ -145,7 +145,7 @@ class TestConnectionInformation(unittest.TestCase):
 
         conn_info.become_method = 'pbrun'
         (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -c '%s -b -l %s -u %s '"'"'echo %s; %s'"'"''""" % (default_exe, pbrun_exe, pbrun_flags, conn_info.become_user, key, default_cmd))
+        self.assertEqual(cmd, """%s -c '%s -b %s -u %s '"'"'echo %s; %s'"'"''""" % (default_exe, pbrun_exe, pbrun_flags, conn_info.become_user, key, default_cmd))
 
         conn_info.become_method = 'pfexec'
         (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
