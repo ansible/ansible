@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.template import Templar
+
 class IncludedFile:
 
     def __init__(self, filename, args, task):
@@ -38,7 +40,7 @@ class IncludedFile:
         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
 
     @staticmethod
-    def process_include_results(results, tqm, iterator, loader):
+    def process_include_results(results, tqm, iterator, loader, variable_manager):
         included_files = []
 
         for res in results:
@@ -62,10 +64,16 @@ class IncludedFile:
                     else:
                         include_file = loader.path_dwim(res._task.args.get('_raw_params'))
 
+                    task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=res._host, task=original_task)
+                    #task_vars = tqm.add_tqm_variables(task_vars, play=iterator._play)
+                    templar = Templar(loader=loader, variables=task_vars)
+
                     include_variables = include_result.get('include_variables', dict())
                     if 'item' in include_result:
                         include_variables['item'] = include_result['item']
+                        task_vars['item'] = include_result['item']
 
+                    include_file = templar.template(include_file)
                     inc_file = IncludedFile(include_file, include_variables, original_task)
 
                     try:
