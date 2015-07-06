@@ -62,19 +62,18 @@ Else {
     Fail-Json $result "missing required argument: dest"
 }
 
-If ($params.recurse -eq "true" -Or $params.recurse -eq "yes") {
-    $recurse = $true
+If ($params.recurse) {
+   $recurse = ConvertTo-Bool ($params.recurse)
 }
 Else {
     $recurse = $false
 }
 
-If ($params.rm -eq "true" -Or $params.rm -eq "yes"){
-    $rm = $true
-    Set-Attr $result.win_unzip "rm" "true"
-}
-Else {
-    $rm = $false
+If ($params.rm) { 
+    $rm = ConvertTo-Bool ($params.rm) 
+} 
+Else { 
+    $rm = $false 
 }
 
 If ($ext -eq ".zip" -And $recurse -eq $false) {
@@ -111,7 +110,7 @@ Else {
         If ($recurse) {
             Expand-Archive -Path $src -OutputPath $dest -Force
 
-            If ($rm) {
+            If ($rm -eq $true) {
                 Get-ChildItem $dest -recurse | Where {$_.extension -eq ".gz" -Or $_.extension -eq ".zip" -Or $_.extension -eq ".bz2" -Or $_.extension -eq ".tar" -Or $_.extension -eq ".msu"} | % {
                     Expand-Archive $_.FullName -OutputPath $dest  -Force
                     Remove-Item $_.FullName -Force
