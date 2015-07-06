@@ -25,11 +25,17 @@ DOCUMENTATION = '''
 ---
 module: win_regedit
 version_added: "2.0"
-short_description: Add, Edit, or Remove Registry Value
+short_description: Add, Edit, or Remove Registry Keys and Values
 description:
-    - Add, Edit, or Remove Registry Value using ItemProperties Cmdlets
+    - Add, Edit, or Remove Registry Keys and Values using ItemProperties Cmdlets
 options:
-  name:
+  key:
+    description:
+      - Name of Registry Key
+    required: true
+    default: null
+    aliases: []
+  value:
     description:
       - Name of Registry Value
     required: true
@@ -41,7 +47,7 @@ options:
     required: false
     default: null
     aliases: []
-  type:
+  datatype:
     description:
       - Registry Value Data Type
     required: false
@@ -53,12 +59,6 @@ options:
       - string
       - qword
     default: string
-    aliases: []
-  path:
-    description:
-      - Path of Registry Value
-    required: true
-    default: null
     aliases: []
   state:
     description:
@@ -73,28 +73,37 @@ author: "Adam Keech (@smadam813), Josh Ludwig (@joshludwig)"
 '''
 
 EXAMPLES = '''
-  # Add Registry Value (Default is String)
+  # Creates Registry Key called MyCompany.
   win_regedit:
-    name: testvalue
+    key: HKCU:\Software\MyCompany
+    
+  # Creates Registry Key called MyCompany,
+  # a value within MyCompany Key called "hello", and
+  # data for the value "hello" containing "world".
+  win_regedit:
+    key: HKCU:\Software\MyCompany
+    value: hello
+    data: world
+
+  # Creates Registry Key called MyCompany,
+  # a value within MyCompany Key called "hello", and
+  # data for the value "hello" containing "1337" as type "dword".
+  win_regedit:
+    key: HKCU:\Software\MyCompany
+    value: hello
     data: 1337
-    path: HKCU:\Software\MyCompany
+    datatype: dword
 
-  # Add Registry Value with Type DWord
+  # Delete Registry Key MyCompany
+  # NOTE: Not specifying a value will delete the root key which means
+  # all values will be deleted
   win_regedit:
-    name: testvalue
-    data: 1337
-    type: dword
-    path: HKCU:\Software\MyCompany
-
-  # Edit Registry Value called testvalue
+    key: HKCU:\Software\MyCompany
+    state: absent
+    
+  # Delete Registry Value "hello" from MyCompany Key
   win_regedit:
-    name: testvalue
-    data: 8008
-    path: HKCU:\Software\MyCompany
-
-  # Remove Registry Value called testvalue
-  win_regedit:
-    name: testvalue
-    path: HKCU:\Software\MyCompany
+    key: HKCU:\Software\MyCompany
+    value: hello
     state: absent
 '''
