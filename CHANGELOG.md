@@ -4,6 +4,17 @@ Ansible Changes By Release
 ## 2.0 "TBD" - ACTIVE DEVELOPMENT
 
 Major Changes:
+ * Introducing the new block/rescue/always directives, allow for making task blocks and introducing exception like semantics
+ * New stratergy plugins, allow to control the flow of execution of tasks per play, the default will be the same as before
+ * Improved error handling, now you get much more detailed parser messages. General exception handling and display has been revamped.
+ * Task includes now get evaluated during execution, end behaviour will be the same but it now allows for more dynamic includes and options.
+ * First feature of the more dynamic includes is that with_ loops are now usable with them.
+ * callback, connection and lookup plugin APIs have changed, some will require modification to work with new version
+ * callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg
+ * Many API changes, this will break those currently using it directly, but the new API is much easier to use and test
+ * Settings are now more inheritable, what you set at play, block or role will be automatically inhertited by the contained,
+   this allows for new feautures to automatically be settable at all levels, previouslly we had to manually code this
+ * Many more tests, new API makes things more testable and we took advantage of it
  * big_ip modules now support turning off ssl certificate validation (use only for self signed)
  * template code now retains types for bools and Numbers instead of turning them into strings
    If you need the old behaviour, quote the value and it will get passed around as a string
@@ -24,6 +35,7 @@ New Modules:
   * amazon: elasticache_subnet_group
   * amazon: iam
   * amazon: iam_policy
+  * amazon: route53_zone
   * bundler
   * circonus_annotation
   * consul
