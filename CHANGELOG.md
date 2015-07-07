@@ -71,6 +71,7 @@ New Modules:
   * openstack: os_network
   * openstack: os_object
   * openstack: os_security_group
+  * openstack: os_security_group_rule
   * openstack: os_server
   * openstack: os_server_actions
   * openstack: os_server_facts
