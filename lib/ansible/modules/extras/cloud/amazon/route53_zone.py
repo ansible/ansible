@@ -23,7 +23,7 @@ version_added: "2.0"
 options:
     zone:
         description:
-            - The DNS zone record (eg: foo.com.)
+            - "The DNS zone record (eg: foo.com.)"
         required: true
     state:
         description:
