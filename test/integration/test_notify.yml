@@ -9,11 +9,11 @@
       notify: '{{handlers_list}}'
   handlers:
     - name: foo
-      command: echo
+      debug: msg="foo handler"
     - name: bar
-      command: echo
+      debug: msg="bar handler"
     - name: scalar
-      command: echo
+      debug: msg="scalar handler"
 
 - name: run notify with play vars
   hosts: A:B
@@ -28,7 +28,7 @@
       notify: '{{handlers_list}}'
   handlers:
     - name: play_foo
-      command: echo
+      debug: msg="play_foo handler"
 
 - name: run notify with included vars
   hosts: A:B
@@ -41,7 +41,7 @@
       notify: '{{handlers_list}}'
   handlers:
     - name: included_foo
-      command: echo
+      debug: msg="included_foo handler"
 
 - name: run notify with role default vars
   hosts: C:D:E
@@ -51,4 +51,4 @@
     - role: test_notify
   handlers:
     - name: notify_host_c
-      command: echo
+      debug: msg="notify_host_c handler"
