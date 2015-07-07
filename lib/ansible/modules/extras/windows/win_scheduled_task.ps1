@@ -65,6 +65,9 @@ elseif ($state -eq "present")
 {
   Fail-Json $result "missing required argument: execute"
 }
+if( $state -ne "present" -and $state -ne "absent") {
+    Fail-Json $result "state must be present or absent"
+}
 if ($params.path)
 {
   $path = "\{0}\" -f $params.path
@@ -89,26 +92,40 @@ elseif($state -eq "present")
 {
   Fail-Json $result "missing required argument: time"
 }
-
-$exists = $true
-#hack to determine if task exists
-try {
-    $task = Get-ScheduledTask -TaskName $name -TaskPath $path
-}
-catch {
-    $exists = $false | ConvertTo-Bool
-}
-Set-Attr $result "exists" "$exists"
-
-
-try
+if ($params.daysOfWeek)
 {
+  $daysOfWeek = $params.daysOfWeek
+}
+elseif ($frequency -eq "weekly")
+{
+  Fail-Json $result "missing required argument: daysOfWeek"
+}
+
+try {
+    $task = Get-ScheduledTask -TaskPath "$path" | Where-Object {$_.TaskName -eq "$name"}
+    $measure = $task | measure
+    if ($measure.count -eq 1 ) {
+        $exists = $true
+    }
+    elseif ($measure.count -eq 0 -and $state -eq "absent" ){
+        Set-Attr $result "msg" "Task does not exist"
+        Exit-Json $result
+    }
+    elseif ($measure.count -eq 0){
+        $exists = $false
+    }
+    else {
+        # This should never occur
+        Fail-Json $result "$measure.count scheduled tasks found"
+    }
+    Set-Attr $result "exists" "$exists"
+
     if ($frequency){
         if ($frequency -eq "daily") {
             $trigger =  New-ScheduledTaskTrigger -Daily -At $time
         }
-        elseif (frequency -eq "weekly"){
-            $trigger =  New-ScheduledTaskTrigger -Weekly -At $time
+        elseif ($frequency -eq "weekly"){
+            $trigger =  New-ScheduledTaskTrigger -Weekly -At $time -DaysOfWeek $daysOfWeek
         }
         else {
             Fail-Json $result "frequency must be daily or weekly"
