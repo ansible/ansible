@@ -698,7 +698,7 @@ def create_block_device(module, ec2, volume):
                            volume_type=volume.get('device_type'),
                            delete_on_termination=volume.get('delete_on_termination', False),
                            iops=volume.get('iops'),
-                           encrypted=volume.get('encrypted', False))
+                           encrypted=volume.get('encrypted', None))
 
 def boto_supports_param_in_spot_request(ec2, param):
     """
