@@ -34,6 +34,7 @@ except Exception:
 
 import os
 import sys
+import traceback
 
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
@@ -41,8 +42,10 @@ from ansible.utils.display import Display
 ########################################
 ### OUTPUT OF LAST RESORT ###
 class LastResort(object):
-    def error(self, msg):
+    def display(self, msg):
         print(msg, file=sys.stderr)
+
+    error = display
 
 ########################################
 
@@ -96,5 +99,10 @@ if __name__ == '__main__':
         display.error("User interrupted execution")
         sys.exit(99)
     except Exception as e:
+        have_cli_options = cli is not None and cli.options is not None
         display.error("Unexpected Exception: %s" % str(e))
+        if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
+            display.display("the full traceback was:\n\n%s" % traceback.format_exc())
+        else:
+            display.display("to see the full traceback, use -vvv")
         sys.exit(250)
