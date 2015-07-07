@@ -203,15 +203,15 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
-                if not work_to_do:
+                debug("done queuing things up, now waiting for results queue to drain")
+                results = self._wait_on_pending_results(iterator)
+                host_results.extend(results)
+
+                if not work_to_do and len(iterator.get_failed_hosts()) > 0:
                     debug("out of hosts to run on")
                     self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                     result = False
                     break
-
-                debug("done queuing things up, now waiting for results queue to drain")
-                results = self._wait_on_pending_results(iterator)
-                host_results.extend(results)
 
                 try:
                     included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator, loader=self._loader, variable_manager=self._variable_manager)
