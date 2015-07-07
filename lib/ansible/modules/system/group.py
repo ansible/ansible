@@ -233,7 +233,8 @@ class FreeBsdGroup(Group):
     def group_add(self, **kwargs):
         cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
         if self.gid is not None:
-            cmd.append('-g %d' % int(self.gid))
+            cmd.append('-g')
+            cmd.append('%d' % int(self.gid))
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
@@ -241,7 +242,8 @@ class FreeBsdGroup(Group):
         info = self.group_info()
         cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
-            cmd.append('-g %d' % int(self.gid))
+            cmd.append('-g')
+            cmd.append('%d' % int(self.gid))
         # modify the group if cmd will do anything
         if cmd_len != len(cmd):
             if self.module.check_mode:
