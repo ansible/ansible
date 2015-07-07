@@ -70,7 +70,7 @@ Actions are pieces of code in ansible that enable things like module execution, 
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   action_plugins = /usr/share/ansible_plugins/action_plugins
+   action_plugins = ~/.ansible/plugins/action_plugins/:/usr/share/ansible_plugins/action_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
 
@@ -135,10 +135,12 @@ Prior to 1.8, callbacks were never loaded for /usr/bin/ansible.
 callback_plugins
 ================
 
+Callbacks are pieces of code in ansible that get called on specific events, permitting to trigger notifications.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-   callback_plugins = /usr/share/ansible_plugins/callback_plugins
+   callback_plugins = ~/.ansible/plugins/callback_plugins/:/usr/share/ansible_plugins/callback_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -171,10 +173,12 @@ parameter string, like so::
 connection_plugins
 ==================
 
+Connections plugin permit to extend the channel used by ansible to transport commands and files.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    connection_plugins = /usr/share/ansible_plugins/connection_plugins
+    connection_plugins = ~/.ansible/plugins/connection_plugins/:/usr/share/ansible_plugins/connection_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -230,10 +234,12 @@ rare instances to /bin/bash in rare instances when sudo is constrained, but in m
 filter_plugins
 ==============
 
+Filters are specific functions that can be used to extend the template system.
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    filter_plugins = /usr/share/ansible_plugins/filter_plugins
+    filter_plugins = ~/.ansible/plugins/filter_plugins/:/usr/share/ansible_plugins/filter_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -245,6 +251,20 @@ force_color
 This options forces color mode even when running without a TTY::
 
     force_color = 1
+
+.. _force_handlers:
+
+force_handlers
+==============
+
+.. versionadded:: 1.9.1
+
+This option causes notified handlers to run on a host even if a failure occurs on that host::
+
+		force_handlers = True
+
+The default is False, meaning that handlers will not run if a failure has occurred on a host.
+This can also be set per play or on the command line. See :ref:`handlers_and_failure` for more details.
 
 .. _forks:
 
@@ -289,10 +309,7 @@ The valid values are either 'replace' (the default) or 'merge'.
 hostfile
 ========
 
-This is the default location of the inventory file, script, or directory that Ansible will use to determine what hosts it has available
-to talk to::
-
-    hostfile = /etc/ansible/hosts
+This is a deprecated setting since 1.9, please look at :ref:`inventory_file` for the new setting.
 
 .. _host_key_checking:
 
@@ -303,6 +320,18 @@ As described in :doc:`intro_getting_started`, host key checking is on by default
 implications and wish to disable it, you may do so here by setting the value to False::
 
     host_key_checking=True
+
+.. _inventory_file:
+
+inventory
+=========
+
+This is the default location of the inventory file, script, or directory that Ansible will use to determine what hosts it has available
+to talk to::
+
+    inventory = /etc/ansible/hosts
+
+It used to be called hostfile in Ansible before 1.9
 
 .. _jinja2_extensions:
 
@@ -350,7 +379,7 @@ lookup_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    lookup_plugins = /usr/share/ansible_plugins/lookup_plugins
+    lookup_plugins = ~/.ansible/plugins/lookup_plugins/:/usr/share/ansible_plugins/lookup_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -422,7 +451,7 @@ private_key_file
 ================
 
 If you are using a pem file to authenticate with machines rather than SSH agent or passwords, you can set the default
-value here to avoid re-specifying ``--ansible-private-keyfile`` with every invocation::
+value here to avoid re-specifying ``--private-key`` with every invocation::
 
     private_key_file=/path/to/file.pem
 
@@ -495,8 +524,8 @@ the sudo implementation is matching CLI flags with the standard sudo::
 sudo_flags
 ==========
 
-Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the environment
-of the original user.  In some situations you may wish to add or remote flags, but in general most users
+Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the $HOME environment variable
+of the original user.  In some situations you may wish to add or remove flags, but in general most users
 will not need to change this setting::
 
    sudo_flags=-H
@@ -553,7 +582,7 @@ vars_plugins
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
 
-    vars_plugins = /usr/share/ansible_plugins/vars_plugins
+    vars_plugins = ~/.ansible/plugins/vars_plugins/:/usr/share/ansible_plugins/vars_plugins
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
@@ -570,6 +599,49 @@ Configures the path to the Vault password file as an alternative to specifying `
    vault_password_file = /path/to/vault_password_file
 
 As of 1.7 this file can also be a script. If you are using a script instead of a flat file, ensure that it is marked as executable, and that the password is printed to standard output. If your script needs to prompt for data, prompts can be sent to standard error.
+
+.. _privilege_escalation:
+
+Privilege Escalation Settings
+-----------------------------
+
+Ansible can use existing privilege escalation systems to allow a user to execute tasks as another. As of 1.9 ‘become’ supersedes the old sudo/su, while still being backwards compatible.  Settings live under the [privilege_escalation] header.
+
+.. _become:
+
+become
+======
+
+The equivalent of adding sudo: or su: to a play or task, set to true/yes to activate privilege escalation. The default behavior is no::
+
+    become=True
+
+.. _become_method:
+
+become_method
+=============
+
+Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``::
+
+    become_method=su
+
+.. _become_user:
+
+become_user
+=============
+
+The equivalent to ansible_sudo_user or ansible_su_user, allows to set the user you become through privilege escalation. The default is 'root'::
+
+    become_user=root
+
+.. _become_ask_pass:
+
+become_ask_pass
+===============
+
+Ask for privilege escalation password, the default is False::
+
+    become_ask_pass=True
 
 .. _paramiko_settings:
 
@@ -608,7 +680,7 @@ If set, this will pass a specific set of options to Ansible rather than Ansible'
     ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 
 In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may
-be appropriate.
+be appropriate. If `ssh_args` is set, the default ``control_path`` setting is not used.
 
 .. _control_path:
 
@@ -628,7 +700,7 @@ may wish to shorten the string to something like the below::
 
 Ansible 1.4 and later will instruct users to run with "-vvvv" in situations where it hits this problem
 and if so it is easy to tell there is too long of a Control Path filename.  This may be frequently
-encountered on EC2.
+encountered on EC2. This setting is ignored if ``ssh_args`` is set.
 
 .. _scp_if_ssh:
 
@@ -662,8 +734,8 @@ recommended if you can enable it, eliminating the need for :doc:`playbooks_accel
 
 .. _accelerate_settings:
 
-Accelerate Mode Settings
-------------------------
+Accelerated Mode Settings
+-------------------------
 
 Under the [accelerate] header, the following settings are tunable for :doc:`playbooks_acceleration`.  Acceleration is 
 a useful performance feature to use if you cannot enable :ref:`pipelining` in your environment, but is probably
@@ -676,7 +748,7 @@ accelerate_port
 
 .. versionadded:: 1.3
 
-This is the port to use for accelerate mode::
+This is the port to use for accelerated mode::
 
     accelerate_port = 5099
 

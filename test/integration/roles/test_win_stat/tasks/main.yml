@@ -72,7 +72,7 @@
   register: win_stat_no_args
   ignore_errors: true
 
-- name: check win_stat result witn no path argument
+- name: check win_stat result with no path argument
   assert:
     that:
       - "win_stat_no_args|failed"

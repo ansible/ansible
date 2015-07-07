@@ -38,12 +38,14 @@ BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
 BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
+SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
+
 # ansible modules can be written in any language.  To simplify
 # development of Python modules, the functions available here
 # can be inserted in any module source automatically by including
 # #<<INCLUDE_ANSIBLE_MODULE_COMMON>> on a blank line by itself inside
 # of an ansible module. The source of this common code lives
-# in lib/ansible/module_common.py
+# in ansible/executor/module_common.py
 
 import locale
 import os
@@ -64,7 +66,7 @@ import grp
 import pwd
 import platform
 import errno
-import tempfile
+from itertools import imap, repeat
 
 try:
     import json
@@ -87,10 +89,19 @@ except ImportError:
 
 HAVE_HASHLIB=False
 try:
-    from hashlib import md5 as _md5
+    from hashlib import sha1 as _sha1
     HAVE_HASHLIB=True
 except ImportError:
-    from md5 import md5 as _md5
+    from sha import sha as _sha1
+
+try:
+    from hashlib import md5 as _md5
+except ImportError:
+    try:
+        from md5 import md5 as _md5
+    except ImportError:
+        # MD5 unavailable.  Possibly FIPS mode
+        _md5 = None
 
 try:
     from hashlib import sha256 as _sha256
@@ -101,7 +112,6 @@ try:
     from systemd import journal
     has_journal = True
 except ImportError:
-    import syslog
     has_journal = False
 
 try:
@@ -109,10 +119,10 @@ try:
 except ImportError:
     # a replacement for literal_eval that works with python 2.4. from: 
     # https://mail.python.org/pipermail/python-list/2009-September/551880.html
-    # which is essentially a cut/past from an earlier (2.6) version of python's
+    # which is essentially a cut/paste from an earlier (2.6) version of python's
     # ast.py
-    from compiler import parse
-    from compiler.ast import *
+    from compiler import ast, parse
+
     def _literal_eval(node_or_string):
         """
         Safely evaluate an expression node or a string containing a Python
@@ -123,21 +133,22 @@ except ImportError:
         _safe_names = {'None': None, 'True': True, 'False': False}
         if isinstance(node_or_string, basestring):
             node_or_string = parse(node_or_string, mode='eval')
-        if isinstance(node_or_string, Expression):
+        if isinstance(node_or_string, ast.Expression):
             node_or_string = node_or_string.node
+
         def _convert(node):
-            if isinstance(node, Const) and isinstance(node.value, (basestring, int, float, long, complex)):
-                 return node.value
-            elif isinstance(node, Tuple):
+            if isinstance(node, ast.Const) and isinstance(node.value, (basestring, int, float, long, complex)):
+                return node.value
+            elif isinstance(node, ast.Tuple):
                 return tuple(map(_convert, node.nodes))
-            elif isinstance(node, List):
+            elif isinstance(node, ast.List):
                 return list(map(_convert, node.nodes))
-            elif isinstance(node, Dict):
+            elif isinstance(node, ast.Dict):
                 return dict((_convert(k), _convert(v)) for k, v in node.items)
-            elif isinstance(node, Name):
+            elif isinstance(node, ast.Name):
                 if node.name in _safe_names:
                     return _safe_names[node.name]
-            elif isinstance(node, UnarySub):
+            elif isinstance(node, ast.UnarySub):
                 return -_convert(node.expr)
             raise ValueError('malformed string')
         return _convert(node_or_string)
@@ -162,6 +173,7 @@ FILE_COMMON_ARGUMENTS=dict(
     directory_mode = dict(), # used by copy
 )
 
+PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
@@ -171,7 +183,8 @@ def get_distribution():
     ''' return the distribution name '''
     if platform.system() == 'Linux':
         try:
-            distribution = platform.linux_distribution()[0].capitalize()
+            supported_dists = platform._supported_dists + ('arch',)
+            distribution = platform.linux_distribution(supported_dists=supported_dists)[0].capitalize()
             if not distribution and os.path.isfile('/etc/system-release'):
                 distribution = platform.linux_distribution(supported_dists=['system'])[0].capitalize()
                 if 'Amazon' in distribution:
@@ -224,7 +237,7 @@ def load_platform_subclass(cls, *args, **kwargs):
     return super(cls, subclass).__new__(subclass)
 
 
-def json_dict_unicode_to_bytes(d):
+def json_dict_unicode_to_bytes(d, encoding='utf-8'):
     ''' Recursively convert dict keys and values to byte str
 
         Specialized for json return because this only handles, lists, tuples,
@@ -232,22 +245,100 @@ def json_dict_unicode_to_bytes(d):
     '''
 
     if isinstance(d, unicode):
-        return d.encode('utf-8')
+        return d.encode(encoding)
     elif isinstance(d, dict):
-        return dict(map(json_dict_unicode_to_bytes, d.iteritems()))
+        return dict(imap(json_dict_unicode_to_bytes, d.iteritems(), repeat(encoding)))
     elif isinstance(d, list):
-        return list(map(json_dict_unicode_to_bytes, d))
+        return list(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     elif isinstance(d, tuple):
-        return tuple(map(json_dict_unicode_to_bytes, d))
+        return tuple(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     else:
         return d
+
+def json_dict_bytes_to_unicode(d, encoding='utf-8'):
+    ''' Recursively convert dict keys and values to byte str
+
+        Specialized for json return because this only handles, lists, tuples,
+        and dict container types (the containers that the json module returns)
+    '''
+
+    if isinstance(d, str):
+        return unicode(d, encoding)
+    elif isinstance(d, dict):
+        return dict(imap(json_dict_bytes_to_unicode, d.iteritems(), repeat(encoding)))
+    elif isinstance(d, list):
+        return list(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
+    elif isinstance(d, tuple):
+        return tuple(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
+    else:
+        return d
+
+def heuristic_log_sanitize(data):
+    ''' Remove strings that look like passwords from log messages '''
+    # Currently filters:
+    # user:pass@foo/whatever and http://username:pass@wherever/foo
+    # This code has false positives and consumes parts of logs that are
+    # not passwds
+
+    # begin: start of a passwd containing string
+    # end: end of a passwd containing string
+    # sep: char between user and passwd
+    # prev_begin: where in the overall string to start a search for
+    #   a passwd
+    # sep_search_end: where in the string to end a search for the sep
+    output = []
+    begin = len(data)
+    prev_begin = begin
+    sep = 1
+    while sep:
+        # Find the potential end of a passwd
+        try:
+            end = data.rindex('@', 0, begin)
+        except ValueError:
+            # No passwd in the rest of the data
+            output.insert(0, data[0:begin])
+            break
+
+        # Search for the beginning of a passwd
+        sep = None
+        sep_search_end = end
+        while not sep:
+            # URL-style username+password
+            try:
+                begin = data.rindex('://', 0, sep_search_end)
+            except ValueError:
+                # No url style in the data, check for ssh style in the
+                # rest of the string
+                begin = 0
+            # Search for separator
+            try:
+                sep = data.index(':', begin + 3, end)
+            except ValueError:
+                # No separator; choices:
+                if begin == 0:
+                    # Searched the whole string so there's no password
+                    # here.  Return the remaining data
+                    output.insert(0, data[0:begin])
+                    break
+                # Search for a different beginning of the password field.
+                sep_search_end = begin
+                continue
+        if sep:
+            # Password was found; remove it.
+            output.insert(0, data[end:prev_begin])
+            output.insert(0, '********')
+            output.insert(0, data[begin:sep + 1])
+            prev_begin = begin
+
+    return ''.join(output)
 
 
 class AnsibleModule(object):
 
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
-        required_one_of=None, add_file_common_args=False, supports_check_mode=False):
+        required_one_of=None, add_file_common_args=False, supports_check_mode=False,
+        required_if=None):
 
         '''
         common code for quickly building an ansible module in Python
@@ -260,9 +351,9 @@ class AnsibleModule(object):
         self.check_mode = False
         self.no_log = no_log
         self.cleanup_files = []
-        
+
         self.aliases = {}
-        
+
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.iteritems():
                 if k not in self.argument_spec:
@@ -272,10 +363,10 @@ class AnsibleModule(object):
         # reset to LANG=C if it's an invalid/unavailable locale
         self._check_locale()
 
-        (self.params, self.args) = self._load_params()
+        self.params = self._load_params()
 
-        self._legal_inputs = ['CHECKMODE', 'NO_LOG']
-        
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log']
+
         self.aliases = self._handle_aliases()
 
         if check_invalid_arguments:
@@ -289,12 +380,23 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=True)
 
+
+        self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
+                'str': self._check_type_str,
+                'list': self._check_type_list,
+                'dict': self._check_type_dict,
+                'bool': self._check_type_bool,
+                'int': self._check_type_int,
+                'float': self._check_type_float,
+                'path': self._check_type_path,
+            }
         if not bypass_checks:
             self._check_required_arguments()
-            self._check_argument_values()
             self._check_argument_types()
+            self._check_argument_values()
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
+            self._check_required_if(required_if)
 
         self._set_defaults(pre=False)
         if not self.no_log:
@@ -441,10 +543,10 @@ class AnsibleModule(object):
             path = os.path.dirname(path)
         return path
 
-    def is_nfs_path(self, path):
+    def is_special_selinux_path(self, path):
         """
-        Returns a tuple containing (True, selinux_context) if the given path
-        is on a NFS mount point, otherwise the return will be (False, None).
+        Returns a tuple containing (True, selinux_context) if the given path is on a
+        NFS or other 'special' fs  mount point, otherwise the return will be (False, None).
         """
         try:
             f = open('/proc/mounts', 'r')
@@ -455,9 +557,13 @@ class AnsibleModule(object):
         path_mount_point = self.find_mount_point(path)
         for line in mount_data:
             (device, mount_point, fstype, options, rest) = line.split(' ', 4)
-            if path_mount_point == mount_point and 'nfs' in fstype:
-                nfs_context = self.selinux_context(path_mount_point)
-                return (True, nfs_context)
+
+            if path_mount_point == mount_point:
+                for fs in SELINUX_SPECIAL_FS.split(','):
+                    if fs in fstype:
+                        special_context = self.selinux_context(path_mount_point)
+                        return (True, special_context)
+
         return (False, None)
 
     def set_default_selinux_context(self, path, changed):
@@ -475,15 +581,15 @@ class AnsibleModule(object):
         # Iterate over the current context instead of the
         # argument context, which may have selevel.
 
-        (is_nfs, nfs_context) = self.is_nfs_path(path)
-        if is_nfs:
-            new_context = nfs_context
+        (is_special_se, sp_context) = self.is_special_selinux_path(path)
+        if is_special_se:
+            new_context = sp_context
         else:
             for i in range(len(cur_context)):
                 if len(context) > i:
                     if context[i] is not None and context[i] != cur_context[i]:
                         new_context[i] = context[i]
-                    if context[i] is None:
+                    elif context[i] is None:
                         new_context[i] = cur_context[i]
 
         if cur_context != new_context:
@@ -492,8 +598,8 @@ class AnsibleModule(object):
                     return True
                 rc = selinux.lsetfilecon(self._to_filesystem_str(path),
                                          str(':'.join(new_context)))
-            except OSError:
-                self.fail_json(path=path, msg='invalid selinux context', new_context=new_context, cur_context=cur_context, input_was=context)
+            except OSError, e:
+                self.fail_json(path=path, msg='invalid selinux context: %s' % str(e), new_context=new_context, cur_context=cur_context, input_was=context)
             if rc != 0:
                 self.fail_json(path=path, msg='set selinux context failed')
             changed = True
@@ -569,14 +675,24 @@ class AnsibleModule(object):
             # FIXME: comparison against string above will cause this to be executed
             # every time
             try:
-                if 'lchmod' in dir(os):
+                if hasattr(os, 'lchmod'):
                     os.lchmod(path, mode)
                 else:
-                    os.chmod(path, mode)
+                    if not os.path.islink(path):
+                        os.chmod(path, mode)
+                    else:
+                        # Attempt to set the perms of the symlink but be
+                        # careful not to change the perms of the underlying
+                        # file while trying
+                        underlying_stat = os.stat(path)
+                        os.chmod(path, mode)
+                        new_underlying_stat = os.stat(path)
+                        if underlying_stat.st_mode != new_underlying_stat.st_mode:
+                            os.chmod(path, stat.S_IMODE(underlying_stat.st_mode))
             except OSError, e:
                 if os.path.islink(path) and e.errno == errno.EPERM:  # Can't set mode on symbolic links
                     pass
-                elif e.errno == errno.ENOENT: # Can't set mode on broken symbolic links
+                elif e.errno in (errno.ENOENT, errno.ELOOP): # Can't set mode on broken symbolic links
                     pass
                 else:
                     raise e
@@ -601,7 +717,8 @@ class AnsibleModule(object):
                 operator = match.group('operator')
                 perms = match.group('perms')
 
-                if users == 'a': users = 'ugo'
+                if users == 'a':
+                    users = 'ugo'
 
                 for user in users:
                     mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms)
@@ -763,6 +880,7 @@ class AnsibleModule(object):
             locale.setlocale(locale.LC_ALL, 'C')
             os.environ['LANG']     = 'C'
             os.environ['LC_CTYPE'] = 'C'
+            os.environ['LC_MESSAGES'] = 'C'
         except Exception, e:
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
@@ -790,21 +908,21 @@ class AnsibleModule(object):
 
     def _check_for_check_mode(self):
         for (k,v) in self.params.iteritems():
-            if k == 'CHECKMODE':
+            if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
-                if self.supports_check_mode:
-                    self.check_mode = True
+                self.check_mode = True
+                break
 
     def _check_for_no_log(self):
         for (k,v) in self.params.iteritems():
-            if k == 'NO_LOG':
+            if k == '_ansible_no_log':
                 self.no_log = self.boolean(v)
 
     def _check_invalid_arguments(self):
         for (k,v) in self.params.iteritems():
             # these should be in legal inputs already
-            #if k in ('CHECKMODE', 'NO_LOG'):
+            #if k in ('_ansible_check_mode', '_ansible_no_log'):
             #    continue
             if k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -822,7 +940,7 @@ class AnsibleModule(object):
         for check in spec:
             count = self._count_terms(check)
             if count > 1:
-                self.fail_json(msg="parameters are mutually exclusive: %s" % check)
+                self.fail_json(msg="parameters are mutually exclusive: %s" % (check,))
 
     def _check_required_one_of(self, spec):
         if spec is None:
@@ -840,7 +958,7 @@ class AnsibleModule(object):
             non_zero = [ c for c in counts if c > 0 ]
             if len(non_zero) > 0:
                 if 0 in counts:
-                    self.fail_json(msg="parameters are required together: %s" % check)
+                    self.fail_json(msg="parameters are required together: %s" % (check,))
 
     def _check_required_arguments(self):
         ''' ensure all required arguments are present '''
@@ -851,6 +969,20 @@ class AnsibleModule(object):
                 missing.append(k)
         if len(missing) > 0:
             self.fail_json(msg="missing required arguments: %s" % ",".join(missing))
+
+    def _check_required_if(self, spec):
+        ''' ensure that parameters which conditionally required are present '''
+        if spec is None:
+            return
+        for (key, val, requirements) in spec:
+            missing = []
+            if key in self.params and self.params[key] == val:
+                for check in requirements:
+                    count = self._count_terms(check)
+                    if count == 0:
+                        missing.append(check)
+            if len(missing) > 0:
+                self.fail_json(msg="%s is %s but the following are missing: %s" % (key, val, ','.join(missing)))
 
     def _check_argument_values(self):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
@@ -899,6 +1031,76 @@ class AnsibleModule(object):
                 return (str, e)
             return str
 
+    def _check_type_str(self, value):
+        if isinstance(value, basestring):
+            return value
+        # Note: This could throw a unicode error if value's __str__() method
+        # returns non-ascii.  Have to port utils.to_bytes() if that happens
+        return str(value)
+
+    def _check_type_list(self, value):
+        if isinstance(value, list):
+            return value
+
+        if isinstance(value, basestring):
+            return value.split(",")
+        elif isinstance(value, int) or isinstance(value, float):
+            return [ str(value) ]
+
+        raise TypeError('%s cannot be converted to a list' % type(value))
+
+    def _check_type_dict(self, value):
+        if isinstance(value, dict):
+            return value
+
+        if isinstance(value, basestring):
+            if value.startswith("{"):
+                try:
+                    return json.loads(value)
+                except:
+                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
+                    if exc is not None:
+                        raise TypeError('unable to evaluate string as dictionary')
+                    return result
+            elif '=' in value:
+                return dict([x.strip().split("=", 1) for x in value.split(",")])
+            else:
+                raise TypeError("dictionary requested, could not parse JSON or key=value")
+
+        raise TypeError('%s cannot be converted to a dict' % type(value))
+
+    def _check_type_bool(self, value):
+        if isinstance(value, bool):
+            return value
+
+        if isinstance(value, basestring):
+            return self.boolean(value)
+
+        raise TypeError('%s cannot be converted to a bool' % type(value))
+
+    def _check_type_int(self, value):
+        if isinstance(value, int):
+            return value
+
+        if isinstance(value, basestring):
+            return int(value)
+
+        raise TypeError('%s cannot be converted to an int' % type(value))
+
+    def _check_type_float(self, value):
+        if isinstance(value, float):
+            return value
+
+        if isinstance(value, basestring):
+            return float(value)
+
+        raise TypeError('%s cannot be converted to a float' % type(value))
+
+    def _check_type_path(self, value):
+        value = self._check_type_str(value)
+        return os.path.expanduser(os.path.expandvars(value))
+
+
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.iteritems():
@@ -911,57 +1113,14 @@ class AnsibleModule(object):
             value = self.params[k]
             is_invalid = False
 
-            if wanted == 'str':
-                if not isinstance(value, basestring):
-                    self.params[k] = str(value)
-            elif wanted == 'list':
-                if not isinstance(value, list):
-                    if isinstance(value, basestring):
-                        self.params[k] = value.split(",")
-                    elif isinstance(value, int) or isinstance(value, float):
-                        self.params[k] = [ str(value) ]
-                    else:
-                        is_invalid = True
-            elif wanted == 'dict':
-                if not isinstance(value, dict):
-                    if isinstance(value, basestring):
-                        if value.startswith("{"):
-                            try:
-                                self.params[k] = json.loads(value)
-                            except:
-                                (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
-                                if exc is not None:
-                                    self.fail_json(msg="unable to evaluate dictionary for %s" % k)
-                                self.params[k] = result
-                        elif '=' in value:
-                            self.params[k] = dict([x.strip().split("=", 1) for x in value.split(",")])
-                        else:
-                            self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
-                    else:
-                        is_invalid = True
-            elif wanted == 'bool':
-                if not isinstance(value, bool):
-                    if isinstance(value, basestring):
-                        self.params[k] = self.boolean(value)
-                    else:
-                        is_invalid = True
-            elif wanted == 'int':
-                if not isinstance(value, int):
-                    if isinstance(value, basestring):
-                        self.params[k] = int(value)
-                    else:
-                        is_invalid = True
-            elif wanted == 'float':
-                if not isinstance(value, float):
-                    if isinstance(value, basestring):
-                        self.params[k] = float(value)
-                    else:
-                        is_invalid = True
-            else:
+            try:
+                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+            except KeyError:
                 self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
-
-            if is_invalid:
-                self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
+            try:
+                self.params[k] = type_checker(value)
+            except (TypeError, ValueError):
+                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s" % (k, type(value), wanted))
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.iteritems():
@@ -977,79 +1136,11 @@ class AnsibleModule(object):
 
     def _load_params(self):
         ''' read the input and return a dictionary and the arguments string '''
-        args = MODULE_ARGS
-        items   = shlex.split(args)
-        params = {}
-        for x in items:
-            try:
-                (k, v) = x.split("=",1)
-            except Exception, e:
-                self.fail_json(msg="this module requires key=value arguments (%s)" % (items))
-            if k in params:
-                self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
-            params[k] = v
-        params2 = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
-        params2.update(params)
-        return (params2, args)
+        params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
+        if params is None:
+            params = dict()
+        return params
 
-    def _heuristic_log_sanitize(self, data):
-        ''' Remove strings that look like passwords from log messages '''
-        # Currently filters:
-        # user:pass@foo/whatever and http://username:pass@wherever/foo
-        # This code has false positives and consumes parts of logs that are
-        # not passwds
-
-        # begin: start of a passwd containing string
-        # end: end of a passwd containing string
-        # sep: char between user and passwd
-        # prev_begin: where in the overall string to start a search for
-        #   a passwd
-        # sep_search_end: where in the string to end a search for the sep
-        output = []
-        begin = len(data)
-        prev_begin = begin
-        sep = 1
-        while sep:
-            # Find the potential end of a passwd
-            try:
-                end = data.rindex('@', 0, begin)
-            except ValueError:
-                # No passwd in the rest of the data
-                output.insert(0, data[0:begin])
-                break
-
-            # Search for the beginning of a passwd
-            sep = None
-            sep_search_end = end
-            while not sep:
-                # URL-style username+password
-                try:
-                    begin = data.rindex('://', 0, sep_search_end)
-                except ValueError:
-                    # No url style in the data, check for ssh style in the
-                    # rest of the string
-                    begin = 0
-                # Search for separator
-                try:
-                    sep = data.index(':', begin + 3, end)
-                except ValueError:
-                    # No separator; choices:
-                    if begin == 0:
-                        # Searched the whole string so there's no password
-                        # here.  Return the remaining data
-                        output.insert(0, data[0:begin])
-                        break
-                    # Search for a different beginning of the password field.
-                    sep_search_end = begin
-                    continue
-            if sep:
-                # Password was found; remove it.
-                output.insert(0, data[end:prev_begin])
-                output.insert(0, '********')
-                output.insert(0, data[begin:sep + 1])
-                prev_begin = begin
-
-        return ''.join(output)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -1073,7 +1164,7 @@ class AnsibleModule(object):
                     param_val = str(param_val)
                 elif isinstance(param_val, unicode):
                     param_val = param_val.encode('utf-8')
-                log_args[param] = self._heuristic_log_sanitize(param_val)
+                log_args[param] = heuristic_log_sanitize(param_val)
 
         module = 'ansible-%s' % os.path.basename(__file__)
         msg = []
@@ -1095,19 +1186,18 @@ class AnsibleModule(object):
             msg = msg.encode('utf-8')
 
         if (has_journal):
-            journal_args = ["MESSAGE=%s %s" % (module, msg)]
-            journal_args.append("MODULE=%s" % os.path.basename(__file__))
+            journal_args = [("MODULE", os.path.basename(__file__))]
             for arg in log_args:
-                journal_args.append(arg.upper() + "=" + str(log_args[arg]))
+                journal_args.append((arg.upper(), str(log_args[arg])))
             try:
-                journal.sendv(*journal_args)
-            except IOError, e:
+                journal.send("%s %s" % (module, msg), **dict(journal_args))
+            except IOError:
                 # fall back to syslog since logging to journal failed
                 syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_NOTICE, msg) #1
+                syslog.syslog(syslog.LOG_INFO, msg) #1
         else:
             syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_NOTICE, msg) #2
+            syslog.syslog(syslog.LOG_INFO, msg) #2
 
     def _set_cwd(self):
         try:
@@ -1171,13 +1261,17 @@ class AnsibleModule(object):
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
 
     def jsonify(self, data):
-        for encoding in ("utf-8", "latin-1", "unicode_escape"):
+        for encoding in ("utf-8", "latin-1"):
             try:
                 return json.dumps(data, encoding=encoding)
-            # Old systems using simplejson module does not support encoding keyword.
-            except TypeError, e:
-                return json.dumps(data)
-            except UnicodeDecodeError, e:
+            # Old systems using old simplejson module does not support encoding keyword.
+            except TypeError:
+                try:
+                    new_data = json_dict_bytes_to_unicode(data, encoding=encoding)
+                except UnicodeDecodeError:
+                    continue
+                return json.dumps(new_data)
+            except UnicodeDecodeError:
                 continue
         self.fail_json(msg='Invalid unicode encoding encountered')
 
@@ -1233,8 +1327,23 @@ class AnsibleModule(object):
         return digest.hexdigest()
 
     def md5(self, filename):
-        ''' Return MD5 hex digest of local file using digest_from_file(). '''
+        ''' Return MD5 hex digest of local file using digest_from_file().
+
+        Do not use this function unless you have no other choice for:
+            1) Optional backwards compatibility
+            2) Compatibility with a third party protocol
+
+        This function will not work on systems complying with FIPS-140-2.
+
+        Most uses of this function can use the module.sha1 function instead.
+        '''
+        if not _md5:
+            raise ValueError('MD5 not available.  Possibly running in FIPS mode')
         return self.digest_from_file(filename, _md5())
+
+    def sha1(self, filename):
+        ''' Return SHA1 hex digest of local file using digest_from_file(). '''
+        return self.digest_from_file(filename, _sha1())
 
     def sha256(self, filename):
         ''' Return SHA-256 hex digest of local file using digest_from_file(). '''
@@ -1244,14 +1353,18 @@ class AnsibleModule(object):
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
-        # backups named basename-YYYY-MM-DD@HH:MM~
-        ext = time.strftime("%Y-%m-%d@%H:%M~", time.localtime(time.time()))
-        backupdest = '%s.%s' % (fn, ext)
 
-        try:
-            shutil.copy2(fn, backupdest)
-        except shutil.Error, e:
-            self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+        backupdest = ''
+        if os.path.exists(fn):
+            # backups named basename-YYYY-MM-DD@HH:MM:SS~
+            ext = time.strftime("%Y-%m-%d@%H:%M:%S~", time.localtime(time.time()))
+            backupdest = '%s.%s' % (fn, ext)
+
+            try:
+                shutil.copy2(fn, backupdest)
+            except (shutil.Error, IOError), e:
+                self.fail_json(msg='Could not make backup of %s to %s: %s' % (fn, backupdest, e))
+
         return backupdest
 
     def cleanup(self, tmpfile):
@@ -1338,7 +1451,7 @@ class AnsibleModule(object):
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(dest, 0666 ^ umask)
+            os.chmod(dest, 0666 & ~umask)
             if switched_user:
                 os.chown(dest, os.getuid(), os.getgid())
 
@@ -1346,7 +1459,7 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -1354,12 +1467,17 @@ class AnsibleModule(object):
         If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
         If args is a string and use_unsafe_shell=True it run with shell=True.
         Other arguments:
-        - check_rc (boolean)  Whether to call fail_json in case of
-                              non zero RC.  Default is False.
-        - close_fds (boolean) See documentation for subprocess.Popen().
-                              Default is True.
-        - executable (string) See documentation for subprocess.Popen().
-                              Default is None.
+        - check_rc (boolean)    Whether to call fail_json in case of
+                                non zero RC.  Default is False.
+        - close_fds (boolean)   See documentation for subprocess.Popen().
+                                Default is True.
+        - executable (string)   See documentation for subprocess.Popen().
+                                Default is None.
+        - prompt_regex (string) A regex string (not a compiled regex) which
+                                can be used to detect prompts in the stdout
+                                which would otherwise cause the execution
+                                to hang (especially if no input data is
+                                specified)
         '''
 
         shell = False
@@ -1375,6 +1493,13 @@ class AnsibleModule(object):
             msg = "Argument 'args' to run_command must be list or string"
             self.fail_json(rc=257, cmd=args, msg=msg)
 
+        prompt_re = None
+        if prompt_regex:
+            try:
+                prompt_re = re.compile(prompt_regex, re.MULTILINE)
+            except re.error:
+                self.fail_json(msg="invalid prompt regular expression given to run_command")
+
         # expand things like $HOME and ~
         if not shell:
             args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
@@ -1383,7 +1508,7 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Set a temporart env path if a prefix is passed
+        # Set a temporary env path if a prefix is passed
         env=os.environ
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
@@ -1391,27 +1516,32 @@ class AnsibleModule(object):
         # create a printable version of the command for use
         # in reporting later, which strips out things like
         # passwords from the args list
-        if isinstance(args, list):
-            clean_args = " ".join(pipes.quote(arg) for arg in args)
+        if isinstance(args, basestring):
+            if isinstance(args, unicode):
+                b_args = args.encode('utf-8')
+            else:
+                b_args = args
+            to_clean_args = shlex.split(b_args)
+            del b_args
         else:
-            clean_args = args
+            to_clean_args = args
 
-        # all clean strings should return two match groups, 
-        # where the first is the CLI argument and the second 
-        # is the password/key/phrase that will be hidden
-        clean_re_strings = [
-            # this removes things like --password, --pass, --pass-wd, etc.
-            # optionally followed by an '=' or a space. The password can 
-            # be quoted or not too, though it does not care about quotes
-            # that are not balanced
-            # source: http://blog.stevenlevithan.com/archives/match-quoted-string
-            r'([-]{0,2}pass[-]?(?:word|wd)?[=\s]?)((?:["\'])?(?:[^\s])*(?:\1)?)',
-            r'^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$', 
-            # TODO: add more regex checks here
-        ]
-        for re_str in clean_re_strings:
-            r = re.compile(re_str)
-            clean_args = r.sub(r'\1********', clean_args)
+        clean_args = []
+        is_passwd = False
+        for arg in to_clean_args:
+            if is_passwd:
+                is_passwd = False
+                clean_args.append('********')
+                continue
+            if PASSWD_ARG_RE.match(arg):
+                sep_idx = arg.find('=')
+                if sep_idx > -1:
+                    clean_args.append('%s=********' % arg[:sep_idx])
+                    continue
+                else:
+                    is_passwd = True
+            clean_args.append(heuristic_log_sanitize(arg))
+        clean_args = ' '.join(pipes.quote(arg) for arg in clean_args)
 
         if data:
             st_in = subprocess.PIPE
@@ -1468,6 +1598,10 @@ class AnsibleModule(object):
                     stderr += dat
                     if dat == '':
                         rpipes.remove(cmd.stderr)
+                # if we're checking for prompts, do it now
+                if prompt_re:
+                    if prompt_re.search(stdout) and not data:
+                        return (257, stdout, "A prompt was encountered while running a command, but no input data was specified")
                 # only break out if no pipes are left to read or
                 # the pipes are completely read and
                 # the process is terminated
@@ -1492,7 +1626,7 @@ class AnsibleModule(object):
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
 
         if rc != 0 and check_rc:
-            msg = stderr.rstrip()
+            msg = heuristic_log_sanitize(stderr.rstrip())
             self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd

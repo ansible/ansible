@@ -19,7 +19,7 @@ pull inventory from dynamic or cloud sources, as described in :doc:`intro_dynami
 Hosts and Groups
 ++++++++++++++++
 
-The format for /etc/ansible/hosts is an INI format and looks like this::
+The format for /etc/ansible/hosts is an INI-like format and looks like this::
 
     mail.example.com
 
@@ -46,7 +46,7 @@ To make things explicit, it is suggested that you set them if things are not run
 
     badwolf.example.com:5309
 
-Suppose you have just static IPs and want to set up some aliases that don't live in your host file, or you are connecting through tunnels.  You can do things like this::
+Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
 
     jumper ansible_ssh_port=5555 ansible_ssh_host=192.168.1.50
 
@@ -106,9 +106,7 @@ Variables can also be applied to an entire group at once::
 Groups of Groups, and Group Variables
 +++++++++++++++++++++++++++++++++++++
 
-It is also possible to make groups of groups and assign
-variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
-/usr/bin/ansible::
+It is also possible to make groups of groups using the ``:children`` suffix. Just like above, you can apply variables using ``:vars``.
 
    [atlanta]
    host1
@@ -184,7 +182,7 @@ variables. Note that this only works on Ansible 1.4 or later.
 
 Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in either 
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
-directory will be loaded second.
+directory will override variables set in the inventory directory.
 
 Tip: Keeping your inventory file and variables in a git repo (or other version control)
 is an excellent way to track changes to your inventory and host variables.
@@ -205,6 +203,8 @@ mentioned::
       The default ssh user name to use.
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
+    ansible_sudo
+      The boolean to decide if sudo should be used for this host. Defaults to false.
     ansible_sudo_pass
       The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
     ansible_sudo_exe (new in version 1.8)
@@ -214,7 +214,7 @@ mentioned::
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
     ansible_shell_type
-      The shell type of the target system. By default commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
+      The shell type of the target system. Commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
       The target host python path. This is useful for systems with more
       than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
@@ -240,7 +240,7 @@ Examples from a host file::
    :doc:`intro_adhoc`
        Examples of basic commands
    :doc:`playbooks`
-       Learning ansible's configuration management language
+       Learning Ansible’s configuration, deployment, and orchestration language.
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

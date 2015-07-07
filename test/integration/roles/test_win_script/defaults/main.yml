@@ -1,0 +1,5 @@
+---
+
+# Parameters to pass to test scripts.
+test_win_script_value: VaLuE
+test_win_script_splat: "@{This='THIS'; That='THAT'; Other='OTHER'}"

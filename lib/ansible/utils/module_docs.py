@@ -23,7 +23,8 @@ import ast
 import yaml
 import traceback
 
-from ansible import utils
+from collections import MutableMapping, MutableSet, MutableSequence
+from ansible.plugins import fragment_loader
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
@@ -44,6 +45,7 @@ def get_docstring(filename, verbose=False):
 
     doc = None
     plainexamples = None
+    returndocs = None
 
     try:
         # Thank you, Habbie, for this bit of code :-)
@@ -65,7 +67,7 @@ def get_docstring(filename, verbose=False):
 
 
                     if fragment_slug != 'doesnotexist':
-                        fragment_class = utils.plugins.fragment_loader.get(fragment_name)
+                        fragment_class = fragment_loader.get(fragment_name)
                         assert fragment_class is not None
 
                         fragment_yaml = getattr(fragment_class, fragment_var, '{}')
@@ -85,14 +87,24 @@ def get_docstring(filename, verbose=False):
                             if not doc.has_key(key):
                                 doc[key] = value
                             else:
-                                doc[key].update(value)
+                                if isinstance(doc[key], MutableMapping):
+                                    doc[key].update(value)
+                                elif isinstance(doc[key], MutableSet):
+                                    doc[key].add(value)
+                                elif isinstance(doc[key], MutableSequence):
+                                    doc[key] = sorted(frozenset(doc[key] + value))
+                                else:
+                                    raise Exception("Attempt to extend a documentation fragement of unknown type")
 
                 if 'EXAMPLES' in (t.id for t in child.targets):
                     plainexamples = child.value.s[1:]  # Skip first empty line
+
+                if 'RETURN' in (t.id for t in child.targets):
+                    returndocs = child.value.s[1:]
     except:
         traceback.print_exc() # temp
         if verbose == True:
             traceback.print_exc()
             print "unable to parse %s" % filename
-    return doc, plainexamples
+    return doc, plainexamples, returndocs
 

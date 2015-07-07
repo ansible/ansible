@@ -106,6 +106,15 @@
     that:
       - "file6_result.changed == true"
 
+- name: touch a hard link
+  file: src={{output_file}} dest={{output_dir}}/hard.txt state=touch
+  register: file6_touch_result  
+
+- name: verify that the hard link was touched
+  assert:
+    that:
+      - "file6_touch_result.changed == true"
+
 - name: create a directory
   file: path={{output_dir}}/foobar state=directory
   register: file7_result
@@ -188,7 +197,7 @@
       - "file11_result.uid == 1235"
 
 - name: fail to create soft link to non existent file
-  file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=no
+  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=no
   register: file12_result
   ignore_errors: true
 
@@ -198,7 +207,7 @@
       - "file12_result.failed == true"
 
 - name: force creation soft link to non existent
-  file: src=/noneexistant dest={{output_dir}}/soft2.txt state=link force=yes
+  file: src=/noneexistent dest={{output_dir}}/soft2.txt state=link force=yes
   register: file13_result
 
 - name: verify that link was created
@@ -468,3 +477,88 @@
   assert:
     that:
     - result.stat.mode == '0644'
+
+- name: attempt to modify the permissions of the link itself
+  file: path={{output_dir}}/test_follow_link src="./test_follow" state=link mode=0600 follow=no
+  register: result
+
+# Whether the link itself changed is platform dependent! (BSD vs Linux?)
+# Just check that the underlying file was not changed
+- name: stat the link target
+  stat: path={{output_dir}}/test_follow
+  register: result
+
+- name: assert that the link target was unmodified
+  assert:
+    that:
+    - result.stat.mode == '0644'
+  ignore_errors: True
+
+# Follow + recursive tests
+- name: create a toplevel directory
+  file: path={{output_dir}}/test_follow_rec state=directory mode=0755
+
+- name: create a file outside of the toplevel
+  file: path={{output_dir}}/test_follow_rec_target_file state=touch mode=0700
+
+- name: create a directory outside of the toplevel
+  file: path={{output_dir}}/test_follow_rec_target_dir state=directory mode=0700
+
+- name: create a file inside of the link target directory
+  file: path={{output_dir}}/test_follow_rec_target_dir/foo state=touch mode=0700
+
+- name: create a symlink to the file
+  file: path={{output_dir}}/test_follow_rec/test_link state=link src="../test_follow_rec_target_file"
+
+- name: create a symlink to the directory
+  file: path={{output_dir}}/test_follow_rec/test_link_dir state=link src="../test_follow_rec_target_dir"
+
+- name: try to change permissions without following symlinks
+  file: path={{output_dir}}/test_follow_rec follow=False mode="a-x" recurse=True
+
+- name: stat the link file target
+  stat: path={{output_dir}}/test_follow_rec_target_file
+  register: file_result
+
+- name: stat the link dir target
+  stat: path={{output_dir}}/test_follow_rec_target_dir
+  register: dir_result
+
+- name: stat the file inside the link dir target
+  stat: path={{output_dir}}/test_follow_rec_target_dir/foo
+  register: file_in_dir_result
+
+- debug: var=file_result.stat.mode
+- debug: var=dir_result.stat.mode
+- debug: var=file_in_dir_result.stat.mode
+- name: assert that the link targets were unmodified
+  assert:
+    that:
+    - file_result.stat.mode == '0700'
+    - dir_result.stat.mode == '0700'
+    - file_in_dir_result.stat.mode == '0700'
+
+- name: try to change permissions with following symlinks
+  file: path={{output_dir}}/test_follow_rec follow=True mode="a-x" recurse=True
+
+- name: stat the link file target
+  stat: path={{output_dir}}/test_follow_rec_target_file
+  register: file_result
+
+- name: stat the link dir target
+  stat: path={{output_dir}}/test_follow_rec_target_dir
+  register: dir_result
+
+- name: stat the file inside the link dir target
+  stat: path={{output_dir}}/test_follow_rec_target_dir/foo
+  register: file_in_dir_result
+
+- debug: var=file_result.stat.mode
+- debug: var=dir_result.stat.mode
+- debug: var=file_in_dir_result.stat.mode
+- name: assert that the link targets were modified
+  assert:
+    that:
+    - file_result.stat.mode == '0600'
+    - dir_result.stat.mode == '0600'
+    - file_in_dir_result.stat.mode == '0600'
