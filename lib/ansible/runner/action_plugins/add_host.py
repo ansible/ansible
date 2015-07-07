@@ -83,6 +83,7 @@ class ActionModule(object):
                 if not inventory.get_group(group_name):
                     new_group = Group(group_name)
                     inventory.add_group(new_group)
+                    new_group.vars = inventory.get_group_variables(group_name, vault_password=inventory._vault_password)
                 grp = inventory.get_group(group_name)
                 grp.add_host(new_host)
 

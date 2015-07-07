@@ -76,14 +76,23 @@ class ActionModule(object):
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
         if copy:
-            if self.runner.sudo and self.runner.sudo_user != 'root':
-                self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
+            if self.runner.sudo and self.runner.sudo_user != 'root' or self.runner.su and self.runner.su_user != 'root':
+                if not self.runner.noop_on_check(inject):
+                    self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
             # Build temporary module_args.
             new_module_args = dict(
                 src=tmp_src,
                 original_basename=os.path.basename(source),
             )
+
+            # make sure checkmod is passed on correctly
+            if self.runner.noop_on_check(inject):
+                new_module_args['CHECKMODE'] = True
+
             module_args = utils.merge_module_args(module_args, new_module_args)
         else:
             module_args = "%s original_basename=%s" % (module_args, pipes.quote(os.path.basename(source)))
+            # make sure checkmod is passed on correctly
+            if self.runner.noop_on_check(inject):
+                module_args += " CHECKMODE=True"
         return self.runner._execute_module(conn, tmp, 'unarchive', module_args, inject=inject, complex_args=complex_args)

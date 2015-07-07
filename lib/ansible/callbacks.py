@@ -25,6 +25,7 @@ import fnmatch
 import tempfile
 import fcntl
 import constants
+import locale
 from ansible.color import stringc
 
 import logging
@@ -410,11 +411,12 @@ class CliRunnerCallbacks(DefaultRunnerCallbacks):
             self._async_notified[jid] = clock + 1
         if self._async_notified[jid] > clock:
             self._async_notified[jid] = clock
-            display("<job %s> polling, %ss remaining" % (jid, clock), runner=self.runner)
+            display("<job %s> polling on %s, %ss remaining" % (jid, host, clock), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_poll(host, res, jid, clock)
 
     def on_async_ok(self, host, res, jid):
-        display("<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True)), runner=self.runner)
+        if jid:
+            display("<job %s> finished on %s => %s"%(jid, host, utils.jsonify(res,format=True)), runner=self.runner)
         super(CliRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
@@ -448,9 +450,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         self._async_notified = {}
 
     def on_unreachable(self, host, results):
-        delegate_to = self.runner.module_vars.get('delegate_to')
-        if delegate_to:
-            host = '%s -> %s' % (host, delegate_to)
+        if self.runner.delegate_to:
+            host = '%s -> %s' % (host, self.runner.delegate_to)
 
         item = None
         if type(results) == dict:
@@ -463,9 +464,8 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_unreachable(host, results)
 
     def on_failed(self, host, results, ignore_errors=False):
-        delegate_to = self.runner.module_vars.get('delegate_to')
-        if delegate_to:
-            host = '%s -> %s' % (host, delegate_to)
+        if self.runner.delegate_to:
+            host = '%s -> %s' % (host, self.runner.delegate_to)
 
         results2 = results.copy()
         results2.pop('invocation', None)
@@ -492,15 +492,14 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         if returned_msg:
             display("msg: %s" % returned_msg, color='red', runner=self.runner)
         if not parsed and module_msg:
-            display("invalid output was: %s" % module_msg, color='red', runner=self.runner)
+            display(module_msg, color='red', runner=self.runner)
         if ignore_errors:
             display("...ignoring", color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_failed(host, results, ignore_errors=ignore_errors)
 
     def on_ok(self, host, host_result):
-        delegate_to = self.runner.module_vars.get('delegate_to')
-        if delegate_to:
-            host = '%s -> %s' % (host, delegate_to)
+        if self.runner.delegate_to:
+            host = '%s -> %s' % (host, self.runner.delegate_to)
 
         item = host_result.get('item', None)
 
@@ -534,12 +533,14 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
                 display(msg, color='green', runner=self.runner)
             else:
                 display(msg, color='yellow', runner=self.runner)
+        if constants.COMMAND_WARNINGS and 'warnings' in host_result2 and host_result2['warnings']:
+            for warning in host_result2['warnings']:
+                display("warning: %s" % warning, color='purple', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_ok(host, host_result)
 
     def on_skipped(self, host, item=None):
-        delegate_to = self.runner.module_vars.get('delegate_to')
-        if delegate_to:
-            host = '%s -> %s' % (host, delegate_to)
+        if self.runner.delegate_to:
+            host = '%s -> %s' % (host, self.runner.delegate_to)
 
         if constants.DISPLAY_SKIPPED_HOSTS:
             msg = ''
@@ -564,8 +565,9 @@ class PlaybookRunnerCallbacks(DefaultRunnerCallbacks):
         super(PlaybookRunnerCallbacks, self).on_async_poll(host,res,jid,clock)
 
     def on_async_ok(self, host, res, jid):
-        msg = "<job %s> finished on %s"%(jid, host)
-        display(msg, color='cyan', runner=self.runner)
+        if jid:
+            msg = "<job %s> finished on %s"%(jid, host)
+            display(msg, color='cyan', runner=self.runner)
         super(PlaybookRunnerCallbacks, self).on_async_ok(host, res, jid)
 
     def on_async_failed(self, host, res, jid):
@@ -645,7 +647,13 @@ class PlaybookCallbacks(object):
             msg = 'input for %s: ' % varname
 
         def prompt(prompt, private):
-            msg = prompt.encode(sys.stdout.encoding)
+            if sys.stdout.encoding:
+                msg = prompt.encode(sys.stdout.encoding)
+            else:
+                # when piping the output, or at other times when stdout
+                # may not be the standard file descriptor, the stdout
+                # encoding may not be set, so default to something sane
+                msg = prompt.encode(locale.getpreferredencoding())
             if private:
                 return getpass.getpass(msg)
             return raw_input(msg)

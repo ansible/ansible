@@ -25,11 +25,13 @@ import shlex
 from ansible import errors
 from ansible import utils
 from ansible import constants as C
+from ansible import __version__
 
 REPLACER = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
 REPLACER_ARGS = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS = "# POWERSHELL_COMMON"
+REPLACER_VERSION = "\"<<ANSIBLE_VERSION>>\""
 
 class ModuleReplacer(object):
 
@@ -149,13 +151,21 @@ class ModuleReplacer(object):
             complex_args_json = utils.jsonify(complex_args)
             # We force conversion of module_args to str because module_common calls shlex.split,
             # a standard library function that incorrectly handles Unicode input before Python 2.7.3.
+            # Note: it would be better to do all this conversion at the border
+            # (when the data is originally parsed into data structures) but
+            # it's currently coming from too many sources to make that
+            # effective.
             try:
                 encoded_args = repr(module_args.encode('utf-8'))
             except UnicodeDecodeError:
                 encoded_args = repr(module_args)
-            encoded_complex = repr(complex_args_json)
+            try:
+                encoded_complex = repr(complex_args_json.encode('utf-8'))
+            except UnicodeDecodeError:
+                encoded_complex = repr(complex_args_json.encode('utf-8'))
 
             # these strings should be part of the 'basic' snippet which is required to be included
+            module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
             module_data = module_data.replace(REPLACER_ARGS, encoded_args)
             module_data = module_data.replace(REPLACER_COMPLEX, encoded_complex)
 

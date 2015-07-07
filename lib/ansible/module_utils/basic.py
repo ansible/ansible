@@ -29,6 +29,8 @@
 
 # == BEGIN DYNAMICALLY INSERTED CODE ==
 
+ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
+
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
@@ -149,8 +151,9 @@ FILE_COMMON_ARGUMENTS=dict(
     serole = dict(),
     selevel = dict(),
     setype = dict(),
+    follow = dict(type='bool', default=False),
     # not taken by the file module, but other modules call file so it must ignore them.
-    content = dict(),
+    content = dict(no_log=True),
     backup = dict(),
     force = dict(),
     remote_src = dict(), # used by assemble
@@ -219,6 +222,26 @@ def load_platform_subclass(cls, *args, **kwargs):
         subclass = cls
 
     return super(cls, subclass).__new__(subclass)
+
+
+def json_dict_unicode_to_bytes(d):
+    ''' Recursively convert dict keys and values to byte str
+
+        Specialized for json return because this only handles, lists, tuples,
+        and dict container types (the containers that the json module returns)
+    '''
+
+    if isinstance(d, unicode):
+        return d.encode('utf-8')
+    elif isinstance(d, dict):
+        return dict(map(json_dict_unicode_to_bytes, d.iteritems()))
+    elif isinstance(d, list):
+        return list(map(json_dict_unicode_to_bytes, d))
+    elif isinstance(d, tuple):
+        return tuple(map(json_dict_unicode_to_bytes, d))
+    else:
+        return d
+
 
 class AnsibleModule(object):
 
@@ -292,6 +315,11 @@ class AnsibleModule(object):
             return {}
         else:
             path = os.path.expanduser(path)
+
+        # if the path is a symlink, and we're following links, get
+        # the target of the link instead for testing
+        if params.get('follow', False) and os.path.islink(path):
+            path = os.path.realpath(path)
 
         mode   = params.get('mode', None)
         owner  = params.get('owner', None)
@@ -517,17 +545,23 @@ class AnsibleModule(object):
 
     def set_mode_if_different(self, path, mode, changed):
         path = os.path.expanduser(path)
+        path_stat = os.lstat(path)
+
         if mode is None:
             return changed
-        try:
-            # FIXME: support English modes
-            if not isinstance(mode, int):
-                mode = int(mode, 8)
-        except Exception, e:
-            self.fail_json(path=path, msg='mode needs to be something octalish', details=str(e))
 
-        st = os.lstat(path)
-        prev_mode = stat.S_IMODE(st[stat.ST_MODE])
+        if not isinstance(mode, int):
+            try:
+                mode = int(mode, 8)
+            except Exception:
+                try:
+                    mode = self._symbolic_mode_to_octal(path_stat, mode)
+                except Exception, e:
+                    self.fail_json(path=path,
+                                   msg="mode must be in octal or symbolic form",
+                                   details=str(e))
+
+        prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         if prev_mode != mode:
             if self.check_mode:
@@ -549,12 +583,106 @@ class AnsibleModule(object):
             except Exception, e:
                 self.fail_json(path=path, msg='chmod failed', details=str(e))
 
-            st = os.lstat(path)
-            new_mode = stat.S_IMODE(st[stat.ST_MODE])
+            path_stat = os.lstat(path)
+            new_mode = stat.S_IMODE(path_stat.st_mode)
 
             if new_mode != prev_mode:
                 changed = True
         return changed
+
+    def _symbolic_mode_to_octal(self, path_stat, symbolic_mode):
+        new_mode = stat.S_IMODE(path_stat.st_mode)
+
+        mode_re = re.compile(r'^(?P<users>[ugoa]+)(?P<operator>[-+=])(?P<perms>[rwxXst]*|[ugo])$')
+        for mode in symbolic_mode.split(','):
+            match = mode_re.match(mode)
+            if match:
+                users = match.group('users')
+                operator = match.group('operator')
+                perms = match.group('perms')
+
+                if users == 'a': users = 'ugo'
+
+                for user in users:
+                    mode_to_apply = self._get_octal_mode_from_symbolic_perms(path_stat, user, perms)
+                    new_mode = self._apply_operation_to_mode(user, operator, mode_to_apply, new_mode)
+            else:
+                raise ValueError("bad symbolic permission for mode: %s" % mode)
+        return new_mode
+    
+    def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
+        if operator  ==  '=':
+            if user == 'u': mask = stat.S_IRWXU | stat.S_ISUID
+            elif user == 'g': mask = stat.S_IRWXG | stat.S_ISGID
+            elif user == 'o': mask = stat.S_IRWXO | stat.S_ISVTX
+            
+            # mask out u, g, or o permissions from current_mode and apply new permissions   
+            inverse_mask = mask ^ 07777
+            new_mode = (current_mode & inverse_mask) | mode_to_apply
+        elif operator == '+':
+            new_mode = current_mode | mode_to_apply
+        elif operator == '-':
+            new_mode = current_mode - (current_mode & mode_to_apply)
+        return new_mode
+        
+    def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms):
+        prev_mode = stat.S_IMODE(path_stat.st_mode)
+        
+        is_directory = stat.S_ISDIR(path_stat.st_mode)
+        has_x_permissions = (prev_mode & 00111) > 0
+        apply_X_permission = is_directory or has_x_permissions
+
+        # Permission bits constants documented at:
+        # http://docs.python.org/2/library/stat.html#stat.S_ISUID
+        if apply_X_permission:
+            X_perms = {
+                'u': {'X': stat.S_IXUSR},
+                'g': {'X': stat.S_IXGRP},
+                'o': {'X': stat.S_IXOTH}
+            }
+        else:
+            X_perms = {
+                'u': {'X': 0},
+                'g': {'X': 0},
+                'o': {'X': 0}
+            }
+
+        user_perms_to_modes = {
+            'u': {
+                'r': stat.S_IRUSR,
+                'w': stat.S_IWUSR,
+                'x': stat.S_IXUSR,
+                's': stat.S_ISUID,
+                't': 0,
+                'u': prev_mode & stat.S_IRWXU,
+                'g': (prev_mode & stat.S_IRWXG) << 3,
+                'o': (prev_mode & stat.S_IRWXO) << 6 },
+            'g': {
+                'r': stat.S_IRGRP,
+                'w': stat.S_IWGRP,
+                'x': stat.S_IXGRP,
+                's': stat.S_ISGID,
+                't': 0,
+                'u': (prev_mode & stat.S_IRWXU) >> 3,
+                'g': prev_mode & stat.S_IRWXG,
+                'o': (prev_mode & stat.S_IRWXO) << 3 },
+            'o': {
+                'r': stat.S_IROTH,
+                'w': stat.S_IWOTH,
+                'x': stat.S_IXOTH,
+                's': 0,
+                't': stat.S_ISVTX,
+                'u': (prev_mode & stat.S_IRWXU) >> 6,
+                'g': (prev_mode & stat.S_IRWXG) >> 3,
+                'o': prev_mode & stat.S_IRWXO }
+        }
+
+        # Insert X_perms into user_perms_to_modes
+        for key, value in X_perms.items():
+            user_perms_to_modes[key].update(value)
+
+        or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
+        return reduce(or_reduce, perms, 0)
 
     def set_fs_attributes_if_different(self, file_args, changed):
         # set modes owners and context as needed
@@ -647,7 +775,7 @@ class AnsibleModule(object):
             required = v.get('required', False)
             if default is not None and required:
                 # not alias specific but this is a good place to check this
-                self.fail_json(msg="internal error: required and default are mutally exclusive for %s" % k)
+                self.fail_json(msg="internal error: required and default are mutually exclusive for %s" % k)
             if aliases is None:
                 continue
             if type(aliases) != list:
@@ -806,7 +934,7 @@ class AnsibleModule(object):
                                     self.fail_json(msg="unable to evaluate dictionary for %s" % k)
                                 self.params[k] = result
                         elif '=' in value:
-                            self.params[k] = dict([x.split("=", 1) for x in value.split(",")])
+                            self.params[k] = dict([x.strip().split("=", 1) for x in value.split(",")])
                         else:
                             self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
                     else:
@@ -860,9 +988,68 @@ class AnsibleModule(object):
             if k in params:
                 self.fail_json(msg="duplicate parameter: %s (value=%s)" % (k, v))
             params[k] = v
-        params2 = json.loads(MODULE_COMPLEX_ARGS)
+        params2 = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
         params2.update(params)
         return (params2, args)
+
+    def _heuristic_log_sanitize(self, data):
+        ''' Remove strings that look like passwords from log messages '''
+        # Currently filters:
+        # user:pass@foo/whatever and http://username:pass@wherever/foo
+        # This code has false positives and consumes parts of logs that are
+        # not passwds
+
+        # begin: start of a passwd containing string
+        # end: end of a passwd containing string
+        # sep: char between user and passwd
+        # prev_begin: where in the overall string to start a search for
+        #   a passwd
+        # sep_search_end: where in the string to end a search for the sep
+        output = []
+        begin = len(data)
+        prev_begin = begin
+        sep = 1
+        while sep:
+            # Find the potential end of a passwd
+            try:
+                end = data.rindex('@', 0, begin)
+            except ValueError:
+                # No passwd in the rest of the data
+                output.insert(0, data[0:begin])
+                break
+
+            # Search for the beginning of a passwd
+            sep = None
+            sep_search_end = end
+            while not sep:
+                # URL-style username+password
+                try:
+                    begin = data.rindex('://', 0, sep_search_end)
+                except ValueError:
+                    # No url style in the data, check for ssh style in the
+                    # rest of the string
+                    begin = 0
+                # Search for separator
+                try:
+                    sep = data.index(':', begin + 3, end)
+                except ValueError:
+                    # No separator; choices:
+                    if begin == 0:
+                        # Searched the whole string so there's no password
+                        # here.  Return the remaining data
+                        output.insert(0, data[0:begin])
+                        break
+                    # Search for a different beginning of the password field.
+                    sep_search_end = begin
+                    continue
+            if sep:
+                # Password was found; remove it.
+                output.insert(0, data[end:prev_begin])
+                output.insert(0, '********')
+                output.insert(0, data[begin:sep + 1])
+                prev_begin = begin
+
+        return ''.join(output)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -871,53 +1058,41 @@ class AnsibleModule(object):
         log_args = dict()
         passwd_keys = ['password', 'login_password']
 
-        filter_re = [
-            # filter out things like user:pass@foo/whatever
-            # and http://username:pass@wherever/foo
-            re.compile('^(?P<before>.*:)(?P<password>.*)(?P<after>\@.*)$'), 
-        ]
-
         for param in self.params:
             canon  = self.aliases.get(param, param)
             arg_opts = self.argument_spec.get(canon, {})
             no_log = arg_opts.get('no_log', False)
-                
-            if no_log:
+
+            if self.boolean(no_log):
                 log_args[param] = 'NOT_LOGGING_PARAMETER'
             elif param in passwd_keys:
                 log_args[param] = 'NOT_LOGGING_PASSWORD'
             else:
-                found = False
-                for filter in filter_re:
-                    if isinstance(self.params[param], unicode):
-                        m = filter.match(self.params[param])
-                    else:
-                        m = filter.match(str(self.params[param]))
-                    if m:
-                        d = m.groupdict()
-                        log_args[param] = d['before'] + "********" + d['after']
-                        found = True
-                        break
-                if not found:
-                    log_args[param] = self.params[param]
+                param_val = self.params[param]
+                if not isinstance(param_val, basestring):
+                    param_val = str(param_val)
+                elif isinstance(param_val, unicode):
+                    param_val = param_val.encode('utf-8')
+                log_args[param] = self._heuristic_log_sanitize(param_val)
 
         module = 'ansible-%s' % os.path.basename(__file__)
-        msg = ''
+        msg = []
         for arg in log_args:
-            if isinstance(log_args[arg], basestring):
-                msg = msg + arg + '=' + log_args[arg].decode('utf-8') + ' '
-            else:
-                msg = msg + arg + '=' + str(log_args[arg]) + ' '
+            arg_val = log_args[arg]
+            if not isinstance(arg_val, basestring):
+                arg_val = str(arg_val)
+            elif isinstance(arg_val, unicode):
+                arg_val = arg_val.encode('utf-8')
+            msg.append('%s=%s ' % (arg, arg_val))
         if msg:
-            msg = 'Invoked with %s' % msg
+            msg = 'Invoked with %s' % ''.join(msg)
         else:
             msg = 'Invoked'
 
         # 6655 - allow for accented characters
-        try:
-            msg = msg.encode('utf8')
-        except UnicodeDecodeError, e:
-            pass
+        if isinstance(msg, unicode):
+            # We should never get here as msg should be type str, not unicode
+            msg = msg.encode('utf-8')
 
         if (has_journal):
             journal_args = ["MESSAGE=%s %s" % (module, msg)]
@@ -1124,14 +1299,17 @@ class AnsibleModule(object):
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
         except (IOError,OSError), e:
-            # only try workarounds for errno 18 (cross device), 1 (not permited) and 13 (permission denied)
+            # only try workarounds for errno 18 (cross device), 1 (not permitted) and 13 (permission denied)
             if e.errno != errno.EPERM and e.errno != errno.EXDEV and e.errno != errno.EACCES:
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
             dest_dir = os.path.dirname(dest)
             dest_file = os.path.basename(dest)
-            tmp_dest = tempfile.NamedTemporaryFile(
-                prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
+            try:
+                tmp_dest = tempfile.NamedTemporaryFile(
+                    prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
+            except (OSError, IOError), e:
+                self.fail_json(msg='The destination directory (%s) is not writable by the current user.' % dest_dir)
 
             try: # leaves tmp file behind when sudo and  not root
                 if switched_user and os.getuid() != 0:
@@ -1143,9 +1321,13 @@ class AnsibleModule(object):
                 if self.selinux_enabled():
                     self.set_context_if_different(
                         tmp_dest.name, context, False)
-                tmp_stat = os.stat(tmp_dest.name)
-                if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                    os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
+                try:
+                    tmp_stat = os.stat(tmp_dest.name)
+                    if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                        os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
+                except OSError, e:
+                    if e.errno != errno.EPERM:
+                        raise
                 os.rename(tmp_dest.name, dest)
             except (shutil.Error, OSError, IOError), e:
                 self.cleanup(tmp_dest.name)
@@ -1256,7 +1438,7 @@ class AnsibleModule(object):
             try:
                 os.chdir(cwd)
             except (OSError, IOError), e:
-                self.fail_json(rc=e.errno, msg="Could not open %s , %s" % (cwd, str(e)))
+                self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, str(e)))
 
         try:
             cmd = subprocess.Popen(args, **kwargs)

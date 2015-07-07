@@ -88,7 +88,7 @@ and is guaranteed to entertain and/or annoy coworkers.
 Configuring
 +++++++++++
 
-To active a callback drop it in a callback directory as configured in :ref:`ansible.cfg <callback_plugins>`.
+To activate a callback drop it in a callback directory as configured in :ref:`ansible.cfg <callback_plugins>`.
 
 .. _callback_development:
 

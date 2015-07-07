@@ -125,6 +125,8 @@ Here are some examples::
 
          - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
+         - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
+
 As an alternative you can also assign lookup plugins to variables or use them
 elsewhere.  This macros are evaluated each time they are used in a task (or
 template)::

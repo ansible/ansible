@@ -22,9 +22,11 @@ import subprocess
 import ansible.constants as C
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
+from ansible.module_utils.basic import json_dict_unicode_to_bytes
 from ansible import utils
 from ansible import errors
 import sys
+
 
 class InventoryScript(object):
     ''' Host inventory parser for ansible using external inventory scripts. '''
@@ -53,6 +55,7 @@ class InventoryScript(object):
 
         # not passing from_remote because data from CMDB is trusted
         self.raw  = utils.parse_json(self.data)
+        self.raw  = json_dict_unicode_to_bytes(self.raw)
 
         all       = Group('all')
         groups    = dict(all=all)
@@ -84,10 +87,14 @@ class InventoryScript(object):
 
             if not isinstance(data, dict):
                 data = {'hosts': data}
+            # is not those subkeys, then simplified syntax, host with vars
             elif not any(k in data for k in ('hosts','vars')):
                 data = {'hosts': [group_name], 'vars': data}
 
             if 'hosts' in data:
+                if not isinstance(data['hosts'], list):
+                    raise errors.AnsibleError("You defined a group \"%s\" with bad "
+                        "data for the host list:\n %s" % (group_name, data))
 
                 for hostname in data['hosts']:
                     if not hostname in all_hosts:
@@ -96,6 +103,10 @@ class InventoryScript(object):
                     group.add_host(host)
 
             if 'vars' in data:
+                if not isinstance(data['vars'], dict):
+                    raise errors.AnsibleError("You defined a group \"%s\" with bad "
+                        "data for variables:\n %s" % (group_name, data))
+
                 for k, v in data['vars'].iteritems():
                     if group.name == all.name:
                         all.set_variable(k, v)
@@ -130,4 +141,10 @@ class InventoryScript(object):
         except OSError, e:
             raise errors.AnsibleError("problem running %s (%s)" % (' '.join(cmd), e))
         (out, err) = sp.communicate()
-        return utils.parse_json(out)
+        if out.strip() == '':
+            return dict()
+        try:
+            return json_dict_unicode_to_bytes(utils.parse_json(out))
+        except ValueError:
+            raise errors.AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
+

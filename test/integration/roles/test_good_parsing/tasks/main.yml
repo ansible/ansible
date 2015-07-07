@@ -164,3 +164,41 @@
       - result.invocation.module_name == "debug"
       - result.msg == "this should be debugged"
 
+- name: test conditional includes
+  include: test_include_conditional.yml
+  when: false
+
+- name: assert the nested include from test_include_conditional was not set
+  assert:
+    that:
+      - nested_include_var is undefined
+
+- name: test omit in complex args
+  set_fact:
+    foo: bar
+    spam: "{{ omit }}"
+    should_not_omit: "prefix{{ omit }}"
+
+- assert:
+    that:
+      - foo == 'bar'
+      - spam is undefined
+      - should_not_omit is defined
+
+- name: test omit in module args
+  set_fact: >
+    yo=whatsup
+    eggs="{{ omit }}"
+    default_omitted="{{ not_exists|default(omit) }}"
+    should_not_omit_1="prefix{{ omit }}"
+    should_not_omit_2="{{ omit }}suffix"
+    should_not_omit_3="__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"
+
+- assert:
+    that:
+      - yo == 'whatsup'
+      - eggs is undefined
+      - default_omitted is undefined
+      - should_not_omit_1 is defined
+      - should_not_omit_2 is defined
+      - should_not_omit_3 == "__omit_place_holder__afb6b9bc3d20bfeaa00a1b23a5930f89"

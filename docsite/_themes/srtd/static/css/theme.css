@@ -3293,7 +3293,7 @@ code, .rst-content tt {
     border: solid 1px #e1e4e5;
     font-size: 75%;
     padding: 0 5px;
-    font-family: "Incosolata", "Consolata", "Monaco", monospace;
+    font-family: "Inconsolata", "Consolata", "Monaco", monospace;
     color: #e74c3c;
     overflow-x: auto;
 }
@@ -3439,7 +3439,7 @@ a.wy-text-neutral:hover {
     border-right: solid 1px #e6e9ea;
     margin: 0;
     padding: 12px 12px;
-    font-family: "Incosolata", "Consolata", "Monaco", monospace;
+    font-family: "Inconsolata", "Consolata", "Monaco", monospace;
     font-size: 12px;
     line-height: 1.5;
     color: #d9d9d9;
@@ -3449,7 +3449,7 @@ div[class^='highlight'] pre {
     white-space: pre;
     margin: 0;
     padding: 12px 12px;
-    font-family: "Incosolata", "Consolata", "Monaco", monospace;
+    font-family: "Inconsolata", "Consolata", "Monaco", monospace;
     font-size: 12px;
     line-height: 1.5;
     display: block;

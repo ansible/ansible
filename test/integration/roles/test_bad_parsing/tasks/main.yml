@@ -49,5 +49,7 @@
   failed_when: False
   tags: scenario4
 
-
+- name: test that a missing/malformed jinja2 filter fails
+  debug: msg="{{output_dir|badfiltername}}"
+  tags: scenario5
 

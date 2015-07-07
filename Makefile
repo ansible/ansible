@@ -86,12 +86,20 @@ MOCK_CFG ?=
 
 NOSETESTS ?= nosetests
 
+NOSETESTS3 ?= nosetests-3.3
+
 ########################################################
 
 all: clean python
 
 tests:
-	PYTHONPATH=./lib ANSIBLE_LIBRARY=./library  $(NOSETESTS) -d -w test/units -v
+	PYTHONPATH=./lib $(NOSETESTS) -d -w test/units -v # Could do: --with-coverage --cover-package=ansible
+
+newtests:
+	PYTHONPATH=./v2:./lib $(NOSETESTS) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
+
+newtests-py3:
+	PYTHONPATH=./v2:./lib $(NOSETESTS3) -d -w v2/test -v --with-coverage --cover-package=ansible --cover-branches
 
 authors:
 	sh hacking/authors.sh
@@ -114,7 +122,7 @@ pep8:
 	@echo "# Running PEP8 Compliance Tests"
 	@echo "#############################################"
 	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 lib/ bin/
-	-pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
+	# -pep8 -r --ignore=E501,E221,W291,W391,E302,E251,E203,W293,E231,E303,E201,E225,E261,E241 --filename "*" library/
 
 pyflakes:
 	pyflakes lib/ansible/*.py lib/ansible/*/*.py bin/*

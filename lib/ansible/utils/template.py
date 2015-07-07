@@ -166,6 +166,7 @@ class _jinja2_vars(object):
         return False
 
     def __getitem__(self, varname):
+        from ansible.runner import HostVars
         if varname not in self.vars:
             for i in self.extras:
                 if varname in i:
@@ -175,8 +176,9 @@ class _jinja2_vars(object):
             else:
                 raise KeyError("undefined variable: %s" % varname)
         var = self.vars[varname]
-        # HostVars is special, return it as-is
-        if isinstance(var, dict) and type(var) != dict:
+        # HostVars is special, return it as-is, as is the special variable
+        # 'vars', which contains the vars structure
+        if isinstance(var, dict) and varname == "vars" or isinstance(var, HostVars):
             return var
         else:
             return template(self.basedir, var, self.vars, fail_on_undefined=self.fail_on_undefined)
@@ -195,7 +197,7 @@ class J2Template(jinja2.environment.Template):
     This class prevents Jinja2 from running _jinja2_vars through dict()
     Without this, {% include %} and similar will create new contexts unlike
     the special one created in template_from_file. This ensures they are all
-    alike, with the exception of potential locals.
+    alike, except for potential locals.
     '''
     def new_context(self, vars=None, shared=False, locals=None):
         return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
@@ -338,6 +340,8 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
 
         try:
             t = environment.from_string(data)
+        except TemplateSyntaxError, e:
+            raise errors.AnsibleError("template error while templating string: %s" % str(e))
         except Exception, e:
             if 'recursion' in str(e):
                 raise errors.AnsibleError("recursive loop detected in template string: %s" % data)
@@ -362,7 +366,7 @@ def template_from_string(basedir, data, vars, fail_on_undefined=False):
                     "Make sure your variable name does not contain invalid characters like '-'."
                 )
             else:
-                raise errors.AnsibleError("an unexpected type error occured. Error was %s" % te)
+                raise errors.AnsibleError("an unexpected type error occurred. Error was %s" % te)
         return res
     except (jinja2.exceptions.UndefinedError, errors.AnsibleUndefinedVariable):
         if fail_on_undefined:

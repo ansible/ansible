@@ -16,7 +16,7 @@ else
         case "$PREFIX_PYTHONPATH*"
         case "*"
             echo "Appending PYTHONPATH"
-            set -gx PYTHONPATH $PREFIX_PYTHONPATH:$PYTHONPATH
+            set -gx PYTHONPATH "$PREFIX_PYTHONPATH:$PYTHONPATH"
     end
 end
 

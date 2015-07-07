@@ -89,7 +89,10 @@ class ShellModule(object):
         script = '''
             If (Test-Path -PathType Leaf "%(path)s")
             {
-                (Get-FileHash -Path "%(path)s" -Algorithm MD5).Hash.ToLower();
+                $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
+                $fp = [System.IO.File]::Open("%(path)s", [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
+                [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
+                $fp.Dispose();
             }
             ElseIf (Test-Path -PathType Container "%(path)s")
             {
@@ -103,6 +106,7 @@ class ShellModule(object):
         return _encode_script(script)
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
+        cmd = cmd.encode('utf-8')
         cmd_parts = shlex.split(cmd, posix=False)
         if not cmd_parts[0].lower().endswith('.ps1'):
             cmd_parts[0] = '%s.ps1' % cmd_parts[0]

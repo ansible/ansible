@@ -26,7 +26,7 @@ options:
     default: null
     choices: []
     description:
-      - mode the file or directory should be, such as 0644 as would be fed to I(chmod)
+      - mode the file or directory should be, such as 0644 as would be fed to I(chmod). As of version 1.8, the mode may be specified as a symbolic mode (for example, C(u+rwx) or C(u=rw,g=r,o=r)).
   owner:
     required: false
     default: null
@@ -67,4 +67,12 @@ options:
       - level part of the SELinux file context. This is the MLS/MCS attribute,
         sometimes known as the C(range). C(_default) feature works as for
         I(seuser).
+  follow:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "1.8"
+    description:
+      - 'This flag indicates that filesystem links, if they exist, should be followed.'
+
 """

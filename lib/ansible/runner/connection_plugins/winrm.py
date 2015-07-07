@@ -87,7 +87,7 @@ class Connection(object):
                 _winrm_cache[cache_key] = protocol
                 return protocol
             except WinRMTransportError, exc:
-                err_msg = str(exc.args[0])
+                err_msg = str(exc)
                 if re.search(r'Operation\s+?timed\s+?out', err_msg, re.I):
                     raise errors.AnsibleError("the connection attempt timed out")
                 m = re.search(r'Code\s+?(\d{3})', err_msg)

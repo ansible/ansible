@@ -68,6 +68,14 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
+As an advanced usage, you can also select the numbered server in a group::
+   
+    webservers[0]
+
+Or a portion of servers in a group::
+
+    webservers[0:25]
+
 Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
 
     ~(web|db).*\.example\.com
@@ -75,6 +83,10 @@ Most people don't specify patterns as regular expressions, but you can.  Just st
 While we're jumping a bit ahead, additionally, you can add an exclusion criteria just by supplying the ``--limit`` flag to /usr/bin/ansible or /usr/bin/ansible-playbook::
 
     ansible-playbook site.yml --limit datacenter2
+
+And if you want to read the list of hosts from a file, prefix the file name with '@'.  Since Ansible 1.2::
+
+    ansible-playbook site.yml --limit @retry_hosts.txt
 
 Easy enough.  See :doc:`intro_adhoc` and then :doc:`playbooks` for how to apply this knowledge.
 
