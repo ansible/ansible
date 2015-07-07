@@ -1,3 +1,4 @@
 ---
 - name: default_foo
-  debug: msg="default_foo handler"
+  set_fact:
+    called_handler: default_foo

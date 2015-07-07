@@ -4,6 +4,7 @@
   gather_facts: False
   connection: local
   tasks:
+    - debug: var=handlers_list
     - name: notify with host vars
       command: echo
       notify: '{{handlers_list}}'
@@ -23,6 +24,7 @@
   gather_facts: False
   connection: local
   tasks:
+    - debug: var=handlers_list
     - name: notify with play vars
       command: echo
       notify: '{{handlers_list}}'
@@ -49,6 +51,12 @@
   connection: local
   roles:
     - role: test_notify
+  tasks:
+    - meta: flush_handlers
+    - assert:
+        that:
+          called_handler is defined
   handlers:
     - name: notify_host_c
-      debug: msg="notify_host_c handler"
+      set_fact:
+        called_handler: notify_host_c
