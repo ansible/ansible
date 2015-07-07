@@ -276,7 +276,7 @@ class DockerImageManager:
                 tls_config = docker.tls.TLSConfig(**params)
 
         self.client = docker.Client(
-            base_url=docker_url.geturl(),
+            base_url=docker_url,
             version=module.params.get('docker_api_version'),
             timeout=module.params.get('timeout'),
             tls=tls_config)
