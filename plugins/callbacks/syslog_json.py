@@ -4,6 +4,7 @@ import json
 import logging
 import logging.handlers
 
+import socket
 
 class CallbackModule(object):
     """
@@ -26,22 +27,23 @@ class CallbackModule(object):
                        os.getenv('SYSLOG_PORT',514)), 
             facility=logging.handlers.SysLogHandler.LOG_USER
         )
-        self.logger.addHandler(handler)
+        self.logger.addHandler(self.handler)
+        self.hostname = socket.gethostname()
 
     def on_any(self, *args, **kwargs):
         pass
 
     def runner_on_failed(self, host, res, ignore_errors=False):
-        self.logger.info('RUNNER_ON_FAILED ' + host + ' ' + json.dumps(res, sort_keys=True))
+        self.logger.error('%s ansible-command: task execution FAILED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def runner_on_ok(self, host, res):
-        self.logger.info('RUNNER_ON_OK ' + host + ' ' + json.dumps(res, sort_keys=True))
+        self.logger.info('%s ansible-command: task execution OK; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def runner_on_skipped(self, host, item=None):
-        self.logger.info('RUNNER_ON_SKIPPED ' + host + ' ...')
+        self.logger.info('%s ansible-command: task execution SKIPPED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def runner_on_unreachable(self, host, res):
-        self.logger.info('RUNNER_UNREACHABLE ' + host + ' ' + json.dumps(res, sort_keys=True))
+        self.logger.error('%s ansible-command: task execution UNREACHABLE; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def runner_on_no_hosts(self):
         pass
@@ -53,7 +55,7 @@ class CallbackModule(object):
         pass
 
     def runner_on_async_failed(self, host, res):
-        self.logger.info('RUNNER_SYNC_FAILED ' + host + ' ' + json.dumps(res, sort_keys=True))
+        self.logger.error('%s ansible-command: task execution FAILED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def playbook_on_start(self):
         pass
@@ -77,10 +79,10 @@ class CallbackModule(object):
         pass
 
     def playbook_on_import_for_host(self, host, imported_file):
-        self.logger.info('PLAYBOOK_ON_IMPORTED ' + host + ' ' + json.dumps(res, sort_keys=True))
+        self.logger.info('%s ansible-command: playbook IMPORTED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def playbook_on_not_import_for_host(self, host, missing_file):
-        self.logger.info('PLAYBOOK_ON_NOTIMPORTED ' + host + ' ' + json.dumps(res, sort_keys=True))
+        self.logger.info('%s ansible-command: playbook NOT IMPORTED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def playbook_on_play_start(self, name):
         pass
