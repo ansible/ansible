@@ -90,8 +90,8 @@ class Connection(object):
 
         if not out_path.startswith(os.path.sep):
             out_path = os.path.join(os.path.sep, out_path)
-        normpath = os.path.normpath(out_path)
-        out_path = os.path.join(self.chroot, normpath[1:])
+        out_path = os.path.sep.join((self.chroot, out_path))
+        out_path = os.path.normpath(out_path)
 
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
         if not os.path.exists(in_path):
