@@ -261,12 +261,12 @@ class TestStrategyBase(unittest.TestCase):
         self.assertIn('test handler', strategy_base._notified_handlers)
         self.assertIn(mock_host, strategy_base._notified_handlers['test handler'])
 
-        queue_items.append(('set_host_var', mock_host, 'foo', 'bar'))
+        queue_items.append(('set_host_var', mock_host, mock_task, None, 'foo', 'bar'))
         results = strategy_base._process_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
         self.assertEqual(strategy_base._pending_results, 1)
 
-        queue_items.append(('set_host_facts', mock_host, 'foo', dict()))
+        queue_items.append(('set_host_facts', mock_host, mock_task, None, 'foo', dict()))
         results = strategy_base._process_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
         self.assertEqual(strategy_base._pending_results, 1)
