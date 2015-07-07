@@ -20,7 +20,7 @@ module: profitbricks
 short_description: Create, destroy, start, stop, and reboot a ProfitBricks virtual machine.
 description:
      - Create, destroy, update, start, stop, and reboot a ProfitBricks virtual machine. When the virtual machine is created it can optionally wait for it to be 'running' before returning. This module has a dependency on profitbricks >= 1.0.0
-version_added: "1.9"
+version_added: "2.0"
 options:
   auto_increment:
     description:
@@ -31,12 +31,10 @@ options:
     description:
       - The name of the virtual machine.
     required: true
-    default: null
   image: 
     description:
       - The system image ID for creating the virtual machine, e.g. a3eae284-a2fe-11e4-b187-5f1f641608c8.
     required: true
-    default: null
   datacenter:
     description:
       - The Datacenter to provision this virtual machine.
@@ -104,12 +102,10 @@ options:
     required: false
     default: "yes"
     choices: [ "yes", "no" ]
-    aliases: []
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 600
-    aliases: []
   remove_boot_volume:
     description:
       - remove the bootVolume of the virtual machine you're destroying.
@@ -121,7 +117,7 @@ options:
       - create or terminate instances
     required: false
     default: 'present'
-    aliases: []
+    choices: [ "running", "stopped", "absent", "present" ]
 
 requirements: [ "profitbricks" ]
 author: Matt Baldwin (baldwin@stackpointcloud.com)
@@ -185,11 +181,12 @@ import time
 import json
 import sys
 
+HAS_PB_SDK = True
+
 try:
     from profitbricks.client import ProfitBricksService, Volume, Server, Datacenter, NIC, LAN
 except ImportError:
-    print "failed=True msg='profitbricks required for this module'"
-    sys.exit(1)
+    HAS_PB_SDK = False
 
 LOCATIONS = ['us/las',
              'de/fra',
@@ -583,6 +580,9 @@ def main():
         )
     )
 
+    if not HAS_PB_SDK:
+        module.fail_json(msg='profitbricks required for this module')
+
     subscription_user = module.params.get('subscription_user')
     subscription_password = module.params.get('subscription_password')
     wait = module.params.get('wait')
@@ -596,21 +596,24 @@ def main():
 
     if state == 'absent':
         if not module.params.get('datacenter'):
-            module.fail_json(msg='datacenter parameter is required for running or stopping machines.')
+            module.fail_json(msg='datacenter parameter is required ' + 
+                'for running or stopping machines.')
 
-        (changed) = remove_virtual_machine(module, profitbricks)
-
-        module.exit_json(
-            changed=changed)
+        try:
+            (changed) = remove_virtual_machine(module, profitbricks)
+            module.exit_json(changed=changed)
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % str(e))
 
     elif state in ('running', 'stopped'):
         if not module.params.get('datacenter'):
-            module.fail_json(msg='datacenter parameter is required for running or stopping machines.')
-        
-        (changed) = startstop_machine(module, profitbricks, state)
-
-        module.exit_json(
-            changed=changed)
+            module.fail_json(msg='datacenter parameter is required for ' + 
+                'running or stopping machines.')
+        try:
+            (changed) = startstop_machine(module, profitbricks, state)
+            module.exit_json(changed=changed)
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % str(e))
 
     elif state == 'present':
         if not module.params.get('name'):
@@ -618,15 +621,19 @@ def main():
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
         if not module.params.get('subscription_user'):
-            module.fail_json(msg='subscription_user parameter is required for new instance')
+            module.fail_json(msg='subscription_user parameter is ' + 
+                'required for new instance')
         if not module.params.get('subscription_password'):
-            module.fail_json(msg='subscription_password parameter is required for new instance')
+            module.fail_json(msg='subscription_password parameter is ' + 
+                'required for new instance')
 
-        (machine_dict_array) = create_virtual_machine(module, profitbricks)
-
-        module.exit_json(**machine_dict_array)
-
+        try:
+            (machine_dict_array) = create_virtual_machine(module, profitbricks)
+            module.exit_json(**machine_dict_array)
+        except Exception as e:
+            module.fail_json(msg='failed to set instance state: %s' % str(e))
 
 from ansible.module_utils.basic import *
 
 main()
+
