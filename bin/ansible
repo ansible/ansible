@@ -80,7 +80,7 @@ if __name__ == '__main__':
         display.error(str(e))
         sys.exit(5)
     except AnsibleParserError as e:
-        display.error(str(e))
+        display.error(str(e), wrap_text=False)
         sys.exit(4)
 # TQM takes care of these, but leaving comment to reserve the exit codes
 #    except AnsibleHostUnreachable as e:
