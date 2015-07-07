@@ -226,13 +226,29 @@ def unset_mount(**kwargs):
 
 def mount(module, **kwargs):
     """ mount up a path or remount if needed """
+
+    # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
+    args = dict(
+        opts   = 'default',
+        dump   = '0',
+        passno = '0',
+        fstab  = '/etc/fstab'
+    )
+    args.update(kwargs)
+
     mount_bin = module.get_bin_path('mount')
 
     name = kwargs['name']
+    
+    cmd = [ mount_bin, ]
+    
     if os.path.ismount(name):
-        cmd = [ mount_bin , '-o', 'remount', name ]
-    else:
-        cmd = [ mount_bin, name ]
+        cmd += [ '-o', 'remount', ]
+
+    if get_platform().lower() == 'freebsd':
+        cmd += [ '-F', args['fstab'], ]
+
+    cmd += [ name, ]
 
     rc, out, err = module.run_command(cmd)
     if rc == 0:
