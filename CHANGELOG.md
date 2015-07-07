@@ -24,6 +24,7 @@ Deprecated Modules (new ones in parens):
   * quantum_network (os_network)
   * glance_image
   * nova_compute   (os_server)
+  * quantum_floating_ip (os_floating_ip)
 
 New Modules:
   * amazon: ec2_ami_copy
@@ -67,6 +68,7 @@ New Modules:
   * openstack: os_ironic
   * openstack: os_ironic_node
   * openstack: os_client_config
+  * openstack: os_floating_ip
   * openstack: os_image
   * openstack: os_network
   * openstack: os_object
