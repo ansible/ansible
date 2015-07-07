@@ -126,6 +126,34 @@ New Inventory scripts:
 
 Other Notable Changes:
 
+## 1.9.2 "Dancing In the Street" - Jun 26, 2015
+
+* Security fixes to check that hostnames match certificates with https urls (CVE-2015-3908)
+  - get_url and uri modules
+  - url and etcd lookup plugins
+* Security fixes to the zone (Solaris containers), jail (bsd containers),
+  and chroot connection plugins.  These plugins can be used to connect to
+  their respective container types in leiu of the standard ssh connection.
+  Prior to this fix being applied these connection plugins didn't properly
+  handle symlinks within the containers which could lead to files intended to
+  be written to or read from the container being written to or read from the
+  host system instead. (CVE pending)
+* Fixed a bug in the service module where init scripts were being incorrectly used instead of upstart/systemd.
+* Fixed a bug where sudo/su settings were not inherited from ansible.cfg correctly.
+* Fixed a bug in the rds module where a traceback may occur due to an unbound variable.
+* Fixed a bug where certain remote file systems where the SELinux context was not being properly set.
+* Re-enabled several windows modules which had been partially merged (via action plugins):
+  - win_copy.ps1
+  - win_copy.py
+  - win_file.ps1
+  - win_file.py
+  - win_template.py
+* Fix bug using with_sequence and a count that is zero.  Also allows counting backwards isntead of forwards
+* Fix get_url module bug preventing use of custom ports with https urls
+* Fix bug disabling repositories in the yum module.
+* Fix giving yum module a url to install a package from on RHEL/CENTOS5
+* Fix bug in dnf module preventing it from working when yum-utils was not already installed
+
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
 * Fixed a bug related to Kerberos auth when using winrm with a domain account.
