@@ -39,7 +39,7 @@ options:
     default: 6667
   nick:
     description:
-      - Nickname. May be shortened, depending on server's NICKLEN setting.
+      - Nickname to send the message from. May be shortened, depending on server's NICKLEN setting.
     required: false
     default: ansible
   msg:
@@ -65,8 +65,9 @@ options:
     required: true
   nick_to:
     description:
-      - Nick to send the message to
+      - A list of nicknames to send the message to. When both channel and nick_to are defined, the message will be send to both of them.
     required: false
+    version_added: 2.0
   key:
     description:
       - Channel key
@@ -99,7 +100,16 @@ EXAMPLES = '''
 - irc: server=irc.example.net channel="#t1" msg="Hello world"
 
 - local_action: irc port=6669
+                server="irc.example.net"
                 channel="#t1"
+                msg="All finished at {{ ansible_date_time.iso8601 }}"
+                color=red
+                nick=ansibleIRC
+
+- local_action: irc port=6669
+                server="irc.example.net"
+                channel="#t1"
+                nick_to=["nick1", "nick2"]
                 msg="All finished at {{ ansible_date_time.iso8601 }}"
                 color=red
                 nick=ansibleIRC
@@ -116,8 +126,8 @@ import ssl
 from time import sleep
 
 
-def send_msg(channel, msg, server='localhost', port='6667', key=None, topic=None,
-             nick="ansible", nick_to=None, color='none', passwd=False, timeout=30, use_ssl=False):
+def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=[], key=None, topic=None,
+             nick="ansible", color='none', passwd=False, timeout=30, use_ssl=False):
     '''send message to IRC'''
 
     colornumbers = {
@@ -178,8 +188,9 @@ def send_msg(channel, msg, server='localhost', port='6667', key=None, topic=None
         sleep(1)
 
     if nick_to:
-        irc.send('PRIVMSG %s :%s\r\n' % (nick_to, message))
-    else:
+        for nick in nick_to:
+            irc.send('PRIVMSG %s :%s\r\n' % (nick, message))
+    if channel:
         irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
     sleep(1)
     irc.send('PART %s\r\n' % channel)
@@ -198,35 +209,38 @@ def main():
             server=dict(default='localhost'),
             port=dict(default=6667),
             nick=dict(default='ansible'),
-            nick_to=dict(),
+            nick_to=dict(required=False, type='list'),
             msg=dict(required=True),
             color=dict(default="none", choices=["yellow", "red", "green",
                                                  "blue", "black", "none"]),
-            channel=dict(required=True),
+            channel=dict(required=False),
             key=dict(),
             topic=dict(),
             passwd=dict(),
             timeout=dict(type='int', default=30),
             use_ssl=dict(type='bool', default=False)
         ),
-        supports_check_mode=True
+        supports_check_mode=True,
+        required_one_of=[['channel', 'nick_to']]
     )
 
     server = module.params["server"]
     port = module.params["port"]
     nick = module.params["nick"]
-    topic = module.params["topic"]
     nick_to = module.params["nick_to"]
     msg = module.params["msg"]
     color = module.params["color"]
     channel = module.params["channel"]
+    topic = module.params["topic"]
+    if topic and not channel:
+        module.fail_json(msg="When topic is specified, a channel is required.")
     key = module.params["key"]
     passwd = module.params["passwd"]
     timeout = module.params["timeout"]
     use_ssl = module.params["use_ssl"]
 
     try:
-        send_msg(channel, msg, server, port, key, topic, nick, nick_to, color, passwd, timeout, use_ssl)
+        send_msg(msg, server, port, channel, nick_to, key, topic, nick, color, passwd, timeout, use_ssl)
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
