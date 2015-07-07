@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
 import re
 
 from jinja2 import Environment
@@ -255,6 +256,17 @@ class Templar:
             else:
                 overrides = JINJA2_ALLOWED_OVERRIDES.intersection(set(overrides))
                 myenv = self.environment.overlay(overrides)
+
+            # Get jinja env overrides from template
+            if data.startswith(JINJA2_OVERRIDE):
+                eol = data.find('\n')
+                line = data[len(JINJA2_OVERRIDE):eol]
+                data = data[eol+1:]
+                for pair in line.split(','):
+                    (key,val) = pair.split(':')
+                    key = key.strip()
+                    if key in JINJA2_ALLOWED_OVERRIDES:
+                        setattr(myenv, key, ast.literal_eval(val.strip()))
 
             #FIXME: add tests
             myenv.filters.update(self._get_filters())
