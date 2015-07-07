@@ -28,6 +28,7 @@ import sys
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
+from ansible.utils.unicode import to_bytes
 
 class Display:
 
@@ -70,25 +71,21 @@ class Display:
         if color:
             msg2 = stringc(msg, color)
         if not log_only:
+            b_msg2 = to_bytes(msg2)
             if not stderr:
-                try:
-                    print(msg2)
-                except UnicodeEncodeError:
-                    print(msg2.encode('utf-8'))
+                print(b_msg2)
             else:
-                try:
-                    print(msg2, file=sys.stderr)
-                except UnicodeEncodeError:
-                    print(msg2.encode('utf-8'), file=sys.stderr)
+                print(b_msg2, file=sys.stderr)
         if C.DEFAULT_LOG_PATH != '':
             while msg.startswith("\n"):
                 msg = msg.replace("\n","")
+            b_msg = to_bytes(msg)
             # FIXME: logger stuff needs to be implemented
             #if not screen_only:
             #    if color == 'red':
-            #        logger.error(msg)
+            #        logger.error(b_msg)
             #    else:
-            #        logger.info(msg)
+            #        logger.info(b_msg)
 
     def vv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=1)
