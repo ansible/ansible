@@ -61,12 +61,13 @@ options:
     choices: [ "none", "yellow", "red", "green", "blue", "black" ]
   channel:
     description:
-      - Channel name
+      - Channel name.  One of nick_to or channel needs to be set.  When both are set, the message will be sent to both of them.
     required: true
   nick_to:
     description:
-      - A list of nicknames to send the message to. When both channel and nick_to are defined, the message will be send to both of them.
+      - A list of nicknames to send the message to. One of nick_to or channel needs to be set.  When both are defined, the message will be sent to both of them.
     required: false
+    default: null
     version_added: 2.0
   key:
     description:
