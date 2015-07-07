@@ -18,10 +18,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
+import datetime
 import os
+import time
 
+from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
+from ansible.utils.unicode import to_bytes
 
 class ActionModule(ActionBase):
 
@@ -97,7 +101,35 @@ class ActionModule(ActionBase):
         try:
             with open(source, 'r') as f:
                 template_data = f.read()
+
+            try:
+                template_uid = pwd.getpwuid(os.stat(source).st_uid).pw_name
+            except:
+                template_uid = os.stat(source).st_uid
+
+            vars = task_vars.copy()
+            vars['template_host']     = os.uname()[1]
+            vars['template_path']     = source
+            vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(source))
+            vars['template_uid']      = template_uid
+            vars['template_fullpath'] = os.path.abspath(source)
+            vars['template_run_date'] = datetime.datetime.now()
+
+            managed_default = C.DEFAULT_MANAGED_STR
+            managed_str = managed_default.format(
+                host = vars['template_host'],
+                uid  = vars['template_uid'],
+                file = to_bytes(vars['template_path'])
+            )
+            vars['ansible_managed'] = time.strftime(
+                managed_str,
+                time.localtime(os.path.getmtime(source))
+            )
+
+            old_vars = self._templar._available_variables
+            self._templar.set_available_variables(vars)
             resultant = self._templar.template(template_data, preserve_trailing_newlines=True)
+            self._templar.set_available_variables(old_vars)
         except Exception as e:
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
 

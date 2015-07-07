@@ -243,6 +243,8 @@ class VariableManager:
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         all_vars['omit'] = self._omit_token
+
+        # make vars self referential, so people can do things like 'vars[var_name]'
         all_vars['vars'] = all_vars.copy()
 
         #CACHED_VARS[cache_entry] = all_vars
