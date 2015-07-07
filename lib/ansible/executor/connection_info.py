@@ -175,6 +175,7 @@ class ConnectionInformation:
         self.only_tags   = set()
         self.skip_tags   = set()
         self.no_log      = False
+        self.no_syslog   = C.DEFAULT_NO_SYSLOG
         self.check_mode  = False
 
         #TODO: just pull options setup to above?
@@ -234,6 +235,8 @@ class ConnectionInformation:
             self.verbosity  = options.verbosity
         #if options.no_log:
         #    self.no_log     = boolean(options.no_log)
+        if options.no_syslog:
+            self.no_syslog  = boolean(options.no_syslog)
         if options.check:
             self.check_mode = boolean(options.check)
 
@@ -283,7 +286,7 @@ class ConnectionInformation:
 
         # loop through a subset of attributes on the task object and set
         # connection fields based on their values
-        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
+        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log', 'no_syslog'):
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
                 if attr_val is not None:
