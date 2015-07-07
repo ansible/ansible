@@ -165,8 +165,10 @@ class ConnectionInformation:
         # backwards compat
         self.sudo_exe    = None
         self.sudo_flags  = None
+        self.sudo_pass   = None
         self.su_exe      = None
         self.su_flags    = None
+        self.su_pass     = None
 
         # general flags (should we move out?)
         self.verbosity   = 0
@@ -294,6 +296,13 @@ class ConnectionInformation:
             for variable_name in variable_names:
                 if variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
+
+        # become legacy updates
+        if not new_info.become_pass:
+            if new_info.become_method == 'sudo' and new_info.sudo_pass:
+               setattr(new_info, 'become_pass', new_info.sudo_pass)
+            elif new_info.become_method == 'su' and new_info.su_pass:
+               setattr(new_info, 'become_pass', new_info.su_pass)
 
         return new_info
 
