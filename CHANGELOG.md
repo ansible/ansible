@@ -113,6 +113,7 @@ New Modules:
   * win_iis_webapppool
   * win_iis_webbinding
   * win_iis_website
+  * win_regedit
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
