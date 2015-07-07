@@ -71,9 +71,9 @@ options:
   from_template:
     version_added: "1.9"
     description:
-     - Specifies if the VM should be deployed from a template (cannot be ran with state)
-     default: no
-     choices: ['yes', 'no']
+      - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware such as CPU, RAM, NICs or Disks can be applied when launching from template.
+    default: no
+    choices: ['yes', 'no']
   template_src:
     version_added: "1.9"
     description:
