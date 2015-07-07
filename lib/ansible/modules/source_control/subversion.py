@@ -82,7 +82,7 @@ options:
     required: false
     default: "yes"
     choices: [ "yes", "no" ]
-    version_added: "1.6"
+    version_added: "2.0"
     description:
       - If C(no), do not call svn switch before update.
 '''
@@ -111,6 +111,7 @@ class Subversion(object):
         self.svn_path = svn_path
 
     def _exec(self, args, check_rc=True):
+        '''Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output.'''
         bits = [
             self.svn_path,
             '--non-interactive',
@@ -122,20 +123,16 @@ class Subversion(object):
         if self.password:
             bits.extend(["--password", self.password])
         bits.extend(args)
+        rc, out, err = self.module.run_command(bits, check_rc)
         if check_rc:
-            rc, out, err = self.module.run_command(bits, check_rc)
             return out.splitlines()
         else:
-            rc, out, err = self.module.run_command(bits, check_rc)
             return rc
 
     def is_svn_repo(self):
         '''Checks if path is a SVN Repo.'''
         rc = self._exec(["info", self.dest], check_rc=False)
-        if rc == 0:
-            return True
-        else:
-            return False
+        return rc == 0
 
     def checkout(self):
         '''Creates new svn working directory if it does not already exist.'''
