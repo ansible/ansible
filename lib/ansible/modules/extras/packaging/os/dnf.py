@@ -136,13 +136,13 @@ def log(msg):
     syslog.syslog(syslog.LOG_NOTICE, msg)
 
 def dnf_base(conf_file=None):
+    """Return a dnf Base object. You must call fill_sack."""
     my = dnf.Base()
     my.conf.debuglevel = 0
     if conf_file and os.path.exists(conf_file):
         my.conf.config_file_path = conf_file
         my.conf.read()
     my.read_all_repos()
-    my.fill_sack()
 
     return my
 
@@ -171,6 +171,7 @@ def pkg_to_dict(pkg):
 
 def list_stuff(module, conf_file, stuff):
     my = dnf_base(conf_file)
+    my.fill_sack()
 
     if stuff == 'installed':
         return [pkg_to_dict(p) for p in my.sack.query().installed()]
@@ -188,11 +189,12 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_g
     items = pkgspec.split(',')
     if disablerepo:
         for repo in disablerepo.split(','):
-            [r.disable() for r in b.repos.get_matching(repo)]
+            [r.disable() for r in my.repos.get_matching(repo)]
     if enablerepo:
         for repo in enablerepo.split(','):
-            [r.enable() for r in b.repos.get_matching(repo)]
-    my.conf.gpgcheck = disable_gpg_check
+            [r.enable() for r in my.repos.get_matching(repo)]
+    my.fill_sack()
+    my.conf.gpgcheck = not disable_gpg_check
 
     res = {}
     res['results'] = []
@@ -226,6 +228,7 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_g
     else:
         my.download_packages(my.transaction.install_set)
         my.do_transaction()
+        res['changed'] = True
         [res['results'].append('Installed: %s' % pkg) for pkg in my.transaction.install_set]
         [res['results'].append('Removed: %s' % pkg) for pkg in my.transaction.remove_set]
 
@@ -282,4 +285,3 @@ def main():
 from ansible.module_utils.basic import *
 if __name__ == '__main__':
     main()
-
