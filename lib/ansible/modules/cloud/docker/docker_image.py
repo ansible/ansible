@@ -431,6 +431,20 @@ def main():
         else:
             module.exit_json(failed=True, chaged=manager.has_changed(), msg="SSLError: " + str(e))
 
+    except ConnectionError as e:
+        if get_platform() == "Darwin" and "DOCKER_HOST" not in os.environ:
+            # Ensure that the environment variables has been set
+            environment_error = '''
+            It looks like you have not set your docker environment
+            variables. Please ensure that you have set the requested
+            variables as instructed when running boot2docker up. If
+            they are set in .bash_profile you will need to symlink
+            it to .bashrc.
+            '''
+            module.exit_json(failed=True, chaged=manager.has_changed(), msg="ConnectionError: " + str(e) + environment_error)
+
+        module.exit_json(failed=True, chaged=manager.has_changed(), msg="ConnectionError: " + str(e))
+
     except DockerAPIError as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
 
