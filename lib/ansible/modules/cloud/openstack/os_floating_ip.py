@@ -64,12 +64,12 @@ options:
         - When attaching a floating IP address, specify whether we should
           wait for it to appear as attached.
      required: false
-     default false
+     default: false
    timeout:
      description:
         - Time to wait for an IP address to appear as attached. See wait.
      required: false
-     default 60
+     default: 60
    state:
      description:
        - Should the resource be present or absent.
