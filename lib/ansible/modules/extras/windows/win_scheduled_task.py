@@ -60,6 +60,10 @@ options:
     description:
       - Time to execute scheduled task
     required: false
+  daysOfWeek:
+    description:
+      - Days of the week to run a weekly task
+    required: false
   path:
     description:
       - Folder path of scheduled task
