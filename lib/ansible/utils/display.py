@@ -182,10 +182,13 @@ class Display:
         (out, err) = cmd.communicate()
         self.display("%s\n" % out, color=color)
 
-    def error(self, msg):
-        new_msg = "\n[ERROR]: %s" % msg
-        wrapped = textwrap.wrap(new_msg, 79)
-        new_msg = "\n".join(wrapped) + "\n"
+    def error(self, msg, wrap_text=True):
+        if wrap_text:
+            new_msg = "\n[ERROR]: %s" % msg
+            wrapped = textwrap.wrap(new_msg, 79)
+            new_msg = "\n".join(wrapped) + "\n"
+        else:
+            new_msg = msg
         if new_msg not in self._errors:
             self.display(new_msg, color='red', stderr=True)
             self._errors[new_msg] = 1
