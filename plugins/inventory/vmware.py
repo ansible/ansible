@@ -115,7 +115,7 @@ class VMwareInventory(object):
                 else:
                     cache_max_age = 0
                 cache_stat = os.stat(cache_file)
-                if (cache_stat.st_mtime + cache_max_age) < time.time():
+                if (cache_stat.st_mtime + cache_max_age) >= time.time():
                     with open(cache_file) as cache:
                         return json.load(cache)
         return default
