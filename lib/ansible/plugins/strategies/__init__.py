@@ -30,6 +30,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role import ROLE_CACHE, hash_params
 from ansible.plugins import _basedirs, filter_loader, lookup_loader, module_loader
+from ansible.template import Templar
 from ansible.utils.debug import debug
 
 
@@ -222,16 +223,31 @@ class StrategyBase:
                     if host not in self._notified_handlers[handler_name]:
                         self._notified_handlers[handler_name].append(host)
 
-                elif result[0] == 'set_host_var':
-                    host      = result[1]
-                    var_name  = result[2]
-                    var_value = result[3]
-                    self._variable_manager.set_host_variable(host, var_name, var_value)
+                elif result[0] in ('set_host_var', 'set_host_facts'):
+                    host = result[1]
+                    task = result[2]
+                    item = result[3]
 
-                elif result[0] == 'set_host_facts':
-                    host  = result[1]
-                    facts = result[2]
-                    self._variable_manager.set_host_facts(host, facts)
+                    if task.delegate_to is not None:
+                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
+                        if item is not None:
+                            task_vars['item'] = item
+                        templar = Templar(loader=self._loader, variables=task_vars)
+                        host_name = templar.template(task.delegate_to)
+                        target_host = self._inventory.get_host(host_name)
+                        if target_host is None:
+                            target_host = Host(name=host_name)
+                    else:
+                        target_host = host
+
+                    if result[0] == 'set_host_var':
+                        var_name  = result[4]
+                        var_value = result[5]
+                        self._variable_manager.set_host_variable(target_host, var_name, var_value)
+                    elif result[0] == 'set_host_facts':
+                        facts = result[4]
+                        self._variable_manager.set_host_facts(target_host, facts)
 
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
@@ -267,7 +283,7 @@ class StrategyBase:
         if host_name in self._inventory._hosts_cache:
             new_host = self._inventory._hosts_cache[host_name]
         else:
-            new_host = Host(host_name)
+            new_host = Host(name=host_name)
             self._inventory._hosts_cache[host_name] = new_host
 
             allgroup = self._inventory.get_group('all')
