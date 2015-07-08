@@ -38,7 +38,7 @@ includes:
 unicode:
 	ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) -e 'extra_var=café'
 	# Test the start-at-task flag #9571
-	ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v --start-at-task '*¶' -e 'start_at_task=True' $(TEST_FLAGS)
+	#ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v --start-at-task '*¶' -e 'start_at_task=True' $(TEST_FLAGS)
 
 test_templating_settings:
 	ansible-playbook test_templating_settings.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
