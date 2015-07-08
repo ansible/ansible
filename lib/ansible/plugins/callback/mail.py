@@ -15,13 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import smtplib
+from ansible.plugins.callback import CallbackBase
 
-def mail(subject='Ansible error mail', sender='<root>', to='root', cc=None, bcc=None, body=None):
-    if not body:
+def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
+
+    if sender is None:
+        sender='<root>'
+    if to is None:
+        to='root'
+    if smtphost is None:
+        smtphost=os.getenv('SMTPHOST', 'localhost')
+
+    if body is None:
         body = subject
 
-    smtp = smtplib.SMTP('localhost')
+    smtp = smtplib.SMTP(smtphost)
 
     content = 'From: %s\n' % sender
     content += 'To: %s\n' % to
@@ -42,31 +52,40 @@ def mail(subject='Ansible error mail', sender='<root>', to='root', cc=None, bcc=
     smtp.quit()
 
 
-class CallbackModule(object):
-
+class CallbackModule(CallbackBase):
     """
     This Ansible callback plugin mails errors to interested parties.
     """
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'notification'
 
-    def runner_on_failed(self, host, res, ignore_errors=False):
+    def v2_runner_on_failed(self, res, ignore_errors=False):
+
+        host = res._host.get_name()
+
         if ignore_errors:
             return
         sender = '"Ansible: %s" <root>' % host
-        subject = 'Failed: %(module_name)s %(module_args)s' % res['invocation']
-        body = 'The following task failed for host ' + host + ':\n\n%(module_name)s %(module_args)s\n\n' % res['invocation']
-        if 'stdout' in res.keys() and res['stdout']:
-            subject = res['stdout'].strip('\r\n').split('\n')[-1]
-            body += 'with the following output in standard output:\n\n' + res['stdout'] + '\n\n'
-        if 'stderr' in res.keys() and res['stderr']:
+        subject = 'Failed: %s' % (res._task.action)
+        body = 'The following task failed for host ' + host + ':\n\n%s\n\n' % (res._task.action)
+
+        if 'stdout' in res._result.keys() and res._result['stdout']:
+            subject = res._result['stdout'].strip('\r\n').split('\n')[-1]
+            body += 'with the following output in standard output:\n\n' + res._result['stdout'] + '\n\n'
+        if 'stderr' in res._result.keys() and res._result['stderr']:
             subject = res['stderr'].strip('\r\n').split('\n')[-1]
-            body += 'with the following output in standard error:\n\n' + res['stderr'] + '\n\n'
-        if 'msg' in res.keys() and res['msg']:
-            subject = res['msg'].strip('\r\n').split('\n')[0]
-            body += 'with the following message:\n\n' + res['msg'] + '\n\n'
-        body += 'A complete dump of the error:\n\n' + str(res)
+            body += 'with the following output in standard error:\n\n' + res._result['stderr'] + '\n\n'
+        if 'msg' in res._result.keys() and res._result['msg']:
+            subject = res._result['msg'].strip('\r\n').split('\n')[0]
+            body += 'with the following message:\n\n' + res._result['msg'] + '\n\n'
+        body += 'A complete dump of the error:\n\n' + str(res._result['msg'])
         mail(sender=sender, subject=subject, body=body)
-                  
-    def runner_on_unreachable(self, host, res):
+
+    def v2_runner_on_unreachable(self, ressult):
+
+        host = result._host.get_name()
+        res = result._result
+
         sender = '"Ansible: %s" <root>' % host
         if isinstance(res, basestring):
             subject = 'Unreachable: %s' % res.strip('\r\n').split('\n')[-1]
@@ -77,7 +96,11 @@ class CallbackModule(object):
                    res['msg'] + '\n\nA complete dump of the error:\n\n' + str(res)
         mail(sender=sender, subject=subject, body=body)
 
-    def runner_on_async_failed(self, host, res, jid):
+    def v2_runner_on_async_failed(self, result):
+
+        host = result._host.get_name()
+        res = result._result
+
         sender = '"Ansible: %s" <root>' % host
         if isinstance(res, basestring):
             subject = 'Async failure: %s' % res.strip('\r\n').split('\n')[-1]
