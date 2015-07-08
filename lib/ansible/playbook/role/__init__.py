@@ -41,7 +41,7 @@ from ansible.plugins import get_all_plugin_loaders, push_basedir
 from ansible.utils.vars import combine_vars
 
 
-__all__ = ['Role', 'ROLE_CACHE', 'hash_params']
+__all__ = ['Role', 'ROLE_CACHE', 'hash_params', 'role_reset_has_run']
 
 # FIXME: this should be a utility function, but can't be a member of
 #        the role due to the fact that it would require the use of self
@@ -70,6 +70,10 @@ def hash_params(params):
 # will be based on the repr() of the dictionary object)
 ROLE_CACHE = dict()
 
+def role_reset_has_run():
+    for (role_name, cached_roles) in ROLE_CACHE.iteritems():
+        for (hashed_params, role) in cached_roles.iteritems():
+            role._had_task_run = False
 
 class Role(Base, Become, Conditional, Taggable):
 
