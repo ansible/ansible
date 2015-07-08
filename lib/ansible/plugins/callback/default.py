@@ -34,7 +34,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
 
     def v2_on_any(self, *args, **kwargs):
-        pass
+        self.on_any(args, kwargs)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
@@ -67,7 +67,7 @@ class CallbackModule(CallbackBase):
             msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
 
-        if (self._display._verbosity > 0 or 'verbose_always' in result._result) and result._task.action not in ('setup', 'include'):
+        if (self._display.verbosity > 0 or 'verbose_always' in result._result) and result._task.action not in ('setup', 'include'):
             indent = None
             if 'verbose_always' in result._result:
                 indent = 4
@@ -77,7 +77,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_skipped(self, result):
         msg = "skipping: [%s]" % result._host.get_name()
-        if self._display._verbosity > 0 or 'verbose_always' in result._result:
+        if self._display.verbosity > 0 or 'verbose_always' in result._result:
             indent = None
             if 'verbose_always' in result._result:
                 indent = 4
