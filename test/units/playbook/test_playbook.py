@@ -66,4 +66,3 @@ class TestPlaybook(unittest.TestCase):
         vm = VariableManager()
         self.assertRaises(AnsibleParserError, Playbook.load, "bad_list.yml", vm, fake_loader)
         self.assertRaises(AnsibleParserError, Playbook.load, "bad_entry.yml", vm, fake_loader)
-
