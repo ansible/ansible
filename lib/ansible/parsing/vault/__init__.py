@@ -378,7 +378,7 @@ class VaultFile(object):
             raise errors.AnsibleError("%s does not exist" % self.filename)
         try:
             self.filehandle = open(filename, "rb")
-        except Exception, e:
+        except Exception as e:
             raise errors.AnsibleError("Could not open %s: %s" % (self.filename, str(e)))
 
         _, self.tmpfile = tempfile.mkstemp()
