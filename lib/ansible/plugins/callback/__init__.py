@@ -36,9 +36,7 @@ class CallbackBase:
         self._display = display
 
     def set_connection_info(self, conn_info):
-        # FIXME: this is a temporary hack, as the connection info object
-        #        should be created early and passed down through objects
-        self._display._verbosity = conn_info.verbosity
+        pass
 
     def on_any(self, *args, **kwargs):
         pass
@@ -99,4 +97,91 @@ class CallbackBase:
 
     def playbook_on_stats(self, stats):
         pass
+
+    ####### V2 METHODS, by default they call v1 counterparts if possible ######
+    def v2_on_any(self, *args, **kwargs):
+        self.on_any(args, kwargs)
+
+    def v2_runner_on_failed(self, result, ignore_errors=False):
+        host = result._host.get_name()
+        self.runner_on_failed(host, result._result, ignore_errors)
+
+    def v2_runner_on_ok(self, result):
+        host = result._host.get_name()
+        self.runner_on_ok(host, result._result)
+
+    def v2_runner_on_skipped(self, result):
+        host = result._host.get_name()
+        #FIXME, get item to pass through
+        item = None
+        self.runner_on_skipped(host, result._result, item)
+
+    def v2_runner_on_unreachable(self, result):
+        host = result._host.get_name()
+        self.runner_on_unreachable(host, result._result)
+
+    def v2_runner_on_no_hosts(self, task):
+        self.runner_on_no_hosts()
+
+    def v2_runner_on_async_poll(self, result):
+        host = result._host.get_name()
+        jid = result._result.get('ansible_job_id')
+         #FIXME, get real clock
+        clock = 0
+        self.runner_on_async_poll(host, result._result, jid, clock)
+
+    def v2_runner_on_async_ok(self, result):
+        host = result._host.get_name()
+        jid = result._result.get('ansible_job_id')
+        self.runner_on_async_ok(host, result._result, jid)
+
+    def v2_runner_on_async_failed(self, result):
+        host = result._host.get_name()
+        jid = result._result.get('ansible_job_id')
+        self.runner_on_async_failed(host, result._result, jid)
+
+    def v2_runner_on_file_diff(self, result, diff):
+        pass #no v1 correspondance
+
+    def v2_playbook_on_start(self):
+        self.playbook_on_start()
+
+    def v2_playbook_on_notify(self, result, handler):
+        host = result._host.get_name()
+        self.playbook_on_notify(host, handler)
+
+    def v2_playbook_on_no_hosts_matched(self):
+        self.playbook_on_no_hosts_matched()
+
+    def v2_playbook_on_no_hosts_remaining(self):
+        self.playbook_on_no_hosts_remaining()
+
+    def v2_playbook_on_task_start(self, task, is_conditional):
+        self.playbook_on_task_start(task, is_conditional)
+
+    def v2_playbook_on_cleanup_task_start(self, task):
+        pass #no v1 correspondance
+
+    def v2_playbook_on_handler_task_start(self, task):
+        pass #no v1 correspondance
+
+    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+        self.playbook_on_vars_prompt(varname, private, prompt, encrypt, confirm, salt_size, salt, default)
+
+    def v2_playbook_on_setup(self):
+        self.playbook_on_setup()
+
+    def v2_playbook_on_import_for_host(self, result, imported_file):
+        host = result._host.get_name()
+        self.playbook_on_import_for_host(host, imported_file)
+
+    def v2_playbook_on_not_import_for_host(self, result, missing_file):
+        host = result._host.get_name()
+        self.playbook_on_not_import_for_host(host, missing_file)
+
+    def v2_playbook_on_play_start(self, play):
+        self.playbook_on_play_start(play.name)
+
+    def v2_playbook_on_stats(self, stats):
+        self.playbook_on_stats(stats)
 
