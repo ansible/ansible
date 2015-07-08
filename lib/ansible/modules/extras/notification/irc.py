@@ -42,6 +42,7 @@ options:
       - Nickname to send the message from. May be shortened, depending on server's NICKLEN setting.
     required: false
     default: ansible
+    version_added: "2.0"
   msg:
     description:
       - The message body.
@@ -52,7 +53,7 @@ options:
       - Set the channel topic
     required: false
     default: null
-    version_added: 2.0
+    version_added: "2.0"
   color:
     description:
       - Text color for the message. ("none" is a valid option in 1.6 or later, in 1.6 and prior, the default color is black, not "none"). 
@@ -67,12 +68,13 @@ options:
     description:
       - A list of nicknames to send the message to. When both channel and nick_to are defined, the message will be send to both of them.
     required: false
-    version_added: 2.0
+    default: null
+    version_added: "2.0"
   key:
     description:
       - Channel key
     required: false
-    version_added: 1.7
+    version_added: "1.7"
   passwd:
     description:
       - Server password
@@ -82,12 +84,12 @@ options:
       - Timeout to use while waiting for successful registration and join
         messages, this is to prevent an endless loop
     default: 30
-    version_added: 1.5
+    version_added: "1.5"
   use_ssl:
     description:
       - Designates whether TLS/SSL should be used when connecting to the IRC server
     default: False
-    version_added: 1.8
+    version_added: "1.8"
 
 # informational: requirements for nodes
 requirements: [ socket ]
