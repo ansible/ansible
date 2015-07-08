@@ -47,6 +47,7 @@ options:
     description:
     - If yes, if the block device and filessytem size differ, grow the filesystem into the space. Note, XFS Will only grow if mounted.
     required: false
+    version_added: "2.0"
   opts:
     description:
     - List of options to be passed to mkfs command.
