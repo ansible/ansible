@@ -296,7 +296,7 @@ class TaskQueueManager:
                 continue
             methods = [
                 getattr(callback_plugin, method_name, None),
-                getattr(callback_plugin, 'on_any', None)
+                getattr(callback_plugin, 'v2_on_any', None)
             ]
             for method in methods:
                 if method is not None:
