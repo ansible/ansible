@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
 
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
-        faf     = task_vars.get('first_available_file', None)
+        faf    = self._task.first_available_file
 
         if (source is None and faf is not None) or dest is None:
             return dict(failed=True, msg="src and dest are required")
