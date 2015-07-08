@@ -223,6 +223,14 @@ class StrategyBase:
                     if host not in self._notified_handlers[handler_name]:
                         self._notified_handlers[handler_name].append(host)
 
+                elif result[0] == 'register_host_var':
+                    # essentially the same as 'set_host_var' below, however we
+                    # never follow the delegate_to value for registered vars
+                    host      = result[1]
+                    var_name  = result[2]
+                    var_value = result[3]
+                    self._variable_manager.set_host_variable(host, var_name, var_value)
+
                 elif result[0] in ('set_host_var', 'set_host_facts'):
                     host = result[1]
                     task = result[2]
