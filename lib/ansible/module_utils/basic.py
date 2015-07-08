@@ -978,7 +978,7 @@ class AnsibleModule(object):
             missing = []
             if key in self.params and self.params[key] == val:
                 for check in requirements:
-                    count = self._count_terms(check)
+                    count = self._count_terms((check,))
                     if count == 0:
                         missing.append(check)
             if len(missing) > 0:
@@ -1111,7 +1111,6 @@ class AnsibleModule(object):
                 continue
 
             value = self.params[k]
-            is_invalid = False
 
             try:
                 type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
