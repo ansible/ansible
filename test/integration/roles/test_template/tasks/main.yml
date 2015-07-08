@@ -44,7 +44,7 @@
 - name: check what python version ansible is running on
   command: python -c 'import distutils.sysconfig ; print(distutils.sysconfig.get_python_version())'
   register: pyver
-  #delegate_to: localhost
+  delegate_to: localhost
 
 - name: copy known good into place
   copy: src=foo.txt dest={{output_dir}}/foo.txt
