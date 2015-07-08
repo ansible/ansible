@@ -33,9 +33,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
 
-    def v2_on_any(self, *args, **kwargs):
-        self.on_any(args, kwargs)
-
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
             if self._display.verbosity < 3:
@@ -88,27 +85,6 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_unreachable(self, result):
         self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), result._result), color='red')
 
-    def v2_runner_on_no_hosts(self, task):
-        pass
-
-    def v2_runner_on_async_poll(self, result):
-        pass
-
-    def v2_runner_on_async_ok(self, result):
-        pass
-
-    def v2_runner_on_async_failed(self, result):
-        pass
-
-    def v2_runner_on_file_diff(self, result, diff):
-        pass
-
-    def v2_playbook_on_start(self):
-        pass
-
-    def v2_playbook_on_notify(self, result, handler):
-        pass
-
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("skipping: no hosts matched", color='cyan')
 
@@ -124,18 +100,6 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_handler_task_start(self, task):
         self._display.banner("RUNNING HANDLER [%s]" % task.get_name().strip())
 
-    #def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-    #    pass
-
-    def v2_playbook_on_setup(self):
-        pass
-
-    def v2_playbook_on_import_for_host(self, result, imported_file):
-        pass
-
-    def v2_playbook_on_not_import_for_host(self, result, missing_file):
-        pass
-
     def v2_playbook_on_play_start(self, play):
         name = play.get_name().strip()
         if not name:
@@ -144,7 +108,3 @@ class CallbackModule(CallbackBase):
             msg = "PLAY [%s]" % name
 
         self._display.banner(name)
-
-    def v2_playbook_on_stats(self, stats):
-        pass
-
