@@ -177,7 +177,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             domain      = dict(type='str', required=False, default=None),
-            token       = dict(type='str', required=True),
+            token       = dict(type='str', required=True, no_log=True),
             msg         = dict(type='str', required=True),
             channel     = dict(type='str', default=None),
             username    = dict(type='str', default='Ansible'),
