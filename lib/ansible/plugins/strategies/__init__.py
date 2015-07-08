@@ -195,7 +195,7 @@ class StrategyBase:
                         # with the correct object and mark it as executed
                         for (entry, role_obj) in ROLE_CACHE[task_result._task._role._role_name].iteritems():
                             hashed_entry = hash_params(task_result._task._role._role_params)
-                            if entry == hashed_entry :
+                            if entry == hashed_entry:
                                 role_obj._had_task_run = True
 
                     ret_results.append(task_result)

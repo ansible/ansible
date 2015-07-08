@@ -25,6 +25,7 @@ from ansible import constants as C
 from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
+from ansible.playbook.role import role_reset_has_run
 from ansible.plugins import module_loader
 from ansible.template import Templar
 
@@ -83,6 +84,10 @@ class PlaybookExecutor:
                 self._display.vv('%d plays in %s' % (len(plays), playbook_path))
 
                 for play in plays:
+                    # clear out the flag on all roles indicating they had any tasks run
+                    role_reset_has_run()
+
+                    # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
                     # Create a temporary copy of the play here, so we can run post_validate
