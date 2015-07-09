@@ -1,1 +1,1 @@
-__version__ = "${version}"
+
