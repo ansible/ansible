@@ -114,7 +114,7 @@ class CallbackBase:
         host = result._host.get_name()
         #FIXME, get item to pass through
         item = None
-        self.runner_on_skipped(host, result._result, item)
+        self.runner_on_skipped(host, item)
 
     def v2_runner_on_unreachable(self, result):
         host = result._host.get_name()
