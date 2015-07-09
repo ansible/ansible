@@ -42,6 +42,12 @@ Other Notable Changes:
 * Fix bug disabling repositories in the yum module.
 * Fix giving yum module a url to install a package from on RHEL/CENTOS5
 * Fix bug in dnf module preventing it from working when yum-utils was not already installed
+* Change yum module to install all packages specified in a single transaction.
+  This fixes problems with dependencies between packages specified by filename
+  or URL.  However, if you are installing packages which install or modify repository
+  information (for instance, epel-release) then you may need to make a separate
+  task to install the package that modifies the repo otherwise the correct
+  repository information may not be available for other packages you are trying to install.
 
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
