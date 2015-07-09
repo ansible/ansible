@@ -6,7 +6,9 @@ import logging.handlers
 
 import socket
 
-class CallbackModule(object):
+from ansible.plugins.callback import CallbackBase
+
+class CallbackModule(CallbackBase):
     """
     logs ansible-playbook and ansible runs to a syslog server in json format
     make sure you have in ansible.cfg:
@@ -17,8 +19,13 @@ class CallbackModule(object):
         SYSLOG_SERVER   (optional): defaults to localhost
         SYSLOG_PORT     (optional): defaults to 514
     """
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'aggregate'
 
-    def __init__(self):
+    def __init__(self, display):
+
+        super(CallbackModule, self).__init__(display)
+
         self.logger =  logging.getLogger('ansible logger')
         self.logger.setLevel(logging.DEBUG)
 
@@ -30,8 +37,6 @@ class CallbackModule(object):
         self.logger.addHandler(self.handler)
         self.hostname = socket.gethostname()
 
-    def on_any(self, *args, **kwargs):
-        pass
 
     def runner_on_failed(self, host, res, ignore_errors=False):
         self.logger.error('%s ansible-command: task execution FAILED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
@@ -45,47 +50,11 @@ class CallbackModule(object):
     def runner_on_unreachable(self, host, res):
         self.logger.error('%s ansible-command: task execution UNREACHABLE; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
-    def runner_on_no_hosts(self):
-        pass
-
-    def runner_on_async_poll(self, host, res):
-        pass
-
-    def runner_on_async_ok(self, host, res):
-        pass
-
     def runner_on_async_failed(self, host, res):
         self.logger.error('%s ansible-command: task execution FAILED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
-
-    def playbook_on_start(self):
-        pass
-
-    def playbook_on_notify(self, host, handler):
-        pass
-
-    def playbook_on_no_hosts_matched(self):
-        pass
-
-    def playbook_on_no_hosts_remaining(self):
-        pass
-
-    def playbook_on_task_start(self, name, is_conditional):
-        pass
-
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-        pass
-
-    def playbook_on_setup(self):
-        pass
 
     def playbook_on_import_for_host(self, host, imported_file):
         self.logger.info('%s ansible-command: playbook IMPORTED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def playbook_on_not_import_for_host(self, host, missing_file):
         self.logger.info('%s ansible-command: playbook NOT IMPORTED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
-
-    def playbook_on_play_start(self, name):
-        pass
-
-    def playbook_on_stats(self, stats):
-        pass
