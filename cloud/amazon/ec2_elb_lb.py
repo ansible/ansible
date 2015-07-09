@@ -395,7 +395,7 @@ class ElbManager(object):
                 'instances': [instance.id for instance in check_elb.instances],
                 'out_of_service_count': 0,
                 'in_service_count': 0,
-                'unknown_instance_state_count': 0
+                'unknown_instance_state_count': 0,
                 'region': self.region
             }
 
