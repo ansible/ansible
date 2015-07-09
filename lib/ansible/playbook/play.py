@@ -162,6 +162,8 @@ class Play(Base, Taggable, Become):
                         raise ValueError
                     all_vars = combine_vars(all_vars, item)
                 return all_vars
+            elif ds is None:
+                return {}
             else:
                 raise ValueError
         except ValueError:
