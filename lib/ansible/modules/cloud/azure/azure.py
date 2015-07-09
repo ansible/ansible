@@ -567,8 +567,8 @@ def main():
             module.fail_json(msg='location parameter is required for new instance')
         if not module.params.get('storage_account'):
             module.fail_json(msg='storage_account parameter is required for new instance')
-        if not module.params.get('password'):
-            module.fail_json(msg='password parameter is required for new instance')
+        if not (module.params.get('password') or module.params.get('ssh_cert_path')):
+            module.fail_json(msg='password or ssh_cert_path parameter is required for new instance')
         (changed, public_dns_name, deployment) = create_virtual_machine(module, azure)
 
     module.exit_json(changed=changed, public_dns_name=public_dns_name, deployment=json.loads(json.dumps(deployment, default=lambda o: o.__dict__)))
