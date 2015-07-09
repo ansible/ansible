@@ -45,7 +45,7 @@ class CallbackModule(CallbackBase):
         self.logger.info('%s ansible-command: task execution OK; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
 
     def runner_on_skipped(self, host, item=None):
-        self.logger.info('%s ansible-command: task execution SKIPPED; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
+        self.logger.info('%s ansible-command: task execution SKIPPED; host: %s; message: %s' % (self.hostname,host, 'skipped'))
 
     def runner_on_unreachable(self, host, res):
         self.logger.error('%s ansible-command: task execution UNREACHABLE; host: %s; message: %s' % (self.hostname,host,json.dumps(res, sort_keys=True)))
