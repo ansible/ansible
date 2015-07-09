@@ -42,7 +42,6 @@ options:
       - Nickname to send the message from. May be shortened, depending on server's NICKLEN setting.
     required: false
     default: ansible
-    version_added: "2.0"
   msg:
     description:
       - The message body.
