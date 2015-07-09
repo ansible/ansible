@@ -110,8 +110,7 @@ class AdHocCLI(CLI):
             self.display.warning("provided hosts list is empty, only localhost is available")
 
         if self.options.listhosts:
-            for host in hosts:
-                self.display.display('    %s' % host)
+            self.display.display(' '.join([str(x) for x in hosts]))
             return 0
 
         if self.options.module_name in C.MODULE_REQUIRE_ARGS and not self.options.module_args:
