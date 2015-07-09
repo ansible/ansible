@@ -79,6 +79,12 @@ options:
         U(http://docs.python.org/2/library/re.html).
     required: false
     default: null
+  ignore_hidden:
+    description:
+      - A boolean that controls if files that start with a '.' will be included or not.
+    required: false
+    default: false
+    version_added: "2.0"
 author: "Stephen Fromm (@sfromm)"
 extends_documentation_fragment: files
 '''
@@ -94,7 +100,7 @@ EXAMPLES = '''
 # ===========================================
 # Support method
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
+def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd,'w')
@@ -105,7 +111,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
         fragment = "%s/%s" % (src_path, f)
-        if not os.path.isfile(fragment):
+        if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
         fragment_content = file(fragment).read()
 
@@ -148,6 +154,7 @@ def main():
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
             regexp = dict(required=False),
+            ignore_hidden = dict(default=False, type='bool'),
         ),
         add_file_common_args=True
     )
@@ -162,6 +169,7 @@ def main():
     delimiter = module.params['delimiter']
     regexp    = module.params['regexp']
     compiled_regexp = None
+    ignore_hidden = module.params['ignore_hidden']
 
     if not os.path.exists(src):
         module.fail_json(msg="Source (%s) does not exist" % src)
@@ -175,7 +183,7 @@ def main():
         except re.error, e:
             module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" % (e, regexp))
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp)
+    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden)
     path_hash = module.sha1(path)
 
     if os.path.exists(dest):
