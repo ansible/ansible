@@ -28,6 +28,8 @@ version_added: "2.0"
 short_description: NSSM - the Non-Sucking Service Manager
 description:
     - nssm is a service helper which doesn't suck. See https://nssm.cc/ for more information.
+requirements:
+  - "nssm >= 2.24.0 # (install via win_chocolatey) win_chocolatey: name=nssm"
 options:
   name:
     description:
