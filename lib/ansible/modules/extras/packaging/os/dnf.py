@@ -184,9 +184,18 @@ def list_stuff(module, conf_file, stuff):
     else:
         return [pkg_to_dict(p) for p in dnf.subject.Subject(stuff).get_best_query(my.sack)]
 
+
+def _mark_package_install(my, res, pkg_spec):
+    """Mark the package for install."""
+    try:
+        my.install(pkg_spec)
+    except dnf.exceptions.MarkingError:
+        res['results'].append('No package %s available.' % pkg_spec)
+        res['rc'] = 1
+
+
 def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_gpg_check):
     my = dnf_base(conf_file)
-    items = pkgspec.split(',')
     if disablerepo:
         for repo in disablerepo.split(','):
             [r.disable() for r in my.repos.get_matching(repo)]
@@ -206,22 +215,33 @@ def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_g
         res['msg'] = 'This command has to be run under the root user.'
         res['rc'] = 1
 
-    pkg_specs, grp_specs, filenames = dnf.cli.commands.parse_spec_group_file(items)
-    if state in ['installed', 'present']:
-        # Install files.
-        local_pkgs = map(my.add_remote_rpm, filenames)
-        map(my.package_install, local_pkgs)
-        # Install groups.
-        if grp_specs:
-            my.read_comps()
-            my.env_group_install(grp_specs, dnf.const.GROUP_PACKAGE_TYPES)
-        # Install packages.
-        for pkg_spec in pkg_specs:
-            try:
-                my.install(pkg_spec)
-            except dnf.exceptions.MarkingError:
-                res['results'].append('No package %s available.' % pkg_spec)
-                res['rc'] = 1
+    if pkgspec == '*' and state == 'latest':
+        my.upgrade_all()
+    else:
+        items = pkgspec.split(',')
+        pkg_specs, grp_specs, filenames = dnf.cli.commands.parse_spec_group_file(items)
+        if state in ['installed', 'present']:
+            # Install files.
+            for filename in filenames:
+                my.package_install(my.add_remote_rpm(filename))
+            # Install groups.
+            if grp_specs:
+                my.read_comps()
+                my.env_group_install(grp_specs, dnf.const.GROUP_PACKAGE_TYPES)
+            # Install packages.
+            for pkg_spec in pkg_specs:
+                _mark_package_install(my, res, pkg_spec)
+        elif state == 'latest':
+            # These aren't implemented yet, so assert them out.
+            assert not filenames
+            assert not grp_specs
+            for pkg_spec in pkg_specs:
+                try:
+                    my.upgrade(pkg_spec)
+                except dnf.exceptions.MarkingError:
+                    # If not already installed, try to install.
+                    _mark_package_install(my, res, pkg_spec)
+
     if not my.resolve() and res['rc'] == 0:
         res['msg'] += 'Nothing to do'
         res['changed'] = False
