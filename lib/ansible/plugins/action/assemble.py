@@ -34,7 +34,7 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None):
+    def _assemble_from_fragments(self, src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
         ''' assemble a file from a directory of fragments '''
 
         tmpfd, temp_path = tempfile.mkstemp()
@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
             if compiled_regexp and not compiled_regexp.search(f):
                 continue
             fragment = "%s/%s" % (src_path, f)
-            if not os.path.isfile(fragment):
+            if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
                 continue
             fragment_content = file(fragment).read()
 
@@ -82,6 +82,8 @@ class ActionModule(ActionBase):
         delimiter  = self._task.args.get('delimiter', None)
         remote_src = self._task.args.get('remote_src', 'yes')
         regexp     = self._task.args.get('regexp', None)
+        ignore_hidden = self._task.args.get('ignore_hidden', False)
+
 
         if src is None or dest is None:
             return dict(failed=True, msg="src and dest are required")
@@ -99,7 +101,7 @@ class ActionModule(ActionBase):
             _re = re.compile(regexp)
 
         # Does all work assembling the file
-        path = self._assemble_from_fragments(src, delimiter, _re)
+        path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest, tmp)
