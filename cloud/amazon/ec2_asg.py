@@ -109,6 +109,12 @@ options:
     default: EC2
     version_added: "1.7"
     choices: ['EC2', 'ELB']
+  default_cooldown:
+    description:
+    The number of seconds after a scaling activity completes before another can begin.
+    required: false
+    default: 300 seconds
+    version_added: "2.0"
   wait_timeout:
     description:
       - how long before wait instances to become viable when replaced.  Used in concjunction with instance_ids option.
@@ -374,6 +380,7 @@ def create_autoscaling_group(connection, module):
     set_tags = module.params.get('tags')
     health_check_period = module.params.get('health_check_period')
     health_check_type = module.params.get('health_check_type')
+    default_cooldown = module.params.get('default_cooldown')
     wait_for_instances = module.params.get('wait_for_instances')
     as_groups = connection.get_all_groups(names=[group_name])
     wait_timeout = module.params.get('wait_timeout')
@@ -413,7 +420,8 @@ def create_autoscaling_group(connection, module):
                  connection=connection,
                  tags=asg_tags,
                  health_check_period=health_check_period,
-                 health_check_type=health_check_type)
+                 health_check_type=health_check_type,
+                 default_cooldown=default_cooldown)
 
         try:
             connection.create_auto_scaling_group(ag)
@@ -774,6 +782,7 @@ def main():
             tags=dict(type='list', default=[]),
             health_check_period=dict(type='int', default=300),
             health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
+            default_cooldown=dict(type='int', default=300),
             wait_for_instances=dict(type='bool', default=True)
         ),
     )
