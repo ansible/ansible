@@ -14,5 +14,7 @@ recursive-include plugins *
 include Makefile
 include VERSION
 include MANIFEST.in
+include contrib/README.md
+include contrib/inventory *
 prune lib/ansible/modules/core/.git
 prune lib/ansible/modules/extras/.git
