@@ -123,6 +123,7 @@ class Host:
         results = combine_vars(results, self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
+        results['ansible_ssh_host'] = self.ipv4_address
         results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
         return results
 

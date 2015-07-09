@@ -217,12 +217,6 @@ class TaskExecutor:
         # variables to the variable dictionary
         self._connection_info.update_vars(variables)
 
-        # get the connection and the handler for this execution
-        self._connection = self._get_connection(variables)
-        self._connection.set_host_overrides(host=self._host)
-
-        self._handler = self._get_action_handler(connection=self._connection, templar=templar)
-
         # Evaluate the conditional (if any) for this task, which we do before running
         # the final task post-validation. We do this before the post validation due to
         # the fact that the conditional may specify that the task be skipped due to a
@@ -250,6 +244,12 @@ class TaskExecutor:
             include_file = include_variables.get('_raw_params')
             del include_variables['_raw_params']
             return dict(changed=True, include=include_file, include_variables=include_variables)
+
+        # get the connection and the handler for this execution
+        self._connection = self._get_connection(variables)
+        self._connection.set_host_overrides(host=self._host)
+
+        self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
@@ -460,7 +460,7 @@ class TaskExecutor:
         self._connection_info.port             = this_info.get('ansible_ssh_port', self._connection_info.port)
         self._connection_info.password         = this_info.get('ansible_ssh_pass', self._connection_info.password)
         self._connection_info.private_key_file = this_info.get('ansible_ssh_private_key_file', self._connection_info.private_key_file)
-        self._connection_info.connection       = this_info.get('ansible_connection', self._connection_info.connection)
+        self._connection_info.connection       = this_info.get('ansible_connection', C.DEFAULT_TRANSPORT)
         self._connection_info.become_pass      = this_info.get('ansible_sudo_pass', self._connection_info.become_pass)
 
         if self._connection_info.remote_addr in ('127.0.0.1', 'localhost'):
