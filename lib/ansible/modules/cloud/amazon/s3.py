@@ -50,6 +50,7 @@ options:
       - When set for PUT mode, asks for server-side encryption
     required: false
     default: no
+    version_added: "2.0"
   expiration:
     description:
       - Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
