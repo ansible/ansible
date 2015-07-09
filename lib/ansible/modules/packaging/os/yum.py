@@ -118,10 +118,22 @@ options:
     choices: ["yes", "no"]
     aliases: []
 
-notes: []
+notes:
+  - When used with a loop of package names in a playbook, ansible optimizes
+    the call to the yum module.  Instead of calling the module with a single
+    package each time through the loop, ansible calls the module once with all
+    of the package names from the loop.
+  - In versions prior to 1.9.2 this module installed and removed each package
+    given to the yum module separately. This caused problems when packages
+    specified by filename or url had to be installed or removed together. In
+    1.9.2 this was fixed so that packages are installed in one yum
+    transaction. However, if one of the packages adds a new yum repository
+    that the other packages come from (such as epel-release) then that package
+    needs to be installed in a separate task. This mimics yum's command line
+    behaviour.
 # informational: requirements for nodes
 requirements: [ yum ]
-author: 
+author:
     - "Ansible Core Team"
     - "Seth Vidal"
 '''
