@@ -61,7 +61,7 @@ def main():
         config = os_client_config.OpenStackConfig()
         clouds = []
         for cloud in config.get_all_clouds():
-            if not module.params['clouds'] or cloud.name in module.param['clouds']:
+            if not p['clouds'] or cloud.name in p['clouds']:
                 cloud.config['name'] = cloud.name
                 clouds.append(cloud.config)
         module.exit_json(ansible_facts=dict(openstack=dict(clouds=clouds)))
