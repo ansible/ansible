@@ -67,9 +67,6 @@ try:
 except ImportError:
     import simplejson as json
 
-# NOTE -- this file assumes Ansible is being accessed FROM the cobbler
-# server, so it does not attempt to login with a username and password.
-# this will be addressed in a future version of this script.
 
 
 class CobblerInventory(object):
@@ -112,6 +109,9 @@ class CobblerInventory(object):
     def _connect(self):
         if not self.conn:
             self.conn = xmlrpclib.Server(self.cobbler_host, allow_none=True)
+            self.token = None
+            if self.cobbler_username is not None:
+                self.token = self.conn.login(self.cobbler_username, self.cobbler_password)
 
     def is_cache_valid(self):
         """ Determines if the cache files have expired, or if it is still valid """
@@ -132,6 +132,12 @@ class CobblerInventory(object):
         config.read(os.path.dirname(os.path.realpath(__file__)) + '/cobbler.ini')
 
         self.cobbler_host = config.get('cobbler', 'host')
+        self.cobbler_username = None
+        self.cobbler_password = None
+        if config.has_option('cobbler', 'username'):
+            self.cobbler_username = config.get('cobbler', 'username')
+        if config.has_option('cobbler', 'password'):
+            self.cobbler_password = config.get('cobbler', 'password')
 
         # Cache related
         cache_path = config.get('cobbler', 'cache_path')
@@ -155,8 +161,10 @@ class CobblerInventory(object):
         self._connect()
         self.groups = dict()
         self.hosts = dict()
-
-        data = self.conn.get_systems()
+        if self.token is not None:
+            data = self.conn.get_systems(self.token)
+        else:
+            data = self.conn.get_systems()
 
         for host in data:
             # Get the FQDN for the host and add it to the right groups
