@@ -494,7 +494,11 @@ not be necessary to "hit" all servers to reference variables and information abo
 With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
 the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
 
-To configure fact caching, enable it in ansible.cfg as follows::
+To benefit from cached facts, you will want to change the 'gathering' setting to 'smart' or 'explicit' or set 'gather_facts' to False in most plays.
+
+Currently, Ansible ships with two persistent cache plugins: redis and jsonfile.
+
+To configure fact caching using redis, enable it in ansible.cfg as follows::
 
     [defaults]
     gathering = smart
@@ -502,9 +506,6 @@ To configure fact caching, enable it in ansible.cfg as follows::
     fact_caching_timeout = 86400
     # seconds
 
-You might also want to change the 'gathering' setting to 'smart' or 'explicit' or set gather_facts to False in most plays.
-
-At the time of writing, Redis is the only supported fact caching engine.
 To get redis up and running, perform the equivalent OS commands::
 
     yum install redis
@@ -515,6 +516,18 @@ Note that the Python redis library should be installed from pip, the version pac
 
 In current embodiments, this feature is in beta-level state and the Redis plugin does not support port or password configuration, this is expected to change in the near future.
 
+To configure fact caching using jsonfile, enable it in ansible.cfg as follows::
+
+    [defaults]
+    gathering = smart
+    fact_caching = jsonfile
+    fact_caching_location = /path/to/cachedir
+    fact_caching_timeout = 86400
+    # seconds
+
+`fact_caching_location` is a local filesystem path to a writeable
+directory (ansible will attempt to create the directory if one does not exist).
+    
 .. _registered_variables:
 
 Registered Variables
