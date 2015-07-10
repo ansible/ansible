@@ -795,7 +795,7 @@ class Ec2Inventory(object):
         # Inventory: Group by security group
         if self.group_by_security_group and not is_redis:
 
-            # Check for the existance of the 'SecurityGroups' key and also if
+            # Check for the existence of the 'SecurityGroups' key and also if
             # this key has some value. When the cluster is not placed in a SG
             # the query can return None here and cause an error.
             if 'SecurityGroups' in cluster and cluster['SecurityGroups'] is not None:
@@ -887,7 +887,7 @@ class Ec2Inventory(object):
         # Inventory: Group by security group
         if self.group_by_security_group:
 
-            # Check for the existance of the 'SecurityGroups' key and also if
+            # Check for the existence of the 'SecurityGroups' key and also if
             # this key has some value. When the cluster is not placed in a SG
             # the query can return None here and cause an error.
             if 'SecurityGroups' in cluster and cluster['SecurityGroups'] is not None:
