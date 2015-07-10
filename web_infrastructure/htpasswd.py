@@ -190,7 +190,7 @@ def main():
         path=dict(required=True, aliases=["dest", "destfile"]),
         name=dict(required=True, aliases=["username"]),
         password=dict(required=False, default=None),
-        crypt_scheme=dict(required=False, default=None),
+        crypt_scheme=dict(required=False, default="apr_md5_crypt"),
         state=dict(required=False, default="present"),
         create=dict(type='bool', default='yes'),
 
