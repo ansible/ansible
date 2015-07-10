@@ -88,6 +88,8 @@ class Play(Base, Taggable, Become):
     def __init__(self):
         super(Play, self).__init__()
 
+        self.ROLE_CACHE = {}
+
     def __repr__(self):
         return self.get_name()
 
@@ -321,4 +323,9 @@ class Play(Base, Taggable, Become):
 
             setattr(self, 'roles', roles)
             del data['roles']
+
+    def copy(self):
+        new_me = super(Play, self).copy()
+        new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
+        return new_me
 

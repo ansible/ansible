@@ -28,7 +28,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
-from ansible.playbook.role import ROLE_CACHE, hash_params
+from ansible.playbook.role import hash_params
 from ansible.plugins import _basedirs, filter_loader, lookup_loader, module_loader
 from ansible.template import Templar
 from ansible.utils.debug import debug
@@ -193,7 +193,7 @@ class StrategyBase:
                     if task_result._task._role is not None and result[0] in ('host_task_ok', 'host_task_failed'):
                         # lookup the role in the ROLE_CACHE to make sure we're dealing
                         # with the correct object and mark it as executed
-                        for (entry, role_obj) in ROLE_CACHE[task_result._task._role._role_name].iteritems():
+                        for (entry, role_obj) in iterator._play.ROLE_CACHE[task_result._task._role._role_name].iteritems():
                             hashed_entry = hash_params(task_result._task._role._role_params)
                             if entry == hashed_entry:
                                 role_obj._had_task_run = True

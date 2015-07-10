@@ -41,7 +41,7 @@ from ansible.plugins import get_all_plugin_loaders, push_basedir
 from ansible.utils.vars import combine_vars
 
 
-__all__ = ['Role', 'ROLE_CACHE', 'hash_params', 'role_reset_has_run']
+__all__ = ['Role', 'hash_params']
 
 # FIXME: this should be a utility function, but can't be a member of
 #        the role due to the fact that it would require the use of self
@@ -63,17 +63,6 @@ def hash_params(params):
             else:
                 s.update((k, v))
         return frozenset(s)
-
-# The role cache is used to prevent re-loading roles, which
-# may already exist. Keys into this cache are the SHA1 hash
-# of the role definition (for dictionary definitions, this
-# will be based on the repr() of the dictionary object)
-ROLE_CACHE = dict()
-
-def role_reset_has_run():
-    for (role_name, cached_roles) in ROLE_CACHE.iteritems():
-        for (hashed_params, role) in cached_roles.iteritems():
-            role._had_task_run = False
 
 class Role(Base, Become, Conditional, Taggable):
 
@@ -111,13 +100,12 @@ class Role(Base, Become, Conditional, Taggable):
             # specified for a role as the key and the Role() object itself.
             # We use frozenset to make the dictionary hashable.
 
-            #hashed_params = frozenset(role_include.get_role_params().iteritems())
             params = role_include.get_role_params()
             params['tags'] = role_include.tags
             params['when'] = role_include.when
             hashed_params = hash_params(params)
-            if role_include.role in ROLE_CACHE:
-                for (entry, role_obj) in ROLE_CACHE[role_include.role].iteritems():
+            if role_include.role in play.ROLE_CACHE:
+                for (entry, role_obj) in play.ROLE_CACHE[role_include.role].iteritems():
                     if hashed_params == entry:
                         if parent_role:
                             role_obj.add_parent(parent_role)
@@ -126,10 +114,10 @@ class Role(Base, Become, Conditional, Taggable):
             r = Role(play=play)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.role not in ROLE_CACHE:
-                ROLE_CACHE[role_include.role] = dict()
+            if role_include.role not in play.ROLE_CACHE:
+                play.ROLE_CACHE[role_include.role] = dict()
 
-            ROLE_CACHE[role_include.role][hashed_params] = r
+            play.ROLE_CACHE[role_include.role][hashed_params] = r
             return r
 
         except RuntimeError:
