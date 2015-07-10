@@ -38,11 +38,11 @@ options:
     description:
       - Volume size of the database 1-150GB
     default: 2
-  type:
+  cdb_type:
     description:
       - type of instance (i.e. MySQL, MariaDB, Percona)
     default: MySQL
-  version:
+  cdb_version:
     description:
       - version of database (MySQL supports 5.1 and 5.6, MariaDB supports 10, Percona supports 5.6)
     choices: ['5.1', '5.6', '10']
@@ -76,8 +76,8 @@ EXAMPLES = '''
         name: db-server1
         flavor: 1
         volume: 2
-        type: MySQL
-        version: 5.6
+        cdb_type: MySQL
+        cdb_version: 5.6
         wait: yes
         state: present
       register: rax_db_server
@@ -101,11 +101,11 @@ def find_instance(name):
     return False
 
 
-def save_instance(module, name, flavor, volume, type, version, wait,
+def save_instance(module, name, flavor, volume, cdb_type, cdb_version, wait,
                   wait_timeout):
 
     for arg, value in dict(name=name, flavor=flavor,
-                           volume=volume, type=type, version=version
+                           volume=volume, type=cdb_type, version=cdb_version
                            ).iteritems():
         if not value:
             module.fail_json(msg='%s is required for the "rax_cdb"'
@@ -131,7 +131,7 @@ def save_instance(module, name, flavor, volume, type, version, wait,
         action = 'create'
         try:
             instance = cdb.create(name=name, flavor=flavor, volume=volume,
-                                  type=type, version=version)
+                                  type=cdb_type, version=cdb_version)
         except Exception, e:
             module.fail_json(msg='%s' % e.message)
         else:
@@ -202,12 +202,12 @@ def delete_instance(module, name, wait, wait_timeout):
                      cdb=rax_to_dict(instance))
 
 
-def rax_cdb(module, state, name, flavor, volume, type, version, wait,
+def rax_cdb(module, state, name, flavor, volume, cdb_type, cdb_version, wait,
             wait_timeout):
 
     # act on the state
     if state == 'present':
-        save_instance(module, name, flavor, volume, type, version, wait,
+        save_instance(module, name, flavor, volume, cdb_type, cdb_version, wait,
                       wait_timeout)
     elif state == 'absent':
         delete_instance(module, name, wait, wait_timeout)
@@ -220,8 +220,8 @@ def main():
             name=dict(type='str', required=True),
             flavor=dict(type='int', default=1),
             volume=dict(type='int', default=2),
-            type=dict(type='str', default='MySQL'),
-            version=dict(type='str', default='5.6'),
+            cdb_type=dict(type='str', default='MySQL'),
+            cdb_version=dict(type='str', default='5.6'),
             state=dict(default='present', choices=['present', 'absent']),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(type='int', default=300),
@@ -239,14 +239,14 @@ def main():
     name = module.params.get('name')
     flavor = module.params.get('flavor')
     volume = module.params.get('volume')
-    type = module.params.get('type')
-    version = module.params.get('version')
+    cdb_type = module.params.get('type')
+    cdb_version = module.params.get('version')
     state = module.params.get('state')
     wait = module.params.get('wait')
     wait_timeout = module.params.get('wait_timeout')
 
     setup_rax_module(module, pyrax)
-    rax_cdb(module, state, name, flavor, volume, type, version, wait, wait_timeout)
+    rax_cdb(module, state, name, flavor, volume, cdb_type, cdb_version, wait, wait_timeout)
 
 
 # import module snippets
