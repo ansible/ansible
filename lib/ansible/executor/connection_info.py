@@ -239,7 +239,7 @@ class ConnectionInformation:
         #    self.no_log     = boolean(options.no_log)
         if options.check:
             self.check_mode = boolean(options.check)
-        if options.force_handlers:
+        if hasattr(options, 'force_handlers') and options.force_handlers:
             self.force_handlers = boolean(options.force_handlers)
 
         # get the tag info from options, converting a comma-separated list
