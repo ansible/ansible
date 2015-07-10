@@ -77,14 +77,14 @@ def role_reset_has_run():
 
 class Role(Base, Become, Conditional, Taggable):
 
-    def __init__(self):
+    def __init__(self, play=None):
         self._role_name        = None
         self._role_path        = None
         self._role_params      = dict()
         self._loader           = None
 
         self._metadata         = None
-        self._play             = None
+        self._play             = play
         self._parents          = []
         self._dependencies     = []
         self._task_blocks      = []
@@ -103,7 +103,7 @@ class Role(Base, Become, Conditional, Taggable):
         return self._role_name
 
     @staticmethod
-    def load(role_include, parent_role=None):
+    def load(role_include, play, parent_role=None):
         # FIXME: add back in the role caching support
         try:
             # The ROLE_CACHE is a dictionary of role names, with each entry
@@ -112,7 +112,10 @@ class Role(Base, Become, Conditional, Taggable):
             # We use frozenset to make the dictionary hashable.
 
             #hashed_params = frozenset(role_include.get_role_params().iteritems())
-            hashed_params = hash_params(role_include.get_role_params())
+            params = role_include.get_role_params()
+            params['tags'] = role_include.tags
+            params['when'] = role_include.when
+            hashed_params = hash_params(params)
             if role_include.role in ROLE_CACHE:
                 for (entry, role_obj) in ROLE_CACHE[role_include.role].iteritems():
                     if hashed_params == entry:
@@ -120,7 +123,7 @@ class Role(Base, Become, Conditional, Taggable):
                             role_obj.add_parent(parent_role)
                         return role_obj
 
-            r = Role()
+            r = Role(play=play)
             r._load_role_data(role_include, parent_role=parent_role)
 
             if role_include.role not in ROLE_CACHE:
@@ -174,11 +177,11 @@ class Role(Base, Become, Conditional, Taggable):
 
         task_data = self._load_role_yaml('tasks')
         if task_data:
-            self._task_blocks = load_list_of_blocks(task_data, play=None, role=self, loader=self._loader)
+            self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = load_list_of_blocks(handler_data, play=None, role=self, use_handlers=True, loader=self._loader)
+            self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader)
 
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')
@@ -227,7 +230,7 @@ class Role(Base, Become, Conditional, Taggable):
         deps = []
         if self._metadata:
             for role_include in self._metadata.dependencies:
-                r = Role.load(role_include, parent_role=self)
+                r = Role.load(role_include, play=self._play, parent_role=self)
                 deps.append(r)
 
         return deps
