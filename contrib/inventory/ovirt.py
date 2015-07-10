@@ -56,7 +56,7 @@ Examples:
   $ ansible -i ovirt.py us-central1-a -m shell -a "/bin/uname -a"
 
   Use the ovirt inventory script to print out instance specific information
-  $ plugins/inventory/ovirt.py --host my_instance
+  $ contrib/inventory/ovirt.py --host my_instance
 
 Author: Josha Inglis <jinglis@iix.net> based on the gce.py by Eric Johnson <erjohnso@google.com>
 Version: 0.0.1

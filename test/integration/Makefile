@@ -164,7 +164,7 @@ $(CONSUL_RUNNING):
 consul:
 ifeq ($(CONSUL_RUNNING), True)
 	ansible-playbook -i $(INVENTORY) consul.yml ; \
-	ansible-playbook -i ../../plugins/inventory/consul_io.py consul_inventory.yml
+	ansible-playbook -i ../../contrib/inventory/consul_io.py consul_inventory.yml
 else
 	@echo "Consul agent is not running locally. To run a cluster locally see http://github.com/sgargan/consul-vagrant"
 endif

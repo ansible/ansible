@@ -111,7 +111,7 @@ optional arguments:
 # (c) 2013, Evan Wies <evan@neomantra.net>
 #
 # Inspired by the EC2 inventory plugin:
-# https://github.com/ansible/ansible/blob/devel/plugins/inventory/ec2.py
+# https://github.com/ansible/ansible/blob/devel/contrib/inventory/ec2.py
 #
 # This file is part of Ansible,
 #

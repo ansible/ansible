@@ -66,7 +66,7 @@ Examples:
   $ ansible -i gce.py us-central1-a -m shell -a "/bin/uname -a"
 
   Use the GCE inventory script to print out instance specific information
-  $ plugins/inventory/gce.py --host my_instance
+  $ contrib/inventory/gce.py --host my_instance
 
 Author: Eric Johnson <erjohnso@google.com>
 Version: 0.0.1
