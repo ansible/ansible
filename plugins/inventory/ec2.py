@@ -1221,7 +1221,7 @@ class Ec2Inventory(object):
         ''' Converts 'bad' characters in a string to underscores so they can be
         used as Ansible groups '''
 
-        return re.sub("[^A-Za-z0-9\_]", "_", word)
+        return re.sub("[^A-Za-z0-9\-]", "_", word)
 
     def json_format_dict(self, data, pretty=False):
         ''' Converts a dict to a JSON object and dumps it as a formatted
