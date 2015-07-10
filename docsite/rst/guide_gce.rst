@@ -79,7 +79,7 @@ Create a file ``secrets.py`` looking like following, and put it in some folder w
     GCE_PARAMS = ('i...@project.googleusercontent.com', '/path/to/project.pem')
     GCE_KEYWORD_PARAMS = {'project': 'project_id'}
 
-Ensure to enter the email adress from the created services account and not the one from your main account.
+Ensure to enter the email address from the created services account and not the one from your main account.
 
 Now the modules can be used as above, but the account information can be omitted.
 
