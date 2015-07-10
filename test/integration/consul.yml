@@ -36,7 +36,7 @@
         service_name: nginx
         service_port: 80
         script: "sh -c true"
-        interval: 5
+        interval: 5s
         token: '4791402A-D875-4C18-8316-E652DBA53B18'
         tags:
           - dev
@@ -48,7 +48,7 @@
         service_name: nginx
         service_port: 443
         script: "sh -c false"
-        interval: 5
+        interval: 5s
         tags:
           - qa
           - slave
@@ -58,7 +58,7 @@
         service_name: ssh
         service_port: 2222
         script: "sh -c true"
-        interval: 5
+        interval: 5s
         token: '4791402A-D875-4C18-8316-E652DBA53B18'
 
     - name: update the Anonymous token to allow anon access to kv store

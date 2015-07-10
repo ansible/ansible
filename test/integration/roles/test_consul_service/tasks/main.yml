@@ -42,7 +42,7 @@
     service_name: with_check
     service_port: 80
     script: "sh -c true"
-    interval: 60
+    interval: 60s
   register: script_result
 
 - name: verify service with check registration
@@ -52,6 +52,51 @@
         - script_result.service_port == 80
         - script_result.service_id == 'with_check'
         - script_result.checks | length == 1
+
+- name: register check with each duration type
+  consul:
+    service_name: with_check
+    service_port: 80
+    script: "sh -c true"
+    interval: '60{{ item }}'
+  register: duration_tests
+  with_items:
+    - ns
+    - us
+    - ms
+    - s
+    - m
+    - h
+
+- name: verify service with check registration
+  assert:
+    that:
+        - item.changed
+        - item.checks[0].interval in ['60ns', '60us','60ms','60s','60h', '60m']
+  with_items: duration_tests.results
+
+- name: register check with each duration type
+  consul:
+    service_name: with_check
+    service_port: 80
+    ttl: '60{{ item }}'
+  register: duration_tests
+  with_items:
+    - ns
+    - us
+    - ms
+    - s
+    - m
+    - h
+
+- name: verify service with check registration
+  assert:
+    that:
+        - item.changed
+        - item.checks[0].ttl in ['60ns', '60us','60ms','60s','60h', '60m']
+  with_items: duration_tests.results
+
+
 
 - name: register service with some service tags
   consul:
@@ -68,6 +113,43 @@
     that:
         - tags_result.changed
         - "tags_result.tags == ['prod', 'webservers']"
+        
+
+- name: register same service causes no change
+  consul:
+    service_name: with_tags
+    service_port: 80
+    tags:
+      - prod
+      - webservers
+  register: tags_result
+
+- debug: var=tags_result
+
+- name: verify no change with same service
+  assert:
+    that:
+        - not tags_result.changed
+        
+- name: register same service with extra tags causes change
+  consul:
+    service_name: with_tags
+    service_port: 80
+    tags:
+      - prod
+      - webservers
+      - secondary
+  register: tags_result
+
+- debug: var=tags_result
+
+- name: verify extra tags causes change
+  assert:
+    that:
+        - tags_result.changed
+        - "tags_result.tags == ['prod', 'webservers', 'secondary']"
+
+        
 
 - name: create a node level check
   consul:

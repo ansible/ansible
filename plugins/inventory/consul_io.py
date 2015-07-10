@@ -261,6 +261,7 @@ class ConsulInventory(object):
     self.add_metadata(node_data, "consul_services", service_name, True)
 
     if self.is_service("ssh", service_name):
+      print 'here'
       self.add_metadata(node_data, "ansible_ssh_port", service['Port'])
 
     if self.config.has_config('servers_suffix'):
