@@ -30,6 +30,7 @@ except ImportError:
     from sha import sha as sha1
 
 from ansible import constants as C
+from ansible.cli import CLI
 from ansible.errors import *
 from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
@@ -243,6 +244,8 @@ class VariableManager:
 
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         all_vars['omit'] = self._omit_token
+
+        all_vars['ansible_version'] = CLI.version_info(gitinfo=False)
 
         # make vars self referential, so people can do things like 'vars[var_name]'
         copied_vars = all_vars.copy()
