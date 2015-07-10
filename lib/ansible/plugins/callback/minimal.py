@@ -113,3 +113,6 @@ class CallbackModule(CallbackBase):
     def v2_playbook_on_stats(self, stats):
         pass
 
+    def v2_playbook_on_exception(self, exception):
+        pass
+
