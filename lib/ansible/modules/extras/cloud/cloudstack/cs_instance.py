@@ -485,8 +485,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             instance = self.deploy_instance()
         else:
             instance = self.update_instance(instance)
-        
-        instance = self.ensure_tags(resource=instance, resource_type='UserVm')
+
+        # In check mode, we do not necessarely have an instance
+        if instance:
+            instance = self.ensure_tags(resource=instance, resource_type='UserVm')
 
         return instance
 
