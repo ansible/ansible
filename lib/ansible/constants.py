@@ -109,7 +109,7 @@ YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
 # sections in config file
 DEFAULTS='defaults'
 
-# generaly configurable things
+# generally configurable things
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, boolean=True)
 DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', get_config(p, DEFAULTS,'inventory','ANSIBLE_INVENTORY', '/etc/ansible/hosts')))
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None)
