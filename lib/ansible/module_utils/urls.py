@@ -229,6 +229,7 @@ import sys
 import socket
 import platform
 import tempfile
+import base64
 
 
 # This is a dummy cacert provided for Mac OS since you need at least 1
@@ -412,7 +413,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
         # Write the dummy ca cert if we are running on Mac OS X
         if system == 'Darwin':
             os.write(tmp_fd, DUMMY_CA_CERT)
-            # Default Homebrew path for OpenSSL certs 
+            # Default Homebrew path for OpenSSL certs
             paths_checked.append('/usr/local/etc/openssl')
 
         # for all of the paths, find any  .crt or .pem files
@@ -522,12 +523,11 @@ class SSLValidationHandler(urllib2.BaseHandler):
 # Rewrite of fetch_url to not require the module environment
 def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         force=False, last_mod_time=None, timeout=10, validate_certs=True,
-        url_username=None, url_password=None, http_agent=None):
+        url_username=None, url_password=None, http_agent=None, force_basic_auth=False):
     '''
     Fetches a file from an HTTP/FTP server using urllib2
     '''
     handlers = []
-
     # FIXME: change the following to use the generic_urlparse function
     #        to remove the indexed references for 'parsed'
     parsed = urlparse.urlparse(url)
@@ -572,7 +572,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             # reconstruct url without credentials
             url = urlparse.urlunparse(parsed)
 
-        if username:
+        if username and not force_basic_auth:
             passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
 
             # this creates a password manager
@@ -585,6 +585,12 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
 
             # create the AuthHandler
             handlers.append(authhandler)
+
+        elif username and force_basic_auth:
+            if headers is None:
+                headers = {}
+
+            headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(username, password)))
 
     if not use_proxy:
         proxyhandler = urllib2.ProxyHandler({})
@@ -605,11 +611,11 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     else:
         request = urllib2.Request(url, data)
 
-    # add the custom agent header, to help prevent issues 
-    # with sites that block the default urllib agent string 
+    # add the custom agent header, to help prevent issues
+    # with sites that block the default urllib agent string
     request.add_header('User-agent', http_agent)
 
-    # if we're ok with getting a 304, set the timestamp in the 
+    # if we're ok with getting a 304, set the timestamp in the
     # header, otherwise make sure we don't get a cached copy
     if last_mod_time and not force:
         tstamp = last_mod_time.strftime('%a, %d %b %Y %H:%M:%S +0000')
@@ -650,9 +656,11 @@ def url_argument_spec():
         validate_certs = dict(default='yes', type='bool'),
         url_username = dict(required=False),
         url_password = dict(required=False),
+        force_basic_auth = dict(required=False, type='bool', default='no'),
+
     )
 
-def fetch_url(module, url, data=None, headers=None, method=None, 
+def fetch_url(module, url, data=None, headers=None, method=None,
               use_proxy=True, force=False, last_mod_time=None, timeout=10):
     '''
     Fetches a file from an HTTP/FTP server using urllib2.  Requires the module environment
@@ -669,6 +677,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
     username = module.params.get('url_username', '')
     password = module.params.get('url_password', '')
     http_agent = module.params.get('http_agent', None)
+    force_basic_auth = module.params.get('force_basic_auth', '')
 
     r = None
     info = dict(url=url)
@@ -676,7 +685,7 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         r = open_url(url, data=data, headers=headers, method=method,
                 use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout,
                 validate_certs=validate_certs, url_username=username,
-                url_password=password, http_agent=http_agent)
+                url_password=password, http_agent=http_agent, force_basic_auth=force_basic_auth)
         info.update(r.info())
         info['url'] = r.geturl()  # The URL goes in too, because of redirects.
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
