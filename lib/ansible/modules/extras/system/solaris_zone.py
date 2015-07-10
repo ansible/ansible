@@ -32,7 +32,7 @@ description:
 version_added: "2.0"
 author: Paul Markham
 requirements:
-  - Solaris 10 or later
+  - Solaris 10 or 11
 options:
   state:
     required: true
@@ -84,6 +84,12 @@ options:
       - 'Extra options to the zonecfg(1M) create command.'
     required: false
     default: empty string
+  install_options:
+    required: false
+    description:
+      - 'Extra options to the zoneadm(1M) install command. To automate Solaris 11 zone creation,
+         use this to specify the profile XML file, e.g. install_options="-c sc_profile.xml"'
+    required: false
   attach_options:
     required: false
     description:
@@ -130,22 +136,33 @@ solaris_zone: name=zone1 state=attached attach_options='-u'
 
 class Zone(object):
     def __init__(self, module):
-        self.changed        = False
-        self.msg            = []
+        self.changed = False
+        self.msg     = []
 
-        self.module         = module
-        self.path           = self.module.params['path']
-        self.name           = self.module.params['name']
-        self.sparse         = self.module.params['sparse']
-        self.root_password  = self.module.params['root_password']
-        self.timeout        = self.module.params['timeout']
-        self.config         = self.module.params['config']
-        self.create_options = self.module.params['create_options']
-        self.attach_options = self.module.params['attach_options']
+        self.module          = module
+        self.path            = self.module.params['path']
+        self.name            = self.module.params['name']
+        self.sparse          = self.module.params['sparse']
+        self.root_password   = self.module.params['root_password']
+        self.timeout         = self.module.params['timeout']
+        self.config          = self.module.params['config']
+        self.create_options  = self.module.params['create_options']
+        self.install_options = self.module.params['install_options']
+        self.attach_options  = self.module.params['attach_options']
 
         self.zoneadm_cmd    = self.module.get_bin_path('zoneadm', True)
         self.zonecfg_cmd    = self.module.get_bin_path('zonecfg', True)
         self.ssh_keygen_cmd = self.module.get_bin_path('ssh-keygen', True)
+
+        if self.module.check_mode:
+            self.msg.append('Running in check mode')
+
+        if platform.system() != 'SunOS':
+            self.module.fail_json(msg='This module requires Solaris')
+
+        (self.os_major, self.os_minor) = platform.release().split('.')
+        if int(self.os_minor) < 10:
+            self.module.fail_json(msg='This module requires Solaris 10 or later')
 
     def configure(self):
         if not self.path:
@@ -176,11 +193,12 @@ class Zone(object):
 
     def install(self):
         if not self.module.check_mode:
-            cmd = '%s -z %s install' % (self.zoneadm_cmd, self.name)
+            cmd = '%s -z %s install %s' % (self.zoneadm_cmd, self.name, self.install_options)
             (rc, out, err) = self.module.run_command(cmd)
             if rc != 0:
                 self.module.fail_json(msg='Failed to install zone. %s' % (out + err))
-            self.configure_sysid()
+            if int(self.os_minor) == 10:
+                self.configure_sysid()
             self.configure_password()
             self.configure_ssh_keys()
         self.changed = True
@@ -273,7 +291,7 @@ class Zone(object):
             while True:
                 if elapsed > self.timeout:
                     self.module.fail_json(msg='timed out waiting for zone to boot')
-                rc = os.system('ps -z %s -o args|grep "/usr/lib/saf/ttymon.*-d /dev/console" > /dev/null 2>/dev/null' % self.name)
+                rc = os.system('ps -z %s -o args|grep "ttymon.*-d /dev/console" > /dev/null 2>/dev/null' % self.name)
                 if rc == 0:
                     break
                 time.sleep(10)
@@ -341,9 +359,10 @@ class Zone(object):
     def status(self):
         cmd = '%s -z %s list -p' % (self.zoneadm_cmd, self.name)
         (rc, out, err) = self.module.run_command(cmd)
-        if rc != 0:
-            self.module.fail_json(msg='Failed to determine zone state. %s' % (out + err))
-        return out.split(':')[2]
+        if rc == 0:
+            return out.split(':')[2]
+        else:
+            return 'undefined'
 
     def state_present(self):
         if self.exists():
@@ -398,26 +417,20 @@ class Zone(object):
 
 def main():
     module = AnsibleModule(
-        argument_spec      = dict(
-            name           = dict(required=True),
-            state          = dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
-            path           = dict(defalt=None),
-            sparse         = dict(default=False, type='bool'),
-            root_password  = dict(default=None),
-            timeout        = dict(default=600, type='int'),
-            config         = dict(default=''),
-            create_options = dict(default=''),
-            attach_options = dict(default=''),
+        argument_spec       = dict(
+            name            = dict(required=True),
+            state           = dict(default='present', choices=['running', 'started', 'present', 'installed', 'stopped', 'absent', 'configured', 'detached', 'attached']),
+            path            = dict(defalt=None),
+            sparse          = dict(default=False, type='bool'),
+            root_password   = dict(default=None),
+            timeout         = dict(default=600, type='int'),
+            config          = dict(default=''),
+            create_options  = dict(default=''),
+            install_options = dict(default=''),
+            attach_options  = dict(default=''),
             ),
         supports_check_mode=True
     )
-
-    if platform.system() == 'SunOS':
-        (major, minor) = platform.release().split('.')
-        if minor < 10:
-            module.fail_json(msg='This module requires Solaris 10 or later')
-    else:
-        module.fail_json(msg='This module requires Solaris')
 
     zone = Zone(module)
 
