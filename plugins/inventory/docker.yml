@@ -7,7 +7,7 @@
 # inventory information.
 #
 # This plugin does not support targeting of specific hosts using the --host
-# flag. Instead, it it queries the Docker API for each container, running
+# flag. Instead, it queries the Docker API for each container, running
 # or not, and returns this data all once.
 #
 # The plugin returns the following custom attributes on Docker containers:
@@ -30,7 +30,7 @@
 #    docker_volumes_rw
 #
 # Requirements:
-# The docker-py module: https://github.com/dotcloud/docker-py
+# The docker-py module version >= 0.6.0: https://github.com/dotcloud/docker-py
 #
 # Notes:
 # A config file can be used to configure this inventory module, and there
@@ -40,6 +40,10 @@
 #    DOCKER_HOST
 #    DOCKER_VERSION
 #    DOCKER_TIMEOUT
+#    DOCKER_TLS_VERIFY
+#    DOCKER_SSL_VERSION
+#    DOCKER_ASSERT_HOSTNAME
+#    DOCKER_CERT_PATH
 #    DOCKER_PRIVATE_SSH_PORT
 #    DOCKER_DEFAULT_IP
 #
@@ -65,6 +69,34 @@
 #     description:
 #         - Timeout in seconds for connections to Docker daemon API
 #     default: Uses docker.docker.Client constructor defaults
+#     required: false
+# environment variable: DOCKER_TLS_VERIFY
+#     description:
+#         - Sets client-side TLS certificate verification.
+#     default: Uses docker.utils.kwargs_from_env function defaults
+#     required: false
+# environment variable: DOCKER_SSL_VERSION
+#     description:
+#         - Sets TLS version used.
+#           See: https://docs.python.org/3.4/library/ssl.html#ssl.PROTOCOL_TLSv1
+#     default: TLSv1 
+#     required: false
+# environment variable: DOCKER_ASSERT_HOSTNAME
+#     description:
+#         - Sets the TLS library server certificate CN assertion behaviour
+#         - If True: asserts that the CN equals the hostname in the url 
+#           (default value)
+#         - If False: no CN assertion takes place
+#         - Some string: asserts that the CN matches the given string
+#     default: True
+#     required: false
+# environment variable: DOCKER_CERT_PATH
+#     description: 
+#         - File system path to the directory holding:
+#             - ca.pem (CA certificate)
+#             - cert.pem (client certificate)
+#             - key.pem (client certificate key)
+#     default: Uses docker.utils.kwargs_from_env function defaults
 #     required: false
 # environment variable: DOCKER_PRIVATE_SSH_PORT
 #     description:
@@ -117,18 +149,37 @@
 # over environment variables.
 #
 # Variable precedence is: hosts > defaults > environment
-
----
-defaults:
-  host: unix:///var/run/docker.sock
-  version: 1.9
-  timeout: 60
-  private_ssh_port: 22
-  default_ip: 127.0.0.1
-hosts:
+#
+#---
+#defaults:
+#  server:
+#    base_url: tcp://192.168.59.104:2375
+#hosts:
+#  # Full host configuration example with tls encryption 
+#  - server:
+#      base_url: https://192.168.59.103:2376
+#      tls_config:
+#        client_cert:
+#          - /home/me/.boot2docker/certs/boot2docker-vm-docker-dev/cert.pem
+#          - /home/me/.boot2docker/certs/boot2docker-vm-docker-dev/key.pem
+#        ca_cert: /home/me/.boot2docker/certs/boot2docker-vm-docker-dev/ca.pem
+#        verify: true
+#        assert_hostname: false
+#        ssl_version: TLSv1
+#      version: 1.9
+#      timeout: 60
+#    default_ip: 172.16.3.45
+#    private_ssh_port: 22
+#    # Simple host configuration without tls
+#  - server:
+#      base_url: tcp://192.168.59.102:2375
+#      # Setting 'tls_config: None' explicitly disallows tls
+#      tls_config: None
+#    default_ip: 172.16.3.45
+#    private_ssh_port: 22
+#    # Old-style host configuration example
 #  - host: tcp://10.45.5.16:4243
 #    version: 1.9
 #    timeout: 60
 #    private_ssh_port: 2022
 #    default_ip: 172.16.3.45
-#  - host: tcp://localhost:4243

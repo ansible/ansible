@@ -48,7 +48,7 @@
 #    docker_volumes_rw
 #
 # Requirements:
-# The docker-py module: https://github.com/dotcloud/docker-py
+# The docker-py module version >= 0.6.0: https://github.com/dotcloud/docker-py
 #
 # Notes:
 # A config file can be used to configure this inventory module, and there
@@ -58,6 +58,10 @@
 #    DOCKER_HOST
 #    DOCKER_VERSION
 #    DOCKER_TIMEOUT
+#    DOCKER_TLS_VERIFY
+#    DOCKER_SSL_VERSION
+#    DOCKER_ASSERT_HOSTNAME
+#    DOCKER_CERT_PATH
 #    DOCKER_PRIVATE_SSH_PORT
 #    DOCKER_DEFAULT_IP
 #
@@ -83,6 +87,34 @@
 #     description:
 #         - Timeout in seconds for connections to Docker daemon API
 #     default: Uses docker.docker.Client constructor defaults
+#     required: false
+# environment variable: DOCKER_TLS_VERIFY
+#     description:
+#         - Sets client-side TLS certificate verification.
+#     default: Uses docker.utils.kwargs_from_env function defaults
+#     required: false
+# environment variable: DOCKER_SSL_VERSION
+#     description:
+#         - Sets TLS version used.
+#           See: https://docs.python.org/3.4/library/ssl.html#ssl.PROTOCOL_TLSv1
+#     default: TLSv1 
+#     required: false
+# environment variable: DOCKER_ASSERT_HOSTNAME
+#     description:
+#         - Sets the TLS library server certificate CN assertion behaviour
+#         - If True: asserts that the CN equals the hostname in the url 
+#           (default value)
+#         - If False: no CN assertion takes place
+#         - Some string: asserts that the CN matches the given string
+#     default: True
+#     required: false
+# environment variable: DOCKER_CERT_PATH
+#     description: 
+#         - File system path to the directory holding:
+#             - ca.pem (CA certificate)
+#             - cert.pem (client certificate)
+#             - key.pem (client certificate key)
+#     default: Uses docker.utils.kwargs_from_env function defaults
 #     required: false
 # environment variable: DOCKER_PRIVATE_SSH_PORT
 #     description:
@@ -133,7 +165,6 @@ import sys
 import json
 import argparse
 
-from UserDict import UserDict
 from collections import defaultdict
 
 import yaml
@@ -154,25 +185,6 @@ try:
 except ImportError:
     print('docker-py is required for this module')
     sys.exit(1)
-
-
-class HostDict(UserDict):
-    def __setitem__(self, key, value):
-        if value is not None:
-            self.data[key] = value
-
-    def update(self, dict=None, **kwargs):
-        if dict is None:
-            pass
-        elif isinstance(dict, UserDict):
-            for k, v in dict.data.items():
-                self[k] = v
-        else:
-            for k, v in dict.items():
-                self[k] = v
-        if len(kwargs):
-            for k, v in kwargs.items():
-                self[k] = v
 
 
 def write_stderr(string):
@@ -197,60 +209,78 @@ def setup():
                 sys.exit(1)
 
     # Environment Variables
-    env_base_url = os.environ.get('DOCKER_HOST')
-    env_version = os.environ.get('DOCKER_VERSION')
-    env_timeout = os.environ.get('DOCKER_TIMEOUT')
-    env_ssh_port = os.environ.get('DOCKER_PRIVATE_SSH_PORT', '22')
-    env_default_ip = os.environ.get('DOCKER_DEFAULT_IP', '127.0.0.1')
+    env_vars = dict()
+    env_ssl_version =  os.environ.get('DOCKER_SSL_VERSION', 'TLSv1')
+    env_assert_hostname =  os.environ.get('DOCKER_ASSERT_HOSTNAME', None)
+    if isinstance(env_assert_hostname, str):
+        if env_assert_hostname.lower() == 'false':
+            env_assert_hostname = False
+        elif env_assert_hostname.lower() == 'true':
+            env_assert_hostname = None
+    env_vars['server'] = docker.utils.kwargs_from_env(
+        ssl_version=env_ssl_version, assert_hostname=env_assert_hostname)
+    env_vars['ssh_port'] = os.environ.get('DOCKER_PRIVATE_SSH_PORT', '22')
+    env_vars['default_ip'] = os.environ.get('DOCKER_DEFAULT_IP', '127.0.0.1')
     # Config file defaults
-    defaults = config.get('defaults', dict())
-    def_host = defaults.get('host')
-    def_version = defaults.get('version')
-    def_timeout = defaults.get('timeout')
-    def_default_ip = defaults.get('default_ip')
-    def_ssh_port = defaults.get('private_ssh_port')
+    defaults = dict()
+    if config:
+        defaults = config.get('defaults', dict())
+    # Compatibility with old server configuration
+    if defaults:
+        if not defaults.get('server'):
+            defaults['server'] = dict()
+            if defaults.get('host'):
+                defaults['server']['base_url'] = defaults.pop('host')
+            if defaults.get('version'):
+                defaults['server']['version'] = defaults.pop('version')
+            if defaults.get('timeout'):
+                defaults['server']['timeout'] = defaults.pop('timeout')
+            defaults['server']['tls_config'] = 'None'
 
     hosts = list()
 
     if config:
+        env_server = env_vars.pop('server', dict())
+        default_server = defaults.pop('server', dict())
         hosts_list = config.get('hosts', list())
         # Look to the config file's defined hosts
         if hosts_list:
             for host in hosts_list:
-                baseurl = host.get('host') or def_host or env_base_url
-                version = host.get('version') or def_version or env_version
-                timeout = host.get('timeout') or def_timeout or env_timeout
-                default_ip = host.get('default_ip') or def_default_ip or env_default_ip
-                ssh_port = host.get('private_ssh_port') or def_ssh_port or env_ssh_port
+                # Compatibility with old server configuration
+                if not host.get('server'):
+                    host['server'] = dict()
+                    if host.get('host'):
+                        host['server']['base_url'] = host.pop('host')
+                    if host.get('version'):
+                        host['server']['version'] = host.pop('version')
+                    if host.get('timeout'):
+                        host['server']['timeout'] = host.pop('timeout')
+                    host['server']['tls_config'] = 'None'
+                
+                host_server = host.pop('server')
 
-                hostdict = HostDict(
-                    base_url=baseurl,
-                    version=version,
-                    timeout=timeout,
-                    default_ip=default_ip,
-                    private_ssh_port=ssh_port,
-                )
-                hosts.append(hostdict)
+                # Host configuration
+                host_config = dict()
+                host_config.update(env_vars)
+                host_config.update(defaults)
+                host_config.update(host)
+                # Per-host server connection configuration
+                host_config_server = dict()
+                host_config_server.update(env_server)
+                host_config_server.update(default_server)
+                host_config_server.update(host_server)
+                host_config['server'] = host_config_server
+                hosts.append(host_config)
         # Look to the defaults
         else:
-            hostdict = HostDict(
-                base_url=def_host,
-                version=def_version,
-                timeout=def_timeout,
-                default_ip=def_default_ip,
-                private_ssh_port=def_ssh_port,
-            )
-            hosts.append(hostdict)
+            host_config = dict()
+            host_config.update(defaults)
+            hosts.append(host_config)
     # Look to the environment
     else:
-        hostdict = HostDict(
-            base_url=env_base_url,
-            version=env_version,
-            timeout=env_timeout,
-            default_ip=env_default_ip,
-            private_ssh_port=env_ssh_port,
-        )
-        hosts.append(hostdict)
+        host_config = dict()
+        host_config.update(env_vars)
+        hosts.append(host_config)
 
     return hosts
 
@@ -261,12 +291,28 @@ def list_groups():
     hostvars = defaultdict(dict)
 
     for host in hosts:
-        ssh_port = host.pop('private_ssh_port', None)
-        default_ip = host.pop('default_ip', None)
-        hostname = host.get('base_url')
+        server = host.get('server', None)
+        ssh_port = host.get('private_ssh_port', None)
+        default_ip = host.get('default_ip', None)
+        hostname = server.get('base_url')
+
+        # Setup tls_config
+        if server.has_key('tls_config'):
+            tls_config = server.pop('tls_config')
+            if isinstance(tls_config,dict):
+                try:
+                    tls = docker.tls.TLSConfig(**tls_config)
+                    server['tls'] = tls
+                except TypeError as e:
+                    write_stderr("Error parsing host tls_config.")
+                    write_stderr(tls_config)
+                    write_stderr(e)
+                    sys.exit(1)
+            else:
+                server.pop('tls', None)
 
         try:
-            client = docker.Client(**host)
+            client = docker.Client(**server)
             containers = client.containers(all=True)
         except (HTTPError, ConnectionError) as e:
             write_stderr(e)
@@ -331,7 +377,8 @@ def list_groups():
 
             hostvars[name].update(container_info)
 
-    groups['docker_hosts'] = [host.get('base_url') for host in hosts]
+    groups['docker_hosts'] = list(set(
+        [host.get('server', {}).get('base_url') for host in hosts]))
     groups['_meta'] = dict()
     groups['_meta']['hostvars'] = hostvars
     print json.dumps(groups, sort_keys=True, indent=4)
@@ -355,5 +402,5 @@ def main():
         sys.exit(1)
     sys.exit(0)
 
-
-main()
+if __name__ == '__main__':
+    main()
