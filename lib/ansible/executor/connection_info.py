@@ -171,11 +171,12 @@ class ConnectionInformation:
         self.su_pass     = None
 
         # general flags (should we move out?)
-        self.verbosity   = 0
-        self.only_tags   = set()
-        self.skip_tags   = set()
-        self.no_log      = False
-        self.check_mode  = False
+        self.verbosity      = 0
+        self.only_tags      = set()
+        self.skip_tags      = set()
+        self.no_log         = False
+        self.check_mode     = False
+        self.force_handlers = False
 
         #TODO: just pull options setup to above?
         # set options before play to allow play to override them
@@ -195,21 +196,23 @@ class ConnectionInformation:
             self.connection = play.connection
 
         if play.remote_user:
-            self.remote_user   = play.remote_user
+            self.remote_user = play.remote_user
 
         if play.port:
-            self.port          = int(play.port)
+            self.port = int(play.port)
 
         if play.become is not None:
-            self.become        = play.become
+            self.become = play.become
         if play.become_method:
             self.become_method = play.become_method
         if play.become_user:
-            self.become_user   = play.become_user
+            self.become_user = play.become_user
 
         # non connection related
-        self.no_log      = play.no_log
-        self.environment = play.environment
+        self.no_log         = play.no_log
+        self.environment    = play.environment
+        if play.force_handlers is not None:
+            self.force_handlers = play.force_handlers
 
     def set_options(self, options):
         '''
@@ -236,6 +239,8 @@ class ConnectionInformation:
         #    self.no_log     = boolean(options.no_log)
         if options.check:
             self.check_mode = boolean(options.check)
+        if options.force_handlers:
+            self.force_handlers = boolean(options.force_handlers)
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the

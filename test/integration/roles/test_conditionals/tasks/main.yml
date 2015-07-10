@@ -267,18 +267,19 @@
     that:
     - "result.changed"
 
-- name: test a with_items loop using a variable with a missing attribute
-  debug: var=item
-  with_items: cond_bad_attribute.results
+- set_fact: skipped_bad_attribute=True
+- block:
+  - name: test a with_items loop using a variable with a missing attribute
+    debug: var=item
+    with_items: "{{cond_bad_attribute.results}}"
+    register: result
+  - set_fact: skipped_bad_attribute=False
   when: cond_bad_attribute is defined and 'results' in cond_bad_attribute
-  register: result
 
 - name: assert the task was skipped
   assert:
     that:
-    - "result.results|length == 1"
-    - "'skipped' in result.results[0]"
-    - "result.results[0].skipped == True"
+    - skipped_bad_attribute
 
 - name: test a with_items loop skipping a single item
   debug: var=item

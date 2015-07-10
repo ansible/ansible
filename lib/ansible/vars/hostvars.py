@@ -39,6 +39,6 @@ class HostVars(dict):
             host = self._inventory.get_host(host_name)
             result = self._vars_manager.get_vars(loader=self._loader, play=self._play, host=host)
             templar = Templar(variables=result, loader=self._loader)
-            self._lookup[host_name] = templar.template(result)
+            self._lookup[host_name] = templar.template(result, fail_on_undefined=False)
         return self._lookup[host_name]
 

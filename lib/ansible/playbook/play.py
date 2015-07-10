@@ -78,6 +78,7 @@ class Play(Base, Taggable, Become):
 
     # Flag/Setting Attributes
     _any_errors_fatal    = FieldAttribute(isa='bool', default=False)
+    _force_handlers      = FieldAttribute(isa='bool')
     _max_fail_percentage = FieldAttribute(isa='string', default='0')
     _serial              = FieldAttribute(isa='int', default=0)
     _strategy            = FieldAttribute(isa='string', default='linear')
@@ -210,7 +211,7 @@ class Play(Base, Taggable, Become):
 
         roles = []
         for ri in role_includes:
-            roles.append(Role.load(ri))
+            roles.append(Role.load(ri, play=self))
         return roles
 
     def _post_validate_vars(self, attr, value, templar):

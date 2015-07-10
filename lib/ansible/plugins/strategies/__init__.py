@@ -207,11 +207,8 @@ class StrategyBase:
                     self._add_host(new_host_info)
 
                 elif result[0] == 'add_group':
-                    host        = result[1]
-                    task_result = result[2]
-                    group_name  = task_result.get('add_group')
-
-                    self._add_group(host, group_name)
+                    task        = result[1]
+                    self._add_group(task, iterator)
 
                 elif result[0] == 'notify_handler':
                     host         = result[1]
@@ -272,11 +269,12 @@ class StrategyBase:
 
         ret_results = []
 
+        debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
-            debug("waiting for pending results (%d left)" % self._pending_results)
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             time.sleep(0.01)
+        debug("no more pending results, returning what we have")
 
         return ret_results
 
@@ -324,29 +322,45 @@ class StrategyBase:
         # FIXME: is this still required?
         self._inventory.clear_pattern_cache()
 
-    def _add_group(self, host, group_name):
+    def _add_group(self, task, iterator):
         '''
         Helper function to add a group (if it does not exist), and to assign the
         specified host to that group.
         '''
 
-        new_group = self._inventory.get_group(group_name)
-        if not new_group:
-            # create the new group and add it to inventory
-            new_group = Group(group_name)
-            self._inventory.add_group(new_group)
-
-            # and add the group to the proper hierarchy
-            allgroup = self._inventory.get_group('all')
-            allgroup.add_child_group(new_group)
-
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        actual_host = self._inventory.get_host(host.name)
+        groups = {}
+        changed = False
 
-        # and add the host to the group
-        new_group.add_host(actual_host)
+        for host in self._inventory.get_hosts():
+            original_task = iterator.get_original_task(host, task)
+            all_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=original_task)
+            templar = Templar(loader=self._loader, variables=all_vars)
+            group_name = templar.template(original_task.args.get('key'))
+            if task.evaluate_conditional(templar=templar, all_vars=all_vars):
+                if group_name not in groups:
+                    groups[group_name] = []
+                groups[group_name].append(host)
+
+        for group_name, hosts in groups.iteritems():
+            new_group = self._inventory.get_group(group_name)
+            if not new_group:
+                # create the new group and add it to inventory
+                new_group = Group(name=group_name)
+                self._inventory.add_group(new_group)
+
+                # and add the group to the proper hierarchy
+                allgroup = self._inventory.get_group('all')
+                allgroup.add_child_group(new_group)
+                changed = True
+            for host in hosts:
+                if group_name not in host.get_groups():
+                    new_group.add_host(host)
+                    changed = True
+
+        return changed
 
     def _load_included_file(self, included_file, iterator):
         '''
@@ -398,13 +412,14 @@ class StrategyBase:
             for handler in handler_block.block:
                 handler_name = handler.get_name()
                 if handler_name in self._notified_handlers and len(self._notified_handlers[handler_name]):
-                    if not len(self.get_hosts_remaining(iterator._play)):
-                        self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
-                        result = False
-                        break
+                    # FIXME: need to use iterator.get_failed_hosts() instead?
+                    #if not len(self.get_hosts_remaining(iterator._play)):
+                    #    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
+                    #    result = False
+                    #    break
                     self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
                     for host in self._notified_handlers[handler_name]:
-                        if not handler.has_triggered(host) and host.name not in self._tqm._failed_hosts:
+                        if not handler.has_triggered(host) and (host.name not in self._tqm._failed_hosts or connection_info.force_handlers):
                             task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
                             task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
                             self._queue_task(host, handler, task_vars, connection_info)
