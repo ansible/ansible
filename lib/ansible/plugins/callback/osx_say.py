@@ -19,87 +19,69 @@
 import subprocess
 import os
 
+from ansible.plugins.callback import CallbackBase
+
 FAILED_VOICE="Zarvox"
 REGULAR_VOICE="Trinoids"
 HAPPY_VOICE="Cellos"
 LASER_VOICE="Princess"
 SAY_CMD="/usr/bin/say"
 
-def say(msg, voice):
-    subprocess.call([SAY_CMD, msg, "--voice=%s" % (voice)])
-
-class CallbackModule(object):
+class CallbackModule(CallbackBase):
     """
     makes Ansible much more exciting on OS X.
     """
-    def __init__(self):
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'notification'
+
+    def __init__(self, display):
+
+        super(CallbackModule, self).__init__(display)
+
         # plugin disable itself if say is not present
         # ansible will not call any callback if disabled is set to True
         if not os.path.exists(SAY_CMD):
             self.disabled = True
-            print "%s does not exist, plugin %s disabled" % \
-                    (SAY_CMD, os.path.basename(__file__))
+            self._display.warning("%s does not exist, plugin %s disabled" % (SAY_CMD, os.path.basename(__file__)) )
 
-    def on_any(self, *args, **kwargs):
-        pass
+    def say(self, msg, voice):
+        subprocess.call([SAY_CMD, msg, "--voice=%s" % (voice)])
 
     def runner_on_failed(self, host, res, ignore_errors=False):
-        say("Failure on host %s" % host, FAILED_VOICE)
+        self.say("Failure on host %s" % host, FAILED_VOICE)
 
     def runner_on_ok(self, host, res):
-        say("pew", LASER_VOICE)
+        self.say("pew", LASER_VOICE)
 
     def runner_on_skipped(self, host, item=None):
-        say("pew", LASER_VOICE)
+        self.say("pew", LASER_VOICE)
 
     def runner_on_unreachable(self, host, res):
-        say("Failure on host %s" % host, FAILED_VOICE)
-
-    def runner_on_no_hosts(self):
-        pass
-
-    def runner_on_async_poll(self, host, res, jid, clock):
-        pass
+        self.say("Failure on host %s" % host, FAILED_VOICE)
 
     def runner_on_async_ok(self, host, res, jid):
-        say("pew", LASER_VOICE)
+        self.say("pew", LASER_VOICE)
 
     def runner_on_async_failed(self, host, res, jid):
-        say("Failure on host %s" % host, FAILED_VOICE)
+        self.say("Failure on host %s" % host, FAILED_VOICE)
 
     def playbook_on_start(self):
-        say("Running Playbook", REGULAR_VOICE)
+        self.say("Running Playbook", REGULAR_VOICE)
 
     def playbook_on_notify(self, host, handler):
-        say("pew", LASER_VOICE)
-
-    def playbook_on_no_hosts_matched(self):
-        pass
-
-    def playbook_on_no_hosts_remaining(self):
-        pass
+        self.say("pew", LASER_VOICE)
 
     def playbook_on_task_start(self, name, is_conditional):
         if not is_conditional:
-            say("Starting task: %s" % name, REGULAR_VOICE)
+            self.say("Starting task: %s" % name, REGULAR_VOICE)
         else:
-            say("Notifying task: %s" % name, REGULAR_VOICE)
-
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-        pass
+            self.say("Notifying task: %s" % name, REGULAR_VOICE)
 
     def playbook_on_setup(self):
-        say("Gathering facts", REGULAR_VOICE)
-
-    def playbook_on_import_for_host(self, host, imported_file):
-        pass
-
-    def playbook_on_not_import_for_host(self, host, missing_file):
-        pass
+        self.say("Gathering facts", REGULAR_VOICE)
 
     def playbook_on_play_start(self, name):
-        say("Starting play: %s" % name, HAPPY_VOICE)
+        self.say("Starting play: %s" % name, HAPPY_VOICE)
 
     def playbook_on_stats(self, stats):
-        say("Play complete", HAPPY_VOICE)
-
+        self.say("Play complete", HAPPY_VOICE)

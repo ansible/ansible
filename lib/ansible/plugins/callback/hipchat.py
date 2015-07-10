@@ -19,16 +19,15 @@ import os
 import urllib
 import urllib2
 
-from ansible import utils
-
 try:
     import prettytable
     HAS_PRETTYTABLE = True
 except ImportError:
     HAS_PRETTYTABLE = False
 
+from ansible.plugins.callback import CallbackBase
 
-class CallbackModule(object):
+class CallbackModule(CallbackBase):
     """This is an example ansible callback plugin that sends status
     updates to a HipChat channel during playbook execution.
 
@@ -42,11 +41,16 @@ class CallbackModule(object):
         prettytable
 
     """
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'notification'
 
-    def __init__(self):
+    def __init__(self, display):
+
+        super(CallbackModule, self).__init__(display)
+
         if not HAS_PRETTYTABLE:
             self.disabled = True
-            utils.warning('The `prettytable` python module is not installed. '
+            self.display.warning('The `prettytable` python module is not installed. '
                           'Disabling the HipChat callback plugin.')
 
         self.msg_uri = 'https://api.hipchat.com/v1/rooms/message'
@@ -57,7 +61,7 @@ class CallbackModule(object):
 
         if self.token is None:
             self.disabled = True
-            utils.warning('HipChat token could not be loaded. The HipChat '
+            self.display.warning('HipChat token could not be loaded. The HipChat '
                           'token can be provided using the `HIPCHAT_TOKEN` '
                           'environment variable.')
 
@@ -80,63 +84,8 @@ class CallbackModule(object):
             response = urllib2.urlopen(url, urllib.urlencode(params))
             return response.read()
         except:
-            utils.warning('Could not submit message to hipchat')
+            self.display.warning('Could not submit message to hipchat')
 
-    def on_any(self, *args, **kwargs):
-        pass
-
-    def runner_on_failed(self, host, res, ignore_errors=False):
-        pass
-
-    def runner_on_ok(self, host, res):
-        pass
-
-    def runner_on_skipped(self, host, item=None):
-        pass
-
-    def runner_on_unreachable(self, host, res):
-        pass
-
-    def runner_on_no_hosts(self):
-        pass
-
-    def runner_on_async_poll(self, host, res, jid, clock):
-        pass
-
-    def runner_on_async_ok(self, host, res, jid):
-        pass
-
-    def runner_on_async_failed(self, host, res, jid):
-        pass
-
-    def playbook_on_start(self):
-        pass
-
-    def playbook_on_notify(self, host, handler):
-        pass
-
-    def playbook_on_no_hosts_matched(self):
-        pass
-
-    def playbook_on_no_hosts_remaining(self):
-        pass
-
-    def playbook_on_task_start(self, name, is_conditional):
-        pass
-
-    def playbook_on_vars_prompt(self, varname, private=True, prompt=None,
-                                encrypt=None, confirm=False, salt_size=None,
-                                salt=None, default=None):
-        pass
-
-    def playbook_on_setup(self):
-        pass
-
-    def playbook_on_import_for_host(self, host, imported_file):
-        pass
-
-    def playbook_on_not_import_for_host(self, host, missing_file):
-        pass
 
     def playbook_on_play_start(self, name):
         """Display Playbook and play start messages"""

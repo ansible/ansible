@@ -15,17 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import time
-import json
+from ansible.plugins.callback import CallbackBase
 
-class CallbackModule(object):
+class CallbackModule(CallbackBase):
     """
     This is a very trivial example of how any callback function can get at play and task objects.
     play will be 'None' for runner invocations, and task will be None for 'setup' invocations.
     """
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'aggregate'
 
-    def on_any(self, *args, **kwargs):
-        play = getattr(self, 'play', None)
-        task = getattr(self, 'task', None)
-        print "play = %s, task = %s, args = %s, kwargs = %s" % (play,task,args,kwargs)
+    def v2_on_any(self, *args, **kwargs):
+        i = 0
+        self._display.display("     --- ARGS ")
+        for a in args:
+            self._display.display('     %s: %s' % (i, a))
+            i += 1
+
+        self._display.display("      --- KWARGS ")
+        for k in kwargs:
+            self._display.display('     %s: %s' % (k, kwargs[k]))

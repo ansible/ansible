@@ -12,13 +12,12 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'aggregate'
 
     start_time = datetime.now()
-    
+
     def __init__(self, display):
 
-        super(CallbackModule, self).__init__(display)        
+        super(CallbackModule, self).__init__(display)
 
         start_time = datetime.now()
-        self._display.warning("Timerv2 plugin is active from included callbacks.")
 
     def days_hours_minutes_seconds(self, timedelta):
         minutes = (timedelta.seconds//60)%60
@@ -27,7 +26,7 @@ class CallbackModule(CallbackBase):
 
     def playbook_on_stats(self, stats):
         self.v2_playbook_on_stats(stats)
-        
+
     def v2_playbook_on_stats(self, stats):
         end_time = datetime.now()
         timedelta = end_time - self.start_time
