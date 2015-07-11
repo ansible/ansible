@@ -70,6 +70,8 @@ class CallbackModule(CallbackBase):
             if 'verbose_always' in result._result:
                 indent = 4
                 del result._result['verbose_always']
+            if self._display.verbosity >= 2 and 'delta' in result._result:
+                msg += " [time: %s]" % (result._result['delta'])
             msg += " => %s" % json.dumps(result._result, indent=indent, ensure_ascii=False)
         self._display.display(msg, color=color)
 
