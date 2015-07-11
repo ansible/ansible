@@ -53,7 +53,7 @@ options:
             - mysql host to connect
         required: False
     login_port:
-        version_added: "1.9"
+        version_added: "2.0"
         description:
             - mysql port to connect
         required: False
