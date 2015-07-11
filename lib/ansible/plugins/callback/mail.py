@@ -82,7 +82,7 @@ class CallbackModule(CallbackBase):
         if 'msg' in res._result.keys() and res._result['msg']:
             subject = res._result['msg'].strip('\r\n').split('\n')[0]
             body += 'with the following message:\n\n' + res._result['msg'] + '\n\n'
-        body += 'A complete dump of the error:\n\n' + json.dumps(res._result, indent=4)
+        body += 'A complete dump of the error:\n\n' + self._dump_results(res._result)
         mail(sender=sender, subject=subject, body=body)
 
     def v2_runner_on_unreachable(self, result):

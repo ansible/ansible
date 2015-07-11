@@ -33,6 +33,7 @@ try:
 except ImportError:
     HAS_ATFORK=False
 
+from ansible import constants as C
 from ansible.playbook.handler import Handler
 from ansible.playbook.task import Task
 
@@ -107,7 +108,8 @@ class ResultProcess(multiprocessing.Process):
 
                 # if this task is registering a result, do it now
                 if result._task.register:
-                    self._send_result(('register_host_var', result._host, result._task.register, result._result))
+                    res = {k: result._result[k] for k in set(result._result.keys()).difference(C.RESULT_SANITIZE)}
+                    self._send_result(('register_host_var', result._host, result._task.register, res))
 
                 # send callbacks, execute other options based on the result status
                 # FIXME: this should all be cleaned up and probably moved to a sub-function.
