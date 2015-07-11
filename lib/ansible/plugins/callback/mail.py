@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2012 Dag Wieers <dag@wieers.com>
 #
 # This file is part of Ansible
@@ -17,6 +18,7 @@
 
 import os
 import smtplib
+import json
 from ansible.plugins.callback import CallbackBase
 
 def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
@@ -58,6 +60,7 @@ class CallbackModule(CallbackBase):
     """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
+    CALLBACK_NAME = 'mail'
 
     def v2_runner_on_failed(self, res, ignore_errors=False):
 
@@ -66,8 +69,9 @@ class CallbackModule(CallbackBase):
         if ignore_errors:
             return
         sender = '"Ansible: %s" <root>' % host
-        subject = 'Failed: %s' % (res._task.action)
-        body = 'The following task failed for host ' + host + ':\n\n%s\n\n' % (res._task.action)
+        attach = "%s:  %s" % (res._result['invocation']['module_name'], json.dumps(res._result['invocation']['module_args']))
+        subject = 'Failed: %s' % attach
+        body = 'The following task failed for host ' + host + ':\n\n%s\n\n' % attach
 
         if 'stdout' in res._result.keys() and res._result['stdout']:
             subject = res._result['stdout'].strip('\r\n').split('\n')[-1]
@@ -78,7 +82,7 @@ class CallbackModule(CallbackBase):
         if 'msg' in res._result.keys() and res._result['msg']:
             subject = res._result['msg'].strip('\r\n').split('\n')[0]
             body += 'with the following message:\n\n' + res._result['msg'] + '\n\n'
-        body += 'A complete dump of the error:\n\n' + str(res._result['msg'])
+        body += 'A complete dump of the error:\n\n' + json.dumps(res._result, indent=4)
         mail(sender=sender, subject=subject, body=body)
 
     def v2_runner_on_unreachable(self, result):

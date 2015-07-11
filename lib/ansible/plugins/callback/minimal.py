@@ -33,6 +33,7 @@ class CallbackModule(CallbackBase):
 
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
+    CALLBACK_NAME = 'minimal'
 
     def v2_on_any(self, *args, **kwargs):
         pass

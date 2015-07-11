@@ -21,6 +21,7 @@ class CallbackModule(CallbackBase):
     """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
+    CALLBACK_NAME = 'syslog_json'
 
     def __init__(self, display):
 

@@ -16,7 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 __all__ = ["CallbackBase"]
@@ -34,6 +34,11 @@ class CallbackBase:
 
     def __init__(self, display):
         self._display = display
+        if self._display.verbosity >= 4:
+            name = getattr(self, 'CALLBACK_NAME', 'with no defined name')
+            ctype = getattr(self, 'CALLBACK_TYPE', 'unknwon')
+            version = getattr(self, 'CALLBACK_VERSION', 'unknwon')
+            self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
     def set_connection_info(self, conn_info):
         pass
