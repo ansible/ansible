@@ -1,4 +1,4 @@
-#!/usr/bin/python -tt
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Copyright 2015 Cristian van Ee <cristian at cvee.org>
@@ -20,15 +20,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-import traceback
-import os
-import operator
-import functools
-import dnf
-import dnf.cli
-import dnf.util
-
 DOCUMENTATION = '''
 ---
 module: dnf
@@ -44,12 +35,14 @@ options:
     version_added: "1.8"
     default: null
     aliases: []
+
   list:
     description:
       - Various (non-idempotent) commands for usage with C(/usr/bin/ansible) and I(not) playbooks. See examples.
     required: false
     version_added: "1.8"
     default: null
+
   state:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
@@ -57,6 +50,7 @@ options:
     choices: [ "present", "latest", "absent" ]
     version_added: "1.8"
     default: "present"
+
   enablerepo:
     description:
       - I(Repoid) of repositories to enable for the install/update operation.
@@ -101,7 +95,7 @@ requirements:
   - "python >= 2.6"
   - dnf
 author:
-  - '"Igor Gnatenko (@ignatenkobrain)	" <i.gnatenko.brain@gmail.com>'
+  - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
 '''
 
@@ -128,178 +122,229 @@ EXAMPLES = '''
   dnf: name="@Development tools" state=present
 
 '''
+import os
 
-import syslog
+try:
+    import dnf
+    from dnf import cli, const, exceptions, subject, util
+    HAS_DNF = True
+except ImportError:
+    HAS_DNF = False
 
-def log(msg):
-    syslog.openlog('ansible-dnf', 0, syslog.LOG_USER)
-    syslog.syslog(syslog.LOG_NOTICE, msg)
 
-def dnf_base(conf_file=None):
-    """Return a dnf Base object. You must call fill_sack."""
-    my = dnf.Base()
-    my.conf.debuglevel = 0
-    if conf_file and os.path.exists(conf_file):
-        my.conf.config_file_path = conf_file
-        my.conf.read()
-    my.read_all_repos()
+def _fail_if_no_dnf(module):
+    """Fail if unable to import dnf."""
+    if not HAS_DNF:
+        module.fail_json(
+            msg="`python-dnf` is not installed, but it is required for the Ansible dnf module.")
 
-    return my
 
-def pkg_to_dict(pkg):
-    """
-    Args:
-      pkg (hawkey.Package): The package
-    """
+def _configure_base(module, base, conf_file, disable_gpg_check):
+    """Configure the dnf Base object."""
+    conf = base.conf
 
-    d = {
-        'name': pkg.name,
-        'arch': pkg.arch,
-        'epoch': str(pkg.epoch),
-        'release': pkg.release,
-        'version': pkg.version,
-        'repo': pkg.repoid,
-    }
-    d['nevra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(**d)
+    # Turn off debug messages in the output
+    conf.debuglevel = 0
 
-    if pkg.installed:
-        d['dnfstate'] = 'installed'
+    # Set whether to check gpg signatures
+    conf.gpgcheck = not disable_gpg_check
+
+    # Don't prompt for user confirmations
+    conf.assumeyes = True
+
+    # Change the configuration file path if provided
+    if conf_file:
+        # Fail if we can't read the configuration file.
+        if not os.access(conf_file, os.R_OK):
+            module.fail_json(
+                msg="cannot read configuration file", conf_file=conf_file)
+        else:
+            conf.config_file_path = conf_file
+
+    # Read the configuration file
+    conf.read()
+
+
+def _specify_repositories(base, disablerepo, enablerepo):
+    """Enable and disable repositories matching the provided patterns."""
+    base.read_all_repos()
+    repos = base.repos
+
+    # Disable repositories
+    for repo_pattern in disablerepo:
+        for repo in repos.get_matching(repo_pattern):
+            repo.disable()
+
+    # Enable repositories
+    for repo_pattern in enablerepo:
+        for repo in repos.get_matching(repo_pattern):
+            repo.enable()
+
+
+def _base(module, conf_file, disable_gpg_check, disablerepo, enablerepo):
+    """Return a fully configured dnf Base object."""
+    _fail_if_no_dnf(module)
+    base = dnf.Base()
+    _configure_base(module, base, conf_file, disable_gpg_check)
+    _specify_repositories(base, disablerepo, enablerepo)
+    base.fill_sack()
+    return base
+
+
+def _package_dict(package):
+    """Return a dictionary of information for the package."""
+    # NOTE: This no longer contains the 'dnfstate' field because it is
+    # already known based on the query type.
+    result = {
+        'name': package.name,
+        'arch': package.arch,
+        'epoch': str(package.epoch),
+        'release': package.release,
+        'version': package.version,
+        'repo': package.repoid}
+    result['nevra'] = '{epoch}:{name}-{version}-{release}.{arch}'.format(
+        **result)
+
+    return result
+
+
+def list_items(module, base, command):
+    """List package info based on the command."""
+    # Rename updates to upgrades
+    if command == 'updates':
+        command = 'upgrades'
+
+    # Return the corresponding packages
+    if command in ['installed', 'upgrades', 'available']:
+        results = [
+            _package_dict(package)
+            for package in getattr(base.sack.query(), command)()]
+    # Return the enabled repository ids
+    elif command in ['repos', 'repositories']:
+        results = [
+            {'repoid': repo.id, 'state': 'enabled'}
+            for repo in base.repos.iter_enabled()]
+    # Return any matching packages
     else:
-        d['dnfstate'] = 'available'
+        packages = subject.Subject(command).get_best_query(base.sack)
+        results = [_package_dict(package) for package in packages]
 
-    return d
-
-def list_stuff(module, conf_file, stuff):
-    my = dnf_base(conf_file)
-    my.fill_sack()
-
-    if stuff == 'installed':
-        return [pkg_to_dict(p) for p in my.sack.query().installed()]
-    elif stuff == 'updates':
-        return [pkg_to_dict(p) for p in  my.sack.query().upgrades()]
-    elif stuff == 'available':
-        return [pkg_to_dict(p) for p in my.sack.query().available()]
-    elif stuff == 'repos':
-        return [dict(repoid=repo.id, state='enabled') for repo in my.repos.iter_enabled()]
-    else:
-        return [pkg_to_dict(p) for p in dnf.subject.Subject(stuff).get_best_query(my.sack)]
+    module.exit_json(results=results)
 
 
-def _mark_package_install(my, res, pkg_spec):
+def _mark_package_install(module, base, pkg_spec):
     """Mark the package for install."""
     try:
-        my.install(pkg_spec)
-    except dnf.exceptions.MarkingError:
-        res['results'].append('No package %s available.' % pkg_spec)
-        res['rc'] = 1
+        base.install(pkg_spec)
+    except exceptions.MarkingError:
+        module.fail(msg="No package {} available.".format(pkg_spec))
 
 
-def ensure(module, state, pkgspec, conf_file, enablerepo, disablerepo, disable_gpg_check):
-    my = dnf_base(conf_file)
-    if disablerepo:
-        for repo in disablerepo.split(','):
-            [r.disable() for r in my.repos.get_matching(repo)]
-    if enablerepo:
-        for repo in enablerepo.split(','):
-            [r.enable() for r in my.repos.get_matching(repo)]
-    my.fill_sack()
-    my.conf.gpgcheck = not disable_gpg_check
+def ensure(module, base, state, names):
+    if not util.am_i_root():
+        module.fail_json(msg="This command has to be run under the root user.")
 
-    res = {}
-    res['results'] = []
-    res['msg'] = ''
-    res['rc'] = 0
-    res['changed'] = False
-
-    if not dnf.util.am_i_root():
-        res['msg'] = 'This command has to be run under the root user.'
-        res['rc'] = 1
-
-    if pkgspec == '*' and state == 'latest':
-        my.upgrade_all()
+    if names == ['*'] and state == 'latest':
+        base.upgrade_all()
     else:
-        items = pkgspec.split(',')
-        pkg_specs, grp_specs, filenames = dnf.cli.commands.parse_spec_group_file(items)
+        pkg_specs, group_specs, filenames = cli.commands.parse_spec_group_file(
+            names)
+        if group_specs:
+            base.read_comps()
+
+        groups = []
+        for group_spec in group_specs:
+            group = base.comps.group_by_pattern(group_spec)
+            if group:
+                groups.append(group)
+            else:
+                module.fail_json(
+                    msg="No group {} available.".format(group_spec))
+
         if state in ['installed', 'present']:
             # Install files.
             for filename in filenames:
-                my.package_install(my.add_remote_rpm(filename))
+                base.package_install(base.add_remote_rpm(filename))
             # Install groups.
-            if grp_specs:
-                my.read_comps()
-                my.env_group_install(grp_specs, dnf.const.GROUP_PACKAGE_TYPES)
+            for group in groups:
+                base.group_install(group, const.GROUP_PACKAGE_TYPES)
             # Install packages.
             for pkg_spec in pkg_specs:
-                _mark_package_install(my, res, pkg_spec)
+                _mark_package_install(module, base, pkg_spec)
+
         elif state == 'latest':
-            # These aren't implemented yet, so assert them out.
-            assert not filenames
-            assert not grp_specs
+            # "latest" is same as "installed" for filenames.
+            for filename in filenames:
+                base.package_install(base.add_remote_rpm(filename))
+            for group in groups:
+                try:
+                    base.group_upgrade(group)
+                except exceptions.CompsError:
+                    # If not already installed, try to install.
+                    base.group_install(group, const.GROUP_PACKAGE_TYPES)
             for pkg_spec in pkg_specs:
                 try:
-                    my.upgrade(pkg_spec)
+                    base.upgrade(pkg_spec)
                 except dnf.exceptions.MarkingError:
                     # If not already installed, try to install.
-                    _mark_package_install(my, res, pkg_spec)
+                    _mark_package_install(module, base, pkg_spec)
 
-    if not my.resolve() and res['rc'] == 0:
-        res['msg'] += 'Nothing to do'
-        res['changed'] = False
+        else:
+            if filenames:
+                module.fail_json(
+                    msg="Cannot remove paths -- please specify package name.")
+
+            installed = base.sack.query().installed()
+            for group in groups:
+                if installed.filter(name=group.name):
+                    base.group_remove(group)
+            for pkg_spec in pkg_specs:
+                if installed.filter(name=pkg_spec):
+                    base.remove(pkg_spec)
+
+    if not base.resolve():
+        module.exit_json(msg="Nothing to do")
     else:
-        my.download_packages(my.transaction.install_set)
-        my.do_transaction()
-        res['changed'] = True
-        [res['results'].append('Installed: %s' % pkg) for pkg in my.transaction.install_set]
-        [res['results'].append('Removed: %s' % pkg) for pkg in my.transaction.remove_set]
+        if module.check_mode:
+            module.exit_json(changed=True)
+        base.download_packages(base.transaction.install_set)
+        base.do_transaction()
+        response = {'changed': True, 'results': []}
+        for package in base.transaction.install_set:
+            response['results'].append("Installed: {}".format(package))
+        for package in base.transaction.remove_set:
+            response['results'].append("Removed: {}".format(package))
 
-    module.exit_json(**res)
+        module.exit_json(**response)
+
 
 def main():
-
-    # state=installed name=pkgspec
-    # state=removed name=pkgspec
-    # state=latest name=pkgspec
-    #
-    # informational commands:
-    #   list=installed
-    #   list=updates
-    #   list=available
-    #   list=repos
-    #   list=pkgspec
-
+    """The main function."""
     module = AnsibleModule(
-        argument_spec = dict(
-            name=dict(aliases=['pkg']),
-            # removed==absent, installed==present, these are accepted as aliases
-            state=dict(default='installed', choices=['absent', 'present', 'installed', 'removed', 'latest']),
-            enablerepo=dict(),
-            disablerepo=dict(),
+        argument_spec=dict(
+            name=dict(aliases=['pkg'], type='list'),
+            state=dict(
+                default='installed',
+                choices=[
+                    'absent', 'present', 'installed', 'removed', 'latest']),
+            enablerepo=dict(type='list', default=[]),
+            disablerepo=dict(type='list', default=[]),
             list=dict(),
             conf_file=dict(default=None),
-            disable_gpg_check=dict(required=False, default="no", type='bool'),
+            disable_gpg_check=dict(default=False, type='bool'),
         ),
-        required_one_of = [['name','list']],
-        mutually_exclusive = [['name','list']],
-        supports_check_mode = True
-    )
-
+        required_one_of=[['name', 'list']],
+        mutually_exclusive=[['name', 'list']],
+        supports_check_mode=True)
     params = module.params
-
-    if not repoquery:
-        module.fail_json(msg="repoquery is required to use this module at this time. Please install the yum-utils package.")
+    base = _base(
+        module, params['conf_file'], params['disable_gpg_check'],
+        params['disablerepo'], params['enablerepo'])
     if params['list']:
-        results = dict(results=list_stuff(module, params['conf_file'], params['list']))
-        module.exit_json(**results)
-
+        list_items(module, base, params['list'])
     else:
-        pkg = params['name']
-        state = params['state']
-        enablerepo = params.get('enablerepo', '')
-        disablerepo = params.get('disablerepo', '')
-        disable_gpg_check = params['disable_gpg_check']
-        res = ensure(module, state, pkg, params['conf_file'], enablerepo,
-                     disablerepo, disable_gpg_check)
-        module.fail_json(msg="we should never get here unless this all failed", **res)
+        ensure(module, base, params['state'], params['name'])
+
 
 # import module snippets
 from ansible.module_utils.basic import *
