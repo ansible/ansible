@@ -71,7 +71,6 @@ options:
     required: false
     default: null
   config:
-    required: false
     description:
       - 'The zonecfg configuration commands for this zone. See zonecfg(1M) for the valid options
         and syntax. Typically this is a list of options separated by semi-colons or new lines, e.g.
@@ -79,19 +78,17 @@ options:
     required: false
     default: empty string
   create_options:
-    required: false
     description:
       - 'Extra options to the zonecfg(1M) create command.'
     required: false
     default: empty string
   install_options:
-    required: false
     description:
       - 'Extra options to the zoneadm(1M) install command. To automate Solaris 11 zone creation,
          use this to specify the profile XML file, e.g. install_options="-c sc_profile.xml"'
     required: false
+    default: empty string
   attach_options:
-    required: false
     description:
       - 'Extra options to the zoneadm attach command. For example, this can be used to specify
         whether a minimum or full update of packages is required and if any packages need to
