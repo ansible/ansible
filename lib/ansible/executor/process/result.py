@@ -108,7 +108,9 @@ class ResultProcess(multiprocessing.Process):
 
                 # if this task is registering a result, do it now
                 if result._task.register:
-                    res = {k: result._result[k] for k in set(result._result.keys()).difference(C.RESULT_SANITIZE)}
+                    res = {}
+                    for k in set(result._result.keys()).difference(C.RESULT_SANITIZE):
+                        res[k] = result._result[k]
                     self._send_result(('register_host_var', result._host, result._task.register, res))
 
                 # send callbacks, execute other options based on the result status

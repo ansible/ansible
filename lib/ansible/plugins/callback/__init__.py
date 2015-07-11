@@ -53,7 +53,10 @@ class CallbackBase:
         return json.dumps(res, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _sanitize_result(self, result):
-        return {k: result[k] for k in set(result.keys()).difference(C.RESULT_SANITIZE)}
+        res = {}
+        for k in set(result.keys()).difference(C.RESULT_SANITIZE):
+            res[k] = result[k]
+        return res
 
     def set_connection_info(self, conn_info):
         pass
