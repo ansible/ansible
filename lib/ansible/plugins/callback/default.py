@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.plugins.callback import CallbackBase
 
 class CallbackModule(CallbackBase):
@@ -48,7 +46,7 @@ class CallbackModule(CallbackBase):
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
-        self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), json.dumps(result._result, ensure_ascii=False)), color='red')
+        self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
 
         if result._task.ignore_errors:
             self._display.display("...ignoring")
@@ -70,9 +68,7 @@ class CallbackModule(CallbackBase):
             if 'verbose_always' in result._result:
                 indent = 4
                 del result._result['verbose_always']
-            if self._display.verbosity >= 2 and 'delta' in result._result:
-                msg += " [time: %s]" % (result._result['delta'])
-            msg += " => %s" % json.dumps(result._result, indent=indent, ensure_ascii=False)
+            msg += " => %s" % self._dump_results(result._result, indent=indent)
         self._display.display(msg, color=color)
 
     def v2_runner_on_skipped(self, result):
@@ -82,11 +78,11 @@ class CallbackModule(CallbackBase):
             if 'verbose_always' in result._result:
                 indent = 4
                 del result._result['verbose_always']
-            msg += " => %s" % json.dumps(result._result, indent=indent, ensure_ascii=False)
+            msg += " => %s" % self._dump_results(result._result, indent=indent)
         self._display.display(msg, color='cyan')
 
     def v2_runner_on_unreachable(self, result):
-        self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), result._result), color='red')
+        self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
 
     def v2_playbook_on_no_hosts_matched(self):
         self._display.display("skipping: no hosts matched", color='cyan')

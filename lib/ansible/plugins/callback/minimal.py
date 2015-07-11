@@ -19,8 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.plugins.callback import CallbackBase
 
 
@@ -55,7 +53,7 @@ class CallbackModule(CallbackBase):
         self._display.display("%s | FAILED! => %s" % (result._host.get_name(), result._result), color='red')
 
     def v2_runner_on_ok(self, result):
-        self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), json.dumps(result._result, indent=4)), color='green')
+        self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result)), color='green')
 
     def v2_runner_on_skipped(self, result):
         pass

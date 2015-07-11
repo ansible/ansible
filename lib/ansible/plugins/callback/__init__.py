@@ -19,7 +19,12 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
+import json
+
+from ansible import constants as C
+
 __all__ = ["CallbackBase"]
+
 
 class CallbackBase:
 
@@ -39,6 +44,16 @@ class CallbackBase:
             ctype = getattr(self, 'CALLBACK_TYPE', 'unknwon')
             version = getattr(self, 'CALLBACK_VERSION', 'unknwon')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
+
+    def _dump_results(self, result, sanitize=True, indent=4, sort_keys=True):
+        if sanitize:
+            res = self._sanitize_result(result)
+        else:
+            res = results
+        return json.dumps(res, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+
+    def _sanitize_result(self, result):
+        return {k: result[k] for k in set(result.keys()).difference(C.RESULT_SANITIZE)}
 
     def set_connection_info(self, conn_info):
         pass

@@ -235,3 +235,4 @@ DEFAULT_SUBSET            = None
 DEFAULT_SU_PASS           = None
 VAULT_VERSION_MIN         = 1.0
 VAULT_VERSION_MAX         = 1.0
+RESULT_SANITIZE           = frozenset(['invocation','warnings'])
