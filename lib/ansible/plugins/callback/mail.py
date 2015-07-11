@@ -81,7 +81,7 @@ class CallbackModule(CallbackBase):
         body += 'A complete dump of the error:\n\n' + str(res._result['msg'])
         mail(sender=sender, subject=subject, body=body)
 
-    def v2_runner_on_unreachable(self, ressult):
+    def v2_runner_on_unreachable(self, result):
 
         host = result._host.get_name()
         res = result._result
