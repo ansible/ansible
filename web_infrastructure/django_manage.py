@@ -165,6 +165,9 @@ def syncdb_filter_output(line):
 def migrate_filter_output(line):
     return ("Migrating forwards " in line) or ("Installed" in line and "Installed 0 object" not in line)
 
+def collectstatic_filter_output(line):
+    return "0 static files" not in line
+
 def main():
     command_allowed_param_map = dict(
         cleanup=(),
