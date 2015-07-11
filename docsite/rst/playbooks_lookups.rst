@@ -178,7 +178,7 @@ Here are some examples::
          # The following lookups were added in 1.9
          - debug: msg="{{item}}"
            with_url:
-                - 'http://github.com/gremlin.keys'
+                - 'https://github.com/gremlin.keys'
 
          # outputs the cartesian product of the supplied lists
          - debug: msg="{{item}}"

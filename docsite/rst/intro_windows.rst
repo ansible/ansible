@@ -26,7 +26,7 @@ Installing on the Control Machine
 
 On a Linux control machine::
 
-   pip install http://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
+   pip install https://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
 
 If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host)::
 

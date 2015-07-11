@@ -9,7 +9,7 @@ This in particular is very applicable when setting up continuous deployment infr
 
 Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process at once during a rolling update.
 
-This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <http://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
+This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
 
 You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.  
 
@@ -189,7 +189,7 @@ use the default remote connection type::
 
    :doc:`playbooks`
        An introduction to playbooks
-   `Ansible Examples on GitHub <http://github.com/ansible/ansible-examples>`_
+   `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!
