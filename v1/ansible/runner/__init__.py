@@ -527,7 +527,7 @@ class Runner(object):
                 cmd = " ".join([str(x) for x in [remote_module_path, async_jid, async_limit, async_module]])
 
         if not shebang:
-            raise errors.AnsibleError("module is missing interpreter line")
+            raise errors.AnsibleError("module '%s' is missing interpreter line" % module_name)
 
         rm_tmp = None
         if "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
