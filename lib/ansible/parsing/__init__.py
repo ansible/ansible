@@ -31,6 +31,7 @@ from ansible.parsing.splitter import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
 from ansible.utils.path import unfrackpath
+from ansible.utils.unicode import to_unicode
 
 class DataLoader():
 
@@ -175,7 +176,7 @@ class DataLoader():
         ''' sets the base directory, used to find files when a relative path is given '''
 
         if basedir is not None:
-            self._basedir = basedir
+            self._basedir = to_unicode(basedir)
 
     def path_dwim(self, given):
         '''
