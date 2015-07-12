@@ -29,6 +29,7 @@ import sys
 
 from ansible import constants as C
 from ansible.utils.display import Display
+from ansible.utils.unicode import to_unicode
 from ansible import errors
 
 MODULE_CACHE = {}
@@ -38,7 +39,7 @@ _basedirs = []
 
 def push_basedir(basedir):
     # avoid pushing the same absolute dir more than once
-    basedir = os.path.realpath(basedir)
+    basedir = to_unicode(os.path.realpath(basedir))
     if basedir not in _basedirs:
         _basedirs.insert(0, basedir)
 
