@@ -69,7 +69,10 @@ class CallbackModule(CallbackBase):
         if ignore_errors:
             return
         sender = '"Ansible: %s" <root>' % host
-        attach = "%s:  %s" % (res._result['invocation']['module_name'], json.dumps(res._result['invocation']['module_args']))
+        attach =  res._task.action
+        if 'invocation' in res._result:
+            attach = "%s:  %s" % (res._result['invocation']['module_name'], json.dumps(res._result['invocation']['module_args']))
+
         subject = 'Failed: %s' % attach
         body = 'The following task failed for host ' + host + ':\n\n%s\n\n' % attach
 
