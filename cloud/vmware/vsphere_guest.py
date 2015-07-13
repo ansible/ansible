@@ -65,13 +65,13 @@ options:
     default: null
   state:
     description:
-      - Indicate desired state of the vm.
+      - Indicate desired state of the vm. 'reconfigured' only applies changes to 'memory_mb' and 'num_cpus' in vm_hardware parameter, and only when hot-plugging is enabled for the guest.
     default: present
     choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
   from_template:
     version_added: "1.9"
     description:
-      - Specifies if the VM should be deployed from a template (cannot be ran with state)
+      - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware such as CPU, RAM, NICs or Disks can be applied when launching from template.
     default: no
     choices: ['yes', 'no']
   template_src:
@@ -202,7 +202,6 @@ EXAMPLES = '''
       hostname: esx001.mydomain.local
 
 # Deploy a guest from a template
-# No reconfiguration of the destination guest is done at this stage, a reconfigure would be needed to adjust memory/cpu etc..
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
     username: myuser
