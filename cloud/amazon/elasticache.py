@@ -56,7 +56,7 @@ options:
     description:
       - The port number on which each of the cache nodes will accept connections
     required: false
-    default: 11211
+    default: none
   cache_subnet_group:
     description:
       - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
@@ -480,7 +480,7 @@ def main():
             cache_engine_version={'required': False},
             node_type={'required': False, 'default': 'cache.m1.small'},
             num_nodes={'required': False, 'default': None, 'type': 'int'},
-            cache_port={'required': False, 'default': 11211, 'type': 'int'},
+            cache_port={'required': False, 'type': 'int'},
             cache_subnet_group={'required': False, 'default': None},
             cache_security_groups={'required': False, 'default': [default],
                                    'type': 'list'},
