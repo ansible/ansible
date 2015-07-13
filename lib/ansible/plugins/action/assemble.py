@@ -77,6 +77,9 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
+        if self._connection_info.check_mode:
+            return dict(skipped=True, msg=("skipped, this module does not support check_mode."))
+
         src        = self._task.args.get('src', None)
         dest       = self._task.args.get('dest', None)
         delimiter  = self._task.args.get('delimiter', None)
@@ -125,7 +128,7 @@ class ActionModule(ActionBase):
                 self._remote_chmod('a+r', xfered, tmp)
 
             # run the copy module
-            
+
             new_module_args = self._task.args.copy()
             new_module_args.update(
                 dict(
