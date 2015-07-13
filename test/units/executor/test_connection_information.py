@@ -129,27 +129,27 @@ class TestConnectionInformation(unittest.TestCase):
         pfexec_exe   = 'pfexec'
         pfexec_flags = ''
 
-        (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable=default_exe)
+        cmd = conn_info.make_become_cmd(cmd=default_cmd, executable=default_exe)
         self.assertEqual(cmd, default_cmd)
 
         conn_info.become = True
         conn_info.become_user = 'foo'
 
         conn_info.become_method = 'sudo'
-        (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -c '%s -k && %s %s -S -p "%s" -u %s %s -c '"'"'echo %s; %s'"'"''""" % (default_exe, sudo_exe, sudo_exe, sudo_flags, prompt, conn_info.become_user, default_exe, key, default_cmd))
+        cmd = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s -c '%s -k && %s %s -S -p "%s" -u %s %s -c '"'"'echo %s; %s'"'"''""" % (default_exe, sudo_exe, sudo_exe, sudo_flags, conn_info.prompt, conn_info.become_user, default_exe, conn_info.success_key, default_cmd))
 
         conn_info.become_method = 'su'
-        (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -c '%s  %s -c "%s -c '"'"'echo %s; %s'"'"'"'""" % (default_exe, su_exe, conn_info.become_user, default_exe, key, default_cmd))
+        cmd = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s -c '%s  %s -c "%s -c '"'"'echo %s; %s'"'"'"'""" % (default_exe, su_exe, conn_info.become_user, default_exe, conn_info.success_key, default_cmd))
 
         conn_info.become_method = 'pbrun'
-        (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -c '%s -b %s -u %s '"'"'echo %s; %s'"'"''""" % (default_exe, pbrun_exe, pbrun_flags, conn_info.become_user, key, default_cmd))
+        cmd = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s -c '%s -b %s -u %s '"'"'echo %s; %s'"'"''""" % (default_exe, pbrun_exe, pbrun_flags, conn_info.become_user, conn_info.success_key, default_cmd))
 
         conn_info.become_method = 'pfexec'
-        (cmd, prompt, key) = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -c '%s %s "'"'"'echo %s; %s'"'"'"'""" % (default_exe, pfexec_exe, pfexec_flags, key, default_cmd))
+        cmd = conn_info.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s -c '%s %s "'"'"'echo %s; %s'"'"'"'""" % (default_exe, pfexec_exe, pfexec_flags, conn_info.success_key, default_cmd))
 
         conn_info.become_method = 'bad'
         self.assertRaises(AnsibleError, conn_info.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
