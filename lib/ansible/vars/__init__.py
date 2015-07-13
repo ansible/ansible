@@ -308,7 +308,8 @@ class VariableManager:
             paths = [os.path.join(path, name) for name in names if not name.startswith('.')]
             for p in paths:
                 _found, results = self._load_inventory_file(path=p, loader=loader)
-                data = self._combine_vars(data, results)
+                if results is not None:
+                    data = self._combine_vars(data, results)
 
         else:
             file_name, ext = os.path.splitext(path)
