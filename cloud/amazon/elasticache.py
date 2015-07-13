@@ -42,6 +42,7 @@ options:
     description:
       - The version number of the cache engine
     required: false
+    default: none
   node_type:
     description:
       - The compute and memory capacity of the nodes in the cache cluster
