@@ -209,7 +209,7 @@ class VariableManager:
                             break
                     else:
                         raise AnsibleError("vars file %s was not found" % vars_file_item)
-                except:
+                except AnsibleError, e:
                     # FIXME: get_vars should probably be taking a flag to determine
                     #        whether or not vars files errors should be fatal at this
                     #        stage, or just base it on whether a host was specified?
