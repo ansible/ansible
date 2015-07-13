@@ -128,6 +128,11 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
+        if self.options.one_line:
+            cb = 'oneline'
+        else:
+            cb = 'minimal'
+
         # now create a task queue manager to execute the play
         self._tqm = None
         try:
@@ -138,7 +143,7 @@ class AdHocCLI(CLI):
                     display=self.display,
                     options=self.options,
                     passwords=passwords,
-                    stdout_callback='minimal',
+                    stdout_callback=cb,
                 )
             result = self._tqm.run(play)
         finally:
