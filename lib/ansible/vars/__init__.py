@@ -314,11 +314,11 @@ class VariableManager:
             file_name, ext = os.path.splitext(path)
             data = None
             if not ext:
-                for ext in ('', '.yml', '.yaml'):
+                for ext in C.YAML_FILENAME_EXTENSIONS:
                     new_path = path + ext
                     if loader.path_exists(new_path):
-                       data = loader.load_from_file(new_path)
-                       break
+                        data = loader.load_from_file(new_path)
+                        break
             else:
                 if loader.path_exists(path):
                     data = loader.load_from_file(path)
