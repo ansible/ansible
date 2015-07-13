@@ -73,7 +73,7 @@ class CacheModule(BaseCacheModule):
             except ValueError:
                 # FIXME: this is in display now, but cache plugins don't have that
                 #utils.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
-                return dict()
+                raise KeyError
         finally:
             f.close()
 
