@@ -59,7 +59,6 @@ class CacheModule(BaseCacheModule):
            raise KeyError
 
         cachefile = "%s/%s" % (self._cache_dir, key)
-        print("getting %s" % cachefile)
         try:
             f = codecs.open(cachefile, 'r', encoding='utf-8')
         except (OSError,IOError), e:
