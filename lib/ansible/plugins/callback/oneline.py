@@ -55,3 +55,6 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_unreachable(self, result):
         self._display.display("%s | UNREACHABLE!" % result._host.get_name(), color='yellow')
+
+    def v2_runner_on_skipped(self, result):
+        self._display.display("%s | SKIPPED" % (result._host.get_name()), color='cyan')
