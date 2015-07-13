@@ -31,11 +31,13 @@ module: clc_publicip
 short_description: Add and Delete public ips on servers in CenturyLink Cloud.
 description:
   - An Ansible module to add or delete public ip addresses on an existing server or servers in CenturyLink Cloud.
+version_added: 1.0
 options:
   protocol:
     descirption:
       - The protocol that the public IP will listen for.
     default: TCP
+    choices: ['TCP', 'UDP', 'ICMP']
     required: False
   ports:
     description:
@@ -58,6 +60,20 @@ options:
     choices: [ True, False ]
     default: True
     required: False
+requirements:
+    - python = 2.7
+    - requests >= 2.5.0
+    - clc-sdk
+notes:
+    - To use this module, it is required to set the below environment variables which enables access to the
+      Centurylink Cloud
+          - CLC_V2_API_USERNAME: the account login id for the centurylink cloud
+          - CLC_V2_API_PASSWORD: the account passwod for the centurylink cloud
+    - Alternatively, the module accepts the API token and account alias. The API token can be generated using the
+      CLC account login and password via the HTTP api call @ https://api.ctl.io/v2/authentication/login
+          - CLC_V2_API_TOKEN: the API token generated from https://api.ctl.io/v2/authentication/login
+          - CLC_ACCT_ALIAS: the account alias associated with the centurylink cloud
+    - Users can set CLC_V2_API_URL to specify an endpoint for pointing to a different CLC environment.
 '''
 
 EXAMPLES = '''
@@ -101,7 +117,14 @@ EXAMPLES = '''
 
 __version__ = '${version}'
 
-import requests
+from distutils.version import LooseVersion
+
+try:
+    import requests
+except ImportError:
+    REQUESTS_FOUND = False
+else:
+    REQUESTS_FOUND = True
 
 #
 #  Requires the clc-python-sdk.
@@ -130,6 +153,12 @@ class ClcPublicIp(object):
         if not CLC_FOUND:
             self.module.fail_json(
                 msg='clc-python-sdk required for this module')
+        if not REQUESTS_FOUND:
+            self.module.fail_json(
+                msg='requests library is required for this module')
+        if requests.__version__ and LooseVersion(requests.__version__) < LooseVersion('2.5.0'):
+            self.module.fail_json(
+                msg='requests library  version should be >= 2.5.0')
 
         self._set_user_agent(self.clc)
 
@@ -169,8 +198,8 @@ class ClcPublicIp(object):
         """
         argument_spec = dict(
             server_ids=dict(type='list', required=True),
-            protocol=dict(default='TCP'),
-            ports=dict(type='list'),
+            protocol=dict(default='TCP', choices=['TCP', 'UDP', 'ICMP']),
+            ports=dict(type='list', required=True),
             wait=dict(type='bool', default=True),
             state=dict(default='present', choices=['present', 'absent']),
         )
@@ -200,11 +229,21 @@ class ClcPublicIp(object):
                            for port in ports]
         for server in servers_to_change:
             if not self.module.check_mode:
-                result = server.PublicIPs().Add(ports_to_expose)
+                result = self._add_publicip_to_server(server, ports_to_expose)
                 results.append(result)
             changed_server_ids.append(server.id)
             changed = True
         return changed, changed_server_ids, results
+
+    def _add_publicip_to_server(self, server, ports_to_expose):
+        result = None
+        try:
+            result = server.PublicIPs().Add(ports_to_expose)
+        except CLCException, ex:
+            self.module.fail_json(msg='Failed to add public ip to the server : {0}. {1}'.format(
+                server.id, ex.response_text
+            ))
+        return result
 
     def ensure_public_ip_absent(self, server_ids):
         """
@@ -224,18 +263,23 @@ class ClcPublicIp(object):
         servers_to_change = [
             server for server in servers if len(
                 server.PublicIPs().public_ips) > 0]
-        ips_to_delete = []
-        for server in servers_to_change:
-            for ip_address in server.PublicIPs().public_ips:
-                ips_to_delete.append(ip_address)
         for server in servers_to_change:
             if not self.module.check_mode:
-                for ip in ips_to_delete:
-                    result = ip.Delete()
-                    results.append(result)
+                result = self._remove_publicip_from_server(server)
+                results.append(result)
             changed_server_ids.append(server.id)
             changed = True
         return changed, changed_server_ids, results
+
+    def _remove_publicip_from_server(self, server):
+        try:
+            for ip_address in server.PublicIPs().public_ips:
+                    result = ip_address.Delete()
+        except CLCException, ex:
+            self.module.fail_json(msg='Failed to remove public ip from the server : {0}. {1}'.format(
+                server.id, ex.response_text
+            ))
+        return result
 
     def _wait_for_requests_to_complete(self, requests_lst):
         """
