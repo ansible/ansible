@@ -25,8 +25,6 @@ from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
 
     def read_shelve(self, shelve_filename, key):
         """
