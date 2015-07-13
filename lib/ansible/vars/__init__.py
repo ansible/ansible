@@ -189,13 +189,26 @@ class VariableManager:
         if play:
             all_vars = self._combine_vars(all_vars, play.get_vars())
             templar = Templar(loader=loader, variables=all_vars)
-            for vars_file in play.get_vars_files():
+
+            for vars_file_item in play.get_vars_files():
                 try:
-                    vars_file = templar.template(vars_file)
-                    data = loader.load_from_file(vars_file)
-                    if data is None:
-                        data = dict()
-                    all_vars = self._combine_vars(all_vars, data)
+                    # we assume each item in the list is itself a list, as we
+                    # support "conditional includes" for vars_files, which mimics
+                    # the with_first_found mechanism.
+                    vars_file_list = templar.template(vars_file_item)
+                    if not isinstance(vars_file_list, list):
+                         vars_file_list = [ vars_file_list ]
+
+                    # now we iterate through the (potential) files, and break out
+                    # as soon as we read one from the list. If none are found, we
+                    # raise an error, which is silently ignored at this point.
+                    for vars_file in vars_file_list:
+                        data = loader.load_from_file(vars_file)
+                        if data is not None:
+                            all_vars = self._combine_vars(all_vars, data)
+                            break
+                    else:
+                        raise AnsibleError("vars file %s was not found" % vars_file_item)
                 except:
                     # FIXME: get_vars should probably be taking a flag to determine
                     #        whether or not vars files errors should be fatal at this
