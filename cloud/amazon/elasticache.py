@@ -42,7 +42,6 @@ options:
     description:
       - The version number of the cache engine
     required: false
-    default: 1.4.14
   node_type:
     description:
       - The compute and memory capacity of the nodes in the cache cluster
@@ -477,7 +476,7 @@ def main():
             state={'required': True, 'choices': ['present', 'absent', 'rebooted']},
             name={'required': True},
             engine={'required': False, 'default': 'memcached'},
-            cache_engine_version={'required': False, 'default': '1.4.14'},
+            cache_engine_version={'required': False},
             node_type={'required': False, 'default': 'cache.m1.small'},
             num_nodes={'required': False, 'default': None, 'type': 'int'},
             cache_port={'required': False, 'default': 11211, 'type': 'int'},
