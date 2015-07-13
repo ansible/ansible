@@ -33,9 +33,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'minimal'
 
-    def v2_on_any(self, *args, **kwargs):
-        pass
-
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
             if self._display.verbosity < 3:
@@ -50,7 +47,7 @@ class CallbackModule(CallbackBase):
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
-        self._display.display("%s | FAILED! => %s" % (result._host.get_name(), result._result), color='red')
+        self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
 
     def v2_runner_on_ok(self, result):
         self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result)), color='green')
@@ -60,55 +57,3 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_unreachable(self, result):
         self._display.display("%s | UNREACHABLE!" % result._host.get_name(), color='yellow')
-
-    def v2_runner_on_no_hosts(self, task):
-        pass
-
-    def v2_runner_on_async_poll(self, host, res, jid, clock):
-        pass
-
-    def v2_runner_on_async_ok(self, host, res, jid):
-        pass
-
-    def v2_runner_on_async_failed(self, host, res, jid):
-        pass
-
-    def v2_playbook_on_start(self):
-        pass
-
-    def v2_playbook_on_notify(self, host, handler):
-        pass
-
-    def v2_playbook_on_no_hosts_matched(self):
-        pass
-
-    def v2_playbook_on_no_hosts_remaining(self):
-        pass
-
-    def v2_playbook_on_task_start(self, task, is_conditional):
-        pass
-
-    def v2_playbook_on_cleanup_task_start(self, task):
-        pass
-
-    def v2_playbook_on_handler_task_start(self, task):
-        pass
-
-    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-        pass
-
-    def v2_playbook_on_setup(self):
-        pass
-
-    def v2_playbook_on_import_for_host(self, result, imported_file):
-        pass
-
-    def v2_playbook_on_not_import_for_host(self, result, missing_file):
-        pass
-
-    def v2_playbook_on_play_start(self, play):
-        pass
-
-    def v2_playbook_on_stats(self, stats):
-        pass
-
