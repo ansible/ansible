@@ -300,5 +300,8 @@ class TaskQueueManager:
             ]
             for method in methods:
                 if method is not None:
-                    method(*args, **kwargs)
+                    try:
+                        method(*args, **kwargs)
+                    except Exception as e:
+                        self._display.warning('Error when using %s: %s' % (method, str(e)))
 
