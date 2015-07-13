@@ -14,12 +14,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
 import shelve
 import os
-from ansible import utils, errors
 
-class LookupModule(object):
+from ansible.errors import AnsibleError
+from ansible.plugins.lookup import LookupBase
+
+class LookupModule(LookupBase):
 
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
@@ -33,17 +37,17 @@ class LookupModule(object):
         d.close()
         return res
 
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
-        ret = []
+    def run(self, terms, variables=None, **kwargs):
 
         if not isinstance(terms, list):
             terms = [ terms ]
 
+        ret = []
+
         for term in terms:
             playbook_path = None
             relative_path = None
+
             paramvals = {"file": None, "key": None}
             params = term.split()
 
@@ -55,27 +59,27 @@ class LookupModule(object):
 
             except (ValueError, AssertionError), e:
                 # In case "file" or "key" are not present
-                raise errors.AnsibleError(e)
+                raise AnsibleError(e)
 
             file = paramvals['file']
             key = paramvals['key']
-            basedir_path  = utils.path_dwim(self.basedir, file)
+            basedir_path  = self._loader.path_dwim(file)
 
             # Search also in the role/files directory and in the playbook directory
-            if '_original_file' in inject:
-                relative_path = utils.path_dwim_relative(inject['_original_file'], 'files', file, self.basedir, check=False)
-            if 'playbook_dir' in inject:
-                playbook_path = os.path.join(inject['playbook_dir'], file)
+            if 'role_path' in variables:
+                relative_path = self._loader.path_dwim_relative(variables['role_path'], 'files', file)
+            if 'playbook_dir' in variables:
+                playbook_path = self._loader.path_dwim_relative(variables['playbook_dir'],'files', file)
 
             for path in (basedir_path, relative_path, playbook_path):
                 if path and os.path.exists(path):
                     res = self.read_shelve(path, key)
                     if res is None:
-                        raise errors.AnsibleError("Key %s not found in shelve file %s" % (key, file))
+                        raise AnsibleError("Key %s not found in shelve file %s" % (key, file))
                     # Convert the value read to string
                     ret.append(str(res))
                     break
             else:
-                raise errors.AnsibleError("Could not locate shelve file in lookup: %s" % file)
+                raise AnsibleError("Could not locate shelve file in lookup: %s" % file)
 
         return ret
