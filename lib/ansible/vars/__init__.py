@@ -181,7 +181,10 @@ class VariableManager:
             all_vars = self._combine_vars(all_vars, host.get_vars())
 
             # next comes the facts cache and the vars cache, respectively
-            all_vars = self._combine_vars(all_vars, self._fact_cache.get(host.get_name(), dict()))
+            try:
+                all_vars = self._combine_vars(all_vars, self._fact_cache.get(host.name, dict()))
+            except KeyError:
+                pass
 
         if play:
             all_vars = self._combine_vars(all_vars, play.get_vars())
@@ -345,11 +348,13 @@ class VariableManager:
 
         assert isinstance(facts, dict)
 
-        host_name = host.get_name()
-        if host_name not in self._fact_cache:
-            self._fact_cache[host_name] = facts
+        if host.name not in self._fact_cache:
+            self._fact_cache[host.name] = facts
         else:
-            self._fact_cache[host_name].update(facts)
+            try:
+                self._fact_cache[host.name].update(facts)
+            except KeyError:
+                self._fact_cache[host.name] = facts
 
     def set_host_variable(self, host, varname, value):
         '''
