@@ -37,6 +37,7 @@ New Modules:
   * amazon: iam
   * amazon: iam_policy
   * amazon: route53_zone
+  * amazon: sts_assume_role
   * bundler
   * circonus_annotation
   * consul
