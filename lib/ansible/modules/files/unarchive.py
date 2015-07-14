@@ -83,7 +83,7 @@ EXAMPLES = '''
 # Unarchive a file that is already on the remote machine
 - unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=no
 
-# Unarchive a file that needs to be downloaded
+# Unarchive a file that needs to be downloaded (added in 2.0)
 - unarchive: src=https://example.com/example.zip dest=/usr/local/bin copy=no
 '''
 
