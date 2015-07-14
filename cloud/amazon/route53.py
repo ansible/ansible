@@ -140,10 +140,8 @@ options:
     version_added: "2.0"
   vpc_id:
     description:
-      - When used in conjunction with private_zone: true, this will only modify
-        records in the private hosted zone attached to this VPC. This allows you
-        to have multiple private hosted zones, all with the same name, attached
-        to different VPCs.
+      - "When used in conjunction with private_zone: true, this will only modify records in the private hosted zone attached to this VPC."
+      - This allows you to have multiple private hosted zones, all with the same name, attached to different VPCs.
     required: false
     default: null
     version_added: "2.0"
