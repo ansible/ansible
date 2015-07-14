@@ -299,7 +299,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         def _get(*args, **kwargs):
             mock_action = MagicMock()
-            mock_action.run.return_value = dict()
+            mock_action.run.return_value = dict(stdout='')
             return mock_action
 
         # testing with some bad values in the result passed to poll async,
