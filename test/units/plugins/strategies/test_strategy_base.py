@@ -309,7 +309,8 @@ class TestStrategyBase(unittest.TestCase):
         res = strategy_base._load_included_file(included_file=mock_inc_file, iterator=mock_iterator)
 
         mock_inc_file._filename = "bad.yml"
-        self.assertRaises(AnsibleParserError, strategy_base._load_included_file, included_file=mock_inc_file, iterator=mock_iterator)
+        res = strategy_base._load_included_file(included_file=mock_inc_file, iterator=mock_iterator)
+        self.assertEqual(res, [])
 
     def test_strategy_base_run_handlers(self):
         workers = []
