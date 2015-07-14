@@ -127,7 +127,6 @@
       - "shell_result0.rc == 0"
       - "shell_result0.stderr == ''"
       - "shell_result0.stdout == 'win'"
-      - "not shell_result0.warnings"
 
 # executable
 
@@ -156,7 +155,6 @@
       - "shell_result2.rc == 0"
       - "shell_result2.stderr == ''"
       - "shell_result2.stdout == 'win'"
-      - "not shell_result2.warnings"
 
 # creates
 
@@ -169,27 +167,10 @@
 - name: verify that afile.txt is present
   file: path={{output_dir_test}}/afile.txt state=file
 
-# removes
-
-- name: remove afile.txt using rm
-  shell: rm {{output_dir_test | expanduser}}/afile.txt removes={{output_dir_test | expanduser}}/afile.txt
-  register: shell_result3
-
-- name: assert that using rm under shell causes a warning
-  assert:
-    that:
-      - "shell_result3.warnings"
-
-- name: verify that afile.txt is absent
-  file: path={{output_dir_test}}/afile.txt state=absent
-  register: shell_result4
-
-- name: assert that the file was removed by the shell
-  assert:
-    that:
-      - "shell_result4.changed == False"
-
 # multiline
+
+- name: remove test file previously created
+  file: path={{output_dir_test | expanduser}}/afile.txt state=absent
 
 - name: execute a shell command using a literal multiline block
   args:
