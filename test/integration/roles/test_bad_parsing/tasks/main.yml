@@ -48,4 +48,9 @@
 - name: test that a missing/malformed jinja2 filter fails
   debug: msg="{{output_dir|badfiltername}}"
   tags: scenario5
+  register: filter_fail
+  ignore_errors: yes
 
+- assert:
+    that:
+     - filter_fail|failed
