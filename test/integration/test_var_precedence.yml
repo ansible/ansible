@@ -36,7 +36,7 @@
 
 - hosts: inven_overridehosts
   vars_files:
-  - "{{ var_dir }}/test_var_precedence.yml"
+  - "test_var_precedence.yml"
   roles:
   - role: test_var_precedence_inven_override
     foo: bar
