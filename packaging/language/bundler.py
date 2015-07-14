@@ -129,81 +129,81 @@ EXAMPLES='''
 
 
 def get_bundler_executable(module):
-	if module.params.get('executable'):
-		return module.params.get('executable').split(' ')
-	else:
-		return [ module.get_bin_path('bundle', True) ]
+    if module.params.get('executable'):
+        return module.params.get('executable').split(' ')
+    else:
+        return [ module.get_bin_path('bundle', True) ]
 
 
 def main():
-	module = AnsibleModule(
-		argument_spec=dict(
-				executable=dict(default=None, required=False),
-				state=dict(default='present', required=False, choices=['present', 'latest']),
-				chdir=dict(default=None, required=False),
-				exclude_groups=dict(default=None, required=False, type='list'),
-				clean=dict(default=False, required=False, type='bool'),
-				gemfile=dict(default=None, required=False),
-				local=dict(default=False, required=False, type='bool'),
-				deployment_mode=dict(default=False, required=False, type='bool'),
-				user_install=dict(default=True, required=False, type='bool'),
-				gem_path=dict(default=None, required=False),
-				binstub_directory=dict(default=None, required=False),
-				extra_args=dict(default=None, required=False),
-			),
-		supports_check_mode=True
-		)
+    module = AnsibleModule(
+        argument_spec=dict(
+                executable=dict(default=None, required=False),
+                state=dict(default='present', required=False, choices=['present', 'latest']),
+                chdir=dict(default=None, required=False),
+                exclude_groups=dict(default=None, required=False, type='list'),
+                clean=dict(default=False, required=False, type='bool'),
+                gemfile=dict(default=None, required=False),
+                local=dict(default=False, required=False, type='bool'),
+                deployment_mode=dict(default=False, required=False, type='bool'),
+                user_install=dict(default=True, required=False, type='bool'),
+                gem_path=dict(default=None, required=False),
+                binstub_directory=dict(default=None, required=False),
+                extra_args=dict(default=None, required=False),
+            ),
+        supports_check_mode=True
+        )
 
-	executable = module.params.get('executable')
-	state = module.params.get('state')
-	chdir = module.params.get('chdir')
-	exclude_groups = module.params.get('exclude_groups')
-	clean = module.params.get('clean')
-	gemfile = module.params.get('gemfile')
-	local = module.params.get('local')
-	deployment_mode = module.params.get('deployment_mode')
-	user_install = module.params.get('user_install')
-	gem_path = module.params.get('gem_install_path')
-	binstub_directory = module.params.get('binstub_directory')
-	extra_args = module.params.get('extra_args')
-		
-	cmd = get_bundler_executable(module)
+    executable = module.params.get('executable')
+    state = module.params.get('state')
+    chdir = module.params.get('chdir')
+    exclude_groups = module.params.get('exclude_groups')
+    clean = module.params.get('clean')
+    gemfile = module.params.get('gemfile')
+    local = module.params.get('local')
+    deployment_mode = module.params.get('deployment_mode')
+    user_install = module.params.get('user_install')
+    gem_path = module.params.get('gem_install_path')
+    binstub_directory = module.params.get('binstub_directory')
+    extra_args = module.params.get('extra_args')
 
-	if module.check_mode:
-		cmd.append('check')
-		rc, out, err = module.run_command(cmd, cwd=chdir, check_rc=False)
+    cmd = get_bundler_executable(module)
 
-		module.exit_json(changed=rc != 0, state=state, stdout=out, stderr=err)
+    if module.check_mode:
+        cmd.append('check')
+        rc, out, err = module.run_command(cmd, cwd=chdir, check_rc=False)
 
-	if state == 'present':
-		cmd.append('install')
-		if exclude_groups:
-			cmd.extend(['--without', ':'.join(exclude_groups)])
-		if clean:
-			cmd.append('--clean')
-		if gemfile:
-			cmd.extend(['--gemfile', gemfile])
-		if local:
-			cmd.append('--local')
-		if deployment_mode:
-			cmd.append('--deployment')
-		if not user_install:
-			cmd.append('--system')
-		if gem_path:
-			cmd.extend(['--path', gem_path])
-		if binstub_directory:
-			cmd.extend(['--binstubs', binstub_directory])
-	else:
-		cmd.append('update')
-		if local:
-			cmd.append('--local')
+        module.exit_json(changed=rc != 0, state=state, stdout=out, stderr=err)
 
-	if extra_args:
-		cmd.extend(extra_args.split(' '))
+    if state == 'present':
+        cmd.append('install')
+        if exclude_groups:
+            cmd.extend(['--without', ':'.join(exclude_groups)])
+        if clean:
+            cmd.append('--clean')
+        if gemfile:
+            cmd.extend(['--gemfile', gemfile])
+        if local:
+            cmd.append('--local')
+        if deployment_mode:
+            cmd.append('--deployment')
+        if not user_install:
+            cmd.append('--system')
+        if gem_path:
+            cmd.extend(['--path', gem_path])
+        if binstub_directory:
+            cmd.extend(['--binstubs', binstub_directory])
+    else:
+        cmd.append('update')
+        if local:
+            cmd.append('--local')
 
-	rc, out, err = module.run_command(cmd, cwd=chdir, check_rc=True)
+    if extra_args:
+        cmd.extend(extra_args.split(' '))
 
-	module.exit_json(changed='Installing' in out, state=state, stdout=out, stderr=err)
+    rc, out, err = module.run_command(cmd, cwd=chdir, check_rc=True)
+
+    module.exit_json(changed='Installing' in out, state=state, stdout=out, stderr=err)
 
 
 from ansible.module_utils.basic import *
