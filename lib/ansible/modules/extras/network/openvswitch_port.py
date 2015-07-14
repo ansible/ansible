@@ -23,7 +23,6 @@
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
 import syslog
-import os
 
 DOCUMENTATION = '''
 ---
@@ -243,13 +242,9 @@ def main():
             'timeout': {'default': 5, 'type': 'int'},
             'set': {'required': False, 'default': None},
             'external_ids': {'default': {}, 'required': False},
-            'syslogging': {'required': False, 'type': "bool", 'default': True}
         },
         supports_check_mode=True,
     )
-
-    if (module.params["syslogging"]):
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
 
     port = OVSPort(module)
     if module.check_mode:
