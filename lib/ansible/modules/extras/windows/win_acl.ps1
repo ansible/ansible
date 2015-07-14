@@ -15,21 +15,82 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-
+ 
 # WANT_JSON
 # POWERSHELL_COMMON
-
+ 
 # win_acl module (File/Resources Permission Additions/Removal)
+ 
+ 
+#Functions
+Function UserSearch
+{
+    Param ([string]$AccountName)
+    #Check if there's a realm specified
+    if ($AccountName.Split("\").count -gt 1)
+    {
+        if ($AccountName.Split("\")[0] -eq $env:COMPUTERNAME)
+        {
+            $IsLocalAccount = $true
+        }
+        Else
+        {
+            $IsDomainAccount = $true
+            $IsUpn = $false
+        }
+ 
+    }
+    Elseif ($AccountName -contains "@")
+    {
+        $IsDomainAccount = $true
+        $IsUpn = $true
+    }
+    Else
+    {
+        #Default to local user account
+        $accountname = $env:COMPUTERNAME + "\" + $AccountName
+        $IsLocalAccount = $true
+    }
+ 
+ 
+    if ($IsLocalAccount -eq $true)
+    {
+        $localaccount = get-wmiobject -class "Win32_UserAccount" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $AccountName}
+        if ($localaccount)
+        {
+            return $localaccount.Caption
+        }
+        $LocalGroup = get-wmiobject -class "Win32_Group" -namespace "root\CIMV2" -filter "LocalAccount = True"| where {$_.Caption -eq $AccountName}
+        if ($LocalGroup)
+        {
+            return $LocalGroup.Caption
+        }
+    }
+    ElseIf (($IsDomainAccount -eq $true) -and ($IsUpn -eq $false))
+    {
+        #Search by samaccountname
+        $Searcher = [adsisearcher]""
+        $Searcher.Filter = "sAMAccountName=$($accountname.split("\")[1])"
+        $result = $Searcher.FindOne()
+ 
+        if ($result)
+        {
+            return $accountname
+        }
+    }
+ 
+}
+ 
 $params = Parse-Args $args;
-
+ 
 $result = New-Object psobject @{
     win_acl = New-Object psobject
     changed = $false
 }
-
+ 
 If ($params.src) {
     $src = $params.src.toString()
-
+ 
     If (-Not (Test-Path -Path $src)) {
         Fail-Json $result "$src file or directory does not exist on the host"
     }
@@ -37,21 +98,20 @@ If ($params.src) {
 Else {
     Fail-Json $result "missing required argument: src"
 }
-
+ 
 If ($params.user) {
-    $user = $params.user.toString()
-
-    # Test that the user/group exists on the local machine
-    $localComputer = [ADSI]("WinNT://"+[System.Net.Dns]::GetHostName())
-    $list = ($localComputer.psbase.children | Where-Object { (($_.psBase.schemaClassName -eq "User") -Or ($_.psBase.schemaClassName -eq "Group"))} | Select-Object -expand Name)
-    If (-Not ($list -contains "$user")) {
-        Fail-Json $result "$user is not a valid user or group on the host machine"
-    }
+    $user = UserSearch -AccountName ($Params.User)
+ 
+    # Test that the user/group is resolvable on the local machine
+    if (!$user)
+    {
+          Fail-Json $result "$($Params.User) is not a valid user or group on the host machine or domain"
+    }    
 }
 Else {
     Fail-Json $result "missing required argument: user.  specify the user or group to apply permission changes."
 }
-
+ 
 If ($params.type -eq "allow") {
     $type = $true
 }
@@ -61,7 +121,7 @@ ElseIf ($params.type -eq "deny") {
 Else {
     Fail-Json $result "missing required argument: type. specify whether to allow or deny the specified rights."
 }
-
+ 
 If ($params.inherit) {
     # If it's a file then no flags can be set or an exception will be thrown
     If (Test-Path -Path $src -PathType Leaf) {
@@ -80,44 +140,44 @@ Else {
         $inherit = "ContainerInherit, ObjectInherit"
     }
 }
-
+ 
 If ($params.propagation) {
     $propagation = $params.propagation.toString()
 }
 Else {
     $propagation = "None"
 }
-
+ 
 If ($params.rights) {
     $rights = $params.rights.toString()
 }
 Else {
     Fail-Json $result "missing required argument: rights"
 }
-
+ 
 If ($params.state -eq "absent") {
     $state = "remove"
 }
 Else {
     $state = "add"
 }
-
+ 
 Try {
     $colRights = [System.Security.AccessControl.FileSystemRights]$rights
     $InheritanceFlag = [System.Security.AccessControl.InheritanceFlags]$inherit
     $PropagationFlag = [System.Security.AccessControl.PropagationFlags]$propagation
-
+ 
     If ($type) {
         $objType =[System.Security.AccessControl.AccessControlType]::Allow
     }
     Else {
         $objType =[System.Security.AccessControl.AccessControlType]::Deny
     }
-
+ 
     $objUser = New-Object System.Security.Principal.NTAccount($user)
     $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     $objACL = Get-ACL $src
-
+ 
     # Check if the ACE exists already in the objects ACL list
     $match = $false
     ForEach($rule in $objACL.Access){
@@ -126,7 +186,7 @@ Try {
             Break
         } 
     }
-
+ 
     If ($state -eq "add" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
@@ -161,5 +221,5 @@ Try {
 Catch {
     Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $src for $user"
 }
-
+ 
 Exit-Json $result
