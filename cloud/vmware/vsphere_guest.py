@@ -1256,8 +1256,7 @@ def main():
                 'vm_hardware',
                 'esxi'
             ],
-            ['resource_pool', 'cluster'],
-            ['from_template', 'resource_pool', 'template_src'],
+            ['from_template', 'template_src'],
         ],
     )
 
