@@ -20,6 +20,7 @@ class ModuleDocFragment(object):
 
     # Standard documentation fragment
     DOCUMENTATION = '''
+options:
     backup:
         description:
           - Create a backup file including the timestamp information so you can get
