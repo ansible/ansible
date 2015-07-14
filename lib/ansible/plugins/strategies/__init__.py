@@ -369,6 +369,8 @@ class StrategyBase:
 
         try:
             data = self._loader.load_from_file(included_file._filename)
+            if data is None:
+                return []
         except AnsibleError, e:
             for host in included_file._hosts:
                 tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=str(e)))
