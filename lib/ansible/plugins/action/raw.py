@@ -19,6 +19,8 @@ __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
 
+import re
+
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
