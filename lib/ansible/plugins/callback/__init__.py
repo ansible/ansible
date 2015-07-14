@@ -49,7 +49,7 @@ class CallbackBase:
         if sanitize:
             res = self._sanitize_result(result)
         else:
-            res = results
+            res = result
         return json.dumps(res, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _sanitize_result(self, result):

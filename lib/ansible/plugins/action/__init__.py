@@ -23,7 +23,7 @@ from six.moves import StringIO
 import json
 import os
 import random
-import sys # FIXME: probably not needed
+import sys
 import tempfile
 import time
 
@@ -404,10 +404,11 @@ class ActionBase:
             data['stdout_lines'] = data.get('stdout', '').splitlines()
 
         # store the module invocation details back into the result
-        data['invocation'] = dict(
-            module_args = module_args,
-            module_name = module_name,
-        )
+        if self._task.async is not None:
+            data['invocation'] = dict(
+                module_args = module_args,
+                module_name = module_name,
+            )
 
         debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
