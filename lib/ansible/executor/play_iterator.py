@@ -99,6 +99,17 @@ class PlayIterator:
         self._host_states = {}
         for host in inventory.get_hosts(self._play.hosts):
              self._host_states[host.name] = HostState(blocks=self._blocks)
+             # if we're looking to start at a specific task, iterate through
+             # the tasks for this host until we find the specified task
+             if connection_info.start_at_task is not None:
+                 while True:
+                     (s, task) = self.get_next_task_for_host(host, peek=True)
+                     if s.run_state == self.ITERATING_COMPLETE:
+                         break
+                     if task.get_name() != connection_info.start_at_task:
+                         self.get_next_task_for_host(host)
+                     else:
+                         break
 
         # Extend the play handlers list to include the handlers defined in roles
         self._play.handlers.extend(play.compile_roles_handlers())

@@ -177,6 +177,8 @@ class ConnectionInformation:
         self.no_log         = False
         self.check_mode     = False
         self.force_handlers = False
+        self.start_at_task  = None
+        self.step           = False
 
         #TODO: just pull options setup to above?
         # set options before play to allow play to override them
@@ -241,6 +243,10 @@ class ConnectionInformation:
             self.check_mode = boolean(options.check)
         if hasattr(options, 'force_handlers') and options.force_handlers:
             self.force_handlers = boolean(options.force_handlers)
+        if hasattr(options, 'step') and options.step:
+            self.step = boolean(options.step)
+        if hasattr(options, 'start_at_task') and options.start_at_task:
+            self.start_at_task = options.start_at_task
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the
