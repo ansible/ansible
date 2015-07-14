@@ -79,6 +79,12 @@ options:
     description:
       - Name of the source template to deploy from
     default: None
+  snapshot_to_clone:
+    version_added 2.0
+    description:
+      - String. When specified, snapshot_to_clone will create a linked clone copy of the VM, Snapshot must already be taken in vCenter.
+    required: false
+    default: none
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -529,7 +535,7 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name):
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
@@ -613,9 +619,14 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
     try:
         if vmTarget:
             changed = False
+        elif snapshot_to_clone != None:
+            #check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
+            vmTemplate.clone(guest, resourcepool=rpmor, linked=True, snapshot=snapshot_to_clone)
+            changed = True
         else:
             vmTemplate.clone(guest, resourcepool=rpmor)
             changed = True
+
         vsphere_client.disconnect()
         module.exit_json(changed=changed)
     except Exception as e:
@@ -1217,9 +1228,10 @@ def main():
                     'reconfigured'
                 ],
                 default='present'),
-            vmware_guest_facts=dict(required=False, choices=BOOLEANS),
-            from_template=dict(required=False, choices=BOOLEANS),
+            vmware_guest_facts=dict(required=False, type='bool'),
+            from_template=dict(required=False, type='bool'),
             template_src=dict(required=False, type='str'),
+            snapshot_to_clone=dict(required=False, default=None, type='str'),
             guest=dict(required=True, type='str'),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
@@ -1228,7 +1240,7 @@ def main():
             vm_hw_version=dict(required=False, default=None, type='str'),
             resource_pool=dict(required=False, default=None, type='str'),
             cluster=dict(required=False, default=None, type='str'),
-            force=dict(required=False, choices=BOOLEANS, default=False),
+            force=dict(required=False, type='bool', default=False),
             esxi=dict(required=False, type='dict', default={}),
 
 
@@ -1245,7 +1257,7 @@ def main():
                 'esxi'
             ],
             ['resource_pool', 'cluster'],
-            ['from_template', 'resource_pool', 'template_src']
+            ['from_template', 'resource_pool', 'template_src'],
         ],
     )
 
@@ -1269,6 +1281,8 @@ def main():
     cluster = module.params['cluster']
     template_src = module.params['template_src']
     from_template = module.params['from_template']
+    snapshot_to_clone = module.params['snapshot_to_clone']
+
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1348,7 +1362,8 @@ def main():
                 guest=guest,
                 template_src=template_src,
                 module=module,
-                cluster_name=cluster
+                cluster_name=cluster,
+                snapshot_to_clone=snapshot_to_clone
             )
         if state in ['restarted', 'reconfigured']:
             module.fail_json(
