@@ -595,22 +595,27 @@ class Inventory(object):
         """ returns the directory of the current playbook """
         return self._playbook_basedir
 
-    def set_playbook_basedir(self, dir):
+    def set_playbook_basedir(self, dir_name):
         """
         sets the base directory of the playbook so inventory can use it as a
         basedir for host_ and group_vars, and other things.
         """
         # Only update things if dir is a different playbook basedir
-        if dir != self._playbook_basedir:
-            self._playbook_basedir = dir
+        if dir_name != self._playbook_basedir:
+            self._playbook_basedir = dir_name
             # get group vars from group_vars/ files
+            # FIXME: excluding the new_pb_basedir directory may result in group_vars
+            #        files loading more than they should, however with the file caching
+            #        we do this shouldn't be too much of an issue. Still, this should
+            #        be fixed at some point to allow a "first load" to touch all of the
+            #        directories, then later runs only touch the new basedir specified
             for group in self.groups:
-                # FIXME: combine_vars
-                group.vars = combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
+                #group.vars = combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
+                group.vars = combine_vars(group.vars, self.get_group_vars(group))
             # get host vars from host_vars/ files
             for host in self.get_hosts():
-                # FIXME: combine_vars
-                host.vars = combine_vars(host.vars, self.get_host_vars(host, new_pb_basedir=True))
+                #host.vars = combine_vars(host.vars, self.get_host_vars(host, new_pb_basedir=True))
+                host.vars = combine_vars(host.vars, self.get_host_vars(host))
             # invalidate cache
             self._vars_per_host = {}
             self._vars_per_group = {}
@@ -646,7 +651,7 @@ class Inventory(object):
             # this can happen from particular API usages, particularly if not run
             # from /usr/bin/ansible-playbook
             if basedir is None:
-                continue
+                basedir = './'
 
             scan_pass = scan_pass + 1
 
