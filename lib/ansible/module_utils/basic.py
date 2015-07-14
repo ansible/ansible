@@ -1260,7 +1260,7 @@ class AnsibleModule(object):
             self.fail_json(msg='Boolean %s not in either boolean list' % arg)
 
     def jsonify(self, data):
-        for encoding in ("utf-8", "latin-1"):
+        for encoding in ("utf-8", "latin-1", "unicode_escape"):
             try:
                 return json.dumps(data, encoding=encoding)
             # Old systems using old simplejson module does not support encoding keyword.
