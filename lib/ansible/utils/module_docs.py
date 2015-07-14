@@ -54,19 +54,21 @@ def get_docstring(filename, verbose=False):
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
                     doc = yaml.safe_load(child.value.s)
-                    fragment_slug = doc.get('extends_documentation_fragment',
-                                            'doesnotexist').lower()
+                    fragments = doc.get('extends_documentation_fragment', [])
+
+                    if isinstance(fragments, basestring):
+                        fragments = [ fragments ]
 
                     # Allow the module to specify a var other than DOCUMENTATION
                     # to pull the fragment from, using dot notation as a separator
-                    if '.' in fragment_slug:
-                        fragment_name, fragment_var = fragment_slug.split('.', 1)
-                        fragment_var = fragment_var.upper()
-                    else:
-                        fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
+                    for fragment_slug in fragments:
+                        fragment_slug = fragment_slug.lower()
+                        if '.' in fragment_slug:
+                            fragment_name, fragment_var = fragment_slug.split('.', 1)
+                            fragment_var = fragment_var.upper()
+                        else:
+                            fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
 
-
-                    if fragment_slug != 'doesnotexist':
                         fragment_class = fragment_loader.get(fragment_name)
                         assert fragment_class is not None
 
