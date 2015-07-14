@@ -58,7 +58,7 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog view [options] file_name")
         elif self.action == "encrypt":
             self.parser.set_usage("usage: %prog encrypt [options] file_name")
-        elif action == "rekey":
+        elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
         self.options, self.args = self.parser.parse_args()
