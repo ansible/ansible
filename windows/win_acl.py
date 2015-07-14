@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_acl
-version_added: ""
+version_added: "2.0"
 short_description: Set file/directory permissions for a system user or group.
 description:
      - Add or remove rights/permissions for a given user or group for the specified src file or folder.
@@ -107,7 +107,7 @@ options:
       - InheritOnly
     default: "None"
     aliases: []
-author: Phil Schwartz
+author: Phil Schwartz, Trond Hindenes
 '''
 
 EXAMPLES = '''
