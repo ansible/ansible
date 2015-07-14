@@ -29,7 +29,7 @@ parsing:
 	#ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario3; [ $$? -eq 4 ]
 	#ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario4; [ $$? -eq 4 ]
 	#ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5; [ $$? -eq 4 ]
-	#ansible-playbook good_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ansible-playbook good_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 	echo "skipping for now..."
 
 includes:
