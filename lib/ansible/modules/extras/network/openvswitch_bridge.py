@@ -3,6 +3,8 @@
 
 # (c) 2013, David Stygstra <david.stygstra@gmail.com>
 #
+# Portions copyright @ 2015 VMware, Inc.
+#
 # This file is part of Ansible
 #
 # This module is free software: you can redistribute it and/or modify
@@ -17,8 +19,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Portions copyright @ 2015 VMware, Inc.  All rights reserved.
 
 # pylint: disable=C0111
 
@@ -47,15 +47,20 @@ options:
         default: 5
         description:
             - How long to wait for ovs-vswitchd to respond
-    external_id:
+    external_ids:
+        version_added: 2.0
         required: false
+        default: None
         description:
-            - bridge external-id
+            - A dictionary of external-ids. Omitting this parameter is a No-op.
+              To  clear all external-ids pass an empty value.
     fail_mode:
+        version_added: 2.0
+        default: None
         required: false
         choices : [secure, standalone]
         description:
-            - bridge fail-mode
+            - Set bridge fail-mode. The default value (None) is a No-op.
 '''
 
 EXAMPLES = '''
@@ -63,12 +68,13 @@ EXAMPLES = '''
 - openvswitch_bridge: bridge=br-int state=present
 
 # Create an integration bridge
-- openvswitch_bridge: bridge=br-int state=present external_id=br-int
-                      fail_mode=secure
+- openvswitch_bridge: bridge=br-int state=present fail_mode=secure
+  args:
+    external_ids:
+        bridge-id: "br-int"
 '''
 
 import syslog
-import os
 
 
 class OVSBridge(object):
@@ -78,7 +84,6 @@ class OVSBridge(object):
         self.bridge = module.params['bridge']
         self.state = module.params['state']
         self.timeout = module.params['timeout']
-        self.external_id = module.params['external_id']
         self.fail_mode = module.params['fail_mode']
 
     def _vsctl(self, command):
@@ -100,8 +105,6 @@ class OVSBridge(object):
         rtc, _, err = self._vsctl(['add-br', self.bridge])
         if rtc != 0:
             self.module.fail_json(msg=err)
-        if self.external_id:
-            self.set_external_id()
         if self.fail_mode:
             self.set_fail_mode()
 
@@ -118,12 +121,25 @@ class OVSBridge(object):
         # pylint: disable=W0703
         try:
             if self.state == 'present' and self.exists():
-                if (self.external_id and
-                   (self.external_id != self.get_external_id())):
-                    changed = True
                 if (self.fail_mode and
                    (self.fail_mode != self.get_fail_mode())):
                     changed = True
+
+                ##
+                # Check if external ids would change.
+                current_external_ids = self.get_external_ids()
+                items = self.module.params['external_ids'].items()
+                for (key, value) in items:
+                    if ((key in current_external_ids) and
+                       (value != current_external_ids[key])):
+                        changed = True
+
+                ##
+                # Check if external ids would be removed.
+                for (key, value) in current_external_ids.items():
+                    if key not in self.module.params['external_ids']:
+                        changed = True
+
             elif self.state == 'absent' and self.exists():
                 changed = True
             elif self.state == 'present' and not self.exists():
@@ -145,13 +161,9 @@ class OVSBridge(object):
                     self.delete()
                     changed = True
             elif self.state == 'present':
+
                 if not self.exists():
                     self.add()
-                    changed = True
-
-                if (self.external_id and
-                   (self.external_id != self.get_external_id())):
-                    self.set_external_id()
                     changed = True
 
                 current_fail_mode = self.get_fail_mode()
@@ -162,31 +174,50 @@ class OVSBridge(object):
                     self.set_fail_mode()
                     changed = True
 
+                current_external_ids = self.get_external_ids()
+
+                ##
+                # Change and add existing external ids.
+                items = self.module.params['external_ids'].items()
+                for (key, value) in items:
+                    if (value != current_external_ids.get(key, None)):
+                        changed = self.set_external_id(key, value) or changed
+
+                ##
+                # Remove current external ids that are not passed in.
+                for (key, value) in current_external_ids.items():
+                    if key not in self.module.params['external_ids']:
+                        changed = self.set_external_id(key, None) or changed
+
         except Exception, earg:
             self.module.fail_json(msg=str(earg))
         # pylint: enable=W0703
         self.module.exit_json(changed=changed)
 
-    def get_external_id(self):
-        """ Return the current external id. """
-        value = ''
+    def get_external_ids(self):
+        """ Return the bridge's external ids as a dict. """
         if self.exists():
             rtc, out, err = self._vsctl(['br-get-external-id', self.bridge])
             if rtc != 0:
                 self.module.fail_json(msg=err)
-            try:
-                (_, value) = out.split('=')
-            except ValueError:
-                pass
-        return value.strip("\n")
+            lines = out.split("\n")
+            lines = [item.split("=") for item in lines if (len(item) > 0)]
+            return {item[0]: item[1] for item in lines}
 
-    def set_external_id(self):
+        return {}
+
+    def set_external_id(self, key, value):
         """ Set external id. """
         if self.exists():
-            (rtc, _, err) = self._vsctl(['br-set-external-id', self.bridge,
-                                         'bridge-id', self.external_id])
+            cmd = ['br-set-external-id', self.bridge, key]
+            if (value):
+                cmd += [value]
+
+            (rtc, _, err) = self._vsctl(cmd)
             if rtc != 0:
                 self.module.fail_json(msg=err)
+            return True
+        return False
 
     def get_fail_mode(self):
         """ Get failure mode. """
@@ -216,15 +247,11 @@ def main():
             'bridge': {'required': True},
             'state': {'default': 'present', 'choices': ['present', 'absent']},
             'timeout': {'default': 5, 'type': 'int'},
-            'external_id': {'default': ''},
-            'fail_mode': {'default': ''},
-            'syslogging': {'required': False, 'type': 'bool', 'default': True}
+            'external_ids': {'default': None},
+            'fail_mode': {'default': None},
         },
         supports_check_mode=True,
     )
-
-    if (module.params["syslogging"]):
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
 
     bridge = OVSBridge(module)
     if module.check_mode:
