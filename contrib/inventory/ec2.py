@@ -406,9 +406,7 @@ class Ec2Inventory(object):
             else:
                 backend = 'Eucalyptus' if self.eucalyptus else 'AWS' 
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
-            self.fail_with_error(
-                'ERROR: "{error}", while: {err_operation}'.format(
-                     error=error, err_operation='getting EC2 instances'))
+            self.fail_with_error(error, 'getting EC2 instances')
 
     def get_rds_instances_by_region(self, region):
         ''' Makes an AWS API call to the list of RDS instances in a particular
@@ -427,9 +425,7 @@ class Ec2Inventory(object):
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
-            self.fail_with_error(
-                'ERROR: "{error}", while: {err_operation}'.format(
-                     error=error, err_operation='getting RDS instances'))
+            self.fail_with_error(error, 'getting RDS instances')
 
     def get_elasticache_clusters_by_region(self, region):
         ''' Makes an AWS API call to the list of ElastiCache clusters (with
@@ -452,7 +448,7 @@ class Ec2Inventory(object):
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting ElastiCache clusters')
 
         try:
             # Boto also doesn't provide wrapper classes to CacheClusters or
@@ -462,7 +458,7 @@ class Ec2Inventory(object):
 
         except KeyError as e:
             error = "ElastiCache query to AWS failed (unexpected format)."
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting ElastiCache clusters')
 
         for cluster in clusters:
             self.add_elasticache_cluster(cluster, region)
@@ -486,7 +482,7 @@ class Ec2Inventory(object):
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache [Replication Groups] is down:\n%s" % e.message
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting ElastiCache clusters')
 
         try:
             # Boto also doesn't provide wrapper classes to ReplicationGroups
@@ -496,7 +492,7 @@ class Ec2Inventory(object):
 
         except KeyError as e:
             error = "ElastiCache [Replication Groups] query to AWS failed (unexpected format)."
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting ElastiCache clusters')
 
         for replication_group in replication_groups:
             self.add_elasticache_replication_group(replication_group, region)
@@ -518,8 +514,11 @@ class Ec2Inventory(object):
 
         return '\n'.join(errors)
 
-    def fail_with_error(self, err_msg):
+    def fail_with_error(self, err_msg, err_operation_context=None):
         '''log an error to std err for ansible-playbook to consume and exit'''
+        if err_operation_context:
+            err_msg = 'ERROR: "{err_msg}", while: {err_operation}'.format(
+                err_msg=err_msg, err_operation=err_operation_context)
         sys.stderr.write(err_msg)
         sys.exit(1)
 
