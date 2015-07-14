@@ -95,9 +95,16 @@ except:
 
 try:
     import ssl
-    HAS_SSL=True
+    HAS_SSL = True
 except:
-    HAS_SSL=False
+    HAS_SSL = False
+
+try:
+    # SNI Handling needs python2.7.9's SSLContext
+    from ssl import create_default_context, SSLContext
+    HAS_SSLCONTEXT = True
+except ImportError:
+    HAS_SSLCONTEXT = False
 
 HAS_MATCH_HOSTNAME = True
 try:
@@ -276,6 +283,13 @@ class NoSSLError(SSLValidationError):
 
 
 class CustomHTTPSConnection(httplib.HTTPSConnection):
+    def __init__(self, *args, **kwargs):
+        httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+        if HAS_SSLCONTEXT:
+            self.context = create_default_context()
+            if self.cert_file:
+                self.context.load_cert_chain(self.cert_file, self.key_file)
+
     def connect(self):
         "Connect to a host on a given (SSL) port."
 
@@ -286,7 +300,10 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-        self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1)
+        if HAS_SSLCONTEXT:
+            self.sock = self.context.wrap_socket(sock, server_hostname=self.host)
+        else:
+            self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1)
 
 class CustomHTTPSHandler(urllib2.HTTPSHandler):
 
@@ -461,9 +478,17 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     return False
         return True
 
+    def _make_context(self, tmp_ca_cert_path):
+        context = create_default_context()
+        context.load_verify_locations(tmp_ca_cert_path)
+        return context
+
     def http_request(self, req):
         tmp_ca_cert_path, paths_checked = self.get_ca_certs()
         https_proxy = os.environ.get('https_proxy')
+        context = None
+        if HAS_SSLCONTEXT:
+            context = self._make_context(tmp_ca_cert_path)
 
         # Detect if 'no_proxy' environment variable is set and if our URL is included
         use_proxy = self.detect_no_proxy(req.get_full_url())
@@ -485,14 +510,20 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     s.sendall('\r\n')
                     connect_result = s.recv(4096)
                     self.validate_proxy_response(connect_result)
-                    ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
-                    match_hostname(ssl_s.getpeercert(), self.hostname)
+                    if context:
+                        ssl_s = context.wrap_socket(s, server_hostname=proxy_parts.get('hostname'))
+                    else:
+                        ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1)
+                        match_hostname(ssl_s.getpeercert(), self.hostname)
                 else:
                     raise ProxyError('Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
             else:
                 s.connect((self.hostname, self.port))
-                ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED)
-                match_hostname(ssl_s.getpeercert(), self.hostname)
+                if context:
+                    ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
+                else:
+                    ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1)
+                    match_hostname(ssl_s.getpeercert(), self.hostname)
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
@@ -501,9 +532,14 @@ class SSLValidationHandler(urllib2.BaseHandler):
             if 'connection refused' in str(e).lower():
                 raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
             else:
-                raise SSLValidationError('Failed to validate the SSL certificate for %s:%s. '
-                    'Use validate_certs=False (insecure) or make sure your managed systems have a valid CA certificate installed. '
-                    'Paths checked for this platform: %s' % (self.hostname, self.port, ", ".join(paths_checked))
+                raise SSLValidationError('Failed to validate the SSL certificate for %s:%s.'
+                    ' Make sure your managed systems have a valid CA'
+                    ' certificate installed.  If the website serving the url'
+                    ' uses SNI you need python >= 2.7.9 on your managed'
+                    ' machine.  You can use validate_certs=False if you do'
+                    ' not need to confirm the server\s identity but this is'
+                    ' unsafe and not recommended'
+                    ' Paths checked for this platform: %s' % (self.hostname, self.port, ", ".join(paths_checked))
                 )
         except CertificateError:
             raise SSLValidationError("SSL Certificate does not belong to %s.  Make sure the url has a certificate that belongs to it or use validate_certs=False (insecure)" % self.hostname)
@@ -534,8 +570,6 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if parsed[0] == 'https' and validate_certs:
         if not HAS_SSL:
             raise NoSSLError('SSL validation is not available in your version of python. You can use validate_certs=False, however this is unsafe and not recommended')
-        if not HAS_MATCH_HOSTNAME:
-            raise SSLValidationError('Available SSL validation does not check that the certificate matches the hostname.  You can install backports.ssl_match_hostname or update your managed machine to python-2.7.9 or newer.  You could also use validate_certs=False, however this is unsafe and not recommended')
 
         # do the cert validation
         netloc = parsed[1]
@@ -624,13 +658,22 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         for header in headers:
             request.add_header(header, headers[header])
 
-    if sys.version_info < (2,6,0):
+    urlopen_args = [request, None]
+    if sys.version_info >= (2,6,0):
         # urlopen in python prior to 2.6.0 did not
         # have a timeout parameter
-        r = urllib2.urlopen(request, None)
-    else:
-        r = urllib2.urlopen(request, None, timeout)
+        urlopen_args.append(timeout)
 
+    if HAS_SSLCONTEXT and not validate_certs:
+        # In 2.7.9, the default context validates certificates
+        context = SSLContext(ssl.PROTOCOL_SSLv23)
+        context.options |= ssl.OP_NO_SSLv2
+        context.options |= ssl.OP_NO_SSLv3
+        context.verify_mode = ssl.CERT_NONE
+        context.check_hostname = False
+        urlopen_args += (None, None, None, context)
+
+    r = urllib2.urlopen(*urlopen_args)
     return r
 
 #
