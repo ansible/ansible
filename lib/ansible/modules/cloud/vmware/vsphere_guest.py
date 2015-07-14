@@ -80,7 +80,7 @@ options:
       - Name of the source template to deploy from
     default: None
   snapshot_to_clone:
-    version_added 2.0
+    version_added "2.0"
     description:
       - String. When specified, snapshot_to_clone will create a linked clone copy of the VM, Snapshot must already be taken in vCenter.
     required: false
@@ -613,7 +613,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
     try:
         if vmTarget:
             changed = False
-        elif snapshot_to_clone != None:
+        elif snapshot_to_clone is not None:
             #check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
             vmTemplate.clone(guest, resourcepool=rpmor, linked=True, snapshot=snapshot_to_clone)
             changed = True
