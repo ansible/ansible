@@ -5,6 +5,8 @@
 
 # (c) 2013, David Stygstra <david.stygstra@gmail.com>
 #
+# Portions copyright @ 2015 VMware, Inc.
+#
 # This file is part of Ansible
 #
 # This module is free software: you can redistribute it and/or modify
@@ -19,8 +21,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
-#
-# Portions copyright @ 2015 VMware, Inc.  All rights reserved.
 
 import syslog
 import os
@@ -54,18 +54,18 @@ options:
         default: 5
         description:
             - How long to wait for ovs-vswitchd to respond
-    iface-id:
+    external_ids:
+        version_added: 2.0
         required: false
+        default: {}
         description:
-            - Used when port is created to set the external_ids:iface-id.
-    attached-mac:
-        required: false
-        description:
-            - MAC address when port is created using external_ids:attached-mac.
+            - Dictionary of external_ids applied to a port.
     set:
+        version_added: 2.0
         required: false
+        default: None
         description:
-            - Additional set options to apply to the port
+            - Set a single property on a port.
 '''
 
 EXAMPLES = '''
@@ -77,13 +77,14 @@ EXAMPLES = '''
                     set Interface eth6 ofport_request=6
 
 # Assign interface id server1-vifeth6 and mac address 52:54:00:30:6d:11
-# to port vifeth6
+# to port vifeth6 and setup port to be managed by a controller.
 - openvswitch_port: bridge=br-int port=vifeth6 state=present
   args:
     external_ids:
-      iface-id: "server1-vifeth6"
+      iface-id: "{{inventory_hostname}}-vifeth6"
       attached-mac: "52:54:00:30:6d:11"
-
+      vm-id: "{{inventory_hostname}}"
+      iface-status: "active"
 '''
 
 # pylint: disable=W0703
@@ -124,40 +125,12 @@ class OVSPort(object):
         self.timeout = module.params['timeout']
         self.set_opt = module.params.get('set', None)
 
-        # if the port name starts with "vif", let's assume it's a VIF
-        self.is_vif = self.port.startswith('vif')
-
-        ##
-        # Several places need host name.
-        rtc, out, err = self.module.run_command(["hostname", "-s"])
-        if (rtc):
-            self.module.fail_json(msg=err)
-        self.hostname = out.strip("\n")
-
-    def _attached_mac_get(self):
-        """ Return the interface.  """
-        attached_mac = self.module.params['external_ids'].get('attached-mac',
-                                                              None)
-        if (not attached_mac):
-            attached_mac = "00:50:50:F"
-            attached_mac += self.hostname[-3] + ":"
-            attached_mac += self.hostname[-2:] + ":00"
-        return attached_mac
-
-    def _iface_id_get(self):
-        """ Return the interface id. """
-
-        iface_id = self.module.params['external_ids'].get('iface-id', None)
-        if (not iface_id):
-            iface_id = "%s-%s" % (self.hostname, self.port)
-        return iface_id
-
-    def _vsctl(self, command):
+    def _vsctl(self, command, check_rc=True):
         '''Run ovs-vsctl command'''
 
         cmd = ['ovs-vsctl', '-t', str(self.timeout)] + command
         syslog.syslog(syslog.LOG_NOTICE, " ".join(cmd))
-        return self.module.run_command(cmd)
+        return self.module.run_command(cmd, check_rc=check_rc)
 
     def exists(self):
         '''Check if the port already exists'''
@@ -171,50 +144,29 @@ class OVSPort(object):
 
     def set(self, set_opt):
         """ Set attributes on a port. """
-
         syslog.syslog(syslog.LOG_NOTICE, "set called %s" % set_opt)
         if (not set_opt):
             return False
 
         (get_cmd, set_value) = _set_to_get(set_opt)
-        (rtc, out, err) = self._vsctl(get_cmd)
+        (rtc, out, err) = self._vsctl(get_cmd, False)
         if rtc != 0:
-            self.module.fail_json(msg=err)
+            ##
+            # ovs-vsctl -t 5 -- get Interface port external_ids:key
+            # returns failure if key does not exist.
+            out = None
+        else:
+            out = out.strip("\n")
+            out = out.strip('"')
 
-        out = out.strip("\n")
-        out = out.strip('"')
         if (out == set_value):
             return False
 
         (rtc, out, err) = self._vsctl(["--", "set"] + set_opt.split(" "))
         if rtc != 0:
             self.module.fail_json(msg=err)
-        self.module.exit_json(changed=True)
-        syslog.syslog(syslog.LOG_NOTICE, "-- set %s" % set_opt)
 
-    def set_vif_attributes(self):
-        ''' Set attributes for a vif '''
-
-        ##
-        # create a fake MAC address for the VIF
-        fmac = self._attached_mac_get()
-
-        ##
-        # If vif_uuid is missing then construct a new one.
-        iface_id = self._iface_id_get()
-        syslog.syslog(syslog.LOG_NOTICE, "iface-id %s" % iface_id)
-
-        attached_mac = "external_ids:attached-mac=%s" % fmac
-        iface_id = "external_ids:iface-id=%s" % iface_id
-        vm_id = "external_ids:vm-id=%s" % self.hostname
-        cmd = ["set", "Interface", self.port,
-               "external_ids:iface-status=active", iface_id, vm_id,
-               attached_mac]
-
-        (rtc, _, stderr) = self._vsctl(cmd)
-        if rtc != 0:
-            self.module.fail_json(msg="%s returned %s %s" % (" ".join(cmd),
-                                                             rtc, stderr))
+        return True
 
     def add(self):
         '''Add the port'''
@@ -226,10 +178,8 @@ class OVSPort(object):
         (rtc, _, err) = self._vsctl(cmd)
         if rtc != 0:
             self.module.fail_json(msg=err)
-        syslog.syslog(syslog.LOG_NOTICE, " ".join(cmd))
 
-        if self.is_vif:
-            self.set_vif_attributes()
+        return True
 
     def delete(self):
         '''Remove the port'''
@@ -275,8 +225,6 @@ class OVSPort(object):
                         value = value.replace('"', '')
                         fmt_opt = "Interface %s external_ids:%s=%s"
                         external_id = fmt_opt % (self.port, key, value)
-                        syslog.syslog(syslog.LOG_NOTICE,
-                                      "external %s" % external_id)
                         changed = self.set(external_id) or changed
                 ##
         except Exception, earg:
@@ -293,7 +241,7 @@ def main():
             'port': {'required': True},
             'state': {'default': 'present', 'choices': ['present', 'absent']},
             'timeout': {'default': 5, 'type': 'int'},
-            'set': {'required': False},
+            'set': {'required': False, 'default': None},
             'external_ids': {'default': {}, 'required': False},
             'syslogging': {'required': False, 'type': "bool", 'default': True}
         },
