@@ -80,9 +80,9 @@ options:
       - Name of the source template to deploy from
     default: None
   snapshot_to_clone:
-    version_added "2.0"
     description:
-      - String. When specified, snapshot_to_clone will create a linked clone copy of the VM, Snapshot must already be taken in vCenter.
+        - A string that when specified, will create a linked clone copy of the VM. Snapshot must already be taken in vCenter.
+    version_added: "2.0"
     required: false
     default: none
   vm_disk:
