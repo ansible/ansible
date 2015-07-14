@@ -116,11 +116,15 @@ class Bower(object):
         data = json.loads(self._exec(cmd, True, False))
         if 'dependencies' in data:
             for dep in data['dependencies']:
-                if 'missing' in data['dependencies'][dep] and data['dependencies'][dep]['missing']:
+                dep_data = data['dependencies'][dep]
+                if dep_data.get('missing', False):
                     missing.append(dep)
-                elif data['dependencies'][dep]['pkgMeta']['version'] != data['dependencies'][dep]['update']['latest']:
+                elif \
+                  'version' in dep_data['pkgMeta'] and \
+                  'update' in dep_data and \
+                  dep_data['pkgMeta']['version'] != dep_data['update']['latest']:
                     outdated.append(dep)
-                elif 'incompatible' in data['dependencies'][dep] and data['dependencies'][dep]['incompatible']:
+                elif dep_data.get('incompatible', False):
                     outdated.append(dep)
                 else:
                     installed.append(dep)
