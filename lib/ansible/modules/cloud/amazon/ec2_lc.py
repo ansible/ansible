@@ -241,7 +241,8 @@ def create_launch_config(connection, module):
 
     module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
                      image_id=result.image_id, arn=result.launch_configuration_arn,
-                     security_groups=result.security_groups, instance_type=instance_type)
+                     security_groups=result.security_groups, instance_type=result.instance_type, 
+                     result=result)
 
 
 def delete_launch_config(connection, module):
