@@ -74,20 +74,8 @@ class ActionModule(ActionBase):
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif faf:
-            #FIXME: issue deprecation warning for first_available_file, use with_first_found or lookup('first_found',...) instead
-            found = False
-            for fn in faf:
-                fn_orig = fn
-                fnt = self._templar.template(fn)
-                fnd = self._loader.path_dwim_relative(self._task._role._role_path, 'files', fnt)
-                of = task_vars.get('_original_file', None)
-                if not os.path.exists(fnd) and of is not None:
-                    fnd = self._loader.path_dwim_relative(of, 'files', of)
-                if os.path.exists(fnd):
-                    source = fnd
-                    found = True
-                    break
-            if not found:
+            source = self._get_first_available_file(faf, task_vars.get('_original_file', None))
+            if source is None:
                 return  dict(failed=True, msg="could not find src in first_available_file list")
         else:
             if self._task._role is not None:

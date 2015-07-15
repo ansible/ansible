@@ -448,3 +448,27 @@ class ActionBase:
             rc = 0
 
         return dict(rc=rc, stdout=out, stderr=err)
+
+    def _get_first_available_file(self, faf, of=None, searchdir='files'):
+
+        self._connection._display.deprecated("first_available_file, use with_first_found or lookup('first_found',...) instead")
+        for fn in faf:
+            fn_orig = fn
+            fnt = self._templar.template(fn)
+            if self._task._role is not None:
+                lead = self._task._role._role_path
+            else:
+                lead = fnt
+            fnd = self._loader.path_dwim_relative(lead, searchdir, fnt)
+
+            if not os.path.exists(fnd) and of is not None:
+                if self._task._role is not None:
+                    lead = self._task._role._role_path
+                else:
+                    lead = of
+                fnd = self._loader.path_dwim_relative(lead, searchdir, of)
+
+            if os.path.exists(fnd):
+                return fnd
+
+        return None
