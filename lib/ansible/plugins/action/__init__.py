@@ -404,7 +404,7 @@ class ActionBase:
             data['stdout_lines'] = data.get('stdout', '').splitlines()
 
         # store the module invocation details back into the result
-        if self._task.async is not None:
+        if self._task.async != 0:
             data['invocation'] = dict(
                 module_args = module_args,
                 module_name = module_name,
