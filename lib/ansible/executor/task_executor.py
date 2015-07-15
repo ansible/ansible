@@ -243,7 +243,7 @@ class TaskExecutor:
             include_variables = self._task.args.copy()
             include_file = include_variables.get('_raw_params')
             del include_variables['_raw_params']
-            return dict(changed=True, include=include_file, include_variables=include_variables)
+            return dict(include=include_file, include_variables=include_variables)
 
         # get the connection and the handler for this execution
         self._connection = self._get_connection(variables)
