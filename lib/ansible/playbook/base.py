@@ -250,6 +250,9 @@ class Base:
         if self._loader is not None:
             basedir = self._loader.get_basedir()
 
+        # save the omit value for later checking
+        omit_value = templar._available_variables.get('omit')
+
         for (name, attribute) in iteritems(self._get_base_attributes()):
 
             if getattr(self, name) is None:
@@ -268,6 +271,12 @@ class Base:
                     # if the attribute contains a variable, template it now
                     value = templar.template(getattr(self, name))
 
+                # if this evaluated to the omit value, set the value back to
+                # the default specified in the FieldAttribute and move on
+                if omit_value is not None and value == omit_value:
+                    value = attribute.default
+                    continue
+
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
@@ -284,7 +293,7 @@ class Base:
                                 if not isinstance(item, attribute.listof):
                                     raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
                     elif attribute.isa == 'dict' and not isinstance(value, dict):
-                        raise TypeError()
+                        raise TypeError("%s is not a dictionary" % value)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
