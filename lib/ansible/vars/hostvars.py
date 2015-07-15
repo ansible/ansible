@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from jinja2 import Undefined as j2undefined
+
 from ansible.template import Templar
 
 __all__ = ['HostVars']
@@ -37,6 +39,8 @@ class HostVars(dict):
         
         if host_name not in self._lookup:
             host = self._inventory.get_host(host_name)
+            if not host:
+                return j2undefined
             result = self._vars_manager.get_vars(loader=self._loader, play=self._play, host=host)
             templar = Templar(variables=result, loader=self._loader)
             self._lookup[host_name] = templar.template(result, fail_on_undefined=False)
