@@ -88,15 +88,15 @@ $result = New-Object psobject @{
     changed = $false
 }
  
-If ($params.src) {
-    $src = $params.src.toString()
+If ($params.path) {
+    $path = $params.path.toString()
  
-    If (-Not (Test-Path -Path $src)) {
-        Fail-Json $result "$src file or directory does not exist on the host"
+    If (-Not (Test-Path -Path $path)) {
+        Fail-Json $result "$path file or directory does not exist on the host"
     }
 }
 Else {
-    Fail-Json $result "missing required argument: src"
+    Fail-Json $result "missing required argument: path"
 }
  
 If ($params.user) {
@@ -124,7 +124,7 @@ Else {
  
 If ($params.inherit) {
     # If it's a file then no flags can be set or an exception will be thrown
-    If (Test-Path -Path $src -PathType Leaf) {
+    If (Test-Path -Path $path -PathType Leaf) {
         $inherit = "None"
     }
     Else {
@@ -133,7 +133,7 @@ If ($params.inherit) {
 }
 Else {
     # If it's a file then no flags can be set or an exception will be thrown
-    If (Test-Path -Path $src -PathType Leaf) {
+    If (Test-Path -Path $path -PathType Leaf) {
         $inherit = "None"
     }
     Else {
@@ -176,7 +176,7 @@ Try {
  
     $objUser = New-Object System.Security.Principal.NTAccount($user)
     $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
-    $objACL = Get-ACL $src
+    $objACL = Get-ACL $path
  
     # Check if the ACE exists already in the objects ACL list
     $match = $false
@@ -190,7 +190,7 @@ Try {
     If ($state -eq "add" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
-            Set-ACL $src $objACL
+            Set-ACL $path $objACL
             $result.changed = $true
         }
         Catch {
@@ -200,7 +200,7 @@ Try {
     ElseIf ($state -eq "remove" -And $match -eq $true) {
         Try {
             $objACL.RemoveAccessRule($objACE)
-            Set-ACL $src $objACL
+            Set-ACL $path $objACL
             $result.changed = $true
         }
         Catch {
@@ -219,7 +219,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $src for $user"
+    Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $path for $user"
 }
  
 Exit-Json $result

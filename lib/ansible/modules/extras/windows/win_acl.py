@@ -29,18 +29,15 @@ short_description: Set file/directory permissions for a system user or group.
 description:
      - Add or remove rights/permissions for a given user or group for the specified src file or folder.
 options:
-  src:
+  path:
     description:
       - File or Directory
     required: yes
-    default: none
-    aliases: []
   user:
     description:
       - User or Group to add specified rights to act on src file/folder
     required: yes
     default: none
-    aliases: []
   state:
     description:
       - Specify whether to add (present) or remove (absent) the specified access rule
@@ -49,7 +46,6 @@ options:
       - present
       - absent
     default: present
-    aliases: []
   type:
     description:
       - Specify whether to allow or deny the rights specified
@@ -58,7 +54,6 @@ options:
       - allow
       - deny
     default: none
-    aliases: []
   rights:
     description:
       - The rights/permissions that are to be allowed/denyed for the specified user or group for the given src file or directory.  Can be entered as a comma separated list (Ex. "Modify, Delete, ExecuteFile").  For more information on the choices see MSDN FileSystemRights Enumeration.
@@ -86,7 +81,6 @@ options:
       - WriteData
       - WriteExtendedAttributes
     default: none
-    aliases: []
   inherit:
     description:
       - Inherit flags on the ACL rules.  Can be specified as a comma separated list (Ex. "ContainerInherit, ObjectInherit").  For more information on the choices see MSDN InheritanceFlags Enumeration.
@@ -96,7 +90,6 @@ options:
       - ObjectInherit
       - None
     default: For Leaf File: None; For Directory: ContainerInherit, ObjectInherit;
-    aliases: []
   propagation:
     description:
       - Propagation flag on the ACL rules.  For more information on the choices see MSDN PropagationFlags Enumeration.
@@ -106,7 +99,6 @@ options:
       - NoPropagateInherit
       - InheritOnly
     default: "None"
-    aliases: []
 author: Phil Schwartz, Trond Hindenes
 '''
 
