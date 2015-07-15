@@ -104,7 +104,7 @@ class Connection(ConnectionBase):
         if not C.HOST_KEY_CHECKING:
             self._common_args += ("-o", "StrictHostKeyChecking=no")
 
-        if self._connection_info.port is not None:
+        if self._connection_info.port is None:
             self._common_args += ("-o", "Port={0}".format(self._connection_info.port))
         if self._connection_info.private_key_file is not None:
             self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self._connection_info.private_key_file)))
