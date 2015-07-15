@@ -59,7 +59,7 @@ class ResultProcess(multiprocessing.Process):
         super(ResultProcess, self).__init__()
 
     def _send_result(self, result):
-        debug("sending result: %s" % (result,))
+        debug(u"sending result: %s" % ([unicode(x) for x in result],))
         self._final_q.put(result, block=False)
         debug("done sending result")
 
