@@ -837,6 +837,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive = [['security_group_ids', 'security_group_names']]
     )
 
     if not HAS_BOTO:
@@ -868,9 +869,7 @@ def main():
     if state == 'present' and not (zones or subnets):
         module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
 
-    if security_group_ids and security_group_names:
-        module.fail_json(msg = str("Use only one type of parameter (security_group_ids) or (security_group_names)"))
-    elif security_group_names:
+    if security_group_names:
         security_group_ids = []
         try:
             ec2 = ec2_connect(module)
