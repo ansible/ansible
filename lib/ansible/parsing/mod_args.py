@@ -23,7 +23,7 @@ from six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins import module_loader
-from ansible.parsing.splitter import parse_kv
+from ansible.parsing.splitter import parse_kv, split_args
 
 # For filtering out modules correctly below
 RAW_PARAM_MODULES = ([
@@ -91,7 +91,7 @@ class ModuleArgsParser:
         self._task_ds = task_ds
 
 
-    def _split_module_string(self, str):
+    def _split_module_string(self, module_string):
         '''
         when module names are expressed like:
         action: copy src=a dest=b
@@ -99,7 +99,7 @@ class ModuleArgsParser:
         and the rest are strings pertaining to the arguments.
         '''
 
-        tokens = str.split()
+        tokens = split_args(module_string)
         if len(tokens) > 1:
             return (tokens[0], " ".join(tokens[1:]))
         else:
@@ -240,17 +240,13 @@ class ModuleArgsParser:
         args        = dict()
 
 
-        #
-        # We can have one of action, local_action, or module specified
-        #
-
-
         # this is the 'extra gross' scenario detailed above, so we grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
         # FIXME: add test cases for this
         additional_args = self._task_ds.get('args', dict())
 
+        # We can have one of action, local_action, or module specified
         # action
         if 'action' in self._task_ds:
             # an old school 'action' statement
