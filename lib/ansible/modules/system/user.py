@@ -276,6 +276,9 @@ class User(object):
         self.update_password = module.params['update_password']
         self.expires = None
 
+        if module.params['home'] is not None:
+            self.home = os.path.expanduser(module.params['home'])
+
         if module.params['expires']:
             try:
                 self.expires = time.gmtime(module.params['expires'])
