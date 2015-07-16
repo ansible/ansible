@@ -47,6 +47,7 @@ options:
         description:
             - Set exact URL to download the plugin from
         required: False
+        default: None
     timeout:
         description:
             - Timeout setting: 30s, 1m, 1h... (1m by default)
@@ -64,6 +65,7 @@ options:
     version:
         description: 
             - Version of the plugin to be installed.
+        default: None
 '''
 
 EXAMPLES = '''
