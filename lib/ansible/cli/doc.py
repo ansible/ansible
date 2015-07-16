@@ -285,10 +285,18 @@ class DocCLI(CLI):
             text.append(doc['returndocs'])
         text.append('')
 
-        if isinstance(doc['author'], basestring):
-            maintainers = [doc['author']]
-        else:
-            maintainers = doc['author']
+        maintainers = set()
+        if 'author' in doc:
+            if isinstance(doc['author'], basestring):
+                maintainers.add(doc['author'])
+            else:
+                maintainers.update(doc['author'])
+
+        if 'maintainers' in doc:
+            if isinstance(doc['maintainers'], basestring):
+                maintainers.add(doc['author'])
+            else:
+                maintainers.update(doc['author'])
 
         text.append('MAINTAINERS: ' + ', '.join(maintainers))
         text.append('')
