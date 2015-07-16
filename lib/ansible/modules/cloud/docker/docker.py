@@ -1282,6 +1282,10 @@ class DockerManager(object):
             if params['restart_policy']['Name'] == 'on-failure':
                 params['restart_policy']['MaximumRetryCount'] = optionals['restart_policy_retry']
 
+        # docker_py only accepts 'host' or None
+        if 'pid' in optionals and not optionals['pid']:
+            optionals['pid'] = None
+
         if optionals['pid'] is not None:
             self.ensure_capability('pid')
             params['pid_mode'] = optionals['pid']
