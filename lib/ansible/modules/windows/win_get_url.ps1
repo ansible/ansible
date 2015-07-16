@@ -62,7 +62,7 @@ If ($force -or -not (Test-Path $dest)) {
         $result.changed = $true
     }
     Catch {
-        Fail-Json $result "Error downloading $url to $dest"
+        Fail-Json $result "Error downloading $url to $dest $($_.Exception.Message)"
     }
 }
 Else {
@@ -85,11 +85,11 @@ Else {
     }
     Catch [System.Net.WebException] {
         If ($_.Exception.Response.StatusCode -ne [System.Net.HttpStatusCode]::NotModified) {
-            Fail-Json $result "Error downloading $url to $dest"
+            Fail-Json $result "Error downloading $url to $dest $($_.Exception.Message)"
         }
     }
     Catch {
-        Fail-Json $result "Error downloading $url to $dest"
+        Fail-Json $result "Error downloading $url to $dest $($_.Exception.Message)"
     }
 }
 
