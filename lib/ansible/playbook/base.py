@@ -154,8 +154,11 @@ class Base:
         else:
             self._loader = DataLoader()
 
-        if isinstance(ds, string_types) or isinstance(ds, FileIO):
-            ds = self._loader.load(ds)
+        # FIXME: is this required anymore? This doesn't seem to do anything
+        #        helpful, and was added in very early stages of the base class
+        #        development.
+        #if isinstance(ds, string_types) or isinstance(ds, FileIO):
+        #    ds = self._loader.load(ds)
 
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation
