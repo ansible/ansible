@@ -127,25 +127,23 @@ def main():
     if state == 'absent':
         if key:
             '''found a match, delete it'''
-            try:
-                key.delete()
-                if wait:
-                    start = time.time()
-                    action_complete = False
-                    while (time.time() - start) < wait_timeout:
-                        if not ec2.get_key_pair(name):
-                            action_complete = True
-                            break
-                        time.sleep(1)
-                    if not action_complete:
-                        module.fail_json(msg="timed out while waiting for the key to be removed")
-            except Exception, e:
-                module.fail_json(msg="Unable to delete key pair '%s' - %s" % (key, e))
-            else:
-                key = None
-                changed = True
-        else:
-            '''no match found, no changes required'''
+            if not module.check_mode:
+                try:
+                    key.delete()
+                    if wait:
+                        start = time.time()
+                        action_complete = False
+                        while (time.time() - start) < wait_timeout:
+                            if not ec2.get_key_pair(name):
+                                action_complete = True
+                                break
+                            time.sleep(1)
+                        if not action_complete:
+                            module.fail_json(msg="timed out while waiting for the key to be removed")
+                except Exception, e:
+                    module.fail_json(msg="Unable to delete key pair '%s' - %s" % (key, e))
+            key = None
+            changed = True
 
     # Ensure requested key is present
     elif state == 'present':
