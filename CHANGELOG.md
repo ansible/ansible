@@ -62,6 +62,7 @@ New Modules:
   * cloudstack: cs_vmsnapshot
   * datadog_monitor
   * dpkg_selections
+  * elasticsearch_plugin
   * expect
   * find
   * hall
