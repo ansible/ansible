@@ -169,9 +169,6 @@ class TaskExecutor:
             res['item'] = item
             results.append(res)
 
-            # FIXME: we should be sending back a callback result for each item in the loop here
-            print(res)
-
         return results
 
     def _squash_items(self, items, variables):
