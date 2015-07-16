@@ -21,8 +21,6 @@ __metaclass__ = type
 
 import json
 
-from ansible import constants as C
-
 __all__ = ["CallbackBase"]
 
 
@@ -45,18 +43,8 @@ class CallbackBase:
             version = getattr(self, 'CALLBACK_VERSION', 'unknwon')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
-    def _dump_results(self, result, sanitize=True, indent=4, sort_keys=True):
-        if sanitize:
-            res = self._sanitize_result(result)
-        else:
-            res = result
-        return json.dumps(res, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
-
-    def _sanitize_result(self, result):
-        res = {}
-        for k in set(result.keys()).difference(C.RESULT_SANITIZE):
-            res[k] = result[k]
-        return res
+    def _dump_results(self, result, indent=4, sort_keys=True):
+        return json.dumps(result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def set_connection_info(self, conn_info):
         pass

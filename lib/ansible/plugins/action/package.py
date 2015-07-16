@@ -29,20 +29,21 @@ class ActionModule(ActionBase):
 
         name  = self._task.args.get('name', None)
         state = self._task.args.get('state', None)
-        module = self._task.args.get('use', None)
+        module = self._task.args.get('use', 'auto')
 
-        if module is None:
+        if module == 'auto':
             try:
                 module = self._templar.template('{{ansible_pkg_mgr}}')
             except:
                 pass # could not get it from template!
 
-        if module is None:
-            #TODO: autodetect the package manager, by invoking that specific fact snippet remotely
+        if module == 'auto':
+            #FIXME: autodetect the package manager run facts module remotely to get ansible_pkg_mgr
+            #module = self._execute_module(module_name=setup, module_args={filter: 'ansible_pkg_mgr'}, task_vars=task_vars)
             pass
 
 
-        if module is not None:
+        if module != 'auto':
             # run the 'package' module
             new_module_args = self._task.args.copy()
             if 'use' in new_module_args:
