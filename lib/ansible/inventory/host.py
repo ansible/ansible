@@ -78,8 +78,6 @@ class Host:
 
         if port and port != C.DEFAULT_REMOTE_PORT:
             self.set_variable('ansible_ssh_port', int(port))
-        else:
-            self.set_variable('ansible_ssh_port', C.DEFAULT_REMOTE_PORT)
 
         self._gathered_facts = False
 
@@ -124,6 +122,10 @@ class Host:
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
         results['ansible_ssh_host'] = self.ipv4_address
+
+        if 'ansible_ssh_port' not in results:
+            results['ansible_ssh_port'] = C.DEFAULT_REMOTE_PORT
+
         results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
         return results
 
