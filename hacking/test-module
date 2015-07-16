@@ -61,7 +61,8 @@ def parse():
         help="path to python debugger (e.g. /usr/bin/pdb)")
     parser.add_option('-I', '--interpreter', dest='interpreter',
         help="path to interpreter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
-        metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
+        metavar='INTERPRETER_TYPE=INTERPRETER_PATH',
+        default='python={}'.format(sys.executable))
     parser.add_option('-c', '--check', dest='check', action='store_true',
         help="run the module in check mode")
     options, args = parser.parse_args()
