@@ -34,3 +34,9 @@ ansible-playbook test_handlers.yml -i inventory.handlers -v "$@" --tags scenario
 # Forcing false in play, which overrides command line
 [ "$(ansible-playbook test_force_handlers.yml -i inventory.handlers -v "$@" --tags force_false_in_play --force-handlers \
 | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
+
+[ "$(ansible-playbook test_handlers_include.yml -i ../../inventory -v "$@" --tags playbook_include_handlers \
+| egrep -o 'RUNNING HANDLER \[.*?]')" = "RUNNING HANDLER [test handler]" ]
+
+[ "$(ansible-playbook test_handlers_include.yml -i ../../inventory -v "$@" --tags role_include_handlers \
+| egrep -o 'RUNNING HANDLER \[test_handlers_include : .*?]')" = "RUNNING HANDLER [test_handlers_include : test handler]" ]
