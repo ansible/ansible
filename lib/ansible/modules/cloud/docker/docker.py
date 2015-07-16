@@ -524,6 +524,7 @@ def get_docker_py_versioninfo():
                     if not char.isdigit():
                         nondigit = part[idx:]
                         digit = part[:idx]
+                        break
                 if digit:
                     version.append(int(digit))
                 if nondigit:
