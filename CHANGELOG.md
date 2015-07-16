@@ -73,6 +73,7 @@ New Modules:
   * openstack: os_floating_ip
   * openstack: os_image
   * openstack: os_network
+  * openstack: os_nova_flavor
   * openstack: os_object
   * openstack: os_security_group
   * openstack: os_security_group_rule
