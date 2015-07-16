@@ -95,7 +95,7 @@ class VMwareInventory(object):
         Saves the value to cache with the name given.
         '''
         if self.config.has_option('defaults', 'cache_dir'):
-            cache_dir = self.config.get('defaults', 'cache_dir')
+            cache_dir = os.path.expanduser(self.config.get('defaults', 'cache_dir'))
             if not os.path.exists(cache_dir):
                 os.makedirs(cache_dir)
             cache_file = os.path.join(cache_dir, name)
