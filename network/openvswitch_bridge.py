@@ -128,17 +128,18 @@ class OVSBridge(object):
                 ##
                 # Check if external ids would change.
                 current_external_ids = self.get_external_ids()
-                items = self.module.params['external_ids'].items()
-                for (key, value) in items:
-                    if ((key in current_external_ids) and
-                       (value != current_external_ids[key])):
-                        changed = True
+                exp_external_ids = self.module.params['external_ids']
+                if exp_external_ids is not None:
+                    for (key, value) in exp_external_ids:
+                        if ((key in current_external_ids) and
+                           (value != current_external_ids[key])):
+                            changed = True
 
-                ##
-                # Check if external ids would be removed.
-                for (key, value) in current_external_ids.items():
-                    if key not in self.module.params['external_ids']:
-                        changed = True
+                    ##
+                    # Check if external ids would be removed.
+                    for (key, value) in current_external_ids.items():
+                        if key not in exp_external_ids:
+                            changed = True
 
             elif self.state == 'absent' and self.exists():
                 changed = True
@@ -178,16 +179,19 @@ class OVSBridge(object):
 
                 ##
                 # Change and add existing external ids.
-                items = self.module.params['external_ids'].items()
-                for (key, value) in items:
-                    if (value != current_external_ids.get(key, None)):
-                        changed = self.set_external_id(key, value) or changed
+                exp_external_ids = self.module.params['external_ids']
+                if exp_external_ids is not None:
+                    for (key, value) in exp_external_ids.items():
+                        if ((value != current_external_ids.get(key, None)) and
+                           self.set_external_id(key, value)):
+                            changed = True
 
-                ##
-                # Remove current external ids that are not passed in.
-                for (key, value) in current_external_ids.items():
-                    if key not in self.module.params['external_ids']:
-                        changed = self.set_external_id(key, None) or changed
+                    ##
+                    # Remove current external ids that are not passed in.
+                    for (key, value) in current_external_ids.items():
+                        if ((key not in exp_external_ids) and
+                           self.set_external_id(key, None)):
+                            changed = True
 
         except Exception, earg:
             self.module.fail_json(msg=str(earg))
@@ -196,21 +200,23 @@ class OVSBridge(object):
 
     def get_external_ids(self):
         """ Return the bridge's external ids as a dict. """
+        results = {}
         if self.exists():
             rtc, out, err = self._vsctl(['br-get-external-id', self.bridge])
             if rtc != 0:
                 self.module.fail_json(msg=err)
             lines = out.split("\n")
-            lines = [item.split("=") for item in lines if (len(item) > 0)]
-            return {item[0]: item[1] for item in lines}
+            lines = [item.split("=") for item in lines if len(item) > 0]
+            for item in lines:
+                results[item[0]] = item[1]
 
-        return {}
+        return results
 
     def set_external_id(self, key, value):
         """ Set external id. """
         if self.exists():
             cmd = ['br-set-external-id', self.bridge, key]
-            if (value):
+            if value:
                 cmd += [value]
 
             (rtc, _, err) = self._vsctl(cmd)
