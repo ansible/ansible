@@ -401,6 +401,7 @@ from urlparse import urlparse
 try:
     import docker.client
     import docker.utils
+    import docker.errors
     from requests.exceptions import RequestException
 except ImportError:
     HAS_DOCKER_PY = False
@@ -1347,7 +1348,10 @@ class DockerManager(object):
 
         try:
             containers = do_create(count, params)
-        except:
+        except docker.errors.APIError as e:
+            if e.response.status_code != 404:
+                raise
+
             self.pull_image()
             containers = do_create(count, params)
 
