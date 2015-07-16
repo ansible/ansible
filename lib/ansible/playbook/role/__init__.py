@@ -160,6 +160,8 @@ class Role(Base, Become, Conditional, Taggable):
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, loader=self._loader)
             self._dependencies = self._load_dependencies()
+        else:
+            self._metadata = RoleMetadata()
 
         task_data = self._load_role_yaml('tasks')
         if task_data:
@@ -242,16 +244,16 @@ class Role(Base, Become, Conditional, Taggable):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self):
+    def get_inherited_vars(self, dep_chain=[]):
         inherited_vars = dict()
-        for parent in self._parents:
-            inherited_vars = combine_vars(inherited_vars, parent.get_inherited_vars())
+
+        for parent in dep_chain:
             inherited_vars = combine_vars(inherited_vars, parent._role_vars)
             inherited_vars = combine_vars(inherited_vars, parent._role_params)
         return inherited_vars
 
-    def get_vars(self):
-        all_vars = self.get_inherited_vars()
+    def get_vars(self, dep_chain=[]):
+        all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():
             all_vars = combine_vars(all_vars, dep.get_vars())
@@ -296,7 +298,7 @@ class Role(Base, Become, Conditional, Taggable):
         at least one task was run
         '''
 
-        return self._had_task_run and self._completed
+        return self._had_task_run and self._completed and not self._metadata.allow_duplicates
 
     def compile(self, play, dep_chain=[]):
         '''

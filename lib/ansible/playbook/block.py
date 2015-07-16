@@ -56,7 +56,7 @@ class Block(Base, Become, Conditional, Taggable):
         all_vars = dict()
 
         if self._role:
-            all_vars.update(self._role.get_vars())
+            all_vars.update(self._role.get_vars(self._dep_chain))
         if self._parent_block:
             all_vars.update(self._parent_block.get_vars())
         if self._task_include:
