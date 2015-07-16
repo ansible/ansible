@@ -206,6 +206,9 @@ ANSIBLE_SSH_PIPELINING         = get_config(p, 'ssh_connection', 'pipelining', '
 ANSIBLE_SSH_RETRIES            = get_config(p, 'ssh_connection', 'retries', 'ANSIBLE_SSH_RETRIES', 0, integer=True)
 PARAMIKO_RECORD_HOST_KEYS      = get_config(p, 'paramiko_connection', 'record_host_keys', 'ANSIBLE_PARAMIKO_RECORD_HOST_KEYS', True, boolean=True)
 
+# https://docs.python.org/2/library/ssl.htm for options
+DEFAULT_SSL_PROTOCOL                   = get_config(p, 'ssl', 'ssl_protocol', 'ANSIBLE_SSL_PROTOCOL', 2, integer=True)
+
 # obsolete -- will be formally removed
 ZEROMQ_PORT                    = get_config(p, 'fireball_connection', 'zeromq_port', 'ANSIBLE_ZEROMQ_PORT', 5099, integer=True)
 ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, integer=True)

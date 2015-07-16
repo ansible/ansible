@@ -38,6 +38,7 @@ REPLACER_ARGS    = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
 REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
 REPLACER_WINDOWS = "# POWERSHELL_COMMON"
 REPLACER_VERSION = "\"<<ANSIBLE_VERSION>>\""
+REPLACER_DEFAULT_SSL = "\"<<ANSIBLE_DEFAULT_SSL>>\""
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
@@ -165,6 +166,7 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
         # these strings should be part of the 'basic' snippet which is required to be included
         module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
         module_data = module_data.replace(REPLACER_COMPLEX, encoded_args)
+        module_data = module_data.replace(REPLACER_DEFAULT_SSL, C.DEFAULT_SSL_PROTOCOL)
 
         if module_style == 'new':
             facility = C.DEFAULT_SYSLOG_FACILITY
