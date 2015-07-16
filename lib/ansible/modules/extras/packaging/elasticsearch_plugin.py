@@ -63,7 +63,8 @@ options:
         default: /usr/share/elasticsearch/plugins/
     version:
         description: 
-            - Version of the plugin to be installed.
+            - Version of the plugin to be installed.  
+              If plugin exists with previous version, it will NOT be updated
         required: False
         default: None
 '''
