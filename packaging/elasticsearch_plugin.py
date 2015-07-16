@@ -72,6 +72,12 @@ options:
 EXAMPLES = '''
 # Install Elasticsearch head plugin
 - elasticsearch_plugin: state=present name="mobz/elasticsearch-head"
+
+# Install specific version of a plugin
+- elasticsearch_plugin: state=present name="com.github.kzwang/elasticsearch-image" version="1.2.0"
+
+# Uninstall Elasticsearch head plugin
+- elasticsearch_plugin: state=absent name="mobz/elasticsearch-head"
 '''
 
 
