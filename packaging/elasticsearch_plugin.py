@@ -48,7 +48,7 @@ options:
         default: None
     timeout:
         description:
-            - Timeout setting: 30s, 1m, 1h...
+            - "Timeout setting: 30s, 1m, 1h..."
         required: False
         default: 1m
     plugin_bin:
@@ -62,8 +62,8 @@ options:
         required: False
         default: /usr/share/elasticsearch/plugins/
     version:
-        description: 
-            - Version of the plugin to be installed.  
+        description:
+            - Version of the plugin to be installed.
               If plugin exists with previous version, it will NOT be updated
         required: False
         default: None
@@ -141,7 +141,7 @@ def main():
     # skip if the state is correct
     if (present and state == "present") or (state == "absent" and not present):
         module.exit_json(changed=False, name=name)
-        
+
     if (version):
        name = name + '/' + version
 
