@@ -65,6 +65,7 @@ options:
     version:
         description: 
             - Version of the plugin to be installed.
+        required: False
         default: None
 '''
 
