@@ -23,7 +23,10 @@ DOCUMENTATION = '''
 ---
 module: package
 version_added: 2.0
-author: Ansible Core Team
+author:
+    - Ansible Inc
+maintainers:
+    - Ansible Core Team
 short_description: Generic OS package manager
 description:
      - Installs, upgrade and removes packages using the underlying OS package manager.
@@ -36,6 +39,11 @@ options:
     description:
       - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
     required: true
+  use:
+    description:
+      - The required package manager module to use (yum, apt, etc). The default 'auto' will use existing facts or try to autodetect it.
+    required: false
+    default: auto
 requirements:
     - Whatever is required for the package plugins specific for each system.
 notes:
