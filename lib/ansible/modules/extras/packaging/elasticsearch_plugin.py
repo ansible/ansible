@@ -130,8 +130,6 @@ def main():
     version = module.params["version"]
 
     present = is_plugin_present(parse_plugin_repo(name), plugin_dir)
-    
-    print state
 
     # skip if the state is correct
     if (present and state == "present") or (state == "absent" and not present):
