@@ -50,8 +50,9 @@ options:
         default: None
     timeout:
         description:
-            - Timeout setting: 30s, 1m, 1h... (1m by default)
+            - Timeout setting: 30s, 1m, 1h...
         required: False
+        default: 1m
     plugin_bin:
         description:
             - Location of the plugin binary
