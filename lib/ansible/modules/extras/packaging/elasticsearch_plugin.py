@@ -3,8 +3,6 @@
 
 import os
 
-from ansible.module_utils.basic import *
-
 """
 Ansible module to manage elasticsearch plugins
 (c) 2015, Mathew Davies <thepixeldeveloper@googlemail.com>
@@ -158,5 +156,6 @@ def main():
 
     module.exit_json(changed=True, cmd=cmd, name=name, state=state, url=url, timeout=timeout, stdout=out, stderr=err)
 
-if __name__ == "__main__":
-    main()
+from ansible.module_utils.basic import *
+
+main()
