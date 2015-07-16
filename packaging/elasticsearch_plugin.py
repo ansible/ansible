@@ -28,7 +28,7 @@ module: elasticsearch_plugin
 short_description: Manage Elasticsearch plugins
 description:
     - Manages Elasticsearch plugins.
-version_added: ""
+version_added: "2.0"
 author: Mathew Davies (@ThePixelDeveloper)
 options:
     name:
