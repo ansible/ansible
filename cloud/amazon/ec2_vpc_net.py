@@ -59,6 +59,7 @@ options:
       - The tags you want attached to the VPC. This is independent of the name value, note if you pass a 'Name' key it would override the Name of the VPC if it's different.
     default: None
     required: false
+    aliases: [ 'resource_tags' ]
   state:
     description:
       - The state of the VPC. Either absent or present.
@@ -186,7 +187,7 @@ def main():
             dns_support = dict(type='bool', default=True),
             dns_hostnames = dict(type='bool', default=True),
             dhcp_opts_id = dict(type='str', default=None, required=False),
-            tags = dict(type='dict', required=False, default=None),
+            tags = dict(type='dict', required=False, default=None, aliases=['resource_tags']),
             state = dict(choices=['present', 'absent'], default='present'),
             multi_ok = dict(type='bool', default=False)
         )
