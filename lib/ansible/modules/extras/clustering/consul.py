@@ -19,30 +19,30 @@
 
 DOCUMENTATION = """
 module: consul
-short_description: "Add, modify & delete services within a consul cluster.
-  See http://consul.io for more details."
+short_description: "Add, modify & delete services within a consul cluster."
 description:
- - registers services and checks for an agent with a consul cluster. A service
-   is some process running on the agent node that should be advertised by
+ - Registers services and checks for an agent with a consul cluster.
+   A service is some process running on the agent node that should be advertised by
    consul's discovery mechanism. It may optionally supply a check definition,
    a periodic service test to notify the consul cluster of service's health.
-   Checks may also be registered per node e.g. disk usage, or cpu usage and
+ - "Checks may also be registered per node e.g. disk usage, or cpu usage and
    notify the health of the entire node to the cluster.
    Service level checks do not require a check name or id as these are derived
-   by Consul from the Service name and id respectively by appending 'service:'.
-   Node level checks require a check_name and optionally a check_id. 
-   Currently, there is no complete way to retrieve the script, interval or ttl 
+   by Consul from the Service name and id respectively by appending 'service:'
+   Node level checks require a check_name and optionally a check_id."
+ - Currently, there is no complete way to retrieve the script, interval or ttl
    metadata for a registered check. Without this metadata it is  not possible to
-   tell if the data supplied with ansible represents a change to a check. As a 
-   result this does not attempt to determine changes and will always report a 
+   tell if the data supplied with ansible represents a change to a check. As a
+   result this does not attempt to determine changes and will always report a
    changed occurred. An api method is planned to supply this metadata so at that
    stage change management will be added.
+ - "See http://consul.io for more details."
 requirements:
   - "python >= 2.6"
   - python-consul
   - requests
 version_added: "2.0"
-author: "Steve Gargan (@sgargan)" 
+author: "Steve Gargan (@sgargan)"
 options:
     state:
         description:
@@ -50,7 +50,7 @@ options:
         required: true
         choices: ['present', 'absent']
     service_name:
-        desciption:
+        description:
           - Unique name for the service on a node, must be unique per node,
             required if registering a service. May be ommitted if registering
             a node level check
@@ -95,11 +95,11 @@ options:
     interval:
         description:
           - the interval at which the service check will be run. This is a number
-            with a s or m suffix to signify the units of seconds or minutes e.g 
-            15s or 1m. If no suffix is supplied, m will be used by default e.g. 
+            with a s or m suffix to signify the units of seconds or minutes e.g
+            15s or 1m. If no suffix is supplied, m will be used by default e.g.
             1 will be 1m. Required if the script param is specified.
         required: false
-        default: None    
+        default: None
     check_id:
         description:
           - an ID for the service check, defaults to the check name, ignored if
@@ -113,20 +113,19 @@ options:
         required: false
         default: None
     ttl:
-        description: 
+        description:
           - checks can be registered with a ttl instead of a script and interval
             this means that the service will check in with the agent before the
-            ttl expires. If it doesn't the check will be considered failed. 
+            ttl expires. If it doesn't the check will be considered failed.
             Required if registering a check and the script an interval are missing
-            Similar to the interval this is a number with a s or m suffix to 
-            signify the units of seconds or minutes e.g 15s or 1m. If no suffix 
+            Similar to the interval this is a number with a s or m suffix to
+            signify the units of seconds or minutes e.g 15s or 1m. If no suffix
             is supplied, m will be used by default e.g. 1 will be 1m
         required: false
         default: None
     token:
         description:
-          - the token key indentifying an ACL rule set. May be required to 
-            register services.
+          - the token key indentifying an ACL rule set. May be required to register services.
         required: false
         default: None
 """
