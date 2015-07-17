@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_unzip
-version_added: ""
+version_added: "2.0"
 short_description: Unzips compressed files on the Windows node
 description:
      - Unzips compressed files, and can force reboot (if needed, i.e. such as hotfixes). Has ability to recursively unzip files within the src zip file provided using Read-Archive and piping to Expand-Archive (Using PSCX). If the destination directory does not exist, it will be created before unzipping the file. If a .zip file is specified as src and recurse is true then PSCX will be installed.  Specifying rm parameter will allow removal of the src file after extraction.
@@ -33,14 +33,10 @@ options:
     description:
       - File to be unzipped (provide absolute path)
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - Destination of zip file (provide absolute path of directory). If it does not exist, the directory will be created.
     required: true
-    default: null
-    aliases: []
   rm:
     description:
       - Remove the zip file, after unzipping
@@ -51,7 +47,6 @@ options:
       - yes
       - no
     default: false
-    aliases: []
   recurse:
     description:
       - Recursively expand zipped files within the src file.
@@ -62,14 +57,12 @@ options:
       - false
       - yes
       - no
-    aliases: []
   creates:
     description:
       - If this file or directory exists the specified src will not be extracted.
     required: no
     default: null
-    aliases: []
-author: Phil Schwartz 
+author: Phil Schwartz
 '''
 
 EXAMPLES = '''
