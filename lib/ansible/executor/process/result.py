@@ -122,18 +122,6 @@ class ResultProcess(multiprocessing.Process):
                 elif result.is_skipped():
                     self._send_result(('host_task_skipped', result))
                 else:
-                    # if this task is notifying a handler, do it now
-                    if result._task.notify and result._result.get('changed', False):
-                        # The shared dictionary for notified handlers is a proxy, which
-                        # does not detect when sub-objects within the proxy are modified.
-                        # So, per the docs, we reassign the list so the proxy picks up and
-                        # notifies all other threads
-                        for notify in result._task.notify:
-                            if result._task._role:
-                                role_name = result._task._role.get_name()
-                                notify = "%s : %s" %(role_name, notify)
-                            self._send_result(('notify_handler', result._host, notify))
-
                     if result._task.loop:
                         # this task had a loop, and has more than one result, so
                         # loop over all of them instead of a single result
@@ -142,6 +130,20 @@ class ResultProcess(multiprocessing.Process):
                         result_items = [ result._result ]
 
                     for result_item in result_items:
+                        # if this task is notifying a handler, do it now
+                        if 'ansible_notify' in result_item and result.is_changed():
+                            # The shared dictionary for notified handlers is a proxy, which
+                            # does not detect when sub-objects within the proxy are modified.
+                            # So, per the docs, we reassign the list so the proxy picks up and
+                            # notifies all other threads
+                            for notify in result_item['ansible_notify']:
+                                if result._task._role:
+                                    role_name = result._task._role.get_name()
+                                    notify = "%s : %s" % (role_name, notify)
+                                self._send_result(('notify_handler', result._host, notify))
+                            # now remove the notify field from the results, as its no longer needed
+                            result_item.pop('ansible_notify')
+
                         if 'add_host' in result_item:
                             # this task added a new host (add_host module)
                             self._send_result(('add_host', result_item))

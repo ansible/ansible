@@ -330,6 +330,12 @@ class TaskExecutor:
         if 'ansible_facts' in result:
             variables.update(result['ansible_facts'])
 
+        # save the notification target in the result, if it was specified, as
+        # this task may be running in a loop in which case the notification
+        # may be item-specific, ie. "notify: service {{item}}"
+        if self._task.notify:
+            result['ansible_notify'] = self._task.notify
+
         # and return
         debug("attempt loop complete, returning result")
         return result
