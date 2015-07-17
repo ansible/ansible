@@ -12,13 +12,11 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'timer'
 
-    start_time = datetime.now()
-
     def __init__(self, display):
 
         super(CallbackModule, self).__init__(display)
 
-        start_time = datetime.now()
+        self.start_time = datetime.now()
 
     def days_hours_minutes_seconds(self, timedelta):
         minutes = (timedelta.seconds//60)%60
