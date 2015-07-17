@@ -58,7 +58,14 @@ def tasktime():
 
 
 class CallbackModule(CallbackBase):
-
+    """
+    This callback module provides per-task timing, ongoing playbook elapsed time 
+    and ordered list of top 20 longest running tasks at end.
+    """
+    CALLBACK_VERSION = 2.0
+    CALLBACK_TYPE = 'aggregate'
+    CALLBACK_NAME = 'profile_tasks'
+ 
     def __init__(self, display):
         self.stats = {}
         self.current = None
