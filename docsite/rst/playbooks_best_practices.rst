@@ -288,7 +288,7 @@ keep the OS configuration in separate playbooks from the app deployment.
 .. _staging_vs_production:
 
 Staging vs Production
-+++++++++++++++++++
++++++++++++++++++++++
 
 As also mentioned above, a good way to keep your staging (or testing) and production environments separate is to use a separate inventory file for staging and production.   This way you pick with -i what you are targeting.  Keeping them all in one file can lead to surprises!
 
