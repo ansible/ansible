@@ -131,16 +131,17 @@ class ResultProcess(multiprocessing.Process):
 
                     for result_item in result_items:
                         # if this task is notifying a handler, do it now
-                        if 'ansible_notify' in result_item and result.is_changed():
-                            # The shared dictionary for notified handlers is a proxy, which
-                            # does not detect when sub-objects within the proxy are modified.
-                            # So, per the docs, we reassign the list so the proxy picks up and
-                            # notifies all other threads
-                            for notify in result_item['ansible_notify']:
-                                if result._task._role:
-                                    role_name = result._task._role.get_name()
-                                    notify = "%s : %s" % (role_name, notify)
-                                self._send_result(('notify_handler', result._host, notify))
+                        if 'ansible_notify' in result_item:
+                            if result.is_changed():
+                                # The shared dictionary for notified handlers is a proxy, which
+                                # does not detect when sub-objects within the proxy are modified.
+                                # So, per the docs, we reassign the list so the proxy picks up and
+                                # notifies all other threads
+                                for notify in result_item['ansible_notify']:
+                                    if result._task._role:
+                                        role_name = result._task._role.get_name()
+                                        notify = "%s : %s" % (role_name, notify)
+                                    self._send_result(('notify_handler', result._host, notify))
                             # now remove the notify field from the results, as its no longer needed
                             result_item.pop('ansible_notify')
 

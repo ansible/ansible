@@ -28,7 +28,7 @@ class ActionModule(ActionBase):
         # Remove special fields from the result, which can only be set
         # internally by the executor engine. We do this only here in
         # the 'normal' action, as other action plugins may set this.
-        for field in ('ansible_facts', 'ansible_notify'):
+        for field in ('ansible_notify',):
             if field in results:
                 results.pop(field)
 
