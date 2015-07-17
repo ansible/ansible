@@ -49,7 +49,7 @@ New command line options
 --ask-become-pass
     ask for privilege escalation password
 
--b, --become
+--become,-b
     run operations with become (no password implied)
 
 --become-method=BECOME_METHOD
