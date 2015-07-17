@@ -1,0 +1,12 @@
+- hosts: testhost
+  tasks:
+    - name: 'debug'
+      debug: msg='a task'
+      changed_when: item == 1
+      notify: test handler
+      with_items:
+          - 1
+          - 2
+  handlers: 
+    - name: test handler
+      debug: msg="handler called"

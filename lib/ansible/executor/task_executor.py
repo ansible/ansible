@@ -148,6 +148,9 @@ class TaskExecutor:
         # the variables and re-validate the task with the item variable
         task_vars = self._job_vars.copy()
 
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=task_vars)
+        self._task.post_validate(templar=templar)
+
         items = self._squash_items(items, task_vars)
         for item in items:
             task_vars['item'] = item
