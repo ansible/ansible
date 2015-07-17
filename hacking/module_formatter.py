@@ -41,7 +41,7 @@ from ansible.utils.vars import merge_hash
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TO_OLD_TO_BE_NOTABLE = 1.0
+TO_OLD_TO_BE_NOTABLE = 1.5
 
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
