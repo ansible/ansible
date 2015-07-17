@@ -120,6 +120,7 @@ New Modules:
   * win_iis_webbinding
   * win_iis_website
   * win_regedit
+  * win_unzip
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
