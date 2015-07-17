@@ -67,7 +67,7 @@ options:
     required: false
     default: null
     aliases: []
-    version_added: "x.x"
+    version_added: "1.9"
   tags:
     description:
       - Dictionary of tags to associate with stack and it's resources during stack creation. Cannot be updated later.
