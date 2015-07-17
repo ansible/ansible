@@ -34,7 +34,8 @@ import os
 import subprocess
 import traceback
 import optparse
-import ansible.utils as utils
+import ansible.utils.vars as utils_vars
+from ansible.parsing import DataLoader
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.parsing.splitter import parse_kv
 import ansible.executor.module_common as module_common
@@ -91,17 +92,18 @@ def boilerplate_module(modfile, args, interpreter, check):
     #module_fh.close()
 
     #replacer = module_common.ModuleReplacer()
+    loader = DataLoader()
 
     #included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
 
     complex_args = {}
     if args.startswith("@"):
         # Argument is a YAML file (JSON is a subset of YAML)
-        complex_args = utils.combine_vars(complex_args, utils.parse_yaml_from_file(args[1:]))
+        complex_args = utils_vars.combine_vars(complex_args, loader.load_from_file(args[1:]))
         args=''
     elif args.startswith("{"):
         # Argument is a YAML document (not a file)
-        complex_args = utils.combine_vars(complex_args, utils.parse_yaml(args))
+        complex_args = utils_vars.combine_vars(complex_args, loader.load(args))
         args=''
 
     inject = {}
