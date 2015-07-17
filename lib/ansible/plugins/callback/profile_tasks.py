@@ -20,12 +20,10 @@
 
 import time
 
-from ansible.callbacks import display
-
+from ansible.plugins.callback import CallbackBase
 
 # define start time
 t0 = tn = time.time()
-
 
 def secondsToStr(t):
     # http://bytes.com/topic/python/answers/635958-handy-short-cut-formatting-elapsed-time-floating-point-seconds
@@ -59,11 +57,14 @@ def tasktime():
     tn = time.time()
 
 
-class CallbackModule(object):
+class CallbackModule(CallbackBase):
 
-    def __init__(self):
+    def __init__(self, display):
         self.stats = {}
         self.current = None
+
+        super(CallbackModule, self).__init__(display)
+
 
     def playbook_on_task_start(self, name, is_conditional):
         """
@@ -97,10 +98,9 @@ class CallbackModule(object):
 
         # Print the timings
         for name, elapsed in results:
-            print(
+            self.display.display(
                 "{0:-<70}{1:->9}".format(
                     '{0} '.format(name),
                     ' {0:.02f}s'.format(elapsed),
                 )
             )
-        print ''
