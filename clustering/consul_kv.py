@@ -19,14 +19,14 @@
 
 DOCUMENTATION = """
 module: consul_kv
-short_description: "manipulate entries in the key/value store of a consul
-  cluster. See http://www.consul.io/docs/agent/http.html#kv for more details."
+short_description: Manipulate entries in the key/value store of a consul cluster.
 description:
-  - allows the addition, modification and deletion of key/value entries in a
+  - Allows the addition, modification and deletion of key/value entries in a
     consul cluster via the agent. The entire contents of the record, including
-    the indices, flags and session are returned as 'value'. If the key
-    represents a prefix then Note that when a value is removed, the existing
+    the indices, flags and session are returned as 'value'.
+  - If the key represents a prefix then Note that when a value is removed, the existing
     value if any is returned as part of the results.
+  - "See http://www.consul.io/docs/agent/http.html#kv for more details."
 requirements:
   - "python >= 2.6"
   - python-consul
