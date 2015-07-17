@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible import constants as C
+
 from ansible.errors import *
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
@@ -130,7 +132,17 @@ class PlayIterator:
         elif s.run_state == self.ITERATING_SETUP:
             s.run_state = self.ITERATING_TASKS
             s.pending_setup = True
-            if self._play.gather_facts == 'smart' and not host._gathered_facts or boolean(self._play.gather_facts):
+
+            # Gather facts if the default is 'smart' and we have not yet
+            # done it for this host; or if 'explicit' and the play sets
+            # gather_facts to True; or if 'implicit' and the play does
+            # NOT explicitly set gather_facts to False.
+
+            gathering = C.DEFAULT_GATHERING
+            if ((gathering == 'smart' and not host._gathered_facts) or
+                (gathering == 'explicit' and boolean(self._play.gather_facts)) or
+                (gathering == 'implicit' and
+                    (self._play.gather_facts is None or boolean(self._play.gather_facts)))):
                 if not peek:
                     # mark the host as having gathered facts
                     host.set_gathered_facts(True)

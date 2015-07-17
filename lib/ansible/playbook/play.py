@@ -58,7 +58,7 @@ class Play(Base, Taggable, Become):
     _accelerate_port     = FieldAttribute(isa='int', default=5099) # should be alias of port
 
     # Connection
-    _gather_facts        = FieldAttribute(isa='string', default='smart')
+    _gather_facts        = FieldAttribute(isa='bool', default=None)
     _hosts               = FieldAttribute(isa='list', default=[], required=True, listof=string_types)
     _name                = FieldAttribute(isa='string', default='')
 
