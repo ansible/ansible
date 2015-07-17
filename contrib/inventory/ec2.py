@@ -454,6 +454,12 @@ class Ec2Inventory(object):
         except configparser.NoOptionError:
             self.pattern_exclude = None
 
+        # Do we want to stack multiple filters?
+        if config.has_option('ec2', 'stack_filters'):
+            self.stack_filters = config.getboolean('ec2', 'stack_filters')
+        else:
+            self.stack_filters = False
+
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
         self.ec2_instance_filters = defaultdict(list)
         if config.has_option('ec2', 'instance_filters'):
@@ -541,8 +547,14 @@ class Ec2Inventory(object):
             conn = self.connect(region)
             reservations = []
             if self.ec2_instance_filters:
-                for filter_key, filter_values in self.ec2_instance_filters.items():
-                    reservations.extend(conn.get_all_instances(filters = { filter_key : filter_values }))
+                if self.stack_filters:
+                    filters_dict = {}
+                    for filter_key, filter_values in self.ec2_instance_filters.items():
+                        filters_dict[filter_key] = filter_values
+                    reservations.extend(conn.get_all_instances(filters = filters_dict))
+                else:
+                    for filter_key, filter_values in self.ec2_instance_filters.items():
+                        reservations.extend(conn.get_all_instances(filters = { filter_key : filter_values }))
             else:
                 reservations = conn.get_all_instances()
 
