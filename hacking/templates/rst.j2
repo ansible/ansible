@@ -10,6 +10,11 @@
 @{ title }@
 @{ '+' * title_len }@
 
+{% if version_added is defined -%}
+.. versionadded:: @{ version_added }@
+{% endif %}
+
+
 .. contents::
    :local:
    :depth: 1
@@ -21,10 +26,6 @@
  #
  --------------------------------------------#}
 
-{% if aliases is defined -%}
-Aliases: @{ ','.join(aliases) }@
-{% endif %}
-
 {% if deprecated is defined -%}
 DEPRECATED
 ----------
@@ -35,14 +36,13 @@ DEPRECATED
 Synopsis
 --------
 
-{% if version_added is defined -%}
-.. versionadded:: @{ version_added }@
-{% endif %}
-
 {% for desc in description -%}
 @{ desc | convert_symbols_to_format }@
 {% endfor %}
 
+{% if aliases is defined -%}
+Aliases: @{ ','.join(aliases) }@
+{% endif %}
 
 {% if requirements %}
 Requirements
@@ -79,37 +79,26 @@ Options
     {% else %}
     <td><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
     {% endif %}
-    <td>{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}</td>
-    </tr>
+    <td>{% for desc in v.description -%}<div>@{ desc | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
+        <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}</td></tr>
     {% endfor %}
     </table>
+    </br>
 
 {% endif %}
-
 
 
 {% if examples or plainexamples -%}
 Examples
 --------
 
-.. raw:: html
+ ::
 
 {% for example in examples %}
-    {% if example['description'] %}<p>@{ example['description'] | html_ify }@</p>{% endif %}
-    <p>
-    <pre>
+{% if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
 @{ example['code'] | escape | indent(4, True) }@
-    </pre>
-    </p>
 {% endfor %}
-    <br/>
-
-{% if plainexamples %}
-
-::
-
-@{ plainexamples | indent(4, True) }@
-{% endif %}
+{% if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
 {% endif %}
 
 
