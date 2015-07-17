@@ -213,7 +213,6 @@ class StrategyBase:
                 elif result[0] == 'notify_handler':
                     host         = result[1]
                     handler_name = result[2]
-
                     if handler_name not in self._notified_handlers:
                         self._notified_handlers[handler_name] = []
 
@@ -425,7 +424,7 @@ class StrategyBase:
                             task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
                             task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
                             self._queue_task(host, handler, task_vars, connection_info)
-                            handler.flag_for_host(host)
+                            #handler.flag_for_host(host)
                         self._process_pending_results(iterator)
                     self._wait_on_pending_results(iterator)
                     # wipe the notification list

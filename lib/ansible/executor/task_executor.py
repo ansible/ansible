@@ -333,7 +333,7 @@ class TaskExecutor:
         # save the notification target in the result, if it was specified, as
         # this task may be running in a loop in which case the notification
         # may be item-specific, ie. "notify: service {{item}}"
-        if self._task.notify:
+        if self._task.notify is not None:
             result['ansible_notify'] = self._task.notify
 
         # and return
