@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
 
 class CallbackModule(CallbackBase):
@@ -72,10 +71,7 @@ class CallbackModule(CallbackBase):
             msg += " => %s" % self._dump_results(result._result, indent=indent)
         self._display.display(msg, color=color)
 
-        # display warnings, if enabled and any exist in the result
-        if C.COMMAND_WARNINGS and 'warnings' in result._result and result._result['warnings']:
-            for warning in result._result['warnings']:
-                self._display.display("warning: %s" % warning, color='purple')
+        self._handle_warnings(result._result)
 
     def v2_runner_on_skipped(self, result):
         msg = "skipping: [%s]" % result._host.get_name()

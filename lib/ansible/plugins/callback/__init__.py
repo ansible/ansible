@@ -21,6 +21,8 @@ __metaclass__ = type
 
 import json
 
+from ansible import constants as C
+
 __all__ = ["CallbackBase"]
 
 
@@ -45,6 +47,12 @@ class CallbackBase:
 
     def _dump_results(self, result, indent=4, sort_keys=True):
         return json.dumps(result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+
+    def _handle_warnings(self, res):
+        ''' display warnings, if enabled and any exist in the result '''
+        if C.COMMAND_WARNINGS and 'warnings' in res and res['warnings']:
+            for warning in res['warnings']:
+                self._display.warning(warning)
 
     def set_connection_info(self, conn_info):
         pass
