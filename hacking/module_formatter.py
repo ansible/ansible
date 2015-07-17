@@ -31,6 +31,7 @@ import time
 import datetime
 import subprocess
 import cgi
+import warnings
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.utils import module_docs
@@ -41,7 +42,7 @@ from ansible.utils.vars import merge_hash
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TO_OLD_TO_BE_NOTABLE = 1.5
+TO_OLD_TO_BE_NOTABLE = 1.3
 
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
@@ -214,6 +215,17 @@ def jinja2_environment(template_dir, typ):
     return env, template, outputname
 
 #####################################################################################
+def too_old(added):
+    if not added:
+        return False
+    try:
+        added_tokens = str(added).split(".")
+        readded = added_tokens[0] + "." + added_tokens[1]
+        added_float = float(readded)
+    except ValueError as e:
+        warnings.warn("Could not parse %s: %s" % (added, str(e)))
+        return False
+    return (added_float < TO_OLD_TO_BE_NOTABLE)
 
 def process_module(module, options, env, template, outputname, module_map, aliases):
 
@@ -271,15 +283,15 @@ def process_module(module, options, env, template, outputname, module_map, alias
         added = doc['version_added']
 
     # don't show version added information if it's too old to be called out
-    if added:
-        added_tokens = str(added).split(".")
-        added = added_tokens[0] + "." + added_tokens[1]
-        added_float = float(added)
-        if added and added_float < TO_OLD_TO_BE_NOTABLE:
-            del doc['version_added']
+    if too_old(added):
+        del doc['version_added']
 
     if 'options' in doc:
         for (k,v) in doc['options'].iteritems():
+            # don't show version added information if it's too old to be called out
+            if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
+                del doc['options'][k]['version_added']
+                continue
             all_keys.append(k)
 
     all_keys = sorted(all_keys)
@@ -329,7 +341,7 @@ def process_category(category, categories, options, env, template, outputname):
     category_file = open(category_file_path, "w")
     print "*** recording category %s in %s ***" % (category, category_file_path)
 
-    # TODO: start a new category file
+    # start a new category file
 
     category = category.replace("_"," ")
     category = category.title()
@@ -352,7 +364,6 @@ def process_category(category, categories, options, env, template, outputname):
                 deprecated.append(module)
             elif '/core/' in module_map[module]:
                 core.append(module)
-
         modules.append(module)
 
     modules.sort()
