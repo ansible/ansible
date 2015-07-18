@@ -24,10 +24,10 @@
 DOCUMENTATION = '''
 ---
 module: win_unzip
-version_added: ""
-short_description: Unzips compressed files on the Windows node
+version_added: "2.0"
+short_description: Unzips compressed files and archives on the Windows node
 description:
-     - Unzips compressed files, and can force reboot (if needed, i.e. such as hotfixes). Has ability to recursively unzip files within the src zip file provided using Read-Archive and piping to Expand-Archive (Using PSCX). If the destination directory does not exist, it will be created before unzipping the file. If a .zip file is specified as src and recurse is true then PSCX will be installed.  Specifying rm parameter will allow removal of the src file after extraction.
+     - Unzips compressed files and archives. For extracting any compression types other than .zip, the PowerShellCommunityExtensions (PSCX) Module is required.  This module (in conjunction with PSCX) has the ability to recursively unzip files within the src zip file provided and also functionality for many other compression types. If the destination directory does not exist, it will be created before unzipping the file.  Specifying rm parameter will force removal of the src file after extraction.
 options:
   src:
     description:
