@@ -506,3 +506,21 @@ class StrategyBase:
         self._display.banner(msg)
 
         return ret
+
+    def _execute_meta(self, task, play_context, iterator):
+
+        # meta tasks store their args in the _raw_params field of args,
+        # since they do not use k=v pairs, so get that
+        meta_action = task.args.get('_raw_params')
+
+        if meta_action == 'noop':
+            # FIXME: issue a callback for the noop here?
+            pass
+        elif meta_action == 'flush_handlers':
+            self.run_handlers(iterator, play_context)
+        elif meta_action == 'refresh_inventory':
+            self._inventory.refresh_inventory()
+        #elif meta_action == 'reset_connection':
+        #    connection_info.connection.close()
+        else:
+            raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)

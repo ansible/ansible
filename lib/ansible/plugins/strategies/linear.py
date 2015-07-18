@@ -178,16 +178,7 @@ class StrategyModule(StrategyBase):
                             continue
 
                     if task.action == 'meta':
-                        # meta tasks store their args in the _raw_params field of args,
-                        # since they do not use k=v pairs, so get that
-                        meta_action = task.args.get('_raw_params')
-                        if meta_action == 'noop':
-                            # FIXME: issue a callback for the noop here?
-                            continue
-                        elif meta_action == 'flush_handlers':
-                            self.run_handlers(iterator, play_context)
-                        else:
-                            raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
+                        self._execute_meta(task, play_context, iterator)
                     else:
                         # handle step if needed, skip meta actions as they are used internally
                         if self._step and choose_step:

@@ -23,9 +23,12 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from . import InventoryParser
 
 class InventoryIniParser(InventoryAggregateParser):
+
+    CONDITION="is_file(%s)"
 
     def __init__(self, inven_directory):
         directory = inven_directory
@@ -35,7 +38,7 @@ class InventoryIniParser(InventoryAggregateParser):
         # Clean up the list of filenames
         for filename in names:
             # Skip files that end with certain extensions or characters
-            if any(filename.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo")):
+            if any(filename.endswith(ext) for ext in C.DEFAULT_INVENTORY_IGNORE):
                 continue
             # Skip hidden files
             if filename.startswith('.') and not filename.startswith('.{0}'.format(os.path.sep)):
