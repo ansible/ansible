@@ -273,7 +273,8 @@ class DarwinGroup(Group):
     def group_add(self, **kwargs):
         cmd = [self.module.get_bin_path('dseditgroup', True)]
         cmd += [ '-o', 'create' ]
-        cmd += [ '-i', self.gid ]
+        if self.gid is not None:
+            cmd += [ '-i', self.gid ]
         cmd += [ '-L', self.name ]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
@@ -285,12 +286,13 @@ class DarwinGroup(Group):
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
 
-    def group_mod(self):
+    def group_mod(self, gid=None):
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
             cmd = [self.module.get_bin_path('dseditgroup', True)]
             cmd += [ '-o', 'edit' ]
-            cmd += [ '-i', self.gid ]
+            if gid is not None:
+                cmd += [ '-i', gid ]
             cmd += [ '-L', self.name ]
             (rc, out, err) = self.execute_command(cmd)
             return (rc, out, err)
