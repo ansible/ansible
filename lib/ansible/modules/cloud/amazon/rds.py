@@ -24,147 +24,123 @@ description:
 options:
   command:
     description:
-      - Specifies the action to take.  
+      - Specifies the action to take.
     required: true
-    default: null
-    aliases: []
     choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'reboot', 'restore' ]
   instance_name:
     description:
       - Database instance identifier. Required except when using command=facts or command=delete on just a snapshot
     required: false
     default: null
-    aliases: []
   source_instance:
     description:
       - Name of the database to replicate. Used only when command=replicate.
     required: false
     default: null
-    aliases: []
   db_engine:
     description:
-      - The type of database.  Used only when command=create. 
+      - The type of database.  Used only when command=create.
     required: false
     default: null
-    aliases: []
     choices: [ 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres']
   size:
     description:
       - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore. If not specified then the replica inherits the same instance type as the source instance. 
+      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore. If not specified then the replica inherits the same instance type as the source instance.
     required: false
     default: null
-    aliases: []
   username:
     description:
       - Master database username. Used only when command=create.
     required: false
     default: null
-    aliases: []
   password:
     description:
       - Password for the master database username. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: true
-    default: null
     aliases: [ 'aws_region', 'ec2_region' ]
   db_name:
     description:
       - Name of a database to create within the instance.  If not specified then no database is created. Used only when command=create.
     required: false
     default: null
-    aliases: []
   engine_version:
     description:
       - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used.
     required: false
     default: null
-    aliases: []
   parameter_group:
     description:
       - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   license_model:
     description:
-      - The license model for this DB instance. Used only when command=create or command=restore. 
+      - The license model for this DB instance. Used only when command=create or command=restore.
     required: false
     default: null
-    aliases: []
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
   multi_zone:
     description:
       - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or command=modify.
-    choices: [ "yes", "no" ] 
+    choices: [ "yes", "no" ]
     required: false
     default: null
-    aliases: []
   iops:
     description:
       - Specifies the number of IOPS for the instance.  Used only when command=create or command=modify. Must be an integer greater than 1000.
     required: false
     default: null
-    aliases: []
   security_groups:
     description:
       - Comma separated list of one or more security groups.  Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   vpc_security_groups:
     description:
       - Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   port:
     description:
       - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql. Must be changed to 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL. Used only when command=create or command=replicate.
     required: false
     default: null
-    aliases: []
   upgrade:
     description:
       - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate. 
     required: false
     default: no
     choices: [ "yes", "no" ]
-    aliases: []
   option_group:
     description:
       - The name of the option group to use.  If not specified then the default option group is used. Used only when command=create.
     required: false
     default: null
-    aliases: []
   maint_window:
     description:
       - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify."
     required: false
     default: null
-    aliases: []
   backup_window:
     description:
       - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   backup_retention:
     description:
       - "Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or command=modify."
     required: false
     default: null
-    aliases: []
   zone:
     description:
       - availability zone in which to launch the instance. Used only when command=create, command=replicate or command=restore.
@@ -176,18 +152,15 @@ options:
       - VPC subnet group.  If specified then a VPC instance is created. Used only when command=create.
     required: false
     default: null
-    aliases: []
   snapshot:
     description:
       - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
     required: false
     default: null
-    aliases: []
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
     required: false
-    default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
   aws_access_key:
     description:
@@ -201,53 +174,46 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-    aliases: []
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
-    aliases: []
   apply_immediately:
     description:
       - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
     default: no
     choices: [ "yes", "no" ]
-    aliases: []
   force_failover:
     description:
       - Used only when command=reboot.  If enabled, the reboot is done using a MultiAZ failover.
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-    aliases: []
+    version_added: "2.0"
   new_instance_name:
     description:
       - Name to rename an instance to. Used only when command=modify.
     required: false
     default: null
-    aliases: []
-    version_added: 1.5
+    version_added: "1.5"
   character_set_name:
     description:
       - Associate the DB instance with a specified character set. Used with command=create.
     required: false
     default: null
-    aliases: []
-    version_added: 1.9
+    version_added: "1.9"
   publicly_accessible:
     description:
       - explicitly set whether the resource should be publicly accessible or not. Used with command=create, command=replicate. Requires boto >= 2.26.0
     required: false
     default: null
-    aliases: []
-    version_added: 1.9
+    version_added: "1.9"
   tags:
     description:
       - tags dict to apply to a resource. Used with command=create, command=replicate, command=restore. Requires boto >= 2.26.0
     required: false
     default: null
-    aliases: []
-    version_added: 1.9
+    version_added: "1.9"
 requirements:
     - "python >= 2.6"
     - "boto"
