@@ -56,6 +56,12 @@ options:
     require: false
     default: None
     version_added: "1.6"
+  security_group_names:
+    description:
+      - A list of security group names to apply to the elb
+    require: false
+    default: None
+    version_added: "2.0"
   health_check:
     description:
       - An associative array of health check configuration settings (see example)
@@ -68,7 +74,7 @@ options:
     aliases: ['aws_region', 'ec2_region']
   subnets:
     description:
-      - A list of VPC subnets to use when creating ELB. Zones should be empty if using this. 
+      - A list of VPC subnets to use when creating ELB. Zones should be empty if using this.
     required: false
     default: None
     aliases: []
@@ -77,7 +83,7 @@ options:
     description:
       - Purge existing subnet on ELB that are not found in subnets
     required: false
-    default: false  
+    default: false
     version_added: "1.7"
   scheme:
     description:
@@ -147,7 +153,7 @@ EXAMPLES = """
     name: "test-vpc"
     scheme: internal
     state: present
-    subnets: 
+    subnets:
       - subnet-abcd1234
       - subnet-1a2b3c4d
     listeners:
@@ -213,7 +219,7 @@ EXAMPLES = """
         instance_port: 80
     purge_zones: yes
 
-# Creates a ELB and assigns a list of subnets to it. 
+# Creates a ELB and assigns a list of subnets to it.
 - local_action:
     module: ec2_elb_lb
     state: present
@@ -297,10 +303,10 @@ class ElbManager(object):
     """Handles ELB creation and destruction"""
 
     def __init__(self, module, name, listeners=None, purge_listeners=None,
-                 zones=None, purge_zones=None, security_group_ids=None, 
+                 zones=None, purge_zones=None, security_group_ids=None,
                  health_check=None, subnets=None, purge_subnets=None,
                  scheme="internet-facing", connection_draining_timeout=None,
-                 cross_az_load_balancing=None, 
+                 cross_az_load_balancing=None,
                  stickiness=None, region=None, **aws_connect_params):
 
         self.module = module
@@ -361,7 +367,8 @@ class ElbManager(object):
         if not check_elb:
             info = {
                 'name': self.name,
-                'status': self.status
+                'status': self.status,
+                'region': self.region
             }
         else:
             try:
@@ -388,7 +395,8 @@ class ElbManager(object):
                 'instances': [instance.id for instance in check_elb.instances],
                 'out_of_service_count': 0,
                 'in_service_count': 0,
-                'unknown_instance_state_count': 0
+                'unknown_instance_state_count': 0,
+                'region': self.region
             }
 
             # status of instances behind the ELB
@@ -442,7 +450,7 @@ class ElbManager(object):
                 else:
                     info['cross_az_load_balancing'] = 'no'
 
-            # return stickiness info? 
+            # return stickiness info?
 
         return info
 
@@ -622,7 +630,7 @@ class ElbManager(object):
                 self._attach_subnets(subnets_to_attach)
             if subnets_to_detach:
                 self._detach_subnets(subnets_to_detach)
-                
+
     def _set_zones(self):
         """Determine which zones need to be enabled or disabled on the ELB"""
         if self.zones:
@@ -727,7 +735,7 @@ class ElbManager(object):
         else:
             self._create_policy(policy_attrs['param_value'], policy_attrs['method'], policy[0])
             self.changed = True
-        
+
         self._set_listener_policy(listeners_dict, policy)
 
     def select_stickiness_policy(self):
@@ -794,7 +802,7 @@ class ElbManager(object):
 
             else:
                 self._set_listener_policy(listeners_dict)
- 
+
     def _get_health_check_target(self):
         """Compose target string from healthcheck parameters"""
         protocol = self.health_check['ping_protocol'].upper()
@@ -816,6 +824,7 @@ def main():
             zones={'default': None, 'required': False, 'type': 'list'},
             purge_zones={'default': False, 'required': False, 'type': 'bool'},
             security_group_ids={'default': None, 'required': False, 'type': 'list'},
+            security_group_names={'default': None, 'required': False, 'type': 'list'},
             health_check={'default': None, 'required': False, 'type': 'dict'},
             subnets={'default': None, 'required': False, 'type': 'list'},
             purge_subnets={'default': False, 'required': False, 'type': 'bool'},
@@ -828,6 +837,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec=argument_spec,
+        mutually_exclusive = [['security_group_ids', 'security_group_names']]
     )
 
     if not HAS_BOTO:
@@ -844,6 +854,7 @@ def main():
     zones = module.params['zones']
     purge_zones = module.params['purge_zones']
     security_group_ids = module.params['security_group_ids']
+    security_group_names = module.params['security_group_names']
     health_check = module.params['health_check']
     subnets = module.params['subnets']
     purge_subnets = module.params['purge_subnets']
@@ -857,6 +868,21 @@ def main():
 
     if state == 'present' and not (zones or subnets):
         module.fail_json(msg="At least one availability zone or subnet is required for ELB creation")
+
+    if security_group_names:
+        security_group_ids = []
+        try:
+            ec2 = ec2_connect(module)
+            grp_details = ec2.get_all_security_groups()
+
+            for group_name in security_group_names:
+                if isinstance(group_name, basestring):
+                    group_name = [group_name]
+
+                group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
+                security_group_ids.extend(group_id)
+        except boto.exception.NoAuthHandlerFound, e:
+            module.fail_json(msg = str(e))
 
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
