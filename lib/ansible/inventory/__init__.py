@@ -26,15 +26,12 @@ import re
 import stat
 
 from ansible import constants as C
-from ansible import errors
+from ansible.errors import AnsibleError
 
-from ansible.inventory.ini import InventoryParser
-from ansible.inventory.script import InventoryScript
-from ansible.inventory.dir import InventoryDirectory
+from ansible.inventory.dir import InventoryDirectory, get_file_parser
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.plugins import vars_loader
-from ansible.utils.path import is_executable
 from ansible.utils.vars import combine_vars
 
 class Inventory(object):
@@ -63,6 +60,7 @@ class Inventory(object):
         self._hosts_cache    = {}
         self._groups_list    = {}
         self._pattern_cache  = {}
+        self._vars_plugins   = []
 
         # to be set by calling set_playbook_basedir by playbook code
         self._playbook_basedir = None
@@ -74,6 +72,10 @@ class Inventory(object):
         self._restriction = None
         self._also_restriction = None
         self._subset = None
+
+        self.parse_inventory(host_list)
+
+    def parse_inventory(self, host_list):
 
         if isinstance(host_list, basestring):
             if "," in host_list:
@@ -102,51 +104,22 @@ class Inventory(object):
                     else:
                         all.add_host(Host(x))
         elif os.path.exists(host_list):
+            #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
             if os.path.isdir(host_list):
                 # Ensure basedir is inside the directory
-                self.host_list = os.path.join(self.host_list, "")
+                host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(loader=self._loader, filename=host_list)
+            else:
+                self.parser = get_file_parser(hostsfile, self._loader)
+                vars_loader.add_directory(self.basedir(), with_subdir=True)
+
+            if self.parser:
                 self.groups = self.parser.groups.values()
             else:
-                # check to see if the specified file starts with a
-                # shebang (#!/), so if an error is raised by the parser
-                # class we can show a more apropos error
-                shebang_present = False
-                try:
-                    with open(host_list, "r") as inv_file:
-                        first_line = inv_file.readline()
-                        if first_line.startswith("#!"):
-                            shebang_present = True
-                except IOError:
-                    pass
+                # should never happen, but JIC
+                raise AnsibleError("Unable to parse %s as an inventory source" % host_list)
 
-                if is_executable(host_list):
-                    try:
-                        self.parser = InventoryScript(loader=self._loader, filename=host_list)
-                        self.groups = self.parser.groups.values()
-                    except errors.AnsibleError:
-                        if not shebang_present:
-                            raise errors.AnsibleError("The file %s is marked as executable, but failed to execute correctly. " % host_list + \
-                                                      "If this is not supposed to be an executable script, correct this with `chmod -x %s`." % host_list)
-                        else:
-                            raise
-                else:
-                    try:
-                        self.parser = InventoryParser(filename=host_list)
-                        self.groups = self.parser.groups.values()
-                    except errors.AnsibleError:
-                        if shebang_present:
-                            raise errors.AnsibleError("The file %s looks like it should be an executable inventory script, but is not marked executable. " % host_list + \
-                                                      "Perhaps you want to correct this with `chmod +x %s`?" % host_list)
-                        else:
-                            raise
-
-            vars_loader.add_directory(self.basedir(), with_subdir=True)
-        else:
-            raise errors.AnsibleError("Unable to find an inventory file (%s), "
-                                      "specify one with -i ?" % host_list)
-
-        self._vars_plugins = [ x for x in vars_loader.all(self) ]
+            self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
         # FIXME: shouldn't be required, since the group/host vars file
         #        management will be done in VariableManager
@@ -166,7 +139,7 @@ class Inventory(object):
             else:
                 return fnmatch.fnmatch(str, pattern_str)
         except Exception, e:
-            raise errors.AnsibleError('invalid host pattern: %s' % pattern_str)
+            raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
     def _match_list(self, items, item_attr, pattern_str):
         results = []
@@ -176,7 +149,7 @@ class Inventory(object):
             else:
                 pattern = re.compile(pattern_str[1:])
         except Exception, e:
-            raise errors.AnsibleError('invalid host pattern: %s' % pattern_str)
+            raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
         for item in items:
             if pattern.match(getattr(item, item_attr)):
@@ -286,7 +259,7 @@ class Inventory(object):
             first = int(first)
             if last:
                 if first < 0:
-                    raise errors.AnsibleError("invalid range: negative indices cannot be used as the first item in a range")
+                    raise AnsibleError("invalid range: negative indices cannot be used as the first item in a range")
                 last = int(last)
             else:
                 last = first
@@ -324,7 +297,7 @@ class Inventory(object):
             else:
                 return [ hosts[left] ]
         except IndexError:
-            raise errors.AnsibleError("no hosts matching the pattern '%s' were found" % pat)
+            raise AnsibleError("no hosts matching the pattern '%s' were found" % pat)
 
     def _create_implicit_localhost(self, pattern):
         new_host = Host(pattern)
@@ -467,7 +440,7 @@ class Inventory(object):
 
         host = self.get_host(hostname)
         if host is None:
-            raise errors.AnsibleError("host not found: %s" % hostname)
+            raise AnsibleError("host not found: %s" % hostname)
 
         vars = {}
 
@@ -499,7 +472,7 @@ class Inventory(object):
             self.groups.append(group)
             self._groups_list = None  # invalidate internal cache 
         else:
-            raise errors.AnsibleError("group already in inventory: %s" % group.name)
+            raise AnsibleError("group already in inventory: %s" % group.name)
 
     def list_hosts(self, pattern="all"):
 
@@ -670,3 +643,14 @@ class Inventory(object):
         # all done, results is a dictionary of variables for this particular host.
         return results
 
+    def refresh_inventory(self):
+
+        self.clear_pattern_cache()
+
+        self._hosts_cache    = {}
+        self._vars_per_host  = {}
+        self._vars_per_group = {}
+        self._groups_list    = {}
+        self.groups = []
+
+        self.parse_inventory(self.host_list)
