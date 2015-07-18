@@ -28,7 +28,7 @@ options:
     required: true
     default: null
     aliases: []
-    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'restore' ]
+    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'reboot', 'restore' ]
   instance_name:
     description:
       - Database instance identifier. Required except when using command=facts or command=delete on just a snapshot
@@ -213,6 +213,13 @@ options:
     default: no
     choices: [ "yes", "no" ]
     aliases: []
+  force_failover:
+    description:
+      - Used only when command=reboot.  If enabled, the reboot is done using a MultiAZ failover.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    aliases: []
   new_instance_name:
     description:
       - Name to rename an instance to. Used only when command=modify.
@@ -292,6 +299,13 @@ EXAMPLES = '''
     instance_name: new-database
     new_instance_name: renamed-database
     wait: yes
+
+# Reboot an instance and wait for it to become available again
+- rds
+    command: reboot
+    instance_name: database
+    wait: yes
+
 '''
 
 import sys
@@ -380,6 +394,13 @@ class RDSConnection:
         except boto.exception.BotoServerError, e:
             raise RDSException(e)
 
+    def reboot_db_instance(self, instance_name, **params):
+        try:
+            result = self.connection.reboot_dbinstance(instance_name)
+            return RDSDBInstance(result)
+        except boto.exception.BotoServerError, e:
+            raise RDSException(e)
+
     def restore_db_instance_from_db_snapshot(self, instance_name, snapshot, instance_type, **params):
         try:
             result = self.connection.restore_dbinstance_from_dbsnapshot(snapshot, instance_name, instance_type, **params)
@@ -460,6 +481,13 @@ class RDS2Connection:
     def modify_db_instance(self, instance_name, **params):
         try:
             result = self.connection.modify_db_instance(instance_name, **params)['ModifyDBInstanceResponse']['ModifyDBInstanceResult']['DBInstance']
+            return RDS2DBInstance(result)
+        except boto.exception.BotoServerError, e:
+            raise RDSException(e)
+
+    def reboot_db_instance(self, instance_name, **params):
+        try:
+            result = self.connection.reboot_db_instance(instance_name, **params)['RebootDBInstanceResponse']['RebootDBInstanceResult']['DBInstance']
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError, e:
             raise RDSException(e)
@@ -847,6 +875,31 @@ def snapshot_db_instance(module, conn):
     module.exit_json(changed=changed, snapshot=resource.get_data())
 
 
+def reboot_db_instance(module, conn):
+    required_vars = ['instance_name']
+    valid_vars = []
+
+    if has_rds2:
+        valid_vars.append('force_failover')
+
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    result = conn.get_db_instance(instance_name)
+    changed = False
+    try:
+        result = conn.reboot_db_instance(instance_name, **params)
+        changed = True
+    except RDSException, e:
+        module.fail_json(msg=e.message)
+
+    if module.params.get('wait'):
+        resource = await_resource(conn, result, 'available', module)
+    else:
+        resource = conn.get_db_instance(instance_name)
+
+    module.exit_json(changed=changed, instance=resource.get_data())
+
+
 def restore_db_instance(module, conn):
     required_vars = ['instance_name', 'snapshot']
     valid_vars = ['db_name', 'iops', 'license_model', 'multi_zone',
@@ -918,6 +971,7 @@ def validate_parameters(required_vars, valid_vars, module):
             'instance_type': 'db_instance_class',
             'password': 'master_user_password',
             'new_instance_name': 'new_db_instance_identifier',
+            'force_failover': 'force_failover',
     }
     if has_rds2:
         optional_params.update(optional_params_rds2)
@@ -960,7 +1014,7 @@ def validate_parameters(required_vars, valid_vars, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'restore'], required=True),
+            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
             instance_name     = dict(required=False),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
@@ -992,6 +1046,7 @@ def main():
             tags              = dict(type='dict', required=False),
             publicly_accessible = dict(required=False),
             character_set_name = dict(required=False),
+            force_failover    = dict(type='bool', required=False, default=False)
         )
     )
 
@@ -1010,6 +1065,7 @@ def main():
             'modify': modify_db_instance,
             'promote': promote_db_instance,
             'snapshot': snapshot_db_instance,
+            'reboot': reboot_db_instance,
             'restore': restore_db_instance,
     }
 
