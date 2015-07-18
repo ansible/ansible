@@ -20,6 +20,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import fnmatch
 import os
 
 from ansible import constants as C
@@ -47,8 +48,8 @@ class InventoryDirectory(object):
 
         for i in self.names:
 
-            # Skip files that end with certain extensions or characters
-            if any(i.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".cfg", ".retry", ".pyc", ".pyo")):
+            # Skip files that should be ignored
+            if any(fnmatch.fnmatch(i, pat) for pat in C.DEFAULT_IGNORED_INV_FILES):
                 continue
             # Skip hidden files
             if i.startswith('.') and not i.startswith('./'):
@@ -233,4 +234,3 @@ class InventoryDirectory(object):
         for i in self.parsers:
             vars.update(i.get_host_variables(host))
         return vars
-

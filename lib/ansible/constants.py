@@ -141,6 +141,9 @@ DEFAULT_GATHERING         = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHER
 DEFAULT_LOG_PATH          = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
 DEFAULT_FORCE_HANDLERS    = get_config(p, DEFAULTS, 'force_handlers', 'ANSIBLE_FORCE_HANDLERS', False, boolean=True)
 
+# Files that should be ignored in inventory directories
+DEFAULT_IGNORED_INV_FILES = get_config(p, DEFAULTS, 'ignored_inventory_files', 'ANSIBLE_IGNORED_INVENTORY_FILES', '*~, *.orig, *.bak, *.ini, *.retry, *.pyc, *.pyo, README*', islist=True)
+
 # selinux
 DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf, ramfs', islist=True)
 
