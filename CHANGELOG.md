@@ -19,6 +19,8 @@ Major Changes:
  * template code now retains types for bools and numbers instead of turning them into strings.
    If you need the old behaviour, quote the value and it will get passed around as a string
  * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support
+ * Consiidated code from modules using urllib2 to normalize features, TLS and SNI support
+ * added meta: refresh_inventory to force rereading the inventory in a play
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
