@@ -4,7 +4,7 @@ set -e
 
 # Get a list of authors ordered by number of commits
 # and remove the commit count column
-AUTHORS=$(git --no-pager shortlog -nse | cut -f 2- )
+AUTHORS=$(git --no-pager shortlog -nse --no-merges | cut -f 2- )
 if [ -z "$AUTHORS" ] ; then
     echo "Authors list was empty"
     exit 1
