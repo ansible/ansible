@@ -188,9 +188,9 @@ class PullCLI(CLI):
         if self.options.purge:
             os.chdir('/')
             try:
-                shutil.rmtree(options.dest)
+                shutil.rmtree(self.options.dest)
             except Exception, e:
-                print >>sys.stderr, "Failed to remove %s: %s" % (options.dest, str(e))
+                self.display.error("Failed to remove %s: %s" % (self.options.dest, str(e)))
 
         return rc
 
