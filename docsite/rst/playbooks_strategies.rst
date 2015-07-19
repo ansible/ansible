@@ -23,7 +23,7 @@ Strategy Plugins
 `````````````````
 
 The strategies are implelented via a new type of plugin, this means that in the future new
-execution types can be added in the future, either locally by users or to Ansible itself by
+execution types can be added, either locally by users or to Ansible itself by
 a code contribution.
 
 .. seealso::
