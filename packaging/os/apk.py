@@ -60,6 +60,9 @@ EXAMPLES = '''
 # Remove "foo" package
 - apk: name=foo state=absent
 
+# Remove "foo" and "bar" packages
+- apk: name=foo,bar state=absent
+
 # Install the package "foo"
 - apk: name=foo state=present
 
@@ -138,19 +141,23 @@ def install_package(module, name, state):
         module.fail_json(msg="failed to install %s" % (name))
     module.exit_json(changed=True, msg="installed %s package" % (name))
 
-def remove_package(module, name):
-    installed = query_package(module, name)
+def remove_packages(module, names):
+    installed = []
+    for name in names:
+        if query_package(module, name):
+            installed.append(name)
     if not installed:
-        module.exit_json(changed=False, msg="package already removed")
+        module.exit_json(changed=False, msg="package(s) already removed")
+    names = " ".join(installed)
     if module.check_mode:
-        cmd = "apk del --purge --simulate %s" % (name)
+        cmd = "apk del --purge --simulate %s" % (names)
     else:
-        cmd = "apk del --purge %s" % (name)
+        cmd = "apk del --purge %s" % (names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
-        module.fail_json(msg="failed to remove %s" % (name))
-    module.exit_json(changed=True, msg="removed %s package" % (name))
-
+        module.fail_json(msg="failed to remove %s package(s)" % (names))
+    module.exit_json(changed=True, msg="removed %s package(s)" % (names))
+        
 # ==========================================
 # Main control flow.
 
@@ -185,10 +192,14 @@ def main():
     if p['upgrade']:
         upgrade_packages(module)
 
+    # Create a list of package names 
+    # Removing empty strings that may have been created by a trailing ','
+    names = filter((lambda x: x != ''), p['name'].split(','))
+
     if p['state'] in ['present', 'latest']:
         install_package(module, p['name'], p['state'])
     elif p['state'] == 'absent':
-        remove_package(module, p['name'])
+        remove_packages(module, names)
 
 # Import module snippets.
 from ansible.module_utils.basic import *
