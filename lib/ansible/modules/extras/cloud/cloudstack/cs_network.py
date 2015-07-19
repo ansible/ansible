@@ -335,13 +335,6 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
         self.network = None
 
 
-    def get_or_fallback(self, key=None, fallback_key=None):
-        value = self.module.params.get(key)
-        if not value:
-            value = self.module.params.get(fallback_key)
-        return value
-
-
     def get_vpc(self, key=None):
         vpc = self.module.params.get('vpc')
         if not vpc:
@@ -380,7 +373,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
     def _get_args(self):
         args                        = {}
         args['name']                = self.module.params.get('name')
-        args['displaytext']         = self.get_or_fallback('displaytext','name')
+        args['displaytext']         = self.get_or_fallback('displaytext', 'name')
         args['networkdomain']       = self.module.params.get('network_domain')
         args['networkofferingid']   = self.get_network_offering(key='id')
         return args
