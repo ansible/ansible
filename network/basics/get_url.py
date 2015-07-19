@@ -111,6 +111,7 @@ options:
     required: false
     version_added: '1.6'
   force_basic_auth:
+    version_added: '2.0'
     description:
       - httplib2, the library used by the uri module only sends authentication information when a webservice
         responds to an initial request with a 401 status. Since some basic auth services do not properly
