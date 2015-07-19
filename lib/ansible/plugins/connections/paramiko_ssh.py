@@ -224,25 +224,27 @@ class Connection(ConnectionBase):
         try:
             chan.exec_command(cmd)
             if self._connection_info.prompt:
-                while True:
-                    debug('Waiting for Privilege Escalation input')
-                    if self.check_become_success(become_output) or self.check_password_prompt(become_output):
-                        break
-                    chunk = chan.recv(bufsize)
-                    if not chunk:
-                        if 'unknown user' in become_output:
-                            raise AnsibleError(
-                                'user %s does not exist' % become_user)
-                        else:
-                            raise AnsibleError('ssh connection ' +
-                                'closed waiting for password prompt')
-                    become_output += chunk
-                if not self.check_become_success(become_output):
-                    if self._connection_info.become:
-                        chan.sendall(self._connection_info.become_pass + '\n')
-                else:
-                    no_prompt_out += become_output
-                    no_prompt_err += become_output
+                if self._connection_info.become and self._connection_info.become_pass:
+                    while True:
+                        debug('Waiting for Privilege Escalation input')
+                        if self.check_become_success(become_output) or self.check_password_prompt(become_output):
+                            break
+                        chunk = chan.recv(bufsize)
+                        print("chunk is: %s" % chunk)
+                        if not chunk:
+                            if 'unknown user' in become_output:
+                                raise AnsibleError(
+                                    'user %s does not exist' % become_user)
+                            else:
+                                raise AnsibleError('ssh connection ' +
+                                    'closed waiting for password prompt')
+                        become_output += chunk
+                    if not self.check_become_success(become_output):
+                        if self._connection_info.become:
+                            chan.sendall(self._connection_info.become_pass + '\n')
+                    else:
+                        no_prompt_out += become_output
+                        no_prompt_err += become_output
         except socket.timeout:
             raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 
