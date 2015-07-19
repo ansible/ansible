@@ -64,23 +64,8 @@ class ActionModule(ActionBase):
             tmp = self._make_tmp_path()
 
         if faf:
-            #FIXME: issue deprecation warning for first_available_file, use with_first_found or lookup('first_found',...) instead
-            found = False
-            for fn in faf:
-                fn_orig = fn
-                fnt = self._templar.template(fn)
-                fnd = self._loader.path_dwim(self._task._role_._role_path, 'templates', fnt)
-
-                if not os.path.exists(fnd):
-                    of = task_vars.get('_original_file', None)
-                    if of is not None:
-                        fnd = self._loader.path_dwim(self._task._role_._role_path, 'templates', of)
-
-                if os.path.exists(fnd):
-                    source = fnd
-                    found = True
-                    break
-            if not found:
+            source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
+            if source is None:
                 return dict(failed=True, msg="could not find src in first_available_file list")
         else:
             if self._task._role is not None:
