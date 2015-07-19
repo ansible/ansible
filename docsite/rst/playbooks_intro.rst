@@ -365,10 +365,10 @@ The things listed in the 'notify' section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by name.  Handlers are what notifiers
-notify.  If nothing notifies a handler, it will not run.  Regardless
-of how many things notify a handler, it will run only once, after all
-of the tasks complete in a particular play.
+tasks, that are referenced by a globally unique name.  Handlers are
+what notifiers notify.  If nothing notifies a handler, it will not
+run.  Regardless of how many things notify a handler, it will run only
+once, after all of the tasks complete in a particular play.
 
 Here's an example handlers section::
 
@@ -382,7 +382,10 @@ Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
 
 .. note::
-   Notify handlers are always run in the order written.
+   * Notify handlers are always run in the order written.
+   * Handler names live in a global namespace.
+   * If two handler tasks have the same name, only one will run.
+     `* <https://github.com/ansible/ansible/issues/4943>`_
 
 Roles are described later on.  It's worthwhile to point out that handlers are
 automatically processed between 'pre_tasks', 'roles', 'tasks', and 'post_tasks'
