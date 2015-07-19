@@ -26,7 +26,6 @@ options:
     description:
       - "Name of the s3 bucket."
     required: true
-    default: null
   region:
     description:
      - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard."
@@ -47,7 +46,7 @@ options:
     description:
       - "The prefix that should be prepended to the generated log files written to the target_bucket."
     required: false
-    default: no
+    default: ""
 
 extends_documentation_fragment: aws
 '''
@@ -141,7 +140,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name = dict(required=True, default=None),
+            name = dict(required=True),
             target_bucket = dict(required=False, default=None),
             target_prefix = dict(required=False, default=""),
             state = dict(required=False, default='present', choices=['present', 'absent'])
