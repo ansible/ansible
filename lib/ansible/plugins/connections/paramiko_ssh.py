@@ -217,10 +217,6 @@ class Connection(ConnectionBase):
 
         self._display.vvv("EXEC %s" % cmd, host=self._connection_info.remote_addr)
 
-
-        if sudoable:
-            cmd, self.prompt, self.success_key = self._connection_info.make_become_cmd(cmd)
-
         no_prompt_out = ''
         no_prompt_err = ''
         become_output = ''
