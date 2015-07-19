@@ -500,13 +500,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return user_data
 
 
-    def get_display_name(self):
-        display_name = self.module.params.get('display_name')
-        if not display_name:
-            display_name = self.module.params.get('name')
-        return display_name
-
-
     def deploy_instance(self):
         self.result['changed'] = True
 
@@ -524,6 +517,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['ipaddress']           = self.module.params.get('ip_address')
         args['ip6address']          = self.module.params.get('ip6_address')
         args['name']                = self.module.params.get('name')
+        args['displayname']         = self.get_or_fallback('display_name', 'name')
         args['group']               = self.module.params.get('group')
         args['keypair']             = self.module.params.get('ssh_key')
         args['size']                = self.module.params.get('disk_size')
@@ -555,7 +549,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_instance_update                        = {}
         args_instance_update['id']                  = instance['id']
         args_instance_update['group']               = self.module.params.get('group')
-        args_instance_update['displayname']         = self.get_display_name()
+        args_instance_update['displayname']         = self.get_or_fallback('display_name', 'name')
         args_instance_update['userdata']            = self.get_user_data()
         args_instance_update['ostypeid']            = self.get_os_type(key='id')
 
