@@ -101,6 +101,32 @@ def inversepower(x, base=2):
         raise errors.AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
 
 
+def human_readable(size, isbits=False, unit=None):
+
+    base = 'bits' if isbits else 'Bytes'
+    suffix = ''
+
+    ranges = (
+            (1<<70L, 'Z'),
+            (1<<60L, 'E'),
+            (1<<50L, 'P'),
+            (1<<40L, 'T'),
+            (1<<30L, 'G'),
+            (1<<20L, 'M'),
+            (1<<10L, 'K'),
+            (1, base)
+        )
+
+    for limit, suffix in ranges:
+        if (unit is None and size >= limit) or \
+            unit is not None and unit.upper() == suffix:
+            break
+
+    if limit != 1:
+        suffix += base[0]
+
+    return '%.2f %s' % (float(size)/ limit, suffix)
+
 class FilterModule(object):
     ''' Ansible math jinja2 filters '''
 
@@ -122,5 +148,8 @@ class FilterModule(object):
             'difference': difference,
             'symmetric_difference': symmetric_difference,
             'union': union,
+
+            # computer theory
+            'human_readable' : human_readable,
 
         }
