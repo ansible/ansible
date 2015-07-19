@@ -517,6 +517,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['ipaddress']           = self.module.params.get('ip_address')
         args['ip6address']          = self.module.params.get('ip6_address')
         args['name']                = self.module.params.get('name')
+        args['displayname']         = self.get_or_fallback('display_name', 'name')
         args['group']               = self.module.params.get('group')
         args['keypair']             = self.module.params.get('ssh_key')
         args['size']                = self.module.params.get('disk_size')
