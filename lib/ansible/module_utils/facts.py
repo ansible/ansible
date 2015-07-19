@@ -116,6 +116,7 @@ class Facts(object):
                  { 'path' : '/bin/opkg',            'name' : 'opkg' },
                  { 'path' : '/opt/local/bin/pkgin', 'name' : 'pkgin' },
                  { 'path' : '/opt/local/bin/port',  'name' : 'macports' },
+                 { 'path' : '/usr/local/bin/brew',  'name' : 'homebrew' },
                  { 'path' : '/sbin/apk',            'name' : 'apk' },
                  { 'path' : '/usr/sbin/pkg',        'name' : 'pkgng' },
                  { 'path' : '/usr/sbin/swlist',     'name' : 'SD-UX' },
