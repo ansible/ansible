@@ -22,7 +22,7 @@ from ansible.plugins.action import ActionBase
 
 class ActionModule(ActionBase):
 
-    TRANSFERS_FILES = True
+    TRANSFERS_FILES = False
 
     def run(self, tmp=None, task_vars=dict()):
         ''' handler for package operations '''
@@ -38,10 +38,7 @@ class ActionModule(ActionBase):
                 pass # could not get it from template!
 
         if module == 'auto':
-            #FIXME: autodetect the package manager run facts module remotely to get ansible_pkg_mgr
-            #module = self._execute_module(module_name=setup, module_args={filter: 'ansible_pkg_mgr'}, task_vars=task_vars)
-            pass
-
+            module = self._execute_module(module_name=setup, module_args={filter: 'ansible_pkg_mgr'}, task_vars=task_vars)
 
         if module != 'auto':
             # run the 'package' module
