@@ -307,7 +307,7 @@ gathering
 
 New in 1.6, the 'gathering' setting controls the default policy of facts gathering (variables discovered about remote systems).
 
-The value 'implicit' is the default, meaning facts will be gathered per play unless 'gather_facts: False' is set in the play and fact caching will be ignored.
+The value 'implicit' is the default, which means that the fact cache will be ignored and facts will be gathered per play unless 'gather_facts: False' is set.
 The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
 The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.
 This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the fact cache.
