@@ -27,15 +27,15 @@ description:
 options:
   name:
     description:
-      - A package name, like C(foo).
+      - A package name, like C(foo), or mutliple packages, like C(foo, bar).
     required: false
     default: null
   state:
     description:
-      - Indicates the desired package state.
-      - C(present) ensures the package is present.
-      - C(absent) ensures the package is absent.
-      - C(latest) ensures the package is present and the latest version.
+      - Indicates the desired package(s) state.
+      - C(present) ensures the package(s) is/are present.
+      - C(absent) ensures the package(s) is/are absent.
+      - C(latest) ensures the package(s) is/are present and the latest version(s).
     required: false
     default: present
     choices: [ "present", "absent", "latest" ]
