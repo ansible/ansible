@@ -257,7 +257,6 @@ class User(object):
         self.group      = module.params['group']
         self.groups     = module.params['groups']
         self.comment    = module.params['comment']
-        self.home       = module.params['home']
         self.shell      = module.params['shell']
         self.password   = module.params['password']
         self.force      = module.params['force']
@@ -274,6 +273,7 @@ class User(object):
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
         self.update_password = module.params['update_password']
+        self.home    = None
         self.expires = None
 
         if module.params['home'] is not None:
