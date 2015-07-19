@@ -250,8 +250,7 @@ class PluginLoader:
                 if alias_name in self._plugin_path_cache:
                     if not os.path.islink(self._plugin_path_cache[alias_name]):
                         d = Display()
-                        d.warning('%s has been deprecated, which means '
-                                  'it is kept for backwards compatibility '
+                        d.deprecated('%s is kept for backwards compatibility '
                                   'but usage is discouraged. The module '
                                   'documentation details page may explain '
                                   'more about this rationale.' %

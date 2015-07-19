@@ -111,7 +111,7 @@ class Display:
             else:
                 self.display("<%s> %s" % (host, msg), color='blue', screen_only=True)
 
-    def deprecated(self, msg, version, removed=False):
+    def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
 
         if not removed and not C.DEPRECATION_WARNINGS:
