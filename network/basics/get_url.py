@@ -110,6 +110,15 @@ options:
         parameter is not specified, the C(url_password) parameter will not be used.
     required: false
     version_added: '1.6'
+  force_basic_auth:
+    description:
+      - httplib2, the library used by the uri module only sends authentication information when a webservice
+        responds to an initial request with a 401 status. Since some basic auth services do not properly
+        send a 401, logins will fail. This option forces the sending of the Basic authentication header
+        upon initial request.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
   others:
     description:
       - all arguments accepted by the M(file) module also work here
@@ -125,6 +134,9 @@ EXAMPLES='''
 
 - name: download file with sha256 check
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf sha256sum=b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
+
+- name: download file and force basic auth
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf force_basic_auth=yes
 '''
 
 import urlparse
