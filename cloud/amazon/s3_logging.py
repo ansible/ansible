@@ -40,8 +40,8 @@ options:
     choices: [ 'present', 'absent' ]
   target_bucket:
     description:
-      - "The bucket to log to."
-    required: true
+      - "The bucket to log to. Required when state=present."
+    required: false
     default: null
   target_prefix:
     description:
@@ -142,7 +142,7 @@ def main():
     argument_spec.update(
         dict(
             name = dict(required=True, default=None),
-            target_bucket = dict(required=True, default=None),
+            target_bucket = dict(required=False, default=None),
             target_prefix = dict(required=False, default=""),
             state = dict(required=False, default='present', choices=['present', 'absent'])
         )
