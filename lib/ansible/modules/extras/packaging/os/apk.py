@@ -57,6 +57,9 @@ EXAMPLES = '''
 # Update repositories and install "foo" package
 - apk: name=foo update_cache=yes
 
+# Update repositories and install "foo" and "bar" packages
+- apk: name=foo,bar update_cache=yes
+
 # Remove "foo" package
 - apk: name=foo state=absent
 
@@ -66,8 +69,14 @@ EXAMPLES = '''
 # Install the package "foo"
 - apk: name=foo state=present
 
+# Install the packages "foo" and "bar"
+- apk: name=foo,bar state=present
+
 # Update repositories and update package "foo" to latest version
 - apk: name=foo state=latest update_cache=yes
+
+# Update repositories and update packages "foo" and "bar" to latest versions
+- apk: name=foo,bar state=latest update_cache=yes
 
 # Update all installed packages to the latest versions
 - apk: upgrade=yes
@@ -118,28 +127,31 @@ def upgrade_packages(module):
         module.exit_json(changed=False, msg="packages already upgraded")
     module.exit_json(changed=True, msg="upgraded packages")
 
-def install_package(module, name, state):
+def install_packages(module, names, state):
     upgrade = False
-    installed = query_package(module, name)
-    latest = query_latest(module, name)
-    if state == 'latest' and not latest:
-        upgrade = True
-    if installed and not upgrade:
-        module.exit_json(changed=False, msg="package already installed")
+    uninstalled = []
+    for name in names:
+        if not query_package(module, name):
+            uninstalled.append(name)
+        elif state == 'latest' and not query_latest(module, name):
+            upgrade = True
+    if not uninstalled and not upgrade:
+        module.exit_json(changed=False, msg="package(s) already installed")
+    names = " ".join(uninstalled)
     if upgrade:
         if module.check_mode:
-            cmd = "apk add --upgrade --simulate %s" % (name)
+            cmd = "apk add --upgrade --simulate %s" % (names)
         else:
-            cmd = "apk add --upgrade %s" % (name)
+            cmd = "apk add --upgrade %s" % (names)
     else:
         if module.check_mode:
-            cmd = "apk add --simulate %s" % (name)
+            cmd = "apk add --simulate %s" % (names)
         else:
-            cmd = "apk add %s" % (name)
+            cmd = "apk add %s" % (names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
-        module.fail_json(msg="failed to install %s" % (name))
-    module.exit_json(changed=True, msg="installed %s package" % (name))
+        module.fail_json(msg="failed to install %s" % (names))
+    module.exit_json(changed=True, msg="installed %s package(s)" % (names))
 
 def remove_packages(module, names):
     installed = []
@@ -197,7 +209,7 @@ def main():
     names = filter((lambda x: x != ''), p['name'].split(','))
 
     if p['state'] in ['present', 'latest']:
-        install_package(module, p['name'], p['state'])
+        install_packages(module, names, p['state'])
     elif p['state'] == 'absent':
         remove_packages(module, names)
 
