@@ -838,5 +838,5 @@ These are settings that control SELinux interactions.
 .. versionadded:: 1.9
 
 This is a list of file systems that require special treatment when dealing with security context.
-The normal behaviour is for operations to copyc the existing context or use the user default, this changes it to use a file system dependent context.
+The normal behaviour is for operations to copy the existing context or use the user default, this changes it to use a file system dependent context.
 The default list is: nfs,vboxsf,fuse,ramfs
