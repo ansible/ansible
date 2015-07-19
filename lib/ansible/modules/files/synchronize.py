@@ -158,6 +158,12 @@ options:
     default: no
     required: false
     version_added: "2.0"
+  verify_host:
+    description:
+      - Verify destination host key.
+    default: no
+    required: false
+    version_added: "2.0"
 notes:
    - `rsync` must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
@@ -244,6 +250,7 @@ def main():
             rsync_opts = dict(type='list'),
             ssh_args = dict(type='str'),
             partial = dict(default='no', type='bool'),
+            verify_host = dict(default='no', type='bool'),
         ),
         supports_check_mode = True
     )
@@ -272,6 +279,7 @@ def main():
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
     ssh_args = module.params['ssh_args']
+    verify_host = module.params['verify_host']
 
     cmd = '%s --delay-updates -F' % rsync
     if compress:
@@ -324,10 +332,13 @@ def main():
     else:
         private_key = '-i '+ private_key 
 
+    ssh_opts = '-S none'
+
+    if not verify_host:
+      ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
+
     if ssh_args:
-      ssh_opts = '-S none -o StrictHostKeyChecking=no %s' % ssh_args
-    else:
-      ssh_opts = '-S none -o StrictHostKeyChecking=no'
+      ssh_opts = '%s %s' % (ssh_opts, ssh_args)
 
     if dest_port != 22:
         cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
