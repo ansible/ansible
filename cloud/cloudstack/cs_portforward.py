@@ -261,7 +261,7 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
             public_port         = self.module.params.get('public_port')
             public_end_port     = self.get_public_end_port()
             private_port        = self.module.params.get('private_port')
-            private_end_port    = self.get_public_end_port()
+            private_end_port    = self.get_private_end_port()
 
             args = {}
             args['ipaddressid'] = self.get_ip_address(key='id')
