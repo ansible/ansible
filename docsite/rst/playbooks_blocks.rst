@@ -51,7 +51,7 @@ Blocks also introduce the ability to handle errors in a way similar to exception
 
 
 The tasks in the ``block`` would execute normally, if there is any error the ``rescue`` section would get executed
-with whatver you need to do to recover from the previous error. The ``always`` section runs no matter what previous
+with whatever you need to do to recover from the previous error. The ``always`` section runs no matter what previous
 error did or did not occur in the ``block`` and ``rescue`` sections.
 
 

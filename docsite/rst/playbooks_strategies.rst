@@ -1,9 +1,9 @@
-Strategies
+Setrategies
 ===========
 
 In 2.0 we added a new way to control play execution, ``strategy``, by default plays will
 still run as they used to, with what we call the ``linear`` strategy. All hosts will run each
-task befor any host starts the next task, using the number of forks (default 5) to paralelize.
+task befor any host starts the next task, using the number of forks (default 5) to parallelize.
 
 The ``serial`` directive can 'batch' this behaviour to a subset of the hosts, which then run to
 completion of the play before the next 'batch' starts.
@@ -19,7 +19,7 @@ the play as fast as it can.::
 
 .. _strategy_plugins:
 
-Stratergy Plugins
+Strategy Plugins
 `````````````````
 
 The strategies are implelented via a new type of plugin, this means that in the future new
