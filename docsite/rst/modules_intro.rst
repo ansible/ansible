@@ -1,7 +1,7 @@
 Introduction
 ============
 
-Modules (also reffered to as "task plugins" or "library plugins") are the ones that do
+Modules (also referred to as "task plugins" or "library plugins") are the ones that do
 the actual work in ansible, they are what gets executed in each playbook task.
 But you can also run a single one using the 'ansible' command.
 
