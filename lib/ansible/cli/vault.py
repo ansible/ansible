@@ -74,7 +74,7 @@ class VaultCLI(CLI):
         if self.options.vault_password_file:
             # read vault_pass from a file
             self.vault_pass = CLI.read_vault_password_file(self.options.vault_password_file)
-        elif self.options.ask_vault_pass:
+        else:
             self.vault_pass, _= self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
 
         if not self.vault_pass:
