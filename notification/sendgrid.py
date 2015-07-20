@@ -84,10 +84,8 @@ EXAMPLES = '''
 # =======================================
 # sendgrid module support methods
 #
-try:
-    import urllib, urllib2
-except ImportError:
-    module.fail_json(msg="urllib and urllib2 are required")
+import urllib
+import urllib2
 
 import base64
 

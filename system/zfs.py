@@ -115,6 +115,11 @@ options:
       - The normalization property.
     required: False
     choices: [none,formC,formD,formKC,formKD]
+  origin:
+    description:
+      - Name of the snapshot to clone
+    required: False
+    version_added: "2.0"
   primarycache:
     description:
       - The primarycache property.
@@ -221,6 +226,12 @@ EXAMPLES = '''
 
 # Create a new file system called myfs2 with snapdir enabled
 - zfs: name=rpool/myfs2 state=present snapdir=enabled
+
+# Create a new file system by cloning a snapshot
+- zfs: name=rpool/cloned_fs state=present origin=rpool/myfs@mysnapshot
+
+# Destroy a filesystem
+- zfs: name=rpool/myfs state=absent
 '''
 
 
@@ -253,8 +264,11 @@ class Zfs(object):
         properties = self.properties
         volsize = properties.pop('volsize', None)
         volblocksize = properties.pop('volblocksize', None)
+        origin = properties.pop('origin', None)
         if "@" in self.name:
             action = 'snapshot'
+        elif origin:
+            action = 'clone'
         else:
             action = 'create'
 
@@ -272,6 +286,8 @@ class Zfs(object):
         if volsize:
             cmd.append('-V')
             cmd.append(volsize)
+        if origin:
+            cmd.append(origin)
         cmd.append(self.name)
         (rc, err, out) = self.module.run_command(' '.join(cmd))
         if rc == 0:
@@ -360,6 +376,7 @@ def main():
             'mountpoint':      {'required': False},
             'nbmand':          {'required': False, 'choices':['on', 'off']},
             'normalization':   {'required': False, 'choices':['none', 'formC', 'formD', 'formKC', 'formKD']},
+            'origin':          {'required': False},
             'primarycache':    {'required': False, 'choices':['all', 'none', 'metadata']},
             'quota':           {'required': False},
             'readonly':        {'required': False, 'choices':['on', 'off']},
