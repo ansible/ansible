@@ -139,10 +139,11 @@ class PlayIterator:
             # NOT explicitly set gather_facts to False.
 
             gathering = C.DEFAULT_GATHERING
-            if ((gathering == 'smart' and not host._gathered_facts) or
-                (gathering == 'explicit' and boolean(self._play.gather_facts)) or
-                (gathering == 'implicit' and
-                    (self._play.gather_facts is None or boolean(self._play.gather_facts)))):
+            implied = self._play.gather_facts is None or boolean(self._play.gather_facts)
+
+            if (gathering == 'implicit' and implied) or \
+               (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
+               (gathering == 'smart' and implied and not host._gathered_facts):
                 if not peek:
                     # mark the host as having gathered facts
                     host.set_gathered_facts(True)
