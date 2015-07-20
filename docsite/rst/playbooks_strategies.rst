@@ -1,4 +1,4 @@
-Setrategies
+Strategies
 ===========
 
 In 2.0 we added a new way to control play execution, ``strategy``, by default plays will
