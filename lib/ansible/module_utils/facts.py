@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import stat
 import array
 import errno
@@ -43,8 +44,16 @@ except ImportError:
 
 try:
     import json
+    # Detect python-json which is incompatible and fallback to simplejson in
+    # that case
+    try:
+        json.loads
+        json.dumps
+    except AttributeError:
+        raise ImportError
 except ImportError:
     import simplejson as json
+
 
 # --------------------------------------------------------------
 # timeout function to make sure some fact gathering
