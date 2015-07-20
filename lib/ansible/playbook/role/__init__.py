@@ -101,6 +101,10 @@ class Role(Base, Become, Conditional, Taggable):
             # We use frozenset to make the dictionary hashable.
 
             params = role_include.get_role_params()
+            if role_include.when is not None:
+                params['when'] = role_include.when
+            if role_include.tags is not None:
+                params['tags'] = role_include.tags
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
                 for (entry, role_obj) in play.ROLE_CACHE[role_include.role].iteritems():

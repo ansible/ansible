@@ -194,7 +194,12 @@ class StrategyBase:
                         # lookup the role in the ROLE_CACHE to make sure we're dealing
                         # with the correct object and mark it as executed
                         for (entry, role_obj) in iterator._play.ROLE_CACHE[task_result._task._role._role_name].iteritems():
-                            hashed_entry = hash_params(task_result._task._role._role_params)
+                            params = task_result._task._role._role_params
+                            if task_result._task._role.tags is not None:
+                                params['tags'] = task_result._task._role.tags
+                            if task_result._task._role.when is not None:
+                                params['when'] = task_result._task._role.when
+                            hashed_entry = hash_params(params)
                             if entry == hashed_entry:
                                 role_obj._had_task_run = True
 
@@ -211,13 +216,15 @@ class StrategyBase:
                     self._add_group(task, iterator)
 
                 elif result[0] == 'notify_handler':
-                    host         = result[1]
+                    task_result  = result[1]
                     handler_name = result[2]
+
+                    original_task = iterator.get_original_task(task_result._host, task_result._task)
                     if handler_name not in self._notified_handlers:
                         self._notified_handlers[handler_name] = []
 
-                    if host not in self._notified_handlers[handler_name]:
-                        self._notified_handlers[handler_name].append(host)
+                    if task_result._host not in self._notified_handlers[handler_name]:
+                        self._notified_handlers[handler_name].append(task_result._host)
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
