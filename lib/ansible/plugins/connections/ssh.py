@@ -42,13 +42,13 @@ from ansible.utils.debug import debug
 class Connection(ConnectionBase):
     ''' ssh based connections '''
 
+    has_pipelining = True
     become_methods = frozenset(C.BECOME_METHODS).difference(['runas'])
 
     def __init__(self, *args, **kwargs):
         # SSH connection specific init stuff
         self._common_args = []
         self.HASHED_KEY_MAGIC = "|1|"
-        self._has_pipelining = True
 
         # FIXME: move the lockfile locations to ActionBase?
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
