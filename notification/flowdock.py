@@ -85,8 +85,7 @@ options:
     choices: ['yes', 'no']
     version_added: 1.5.1
 
-# informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
+requirements: [ ]
 '''
 
 EXAMPLES = '''
@@ -103,6 +102,8 @@ EXAMPLES = '''
             msg='test from ansible'
             tags=tag1,tag2,tag3
 '''
+
+import urllib
 
 # ===========================================
 # Module execution.

@@ -216,18 +216,12 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
         self.firewall_rule = None
 
 
-    def get_end_port(self):
-        if self.module.params.get('end_port'):
-            return self.module.params.get('end_port')
-        return self.module.params.get('start_port')
-
-
     def get_firewall_rule(self):
         if not self.firewall_rule:
             cidr        = self.module.params.get('cidr')
             protocol    = self.module.params.get('protocol')
             start_port  = self.module.params.get('start_port')
-            end_port    = self.get_end_port()
+            end_port    = self.get_or_fallback('end_port', 'start_port')
             icmp_code   = self.module.params.get('icmp_code')
             icmp_type   = self.module.params.get('icmp_type')
             fw_type     = self.module.params.get('type')
@@ -328,7 +322,7 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
             args['cidrlist']    = self.module.params.get('cidr')
             args['protocol']    = self.module.params.get('protocol')
             args['startport']   = self.module.params.get('start_port')
-            args['endport']     = self.get_end_port()
+            args['endport']     = self.get_or_fallback('end_port', 'start_port')
             args['icmptype']    = self.module.params.get('icmp_type')
             args['icmpcode']    = self.module.params.get('icmp_code')
 
@@ -451,11 +445,9 @@ def main():
     except CloudStackException, e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
-    except Exception, e:
-        module.fail_json(msg='Exception: %s' % str(e))
-
     module.exit_json(**result)
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()

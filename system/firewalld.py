@@ -41,6 +41,12 @@ options:
       - "Rich rule to add/remove to/from firewalld."
     required: false
     default: null
+  source:
+    description:
+      - 'The source/network you would like to add/remove to/from firewalld'
+    required: false
+    default: null
+    version_added: "2.0"
   zone:
     description:
       - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
@@ -78,6 +84,7 @@ EXAMPLES = '''
 - firewalld: port=161-162/udp permanent=true state=enabled
 - firewalld: zone=dmz service=http permanent=true state=enabled
 - firewalld: rich_rule='rule service name="ftp" audit limit value="1/m" accept' permanent=true state=enabled
+- firewalld: source='192.168.1.0/24' zone=internal state=enabled
 '''
 
 import os
@@ -127,7 +134,27 @@ def set_port_disabled_permanent(zone, port, protocol):
     fw_settings = fw_zone.getSettings()
     fw_settings.removePort(port, protocol)
     fw_zone.update(fw_settings)
-    
+
+####################
+# source handling
+#    
+def get_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    if source in fw_settings.getSources():
+       return True
+    else:
+        return False
+
+def add_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.addSource(source)
+
+def remove_source(zone, source):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.removeSource(source)
 
 ####################
 # service handling
@@ -209,13 +236,16 @@ def main():
             port=dict(required=False,default=None),
             rich_rule=dict(required=False,default=None),
             zone=dict(required=False,default=None),
-            permanent=dict(type='bool',required=True),
             immediate=dict(type='bool',default=False),
+            source=dict(required=False,default=None),
+            permanent=dict(type='bool',required=False,default=None),
             state=dict(choices=['enabled', 'disabled'], required=True),
             timeout=dict(type='int',required=False,default=0),
         ),
         supports_check_mode=True
     )
+    if module.params['source'] == None and module.params['permanent'] == None:
+        module.fail(msg='permanent is a required parameter')
 
     if not HAS_FIREWALLD:
         module.fail_json(msg='firewalld required for this module')
@@ -229,6 +259,7 @@ def main():
     msgs = []
     service = module.params['service']
     rich_rule = module.params['rich_rule']
+    source = module.params['source']
 
     if module.params['port'] != None:
         port, protocol = module.params['port'].split('/')
@@ -308,6 +339,24 @@ def main():
         if changed == True:
             msgs.append("Changed service %s to %s" % (service, desired_state))
 
+    if source != None:
+        is_enabled = get_source(zone, source)
+        if desired_state == "enabled":
+            if is_enabled == False:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                add_source(zone, source)
+                changed=True
+                msgs.append("Added %s to zone %s" % (source, zone))
+        elif desired_state == "disabled":
+            if is_enabled == True:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                remove_source(zone, source)
+                changed=True
+                msgs.append("Removed %s from zone %s" % (source, zone))
     if port != None:
         if permanent:
             is_enabled = get_port_enabled_permanent(zone, [port, protocol])
