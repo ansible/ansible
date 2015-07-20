@@ -832,8 +832,8 @@ Selinux Specific Settings
 These are settings that control SELinux interactions.
 
 
-#special_context_filesystems
-============================
+special_context_filesystems
+===========================
 
 .. versionadded:: 1.9
 
