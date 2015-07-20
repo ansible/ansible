@@ -1165,6 +1165,7 @@ def gather_facts(vm):
         'hw_product_uuid': vm.properties.config.uuid,
         'hw_processor_count': vm.properties.config.hardware.numCPU,
         'hw_memtotal_mb': vm.properties.config.hardware.memoryMB,
+        'hw_interfaces':[],
     }
     netInfo = vm.get_property('net')
     netDict = {}
@@ -1187,6 +1188,7 @@ def gather_facts(vm):
             'macaddress_dash': entry.macAddress.replace(':', '-'),
             'summary': entry.deviceInfo.summary,
         }
+        facts['hw_interfaces'].append('eth'+str(ifidx))
 
         ifidx += 1
 
