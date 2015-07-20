@@ -106,7 +106,7 @@ Variables can also be applied to an entire group at once::
 Groups of Groups, and Group Variables
 +++++++++++++++++++++++++++++++++++++
 
-It is also possible to make groups of groups using the ``:children`` suffix. Just like above, you can apply variables using ``:vars``.
+It is also possible to make groups of groups using the ``:children`` suffix. Just like above, you can apply variables using ``:vars``.::
 
    [atlanta]
    host1
