@@ -40,6 +40,7 @@ New Modules:
   * amazon: sts_assume_role
   * amazon: s3_logging
   * bundler
+  * centurylink: clc_publicip
   * circonus_annotation
   * consul
   * consul_acl
