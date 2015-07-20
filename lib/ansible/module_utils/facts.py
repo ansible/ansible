@@ -2147,7 +2147,7 @@ class GenericBsdIfconfigNetwork(Network):
             for item in ifinfo[ip_type][0].keys():
                 defaults[item] = ifinfo[ip_type][0][item]
 
-class HPUX(Network):
+class HPUXNetwork(Network):
     """
     HP-UX-specifig subclass of Network. Defines networking facts:
     - default_interface
@@ -2171,7 +2171,7 @@ class HPUX(Network):
         return self.facts
 
     def get_default_interfaces(self):
-        rc, out, err = module.run_command("/usr/bin/netstat -nr", use_unsafe_shell=True)
+        rc, out, err = module.run_command("/usr/bin/netstat -nr")
         lines = out.split('\n')
         for line in lines:
                 words = line.split()
@@ -2182,7 +2182,7 @@ class HPUX(Network):
 
     def get_interfaces_info(self):
         interfaces = {}
-        rc, out, err = module.run_command("/usr/bin/netstat -ni", use_unsafe_shell=True)
+        rc, out, err = module.run_command("/usr/bin/netstat -ni")
         lines = out.split('\n')
         for line in lines:
             words = line.split()
