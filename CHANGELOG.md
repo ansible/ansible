@@ -14,6 +14,11 @@ Other Notable Changes:
 * Fixes a bug related to keyczar messing up encodings internally, resulting in decrypted
   messages coming out as empty strings.
 * AES Keys generated for use in accelerated mode are now 256-bit by default instead of 128.
+* Fix url fetching for SNI with python-2.7.9 or greater.  SNI does not work
+  with python < 2.7.9.  The best workaround is probably to use the command
+  module with curl or wget.
+* Fix url fetching to allow tls-1.1 and tls-1.2 if the system's openssl library
+  supports those protocols
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
