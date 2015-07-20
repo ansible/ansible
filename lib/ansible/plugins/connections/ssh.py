@@ -61,8 +61,8 @@ class Connection(ConnectionBase):
         # FIXME: make this work, should be set from connection info
         self._ipv6 = False
         self.host = self._connection_info.remote_addr
-        if self._ipv6:
-            self.host = '[%s]' % self.host
+	if self.host != None and self.host.count(":")>1:
+	    self._ipv6 = True
 
     @property
     def transport(self):
@@ -436,15 +436,21 @@ class Connection(ConnectionBase):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         cmd = self._password_cmd()
 
+
+        if self._ipv6 == True:
+            tempHost = '[%s]' % self.host
+        else:
+            tempHost = self.host 	
+
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
             cmd.extend(self._common_args)
-            cmd.extend([in_path, '{0}:{1}'.format(self.host, pipes.quote(out_path))])
+            cmd.extend([in_path, '{0}:{1}'.format(tempHost, pipes.quote(out_path))])
             indata = None
         else:
             cmd.append('sftp')
             cmd.extend(self._common_args)
-            cmd.append(self.host)
+            cmd.append(tempHost)
             indata = "put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
 
         (p, stdin) = self._run(cmd, indata)
