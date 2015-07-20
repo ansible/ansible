@@ -119,7 +119,9 @@ options:
     default: 'present'
     choices: [ "running", "stopped", "absent", "present" ]
 
-requirements: [ "profitbricks" ]
+requirements:
+     - "profitbricks"
+     - "python >= 2.6"
 author: Matt Baldwin (baldwin@stackpointcloud.com)
 '''
 
@@ -178,8 +180,6 @@ EXAMPLES = '''
 import re
 import uuid
 import time
-import json
-import sys
 
 HAS_PB_SDK = True
 
@@ -232,7 +232,7 @@ def _create_machine(module, profitbricks, datacenter, name):
     image = module.params.get('image')
     assign_public_ip = module.boolean(module.params.get('assign_public_ip'))
     wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
 
     try:
         # Generate name, but grab first 10 chars so we don't
@@ -298,8 +298,6 @@ def _create_machine(module, profitbricks, datacenter, name):
                                  wait_timeout, "create_virtual_machine")
 
 
-
-        # return (json.dumps(server_response))
         return (server_response)
     except Exception as e:
         module.fail_json(msg="failed to create the new server: %s" % str(e))
@@ -307,7 +305,7 @@ def _create_machine(module, profitbricks, datacenter, name):
 def _remove_machine(module, profitbricks, datacenter, name):
     remove_boot_volume = module.params.get('remove_boot_volume')
     wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
     changed = False
 
     # User provided the actual UUID instead of the name.
@@ -349,7 +347,7 @@ def _startstop_machine(module, profitbricks, datacenter, name):
 def _create_datacenter(module, profitbricks):
     datacenter = module.params.get('datacenter')
     location = module.params.get('location')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
 
     i = Datacenter(
         name=datacenter,
@@ -381,7 +379,7 @@ def create_virtual_machine(module, profitbricks):
     auto_increment = module.params.get('auto_increment')
     count = module.params.get('count')
     lan = module.params.get('lan')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
     failed = True
     datacenter_found = False
 
@@ -502,7 +500,7 @@ def startstop_machine(module, profitbricks, state):
         module.fail_json(msg='instance_ids should be a list of virtual machine ids or names, aborting')
 
     wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
     changed = False
 
     datacenter = module.params.get('datacenter')
@@ -574,7 +572,7 @@ def main():
             location=dict(choices=LOCATIONS, default='us/las'),
             assign_public_ip=dict(type='bool', default=False),
             wait=dict(type='bool', default=True),
-            wait_timeout=dict(default=600),
+            wait_timeout=dict(type='int', default=600),
             remove_boot_volume=dict(type='bool', default=True),
             state=dict(default='present'),
         )
@@ -586,7 +584,7 @@ def main():
     subscription_user = module.params.get('subscription_user')
     subscription_password = module.params.get('subscription_password')
     wait = module.params.get('wait')
-    wait_timeout = int(module.params.get('wait_timeout'))
+    wait_timeout = module.params.get('wait_timeout')
 
     profitbricks = ProfitBricksService(
         username=subscription_user,
