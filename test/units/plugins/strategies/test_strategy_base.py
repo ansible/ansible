@@ -253,7 +253,8 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(strategy_base._pending_results, 1)
         self.assertIn('test01', strategy_base._blocked_hosts)
 
-        queue_items.append(('notify_handler', mock_host, 'test handler'))
+        task_result = TaskResult(host=mock_host, task=mock_task, return_data=dict(changed=True))
+        queue_items.append(('notify_handler', task_result, 'test handler'))
         results = strategy_base._process_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
         self.assertEqual(strategy_base._pending_results, 1)
