@@ -384,6 +384,8 @@ To match strings against a regex, use the "match" or "search" filter::
 
 'match' will require a complete match in the string, while 'search' will require a match inside of the string.
 
+.. versionadded:: 1.6
+
 To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "ansible" to "able"    
