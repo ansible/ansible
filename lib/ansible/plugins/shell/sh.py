@@ -64,10 +64,10 @@ class ShellModule(object):
         basetmp = self.join_path(C.DEFAULT_REMOTE_TMP, basefile)
         if system and (basetmp.startswith('$HOME') or basetmp.startswith('~/')):
             basetmp = self.join_path('/tmp', basefile)
-        cmd = 'mkdir -p %s' % basetmp
+        cmd = 'mkdir -p "%s"' % basetmp
         if mode:
-            cmd += ' && chmod %s %s' % (mode, basetmp)
-        cmd += ' && echo %s' % basetmp
+            cmd += ' && chmod %s "%s"' % (mode, basetmp)
+        cmd += ' && echo "%s"' % basetmp
         return cmd
 
     def expand_user(self, user_home_path):
@@ -127,8 +127,12 @@ class ShellModule(object):
         return cmd
 
     def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
+        # don't quote the cmd if it's an empty string, because this will
+        # break pipelining mode
+        if cmd.strip() != '':
+            cmd = pipes.quote(cmd)
         cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
         new_cmd = " ".join(cmd_parts)
         if rm_tmp:
-            new_cmd = '%s; rm -rf %s >/dev/null 2>&1' % (new_cmd, rm_tmp)
+            new_cmd = '%s; rm -rf "%s" >/dev/null 2>&1' % (new_cmd, rm_tmp)
         return new_cmd
