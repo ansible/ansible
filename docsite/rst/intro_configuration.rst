@@ -224,8 +224,7 @@ or ansible action line exactly as written.
 executable
 ==========
 
-This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this in
-rare instances to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
+This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
 
     executable = /bin/bash
 
