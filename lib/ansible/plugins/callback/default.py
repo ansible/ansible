@@ -108,4 +108,4 @@ class CallbackModule(CallbackBase):
         else:
             msg = "PLAY [%s]" % name
 
-        self._display.banner(name)
+        self._display.banner(msg)

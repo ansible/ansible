@@ -95,7 +95,7 @@ class Play(Base, Taggable, Become):
 
     def get_name(self):
        ''' return the name of the Play '''
-       return "PLAY: %s" % self._attributes.get('name')
+       return self._attributes.get('name')
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
