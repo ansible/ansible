@@ -207,6 +207,7 @@ options:
         disabled, fail unless the process exits cleanly.
     default: true
   signal:
+    version_added: "2.0"
     description:
       - With the state "killed", you can alter the signal sent to the
         container.
