@@ -291,7 +291,6 @@ def process_module(module, options, env, template, outputname, module_map, alias
             # don't show version added information if it's too old to be called out
             if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
                 del doc['options'][k]['version_added']
-                continue
             all_keys.append(k)
 
     all_keys = sorted(all_keys)
