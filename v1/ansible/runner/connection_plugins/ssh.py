@@ -272,7 +272,7 @@ class Connection(object):
         if utils.VERBOSITY > 3:
             ssh_cmd += ["-vvv"]
         else:
-            if self.runner.module_name == 'raw':
+            if self.runner.module_name == 'raw' or self.runner.module_name == 'script':
                 ssh_cmd += ["-q"]
             else:
                 ssh_cmd += ["-v"]
