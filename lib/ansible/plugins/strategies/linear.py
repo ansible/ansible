@@ -116,7 +116,7 @@ class StrategyModule(StrategyBase):
         # return None for all hosts in the list
         return [(host, None) for host in hosts]
 
-    def run(self, iterator, connection_info):
+    def run(self, iterator, play_context):
         '''
         The linear strategy is simple - get the next task and queue
         it for all hosts, then wait for the queue to drain before
@@ -177,7 +177,7 @@ class StrategyModule(StrategyBase):
                             # FIXME: issue a callback for the noop here?
                             continue
                         elif meta_action == 'flush_handlers':
-                            self.run_handlers(iterator, connection_info)
+                            self.run_handlers(iterator, play_context)
                         else:
                             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
                     else:
@@ -194,7 +194,7 @@ class StrategyModule(StrategyBase):
                             callback_sent = True
 
                         self._blocked_hosts[host.get_name()] = True
-                        self._queue_task(host, task, task_vars, connection_info)
+                        self._queue_task(host, task, task_vars, play_context)
 
                     results = self._process_pending_results(iterator)
                     host_results.extend(results)
@@ -245,7 +245,7 @@ class StrategyModule(StrategyBase):
                             for host in hosts_left:
                                 if host in included_file._hosts:
                                     task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=included_file._task)
-                                    final_block = new_block.filter_tagged_tasks(connection_info, task_vars)
+                                    final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                                     all_blocks[host].append(final_block)
                                 else:
                                     all_blocks[host].append(noop_block)
@@ -262,5 +262,5 @@ class StrategyModule(StrategyBase):
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
 
-        return super(StrategyModule, self).run(iterator, connection_info, result)
+        return super(StrategyModule, self).run(iterator, play_context, result)
 

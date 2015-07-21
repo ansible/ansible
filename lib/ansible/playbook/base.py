@@ -295,6 +295,11 @@ class Base:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
                                     raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                    elif attribute.isa == 'set':
+                        if not isinstance(value, (list, set)):
+                            value = [ value ]
+                        if not isinstance(value, set):
+                            value = set(value)
                     elif attribute.isa == 'dict' and not isinstance(value, dict):
                         raise TypeError("%s is not a dictionary" % value)
 

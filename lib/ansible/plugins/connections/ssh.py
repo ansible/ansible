@@ -60,7 +60,7 @@ class Connection(ConnectionBase):
 
         # FIXME: make this work, should be set from connection info
         self._ipv6 = False
-        self.host = self._connection_info.remote_addr
+        self.host = self._play_context.remote_addr
         if self._ipv6:
             self.host = '[%s]' % self.host
 
@@ -72,7 +72,7 @@ class Connection(ConnectionBase):
     def _connect(self):
         ''' connect to the remote host '''
 
-        self._display.vvv("ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._connection_info.remote_user), host=self._connection_info.remote_addr)
+        self._display.vvv("ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
 
         if self._connected:
             return self
@@ -104,20 +104,20 @@ class Connection(ConnectionBase):
         if not C.HOST_KEY_CHECKING:
             self._common_args += ("-o", "StrictHostKeyChecking=no")
 
-        if self._connection_info.port is not None:
-            self._common_args += ("-o", "Port={0}".format(self._connection_info.port))
-        if self._connection_info.private_key_file is not None:
-            self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self._connection_info.private_key_file)))
-        if self._connection_info.password:
+        if self._play_context.port is not None:
+            self._common_args += ("-o", "Port={0}".format(self._play_context.port))
+        if self._play_context.private_key_file is not None:
+            self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self._play_context.private_key_file)))
+        if self._play_context.password:
             self._common_args += ("-o", "GSSAPIAuthentication=no",
                                  "-o", "PubkeyAuthentication=no")
         else:
             self._common_args += ("-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no")
-        if self._connection_info.remote_user is not None and self._connection_info.remote_user != pwd.getpwuid(os.geteuid())[0]:
-            self._common_args += ("-o", "User={0}".format(self._connection_info.remote_user))
-        self._common_args += ("-o", "ConnectTimeout={0}".format(self._connection_info.timeout))
+        if self._play_context.remote_user is not None and self._play_context.remote_user != pwd.getpwuid(os.geteuid())[0]:
+            self._common_args += ("-o", "User={0}".format(self._play_context.remote_user))
+        self._common_args += ("-o", "ConnectTimeout={0}".format(self._play_context.timeout))
 
         self._connected = True
 
@@ -143,7 +143,7 @@ class Connection(ConnectionBase):
         return (p, stdin)
 
     def _password_cmd(self):
-        if self._connection_info.password:
+        if self._play_context.password:
             try:
                 p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 p.communicate()
@@ -154,9 +154,9 @@ class Connection(ConnectionBase):
         return []
 
     def _send_password(self):
-        if self._connection_info.password:
+        if self._play_context.password:
             os.close(self.rfd)
-            os.write(self.wfd, "{0}\n".format(self._connection_info.password))
+            os.write(self.wfd, "{0}\n".format(self._play_context.password))
             os.close(self.wfd)
 
     def _communicate(self, p, stdin, indata, sudoable=True):
@@ -177,11 +177,11 @@ class Connection(ConnectionBase):
             rfd, wfd, efd = select.select(rpipes, [], rpipes, 1)
 
             # fail early if the become password is wrong
-            if self._connection_info.become and sudoable:
-                if self._connection_info.become_pass:
+            if self._play_context.become and sudoable:
+                if self._play_context.become_pass:
                     self.check_incorrect_password(stdout)
                 elif self.check_password_prompt(stdout):
-                    raise AnsibleError('Missing %s password' % self._connection_info.become_method)
+                    raise AnsibleError('Missing %s password' % self._play_context.become_method)
 
             if p.stderr in rfd:
                 dat = os.read(p.stderr.fileno(), 9000)
@@ -335,7 +335,7 @@ class Connection(ConnectionBase):
             # inside a tty automatically invokes the python interactive-mode but the modules are not
             # compatible with the interactive-mode ("unexpected indent" mainly because of empty lines)
             ssh_cmd.append("-tt")
-        if self._connection_info.verbosity > 3:
+        if self._play_context.verbosity > 3:
             ssh_cmd.append("-vvv")
         else:
             ssh_cmd.append("-q")
@@ -358,7 +358,7 @@ class Connection(ConnectionBase):
         no_prompt_out = ''
         no_prompt_err = ''
 
-        if self._connection_info.prompt:
+        if self._play_context.prompt:
             '''
                 Several cases are handled for privileges with password
                 * NOPASSWD (tty & no-tty): detect success_key on stdout
@@ -369,7 +369,7 @@ class Connection(ConnectionBase):
 
             debug("Handling privilege escalation password prompt.")
 
-            if self._connection_info.become and self._connection_info.become_pass:
+            if self._play_context.become and self._play_context.become_pass:
 
                 fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
                 fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -381,7 +381,7 @@ class Connection(ConnectionBase):
                     if self.check_become_success(become_output) or self.check_password_prompt(become_output):
                         break
 
-                    rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._connection_info.timeout)
+                    rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._play_context.timeout)
                     if not rfd:
                         # timeout. wrap up process communication
                         stdout, stderr = p.communicate()
@@ -401,7 +401,7 @@ class Connection(ConnectionBase):
 
                 if not self.check_become_success(become_output):
                     debug("Sending privilege escalation password.")
-                    stdin.write(self._connection_info.become_pass + '\n')
+                    stdin.write(self._play_context.become_pass + '\n')
                 else:
                     no_prompt_out = become_output
                     no_prompt_err = become_errput
@@ -491,7 +491,7 @@ class Connection(ConnectionBase):
             if 'ControlMaster' in self._common_args:
                 cmd = ['ssh','-O','stop']
                 cmd.extend(self._common_args)
-                cmd.append(self._connection_info.remote_addr)
+                cmd.append(self._play_context.remote_addr)
 
                 p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdout, stderr = p.communicate()

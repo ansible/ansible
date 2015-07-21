@@ -28,7 +28,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         ''' transfer the given module name, plus the async module, then run it '''
 
-        if self._connection_info.check_mode:
+        if self._play_context.check_mode:
             return dict(skipped=True, msg='check mode not supported for this module')
 
         if not tmp:

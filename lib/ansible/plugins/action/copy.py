@@ -179,7 +179,7 @@ class ActionModule(ActionBase):
                 #    diff = {}
                 diff = {}
 
-                if self._connection_info.check_mode:
+                if self._play_context.check_mode:
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
                     # FIXME: diff stuff
                     #diffs.append(diff)
@@ -199,7 +199,7 @@ class ActionModule(ActionBase):
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 # fix file permissions when the copy is done as a different user
-                if self._connection_info.become and self._connection_info.become_user != 'root':
+                if self._play_context.become and self._play_context.become_user != 'root':
                     self._remote_chmod('a+r', tmp_src, tmp)
 
                 if raw:

@@ -142,7 +142,7 @@ class ActionModule(ActionBase):
             xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
             # fix file permissions when the copy is done as a different user
-            if self._connection_info.become and self._connection_info.become_user != 'root':
+            if self._play_context.become and self._play_context.become_user != 'root':
                 self._remote_chmod('a+r', xfered, tmp)
 
             # run the copy module

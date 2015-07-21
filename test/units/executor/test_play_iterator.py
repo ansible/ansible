@@ -23,9 +23,9 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.executor.connection_info import ConnectionInformation
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook import Playbook
+from ansible.playbook.play_context import PlayContext
 
 from units.mock.loader import DictDataLoader
 
@@ -68,12 +68,12 @@ class TestPlayIterator(unittest.TestCase):
         inventory.get_hosts.return_value = hosts
         inventory.filter_hosts.return_value = hosts
 
-        connection_info = ConnectionInformation(play=p._entries[0])
+        play_context = PlayContext(play=p._entries[0])
 
         itr = PlayIterator(
             inventory=inventory,
             play=p._entries[0],
-            connection_info=connection_info,
+            play_context=play_context,
             all_vars=dict(),
         )
 

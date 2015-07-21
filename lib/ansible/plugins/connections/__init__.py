@@ -58,14 +58,14 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     has_pipelining = False
     become_methods = C.BECOME_METHODS
 
-    def __init__(self, connection_info, new_stdin, *args, **kwargs):
+    def __init__(self, play_context, new_stdin, *args, **kwargs):
         # All these hasattrs allow subclasses to override these parameters
-        if not hasattr(self, '_connection_info'):
-            self._connection_info = connection_info
+        if not hasattr(self, '_play_context'):
+            self._play_context = play_context
         if not hasattr(self, '_new_stdin'):
             self._new_stdin = new_stdin
         if not hasattr(self, '_display'):
-            self._display = Display(verbosity=connection_info.verbosity)
+            self._display = Display(verbosity=play_context.verbosity)
         if not hasattr(self, '_connected'):
             self._connected = False
 
@@ -73,8 +73,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         self.prompt = None
 
         # load the shell plugin for this action/connection
-        if connection_info.shell:
-            shell_type = connection_info.shell
+        if play_context.shell:
+            shell_type = play_context.shell
         elif hasattr(self, '_shell_type'):
             shell_type = getattr(self, '_shell_type')
         else:
@@ -87,7 +87,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
 
-        if self._connection_info.become_method in self.__class__.become_methods:
+        if self._play_context.become_method in self.__class__.become_methods:
             return True
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_method)
@@ -113,7 +113,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Connect to the host we've been initialized with"""
 
         # Check if PE is supported
-        if self._connection_info.become:
+        if self._play_context.become:
             self.__become_method_supported()
 
     @ensure_connect
@@ -140,18 +140,18 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         pass
 
     def check_become_success(self, output):
-        return self._connection_info.success_key in output
+        return self._play_context.success_key in output
 
     def check_password_prompt(self, output):
-        if self._connection_info.prompt is None:
+        if self._play_context.prompt is None:
             return False
-        elif isinstance(self._connection_info.prompt, basestring):
-            return output.endswith(self._connection_info.prompt)
+        elif isinstance(self._play_context.prompt, basestring):
+            return output.endswith(self._play_context.prompt)
         else:
-            return self._connection_info.prompt(output)
+            return self._play_context.prompt(output)
 
     def check_incorrect_password(self, output):
-        incorrect_password = gettext.dgettext(self._connection_info.become_method, C.BECOME_ERROR_STRINGS[self._connection_info.become_method])
+        incorrect_password = gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method])
         if incorrect_password in output:
-            raise AnsibleError('Incorrect %s password' % self._connection_info.become_method)
+            raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
 

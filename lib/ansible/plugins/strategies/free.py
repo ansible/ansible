@@ -26,7 +26,7 @@ from ansible.utils.debug import debug
 
 class StrategyModule(StrategyBase):
 
-    def run(self, iterator, connection_info):
+    def run(self, iterator, play_context):
         '''
         The "free" strategy is a bit more complex, in that it allows tasks to
         be sent to hosts as quickly as they can be processed. This means that
@@ -97,7 +97,7 @@ class StrategyModule(StrategyBase):
                                 debug("'%s' skipped because role has already run" % task)
                                 continue
 
-                        if not task.evaluate_tags(connection_info.only_tags, connection_info.skip_tags, task_vars) and task.action != 'setup':
+                        if not task.evaluate_tags(play_context.only_tags, play_context.skip_tags, task_vars) and task.action != 'setup':
                             debug("'%s' failed tag evaluation" % task)
                             continue
 
@@ -111,14 +111,14 @@ class StrategyModule(StrategyBase):
                             elif meta_action == 'flush_handlers':
                                 # FIXME: in the 'free' mode, flushing handlers should result in
                                 #        only those handlers notified for the host doing the flush
-                                self.run_handlers(iterator, connection_info)
+                                self.run_handlers(iterator, play_context)
                             else:
                                 raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
 
                             self._blocked_hosts[host_name] = False
                         else:
                             self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
-                            self._queue_task(host, task, task_vars, connection_info)
+                            self._queue_task(host, task, task_vars, play_context)
 
                 # move on to the next host and make sure we
                 # haven't gone past the end of our hosts list
@@ -147,5 +147,5 @@ class StrategyModule(StrategyBase):
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
-        super(StrategyModule, self).run(iterator, connection_info)
+        super(StrategyModule, self).run(iterator, play_context)
 

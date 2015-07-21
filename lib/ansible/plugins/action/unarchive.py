@@ -78,8 +78,8 @@ class ActionModule(ActionBase):
         # handle check mode client side
         # fix file permissions when the copy is done as a different user
         if copy:
-            if self._connection_info.become and self._connection_info.become_user != 'root':
-                if not self._connection_info.check_mode:
+            if self._play_context.become and self._play_context.become_user != 'root':
+                if not self._play_context.check_mode:
                     self._remote_chmod(tmp, 'a+r', tmp_src)
 
             # Build temporary module_args.
