@@ -19,6 +19,7 @@ Other Notable Changes:
   module with curl or wget.
 * Fix url fetching to allow tls-1.1 and tls-1.2 if the system's openssl library
   supports those protocols
+* Fix ec2_ami_search module to check TLS Certificates
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
