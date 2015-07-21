@@ -22,11 +22,9 @@
 __author__ = 'cschmidt'
 
 from lxml import etree
-from urllib2 import Request, urlopen, URLError, HTTPError
 import os
 import hashlib
 import sys
-import base64
 
 DOCUMENTATION = '''
 ---
@@ -69,7 +67,7 @@ options:
         required: false
         default: null
     password:
-        description: The passwor to authenticate with to the Maven Repository
+        description: The password to authenticate with to the Maven Repository
         required: false
         default: null
     dest:
@@ -81,6 +79,12 @@ options:
         required: true
         default: present
         choices: [present,absent]
+    validate_certs:
+        description: If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: "1.9.3"
 '''
 
 EXAMPLES = '''
@@ -165,13 +169,12 @@ class Artifact(object):
 
 
 class MavenDownloader:
-    def __init__(self, base="http://repo1.maven.org/maven2", username=None, password=None):
+    def __init__(self, module, base="http://repo1.maven.org/maven2"):
+        self.module = module
         if base.endswith("/"):
             base = base.rstrip("/")
         self.base = base
         self.user_agent = "Maven Artifact Downloader/1.0"
-        self.username = username
-        self.password = password
 
     def _find_latest_version_available(self, artifact):
         path = "/%s/maven-metadata.xml" % (artifact.path(False))
@@ -201,20 +204,14 @@ class MavenDownloader:
         return self.base + "/" + artifact.path() + "/" + artifact.artifact_id + "-" + version + "." + artifact.extension
 
     def _request(self, url, failmsg, f):
-        if not self.username:
-            headers = {"User-Agent": self.user_agent}
-        else:
-            headers = {
-                "User-Agent": self.user_agent,
-                "Authorization": "Basic " + base64.b64encode(self.username + ":" + self.password)
-            }
-        req = Request(url, None, headers)
-        try:
-            response = urlopen(req)
-        except HTTPError, e:
-            raise ValueError(failmsg + " because of " + str(e) + "for URL " + url)
-        except URLError, e:
-            raise ValueError(failmsg + " because of " + str(e) + "for URL " + url)
+        # Hack to add parameters in the way that fetch_url expects
+        self.module.params['url_username'] = self.module.params.get('username', '')
+        self.module.params['url_password'] = self.module.params.get('password', '')
+        self.module.params['http_agent'] = self.module.params.get('user_agent', None)
+
+        response, info = fetch_url(self.module, url)
+        if info['status'] != 200:
+            raise ValueError(failmsg + " because of " + info['msg'] + "for URL " + url)
         else:
             return f(response)
 
@@ -294,6 +291,7 @@ def main():
             password = dict(default=None),
             state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
             dest = dict(default=None),
+            validate_certs = dict(required=False, default=True, type='bool'),
         )
     )
 
@@ -311,7 +309,7 @@ def main():
     if not repository_url:
         repository_url = "http://repo1.maven.org/maven2"
 
-    downloader = MavenDownloader(repository_url, repository_username, repository_password)
+    downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
 
     try:
         artifact = Artifact(group_id, artifact_id, version, classifier, extension)
@@ -343,4 +341,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+if __name__ == '__main__':
+    main()
