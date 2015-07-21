@@ -29,15 +29,15 @@ description:
 options:
   user:
     description:
-      User as which to connect
+      - User as which to connect
     required: true
   password:
     description:
-      password for user to connect
+      - password for user to connect
     required: true
   to:
     description:
-      user ID or name of the room, when using room use a slash to indicate your nick.
+      - user ID or name of the room, when using room use a slash to indicate your nick.
     required: true
   msg:
     description:
@@ -46,16 +46,16 @@ options:
     default: null
   host:
     description:
-      host to connect, overrides user info
+      - host to connect, overrides user info
     required: false
   port:
     description:
-      port to connect to, overrides default
+      - port to connect to, overrides default
     required: false
     default: 5222
   encoding:
     description:
-      message encoding
+      - message encoding
     required: false
 
 # informational: requirements for nodes
