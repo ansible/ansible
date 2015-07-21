@@ -37,6 +37,7 @@ EXAMPLES = '''
 LOCALE_NORMALIZATION = {
     ".utf8": ".UTF-8",
     ".eucjp": ".EUC-JP",
+    ".iso885915": ".ISO-8859-15",
 }
 
 # ===========================================
