@@ -2,6 +2,7 @@
 # This file is part of Ansible
 #
 # Copyright 2015, Peter Mounce <public@neverrunwithscissors.com>
+# Michael Perzel <michaelperzel@gmail.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,6 +104,20 @@ elseif ($frequency -eq "weekly")
 
 try {
     $task = Get-ScheduledTask -TaskPath "$path" | Where-Object {$_.TaskName -eq "$name"}
+
+    # Correlate task state to enable variable, used to calculate if state needs to be changed
+    $taskState = $task.State
+    if ($taskState -eq "Ready"){
+        $taskState = $true
+    }
+    elseif($taskState -eq "Disabled"){
+        $taskState = $false
+    }
+    else
+    {
+        $taskState = $null
+    }
+
     $measure = $task | measure
     if ($measure.count -eq 1 ) {
         $exists = $true
@@ -118,6 +133,7 @@ try {
         # This should never occur
         Fail-Json $result "$measure.count scheduled tasks found"
     }
+
     Set-Attr $result "exists" "$exists"
 
     if ($frequency){
@@ -143,37 +159,36 @@ try {
         Exit-Json $result
     }
 
+    if ($enabled -eq $false){
+        $settings = New-ScheduledTaskSettingsSet -Disable
+    }
+    else {
+        $settings = New-ScheduledTaskSettingsSet
+    }
+
     if ($state -eq "present" -and $exists -eq $false){
         $action = New-ScheduledTaskAction -Execute $execute
-        Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path
+        Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $
+description -TaskPath $path -Settings $settings
         $task = Get-ScheduledTask -TaskName $name
         Set-Attr $result "msg" "Added new task $name"
         $result.changed = $true
     }
     elseif($state -eq "present" -and $exists -eq $true) {
-        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $execute) {
+        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPat
+h -eq $path -and $task.Actions.Execute -eq $execute -and $taskState -eq $enabled) {
             #No change in the task yet
             Set-Attr $result "msg" "No change in task $name"
         }
         else {
             Unregister-ScheduledTask -TaskName $name -Confirm:$false
             $action = New-ScheduledTaskAction -Execute $execute
-            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path
+            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Descripti
+on $description -TaskPath $path -Settings $settings
             $task = Get-ScheduledTask -TaskName $name
             Set-Attr $result "msg" "Updated task $name"
             $result.changed = $true
         }
-    }
-
-    if ($state -eq "present" -and $enabled -eq $true -and $task.State -ne "Ready" ){
-        $task | Enable-ScheduledTask
-        Set-Attr $result "msg" "Enabled task $name"
-        $result.changed = $true
-    }
-    elseif ($state -eq "present" -and $enabled -eq $false -and $task.State -ne "Disabled"){
-        $task | Disable-ScheduledTask
-        Set-Attr $result "msg" "Disabled task $name"
-        $result.changed = $true
     }
 
     Exit-Json $result;
