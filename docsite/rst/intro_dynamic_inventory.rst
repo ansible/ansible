@@ -231,7 +231,7 @@ In an inventory directory, executable files will be treated as dynamic inventory
 
 You can replace this list with your own selection by configuring an ``inventory_ignore_extensions`` list in ansible.cfg, or setting the ANSIBLE_INVENTORY_IGNORE environment variable. The value in either case should be a comma-separated list of patterns, as shown above.
 
-Any ``group_vars`` and ``host_vars`` subdirectories in and inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations.
+Any ``group_vars`` and ``host_vars`` subdirectories in an inventory directory will be interpreted as expected, making inventory directories a powerful way to organize different sets of configurations.
 
 .. _static_groups_of_dynamic:
 
