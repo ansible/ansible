@@ -120,6 +120,9 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                     if cp.get(section, option):
                         cp.remove_option(section, option)
                         changed = True
+                except ConfigParser.InterpolationError:
+                    cp.remove_option(section, option)
+                    changed = True
                 except:
                     pass
 
@@ -141,6 +144,9 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                 cp.set(section, option, value)
                 changed = True
             except ConfigParser.NoOptionError:
+                cp.set(section, option, value)
+                changed = True
+            except ConfigParser.InterpolationError:
                 cp.set(section, option, value)
                 changed = True
 
