@@ -411,7 +411,7 @@ And various other bug fixes and improvements ...
 - Fixes a bug in vault where the password file option was not being used correctly internally.
 - Improved multi-line parsing when using YAML literal blocks (using > or |).
 - Fixed a bug with the file module and the creation of relative symlinks.
-- Fixed a bug where checkmode was not being honored during the templating of files.
+- Fixed a bug where checkmode was not being honoured during the templating of files.
 - Other various bug fixes.
 
 ## 1.7.1 "Summer Nights" - Aug 14, 2014
@@ -454,7 +454,7 @@ New Modules:
 Other notable changes:
 
 * Security fixes
-  - Prevent the use of lookups when using legaxy "{{ }}" syntax around variables and with_* loops.
+  - Prevent the use of lookups when using legacy "{{ }}" syntax around variables and with_* loops.
   - Remove relative paths in TAR-archived file names used by ansible-galaxy.
 * Inventory speed improvements for very large inventories.
 * Vault password files can now be executable, to support scripts that fetch the vault password.
@@ -1131,7 +1131,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * service pattern argument now correctly read for BSD services
 * fetch location can now be controlled more directly via the 'flat' parameter.
 * added basename and dirname as Jinja2 filters available to all templates
-* pip works better when sudoing from unpriveledged users
+* pip works better when sudoing from unprivileged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
 * fix for some unicode encoding errors in outputing some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts
