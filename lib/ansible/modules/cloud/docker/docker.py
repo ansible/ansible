@@ -1036,7 +1036,7 @@ class DockerManager(object):
             except ValueError as e:
                 self.module.fail_json(msg=str(e))
 
-            actual_mem = container['Config']['Memory']
+            actual_mem = container['HostConfig']['Memory']
 
             if expected_mem and actual_mem != expected_mem:
                 self.reload_reasons.append('memory ({0} => {1})'.format(actual_mem, expected_mem))
