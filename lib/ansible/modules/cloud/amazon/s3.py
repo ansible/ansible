@@ -35,7 +35,8 @@ options:
     default: null
     aliases: ['ec2_secret_key', 'secret_key']
   bucket:
-    description: Bucket name.
+    description: 
+      - Bucket name.
     required: true
     default: null
     aliases: []
@@ -118,11 +119,13 @@ options:
     default: 0
     version_added: "2.0"
   s3_url:
-    description: S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
+    description: 
+      - S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
     default: null
     aliases: [ S3_URL ]
   src:
-    description: The source file path when performing a PUT operation.
+    description: 
+      - The source file path when performing a PUT operation.
     required: false
     default: null
     aliases: []
