@@ -4,7 +4,7 @@
   gather_facts: False
   connection: local
   roles:
-  - { role: test_handlers_meta }
+  - { role: test_handlers_meta, tags: ['scenario1'] }
 
 - name: verify final handler was run
   hosts: A
@@ -16,6 +16,7 @@
         that:
             - "not hostvars[inventory_hostname]['handler1_called']"
             - "'handler2_called' in hostvars[inventory_hostname]"
+      tags: ['scenario1']
 
 - name: test handlers
   hosts: testgroup
