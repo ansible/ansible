@@ -74,8 +74,6 @@ EXAMPLES = '''
         bridge-id: "br-int"
 '''
 
-import syslog
-
 
 class OVSBridge(object):
     """ Interface to ovs-vsctl. """
