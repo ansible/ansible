@@ -265,6 +265,12 @@ options:
     default: DockerHub
     aliases: []
     version_added: "1.8"
+  read_only:
+    description:
+      - Mount the container's root filesystem as read only
+    default: false
+    aliases: []
+    version_added: "1.9"
   restart_policy:
     description:
       - Container restart policy.
@@ -772,6 +778,7 @@ class DockerManager(object):
             'privileged': self.module.params.get('privileged'),
             'links': self.links,
             'network_mode': self.module.params.get('net'),
+            'read_only': self.module.params.get('read_only'),
         }
 
         optionals = {}
@@ -1609,6 +1616,7 @@ def main():
             insecure_registry = dict(default=False, type='bool'),
             log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog']),
             cpu_set         = dict(default=None),
+            read_only       = dict(default=False, type='bool'),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
