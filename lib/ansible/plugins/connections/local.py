@@ -44,7 +44,7 @@ class Connection(ConnectionBase):
         ''' connect to the local host; nothing to do here '''
 
         if not self._connected:
-            self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._connection_info.remote_user, host=self._connection_info.remote_addr))
+            self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user, host=self._play_context.remote_addr))
             self._connected = True
         return self
 
@@ -59,7 +59,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
-        self._display.vvv("{0} EXEC {1}".format(self._connection_info.remote_addr, cmd))
+        self._display.vvv("{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook
         debug("opening command with Popen()")
         p = subprocess.Popen(
@@ -72,13 +72,13 @@ class Connection(ConnectionBase):
         )
         debug("done running command with Popen()")
 
-        if self._connection_info.prompt  and self._connection_info.become_pass:
+        if self._play_context.prompt  and self._play_context.become_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             become_output = ''
             while not self.check_become_success(become_output) and not self.check_password_prompt(become_output):
 
-                rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], self._connection_info.timeout)
+                rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout, p.stderr], self._play_context.timeout)
                 if p.stdout in rfd:
                     chunk = p.stdout.read()
                 elif p.stderr in rfd:
@@ -91,7 +91,7 @@ class Connection(ConnectionBase):
                     raise AnsibleError('privilege output closed while waiting for password prompt:\n' + become_output)
                 become_output += chunk
             if not self.check_become_success(become_output):
-                p.stdin.write(self._connection_info.become_pass + '\n')
+                p.stdin.write(self._play_context.become_pass + '\n')
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
@@ -107,7 +107,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        self._display.vvv("{0} PUT {1} TO {2}".format(self._connection_info.remote_addr, in_path, out_path))
+        self._display.vvv("{0} PUT {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         try:
@@ -124,7 +124,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        self._display.vvv("{0} FETCH {1} TO {2}".format(self._connection_info.remote_addr, in_path, out_path))
+        self._display.vvv("{0} FETCH {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
         self.put_file(in_path, out_path)
 
     def close(self):

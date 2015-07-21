@@ -28,7 +28,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
 
-        if self._connection_info.check_mode:
+        if self._play_context.check_mode:
             return dict(skipped=True, msg='check mode not supported for this module')
 
         if not tmp:
@@ -73,7 +73,7 @@ class ActionModule(ActionBase):
 
         sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
-        if self._connection_info.become and self._connection_info.become_user != 'root':
+        if self._play_context.become and self._play_context.become_user != 'root':
             chmod_mode = 'a+rx'
             sudoable = False
         else:

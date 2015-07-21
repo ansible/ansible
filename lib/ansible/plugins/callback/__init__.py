@@ -54,7 +54,7 @@ class CallbackBase:
             for warning in res['warnings']:
                 self._display.warning(warning)
 
-    def set_connection_info(self, conn_info):
+    def set_play_context(self, play_context):
         pass
 
     def on_any(self, *args, **kwargs):

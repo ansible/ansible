@@ -74,14 +74,14 @@ class StrategyBase:
         # outstanding tasks still in queue
         self._blocked_hosts     = dict()
 
-    def run(self, iterator, connection_info, result=True):
+    def run(self, iterator, play_context, result=True):
         # save the failed/unreachable hosts, as the run_handlers()
         # method will clear that information during its execution
         failed_hosts      = self._tqm._failed_hosts.keys()
         unreachable_hosts = self._tqm._unreachable_hosts.keys()
 
         debug("running handlers")
-        result &= self.run_handlers(iterator, connection_info)
+        result &= self.run_handlers(iterator, play_context)
 
         # now update with the hosts (if any) that failed or were
         # unreachable during the handler execution phase
@@ -117,7 +117,7 @@ class StrategyBase:
         new_vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
         return new_vars
 
-    def _queue_task(self, host, task, task_vars, connection_info):
+    def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
 
         debug("entering _queue_task() for %s/%s" % (host, task))
@@ -136,7 +136,7 @@ class StrategyBase:
             # way to share them with the forked processes
             shared_loader_obj = SharedPluginLoaderObj()
 
-            main_q.put((host, task, self._loader.get_basedir(), task_vars, connection_info, shared_loader_obj), block=False)
+            main_q.put((host, task, self._loader.get_basedir(), task_vars, play_context, shared_loader_obj), block=False)
             self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
@@ -406,7 +406,7 @@ class StrategyBase:
 
         return block_list
 
-    def run_handlers(self, iterator, connection_info):
+    def run_handlers(self, iterator, play_context):
         '''
         Runs handlers on those hosts which have been notified.
         '''
@@ -427,10 +427,10 @@ class StrategyBase:
                     #    break
                     self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
                     for host in self._notified_handlers[handler_name]:
-                        if not handler.has_triggered(host) and (host.name not in self._tqm._failed_hosts or connection_info.force_handlers):
+                        if not handler.has_triggered(host) and (host.name not in self._tqm._failed_hosts or play_context.force_handlers):
                             task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
                             task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
-                            self._queue_task(host, handler, task_vars, connection_info)
+                            self._queue_task(host, handler, task_vars, play_context)
                             #handler.flag_for_host(host)
                         self._process_pending_results(iterator)
                     self._wait_on_pending_results(iterator)

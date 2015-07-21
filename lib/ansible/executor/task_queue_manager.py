@@ -27,11 +27,11 @@ import sys
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.executor.connection_info import ConnectionInformation
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
+from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader
 from ansible.template import Templar
 
@@ -236,10 +236,10 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        connection_info = ConnectionInformation(new_play, self._options, self.passwords)
+        play_context = PlayContext(new_play, self._options, self.passwords)
         for callback_plugin in self._callback_plugins:
-            if hasattr(callback_plugin, 'set_connection_info'):
-                callback_plugin.set_connection_info(connection_info)
+            if hasattr(callback_plugin, 'set_play_context'):
+                callback_plugin.set_play_context(play_context)
 
         self.send_callback('v2_playbook_on_play_start', new_play)
 
@@ -252,10 +252,10 @@ class TaskQueueManager:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
-        iterator = PlayIterator(inventory=self._inventory, play=new_play, connection_info=connection_info, all_vars=all_vars)
+        iterator = PlayIterator(inventory=self._inventory, play=new_play, play_context=play_context, all_vars=all_vars)
 
         # and run the play using the strategy
-        return strategy.run(iterator, connection_info)
+        return strategy.run(iterator, play_context)
 
     def cleanup(self):
         debug("RUNNING CLEANUP")

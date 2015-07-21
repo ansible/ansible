@@ -94,7 +94,7 @@ class WorkerProcess(multiprocessing.Process):
             try:
                 if not self._main_q.empty():
                     debug("there's work to be done!")
-                    (host, task, basedir, job_vars, connection_info, shared_loader_obj) = self._main_q.get(block=False)
+                    (host, task, basedir, job_vars, play_context, shared_loader_obj) = self._main_q.get(block=False)
                     debug("got a task/handler to work on: %s" % task)
 
                     # because the task queue manager starts workers (forks) before the
@@ -111,11 +111,11 @@ class WorkerProcess(multiprocessing.Process):
                     # apply the given task's information to the connection info,
                     # which may override some fields already set by the play or
                     # the options specified on the command line
-                    new_connection_info = connection_info.set_task_and_host_override(task=task, host=host)
+                    new_play_context = play_context.set_task_and_host_override(task=task, host=host)
 
                     # execute the task and build a TaskResult from the result
                     debug("running TaskExecutor() for %s/%s" % (host, task))
-                    executor_result = TaskExecutor(host, task, job_vars, new_connection_info, self._new_stdin, self._loader, shared_loader_obj).run()
+                    executor_result = TaskExecutor(host, task, job_vars, new_play_context, self._new_stdin, self._loader, shared_loader_obj).run()
                     debug("done running TaskExecutor() for %s/%s" % (host, task))
                     task_result = TaskResult(host, task, executor_result)
 

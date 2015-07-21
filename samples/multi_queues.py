@@ -9,8 +9,8 @@ import multiprocessing
 from ansible.inventory import Inventory
 from ansible.inventory.host import Host
 from ansible.playbook.play import Play
+from ansible.playbook.play_context import PlayContext
 from ansible.playbook.task import Task
-from ansible.executor.connection_info import ConnectionInformation
 from ansible.executor.task_executor import TaskExecutor
 from ansible.executor.task_result import TaskResult
 from ansible.parsing import DataLoader
@@ -144,8 +144,8 @@ inventory = Inventory(host_list='/tmp/med_inventory', loader=loader, variable_ma
 hosts = inventory.get_hosts()[:]
 debug("done loading inventory")
 
-ci = ConnectionInformation()
-ci.connection = 'local'
+play_context = PlayContext()
+play_context.connection = 'local'
 
 for i in range(NUM_TASKS):
    #for j in range(NUM_HOSTS):
@@ -158,7 +158,7 @@ for i in range(NUM_TASKS):
       task_vars = dict()
       new_t = t.copy()
       new_t.post_validate(task_vars)
-      send_data((h, t, task_vars, ci))
+      send_data((h, t, task_vars, play_context))
       debug("done queuing %s %d" % (h, i))
       _process_pending_results()
    debug("waiting for the results to drain...")
