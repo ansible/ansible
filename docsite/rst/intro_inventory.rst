@@ -194,6 +194,11 @@ List of Behavioral Inventory Parameters
 
 As alluded to above, setting the following variables controls how ansible interacts with remote hosts.
 
+Host connection::
+
+    ansible_connection
+      Connection type to the host. Candidates are local, smart, ssh or paramiko.  The default is smart.
+
 Ssh connection::
 
     ansible_ssh_host
@@ -204,12 +209,10 @@ Ssh connection::
       The default ssh user name to use.
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
-    ansible_connection
-      Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
 
-Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details). Since Ansible 1.9 you should use *ansible_become*::
+Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details)::
 
     ansible_become
       Equivalent to ansible_sudo or ansible_su, allows to force privilege escalation
@@ -219,20 +222,6 @@ Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for furthe
       Equivalent to ansible_sudo_user or ansible_su_user, allows to set the user you become through privilege escalation
     ansible_become_pass
       Equivalent to ansible_sudo_pass or ansible_su_pass, allows you to set the privilege escalation password
-    ansible_sudo
-      The boolean to decide if sudo should be used for this host. Defaults to false.
-    ansible_sudo_user
-      Run operations as this user if 'sudo' is enabled.
-    ansible_sudo_pass
-      The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
-    ansible_sudo_exe (new in version 1.8)
-      The sudo command path.
-    ansible_su
-      The boolean to decide if su should be used for this host. Defaults to false.
-    ansible_su_user
-      Run operations as this user if 'su' is enabled.
-    ansible_su_pass
-      The su password to use (this is insecure, we strongly recommend using --ask-su-pass)
 
 Remote host environnement parameters::
 
