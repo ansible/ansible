@@ -51,118 +51,95 @@ EXAMPLES = '''
 
 import json
 import urllib
-import urllib2
 import time
 
 API_BASE = "http://api.uptimerobot.com/"
 
 API_ACTIONS = dict(
-	status='getMonitors?',
-	editMonitor='editMonitor?'
+    status='getMonitors?',
+    editMonitor='editMonitor?'
 )
 
 API_FORMAT = 'json'
-
 API_NOJSONCALLBACK = 1
-
 CHANGED_STATE = False
-
 SUPPORTS_CHECK_MODE = False
 
-def checkID(params):
 
-	data = urllib.urlencode(params)
+def checkID(module, params):
 
-	full_uri = API_BASE + API_ACTIONS['status'] + data
-
-	req = urllib2.urlopen(full_uri)
-
-	result = req.read()
-
-	jsonresult = json.loads(result)
-
-	req.close()
-
-	return jsonresult
+    data = urllib.urlencode(params)
+    full_uri = API_BASE + API_ACTIONS['status'] + data
+    req, info = fetch_url(module, full_uri)
+    result = req.read()
+    jsonresult = json.loads(result)
+    req.close()
+    return jsonresult
 
 
-def startMonitor(params):
+def startMonitor(module, params):
 
-	params['monitorStatus'] = 1
-
-	data = urllib.urlencode(params)
-
-	full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
-
-	req = urllib2.urlopen(full_uri)
-
-	result = req.read()
-
-	jsonresult = json.loads(result)
-
-	req.close()
-
-	return jsonresult['stat']
+    params['monitorStatus'] = 1
+    data = urllib.urlencode(params)
+    full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
+    req, info = fetch_url(module, full_uri)
+    result = req.read()
+    jsonresult = json.loads(result)
+    req.close()
+    return jsonresult['stat']
 
 
-def pauseMonitor(params):
+def pauseMonitor(module, params):
 
-	params['monitorStatus'] = 0
-
-	data = urllib.urlencode(params)
-
-	full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
-
-	req = urllib2.urlopen(full_uri)
-
-	result = req.read()
-
-	jsonresult = json.loads(result)
-
-	req.close()
-
-	return jsonresult['stat']
+    params['monitorStatus'] = 0
+    data = urllib.urlencode(params)
+    full_uri = API_BASE + API_ACTIONS['editMonitor'] + data
+    req, info = fetch_url(module, full_uri)
+    result = req.read()
+    jsonresult = json.loads(result)
+    req.close()
+    return jsonresult['stat']
 
 
 def main():
 
-	module = AnsibleModule(
-	    argument_spec = dict(
-	        state     = dict(required=True, choices=['started', 'paused']),
-	        apikey      = dict(required=True),
-	        monitorid   = dict(required=True)
-	    ),
-	    supports_check_mode=SUPPORTS_CHECK_MODE
-	)
+    module = AnsibleModule(
+        argument_spec = dict(
+            state     = dict(required=True, choices=['started', 'paused']),
+            apikey      = dict(required=True),
+            monitorid   = dict(required=True)
+        ),
+        supports_check_mode=SUPPORTS_CHECK_MODE
+    )
 
-	params = dict(
-		apiKey=module.params['apikey'],
-		monitors=module.params['monitorid'],
-		monitorID=module.params['monitorid'],
-		format=API_FORMAT,
-		noJsonCallback=API_NOJSONCALLBACK
-	)
+    params = dict(
+        apiKey=module.params['apikey'],
+        monitors=module.params['monitorid'],
+        monitorID=module.params['monitorid'],
+        format=API_FORMAT,
+        noJsonCallback=API_NOJSONCALLBACK
+    )
 
-	check_result = checkID(params)
+    check_result = checkID(module, params)
 
-	if check_result['stat'] != "ok":
-		module.fail_json(
-			msg="failed",
-			result=check_result['message']
-		)
+    if check_result['stat'] != "ok":
+        module.fail_json(
+            msg="failed",
+            result=check_result['message']
+        )
 
-	if module.params['state'] == 'started':
-		monitor_result = startMonitor(params)
-	else:
-		monitor_result = pauseMonitor(params)
+    if module.params['state'] == 'started':
+        monitor_result = startMonitor(module, params)
+    else:
+        monitor_result = pauseMonitor(module, params)
 
-
-
-	module.exit_json(
-		msg="success",
-		result=monitor_result
-	) 
+    module.exit_json(
+        msg="success",
+        result=monitor_result
+    )
 
 
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.urls import *
+if __name__ == '__main__':
+    main()
