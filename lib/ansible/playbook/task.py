@@ -34,7 +34,6 @@ from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.utils.vars import combine_vars
 
 __all__ = ['Task']
 
@@ -293,25 +292,21 @@ class Task(Base, Conditional, Taggable, Become):
         if self._task_include:
             self._task_include.set_loader(loader)
 
-    def _get_parent_attribute(self, attr, extend=False, combine=False):
+    def _get_parent_attribute(self, attr, extend=False):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
         value = self._attributes[attr]
-        if self._block and (value is None or extend or combine):
+        if self._block and (value is None or extend):
             parent_value = getattr(self._block, attr)
             if extend:
                 value = self._extend_value(value, parent_value)
-            elif combine and isinstance(parent_value, dict) and isinstance(value, dict):
-                value = combine_vars(parent_value, value)
             else:
                 value = parent_value
-        if self._task_include and (value is None or extend or combine):
+        if self._task_include and (value is None or extend):
             parent_value = getattr(self._task_include, attr)
             if extend:
                 value = self._extend_value(value, parent_value)
-            elif combine:
-                value = combine_vars(parent_value, value)
             else:
                 value = parent_value
         return value
@@ -324,7 +319,7 @@ class Task(Base, Conditional, Taggable, Become):
         if environment is None:
             environment = dict()
 
-        environment = self._get_parent_attribute('environment', combine=True)
+        environment = self._get_parent_attribute('environment', extend=True)
 
         return environment
 

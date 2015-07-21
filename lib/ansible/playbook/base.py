@@ -49,7 +49,7 @@ class Base:
 
     # vars and flags
     _vars                = FieldAttribute(isa='dict', default=dict())
-    _environment         = FieldAttribute(isa='dict', default=dict())
+    _environment         = FieldAttribute(isa='list', default=[])
     _no_log              = FieldAttribute(isa='bool', default=False)
 
     def __init__(self):
