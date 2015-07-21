@@ -31,9 +31,7 @@ description:
 author: "Mischa Peters (@mischapeters)"
 notes:
     - Requires A10 Networks aXAPI 2.1
-requirements:
-    - urllib2
-    - re
+requirements: []
 options:
   host:
     description:
@@ -294,6 +292,6 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 from ansible.module_utils.a10 import *
-
-main()
+if __name__ == '__main__':
+    main()
 

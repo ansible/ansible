@@ -97,7 +97,6 @@ EXAMPLES = '''
 - riak: wait_for_service=kv
 '''
 
-import urllib2
 import time
 import socket
 import sys
@@ -254,5 +253,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-
-main()
+if __name__ == '__main__':
+    main()
