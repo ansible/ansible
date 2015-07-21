@@ -33,7 +33,7 @@ from ansible.playbook import Playbook
 from ansible.playbook.task import Task
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
 #---------------------------------------------------------------------------------------------------
@@ -103,20 +103,6 @@ class PlaybookCLI(CLI):
 
         loader = DataLoader(vault_password=vault_pass)
 
-        extra_vars = {}
-        for extra_vars_opt in self.options.extra_vars:
-            extra_vars_opt = to_unicode(extra_vars_opt, errors='strict')
-            if extra_vars_opt.startswith(u"@"):
-                # Argument is a YAML file (JSON is a subset of YAML)
-                data = loader.load_from_file(extra_vars_opt[1:])
-            elif extra_vars_opt and extra_vars_opt[0] in u'[{':
-                # Arguments as YAML
-                data = loader.load(extra_vars_opt)
-            else:
-                # Arguments as Key-value
-                data = parse_kv(extra_vars_opt)
-            extra_vars = combine_vars(extra_vars, data)
-
         # FIXME: this should be moved inside the playbook executor code
         only_tags = self.options.tags.split(",")
         skip_tags = self.options.skip_tags
@@ -134,7 +120,7 @@ class PlaybookCLI(CLI):
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager()
-        variable_manager.extra_vars = extra_vars
+        variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
