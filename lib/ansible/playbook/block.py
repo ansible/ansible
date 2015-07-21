@@ -301,6 +301,18 @@ class Block(Base, Become, Conditional, Taggable):
 
         return value
 
+    def _get_attr_environment(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        environment = self._attributes['tags']
+        if environment is None:
+            environment = dict()
+
+        environment = self._get_parent_attribute('environment', extend=True)
+
+        return environment
+
     def filter_tagged_tasks(self, play_context, all_vars):
         '''
         Creates a new block, with task lists filtered based on the tags contained

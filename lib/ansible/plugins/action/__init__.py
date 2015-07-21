@@ -81,11 +81,20 @@ class ActionBase:
         Builds the environment string to be used when executing the remote task.
         '''
 
-        if self._task.environment:
-            if type(self._task.environment) != dict:
-                raise errors.AnsibleError("environment must be a dictionary, received %s" % self._task.environment)
+        final_environment = dict()
+        if self._task.environment is not None:
+            environments = self._task.environment
+            if not isinstance(environments, list):
+                environments = [ environments ]
 
-        return self._connection._shell.env_prefix(**self._task.environment)
+            for environment in environments:
+                if type(environment) != dict:
+                    raise errors.AnsibleError("environment must be a dictionary, received %s" % environment)
+                # very deliberatly using update here instead of combine_vars, as
+                # these environment settings should not need to merge sub-dicts
+                final_environment.update(environment)
+
+        return self._connection._shell.env_prefix(**final_environment)
 
     def _early_needs_tmp_path(self):
         '''

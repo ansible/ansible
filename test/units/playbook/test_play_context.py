@@ -73,7 +73,6 @@ class TestPlayContext(unittest.TestCase):
         mock_play.become_method = 'mock'
         mock_play.become_user   = 'mockroot'
         mock_play.no_log        = True
-        mock_play.environment   = dict(mock='mockenv')
 
         play_context = PlayContext(play=mock_play, options=options)
         self.assertEqual(play_context.connection, 'mock')
@@ -81,7 +80,6 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(play_context.password, '')
         self.assertEqual(play_context.port, 1234)
         self.assertEqual(play_context.no_log, True)
-        self.assertEqual(play_context.environment, dict(mock="mockenv"))
         self.assertEqual(play_context.become, True)
         self.assertEqual(play_context.become_method, "mock")
         self.assertEqual(play_context.become_user, "mockroot")
@@ -94,7 +92,6 @@ class TestPlayContext(unittest.TestCase):
         mock_task.become_user   = 'mocktaskroot'
         mock_task.become_pass   = 'mocktaskpass'
         mock_task.no_log        = False
-        mock_task.environment   = dict(mock='mocktaskenv')
 
         mock_host = MagicMock()
         mock_host.get_vars.return_value = dict(
@@ -108,7 +105,6 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(play_context.remote_user, 'mocktask')
         self.assertEqual(play_context.port, 4321)
         self.assertEqual(play_context.no_log, False)
-        self.assertEqual(play_context.environment, dict(mock="mocktaskenv"))
         self.assertEqual(play_context.become, True)
         self.assertEqual(play_context.become_method, "mocktask")
         self.assertEqual(play_context.become_user, "mocktaskroot")

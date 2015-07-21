@@ -217,7 +217,6 @@ class PlayContext(Base):
 
         # non connection related
         self.no_log      = play.no_log
-        self.environment = play.environment
 
         if play.force_handlers is not None:
             self.force_handlers = play.force_handlers
@@ -299,7 +298,7 @@ class PlayContext(Base):
 
         # loop through a subset of attributes on the task object and set
         # connection fields based on their values
-        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
+        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'no_log'):
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
                 if attr_val is not None:
