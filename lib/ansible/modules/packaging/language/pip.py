@@ -71,7 +71,7 @@ options:
     required: false
     default: virtualenv
   virtualenv_python:
-    version_added: "FIXME"
+    version_added: "2.0"
     description:
       - The Python executable used for creating the virtual environment.
         For example C(python3.4), C(python2.7). When not specified, the
