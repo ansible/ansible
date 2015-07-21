@@ -35,21 +35,28 @@ EXAMPLES = '''
 
 import urllib
 
-import urllib2
-
 try:
     import json
 except ImportError:
-    json = None
+    try:
+        import simplejson as json
+    except ImportError:
+        json = None
 
 
-def do_request(url, params, headers={}):
+def do_request(module, url, params, headers=None):
     data = urllib.urlencode(params)
+    if headers is None:
+        headers = dict()
     headers = dict(headers, **{
         'User-Agent': 'Ansible/typetalk module',
     })
-    return urllib2.urlopen(urllib2.Request(url, data, headers))
-
+    r, info = fetch_url(module, url, data=data, headers=headers)
+    if info['status'] != 200:
+        exc = ConnectionError(info['msg'])
+        exc.code = info['status']
+        raise exc
+    return r
 
 def get_access_token(client_id, client_secret):
     params = {
@@ -62,7 +69,7 @@ def get_access_token(client_id, client_secret):
     return json.load(res)['access_token']
 
 
-def send_message(client_id, client_secret, topic, msg):
+def send_message(module, client_id, client_secret, topic, msg):
     """
     send message to typetalk
     """
@@ -72,9 +79,9 @@ def send_message(client_id, client_secret, topic, msg):
         headers = {
             'Authorization': 'Bearer %s' % access_token,
         }
-        do_request(url, {'message': msg}, headers)
+        do_request(module, url, {'message': msg}, headers)
         return True, {'access_token': access_token}
-    except urllib2.HTTPError, e:
+    except ConnectionError, e:
         return False, e
 
 
@@ -98,7 +105,7 @@ def main():
     topic = module.params["topic"]
     msg = module.params["msg"]
 
-    res, error = send_message(client_id, client_secret, topic, msg)
+    res, error = send_message(module, client_id, client_secret, topic, msg)
     if not res:
         module.fail_json(msg='fail to send message with response code %s' % error.code)
 
@@ -107,4 +114,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.urls import *
+if __name__ == '__main__':
+    main()
