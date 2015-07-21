@@ -21,7 +21,7 @@
 
 DOCUMENTATION = '''
 module: clc_group
-short_desciption: Create/delete Server Groups at Centurylink Cloud
+short_description: Create/delete Server Groups at Centurylink Cloud
 description:
   - Create or delete Server Groups at Centurylink Centurylink Cloud
 version_added: 1.0
