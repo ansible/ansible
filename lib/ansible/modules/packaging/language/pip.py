@@ -155,7 +155,7 @@ def _get_cmd_options(module, cmd):
     words = stdout.strip().split()
     cmd_options = [ x for x in words if x.startswith('--') ]
     return cmd_options
-    
+
 
 def _get_full_name(name, version=None):
     if version is None:
@@ -356,7 +356,8 @@ def main():
     rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=this_dir)
     out += out_pip
     err += err_pip
-    if rc == 1 and state == 'absent' and 'not installed' in out_pip:
+    if rc == 1 and state == 'absent' and \
+       ('not installed' in out_pip or 'not installed' in err_pip):
         pass  # rc is 1 when attempting to uninstall non-installed package
     elif rc != 0:
         _fail(module, cmd, out, err)
