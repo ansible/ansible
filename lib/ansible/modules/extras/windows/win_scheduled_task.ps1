@@ -168,23 +168,20 @@ try {
 
     if ($state -eq "present" -and $exists -eq $false){
         $action = New-ScheduledTaskAction -Execute $execute
-        Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $
-description -TaskPath $path -Settings $settings
+        Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings
         $task = Get-ScheduledTask -TaskName $name
         Set-Attr $result "msg" "Added new task $name"
         $result.changed = $true
     }
     elseif($state -eq "present" -and $exists -eq $true) {
-        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPat
-h -eq $path -and $task.Actions.Execute -eq $execute -and $taskState -eq $enabled) {
+        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $execute -and $taskState -eq $enabled) {
             #No change in the task yet
             Set-Attr $result "msg" "No change in task $name"
         }
         else {
             Unregister-ScheduledTask -TaskName $name -Confirm:$false
             $action = New-ScheduledTaskAction -Execute $execute
-            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Descripti
-on $description -TaskPath $path -Settings $settings
+            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings
             $task = Get-ScheduledTask -TaskName $name
             Set-Attr $result "msg" "Updated task $name"
             $result.changed = $true
