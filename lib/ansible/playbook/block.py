@@ -310,7 +310,7 @@ class Block(Base, Become, Conditional, Taggable):
         def evaluate_and_append_task(target):
             tmp_list = []
             for task in target:
-                if task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
+                if task.action == 'include' or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 
