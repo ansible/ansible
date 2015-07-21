@@ -166,7 +166,6 @@ EXAMPLES = '''
 '''
 
 import sys
-import urllib2
 
 try:
     import json
@@ -179,7 +178,7 @@ try:
     python_consul_installed = True
 except ImportError, e:
     python_consul_installed = False
-    
+
 def register_with_consul(module):
 
     state = module.params.get('state')
@@ -503,4 +502,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
