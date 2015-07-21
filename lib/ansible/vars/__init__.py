@@ -188,7 +188,11 @@ class VariableManager:
 
         if play:
             all_vars = self._combine_vars(all_vars, play.get_vars())
-            templar = Templar(loader=loader, variables=all_vars)
+            
+            # create a set of temporary vars here, which incorporate any extra vars
+            # which may have been specified, so we can properly template vars_files
+            temp_vars = self._combine_vars(all_vars, self.extra_vars)
+            templar = Templar(loader=loader, variables=temp_vars)
 
             for vars_file_item in play.get_vars_files():
                 try:
