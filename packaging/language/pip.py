@@ -63,13 +63,21 @@ options:
     default: "no"
     choices: [ "yes", "no" ]
   virtualenv_command:
-    version_aded: "1.1"
+    version_added: "1.1"
     description:
       - The command or a pathname to the command to create the virtual
         environment with. For example C(pyvenv), C(virtualenv),
         C(virtualenv2), C(~/bin/virtualenv), C(/usr/local/bin/virtualenv).
     required: false
     default: virtualenv
+  virtualenv_python:
+    version_added: "FIXME"
+    description:
+      - The Python executable used for creating the virtual environment.
+        For example C(python3.4), C(python2.7). When not specified, the
+        system Python version is used.
+    required: false
+    default: null
   state:
     description:
       - The state of module
@@ -228,6 +236,7 @@ def main():
             virtualenv=dict(default=None, required=False),
             virtualenv_site_packages=dict(default='no', type='bool'),
             virtualenv_command=dict(default='virtualenv', required=False),
+            virtualenv_python=dict(default=None, required=False, type='str'),
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
             chdir=dict(default=None, required=False),
@@ -243,6 +252,7 @@ def main():
     version = module.params['version']
     requirements = module.params['requirements']
     extra_args = module.params['extra_args']
+    virtualenv_python = module.params['virtualenv_python']
     chdir = module.params['chdir']
 
     if state == 'latest' and version is not None:
@@ -260,18 +270,21 @@ def main():
             if module.check_mode:
                 module.exit_json(changed=True)
 
-            virtualenv = os.path.expanduser(virtualenv_command)
-            if os.path.basename(virtualenv) == virtualenv:
-                virtualenv = module.get_bin_path(virtualenv_command, True)
+            cmd = os.path.expanduser(virtualenv_command)
+            if os.path.basename(cmd) == cmd:
+                cmd = module.get_bin_path(virtualenv_command, True)
 
             if module.params['virtualenv_site_packages']:
-                cmd = '%s --system-site-packages %s' % (virtualenv, env)
+                cmd += ' --system-site-packages'
             else:
-                cmd_opts = _get_cmd_options(module, virtualenv)
+                cmd_opts = _get_cmd_options(module, cmd)
                 if '--no-site-packages' in cmd_opts:
-                    cmd = '%s --no-site-packages %s' % (virtualenv, env)
-                else:
-                    cmd = '%s %s' % (virtualenv, env)
+                    cmd += ' --no-site-packages'
+
+            if virtualenv_python:
+                cmd += ' -p%s' % virtualenv_python
+
+            cmd = "%s %s" % (cmd, env)
             this_dir = tempfile.gettempdir()
             if chdir:
                 this_dir = os.path.join(this_dir, chdir)
@@ -286,14 +299,14 @@ def main():
     cmd = '%s %s' % (pip, state_map[state])
 
     # If there's a virtualenv we want things we install to be able to use other
-    # installations that exist as binaries within this virtualenv. Example: we 
-    # install cython and then gevent -- gevent needs to use the cython binary, 
-    # not just a python package that will be found by calling the right python. 
+    # installations that exist as binaries within this virtualenv. Example: we
+    # install cython and then gevent -- gevent needs to use the cython binary,
+    # not just a python package that will be found by calling the right python.
     # So if there's a virtualenv, we add that bin/ to the beginning of the PATH
     # in run_command by setting path_prefix here.
     path_prefix = None
     if env:
-        path_prefix="/".join(pip.split('/')[:-1])
+        path_prefix = "/".join(pip.split('/')[:-1])
 
     # Automatically apply -e option to extra_args when source is a VCS url. VCS
     # includes those beginning with svn+, git+, hg+ or bzr+
@@ -354,7 +367,8 @@ def main():
         changed = 'Successfully installed' in out_pip
 
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                     state=state, requirements=requirements, virtualenv=env, stdout=out, stderr=err)
+                     state=state, requirements=requirements, virtualenv=env,
+                     stdout=out, stderr=err)
 
 # import module snippets
 from ansible.module_utils.basic import *
