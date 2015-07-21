@@ -88,6 +88,7 @@ New Modules:
   * openstack: os_volume
   * osx_defaults
   * pear
+  * profitbricks: profitbricks
   * proxmox
   * proxmox_template 
   * puppet 
