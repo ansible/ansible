@@ -296,7 +296,7 @@ options:
       - CPUs in which to allow execution. Requires docker-py >= 0.6.0.
     required: false
     default: null
-    version_added: "1.9"
+    version_added: "2.0"
 
 author:
     - "Cove Schneider (@cove)"
