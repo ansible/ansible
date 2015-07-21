@@ -24,6 +24,8 @@ import os
 from collections import defaultdict
 from collections import MutableMapping
 
+from jinja2.exceptions import UndefinedError
+
 try:
     from hashlib import sha1
 except ImportError:
@@ -189,13 +191,13 @@ class VariableManager:
         if play:
             all_vars = self._combine_vars(all_vars, play.get_vars())
             
-            # create a set of temporary vars here, which incorporate any extra vars
-            # which may have been specified, so we can properly template vars_files
-            temp_vars = self._combine_vars(all_vars, self.extra_vars)
-            templar = Templar(loader=loader, variables=temp_vars)
-
             for vars_file_item in play.get_vars_files():
                 try:
+                    # create a set of temporary vars here, which incorporate the
+                    # extra vars so we can properly template the vars_files entries
+                    temp_vars = self._combine_vars(all_vars, self._extra_vars)
+                    templar = Templar(loader=loader, variables=temp_vars)
+
                     # we assume each item in the list is itself a list, as we
                     # support "conditional includes" for vars_files, which mimics
                     # the with_first_found mechanism.
@@ -218,6 +220,8 @@ class VariableManager:
                     #        whether or not vars files errors should be fatal at this
                     #        stage, or just base it on whether a host was specified?
                     pass
+                except UndefinedError, e:
+                    continue
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
