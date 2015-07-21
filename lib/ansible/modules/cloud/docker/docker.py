@@ -169,8 +169,7 @@ options:
     description:
       - Username or UID to use within the container
     required: false
-    default:
-    aliases: []
+    default: null
     version_added: "2.0"
   username:
     description:
