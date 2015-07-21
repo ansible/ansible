@@ -16,7 +16,7 @@ description:
 version_added: "1.3"
 author: "Artūras `arturaz` Šlajus (@arturaz)"
 notes: []
-requirements: [urllib2]
+requirements: []
 options:
     api_key:
         description: ["Your DataDog API key."]
@@ -139,5 +139,5 @@ def post_event(module):
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-
-main()
+if __name__ == '__main__':
+    main()
