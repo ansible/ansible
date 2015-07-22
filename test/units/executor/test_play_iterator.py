@@ -77,19 +77,37 @@ class TestPlayIterator(unittest.TestCase):
             all_vars=dict(),
         )
 
+        # pre task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        print(task)
         self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'debug')
+        # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        print(task)
         self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'meta')
+        # role task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        print(task)
         self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'debug')
+        self.assertIsNotNone(task._role)
+        # regular play task
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        print(task)
         self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'debug')
+        self.assertIsNone(task._role)
+        # implicit meta: flush_handlers
         (host_state, task) = itr.get_next_task_for_host(hosts[0])
-        print(task)
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'meta')
+        # post task
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'debug')
+        # implicit meta: flush_handlers
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
+        self.assertIsNotNone(task)
+        self.assertEqual(task.action, 'meta')
+        # end of iteration
+        (host_state, task) = itr.get_next_task_for_host(hosts[0])
         self.assertIsNone(task)
 
