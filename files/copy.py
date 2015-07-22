@@ -63,21 +63,13 @@ options:
   force:
     description:
       - the default is C(yes), which will replace the remote file when contents
-        are different than the source.  If C(no), the file will only be transferred
+        are different than the source. If C(no), the file will only be transferred
         if the destination does not exist.
     version_added: "1.1"
     required: false
     choices: [ "yes", "no" ]
     default: "yes"
     aliases: [ "thirsty" ]
-  validate:
-    description:
-      - The validation command to run before copying into place.  The path to the file to
-        validate is passed in via '%s' which must be present as in the visudo example below.
-        The command is passed securely so shell features like expansion and pipes won't work.
-    required: false
-    default: ""
-    version_added: "1.2"
   directory_mode:
     description:
       - When doing a recursive copy set the mode for the directories. If this is not set we will use the system
@@ -86,6 +78,7 @@ options:
     required: false
     version_added: "1.5"
 extends_documentation_fragment: files
+extends_documentation_fragment: validate
 author: 
     - "Ansible Core Team"
     - "Michael DeHaan"
