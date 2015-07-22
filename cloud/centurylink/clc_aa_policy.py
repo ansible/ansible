@@ -55,7 +55,7 @@ notes:
     - To use this module, it is required to set the below environment variables which enables access to the
       Centurylink Cloud
           - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
-          - CLC_V2_API_PASSWORD, the account passwod for the centurylink cloud
+          - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
     - Alternatively, the module accepts the API token and account alias. The API token can be generated using the
       CLC account login and password via the HTTP api call @ https://api.ctl.io/v2/authentication/login
           - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login
@@ -229,7 +229,7 @@ class ClcAntiAffinityPolicy():
 
     def _create_policy(self, p):
         """
-        Create an Anti Affinnity Policy using the CLC API.
+        Create an Anti Affinity Policy using the CLC API.
         :param p: datacenter to create policy in
         :return: response dictionary from the CLC API.
         """
@@ -283,7 +283,7 @@ class ClcAntiAffinityPolicy():
     def _ensure_policy_is_present(self, p):
         """
         Ensures that a policy is present
-        :param p: dictonary of a policy name
+        :param p: dictionary of a policy name
         :return: tuple of if an addition occurred and the name of the policy that was added
         """
         changed = False
