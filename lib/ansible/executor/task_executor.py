@@ -407,9 +407,12 @@ class TaskExecutor:
                 conn_type = "paramiko"
             else:
                 # see if SSH can support ControlPersist if not use paramiko
-                cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (out, err) = cmd.communicate()
-                if "Bad configuration option" in err:
+                try:
+                    cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    (out, err) = cmd.communicate()
+                    if "Bad configuration option" in err:
+                        conn_type = "paramiko"
+                except OSError:
                     conn_type = "paramiko"
 
         connection = connection_loader.get(conn_type, self._play_context, self._new_stdin)
