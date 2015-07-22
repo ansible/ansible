@@ -94,8 +94,8 @@ def main():
     AGENT = "Ansible/1.2"
 
     # Hack to add basic auth username and password the way fetch_url expects
-    module.params['username'] = token
-    module.params['password'] = 'X'
+    module.params['url_username'] = token
+    module.params['url_password'] = 'X'
 
     target_url = '%s/room/%s/speak.xml' % (URI, room)
     headers = {'Content-Type': 'application/xml',
