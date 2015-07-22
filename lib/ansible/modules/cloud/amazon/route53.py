@@ -226,7 +226,7 @@ EXAMPLES = '''
 - route53:
       command: "create"
       zone: "foo.com"
-      hostes_zone_id: "Z2AABBCCDDEEFF"
+      hosted_zone_id: "Z2AABBCCDDEEFF"
       record: "localhost.foo.com"
       type: "AAAA"
       ttl: "7200"
