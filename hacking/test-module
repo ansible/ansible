@@ -26,7 +26,7 @@
 #    test-module -m ../library/commands/command -a "/bin/sleep 3"
 #    test-module -m ../library/system/service -a "name=httpd ensure=restarted"
 #    test-module -m ../library/system/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
-#    test-modulr -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
+#    test-module -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
 #    test-module -m ../library/commands/command -a "echo hello" -n -o "test_hello"
 
 import sys
@@ -69,7 +69,7 @@ def parse():
         help="run the module in check mode")
     parser.add_option('-n', '--noexecute', dest='execute', action='store_false',
         default=True, help="do not run the resulting module")
-    parser.add_option('-o', '--output', dest='filename', 
+    parser.add_option('-o', '--output', dest='filename',
         help="Filename for resulting module",
         default="~/.ansible_module_generated")
     options, args = parser.parse_args()
@@ -195,7 +195,7 @@ def main():
         else:
             raise Exception("internal error, unexpected module style: %s" % module_style)
     if options.execute:
-        if options.debugger: 
+        if options.debugger:
             rundebug(options.debugger, modfile, argspath)
         else:
             runtest(modfile, argspath)
