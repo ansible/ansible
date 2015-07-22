@@ -82,7 +82,10 @@ class StrategyModule(StrategyBase):
             # specified in the given hosts array
             rvals = []
             for host in hosts:
-                (s, t) = host_tasks[host.name]
+                host_state_task = host_tasks[host.name]
+                if host_state_task is None:
+                    continue
+                (s, t) = host_state_task
                 if s.run_state == cur_state and s.cur_block == cur_block:
                     new_t = iterator.get_next_task_for_host(host)
                     #if new_t != t:
