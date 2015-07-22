@@ -31,6 +31,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
+from ansible.utils.unicode import to_unicode
 
 __all__ = ['PlayContext']
 
@@ -251,7 +252,7 @@ class PlayContext(Base):
         if hasattr(options, 'step') and options.step:
             self.step = boolean(options.step)
         if hasattr(options, 'start_at_task') and options.start_at_task:
-            self.start_at_task = options.start_at_task
+            self.start_at_task = to_unicode(options.start_at_task)
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the
