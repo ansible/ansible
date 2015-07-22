@@ -472,6 +472,12 @@ class Connection(ConnectionBase):
             indata = None
         else:
             cmd.append('sftp')
+            # sftp batch mode allows us to correctly catch failed transfers,
+            # but can be disabled if for some reason the client side doesn't
+            # support the option
+            if C.DEFAULT_SFTP_BATCH_MODE:
+                cmd.append('-b')
+                cmd.append('-')
             cmd.extend(self._common_args)
             cmd.append(self.host)
             indata = "get {0} {1}\n".format(in_path, out_path)

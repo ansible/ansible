@@ -131,9 +131,12 @@ class ActionModule(ActionBase):
             if remote_data is None:
                 self._connection.fetch_file(source, dest)
             else:
-                f = open(dest, 'w')
-                f.write(remote_data)
-                f.close()
+                try:
+                    f = open(dest, 'w')
+                    f.write(remote_data)
+                    f.close()
+                except (IOError, OSError) as e:
+                    raise AnsibleError("Failed to fetch the file: %s" % e)
             new_checksum = secure_hash(dest)
             # For backwards compatibility.  We'll return None on FIPS enabled
             # systems
