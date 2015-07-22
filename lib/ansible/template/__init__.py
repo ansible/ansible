@@ -211,8 +211,9 @@ class Templar:
         '''
 
         if isinstance(variable, basestring):
-            first_part = variable.split(".")[0].split("[")[0]
-            if first_part in self._available_variables and self.environment.variable_start_string not in variable:
+            contains_filters = "|" in variable
+            first_part = variable.split("|")[0].split(".")[0].split("[")[0]
+            if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
