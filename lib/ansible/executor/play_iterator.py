@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import fnmatch
+
 from ansible import constants as C
 
 from ansible.errors import *
@@ -108,10 +110,10 @@ class PlayIterator:
                      (s, task) = self.get_next_task_for_host(host, peek=True)
                      if s.run_state == self.ITERATING_COMPLETE:
                          break
-                     if task.get_name() != play_context.start_at_task:
-                         self.get_next_task_for_host(host)
-                     else:
+                     if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task):
                          break
+                     else:
+                         self.get_next_task_for_host(host)
 
         # Extend the play handlers list to include the handlers defined in roles
         self._play.handlers.extend(play.compile_roles_handlers())
