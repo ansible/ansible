@@ -110,7 +110,7 @@ options:
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
-   - Both C(login_password) and C(login_username) are required when you are
+   - Both C(login_password) and C(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
      default login of 'root' with no password.
