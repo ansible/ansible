@@ -65,15 +65,6 @@ options:
     required: false
     default: paravirtual
     choices: ["paravirtual", "hvm"]
-  validate_certs:
-    description:
-      - If C(no), SSL certificates will not be validated.  This should only
-        be set to C(no) used on personally controlled sites using self-signed
-        certificates.  Prior to 1.9.3 the code defaulted to C(no).
-    required: false
-    default: 'yes'
-    choices: ['yes', 'no']
-    version_added: '1.9.3'
 
 author: Lorin Hochstein
 '''
@@ -193,7 +184,6 @@ def main():
         region=dict(required=False, default='us-east-1', choices=AWS_REGIONS),
         virt=dict(required=False, default='paravirtual',
             choices=['paravirtual', 'hvm']),
-        validate_certs = dict(required=False, default=True, type='bool'),
     )
     module = AnsibleModule(argument_spec=arg_spec)
     distro = module.params['distro']
