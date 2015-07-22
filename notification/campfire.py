@@ -42,7 +42,7 @@ options:
               "vuvuzela", "what", "whoomp", "yeah", "yodel"]
 
 # informational: requirements for nodes
-requirements: [ urllib2, cgi ]
+requirements: [ ]
 author: "Adam Garside (@fabulops)"
 '''
 
@@ -53,18 +53,9 @@ EXAMPLES = '''
         msg="Task completed ... with feeling."
 '''
 
+import cgi
 
 def main():
-
-    try:
-        import urllib2
-    except ImportError:
-        module.fail_json(msg="urllib2 is required")
-
-    try:
-        import cgi
-    except ImportError:
-        module.fail_json(msg="cgi is required")
 
     module = AnsibleModule(
         argument_spec=dict(
@@ -102,42 +93,33 @@ def main():
     MSTR = "<message><body>%s</body></message>"
     AGENT = "Ansible/1.2"
 
-    try:
+    # Hack to add basic auth username and password the way fetch_url expects
+    module.params['username'] = token
+    module.params['password'] = 'X'
 
-        # Setup basic auth using token as the username
-        pm = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        pm.add_password(None, URI, token, 'X')
+    target_url = '%s/room/%s/speak.xml' % (URI, room)
+    headers = {'Content-Type': 'application/xml',
+            'User-agent': AGENT}
 
-        # Setup Handler and define the opener for the request
-        handler = urllib2.HTTPBasicAuthHandler(pm)
-        opener = urllib2.build_opener(handler)
+    # Send some audible notification if requested
+    if notify:
+        response, info = fetch_url(module, target_url, data=NSTR % cgi.escape(notify), headers=headers)
+    if info['status'] != 200:
+        module.fail_json(msg="unable to send msg: '%s', campfire api"
+                            " returned error code: '%s'" %
+                             (notify, info['status']))
 
-        target_url = '%s/room/%s/speak.xml' % (URI, room)
-
-        # Send some audible notification if requested
-        if notify:
-            req = urllib2.Request(target_url, NSTR % cgi.escape(notify))
-            req.add_header('Content-Type', 'application/xml')
-            req.add_header('User-agent', AGENT)
-            response = opener.open(req)
-
-        # Send the message
-        req = urllib2.Request(target_url, MSTR % cgi.escape(msg))
-        req.add_header('Content-Type', 'application/xml')
-        req.add_header('User-agent', AGENT)
-        response = opener.open(req)
-
-    except urllib2.HTTPError, e:
-        if not (200 <= e.code < 300):
-            module.fail_json(msg="unable to send msg: '%s', campfire api"
-                                 " returned error code: '%s'" %
-                                 (msg, e.code))
-
-    except Exception, e:
-        module.fail_json(msg="unable to send msg: %s" % msg)
+    # Send the message
+    response, info = fetch_url(module, target_url, data=MSTR %cgi.escape(msg), headers=headers)
+    if info['status'] != 200:
+        module.fail_json(msg="unable to send msg: '%s', campfire api"
+                            " returned error code: '%s'" %
+                             (msg, info['status']))
 
     module.exit_json(changed=True, room=room, msg=msg, notify=notify)
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.urls import *
+if __name__ == '__main__':
+    main()
