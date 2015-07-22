@@ -143,7 +143,7 @@ class Templar:
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None, convert_data=True):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -171,14 +171,16 @@ class Templar:
 
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
 
-                    # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or result.startswith("[") or result in ("True", "False"):
-                        eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
-                        if eval_results[1] is None:
-                            result = eval_results[0]
-                        else:
-                            # FIXME: if the safe_eval raised an error, should we do something with it?
-                            pass
+                    if convert_data:
+                        # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                        if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                           result.startswith("[") or result in ("True", "False"):
+                            eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                            if eval_results[1] is None:
+                                result = eval_results[0]
+                            else:
+                                # FIXME: if the safe_eval raised an error, should we do something with it?
+                                pass
 
                 return result
 
