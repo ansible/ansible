@@ -291,12 +291,6 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
                     module.fail_json(changed=False, msg="Passsword doesn't conform to policy")
                 else:
                     module.fail_json(msg=error_msg)
-    else:
-        try:
-            iam.delete_login_profile(name)
-            changed = True
-        except boto.exception.BotoServerError:
-            pass
 
     if key_state == 'create':
         try:
