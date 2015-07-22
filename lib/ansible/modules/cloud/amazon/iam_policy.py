@@ -120,7 +120,7 @@ tasks:
   iam_policy:
     iam_type: user
     iam_name: "{{ item.user }}"
-    policy_name: "s3_limited_access_{{ item.s3_user_prefix }}"
+    policy_name: "s3_limited_access_{{ item.prefix }}"
     state: present
     policy_json: " {{ lookup( 'template', 's3_policy.json.j2') }} "
     with_items:
