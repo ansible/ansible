@@ -60,7 +60,7 @@ class Connection(ConnectionBase):
 
         self._ipv6 = False
         self.host = self._connection_info.remote_addr
-	if self.host != None and self.host.count(":")>1:
+	if self.host is not None and self.host.count(":")>1:
 	    self._ipv6 = True
 
     @property
