@@ -97,7 +97,7 @@ class Task(Base, Conditional, Taggable, Become):
     def get_name(self):
        ''' return the name of the task '''
 
-       if self._role and self.name:
+       if self._role and self.name and not self.name.startswith("%s :" % self._role.get_name()):
            return "%s : %s" % (self._role.get_name(), self.name)
        elif self.name:
            return self.name
