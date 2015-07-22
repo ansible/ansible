@@ -146,6 +146,7 @@ If ($state -eq 'present') {
             If ($password -ne $null) {
                 $user_obj.SetPassword($password)
             }
+            $user_obj.SetInfo()
             $result.changed = $true
         }
         ElseIf (($password -ne $null) -and ($update_password -eq 'always')) {
