@@ -275,7 +275,7 @@ options:
       - Mount the container's root filesystem as read only
     default: false
     aliases: []
-    version_added: "1.9"
+    version_added: "2.0"
   restart_policy:
     description:
       - Container restart policy.
