@@ -988,7 +988,7 @@ class FreeBsdService(Service):
 
         try:
             return self.service_enable_rcconf()
-        except:
+        except Exception:
             self.module.fail_json(msg='unable to set rcvar')
 
     def service_control(self):
