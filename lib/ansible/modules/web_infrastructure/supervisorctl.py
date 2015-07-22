@@ -75,8 +75,8 @@ notes:
   - When C(state) = I(present), the module will call C(supervisorctl reread) then C(supervisorctl add) if the program/group does not exist.
   - When C(state) = I(restarted), the module will call C(supervisorctl update) then call C(supervisorctl restart).
 requirements: [ "supervisorctl" ]
-author: 
-    - "Matt Wright (@mattupstate)" 
+author:
+    - "Matt Wright (@mattupstate)"
     - "Aaron Wang (@inetfuture) <inetfuture@gmail.com>"
 '''
 
@@ -194,14 +194,12 @@ def main():
     if state == 'restarted':
         rc, out, err = run_supervisorctl('update', check_rc=True)
         processes = get_matched_processes()
-        if not processes:
+        if len(processes) == 0:
             module.fail_json(name=name, msg="ERROR (no such process)")
 
         take_action_on_processes(processes, lambda s: True, 'restart', 'started')
 
     processes = get_matched_processes()
-    if not processes:
-         module.fail_json(name=name, msg="ERROR (no such process)")
 
     if state == 'absent':
         if len(processes) == 0:
@@ -230,9 +228,13 @@ def main():
             module.fail_json(msg=out, name=name, state=state)
 
     if state == 'started':
+        if len(processes) == 0:
+            module.fail_json(name=name, msg="ERROR (no such process)")
         take_action_on_processes(processes, lambda s: s not in ('RUNNING', 'STARTING'), 'start', 'started')
 
     if state == 'stopped':
+        if len(processes) == 0:
+            module.fail_json(name=name, msg="ERROR (no such process)")
         take_action_on_processes(processes, lambda s: s in ('RUNNING', 'STARTING'), 'stop', 'stopped')
 
 # import module snippets
