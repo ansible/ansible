@@ -113,11 +113,9 @@ class Connection(ConnectionBase):
         try:
             shutil.copyfile(in_path, out_path)
         except shutil.Error:
-            traceback.print_exc()
             raise AnsibleError("failed to copy: {0} and {1} are the same".format(in_path, out_path))
-        except IOError:
-            traceback.print_exc()
-            raise AnsibleError("failed to transfer file to {0}".format(out_path))
+        except IOError as e:
+            raise AnsibleError("failed to transfer file to {0}: {1}".format(out_path, e))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from local to local -- for copatibility '''
