@@ -58,7 +58,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-        # FIXME: make this work, should be set from connection info
         self._ipv6 = False
         self.host = self._connection_info.remote_addr
 	if self.host != None and self.host.count(":")>1:
@@ -436,8 +435,8 @@ class Connection(ConnectionBase):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         cmd = self._password_cmd()
 
-
-        if self._ipv6 == True:
+        '''SCP and SFTP require square brackets while ssh will break with them'''
+        if self._ipv6:
             tempHost = '[%s]' % self.host
         else:
             tempHost = self.host 	
