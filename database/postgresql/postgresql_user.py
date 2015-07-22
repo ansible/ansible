@@ -490,10 +490,10 @@ def parse_role_attrs(role_attr_flags):
 
 def normalize_privileges(privs, type_):
     new_privs = set(privs)
-    if 'ALL' in privs:
+    if 'ALL' in new_privs:
         new_privs.update(VALID_PRIVS[type_])
         new_privs.remove('ALL')
-    if 'TEMP' in privs:
+    if 'TEMP' in new_privs:
         new_privs.add('TEMPORARY')
         new_privs.remove('TEMP')
 
