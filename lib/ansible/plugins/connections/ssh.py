@@ -37,7 +37,6 @@ from hashlib import sha1
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
-from ansible.utils.debug import debug
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
@@ -367,7 +366,7 @@ class Connection(ConnectionBase):
                   * detect prompt on stderr (no-tty)
             '''
 
-            debug("Handling privilege escalation password prompt.")
+            self._display.debug("Handling privilege escalation password prompt.")
 
             if self._play_context.become and self._play_context.become_pass:
 
@@ -377,7 +376,7 @@ class Connection(ConnectionBase):
                 become_output = ''
                 become_errput = ''
                 while True:
-                    debug('Waiting for Privilege Escalation input')
+                    self._display.debug('Waiting for Privilege Escalation input')
                     if self.check_become_success(become_output) or self.check_password_prompt(become_output):
                         break
 
@@ -400,7 +399,7 @@ class Connection(ConnectionBase):
                         raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
 
                 if not self.check_become_success(become_output):
-                    debug("Sending privilege escalation password.")
+                    self._display.debug("Sending privilege escalation password.")
                     stdin.write(self._play_context.become_pass + '\n')
                 else:
                     no_prompt_out = become_output

@@ -43,7 +43,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 from ansible.utils.path import makedirs_safe
-from ansible.utils.debug import debug
 
 AUTHENTICITY_MSG="""
 paramiko: The authenticity of host '%s' can't be established.
@@ -226,7 +225,7 @@ class Connection(ConnectionBase):
             if self._play_context.prompt:
                 if self._play_context.become and self._play_context.become_pass:
                     while True:
-                        debug('Waiting for Privilege Escalation input')
+                        self._display.debug('Waiting for Privilege Escalation input')
                         if self.check_become_success(become_output) or self.check_password_prompt(become_output):
                             break
                         chunk = chan.recv(bufsize)

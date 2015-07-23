@@ -40,8 +40,10 @@ class LookupModule(LookupBase):
             basedir = self._loader.get_basedir()
 
         for term in terms:
+            self._display.debug("File lookup term: %s" % term)
 
             lookupfile = self._loader.path_dwim_relative(basedir, 'templates', term)
+            self._display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile and os.path.exists(lookupfile):
                 with open(lookupfile, 'r') as f:
                     template_data = f.read()

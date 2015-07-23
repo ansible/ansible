@@ -46,8 +46,7 @@ class CacheModule(BaseCacheModule):
             try:
                 os.makedirs(self._cache_dir)
             except (OSError,IOError), e:
-                # FIXME: this is in display now, but cache plugins don't have that
-                #utils.warning("error while trying to create cache dir %s : %s" % (self._cache_dir, str(e)))
+                self._display.warning("error while trying to create cache dir %s : %s" % (self._cache_dir, str(e)))
                 return None
 
     def get(self, key):
@@ -62,8 +61,7 @@ class CacheModule(BaseCacheModule):
         try:
             f = codecs.open(cachefile, 'r', encoding='utf-8')
         except (OSError,IOError), e:
-            # FIXME: this is in display now, but cache plugins don't have that
-            #utils.warning("error while trying to read %s : %s" % (cachefile, str(e)))
+            self._display.warning("error while trying to read %s : %s" % (cachefile, str(e)))
             pass
         else:
             try:
@@ -71,8 +69,7 @@ class CacheModule(BaseCacheModule):
                 self._cache[key] = value
                 return value
             except ValueError:
-                # FIXME: this is in display now, but cache plugins don't have that
-                #utils.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
+                self._display.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
                 raise KeyError
         finally:
             f.close()
@@ -85,8 +82,7 @@ class CacheModule(BaseCacheModule):
         try:
             f = codecs.open(cachefile, 'w', encoding='utf-8')
         except (OSError,IOError), e:
-            # FIXME: this is in display now, but cache plugins don't have that
-            #utils.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
+            self._display.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
             pass
         else:
             f.write(jsonify(value))
@@ -102,8 +98,7 @@ class CacheModule(BaseCacheModule):
             if e.errno == errno.ENOENT:
                 return False
             else:
-                # FIXME: this is in display now, but cache plugins don't have that
-                #utils.warning("error while trying to stat %s : %s" % (cachefile, str(e)))
+                self._display.warning("error while trying to stat %s : %s" % (cachefile, str(e)))
                 pass
 
         if time.time() - st.st_mtime <= self._timeout:
@@ -135,8 +130,7 @@ class CacheModule(BaseCacheModule):
             if e.errno == errno.ENOENT:
                 return False
             else:
-                # FIXME: this is in display now, but cache plugins don't have that
-                #utils.warning("error while trying to stat %s : %s" % (cachefile, str(e)))
+                self._display.warning("error while trying to stat %s : %s" % (cachefile, str(e)))
                 pass
 
     def delete(self, key):

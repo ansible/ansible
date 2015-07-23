@@ -24,6 +24,8 @@ import os
 import random
 import subprocess
 import sys
+import time
+from multiprocessing import Lock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -44,6 +46,7 @@ class Display:
         self.cowsay = None
         self.noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
         self.set_cowsay_info()
+        #self.debug_lock = Lock()
 
     def set_cowsay_info(self):
 
@@ -101,6 +104,14 @@ class Display:
 
     def vvvvvv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=5)
+
+    def debug(self, msg):
+        if C.DEFAULT_DEBUG:
+            # FIXME: enable when display is inherited to all
+            #self.debug_lock.acquire()
+            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color='dark gray')
+            sys.stdout.flush()
+            #self.debug_lock.release()
 
     def verbose(self, msg, host=None, caplevel=2):
         # FIXME: this needs to be implemented

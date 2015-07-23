@@ -22,8 +22,16 @@ from abc import ABCMeta, abstractmethod
 
 from six import with_metaclass
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class BaseCacheModule(with_metaclass(ABCMeta, object)):
+
+    display = display
 
     @abstractmethod
     def get(self, key):

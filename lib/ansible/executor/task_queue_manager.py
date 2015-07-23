@@ -34,8 +34,6 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader
 from ansible.template import Templar
 
-from ansible.utils.debug import debug
-
 __all__ = ['TaskQueueManager']
 
 class TaskQueueManager:
@@ -194,7 +192,7 @@ class TaskQueueManager:
         return strategy.run(iterator, play_context)
 
     def cleanup(self):
-        debug("RUNNING CLEANUP")
+        self._display.debug("RUNNING CLEANUP")
 
         self.terminate()
 

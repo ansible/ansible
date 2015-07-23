@@ -31,8 +31,12 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.role import hash_params
 from ansible.plugins import _basedirs, filter_loader, lookup_loader, module_loader
 from ansible.template import Templar
-from ansible.utils.debug import debug
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 __all__ = ['StrategyBase']
 
@@ -65,6 +69,7 @@ class StrategyBase:
         self._variable_manager  = tqm.get_variable_manager()
         self._loader            = tqm.get_loader()
         self._final_q           = tqm._final_q
+        self._display           = display
 
         # internal counters
         self._pending_results   = 0
@@ -80,7 +85,7 @@ class StrategyBase:
         failed_hosts      = self._tqm._failed_hosts.keys()
         unreachable_hosts = self._tqm._unreachable_hosts.keys()
 
-        debug("running handlers")
+        self._display.debug("running handlers")
         result &= self.run_handlers(iterator, play_context)
 
         # now update with the hosts (if any) that failed or were
@@ -120,12 +125,12 @@ class StrategyBase:
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
 
-        debug("entering _queue_task() for %s/%s" % (host, task))
+        self._display.debug("entering _queue_task() for %s/%s" % (host, task))
 
         # and then queue the new task
-        debug("%s - putting task (%s) in queue" % (host, task))
+        self._display.debug("%s - putting task (%s) in queue" % (host, task))
         try:
-            debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
+            self._display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
 
             (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
             self._cur_worker += 1
@@ -140,9 +145,9 @@ class StrategyBase:
             self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
-            debug("got an error while queuing: %s" % e)
+            self._display.debug("got an error while queuing: %s" % e)
             return
-        debug("exiting _queue_task() for %s/%s" % (host, task))
+        self._display.debug("exiting _queue_task() for %s/%s" % (host, task))
 
     def _process_pending_results(self, iterator):
         '''
@@ -155,7 +160,7 @@ class StrategyBase:
         while not self._final_q.empty() and not self._tqm._terminated:
             try:
                 result = self._final_q.get(block=False)
-                debug("got result from result worker: %s" % ([unicode(x) for x in result],))
+                self._display.debug("got result from result worker: %s" % ([unicode(x) for x in result],))
 
                 # all host status messages contain 2 entries: (msg, task_result)
                 if result[0] in ('host_task_ok', 'host_task_failed', 'host_task_skipped', 'host_unreachable'):
@@ -164,7 +169,7 @@ class StrategyBase:
                     task = task_result._task
                     if result[0] == 'host_task_failed' or task_result.is_failed():
                         if not task.ignore_errors:
-                            debug("marking %s as failed" % host.name)
+                            self._display.debug("marking %s as failed" % host.name)
                             iterator.mark_host_failed(host)
                             self._tqm._failed_hosts[host.name] = True
                             self._tqm._stats.increment('failures', host.name)
@@ -275,12 +280,12 @@ class StrategyBase:
 
         ret_results = []
 
-        debug("waiting for pending results...")
+        self._display.debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             time.sleep(0.01)
-        debug("no more pending results, returning what we have")
+        self._display.debug("no more pending results, returning what we have")
 
         return ret_results
 
@@ -436,5 +441,5 @@ class StrategyBase:
                     self._wait_on_pending_results(iterator)
                     # wipe the notification list
                     self._notified_handlers[handler_name] = []
-            debug("done running handlers, result is: %s" % result)
+            self._display.debug("done running handlers, result is: %s" % result)
         return result

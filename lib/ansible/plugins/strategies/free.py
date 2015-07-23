@@ -22,7 +22,12 @@ __metaclass__ = type
 import time
 
 from ansible.plugins.strategies import StrategyBase
-from ansible.utils.debug import debug
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 class StrategyModule(StrategyBase):
 
@@ -62,21 +67,21 @@ class StrategyModule(StrategyBase):
             host_results = []
             while True:
                 host = hosts_left[last_host]
-                debug("next free host: %s" % host)
+                self._display.debug("next free host: %s" % host)
                 host_name = host.get_name()
 
                 # peek at the next task for the host, to see if there's
                 # anything to do do for this host
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
-                debug("free host state: %s" % state)
-                debug("free host task: %s" % task)
+                self._display.debug("free host state: %s" % state)
+                self._display.debug("free host task: %s" % task)
                 if host_name not in self._tqm._failed_hosts and host_name not in self._tqm._unreachable_hosts and task:
 
                     # set the flag so the outer loop knows we've still found
                     # some work which needs to be done
                     work_to_do = True
 
-                    debug("this host has work to do")
+                    self._display.debug("this host has work to do")
 
                     # check to see if this host is blocked (still executing a previous task)
                     if not host_name in self._blocked_hosts:
@@ -84,9 +89,9 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host_name] = True
                         (state, task) = iterator.get_next_task_for_host(host)
 
-                        debug("getting variables")
+                        self._display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                        debug("done getting variables")
+                        self._display.debug("done getting variables")
 
                         # check to see if this task should be skipped, due to it being a member of a
                         # role which has already run (and whether that role allows duplicate execution)
@@ -94,11 +99,11 @@ class StrategyModule(StrategyBase):
                             # If there is no metadata, the default behavior is to not allow duplicates,
                             # if there is metadata, check to see if the allow_duplicates flag was set to true
                             if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
-                                debug("'%s' skipped because role has already run" % task)
+                                self._display.debug("'%s' skipped because role has already run" % task)
                                 continue
 
                         if not task.evaluate_tags(play_context.only_tags, play_context.skip_tags, task_vars) and task.action != 'setup':
-                            debug("'%s' failed tag evaluation" % task)
+                            self._display.debug("'%s' failed tag evaluation" % task)
                             continue
 
                         if task.action == 'meta':
