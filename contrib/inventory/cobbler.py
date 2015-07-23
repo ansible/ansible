@@ -76,6 +76,8 @@ except ImportError:
 # server, so it does not attempt to login with a username and password.
 # this will be addressed in a future version of this script.
 
+orderby_keyname = 'owners'  # alternatively 'mgmt_classes'
+
 
 class CobblerInventory(object):
 
@@ -104,13 +106,12 @@ class CobblerInventory(object):
 
         # Data to print
         if self.args.host:
-            data_to_print = self.get_host_info()
+            data_to_print += self.get_host_info()
         else:
             self.inventory['_meta'] = { 'hostvars': {} }
             for hostname in self.cache:
                 self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
-        
-        data_to_print += self.json_format_dict(self.inventory, True)
+            data_to_print += self.json_format_dict(self.inventory, True)
 
         print data_to_print
 
@@ -180,7 +181,7 @@ class CobblerInventory(object):
 
             status = host['status']
             profile = host['profile']
-            classes = host['owners'] #host['mgmt_classes']
+            classes = host[orderby_keyname] #host['mgmt_classes']
 
             if status not in self.inventory:
                 self.inventory[status] = []
