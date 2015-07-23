@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.callback import CallbackBase
+from ansible import constants as C
 
 
 class CallbackModule(CallbackBase):
@@ -32,6 +33,16 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'minimal'
+
+    def _command_generic_msg(self, host, result,  caption):
+        ''' output the result of a command run '''
+
+        buf = "%s | %s | rc=%s >>\n" % (host, caption, result.get('rc',0))
+        buf += result.get('stdout','')
+        buf += result.get('stdout','')
+        buf += result.get('msg','')
+
+        return buf + "\n"
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
@@ -47,11 +58,17 @@ class CallbackModule(CallbackBase):
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
-        self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
+        if result._task.action in C.MODULE_NO_JSON:
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"FAILED"), color='red')
+        else:
+            self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
 
     def v2_runner_on_ok(self, result):
-        self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result)), color='green')
-        self._handle_warnings(result._result)
+        if result._task.action in C.MODULE_NO_JSON:
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"SUCCESS"), color='green')
+        else:
+            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result)), color='green')
+            self._handle_warnings(result._result)
 
     def v2_runner_on_skipped(self, result):
         self._display.display("%s | SKIPPED" % (result._host.get_name()), color='cyan')
