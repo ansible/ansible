@@ -109,7 +109,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             return ds
 
         role_name = ds.get('role', ds.get('name'))
-        if not role_name:
+        if not role_name or not isinstance(role_name, string_types):
             raise AnsibleError('role definitions must contain a role name', obj=ds)
 
         return role_name
