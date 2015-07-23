@@ -118,10 +118,7 @@ class ActionBase:
         if tmp and "tmp" in tmp:
             # tmp has already been created
             return False
-        if not self._connection.__class__.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self._play_context.become:
-            # tmp is necessary to store module source code
-            return True
-        if not self._connection.__class__.has_pipelining:
+        if not self._connection.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self._play_context.become:
             # tmp is necessary to store the module source code
             # or we want to keep the files on the target system
             return True
@@ -363,7 +360,7 @@ class ActionBase:
         # FIXME: all of the old-module style and async stuff has been removed from here, and
         #        might need to be re-added (unless we decide to drop support for old-style modules
         #        at this point and rework things to support non-python modules specifically)
-        if self._connection.__class__.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES:
+        if self._connection.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES:
             in_data = module_data
         else:
             if remote_module_path:
