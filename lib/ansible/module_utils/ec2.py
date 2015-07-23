@@ -33,6 +33,19 @@ except:
     HAS_LOOSE_VERSION = False
 
 
+def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
+    if conn_type not in ['both', 'resource', 'client']:
+        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
+
+    resource = boto3.session.Session().resource(resource, region_name=region, endpoint_url=endpoint, **params)
+    client = resource.meta.client
+
+    if conn_type == 'resource':
+        return resource
+    elif conn_type == 'client':
+        return client
+    else:
+        return client, resource
 
 def aws_common_argument_spec():
     return dict(
@@ -59,7 +72,7 @@ def boto_supports_profile_name():
     return hasattr(boto.ec2.EC2Connection, 'profile_name')
 
 
-def get_aws_connection_info(module):
+def get_aws_connection_info(module, boto3=False):
 
     # Check module args for credentials, then check environment vars
     # access_key
@@ -120,19 +133,31 @@ def get_aws_connection_info(module):
             # in case security_token came in as empty string
             security_token = None
 
-    boto_params = dict(aws_access_key_id=access_key,
-                       aws_secret_access_key=secret_key,
-                       security_token=security_token)
+    if boto3:
+        boto_params = dict(aws_access_key_id=access_key,
+                           aws_secret_access_key=secret_key,
+                           aws_session_token=security_token)
+        if validate_certs:
+            boto_params['verify'] = validate_certs
 
-    # profile_name only works as a key in boto >= 2.24
-    # so only set profile_name if passed as an argument
-    if profile_name:
-        if not boto_supports_profile_name():
-            module.fail_json("boto does not support profile_name before 2.24")
-        boto_params['profile_name'] = profile_name
+        if profile_name:
+            boto_params['profile_name'] = profile_name
 
-    if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
-        boto_params['validate_certs'] = validate_certs
+
+    else:
+        boto_params = dict(aws_access_key_id=access_key,
+                           aws_secret_access_key=secret_key,
+                           security_token=security_token)
+
+       # profile_name only works as a key in boto >= 2.24
+        # so only set profile_name if passed as an argument
+        if profile_name:
+            if not boto_supports_profile_name():
+                module.fail_json("boto does not support profile_name before 2.24")
+            boto_params['profile_name'] = profile_name
+
+        if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
+            boto_params['validate_certs'] = validate_certs
 
     return region, ec2_url, boto_params
 
