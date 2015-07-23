@@ -1039,10 +1039,10 @@ class DockerManager(object):
             except ValueError as e:
                 self.module.fail_json(msg=str(e))
 
-            actual_mem = container['HostConfig']['Memory']
-
-            #Use v1.18 API and earlier Memory element location
-            if docker_api_version <= 1.18:
+            #For v1.19 API and above use HostConfig, otherwise use Config
+            if docker_api_version >= 1.19:
+                actual_mem = container['HostConfig']['Memory']
+            else:
                 actual_mem = container['Config']['Memory']
 
             if expected_mem and actual_mem != expected_mem:
