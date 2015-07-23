@@ -19,11 +19,18 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 __all__ = ['LookupBase']
 
 class LookupBase:
     def __init__(self, loader=None, **kwargs):
         self._loader = loader
+        self._display = display
 
     def _flatten(self, terms):
         ret = []

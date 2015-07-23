@@ -27,7 +27,6 @@ from ansible.playbook.task import Task
 from ansible.plugins import action_loader
 from ansible.plugins.strategies import StrategyBase
 from ansible.template import Templar
-from ansible.utils.debug import debug
 
 class StrategyModule(StrategyBase):
 
@@ -132,9 +131,9 @@ class StrategyModule(StrategyBase):
         while work_to_do and not self._tqm._terminated:
 
             try:
-                debug("getting the remaining hosts for this loop")
+                self._display.debug("getting the remaining hosts for this loop")
                 hosts_left = self._inventory.get_hosts(iterator._play.hosts)
-                debug("done getting the remaining hosts for this loop")
+                self._display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory
                 callback_sent = False
@@ -169,7 +168,7 @@ class StrategyModule(StrategyBase):
                         # If there is no metadata, the default behavior is to not allow duplicates,
                         # if there is metadata, check to see if the allow_duplicates flag was set to true
                         if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
-                            debug("'%s' skipped because role has already run" % task)
+                            self._display.debug("'%s' skipped because role has already run" % task)
                             continue
 
                     if task.action == 'meta':
@@ -184,11 +183,11 @@ class StrategyModule(StrategyBase):
                         else:
                             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
                     else:
-                        debug("getting variables")
+                        self._display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
                         task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
-                        debug("done getting variables")
+                        self._display.debug("done getting variables")
 
                         if not callback_sent:
                             temp_task = task.copy()
@@ -206,12 +205,12 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
-                debug("done queuing things up, now waiting for results queue to drain")
+                self._display.debug("done queuing things up, now waiting for results queue to drain")
                 results = self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
                 if not work_to_do and len(iterator.get_failed_hosts()) > 0:
-                    debug("out of hosts to run on")
+                    self._display.debug("out of hosts to run on")
                     self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                     result = False
                     break
@@ -236,8 +235,7 @@ class StrategyModule(StrategyBase):
                         except AnsibleError, e:
                             for host in included_file._hosts:
                                 iterator.mark_host_failed(host)
-                            # FIXME: callback here?
-                            print(e)
+                            self._display.warning(str(e))
                             continue
 
                         for new_block in new_blocks:
@@ -256,9 +254,9 @@ class StrategyModule(StrategyBase):
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
 
-                debug("results queue empty")
+                self._display.debug("results queue empty")
             except (IOError, EOFError), e:
-                debug("got IOError/EOFError in task loop: %s" % e)
+                self._display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return False
 
