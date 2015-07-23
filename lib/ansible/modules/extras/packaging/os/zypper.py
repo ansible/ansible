@@ -31,7 +31,9 @@ import re
 DOCUMENTATION = '''
 ---
 module: zypper
-author: "Patrick Callahan (@dirtyharrycallahan)"
+author:
+    - "Patrick Callahan (@dirtyharrycallahan)"
+    - "Alexander Gubin (@alxgu)"
 version_added: "1.2"
 short_description: Manage packages on SUSE and openSUSE
 description:
@@ -39,7 +41,7 @@ description:
 options:
     name:
         description:
-        - package name or package specifier wth version C(name) or C(name-1.0).
+        - package name or package specifier with version C(name) or C(name-1.0). You can also pass a url or a local path to a rpm file.
         required: true
         aliases: [ 'pkg' ]
     state:
@@ -89,6 +91,12 @@ EXAMPLES = '''
 
 # Remove the "nmap" package
 - zypper: name=nmap state=absent
+
+# Install the nginx rpm from a remote repo
+- zypper: name=http://nginx.org/packages/sles/12/x86_64/RPMS/nginx-1.8.0-1.sles12.ngx.x86_64.rpm state=present
+
+# Install local rpm file
+- zypper: name=/tmp/fancy-software.rpm state=present
 '''
 
 # Function used for getting zypper version
@@ -129,6 +137,20 @@ def get_current_version(m, packages):
 
 # Function used to find out if a package is currently installed.
 def get_package_state(m, packages):
+    for i in range(0, len(packages)):
+        # Check state of a local rpm-file
+        if ".rpm" in packages[i]:
+            # Check if rpm file is available
+            package = packages[i]
+            if not os.path.isfile(package) and not '://' in package:
+                stderr = "No Package file matching '%s' found on system" % package
+                m.fail_json(msg=stderr)
+            # Get packagename from rpm file
+            cmd = ['/bin/rpm', '--query', '--qf', '%{NAME}', '--package']
+            cmd.append(package)
+            rc, stdout, stderr = m.run_command(cmd, check_rc=False)
+            packages[i] = stdout
+
     cmd = ['/bin/rpm', '--query', '--qf', 'package %{NAME} is installed\n']
     cmd.extend(packages)
 
