@@ -30,16 +30,24 @@ class LookupModule(LookupBase):
         if not isinstance(terms, list):
             terms = [ terms ]
 
+        ret = []
+
         templar = Templar(loader=self._loader, variables=variables)
 
-        ret = []
+        if 'role_path' in variables:
+            basedir = variables['role_path']
+        else:
+            basedir = self._loader.get_basedir()
+
         for term in terms:
-            path = self._loader.path_dwim(term)
-            if os.path.exists(path):
-                with open(path, 'r') as f:
+
+            lookupfile = self._loader.path_dwim_relative(basedir, 'templates', term)
+            if lookupfile and os.path.exists(lookupfile):
+                with open(lookupfile, 'r') as f:
                     template_data = f.read()
                     res = templar.template(template_data, preserve_trailing_newlines=True)
                     ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
+
         return ret
