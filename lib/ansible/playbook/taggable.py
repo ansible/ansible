@@ -28,7 +28,7 @@ from ansible.template import Templar
 
 class Taggable:
 
-    untagged = set(['untagged'])
+    untagged = frozenset(['untagged'])
     _tags = FieldAttribute(isa='list', default=[], listof=(string_types,int))
 
     def __init__(self):
@@ -70,8 +70,8 @@ class Taggable:
             else:
                 tags = set([i for i,_ in itertools.groupby(tags)])
         else:
-            # this makes intersection work for untagged
-            tags = self.__class__.untagged
+            # this makes isdisjoint work for untagged
+            tags = self.untagged
 
         if only_tags:
 
@@ -79,9 +79,9 @@ class Taggable:
 
             if 'always' in tags or 'all' in only_tags:
                  should_run = True
-            elif tags.intersection(only_tags):
+            elif not tags.isdisjoint(only_tags):
                 should_run = True
-            elif 'tagged' in only_tags and tags != self.__class__.untagged:
+            elif 'tagged' in only_tags and tags != self.untagged:
                 should_run = True
 
         if should_run and skip_tags:
@@ -90,9 +90,9 @@ class Taggable:
             if 'all' in skip_tags:
                 if 'always' not in tags or 'always' in skip_tags:
                     should_run = False
-            elif tags.intersection(skip_tags):
+            elif not tags.isdisjoint(skip_tags):
                 should_run = False
-            elif 'tagged' in skip_tags and tags != self.__class__.untagged:
+            elif 'tagged' in skip_tags and tags != self.untagged:
                 should_run = False
 
         return should_run

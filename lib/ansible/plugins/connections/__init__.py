@@ -87,7 +87,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
 
-        if self._play_context.become_method in self.__class__.become_methods:
+        if self._play_context.become_method in self.become_methods:
             return True
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_method)
