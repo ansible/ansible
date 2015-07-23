@@ -333,6 +333,7 @@ class CLI(object):
         gitinfo = CLI._gitinfo()
         if gitinfo:
             result = result + " {0}".format(gitinfo)
+        result += "\n  config file = %s" % C.CONFIG_FILE
         result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
         return result
 
