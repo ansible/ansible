@@ -22,12 +22,20 @@ from collections import MutableMapping
 from ansible import constants as C
 from ansible.plugins import cache_loader
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class FactCache(MutableMapping):
 
     def __init__(self, *args, **kwargs):
         self._plugin = cache_loader.get(C.CACHE_PLUGIN)
+        self._display = display
+
         if self._plugin is None:
-            # FIXME: this should be an exception
+            self._display.warning("Failed to load fact cache plugins")
             return
 
     def __getitem__(self, key):

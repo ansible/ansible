@@ -31,8 +31,13 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.module_common import modify_module
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.utils.debug import debug
 from ansible.utils.unicode import to_bytes
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 class ActionBase:
 
@@ -50,6 +55,7 @@ class ActionBase:
         self._loader            = loader
         self._templar           = templar
         self._shared_loader_obj = shared_loader_obj
+        self._display           = display
 
         self._supports_check_mode = True
 
@@ -142,9 +148,9 @@ class ActionBase:
             tmp_mode = 'a+rx'
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
-        debug("executing _low_level_execute_command to create the tmp path")
+        self._display.debug("executing _low_level_execute_command to create the tmp path")
         result = self._low_level_execute_command(cmd, None, sudoable=False)
-        debug("done with creation of tmp path")
+        self._display.debug("done with creation of tmp path")
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -183,9 +189,9 @@ class ActionBase:
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
-            debug("calling _low_level_execute_command to remove the tmp path")
+            self._display.debug("calling _low_level_execute_command to remove the tmp path")
             self._low_level_execute_command(cmd, None, sudoable=False)
-            debug("done removing the tmp path")
+            self._display.debug("done removing the tmp path")
 
     def _transfer_data(self, remote_path, data):
         '''
@@ -220,9 +226,9 @@ class ActionBase:
         '''
 
         cmd = self._connection._shell.chmod(mode, path)
-        debug("calling _low_level_execute_command to chmod the remote path")
+        self._display.debug("calling _low_level_execute_command to chmod the remote path")
         res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable)
-        debug("done with chmod call")
+        self._display.debug("done with chmod call")
         return res
 
     def _remote_checksum(self, tmp, path):
@@ -235,9 +241,9 @@ class ActionBase:
         #python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
         python_interp = 'python'
         cmd = self._connection._shell.checksum(path, python_interp)
-        debug("calling _low_level_execute_command to get the remote checksum")
+        self._display.debug("calling _low_level_execute_command to get the remote checksum")
         data = self._low_level_execute_command(cmd, tmp, sudoable=True)
-        debug("done getting the remote checksum")
+        self._display.debug("done getting the remote checksum")
         # FIXME: implement this function?
         #data2 = utils.last_non_blank_line(data['stdout'])
         try:
@@ -271,9 +277,9 @@ class ActionBase:
                 expand_path = '~%s' % self._play_context.become_user
 
         cmd = self._connection._shell.expand_user(expand_path)
-        debug("calling _low_level_execute_command to expand the remote user path")
+        self._display.debug("calling _low_level_execute_command to expand the remote user path")
         data = self._low_level_execute_command(cmd, tmp, sudoable=False)
-        debug("done expanding the remote user path")
+        self._display.debug("done expanding the remote user path")
         #initial_fragment = utils.last_non_blank_line(data['stdout'])
         initial_fragment = data['stdout'].strip().splitlines()[-1]
 
@@ -326,7 +332,7 @@ class ActionBase:
         if self._play_context.no_log:
             module_args['_ansible_no_log'] = True
 
-        debug("in _execute_module (%s, %s)" % (module_name, module_args))
+        self._display.debug("in _execute_module (%s, %s)" % (module_name, module_args))
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang:
@@ -341,9 +347,9 @@ class ActionBase:
         # FIXME: async stuff here?
         #if (module_style != 'new' or async_jid is not None or not self._connection._has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES):
         if remote_module_path:
-            debug("transferring module to remote")
+            self._display.debug("transferring module to remote")
             self._transfer_data(remote_module_path, module_data)
-            debug("done transferring module to remote")
+            self._display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
 
@@ -378,9 +384,9 @@ class ActionBase:
             # specified in the play, not the sudo_user
             sudoable = False
 
-        debug("calling _low_level_execute_command() for command %s" % cmd)
+        self._display.debug("calling _low_level_execute_command() for command %s" % cmd)
         res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable, in_data=in_data)
-        debug("_low_level_execute_command returned ok")
+        self._display.debug("_low_level_execute_command returned ok")
 
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if self._play_context.become and self._play_context.become_user != 'root':
@@ -413,7 +419,7 @@ class ActionBase:
                 module_name = module_name,
             )
 
-        debug("done with _execute_module (%s, %s)" % (module_name, module_args))
+        self._display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
     def _low_level_execute_command(self, cmd, tmp, sudoable=True, in_data=None, executable=None):
@@ -426,18 +432,18 @@ class ActionBase:
         if executable is not None:
             cmd = executable + ' -c ' + cmd
 
-        debug("in _low_level_execute_command() (%s)" % (cmd,))
+        self._display.debug("in _low_level_execute_command() (%s)" % (cmd,))
         if not cmd:
             # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-            debug("no command, exiting _low_level_execute_command()")
+            self._display.debug("no command, exiting _low_level_execute_command()")
             return dict(stdout='', stderr='')
 
         if sudoable:
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
-        debug("executing the command %s through the connection" % cmd)
+        self._display.debug("executing the command %s through the connection" % cmd)
         rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, in_data=in_data, sudoable=sudoable)
-        debug("command execution done")
+        self._display.debug("command execution done")
 
         if not isinstance(stdout, basestring):
             out = ''.join(stdout.readlines())
@@ -449,7 +455,7 @@ class ActionBase:
         else:
             err = stderr
 
-        debug("done with _low_level_execute_command() (%s)" % (cmd,))
+        self._display.debug("done with _low_level_execute_command() (%s)" % (cmd,))
         if rc is None:
             rc = 0
 
@@ -457,7 +463,7 @@ class ActionBase:
 
     def _get_first_available_file(self, faf, of=None, searchdir='files'):
 
-        self._connection._display.deprecated("first_available_file, use with_first_found or lookup('first_found',...) instead")
+        self._display.deprecated("first_available_file, use with_first_found or lookup('first_found',...) instead")
         for fn in faf:
             fn_orig = fn
             fnt = self._templar.template(fn)

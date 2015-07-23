@@ -28,9 +28,14 @@ import os.path
 import sys
 
 from ansible import constants as C
-from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
 from ansible import errors
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 MODULE_CACHE = {}
 PATH_CACHE = {}
@@ -225,8 +230,7 @@ class PluginLoader:
                 try:
                     full_paths = (os.path.join(path, f) for f in os.listdir(path))
                 except OSError as e:
-                    d = Display()
-                    d.warning("Error accessing plugin paths: %s" % str(e))
+                    display.warning("Error accessing plugin paths: %s" % str(e))
                 for full_path in (f for f in full_paths if os.path.isfile(f)):
                     for suffix in suffixes:
                         if full_path.endswith(suffix):
@@ -249,8 +253,7 @@ class PluginLoader:
                 # We've already cached all the paths at this point
                 if alias_name in self._plugin_path_cache:
                     if not os.path.islink(self._plugin_path_cache[alias_name]):
-                        d = Display()
-                        d.deprecated('%s is kept for backwards compatibility '
+                        display.deprecated('%s is kept for backwards compatibility '
                                   'but usage is discouraged. The module '
                                   'documentation details page may explain '
                                   'more about this rationale.' %

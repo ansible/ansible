@@ -94,7 +94,7 @@ class Connection(ConnectionBase):
 
             endpoint = parse.urlunsplit((scheme, netloc, '/wsman', '', ''))
 
-            self._display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._play_context.remote_addr)
+            self._display.debug('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._play_context.remote_addr)
             protocol = Protocol(
                 endpoint,
                 transport=transport,
@@ -117,16 +117,16 @@ class Connection(ConnectionBase):
                         raise AnsibleError("the username/password specified for this server was incorrect")
                     elif code == 411:
                         return protocol
-                self._display.vvvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self._play_context.remote_addr)
+                self._display.debug('WINRM CONNECTION ERROR: %s' % err_msg, host=self._play_context.remote_addr)
                 continue
         if exc:
             raise AnsibleError(str(exc))
 
     def _winrm_exec(self, command, args=(), from_exec=False):
         if from_exec:
-            self._display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
+            self._display.debug("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
         else:
-            self._display.vvvvvv("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
+            self._display.debugv("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
         if not self.protocol:
             self.protocol = self._winrm_connect()
         if not self.shell_id:
@@ -136,11 +136,11 @@ class Connection(ConnectionBase):
             command_id = self.protocol.run_command(self.shell_id, command, args)
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
             if from_exec:
-                self._display.vvvvv('WINRM RESULT %r' % response, host=self._play_context.remote_addr)
+                self._display.debug('WINRM RESULT %r' % response, host=self._play_context.remote_addr)
             else:
-                self._display.vvvvvv('WINRM RESULT %r' % response, host=self._play_context.remote_addr)
-            self._display.vvvvvv('WINRM STDOUT %s' % response.std_out, host=self._play_context.remote_addr)
-            self._display.vvvvvv('WINRM STDERR %s' % response.std_err, host=self._play_context.remote_addr)
+                self._display.debugv('WINRM RESULT %r' % response, host=self._play_context.remote_addr)
+            self._display.debugv('WINRM STDOUT %s' % response.std_out, host=self._play_context.remote_addr)
+            self._display.debugv('WINRM STDERR %s' % response.std_err, host=self._play_context.remote_addr)
             return response
         finally:
             if command_id:
@@ -206,7 +206,7 @@ class Connection(ConnectionBase):
                             out_path = out_path + '.ps1'
                     b64_data = base64.b64encode(out_data)
                     script = script_template % (self._shell._escape(out_path), offset, b64_data, in_size)
-                    self._display.vvvvv("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self._play_context.remote_addr)
+                    self._display.debug("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self._play_context.remote_addr)
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
@@ -248,7 +248,7 @@ class Connection(ConnectionBase):
                             Exit 1;
                         }
                     ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
-                    self._display.vvvvv("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self._play_context.remote_addr)
+                    self._display.debug("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self._play_context.remote_addr)
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
