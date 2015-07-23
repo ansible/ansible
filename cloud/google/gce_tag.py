@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# Copyright 2015 Google Inc. All Rights Reserved.
-#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -214,15 +212,11 @@ def main():
 
     # add tags to instance.
     if state == 'present':
-        results = add_tags(gce, module, instance_name, tags)
-        changed = results[0]
-        tags_changed = results[1]
+        changed, tags_changed = add_tags(gce, module, instance_name, tags)
 
     # remove tags from instance
     if state == 'absent':
-        results = remove_tags(gce, module, instance_name, tags)
-        changed = results[0]
-        tags_changed = results[1]
+        changed, tags_changed = remove_tags(gce, module, instance_name, tags)
 
     module.exit_json(changed=changed, instance_name=instance_name, tags=tags_changed, zone=zone)
     sys.exit(0)
