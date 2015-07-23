@@ -1,8 +1,12 @@
-[![PyPI version](https://badge.fury.io/py/ansible.png)](http://badge.fury.io/py/ansible) [![PyPI downloads](https://pypip.in/d/ansible/badge.png)](https://pypi.python.org/pypi/ansible)
+[![PyPI version](https://badge.fury.io/py/ansible.png)](http://badge.fury.io/py/ansible)
+[![PyPI downloads](https://pypip.in/d/ansible/badge.png)](https://pypi.python.org/pypi/ansible)
+[![Build Status](https://travis-ci.org/ansible/ansible.svg?branch=devel)](https://travis-ci.org/ansible/ansible)
 
 
 Ansible
 =======
+
+[![Join the chat at https://gitter.im/ansible/ansible](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ansible/ansible?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Ansible is a radically simple IT automation system.  It handles configuration-management, application deployment, cloud provisioning, ad-hoc task-execution, and multinode orchestration - including trivializing things like zero downtime rolling updates with load balancers.
 
@@ -49,8 +53,7 @@ Branch Info
 Authors
 =======
 
-Ansible was created by [Michael DeHaan](github.com/mpdehaan) (michael@ansible.com) and has contributions from over
-800 users (and growing).  Thanks everyone!
+Ansible was created by [Michael DeHaan](https://github.com/mpdehaan) (michael.dehaan/gmail/com) and has contributions from over 1000 users (and growing).  Thanks everyone!
 
 Ansible is sponsored by [Ansible, Inc](http://ansible.com)
 
