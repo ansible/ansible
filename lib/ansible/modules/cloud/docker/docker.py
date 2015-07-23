@@ -576,6 +576,7 @@ class DockerManager(object):
             'cpu_set': ((0, 6, 0), '1.14'),
             'cap_add': ((0, 5, 0), '1.14'),
             'cap_drop': ((0, 5, 0), '1.14'),
+            'read_only': ((1, 0, 0), '1.17'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
