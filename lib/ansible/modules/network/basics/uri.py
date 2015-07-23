@@ -70,6 +70,7 @@ options:
       - The serialization format of the body. Either raw, or json. When set to json, encodes the body argument and automatically sets the Content-Type header accordingly.
     required: false
     default: raw
+    version_added: "2.0"
   method:
     description:
       - The HTTP method of the request or response.
