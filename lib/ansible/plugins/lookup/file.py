@@ -38,6 +38,7 @@ class LookupModule(LookupBase):
             basedir = self._loader.get_basedir()
 
         for term in terms:
+            self._display.debug("File lookup term: %s" % term)
 
             # Special handling of the file lookup, used primarily when the
             # lookup is done from a role. If the file isn't found in the
@@ -46,6 +47,7 @@ class LookupModule(LookupBase):
             # itself (which will be relative to the current working dir)
 
             lookupfile = self._loader.path_dwim_relative(basedir, 'files', term)
+            self._display.vvvv("File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
                     contents, show_data = self._loader._get_file_contents(lookupfile)

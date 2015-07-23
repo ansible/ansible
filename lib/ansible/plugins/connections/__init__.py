@@ -33,11 +33,11 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins import shell_loader
 
-# FIXME: this object should be created upfront and passed through
-#        the entire chain of calls to here, as there are other things
-#        which may want to output display/logs too
-from ansible.utils.display import Display
-
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
@@ -65,7 +65,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         if not hasattr(self, '_new_stdin'):
             self._new_stdin = new_stdin
         if not hasattr(self, '_display'):
-            self._display = Display(verbosity=play_context.verbosity)
+            self._display = display
         if not hasattr(self, '_connected'):
             self._connected = False
 

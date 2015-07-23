@@ -30,8 +30,6 @@ import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 
-from ansible.utils.debug import debug
-
 class Connection(ConnectionBase):
     ''' Local based connections '''
 
@@ -53,7 +51,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
 
-        debug("in local.exec_command()")
+        self._display.debug("in local.exec_command()")
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -61,7 +59,7 @@ class Connection(ConnectionBase):
 
         self._display.vvv("{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook
-        debug("opening command with Popen()")
+        self._display.debug("opening command with Popen()")
         p = subprocess.Popen(
             cmd,
             shell=isinstance(cmd, basestring),
@@ -70,7 +68,7 @@ class Connection(ConnectionBase):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        debug("done running command with Popen()")
+        self._display.debug("done running command with Popen()")
 
         if self._play_context.prompt  and self._play_context.become_pass:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -95,11 +93,11 @@ class Connection(ConnectionBase):
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
-        debug("getting output with communicate()")
+        self._display.debug("getting output with communicate()")
         stdout, stderr = p.communicate()
-        debug("done communicating")
+        self._display.debug("done communicating")
 
-        debug("done with local.exec_command()")
+        self._display.debug("done with local.exec_command()")
         return (p.returncode, '', stdout, stderr)
 
     def put_file(self, in_path, out_path):
