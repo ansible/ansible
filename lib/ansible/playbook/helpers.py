@@ -90,10 +90,19 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
         else:
             if use_handlers:
                 t = Handler.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
+                if t.action == 'include':
+                    if t._role is not None:
+                        include_file = loader.path_dwim_relative(t._role._role_path, 'handlers', t.args.get('_raw_params'))
+                    else:
+                        include_file = loader.path_dwim(t.args.get('_raw_params'))
+                    handler_data = loader.load_from_file(include_file)
+                    for included in load_list_of_tasks(handler_data, play, block=block, role=role, task_include=task_include, use_handlers=use_handlers, variable_manager=variable_manager, loader=loader):
+                        task_list.append(included)
+                else:
+                    task_list.append(t)
             else:
                 t = Task.load(task, block=block, role=role, task_include=task_include, variable_manager=variable_manager, loader=loader)
-
-        task_list.append(t)
+                task_list.append(t)
 
     return task_list
 

@@ -1,0 +1,4 @@
+- name: verify role handlers can includes tasks
+  hosts: testhost
+  roles: 
+    - { role: test_handlers_include }

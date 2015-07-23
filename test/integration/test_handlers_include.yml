@@ -1,0 +1,8 @@
+- name: verify playbook handlers can includes tasks
+  hosts: testhost
+  tasks:
+    - debug: msg="main task"
+      changed_when: True
+      notify: test handler
+  handlers:
+    - include: handlers.yml
