@@ -191,7 +191,12 @@ class StrategyModule(StrategyBase):
 
                         if not callback_sent:
                             temp_task = task.copy()
-                            temp_task.name = templar.template(temp_task.get_name(), fail_on_undefined=False)
+                            try:
+                                temp_task.name = unicode(templar.template(temp_task.name, fail_on_undefined=False))
+                            except:
+                                # just ignore any errors during task name templating,
+                                # we don't care if it just shows the raw name
+                                pass
                             self._tqm.send_callback('v2_playbook_on_task_start', temp_task, is_conditional=False)
                             callback_sent = True
 
