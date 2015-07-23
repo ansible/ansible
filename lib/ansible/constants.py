@@ -229,6 +229,7 @@ DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 
 # non-configurable things
 MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
+MODULE_NO_JSON            = ['command', 'shell', 'raw']
 DEFAULT_BECOME_PASS       = None
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
