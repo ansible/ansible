@@ -30,9 +30,10 @@ See http://ansible.github.com/api.html for more info
 Tested with Cobbler 2.0.11.
 
 Changelog:
-    - 2015-06-21 dmccue: Heavily modified to support run-once _meta retrieval, results in
+    - 2015-06-21 dmccue: Modified to support run-once _meta retrieval, results in
          higher performance at ansible startup.  Groups are determined by owner rather than
-         default mgmt_classes.  DNS name determined from hostname.
+         default mgmt_classes.  DNS name determined from hostname. cobbler values are written
+         to a 'cobbler' fact namespace
 
     - 2013-09-01 pgehres: Refactored implementation to make use of caching and to
         limit the number of connections to external cobbler server for performance.
@@ -102,15 +103,14 @@ class CobblerInventory(object):
         data_to_print = ""
 
         # Data to print
-        #if self.args.host:
-        #    data_to_print = self.get_host_info()
-
-        self.inventory['_meta'] = { 'hostvars': {} }
-        for hostname in self.cache:
-            self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
-
-
-        data_to_print = self.json_format_dict(self.inventory, True)
+        if self.args.host:
+            data_to_print = self.get_host_info()
+        else:
+            self.inventory['_meta'] = { 'hostvars': {} }
+            for hostname in self.cache:
+                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
+        
+        data_to_print += self.json_format_dict(self.inventory, True)
 
         print data_to_print
 
@@ -149,7 +149,7 @@ class CobblerInventory(object):
 
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Cobbler')
         parser.add_argument('--list', action='store_true', default=True, help='List instances (default: True)')
-        #parser.add_argument('--host', action='store', help='Get all the variables about a specific instance')
+        parser.add_argument('--host', action='store', help='Get all the variables about a specific instance')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                             help='Force refresh of cache by making API requests to cobbler (default: False - use cache files)')
         self.args = parser.parse_args()
@@ -248,7 +248,7 @@ class CobblerInventory(object):
 
     def write_to_cache(self, data, filename):
         """ Writes data in JSON format to a file """
-        if data: print "DEBUG: data = " + str(data)
+        #if data: print "DEBUG: data = " + str(data)
         json_data = self.json_format_dict(data, True)
         cache = open(filename, 'w')
         cache.write(json_data)
