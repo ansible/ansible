@@ -71,6 +71,7 @@ options:
     required: false
     choices: [ "raw", "json" ]
     default: raw
+    version_added: "2.0"
   method:
     description:
       - The HTTP method of the request or response.
