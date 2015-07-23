@@ -194,32 +194,47 @@ class DataLoader():
         else:
             return os.path.abspath(os.path.join(self._basedir, given))
 
-    def path_dwim_relative(self, role_path, dirname, source):
-        ''' find one file in a directory one level up in a dir named dirname relative to current '''
+    def path_dwim_relative(self, path, dirname, source):
+        ''' find one file in a role/playbook dirs with/without dirname subdir '''
 
-        basedir = os.path.dirname(role_path)
-        if os.path.islink(basedir):
-            basedir = unfrackpath(basedir)
-            template2 = os.path.join(basedir, dirname, source)
+        search = []
+        isrole = False
+
+        # I have full path, nothing else needs to be looked at
+        if source.startswith('~') or source.startswith('/'):
+            search.append(self.path_dwim(source))
         else:
-            template2 = os.path.join(basedir, '..', dirname, source)
+            # base role/play path + templates/files/vars + relative filename
+            search.append(os.path.join(path, dirname, source))
 
-        source1 = os.path.join(role_path, dirname, source)
-        if os.path.exists(source1):
-            return source1
+            basedir = unfrackpath(path)
 
-        cur_basedir = self._basedir
-        self.set_basedir(basedir)
-        source2 = self.path_dwim(template2)
-        if os.path.exists(source2):
+            # is it a role and if so make sure you get correct base path
+            if path.endswith('tasks') and os.path.exists(os.path.join(path,'main.yml')) \
+                or os.path.exists(os.path.join(path,'tasks/main.yml')):
+                isrole = True
+                if path.endswith('tasks'):
+                    basedir = unfrackpath(os.path.dirname(path))
+
+            cur_basedir = self._basedir
+            self.set_basedir(basedir)
+            # resolved base role/play path + templates/files/vars + relative filename
+            search.append(self.path_dwim(os.path.join(basedir, dirname, source)))
             self.set_basedir(cur_basedir)
-            return source2
-        self.set_basedir(cur_basedir)
 
-        obvious_local_path = self.path_dwim(source)
-        if os.path.exists(obvious_local_path):
-            #self.set_basedir(cur_basedir)
-            return obvious_local_path
+            if isrole and not source.endswith(dirname):
+                # look in role's tasks dir w/o dirname
+                search.append(self.path_dwim(os.path.join(basedir, 'tasks', source)))
 
-        return source2
+            # try to create absolute path for loader basedir + templates/files/vars + filename
+            search.append(self.path_dwim(os.path.join(dirname,source)))
+
+            # try to create absolute path for loader basedir + filename
+            search.append(self.path_dwim(source))
+
+        for candidate in search:
+            if os.path.exists(candidate):
+                break
+
+        return candidate
 
