@@ -169,6 +169,11 @@ class ActionModule(ActionBase):
         if use_ssh_args:
             self._task.args['ssh_args'] = constants.ANSIBLE_SSH_ARGS
 
+        # Remove mode as it is handled purely in this action module
+        if 'mode' in self._task.args:
+            del self._task.args['mode']
+
+
         # run the module and store the result
         result = self._execute_module('synchronize', task_vars=task_vars)
 
