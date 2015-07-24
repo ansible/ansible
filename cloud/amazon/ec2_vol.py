@@ -107,7 +107,7 @@ options:
     default: present
     choices: ['absent', 'present', 'list']
     version_added: "1.6"
-author: Lester Wade
+author: "Lester Wade (@lwade)"
 extends_documentation_fragment: aws
 '''
 
@@ -160,8 +160,8 @@ EXAMPLES = '''
     instance: "{{ item.id }}"
     name: my_existing_volume_Name_tag
     device_name: /dev/xvdf
-    with_items: ec2.instances
-    register: ec2_vol
+  with_items: ec2.instances
+  register: ec2_vol
 
 # Remove a volume
 - ec2_vol:
@@ -239,15 +239,14 @@ def get_volumes(module, ec2):
     return vols
 
 def delete_volume(module, ec2):
-    vol = get_volume(module, ec2)
-    if not vol:
-        module.exit_json(changed=False)
-    else:
-       if vol.attachment_state() is not None: 
-           adata = vol.attach_data
-           module.fail_json(msg="Volume %s is attached to an instance %s." % (vol.id, adata.instance_id))
-       ec2.delete_volume(vol.id)
-       module.exit_json(changed=True)
+    volume_id = module.params['id']
+    try:
+        ec2.delete_volume(volume_id)
+        module.exit_json(changed=True)
+    except boto.exception.EC2ResponseError as ec2_error:
+        if ec2_error.code == 'InvalidVolume.NotFound':
+            module.exit_json(changed=False)
+        module.fail_json(msg=ec2_error.message)
 
 def boto_supports_volume_encryption():
     """
@@ -437,11 +436,11 @@ def main():
 
     # Delaying the checks until after the instance check allows us to get volume ids for existing volumes
     # without needing to pass an unused volume_size
-    if not volume_size and not (id or name):
-        module.fail_json(msg="You must specify an existing volume with id or name or a volume_size")
+    if not volume_size and not (id or name or snapshot):
+        module.fail_json(msg="You must specify volume_size or identify an existing volume by id, name, or snapshot")
 
-    if volume_size and id:
-        module.fail_json(msg="Cannot specify volume_size and id")
+    if volume_size and (id or snapshot):
+        module.fail_json(msg="Cannot specify volume_size together with id or snapshot")
 
     if state == 'absent':
         delete_volume(module, ec2)

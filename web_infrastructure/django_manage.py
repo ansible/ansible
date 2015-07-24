@@ -30,7 +30,8 @@ options:
   command:
     choices: [ 'cleanup', 'collectstatic', 'flush', 'loaddata', 'migrate', 'runfcgi', 'syncdb', 'test', 'validate', ]
     description:
-      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb, test, and validate. Other commands can be entered, but will fail if they're unknown to Django.
+      - The name of the Django management command to run. Built in commands are cleanup, collectstatic, flush, loaddata, migrate, runfcgi, syncdb, test, and validate.
+      - Other commands can be entered, but will fail if they're unknown to Django.  Other commands that may prompt for user input should be run with the I(--noinput) flag.
     required: true
   app_path:
     description:
@@ -89,10 +90,10 @@ notes:
    - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
    - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
    - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
-   - To be able to use the migrate command, you must have south installed and added as an app in your settings
+   - To be able to use the migrate command with django versions < 1.7, you must have south installed and added as an app in your settings
    - To be able to use the collectstatic command, you must have enabled staticfiles in your settings
 requirements: [ "virtualenv", "django" ]
-author: Scott Anderson
+author: "Scott Anderson (@tastychutney)"
 '''
 
 EXAMPLES = """
@@ -102,7 +103,7 @@ EXAMPLES = """
 # Load the initial_data fixture into the application
 - django_manage: command=loaddata app_path={{ django_dir }} fixtures={{ initial_data }}
 
-#Run syncdb on the application
+# Run syncdb on the application
 - django_manage: >
       command=syncdb
       app_path={{ django_dir }}
@@ -110,8 +111,11 @@ EXAMPLES = """
       pythonpath={{ settings_dir }}
       virtualenv={{ virtualenv_dir }}
 
-#Run the SmokeTest test case from the main app. Useful for testing deploys.
-- django_manage: command=test app_path=django_dir apps=main.SmokeTest
+# Run the SmokeTest test case from the main app. Useful for testing deploys.
+- django_manage: command=test app_path={{ django_dir }} apps=main.SmokeTest
+
+# Create an initial superuser. 
+- django_manage: command="createsuperuser --noinput --username=admin --email=admin@example.com" app_path={{ django_dir }}
 """
 
 
@@ -159,7 +163,10 @@ def syncdb_filter_output(line):
     return ("Creating table " in line) or ("Installed" in line and "Installed 0 object" not in line)
 
 def migrate_filter_output(line):
-    return ("Migrating forwards " in line) or ("Installed" in line and "Installed 0 object" not in line)
+    return ("Migrating forwards " in line) or ("Installed" in line and "Installed 0 object" not in line) or ("Applying" in line)
+
+def collectstatic_filter_output(line):
+    return "0 static files" not in line
 
 def main():
     command_allowed_param_map = dict(
@@ -218,7 +225,7 @@ def main():
     )
 
     command = module.params['command']
-    app_path = module.params['app_path']
+    app_path = os.path.expanduser(module.params['app_path'])
     virtualenv = module.params['virtualenv']
 
     for param in specific_params:
@@ -234,7 +241,7 @@ def main():
 
     _ensure_virtualenv(module)
 
-    cmd = "python manage.py %s" % (command, )
+    cmd = "./manage.py %s" % (command, )
 
     if command in noinput_commands:
         cmd = '%s --noinput' % cmd

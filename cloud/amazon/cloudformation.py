@@ -51,16 +51,23 @@ options:
   template:
     description:
       - The local path of the cloudformation template. This parameter is mutually exclusive with 'template_url'. Either one of them is required if "state" parameter is "present"
+        Must give full path to the file, relative to the working directory. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json"
     required: false
     default: null
     aliases: []
+  notification_arns:
+    description:
+      - The Simple Notification Service (SNS) topic ARNs to publish stack related events.
+    required: false
+    default: null
+    version_added: "2.0"
   stack_policy:
     description:
       - the path of the cloudformation stack policy
     required: false
     default: null
     aliases: []
-    version_added: "x.x"
+    version_added: "1.9"
   tags:
     description:
       - Dictionary of tags to associate with stack and it's resources during stack creation. Cannot be updated later.
@@ -81,8 +88,14 @@ options:
       - Location of file containing the template body. The URL must point to a template (max size 307,200 bytes) located in an S3 bucket in the same region as the stack. This parameter is mutually exclusive with 'template'. Either one of them is required if "state" parameter is "present"
     required: false
     version_added: "2.0"
+  template_format:
+    description: For local templates, allows specification of json or yaml format
+    default: json
+    choices: [ json, yaml ]
+    required: false
+    version_added: "2.0"
 
-author: James S. Martin
+author: "James S. Martin (@jsmartin)"
 extends_documentation_fragment: aws
 '''
 
@@ -95,6 +108,22 @@ EXAMPLES = '''
     region: "us-east-1" 
     disable_rollback: true
     template: "files/cloudformation-example.json"
+    template_parameters:
+      KeyName: "jmartin"
+      DiskType: "ephemeral"
+      InstanceType: "m1.small"
+      ClusterSize: 3
+    tags:
+      Stack: "ansible-cloudformation"
+
+# Basic role example
+- name: launch ansible cloudformation example
+  cloudformation:
+    stack_name: "ansible-cloudformation" 
+    state: "present"
+    region: "us-east-1" 
+    disable_rollback: true
+    template: "roles/cloudformation/files/cloudformation-example.json"
     template_parameters:
       KeyName: "jmartin"
       DiskType: "ephemeral"
@@ -127,6 +156,7 @@ EXAMPLES = '''
 
 import json
 import time
+import yaml
 
 try:
     import boto
@@ -191,6 +221,11 @@ def stack_operation(cfn, stack_name, operation):
                           events = map(str, list(stack.describe_events())),
                           output = 'Stack %s failed' % operation)
             break
+        elif '%s_ROLLBACK_FAILED' % operation == stack.stack_status:
+            result = dict(changed=True, failed=True,
+                          events = map(str, list(stack.describe_events())),
+                          output = 'Stack %s rollback failed' % operation)
+            break
         else:
             time.sleep(5)
     return result
@@ -216,9 +251,11 @@ def main():
             template_parameters=dict(required=False, type='dict', default={}),
             state=dict(default='present', choices=['present', 'absent']),
             template=dict(default=None, required=False),
+            notification_arns=dict(default=None, required=False),
             stack_policy=dict(default=None, required=False),
             disable_rollback=dict(default=False, type='bool'),
             template_url=dict(default=None, required=False),
+            template_format=dict(default='json', choices=['json', 'yaml'], required=False),
             tags=dict(default=None)
         )
     )
@@ -244,6 +281,14 @@ def main():
         template_body = open(module.params['template'], 'r').read()
     else:
         template_body = None
+
+    if module.params['template_format'] == 'yaml':
+        if template_body is None:
+            module.fail_json(msg='yaml format only supported for local templates')
+        else:
+            template_body = json.dumps(yaml.load(template_body), indent=2)
+
+    notification_arns = module.params['notification_arns']
 
     if module.params['stack_policy'] is not None:
         stack_policy_body = open(module.params['stack_policy'], 'r').read()
@@ -285,6 +330,7 @@ def main():
         try:
             cfn.create_stack(stack_name, parameters=template_parameters_tup,
                              template_body=template_body,
+                             notification_arns=notification_arns,
                              stack_policy_body=stack_policy_body,
                              template_url=template_url,
                              disable_rollback=disable_rollback,
@@ -307,6 +353,7 @@ def main():
         try:
             cfn.update_stack(stack_name, parameters=template_parameters_tup,
                              template_body=template_body,
+                             notification_arns=notification_arns,
                              stack_policy_body=stack_policy_body,
                              disable_rollback=disable_rollback,
                              template_url=template_url,

@@ -38,6 +38,8 @@ description:
        (see `setting the environment
        <http://docs.ansible.com/playbooks_environment.html>`_),
        or by using the use_proxy option.
+     - HTTP redirects can redirect from HTTP to HTTPS so you should be sure that
+       your proxy environment for both protocols is correct.
 version_added: "0.6"
 options:
   url:
@@ -96,6 +98,12 @@ options:
     required: false
     default: 10
     version_added: '1.8'
+  headers:
+    description:
+       - Add custom HTTP headers to a request in the format 'key:value,key:value'
+     required: false
+     default: null
+     version_added: '2.0'
   url_username:
     description:
       - The username for use in HTTP basic authentication. This parameter can be used
@@ -108,13 +116,23 @@ options:
         parameter is not specified, the C(url_password) parameter will not be used.
     required: false
     version_added: '1.6'
+  force_basic_auth:
+    version_added: '2.0'
+    description:
+      - httplib2, the library used by the uri module only sends authentication information when a webservice
+        responds to an initial request with a 401 status. Since some basic auth services do not properly
+        send a 401, logins will fail. This option forces the sending of the Basic authentication header
+        upon initial request.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
   others:
     description:
       - all arguments accepted by the M(file) module also work here
     required: false
 # informational: requirements for nodes
-requirements: [ urllib2, urlparse ]
-author: Jan-Piet Mens
+requirements: [ ]
+author: "Jan-Piet Mens (@jpmens)"
 '''
 
 EXAMPLES='''
@@ -123,7 +141,15 @@ EXAMPLES='''
 
 - name: download file with sha256 check
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf sha256sum=b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
+
+- name: download file and force basic auth
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf force_basic_auth=yes
+
+- name: download file with custom HTTP headers
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf headers: 'key:value,key:value'
 '''
+
+import urlparse
 
 try:
     import hashlib
@@ -140,14 +166,14 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10):
+def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None):
     """
     Download data from the url and store in a temporary file.
 
     Return (tempfile, info about the request)
     """
 
-    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout)
+    rsp, info = fetch_url(module, url, use_proxy=use_proxy, force=force, last_mod_time=last_mod_time, timeout=timeout, headers=headers)
 
     if info['status'] == 304:
         module.exit_json(url=url, dest=dest, changed=False, msg=info.get('msg', ''))
@@ -197,6 +223,7 @@ def main():
         dest = dict(required=True),
         sha256sum = dict(default=''),
         timeout = dict(required=False, type='int', default=10),
+        headers = dict(required=False, default=None),
     )
 
     module = AnsibleModule(
@@ -211,12 +238,42 @@ def main():
     sha256sum = module.params['sha256sum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
+    
+    # Parse headers to dict
+    if module.params['headers']:
+        try:
+            headers = dict(item.split(':') for item in module.params['headers'].split(','))
+        except:
+            module.fail_json(msg="The header parameter requires a key:value,key:value syntax to be properly parsed.")
+    else:
+        headers = None
 
     dest_is_dir = os.path.isdir(dest)
     last_mod_time = None
 
+    # Remove any non-alphanumeric characters, including the infamous
+    # Unicode zero-width space
+    stripped_sha256sum = re.sub(r'\W+', '', sha256sum)
+
+    # Fail early if sha256 is not supported
+    if sha256sum != '' and not HAS_HASHLIB:
+        module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
+
     if not dest_is_dir and os.path.exists(dest):
-        if not force:
+        checksum_mismatch = False
+
+        # If the download is not forced and there is a checksum, allow
+        # checksum match to skip the download.
+        if not force and sha256sum != '':
+            destination_checksum = module.sha256(dest)
+
+            if stripped_sha256sum.lower() == destination_checksum:
+                module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
+
+            checksum_mismatch = True
+
+        # Not forcing redownload, unless sha256sum has already failed
+        if not force and not checksum_mismatch:
             module.exit_json(msg="file already exists", dest=dest, url=url, changed=False)
 
         # If the file already exists, prepare the last modified time for the
@@ -225,7 +282,7 @@ def main():
         last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
 
     # download to tmpsrc
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers)
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
@@ -279,15 +336,7 @@ def main():
     # Check the digest of the destination file and ensure that it matches the
     # sha256sum parameter if it is present
     if sha256sum != '':
-        # Remove any non-alphanumeric characters, including the infamous
-        # Unicode zero-width space
-        stripped_sha256sum = re.sub(r'\W+', '', sha256sum)
-
-        if not HAS_HASHLIB:
-            os.remove(dest)
-            module.fail_json(msg="The sha256sum parameter requires hashlib, which is available in Python 2.5 and higher")
-        else:
-            destination_checksum = module.sha256(dest)
+        destination_checksum = module.sha256(dest)
 
         if stripped_sha256sum.lower() != destination_checksum:
             os.remove(dest)
@@ -315,4 +364,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+if __name__ == '__main__':
+    main()

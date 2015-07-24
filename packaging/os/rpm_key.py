@@ -22,7 +22,7 @@
 DOCUMENTATION = '''
 ---
 module: rpm_key
-author: Hector Acosta <hector.acosta@gazzang.com>
+author: "Hector Acosta (@hacosta) <hector.acosta@gazzang.com>"
 short_description: Adds or removes a gpg key from the rpm db
 description:
     - Adds or removes (rpm --import) a gpg key to your rpm database.
@@ -60,9 +60,10 @@ EXAMPLES = '''
 # Example action to ensure a key is not present in the db
 - rpm_key: state=absent key=DEADB33F
 '''
+import re
 import syslog
 import os.path
-import re
+import urllib2
 import tempfile
 
 def is_pubkey(string):
@@ -203,4 +204,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+if __name__ == '__main__':
+    main()

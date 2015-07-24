@@ -26,7 +26,7 @@ notes:
     after it is changed will not modify the launch configuration on AWS. You must create a new config and assign
     it to the ASG instead."
 version_added: "1.6"
-author: Gareth Rushgrove
+author: "Gareth Rushgrove (@garethr)"
 options:
   state:
     description:
@@ -116,6 +116,18 @@ options:
     default: false
     aliases: []
     version_added: "1.8"
+  classic_link_vpc_id:
+    description:
+      - Id of ClassicLink enabled VPC
+    required: false
+    default: null
+    version_added: "2.0"
+  classic_link_vpc_security_groups:
+    description:
+       - A list of security group id’s with which to associate the ClassicLink VPC instances.
+    required: false
+    default: null
+    version_added: "2.0"
 extends_documentation_fragment: aws
 """
 
@@ -126,6 +138,12 @@ EXAMPLES = '''
     key_name: default
     security_groups: ['group', 'group2' ]
     instance_type: t1.micro
+    volumes:
+    - device_name: /dev/sda1
+      volume_size: 100
+      device_type: io1
+      iops: 3000
+      delete_on_termination: true
 
 '''
 
@@ -178,6 +196,8 @@ def create_launch_config(connection, module):
     ramdisk_id = module.params.get('ramdisk_id')
     instance_profile_name = module.params.get('instance_profile_name')
     ebs_optimized = module.params.get('ebs_optimized')
+    classic_link_vpc_id = module.params.get('classic_link_vpc_id')
+    classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -200,10 +220,12 @@ def create_launch_config(connection, module):
         kernel_id=kernel_id,
         spot_price=spot_price,
         instance_monitoring=instance_monitoring,
-        associate_public_ip_address = assign_public_ip,
+        associate_public_ip_address=assign_public_ip,
         ramdisk_id=ramdisk_id,
         instance_profile_name=instance_profile_name,
         ebs_optimized=ebs_optimized,
+        classic_link_vpc_security_groups=classic_link_vpc_security_groups,
+        classic_link_vpc_id=classic_link_vpc_id,
     )
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
@@ -219,7 +241,8 @@ def create_launch_config(connection, module):
 
     module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
                      image_id=result.image_id, arn=result.launch_configuration_arn,
-                     security_groups=result.security_groups, instance_type=instance_type)
+                     security_groups=result.security_groups, instance_type=result.instance_type, 
+                     result=result)
 
 
 def delete_launch_config(connection, module):
@@ -251,7 +274,9 @@ def main():
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
             instance_monitoring=dict(default=False, type='bool'),
-            assign_public_ip=dict(type='bool')
+            assign_public_ip=dict(type='bool'),
+            classic_link_vpc_security_groups=dict(type='list'),
+            classic_link_vpc_id=dict(type='str')
         )
     )
 

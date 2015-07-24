@@ -21,7 +21,9 @@
 DOCUMENTATION = '''
 ---
 module: service
-author: Michael DeHaan
+author: 
+    - "Ansible Core Team"
+    - "Michael DeHaan"
 version_added: "0.1"
 short_description:  Manage services.
 description:
@@ -72,6 +74,14 @@ options:
         description:
         - Additional arguments provided on the command line
         aliases: [ 'args' ]
+    must_exist:
+        required: false
+        default: true
+        version_added: "2.0"
+        description:
+        - Avoid a module failure if the named service does not exist. Useful
+          for opportunistically starting/stopping/restarting a list of
+          potential services.
 '''
 
 EXAMPLES = '''
@@ -95,6 +105,9 @@ EXAMPLES = '''
 
 # Example action to restart network service for interface eth0
 - service: name=network state=restarted args=eth0
+
+# Example action to restart nova-compute if it exists
+- service: name=nova-compute state=restarted must_exist=no
 '''
 
 import platform
@@ -468,7 +481,11 @@ class LinuxService(Service):
                 self.enable_cmd = location['chkconfig']
 
         if self.enable_cmd is None:
-            self.module.fail_json(msg="no service or tool found for: %s" % self.name)
+            if self.module.params['must_exist']:
+                self.module.fail_json(msg="no service or tool found for: %s" % self.name)
+            else:
+                # exiting without change on non-existent service
+                self.module.exit_json(changed=False, exists=False)
 
         # If no service control tool selected yet, try to see if 'service' is available
         if self.svc_cmd is None and location.get('service', False):
@@ -476,7 +493,11 @@ class LinuxService(Service):
 
         # couldn't find anything yet
         if self.svc_cmd is None and not self.svc_initscript:
-            self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
+            if self.module.params['must_exist']:
+                self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
+            else:
+                # exiting without change on non-existent service
+                self.module.exit_json(changed=False, exists=False)
 
         if location.get('initctl', False):
             self.svc_initctl = location['initctl']
@@ -765,6 +786,9 @@ class LinuxService(Service):
                 else:
                     action = 'disable'
 
+                if self.module.check_mode:
+                    rc = 0
+                    return
                 (rc, out, err) = self.execute_command("%s %s %s"  % (self.enable_cmd, self.name, action))
                 if rc != 0:
                     if err:
@@ -861,7 +885,7 @@ class LinuxService(Service):
         if self.svc_cmd and self.svc_cmd.endswith('rc-service') and self.action == 'start' and self.crashed:
             self.execute_command("%s zap" % svc_cmd, daemonize=True)
 
-        if self.action is not "restart":
+        if self.action != "restart":
             if svc_cmd != '':
                 # upstart or systemd or OpenRC
                 rc_state, stdout, stderr = self.execute_command("%s %s %s" % (svc_cmd, self.action, arguments), daemonize=True)
@@ -964,16 +988,16 @@ class FreeBsdService(Service):
 
         try:
             return self.service_enable_rcconf()
-        except:
+        except Exception:
             self.module.fail_json(msg='unable to set rcvar')
 
     def service_control(self):
 
-        if self.action is "start":
+        if self.action == "start":
             self.action = "onestart"
-        if self.action is "stop":
+        if self.action == "stop":
             self.action = "onestop"
-        if self.action is "reload":
+        if self.action == "reload":
             self.action = "onereload"
 
         return self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, self.action, self.arguments))
@@ -1037,7 +1061,7 @@ class OpenBsdService(Service):
 
         getdef_string = stdout.rstrip()
 
-        # Depending on the service the string returned from 'default' may be
+        # Depending on the service the string returned from 'getdef' may be
         # either a set of flags or the boolean YES/NO
         if getdef_string == "YES" or getdef_string == "NO":
             default_flags = ''
@@ -1051,7 +1075,7 @@ class OpenBsdService(Service):
 
         get_string = stdout.rstrip()
 
-        # Depending on the service the string returned from 'getdef/get' may be
+        # Depending on the service the string returned from 'get' may be
         # either a set of flags or the boolean YES/NO
         if get_string == "YES" or get_string == "NO":
             current_flags = ''
@@ -1179,9 +1203,9 @@ class NetBsdService(Service):
             self.running = True
 
     def service_control(self):
-        if self.action is "start":
+        if self.action == "start":
             self.action = "onestart"
-        if self.action is "stop":
+        if self.action == "stop":
             self.action = "onestop"
 
         self.svc_cmd = "%s" % self.svc_initscript
@@ -1397,6 +1421,7 @@ def main():
             enabled = dict(type='bool'),
             runlevel = dict(required=False, default='default'),
             arguments = dict(aliases=['args'], default=''),
+            must_exist = dict(type='bool', default=True),
         ),
         supports_check_mode=True
     )

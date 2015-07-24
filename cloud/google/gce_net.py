@@ -75,7 +75,7 @@ options:
     aliases: []
   state:
     description:
-      - desired state of the persistent disk
+      - desired state of the network or firewall
     required: false
     default: "present"
     choices: ["active", "present", "absent", "deleted"]
@@ -105,7 +105,7 @@ options:
 requirements:
     - "python >= 2.6"
     - "apache-libcloud >= 0.13.3"
-author: Eric Johnson <erjohnso@google.com>
+author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 '''
 
 EXAMPLES = '''
@@ -264,7 +264,7 @@ def main():
             if fw:
                 gce.ex_destroy_firewall(fw)
                 changed = True
-        if name:
+        elif name:
             json_output['name'] = name
             network = None
             try:

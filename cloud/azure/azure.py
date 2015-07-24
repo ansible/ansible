@@ -53,7 +53,7 @@ options:
     default: null
   role_size:
     description:
-      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6)
+      - azure role size for the new virtual machine (e.g., Small, ExtraLarge, A6). You have to pay attention to the fact that instances of type G and DS are not available in all regions (locations). Make sure if you selected the size and type of instance available in your chosen location.
     required: false
     default: Small
   endpoints:
@@ -110,11 +110,39 @@ options:
     required: false
     default: 'present'
     aliases: []
+  reset_pass_atlogon:
+    description:
+      - Reset the admin password on first logon for windows hosts
+    required: false
+    default: "no"
+    version_added: "2.0"
+    choices: [ "yes", "no" ]
+  auto_updates:
+    description:
+      - Enable Auto Updates on Windows Machines
+    required: false
+    version_added: "2.0"
+    default: "no"
+    choices: [ "yes", "no" ]
+  enable_winrm:
+    description:
+      - Enable winrm on Windows Machines
+    required: false
+    version_added: "2.0"
+    default: "yes"
+    choices: [ "yes", "no" ]
+  os_type:
+    description:
+      - The type of the os that is gettings provisioned
+    required: false
+    version_added: "2.0"
+    default: "linux"
+    choices: [ "windows", "linux" ]
 
 requirements:
     - "python >= 2.6"
     - "azure >= 0.7.1"
-author: John Whitbeck
+author: "John Whitbeck (@jwhitbeck)"
 '''
 
 EXAMPLES = '''
@@ -138,6 +166,29 @@ EXAMPLES = '''
     module: azure
     name: my-virtual-machine
     state: absent
+
+#Create windows machine
+- hosts: all
+  connection: local
+  tasks:
+   - local_action:
+      module: azure
+      name: "ben-Winows-23"
+      hostname: "win123"
+      os_type: windows
+      enable_winrm: yes
+      subscription_id: "{{ azure_sub_id }}"
+      management_cert_path: "{{ azure_cert_path }}"
+      role_size: Small
+      image: 'bd507d3a70934695bc2128e3e5a255ba__RightImage-Windows-2012-x64-v13.5'
+      location: 'East Asia'
+      password: "xxx"
+      storage_account: benooytes
+      user: admin
+      wait: yes
+      virtual_network_name: "{{ vnet_name }}"
+
+
 '''
 
 import base64
@@ -184,6 +235,14 @@ AZURE_ROLE_SIZES = ['ExtraSmall',
                     'Standard_D12',
                     'Standard_D13',
                     'Standard_D14',
+                    'Standard_DS1',
+                    'Standard_DS2',
+                    'Standard_DS3',
+                    'Standard_DS4',
+                    'Standard_DS11',
+                    'Standard_DS12',
+                    'Standard_DS13',
+                    'Standard_DS14',
                     'Standard_G1',
                     'Standard_G2',
                     'Standard_G3',
@@ -196,7 +255,7 @@ try:
     from azure import WindowsAzureError, WindowsAzureMissingResourceError
     from azure.servicemanagement import (ServiceManagementService, OSVirtualHardDisk, SSH, PublicKeys,
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
-                                         ConfigurationSetInputEndpoint)
+                                         ConfigurationSetInputEndpoint, Listener, WindowsConfigurationSet)
     HAS_AZURE = True
 except ImportError:
     HAS_AZURE = False
@@ -264,6 +323,7 @@ def create_virtual_machine(module, azure):
         True if a new virtual machine and/or cloud service was created, false otherwise
     """
     name = module.params.get('name')
+    os_type = module.params.get('os_type')
     hostname = module.params.get('hostname') or name + ".cloudapp.net"
     endpoints = module.params.get('endpoints').split(',')
     ssh_cert_path = module.params.get('ssh_cert_path')
@@ -295,10 +355,21 @@ def create_virtual_machine(module, azure):
         azure.get_role(name, name, name)
     except WindowsAzureMissingResourceError:
         # vm does not exist; create it
-
-        # Create linux configuration
-        disable_ssh_password_authentication = not password
-        linux_config = LinuxConfigurationSet(hostname, user, password, disable_ssh_password_authentication)
+        
+        if os_type == 'linux':
+            # Create linux configuration
+            disable_ssh_password_authentication = not password
+            vm_config = LinuxConfigurationSet(hostname, user, password, disable_ssh_password_authentication)
+        else:
+            #Create Windows Config
+            vm_config = WindowsConfigurationSet(hostname, password, module.params.get('reset_pass_atlogon'),\
+                                                 module.params.get('auto_updates'), None, user)
+            vm_config.domain_join = None
+            if module.params.get('enable_winrm'):
+                listener = Listener('Http')
+                vm_config.win_rm.listeners.listeners.append(listener)
+            else:
+                vm_config.win_rm = None
 
         # Add ssh certificates if specified
         if ssh_cert_path:
@@ -313,7 +384,7 @@ def create_virtual_machine(module, azure):
             authorized_keys_path = u'/home/%s/.ssh/authorized_keys' % user
             ssh_config.public_keys.public_keys.append(PublicKey(path=authorized_keys_path, fingerprint=fingerprint))
             # Append ssh config to linux machine config
-            linux_config.ssh = ssh_config
+            vm_config.ssh = ssh_config
 
         # Create network configuration
         network_config = ConfigurationSetInputEndpoints()
@@ -340,7 +411,7 @@ def create_virtual_machine(module, azure):
                                                              deployment_slot='production',
                                                              label=name,
                                                              role_name=name,
-                                                             system_config=linux_config,
+                                                             system_config=vm_config,
                                                              network_config=network_config,
                                                              os_virtual_hard_disk=os_hd,
                                                              role_size=role_size,
@@ -448,6 +519,7 @@ def main():
             ssh_cert_path=dict(),
             name=dict(),
             hostname=dict(),
+            os_type=dict(default='linux', choices=['linux', 'windows']),
             location=dict(choices=AZURE_LOCATIONS),
             role_size=dict(choices=AZURE_ROLE_SIZES),
             subscription_id=dict(no_log=True),
@@ -461,7 +533,10 @@ def main():
             state=dict(default='present'),
             wait=dict(type='bool', default=False),
             wait_timeout=dict(default=600),
-            wait_timeout_redirects=dict(default=300)
+            wait_timeout_redirects=dict(default=300),
+            reset_pass_atlogon=dict(type='bool', default=False),
+            auto_updates=dict(type='bool', default=False),
+            enable_winrm=dict(type='bool', default=True),
         )
     )
     if not HAS_AZURE:
@@ -479,7 +554,7 @@ def main():
     cloud_service_raw = None
     if module.params.get('state') == 'absent':
         (changed, public_dns_name, deployment) = terminate_virtual_machine(module, azure)
-
+    
     elif module.params.get('state') == 'present':
         # Changed is always set to true when provisioning new instances
         if not module.params.get('name'):
@@ -492,8 +567,8 @@ def main():
             module.fail_json(msg='location parameter is required for new instance')
         if not module.params.get('storage_account'):
             module.fail_json(msg='storage_account parameter is required for new instance')
-        if not module.params.get('password'):
-            module.fail_json(msg='password parameter is required for new instance')
+        if not (module.params.get('password') or module.params.get('ssh_cert_path')):
+            module.fail_json(msg='password or ssh_cert_path parameter is required for new instance')
         (changed, public_dns_name, deployment) = create_virtual_machine(module, azure)
 
     module.exit_json(changed=changed, public_dns_name=public_dns_name, deployment=json.loads(json.dumps(deployment, default=lambda o: o.__dict__)))

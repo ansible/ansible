@@ -90,7 +90,8 @@ options:
     description:
       - Check if mysql allows login as root/nopassword before trying supplied credentials.
     required: false
-    default: false
+    choices: [ "yes", "no" ]
+    default: "no"
     version_added: "1.3"
   update_password:
     required: false
@@ -108,7 +109,7 @@ options:
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
-   - Both C(login_password) and C(login_username) are required when you are
+   - Both C(login_password) and C(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
      default login of 'root' with no password.
@@ -119,7 +120,7 @@ notes:
      the file."
 
 requirements: [ "MySQLdb" ]
-author: Mark Theunissen
+author: "Mark Theunissen (@marktheunissen)"
 '''
 
 EXAMPLES = """
@@ -148,8 +149,6 @@ mydb.*:INSERT,UPDATE/anotherdb.*:SELECT/yetanotherdb.*:ALL
 - mysql_user: name=root password=abc123 login_unix_socket=/var/run/mysqld/mysqld.sock
 
 # Example .my.cnf file for setting the root password
-# Note: don't use quotes around the password, because the mysql_user module
-# will include them in the password but the mysql client will not
 
 [client]
 user=root
@@ -158,6 +157,7 @@ password=n<_665{vS43y
 
 import getpass
 import tempfile
+import re
 try:
     import MySQLdb
 except ImportError:
@@ -244,7 +244,7 @@ def user_mod(cursor, user, host, password, new_priv, append_privs):
                 grant_option = True
             if db_table not in new_priv:
                 if user != "root" and "PROXY" not in priv and not append_privs:
-                    privileges_revoke(cursor, user,host,db_table,grant_option)
+                    privileges_revoke(cursor, user,host,db_table,priv,grant_option)
                     changed = True
 
         # If the user doesn't currently have any privileges on a db.table, then
@@ -261,7 +261,7 @@ def user_mod(cursor, user, host, password, new_priv, append_privs):
             priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
             if (len(priv_diff) > 0):
                 if not append_privs:
-                    privileges_revoke(cursor, user,host,db_table,grant_option)
+                    privileges_revoke(cursor, user,host,db_table,curr_priv[db_table],grant_option)
                 privileges_grant(cursor, user,host,db_table,new_priv[db_table])
                 changed = True
 
@@ -292,7 +292,7 @@ def privileges_get(cursor, user,host):
             return x
 
     for grant in grants:
-        res = re.match("GRANT (.+) ON (.+) TO '.+'@'.+'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
+        res = re.match("GRANT (.+) ON (.+) TO '.*'@'.+'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
@@ -317,17 +317,19 @@ def privileges_unpack(priv):
     not specified in the string, as MySQL will always provide this by default.
     """
     output = {}
+    privs = []
     for item in priv.strip().split('/'):
         pieces = item.strip().split(':')
-        if '.' in pieces[0]:
-            pieces[0] = pieces[0].split('.')
-            for idx, piece in enumerate(pieces):
-                if pieces[0][idx] != "*":
-                    pieces[0][idx] = "`" + pieces[0][idx] + "`"
-            pieces[0] = '.'.join(pieces[0])
-
-        output[pieces[0]] = pieces[1].upper().split(',')
-        new_privs = frozenset(output[pieces[0]])
+        dbpriv = pieces[0].rsplit(".", 1)
+        pieces[0] = "`%s`.%s" % (dbpriv[0].strip('`'), dbpriv[1])
+        if '(' in pieces[1]:
+            output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
+            for i in output[pieces[0]]:
+                privs.append(re.sub(r'\(.*\)','',i))
+        else:
+            output[pieces[0]] = pieces[1].upper().split(',')
+            privs = output[pieces[0]]
+        new_privs = frozenset(privs)
         if not new_privs.issubset(VALID_PRIVS):
             raise InvalidPrivsError('Invalid privileges specified: %s' % new_privs.difference(VALID_PRIVS))
 
@@ -341,7 +343,7 @@ def privileges_unpack(priv):
 
     return output
 
-def privileges_revoke(cursor, user,host,db_table,grant_option):
+def privileges_revoke(cursor, user,host,db_table,priv,grant_option):
     # Escape '%' since mysql db.execute() uses a format string
     db_table = db_table.replace('%', '%%')
     if grant_option:
@@ -349,7 +351,8 @@ def privileges_revoke(cursor, user,host,db_table,grant_option):
         query.append("FROM %s@%s")
         query = ' '.join(query)
         cursor.execute(query, (user, host))
-    query = ["REVOKE ALL PRIVILEGES ON %s" % mysql_quote_identifier(db_table, 'table')]
+    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
+    query = ["REVOKE %s ON %s" % (priv_string, mysql_quote_identifier(db_table, 'table'))]
     query.append("FROM %s@%s")
     query = ' '.join(query)
     cursor.execute(query, (user, host))
@@ -358,7 +361,7 @@ def privileges_grant(cursor, user,host,db_table,priv):
     # Escape '%' since mysql db.execute uses a format string and the
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
-    priv_string = ",".join(filter(lambda x: x not in [ 'GRANT', 'REQUIRESSL' ], priv))
+    priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
     query = ["GRANT %s ON %s" % (priv_string, mysql_quote_identifier(db_table, 'table'))]
     query.append("TO %s@%s")
     if 'GRANT' in priv:
@@ -381,12 +384,12 @@ def main():
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             user=dict(required=True, aliases=['name']),
-            password=dict(default=None),
+            password=dict(default=None, no_log=True),
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
-            append_privs=dict(type="bool", default="no"),
-            check_implicit_admin=dict(default=False),
+            append_privs=dict(default=False, type='bool'),
+            check_implicit_admin=dict(default=False, type='bool'),
             update_password=dict(default="always", choices=["always", "on_create"]),
             config_file=dict(default="~/.my.cnf"),
         )
@@ -395,7 +398,7 @@ def main():
     login_password = module.params["login_password"]
     user = module.params["user"]
     password = module.params["password"]
-    host = module.params["host"]
+    host = module.params["host"].lower()
     state = module.params["state"]
     priv = module.params["priv"]
     check_implicit_admin = module.params['check_implicit_admin']

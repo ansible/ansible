@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: hostname
-author: Hiroaki Nakamura
+author: "Hiroaki Nakamura (@hnakamur)"
 version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
@@ -248,6 +248,8 @@ class SystemdStrategy(GenericStrategy):
         return out.strip()
 
     def set_current_hostname(self, name):
+        if len(name) > 64:
+            self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
         cmd = ['hostnamectl', '--transient', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
@@ -263,6 +265,8 @@ class SystemdStrategy(GenericStrategy):
         return out.strip()
 
     def set_permanent_hostname(self, name):
+        if len(name) > 64:
+            self.module.fail_json(msg="name cannot be longer than 64 characters on systemd servers, try a shorter name")
         cmd = ['hostnamectl', '--pretty', 'set-hostname', name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
@@ -363,6 +367,15 @@ class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
     strategy_class = SystemdStrategy
+
+class SLESHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Suse linux enterprise server '
+    distribution_version = get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("12"):
+        strategy_class = SystemdStrategy
+    else:
+        strategy_class = UnimplementedStrategy
 
 class OpenSUSEHostname(Hostname):
     platform = 'Linux'
@@ -496,6 +509,6 @@ def main():
         hostname.set_permanent_hostname(name)
         changed = True
 
-    module.exit_json(changed=changed, name=name)
+    module.exit_json(changed=changed, name=name, ansible_facts=dict(ansible_hostname=name))
 
 main()

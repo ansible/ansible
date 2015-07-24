@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: user
-author: Stephen Fromm
+author: "Stephen Fromm (@sfromm)"
 version_added: "0.2"
 short_description: Manage user accounts
 requirements: [ useradd, userdel, usermod ]
@@ -253,7 +253,6 @@ class User(object):
         self.group      = module.params['group']
         self.groups     = module.params['groups']
         self.comment    = module.params['comment']
-        self.home       = module.params['home']
         self.shell      = module.params['shell']
         self.password   = module.params['password']
         self.force      = module.params['force']
@@ -269,7 +268,11 @@ class User(object):
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
         self.update_password = module.params['update_password']
+        self.home    = None
         self.expires = None
+
+        if module.params['home'] is not None:
+            self.home = os.path.expanduser(module.params['home'])
 
         if module.params['expires']:
             try:

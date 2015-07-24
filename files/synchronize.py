@@ -152,6 +152,18 @@ options:
     default:
     required: false
     version_added: "1.6"
+  partial:
+    description:
+      - Tells rsync to keep the partial file which should make a subsequent transfer of the rest of the file much faster.
+    default: no
+    required: false
+    version_added: "2.0"
+  verify_host:
+    description:
+      - Verify destination host key.
+    default: no
+    required: false
+    version_added: "2.0"
 notes:
    - rsync must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
@@ -163,7 +175,7 @@ notes:
      C(.rsync-filter) files to the source directory.
 
 
-author: Timothy Appnel
+author: "Timothy Appnel (@tima)"
 '''
 
 EXAMPLES = '''
@@ -237,6 +249,8 @@ def main():
             rsync_timeout = dict(type='int', default=0),
             rsync_opts = dict(type='list'),
             ssh_args = dict(type='str'),
+            partial = dict(default='no', type='bool'),
+            verify_host = dict(default='no', type='bool'),
         ),
         supports_check_mode = True
     )
@@ -254,6 +268,7 @@ def main():
     compress = module.params['compress']
     existing_only = module.params['existing_only']
     dirs = module.params['dirs']
+    partial = module.params['partial']
     # the default of these params depends on the value of archive
     recursive = module.params['recursive']
     links = module.params['links']
@@ -264,6 +279,7 @@ def main():
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
     ssh_args = module.params['ssh_args']
+    verify_host = module.params['verify_host']
 
     cmd = '%s --delay-updates -F' % rsync
     if compress:
@@ -316,10 +332,13 @@ def main():
     else:
         private_key = '-i '+ private_key 
 
+    ssh_opts = '-S none'
+
+    if not verify_host:
+      ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
+
     if ssh_args:
-      ssh_opts = '-S none -o StrictHostKeyChecking=no %s' % ssh_args
-    else:
-      ssh_opts = '-S none -o StrictHostKeyChecking=no'
+      ssh_opts = '%s %s' % (ssh_opts, ssh_args)
 
     if dest_port != 22:
         cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
@@ -331,6 +350,9 @@ def main():
 
     if rsync_opts:
         cmd = cmd + " " +  " ".join(rsync_opts)
+
+    if partial:
+        cmd = cmd + " --partial"
 
     changed_marker = '<<CHANGED>>'
     cmd = cmd + " --out-format='" + changed_marker + "%i %n%L'"

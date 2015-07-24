@@ -38,20 +38,22 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
-  validate:
+  force:
     description:
-      - The validation command to run before copying into place. 
-      - The path to the file to validate is passed in via '%s' which must be present as in the visudo example below.
-      - validation to run before copying into place. The command is passed 
-        securely so shell features like expansion and pipes won't work.
+      - the default is C(yes), which will replace the remote file when contents
+        are different than the source.  If C(no), the file will only be transferred
+        if the destination does not exist.
     required: false
-    default: ""
-    version_added: "1.2"
+    choices: [ "yes", "no" ]
+    default: "yes"
 notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
 requirements: []
-author: Michael DeHaan
+author:
+    - Ansible Core Team 
+    - Michael DeHaan
 extends_documentation_fragment: files
+extends_documentation_fragment: validate
 '''
 
 EXAMPLES = '''

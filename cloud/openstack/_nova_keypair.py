@@ -29,6 +29,10 @@ DOCUMENTATION = '''
 ---
 module: nova_keypair
 version_added: "1.2"
+author: 
+    - "Benno Joy (@bennojoy)"
+    - "Michael DeHaan"
+deprecated: Deprecated in 2.0. Use os_keypair instead
 short_description: Add/Delete key pair from nova
 description:
    - Add or Remove key pair from nova .
@@ -97,7 +101,7 @@ def main():
         state                           = dict(default='present', choices=['absent', 'present'])
     ))
     module = AnsibleModule(argument_spec=argument_spec)
-    if not HAVE_NOVACLIENT:
+    if not HAS_NOVACLIENT:
         module.fail_json(msg='python-novaclient is required for this module to work')
 
     nova = nova_client.Client(module.params['login_username'],

@@ -19,6 +19,11 @@
 
 $params = Parse-Args $args;
 
+function Date_To_Timestamp($start_date, $end_date)
+{
+    Write-Output (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
+}
+
 $path = Get-Attr $params "path" $FALSE;
 If ($path -eq $FALSE)
 {
@@ -36,6 +41,7 @@ If (Test-Path $path)
 {
     Set-Attr $result.stat "exists" $TRUE;
     $info = Get-Item $path;
+    $epoch_date = Get-Date -Date "01/01/1970"
     If ($info.Directory) # Only files have the .Directory attribute.
     {
         Set-Attr $result.stat "isdir" $FALSE;
@@ -45,6 +51,12 @@ If (Test-Path $path)
     {
         Set-Attr $result.stat "isdir" $TRUE;
     }
+    Set-Attr $result.stat "extension" $info.Extension;
+    Set-Attr $result.stat "attributes" $info.Attributes.ToString();
+    Set-Attr $result.stat "owner" $info.GetAccessControl().Owner;
+    Set-Attr $result.stat "creationtime" (Date_To_Timestamp $epoch_date $info.CreationTime);
+    Set-Attr $result.stat "lastaccesstime" (Date_To_Timestamp $epoch_date $info.LastAccessTime);
+    Set-Attr $result.stat "lastwritetime" (Date_To_Timestamp $epoch_date $info.LastWriteTime);
 }
 Else
 {
@@ -53,11 +65,9 @@ Else
 
 If ($get_md5 -and $result.stat.exists -and -not $result.stat.isdir)
 {
-    $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
-    $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
-    $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
-    $fp.Dispose();
+    $hash = Get-FileChecksum($path);
     Set-Attr $result.stat "md5" $hash;
+    Set-Attr $result.stat "checksum" $hash;
 }
 
 Exit-Json $result;

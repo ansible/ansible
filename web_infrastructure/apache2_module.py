@@ -20,6 +20,7 @@ DOCUMENTATION = '''
 ---
 module: apache2_module
 version_added: 1.6
+author: "Christian Berendt (@berendt)"
 short_description: enables/disables a module of the Apache2 webserver
 description:
    - Enables or disables a specified module of the Apache2 webserver.
@@ -34,6 +35,7 @@ options:
      choices: ['present', 'absent']
      default: present
 
+requirements: ["a2enmod","a2dismod"]
 '''
 
 EXAMPLES = '''

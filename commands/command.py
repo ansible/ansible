@@ -21,6 +21,7 @@
 import copy
 import sys
 import datetime
+import glob
 import traceback
 import re
 import shlex
@@ -47,12 +48,12 @@ options:
     aliases: []
   creates:
     description:
-      - a filename, when it already exists, this step will B(not) be run.
+      - a filename or glob pattern, when it already exists, this step will B(not) be run.
     required: no
     default: null
   removes:
     description:
-      - a filename, when it does not exist, this step will B(not) be run.
+      - a filename or glob pattern, when it does not exist, this step will B(not) be run.
     version_added: "0.8"
     required: no
     default: null
@@ -81,7 +82,9 @@ notes:
        M(command) module is much more secure as it's not affected by the user's
        environment.
     -  " C(creates), C(removes), and C(chdir) can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this."
-author: Michael DeHaan
+author: 
+    - Ansible Core Team
+    - Michael DeHaan
 '''
 
 EXAMPLES = '''
@@ -154,12 +157,22 @@ def main():
 
     # the command module is the one ansible module that does not take key=value args
     # hence don't copy this one if you are looking to build others!
-    module = CommandModule(argument_spec=dict())
+    module = AnsibleModule(
+        argument_spec=dict(
+          _raw_params = dict(),
+          _uses_shell = dict(type='bool', default=False),
+          chdir = dict(),
+          executable = dict(),
+          creates = dict(),
+          removes = dict(),
+          warn = dict(type='bool', default=True),
+        )
+    )
 
-    shell = module.params['shell']
+    shell = module.params['_uses_shell']
     chdir = module.params['chdir']
     executable = module.params['executable']
-    args  = module.params['args']
+    args  = module.params['_raw_params']
     creates  = module.params['creates']
     removes  = module.params['removes']
     warn = module.params['warn']
@@ -168,6 +181,7 @@ def main():
         module.fail_json(rc=256, msg="no command given")
 
     if chdir:
+        chdir = os.path.abspath(os.path.expanduser(chdir))
         os.chdir(chdir)
 
     if creates:
@@ -175,7 +189,7 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of command executions.
         v = os.path.expanduser(creates)
-        if os.path.exists(v):
+        if glob.glob(v):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s exists" % v,
@@ -189,7 +203,7 @@ def main():
     # and the filename does not exist.  This allows idempotence
     # of command executions.
         v = os.path.expanduser(removes)
-        if not os.path.exists(v):
+        if not glob.glob(v):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % v,
@@ -231,49 +245,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.splitter import *
-
-# only the command module should ever need to do this
-# everything else should be simple key=value
-
-class CommandModule(AnsibleModule):
-
-    def _handle_aliases(self):
-        return {}
-
-    def _check_invalid_arguments(self):
-        pass
-
-    def _load_params(self):
-        ''' read the input and return a dictionary and the arguments string '''
-        args = MODULE_ARGS
-        params = copy.copy(OPTIONS)
-        params['shell'] = False
-        if "#USE_SHELL" in args:
-            args = args.replace("#USE_SHELL", "")
-            params['shell'] = True
-
-        items = split_args(args)
-
-        for x in items:
-            quoted = x.startswith('"') and x.endswith('"') or x.startswith("'") and x.endswith("'")
-            if '=' in x and not quoted:
-                # check to see if this is a special parameter for the command
-                k, v = x.split('=', 1)
-                v = unquote(v.strip())
-                if k in OPTIONS.keys():
-                    if k == "chdir":
-                        v = os.path.abspath(os.path.expanduser(v))
-                        if not (os.path.exists(v) and os.path.isdir(v)):
-                            self.fail_json(rc=258, msg="cannot change to directory '%s': path does not exist" % v)
-                    elif k == "executable":
-                        v = os.path.abspath(os.path.expanduser(v))
-                        if not (os.path.exists(v)):
-                            self.fail_json(rc=258, msg="cannot use executable '%s': file does not exist" % v)
-                    params[k] = v
-        # Remove any of the above k=v params from the args string
-        args = PARAM_REGEX.sub('', args)
-        params['args'] = args.strip()
-
-        return (params, params['args'])
 
 main()

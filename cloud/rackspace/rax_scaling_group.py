@@ -105,7 +105,7 @@ options:
       - Data to be uploaded to the servers config drive. This option implies
         I(config_drive). Can be a file path or a string
     version_added: 1.8
-author: Matt Martz
+author: "Matt Martz (@sivel)"
 extends_documentation_fragment: rackspace
 '''
 
@@ -263,7 +263,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             lc = sg.get_launch_config()
             lc_args = {}
             if server_name != lc.get('name'):
-                lc_args['name'] = server_name
+                lc_args['server_name'] = server_name
 
             if image != lc.get('image'):
                 lc_args['image'] = image
@@ -273,7 +273,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
 
             disk_config = disk_config or 'AUTO'
             if ((disk_config or lc.get('disk_config')) and
-                    disk_config != lc.get('disk_config')):
+                    disk_config != lc.get('disk_config', 'AUTO')):
                 lc_args['disk_config'] = disk_config
 
             if (meta or lc.get('meta')) and meta != lc.get('metadata'):
@@ -299,7 +299,7 @@ def rax_asg(module, cooldown=300, disk_config=None, files={}, flavor=None,
             if key_name != lc.get('key_name'):
                 lc_args['key_name'] = key_name
 
-            if config_drive != lc.get('config_drive'):
+            if config_drive != lc.get('config_drive', False):
                 lc_args['config_drive'] = config_drive
 
             if (user_data and

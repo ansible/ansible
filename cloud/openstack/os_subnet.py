@@ -29,6 +29,7 @@ module: os_subnet
 short_description: Add/Remove subnet to an OpenStack network
 extends_documentation_fragment: openstack
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
    - Add or Remove a subnet to an OpenStack network
 options:
@@ -91,6 +92,18 @@ options:
         - A list of host route dictionaries for the subnet.
      required: false
      default: None
+   ipv6_ra_mode:
+     description:
+        - IPv6 router advertisement mode
+     choices: ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
+     required: false
+     default: None
+   ipv6_address_mode:
+     description:
+        - IPv6 address mode
+     choices: ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
+     required: false
+     default: None
 requirements:
     - "python >= 2.6"
     - "shade"
@@ -116,6 +129,19 @@ EXAMPLES = '''
 - os_subnet:
     state=absent
     name=net1subnet
+
+# Create an ipv6 stateless subnet
+- os_subnet:
+    state: present
+    name: intv6
+    network_name: internal
+    ip_version: 6
+    cidr: 2db8:1::/64
+    dns_nameservers:
+        - 2001:4860:4860::8888
+        - 2001:4860:4860::8844
+    ipv6_ra_mode: dhcpv6-stateless
+    ipv6_address_mode: dhcpv6-stateless
 '''
 
 
@@ -162,6 +188,7 @@ def _system_state_change(module, subnet):
 
 
 def main():
+    ipv6_mode_choices = ['dhcpv6-stateful', 'dhcpv6-stateless', 'slaac']
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
         network_name=dict(default=None),
@@ -173,6 +200,9 @@ def main():
         allocation_pool_start=dict(default=None),
         allocation_pool_end=dict(default=None),
         host_routes=dict(default=None, type='list'),
+        ipv6_ra_mode=dict(default=None, choice=ipv6_mode_choices),
+        ipv6_address_mode=dict(default=None, choice=ipv6_mode_choices),
+        state=dict(default='present', choices=['absent', 'present']),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -194,6 +224,8 @@ def main():
     pool_start = module.params['allocation_pool_start']
     pool_end = module.params['allocation_pool_end']
     host_routes = module.params['host_routes']
+    ipv6_ra_mode = module.params['ipv6_ra_mode']
+    ipv6_a_mode = module.params['ipv6_address_mode']
 
     # Check for required parameters when state == 'present'
     if state == 'present':
@@ -224,8 +256,10 @@ def main():
                                              gateway_ip=gateway_ip,
                                              dns_nameservers=dns,
                                              allocation_pools=pool,
-                                             host_routes=host_routes)
-                module.exit_json(changed=True, result="created")
+                                             host_routes=host_routes,
+                                             ipv6_ra_mode=ipv6_ra_mode,
+                                             ipv6_address_mode=ipv6_a_mode)
+                changed = True
             else:
                 if _needs_update(subnet, module):
                     cloud.update_subnet(subnet['id'],
@@ -234,17 +268,21 @@ def main():
                                         gateway_ip=gateway_ip,
                                         dns_nameservers=dns,
                                         allocation_pools=pool,
-                                        host_routes=host_routes)
-                    module.exit_json(changed=True, result="updated")
+                                        host_routes=host_routes,
+                                        ipv6_ra_mode=ipv6_ra_mode,
+                                        ipv6_address_mode=ipv6_a_mode)
+                    changed = True
                 else:
-                    module.exit_json(changed=False, result="success")
+                    changed = False
+            module.exit_json(changed=changed)
 
         elif state == 'absent':
             if not subnet:
-                module.exit_json(changed=False, result="success")
+                changed = False
             else:
+                changed = True
                 cloud.delete_subnet(subnet_name)
-                module.exit_json(changed=True, result="deleted")
+            module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)

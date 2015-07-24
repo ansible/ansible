@@ -47,7 +47,7 @@ options:
     default: yes
     aliases: []
     version_added: "1.8"
-author: Bruce Pennypacker
+author: "Bruce Pennypacker (@bpennypacker)"
 '''
 
 EXAMPLES = '''
@@ -57,6 +57,23 @@ EXAMPLES = '''
   register: st
 - fail: msg="Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
+
+# Determine if a path exists and is a symlink. Note that if the path does
+# not exist, and we test sym.stat.islnk, it will fail with an error. So
+# therefore, we must test whether it is defined.
+# Run this to understand the structure, the skipped ones do not pass the
+# check performed by 'when'
+- stat: path=/path/to/something
+  register: sym
+- debug: msg="islnk isn't defined (path doesn't exist)"
+  when: sym.stat.islnk is not defined
+- debug: msg="islnk is defined (path must exist)"
+  when: sym.stat.islnk is defined
+- debug: msg="Path exists and is a symlink"
+  when: sym.stat.islnk is defined and sym.stat.islnk
+- debug: msg="Path exists and isn't a symlink"
+  when: sym.stat.islnk is defined and sym.stat.islnk == False
+
 
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
@@ -233,13 +250,13 @@ stat:
         md5:
             description: md5 hash of the path
             returned: success, path exists and user can read stats and path supports hashing and md5 is supported
-            type: boolean
-            sample: True
+            type: string
+            sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
         checksum:
             description: hash of the path
             returned: success, path exists and user can read stats and path supports hashing
-            type: boolean
-            sample: True
+            type: string
+            sample: 50ba294cdf28c0d5bcde25708df53346825a429f
         pw_name:
             description: User name of owner
             returned: success, path exists and user can read stats and installed python supports it
