@@ -155,7 +155,7 @@ else:
     CLC_FOUND = True
 
 
-class ClcAlertPolicy():
+class ClcAlertPolicy:
 
     clc = clc_sdk
     module = None
@@ -262,10 +262,10 @@ class ClcAlertPolicy():
         changed = False
         p = self.module.params
         policy_name = p.get('name')
-        alias = p.get('alias')
+
         if not policy_name:
             self.module.fail_json(msg='Policy name is a required')
-        policy = self._alert_policy_exists(alias, policy_name)
+        policy = self._alert_policy_exists(policy_name)
         if not policy:
             changed = True
             policy = None
@@ -340,7 +340,7 @@ class ClcAlertPolicy():
 
         policies = self.clc.v2.API.Call('GET',
                                         '/v2/alertPolicies/%s'
-                                        % (alias))
+                                        % alias)
 
         for policy in policies.get('items'):
             response[policy.get('id')] = policy
@@ -377,7 +377,7 @@ class ClcAlertPolicy():
         try:
             result = self.clc.v2.API.Call(
                 'POST',
-                '/v2/alertPolicies/%s' %alias,
+                '/v2/alertPolicies/%s' % alias,
                 arguments)
         except APIFailedResponse as e:
             return self.module.fail_json(
@@ -441,16 +441,16 @@ class ClcAlertPolicy():
                     policy_id, str(e.response_text)))
         return result
 
-    def _alert_policy_exists(self, alias, policy_name):
+    def _alert_policy_exists(self, policy_name):
         """
         Check to see if an alert policy exists
         :param policy_name: name of the alert policy
         :return: boolean of if the policy exists
         """
         result = False
-        for id in self.policy_dict:
-            if self.policy_dict.get(id).get('name') == policy_name:
-                result = self.policy_dict.get(id)
+        for policy_id in self.policy_dict:
+            if self.policy_dict.get(policy_id).get('name') == policy_name:
+                result = self.policy_dict.get(policy_id)
         return result
 
     def _get_alert_policy_id(self, module, alert_policy_name):
@@ -461,14 +461,13 @@ class ClcAlertPolicy():
         :return: alert_policy_id: The alert policy id
         """
         alert_policy_id = None
-        for id in self.policy_dict:
-            if self.policy_dict.get(id).get('name') == alert_policy_name:
+        for policy_id in self.policy_dict:
+            if self.policy_dict.get(policy_id).get('name') == alert_policy_name:
                 if not alert_policy_id:
-                    alert_policy_id = id
+                    alert_policy_id = policy_id
                 else:
                     return module.fail_json(
-                        msg='mutiple alert policies were found with policy name : %s' %
-                        (alert_policy_name))
+                        msg='multiple alert policies were found with policy name : %s' % alert_policy_name)
         return alert_policy_id
 
     @staticmethod
