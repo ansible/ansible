@@ -41,6 +41,7 @@ class TestStrategyBase(unittest.TestCase):
     def test_strategy_base_init(self):
         mock_tqm = MagicMock(TaskQueueManager)
         mock_tqm._final_q = MagicMock()
+        mock_tqm._options = MagicMock()
         strategy_base = StrategyBase(tqm=mock_tqm)
 
     def test_strategy_base_run(self):
@@ -57,6 +58,7 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm._failed_hosts = dict()
         mock_tqm._unreachable_hosts = dict()
+        mock_tqm._options = MagicMock()
         strategy_base = StrategyBase(tqm=mock_tqm)
 
         self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context), 0)
