@@ -25,12 +25,27 @@ import random
 import subprocess
 import sys
 import time
+import logging
+import getpass
 from multiprocessing import Lock
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
 from ansible.utils.unicode import to_bytes
+
+if C.DEFAULT_LOG_PATH:
+    path = C.DEFAULT_LOG_PATH
+    if (os.path.exists(path) and not os.access(path, os.W_OK)) and not os.access(os.path.dirname(path), os.W_OK):
+        self._display.warning("log file at %s is not writeable, aborting\n" % path)
+
+    logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+    mypid = str(os.getpid())
+    user = getpass.getuser()
+    logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+else:
+    logger = None
+
 
 class Display:
 
@@ -48,6 +63,7 @@ class Display:
         self.set_cowsay_info()
         #self.debug_lock = Lock()
 
+
     def set_cowsay_info(self):
 
         if not C.ANSIBLE_NOCOWS:
@@ -61,34 +77,37 @@ class Display:
             elif os.path.exists("/opt/local/bin/cowsay"):
                 # MacPorts path for cowsay
                 self.cowsay = "/opt/local/bin/cowsay"
-    
+
             if self.cowsay and self.noncow == 'random':
                 cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
                 cows = out.split()
                 cows.append(False)
                 self.noncow = random.choice(cows)
-    
+
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+
+        # FIXME: this needs to be implemented
+        #msg = utils.sanitize_output(msg)
         msg2 = msg
         if color:
             msg2 = stringc(msg, color)
+
         if not log_only:
             b_msg2 = to_bytes(msg2)
             if not stderr:
                 print(b_msg2)
             else:
                 print(b_msg2, file=sys.stderr)
-        if C.DEFAULT_LOG_PATH != '':
+
+        if logger and not screen_only:
             while msg.startswith("\n"):
                 msg = msg.replace("\n","")
             b_msg = to_bytes(msg)
-            # FIXME: logger stuff needs to be implemented
-            #if not screen_only:
-            #    if color == 'red':
-            #        logger.error(b_msg)
-            #    else:
-            #        logger.info(b_msg)
+            if color == 'red':
+                logger.error(b_msg)
+            else:
+                logger.info(b_msg)
 
     def vv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=1)
@@ -166,9 +185,9 @@ class Display:
                 self.banner_cowsay(msg)
                 return
             except OSError:
-                # somebody cleverly deleted cowsay or something during the PB run.  heh.
-                pass
+                self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
+        #FIXME: make this dynamic on tty size (look and ansible-doc)
         msg = msg.strip()
         star_len = (80 - len(msg))
         if star_len < 0:
