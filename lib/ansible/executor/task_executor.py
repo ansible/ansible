@@ -295,7 +295,7 @@ class TaskExecutor:
                 # response, so we parse it here and replace the result
                 try:
                     result = json.loads(result.get('stdout'))
-                except ValueError, e:
+                except (TypeError, ValueError) as e:
                     return dict(failed=True, msg="The async task did not return valid JSON: %s" % str(e))
 
                 if self._task.poll > 0:
