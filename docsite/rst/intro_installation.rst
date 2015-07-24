@@ -272,6 +272,13 @@ Ansible is available in the Community repository::
 
 The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_.
 
+Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
+
+.. note::
+
+   If you have Python 3 as a default Python slot on your Arch nodes (default setting), then you
+   must set ``ansible_python_interpreter = /usr/bin/python2`` in your group or inventory variables.
+
 .. _from_pip:
 
 Latest Releases Via Pip
