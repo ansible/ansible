@@ -103,7 +103,7 @@ options:
        - Add custom HTTP headers to a request in the format 'key:value,key:value'
      required: false
      default: null
-     version_added: '1.9'
+     version_added: '2.0'
   url_username:
     description:
       - The username for use in HTTP basic authentication. This parameter can be used
