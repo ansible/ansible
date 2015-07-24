@@ -46,7 +46,7 @@ class StrategyModule(StrategyBase):
         '''
 
         # the last host to be given a task
-        last_host = 0      
+        last_host = 0
 
         result = True
 
@@ -84,7 +84,7 @@ class StrategyModule(StrategyBase):
                     self._display.debug("this host has work to do")
 
                     # check to see if this host is blocked (still executing a previous task)
-                    if not host_name in self._blocked_hosts:
+                    if not host_name in self._blocked_hosts or not self._blocked_hosts[host_name]:
                         # pop the task, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
                         (state, task) = iterator.get_next_task_for_host(host)
@@ -122,8 +122,10 @@ class StrategyModule(StrategyBase):
 
                             self._blocked_hosts[host_name] = False
                         else:
-                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
-                            self._queue_task(host, task, task_vars, play_context)
+                            # handle step if needed, skip meta actions as they are used internally
+                            if not self._step or self._take_step(task, host_name):
+                                self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                                self._queue_task(host, task, task_vars, play_context)
 
                 # move on to the next host and make sure we
                 # haven't gone past the end of our hosts list

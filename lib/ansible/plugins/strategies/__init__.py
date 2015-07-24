@@ -69,6 +69,7 @@ class StrategyBase:
         self._variable_manager  = tqm.get_variable_manager()
         self._loader            = tqm.get_loader()
         self._final_q           = tqm._final_q
+        self._step              = tqm._options.step
         self._display           = display
 
         # internal counters
@@ -443,3 +444,26 @@ class StrategyBase:
                     self._notified_handlers[handler_name] = []
             self._display.debug("done running handlers, result is: %s" % result)
         return result
+
+    def _take_step(self, task, host=None):
+
+        ret=False
+        if host:
+            msg = u'Perform task: %s on %s (y/n/c): ' % (task, host)
+        else:
+            msg = u'Perform task: %s (y/n/c): ' % task
+        resp = self._display.prompt(msg)
+
+        if resp.lower() in ['y','yes']:
+            self._display.debug("User ran task")
+            ret = True
+        elif resp.lower() in ['c', 'continue']:
+            self._display.debug("User ran task and cancled step mode")
+            self._step = False
+            ret = True
+        else:
+            self._display.debug("User skipped task")
+
+        self._display.banner(msg)
+
+        return ret

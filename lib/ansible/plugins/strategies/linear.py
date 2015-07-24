@@ -94,6 +94,7 @@ class StrategyModule(StrategyBase):
                     rvals.append((host, noop_task))
             return rvals
 
+
         # if any hosts are in ITERATING_SETUP, return the setup task
         # while all other hosts get a noop
         if num_setups:
@@ -142,12 +143,17 @@ class StrategyModule(StrategyBase):
                 host_results = []
                 host_tasks = self._get_next_task_lockstep(hosts_left, iterator)
 
+                # skip control
+                skip_rest   = False
+                choose_step = True
+
                 for (host, task) in host_tasks:
                     if not task:
                         continue
 
                     run_once = False
                     work_to_do = True
+
 
                     # test to see if the task across all hosts points to an action plugin which
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
@@ -183,6 +189,14 @@ class StrategyModule(StrategyBase):
                         else:
                             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
                     else:
+                        # handle step if needed, skip meta actions as they are used internally
+                        if self._step and choose_step:
+                            if self._take_step(task):
+                                choose_step = False
+                            else:
+                                break
+                                skip_rest = True
+
                         self._display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
                         task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
@@ -209,6 +223,10 @@ class StrategyModule(StrategyBase):
                     # if we're bypassing the host loop, break out now
                     if run_once:
                         break
+
+                # go to next host/task group
+                if skip_rest:
+                    continue
 
                 self._display.debug("done queuing things up, now waiting for results queue to drain")
                 results = self._wait_on_pending_results(iterator)

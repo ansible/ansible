@@ -201,3 +201,11 @@ class Display:
             self.display(new_msg, color='red', stderr=True)
             self._errors[new_msg] = 1
 
+    def prompt(self, msg):
+
+        if sys.stdout.encoding:
+            msg = to_bytes(msg, sys.stdout.encoding)
+        else:
+            msg = to_bytes(msg)
+
+        return raw_input(msg)
