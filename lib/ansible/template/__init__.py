@@ -56,9 +56,13 @@ class Templar:
 
     def __init__(self, loader, shared_loader_obj=None, variables=dict()):
         self._loader              = loader
-        self._basedir             = loader.get_basedir()
         self._filters             = None
         self._available_variables = variables
+
+        if loader:
+            self._basedir = loader.get_basedir()
+        else:
+            self._basedir = './'
 
         if shared_loader_obj:
             global _basedirs

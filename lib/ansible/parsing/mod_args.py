@@ -24,6 +24,7 @@ from six import iteritems, string_types
 from ansible.errors import AnsibleParserError
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
+from ansible.template import Templar
 
 # For filtering out modules correctly below
 RAW_PARAM_MODULES = ([
@@ -278,7 +279,12 @@ class ModuleArgsParser:
         if action is None:
             raise AnsibleParserError("no action detected in task", obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
-            raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES)), obj=self._task_ds)
+            templar = Templar(loader=None)
+            raw_params = args.pop('_raw_params')
+            if templar._contains_vars(raw_params):
+                args['_variable_params'] = raw_params
+            else:
+                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES)), obj=self._task_ds)
 
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)
