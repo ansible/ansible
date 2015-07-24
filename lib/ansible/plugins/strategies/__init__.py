@@ -28,6 +28,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
+from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.role import hash_params
 from ansible.plugins import _basedirs, filter_loader, lookup_loader, module_loader
 from ansible.template import Templar
@@ -374,7 +375,7 @@ class StrategyBase:
 
         return changed
 
-    def _load_included_file(self, included_file, iterator):
+    def _load_included_file(self, included_file, iterator, is_handler=False):
         '''
         Loads an included YAML file of tasks, applying the optional set of variables.
         '''
@@ -395,7 +396,6 @@ class StrategyBase:
         if not isinstance(data, list):
             raise AnsibleParserError("included task files must contain a list of tasks", obj=included_file._task._ds)
 
-        is_handler = isinstance(included_file._task, Handler)
         block_list = load_list_of_blocks(
             data,
             play=included_file._task._block._play,
@@ -432,16 +432,56 @@ class StrategyBase:
                     #    result = False
                     #    break
                     self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
+                    host_results = []
                     for host in self._notified_handlers[handler_name]:
                         if not handler.has_triggered(host) and (host.name not in self._tqm._failed_hosts or play_context.force_handlers):
                             task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
                             task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
                             self._queue_task(host, handler, task_vars, play_context)
                             #handler.flag_for_host(host)
-                        self._process_pending_results(iterator)
-                    self._wait_on_pending_results(iterator)
+                        results = self._process_pending_results(iterator)
+                        host_results.extend(results)
+                    results = self._wait_on_pending_results(iterator)
+                    host_results.extend(results)
+
                     # wipe the notification list
                     self._notified_handlers[handler_name] = []
+
+                    try:
+                        included_files = IncludedFile.process_include_results(
+                            host_results,
+                            self._tqm,
+                            iterator=iterator,
+                            loader=self._loader,
+                            variable_manager=self._variable_manager
+                        )
+                    except AnsibleError, e:
+                        return False
+
+                    if len(included_files) > 0:
+                        for included_file in included_files:
+                            try:
+                                new_blocks = self._load_included_file(included_file, iterator=iterator, is_handler=True)
+                                # for every task in each block brought in by the include, add the list
+                                # of hosts which included the file to the notified_handlers dict
+                                for block in new_blocks:
+                                    for task in block.block:
+                                        if task.name in self._notified_handlers:
+                                            for host in included_file._hosts:
+                                                if host.name not in self._notified_handlers[task.name]:
+                                                    self._notified_handlers[task.name].append(host)
+                                        else:
+                                            self._notified_handlers[task.name] = included_file._hosts[:]
+                                    # and add the new blocks to the list of handler blocks
+                                    handler_block.block.extend(block.block)
+                                #iterator._play.handlers.extend(new_blocks)
+                            except AnsibleError, e:
+                                for host in included_file._hosts:
+                                    iterator.mark_host_failed(host)
+                                    self._tqm._failed_hosts[host.name] = True
+                                # FIXME: callback here?
+                                print(e)
+                                continue
             self._display.debug("done running handlers, result is: %s" % result)
         return result
 

@@ -307,6 +307,11 @@ class PlayIterator:
             if res:
                 return res
 
+        for block in self._play.handlers:
+            res = _search_block(block, task)
+            if res:
+                return res
+
         return None
 
     def add_tasks(self, host, task_list):
