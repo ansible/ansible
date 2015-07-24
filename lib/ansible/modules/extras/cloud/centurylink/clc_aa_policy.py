@@ -46,7 +46,6 @@ options:
     default: True
     required: False
     choices: [True, False]
-    aliases: []
 requirements:
     - python = 2.7
     - requests >= 2.5.0
@@ -124,7 +123,7 @@ else:
     CLC_FOUND = True
 
 
-class ClcAntiAffinityPolicy():
+class ClcAntiAffinityPolicy:
 
     clc = clc_sdk
     module = None
