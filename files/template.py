@@ -24,13 +24,10 @@ options:
     description:
       - Path of a Jinja2 formatted template on the local server. This can be a relative or absolute path.
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - Location to render the template to on the remote machine.
     required: true
-    default: null
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
@@ -48,12 +45,12 @@ options:
     default: "yes"
 notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
-requirements: []
 author:
-    - Ansible Core Team 
+    - Ansible Core Team
     - Michael DeHaan
-extends_documentation_fragment: files
-extends_documentation_fragment: validate
+extends_documentation_fragment:
+    - files
+    - validate
 '''
 
 EXAMPLES = '''

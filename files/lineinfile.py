@@ -27,11 +27,12 @@ import tempfile
 DOCUMENTATION = """
 ---
 module: lineinfile
-author: 
+author:
     - "Daniel Hokka Zakrissoni (@dhozac)"
     - "Ahti Kitsik (@ahtik)"
-extends_documentation_fragment: files
-extends_documentation_fragment: validate
+extends_documentation_fragment:
+    - files
+    - validate
 short_description: Ensure a particular line is in a file, or replace an
                    existing line using a back-referenced regular expression.
 description:
