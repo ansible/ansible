@@ -60,6 +60,13 @@ class TaskExecutor:
         self._loader            = loader
         self._shared_loader_obj = shared_loader_obj
 
+        try:
+            from __main__ import display
+            self._display = display
+        except ImportError:
+            from ansible.utils.display import Display
+            self._display = Display()
+
     def run(self):
         '''
         The main executor entrypoint, where we determine if the specified
@@ -229,6 +236,12 @@ class TaskExecutor:
             prev_var = self._task.args.pop('var')
 
         self._task.post_validate(templar=templar)
+        if '_variable_params' in self._task.args:
+            variable_params = self._task.args.pop('_variable_params')
+            if isinstance(variable_params, dict):
+                self._display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts")
+                variable_params.update(self._task.args)
+                self._task.args = variable_params
 
         if prev_var is not None:
             self._task.args['var'] = prev_var
