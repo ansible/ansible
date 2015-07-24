@@ -482,10 +482,10 @@ def main():
             else:
                 module.fail_json(msg="Key %s does not exist."%obj, failed=True)
 
-        # If the destination path doesn't exist, no need to md5um etag check, so just download.
+        # If the destination path doesn't exist or overwrite is True, no need to do the md5um etag check, so just download.
         pathrtn = path_check(dest)
-        if pathrtn is False:
-            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
+        if pathrtn is False or overwrite == 'always':
+            download_s3file(module, s3, bucket, obj, dest)
 
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if pathrtn is True:
@@ -508,10 +508,6 @@ def main():
         # Firstly, if key_matches is TRUE and overwrite is not enabled, we EXIT with a helpful message.
         if sum_matches is True and overwrite is False:
             module.exit_json(msg="Local and remote object are identical, ignoring. Use overwrite parameter to force.", changed=False)
-
-        # At this point explicitly define the overwrite condition.
-        if sum_matches is True and pathrtn is True and overwrite == 'always':
-            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
 
     # if our mode is a PUT operation (upload), go through the procedure as appropriate ...
     if mode == 'put':
