@@ -127,6 +127,13 @@ class TaskExecutor:
             return result
         except AnsibleError, e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
+        finally:
+            try:
+                self._connection.close()
+            except AttributeError:
+                pass
+            except Exception, e:
+                debug("error closing connection: %s" % to_unicode(e))
 
     def _get_loop_items(self):
         '''
