@@ -38,8 +38,9 @@ And you may also tag basic include statements::
 
     - include: foo.yml tags=web,foo
 
-Both of these have the function of tagging every single task inside the include statement.
-
+Both of these apply the specified tags to every task inside the included
+file or role, so that these tasks can be selectively run when the playbook
+is invoked with the corresponding tags.
 
 Special Tags
 ````````````
