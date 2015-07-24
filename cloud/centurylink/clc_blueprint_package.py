@@ -104,7 +104,7 @@ else:
     CLC_FOUND = True
 
 
-class ClcBlueprintPackage():
+class ClcBlueprintPackage:
 
     clc = clc_sdk
     module = None
@@ -133,9 +133,9 @@ class ClcBlueprintPackage():
         :return: Returns with either an exit_json or fail_json
         """
         p = self.module.params
-
+        changed = False
+        changed_server_ids = []
         self._set_clc_credentials_from_env()
-
         server_ids = p['server_ids']
         package_id = p['package_id']
         package_params = p['package_params']
