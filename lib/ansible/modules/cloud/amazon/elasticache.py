@@ -56,7 +56,7 @@ options:
     description:
       - The port number on which each of the cache nodes will accept connections
     required: false
-    default: 11211
+    default: none
   parameter_group:
     description:
       - Specify non-default parameter group names to be associated with cache cluster
