@@ -45,6 +45,12 @@ options:
     required: false
     default: All Regions
     aliases: []
+  ignore_state:
+    description:
+      - instance state that should be ignored such as terminated.
+    required: false
+    default: terminated
+    aliases: []
 author:
     - "Michael Schuett (@michaeljs1990)"
 extends_documentation_fragment: aws
@@ -57,7 +63,7 @@ EXAMPLES = '''
 - ec2_search:
     key: mykey
     value: myvalue
-
+  register: servers
 '''
 try:
     import boto
