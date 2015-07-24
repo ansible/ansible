@@ -67,9 +67,29 @@ class ActionBase:
 
         # Search module path(s) for named module.
         module_suffixes = getattr(self._connection, 'default_suffixes', None)
+
+        # Check to determine if PowerShell modules are supported, and apply
+        # some fixes (hacks) to module name + args.
+        if module_suffixes and '.ps1' in module_suffixes:
+            # Use Windows versions of stat/file/copy modules when called from
+            # within other action plugins.
+            if module_name in ('stat', 'file', 'copy') and self._task.action != module_name:
+                module_name = 'win_%s' % module_name
+            # Remove extra quotes surrounding path parameters before sending to module.
+            if module_name in ('win_stat', 'win_file', 'win_copy', 'slurp') and module_args and hasattr(self._connection._shell, '_unquote'):
+                for key in ('src', 'dest', 'path'):
+                    if key in module_args:
+                        module_args[key] = self._connection._shell._unquote(module_args[key])
+
         module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, module_suffixes)
         if module_path is None:
-            module_path2 = self._shared_loader_obj.module_loader.find_plugin('ping', module_suffixes)
+            # Use Windows version of ping module to check module paths when
+            # using a connection that supports .ps1 suffixes.
+            if module_suffixes and '.ps1' in module_suffixes:
+                ping_module = 'win_ping'
+            else:
+                ping_module = 'ping'
+            module_path2 = self._shared_loader_obj.module_loader.find_plugin(ping_module, module_suffixes)
             if module_path2 is not None:
                 raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
             else:
@@ -264,9 +284,10 @@ class ActionBase:
 
     def _remote_expand_user(self, path, tmp):
         ''' takes a remote path and performs tilde expansion on the remote host '''
-        if not path.startswith('~'):
+        if not path.startswith('~'): # FIXME: Windows paths may start with "~ instead of just ~
             return path
 
+        # FIXME: Can't use os.path.sep for Windows paths.
         split_path = path.split(os.path.sep, 1)
         expand_path = split_path[0]
         if expand_path == '~':
@@ -339,6 +360,8 @@ class ActionBase:
         remote_module_path = None
         if not tmp and self._late_needs_tmp_path(tmp, module_style):
             tmp = self._make_tmp_path()
+
+        if tmp:
             remote_module_path = self._connection._shell.join_path(tmp, module_name)
 
         # FIXME: async stuff here?
@@ -456,7 +479,7 @@ class ActionBase:
         if rc is None:
             rc = 0
 
-        return dict(rc=rc, stdout=out, stderr=err)
+        return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
 
     def _get_first_available_file(self, faf, of=None, searchdir='files'):
 
