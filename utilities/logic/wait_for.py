@@ -301,6 +301,25 @@ def _little_endian_convert_32bit(block):
     # which lets us start at the end of the string block and work to the begining
     return "".join([ block[x:x+2] for x in xrange(6, -2, -2) ])
 
+def _create_connection( (host, port), connect_timeout):
+    """
+    Connect to a 2-tuple (host, port) and return
+    the socket object.
+
+    Args:
+        2-tuple (host, port) and connection timeout
+    Returns:
+        Socket object
+    """
+    if sys.version_info < (2, 6):
+        (family, _) = _convert_host_to_ip(host)
+        connect_socket = socket.socket(family, socket.SOCK_STREAM)
+        connect_socket.settimeout(connect_timeout)
+        connect_socket.connect( (host, port) )
+    else:
+        connect_socket = socket.create_connection( (host, port), connect_timeout)
+    return connect_socket
+
 def main():
 
     module = AnsibleModule(
@@ -362,10 +381,8 @@ def main():
                 except IOError:
                     break
             elif port:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(connect_timeout)
                 try:
-                    s.connect( (host, port) )
+                    s = _create_connection( (host, port), connect_timeout)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
                     time.sleep(1)
@@ -410,10 +427,8 @@ def main():
                         elapsed = datetime.datetime.now() - start
                         module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
             elif port:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(connect_timeout)
                 try:
-                    s.connect( (host, port) )
+                    s = _create_connection( (host, port), connect_timeout)
                     if search_regex:
                         data = ''
                         matched = False
