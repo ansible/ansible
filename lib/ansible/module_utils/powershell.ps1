@@ -26,8 +26,17 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Helper function to parse Ansible JSON arguments from a file passed as
-# the single argument to the module
+# Ansible v2 will insert the module arguments below as a string containing
+# JSON; assign them to an environment variable and redefine $args so existing
+# modules will continue to work.
+$complex_args = @'
+<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>
+'@
+Set-Content env:MODULE_COMPLEX_ARGS -Value $complex_args
+$args = @('env:MODULE_COMPLEX_ARGS')
+
+# Helper function to parse Ansible JSON arguments from a "file" passed as
+# the single argument to the module.
 # Example: $params = Parse-Args $args
 Function Parse-Args($arguments)
 {

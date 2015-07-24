@@ -78,6 +78,7 @@ class ActionModule(ActionBase):
 
         # calculate the destination name
         if os.path.sep not in self._connection._shell.join_path('a', ''):
+            source = self._connection._shell._unquote(source)
             source_local = source.replace('\\', '/')
         else:
             source_local = source
