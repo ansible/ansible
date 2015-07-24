@@ -109,8 +109,9 @@ except ImportError:
 # Select a protocol that includes all secure tls protocols
 # Exclude insecure ssl protocols if possible
 
-# If we can't find extra tls methods, ssl.PROTOCOL_TLSv1 is sufficient
-PROTOCOL = ssl.PROTOCOL_TLSv1
+if HAS_SSL:
+    # If we can't find extra tls methods, ssl.PROTOCOL_TLSv1 is sufficient
+    PROTOCOL = ssl.PROTOCOL_TLSv1
 if not HAS_SSLCONTEXT and HAS_SSL:
     try:
         import ctypes, ctypes.util
