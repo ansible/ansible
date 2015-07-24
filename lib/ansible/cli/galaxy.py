@@ -452,7 +452,8 @@ class GalaxyCLI(CLI):
 
         if len(self.args) == 1:
             # show only the request role, if it exists
-            gr = GalaxyRole(self.galaxy, self.name)
+            name = self.args.pop()
+            gr = GalaxyRole(self.galaxy, name)
             if gr.metadata:
                 install_info = gr.install_info
                 version = None
@@ -461,9 +462,9 @@ class GalaxyCLI(CLI):
                 if not version:
                     version = "(unknown version)"
                 # show some more info about single roles here
-                self.display.display("- %s, %s" % (self.name, version))
+                self.display.display("- %s, %s" % (name, version))
             else:
-                self.display.display("- the role %s was not found" % self.name)
+                self.display.display("- the role %s was not found" % name)
         else:
             # show all valid roles in the roles_path directory
             roles_path = self.get_opt('roles_path')
@@ -474,6 +475,7 @@ class GalaxyCLI(CLI):
                 raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
             path_files = os.listdir(roles_path)
             for path_file in path_files:
+                gr = GalaxyRole(self.galaxy, path_file)
                 if gr.metadata:
                     install_info = gr.metadata
                     version = None
