@@ -25,147 +25,123 @@ description:
 version_added: "2.0"
 options:
     username:
-      version_added: "2.0"
       description:
         - The vca username or email address, if not set the environment variable VCA_USER is checked for the username.
       required: false
       default: None
     password:
-      version_added: "2.0"
       description:
         - The vca password, if not set the environment variable VCA_PASS is checked for the password
       required: false
       default: None
     org:
-      version_added: "2.0"
       description:
         - The org to login to for creating vapp, mostly set when the service_type is vdc.
       required: false
       default: None
     service_id:
-      version_added: "2.0"
       description:
         - The service id in a vchs environment to be used for creating the vapp
       required: false
       default: None
     host:
-      version_added: "2.0"
       description:
         - The authentication host to be used when service type  is vcd.
       required: false
       default: None
     api_version:
-      version_added: "2.0"
       description:
         - The api version to be used with the vca
       required: false
       default: "5.7"
     service_type:
-      version_added: "2.0"
       description:
         - The type of service we are authenticating against
       required: false
       default: vca
       choices: [ "vca", "vchs", "vcd" ]
     state:
-      version_added: "2.0"
       description:
         - if the object should be added or removed
       required: false
       default: present
       choices: [ "present", "absent" ]
     catalog_name:
-      version_added: "2.0"
       description:
         - The catalog from which the vm template is used.
       required: false
       default: "Public Catalog"
     script:
-      version_added: "2.0"
       description:
         - The path to script that gets injected to vm during creation.
       required: false
       default: "Public Catalog"
     template_name:
-      version_added: "2.0"
       description:
         - The template name from which the vm should be created.
       required: True
     network_name:
-      version_added: "2.0"
       description:
         - The network name to which the vm should be attached.
       required: false
       default: 'None'
     network_ip:
-      version_added: "2.0"
       description:
         - The ip address that should be assigned to vm when the ip assignment type is static
       required: false
       default: None
     network_mode:
-      version_added: "2.0"
       description:
         - The network mode in which the ip should be allocated.
       required: false
       default: pool
       choices: [ "pool", "dhcp", 'static' ]
     instance_id::
-      version_added: "2.0"
       description:
         - The instance id of the region in vca flavour where the vm should be created
       required: false
       default: None
     wait:
-      version_added: "2.0"
       description:
         - If the module should wait if the operation is poweroff or poweron, is better to wait to report the right state. 
       required: false
       default: True
     wait_timeout:
-      version_added: "2.0"
       description:
         - The wait timeout when wait is set to true
       required: false
       default: 250
     vdc_name:
-      version_added: "2.0"
       description:
         - The name of the vdc where the vm should be created.
       required: false
       default: None
     vm_name:
-     version_added: "2.0"
       description:
         - The name of the vm to be created, the vapp is named the same as the vapp name
       required: false
       default: 'default_ansible_vm1'
     vm_cpus:
-      version_added: "2.0"
       description:
         - The number if cpus to be added to the vm
       required: false
       default: None
     vm_memory:
-      version_added: "2.0"
       description:
         - The amount of memory to be added to vm in megabytes
       required: false
       default: None
     verify_certs:
-      version_added: "2.0"
       description:
         - If the certificates of the authentication is to be verified
       required: false
       default: True
     admin_password:
-      version_added: "2.0"
       description:
         - The password to be set for admin
       required: false
       default: None
     operation:
-      version_added: "2.0"
       description:
         - The operation to be done on the vm
       required: false
