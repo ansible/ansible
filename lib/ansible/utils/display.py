@@ -34,6 +34,7 @@ from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
 from ansible.utils.unicode import to_bytes
 
+#TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
     if (os.path.exists(path) and not os.access(path, os.W_OK)) and not os.access(os.path.dirname(path), os.W_OK):
