@@ -916,7 +916,7 @@ class OpenBSDUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
-        if self.password is not None:
+        if self.password is not None and self.password != '*':
             cmd.append('-p')
             cmd.append(self.password)
 
@@ -1010,7 +1010,8 @@ class OpenBSDUser(User):
                 cmd.append('-L')
                 cmd.append(self.login_class)
 
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None \
+           and self.password != '*' and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
 
