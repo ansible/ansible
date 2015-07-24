@@ -77,9 +77,10 @@ options:
         already existed.
     required: false
     version_added: "1.5"
-extends_documentation_fragment: files
-extends_documentation_fragment: validate
-author: 
+extends_documentation_fragment:
+    - files
+    - validate
+author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 notes:
