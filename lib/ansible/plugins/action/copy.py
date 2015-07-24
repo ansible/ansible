@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
         # Check if the source ends with a "/"
         source_trailing_slash = False
         if source:
-            source_trailing_slash = source.endswith(os.sep)
+            source_trailing_slash = self._connection._shell.path_has_trailing_slash(source)
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
@@ -182,7 +182,7 @@ class ActionModule(ActionBase):
                     continue
 
                 # Define a remote directory that we will copy the file to.
-                tmp_src = tmp + 'source'
+                tmp_src = self._connection._shell.join_path(tmp, 'source')
 
                 if not raw:
                     self._connection.put_file(source_full, tmp_src)

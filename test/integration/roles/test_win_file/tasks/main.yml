@@ -32,7 +32,7 @@
 #      - "file_result.state == 'file'"
 
 - name: verify that we are checking an absent file
-  win_file: path={{win_output_dir}}\bar.txt state=absent
+  win_file: path={{win_output_dir}}/bar.txt state=absent
   register: file2_result
 
 - name: verify that the file was marked as changed
@@ -42,7 +42,7 @@
 #      - "file2_result.state == 'absent'"
 
 - name: verify we can touch a file
-  win_file: path={{win_output_dir}}\baz.txt state=touch
+  win_file: path={{win_output_dir}}/baz.txt state=touch
   register: file3_result
 
 - name: verify that the file was marked as changed
@@ -85,8 +85,8 @@
 #      - "chown_result.failed == True"
 #      - "file_exists_result.stat.exists == False"
 #
-- name: clean up
-  win_file: path=/tmp/worldwritable state=absent
+#- name: clean up
+#  win_file: path=/tmp/worldwritable state=absent
 
 #- name: create soft link to file
 #  win_file: src={{output_file}} dest={{win_output_dir}}/soft.txt state=link
@@ -107,7 +107,7 @@
 #      - "file6_result.changed == true"
 #
 - name: create a directory
-  win_file: path={{win_output_dir}}\foobar state=directory
+  win_file: path={{win_output_dir}}/foobar state=directory
   register: file7_result
 
 - debug: var=file7_result
@@ -134,22 +134,22 @@
 #  when: selinux_installed.stdout != "" and selinux_enabled.stdout != "Disabled"
 
 - name: remote directory foobar
-  win_file: path={{win_output_dir}}\foobar state=absent
+  win_file: path={{win_output_dir}}/foobar state=absent
 
 - name: remove file foo.txt
-  win_file: path={{win_output_dir}}\foo.txt state=absent
+  win_file: path={{win_output_dir}}/foo.txt state=absent
 
 - name: remove file bar.txt
-  win_file: path={{win_output_dir}}\foo.txt state=absent
+  win_file: path={{win_output_dir}}/foo.txt state=absent
 
 - name: remove file baz.txt
-  win_file: path={{win_output_dir}}\foo.txt state=absent
+  win_file: path={{win_output_dir}}/foo.txt state=absent
 
 - name: win copy directory structure over
   win_copy: src=foobar dest={{win_output_dir}}
 
 - name: remove directory foobar
-  win_file: path={{win_output_dir}}\foobar state=absent
+  win_file: path={{win_output_dir}}/foobar state=absent
   register: file14_result
 
 - debug: var=file14_result

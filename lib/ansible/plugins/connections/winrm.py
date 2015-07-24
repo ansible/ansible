@@ -45,7 +45,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNo
 from ansible.plugins.connections import ConnectionBase
 from ansible.plugins import shell_loader
 from ansible.utils.path import makedirs_safe
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
 
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
@@ -94,7 +94,7 @@ class Connection(ConnectionBase):
 
             endpoint = parse.urlunsplit((scheme, netloc, '/wsman', '', ''))
 
-            self._display.debug('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._play_context.remote_addr)
+            self._display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._play_context.remote_addr)
             protocol = Protocol(
                 endpoint,
                 transport=transport,
@@ -117,30 +117,30 @@ class Connection(ConnectionBase):
                         raise AnsibleError("the username/password specified for this server was incorrect")
                     elif code == 411:
                         return protocol
-                self._display.debug('WINRM CONNECTION ERROR: %s' % err_msg, host=self._play_context.remote_addr)
+                self._display.vvvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self._play_context.remote_addr)
                 continue
         if exc:
             raise AnsibleError(str(exc))
 
     def _winrm_exec(self, command, args=(), from_exec=False):
         if from_exec:
-            self._display.debug("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
+            self._display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
         else:
-            self._display.debugv("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
+            self._display.vvvvvv("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
         if not self.protocol:
             self.protocol = self._winrm_connect()
         if not self.shell_id:
-            self.shell_id = self.protocol.open_shell()
+            self.shell_id = self.protocol.open_shell(codepage=65001) # UTF-8
         command_id = None
         try:
-            command_id = self.protocol.run_command(self.shell_id, command, args)
+            command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args))
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
             if from_exec:
-                self._display.debug('WINRM RESULT %r' % response, host=self._play_context.remote_addr)
+                self._display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._play_context.remote_addr)
             else:
-                self._display.debugv('WINRM RESULT %r' % response, host=self._play_context.remote_addr)
-            self._display.debugv('WINRM STDOUT %s' % response.std_out, host=self._play_context.remote_addr)
-            self._display.debugv('WINRM STDERR %s' % response.std_err, host=self._play_context.remote_addr)
+                self._display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._play_context.remote_addr)
+            self._display.vvvvvv('WINRM STDOUT %s' % to_unicode(response.std_out), host=self._play_context.remote_addr)
+            self._display.vvvvvv('WINRM STDERR %s' % to_unicode(response.std_err), host=self._play_context.remote_addr)
             return response
         finally:
             if command_id:
@@ -153,34 +153,42 @@ class Connection(ConnectionBase):
 
     def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
-
-        cmd = to_bytes(cmd)
-        cmd_parts = shlex.split(cmd, posix=False)
+        cmd_parts = shlex.split(to_bytes(cmd), posix=False)
+        cmd_parts = map(to_unicode, cmd_parts)
+        script = None
+        cmd_ext = cmd_parts and self._shell._unquote(cmd_parts[0]).lower()[-4:] or ''
+        # Support running .ps1 files (via script/raw).
+        if cmd_ext == '.ps1':
+            script = ' '.join(['&'] + cmd_parts)
+        # Support running .bat/.cmd files; change back to the default system encoding instead of UTF-8.
+        elif cmd_ext in ('.bat', '.cmd'):
+            script = ' '.join(['[System.Console]::OutputEncoding = [System.Text.Encoding]::Default;', '&'] + cmd_parts)
+        # Encode the command if not already encoded; supports running simple PowerShell commands via raw.
+        elif '-EncodedCommand' not in cmd_parts:
+            script = ' '.join(cmd_parts)
+        if script:
+            cmd_parts = self._shell._encode_script(script, as_list=True)
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
-            decoded_cmd = base64.b64decode(encoded_cmd)
+            decoded_cmd = to_unicode(base64.b64decode(encoded_cmd))
             self._display.vvv("EXEC %s" % decoded_cmd, host=self._play_context.remote_addr)
         else:
             self._display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
-        # For script/raw support.
-        if cmd_parts and cmd_parts[0].lower().endswith('.ps1'):
-            script = self._shell._build_file_cmd(cmd_parts, quote_args=False)
-            cmd_parts = self._shell._encode_script(script, as_list=True)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
         except Exception as e:
             traceback.print_exc()
             raise AnsibleError("failed to exec cmd %s" % cmd)
-        result.std_out = to_bytes(result.std_out)
-        result.std_err = to_bytes(result.std_err)
+        result.std_out = to_unicode(result.std_out)
+        result.std_err = to_unicode(result.std_err)
         return (result.status_code, '', result.std_out, result.std_err)
 
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)
-
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        out_path = self._shell._unquote(out_path)
+        self._display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._play_context.remote_addr)
         if not os.path.exists(in_path):
-            raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
+            raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
         with open(in_path) as in_file:
             in_size = os.path.getsize(in_path)
             script_template = '''
@@ -206,20 +214,20 @@ class Connection(ConnectionBase):
                             out_path = out_path + '.ps1'
                     b64_data = base64.b64encode(out_data)
                     script = script_template % (self._shell._escape(out_path), offset, b64_data, in_size)
-                    self._display.debug("WINRM PUT %s to %s (offset=%d size=%d)" % (in_path, out_path, offset, len(out_data)), host=self._play_context.remote_addr)
+                    self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._play_context.remote_addr)
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
-                        raise IOError(result.std_err.encode('utf-8'))
+                        raise IOError(to_unicode(result.std_err))
                 except Exception:
                     traceback.print_exc()
-                    raise AnsibleError("failed to transfer file to %s" % out_path)
+                    raise AnsibleError('failed to transfer file to "%s"' % out_path)
 
     def fetch_file(self, in_path, out_path):
         super(Connection, self).fetch_file(in_path, out_path)
-
+        in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        self._display.vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self._play_context.remote_addr)
         buffer_size = 2**19 # 0.5MB chunks
         makedirs_safe(os.path.dirname(out_path))
         out_file = None
@@ -248,11 +256,11 @@ class Connection(ConnectionBase):
                             Exit 1;
                         }
                     ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
-                    self._display.debug("WINRM FETCH %s to %s (offset=%d)" % (in_path, out_path, offset), host=self._play_context.remote_addr)
+                    self._display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._play_context.remote_addr)
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
-                        raise IOError(result.std_err.encode('utf-8'))
+                        raise IOError(to_unicode(result.std_err))
                     if result.std_out.strip() == '[DIR]':
                         data = None
                     else:
@@ -272,7 +280,7 @@ class Connection(ConnectionBase):
                         offset += len(data)
                 except Exception:
                     traceback.print_exc()
-                    raise AnsibleError("failed to transfer file to %s" % out_path)
+                    raise AnsibleError('failed to transfer file to "%s"' % out_path)
         finally:
             if out_file:
                 out_file.close()

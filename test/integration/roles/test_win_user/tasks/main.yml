@@ -51,7 +51,7 @@
       - "win_user_missing_query_result.state == 'absent'"
 
 - name: test create user
-  win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password }}" groups="Guests"
+  win_user: name="{{ test_win_user_name }}" password="{{ test_win_user_password }}" fullname="Test User" description="Test user account" groups="Guests"
   register: win_user_create_result
 
 - name: check user creation result
@@ -59,7 +59,8 @@
     that:
       - "win_user_create_result|changed"
       - "win_user_create_result.name == '{{ test_win_user_name }}'"
-      - "win_user_create_result.fullname == '{{ test_win_user_name }}'"
+      - "win_user_create_result.fullname == 'Test User'"
+      - "win_user_create_result.description == 'Test user account'"
       - "win_user_create_result.path"
       - "win_user_create_result.state == 'present'"
 
