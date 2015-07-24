@@ -1223,7 +1223,7 @@ def main():
     argument_spec.update(dict(
             key_name = dict(aliases = ['keypair']),
             id = dict(),
-            group = dict(type='list'),
+            group = dict(type='list', aliases=['groups']),
             group_id = dict(type='list'),
             zone = dict(aliases=['aws_zone', 'ec2_zone']),
             instance_type = dict(aliases=['type']),
