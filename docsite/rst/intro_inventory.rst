@@ -192,8 +192,14 @@ is an excellent way to track changes to your inventory and host variables.
 List of Behavioral Inventory Parameters
 +++++++++++++++++++++++++++++++++++++++
 
-As alluded to above, setting the following variables controls how ansible interacts with remote hosts. Some we have already
-mentioned::
+As alluded to above, setting the following variables controls how ansible interacts with remote hosts.
+
+Host connection::
+
+    ansible_connection
+      Connection type to the host. Candidates are local, smart, ssh or paramiko.  The default is smart.
+
+Ssh connection::
 
     ansible_ssh_host
       The name of the host to connect to, if different from the alias you wish to give to it.
@@ -203,16 +209,22 @@ mentioned::
       The default ssh user name to use.
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
-    ansible_sudo
-      The boolean to decide if sudo should be used for this host. Defaults to false.
-    ansible_sudo_pass
-      The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
-    ansible_sudo_exe (new in version 1.8)
-      The sudo command path.
-    ansible_connection
-      Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
+
+Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details)::
+
+    ansible_become
+      Equivalent to ansible_sudo or ansible_su, allows to force privilege escalation
+    ansible_become_method
+      Allows to set privilege escalation method
+    ansible_become_user
+      Equivalent to ansible_sudo_user or ansible_su_user, allows to set the user you become through privilege escalation
+    ansible_become_pass
+      Equivalent to ansible_sudo_pass or ansible_su_pass, allows you to set the privilege escalation password
+
+Remote host environnement parameters::
+
     ansible_shell_type
       The shell type of the target system. Commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
