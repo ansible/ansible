@@ -135,7 +135,7 @@ def main():
                 for instance in [i for r in reservations for i in r.instances]:
                     if instance.private_ip_address != None:
                         instance.hostname = 'ip-' + instance.private_ip_address.replace('.', '-')
-                    if instance._state.name not in module.params.get('ignore_state') and :
+                    if instance._state.name not in module.params.get('ignore_state'):
                         server_info.append(todict(instance))
         except:
             print module.jsonify('error getting instances from: ' + region.name)
