@@ -69,7 +69,7 @@ class StrategyBase:
         self._variable_manager  = tqm.get_variable_manager()
         self._loader            = tqm.get_loader()
         self._final_q           = tqm._final_q
-        self._step              = tqm._options.step
+        self._step              = getattr(tqm._options, 'step', False)
         self._display           = display
 
         # internal counters
