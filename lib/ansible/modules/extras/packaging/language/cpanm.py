@@ -58,22 +58,29 @@ options:
       - Use the mirror's index file instead of the CPAN Meta DB
     required: false
     default: false
-examples:
-   - code: "cpanm: name=Dancer"
-     description: Install I(Dancer) perl package.
-   - code: "cpanm: name=MIYAGAWA/Plack-0.99_05.tar.gz"
-     description: Install version 0.99_05 of the I(Plack) perl package.
-   - code: "cpanm: name=Dancer locallib=/srv/webapps/my_app/extlib"
-     description: "Install I(Dancer) (U(http://perldancer.org/)) into the specified I(locallib)"
-   - code: "cpanm: from_path=/srv/webapps/my_app/src/"
-     description: Install perl dependencies from local directory.
-   - code: "cpanm: name=Dancer notest=True locallib=/srv/webapps/my_app/extlib"
-     description: Install I(Dancer) perl package without running the unit tests in indicated I(locallib).
-   - code: "cpanm: name=Dancer mirror=http://cpan.cpantesters.org/"
-     description: Install I(Dancer) perl package from a specific mirror
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
 author: "Franck Cuny (@franckcuny)"
+'''
+
+EXAMPLES = '''
+# install Dancer perl package
+- cpanm: name=Dancer
+
+# install version 0.99_05 of the Plack perl package
+- cpanm: name=MIYAGAWA/Plack-0.99_05.tar.gz
+
+# install Dancer into the specified locallib
+- cpanm: name=Dancer locallib=/srv/webapps/my_app/extlib
+
+# install perl dependencies from local directory
+- cpanm: from_path=/srv/webapps/my_app/src/
+
+# install Dancer perl package without running the unit tests in indicated locallib
+- cpanm: name=Dancer notest=True locallib=/srv/webapps/my_app/extlib
+
+# install Dancer perl package from a specific mirror
+- cpanm: name=Dancer mirror=http://cpan.cpantesters.org/
 '''
 
 def _is_package_installed(module, name, locallib, cpanm):
