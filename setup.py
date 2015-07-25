@@ -2,7 +2,6 @@
 
 import os
 import sys
-from glob import glob
 
 sys.path.insert(0, os.path.abspath('lib'))
 from ansible import __version__, __author__
