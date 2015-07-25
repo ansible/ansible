@@ -99,6 +99,12 @@ options:
     version_added: "2.0"
     required: false
     default: none
+  power_on_after_clone:
+    description:
+      - Specifies if the VM should be powered on after the clone.
+    required: false
+    default: yes
+    choices: ['yes', 'no']
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -587,7 +593,7 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone):
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone, power_on_after_clone):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
@@ -664,20 +670,25 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
         vmTarget = vsphere_client.get_vm_by_name(guest)
     except Exception:
         pass
-    if not vmTemplate.properties.config.template:
+
+    if not vmTemplate.is_powered_off():
         module.fail_json(
-            msg="Target %s is not a registered template" % template_src
+            msg="Source %s must be powered off" % template_src
         )
+
     try:
-        if vmTarget:
-            changed = False
-        elif snapshot_to_clone is not None:
-            #check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
-            vmTemplate.clone(guest, resourcepool=rpmor, linked=True, snapshot=snapshot_to_clone)
+        if not vmTarget:
+            cloneArgs = dict(resourcepool=rpmor, power_on=power_on_after_clone)
+
+            if snapshot_to_clone is not None:
+                #check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
+                cloneArgs["linked"] = True
+                cloneArgs["snapshot"] = snapshot_to_clone
+
+            vmTemplate.clone(guest, **cloneArgs)
             changed = True
         else:
-            vmTemplate.clone(guest, resourcepool=rpmor)
-            changed = True
+            changed = False
 
         vsphere_client.disconnect()
         module.exit_json(changed=changed)
@@ -1317,6 +1328,7 @@ def main():
             cluster=dict(required=False, default=None, type='str'),
             force=dict(required=False, type='bool', default=False),
             esxi=dict(required=False, type='dict', default={}),
+            power_on_after_clone=dict(required=False, type='bool', default=True)
 
 
         ),
@@ -1356,6 +1368,7 @@ def main():
     template_src = module.params['template_src']
     from_template = module.params['from_template']
     snapshot_to_clone = module.params['snapshot_to_clone']
+    power_on_after_clone = module.params['power_on_after_clone']
 
 
     # CONNECT TO THE SERVER
@@ -1437,8 +1450,10 @@ def main():
                 template_src=template_src,
                 module=module,
                 cluster_name=cluster,
-                snapshot_to_clone=snapshot_to_clone
+                snapshot_to_clone=snapshot_to_clone,
+                power_on_after_clone=power_on_after_clone
             )
+
         if state in ['restarted', 'reconfigured']:
             module.fail_json(
                 msg="No such VM %s. States ["
