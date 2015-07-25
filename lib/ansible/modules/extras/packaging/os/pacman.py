@@ -110,8 +110,6 @@ import os
 import re
 import sys
 
-PACMAN_PATH = "/usr/bin/pacman"
-
 def get_version(pacman_output):
     """Take pacman -Qi or pacman -Si output and get the Version"""
     lines = pacman_output.split('\n')
@@ -120,19 +118,19 @@ def get_version(pacman_output):
             return line.split(':')[1].strip()
     return None
 
-def query_package(module, name, state="present"):
+def query_package(module, pacman_path, name, state="present"):
     """Query the package status in both the local system and the repository. Returns a boolean to indicate if the package is installed, and a second boolean to indicate if the package is up-to-date."""
     if state == "present":
-        lcmd = "pacman -Qi %s" % (name)
+        lcmd = "%s -Qi %s" % (pacman_path, name)
         lrc, lstdout, lstderr = module.run_command(lcmd, check_rc=False)
         if lrc != 0:
             # package is not installed locally
             return False, False
-        
+
         # get the version installed locally (if any)
         lversion = get_version(lstdout)
-        
-        rcmd = "pacman -Si %s" % (name)
+
+        rcmd = "%s -Si %s" % (pacman_path, name)
         rrc, rstdout, rstderr = module.run_command(rcmd, check_rc=False)
         # get the version in the repository
         rversion = get_version(rstdout)
@@ -145,8 +143,8 @@ def query_package(module, name, state="present"):
         return False, False
 
 
-def update_package_db(module):
-    cmd = "pacman -Sy"
+def update_package_db(module, pacman_path):
+    cmd = "%s -Sy" % (pacman_path)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
     if rc == 0:
@@ -154,30 +152,27 @@ def update_package_db(module):
     else:
         module.fail_json(msg="could not update package db")
 
-def upgrade(module):
-    cmdupgrade = "pacman -Suq --noconfirm"
-    cmdneedrefresh = "pacman -Supq"
+def upgrade(module, pacman_path):
+    cmdupgrade = "%s -Suq --noconfirm" % (pacman_path)
+    cmdneedrefresh = "%s -Qqu" % (pacman_path)
     rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
 
     if rc == 0:
-        if stdout.count('\n') > 1:
-            rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
-            if rc == 0:
-                module.exit_json(changed=True, msg='System upgraded')
-            else:
-                module.fail_json(msg="could not upgrade")
+        rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
+        if rc == 0:
+            module.exit_json(changed=True, msg='System upgraded')
         else:
-            module.exit_json(changed=False, msg='Nothing to upgrade')
+            module.fail_json(msg="could not upgrade")
     else:
-        module.fail_json(msg="could not list upgrades")
+        module.exit_json(changed=False, msg='Nothing to upgrade')
 
-def remove_packages(module, packages):
+def remove_packages(module, pacman_path, packages):
     if module.params["recurse"]:
         args = "Rs"
     else:
         args = "R"
 
-def remove_packages(module, packages):
+def remove_packages(module, pacman_path, packages):
     if module.params["force"]:
         args = "Rdd"
     else:
@@ -187,11 +182,11 @@ def remove_packages(module, packages):
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
         # Query the package first, to see if we even need to remove
-        installed, updated = query_package(module, package)
+        installed, updated = query_package(module, pacman_path, package)
         if not installed:
             continue
 
-        cmd = "pacman -%s %s --noconfirm" % (args, package)
+        cmd = "%s -%s %s --noconfirm" % (pacman_path, args, package)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -206,12 +201,12 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, state, packages, package_files):
+def install_packages(module, pacman_path, state, packages, package_files):
     install_c = 0
 
     for i, package in enumerate(packages):
         # if the package is installed and state == present or state == latest and is up-to-date then skip
-        installed, updated = query_package(module, package)
+        installed, updated = query_package(module, pacman_path, package)
         if installed and (state == 'present' or (state == 'latest' and updated)):
             continue
 
@@ -220,7 +215,7 @@ def install_packages(module, state, packages, package_files):
         else:
             params = '-S %s' % package
 
-        cmd = "pacman %s --noconfirm" % (params)
+        cmd = "%s %s --noconfirm" % (pacman_path, params)
         rc, stdout, stderr = module.run_command(cmd, check_rc=False)
 
         if rc != 0:
@@ -234,10 +229,10 @@ def install_packages(module, state, packages, package_files):
     module.exit_json(changed=False, msg="package(s) already installed")
 
 
-def check_packages(module, packages, state):
+def check_packages(module, pacman_path, packages, state):
     would_be_changed = []
     for package in packages:
-        installed, updated = query_package(module, package)
+        installed, updated = query_package(module, pacman_path, package)
         if ((state in ["present", "latest"] and not installed) or
                 (state == "absent" and installed) or
                 (state == "latest" and not updated)):
@@ -263,8 +258,10 @@ def main():
         required_one_of = [['name', 'update_cache', 'upgrade']],
         supports_check_mode = True)
 
-    if not os.path.exists(PACMAN_PATH):
-        module.fail_json(msg="cannot find pacman, looking for %s" % (PACMAN_PATH))
+    pacman_path = module.get_bin_path('pacman', True)
+
+    if not os.path.exists(pacman_path):
+        module.fail_json(msg="cannot find pacman, in path %s" % (pacman_path))
 
     p = module.params
 
@@ -275,7 +272,7 @@ def main():
         p['state'] = 'absent'
 
     if p["update_cache"] and not module.check_mode:
-        update_package_db(module)
+        update_package_db(module, pacman_path)
         if not p['name']:
             module.exit_json(changed=True, msg='updated the package master lists')
 
@@ -283,7 +280,7 @@ def main():
         module.exit_json(changed=True, msg='Would have updated the package cache')
 
     if p['upgrade']:
-        upgrade(module)
+        upgrade(module, pacman_path)
 
     if p['name']:
         pkgs = p['name'].split(',')
@@ -299,14 +296,15 @@ def main():
                 pkg_files.append(None)
 
         if module.check_mode:
-            check_packages(module, pkgs, p['state'])
+            check_packages(module, pacman_path, pkgs, p['state'])
 
         if p['state'] in ['present', 'latest']:
-            install_packages(module, p['state'], pkgs, pkg_files)
+            install_packages(module, pacman_path, p['state'], pkgs, pkg_files)
         elif p['state'] == 'absent':
-            remove_packages(module, pkgs)
+            remove_packages(module, pacman_path, pkgs)
 
 # import module snippets
 from ansible.module_utils.basic import *
-    
-main()        
+
+if __name__ == "__main__":
+    main()
