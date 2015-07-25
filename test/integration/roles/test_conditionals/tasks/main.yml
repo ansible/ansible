@@ -148,6 +148,16 @@
     that:
     - "result.skipped == true"
 
+- name: test bad conditional 'is undefined'
+  shell: echo 'testing'
+  when: test_bare is undefined
+  register: result
+
+- name: assert bad conditional 'is undefined' did NOT run
+  assert:
+    that:
+    - "result.skipped == true"
+
 - name: test bare conditional
   shell: echo 'testing'
   when: test_bare
