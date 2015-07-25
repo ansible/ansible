@@ -90,7 +90,7 @@ If a required variable has not been set, you can skip or fail using Jinja2's
           when: foo is defined
 
         - fail: msg="Bailing out. this play requires 'bar'"
-          when: bar is not defined
+          when: bar is undefined
 
 This is especially useful in combination with the conditional import of vars
 files (see below).
