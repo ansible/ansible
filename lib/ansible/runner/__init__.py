@@ -1115,7 +1115,7 @@ class Runner(object):
                 self.callbacks.on_failed(host, data, ignore_errors)
             else:
                 if self.diff:
-                    self.callbacks.on_file_diff(conn.host, result.diff)
+                    self.callbacks.on_file_diff(host, result.diff)
                 self.callbacks.on_ok(host, data)
 
         return result
