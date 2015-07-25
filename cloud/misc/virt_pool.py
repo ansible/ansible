@@ -463,8 +463,8 @@ class VirtStoragePool(object):
     def refresh(self, entryid):
         return self.conn.refresh(entryid)
 
-    def info(self, facts_mode='info'):
-        return self.facts(facts_mode)
+    def info(self):
+        return self.facts(facts_mode='info')
 
     def facts(self, facts_mode='facts'):
         results = dict()
