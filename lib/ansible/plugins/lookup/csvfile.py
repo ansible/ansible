@@ -75,7 +75,7 @@ class LookupModule(LookupBase):
             if paramvals['delimiter'] == 'TAB':
                 paramvals['delimiter'] = "\t"
 
-            lookupfile = self._loader.path_dwim_relative(basedir, 'files', term)
+            lookupfile = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])
             var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['default'], paramvals['col'])
             if var is not None:
                 if type(var) is list:
