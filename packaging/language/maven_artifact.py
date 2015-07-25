@@ -22,11 +22,9 @@
 __author__ = 'cschmidt'
 
 from lxml import etree
-from urllib2 import Request, urlopen, URLError, HTTPError
 import os
 import hashlib
 import sys
-import base64
 
 DOCUMENTATION = '''
 ---
@@ -37,10 +35,10 @@ description:
     - Downloads an artifact from a maven repository given the maven coordinates provided to the module. Can retrieve
     - snapshots or release versions of the artifact and will resolve the latest available version if one is not
     - available.
-author: Chris Schmidt <chris.schmidt () contrastsecurity.com>
+author: "Chris Schmidt (@chrisisbeef)"
 requirements:
-    - python libxml
-    - python urllib2
+    - "python >= 2.6"
+    - lxml
 options:
     group_id:
         description: The Maven groupId coordinate
@@ -69,7 +67,7 @@ options:
         required: false
         default: null
     password:
-        description: The passwor to authenticate with to the Maven Repository
+        description: The password to authenticate with to the Maven Repository
         required: false
         default: null
     dest:
@@ -81,6 +79,12 @@ options:
         required: true
         default: present
         choices: [present,absent]
+    validate_certs:
+        description: If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
+        required: false
+        default: 'yes'
+        choices: ['yes', 'no']
+        version_added: "1.9.3"
 '''
 
 EXAMPLES = '''
@@ -165,13 +169,12 @@ class Artifact(object):
 
 
 class MavenDownloader:
-    def __init__(self, base="http://repo1.maven.org/maven2", username=None, password=None):
+    def __init__(self, module, base="http://repo1.maven.org/maven2"):
+        self.module = module
         if base.endswith("/"):
             base = base.rstrip("/")
         self.base = base
         self.user_agent = "Maven Artifact Downloader/1.0"
-        self.username = username
-        self.password = password
 
     def _find_latest_version_available(self, artifact):
         path = "/%s/maven-metadata.xml" % (artifact.path(False))
@@ -184,28 +187,11 @@ class MavenDownloader:
         if artifact.is_snapshot():
             path = "/%s/maven-metadata.xml" % (artifact.path())
             xml = self._request(self.base + path, "Failed to download maven-metadata.xml", lambda r: etree.parse(r))
-            basexpath = "/metadata/versioning/"
-            p = xml.xpath(basexpath + "/snapshotVersions/snapshotVersion")
-            if p:
-                return self._find_matching_artifact(p, artifact)
+            timestamp = xml.xpath("/metadata/versioning/snapshot/timestamp/text()")[0]
+            buildNumber = xml.xpath("/metadata/versioning/snapshot/buildNumber/text()")[0]
+            return self._uri_for_artifact(artifact, artifact.version.replace("SNAPSHOT", timestamp + "-" + buildNumber))
         else:
             return self._uri_for_artifact(artifact)
-
-    def _find_matching_artifact(self, elems, artifact):
-        filtered = filter(lambda e: e.xpath("extension/text() = '%s'" % artifact.extension), elems)
-        if artifact.classifier:
-            filtered = filter(lambda e: e.xpath("classifier/text() = '%s'" % artifact.classifier), elems)
-
-        if len(filtered) > 1:
-            print(
-                "There was more than one match. Selecting the first one. Try adding a classifier to get a better match.")
-        elif not len(filtered):
-            print("There were no matches.")
-            return None
-
-        elem = filtered[0]
-        value = elem.xpath("value/text()")
-        return self._uri_for_artifact(artifact, value[0])
 
     def _uri_for_artifact(self, artifact, version=None):
         if artifact.is_snapshot() and not version:
@@ -218,20 +204,14 @@ class MavenDownloader:
         return self.base + "/" + artifact.path() + "/" + artifact.artifact_id + "-" + version + "." + artifact.extension
 
     def _request(self, url, failmsg, f):
-        if not self.username:
-            headers = {"User-Agent": self.user_agent}
-        else:
-            headers = {
-                "User-Agent": self.user_agent,
-                "Authorization": "Basic " + base64.b64encode(self.username + ":" + self.password)
-            }
-        req = Request(url, None, headers)
-        try:
-            response = urlopen(req)
-        except HTTPError, e:
-            raise ValueError(failmsg + " because of " + str(e) + "for URL " + url)
-        except URLError, e:
-            raise ValueError(failmsg + " because of " + str(e) + "for URL " + url)
+        # Hack to add parameters in the way that fetch_url expects
+        self.module.params['url_username'] = self.module.params.get('username', '')
+        self.module.params['url_password'] = self.module.params.get('password', '')
+        self.module.params['http_agent'] = self.module.params.get('user_agent', None)
+
+        response, info = fetch_url(self.module, url)
+        if info['status'] != 200:
+            raise ValueError(failmsg + " because of " + info['msg'] + "for URL " + url)
         else:
             return f(response)
 
@@ -309,8 +289,9 @@ def main():
             repository_url = dict(default=None),
             username = dict(default=None),
             password = dict(default=None),
-            state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state 
+            state = dict(default="present", choices=["present","absent"]), # TODO - Implement a "latest" state
             dest = dict(default=None),
+            validate_certs = dict(required=False, default=True, type='bool'),
         )
     )
 
@@ -328,7 +309,7 @@ def main():
     if not repository_url:
         repository_url = "http://repo1.maven.org/maven2"
 
-    downloader = MavenDownloader(repository_url, repository_username, repository_password)
+    downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
 
     try:
         artifact = Artifact(group_id, artifact_id, version, classifier, extension)
@@ -360,4 +341,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+if __name__ == '__main__':
+    main()

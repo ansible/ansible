@@ -1,5 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
+# (c) 2015, Brian Coca <bcoca@ansible.com>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>
+
 
 DOCUMENTATION = '''
 ---
@@ -11,15 +29,15 @@ description:
 options:
   user:
     description:
-      User as which to connect
+      - User as which to connect
     required: true
   password:
     description:
-      password for user to connect
+      - password for user to connect
     required: true
   to:
     description:
-      user ID or name of the room, when using room use a slash to indicate your nick.
+      - user ID or name of the room, when using room use a slash to indicate your nick.
     required: true
   msg:
     description:
@@ -28,21 +46,21 @@ options:
     default: null
   host:
     description:
-      host to connect, overrides user info
+      - host to connect, overrides user info
     required: false
   port:
     description:
-      port to connect to, overrides default
+      - port to connect to, overrides default
     required: false
     default: 5222
   encoding:
     description:
-      message encoding
+      - message encoding
     required: false
 
 # informational: requirements for nodes
 requirements: [ xmpp ]
-author: Brian Coca
+author: "Brian Coca (@bcoca)"
 '''
 
 EXAMPLES = '''

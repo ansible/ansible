@@ -24,7 +24,7 @@ short_description: Send Slack notifications
 description:
     - The M(slack) module sends notifications to U(http://slack.com) via the Incoming WebHook integration
 version_added: 1.6
-author: Ramon de la Fuente <ramon@delafuente.nl>
+author: "Ramon de la Fuente (@ramondelafuente)"
 options:
   domain:
     description:
@@ -141,7 +141,10 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
     else:
         payload = dict(attachments=[dict(text=text, color=color)])
     if channel is not None:
-        payload['channel'] = channel if (channel[0] == '#') else '#'+channel
+        if (channel[0] == '#') or (channel[0] == '@'):
+            payload['channel'] = channel
+        else:
+            payload['channel'] = '#'+channel
     if username is not None:
         payload['username'] = username
     if icon_emoji is not None:
@@ -174,7 +177,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             domain      = dict(type='str', required=False, default=None),
-            token       = dict(type='str', required=True),
+            token       = dict(type='str', required=True, no_log=True),
             msg         = dict(type='str', required=True),
             channel     = dict(type='str', default=None),
             username    = dict(type='str', default='Ansible'),

@@ -3,7 +3,7 @@
 DOCUMENTATION = '''
 ---
 module: bigpanda
-author: BigPanda
+author: "Hagai Kariti (@hkariti)"
 short_description: Notify BigPanda about deployments
 version_added: "1.8"
 description: 
@@ -59,7 +59,7 @@ options:
     choices: ['yes', 'no']
 
 # informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
+requirements: [ ]
 '''
 
 EXAMPLES = '''
@@ -162,11 +162,11 @@ def main():
             module.exit_json(changed=True, **deployment)
         else:
             module.fail_json(msg=json.dumps(info))
-    except Exception as e:
+    except Exception, e:
         module.fail_json(msg=str(e))
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-
-main()
+if __name__ == '__main__':
+    main()

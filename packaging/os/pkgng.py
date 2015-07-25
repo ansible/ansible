@@ -68,7 +68,7 @@ options:
             - for pkgng versions 1.5 and later, pkg will install all packages
               within the specified root directory
         required: false
-author: bleader
+author: "bleader (@bleader)" 
 notes:
     - When using pkgsite, be careful that already in cache packages won't be downloaded again.
 '''
@@ -257,9 +257,8 @@ def annotate_packages(module, pkgng_path, packages, annotation, rootdir_arg):
 
     for package in packages:
         for _annotation in annotations:
-            annotate_c += ( 1 if operation[_annotation['operation']](
-                module, pkgng_path, package,
-                _annotation['tag'], _annotation['value'], rootdir_arg) else 0 )
+            if operation[_annotation['operation']](module, pkgng_path, package, _annotation['tag'], _annotation['value']):
+                annotate_c += 1
 
     if annotate_c > 0:
         return (True, "added %s annotations." % annotate_c)

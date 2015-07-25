@@ -27,9 +27,13 @@ short_description: Zabbix screen creates/updates/deletes
 description:
     - This module allows you to create, modify and delete Zabbix screens and associated graph data.
 version_added: "2.0"
-author: Tony Minfei Ding, Harrison Gu
+author: 
+    - "(@cove)"
+    - "Tony Minfei Ding"
+    - "Harrison Gu (@harrisongu)"
 requirements:
-    - zabbix-api python module
+    - "python >= 2.6"
+    - zabbix-api
 options:
     server_url:
         description:
@@ -46,15 +50,15 @@ options:
         required: true
     timeout:
         description:
-            - The timeout of API request(seconds).
+            - The timeout of API request (seconds).
         default: 10
     zabbix_screens:
         description:
             - List of screens to be created/updated/deleted(see example).
             - If the screen(s) already been added, the screen(s) name won't be updated.
-            - When creating or updating screen(s), the screen_name, host_group are required.
-            - When deleting screen(s), the screen_name is required.
-            - 'The available states are: present(default) and absent. If the screen(s) already exists, and the state is not "absent", the screen(s) will just be updated as needed.'
+            - When creating or updating screen(s), C(screen_name), C(host_group) are required.
+            - When deleting screen(s), the C(screen_name) is required.
+            - 'The available states are: C(present) (default) and C(absent). If the screen(s) already exists, and the state is not C(absent), the screen(s) will just be updated as needed.'
         required: true
 notes:
     - Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
@@ -122,8 +126,6 @@ EXAMPLES = '''
         graph_height: 100
   when: inventory_hostname==groups['group_name'][0]
 '''
-
-from ansible.module_utils.basic import *
 
 try:
     from zabbix_api import ZabbixAPI, ZabbixAPISubClass
@@ -315,9 +317,9 @@ def main():
         argument_spec=dict(
             server_url=dict(required=True, aliases=['url']),
             login_user=dict(required=True),
-            login_password=dict(required=True),
-            timeout=dict(default=10),
-            screens=dict(required=True)
+            login_password=dict(required=True, no_log=True),
+            timeout=dict(type='int', default=10),
+            screens=dict(type='dict', required=True)
         ),
         supports_check_mode=True
     )
@@ -411,5 +413,7 @@ def main():
     else:
         module.exit_json(changed=False)
 
-# <<INCLUDE_ANSIBLE_MODULE_COMMON>>
-main()
+from ansible.module_utils.basic import *
+
+if __name__ == '__main__':
+    main()

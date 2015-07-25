@@ -115,6 +115,11 @@ options:
       - The normalization property.
     required: False
     choices: [none,formC,formD,formKC,formKD]
+  origin:
+    description:
+      - Name of the snapshot to clone
+    required: False
+    version_added: "2.0"
   primarycache:
     description:
       - The primarycache property.
@@ -177,7 +182,7 @@ options:
     description:
       - The sync property.
     required: False
-    choices: ['on','off']
+    choices: ['standard','always','disabled']
   utf8only:
     description:
       - The utf8only property.
@@ -206,7 +211,7 @@ options:
       - The zoned property.
     required: False
     choices: ['on','off']
-author: Johan Wiren
+author: "Johan Wiren (@johanwiren)"
 '''
 
 EXAMPLES = '''
@@ -221,6 +226,12 @@ EXAMPLES = '''
 
 # Create a new file system called myfs2 with snapdir enabled
 - zfs: name=rpool/myfs2 state=present snapdir=enabled
+
+# Create a new file system by cloning a snapshot
+- zfs: name=rpool/cloned_fs state=present origin=rpool/myfs@mysnapshot
+
+# Destroy a filesystem
+- zfs: name=rpool/myfs state=absent
 '''
 
 
@@ -250,16 +261,23 @@ class Zfs(object):
         if self.module.check_mode:
             self.changed = True
             return
-        properties=self.properties
+        properties = self.properties
         volsize = properties.pop('volsize', None)
         volblocksize = properties.pop('volblocksize', None)
+        origin = properties.pop('origin', None)
         if "@" in self.name:
             action = 'snapshot'
+        elif origin:
+            action = 'clone'
         else:
             action = 'create'
 
         cmd = [self.module.get_bin_path('zfs', True)]
         cmd.append(action)
+
+        if createparent:
+            cmd.append('-p')
+
         if volblocksize:
             cmd.append('-b %s' % volblocksize)
         if properties:
@@ -268,10 +286,12 @@ class Zfs(object):
         if volsize:
             cmd.append('-V')
             cmd.append(volsize)
+        if origin:
+            cmd.append(origin)
         cmd.append(self.name)
         (rc, err, out) = self.module.run_command(' '.join(cmd))
         if rc == 0:
-            self.changed=True
+            self.changed = True
         else:
             self.module.fail_json(msg=out)
 
@@ -345,6 +365,7 @@ def main():
             'checksum':        {'required': False, 'choices':['on', 'off', 'fletcher2', 'fletcher4', 'sha256']},
             'compression':     {'required': False, 'choices':['on', 'off', 'lzjb', 'gzip', 'gzip-1', 'gzip-2', 'gzip-3', 'gzip-4', 'gzip-5', 'gzip-6', 'gzip-7', 'gzip-8', 'gzip-9', 'lz4', 'zle']},
             'copies':          {'required': False, 'choices':['1', '2', '3']},
+            'createparent':    {'required': False, 'choices':['on', 'off']},
             'dedup':           {'required': False, 'choices':['on', 'off']},
             'devices':         {'required': False, 'choices':['on', 'off']},
             'exec':            {'required': False, 'choices':['on', 'off']},
@@ -355,6 +376,7 @@ def main():
             'mountpoint':      {'required': False},
             'nbmand':          {'required': False, 'choices':['on', 'off']},
             'normalization':   {'required': False, 'choices':['none', 'formC', 'formD', 'formKC', 'formKD']},
+            'origin':          {'required': False},
             'primarycache':    {'required': False, 'choices':['all', 'none', 'metadata']},
             'quota':           {'required': False},
             'readonly':        {'required': False, 'choices':['on', 'off']},
@@ -368,7 +390,7 @@ def main():
             'sharenfs':        {'required': False},
             'sharesmb':        {'required': False},
             'snapdir':         {'required': False, 'choices':['hidden', 'visible']},
-            'sync':            {'required': False, 'choices':['on', 'off']},
+            'sync':            {'required': False, 'choices':['standard', 'always', 'disabled']},
             # Not supported
             #'userquota':       {'required': False},
             'utf8only':        {'required': False, 'choices':['on', 'off']},
@@ -396,7 +418,7 @@ def main():
     result['name'] = name
     result['state'] = state
 
-    zfs=Zfs(module, name, properties)
+    zfs = Zfs(module, name, properties)
 
     if state == 'present':
         if zfs.exists():

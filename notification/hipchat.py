@@ -5,7 +5,7 @@ DOCUMENTATION = '''
 ---
 module: hipchat
 version_added: "1.2"
-short_description: Send a message to hipchat
+short_description: Send a message to hipchat.
 description:
    - Send a message to hipchat
 options:
@@ -56,30 +56,44 @@ options:
     version_added: 1.5.1
   api:
     description:
-      - API url if using a self-hosted hipchat server
+      - API url if using a self-hosted hipchat server. For hipchat api version 2 use C(/v2) path in URI
     required: false
-    default: 'https://api.hipchat.com/v1/rooms/message'
+    default: 'https://api.hipchat.com/v1'
     version_added: 1.6.0
 
 
-# informational: requirements for nodes
-requirements: [ urllib, urllib2 ]
-author: WAKAYAMA Shirou
+requirements: [ ]
+author: "WAKAYAMA Shirou (@shirou), BOURDEL Paul (@pb8226)"
 '''
 
 EXAMPLES = '''
-- hipchat: token=AAAAAA room=notify msg="Ansible task finished"
+- hipchat:  room=notify msg="Ansible task finished"
+
+# Use Hipchat API version 2
+
+- hipchat: 
+    api: "https://api.hipchat.com/v2/"
+    token: OAUTH2_TOKEN
+    room: notify 
+    msg: "Ansible task finished"
 '''
 
 # ===========================================
 # HipChat module specific support methods.
 #
 
-MSG_URI = "https://api.hipchat.com/v1/rooms/message"
+import urllib
 
-def send_msg(module, token, room, msg_from, msg, msg_format='text',
-             color='yellow', notify=False, api=MSG_URI):
-    '''sending message to hipchat'''
+DEFAULT_URI = "https://api.hipchat.com/v1"
+
+MSG_URI_V1 = "/rooms/message"
+
+NOTIFY_URI_V2 = "/room/{id_or_name}/notification"
+
+def send_msg_v1(module, token, room, msg_from, msg, msg_format='text',
+             color='yellow', notify=False, api=MSG_URI_V1):
+    '''sending message to hipchat v1 server'''
+    print "Sending message to v1 server"
 
     params = {}
     params['room_id'] = room
@@ -88,15 +102,45 @@ def send_msg(module, token, room, msg_from, msg, msg_format='text',
     params['message_format'] = msg_format
     params['color'] = color
     params['api'] = api
-
-    if notify:
-        params['notify'] = 1
-    else:
-        params['notify'] = 0
-
-    url = api + "?auth_token=%s" % (token)
+    params['notify'] = int(notify)
+  
+    url = api + MSG_URI_V1 + "?auth_token=%s" % (token)
     data = urllib.urlencode(params)
+
+    if module.check_mode:
+        # In check mode, exit before actually sending the message
+        module.exit_json(changed=False)
+
     response, info = fetch_url(module, url, data=data)
+    if info['status'] == 200:
+        return response.read()
+    else:
+        module.fail_json(msg="failed to send message, return status=%s" % str(info['status']))
+
+
+def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
+             color='yellow', notify=False, api=NOTIFY_URI_V2):
+    '''sending message to hipchat v2 server'''
+    print "Sending message to v2 server"
+
+    headers = {'Authorization':'Bearer %s' % token, 'Content-Type':'application/json'}
+
+    body = dict()
+    body['message'] = msg
+    body['color'] = color
+    body['message_format'] = msg_format
+    params['notify'] = notify
+
+    POST_URL = api + NOTIFY_URI_V2
+    
+    url = POST_URL.replace('{id_or_name}', room)
+    data = json.dumps(body)
+
+    if module.check_mode:
+        # In check mode, exit before actually sending the message
+        module.exit_json(changed=False)
+
+    response, info = fetch_url(module, url, data=data, headers=headers, method='POST')
     if info['status'] == 200:
         return response.read()
     else:
@@ -119,8 +163,8 @@ def main():
                                                   "purple", "gray", "random"]),
             msg_format=dict(default="text", choices=["text", "html"]),
             notify=dict(default=True, type='bool'),
-            validate_certs = dict(default='yes', type='bool'),
-            api = dict(default=MSG_URI),
+            validate_certs=dict(default='yes', type='bool'),
+            api=dict(default=DEFAULT_URI),
         ),
         supports_check_mode=True
     )
@@ -135,7 +179,10 @@ def main():
     api = module.params["api"]
 
     try:
-        send_msg(module, token, room, msg_from, msg, msg_format, color, notify, api)
+        if api.find('/v2') != -1:
+            send_msg_v2(module, token, room, msg_from, msg, msg_format, color, notify, api)
+        else:
+            send_msg_v1(module, token, room, msg_from, msg, msg_format, color, notify, api)
     except Exception, e:
         module.fail_json(msg="unable to send msg: %s" % e)
 

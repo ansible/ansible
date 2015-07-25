@@ -55,8 +55,13 @@ options:
       - XML document used with the define command
     required: false
     default: null
-requirements: [ "libvirt" ]
-author: Michael DeHaan, Seth Vidal
+requirements:
+    - "python >= 2.6"
+    - "libvirt-python"
+author:
+    - "Ansible Core Team"
+    - "Michael DeHaan"
+    - "Seth Vidal"
 '''
 
 EXAMPLES = '''
@@ -88,8 +93,9 @@ import sys
 try:
     import libvirt
 except ImportError:
-    print "failed=True msg='libvirt python module unavailable'"
-    sys.exit(1)
+    HAS_VIRT = False
+else:
+    HAS_VIRT = True
 
 ALL_COMMANDS = []
 VM_COMMANDS = ['create','status', 'start', 'stop', 'pause', 'unpause',
@@ -475,6 +481,11 @@ def main():
         uri = dict(default='qemu:///system'),
         xml = dict(),
     ))
+
+    if not HAS_VIRT:
+        module.fail_json(
+            msg='The `libvirt` module is not importable. Check the requirements.'
+        )
 
     rc = VIRT_SUCCESS
     try:
