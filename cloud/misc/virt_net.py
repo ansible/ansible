@@ -501,6 +501,7 @@ def core(module):
 
     module.fail_json(msg="expected state or command parameter to be specified")
 
+
 def main():
 
     module = AnsibleModule (
