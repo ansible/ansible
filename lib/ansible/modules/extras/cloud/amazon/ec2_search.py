@@ -146,8 +146,7 @@ def main():
         except:
             print module.jsonify('error getting instances from: ' + region.name)
 
-    ansible_facts = {'info': server_info}
-    ec2_facts_result = dict(changed=True, ec2=ansible_facts)
+    ec2_facts_result = dict(changed=True, ec2=server_info)
 
     module.exit_json(**ec2_facts_result)
 
