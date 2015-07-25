@@ -175,7 +175,7 @@ def main():
     state = module.params['state']
 
     if not os.path.exists("/etc/locale.gen"):
-        if os.path.exists("/var/lib/locales/supported.d/local"):
+        if os.path.exists("/var/lib/locales/supported.d/"):
             # Ubuntu created its own system to manage locales.
             ubuntuMode = True
         else:
