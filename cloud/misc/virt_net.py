@@ -177,14 +177,12 @@ class LibvirtConnection(object):
         results = []
 
         # Get active entries
-        entries = self.conn.listNetworks()
-        for name in entries:
+        for name in self.conn.listNetworks():
             entry = self.conn.networkLookupByName(name)
             results.append(entry)
 
         # Get inactive entries
-        entries = self.conn.listDefinedNetworks()
-        for name in entries:
+        for name in self.conn.listDefinedNetworks():
             entry = self.conn.networkLookupByName(name)
             results.append(entry)
 
@@ -334,9 +332,8 @@ class VirtNetwork(object):
         return results
 
     def state(self):
-        entries = self.list_nets()
         results = []
-        for entry in entries:
+        for entry in self.list_nets():
             state_blurb = self.conn.get_status(entry)
             results.append("%s %s" % (entry,state_blurb))
         return results
@@ -378,9 +375,8 @@ class VirtNetwork(object):
         return self.facts(facts_mode)
 
     def facts(self, facts_mode='facts'):
-        entries = self.list_nets()
         results = dict()
-        for entry in entries:
+        for entry in self.list_nets():
             results[entry] = dict()
             results[entry]["autostart"] = self.conn.get_autostart(entry)
             results[entry]["persistent"] = self.conn.get_persistent(entry)
