@@ -363,6 +363,41 @@ class OpenBSDStrategy(GenericStrategy):
 
 # ===========================================
 
+class SolarisStrategy(GenericStrategy):
+    """
+    This is a Solaris11 or later Hostname manipulation strategy class - it
+    execute hostname command.
+    """
+
+    HOSTNAME_CMD = '/usr/bin/hostname'
+
+    def set_current_hostname(self, name):
+        cmd_option = '-t'
+        cmd = [self.HOSTNAME_CMD, cmd_option, name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+
+    def get_permanent_hostname(self):
+        fmri = 'svc:/system/identity:node'
+        pattern = 'config/nodename'
+        cmd = '/usr/sbin/svccfg -s %s listprop -o value %s' % (fmri, pattern)
+        rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+        return out.strip()
+
+    def set_permanent_hostname(self, name):
+        cmd = [self.HOSTNAME_CMD, name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+
+# ===========================================
+
 class FedoraHostname(Hostname):
     platform = 'Linux'
     distribution = 'Fedora'
@@ -485,6 +520,11 @@ class OpenBSDHostname(Hostname):
     platform = 'OpenBSD'
     distribution = None
     strategy_class = OpenBSDStrategy
+
+class SolarisHostname(Hostname):
+    platform = 'SunOS'
+    distribution = None
+    strategy_class = SolarisStrategy
 
 # ===========================================
 
