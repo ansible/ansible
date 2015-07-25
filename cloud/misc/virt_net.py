@@ -164,13 +164,7 @@ class LibvirtConnection(object):
 
         self.module = module
 
-        cmd = "uname -r"
-        rc, stdout, stderr = self.module.run_command(cmd)
-
-        if "xen" in stdout:
-            conn = libvirt.open(None)
-        else:
-            conn = libvirt.open(uri)
+        conn = libvirt.open(uri)
 
         if not conn:
             raise Exception("hypervisor connection failure")
