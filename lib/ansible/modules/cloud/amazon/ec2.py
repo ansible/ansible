@@ -1280,21 +1280,21 @@ def main():
     else:
         module.fail_json(msg="region must be specified")
 
-    tagged_instances = [] 
+    tagged_instances = []
 
-    state = module.params.get('state')
+    state = module.params['state']
 
     if state == 'absent':
-        instance_ids = module.params.get('instance_ids')
-        if not isinstance(instance_ids, list):
-            module.fail_json(msg='termination_list needs to be a list of instances to terminate')
+        instance_ids = module.params['instance_ids']
+        if not instance_ids:
+            module.fail_json(msg='instance_ids list is required for absent state')
 
         (changed, instance_dict_array, new_instance_ids) = terminate_instances(module, ec2, instance_ids)
 
     elif state in ('running', 'stopped'):
-        instance_ids = module.params.get('instance_ids')
-        if not isinstance(instance_ids, list):
-            module.fail_json(msg='running list needs to be a list of instances to run: %s' % instance_ids)
+        instance_ids = module.params['instance_ids']
+        if not instance_ids:
+            module.fail_json(msg='instance_ids list is requried for %s state' % state)
 
         (changed, instance_dict_array, new_instance_ids) = startstop_instances(module, ec2, instance_ids, state)
 
