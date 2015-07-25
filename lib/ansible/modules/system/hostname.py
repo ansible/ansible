@@ -21,7 +21,9 @@
 DOCUMENTATION = '''
 ---
 module: hostname
-author: "Hiroaki Nakamura (@hnakamur)"
+author:
+    - "Hiroaki Nakamura (@hnakamur)"
+    - "Hideki Saito (@saito-hideki)"
 version_added: "1.4"
 short_description: Manage hostname
 requirements: [ hostname ]
@@ -116,13 +118,13 @@ class GenericStrategy(object):
       - set_current_hostname(name)
       - set_permanent_hostname(name)
     """
+
     def __init__(self, module):
         self.module = module
-
-    HOSTNAME_CMD = '/bin/hostname'
+        self.hostname_cmd = self.module.get_bin_path('hostname', True)
 
     def get_current_hostname(self):
-        cmd = [self.HOSTNAME_CMD]
+        cmd = [self.hostname_cmd]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
@@ -130,7 +132,7 @@ class GenericStrategy(object):
         return out.strip()
 
     def set_current_hostname(self, name):
-        cmd = [self.HOSTNAME_CMD, name]
+        cmd = [self.hostname_cmd, name]
         rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
@@ -360,6 +362,39 @@ class OpenBSDStrategy(GenericStrategy):
         except Exception, err:
             self.module.fail_json(msg="failed to update hostname: %s" %
                 str(err))
+
+# ===========================================
+
+class SolarisStrategy(GenericStrategy):
+    """
+    This is a Solaris11 or later Hostname manipulation strategy class - it
+    execute hostname command.
+    """
+
+    def set_current_hostname(self, name):
+        cmd_option = '-t'
+        cmd = [self.hostname_cmd, cmd_option, name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+
+    def get_permanent_hostname(self):
+        fmri = 'svc:/system/identity:node'
+        pattern = 'config/nodename'
+        cmd = '/usr/sbin/svccfg -s %s listprop -o value %s' % (fmri, pattern)
+        rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
+        return out.strip()
+
+    def set_permanent_hostname(self, name):
+        cmd = [self.hostname_cmd, name]
+        rc, out, err = self.module.run_command(cmd)
+        if rc != 0:
+            self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
+                (rc, out, err))
 
 # ===========================================
 
