@@ -405,18 +405,13 @@ class VirtStoragePool(object):
         return self.conn.find_entry(entryid)
 
     def list_pools(self, state=None):
-        entries = self.conn.find_entry(-1)
         results = []
-        for x in entries:
-            try:
-                if state:
-                    entrystate = self.conn.get_status2(x)
-                    if entrystate == state:
-                        results.append(x.name())
-                else:
-                    results.append(x.name())
-            except:
-                pass
+        for entry in self.conn.find_entry(-1):
+            if state:
+                if state == self.conn.get_status2(entry):
+                    results.append(entry.name())
+            else:
+                results.append(entry.name())
         return results
 
     def state(self):
