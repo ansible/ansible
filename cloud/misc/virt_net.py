@@ -366,8 +366,8 @@ class VirtNetwork(object):
     def define(self, entryid, xml):
         return self.conn.define_from_xml(entryid, xml)
 
-    def info(self, facts_mode='info'):
-        return self.facts(facts_mode)
+    def info(self):
+        return self.facts(facts_mode='info')
 
     def facts(self, facts_mode='facts'):
         results = dict()
