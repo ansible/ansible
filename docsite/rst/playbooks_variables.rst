@@ -308,7 +308,7 @@ This will return a ginormous amount of variable data, which may look like this, 
             "type": "ether"
         }, 
         "ansible_form_factor": "Other", 
-        "ansible_fqdn": "ubuntu2", 
+        "ansible_fqdn": "ubuntu2.example.com",
         "ansible_hostname": "ubuntu2", 
         "ansible_interfaces": [
             "lo", 
@@ -353,6 +353,7 @@ This will return a ginormous amount of variable data, which may look like this, 
                 "size_total": 20079898624
             }
         ], 
+        "ansible_nodename": "ubuntu2.example.com",
         "ansible_os_family": "Debian", 
         "ansible_pkg_mgr": "apt", 
         "ansible_processor": [
@@ -387,8 +388,11 @@ In the above the model of the first harddrive may be referenced in a template or
 
 Similarly, the hostname as the system reports it is::
 
-    {{ ansible_hostname }}
+    {{ ansible_nodename }}
 
+and the unqualified hostname shows the string before the first period(.)::
+
+    {{ ansible_hostname }}
 
 Facts are frequently used in conditionals (see :doc:`playbooks_conditionals`) and also in templates.
 
