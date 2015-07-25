@@ -215,14 +215,12 @@ class LibvirtConnection(object):
         results = []
 
         # Get active entries
-        entries = self.conn.listStoragePools()
-        for name in entries:
+        for name in self.conn.listStoragePools():
             entry = self.conn.storagePoolLookupByName(name)
             results.append(entry)
 
         # Get inactive entries
-        entries = self.conn.listDefinedStoragePools()
-        for name in entries:
+        for name in self.conn.listDefinedStoragePools():
             entry = self.conn.storagePoolLookupByName(name)
             results.append(entry)
 
@@ -422,9 +420,8 @@ class VirtStoragePool(object):
         return results
 
     def state(self):
-        entries = self.list_pools()
         results = []
-        for entry in entries:
+        for entry in self.list_pools():
             state_blurb = self.conn.get_status(entry)
             results.append("%s %s" % (entry,state_blurb))
         return results
@@ -475,9 +472,8 @@ class VirtStoragePool(object):
         return self.facts(facts_mode)
 
     def facts(self, facts_mode='facts'):
-        entries = self.list_pools()
         results = dict()
-        for entry in entries:
+        for entry in self.list_pools():
             results[entry] = dict()
             if self.conn.find_entry(entry):
                 data = self.conn.get_info(entry)
