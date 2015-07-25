@@ -47,6 +47,7 @@ if C.DEFAULT_LOG_PATH:
 else:
     logger = None
 
+debug_lock = Lock()
 
 class Display:
 
@@ -62,7 +63,6 @@ class Display:
         self.cowsay = None
         self.noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
         self.set_cowsay_info()
-        #self.debug_lock = Lock()
 
 
     def set_cowsay_info(self):
@@ -90,7 +90,7 @@ class Display:
 
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
-        msg2 = msg
+        msg2 = self._safe_output(msg, stderr=stderr)
         if color:
             msg2 = stringc(msg, color)
 
@@ -98,8 +98,10 @@ class Display:
             b_msg2 = to_bytes(msg2)
             if not stderr:
                 print(b_msg2)
+                sys.stdout.flush()
             else:
                 print(b_msg2, file=sys.stderr)
+                sys.stderr.flush()
 
         if logger and not screen_only:
             while msg.startswith("\n"):
@@ -127,11 +129,9 @@ class Display:
 
     def debug(self, msg):
         if C.DEFAULT_DEBUG:
-            # FIXME: enable when display is inherited to all
-            #self.debug_lock.acquire()
+            debug_lock.acquire()
             self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color='dark gray')
-            sys.stdout.flush()
-            #self.debug_lock.release()
+            debug_lock.release()
 
     def verbose(self, msg, host=None, caplevel=2):
         # FIXME: this needs to be implemented
@@ -223,9 +223,15 @@ class Display:
 
     def prompt(self, msg):
 
-        if sys.stdout.encoding:
+        return raw_input(self._safe_output(msg))
+
+    def _safe_output(self, msg, stderr=False):
+
+        if not stderr and sys.stdout.encoding:
             msg = to_bytes(msg, sys.stdout.encoding)
+        elif stderr and sys.stderr.encoding:
+            msg = to_bytes(msg, sys.stderr.encoding)
         else:
             msg = to_bytes(msg)
 
-        return raw_input(msg)
+        return msg
