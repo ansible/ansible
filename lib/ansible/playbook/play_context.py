@@ -175,6 +175,7 @@ class PlayContext(Base):
     _force_handlers   = FieldAttribute(isa='bool', default=False)
     _start_at_task    = FieldAttribute(isa='string')
     _step             = FieldAttribute(isa='bool', default=False)
+    _diff             = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None, options=None, passwords=None):
 
@@ -253,6 +254,8 @@ class PlayContext(Base):
             self.step = boolean(options.step)
         if hasattr(options, 'start_at_task') and options.start_at_task:
             self.start_at_task = to_unicode(options.start_at_task)
+        if hasattr(options, 'diff') and options.diff:
+            self.diff = boolean(options.diff)
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the

@@ -34,6 +34,11 @@ from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
 from ansible.utils.unicode import to_bytes
 
+
+
+# These are module level as we currently fork and serialize the whole process and locks in the objects don't play well with that
+debug_lock = Lock()
+
 #TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
@@ -47,7 +52,6 @@ if C.DEFAULT_LOG_PATH:
 else:
     logger = None
 
-debug_lock = Lock()
 
 class Display:
 

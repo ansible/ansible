@@ -233,8 +233,7 @@ class ActionBase:
         Takes a remote checksum and returns 1 if no file
         '''
 
-        # FIXME: figure out how this will work, probably pulled from the
-        #        variable manager data
+        # FIXME: figure out how this will work, probably pulled from the variable manager data
         #python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
         python_interp = 'python'
         cmd = self._connection._shell.checksum(path, python_interp)

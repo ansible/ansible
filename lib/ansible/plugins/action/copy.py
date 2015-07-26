@@ -174,17 +174,11 @@ class ActionModule(ActionBase):
                     if tmp is None or "-tmp-" not in tmp:
                         tmp = self._make_tmp_path()
 
-                # FIXME: runner shouldn't have the diff option there
-                #if self.runner.diff and not raw:
-                #    diff = self._get_diff_data(tmp, dest_file, source_full, task_vars)
-                #else:
-                #    diff = {}
-                diff = {}
+                if self._play_context.diff and not raw:
+                    diffs.append(self._get_diff_data(tmp, dest_file, source_full, task_vars))
 
                 if self._play_context.check_mode:
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
-                    # FIXME: diff stuff
-                    #diffs.append(diff)
                     changed = True
                     module_return = dict(changed=True)
                     continue
@@ -231,7 +225,7 @@ class ActionModule(ActionBase):
 
                 if raw:
                     # Continue to next iteration if raw is defined.
-                    # self._remove_tmp_path(tmp)
+                    self._remove_tmp_path(tmp)
                     continue
 
                 # Build temporary module_args.
@@ -243,6 +237,9 @@ class ActionModule(ActionBase):
                         original_basename=source_rel
                     )
                 )
+
+                if self._play_context.check_mode:
+                    new_module_args['CHECKMODE'] = True
 
                 # Execute the file module.
                 module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=delete_remote_tmp)
@@ -299,9 +296,8 @@ class ActionModule(ActionBase):
             diff['before'] = ''
         elif peek_result['appears_binary']:
             diff['dst_binary'] = 1
-        # FIXME: this should not be in utils..
-        #elif peek_result['size'] > utils.MAX_FILE_SIZE_FOR_DIFF:
-        #    diff['dst_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
+        elif peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
+            diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
         else:
             dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), task_vars=task_vars, tmp=tmp, persist_files=True)
             if 'content' in dest_result:
@@ -318,9 +314,8 @@ class ActionModule(ActionBase):
         st = os.stat(source)
         if "\x00" in src_contents:
             diff['src_binary'] = 1
-        # FIXME: this should not be in utils
-        #elif st[stat.ST_SIZE] > utils.MAX_FILE_SIZE_FOR_DIFF:
-        #    diff['src_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
+        elif st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
+            diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
         else:
             src.seek(0)
             diff['after_header'] = source
