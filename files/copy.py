@@ -220,6 +220,7 @@ def main():
     original_basename = module.params.get('original_basename',None)
     validate = module.params.get('validate',None)
     follow = module.params['follow']
+    mode   = module.params['mode']
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
@@ -289,6 +290,11 @@ def main():
                 os.unlink(dest)
                 open(dest, 'w').close()
             if validate:
+                # if we have a mode, make sure we set it on the temporary
+                # file source as some validations may require it
+                # FIXME: should we do the same for owner/group here too?
+                if mode is not None:
+                    module.set_mode_if_different(src, mode, False)
                 if "%s" not in validate:
                     module.fail_json(msg="validate must contain %%s: %s" % (validate))
                 (rc,out,err) = module.run_command(validate % src)
