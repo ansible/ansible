@@ -40,9 +40,9 @@ class CallbackBase:
     def __init__(self, display):
         self._display = display
         if self._display.verbosity >= 4:
-            name = getattr(self, 'CALLBACK_NAME', 'with no defined name')
-            ctype = getattr(self, 'CALLBACK_TYPE', 'unknwon')
-            version = getattr(self, 'CALLBACK_VERSION', 'unknwon')
+            name = getattr(self, 'CALLBACK_NAME', 'unnamed')
+            ctype = getattr(self, 'CALLBACK_TYPE', 'old')
+            version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
     def _dump_results(self, result, indent=4, sort_keys=True):
@@ -116,6 +116,9 @@ class CallbackBase:
 
     def playbook_on_stats(self, stats):
         pass
+
+    def on_file_diff(self, host, diff):
+        self._display.display(self._dump_results(diff))
 
     ####### V2 METHODS, by default they call v1 counterparts if possible ######
     def v2_on_any(self, *args, **kwargs):
@@ -204,3 +207,7 @@ class CallbackBase:
     def v2_playbook_on_stats(self, stats):
         self.playbook_on_stats(stats)
 
+    def v2_on_file_diff(self, result):
+        host = result._host.get_name()
+        if 'diff' in result._result:
+            self.on_file_diff(host, result._result['diff'])

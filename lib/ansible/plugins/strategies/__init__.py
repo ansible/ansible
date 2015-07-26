@@ -71,6 +71,7 @@ class StrategyBase:
         self._loader            = tqm.get_loader()
         self._final_q           = tqm._final_q
         self._step              = getattr(tqm._options, 'step', False)
+        self._diff              = getattr(tqm._options, 'diff', False)
         self._display           = display
 
         # internal counters
@@ -191,6 +192,9 @@ class StrategyBase:
                             self._tqm._stats.increment('changed', host.name)
                         self._tqm.send_callback('v2_runner_on_ok', task_result)
 
+                        if self._diff and 'diff' in task_result._result:
+                            self._tqm.send_callback('v2_on_file_diff', task_result)
+
                     self._pending_results -= 1
                     if host.name in self._blocked_hosts:
                         del self._blocked_hosts[host.name]
@@ -215,7 +219,7 @@ class StrategyBase:
                 elif result[0] == 'add_host':
                     task_result = result[1]
                     new_host_info = task_result.get('add_host', dict())
-                    
+
                     self._add_host(new_host_info)
 
                 elif result[0] == 'add_group':
@@ -479,8 +483,7 @@ class StrategyBase:
                                 for host in included_file._hosts:
                                     iterator.mark_host_failed(host)
                                     self._tqm._failed_hosts[host.name] = True
-                                # FIXME: callback here?
-                                print(e)
+                                self._display.warning(str(e))
                                 continue
             self._display.debug("done running handlers, result is: %s" % result)
         return result
