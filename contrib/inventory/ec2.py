@@ -158,6 +158,8 @@ class Ec2Inventory(object):
         elif not self.is_cache_valid():
             self.do_api_calls_update_cache()
 
+
+    def data_to_print(self):
         # Data to print
         if self.args.host:
             data_to_print = self.get_host_info()
@@ -169,7 +171,7 @@ class Ec2Inventory(object):
             else:
                 data_to_print = self.json_format_dict(self.inventory, True)
 
-        print(data_to_print)
+        return data_to_print
 
 
     def is_cache_valid(self):
@@ -404,7 +406,7 @@ class Ec2Inventory(object):
             if e.error_code == 'AuthFailure':
                 error = self.get_auth_error_message()
             else:
-                backend = 'Eucalyptus' if self.eucalyptus else 'AWS' 
+                backend = 'Eucalyptus' if self.eucalyptus else 'AWS'
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
             self.fail_with_error(error)
 
@@ -617,7 +619,7 @@ class Ec2Inventory(object):
                     if self.nested_groups:
                         self.push_group(self.inventory, 'security_groups', key)
             except AttributeError:
-                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                             'Please upgrade boto >= 2.3.0.']))
 
         # Inventory: Group by tag keys
@@ -714,7 +716,7 @@ class Ec2Inventory(object):
                         self.push_group(self.inventory, 'security_groups', key)
 
             except AttributeError:
-                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                             'Please upgrade boto >= 2.3.0.']))
 
 
@@ -1233,5 +1235,6 @@ class Ec2Inventory(object):
             return json.dumps(data)
 
 
-# Run the script
-Ec2Inventory()
+if __name__ == "__main__":
+    # Run the Inventory script and print output
+    print Ec2Inventory().data_to_print()
