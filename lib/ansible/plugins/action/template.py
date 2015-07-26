@@ -160,7 +160,7 @@ class ActionModule(ActionBase):
             else:
                 result=dict(changed=True)
 
-            if result.['changed'] and self._play_context.diff:
+            if result['changed'] and self._play_context.diff:
                 result['diff'] = dict(before=dest_contents, after=resultant, before_header=dest, after_header=source)
 
             return result
