@@ -102,6 +102,9 @@ EXAMPLES = '''
 # Run the equivalent of "pacman -Su" as a separate step
 - pacman: upgrade=yes
 
+# Run the equivalent of "pacman -Syu" as a separate step
+- pacman: update_cache=yes upgrade=yes
+
 # Run the equivalent of "pacman -Rdd", force remove package baz
 - pacman: name=baz state=absent force=yes
 '''
@@ -160,11 +163,14 @@ def upgrade(module, pacman_path):
     rc, stdout, stderr = module.run_command(cmdneedrefresh, check_rc=False)
 
     if rc == 0:
+        if module.check_mode:
+            data = stdout.split('\n')
+            module.exit_json(changed=True, msg="%s package(s) would be upgraded" % len(data))
         rc, stdout, stderr = module.run_command(cmdupgrade, check_rc=False)
         if rc == 0:
             module.exit_json(changed=True, msg='System upgraded')
         else:
-            module.fail_json(msg="could not upgrade")
+            module.fail_json(msg="Could not upgrade")
     else:
         module.exit_json(changed=False, msg='Nothing to upgrade')
 
@@ -276,10 +282,10 @@ def main():
 
     if p["update_cache"] and not module.check_mode:
         update_package_db(module, pacman_path)
-        if not p['name']:
-            module.exit_json(changed=True, msg='updated the package master lists')
+        if not (p['name'] or p['upgrade']):
+            module.exit_json(changed=True, msg='Updated the package master lists')
 
-    if p['update_cache'] and module.check_mode and not p['name']:
+    if p['update_cache'] and module.check_mode and not (p['name'] or p['upgrade']):
         module.exit_json(changed=True, msg='Would have updated the package cache')
 
     if p['upgrade']:
