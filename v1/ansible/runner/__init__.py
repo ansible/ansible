@@ -1282,7 +1282,7 @@ class Runner(object):
 
         tmp_mode = None
         if self.remote_user != 'root' or (self.become and self.become_user != 'root'):
-            tmp_mode = 'a+rx'
+            tmp_mode = 0755
 
         cmd = conn.shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         result = self._low_level_exec_command(conn, cmd, None, sudoable=False)
