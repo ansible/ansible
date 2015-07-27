@@ -23,6 +23,8 @@ import json
 import difflib
 import warnings
 
+from six import string_types
+
 from ansible import constants as C
 from ansible.utils.unicode import to_unicode
 
@@ -48,8 +50,20 @@ class CallbackBase:
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
-    def _dump_results(self, result, indent=4, sort_keys=True):
-        return json.dumps(result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+    def _dump_results(self, result, indent=None, sort_keys=True):
+        if result.get('_ansible_no_log', False):
+            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
+        else:
+            if '_ansible_verbose_always' in result:
+                indent = 4
+            # all result keys stating with _ansible_ are internal, so remove
+            # them from the result before we output anything. We have to save
+            # the keys off first, as we're modifying the dict (so iteritems()
+            # won't work here)
+            for k in result.keys():
+                if isinstance(k, string_types) and k.startswith('_ansible_'):
+                    del result[k]
+            return json.dumps(result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
