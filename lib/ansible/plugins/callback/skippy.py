@@ -63,12 +63,8 @@ class CallbackModule(CallbackBase):
             msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
 
-        if (self._display.verbosity > 0 or 'verbose_always' in result._result) and result._task.action not in ('setup', 'include'):
-            indent = None
-            if 'verbose_always' in result._result:
-                indent = 4
-                del result._result['verbose_always']
-            msg += " => %s" % self._dump_results(result._result, indent=indent)
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and result._task.action not in ('setup', 'include'):
+            msg += " => %s" % self._dump_results(result._result)
 
         self._display.display(msg, color=color)
         self._handle_warnings(result._result)

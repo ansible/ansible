@@ -39,12 +39,13 @@ class ActionModule(ActionBase):
             source = self._loader.path_dwim(source)
 
         if os.path.exists(source):
-            data = self._loader.load_from_file(source)
+            (data, show_content) = self._loader._get_file_contents(source)
+            data = self._loader.load(data, show_content)
             if data is None:
                 data = {}
             if not isinstance(data, dict):
                 raise AnsibleError("%s must be stored as a dictionary/hash" % source)
-            return dict(ansible_facts=data)
+            return dict(ansible_facts=data, _ansible_no_log=not show_content)
         else:
             return dict(failed=True, msg="Source file not found.", file=source)
 
