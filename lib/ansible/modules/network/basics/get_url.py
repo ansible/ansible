@@ -46,8 +46,6 @@ options:
     description:
       - HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - absolute path of where to download the file to.
@@ -57,7 +55,6 @@ options:
         If C(dest) is a directory, the file will always be
         downloaded (regardless of the force option), but replaced only if the contents changed.
     required: true
-    default: null
   force:
     description:
       - If C(yes) and C(dest) is not a directory, will download the file every
@@ -100,10 +97,10 @@ options:
     version_added: '1.8'
   headers:
     description:
-       - Add custom HTTP headers to a request in the format 'key:value,key:value'
-     required: false
-     default: null
-     version_added: '2.0'
+        - 'Add custom HTTP headers to a request in the format "key:value,key:value"'
+    required: false
+    default: null
+    version_added: '2.0'
   url_username:
     description:
       - The username for use in HTTP basic authentication. This parameter can be used
@@ -112,8 +109,8 @@ options:
     version_added: '1.6'
   url_password:
     description:
-      - The password for use in HTTP basic authentication. If the C(url_username)
-        parameter is not specified, the C(url_password) parameter will not be used.
+        - The password for use in HTTP basic authentication. If the C(url_username)
+          parameter is not specified, the C(url_password) parameter will not be used.
     required: false
     version_added: '1.6'
   force_basic_auth:
