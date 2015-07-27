@@ -237,11 +237,14 @@ def create_launch_config(connection, module):
             changed = True
         except BotoServerError, e:
             module.fail_json(msg=str(e))
-    result = launch_configs[0]
+
+    result = dict(
+            ((a[0], a[1]) for a in vars(launch_configs[0]) if a[0] not in ('connection',)))
 
     module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
                      image_id=result.image_id, arn=result.launch_configuration_arn,
-                     security_groups=result.security_groups, instance_type=result.instance_type, 
+                     security_groups=result.security_groups,
+                     instance_type=result.instance_type,
                      result=result)
 
 
