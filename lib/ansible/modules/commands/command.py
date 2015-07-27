@@ -144,12 +144,15 @@ def check_command(commandline):
                   'mount': 'mount', 'rpm': 'yum', 'yum': 'yum', 'apt-get': 'apt-get',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
                   'rsync': 'synchronize' }
+    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas' ]
     warnings = list()
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
         warnings.append("Consider using file module with %s rather than running %s" % (arguments[command], command))
     if command in commands:
         warnings.append("Consider using %s module rather than running %s" % (commands[command], command))
+    if command in become:
+        warnings.append("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
     return warnings
 
 
