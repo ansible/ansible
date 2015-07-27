@@ -476,6 +476,8 @@ class CLI(object):
         if not os.path.exists(this_path):
             raise AnsibleError("The vault password file %s was not found" % this_path)
 
+        CLI.check_if_file_private(this_path)
+
         if is_executable(this_path):
             try:
                 # STDERR not captured to make it easier for users to prompt for input in their scripts
@@ -494,3 +496,13 @@ class CLI(object):
 
         return vault_pass
 
+    @staticmethod
+    def check_if_file_private(path):
+        '''raises an error if the mode of the vault_pass file
+        allows access by anyone other than the owner'''
+        mode = oct(os.stat(path).st_mode)
+        if mode[-2:] != '00':
+            raise AnsibleError(
+                "Group and others should not have access to your vault password.\n" +
+                "Please run `chmod 600 {0}`".format(path)
+            )
