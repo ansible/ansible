@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: virt_pool
-author: "Maciej Delmanowski"
+author: "Maciej Delmanowski (@drybjed)"
 version_added: "2.0"
 short_description: Manage libvirt storage pools
 description:
