@@ -273,9 +273,9 @@ class ActionModule(ActionBase):
         f = os.fdopen(fd, 'wb')
         content = to_bytes(content)
         try:
-            f.write(content)
             if not content.endswith('\n'):
-                f.write('\n')
+                content = content + '\n'
+            f.write(content)
         except Exception as err:
             os.remove(content_tempfile)
             raise Exception(err)
