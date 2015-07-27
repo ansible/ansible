@@ -124,20 +124,15 @@ class ActionModule(ActionBase):
             # Error from remote_checksum is a dict.  Valid return is a str
             return remote_checksum
 
+        diff = {}
+        new_module_args = self._task.args.copy()
+
         if local_checksum != remote_checksum:
             dest_contents = ''
 
             # if showing diffs, we need to get the remote value
             if self._play_context.diff:
-                # using persist_files to keep the temp directory around to avoid needing to grab another
-                my_args = dict(path=dest)
-                dest_result = self._execute_module(module_name='slurp', module_args=my_args, task_vars=task_vars, persist_files=True)
-                if 'content' in dest_result:
-                    dest_contents = dest_result['content']
-                    if dest_result['encoding'] == 'base64':
-                        dest_contents = base64.b64decode(dest_contents)
-                    else:
-                        raise Exception("unknown encoding, failed: %s" % dest_result)
+                diff = self._get_diff_data(tmp, dest, resultant, task_vars, source_file=False)
 
             if not self._play_context.check_mode: # do actual work thorugh copy
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
@@ -147,7 +142,6 @@ class ActionModule(ActionBase):
                     self._remote_chmod('a+r', xfered, tmp)
 
                 # run the copy module
-                new_module_args = self._task.args.copy()
                 new_module_args.update(
                    dict(
                        src=xfered,
@@ -161,7 +155,8 @@ class ActionModule(ActionBase):
                 result=dict(changed=True)
 
             if result.get('changed', False) and self._play_context.diff:
-                result['diff'] = dict(before=dest_contents, after=resultant, before_header=dest, after_header=source)
+                result['diff'] = diff
+            #    result['diff'] = dict(before=dest_contents, after=resultant, before_header=dest, after_header=source)
 
             return result
 
@@ -172,7 +167,6 @@ class ActionModule(ActionBase):
             # the module to follow links.  When doing that, we have to set
             # original_basename to the template just in case the dest is
             # a directory.
-            new_module_args = self._task.args.copy()
             new_module_args.update(
                 dict(
                     src=None,
@@ -180,9 +174,6 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
-
-            if self._play_context.check_mode:
-                new_module_args['CHECKMODE'] = True
 
             return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
 

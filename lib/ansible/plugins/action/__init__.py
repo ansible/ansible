@@ -20,9 +20,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import StringIO
+import base64
 import json
 import os
 import random
+import stat
 import sys
 import tempfile
 import time
@@ -480,3 +482,51 @@ class ActionBase:
                 return fnd
 
         return None
+
+    def _get_diff_data(self, tmp, destination, source, task_vars, source_file=True):
+
+        diff = {}
+        self._display.debug("Going to peek to see if file has changed permissions")
+        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
+
+        if not('failed' in peek_result and peek_result['failed']) or peek_result.get('rc', 0) == 0:
+
+            if peek_result['state'] == 'absent':
+                diff['before'] = ''
+            elif peek_result['appears_binary']:
+                diff['dst_binary'] = 1
+            elif peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
+                diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
+            else:
+                self._display.debug("Slurping the file %s" % source)
+                dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), task_vars=task_vars, persist_files=True)
+                if 'content' in dest_result:
+                    dest_contents = dest_result['content']
+                    if dest_result['encoding'] == 'base64':
+                        dest_contents = base64.b64decode(dest_contents)
+                    else:
+                        raise AnsibleError("unknown encoding in content option, failed: %s" % dest_result)
+                    diff['before_header'] = destination
+                    diff['before'] = dest_contents
+
+            if source_file:
+                self._display.debug("Reading local copy of the file %s" % source)
+                try:
+                    src = open(source)
+                    src_contents = src.read(8192)
+                    st = os.stat(source)
+                except Exception as e:
+                    raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
+                if "\x00" in src_contents:
+                    diff['src_binary'] = 1
+                elif st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
+                    diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
+                else:
+                    diff['after_header'] = source
+                    diff['after'] = src.read()
+            else:
+                self._display.debug("source of file passed in")
+                diff['after_header'] = 'dynamically generated'
+                diff['after'] = source
+
+        return diff
