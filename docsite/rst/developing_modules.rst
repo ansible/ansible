@@ -18,7 +18,7 @@ The directory "./library", alongside your top level playbooks, is also automatic
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
-`modules-extras project <http://github.com/ansible/ansible-modules-extras>`_.  There's also a core
+`modules-extras project <https://github.com/ansible/ansible-modules-extras>`_.  There's also a core
 repo for more established and widely used modules.  "Extras" modules may be promoted to core periodically,
 but there's no fundamental difference in the end - both ship with ansible, all in one package, regardless
 of how you acquire ansible.
@@ -48,7 +48,7 @@ modules.   Keep in mind, though, that some modules in ansible's source tree are 
 so look at `service` or `yum`, and don't stare too close into things like `async_wrapper` or
 you'll turn to stone.  Nobody ever executes async_wrapper directly.
 
-Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `time.py`::
+Ok, let's get going with an example.  We'll use Python.  For starters, save this as a file named `timetest.py`::
 
     #!/usr/bin/python
 
@@ -73,7 +73,7 @@ There's a useful test script in the source checkout for ansible::
 
 Let's run the script you just wrote with that::
 
-    ansible/hacking/test-module -m ./time.py
+    ansible/hacking/test-module -m ./timetest.py
 
 You should see output that looks something like this::
 
@@ -238,7 +238,8 @@ The 'group' and 'user' modules are reasonably non-trivial and showcase what this
 Key parts include always ending the module file with::
 
     from ansible.module_utils.basic import *
-    main()
+    if __name__ == '__main__':
+        main()
 
 And instantiating the module class like::
 
@@ -262,7 +263,7 @@ And failures are just as simple (where 'msg' is a required parameter to explain 
 
     module.fail_json(msg="Something fatal happened")
 
-There are also other useful functions in the module class, such as module.md5(path).  See
+There are also other useful functions in the module class, such as module.sha1(path).  See
 lib/ansible/module_common.py in the source checkout for implementation details.
 
 Again, modules developed this way are best tested with the hacking/test-module script in the git
@@ -291,7 +292,7 @@ will evaluate to True when check mode is enabled. For example::
     )
 
     if module.check_mode:
-        # Check if any changes would be made by don't actually make those changes
+        # Check if any changes would be made but don't actually make those changes
         module.exit_json(changed=check_if_system_state_would_be_changed())
 
 Remember that, as module developer, you are responsible for ensuring that no
@@ -309,8 +310,7 @@ You should also never do this in a module::
 
     print "some status message"
 
-Because the output is supposed to be valid JSON.  Except that's not quite true,
-but we'll get to that later.
+Because the output is supposed to be valid JSON.
 
 Modules must not output anything on standard error, because the system will merge
 standard out with standard error and prevent the JSON from parsing. Capturing standard
@@ -343,28 +343,13 @@ and guidelines:
 
 * If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional and up to you.
 
-* Modules should return JSON or key=value results all on one line.  JSON is best if you can do JSON.  All return types must be hashes (dictionaries) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
+* Modules should output valid JSON only. All return types must be hashes (dictionaries) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
 
 * In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
 
 * Return codes from modules are not actually not significant, but continue on with 0=success and non-zero=failure for reasons of future proofing.
 
 * As results from many hosts will be aggregated at once, modules should return only relevant output.  Returning the entire contents of a log file is generally bad form.
-
-.. _module_dev_shorthand:
-
-Shorthand Vs JSON
-`````````````````
-
-To make it easier to write modules in bash and in cases where a JSON
-module might not be available, it is acceptable for a module to return
-key=value output all on one line, like this.   The Ansible parser
-will know what to do::
-
-    somekey=1 somevalue=2 rc=3 favcolor=red
-
-If you're writing a module in Python or Ruby or whatever, though, returning
-JSON is probably the simplest way to go.
 
 .. _module_documenting:
 
@@ -386,7 +371,7 @@ See an example documentation string in the checkout under `examples/DOCUMENTATIO
 
 Include it in your module file like this::
 
-    #!/usr/bin/env python
+    #!/usr/bin/python
     # Copyright header....
 
     DOCUMENTATION = '''
@@ -457,13 +442,124 @@ Getting Your Module Into Ansible
 ````````````````````````````````
 
 High-quality modules with minimal dependencies
-can be included in the ansible, but modules (just due to the programming
+can be included in Ansible, but modules (just due to the programming
 preferences of the developers) will need to be implemented in Python and use
 the AnsibleModule common code, and should generally use consistent arguments with the rest of
 the program.   Stop by the mailing list to inquire about requirements if you like, and submit
 a github pull request to the `extras <https://github.com/ansible/ansible-modules-extras>`_ project.
-Included modules will ship with ansible, and also have a change to be promoted to 'core' status, which
+Included modules will ship with ansible, and also have a chance to be promoted to 'core' status, which
 gives them slightly higher development priority (though they'll work in exactly the same way).
+
+Module checklist
+````````````````
+
+* The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
+* Documentation: Make sure it exists
+    * `required` should always be present, be it true or false
+    * If `required` is false you need to document `default`, even if its 'null'
+    * `default` is not needed for `required: true`
+    * Remove unnecessary doc like `aliases: []` or `choices: []`
+    * The version is not a float number and value the current development version
+    * The verify that arguments in doc and module spec dict are identical
+    * For password / secret arguments no_log=True should be set
+    * Requirements should  be documented, using the `requirements=[]` field
+    * Author should be set, name and github id at least
+    * Made use of U() for urls, C() for files and options, I() for params, M() for modules?
+    * GPL License header
+    * Does module use check_mode? Could it be modified to use it? Document it
+    * Examples: make sure they are reproducible
+    * Return: document the return structure of the module
+* Exceptions: The module must handle them. (exceptions are bugs)
+    * Give out useful messages on what you were doing and you can add the exception message to that.
+    * Avoid catchall exceptions, they are not very useful unless the underlying API gives very good error messages pertaining the attempted action.
+* The module must not use sys.exit() --> use fail_json() from the module object
+* Import custom packages in try/except and handled with fail_json() in main() e.g.::
+
+    try:
+        import foo
+        HAS_LIB=True
+    except:
+        HAS_LIB=False
+
+* The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
+* Are module actions idempotent? If not document in the descriptions or the notes
+* Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
+* Call your :func:`main` from a conditional so that it would be possible to
+  test them in the future example::
+
+    if __name__ == '__main__':
+        main()
+
+* Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
+* Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
+* Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
+* Sometimes you want to split the module, specially if you are adding a list/info state, you want a _facts version
+* If you are asking 'how can i have a module execute other modules' ... you want to write a role
+
+
+Windows modules checklist
+`````````````````````````
+* Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of windows
+* modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
+* look at ansible/lib/ansible/module_utils/powershell.ps1 for commmon code, avoid duplication
+* start with::
+
+    #!powershell
+
+then::
+    <GPL header>
+then::
+    # WANT_JSON
+    # POWERSHELL_COMMON
+
+* Arguments:
+    * Try and use state present and state absent like other modules
+    * You need to check that all your mandatory args are present::
+
+        If ($params.state) {
+            $state = $params.state.ToString().ToLower()
+            If (($state -ne 'started') -and ($state -ne 'stopped') -and ($state -ne 'restarted')) {
+                Fail-Json $result "state is '$state'; must be 'started', 'stopped', or 'restarted'"
+            }
+        }
+
+    * Look at existing modules for more examples of argument checking.
+
+* Results
+    * The result object should allways contain an attribute called changed set to either $true or $false
+    * Create your result object like this::
+
+        $result = New-Object psobject @{
+        changed = $false
+        other_result_attribute = $some_value
+        };
+
+        If all is well, exit with a
+        Exit-Json $result
+
+    * Ensure anything you return, including errors can be converted to json.
+    * Be aware that because exception messages could contain almost anything.
+    * ConvertTo-Json will fail if it encounters a trailing \ in a string.
+    * If all is not well use Fail-Json to exit.
+
+* Have you tested for powershell 3.0 and 4.0 compliance?
+
+
+Deprecating and making module aliases
+``````````````````````````````````````
+
+Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to 
+_old_cloud.py, This will keep the module available but hide it from the primary docs and listing.
+
+You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
+This example allows the stat module to be called with fileinfo, making the following examples equivalent
+
+    EXAMPLES = '''
+    ln -s stat.py _fileinfo.py
+    ansible -m stat -a "path=/tmp" localhost
+    ansible -m fileinfo -a "path=/tmp" localhost
+    '''
+
 
 .. seealso::
 
@@ -473,8 +569,10 @@ gives them slightly higher development priority (though they'll work in exactly 
        Learn about developing plugins
    :doc:`developing_api`
        Learn about the Python API for playbook and task execution
-   `GitHub modules directory <https://github.com/ansible/ansible/tree/devel/library>`_
+   `GitHub Core modules directory <https://github.com/ansible/ansible-modules-core/tree/devel>`_
        Browse source of core modules
+   `Github Extras modules directory <https://github.com/ansible/ansible-modules-extras/tree/devel>`_
+       Browse source of extras modules.
    `Mailing List <http://groups.google.com/group/ansible-devel>`_
        Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_

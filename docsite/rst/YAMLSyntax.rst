@@ -25,7 +25,7 @@ Ansible or not) should begin with ``---``.  This is part of the YAML
 format and indicates the start of a document.
 
 All members of a list are lines beginning at the same indentation level starting
-with a ``-`` (dash) character::
+with a ``"- "`` (a dash and a space)::
 
     ---
     # A list of tasty fruits
@@ -34,7 +34,7 @@ with a ``-`` (dash) character::
     - Strawberry
     - Mango
 
-A dictionary is represented in a simple ``key:`` and ``value`` form::
+A dictionary is represented in a simple ``key: value`` form (the colon must be followed by a space)::
 
     ---
     # An employee record
@@ -85,11 +85,11 @@ That's all you really need to know about YAML to start writing
 Gotchas
 -------
 
-While YAML is generally friendly, the following is going to result in a YAML syntax error:
+While YAML is generally friendly, the following is going to result in a YAML syntax error::
 
     foo: somebody said I should put a colon here: so I did
 
-You will want to quote any hash values using colons, like so:
+You will want to quote any hash values using colons, like so::
 
     foo: "somebody said I should put a colon here: so I did"
 
@@ -107,7 +107,7 @@ with a "{", YAML will think it is a dictionary, so you must quote it, like so::
        Learn what playbooks can do and how to write/run them.
    `YAMLLint <http://yamllint.com/>`_
        YAML Lint (online) helps you debug YAML syntax if you are having problems
-   `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
+   `Github examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

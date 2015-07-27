@@ -18,11 +18,11 @@
 
 - name: clean out the test directory
   local_action: file name={{ output_dir|mandatory }} state=absent
-  tags: me
+  run_once: true
 
 - name: create the test directory
   local_action: file name={{ output_dir }} state=directory
-  tags: me
+  run_once: true
 
 - name: fetch a small file
   fetch: src="C:/Windows/win.ini" dest={{ output_dir }}
@@ -145,7 +145,7 @@
       - "not fetch_missing_nofail|changed"
 
 - name: attempt to fetch a non-existent file - fail on missing
-  fetch: src="C:/this_file_should_not_exist.txt" dest={{ output_dir }} fail_on_missing=yes
+  fetch: src="~/this_file_should_not_exist.txt" dest={{ output_dir }} fail_on_missing=yes
   register: fetch_missing
   ignore_errors: true
 
@@ -164,5 +164,6 @@
 - name: check fetch directory result
   assert:
     that:
-      - "fetch_dir|failed"
+      # Doesn't fail anymore, only returns a message.
+      - "not fetch_dir|changed"
       - "fetch_dir.msg"

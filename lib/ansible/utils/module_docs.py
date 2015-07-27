@@ -23,7 +23,8 @@ import ast
 import yaml
 import traceback
 
-from ansible import utils
+from collections import MutableMapping, MutableSet, MutableSequence
+from ansible.plugins import fragment_loader
 
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
@@ -44,6 +45,7 @@ def get_docstring(filename, verbose=False):
 
     doc = None
     plainexamples = None
+    returndocs = None
 
     try:
         # Thank you, Habbie, for this bit of code :-)
@@ -52,20 +54,22 @@ def get_docstring(filename, verbose=False):
             if isinstance(child, ast.Assign):
                 if 'DOCUMENTATION' in (t.id for t in child.targets):
                     doc = yaml.safe_load(child.value.s)
-                    fragment_slug = doc.get('extends_documentation_fragment',
-                                            'doesnotexist').lower()
+                    fragments = doc.get('extends_documentation_fragment', [])
+
+                    if isinstance(fragments, basestring):
+                        fragments = [ fragments ]
 
                     # Allow the module to specify a var other than DOCUMENTATION
                     # to pull the fragment from, using dot notation as a separator
-                    if '.' in fragment_slug:
-                        fragment_name, fragment_var = fragment_slug.split('.', 1)
-                        fragment_var = fragment_var.upper()
-                    else:
-                        fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
+                    for fragment_slug in fragments:
+                        fragment_slug = fragment_slug.lower()
+                        if '.' in fragment_slug:
+                            fragment_name, fragment_var = fragment_slug.split('.', 1)
+                            fragment_var = fragment_var.upper()
+                        else:
+                            fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
 
-
-                    if fragment_slug != 'doesnotexist':
-                        fragment_class = utils.plugins.fragment_loader.get(fragment_name)
+                        fragment_class = fragment_loader.get(fragment_name)
                         assert fragment_class is not None
 
                         fragment_yaml = getattr(fragment_class, fragment_var, '{}')
@@ -85,14 +89,24 @@ def get_docstring(filename, verbose=False):
                             if not doc.has_key(key):
                                 doc[key] = value
                             else:
-                                doc[key].update(value)
+                                if isinstance(doc[key], MutableMapping):
+                                    doc[key].update(value)
+                                elif isinstance(doc[key], MutableSet):
+                                    doc[key].add(value)
+                                elif isinstance(doc[key], MutableSequence):
+                                    doc[key] = sorted(frozenset(doc[key] + value))
+                                else:
+                                    raise Exception("Attempt to extend a documentation fragement of unknown type")
 
                 if 'EXAMPLES' in (t.id for t in child.targets):
                     plainexamples = child.value.s[1:]  # Skip first empty line
+
+                if 'RETURN' in (t.id for t in child.targets):
+                    returndocs = child.value.s[1:]
     except:
         traceback.print_exc() # temp
         if verbose == True:
             traceback.print_exc()
             print "unable to parse %s" % filename
-    return doc, plainexamples
+    return doc, plainexamples, returndocs
 
