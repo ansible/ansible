@@ -32,10 +32,7 @@ class LookupModule(LookupBase):
 
         ret = []
 
-        if 'role_path' in variables:
-            basedir = variables['role_path']
-        else:
-            basedir = self._loader.get_basedir()
+        basedir = self.get_basedir(variables)
 
         for term in terms:
             self._display.debug("File lookup term: %s" % term)

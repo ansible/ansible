@@ -26,9 +26,11 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
+        basedir = self.get_basedir(variables)
+
         ret = []
         for term in terms:
-            dwimmed = self._loader.path_dwim(term)
+            dwimmed = self._loader.path_dwim_relative(basedir, 'files', term)
             globbed = glob.glob(dwimmed)
             ret.extend(g for g in globbed if os.path.isfile(g))
         return ret

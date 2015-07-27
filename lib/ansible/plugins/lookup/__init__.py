@@ -32,6 +32,12 @@ class LookupBase:
         self._loader = loader
         self._display = display
 
+    def get_basedir(self, variables):
+        if 'role_path' in variables:
+            return variables['role_path']
+        else:
+            return self._loader.get_basedir()
+
     def _flatten(self, terms):
         ret = []
         for term in terms:
