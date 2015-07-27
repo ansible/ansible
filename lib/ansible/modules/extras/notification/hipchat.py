@@ -71,10 +71,10 @@ EXAMPLES = '''
 
 # Use Hipchat API version 2
 
-- hipchat: 
+- hipchat:
     api: "https://api.hipchat.com/v2/"
     token: OAUTH2_TOKEN
-    room: notify 
+    room: notify
     msg: "Ansible task finished"
 '''
 
@@ -96,13 +96,9 @@ def send_msg(module, token, room, msg_from, msg, msg_format='text',
     params['message_format'] = msg_format
     params['color'] = color
     params['api'] = api
+    params['notify'] = int(notify)
 
-    if notify:
-        params['notify'] = 1
-    else:
-        params['notify'] = 0
-
-    url = api + "?auth_token=%s" % (token)
+    url = api + MSG_URI_V1 + "?auth_token=%s" % (token)
     data = urllib.urlencode(params)
 
     if module.check_mode:
@@ -127,10 +123,10 @@ def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
     body['message'] = msg
     body['color'] = color
     body['message_format'] = msg_format
-    params['notify'] = notify
+    body['notify'] = notify
 
     POST_URL = api + NOTIFY_URI_V2
-    
+
     url = POST_URL.replace('{id_or_name}', room)
     data = json.dumps(body)
 
