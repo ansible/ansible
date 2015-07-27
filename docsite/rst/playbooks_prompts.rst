@@ -55,7 +55,7 @@ entered value so you can use it, for instance, with the user module to define a 
      - name: "my_password2"
        prompt: "Enter password2"
        private: yes
-       encrypt: "md5_crypt"
+       encrypt: "sha512_crypt"
        confirm: yes
        salt_size: 7
 

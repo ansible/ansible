@@ -7,6 +7,7 @@ and adopt these only if they seem relevant or useful to your environment.
 .. toctree::
    :maxdepth: 1
 
+   become
    playbooks_acceleration
    playbooks_async
    playbooks_checkmode
@@ -17,3 +18,4 @@ and adopt these only if they seem relevant or useful to your environment.
    playbooks_prompts
    playbooks_tags
    playbooks_vault
+   playbooks_startnstep

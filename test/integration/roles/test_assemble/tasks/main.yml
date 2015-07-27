@@ -37,7 +37,19 @@
   assert:
     that:
     - "result.state == 'file'"
-    - "result.md5sum == '96905702a2ece40de6bf3a94b5062513'"
+    - "result.changed == True"
+    - "result.checksum == '048a1bd1951aa5ccc427eeb4ca19aee45e9c68b3'"
+
+- name: test assemble with all fragments
+  assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled1"
+  register: result
+
+- name: assert that the same assemble made no changes
+  assert:
+    that:
+    - "result.state == 'file'"
+    - "result.changed == False"
+    - "result.checksum == '048a1bd1951aa5ccc427eeb4ca19aee45e9c68b3'"
 
 - name: test assemble with fragments matching a regex
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled2" regexp="^fragment[1-3]$"
@@ -47,7 +59,7 @@
   assert:
     that:
     - "result.state == 'file'"
-    - "result.md5sum == 'eb9e3486a9cd6943b5242e573b9b9349'"
+    - "result.checksum == 'edfe2d7487ef8f5ebc0f1c4dc57ba7b70a7b8e2b'"
 
 - name: test assemble with a delimiter
   assemble: src="{{output_dir}}/src" dest="{{output_dir}}/assembled3" delimiter="#--- delimiter ---#"
@@ -57,7 +69,7 @@
   assert:
     that:
     - "result.state == 'file'"
-    - "result.md5sum == '4773eac67aba3f0be745876331c8a450'"
+    - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
 
 - name: test assemble with remote_src=False
   assemble: src="./" dest="{{output_dir}}/assembled4" remote_src=no
@@ -67,7 +79,7 @@
   assert:
     that:
     - "result.state == 'file'"
-    - "result.md5sum == '96905702a2ece40de6bf3a94b5062513'"
+    - "result.checksum == '048a1bd1951aa5ccc427eeb4ca19aee45e9c68b3'"
 
 - name: test assemble with remote_src=False and a delimiter
   assemble: src="./" dest="{{output_dir}}/assembled5" remote_src=no delimiter="#--- delimiter ---#"
@@ -77,5 +89,5 @@
   assert:
     that:
     - "result.state == 'file'"
-    - "result.md5sum == '4773eac67aba3f0be745876331c8a450'"
+    - "result.checksum == '505359f48c65b3904127cf62b912991d4da7ed6d'"
 

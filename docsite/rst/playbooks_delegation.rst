@@ -9,7 +9,7 @@ This in particular is very applicable when setting up continuous deployment infr
 
 Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process at once during a rolling update.
 
-This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <http://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
+This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
 
 You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.  
 
@@ -161,7 +161,7 @@ This can be optionally paired with "delegate_to" to specify an individual host t
 When "run_once" is not used with "delegate_to" it will execute on the first host, as defined by inventory,
 in the group(s) of hosts targeted by the play. e.g. webservers[0] if the play targeted "hosts: webservers".
 
-This aproach is similar, although more concise and cleaner than applying a conditional to a task such as::
+This approach is similar, although more concise and cleaner than applying a conditional to a task such as::
 
         - command: /opt/application/upgrade_db.py
           when: inventory_hostname == webservers[0]
@@ -175,7 +175,7 @@ It may be useful to use a playbook locally, rather than by connecting over SSH. 
 for assuring the configuration of a system by putting a playbook on a crontab.  This may also be used
 to run a playbook inside an OS installer, such as an Anaconda kickstart.
 
-To run an entire playbook locally, just set the "hosts:" line to "hosts:127.0.0.1" and then run the playbook like so::
+To run an entire playbook locally, just set the "hosts:" line to "hosts: 127.0.0.1" and then run the playbook like so::
 
     ansible-playbook playbook.yml --connection=local
 
@@ -189,7 +189,7 @@ use the default remote connection type::
 
    :doc:`playbooks`
        An introduction to playbooks
-   `Ansible Examples on GitHub <http://github.com/ansible/ansible-examples>`_
+   `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

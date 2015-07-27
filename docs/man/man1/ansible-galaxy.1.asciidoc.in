@@ -122,6 +122,10 @@ Force overwriting an existing role.
 The path in which the skeleton role will be created.The default is the current 
 working directory.
 
+*--offline*::
+
+Don't query the galaxy API when creating roles
+
 LIST
 ----
 

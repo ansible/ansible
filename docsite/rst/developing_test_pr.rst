@@ -29,12 +29,13 @@ and then commenting on that particular issue on GitHub. Here's how:
    or Docker for this, but they are optional.  It is also useful to have virtual machines of different Linux or 
    other flavors, since some features (apt vs. yum, for example) are specific to those OS versions.
 
-First, you will need to configure your testing environment with the neccessary tools required to run our test
+First, you will need to configure your testing environment with the necessary tools required to run our test
 suites. You will need at least::
 
    git
    python-nosetests (sometimes named python-nose)
    python-passlib
+   python-mock
 
 If you want to run the full integration test suite you'll also need the following packages installed::
 

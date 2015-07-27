@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tags:
+    - cloudstack
+  roles:
+    - { role: test_cs_sshkeypair,           tags: test_cs_sshkeypair }
+    - { role: test_cs_affinitygroup,        tags: test_cs_affinitygroup }
+    - { role: test_cs_securitygroup,        tags: test_cs_securitygroup }
+    - { role: test_cs_securitygroup_rule,   tags: test_cs_securitygroup_rule }
+    - { role: test_cs_instance,             tags: test_cs_instance }
+    - { role: test_cs_instancegroup,        tags: test_cs_instancegroup }
+    - { role: test_cs_portforward,          tags: test_cs_portforward }
+    - { role: test_cs_account,              tags: test_cs_account }
+    - { role: test_cs_firewall,             tags: test_cs_firewall }
