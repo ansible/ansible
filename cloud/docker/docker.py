@@ -964,6 +964,9 @@ class DockerManager(object):
         running = self.get_running_containers()
         current = self.get_inspect_containers(running)
 
+        #Get API version
+        api_version = self.client.version()['ApiVersion']
+
         image = self.get_inspect_image()
         if image is None:
             # The image isn't present. Assume that we're about to pull a new
@@ -1030,7 +1033,11 @@ class DockerManager(object):
             except ValueError as e:
                 self.module.fail_json(msg=str(e))
 
-            actual_mem = container['Config']['Memory']
+            #For v1.19 API and above use HostConfig, otherwise use Config
+            if docker_api_version >= 1.19:
+                actual_mem = container['HostConfig']['Memory']
+            else:
+                actual_mem = container['Config']['Memory']
 
             if expected_mem and actual_mem != expected_mem:
                 self.reload_reasons.append('memory ({0} => {1})'.format(actual_mem, expected_mem))
