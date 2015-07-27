@@ -165,8 +165,7 @@ class Ec2Inventory(object):
         # as pre 2.24 boto will fall over otherwise
         if self.boto_profile:
             if not hasattr(boto.ec2.EC2Connection, 'profile_name'):
-                sys.stderr.write("boto version must be >= 2.24 to use profile\n")
-                sys.exit(1)
+                self.fail_with_error("boto version must be >= 2.24 to use profile")
 
         # Cache
         if self.args.refresh_cache:
@@ -364,7 +363,6 @@ class Ec2Inventory(object):
                     continue
                 self.ec2_instance_filters[filter_key].append(filter_value)
 
-
     def parse_cli_args(self):
         ''' Command line argument processing '''
 
@@ -403,10 +401,7 @@ class Ec2Inventory(object):
             conn = boto.connect_euca(host=self.eucalyptus_host)
             conn.APIVersion = '2010-08-31'
         else:
-            conn = ec2.connect_to_region(region)
-        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
-        if conn is None:
-            self.fail_with_error("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
+            conn = self.connect_to_aws(ec2, region)
         return conn
 
     def boto_fix_security_token_in_profile(self, connect_args):
@@ -415,7 +410,6 @@ class Ec2Inventory(object):
         if boto.config.has_option(profile, 'aws_security_token'):
             connect_args['security_token'] = boto.config.get(profile, 'aws_security_token')
         return connect_args
-
 
     def connect_to_aws(self, module, region):
         connect_args = {}
@@ -426,8 +420,10 @@ class Ec2Inventory(object):
             self.boto_fix_security_token_in_profile(connect_args)
 
         conn = module.connect_to_region(region, **connect_args)
+        # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
+        if conn is None:
+            self.fail_with_error("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
         return conn
-
 
     def get_instances_by_region(self, region):
         ''' Makes an AWS EC2 API call to the list of instances in a particular
@@ -440,14 +436,8 @@ class Ec2Inventory(object):
                 for filter_key, filter_values in self.ec2_instance_filters.items():
                     reservations.extend(conn.get_all_instances(filters = { filter_key : filter_values }))
             else:
-                conn = ec2.connect_to_region(region, profile_name=self.boto_profile)
+                reservations = conn.get_all_instances()
 
-            # connect_to_region will fail "silently" by returning None if the region name is wrong or not supported
-            if conn is None:
-                print("region name: %s likely not supported, or AWS is down.  connection to region failed." % region)
-                sys.exit(1)
-
-            reservations = conn.get_all_instances()
             for reservation in reservations:
                 for instance in reservation.instances:
                     self.add_instance(instance, region)
@@ -459,7 +449,6 @@ class Ec2Inventory(object):
                 backend = 'Eucalyptus' if self.eucalyptus else 'AWS' 
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
             self.fail_with_error(error)
-
 
     def get_rds_instances_by_region(self, region):
         ''' Makes an AWS API call to the list of RDS instances in a particular
