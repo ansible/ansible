@@ -184,6 +184,7 @@ def read_vault_file(vault_password_file):
         else:
             try:
                 f = open(this_path, "rb")
+                check_if_secure(this_path)
                 vault_pass=f.read().strip()
                 f.close()
             except (OSError, IOError), e:
@@ -192,6 +193,16 @@ def read_vault_file(vault_password_file):
         return vault_pass
     else:
         return None
+
+def check_if_secure(path):
+    '''raises an error if the mode of the vault_pass file
+    allows access by anyone other than the owner'''
+    mode = oct(os.stat(path).st_mode)
+    if mode[-2:] != '00':
+        raise errors.AnsibleError(
+            "Group and others should not have access to your vault password.\n" +
+            "Please run `chmod 600 {0}`".format(path)
+        )
 
 def err(msg):
     ''' print an error message to stderr '''
