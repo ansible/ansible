@@ -1070,7 +1070,32 @@ class AnsibleModule(object):
                         raise TypeError('unable to evaluate string as dictionary')
                     return result
             elif '=' in value:
-                return dict([x.strip().split("=", 1) for x in value.split(",")])
+                fields = []
+                field_buffer = []
+                in_quote = False
+                in_escape = False
+                for c in value.strip():
+                    if in_escape:
+                        field_buffer.append(c)
+                        in_escape = False
+                    elif c == '\\':
+                        in_escape = True
+                    elif not in_quote and c in ('\'', '"'):
+                        in_quote = c
+                    elif in_quote and in_quote == c:
+                        in_quote = False
+                    elif not in_quote and c in (',', ' '):
+                        field = ''.join(field_buffer)
+                        if field:
+                            fields.append(field)
+                        field_buffer = []
+                    else:
+                        field_buffer.append(c)
+
+                field = ''.join(field_buffer)
+                if field:
+                    fields.append(field)
+                return dict(x.split("=", 1) for x in fields)
             else:
                 raise TypeError("dictionary requested, could not parse JSON or key=value")
 
