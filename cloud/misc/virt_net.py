@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: virt_net
-author: "Maciej Delmanowski"
+author: "Maciej Delmanowski (@drybjed)"
 version_added: "2.0"
 short_description: Manage libvirt network configuration
 description:
