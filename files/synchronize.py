@@ -233,6 +233,7 @@ def main():
             delete = dict(default='no', type='bool'),
             private_key = dict(default=None),
             rsync_path = dict(default=None),
+            _local_rsync_path = dict(default='rsync', type='path'),
             archive = dict(default='yes', type='bool'),
             checksum = dict(default='no', type='bool'),
             compress = dict(default='yes', type='bool'),
@@ -261,7 +262,7 @@ def main():
     delete = module.params['delete']
     private_key = module.params['private_key']
     rsync_path = module.params['rsync_path']
-    rsync = module.params.get('local_rsync_path', 'rsync')
+    rsync = module.params.get('_local_rsync_path', 'rsync')
     rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
     checksum = module.params['checksum']
