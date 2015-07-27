@@ -35,10 +35,12 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'oneline'
 
     def _command_generic_msg(self, hostname, result,  caption):
+        stdout = result.get('stdout','').replace('\n', '\\n')
         if 'stderr' in result and result['stderr']:
-            return "%s | %s | rc=%s | (stdout) %s (stderr) %s" % (hostname, caption, result.get('rc',0), result.get('stdout',''), result.get('stderr',''))
+            stderr = result.get('stderr','').replace('\n', '\\n')
+            return "%s | %s | rc=%s | (stdout) %s (stderr) %s" % (hostname, caption, result.get('rc',0), stdout, stderr)
         else:
-            return "%s | %s | rc=%s | (stdout) %s" % (hostname, caption, result.get('rc',0), result.get('stdout',''))
+            return "%s | %s | rc=%s | (stdout) %s" % (hostname, caption, result.get('rc',0), stdout)
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
