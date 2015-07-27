@@ -121,7 +121,9 @@ class Host:
         results = combine_vars(results, self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['ansible_ssh_host'] = self.ipv4_address
+
+        if 'ansible_ssh_host' not in results:
+            results['ansible_ssh_host'] = self.ipv4_address
 
         if 'ansible_ssh_port' not in results:
             results['ansible_ssh_port'] = C.DEFAULT_REMOTE_PORT
