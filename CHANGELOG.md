@@ -69,6 +69,7 @@ New Modules:
   * expect
   * find
   * hall
+  * libvirt: virt_pool
   * maven_artifact
   * openstack: os_ironic
   * openstack: os_ironic_node
