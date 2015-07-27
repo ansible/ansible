@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: cs_account
-short_description: Manages account on Apache CloudStack based clouds.
+short_description: Manages accounts on Apache CloudStack based clouds.
 description:
     - Create, disable, lock, enable and remove accounts.
 version_added: '2.0'
