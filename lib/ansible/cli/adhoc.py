@@ -116,7 +116,10 @@ class AdHocCLI(CLI):
             return 0
 
         if self.options.module_name in C.MODULE_REQUIRE_ARGS and not self.options.module_args:
-            raise AnsibleOptionsError("No argument passed to %s module" % self.options.module_name)
+            err = "No argument passed to %s module" % self.options.module_name
+            if pattern.endswith(".yml"):
+                err = err + ' (did you mean to run ansible-playbook?)'
+            raise AnsibleOptionsError(err)
 
         #TODO: implement async support
         #if self.options.seconds:
