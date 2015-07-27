@@ -652,7 +652,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             if headers is None:
                 headers = {}
 
-            headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(username, password)))
+            headers["Authorization"] = "Basic %s" % base64.b64encode("%s:%s" % (username, password))
 
     if not use_proxy:
         proxyhandler = urllib2.ProxyHandler({})
