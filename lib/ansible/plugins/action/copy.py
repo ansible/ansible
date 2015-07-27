@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
 import json
 import os
 import pipes
-import stat
 import tempfile
 
 from ansible import constants as C
@@ -238,9 +236,6 @@ class ActionModule(ActionBase):
                     )
                 )
 
-                if self._play_context.check_mode:
-                    new_module_args['CHECKMODE'] = True
-
                 # Execute the file module.
                 module_return = self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=delete_remote_tmp)
                 module_executed = True
@@ -286,42 +281,6 @@ class ActionModule(ActionBase):
             f.close()
         return content_tempfile
 
-    def _get_diff_data(self, tmp, destination, source, task_vars):
-        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
-        if 'failed' in peek_result and peek_result['failed'] or peek_result.get('rc', 0) != 0:
-            return {}
-
-        diff = {}
-        if peek_result['state'] == 'absent':
-            diff['before'] = ''
-        elif peek_result['appears_binary']:
-            diff['dst_binary'] = 1
-        elif peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
-            diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
-        else:
-            dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), task_vars=task_vars, tmp=tmp, persist_files=True)
-            if 'content' in dest_result:
-                dest_contents = dest_result['content']
-                if dest_result['encoding'] == 'base64':
-                    dest_contents = base64.b64decode(dest_contents)
-                else:
-                    raise Exception("unknown encoding, failed: %s" % dest_result)
-                diff['before_header'] = destination
-                diff['before'] = dest_contents
-
-        src = open(source)
-        src_contents = src.read(8192)
-        st = os.stat(source)
-        if "\x00" in src_contents:
-            diff['src_binary'] = 1
-        elif st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
-            diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
-        else:
-            src.seek(0)
-            diff['after_header'] = source
-            diff['after'] = src.read()
-
-        return diff
 
     def _remove_tempfile_if_content_defined(self, content, content_tempfile):
         if content is not None:

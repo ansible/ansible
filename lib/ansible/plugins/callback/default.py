@@ -109,3 +109,7 @@ class CallbackModule(CallbackBase):
             msg = "PLAY [%s]" % name
 
         self._display.banner(msg)
+
+    def v2_on_file_diff(self, result):
+        if 'diff' in result._result:
+            self._display.display(self._get_diff(result._result['diff']))
