@@ -579,6 +579,11 @@ class LinuxService(Service):
             self.running = "started" in openrc_status_stdout
             self.crashed = "crashed" in openrc_status_stderr
 
+        # Prefer a non-zero return code. For reference, see:
+        # http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
+        if self.running is None and rc in [1, 2, 3, 4, 69]:
+            self.running = False
+
         # if the job status is still not known check it by status output keywords
         # Only check keywords if there's only one line of output (some init
         # scripts will output verbosely in case of error and those can emit
@@ -603,14 +608,10 @@ class LinuxService(Service):
             elif 'dead but pid file exists' in cleanout:
                 self.running = False
 
-        # if the job status is still not known check it by response code
-        # For reference, see:
-        # http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html
-        if self.running is None:
-            if rc in [1, 2, 3, 4, 69]:
-                self.running = False
-            elif rc == 0:
-                self.running = True
+        # if the job status is still not known and we got a zero for the
+        # return code, assume here that the service is running
+        if self.running is None and rc == 0:
+            self.running = True
 
         # if the job status is still not known check it by special conditions
         if self.running is None:
