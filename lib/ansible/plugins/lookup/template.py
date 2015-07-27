@@ -30,14 +30,11 @@ class LookupModule(LookupBase):
         if not isinstance(terms, list):
             terms = [ terms ]
 
+        basedir = self.get_basedir(variables)
+
         ret = []
 
         templar = Templar(loader=self._loader, variables=variables)
-
-        if 'role_path' in variables:
-            basedir = variables['role_path']
-        else:
-            basedir = self._loader.get_basedir()
 
         for term in terms:
             self._display.debug("File lookup term: %s" % term)

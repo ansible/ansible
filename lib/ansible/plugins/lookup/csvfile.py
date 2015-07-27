@@ -45,12 +45,9 @@ class LookupModule(LookupBase):
         if isinstance(terms, basestring):
             terms = [ terms ]
 
-        ret = []
+        basedir = self.get_basedir(variables)
 
-        if 'role_path' in variables:
-            basedir = variables['role_path']
-        else:
-            basedir = self._loader.get_basedir()
+        ret = []
 
         for term in terms:
             params = term.split()
