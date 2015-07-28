@@ -40,6 +40,11 @@ RELEASE := $(shell cat VERSION | cut -f2 -d' ')
 # Get the branch information from git
 ifneq ($(shell which git),)
 GIT_DATE := $(shell git log -n 1 --format="%ai")
+GIT_HASH := $(shell git log -n 1 --format="%h")
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.]//g')
+GITINFO = .$(GIT_HASH).$(GIT_BRANCH)
+else
+GITINFO = ''
 endif
 
 ifeq ($(shell echo $(OS) | egrep -c 'Darwin|FreeBSD|OpenBSD'),1)
@@ -62,7 +67,7 @@ ifeq ($(OFFICIAL),yes)
         DEBUILD_OPTS += -k$(DEBSIGN_KEYID)
     endif
 else
-    DEB_RELEASE = 0.git$(DATE)
+    DEB_RELEASE = 0.git$(DATE)$(GITINFO)
     # Do not sign unofficial builds
     DEBUILD_OPTS += -uc -us
     DPUT_OPTS += -u
@@ -78,7 +83,7 @@ RPMSPEC = $(RPMSPECDIR)/ansible.spec
 RPMDIST = $(shell rpm --eval '%{?dist}')
 RPMRELEASE = $(RELEASE)
 ifneq ($(OFFICIAL),yes)
-    RPMRELEASE = 0.git$(DATE)
+    RPMRELEASE = 0.git$(DATE)$(GITINFO)
 endif
 RPMNVR = "$(NAME)-$(VERSION)-$(RPMRELEASE)$(RPMDIST)"
 
