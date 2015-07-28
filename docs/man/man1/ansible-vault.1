@@ -2,12 +2,12 @@
 .\"     Title: ansible-vault
 .\"    Author: [see the "AUTHOR" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 12/09/2014
+.\"      Date: 07/28/2015
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.9
+.\"    Source: Ansible 2.0.0
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-VAULT" "1" "12/09/2014" "Ansible 1\&.9" "System administration commands"
+.TH "ANSIBLE\-VAULT" "1" "07/28/2015" "Ansible 2\&.0\&.0" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -43,7 +43,12 @@ The following options are available to all sub\-commands:
 .PP
 \fB\-\-vault\-password\-file=\fR\fIFILE\fR
 .RS 4
-A file containing the vault password to be used during the encryption/decryption steps\&. Be sure to keep this file secured if it is used\&.
+A file containing the vault password to be used during the encryption/decryption steps\&. Be sure to keep this file secured if it is used\&. If the file is executable, it will be run and its standard output will be used as the password\&.
+.RE
+.PP
+\fB\-\-new\-vault\-password\-file=\fR\fIFILE\fR
+.RS 4
+A file containing the new vault password to be used when rekeying a file\&. Be sure to keep this file secured if it is used\&. If the file is executable, it will be run and its standard output will be used as the password\&.
 .RE
 .PP
 \fB\-h\fR, \fB\-\-help\fR
