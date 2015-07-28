@@ -340,7 +340,10 @@ class RhsmPools(object):
                 consumed(bool): if True list consumed  pools, else list available pools (default False)
         """
         args = "subscription-manager list"
-        args += " --consumed" if consumed else " --available"
+        if consumed:
+            args += " --consumed"
+        else:
+            args += " --available"
         rc, stdout, stderr = self.module.run_command(args, check_rc=True)
 
         products = []
