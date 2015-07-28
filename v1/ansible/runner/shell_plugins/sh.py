@@ -61,9 +61,14 @@ class ShellModule(object):
         if system and basetmp.startswith('$HOME'):
             basetmp = self.join_path('/tmp', basefile)
         cmd = 'mkdir -p %s' % basetmp
-        if mode:
-            cmd += ' && chmod %s %s' % (mode, basetmp)
         cmd += ' && echo %s' % basetmp
+
+        # change the umask in a subshell to achieve the desired mode
+        # also for directories created with `mkdir -p`
+        if mode:
+            tmp_umask = 0777 & ~mode
+            cmd = '(umask %o && %s)' % (tmp_umask, cmd)
+
         return cmd
 
     def expand_user(self, user_home_path):
