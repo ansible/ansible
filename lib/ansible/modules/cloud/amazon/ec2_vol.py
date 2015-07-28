@@ -140,7 +140,7 @@ EXAMPLES = '''
 - ec2_vol:
     instance: "{{ item.id }} " 
     volume_size: 5
-    with_items: ec2.instances
+  with_items: ec2.instances
   register: ec2_vol
 
 # Example: Launch an instance and then add a volume if not already attached
