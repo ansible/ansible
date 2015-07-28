@@ -38,7 +38,7 @@
   tags: scenario2
 
 - name: include test that we can't do this for the shell module
-  include: scneario3.yml
+  include: scenario3.yml
   tags: scenario3
 
 - name: include test that we can't go all Little Bobby Droptables on a quoted var to add more
