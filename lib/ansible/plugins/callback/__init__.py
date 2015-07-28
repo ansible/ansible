@@ -22,6 +22,7 @@ __metaclass__ = type
 import json
 import difflib
 import warnings
+from copy import deepcopy
 
 from six import string_types
 
@@ -99,6 +100,21 @@ class CallbackBase:
                 return u"".join(ret)
         except UnicodeDecodeError:
             return ">> the files are different, but the diff library cannot compare unicode strings"
+
+    def _process_items(self, result):
+
+        for res in result._result['results']:
+            import q
+            q(res)
+
+            newres = deepcopy(result)
+            newres._result = res
+            if 'failed' in res and res['failed']:
+                self.v2_runner_on_failed(newres)
+            else:
+                self.v2_runner_on_ok(newres)
+
+        del result._result['results']
 
     def set_play_context(self, play_context):
         pass

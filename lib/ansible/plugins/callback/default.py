@@ -46,6 +46,9 @@ class CallbackModule(CallbackBase):
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
+        if result._task.loop and 'results' in result._result:
+            self._process_items(result)
+
         self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
 
         if result._task.ignore_errors:
@@ -62,6 +65,9 @@ class CallbackModule(CallbackBase):
         else:
             msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
+
+        if result._task.loop and 'results' in result._result:
+            self._process_items(result)
 
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result and result._task.action != 'include':
             msg += " => %s" % self._dump_results(result._result)
