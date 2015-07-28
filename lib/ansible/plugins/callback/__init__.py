@@ -104,9 +104,6 @@ class CallbackBase:
     def _process_items(self, result):
 
         for res in result._result['results']:
-            import q
-            q(res)
-
             newres = deepcopy(result)
             newres._result = res
             if 'failed' in res and res['failed']:
