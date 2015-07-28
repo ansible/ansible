@@ -114,8 +114,10 @@ New Modules:
   * vertica_role
   * vertica_schema
   * vertica_user
-  * vmware_datacenter
-  * vsphere_copy
+  * vmware: vmware_datacenter
+  * vmware: vca_fw
+  * vmware: vca_nat
+  * vmware: vsphere_copy
   * webfaction_app
   * webfaction_db
   * webfaction_domain
