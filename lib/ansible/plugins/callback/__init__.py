@@ -278,3 +278,6 @@ class CallbackBase:
 
     def v2_playbook_on_item_failed(self, result):
         pass # no v1
+
+    def v2_playbook_on_item_skipped(self, result):
+        pass # no v1
