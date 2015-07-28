@@ -343,7 +343,7 @@ and guidelines:
 
 * If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional and up to you.
 
-* Modules should output valid JSON only. All return types must be hashes (dictionaries) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
+* Modules must output valid JSON only. The toplevel return type must be a hash (dictionary) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
 
 * In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
 
@@ -494,8 +494,15 @@ Module checklist
 * Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
 * Sometimes you want to split the module, specially if you are adding a list/info state, you want a _facts version
-* If you are asking 'how can i have a module execute other modules' ... you want to write a role
-
+* If you are asking 'how can I have a module execute other modules' ... you want to write a role
+* Return values must be able to be serialized as json via the python stdlib
+  json library.  basic python types (strings, int, dicts, lists, etc) are
+  serializable.  A common pitfall is to try returning an object via
+  exit_json().  Instead, convert the fields you need from the object into the
+  fields of a dictionary and return the dictionary.
+* Do not use urllib2 to handle urls.  urllib2 does not natively verify TLS
+  certificates and so is insecure for https.  Instead, use either fetch_url or
+  open_url from ansible.module_utils.urls.
 
 Windows modules checklist
 `````````````````````````
