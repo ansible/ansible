@@ -59,8 +59,9 @@ options:
     required: false
 
 # informational: requirements for nodes
-requirements: [ xmpp ]
-author: Brian Coca
+requirements:
+    - python xmpp (xmpppy)
+author: "Brian Coca (@bcoca)"
 '''
 
 EXAMPLES = '''
@@ -111,7 +112,7 @@ def main():
     )
 
     if not HAS_XMPP:
-        module.fail_json(msg="xmpp is not installed")
+        module.fail_json(msg="The required python xmpp library (xmpppy) is not installed")
 
     jid = xmpp.JID(module.params['user'])
     user = jid.getNode()
