@@ -313,8 +313,6 @@ def process_module(module, options, env, template, outputname, module_map, alias
     # here is where we build the table of contents...
 
     try:
-        import q
-        q(doc)
         text = template.render(doc)
     except Exception as e:
         raise AnsibleError("Failed to render doc for %s: %s" % (fname, str(e)))
