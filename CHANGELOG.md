@@ -139,6 +139,7 @@ New Inventory scripts:
   * cloudstack
   * fleetctl
   * openvz
+  * proxmox
   * serf
 
 Other Notable Changes:
