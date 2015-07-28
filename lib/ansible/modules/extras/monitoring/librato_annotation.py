@@ -20,8 +20,6 @@
 #
 
 
-import base64
-
 DOCUMENTATION = '''
 ---
 module: librato_annotation
@@ -29,9 +27,8 @@ short_description: create an annotation in librato
 description:
     - Create an annotation event on the given annotation stream :name. If the annotation stream does not exist, it will be created automatically
 version_added: "1.6"
-author: Seth Edwards
-requirements:
-    - base64
+author: "Seth Edwards (@sedward)"
+requirements: []
 options:
     user:
         description:
@@ -130,8 +127,10 @@ def post_annotation(module):
 
     headers = {}
     headers['Content-Type'] = 'application/json'
-    headers['Authorization'] = "Basic " + base64.b64encode(user + ":" + api_key).strip()
 
+    # Hack send parameters the way fetch_url wants them
+    module.params['url_username'] = user
+    module.params['url_password'] = api_key
     response, info = fetch_url(module, url, data=json_body, headers=headers)
     if info['status'] != 200:
         module.fail_json(msg="Request Failed", reason=e.reason)
