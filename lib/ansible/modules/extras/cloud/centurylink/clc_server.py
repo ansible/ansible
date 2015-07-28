@@ -399,7 +399,7 @@ class ClcServer:
             cpu=dict(default=1),
             memory=dict(default=1),
             alias=dict(default=None),
-            password=dict(default=None),
+            password=dict(default=None, no_log=True),
             ip_address=dict(default=None),
             storage_type=dict(
                 default='standard',
