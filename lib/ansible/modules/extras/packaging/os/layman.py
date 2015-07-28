@@ -143,7 +143,11 @@ def install_overlay(module, name, list_url=None):
     layman = init_layman(layman_conf)
 
     if layman.is_installed(name):
-        return False
+        return False    
+    
+    if module.check_mode:
+        mymsg = 'Would add layman repo \'' + name + '\''
+        module.exit_json(changed=True, msg=mymsg)
 
     if not layman.is_repo(name):
         if not list_url:
@@ -164,7 +168,7 @@ def install_overlay(module, name, list_url=None):
     return True
 
 
-def uninstall_overlay(name):
+def uninstall_overlay(module, name):
     '''Uninstalls the given overlay repository from the system.
 
     :param name: the overlay id to uninstall
@@ -177,6 +181,10 @@ def uninstall_overlay(name):
 
     if not layman.is_installed(name):
         return False
+    
+    if module.check_mode:
+        mymsg = 'Would remove layman repo \'' + name + '\''
+        module.exit_json(changed=True, msg=mymsg)
 
     layman.delete_repos(name)
     if layman.get_errors(): raise ModuleError(layman.get_errors())
@@ -216,7 +224,8 @@ def main():
             list_url = dict(aliases=['url']),
             state = dict(default="present", choices=['present', 'absent', 'updated']),
             validate_certs = dict(required=False, default=True, type='bool'),
-        )
+        ),
+        supports_check_mode=True
     )
 
     if not HAS_LAYMAN_API:
@@ -237,7 +246,7 @@ def main():
             else:
                 sync_overlay(name)
         else:
-            changed = uninstall_overlay(name)
+            changed = uninstall_overlay(module, name)
 
     except ModuleError, e:
         module.fail_json(msg=e.message)
