@@ -89,6 +89,7 @@ New Modules:
   * openstack: os_subnet
   * openstack: os_volume
   * osx_defaults
+  * pam_limits
   * pear
   * profitbricks: profitbricks
   * proxmox
