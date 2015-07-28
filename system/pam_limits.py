@@ -38,12 +38,12 @@ options:
     required: true
   limit_type:
     description:
-      - Limit type : hard or soft.
+      - Limit type, see C(man limits) for an explanation
     required: true
     choices: [ "hard", "soft" ]
   limit_item:
     description:
-      - The limit to be set : core, data, nofile, cpu, etc.
+      - The limit to be set
     required: true
     choices: [ "core", "data", "fsize", "memlock", "nofile", "rss", "stack", "cpu", "nproc", "as", "maxlogins", "maxsyslogins", "priority", "locks", "sigpending", "msgqueue", "nice", "rtprio", "chroot" ]
   value:
