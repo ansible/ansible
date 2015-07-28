@@ -76,6 +76,12 @@ EXAMPLES = '''
 - redhat_subscription: state=present
                        activationkey=1-222333444
                        pool='^(Red Hat Enterprise Server|Red Hat Virtualization)$'
+
+# Update the consumed subscriptions from the previous example (remove the Red
+# Hat Virtualization subscription)
+- redhat_subscription: state=present
+                       activationkey=1-222333444
+                       pool='^Red Hat Enterprise Server$'
 '''
 
 import os
