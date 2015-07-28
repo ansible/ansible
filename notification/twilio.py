@@ -104,7 +104,6 @@ EXAMPLES = '''
 # =======================================
 # twilio module support methods
 #
-import base64
 import urllib
 
 
@@ -119,14 +118,15 @@ def post_twilio_api(module, account_sid, auth_token, msg, from_number,
         data['MediaUrl'] = media_url
     encoded_data = urllib.urlencode(data)
 
-    base64string = base64.encodestring('%s:%s' % \
-        (account_sid, auth_token)).replace('\n', '')
-
     headers = {'User-Agent': AGENT,
             'Content-type': 'application/x-www-form-urlencoded',
             'Accept': 'application/json',
-            'Authorization': 'Basic %s' % base64string,
             }
+
+    # Hack module params to have the Basic auth params that fetch_url expects
+    module.params['url_username'] = account_sid.replace('\n', '')
+    module.params['url_password'] = auth_token.replace('\n', '')
+
     return fetch_url(module, URI, data=encoded_data, headers=headers)
 
 
