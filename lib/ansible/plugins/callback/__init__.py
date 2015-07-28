@@ -107,9 +107,11 @@ class CallbackBase:
             newres = deepcopy(result)
             newres._result = res
             if 'failed' in res and res['failed']:
-                self.v2_runner_on_failed(newres)
+                self.v2_playbook_item_on_failed(newres)
+            elif 'skipped' in res and res['skipped']:
+                self.v2_playbook_item_on_skipped(newres)
             else:
-                self.v2_runner_on_ok(newres)
+                self.v2_playbook_item_on_ok(newres)
 
         del result._result['results']
 
@@ -270,3 +272,9 @@ class CallbackBase:
         host = result._host.get_name()
         if 'diff' in result._result:
             self.on_file_diff(host, result._result['diff'])
+
+    def v2_playbook_on_item_ok(self, result):
+        pass # no v1
+
+    def v2_playbook_on_item_failed(self, result):
+        pass # no v1
