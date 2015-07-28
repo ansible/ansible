@@ -2,17 +2,21 @@
 
 # Copyright (c) 2015 VMware, Inc. All Rights Reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# This file is part of Ansible
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 
 DOCUMENTATION = '''
 ---
@@ -23,81 +27,68 @@ description:
 version_added: "2.0"
 options:
     username:
-      version_added: "2.0"
       description:
         - The vca username or email address, if not set the environment variable VCA_USER is checked for the username.
       required: false
       default: None
     password:
-      version_added: "2.0"
       description:
         - The vca password, if not set the environment variable VCA_PASS is checked for the password
       required: false
       default: None
     org:
-      version_added: "2.0"
       description:
         - The org to login to for creating vapp, mostly set when the service_type is vdc.
       required: false
       default: None
     service_id:
-      version_added: "2.0"
       description:
         - The service id in a vchs environment to be used for creating the vapp
       required: false
       default: None
     host:
-      version_added: "2.0"
       description:
         - The authentication host to be used when service type  is vcd.
       required: false
       default: None
     api_version:
-      version_added: "2.0"
       description:
         - The api version to be used with the vca
       required: false
       default: "5.7"
     service_type:
-      version_added: "2.0"
       description:
         - The type of service we are authenticating against
       required: false
       default: vca
       choices: [ "vca", "vchs", "vcd" ] 
     state:
-      version_added: "2.0"
       description:
         - if the object should be added or removed
       required: false
       default: present
       choices: [ "present", "absent" ]
     verify_certs:
-      version_added: "2.0"
       description:
         - If the certificates of the authentication is to be verified
       required: false
       default: True
     vdc_name:
-      version_added: "2.0"
       description:
         - The name of the vdc where the gateway is located.
       required: false
       default: None
     gateway_name:
-      version_added: "2.0"
       description:
         - The name of the gateway of the vdc where the rule should be added
       required: false
       default: gateway
     purge_rules:
-      version_added: "2.0"
       description:
         - If set to true, it will delete all rules in the gateway that are not given as paramter to this module.
       required: false
       default: false
     nat_rules:
-      version_added: "2.0"
       description:
         - A list of rules to be added to the gateway, Please see examples on valid entries
       required: True
