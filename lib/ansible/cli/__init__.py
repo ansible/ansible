@@ -258,6 +258,10 @@ class CLI(object):
             parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
                 dest='vault_password_file', help="vault password file", action="callback",
                 callback=CLI.expand_tilde, type=str)
+            parser.add_option('--new-vault-password-file',
+			    dest='new_vault_password_file', help="new vault password file for rekey", action="callback",
+			    callback=CLI.expand_tilde, type=str)
+
 
         if subset_opts:
             parser.add_option('-t', '--tags', dest='tags', default='all',
