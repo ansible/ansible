@@ -144,9 +144,38 @@ EXAMPLES = '''
     ipv6_address_mode: dhcpv6-stateless
 '''
 
+def _can_update(subnet, module, cloud):
+    """Check for differences in non-updatable values"""
+    network_name = module.params['network_name']
+    cidr = module.params['cidr']
+    ip_version = int(module.params['ip_version'])
+    ipv6_ra_mode = module.params['ipv6_ra_mode']
+    ipv6_a_mode = module.params['ipv6_address_mode']
 
-def _needs_update(subnet, module):
+    if network_name:
+        network = cloud.get_network(network_name)
+        if network:
+            netid = network['id']
+        else:
+            module.fail_json(msg='No network found for %s' % network_name)
+        if netid != subnet['network_id']:
+                module.fail_json(msg='Cannot update network_name in existing \
+                                      subnet')
+    if ip_version and subnet['ip_version'] != ip_version:
+        module.fail_json(msg='Cannot update ip_version in existing subnet')
+    if ipv6_ra_mode and subnet.get('ipv6_ra_mode', None) != ip_version:
+        module.fail_json(msg='Cannot update ipv6_ra_mode in existing subnet')
+    if ipv6_a_mode and subnet.get('ipv6_address_mode', None) != ipv6_a_mode:
+        module.fail_json(msg='Cannot update ipv6_address_mode in existing \
+                              subnet')
+
+def _needs_update(subnet, module, cloud):
     """Check for differences in the updatable values."""
+
+    # First check if we are trying to update something we're not allowed to
+    _can_update(subnet, module, cloud)
+
+    # now check for the things we are allowed to update
     enable_dhcp = module.params['enable_dhcp']
     subnet_name = module.params['name']
     pool_start = module.params['allocation_pool_start']
@@ -176,12 +205,12 @@ def _needs_update(subnet, module):
     return False
 
 
-def _system_state_change(module, subnet):
+def _system_state_change(module, subnet, cloud):
     state = module.params['state']
     if state == 'present':
         if not subnet:
             return True
-        return _needs_update(subnet, module)
+        return _needs_update(subnet, module, cloud)
     if state == 'absent' and subnet:
         return True
     return False
@@ -245,7 +274,8 @@ def main():
         subnet = cloud.get_subnet(subnet_name)
 
         if module.check_mode:
-            module.exit_json(changed=_system_state_change(module, subnet))
+            module.exit_json(changed=_system_state_change(module, subnet,
+                                                          cloud))
 
         if state == 'present':
             if not subnet:
@@ -261,16 +291,14 @@ def main():
                                              ipv6_address_mode=ipv6_a_mode)
                 changed = True
             else:
-                if _needs_update(subnet, module):
+                if _needs_update(subnet, module, cloud):
                     cloud.update_subnet(subnet['id'],
                                         subnet_name=subnet_name,
                                         enable_dhcp=enable_dhcp,
                                         gateway_ip=gateway_ip,
                                         dns_nameservers=dns,
                                         allocation_pools=pool,
-                                        host_routes=host_routes,
-                                        ipv6_ra_mode=ipv6_ra_mode,
-                                        ipv6_address_mode=ipv6_a_mode)
+                                        host_routes=host_routes)
                     changed = True
                 else:
                     changed = False
