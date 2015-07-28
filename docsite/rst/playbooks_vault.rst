@@ -108,5 +108,11 @@ This is something you may wish to do if using Ansible from a continuous integrat
 
 (The `--vault-password-file` option can also be used with the :ref:`ansible-pull` command if you wish, though this would require distributing the keys to your nodes, so understand the implications -- vault is more intended for push mode).
 
+.. _speeding_up_vault:
 
+Speeding Up Vault Operations
+````````````````````````````
 
+By default, Ansible uses PyCrypto to encrypt and decrypt vault files. If you have many encrypted files, decrypting them at startup may cause a perceptible delay. To speed this up, install the cryptography package::
+
+    pip install cryptography
