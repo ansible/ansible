@@ -146,9 +146,9 @@ def main():
     state = module.params.get('state')
 
     if not volume_id and not instance_id and not snapshot_id or volume_id and instance_id and snapshot_id:
-        module.fail_json('One and only one of volume_id or instance_id or snapshot_id must be specified')
+        module.fail_json(msg='One and only one of volume_id or instance_id or snapshot_id must be specified')
     if instance_id and not device_name or device_name and not instance_id:
-        module.fail_json('Instance ID and device name must both be specified')
+        module.fail_json(msg='Instance ID and device name must both be specified')
 
     ec2 = ec2_connect(module)
 
