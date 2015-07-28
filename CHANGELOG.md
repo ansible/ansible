@@ -18,6 +18,7 @@ Major Changes:
  * big_ip modules now support turning off ssl certificate validation (use only for self signed)
  * template code now retains types for bools and numbers instead of turning them into strings.
    If you need the old behaviour, quote the value and it will get passed around as a string
+ * Consiidated code from modules using urllib2 to normalize features, TLS and SNI support
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
