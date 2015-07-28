@@ -30,7 +30,8 @@ description:
     - Installs packages using Web Platform Installer command-line (http://www.iis.net/learn/install/web-platform-installer/web-platform-installer-v4-command-line-webpicmdexe-rtw-release).
     - Must be installed and present in PATH (see win_chocolatey module; 'webpicmd' is the package name, and you must install 'lessmsi' first too)
     - Install IIS first (see win_feature module)
-    - Note: accepts EULAs and suppresses reboot - you will need to check manage reboots yourself (see win_reboot module)
+notes:
+    - accepts EULAs and suppresses reboot - you will need to check manage reboots yourself (see win_reboot module)
 options:
   name:
     description:
