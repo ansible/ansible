@@ -63,7 +63,7 @@ class CallbackModule(CallbackBase):
             msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
 
-        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and result._task.action not in ('setup', 'include'):
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result and result._task.action != 'include':
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color=color)
 
@@ -71,7 +71,7 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_skipped(self, result):
         msg = "skipping: [%s]" % result._host.get_name()
-        if self._display.verbosity > 0 or '_ansible_verbose_always' in result._result:
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color='cyan')
 

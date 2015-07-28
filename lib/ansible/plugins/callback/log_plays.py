@@ -48,8 +48,8 @@ class CallbackModule(CallbackBase):
 
     def log(self, host, category, data):
         if type(data) == dict:
-            if 'verbose_override' in data:
-                # avoid logging extraneous data from facts
+            if '_ansible_verbose_override' in data:
+                # avoid logging extraneous data
                 data = 'omitted'
             else:
                 data = data.copy()

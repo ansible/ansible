@@ -2874,6 +2874,6 @@ def get_all_facts(module):
             setup_result['ansible_facts'][k] = v
 
     # hack to keep --verbose from showing all the setup module results
-    setup_result['verbose_override'] = True
+    setup_result['_ansible_verbose_override'] = True
 
     return setup_result
