@@ -63,6 +63,7 @@ options:
       - Custom headers for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
     required: false
     default: null
+    version_added: "2.0"
   marker:
     description:
       - Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
