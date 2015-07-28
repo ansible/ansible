@@ -22,6 +22,10 @@ Other Notable Changes:
 * Fix ec2_ami_search module to check TLS Certificates
 * Fix the following extras modules to check TLS Certificates:
   * campfire
+  * layman
+  * librarto_annotate
+  * twilio
+  * typetalk
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
