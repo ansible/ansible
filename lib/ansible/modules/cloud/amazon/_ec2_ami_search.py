@@ -83,7 +83,6 @@ EXAMPLES = '''
 
 import csv
 import json
-import urllib2
 import urlparse
 
 SUPPORTED_DISTROS = ['ubuntu']
