@@ -275,24 +275,7 @@ class PlayContext(Base):
             elif isinstance(options.skip_tags, basestring):
                 self.skip_tags.update(options.skip_tags.split(','))
 
-    #def copy(self, ci):
-    #    '''
-    #    Copies the connection info from another connection info object, used
-    #    when merging in data from task overrides.
-    #    '''
-    #
-    #    for field in self._get_fields():
-    #        value = getattr(ci, field, None)
-    #        if isinstance(value, dict):
-    #            setattr(self, field, value.copy())
-    #        elif isinstance(value, set):
-    #            setattr(self, field, value.copy())
-    #        elif isinstance(value, list):
-    #            setattr(self, field, value[:])
-    #        else:
-    #            setattr(self, field, value)
-
-    def set_task_and_host_override(self, task, host):
+    def set_task_and_variable_override(self, task, variables):
         '''
         Sets attributes from the task if they are set, which will override
         those from the play.
@@ -309,8 +292,7 @@ class PlayContext(Base):
                     setattr(new_info, attr, attr_val)
 
         # finally, use the MAGIC_VARIABLE_MAPPING dictionary to update this
-        # connection info object with 'magic' variables from inventory
-        variables = host.get_vars()
+        # connection info object with 'magic' variables from the variable list
         for (attr, variable_names) in MAGIC_VARIABLE_MAPPING.iteritems():
             for variable_name in variable_names:
                 if variable_name in variables:
@@ -387,18 +369,6 @@ class PlayContext(Base):
             return ('%s -c ' % executable) + pipes.quote(becomecmd)
 
         return cmd
-
-    #def _get_fields(self):
-    #    return [i for i in self.__dict__.keys() if i[:1] != '_']
-
-    #def post_validate(self, templar):
-    #    '''
-    #    Finalizes templated values which may be set on this objects fields.
-    #    '''
-    #
-    #    for field in self._get_fields():
-    #        value = templar.template(getattr(self, field))
-    #        setattr(self, field, value)
 
     def update_vars(self, variables):
         '''

@@ -93,14 +93,13 @@ class TestPlayContext(unittest.TestCase):
         mock_task.become_pass   = 'mocktaskpass'
         mock_task.no_log        = False
 
-        mock_host = MagicMock()
-        mock_host.get_vars.return_value = dict(
+        all_vars = dict(
             ansible_connection = 'mock_inventory',
             ansible_ssh_port = 4321,
         )
 
         play_context = PlayContext(play=mock_play, options=options)
-        play_context = play_context.set_task_and_host_override(task=mock_task, host=mock_host)
+        play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars)
         self.assertEqual(play_context.connection, 'mock_inventory')
         self.assertEqual(play_context.remote_user, 'mocktask')
         self.assertEqual(play_context.port, 4321)
