@@ -327,9 +327,12 @@ class TaskExecutor:
                     result['failed_when_result'] = result['failed'] = failed_when_result
                     if failed_when_result:
                         break
-            elif 'failed' not in result and result.get('rc', 0) == 0:
-                # if the result is not failed, stop trying
-                break
+            elif 'failed' not in result:
+                if result.get('rc', 0) != 0:
+                    result['failed'] = True
+                else:
+                    # if the result is not failed, stop trying
+                    break
 
             if attempt < retries - 1:
                 time.sleep(delay)
