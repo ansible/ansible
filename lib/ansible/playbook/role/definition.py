@@ -155,7 +155,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # FIXME: make the parser smart about list/string entries in
         #        the yaml so the error line/file can be reported here
 
-        raise AnsibleError("the role '%s' was not found" % role_name)
+        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)))
 
     def _split_role_params(self, ds):
         '''
