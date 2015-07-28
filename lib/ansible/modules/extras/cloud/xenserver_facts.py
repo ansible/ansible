@@ -18,11 +18,13 @@
 DOCUMENTATION = '''
 ---
 module: xenserver_facts
-version_added: 1.7
+version_added: "2.0"
 short_description: get facts reported on xenserver
 description:
   - Reads data out of XenAPI, can be used instead of multiple xe commands.
-author: Andy Hill, Tim Rupp
+author:
+    - Andy Hill (@andyhky)
+    - Tim Rupp
 '''
 
 import platform
