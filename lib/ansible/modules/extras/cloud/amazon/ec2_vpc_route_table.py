@@ -40,7 +40,6 @@ options:
     description:
       - List of routes in the route table. Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id', 'instance_id', 'interface_id', or 'vpc_peering_connection'. If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
     required: true
-    aliases: []
   subnets:
     description:
       - An array of subnets to add to this route table. Subnets may be specified by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'.
@@ -65,6 +64,7 @@ options:
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+
 extends_documentation_fragment: aws
 '''
 
