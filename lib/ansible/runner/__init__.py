@@ -1081,7 +1081,8 @@ class Runner(object):
 
             result.result['invocation'] = dict(
                 module_args=module_args,
-                module_name=module_name
+                module_name=module_name,
+                module_complex_args=complex_args,
             )
 
             changed_when = self.module_vars.get('changed_when')
