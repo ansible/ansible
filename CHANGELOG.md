@@ -134,6 +134,7 @@ New Modules:
 New Inventory scripts:
   * cloudstack
   * fleetctl
+  * openvz
   * serf
 
 Other Notable Changes:
