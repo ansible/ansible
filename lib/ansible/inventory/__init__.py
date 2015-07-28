@@ -24,7 +24,6 @@ import os
 import sys
 import re
 import stat
-import subprocess
 
 from ansible import constants as C
 from ansible import errors
