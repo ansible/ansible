@@ -417,6 +417,7 @@ EXAMPLES = '''
 '''
 
 HAS_DOCKER_PY = True
+DEFAULT_DOCKER_API_VERSION = None
 
 import sys
 import json
