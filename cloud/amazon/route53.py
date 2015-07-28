@@ -24,75 +24,61 @@ description:
 options:
   command:
     description:
-      - Specifies the action to take.  
+      - Specifies the action to take.
     required: true
-    default: null
-    aliases: []
     choices: [ 'get', 'create', 'delete' ]
   zone:
     description:
       - The DNS zone to modify
     required: true
-    default: null
-    aliases: []
   hosted_zone_id:
     description:
       - The Hosted Zone ID of the DNS zone to modify
     required: false
-    version_added: 2.0
+    version_added: "2.0"
     default: null
   record:
     description:
       - The full DNS record to create or delete
     required: true
-    default: null
-    aliases: []
   ttl:
     description:
       - The TTL to give the new record
     required: false
     default: 3600 (one hour)
-    aliases: []
   type:
     description:
       - The type of DNS record to create
     required: true
-    default: null
-    aliases: []
     choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS' ]
   alias:
     description:
       - Indicates if this is an alias record.
     required: false
-    version_added: 1.9
+    version_added: "1.9"
     default: False
-    aliases: []
     choices: [ 'True', 'False' ]
   alias_hosted_zone_id:
     description:
       - The hosted zone identifier.
     required: false
-    version_added: 1.9
+    version_added: "1.9"
     default: null
-    aliases: []
   value:
     description:
       - The new value when creating a DNS record.  Multiple comma-spaced values are allowed for non-alias records.  When deleting a record all values for the record must be specified or Route53 will not delete it.
     required: false
     default: null
-    aliases: []
   overwrite:
     description:
       - Whether an existing record should be overwritten on create if values do not match
     required: false
     default: null
-    aliases: []
   retry_interval:
     description:
       - In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many domain names, the default of 500 seconds may be too long.
     required: false
     default: 500
-    aliases: []
   private_zone:
     description:
       - If set to true, the private zone matching the requested name within the domain will be used if there are both public and private zones. The default is to use the public zone.

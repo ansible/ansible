@@ -53,7 +53,7 @@ options:
     required: false
     default: private
   headers:
-    version_added: 2.0
+    version_added: "2.0"
     description:
       - Headers to attach to object.
     required: false

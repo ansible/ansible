@@ -3,7 +3,6 @@
 DOCUMENTATION = '''
 ---
 module: raw
-version_added: historical
 short_description: Executes a low-down and dirty SSH command
 options:
   free_form:
@@ -15,7 +14,7 @@ options:
       - change the shell used to execute the command. Should be an absolute path to the executable.
     required: false
     version_added: "1.0"
-description: 
+description:
      - Executes a low-down and dirty SSH command, not going through the module
        subsystem. This is useful and should only be done in two cases. The
        first case is installing C(python-simplejson) on older (Python 2.4 and
@@ -34,7 +33,7 @@ notes:
       playbooks will follow the trend of using M(command) unless M(shell) is
       explicitly required. When running ad-hoc commands, use your best
       judgement.
-author: 
+author:
     - Ansible Core Team
     - Michael DeHaan
 '''

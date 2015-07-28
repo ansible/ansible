@@ -30,7 +30,6 @@ import os
 DOCUMENTATION = '''
 ---
 module: command
-version_added: historical
 short_description: Executes a command on a remote node
 description:
      - The M(command) module takes the command name followed by a list of space-delimited arguments.
@@ -45,7 +44,6 @@ options:
         See the examples!
     required: true
     default: null
-    aliases: []
   creates:
     description:
       - a filename or glob pattern, when it already exists, this step will B(not) be run.

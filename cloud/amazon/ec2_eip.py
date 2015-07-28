@@ -5,7 +5,7 @@ module: ec2_eip
 short_description: associate an EC2 elastic IP with an instance.
 description:
     - This module associates AWS EC2 elastic IP addresses with instances
-version_added: 1.4
+version_added: "1.4"
 options:
   instance_id:
     description:

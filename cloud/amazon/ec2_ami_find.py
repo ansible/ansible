@@ -18,7 +18,7 @@
 DOCUMENTATION = '''
 ---
 module: ec2_ami_find
-version_added: 2.0
+version_added: '2.0'
 short_description: Searches for AMIs to obtain the AMI ID and other information
 description:
   - Returns list of matching AMIs with AMI ID, along with other useful information
