@@ -39,7 +39,6 @@ class CallbackModule(CallbackBase):
 
         buf = "%s | %s | rc=%s >>\n" % (host, caption, result.get('rc',0))
         buf += result.get('stdout','')
-        buf += result.get('stdout','')
         buf += result.get('msg','')
 
         return buf + "\n"
