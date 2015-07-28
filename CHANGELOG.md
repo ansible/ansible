@@ -130,6 +130,7 @@ New Modules:
   * win_iis_website
   * win_regedit
   * win_unzip
+  * xenserver_facts
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
