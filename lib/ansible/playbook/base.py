@@ -47,8 +47,7 @@ class Base:
     _port                = FieldAttribute(isa='int')
     _remote_user         = FieldAttribute(isa='string')
 
-    # vars and flags
-    _vars                = FieldAttribute(isa='dict', default=dict())
+    # flags and misc. settings
     _environment         = FieldAttribute(isa='list', default=[])
     _no_log              = FieldAttribute(isa='bool', default=False)
 

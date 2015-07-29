@@ -62,7 +62,6 @@ class Block(Base, Become, Conditional, Taggable):
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 
-        all_vars.update(self.vars)
         return all_vars
 
     @staticmethod
