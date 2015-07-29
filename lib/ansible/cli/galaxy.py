@@ -323,11 +323,16 @@ class GalaxyCLI(CLI):
         if role_file:
             f = open(role_file, 'r')
             if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-                rolesparsed = map(self.parse_requirements_files, yaml.safe_load(f))
+                try:
+                    rolesparsed = map(self.parse_requirements_files, yaml.safe_load(f))
+                except:
+                   raise AnsibleError("%s does not seem like a valid yaml file" % role_file)
                 roles_left = [GalaxyRole(self.galaxy, **r) for r in rolesparsed]
             else:
                 # roles listed in a file, one per line
                 for rname in f.readlines():
+                    if rname.startswith("#") or rname.strip() == '':
+                        continue
                     roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
             f.close()
         else:
