@@ -26,6 +26,7 @@ Other Notable Changes:
   * librarto_annotate
   * twilio
   * typetalk
+* Fix docker module's parsing of docker-py version for dev checkouts
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
