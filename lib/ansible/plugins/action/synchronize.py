@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
             return path
 
     def _process_remote(self, host, path, user):
-        transport = self._connection_info.connection
+        transport = self._play_context.connection
         return_data = None
         if not host in ['127.0.0.1', 'localhost'] or transport != "local":
             if user:
@@ -71,7 +71,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         ''' generates params and passes them on to the rsync module '''
 
-        original_transport = task_vars.get('ansible_connection') or self._connection_info.connection
+        original_transport = task_vars.get('ansible_connection') or self._play_context.connection
         transport_overridden = False
         if task_vars.get('delegate_to') is None:
             task_vars['delegate_to'] = '127.0.0.1'
@@ -79,7 +79,7 @@ class ActionModule(ActionBase):
             if original_transport != 'local':
                 task_vars['ansible_connection'] = 'local'
                 transport_overridden = True
-                self._connection_info.become = False
+                self._play_context.become = False
 
         src  = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
@@ -130,13 +130,13 @@ class ActionModule(ActionBase):
                     user = task_vars['hostvars'][conn.delegate].get('ansible_ssh_user')
 
                 if not use_delegate or not user:
-                    user = task_vars.get('ansible_ssh_user') or self._connection_info.remote_user
+                    user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
                 
             if use_delegate:
                 # FIXME
-                private_key = task_vars.get('ansible_ssh_private_key_file') or self._connection_info.private_key_file
+                private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
             else:
-                private_key = task_vars.get('ansible_ssh_private_key_file') or self._connection_info.private_key_file
+                private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
 
             if private_key is not None:
                 private_key = os.path.expanduser(private_key)
@@ -159,7 +159,7 @@ class ActionModule(ActionBase):
         rsync_path = self._task.args.get('rsync_path', None)
 
         # If no rsync_path is set, sudo was originally set, and dest is remote then add 'sudo rsync' argument.
-        if not rsync_path and transport_overridden and self._connection_info.become and self._connection_info.become_method == 'sudo' and not dest_is_local:
+        if not rsync_path and transport_overridden and self._play_context.become and self._play_context.become_method == 'sudo' and not dest_is_local:
             rsync_path = 'sudo rsync'
 
         # make sure rsync path is quoted.
@@ -168,6 +168,11 @@ class ActionModule(ActionBase):
 
         if use_ssh_args:
             self._task.args['ssh_args'] = constants.ANSIBLE_SSH_ARGS
+
+        # Remove mode as it is handled purely in this action module
+        if 'mode' in self._task.args:
+            del self._task.args['mode']
+
 
         # run the module and store the result
         result = self._execute_module('synchronize', task_vars=task_vars)

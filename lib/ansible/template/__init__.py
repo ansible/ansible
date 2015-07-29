@@ -56,9 +56,13 @@ class Templar:
 
     def __init__(self, loader, shared_loader_obj=None, variables=dict()):
         self._loader              = loader
-        self._basedir             = loader.get_basedir()
         self._filters             = None
         self._available_variables = variables
+
+        if loader:
+            self._basedir = loader.get_basedir()
+        else:
+            self._basedir = './'
 
         if shared_loader_obj:
             global _basedirs
@@ -143,7 +147,7 @@ class Templar:
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None, convert_data=True):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -171,14 +175,16 @@ class Templar:
 
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
 
-                    # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or result.startswith("[") or result in ("True", "False"):
-                        eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
-                        if eval_results[1] is None:
-                            result = eval_results[0]
-                        else:
-                            # FIXME: if the safe_eval raised an error, should we do something with it?
-                            pass
+                    if convert_data:
+                        # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                        if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                           result.startswith("[") or result in ("True", "False"):
+                            eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                            if eval_results[1] is None:
+                                result = eval_results[0]
+                            else:
+                                # FIXME: if the safe_eval raised an error, should we do something with it?
+                                pass
 
                 return result
 
@@ -211,8 +217,9 @@ class Templar:
         '''
 
         if isinstance(variable, basestring):
-            first_part = variable.split(".")[0].split("[")[0]
-            if first_part in self._available_variables and self.environment.variable_start_string not in variable:
+            contains_filters = "|" in variable
+            first_part = variable.split("|")[0].split(".")[0].split("[")[0]
+            if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,

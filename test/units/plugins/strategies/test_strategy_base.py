@@ -41,6 +41,7 @@ class TestStrategyBase(unittest.TestCase):
     def test_strategy_base_init(self):
         mock_tqm = MagicMock(TaskQueueManager)
         mock_tqm._final_q = MagicMock()
+        mock_tqm._options = MagicMock()
         strategy_base = StrategyBase(tqm=mock_tqm)
 
     def test_strategy_base_run(self):
@@ -53,18 +54,19 @@ class TestStrategyBase(unittest.TestCase):
         mock_iterator._play = MagicMock()
         mock_iterator._play.handlers = []
 
-        mock_conn_info = MagicMock()
+        mock_play_context = MagicMock()
 
         mock_tqm._failed_hosts = dict()
         mock_tqm._unreachable_hosts = dict()
+        mock_tqm._options = MagicMock()
         strategy_base = StrategyBase(tqm=mock_tqm)
 
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info), 0)
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info, result=False), 1)
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context), 0)
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 1)
         mock_tqm._failed_hosts = dict(host1=True)
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info, result=False), 2)
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 2)
         mock_tqm._unreachable_hosts = dict(host1=True)
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, connection_info=mock_conn_info, result=False), 3)
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 3)
 
     def test_strategy_base_get_hosts(self):
         mock_hosts = []
@@ -114,17 +116,17 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base = StrategyBase(tqm=mock_tqm)
         strategy_base._cur_worker = 0
         strategy_base._pending_results = 0
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), connection_info=MagicMock())
+        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
         self.assertEqual(strategy_base._cur_worker, 1)
         self.assertEqual(strategy_base._pending_results, 1)
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), connection_info=MagicMock())
+        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
         self.assertEqual(strategy_base._cur_worker, 2)
         self.assertEqual(strategy_base._pending_results, 2)
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), connection_info=MagicMock())
+        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
         self.assertEqual(strategy_base._cur_worker, 0)
         self.assertEqual(strategy_base._pending_results, 3)
         workers[0][1].put.side_effect = EOFError
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), connection_info=MagicMock())
+        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
         self.assertEqual(strategy_base._cur_worker, 1)
         self.assertEqual(strategy_base._pending_results, 3)
 
@@ -253,7 +255,8 @@ class TestStrategyBase(unittest.TestCase):
         self.assertEqual(strategy_base._pending_results, 1)
         self.assertIn('test01', strategy_base._blocked_hosts)
 
-        queue_items.append(('notify_handler', mock_host, 'test handler'))
+        task_result = TaskResult(host=mock_host, task=mock_task, return_data=dict(changed=True))
+        queue_items.append(('notify_handler', task_result, 'test handler'))
         results = strategy_base._process_pending_results(iterator=mock_iterator)
         self.assertEqual(len(results), 0)
         self.assertEqual(strategy_base._pending_results, 1)
@@ -325,7 +328,7 @@ class TestStrategyBase(unittest.TestCase):
         mock_tqm.get_workers.return_value = workers
         mock_tqm.send_callback.return_value = None
 
-        mock_conn_info = MagicMock()
+        mock_play_context = MagicMock()
 
         mock_handler_task = MagicMock()
         mock_handler_task.get_name.return_value = "test handler"
@@ -356,4 +359,4 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base._inventory = mock_inventory
         strategy_base._notified_handlers = {"test handler": [mock_host]}
 
-        result = strategy_base.run_handlers(iterator=mock_iterator, connection_info=mock_conn_info)
+        result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)

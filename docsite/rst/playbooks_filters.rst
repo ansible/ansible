@@ -110,6 +110,10 @@ As of Ansible 1.8, it is possible to use the default filter to omit variables an
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
+.. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
+      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (python null) value will cause the
+      later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
+      the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _list_filters:
 
@@ -396,6 +400,11 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
 .. note:: If "regex_replace" filter is used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you need to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+
+To escape special characters within a regex, use the "regex_escape" filter::
+
+    # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
+    {{ '^f.*o(.*)$' | regex_escape() }}
 
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones

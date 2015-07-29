@@ -45,7 +45,10 @@ class LookupModule(LookupBase):
         if isinstance(terms, basestring):
             terms = [ terms ]
 
+        basedir = self.get_basedir(variables)
+
         ret = []
+
         for term in terms:
             params = term.split()
             key = params[0]
@@ -69,9 +72,8 @@ class LookupModule(LookupBase):
             if paramvals['delimiter'] == 'TAB':
                 paramvals['delimiter'] = "\t"
 
-            path = self._loader.path_dwim(paramvals['file'])
-
-            var = self.read_csv(path, key, paramvals['delimiter'], paramvals['default'], paramvals['col'])
+            lookupfile = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])
+            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['default'], paramvals['col'])
             if var is not None:
                 if type(var) is list:
                     for v in var:

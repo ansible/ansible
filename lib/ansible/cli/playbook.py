@@ -33,7 +33,7 @@ from ansible.playbook import Playbook
 from ansible.playbook.task import Task
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
 #---------------------------------------------------------------------------------------------------
@@ -103,20 +103,6 @@ class PlaybookCLI(CLI):
 
         loader = DataLoader(vault_password=vault_pass)
 
-        extra_vars = {}
-        for extra_vars_opt in self.options.extra_vars:
-            extra_vars_opt = to_unicode(extra_vars_opt, errors='strict')
-            if extra_vars_opt.startswith(u"@"):
-                # Argument is a YAML file (JSON is a subset of YAML)
-                data = loader.load_from_file(extra_vars_opt[1:])
-            elif extra_vars_opt and extra_vars_opt[0] in u'[{':
-                # Arguments as YAML
-                data = loader.load(extra_vars_opt)
-            else:
-                # Arguments as Key-value
-                data = parse_kv(extra_vars_opt)
-            extra_vars = combine_vars(extra_vars, data)
-
         # FIXME: this should be moved inside the playbook executor code
         only_tags = self.options.tags.split(",")
         skip_tags = self.options.skip_tags
@@ -134,7 +120,7 @@ class PlaybookCLI(CLI):
         # create the variable manager, which will be shared throughout
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager()
-        variable_manager.extra_vars = extra_vars
+        variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
@@ -164,20 +150,45 @@ class PlaybookCLI(CLI):
         if isinstance(results, list):
             for p in results:
 
-                self.display.display('\nplaybook: %s\n' % p['playbook'])
+                self.display.display('\nplaybook: %s' % p['playbook'])
+                i = 1
                 for play in p['plays']:
+                    if play.name:
+                        playname = play.name
+                    else:
+                        playname = '#' + str(i)
+
+                    msg = "\n  PLAY: %s" % (playname)
+                    mytags = set()
+                    if self.options.listtags and play.tags:
+                        mytags = mytags.union(set(play.tags))
+                        msg += '\n    tags: [%s]' % (','.join(mytags))
+
                     if self.options.listhosts:
-                        self.display.display("\n  %s (%s): host count=%d" % (play['name'], play['pattern'], len(play['hosts'])))
-                        for host in play['hosts']:
-                            self.display.display("    %s" % host)
-                    if self.options.listtasks: #TODO: do we want to display block info?
-                        self.display.display("\n  %s" % (play['name']))
-                        for task in play['tasks']:
-                            self.display.display("    %s" % task)
-                    if self.options.listtags: #TODO: fix once we figure out block handling above
-                        self.display.display("\n  %s: tags count=%d" % (play['name'], len(play['tags'])))
-                        for tag in play['tags']:
-                            self.display.display("    %s" % tag)
+                        playhosts = set(inventory.get_hosts(play.hosts))
+                        msg += "\n    pattern: %s\n    total hosts: %d\n    hosts:" % (play.hosts, len(playhosts))
+                        for host in playhosts:
+                            msg += "\n      %s" % host
+
+                    self.display.display(msg)
+
+                    if self.options.listtags or self.options.listtasks:
+                        taskmsg = '    tasks:'
+
+                        for block in play.compile():
+                            if not block.has_tasks():
+                                continue
+
+                            j = 1
+                            for task in block.block:
+                                taskmsg += "\n      %s" % task
+                                if self.options.listtags and task.tags:
+                                    taskmsg += "\n        tags: [%s]" % ','.join(mytags.union(set(task.tags)))
+                                j = j + 1
+
+                        self.display.display(taskmsg)
+
+                    i = i + 1
             return 0
         else:
             return results

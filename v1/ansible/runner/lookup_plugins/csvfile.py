@@ -63,7 +63,10 @@ class LookupModule(object):
                 for param in params[1:]:
                     name, value = param.split('=')
                     assert(name in paramvals)
-                    paramvals[name] = value
+                    if name == 'delimiter':
+                        paramvals[name] = str(value)
+                    else:
+                        paramvals[name] = value
             except (ValueError, AssertionError), e:
                 raise errors.AnsibleError(e)
 

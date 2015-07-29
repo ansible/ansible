@@ -31,7 +31,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
-        if self._connection_info.check_mode:
+        if self._play_context.check_mode:
             return dict(skipped=True, msg='check mode not supported for this module')
 
         # Parse out any hostname:port patterns

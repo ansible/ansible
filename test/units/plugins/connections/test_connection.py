@@ -22,7 +22,7 @@ __metaclass__ = type
 from six import StringIO
 
 from ansible.compat.tests import unittest
-from ansible.executor.connection_info import ConnectionInformation
+from ansible.playbook.play_context import PlayContext
 
 from ansible.plugins.connections import ConnectionBase
 #from ansible.plugins.connections.accelerate import Connection as AccelerateConnection
@@ -38,7 +38,7 @@ from ansible.plugins.connections.ssh import Connection as SSHConnection
 class TestConnectionBaseClass(unittest.TestCase):
 
     def setUp(self):
-        self.conn_info = ConnectionInformation()
+        self.play_context = PlayContext()
         self.in_stream = StringIO()
 
     def tearDown(self):
@@ -72,7 +72,7 @@ class TestConnectionBaseClass(unittest.TestCase):
                 pass
             def close(self):
                 pass
-        self.assertIsInstance(ConnectionModule3(self.conn_info, self.in_stream), ConnectionModule3)
+        self.assertIsInstance(ConnectionModule3(self.play_context, self.in_stream), ConnectionModule3)
 
 #    def test_accelerate_connection_module(self):
 #        self.assertIsInstance(AccelerateConnection(), AccelerateConnection)
@@ -90,13 +90,13 @@ class TestConnectionBaseClass(unittest.TestCase):
 #        self.assertIsInstance(LibvirtLXCConnection(), LibvirtLXCConnection)
 
     def test_local_connection_module(self):
-        self.assertIsInstance(LocalConnection(self.conn_info, self.in_stream), LocalConnection)
+        self.assertIsInstance(LocalConnection(self.play_context, self.in_stream), LocalConnection)
 
     def test_paramiko_connection_module(self):
-        self.assertIsInstance(ParamikoConnection(self.conn_info, self.in_stream), ParamikoConnection)
+        self.assertIsInstance(ParamikoConnection(self.play_context, self.in_stream), ParamikoConnection)
 
     def test_ssh_connection_module(self):
-        self.assertIsInstance(SSHConnection(self.conn_info, self.in_stream), SSHConnection)
+        self.assertIsInstance(SSHConnection(self.play_context, self.in_stream), SSHConnection)
 
 #    def test_winrm_connection_module(self):
 #        self.assertIsInstance(WinRmConnection(), WinRmConnection)

@@ -50,8 +50,8 @@ class ActionModule(ActionBase):
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
         self._connection.put_file(src, tmp_src)
 
-        if self._connection_info.become and self._connection_info.become_user != 'root':
-            if not self._connection_info.check_mode:
+        if self._play_context.become and self._play_context.become_user != 'root':
+            if not self._play_context.check_mode:
                 self._remote_chmod('a+r', tmp_src, tmp)
 
         new_module_args = self._task.args.copy()

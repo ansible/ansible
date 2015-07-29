@@ -227,6 +227,10 @@ class VaultEditor(object):
         call(self._editor_shell_command(tmp_path))
         tmpdata = self.read_data(tmp_path)
 
+        # Do nothing if the content has not changed
+        if existing_data == tmpdata:
+            return
+
         # create new vault
         this_vault = VaultLib(self.password)
         if cipher:

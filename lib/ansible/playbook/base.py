@@ -49,7 +49,7 @@ class Base:
 
     # vars and flags
     _vars                = FieldAttribute(isa='dict', default=dict())
-    _environment         = FieldAttribute(isa='dict', default=dict())
+    _environment         = FieldAttribute(isa='list', default=[])
     _no_log              = FieldAttribute(isa='bool', default=False)
 
     def __init__(self):
@@ -295,6 +295,11 @@ class Base:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
                                     raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                    elif attribute.isa == 'set':
+                        if not isinstance(value, (list, set)):
+                            value = [ value ]
+                        if not isinstance(value, set):
+                            value = set(value)
                     elif attribute.isa == 'dict' and not isinstance(value, dict):
                         raise TypeError("%s is not a dictionary" % value)
 

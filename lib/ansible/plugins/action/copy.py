@@ -19,11 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
 import json
 import os
 import pipes
-import stat
 import tempfile
 
 from ansible import constants as C
@@ -49,6 +47,8 @@ class ActionModule(ActionBase):
             return dict(failed=True, msg="src (or content) and dest are required")
         elif (source is not None or faf is not None) and content is not None:
             return dict(failed=True, msg="src and content are mutually exclusive")
+        elif content is not None and dest is not None and dest.endswith("/"):
+            return dict(failed=True, msg="dest must be a file if content is defined")
 
         # Check if the source ends with a "/"
         source_trailing_slash = False
@@ -90,7 +90,7 @@ class ActionModule(ActionBase):
         if os.path.isdir(source):
             # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
-                sz = len(source)
+                sz = len(source) + 1
             else:
                 sz = len(source.rsplit('/', 1)[0]) + 1
 
@@ -172,17 +172,11 @@ class ActionModule(ActionBase):
                     if tmp is None or "-tmp-" not in tmp:
                         tmp = self._make_tmp_path()
 
-                # FIXME: runner shouldn't have the diff option there
-                #if self.runner.diff and not raw:
-                #    diff = self._get_diff_data(tmp, dest_file, source_full, task_vars)
-                #else:
-                #    diff = {}
-                diff = {}
+                if self._play_context.diff and not raw:
+                    diffs.append(self._get_diff_data(tmp, dest_file, source_full, task_vars))
 
-                if self._connection_info.check_mode:
+                if self._play_context.check_mode:
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
-                    # FIXME: diff stuff
-                    #diffs.append(diff)
                     changed = True
                     module_return = dict(changed=True)
                     continue
@@ -199,7 +193,7 @@ class ActionModule(ActionBase):
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
                 # fix file permissions when the copy is done as a different user
-                if self._connection_info.become and self._connection_info.become_user != 'root':
+                if self._play_context.become and self._play_context.become_user != 'root':
                     self._remote_chmod('a+r', tmp_src, tmp)
 
                 if raw:
@@ -229,7 +223,7 @@ class ActionModule(ActionBase):
 
                 if raw:
                     # Continue to next iteration if raw is defined.
-                    # self._remove_tmp_path(tmp)
+                    self._remove_tmp_path(tmp)
                     continue
 
                 # Build temporary module_args.
@@ -287,44 +281,6 @@ class ActionModule(ActionBase):
             f.close()
         return content_tempfile
 
-    def _get_diff_data(self, tmp, destination, source, task_vars):
-        peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
-        if 'failed' in peek_result and peek_result['failed'] or peek_result.get('rc', 0) != 0:
-            return {}
-
-        diff = {}
-        if peek_result['state'] == 'absent':
-            diff['before'] = ''
-        elif peek_result['appears_binary']:
-            diff['dst_binary'] = 1
-        # FIXME: this should not be in utils..
-        #elif peek_result['size'] > utils.MAX_FILE_SIZE_FOR_DIFF:
-        #    diff['dst_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
-        else:
-            dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), task_vars=task_vars, tmp=tmp, persist_files=True)
-            if 'content' in dest_result:
-                dest_contents = dest_result['content']
-                if dest_result['encoding'] == 'base64':
-                    dest_contents = base64.b64decode(dest_contents)
-                else:
-                    raise Exception("unknown encoding, failed: %s" % dest_result)
-                diff['before_header'] = destination
-                diff['before'] = dest_contents
-
-        src = open(source)
-        src_contents = src.read(8192)
-        st = os.stat(source)
-        if "\x00" in src_contents:
-            diff['src_binary'] = 1
-        # FIXME: this should not be in utils
-        #elif st[stat.ST_SIZE] > utils.MAX_FILE_SIZE_FOR_DIFF:
-        #    diff['src_larger'] = utils.MAX_FILE_SIZE_FOR_DIFF
-        else:
-            src.seek(0)
-            diff['after_header'] = source
-            diff['after'] = src.read()
-
-        return diff
 
     def _remove_tempfile_if_content_defined(self, content, content_tempfile):
         if content is not None:

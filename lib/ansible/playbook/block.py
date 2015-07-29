@@ -301,16 +301,28 @@ class Block(Base, Become, Conditional, Taggable):
 
         return value
 
-    def filter_tagged_tasks(self, connection_info, all_vars):
+    def _get_attr_environment(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        environment = self._attributes['tags']
+        if environment is None:
+            environment = dict()
+
+        environment = self._get_parent_attribute('environment', extend=True)
+
+        return environment
+
+    def filter_tagged_tasks(self, play_context, all_vars):
         '''
         Creates a new block, with task lists filtered based on the tags contained
-        within the connection_info object.
+        within the play_context object.
         '''
 
         def evaluate_and_append_task(target):
             tmp_list = []
             for task in target:
-                if task.evaluate_tags(connection_info.only_tags, connection_info.skip_tags, all_vars=all_vars):
+                if task.action in ('meta', 'include') or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 

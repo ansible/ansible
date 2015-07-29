@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.plugins.callback import CallbackBase
+from ansible import constants as C
 
 
 class CallbackModule(CallbackBase):
@@ -33,6 +34,14 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'stdout'
     CALLBACK_NAME = 'oneline'
 
+    def _command_generic_msg(self, hostname, result,  caption):
+        stdout = result.get('stdout','').replace('\n', '\\n')
+        if 'stderr' in result and result['stderr']:
+            stderr = result.get('stderr','').replace('\n', '\\n')
+            return "%s | %s | rc=%s | (stdout) %s (stderr) %s" % (hostname, caption, result.get('rc',0), stdout, stderr)
+        else:
+            return "%s | %s | rc=%s | (stdout) %s" % (hostname, caption, result.get('rc',0), stdout)
+
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
             if self._display.verbosity < 3:
@@ -42,7 +51,10 @@ class CallbackModule(CallbackBase):
             else:
                 msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception'].replace('\n','')
 
-            self._display.display(msg, color='red')
+            if result._task.action in C.MODULE_NO_JSON:
+                self._display.display(self._command_generic_msg(result._host.get_name(), result._result,'FAILED'), color='red')
+            else:
+                self._display.display(msg, color='red')
 
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
@@ -50,7 +62,10 @@ class CallbackModule(CallbackBase):
         self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=0).replace('\n','')), color='red')
 
     def v2_runner_on_ok(self, result):
-        self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=0).replace('\n','')), color='green')
+        if result._task.action in C.MODULE_NO_JSON:
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,'SUCCESS'), color='green')
+        else:
+            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=0).replace('\n','')), color='green')
 
 
     def v2_runner_on_unreachable(self, result):

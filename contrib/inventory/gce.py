@@ -257,7 +257,10 @@ class GceInventory(object):
 
             tags = node.extra['tags']
             for t in tags:
-                tag = 'tag_%s' % t
+                if t.startswith('group-'):
+                    tag = t[6:]
+                else:
+                    tag = 'tag_%s' % t
                 if groups.has_key(tag): groups[tag].append(name)
                 else: groups[tag] = [name]
 

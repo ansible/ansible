@@ -26,10 +26,11 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
+from ansible.playbook.block import Block
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.playbook.block import Block
+from ansible.playbook.task import Task
 
 from ansible.utils.vars import combine_vars
 
@@ -95,7 +96,7 @@ class Play(Base, Taggable, Become):
 
     def get_name(self):
        ''' return the name of the Play '''
-       return "PLAY: %s" % self._attributes.get('name')
+       return self._attributes.get('name')
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
@@ -270,12 +271,25 @@ class Play(Base, Taggable, Become):
         tasks specified in the play.
         '''
 
+        # create a block containing a single flush handlers meta
+        # task, so we can be sure to run handlers at certain points
+        # of the playbook execution
+        flush_block = Block.load(
+            data={'meta': 'flush_handlers'},
+            play=self,
+            variable_manager=self._variable_manager,
+            loader=self._loader
+        )
+
         block_list = []
 
         block_list.extend(self.pre_tasks)
+        block_list.append(flush_block)
         block_list.extend(self._compile_roles())
         block_list.extend(self.tasks)
+        block_list.append(flush_block)
         block_list.extend(self.post_tasks)
+        block_list.append(flush_block)
 
         return block_list
 

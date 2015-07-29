@@ -36,6 +36,7 @@ class LookupModule(LookupBase):
 
         ret = []
         for term in terms:
+            self._display.vvvv("url lookup connecting to %s" % term)
             try:
                 response = open_url(term, validate_certs=validate_certs)
             except urllib2.URLError as e:

@@ -320,9 +320,6 @@ class GalaxyCLI(CLI):
 
         roles_done = []
         roles_left = []
-        role_name = self.args.pop(0).strip()
-
-        gr = GalaxyRole(self.galaxy, role_name)
         if role_file:
             f = open(role_file, 'r')
             if role_file.endswith('.yaml') or role_file.endswith('.yml'):
@@ -330,20 +327,18 @@ class GalaxyCLI(CLI):
             else:
                 # roles listed in a file, one per line
                 for rname in f.readlines():
-                    roles_left.append(GalaxyRole(self.galaxy, rname))
+                    roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
             f.close()
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
             for rname in self.args:
-                roles_left.append(GalaxyRole(self.galaxy, rname))
+                roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
 
         while len(roles_left) > 0:
             # query the galaxy API for the role data
             role_data = None
             role = roles_left.pop(0)
-            role_src = role.src
-            role_scm = role.scm
             role_path = role.path
 
             if role_path:
@@ -352,21 +347,19 @@ class GalaxyCLI(CLI):
                 self.options.roles_path = roles_path
 
             tmp_file = None
-            if role_src and os.path.isfile(role_src):
+            installed = False
+            if role.src and os.path.isfile(role.src):
                 # installing a local tar.gz
-                tmp_file = role_src
+                tmp_file = role.src
             else:
-                if role_scm:
+                if role.scm:
                     # create tar file from scm url
-                    tmp_file = scm_archive_role(role_scm, role_src, role.version, role.name)
-                if role_src:
-                    if '://' in role_src:
-                        # just download a URL - version will probably be in the URL
-                        tmp_file = gr.fetch()
-                    else:
-                        role_data = self.api.lookup_role_by_name(role_src)
+                    tmp_file = scm_archive_role(role.scm, role.src, role.version, role.name)
+                if role.src:
+                    if '://' not in role.src:
+                        role_data = self.api.lookup_role_by_name(role.src)
                         if not role_data:
-                            self.display.warning("- sorry, %s was not found on %s." % (role_src, self.options.api_server))
+                            self.display.warning("- sorry, %s was not found on %s." % (role.src, self.options.api_server))
                             self.exit_without_ignore()
                             continue
 
@@ -379,24 +372,23 @@ class GalaxyCLI(CLI):
                             if len(role_versions) > 0:
                                 loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
                                 loose_versions.sort()
-                                role["version"] = str(loose_versions[-1])
+                                role.version = str(loose_versions[-1])
                             else:
-                                role["version"] = 'master'
-                        elif role['version'] != 'master':
+                                role.version = 'master'
+                        elif role.version != 'master':
                             if role_versions and role.version not in [a.get('name', None) for a in role_versions]:
                                 self.display.warning('role is %s' % role)
                                 self.display.warning("- the specified version (%s) was not found in the list of available versions (%s)." % (role.version, role_versions))
                                 self.exit_without_ignore()
                                 continue
 
-                        # download the role. if --no-deps was specified, we stop here,
-                        # otherwise we recursively grab roles and all of their deps.
-                        tmp_file = gr.fetch(role_data)
-            installed = False
+                    # download the role. if --no-deps was specified, we stop here,
+                    # otherwise we recursively grab roles and all of their deps.
+                    tmp_file = role.fetch(role_data)
             if tmp_file:
-                installed = install_role(role.name, role.version, tmp_file, options)
+                installed = role.install(tmp_file)
                 # we're done with the temp file, clean it up
-                if tmp_file != role_src:
+                if tmp_file != role.src:
                     os.unlink(tmp_file)
                 # install dependencies, if we want them
 
@@ -460,7 +452,8 @@ class GalaxyCLI(CLI):
 
         if len(self.args) == 1:
             # show only the request role, if it exists
-            gr = GalaxyRole(self.galaxy, self.name)
+            name = self.args.pop()
+            gr = GalaxyRole(self.galaxy, name)
             if gr.metadata:
                 install_info = gr.install_info
                 version = None
@@ -469,9 +462,9 @@ class GalaxyCLI(CLI):
                 if not version:
                     version = "(unknown version)"
                 # show some more info about single roles here
-                self.display.display("- %s, %s" % (self.name, version))
+                self.display.display("- %s, %s" % (name, version))
             else:
-                self.display.display("- the role %s was not found" % self.name)
+                self.display.display("- the role %s was not found" % name)
         else:
             # show all valid roles in the roles_path directory
             roles_path = self.get_opt('roles_path')
@@ -482,6 +475,7 @@ class GalaxyCLI(CLI):
                 raise AnsibleOptionsError("- %s exists, but it is not a directory. Please specify a valid path with --roles-path" % roles_path)
             path_files = os.listdir(roles_path)
             for path_file in path_files:
+                gr = GalaxyRole(self.galaxy, path_file)
                 if gr.metadata:
                     install_info = gr.metadata
                     version = None

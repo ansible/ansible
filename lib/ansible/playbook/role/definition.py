@@ -109,7 +109,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             return ds
 
         role_name = ds.get('role', ds.get('name'))
-        if not role_name:
+        if not role_name or not isinstance(role_name, string_types):
             raise AnsibleError('role definitions must contain a role name', obj=ds)
 
         return role_name
@@ -129,7 +129,12 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             return (role_name, role_path)
         else:
             # we always start the search for roles in the base directory of the playbook
-            role_search_paths = [os.path.join(self._loader.get_basedir(), u'roles'), u'./roles', u'./']
+            role_search_paths = [
+                os.path.join(self._loader.get_basedir(), u'roles'),
+                u'./roles',
+                self._loader.get_basedir(),
+                u'./'
+            ]
 
             # also search in the configured roles path
             if C.DEFAULT_ROLES_PATH:
@@ -150,7 +155,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         # FIXME: make the parser smart about list/string entries in
         #        the yaml so the error line/file can be reported here
 
-        raise AnsibleError("the role '%s' was not found" % role_name)
+        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)))
 
     def _split_role_params(self, ds):
         '''

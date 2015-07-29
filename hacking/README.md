@@ -33,6 +33,22 @@ Example:
 
 This is a good way to insert a breakpoint into a module, for instance.
 
+For more complex arguments such as the following yaml:
+
+```yaml
+parent:
+  child:
+    - item: first
+      val: foo
+    - item: second
+      val: boo
+```
+
+Use:
+
+    $ ./hacking/test-module -m module \
+        -a "{"parent": {"child": [{"item": "first", "val": "foo"}, {"item": "second", "val": "bar"}]}}"
+
 Module-formatter
 ----------------
 

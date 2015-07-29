@@ -106,6 +106,34 @@ try:
 except ImportError:
     HAS_SSLCONTEXT = False
 
+# Select a protocol that includes all secure tls protocols
+# Exclude insecure ssl protocols if possible
+
+if HAS_SSL:
+    # If we can't find extra tls methods, ssl.PROTOCOL_TLSv1 is sufficient
+    PROTOCOL = ssl.PROTOCOL_TLSv1
+if not HAS_SSLCONTEXT and HAS_SSL:
+    try:
+        import ctypes, ctypes.util
+    except ImportError:
+        # python 2.4 (likely rhel5 which doesn't have tls1.1 support in its openssl)
+        pass
+    else:
+        libssl_name = ctypes.util.find_library('ssl')
+        libssl = ctypes.CDLL(libssl_name)
+        for method in ('TLSv1_1_method', 'TLSv1_2_method'):
+            try:
+                libssl[method]
+                # Found something - we'll let openssl autonegotiate and hope
+                # the server has disabled sslv2 and 3.  best we can do.
+                PROTOCOL = ssl.PROTOCOL_SSLv23
+                break
+            except AttributeError:
+                pass
+        del libssl
+
+
+
 HAS_MATCH_HOSTNAME = True
 try:
     from ssl import match_hostname, CertificateError
@@ -304,7 +332,7 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
         if HAS_SSLCONTEXT:
             self.sock = self.context.wrap_socket(sock, server_hostname=self.host)
         else:
-            self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=ssl.PROTOCOL_TLSv1)
+            self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
 class CustomHTTPSHandler(urllib2.HTTPSHandler):
 
@@ -514,7 +542,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     if context:
                         ssl_s = context.wrap_socket(s, server_hostname=proxy_parts.get('hostname'))
                     else:
-                        ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1)
+                        ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                         match_hostname(ssl_s.getpeercert(), self.hostname)
                 else:
                     raise ProxyError('Unsupported proxy scheme: %s. Currently ansible only supports HTTP proxies.' % proxy_parts.get('scheme'))
@@ -523,7 +551,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
                 if context:
                     ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
                 else:
-                    ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1)
+                    ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                     match_hostname(ssl_s.getpeercert(), self.hostname)
             # close the ssl connection
             #ssl_s.unwrap()
@@ -624,7 +652,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             if headers is None:
                 headers = {}
 
-            headers["Authorization"] = "Basic {0}".format(base64.b64encode("{0}:{1}".format(username, password)))
+            headers["Authorization"] = "Basic %s" % base64.b64encode("%s:%s" % (username, password))
 
     if not use_proxy:
         proxyhandler = urllib2.ProxyHandler({})

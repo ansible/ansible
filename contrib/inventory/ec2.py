@@ -192,7 +192,7 @@ class Ec2Inventory(object):
         else:
             config = configparser.ConfigParser()
         ec2_default_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ec2.ini')
-        ec2_ini_path = os.environ.get('EC2_INI_PATH', ec2_default_ini_path)
+        ec2_ini_path = os.path.expanduser(os.path.expandvars(os.environ.get('EC2_INI_PATH', ec2_default_ini_path)))
         config.read(ec2_ini_path)
 
         # is eucalyptus?
@@ -243,6 +243,28 @@ class Ec2Inventory(object):
             self.all_instances = config.getboolean('ec2', 'all_instances')
         else:
             self.all_instances = False
+
+        # Instance states to be gathered in inventory. Default is 'running'.
+        # Setting 'all_instances' to 'yes' overrides this option.
+        ec2_valid_instance_states = [
+            'pending',
+            'running',
+            'shutting-down',
+            'terminated',
+            'stopping',
+            'stopped'
+        ]
+        self.ec2_instance_states = []
+        if self.all_instances:
+            self.ec2_instance_states = ec2_valid_instance_states
+        elif config.has_option('ec2', 'instance_states'):
+          for instance_state in config.get('ec2', 'instance_states').split(','):
+            instance_state = instance_state.strip()
+            if instance_state not in ec2_valid_instance_states:
+              continue
+            self.ec2_instance_states.append(instance_state)
+        else:
+          self.ec2_instance_states = ['running']
 
         # Return all RDS instances? (if RDS is enabled)
         if config.has_option('ec2', 'all_rds_instances') and self.rds_enabled:
@@ -406,7 +428,7 @@ class Ec2Inventory(object):
             else:
                 backend = 'Eucalyptus' if self.eucalyptus else 'AWS' 
                 error = "Error connecting to %s backend.\n%s" % (backend, e.message)
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting EC2 instances')
 
     def get_rds_instances_by_region(self, region):
         ''' Makes an AWS API call to the list of RDS instances in a particular
@@ -425,7 +447,7 @@ class Ec2Inventory(object):
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
                 error = "Looks like AWS RDS is down:\n%s" % e.message
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting RDS instances')
 
     def get_elasticache_clusters_by_region(self, region):
         ''' Makes an AWS API call to the list of ElastiCache clusters (with
@@ -448,7 +470,7 @@ class Ec2Inventory(object):
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache is down:\n%s" % e.message
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting ElastiCache clusters')
 
         try:
             # Boto also doesn't provide wrapper classes to CacheClusters or
@@ -458,7 +480,7 @@ class Ec2Inventory(object):
 
         except KeyError as e:
             error = "ElastiCache query to AWS failed (unexpected format)."
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting ElastiCache clusters')
 
         for cluster in clusters:
             self.add_elasticache_cluster(cluster, region)
@@ -482,7 +504,7 @@ class Ec2Inventory(object):
                 error = self.get_auth_error_message()
             if not e.reason == "Forbidden":
                 error = "Looks like AWS ElastiCache [Replication Groups] is down:\n%s" % e.message
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting ElastiCache clusters')
 
         try:
             # Boto also doesn't provide wrapper classes to ReplicationGroups
@@ -492,7 +514,7 @@ class Ec2Inventory(object):
 
         except KeyError as e:
             error = "ElastiCache [Replication Groups] query to AWS failed (unexpected format)."
-            self.fail_with_error(error)
+            self.fail_with_error(error, 'getting ElastiCache clusters')
 
         for replication_group in replication_groups:
             self.add_elasticache_replication_group(replication_group, region)
@@ -514,8 +536,11 @@ class Ec2Inventory(object):
 
         return '\n'.join(errors)
 
-    def fail_with_error(self, err_msg):
+    def fail_with_error(self, err_msg, err_operation=None):
         '''log an error to std err for ansible-playbook to consume and exit'''
+        if err_operation:
+            err_msg = 'ERROR: "{err_msg}", while: {err_operation}'.format(
+                err_msg=err_msg, err_operation=err_operation)
         sys.stderr.write(err_msg)
         sys.exit(1)
 
@@ -531,8 +556,8 @@ class Ec2Inventory(object):
         ''' Adds an instance to the inventory and index, as long as it is
         addressable '''
 
-        # Only want running instances unless all_instances is True
-        if not self.all_instances and instance.state != 'running':
+        # Only return instances with desired instance states
+        if instance.state not in self.ec2_instance_states:
             return
 
         # Select the best destination address

@@ -77,7 +77,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
-        if self._connection_info.check_mode:
+        if self._play_context.check_mode:
             return dict(skipped=True, msg=("skipped, this module does not support check_mode."))
 
         src        = self._task.args.get('src', None)
@@ -124,7 +124,7 @@ class ActionModule(ActionBase):
             xfered = self._transfer_data('src', resultant)
 
             # fix file permissions when the copy is done as a different user
-            if self._connection_info.become and self._connection_info.become_user != 'root':
+            if self._play_context.become and self._play_context.become_user != 'root':
                 self._remote_chmod('a+r', xfered, tmp)
 
             # run the copy module

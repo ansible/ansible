@@ -26,11 +26,14 @@ import random
 import re
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.base import Base
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
-from ansible.errors import AnsibleError
+from ansible.utils.unicode import to_unicode
 
-__all__ = ['ConnectionInformation']
+__all__ = ['PlayContext']
 
 SU_PROMPT_LOCALIZATIONS = [
     'Password',
@@ -67,7 +70,7 @@ SU_PROMPT_LOCALIZATIONS = [
 ]
 
 # the magic variable mapping dictionary below is used to translate
-# host/inventory variables to fields in the ConnectionInformation
+# host/inventory variables to fields in the PlayContext
 # object. The dictionary values are tuples, to account for aliases
 # in variable names.
 
@@ -131,7 +134,7 @@ SU_PROMPT_LOCALIZATIONS = [
     '密碼',
 ]
 
-class ConnectionInformation:
+class PlayContext(Base):
 
     '''
     This class is used to consolidate the connection information for
@@ -139,48 +142,50 @@ class ConnectionInformation:
     connection/authentication information.
     '''
 
+    # connection fields, some are inherited from Base:
+    # (connection, port, remote_user, environment, no_log)
+    _remote_addr      = FieldAttribute(isa='string')
+    _password         = FieldAttribute(isa='string')
+    _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
+    _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
+    _shell            = FieldAttribute(isa='string')
+
+    # privilege escalation fields
+    _become           = FieldAttribute(isa='bool')
+    _become_method    = FieldAttribute(isa='string')
+    _become_user      = FieldAttribute(isa='string')
+    _become_pass      = FieldAttribute(isa='string')
+    _become_exe       = FieldAttribute(isa='string')
+    _become_flags     = FieldAttribute(isa='string')
+    _prompt           = FieldAttribute(isa='string')
+
+    # backwards compatibility fields for sudo/su
+    _sudo_exe         = FieldAttribute(isa='string')
+    _sudo_flags       = FieldAttribute(isa='string')
+    _sudo_pass        = FieldAttribute(isa='string')
+    _su_exe           = FieldAttribute(isa='string')
+    _su_flags         = FieldAttribute(isa='string')
+    _su_pass          = FieldAttribute(isa='string')
+
+    # general flags
+    _verbosity        = FieldAttribute(isa='int', default=0)
+    _only_tags        = FieldAttribute(isa='set', default=set())
+    _skip_tags        = FieldAttribute(isa='set', default=set())
+    _check_mode       = FieldAttribute(isa='bool', default=False)
+    _force_handlers   = FieldAttribute(isa='bool', default=False)
+    _start_at_task    = FieldAttribute(isa='string')
+    _step             = FieldAttribute(isa='bool', default=False)
+    _diff             = FieldAttribute(isa='bool', default=False)
+
     def __init__(self, play=None, options=None, passwords=None):
+
+        super(PlayContext, self).__init__()
 
         if passwords is None:
             passwords = {}
 
-        # connection
-        self.connection       = None
-        self.remote_addr      = None
-        self.remote_user      = None
-        self.password         = passwords.get('conn_pass','')
-        self.port             = None
-        self.private_key_file = C.DEFAULT_PRIVATE_KEY_FILE
-        self.timeout          = C.DEFAULT_TIMEOUT
-        self.shell            = None
-
-        # privilege escalation
-        self.become        = None
-        self.become_method = None
-        self.become_user   = None
-        self.become_pass   = passwords.get('become_pass','')
-        self.become_exe    = None
-        self.become_flags  = None
-        self.prompt        = None
-        self.success_key   = None
-
-        # backwards compat
-        self.sudo_exe    = None
-        self.sudo_flags  = None
-        self.sudo_pass   = None
-        self.su_exe      = None
-        self.su_flags    = None
-        self.su_pass     = None
-
-        # general flags (should we move out?)
-        self.verbosity      = 0
-        self.only_tags      = set()
-        self.skip_tags      = set()
-        self.no_log         = False
-        self.check_mode     = False
-        self.force_handlers = False
-        self.start_at_task  = None
-        self.step           = False
+        self.password    = passwords.get('conn_pass','')
+        self.become_pass = passwords.get('become_pass','')
 
         #TODO: just pull options setup to above?
         # set options before play to allow play to override them
@@ -213,8 +218,8 @@ class ConnectionInformation:
             self.become_user = play.become_user
 
         # non connection related
-        self.no_log         = play.no_log
-        self.environment    = play.environment
+        self.no_log      = play.no_log
+
         if play.force_handlers is not None:
             self.force_handlers = play.force_handlers
 
@@ -248,7 +253,9 @@ class ConnectionInformation:
         if hasattr(options, 'step') and options.step:
             self.step = boolean(options.step)
         if hasattr(options, 'start_at_task') and options.start_at_task:
-            self.start_at_task = options.start_at_task
+            self.start_at_task = to_unicode(options.start_at_task)
+        if hasattr(options, 'diff') and options.diff:
+            self.diff = boolean(options.diff)
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the
@@ -268,43 +275,24 @@ class ConnectionInformation:
             elif isinstance(options.skip_tags, basestring):
                 self.skip_tags.update(options.skip_tags.split(','))
 
-    def copy(self, ci):
-        '''
-        Copies the connection info from another connection info object, used
-        when merging in data from task overrides.
-        '''
-
-        for field in self._get_fields():
-            value = getattr(ci, field, None)
-            if isinstance(value, dict):
-                setattr(self, field, value.copy())
-            elif isinstance(value, set):
-                setattr(self, field, value.copy())
-            elif isinstance(value, list):
-                setattr(self, field, value[:])
-            else:
-                setattr(self, field, value)
-
-    def set_task_and_host_override(self, task, host):
+    def set_task_and_variable_override(self, task, variables):
         '''
         Sets attributes from the task if they are set, which will override
         those from the play.
         '''
 
-        new_info = ConnectionInformation()
-        new_info.copy(self)
+        new_info = self.copy()
 
         # loop through a subset of attributes on the task object and set
         # connection fields based on their values
-        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'environment', 'no_log'):
+        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'no_log'):
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
                 if attr_val is not None:
                     setattr(new_info, attr, attr_val)
 
         # finally, use the MAGIC_VARIABLE_MAPPING dictionary to update this
-        # connection info object with 'magic' variables from inventory
-        variables = host.get_vars()
+        # connection info object with 'magic' variables from the variable list
         for (attr, variable_names) in MAGIC_VARIABLE_MAPPING.iteritems():
             for variable_name in variable_names:
                 if variable_name in variables:
@@ -381,18 +369,6 @@ class ConnectionInformation:
             return ('%s -c ' % executable) + pipes.quote(becomecmd)
 
         return cmd
-
-    def _get_fields(self):
-        return [i for i in self.__dict__.keys() if i[:1] != '_']
-
-    def post_validate(self, templar):
-        '''
-        Finalizes templated values which may be set on this objects fields.
-        '''
-
-        for field in self._get_fields():
-            value = templar.template(getattr(self, field))
-            setattr(self, field, value)
 
     def update_vars(self, variables):
         '''

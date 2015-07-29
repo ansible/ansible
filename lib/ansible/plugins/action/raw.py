@@ -26,7 +26,7 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
-        if self._connection_info.check_mode:
+        if self._play_context.check_mode:
             # in --check mode, always skip this module execution
             return dict(skipped=True)
 

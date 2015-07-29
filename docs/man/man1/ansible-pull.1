@@ -2,12 +2,12 @@
 .\"     Title: ansible
 .\"    Author: :doctype:manpage
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 05/05/2015
+.\"      Date: 07/22/2015
 .\"    Manual: System administration commands
-.\"    Source: Ansible 2.0.0
+.\"    Source: Ansible %VERSION%
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "05/05/2015" "Ansible 2\&.0\&.0" "System administration commands"
+.TH "ANSIBLE" "1" "07/22/2015" "Ansible %VERSION%" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -50,14 +50,14 @@ The name of one the YAML format files to run as an ansible playbook\&. This can 
 .RE
 .SH "OPTIONS"
 .PP
-\fB\-d\fR \fIDEST\fR, \fB\-\-directory=\fR\fIDEST\fR
+\fB\-\-accept\-host\-key\fR
 .RS 4
-Directory to checkout repository into\&. If not provided, a subdirectory of ~/\&.ansible/pull/ will be used\&.
+Adds the hostkey for the repo URL if not already added\&.
 .RE
 .PP
-\fB\-U\fR \fIURL\fR, \fB\-\-url=\fR\fIURL\fR
+\fB\-K\fR, \fB\-\-ask\-sudo\-pass\fR
 .RS 4
-URL of the playbook repository to checkout\&.
+Ask for sudo password\&.
 .RE
 .PP
 \fB\-C\fR \fICHECKOUT\fR, \fB\-\-checkout=\fR\fICHECKOUT\fR
@@ -65,9 +65,24 @@ URL of the playbook repository to checkout\&.
 Branch/Tag/Commit to checkout\&. If not provided, uses default behavior of module used to check out playbook repository\&.
 .RE
 .PP
+\fB\-d\fR \fIDEST\fR, \fB\-\-directory=\fR\fIDEST\fR
+.RS 4
+Directory to checkout repository into\&. If not provided, a subdirectory of ~/\&.ansible/pull/ will be used\&.
+.RE
+.PP
+\fB\-e\fR \fIEXTRA_VARS\fR, \fB\-\-extra\-vars=\fR\*(AqEXTRA_VARS*
+.RS 4
+Set additional variables as key=value or YAML/JSON
+.RE
+.PP
 \fB\-f\fR, \fB\-\-force\fR
 .RS 4
 Force running of playbook even if unable to update playbook repository\&. This can be useful, for example, to enforce run\-time state when a network connection may not always be up or possible\&.
+.RE
+.PP
+\fB\-h\fR, \fB\-\-help\fR
+.RS 4
+Show the help message and exit\&.
 .RE
 .PP
 \fB\-i\fR \fIPATH\fR, \fB\-\-inventory=\fR\fIPATH\fR
@@ -77,9 +92,11 @@ The
 to the inventory hosts file\&. This can be a relative path within the checkout\&.
 .RE
 .PP
-\fB\-\-purge\fR
+\fB\-\-key\-file=\fR\fIKEYFILE\fR
 .RS 4
-Purge the checkout after the playbook is run\&.
+Pass
+\fI\-i <key_file>\fR
+to the SSH arguments used by git\&.
 .RE
 .PP
 \fB\-m\fR \fINAME\fR, \fB\-\-module\-name=\fR\fINAME\fR
@@ -89,7 +106,37 @@ Module used to checkout playbook repository\&. Defaults to git\&.
 .PP
 \fB\-o\fR, \fB\-\-only\-if\-changed\fR
 .RS 4
-Run the playbook only if the repository has changed
+Only run the playbook if the repository has been updated\&.
+.RE
+.PP
+\fB\-\-purge\fR
+.RS 4
+Purge the checkout after the playbook is run\&.
+.RE
+.PP
+\fB\-s\fR \fISLEEP\fR, \fB\-\-sleep=\fR\fISLEEP\fR
+.RS 4
+Sleep for random interval (between 0 and SLEEP number of seconds) before starting\&. This is a useful way ot disperse git requests\&.
+.RE
+.PP
+\fB\-t\fR \fITAGS\fR, \fB\-\-tags=\fR\fITAGS\fR
+.RS 4
+Only run plays and tasks tagged with these values\&.
+.RE
+.PP
+\fB\-U\fR \fIURL\fR, \fB\-\-url=\fR\fIURL\fR
+.RS 4
+URL of the playbook repository to checkout\&.
+.RE
+.PP
+\fB\-\-vault\-password\-file=\fR\fIVAULT_PASSWORD_FILE\fR
+.RS 4
+Vault password file\&.
+.RE
+.PP
+\fB\-v\fR, \fB\-\-verbose\fR
+.RS 4
+Pass \-vvv to ansible\-playbook\&.
 .RE
 .SH "AUTHOR"
 .sp

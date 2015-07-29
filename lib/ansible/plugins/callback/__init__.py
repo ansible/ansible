@@ -20,8 +20,14 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import json
+import difflib
+import warnings
+from copy import deepcopy
+
+from six import string_types
 
 from ansible import constants as C
+from ansible.utils.unicode import to_unicode
 
 __all__ = ["CallbackBase"]
 
@@ -40,12 +46,24 @@ class CallbackBase:
     def __init__(self, display):
         self._display = display
         if self._display.verbosity >= 4:
-            name = getattr(self, 'CALLBACK_NAME', 'with no defined name')
-            ctype = getattr(self, 'CALLBACK_TYPE', 'unknwon')
-            version = getattr(self, 'CALLBACK_VERSION', 'unknwon')
+            name = getattr(self, 'CALLBACK_NAME', 'unnamed')
+            ctype = getattr(self, 'CALLBACK_TYPE', 'old')
+            version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
-    def _dump_results(self, result, indent=4, sort_keys=True):
+    def _dump_results(self, result, indent=None, sort_keys=True):
+
+        if result.get('_ansible_no_log', False):
+            return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
+
+        if not indent and '_ansible_verbose_always' in result and result['_ansible_verbose_always']:
+            indent = 4
+
+        # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
+        for k in result.keys():
+            if isinstance(k, string_types) and k.startswith('_ansible_'):
+                del result[k]
+
         return json.dumps(result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):
@@ -54,7 +72,50 @@ class CallbackBase:
             for warning in res['warnings']:
                 self._display.warning(warning)
 
-    def set_connection_info(self, conn_info):
+    def _get_diff(self, diff):
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                ret = []
+                if 'dst_binary' in diff:
+                    ret.append("diff skipped: destination file appears to be binary\n")
+                if 'src_binary' in diff:
+                    ret.append("diff skipped: source file appears to be binary\n")
+                if 'dst_larger' in diff:
+                    ret.append("diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
+                if 'src_larger' in diff:
+                    ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
+                if 'before' in diff and 'after' in diff:
+                    if 'before_header' in diff:
+                        before_header = "before: %s" % diff['before_header']
+                    else:
+                        before_header = 'before'
+                    if 'after_header' in diff:
+                        after_header = "after: %s" % diff['after_header']
+                    else:
+                        after_header = 'after'
+                    differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
+                    for line in list(differ):
+                        ret.append(line)
+                return u"".join(ret)
+        except UnicodeDecodeError:
+            return ">> the files are different, but the diff library cannot compare unicode strings"
+
+    def _process_items(self, result):
+
+        for res in result._result['results']:
+            newres = deepcopy(result)
+            newres._result = res
+            if 'failed' in res and res['failed']:
+                self.v2_playbook_item_on_failed(newres)
+            elif 'skipped' in res and res['skipped']:
+                self.v2_playbook_item_on_skipped(newres)
+            else:
+                self.v2_playbook_item_on_ok(newres)
+
+        del result._result['results']
+
+    def set_play_context(self, play_context):
         pass
 
     def on_any(self, *args, **kwargs):
@@ -115,6 +176,9 @@ class CallbackBase:
         pass
 
     def playbook_on_stats(self, stats):
+        pass
+
+    def on_file_diff(self, host, diff):
         pass
 
     ####### V2 METHODS, by default they call v1 counterparts if possible ######
@@ -204,3 +268,16 @@ class CallbackBase:
     def v2_playbook_on_stats(self, stats):
         self.playbook_on_stats(stats)
 
+    def v2_on_file_diff(self, result):
+        host = result._host.get_name()
+        if 'diff' in result._result:
+            self.on_file_diff(host, result._result['diff'])
+
+    def v2_playbook_on_item_ok(self, result):
+        pass # no v1
+
+    def v2_playbook_on_item_failed(self, result):
+        pass # no v1
+
+    def v2_playbook_on_item_skipped(self, result):
+        pass # no v1

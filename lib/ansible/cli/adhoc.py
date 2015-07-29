@@ -17,13 +17,14 @@
 
 ########################################################
 from ansible import constants as C
+from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.cli import CLI
+from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
 ########################################################
@@ -100,6 +101,7 @@ class AdHocCLI(CLI):
 
         loader = DataLoader(vault_password=vault_pass)
         variable_manager = VariableManager()
+        variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
 
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
         variable_manager.set_inventory(inventory)
@@ -114,7 +116,10 @@ class AdHocCLI(CLI):
             return 0
 
         if self.options.module_name in C.MODULE_REQUIRE_ARGS and not self.options.module_args:
-            raise AnsibleOptionsError("No argument passed to %s module" % self.options.module_name)
+            err = "No argument passed to %s module" % self.options.module_name
+            if pattern.endswith(".yml"):
+                err = err + ' (did you mean to run ansible-playbook?)'
+            raise AnsibleOptionsError(err)
 
         #TODO: implement async support
         #if self.options.seconds:

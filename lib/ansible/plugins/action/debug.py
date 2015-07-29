@@ -43,6 +43,6 @@ class ActionModule(ActionBase):
             result = dict(msg='here we are')
 
         # force flag to make debug output module always verbose
-        result['verbose_always'] = True
+        result['_ansible_verbose_always'] = True
 
         return result

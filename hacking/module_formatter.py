@@ -36,6 +36,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from ansible.utils import module_docs
 from ansible.utils.vars import merge_hash
+from ansible.errors import AnsibleError
 
 #####################################################################################
 # constants and paths
@@ -67,11 +68,14 @@ NOTCORE    = " (E)"
 def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
 
-    t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
-    t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-    t = _MODULE.sub(r':ref:`' + r"\1 <\1>" + r"`", t)
-    t = _URL.sub(r"\1", t)
-    t = _CONST.sub(r'``' + r"\1" + r"``", t)
+    try:
+        t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
+        t = _BOLD.sub(r'**' + r"\1" + r"**", t)
+        t = _MODULE.sub(r':ref:`' + r"\1 <\1>" + r"`", t)
+        t = _URL.sub(r"\1", t)
+        t = _CONST.sub(r'``' + r"\1" + r"``", t)
+    except Exception as e:
+        raise AnsibleError("Could not process (%s) : %s" % (str(text), str(e)))
 
     return t
 
@@ -286,12 +290,11 @@ def process_module(module, options, env, template, outputname, module_map, alias
     if too_old(added):
         del doc['version_added']
 
-    if 'options' in doc:
+    if 'options' in doc and doc['options']:
         for (k,v) in doc['options'].iteritems():
             # don't show version added information if it's too old to be called out
             if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
                 del doc['options'][k]['version_added']
-                continue
             all_keys.append(k)
 
     all_keys = sorted(all_keys)
@@ -309,7 +312,10 @@ def process_module(module, options, env, template, outputname, module_map, alias
 
     # here is where we build the table of contents...
 
-    text = template.render(doc)
+    try:
+        text = template.render(doc)
+    except Exception as e:
+        raise AnsibleError("Failed to render doc for %s: %s" % (fname, str(e)))
     write_data(text, options, outputname, module)
     return doc['short_description']
 
@@ -327,7 +333,7 @@ def print_modules(module, category_file, deprecated, core, options, env, templat
     result = process_module(modname, options, env, template, outputname, module_map, aliases)
 
     if result != "SKIPPED":
-        category_file.write("  %s - %s <%s_module>\n" % (modstring, result, module))
+        category_file.write("  %s - %s <%s_module>\n" % (modstring, rst_ify(result), module))
 
 def process_category(category, categories, options, env, template, outputname):
 

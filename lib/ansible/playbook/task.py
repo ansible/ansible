@@ -311,3 +311,15 @@ class Task(Base, Conditional, Taggable, Become):
                 value = parent_value
         return value
 
+    def _get_attr_environment(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        environment = self._attributes['tags']
+        if environment is None:
+            environment = dict()
+
+        environment = self._get_parent_attribute('environment', extend=True)
+
+        return environment
+

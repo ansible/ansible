@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import fnmatch
+
 from ansible import constants as C
 
 from ansible.errors import *
@@ -89,12 +91,12 @@ class PlayIterator:
     FAILED_RESCUE      = 4
     FAILED_ALWAYS      = 8
 
-    def __init__(self, inventory, play, connection_info, all_vars):
+    def __init__(self, inventory, play, play_context, all_vars):
         self._play = play
 
         self._blocks = []
         for block in self._play.compile():
-            new_block = block.filter_tagged_tasks(connection_info, all_vars)
+            new_block = block.filter_tagged_tasks(play_context, all_vars)
             if new_block.has_tasks():
                 self._blocks.append(new_block)
 
@@ -103,15 +105,15 @@ class PlayIterator:
              self._host_states[host.name] = HostState(blocks=self._blocks)
              # if we're looking to start at a specific task, iterate through
              # the tasks for this host until we find the specified task
-             if connection_info.start_at_task is not None:
+             if play_context.start_at_task is not None:
                  while True:
                      (s, task) = self.get_next_task_for_host(host, peek=True)
                      if s.run_state == self.ITERATING_COMPLETE:
                          break
-                     if task.get_name() != connection_info.start_at_task:
-                         self.get_next_task_for_host(host)
-                     else:
+                     if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task):
                          break
+                     else:
+                         self.get_next_task_for_host(host)
 
         # Extend the play handlers list to include the handlers defined in roles
         self._play.handlers.extend(play.compile_roles_handlers())
@@ -301,6 +303,11 @@ class PlayIterator:
 
         s = self.get_host_state(host)
         for block in s._blocks:
+            res = _search_block(block, task)
+            if res:
+                return res
+
+        for block in self._play.handlers:
             res = _search_block(block, task)
             if res:
                 return res

@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 import stat
 import array
 import errno
@@ -43,8 +44,16 @@ except ImportError:
 
 try:
     import json
+    # Detect python-json which is incompatible and fallback to simplejson in
+    # that case
+    try:
+        json.loads
+        json.dumps
+    except AttributeError:
+        raise ImportError
 except ImportError:
     import simplejson as json
+
 
 # --------------------------------------------------------------
 # timeout function to make sure some fact gathering
@@ -142,6 +151,7 @@ class Facts(object):
             self.get_user_facts()
             self.get_local_facts()
             self.get_env_facts()
+            self.get_dns_facts()
 
     def populate(self):
         return self.facts
@@ -623,6 +633,37 @@ class Facts(object):
         for k,v in os.environ.iteritems():
             self.facts['env'][k] = v
 
+    def get_dns_facts(self):
+        self.facts['dns'] = {}
+        for line in get_file_lines('/etc/resolv.conf'):
+            if line.startswith('#') or line.startswith(';') or line.strip() == '':
+                continue
+            tokens = line.split()
+            if len(tokens) == 0:
+                continue
+            if tokens[0] == 'nameserver':
+                self.facts['dns']['nameservers'] = []
+                for nameserver in tokens[1:]:
+                    self.facts['dns']['nameservers'].append(nameserver)
+            elif tokens[0] == 'domain':
+                self.facts['dns']['domain'] = tokens[1]
+            elif tokens[0] == 'search':
+                self.facts['dns']['search'] = []
+                for suffix in tokens[1:]:
+                    self.facts['dns']['search'].append(suffix)
+            elif tokens[0] == 'sortlist':
+                self.facts['dns']['sortlist'] = []
+                for address in tokens[1:]:
+                    self.facts['dns']['sortlist'].append(address)
+            elif tokens[0] == 'options':
+                self.facts['dns']['options'] = {}
+                for option in tokens[1:]:
+                    option_tokens = option.split(':', 1)
+                    if len(option_tokens) == 0:
+                        continue
+                    val = len(option_tokens) == 2 and option_tokens[1] or True
+                    self.facts['dns']['options'][option_tokens[0]] = val
+
 class Hardware(Facts):
     """
     This is a generic Hardware subclass of Facts.  This should be further
@@ -773,7 +814,7 @@ class LinuxHardware(Hardware):
 
             # model name is for Intel arch, Processor (mind the uppercase P)
             # works for some ARM devices, like the Sheevaplug.
-            if key == 'model name' or key == 'Processor' or key == 'vendor_id':
+            if key in ['model name', 'Processor', 'vendor_id', 'cpu', 'Vendor']:
                 if 'processor' not in self.facts:
                     self.facts['processor'] = []
                 self.facts['processor'].append(data[1].strip())
@@ -1817,6 +1858,8 @@ class LinuxNetwork(Network):
                     path = os.path.join(path, 'bonding', 'all_slaves_active')
                     if os.path.exists(path):
                         interfaces[device]['all_slaves_active'] = get_file_content(path) == '1'
+            if os.path.exists(os.path.join(path,'device')):
+                interfaces[device]['pciid'] = os.path.basename(os.readlink(os.path.join(path,'device')))
 
             # Check whether an interface is in promiscuous mode
             if os.path.exists(os.path.join(path,'flags')):
@@ -2146,6 +2189,57 @@ class GenericBsdIfconfigNetwork(Network):
         if len(ifinfo[ip_type]) > 0:
             for item in ifinfo[ip_type][0].keys():
                 defaults[item] = ifinfo[ip_type][0][item]
+
+class HPUXNetwork(Network):
+    """
+    HP-UX-specifig subclass of Network. Defines networking facts:
+    - default_interface
+    - interfaces (a list of interface names)
+    - interface_<name> dictionary of ipv4 address information.
+    """
+    platform = 'HP-UX'
+
+    def __init__(self, module):
+        Network.__init__(self, module)
+
+    def populate(self):
+        netstat_path = self.module.get_bin_path('netstat')
+        if netstat_path is None:
+            return self.facts
+        self.get_default_interfaces()
+        interfaces = self.get_interfaces_info()
+        self.facts['interfaces'] = interfaces.keys()
+        for iface in interfaces:
+                self.facts[iface] = interfaces[iface]
+        return self.facts
+
+    def get_default_interfaces(self):
+        rc, out, err = module.run_command("/usr/bin/netstat -nr")
+        lines = out.split('\n')
+        for line in lines:
+                words = line.split()
+                if len(words) > 1:
+                    if words[0] == 'default':
+                        self.facts['default_interface'] = words[4]
+                        self.facts['default_gateway'] = words[1]
+
+    def get_interfaces_info(self):
+        interfaces = {}
+        rc, out, err = module.run_command("/usr/bin/netstat -ni")
+        lines = out.split('\n')
+        for line in lines:
+            words = line.split()
+            for i in range(len(words) - 1):
+                if words[i][:3] == 'lan':
+                    device = words[i]
+                    interfaces[device] = { 'device': device }
+                    address = words[i+3]
+                    interfaces[device]['ipv4'] = { 'address': address }
+                    network = words[i+2]
+                    interfaces[device]['ipv4'] = { 'network': network,
+                                                   'interface': device,
+                                                   'address': address }
+        return interfaces
 
 class DarwinNetwork(GenericBsdIfconfigNetwork, Network):
     """
@@ -2782,6 +2876,6 @@ def get_all_facts(module):
             setup_result['ansible_facts'][k] = v
 
     # hack to keep --verbose from showing all the setup module results
-    setup_result['verbose_override'] = True
+    setup_result['_ansible_verbose_override'] = True
 
     return setup_result

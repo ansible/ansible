@@ -5,19 +5,20 @@ Ansible Changes By Release
 
 Major Changes:
  * Introducing the new block/rescue/always directives, allow for making task blocks and introducing exception like semantics
- * New stratergy plugins, allow to control the flow of execution of tasks per play, the default will be the same as before
+ * New strategy plugins, allow to control the flow of execution of tasks per play, the default will be the same as before
  * Improved error handling, now you get much more detailed parser messages. General exception handling and display has been revamped.
  * Task includes now get evaluated during execution, end behaviour will be the same but it now allows for more dynamic includes and options.
  * First feature of the more dynamic includes is that with_ loops are now usable with them.
  * callback, connection and lookup plugin APIs have changed, some will require modification to work with new version
  * callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg
  * Many API changes, this will break those currently using it directly, but the new API is much easier to use and test
- * Settings are now more inheritable, what you set at play, block or role will be automatically inhertited by the contained,
-   this allows for new feautures to automatically be settable at all levels, previouslly we had to manually code this
+ * Settings are now more inheritable, what you set at play, block or role will be automatically inhertited by the contained.
+   This allows for new features to automatically be settable at all levels, previously we had to manually code this
  * Many more tests, new API makes things more testable and we took advantage of it
  * big_ip modules now support turning off ssl certificate validation (use only for self signed)
- * template code now retains types for bools and Numbers instead of turning them into strings
+ * template code now retains types for bools and numbers instead of turning them into strings.
    If you need the old behaviour, quote the value and it will get passed around as a string
+ * Consiidated code from modules using urllib2 to normalize features, TLS and SNI support
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
@@ -32,6 +33,7 @@ New Modules:
   * amazon: ec2_eni
   * amazon: ec2_eni_facts
   * amazon: ec2_vpc_net
+  * amazon: ec2_vpc_route_table_facts
   * amazon: ec2_win_password
   * amazon: elasticache_subnet_group
   * amazon: iam
@@ -40,6 +42,7 @@ New Modules:
   * amazon: sts_assume_role
   * amazon: s3_logging
   * bundler
+  * centurylink: clc_publicip
   * circonus_annotation
   * consul
   * consul_acl
@@ -59,6 +62,7 @@ New Modules:
   * cloudstack: cs_sshkeypair
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
+  * cloudstack: cs_staticnat
   * cloudstack: cs_template
   * cloudstack: cs_vmsnapshot
   * datadog_monitor
@@ -67,6 +71,8 @@ New Modules:
   * expect
   * find
   * hall
+  * libvirt: virt_net
+  * libvirt: virt_pool
   * maven_artifact
   * openstack: os_ironic
   * openstack: os_ironic_node
@@ -85,7 +91,9 @@ New Modules:
   * openstack: os_subnet
   * openstack: os_volume
   * osx_defaults
+  * pam_limits
   * pear
+  * profitbricks: profitbricks
   * proxmox
   * proxmox_template 
   * puppet 
@@ -106,8 +114,10 @@ New Modules:
   * vertica_role
   * vertica_schema
   * vertica_user
-  * vmware_datacenter
-  * vsphere_copy
+  * vmware: vmware_datacenter
+  * vmware: vca_fw
+  * vmware: vca_nat
+  * vmware: vsphere_copy
   * webfaction_app
   * webfaction_db
   * webfaction_domain
@@ -122,6 +132,7 @@ New Modules:
   * win_iis_website
   * win_regedit
   * win_unzip
+  * xenserver_facts
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
@@ -129,6 +140,8 @@ New Modules:
 New Inventory scripts:
   * cloudstack
   * fleetctl
+  * openvz
+  * proxmox
   * serf
 
 Other Notable Changes:
@@ -409,7 +422,7 @@ And various other bug fixes and improvements ...
 - Fixes a bug in vault where the password file option was not being used correctly internally.
 - Improved multi-line parsing when using YAML literal blocks (using > or |).
 - Fixed a bug with the file module and the creation of relative symlinks.
-- Fixed a bug where checkmode was not being honored during the templating of files.
+- Fixed a bug where checkmode was not being honoured during the templating of files.
 - Other various bug fixes.
 
 ## 1.7.1 "Summer Nights" - Aug 14, 2014
@@ -452,7 +465,7 @@ New Modules:
 Other notable changes:
 
 * Security fixes
-  - Prevent the use of lookups when using legaxy "{{ }}" syntax around variables and with_* loops.
+  - Prevent the use of lookups when using legacy "{{ }}" syntax around variables and with_* loops.
   - Remove relative paths in TAR-archived file names used by ansible-galaxy.
 * Inventory speed improvements for very large inventories.
 * Vault password files can now be executable, to support scripts that fetch the vault password.
@@ -1129,7 +1142,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * service pattern argument now correctly read for BSD services
 * fetch location can now be controlled more directly via the 'flat' parameter.
 * added basename and dirname as Jinja2 filters available to all templates
-* pip works better when sudoing from unpriveledged users
+* pip works better when sudoing from unprivileged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
 * fix for some unicode encoding errors in outputing some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts
