@@ -244,6 +244,28 @@ class Ec2Inventory(object):
         else:
             self.all_instances = False
 
+        # Instance states to be gathered in inventory. Default is 'running'.
+        # Setting 'all_instances' to 'yes' overrides this option.
+        ec2_valid_instance_states = [
+            'pending',
+            'running',
+            'shutting-down',
+            'terminated',
+            'stopping',
+            'stopped'
+        ]
+        self.ec2_instance_states = []
+        if self.all_instances:
+            self.ec2_instance_states = ec2_valid_instance_states
+        elif config.has_option('ec2', 'instance_states'):
+          for instance_state in config.get('ec2', 'instance_states').split(','):
+            instance_state = instance_state.strip()
+            if instance_state not in ec2_valid_instance_states:
+              continue
+            self.ec2_instance_states.append(instance_state)
+        else:
+          self.ec2_instance_states = ['running']
+
         # Return all RDS instances? (if RDS is enabled)
         if config.has_option('ec2', 'all_rds_instances') and self.rds_enabled:
             self.all_rds_instances = config.getboolean('ec2', 'all_rds_instances')
@@ -534,8 +556,8 @@ class Ec2Inventory(object):
         ''' Adds an instance to the inventory and index, as long as it is
         addressable '''
 
-        # Only want running instances unless all_instances is True
-        if not self.all_instances and instance.state != 'running':
+        # Only return instances with desired instance states
+        if instance.state not in self.ec2_instance_states:
             return
 
         # Select the best destination address
