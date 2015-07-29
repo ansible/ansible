@@ -324,8 +324,6 @@ class GalaxyCLI(CLI):
             f = open(role_file, 'r')
             if role_file.endswith('.yaml') or role_file.endswith('.yml'):
                 rolesparsed = map(self.parse_requirements_files, yaml.safe_load(f))
-                import q
-                q(rolesparsed)
                 roles_left = [GalaxyRole(self.galaxy, **r) for r in rolesparsed]
             else:
                 # roles listed in a file, one per line
