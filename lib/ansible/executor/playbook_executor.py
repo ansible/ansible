@@ -121,29 +121,7 @@ class PlaybookExecutor:
 
                     if self._tqm is None:
                         # we are just doing a listing
-
-                        pname =  new_play.get_name().strip()
-                        if pname == 'PLAY: <no name specified>':
-                            pname = 'PLAY: #%d' % i
-                        p = { 'name': pname }
-
-                        if self._options.listhosts:
-                            p['pattern']=play.hosts
-                            p['hosts']=set(self._inventory.get_hosts(new_play.hosts))
-
-                        #TODO: play tasks are really blocks, need to figure out how to get task objects from them
-                        elif self._options.listtasks:
-                            p['tasks'] = []
-                            for task in play.get_tasks():
-                               p['tasks'].append(task)
-                               #p['tasks'].append({'name': task.get_name().strip(), 'tags': task.tags})
-
-                        elif self._options.listtags:
-                            p['tags'] = set(new_play.tags)
-                            for task in play.get_tasks():
-                                p['tags'].update(task)
-                                #p['tags'].update(task.tags)
-                        entry['plays'].append(p)
+                        entry['plays'].append(new_play)
 
                     else:
                         # make sure the tqm has callbacks loaded

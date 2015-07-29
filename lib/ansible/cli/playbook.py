@@ -151,19 +151,43 @@ class PlaybookCLI(CLI):
             for p in results:
 
                 self.display.display('\nplaybook: %s\n' % p['playbook'])
+                i = 1
                 for play in p['plays']:
+                    if play.name:
+                        playname = play.name
+                    else:
+                        playname = '#' + str(i)
+
+                    msg = "\n  PLAY: %s" % (playname)
+                    if self.options.listtags:
+                        mytags = set(play.tags)
+                        msg += '\n  total tags: %d' % (len(mytags))
+                        msg += '\n  tags: [%s]' % (','.join(mytags))
+
                     if self.options.listhosts:
-                        self.display.display("\n  %s (%s): host count=%d" % (play['name'], play['pattern'], len(play['hosts'])))
-                        for host in play['hosts']:
-                            self.display.display("    %s" % host)
-                    if self.options.listtasks: #TODO: do we want to display block info?
-                        self.display.display("\n  %s" % (play['name']))
-                        for task in play['tasks']:
-                            self.display.display("    %s" % task)
-                    if self.options.listtags: #TODO: fix once we figure out block handling above
-                        self.display.display("\n  %s: tags count=%d" % (play['name'], len(play['tags'])))
-                        for tag in play['tags']:
-                            self.display.display("    %s" % tag)
+                        playhosts = set(inventory.get_hosts(play.hosts))
+                        msg += "\n  pattern: %s\n  total hosts: %d\n  hosts:" % (play.hosts, len(playhosts))
+                        for host in playhosts:
+                            msg += "\n    %s" % host
+
+                    self.display.display(msg)
+
+                    if self.options.listtags or self.options.listtasks:
+                        j = 1
+                        taskmsg = '  tasks:'
+                        for task in play.get_tasks():
+                            taskmsg += "\n    %s" % task
+
+                            if self.options.listtags:
+                                pass
+                                #for task in play.get_tasks():
+                                #    mytags.union(set(task.tags))
+                                #self.display.display("    %s" % ','.join(mytags))
+
+                            j = j + 1
+                        self.display.display(taskmsg)
+
+                    i = i + 1
             return 0
         else:
             return results
