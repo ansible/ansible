@@ -177,7 +177,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             state = dict(default='present', choices=['present', 'installed', 'absent', 'removed', 'latest']),
-            name = dict(type='str'),
+            name = dict(type='list'),
             update_cache = dict(default='no', choices=BOOLEANS, type='bool'),
             upgrade = dict(default='no', choices=BOOLEANS, type='bool'),
         ),
@@ -204,14 +204,10 @@ def main():
     if p['upgrade']:
         upgrade_packages(module)
 
-    # Create a list of package names 
-    # Removing empty strings that may have been created by a trailing ','
-    names = filter((lambda x: x != ''), p['name'].split(','))
-
     if p['state'] in ['present', 'latest']:
-        install_packages(module, names, p['state'])
+        install_packages(module, p['name'], p['state'])
     elif p['state'] == 'absent':
-        remove_packages(module, names)
+        remove_packages(module, p['name'])
 
 # Import module snippets.
 from ansible.module_utils.basic import *
