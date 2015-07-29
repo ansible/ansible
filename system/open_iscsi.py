@@ -206,18 +206,15 @@ def target_device_node(module, target):
     # a given target...
 
     devices = glob.glob('/dev/disk/by-path/*%s*' % target)
-    if len(devices) == 0:
-        return None
-    else:
-        devdisks = []
-        for dev in devices:
-            # exclude partitions
-            if "-part" not in dev:
-                devdisk = os.path.realpath(dev)
-                # only add once (multi-path?)
-                if devdisk not in devdisks:
-                    devdisks.append(devdisk)
-        return devdisks
+    devdisks = []
+    for dev in devices:
+        # exclude partitions
+        if "-part" not in dev:
+            devdisk = os.path.realpath(dev)
+            # only add once (multi-path?)
+            if devdisk not in devdisks:
+                devdisks.append(devdisk)
+    return devdisks
 
 
 def target_isauto(module, target):
