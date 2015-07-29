@@ -30,7 +30,7 @@ from jinja2.runtime import StrictUndefined
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
-from ansible.plugins import _basedirs, filter_loader, lookup_loader
+from ansible.plugins import _basedirs, filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
@@ -57,6 +57,7 @@ class Templar:
     def __init__(self, loader, shared_loader_obj=None, variables=dict()):
         self._loader              = loader
         self._filters             = None
+        self._tests               = None
         self._available_variables = variables
 
         if loader:
@@ -118,11 +119,28 @@ class Templar:
         self._filters = dict()
         for fp in plugins:
             self._filters.update(fp.filters())
+        self._filters.update(self._get_tests())
 
         return self._filters.copy()
 
+    def _get_tests(self):
+        '''
+        Returns tests plugins, after loading and caching them if need be
+        '''
+
+        if self._tests is not None:
+            return self._tests.copy()
+
+        plugins = [x for x in test_loader.all()]
+
+        self._tests = dict()
+        for fp in plugins:
+            self._tests.update(fp.tests())
+
+        return self._tests.copy()
+
     def _get_extensions(self):
-        ''' 
+        '''
         Return jinja2 extensions to load.
 
         If some extensions are set via jinja_extensions in ansible.cfg, we try
@@ -277,6 +295,7 @@ class Templar:
 
             #FIXME: add tests
             myenv.filters.update(self._get_filters())
+            myenv.tests.update(self._get_tests())
 
             try:
                 t = myenv.from_string(data)
