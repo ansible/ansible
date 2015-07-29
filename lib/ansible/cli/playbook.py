@@ -159,28 +159,33 @@ class PlaybookCLI(CLI):
                         playname = '#' + str(i)
 
                     msg = "\n  PLAY: %s" % (playname)
-                    if self.options.listtags:
-                        mytags = set(play.tags)
-                        msg += '\n  tags: [%s]' % (','.join(mytags))
+                    mytags = set()
+                    if self.options.listtags and play.tags:
+                        mytags = mytags.union(set(play.tags))
+                        msg += '\n    tags: [%s]' % (','.join(mytags))
 
                     if self.options.listhosts:
                         playhosts = set(inventory.get_hosts(play.hosts))
-                        msg += "\n  pattern: %s\n  total hosts: %d\n  hosts:" % (play.hosts, len(playhosts))
+                        msg += "\n    pattern: %s\n    total hosts: %d\n    hosts:" % (play.hosts, len(playhosts))
                         for host in playhosts:
                             msg += "\n    %s" % host
 
                     self.display.display(msg)
 
                     if self.options.listtags or self.options.listtasks:
-                        j = 1
-                        taskmsg = '  tasks:'
+                        taskmsg = '    tasks:'
 
-                        for task in play.get_tasks():
-                            taskmsg += "\n    %s" % task
-                            if self.options.listtags:
-                                pass
-                                #taskmsg += "    %s" % ','.join(mytags.union(set(task.tags))) #FIXME: find out how to get task tags
-                            j = j + 1
+                        for block in play.compile():
+                            if not block.has_tasks():
+                                continue
+
+                            j = 1
+                            for task in block.block:
+                                taskmsg += "\n      %s" % task
+                                if self.options.listtags and task.tags:
+                                    taskmsg += "\n        tags: [%s]" % ','.join(mytags.union(set(task.tags)))
+                                j = j + 1
+
                         self.display.display(taskmsg)
 
                     i = i + 1
