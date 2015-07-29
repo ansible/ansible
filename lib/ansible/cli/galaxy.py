@@ -323,7 +323,10 @@ class GalaxyCLI(CLI):
         if role_file:
             f = open(role_file, 'r')
             if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-                roles_left = map(ansible.utils.role_yaml_parse, yaml.safe_load(f))
+                rolesparsed = map(self.parse_requirements_files, yaml.safe_load(f))
+                import q
+                q(rolesparsed)
+                roles_left = [GalaxyRole(self.galaxy, **r) for r in rolesparsed]
             else:
                 # roles listed in a file, one per line
                 for rname in f.readlines():
@@ -485,3 +488,36 @@ class GalaxyCLI(CLI):
                         version = "(unknown version)"
                     self.display.display("- %s, %s" % (path_file, version))
         return 0
+
+    def parse_requirements_files(self, role):
+        if 'role' in role:
+            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+            role_info = role_spec_parse(role['role'])
+            if isinstance(role_info, dict):
+                # Warning: Slight change in behaviour here.  name may be being
+                # overloaded.  Previously, name was only a parameter to the role.
+                # Now it is both a parameter to the role and the name that
+                # ansible-galaxy will install under on the local system.
+                if 'name' in role and 'name' in role_info:
+                    del role_info['name']
+                role.update(role_info)
+        else:
+            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+            if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
+                role["src"] = "git+" + role["src"]
+
+            if '+' in role["src"]:
+                (scm, src) = role["src"].split('+')
+                role["scm"] = scm
+                role["src"] = src
+
+            if 'name' not in role:
+                role["name"] = GalaxyRole.url_to_spec(role["src"])
+
+            if 'version' not in role:
+                role['version'] = ''
+
+            if 'scm' not in role:
+                role['scm'] = None
+
+        return role

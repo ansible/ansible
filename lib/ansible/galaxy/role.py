@@ -292,3 +292,21 @@ class GalaxyRole(object):
         }
         """
         return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)
+
+
+    @staticmethod
+    def url_to_spec(roleurl):
+        # gets the role name out of a repo like
+        # http://git.example.com/repos/repo.git" => "repo"
+
+        if '://' not in roleurl and '@' not in roleurl:
+            return roleurl
+        trailing_path = roleurl.split('/')[-1]
+        if trailing_path.endswith('.git'):
+            trailing_path = trailing_path[:-4]
+        if trailing_path.endswith('.tar.gz'):
+            trailing_path = trailing_path[:-7]
+        if ',' in trailing_path:
+            trailing_path = trailing_path.split(',')[0]
+        return trailing_path
+
