@@ -360,6 +360,10 @@ class UbuntuSourcesList(SourcesList):
         if line.startswith('ppa:'):
             source, ppa_owner, ppa_name = self._expand_ppa(line)
 
+            if source in self.repos_urls:
+                # repository already exists
+                return
+
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
                 if not self._key_already_exists(info['signing_key_fingerprint']):
@@ -445,13 +449,8 @@ def main():
 
     sources_before = sourceslist.dump()
 
-    if repo.startswith('ppa:'):
-        expanded_repo = sourceslist._expand_ppa(repo)[0]
-    else:
-        expanded_repo = repo
-
     try:
-        if state == 'present' and expanded_repo not in sourceslist.repos_urls:
+        if state == 'present':
             sourceslist.add_source(repo)
         elif state == 'absent':
             sourceslist.remove_source(repo)
