@@ -19,6 +19,10 @@
 
 # Dynamic inventory script which lets you use aliases from ~/.ssh/config.
 #
+# There were some issues with various Paramiko versions. I took a deeper look
+# and tested heavily. Now, ansible parses this alright with Paramiko versions
+# 1.7.2 to 1.15.2.
+#
 # It prints inventory based on parsed ~/.ssh/config. You can refer to hosts
 # with their alias, rather than with the IP or hostname. It takes advantage
 # of the ansible_ssh_{host,port,user,private_key_file}.
@@ -39,13 +43,14 @@
 import argparse
 import os.path
 import sys
-
 import paramiko
 
 try:
     import json
 except ImportError:
     import simplejson as json
+
+SSH_CONF = '~/.ssh/config'
 
 _key = 'ssh_config'
 
@@ -56,15 +61,25 @@ _ssh_to_ansible = [('user', 'ansible_ssh_user'),
 
 
 def get_config():
-    with open(os.path.expanduser('~/.ssh/config')) as f:
+    if not os.path.isfile(os.path.expanduser(SSH_CONF)):
+        return {}
+    with open(os.path.expanduser(SSH_CONF)) as f:
         cfg = paramiko.SSHConfig()
         cfg.parse(f)
         ret_dict = {}
         for d in cfg._config:
+            if type(d['host']) is list:
+                alias = d['host'][0]
+            else:
+                alias = d['host']
+            if ('?' in alias) or ('*' in alias):
+                continue
             _copy = dict(d)
             del _copy['host']
-            for host in d['host']:
-                ret_dict[host] = _copy['config']
+            if 'config' in _copy:
+                ret_dict[alias] = _copy['config']
+            else:
+                ret_dict[alias] = _copy
         return ret_dict
 
 
@@ -75,7 +90,12 @@ def print_list():
         tmp_dict = {}
         for ssh_opt, ans_opt in _ssh_to_ansible:
             if ssh_opt in attributes:
-                tmp_dict[ans_opt] = attributes[ssh_opt]
+                # If the attribute is a list, just take the first element.
+                # Private key is returned in a list for some reason.
+                attr = attributes[ssh_opt]
+                if type(attr) is list:
+                    attr = attr[0]
+                tmp_dict[ans_opt] = attr
         if tmp_dict:
             meta['hostvars'][alias] = tmp_dict
 
