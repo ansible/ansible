@@ -525,13 +525,13 @@ To configure fact caching using jsonfile, enable it in ansible.cfg as follows::
     [defaults]
     gathering = smart
     fact_caching = jsonfile
-    fact_caching_location = /path/to/cachedir
+    fact_caching_connection = /path/to/cachedir
     fact_caching_timeout = 86400
     # seconds
 
-`fact_caching_location` is a local filesystem path to a writeable
+`fact_caching_connection` is a local filesystem path to a writeable
 directory (ansible will attempt to create the directory if one does not exist).
-    
+
 .. _registered_variables:
 
 Registered Variables
