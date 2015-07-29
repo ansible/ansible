@@ -23,7 +23,7 @@ import sys
 from six.moves import builtins
 
 from ansible import constants as C
-from ansible.plugins import filter_loader
+from ansible.plugins import filter_loader, test_loader
 
 def safe_eval(expr, locals={}, include_exceptions=False):
     '''
@@ -77,7 +77,11 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     for filter in filter_loader.all():
         filter_list.extend(filter.filters().keys())
 
-    CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list
+    test_list = []
+    for test in test_loader.all():
+        test_list.extend(test.tests().keys())
+
+    CALL_WHITELIST = C.DEFAULT_CALLABLE_WHITELIST + filter_list + test_list
 
     class CleansingNodeVisitor(ast.NodeVisitor):
         def generic_visit(self, node, inside_call=False):
