@@ -168,7 +168,7 @@ class PlaybookCLI(CLI):
                         playhosts = set(inventory.get_hosts(play.hosts))
                         msg += "\n    pattern: %s\n    total hosts: %d\n    hosts:" % (play.hosts, len(playhosts))
                         for host in playhosts:
-                            msg += "\n    %s" % host
+                            msg += "\n      %s" % host
 
                     self.display.display(msg)
 
