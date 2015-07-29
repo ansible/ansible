@@ -150,7 +150,7 @@ class PlaybookCLI(CLI):
         if isinstance(results, list):
             for p in results:
 
-                self.display.display('\nplaybook: %s\n' % p['playbook'])
+                self.display.display('\nplaybook: %s' % p['playbook'])
                 i = 1
                 for play in p['plays']:
                     if play.name:
@@ -161,7 +161,6 @@ class PlaybookCLI(CLI):
                     msg = "\n  PLAY: %s" % (playname)
                     if self.options.listtags:
                         mytags = set(play.tags)
-                        msg += '\n  total tags: %d' % (len(mytags))
                         msg += '\n  tags: [%s]' % (','.join(mytags))
 
                     if self.options.listhosts:
@@ -175,15 +174,12 @@ class PlaybookCLI(CLI):
                     if self.options.listtags or self.options.listtasks:
                         j = 1
                         taskmsg = '  tasks:'
+
                         for task in play.get_tasks():
                             taskmsg += "\n    %s" % task
-
                             if self.options.listtags:
                                 pass
-                                #for task in play.get_tasks():
-                                #    mytags.union(set(task.tags))
-                                #self.display.display("    %s" % ','.join(mytags))
-
+                                #taskmsg += "    %s" % ','.join(mytags.union(set(task.tags))) #FIXME: find out how to get task tags
                             j = j + 1
                         self.display.display(taskmsg)
 
