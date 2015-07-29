@@ -83,10 +83,14 @@ def symmetric_difference(a, b, strict=False):
         c = unique(filter(lambda x: x not in intersect(a,b), union(a,b)))
     return c
 
-def union(a, b):
+def union(a, b, strict=False):
     if isinstance(a, dict) and isinstance(b, dict):
-        c = a.copy()
-        c.update(b)
+        if not strict:
+            c = a.copy()
+            c.update(b)
+        else:
+            c = b.copy()
+            c.update(a)
     elif isinstance(a,collections.Hashable) and isinstance(b,collections.Hashable):
         c = set(a) | set(b)
     else:
