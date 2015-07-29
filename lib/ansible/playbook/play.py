@@ -64,6 +64,7 @@ class Play(Base, Taggable, Become):
     _name                = FieldAttribute(isa='string', default='')
 
     # Variable Attributes
+    _vars                = FieldAttribute(isa='dict', default=dict())
     _vars_files          = FieldAttribute(isa='list', default=[])
     _vars_prompt         = FieldAttribute(isa='list', default=[])
     _vault_password      = FieldAttribute(isa='string')

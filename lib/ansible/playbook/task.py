@@ -91,6 +91,7 @@ class Task(Base, Conditional, Taggable, Become):
         self._block        = block
         self._role         = role
         self._task_include = task_include
+        self._vars         = dict()
 
         super(Task, self).__init__()
 
@@ -193,7 +194,7 @@ class Task(Base, Conditional, Taggable, Become):
         super(Task, self).post_validate(templar)
 
     def get_vars(self):
-        all_vars = self.vars.copy()
+        all_vars = self._vars.copy()
         if self._block:
             all_vars.update(self._block.get_vars())
         if self._task_include:
