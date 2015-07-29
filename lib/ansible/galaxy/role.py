@@ -182,28 +182,30 @@ class GalaxyRole(object):
         """
         Downloads the archived role from github to a temp location
         """
+        if role_data:
 
-        # first grab the file and save it to a temp location
-        if "github_user" in role_data and "github_repo" in role_data:
-            archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
-        else:
-            archive_url = self.src
-        self.display.display("- downloading role from %s" % archive_url)
+            # first grab the file and save it to a temp location
+            if "github_user" in role_data and "github_repo" in role_data:
+                archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
+            else:
+                archive_url = self.src
+            self.display.display("- downloading role from %s" % archive_url)
 
-        try:
-            url_file = urlopen(archive_url)
-            temp_file = tempfile.NamedTemporaryFile(delete=False)
-            data = url_file.read()
-            while data:
-                temp_file.write(data)
+            try:
+                url_file = urlopen(archive_url)
+                temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
-            temp_file.close()
-            return temp_file.name
-        except:
-            # TODO: better urllib2 error handling for error
-            #       messages that are more exact
-            self.display.error("failed to download the file.")
-            return False
+                while data:
+                    temp_file.write(data)
+                    data = url_file.read()
+                temp_file.close()
+                return temp_file.name
+            except:
+                # TODO: better urllib2 error handling for error
+                #       messages that are more exact
+                self.display.error("failed to download the file.")
+
+        return False
 
     def install(self, role_filename):
         # the file is a tar, so open it that way and extract it
