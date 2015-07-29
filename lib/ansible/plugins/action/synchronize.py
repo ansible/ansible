@@ -18,9 +18,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
 import os.path
 
 from ansible.plugins.action import ActionBase
+from ansible.plugins import connection_loader
 from ansible.utils.boolean import boolean
 from ansible import constants
 
@@ -81,47 +83,59 @@ class ActionModule(ActionBase):
                 transport_overridden = True
                 self._play_context.become = False
 
-        src  = self._task.args.get('src', None)
-        dest = self._task.args.get('dest', None)
         use_ssh_args = self._task.args.pop('use_ssh_args', None)
 
-        # FIXME: this doesn't appear to be used anywhere?
-        local_rsync_path = task_vars.get('ansible_rsync_path')
+        # Parameter name needed by the ansible module
+        self._task.args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
 
         # from the perspective of the rsync call the delegate is the localhost
-        src_host  = '127.0.0.1'
+        src_host = '127.0.0.1'
         dest_host = task_vars.get('ansible_ssh_host') or task_vars.get('inventory_hostname')
 
-        # allow ansible_ssh_host to be templated
+        ### FIXME: do we still need to explicitly template ansible_ssh_host here in v2?
+
         dest_is_local = dest_host in ['127.0.0.1', 'localhost']
+
 
         # CHECK FOR NON-DEFAULT SSH PORT
         dest_port = task_vars.get('ansible_ssh_port') or self._task.args.get('dest_port') or 22
 
-        # edge case: explicit delegate and dest_host are the same
-        if dest_host == task_vars.get('delegate_to'):
-            dest_host = '127.0.0.1'
-
-        # SWITCH SRC AND DEST PER MODE
-        if self._task.args.get('mode', 'push') == 'pull':
-            (dest_host, src_host) = (src_host, dest_host)
-
         # CHECK DELEGATE HOST INFO
         use_delegate = False
-        # FIXME: not sure if this is in connection info yet or not...
-        #if conn.delegate != conn.host:
-        #    if 'hostvars' in task_vars:
-        #        if conn.delegate in task_vars['hostvars'] and original_transport != 'local':
-        #            # use a delegate host instead of localhost
-        #            use_delegate = True
 
-        # COMPARE DELEGATE, HOST AND TRANSPORT                             
+        if dest_host == task_vars.get('delegate_to'):
+            # edge case: explicit delegate and dest_host are the same
+            dest_host = '127.0.0.1'
+            use_delegate = True
+        else:
+            if 'hostvars' in task_vars:
+                if task_vars.get('delegate_to') in task_vars['hostvars'] and original_transport != 'local':
+                    # use a delegate host instead of localhost
+                    use_delegate = True
+
+        # COMPARE DELEGATE, HOST AND TRANSPORT
         process_args = False
         if not dest_host is src_host and original_transport != 'local':
             # interpret and task_vars remote host info into src or dest
             process_args = True
 
+        # SWITCH SRC AND DEST PER MODE
+        if self._task.args.get('mode', 'push') == 'pull':
+            (dest_host, src_host) = (src_host, dest_host)
+
+        # Delegate to localhost as the source of the rsync unless we've been
+        # told (via delegate_to) that a different host is the source of the
+        # rsync
+        if not use_delegate:
+            # Create a connection to localhost to run rsync on
+            ### FIXME: Do we have to dupe stdin or is this sufficient?
+            new_stdin = self._connection._new_stdin
+            new_connection = connection_loader.get('local', self._play_context, new_stdin)
+            self._connection = new_connection
+
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
+        src  = self._task.args.get('src', None)
+        dest = self._task.args.get('dest', None)
         if process_args or use_delegate:
 
             user = None
@@ -131,7 +145,7 @@ class ActionModule(ActionBase):
 
                 if not use_delegate or not user:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
-                
+
             if use_delegate:
                 # FIXME
                 private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
@@ -152,8 +166,12 @@ class ActionModule(ActionBase):
                 src  = self._process_origin(src_host, src, user)
                 dest = self._process_remote(dest_host, dest, user)
 
-            self._task.args['src'] = src
-            self._task.args['dest'] = dest
+        self._task.args['src'] = src
+        self._task.args['dest'] = dest
+
+        # Remove mode as it is handled purely in this action module
+        if 'mode' in self._task.args:
+            del self._task.args['mode']
 
         # Allow custom rsync path argument.
         rsync_path = self._task.args.get('rsync_path', None)
@@ -169,13 +187,7 @@ class ActionModule(ActionBase):
         if use_ssh_args:
             self._task.args['ssh_args'] = constants.ANSIBLE_SSH_ARGS
 
-        # Remove mode as it is handled purely in this action module
-        if 'mode' in self._task.args:
-            del self._task.args['mode']
-
-
         # run the module and store the result
         result = self._execute_module('synchronize', task_vars=task_vars)
 
         return result
-
