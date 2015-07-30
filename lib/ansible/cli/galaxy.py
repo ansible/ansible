@@ -154,8 +154,7 @@ class GalaxyCLI(CLI):
         option --ignore-errors was specified
         """
         if not self.get_opt("ignore_errors", False):
-            self.display.error('- you can use --ignore-errors to skip failed roles and finish processing the list.')
-            return rc
+            raise AnsibleError('- you can use --ignore-errors to skip failed roles and finish processing the list.')
 
     def execute_init(self):
         """
@@ -321,20 +320,24 @@ class GalaxyCLI(CLI):
         roles_done = []
         roles_left = []
         if role_file:
-            f = open(role_file, 'r')
-            if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-                try:
-                    rolesparsed = map(self.parse_requirements_files, yaml.safe_load(f))
-                except:
-                   raise AnsibleError("%s does not seem like a valid yaml file" % role_file)
-                roles_left = [GalaxyRole(self.galaxy, **r) for r in rolesparsed]
-            else:
-                # roles listed in a file, one per line
-                for rname in f.readlines():
-                    if rname.startswith("#") or rname.strip() == '':
-                        continue
-                    roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
-            f.close()
+            try:
+                f = open(role_file, 'r')
+                if role_file.endswith('.yaml') or role_file.endswith('.yml'):
+                    try:
+                        rolesparsed = map(self.parse_requirements_files, yaml.safe_load(f))
+                    except Exception as e:
+                       raise AnsibleError("%s does not seem like a valid yaml file: %s" % (role_file, str(e)))
+                    roles_left = [GalaxyRole(self.galaxy, **r) for r in rolesparsed]
+                else:
+                    # roles listed in a file, one per line
+                    self.display.deprecated("Non yaml files for role requirements")
+                    for rname in f.readlines():
+                        if rname.startswith("#") or rname.strip() == '':
+                            continue
+                        roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
+                f.close()
+            except (IOError,OSError) as e:
+                raise AnsibleError("Unable to read requirements file (%s): %s" % (role_file, str(e)))
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
