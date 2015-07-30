@@ -2516,6 +2516,12 @@ class LinuxVirtual(Virtual):
                 self.facts['virtualization_role'] = 'guest'
             return
 
+        systemd_container = get_file_content('/run/systemd/container')
+        if systemd_container:
+            self.facts['virtualization_type'] = systemd_container
+            self.facts['virtualization_role'] = 'guest'
+            return
+
         if os.path.exists('/proc/1/cgroup'):
             for line in get_file_lines('/proc/1/cgroup'):
                 if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
