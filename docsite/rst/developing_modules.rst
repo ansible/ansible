@@ -465,7 +465,7 @@ Module checklist
     * Requirements should  be documented, using the `requirements=[]` field
     * Author should be set, name and github id at least
     * Made use of U() for urls, C() for files and options, I() for params, M() for modules?
-    * GPL License header
+    * GPL 3 License header
     * Does module use check_mode? Could it be modified to use it? Document it
     * Examples: make sure they are reproducible
     * Return: document the return structure of the module
