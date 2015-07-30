@@ -17,7 +17,7 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args $true;
 
 $src = Get-Attr $params "src" (Get-Attr $params "path" $FALSE);
 If (-not $src)
