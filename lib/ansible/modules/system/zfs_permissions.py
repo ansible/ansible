@@ -199,6 +199,8 @@ class ZfsPermissions(object):
             if self.perms:
                 cmd = cmd + [','.join(self.perms)]
             cmd = cmd + [self.name]
+            if self.module.check_mode:
+                return 'Check mode skipped execution of: %s' % ' '.join(cmd)
             rc, out, err = self.run_command(cmd)
             if rc:
                 msg = 'Changing permissions with `%s` failed: %s' % (' '.join(cmd), err)
