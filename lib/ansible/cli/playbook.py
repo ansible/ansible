@@ -162,7 +162,7 @@ class PlaybookCLI(CLI):
                     mytags = set()
                     if self.options.listtags and play.tags:
                         mytags = mytags.union(set(play.tags))
-                        msg += '\n    tags: [%s]' % (','.join(mytags))
+                        msg += '    TAGS: [%s]' % (','.join(mytags))
 
                     if self.options.listhosts:
                         playhosts = set(inventory.get_hosts(play.hosts))
@@ -183,7 +183,7 @@ class PlaybookCLI(CLI):
                             for task in block.block:
                                 taskmsg += "\n      %s" % task
                                 if self.options.listtags and task.tags:
-                                    taskmsg += "\n        tags: [%s]" % ','.join(mytags.union(set(task.tags)))
+                                    taskmsg += "    TAGS: [%s]" % ','.join(mytags.union(set(task.tags)))
                                 j = j + 1
 
                         self.display.display(taskmsg)
