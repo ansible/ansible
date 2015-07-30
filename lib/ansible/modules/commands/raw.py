@@ -20,6 +20,7 @@ DOCUMENTATION = '''
 module: raw
 version_added: historical
 short_description: Executes a low-down and dirty SSH command
+version_added: historical
 options:
   free_form:
     description:
