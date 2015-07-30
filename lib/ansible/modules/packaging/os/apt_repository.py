@@ -423,24 +423,24 @@ def main():
     )
 
     params = module.params
-    if params['install_python_apt'] and not HAVE_PYTHON_APT and not module.check_mode:
-        install_python_apt(module)
-
     repo = module.params['repo']
     state = module.params['state']
     update_cache = module.params['update_cache']
     sourceslist = None
 
-    if HAVE_PYTHON_APT:
-        if isinstance(distro, aptsources_distro.UbuntuDistribution):
-            sourceslist = UbuntuSourcesList(module,
-                add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
-        elif HAVE_PYTHON_APT and \
-            isinstance(distro, aptsources_distro.DebianDistribution) or isinstance(distro, aptsources_distro.Distribution):
-            sourceslist = SourcesList()
+    if not HAVE_PYTHON_APT:
+        if params['install_python_apt']:
+            install_python_apt(module)
+        else:
+            module.fail_json(msg='python-apt is not installed, and install_python_apt is False')
+
+    if isinstance(distro, aptsources_distro.UbuntuDistribution):
+        sourceslist = UbuntuSourcesList(module,
+            add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+    elif isinstance(distro, aptsources_distro.DebianDistribution) or isinstance(distro, aptsources_distro.Distribution):
+        sourceslist = SourcesList()
     else:
-        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu. ' + \
-                             'You may be seeing this because python-apt is not installed, but you requested that it not be auto-installed')
+        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu.')
 
     sources_before = sourceslist.dump()
 
