@@ -134,7 +134,21 @@ options:
     default: Default. Eg, when used to create a new autoscaling group, the “Default” value is used. When used to change an existent autoscaling group, the current termination policies are mantained
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
     version_added: "2.0"
-extends_documentation_fragment: aws
+  notification_topic:
+    description:
+      - A SNS topic ARN to send auto scaling notifications to.
+    default: None
+    required: false
+    version_added: "2.0"
+  notification_types:
+    description:
+      - A list of auto scaling events to trigger notifications on.
+    default: ['autoscaling:EC2_INSTANCE_LAUNCH', 'autoscaling:EC2_INSTANCE_LAUNCH_ERROR', 'autoscaling:EC2_INSTANCE_TERMINATE', 'autoscaling:EC2_INSTANCE_TERMINATE_ERROR']
+    required: false
+    version_added: "2.0"
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = '''
@@ -394,6 +408,8 @@ def create_autoscaling_group(connection, module):
     as_groups = connection.get_all_groups(names=[group_name])
     wait_timeout = module.params.get('wait_timeout')
     termination_policies = module.params.get('termination_policies')
+    notification_topic = module.params.get('notification_topic')
+    notification_types = module.params.get('notification_types')
 
     if not vpc_zone_identifier and not availability_zones:
         region, ec2_url, aws_connect_params = get_aws_connection_info(module)
@@ -439,6 +455,10 @@ def create_autoscaling_group(connection, module):
             if wait_for_instances:
                 wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
                 wait_for_elb(connection, module, group_name)
+
+            if notification_topic:
+                ag.put_notification_configuration(notification_topic, notification_types)
+
             as_group = connection.get_all_groups(names=[group_name])[0]
             asg_properties = get_properties(as_group)
             changed = True
@@ -502,6 +522,12 @@ def create_autoscaling_group(connection, module):
             except BotoServerError as e:
                 module.fail_json(msg="Failed to update Autoscaling Group: %s" % str(e), exception=traceback.format_exc(e))
 
+        if notification_topic:
+            try:
+                as_group.put_notification_configuration(notification_topic, notification_types)
+            except BotoServerError as e:
+                module.fail_json(msg="Failed to update Autoscaling Group notifications: %s" % str(e), exception=traceback.format_exc(e))
+
         if wait_for_instances:
             wait_for_new_inst(module, connection, group_name, wait_timeout, desired_capacity, 'viable_instances')
             wait_for_elb(connection, module, group_name)
@@ -515,6 +541,11 @@ def create_autoscaling_group(connection, module):
 
 def delete_autoscaling_group(connection, module):
     group_name = module.params.get('name')
+    notification_topic = module.params.get('notification_topic')
+
+    if notification_topic:
+        ag.delete_notification_configuration(notification_topic)
+
     groups = connection.get_all_groups(names=[group_name])
     if groups:
         group = groups[0]
@@ -802,7 +833,14 @@ def main():
             health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
             default_cooldown=dict(type='int', default=300),
             wait_for_instances=dict(type='bool', default=True),
-            termination_policies=dict(type='list', default='Default')
+            termination_policies=dict(type='list', default='Default'),
+            notification_topic=dict(type='str', default=None),
+            notification_types=dict(type='list', default=[
+                'autoscaling:EC2_INSTANCE_LAUNCH',
+                'autoscaling:EC2_INSTANCE_LAUNCH_ERROR',
+                'autoscaling:EC2_INSTANCE_TERMINATE',
+                'autoscaling:EC2_INSTANCE_TERMINATE_ERROR'
+            ])
         ),
     )
 
