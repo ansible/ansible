@@ -17,7 +17,7 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args $true;
 
 function Date_To_Timestamp($start_date, $end_date)
 {

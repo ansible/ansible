@@ -17,7 +17,7 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args $true;
 
 $data = Get-Attr $params "data" "pong";
 
