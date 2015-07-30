@@ -68,22 +68,17 @@ class Task(Base, Conditional, Taggable, Become):
     _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
     _ignore_errors        = FieldAttribute(isa='bool')
-
     _loop                 = FieldAttribute(isa='string', private=True)
     _loop_args            = FieldAttribute(isa='list', private=True)
     _local_action         = FieldAttribute(isa='string')
-
-    # FIXME: this should not be a Task
-    _meta                 = FieldAttribute(isa='string')
-
     _name                 = FieldAttribute(isa='string', default='')
-
     _notify               = FieldAttribute(isa='list')
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=1)
     _run_once             = FieldAttribute(isa='bool')
     _until                = FieldAttribute(isa='list') # ?
+    _vars                 = FieldAttribute(isa='dict', default=dict())
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -91,7 +86,6 @@ class Task(Base, Conditional, Taggable, Become):
         self._block        = block
         self._role         = role
         self._task_include = task_include
-        self._vars         = dict()
 
         super(Task, self).__init__()
 
@@ -194,7 +188,7 @@ class Task(Base, Conditional, Taggable, Become):
         super(Task, self).post_validate(templar)
 
     def get_vars(self):
-        all_vars = self._vars.copy()
+        all_vars = self.vars.copy()
         if self._block:
             all_vars.update(self._block.get_vars())
         if self._task_include:
