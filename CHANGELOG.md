@@ -107,6 +107,7 @@ New Modules:
   * rabbitmq_binding
   * rabbitmq_exchange
   * rabbitmq_queue
+  * selinux_permissive
   * sensu_check
   * sensu_subscription
   * vertica_configuration
