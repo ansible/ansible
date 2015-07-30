@@ -20,7 +20,17 @@ __metaclass__ = type
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
-import credstash
+CREDSTASH_INSTALLED = False
+
+try:
+    import credstash
+    CREDSTASH_INSTALLED = True
+except ImportError:
+    CREDSTASH_INSTALLED = False
+
+
+if not CREDSTASH_INSTALLED:
+    raise AnsibleError('The credstash lookup plugin requires credstash to be installed.')
 
 
 class LookupModule(LookupBase):
