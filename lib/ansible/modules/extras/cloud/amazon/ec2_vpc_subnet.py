@@ -22,30 +22,34 @@ description:
 version_added: "2.0"
 author: Robert Estelle, @erydo
 options:
-  vpc_id:
-    description:
-      - VPC ID of the VPC in which to create the subnet.
-    required: false
-    default: null
-  resource_tags:
-    description:
-      - A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }. This module identifies a subnet by CIDR and will update the subnet's tags to match. Tags not in this list will be ignored.
-    required: false
-    default: null
-  cidr:
-    description:
-      - The CIDR block for the subnet. E.g. 10.0.0.0/16. Only required when state=present."
-    required: false
   az:
     description:
       - "The availability zone for the subnet. Only required when state=present."
     required: false
+    default: null
+  cidr:
+    description:
+      - "The CIDR block for the subnet. E.g. 10.0.0.0/16. Only required when state=present."
+    required: false
+    default: null
+  tags:
+    description:
+      - "A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }. This module identifies a subnet by CIDR and will update the subnet's tags to match. Tags not in this list will be ignored."
+    required: false
+    default: null
+    aliases: [ 'resource_tags' ]
   state:
     description:
-      - Create or remove the subnet
-    required: true
+      - "Create or remove the subnet"
+    required: false
     default: present
     choices: [ 'present', 'absent' ]
+  vpc_id:
+    description:
+      - "VPC ID of the VPC in which to create the subnet."
+    required: false
+    default: null
+    
 extends_documentation_fragment: aws
 '''
 
