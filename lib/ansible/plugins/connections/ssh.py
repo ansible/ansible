@@ -377,7 +377,7 @@ class Connection(ConnectionBase):
                 become_errput = ''
                 while True:
                     self._display.debug('Waiting for Privilege Escalation input')
-                    if self.check_become_success(become_output) or self.check_password_prompt(become_output):
+                    if self.check_become_success(become_output + become_errput) or self.check_password_prompt(become_output + become_errput):
                         break
 
                     rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._play_context.timeout)
@@ -398,7 +398,7 @@ class Connection(ConnectionBase):
                     if not chunk:
                         raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
 
-                if not self.check_become_success(become_output):
+                if not self.check_become_success(become_output + become_errput):
                     self._display.debug("Sending privilege escalation password.")
                     stdin.write(self._play_context.become_pass + '\n')
                 else:
