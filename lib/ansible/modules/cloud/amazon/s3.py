@@ -492,7 +492,7 @@ def main():
         # If the destination path doesn't exist or overwrite is True, no need to do the md5um etag check, so just download.
         pathrtn = path_check(dest)
         if pathrtn is False or overwrite == 'always':
-            download_s3file(module, s3, bucket, obj, dest)
+            download_s3file(module, s3, bucket, obj, dest, retries, version=version)
 
         # Compare the remote MD5 sum of the object with the local dest md5sum, if it already exists.
         if pathrtn is True:
