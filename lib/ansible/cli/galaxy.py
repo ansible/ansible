@@ -320,6 +320,7 @@ class GalaxyCLI(CLI):
         roles_done = []
         roles_left = []
         if role_file:
+            self.display.debug('Getting roles from %s' % role_file)
             try:
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
@@ -349,6 +350,8 @@ class GalaxyCLI(CLI):
             role_data = None
             role = roles_left.pop(0)
             role_path = role.path
+
+            self.display.debug('Installing role %s' % role_path)
 
             if role_path:
                 self.options.roles_path = role_path
@@ -400,27 +403,26 @@ class GalaxyCLI(CLI):
                 if tmp_file != role.src:
                     os.unlink(tmp_file)
                 # install dependencies, if we want them
-
-                # this should use new roledepenencies code
-                #if not no_deps and installed:
-                #    if not role_data:
-                #        role_data = gr.get_metadata(role.get("name"), options)
-                #        role_dependencies = role_data['dependencies']
-                #    else:
-                #        role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
-                #    for dep in role_dependencies:
-                #        if isinstance(dep, basestring):
-                #            dep = ansible.utils.role_spec_parse(dep)
-                #        else:
-                #            dep = ansible.utils.role_yaml_parse(dep)
-                #        if not get_role_metadata(dep["name"], options):
-                #            if dep not in roles_left:
-                #                print '- adding dependency: %s' % dep["name"]
-                #                roles_left.append(dep)
-                #            else:
-                #                print '- dependency %s already pending installation.' % dep["name"]
-                #        else:
-                #            print '- dependency %s is already installed, skipping.' % dep["name"]
+                if not no_deps and installed:
+                    if not role_data:
+                        role_data = gr.get_metadata(role.get("name"), options)
+                        role_dependencies = role_data['dependencies']
+                    else:
+                        role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
+                    for dep in role_dependencies:
+                        self.display.debug('Installing dep %s' % dep)
+                        if isinstance(dep, basestring):
+                            dep = ansible.utils.role_spec_parse(dep)
+                        else:
+                            dep = ansible.utils.role_yaml_parse(dep)
+                        if not get_role_metadata(dep["name"], options):
+                            if dep not in roles_left:
+                                self.display.display('- adding dependency: %s' % dep["name"])
+                                roles_left.append(dep)
+                            else:
+                                self.display.display('- dependency %s already pending installation.' % dep["name"])
+                        else:
+                            self.display.display('- dependency %s is already installed, skipping.' % dep["name"])
 
             if not tmp_file or not installed:
                 self.display.warning("- %s was NOT installed successfully." % role.name)
