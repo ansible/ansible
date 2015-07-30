@@ -151,12 +151,10 @@ class Inventory(object):
         #        management will be done in VariableManager
         # get group vars from group_vars/ files and vars plugins
         for group in self.groups:
-            # FIXME: combine_vars
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
 
         # get host vars from host_vars/ files and vars plugins
         for host in self.get_hosts():
-            # FIXME: combine_vars
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
 
 
@@ -441,11 +439,9 @@ class Inventory(object):
         vars_results = [ plugin.get_group_vars(group, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_group_vars')]
         for updated in vars_results:
             if updated is not None:
-                # FIXME: combine_vars
                 vars = combine_vars(vars, updated)
 
         # Read group_vars/ files
-        # FIXME: combine_vars
         vars = combine_vars(vars, self.get_group_vars(group))
 
         return vars
@@ -475,25 +471,21 @@ class Inventory(object):
         vars_results = [ plugin.run(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'run')]
         for updated in vars_results:
             if updated is not None:
-                # FIXME: combine_vars
                 vars = combine_vars(vars, updated)
 
         # plugin.get_host_vars retrieves just vars for specific host
         vars_results = [ plugin.get_host_vars(host, vault_password=vault_password) for plugin in self._vars_plugins if hasattr(plugin, 'get_host_vars')]
         for updated in vars_results:
             if updated is not None:
-                # FIXME: combine_vars
                 vars = combine_vars(vars, updated)
 
         # still need to check InventoryParser per host vars
         # which actually means InventoryScript per host,
         # which is not performant
         if self.parser is not None:
-            # FIXME: combine_vars
             vars = combine_vars(vars, self.parser.get_host_variables(host))
 
         # Read host_vars/ files
-        # FIXME: combine_vars
         vars = combine_vars(vars, self.get_host_vars(host))
 
         return vars
