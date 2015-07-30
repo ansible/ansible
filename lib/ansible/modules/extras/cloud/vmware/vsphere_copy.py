@@ -155,7 +155,7 @@ def main():
         module.fail_json(msg=str(e), status=status, reason=str(e), url=url)
 
     status = r.getcode()
-    if satus >= 200 and status < 300:
+    if 200 <= status < 300:
         module.exit_json(changed=True, status=status, reason=r.msg, url=url)
     else:
         length = r.headers.get('content-length', None)
