@@ -103,12 +103,6 @@ class PlaybookCLI(CLI):
 
         loader = DataLoader(vault_password=vault_pass)
 
-        # FIXME: this should be moved inside the playbook executor code
-        only_tags = self.options.tags.split(",")
-        skip_tags = self.options.skip_tags
-        if self.options.skip_tags is not None:
-            skip_tags = self.options.skip_tags.split(",")
-
         # initial error check, to make sure all specified playbooks are accessible
         # before we start running anything through the playbook executor
         for playbook in self.args:
