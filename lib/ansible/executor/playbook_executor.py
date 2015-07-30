@@ -262,7 +262,7 @@ class PlaybookExecutor:
                 second = do_prompt("confirm " + msg, private)
                 if result == second:
                     break
-                display("***** VALUES ENTERED DO NOT MATCH ****")
+                self._display.display("***** VALUES ENTERED DO NOT MATCH ****")
         else:
             result = do_prompt(msg, private)
 
