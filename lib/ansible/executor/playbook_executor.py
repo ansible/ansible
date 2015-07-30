@@ -34,6 +34,7 @@ from ansible.template import Templar
 from ansible.utils.color import colorize, hostcolor
 from ansible.utils.debug import debug
 from ansible.utils.encrypt import do_encrypt
+from ansible.utils.unicode import to_unicode
 
 class PlaybookExecutor:
 
@@ -274,8 +275,7 @@ class PlaybookExecutor:
             result = do_encrypt(result, encrypt, salt_size, salt)
 
         # handle utf-8 chars
-        # FIXME: make this work
-        #result = to_unicode(result, errors='strict')
+        result = to_unicode(result, errors='strict')
         return result
 
 
