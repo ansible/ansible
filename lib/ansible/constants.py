@@ -78,8 +78,8 @@ def load_config_file():
     path0 = os.getenv("ANSIBLE_CONFIG", None)
     if path0 is not None:
         path0 = os.path.expanduser(path0)
-    if os.path.isdir(path0):
-        path0 += "/ansible.cfg"
+        if os.path.isdir(path0):
+            path0 += "/ansible.cfg"
     path1 = os.getcwd() + "/ansible.cfg"
     path2 = os.path.expanduser("~/.ansible.cfg")
     path3 = "/etc/ansible/ansible.cfg"
