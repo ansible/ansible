@@ -390,7 +390,7 @@ class UbuntuSourcesList(SourcesList):
                     continue
 
                 if source_line.startswith('ppa:'):
-                    source, ppa_owner, ppa_name = self._expand_ppa(i[3])
+                    source, ppa_owner, ppa_name = self._expand_ppa(source_line)
                     _repositories.append(source)
                 else:
                     _repositories.append(source_line)
