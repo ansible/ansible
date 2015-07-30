@@ -289,6 +289,7 @@ options:
     default: 0
     version_added: "1.9"
   extra_hosts:
+    version_added: "2.0"
     description:
     - Dict of custom host-to-IP mappings to be defined in the container
   insecure_registry:
