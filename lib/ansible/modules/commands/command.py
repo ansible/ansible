@@ -32,6 +32,7 @@ DOCUMENTATION = '''
 module: command
 version_added: historical
 short_description: Executes a command on a remote node
+version_added: historical
 description:
      - The M(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
