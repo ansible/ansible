@@ -19,38 +19,33 @@ module: ec2_remote_facts
 short_description: ask EC2 for information about other instances.
 description:
     - Only supports seatch for hostname by tags currently. Looking to add more later.
-version_added: "1.9"
+version_added: "2.0"
 options:
   key:
     description:
       - instance tag key in EC2
     required: false
     default: Name
-    aliases: []
   value:
     description:
       - instance tag value in EC2
     required: false
     default: null
-    aliases: []
   lookup:
     description:
       - What type of lookup to use when searching EC2 instance info.
     required: false
     default: tags
-    aliases: []
   region:
     description:
       - EC2 region that it should look for tags in
     required: false
     default: All Regions
-    aliases: []
   ignore_state:
     description:
       - instance state that should be ignored such as terminated.
     required: false
     default: terminated
-    aliases: []
 author:
     - "Michael Schuett (@michaeljs1990)"
 extends_documentation_fragment: aws
