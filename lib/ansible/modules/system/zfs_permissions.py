@@ -133,7 +133,10 @@ class ZfsPermissions(object):
         self.recursive_opt = []
         if self.state == 'absent':
             self.subcommand = 'unallow'
-            self.recursive_opt = ['-r'] if self.recursive else []
+            if self.recursive:
+                self.recursive_opt = ['-r']
+            else:
+                self.recursive_opt = []
 
         self.run()
 
