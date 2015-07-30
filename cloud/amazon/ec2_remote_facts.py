@@ -15,7 +15,7 @@
 
 DOCUMENTATION = '''
 ---
-module: ec2_search
+module: ec2_remote_facts
 short_description: ask EC2 for information about other instances.
 description:
     - Only supports seatch for hostname by tags currently. Looking to add more later.
