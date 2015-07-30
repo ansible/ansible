@@ -55,6 +55,14 @@ options:
     description:
       - The file to push to the datastore on the vCenter server.
     required: true
+  validate_certs:
+    description:
+      - If C(no), SSL certificates will not be validated. This should only be
+        set to C(no) when no other option exists.
+    required: false
+    default: 'yes'
+    choices: ['yes', 'no']
+
 notes:
   - "This module ought to be run from a system that can access vCenter directly and has the file to transfer.
     It can be the normal remote target or you can change it either by using C(transport: local) or using C(delegate_to)."
@@ -69,8 +77,6 @@ EXAMPLES = '''
 '''
 
 import atexit
-import base64
-import httplib
 import urllib
 import mmap
 import errno
@@ -101,6 +107,7 @@ def main():
             datacenter = dict(required=True),
             datastore = dict(required=True),
             dest = dict(required=True, aliases=[ 'path' ]),
+            validate_certs = dict(required=False, default=True, type='bool'),
         ),
         # Implementing check-mode using HEAD is impossible, since size/date is not 100% reliable
         supports_check_mode = False,
@@ -113,6 +120,7 @@ def main():
     datacenter = module.params.get('datacenter')
     datastore = module.params.get('datastore')
     dest = module.params.get('dest')
+    validate_certs = module.params.get('validate_certs')
 
     fd = open(src, "rb")
     atexit.register(fd.close)
@@ -120,37 +128,46 @@ def main():
     data = mmap.mmap(fd.fileno(), 0, access=mmap.ACCESS_READ)
     atexit.register(data.close)
 
-    conn = httplib.HTTPSConnection(host)
-    atexit.register(conn.close)
-
     remote_path = vmware_path(datastore, datacenter, dest)
-    auth = base64.encodestring('%s:%s' % (login, password)).rstrip()
+    url = 'https://%s%s' % (host, remote_path)
+
     headers = {
         "Content-Type": "application/octet-stream",
         "Content-Length": str(len(data)),
-        "Authorization": "Basic %s" % auth,
     }
 
-    # URL is only used in JSON output (helps troubleshooting)
-    url = 'https://%s%s' % (host, remote_path)
-
     try:
-        conn.request("PUT", remote_path, body=data, headers=headers)
+        r = open_url(module, url, data=data, headers=headers, method='PUT',
+                url_username=login, url_password=password, validate_certs=validate_certs)
     except socket.error, e:
         if isinstance(e.args, tuple) and e[0] == errno.ECONNRESET:
             # VSphere resets connection if the file is in use and cannot be replaced
             module.fail_json(msg='Failed to upload, image probably in use', status=e[0], reason=str(e), url=url)
         else:
             module.fail_json(msg=str(e), status=e[0], reason=str(e), url=url)
+    except Exception, e:
+        status = -1
+        try:
+            if isinstance(e[0], int):
+                status = e[0]
+        except KeyError:
+            pass
+        module.fail_json(msg=str(e), status=status, reason=str(e), url=url)
 
-    resp = conn.getresponse()
-
-    if resp.status in range(200, 300):
-        module.exit_json(changed=True, status=resp.status, reason=resp.reason, url=url)
+    status = r.getcode()
+    if satus >= 200 and status < 300:
+        module.exit_json(changed=True, status=status, reason=r.msg, url=url)
     else:
-        module.fail_json(msg='Failed to upload', status=resp.status, reason=resp.reason, length=resp.length, version=resp.version, headers=resp.getheaders(), chunked=resp.chunked, url=url)
+        length = r.headers.get('content-length', None)
+        if r.headers.get('transfer-encoding', '').lower() == 'chunked':
+            chunked = 1
+        else:
+            chunked = 0
+
+        module.fail_json(msg='Failed to upload', status=status, reason=r.msg, length=length, headers=dict(r.headers), chunked=chunked, url=url)
 
 # Import module snippets
 from ansible.module_utils.basic import *
-
-main()
+from ansible.module_utils.urls import *
+if __name__ == '__main__':
+    main()
