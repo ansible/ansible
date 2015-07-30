@@ -140,6 +140,42 @@ default      empty string   return value if the key is not in the csv file
 .. note:: The default delimiter is TAB, *not* comma.
 
 
+.. _credstash_lookup:
+
+The Credstash Lookup
+````````````````````
+
+Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/LuminalOSS/credstash
+
+First, you need to store your secrets with credstash::
+
+
+    $ credstash put my-github-password secure123
+
+    my-github-password has been stored
+
+
+Example usage::
+
+
+    ---
+    - name: "Test credstash lookup plugin -- get my github password"
+      debug: msg="Credstash lookup! {{ lookup('credstash', 'my-github-password') }}"
+
+
+You can specify regions or tables to fetch secrets from::
+
+
+    ---
+    - name: "Test credstash lookup plugin -- get my other password from us-west-1"
+      debug: msg="Credstash lookup! {{ lookup('credstash', 'my-other-password', region='us-west-1') }}"
+
+
+    - name: "Test credstash lookup plugin -- get the company's github password"
+      debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
+
+
+
 .. _more_lookups:
 
 More Lookups
