@@ -30,7 +30,12 @@ On a Linux control machine::
 
 If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host)::
 
+   # Debian-based distributions (Debian, Ubuntu, …)
    sudo apt-get install python-dev libkrb5-dev
+   pip install kerberos
+   
+   # RPM-based distributions (Fedora, CentOS, RHEL, …)
+   yum -y install python-devel krb5-devel krb5-libs krb5-workstation
    pip install kerberos
 
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
