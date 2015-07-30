@@ -47,7 +47,6 @@ __all__ = ['Templar']
 NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
-JINJA2_ALLOWED_OVERRIDES = frozenset(['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline'])
 
 class Templar:
     '''
@@ -279,7 +278,6 @@ class Templar:
             if overrides is None:
                 myenv = self.environment.overlay()
             else:
-                overrides = JINJA2_ALLOWED_OVERRIDES.intersection(set(overrides))
                 myenv = self.environment.overlay(overrides)
 
             # Get jinja env overrides from template
@@ -290,8 +288,7 @@ class Templar:
                 for pair in line.split(','):
                     (key,val) = pair.split(':')
                     key = key.strip()
-                    if key in JINJA2_ALLOWED_OVERRIDES:
-                        setattr(myenv, key, ast.literal_eval(val.strip()))
+                    setattr(myenv, key, ast.literal_eval(val.strip()))
 
             #FIXME: add tests
             myenv.filters.update(self._get_filters())
