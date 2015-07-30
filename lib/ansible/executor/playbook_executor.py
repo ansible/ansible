@@ -33,6 +33,7 @@ from ansible.template import Templar
 
 from ansible.utils.color import colorize, hostcolor
 from ansible.utils.debug import debug
+from ansible.utils.encrypt import do_encrypt
 
 class PlaybookExecutor:
 
@@ -269,9 +270,8 @@ class PlaybookExecutor:
         if not result and default is not None:
             result = default
 
-        # FIXME: make this work with vault or whatever this old method was
-        #if encrypt:
-        #    result = utils.do_encrypt(result, encrypt, salt_size, salt)
+        if encrypt:
+            result = do_encrypt(result, encrypt, salt_size, salt)
 
         # handle utf-8 chars
         # FIXME: make this work
