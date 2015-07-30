@@ -438,7 +438,7 @@ def main():
     if isinstance(distro, aptsources_distro.UbuntuDistribution):
         sourceslist = UbuntuSourcesList(module,
             add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
-    elif isinstance(distro, aptsources_distro.DebianDistribution) or isinstance(distro, aptsources_distro.Distribution):
+    elif isinstance(distro, aptsources_distro.Distribution):
         sourceslist = SourcesList(module)
     else:
         module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu.')
