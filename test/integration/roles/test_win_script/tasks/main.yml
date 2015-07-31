@@ -62,6 +62,22 @@
       - "not test_script_with_splatting_result|failed"
       - "test_script_with_splatting_result|changed"
 
+- name: run test script that takes parameters passed via splatting filter
+  script: 'test_script_with_splatting.ps1 "{{ test_win_script_yaml_dict_value|toPowershellHash }}"'
+  register: test_script_with_splatting_filter_result
+
+- name: check that script ran and received parameters via splatting filter
+  assert:
+    that:
+      - "test_script_with_splatting_filter_result.rc == 0"
+      - "test_script_with_splatting_filter_result.stdout"
+      - "test_script_with_splatting_filter_result.stdout_lines[0] == 'this'"
+      - "test_script_with_splatting_filter_result.stdout_lines[1] == 'that'"
+      - "test_script_with_splatting_filter_result.stdout_lines[2] == 'other'"
+      - "not test_script_with_splatting_filter_result.stderr"
+      - "not test_script_with_splatting_filter_result|failed"
+      - "test_script_with_splatting_filter_result|changed"
+
 - name: run test script that takes splatted parameters from a variable
   script: test_script_with_splatting.ps1 {{ test_win_script_splat|quote }}
   register: test_script_with_splatting2_result

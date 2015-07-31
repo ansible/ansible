@@ -1,0 +1,13 @@
+---
+# Parameters to pass to test scripts.
+test_powershell_hash_filter_value:
+  This: THIS
+  That: THAT
+  Other: OTHER
+
+test_powershell_hash_filter_expected: "@{This=THIS;Other=OTHER;That=THAT;}"
+
+test_powershell_hash_filter_value_invalid:
+  - This
+  - That
+  - Other
