@@ -1,0 +1,48 @@
+# common setup tasks for ecs module tests
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
+- name: Create ECS Role
+  iam:
+    iam_type: role
+    name: ecsInstanceRole
+    state: present
+  register: new_role
+
+- name: Create policy for ECS Role
+  iam_policy:
+    iam_type: role
+    iam_name: ecsInstanceRole
+    policy_name: ecsInstanceRoleAccessPolicy
+    state: present
+    policy_json: '{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:Get*",
+        "s3:List*",
+        "ecs:CreateCluster",
+        "ecs:DeregisterContainerInstance",
+        "ecs:DiscoverPollEndpoint",
+        "ecs:Poll",
+        "ecs:RegisterContainerInstance",
+        "ecs:Submit*"
+      ],
+      "Resource": "*"
+    }
+  ]
+}'

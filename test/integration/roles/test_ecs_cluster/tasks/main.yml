@@ -1,0 +1,95 @@
+---
+# Basic provisioning example
+- name: Check cluster status
+  ecs_cluster_facts:
+  register: outputs
+
+- name: Debug facts
+  debug: var="outputs"
+  when: debug is defined and debug
+
+- name: Create cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: present
+  register: result
+
+- name: Show create cluster outputs
+  debug: var="result.cluster"
+  when: debug is defined and debug
+
+- name: assert new cluster was created
+  assert:
+    that:
+      - '"cluster" in result'
+      - '"status" in result.cluster'
+      - 'result.cluster.status == "ACTIVE"'
+      - 'result.cluster.clusterName == "{{ new_cluster }}"'
+
+- name: Check cluster facts no details
+  ecs_cluster_facts:
+    cluster: "{{ new_cluster }}"
+  register: task_output
+
+- name: Show cluster facts no details outputs
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: assert ansible_facts exist for cluster
+  assert:
+    that:
+      - '"ansible_facts" in task_output'
+      - '"clusters" in task_output.ansible_facts or "clusters_not_running" in task_output.ansible_facts'
+
+- name: Check cluster facts with details
+  ecs_cluster_facts:
+    cluster: "{{ new_cluster }}"
+    details: true
+  register: task_output
+
+- name: Show outputs of cluster facts with details
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: assert ansible_facts exist
+  assert:
+    that:
+      - '"ansible_facts" in task_output'
+      - '"clusters" in task_output.ansible_facts or "clusters_not_running" in task_output.ansible_facts'
+
+- name: Delete cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: absent
+  register: result
+
+- name: Show outputs
+  debug: var="result.cluster.status"
+  when: debug is defined and debug
+
+# The cluster delete module returns the status of the cluster before delete
+- name: assert cluster was deleted
+  assert:
+    that:
+      - '"cluster" in result'
+      - '"status" in result.cluster'
+      - 'result.cluster.status == "ACTIVE"'
+
+- name: Check cluster status
+  ecs_cluster_facts:
+    cluster: "{{ new_cluster }}"
+    details: true
+  register: result
+
+- name: Show outputs
+  debug: var="result"
+  when: debug is defined and debug
+
+- name: assert new cluster was deleted
+  assert:
+    that:
+      - '"ansible_facts" in result'
+      - '"clusters" in result.ansible_facts'
+      - '"status" in result.ansible_facts.clusters[0]'
+      - 'result.ansible_facts.clusters[0].status == "INACTIVE"'
+      - 'result.ansible_facts.clusters[0].clusterName == "{{ new_cluster }}"'

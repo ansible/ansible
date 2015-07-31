@@ -1,0 +1,214 @@
+---
+
+- name: Create cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: present
+  register: result
+
+- name: Show create cluster outputs
+  debug: var="result.cluster"
+  when: debug is defined and debug
+
+- name: assert new cluster was created
+  assert:
+    that:
+      - '"cluster" in result'
+      - '"status" in result.cluster'
+      - 'result.cluster.status == "ACTIVE"'
+      - 'result.cluster.clusterName == "{{ new_cluster }}"'
+
+- name: Create task definition
+  ecs_taskdefinition:
+    containers:
+    - name: simple-app
+      cpu: 10
+      essential: true
+      image: "httpd:2.4"
+      memory: 300
+      mountPoints:
+      - containerPath: /usr/local/apache2/htdocs
+        sourceVolume: my-vol
+      portMappings:
+      - containerPort: 80
+        hostPort: 80
+    - name: busybox
+      command:
+        - "/bin/sh -c \"while true; do echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done\""
+      cpu: 10
+      entryPoint:
+      - sh
+      - "-c"
+      essential: false
+      image: busybox
+      memory: 200
+      volumesFrom:
+      - sourceContainer: simple-app
+    volumes:
+    - name: my-vol
+    family: "{{ new_cluster ~ '-task'}}"
+    state: present
+  register: task_output
+
+- name: "Show outputs for task definition creation"
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: "Get task definitions with details"
+  ecs_taskdefinition_facts:
+    name: "{{ new_cluster ~ '-task' }}"
+    details: true
+  register: task_output
+
+- name: "Show outputs for task definition with details"
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: "assert ansible_facts exist for task definition"
+  assert:
+    that:
+      - '"ansible_facts" in task_output'
+      - '"task_definitions" in task_output.ansible_facts'
+
+- name: "get revision number of task"
+  set_fact:
+    task_revision: "{{ task_output.ansible_facts.task_definitions.revision }}"
+
+- name: Create service
+  ecs_service:
+    state: present
+    name: console-test-service
+    cluster: "{{ new_cluster }}"
+    task_definition: "{{ new_cluster }}-task:{{task_revision}}"
+    desired_count: 0
+  register: result
+- name: Show outputs
+  debug: var="result"
+
+- name: Show create service outputs
+  debug: var="result.service"
+  when: debug is defined and debug
+
+- name: assert new service was created
+  assert:
+    that:
+      - '"service" in result'
+      - '"status" in result.service'
+      - 'result.service.status == "ACTIVE"'
+      - 'result.service.serviceName == "console-test-service"'
+
+- name: Check service facts with no details
+  ecs_service_facts:
+    cluster: "{{ new_cluster }}"
+  register: result
+
+- name: Show outputs
+  debug: var="result"
+
+- name: assert results were returned
+  assert:
+    that:
+      - '"ansible_facts" in result'
+
+- name: Check service facts with details
+  ecs_service_facts:
+    cluster: "{{ new_cluster }}"
+    service: console-test-service
+    details: "true"
+  register: result
+
+- name: Show outputs
+  debug: var="result"
+
+- name: assert results were returned
+  assert:
+    that:
+      - '"ansible_facts" in result'
+
+- name: Delete Service
+  ecs_service:
+    state: absent
+    name: console-test-service
+    cluster: "{{ new_cluster }}"
+  register: result
+- name: Show outputs
+  debug: var="result"
+
+# The service delete module returns the status of the service before delete
+- name: assert service was deleted
+  assert:
+    that:
+      - '"ansible_facts" in result'
+      - '"status" in result.ansible_facts'
+      - 'result.ansible_facts.status == "ACTIVE"'
+      - 'result.ansible_facts.serviceName == "console-test-service"'
+
+# Wait for service to be fully deleted
+- name: Wait for service to be deleted
+  ecs_service:
+    state: deleting
+    name: console-test-service
+    cluster: "{{ new_cluster }}"
+  register: task_output
+
+- name: Check service status
+  ecs_service_facts:
+    cluster: "{{ new_cluster }}"
+    service: console-test-service
+    details: "true"
+  register: result
+
+- name: Show outputs
+  debug: var="result"
+  when: debug is defined and debug
+
+- name: assert new service was deleted
+  assert:
+    that:
+      - '"ansible_facts" in result'
+      - '"services" in result.ansible_facts'
+      - '"status" in result.ansible_facts.services[0]'
+      - 'result.ansible_facts.services[0].status == "INACTIVE"'
+      - 'result.ansible_facts.services[0].serviceName == "console-test-service"'
+
+- name: Delete task definition
+  ecs_taskdefinition:
+    state: absent
+    family: "{{ new_cluster ~ '-task' }}"
+    revision: "{{ task_revision }}"
+  register: task_output
+
+- name: Delete cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: absent
+  register: result
+
+# The cluster delete module returns the status of the cluster before delete
+- name: assert cluster was deleted
+  assert:
+    that:
+      - '"cluster" in result'
+      - '"status" in result.cluster'
+      - 'result.cluster.status == "ACTIVE"'
+
+- name: Check cluster status
+  ecs_cluster_facts:
+    cluster: "{{ new_cluster }}"
+    details: true
+  register: result
+
+- name: Show outputs
+  debug: var="result"
+  when: debug is defined and debug
+
+- name: assert new cluster was deleted
+  assert:
+    that:
+      - '"ansible_facts" in result'
+      - '"clusters" in result.ansible_facts'
+      - '"status" in result.ansible_facts.clusters[0]'
+      - 'result.ansible_facts.clusters[0].status == "INACTIVE"'
+      - 'result.ansible_facts.clusters[0].clusterName == "{{ new_cluster }}"'
+
+

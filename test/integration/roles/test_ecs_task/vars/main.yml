@@ -1,0 +1,3 @@
+---
+# vars file for test_ecs
+ami_image_id: ami-db0306eb

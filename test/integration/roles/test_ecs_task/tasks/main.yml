@@ -1,0 +1,312 @@
+---
+#
+# Setup
+#
+
+- name: Create cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: present
+  register: result
+
+- name: Show outputs
+  debug: var="result.cluster"
+  when: debug is defined and debug
+
+- name: "assert new cluster was created"
+  assert:
+    that:
+      - '"cluster" in result'
+      - '"status" in result.cluster'
+      - 'result.cluster.status == "ACTIVE"'
+      - 'result.cluster.clusterName == "{{ new_cluster }}"'
+
+- name: "Create task definition"
+  ecs_taskdefinition:
+    containers:
+    - name: simple-app
+      cpu: 10
+      essential: true
+      image: "httpd:2.4"
+      memory: 300
+      mountPoints:
+      - containerPath: /usr/local/apache2/htdocs
+        sourceVolume: my-vol
+      portMappings:
+      - containerPort: 80
+        hostPort: 80
+    - name: busybox
+      command:
+        - "/bin/sh -c \"while true; do echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done\""
+      cpu: 10
+      entryPoint:
+      - sh
+      - "-c"
+      essential: false
+      image: busybox
+      memory: 200
+      volumesFrom:
+      - sourceContainer: simple-app
+    volumes:
+    - name: my-vol
+    family: "{{ new_cluster ~ '-task'}}"
+    state: present
+  register: task_output
+
+- name: "Show outputs for task definition creation"
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: "get arn of task"
+  set_fact:
+    task_definition_arn: "{{ task_output.taskdefinition.taskDefinitionArn }}"
+
+- name: show task_definition_arn
+  debug: var=task_definition_arn
+
+#
+# Container Instance Strategy:
+#  - launch an instance to the ecs_host group
+#  - scp to it a new /etc/ecs/ecs.config with
+#       ECS_CLUSTER=test-cluster-<ourname>
+#  - reboot it
+#  - wait for it to join the cluster 
+
+- name: Get some facts about vpcs
+  ec2_vpc_facts:
+  register: vpc_facts
+
+- name: Find default vpc id
+  # set_fact: default_vpc_id="{{ item.VpcId }}"
+  set_fact: default_vpc_id="{% for i in vpc_facts.vpcs if i.IsDefault %}{{ i.VpcId }}{%endfor%}"
+
+- name: Show output vpc id
+  debug: var=default_vpc_id
+  when: debug is defined and debug
+
+- name: Get some facts about vpc subnets
+  ec2_vpc_facts:
+    vpc_id: "{{ default_vpc_id }}"
+    options: "subnets"
+  register: vpc_subnets
+
+# This is the ami id for the ecs-optimized image in us-west-2
+- name: Launch/restart instance
+  ec2:
+    instance_type: t2.micro
+    image: "{{ ami_image_id }}"
+    wait: yes
+    group: ecs_hosts
+    count: 1
+    vpc_subnet_id: "{{ vpc_subnets.subnets[0].SubnetId }}"
+    user_data: "#!/bin/bash\necho ECS_CLUSTER={{ new_cluster }} >> /etc/ecs/ecs.config"
+    assign_public_ip: yes
+    instance_tags:
+      Name: "{{ new_cluster ~ '-instance'}}"
+    instance_profile_name: ecsInstanceRole
+    wait: yes
+  register: new_ec2_instance
+
+- name: Show outputs
+  debug: var=new_ec2_instance
+  when: debug is defined and debug
+
+# Wait for ec2 instance to register itself with the cluster
+# (not sufficient to wait for running status)
+- name: Wait for register
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: has_instances
+  register: task_output
+
+- name: Run task
+  ecs_task:
+      operation: run
+      cluster: "{{ new_cluster }}"
+      task_definition: "{{ new_cluster ~ '-task' }}"
+      count: 1
+      started_by: ansible_user
+  register: task_output
+
+- name: Show run task outputs
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: Save task arn
+  set_fact: task_arn="{{ task_output.task[0].taskArn }}"
+
+# Assert task is in list of tasks, vs failures
+- name: test task facts after run
+  ecs_task_facts:
+    cluster: "{{ new_cluster }}"
+    details: true
+    task_list: "{{ task_arn }}"
+  register: task_fact_outputs
+
+# - name: assert task was started
+#   assert:
+#     that:
+#       - '"cluster" in result'
+#       - '"status" in result.cluster'
+#       - 'result.cluster.status == "ACTIVE"'
+
+- name: Show task after run fact outputs
+  debug: var=task_fact_outputs
+  when: debug is defined and debug
+
+- name: Stop a task
+  ecs_task:
+      operation: stop
+      cluster: "{{ new_cluster }}"
+      task: "{{ task_arn }}"
+      task_definition: "{{ new_cluster ~ '-task' }}"
+
+# Assert task is in list of tasks, vs failures
+- name: test task facts after stop
+  ecs_task_facts:
+    cluster: "{{ new_cluster }}"
+    task_list: "{{ task_arn }}"
+    details: true
+  register: task_fact_outputs
+
+# - name: assert task was started
+#   assert:
+#     that:
+#       - '"cluster" in result'
+#       - '"status" in result.cluster'
+#       - 'result.cluster.status == "ACTIVE"'
+
+- name: Show task fact outputs after stop
+  debug: var=task_fact_outputs
+  when: debug is defined and debug
+
+- name: Get cluster instance facts
+  ecs_cluster_facts:
+    cluster: "{{ new_cluster }}"
+    option: instances
+  register: instance_output
+
+- name: Show cluster instance facts
+  debug: var=instance_output
+  when: debug is defined and debug
+
+- name: Get cluster instance facts
+  ecs_cluster_facts:
+    cluster: "{{ new_cluster }}"
+    details: true
+  register: cluster_output
+
+- name: Show cluster facts
+  debug: var=cluster_output
+  when: debug is defined and debug
+
+- name: Get InstanceId
+  set_fact: task_instance_id="{{ instance_output.ansible_facts.instances[0] }}"
+
+- name: Start a task
+  ecs_task:
+      operation: start
+      cluster: "{{ new_cluster }}"
+      task: "{{ new_cluster ~ '-task'}}"
+      task_definition: "{{ task_definition_arn }}"
+      container_instances:
+      - "{{ task_instance_id }}"
+      started_by: ansible_user
+  register: task_output
+
+- name: Show task start outputs
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: Save task arn
+  set_fact: task_started_arn="{{ task_output.task[0].taskArn }}"
+
+# Assert task is in list of tasks, vs failures
+- name: test task facts
+  ecs_task_facts:
+    cluster: "{{ new_cluster }}"
+    task_list: "{{ task_arn }}"
+    details: true
+  register: task_fact_outputs
+
+# - name: assert task was started
+#   assert:
+#     that:
+#       - '"cluster" in result'
+#       - '"status" in result.cluster'
+#       - 'result.cluster.status == "ACTIVE"'
+
+- name: Show task fact outputs
+  debug: var=task_fact_outputs
+  when: debug is defined and debug
+
+- name: Stop a task
+  ecs_task:
+      operation: stop
+      cluster: "{{ new_cluster }}"
+      task: "{{ task_output.task[0].taskArn }}"
+      task_definition: "{{ new_cluster ~ '-task'}}"
+  register: task_output
+
+- name: Show outputs
+  debug: var="task_output"
+  when: debug is defined and debug
+
+#
+# Clean up
+#
+
+- name: Deregister task definition by ARN
+  ecs_taskdefinition:
+    state: absent
+    arn: "{{ task_definition_arn }}"
+  register: task_output
+
+- name: Terminate ec2 instance
+  ec2:
+    state: absent
+    wait: yes
+    instance_id: "{{ new_ec2_instance.instance_ids }}"
+  register: outputs
+
+- name: Show outputs of ec2 Terminate
+  debug: var=outputs
+  when: debug is defined and debug
+
+# need to deregister the EC2 instance
+- name: Delete cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: absent
+  register: result
+
+- name: Show outputs
+  debug: var="result.cluster.status"
+  when: debug is defined and debug
+
+# The cluster delete module returns the status of the cluster before delete
+- name: assert cluster was deleted
+  assert:
+    that:
+      - '"cluster" in result'
+      - '"status" in result.cluster'
+      - 'result.cluster.status == "ACTIVE"'
+
+- name: Check cluster status
+  ecs_cluster_facts:
+    cluster: "{{ new_cluster }}"
+    details: true
+  register: result
+
+- name: Show outputs
+  debug: var="result"
+  when: debug is defined and debug
+
+- name: assert new cluster was deleted
+  assert:
+    that:
+      - '"ansible_facts" in result'
+      - '"clusters" in result.ansible_facts'
+      - '"status" in result.ansible_facts.clusters[0]'
+      - 'result.ansible_facts.clusters[0].status == "INACTIVE"'
+      - 'result.ansible_facts.clusters[0].clusterName == "{{ new_cluster }}"'

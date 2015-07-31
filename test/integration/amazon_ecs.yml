@@ -1,0 +1,15 @@
+
+- hosts: localhost
+  gather_facts: true
+  connection: local
+
+  roles:
+  - { role: test_ecs_taskdefinition, tags: test_ecs_taskdefinition }
+  - { role: test_ecs_cluster, tags: test_ecs_cluster }
+  - { role: test_ecs_task, tags: test_ecs_task }
+  - { role: test_ecs_service, tags: test_ecs_service }
+
+  vars:
+    output_dir: test_output
+    new_cluster: test-cluster-{{ random_string }}
+    debug: true

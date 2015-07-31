@@ -1,0 +1,201 @@
+---
+# Basic provisioning example
+- name: Check cluster status
+  ecs_cluster_facts:
+  register: outputs
+
+- name: Show cluster facts
+  debug: var="outputs"
+  when: debug is defined and debug
+
+- name: Create cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: present
+  register: result
+
+- name: "Show outputs"
+  debug: var="result.cluster"
+  when: debug is defined and debug
+
+- name: "assert new cluster was created"
+  assert:
+    that:
+      - '"cluster" in result'
+      - '"status" in result.cluster'
+      - 'result.cluster.status == "ACTIVE"'
+      - 'result.cluster.clusterName == "{{ new_cluster }}"'
+
+- name: "Check definitions status"
+  ecs_taskdefinition_facts: ~
+  register: outputs
+
+- name: "Create task definition"
+  ecs_taskdefinition:
+    containers:
+    - name: simple-app
+      cpu: 10
+      essential: true
+      image: "httpd:2.4"
+      memory: 300
+      mountPoints:
+      - containerPath: /usr/local/apache2/htdocs
+        sourceVolume: my-vol
+      portMappings:
+      - containerPort: 80
+        hostPort: 80
+    - name: busybox
+      command:
+        - "/bin/sh -c \"while true; do echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done\""
+      cpu: 10
+      entryPoint:
+      - sh
+      - "-c"
+      essential: false
+      image: busybox
+      memory: 200
+      volumesFrom:
+      - sourceContainer: simple-app
+    volumes:
+    - name: my-vol
+    family: "{{ new_cluster ~ '-task'}}"
+    state: present
+  register: task_output
+
+- name: "Show outputs for task definition creation"
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: "Get task definitions with details"
+  ecs_taskdefinition_facts:
+    name: "{{ new_cluster ~ '-task' }}"
+    details: true
+  register: task_output
+
+- name: "Show outputs for task definition with details"
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: "assert ansible_facts exist for task definition"
+  assert:
+    that:
+      - '"ansible_facts" in task_output'
+      - '"task_definitions" in task_output.ansible_facts'
+
+- name: "get revision number of task"
+  set_fact:
+    task_revision: "{{ task_output.ansible_facts.task_definitions.revision }}"
+
+- name: Did it set?
+  debug: var="task_revision"
+  when: debug is defined and debug
+
+- name: "Delete task definition"
+  ecs_taskdefinition:
+    state: absent
+    family: "{{ new_cluster ~ '-task' }}"
+    revision: "{{ task_revision }}"
+  register: task_output
+
+- name: "Get task definitions with details"
+  ecs_taskdefinition_facts:
+    name: "{{ new_cluster ~ '-task' }}"
+    details: true
+  register: task_output
+
+- name: "Show outputs for task definitions with details"
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: "assert ansible_facts exist for task definition"
+  assert:
+    that:
+      - '"ansible_facts" in task_output'
+      - '"task_definitions" in task_output.ansible_facts'
+
+- name: "Create second task definition"
+  ecs_taskdefinition:
+    containers:
+    - name: simple-app
+      cpu: 10
+      essential: true
+      image: "httpd:2.4"
+      memory: 300
+      mountPoints:
+      - containerPath: /usr/local/apache2/htdocs
+        sourceVolume: my-vol
+      portMappings:
+      - containerPort: 80
+        hostPort: 80
+    - name: busybox
+      command:
+        - "/bin/sh -c \"while true; do echo '<html> <head> <title>Amazon ECS Sample App</title> <style>body {margin-top: 40px; background-color: #333;} </style> </head><body> <div style=color:white;text-align:center> <h1>Amazon ECS Sample App</h1> <h2>Congratulations!</h2> <p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom; cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done\""
+      cpu: 10
+      entryPoint:
+      - sh
+      - "-c"
+      essential: false
+      image: busybox
+      memory: 200
+      volumesFrom:
+      - sourceContainer: simple-app
+    volumes:
+    - name: my-vol
+    family: "{{ new_cluster ~ '-task2'}}"
+    state: present
+  register: task_output
+
+- name: "Show second task definition outputs"
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: "get arn of task definition"
+  set_fact:
+    task_arn: "{{ task_output.taskdefinition.taskDefinitionArn }}"
+
+- name: Deregister task definition by ARN
+  ecs_taskdefinition:
+    state: absent
+    arn: "{{ task_arn }}"
+  register: task_output
+
+- name: Show outputs
+  debug: var="task_output"
+  when: debug is defined and debug
+
+- name: Delete cluster
+  ecs_cluster:
+    name: "{{ new_cluster }}"
+    state: absent
+  register: result
+
+- name: Show outputs
+  debug: var="result.cluster.status"
+  when: debug is defined and debug
+
+# The cluster delete module returns the status of the cluster before delete
+- name: assert cluster was deleted
+  assert:
+    that:
+      - '"cluster" in result'
+      - '"status" in result.cluster'
+      - 'result.cluster.status == "ACTIVE"'
+
+- name: Check cluster status
+  ecs_cluster_facts:
+    cluster: "{{ new_cluster }}"
+    details: true
+  register: result
+
+- name: Show outputs
+  debug: var="result"
+  when: debug is defined and debug
+
+- name: assert new cluster was deleted
+  assert:
+    that:
+      - '"ansible_facts" in result'
+      - '"clusters" in result.ansible_facts'
+      - '"status" in result.ansible_facts.clusters[0]'
+      - 'result.ansible_facts.clusters[0].status == "INACTIVE"'
+      - 'result.ansible_facts.clusters[0].clusterName == "{{ new_cluster }}"'
