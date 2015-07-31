@@ -56,7 +56,8 @@ class Connection(ConnectionBase):
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
         super(Connection, self).__init__(*args, **kwargs)
-
+        
+        self._ipv6 = False
         self.host = self._play_context.remote_addr
 
     @property
