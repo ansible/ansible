@@ -57,10 +57,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-        self._ipv6 = False
         self.host = self._play_context.remote_addr
-	if self.host is not None and self.host.count(":")>1:
-	    self._ipv6 = True
 
     @property
     def transport(self):
@@ -376,7 +373,7 @@ class Connection(ConnectionBase):
                 become_errput = ''
                 while True:
                     self._display.debug('Waiting for Privilege Escalation input')
-                    if self.check_become_success(become_output) or self.check_password_prompt(become_output):
+                    if self.check_become_success(become_output + become_errput) or self.check_password_prompt(become_output + become_errput):
                         break
 
                     rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._play_context.timeout)
@@ -397,7 +394,7 @@ class Connection(ConnectionBase):
                     if not chunk:
                         raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
 
-                if not self.check_become_success(become_output):
+                if not self.check_become_success(become_output + become_errput):
                     self._display.debug("Sending privilege escalation password.")
                     stdin.write(self._play_context.become_pass + '\n')
                 else:
@@ -434,21 +431,19 @@ class Connection(ConnectionBase):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         cmd = self._password_cmd()
 
-        '''SCP and SFTP require square brackets while ssh will break with them'''
-        if self._ipv6:
-            tempHost = '[%s]' % self.host
-        else:
-            tempHost = self.host 	
+        # scp and sftp require square brackets for IPv6 addresses, but
+        # accept them for hostnames and IPv4 addresses too.
+        host = '[%s]' % self.host
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
             cmd.extend(self._common_args)
-            cmd.extend([in_path, '{0}:{1}'.format(tempHost, pipes.quote(out_path))])
+            cmd.extend([in_path, '{0}:{1}'.format(host, pipes.quote(out_path))])
             indata = None
         else:
             cmd.append('sftp')
             cmd.extend(self._common_args)
-            cmd.append(tempHost)
+            cmd.append(host)
             indata = "put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
 
         (p, stdin) = self._run(cmd, indata)
