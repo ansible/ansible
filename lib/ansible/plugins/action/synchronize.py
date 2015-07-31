@@ -140,14 +140,12 @@ class ActionModule(ActionBase):
 
             user = None
             if boolean(task_vars.get('set_remote_user', 'yes')):
-                if use_delegate:
-                    user = task_vars['hostvars'][conn.delegate].get('ansible_ssh_user')
-
                 if not use_delegate or not user:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+                elif use_delegate:
+                    user = task_vars['hostvars'][task_vars.get('delegate_to')].get('ansible_ssh_user')
 
             if use_delegate:
-                # FIXME
                 private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
             else:
                 private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
