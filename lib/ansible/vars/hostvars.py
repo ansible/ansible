@@ -19,13 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
+
 from jinja2 import Undefined as j2undefined
 
 from ansible.template import Templar
 
 __all__ = ['HostVars']
 
-class HostVars(dict):
+# Note -- this is a Mapping, not a MutableMapping
+class HostVars(collections.Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
     def __init__(self, vars_manager, play, inventory, loader):
@@ -36,7 +39,7 @@ class HostVars(dict):
         self._lookup       = {}
 
     def __getitem__(self, host_name):
-        
+
         if host_name not in self._lookup:
             host = self._inventory.get_host(host_name)
             if not host:
@@ -46,3 +49,13 @@ class HostVars(dict):
             self._lookup[host_name] = templar.template(result, fail_on_undefined=False)
         return self._lookup[host_name]
 
+    def __contains__(self, host_name):
+        item = self.get(host_name)
+        if item and item is not j2undefined:
+            return True
+        return False
+    def __iter__(self):
+        raise NotImplementedError('HostVars does not support iteration as hosts are discovered on an as needed basis.')
+
+    def __len__(self):
+        raise NotImplementedError('HostVars does not support len.  hosts entries are discovered dynamically as needed')
