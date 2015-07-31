@@ -72,9 +72,9 @@ As an advanced usage, you can also select the numbered server in a group::
    
     webservers[0]
 
-Or a portion of servers in a group::
+Or a range of servers in a group::
 
-    webservers[0-25]
+    webservers[0:25]
 
 Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
 
