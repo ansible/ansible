@@ -75,13 +75,10 @@ class ActionModule(ActionBase):
 
         original_transport = task_vars.get('ansible_connection') or self._play_context.connection
         transport_overridden = False
-        if task_vars.get('delegate_to') is None:
-            task_vars['delegate_to'] = '127.0.0.1'
-            # IF original transport is not local, override transport and disable sudo.
-            if original_transport != 'local':
-                task_vars['ansible_connection'] = 'local'
-                transport_overridden = True
-                self._play_context.become = False
+        try:
+            delegate_to = self._play_context.delegate_to
+        except (AttributeError, KeyError):
+            delegate_to = None
 
         use_ssh_args = self._task.args.pop('use_ssh_args', None)
 
@@ -103,13 +100,15 @@ class ActionModule(ActionBase):
         # CHECK DELEGATE HOST INFO
         use_delegate = False
 
-        if dest_host == task_vars.get('delegate_to'):
+        if dest_host == delegate_to:
             # edge case: explicit delegate and dest_host are the same
+            # so we run rsync on the remote machine targetting its localhost
+            # (itself)
             dest_host = '127.0.0.1'
             use_delegate = True
         else:
             if 'hostvars' in task_vars:
-                if task_vars.get('delegate_to') in task_vars['hostvars'] and original_transport != 'local':
+                if delegate_to in task_vars['hostvars'] and original_transport != 'local':
                     # use a delegate host instead of localhost
                     use_delegate = True
 
@@ -126,12 +125,16 @@ class ActionModule(ActionBase):
         # Delegate to localhost as the source of the rsync unless we've been
         # told (via delegate_to) that a different host is the source of the
         # rsync
-        if not use_delegate:
+        transport_overridden = False
+        if not use_delegate and original_transport != 'local':
             # Create a connection to localhost to run rsync on
-            ### FIXME: Do we have to dupe stdin or is this sufficient?
             new_stdin = self._connection._new_stdin
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
+            transport_overridden = True
+            # Also disable sudo
+            ### FIXME: Why exactly?
+            self._play_context.become = False
 
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
         src  = self._task.args.get('src', None)
@@ -140,10 +143,11 @@ class ActionModule(ActionBase):
 
             user = None
             if boolean(task_vars.get('set_remote_user', 'yes')):
+                if use_delegate:
+                    user = task_vars['hostvars'][delegate_to].get('ansible_ssh_user')
+
                 if not use_delegate or not user:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
-                elif use_delegate:
-                    user = task_vars['hostvars'][task_vars.get('delegate_to')].get('ansible_ssh_user')
 
             if use_delegate:
                 private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
