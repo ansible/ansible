@@ -35,19 +35,6 @@ $complex_args = @'
 Set-Content env:MODULE_COMPLEX_ARGS -Value $complex_args
 $args = @('env:MODULE_COMPLEX_ARGS')
 
-# Helper function to parse Ansible JSON arguments from a "file" passed as
-# the single argument to the module.
-# Example: $params = Parse-Args $args
-Function Parse-Args($arguments)
-{
-    $parameters = New-Object psobject;
-    If ($arguments.Length -gt 0)
-    {
-        $parameters = Get-Content $arguments[0] | ConvertFrom-Json;
-    }
-    $parameters;
-}
-
 # Helper function to set an "attribute" on a psobject instance in powershell.
 # This is a convenience to make adding Members to the object easier and
 # slightly more pythonic
@@ -149,6 +136,28 @@ Function ConvertTo-Bool
         $false
     }
     return
+}
+
+# Helper function to parse Ansible JSON arguments from a "file" passed as
+# the single argument to the module.
+# Example: $params = Parse-Args $args
+Function Parse-Args($arguments, $supports_check_mode = $false)
+{
+    $parameters = New-Object psobject
+    If ($arguments.Length -gt 0)
+    {
+        $parameters = Get-Content $arguments[0] | ConvertFrom-Json
+    }
+    $check_mode = Get-Attr $parameters "_ansible_check_mode" $false | ConvertTo-Bool
+    If ($check_mode -and -not $supports_check_mode)
+    {
+        $obj = New-Object psobject
+        Set-Attr $obj "skipped" $true
+        Set-Attr $obj "changed" $false
+        Set-Attr $obj "msg" "remote module does not support check mode"
+        Exit-Json $obj
+    }
+    $parameters
 }
 
 # Helper function to calculate a hash of a file in a way which powershell 3 
