@@ -186,7 +186,7 @@ class Facts(object):
         if self.facts['system'] == 'Linux':
             self.get_distribution_facts()
         elif self.facts['system'] == 'AIX':
-            # Attempt to use getconf to figure out architechture
+            # Attempt to use getconf to figure out architecture
             # fall back to bootinfo if needed
             if module.get_bin_path('getconf'):
                 rc, out, err = module.run_command([module.get_bin_path('getconf'),
