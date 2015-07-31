@@ -124,7 +124,8 @@ class InvalidSource(Exception):
 # Simple version of aptsources.sourceslist.SourcesList.
 # No advanced logic and no backups inside.
 class SourcesList(object):
-    def __init__(self):
+    def __init__(self, module):
+        self.module = module
         self.files = {}  # group sources by file
         # Repositories that we're adding -- used to implement mode param
         self.new_repos = set()
@@ -234,7 +235,7 @@ class SourcesList(object):
             group.append((n, valid, enabled, source, comment))
         self.files[file] = group
 
-    def save(self, module):
+    def save(self):
         for filename, sources in self.files.items():
             if sources:
                 d, fn = os.path.split(filename)
@@ -255,13 +256,13 @@ class SourcesList(object):
                     try:
                         f.write(line)
                     except IOError, err:
-                        module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
-                module.atomic_move(tmp_path, filename)
+                        self.module.fail_json(msg="Failed to write to file %s: %s" % (tmp_path, unicode(err)))
+                self.module.atomic_move(tmp_path, filename)
 
                 # allow the user to override the default mode
                 if filename in self.new_repos:
-                    this_mode = module.params['mode']
-                    module.set_mode_if_different(filename, this_mode, False)
+                    this_mode = self.module.params['mode']
+                    self.module.set_mode_if_different(filename, this_mode, False)
             else:
                 del self.files[filename]
                 if os.path.exists(filename):
@@ -329,7 +330,7 @@ class UbuntuSourcesList(SourcesList):
     def __init__(self, module, add_ppa_signing_keys_callback=None):
         self.module = module
         self.add_ppa_signing_keys_callback = add_ppa_signing_keys_callback
-        super(UbuntuSourcesList, self).__init__()
+        super(UbuntuSourcesList, self).__init__(module)
 
     def _get_ppa_info(self, owner_name, ppa_name):
         lp_api = self.LP_API % (owner_name, ppa_name)
@@ -358,6 +359,10 @@ class UbuntuSourcesList(SourcesList):
     def add_source(self, line, comment='', file=None):
         if line.startswith('ppa:'):
             source, ppa_owner, ppa_name = self._expand_ppa(line)
+
+            if source in self.repos_urls:
+                # repository already exists
+                return
 
             if self.add_ppa_signing_keys_callback is not None:
                 info = self._get_ppa_info(ppa_owner, ppa_name)
@@ -390,7 +395,7 @@ class UbuntuSourcesList(SourcesList):
                     continue
 
                 if source_line.startswith('ppa:'):
-                    source, ppa_owner, ppa_name = self._expand_ppa(i[3])
+                    source, ppa_owner, ppa_name = self._expand_ppa(source_line)
                     _repositories.append(source)
                 else:
                     _repositories.append(source_line)
@@ -423,34 +428,29 @@ def main():
     )
 
     params = module.params
-    if params['install_python_apt'] and not HAVE_PYTHON_APT and not module.check_mode:
-        install_python_apt(module)
-
     repo = module.params['repo']
     state = module.params['state']
     update_cache = module.params['update_cache']
     sourceslist = None
 
-    if HAVE_PYTHON_APT:
-        if isinstance(distro, aptsources_distro.UbuntuDistribution):
-            sourceslist = UbuntuSourcesList(module,
-                add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
-        elif HAVE_PYTHON_APT and \
-            isinstance(distro, aptsources_distro.DebianDistribution) or isinstance(distro, aptsources_distro.Distribution):
-            sourceslist = SourcesList()
+    if not HAVE_PYTHON_APT:
+        if params['install_python_apt']:
+            install_python_apt(module)
+        else:
+            module.fail_json(msg='python-apt is not installed, and install_python_apt is False')
+
+    if isinstance(distro, aptsources_distro.UbuntuDistribution):
+        sourceslist = UbuntuSourcesList(module,
+            add_ppa_signing_keys_callback=get_add_ppa_signing_key_callback(module))
+    elif isinstance(distro, aptsources_distro.Distribution):
+        sourceslist = SourcesList(module)
     else:
-        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu. ' + \
-                             'You may be seeing this because python-apt is not installed, but you requested that it not be auto-installed')
+        module.fail_json(msg='Module apt_repository supports only Debian and Ubuntu.')
 
     sources_before = sourceslist.dump()
 
-    if repo.startswith('ppa:'):
-        expanded_repo = sourceslist._expand_ppa(repo)[0]
-    else:
-        expanded_repo = repo
-
     try:
-        if state == 'present' and expanded_repo not in sourceslist.repos_urls:
+        if state == 'present':
             sourceslist.add_source(repo)
         elif state == 'absent':
             sourceslist.remove_source(repo)
@@ -462,7 +462,7 @@ def main():
 
     if not module.check_mode and changed:
         try:
-            sourceslist.save(module)
+            sourceslist.save()
             if update_cache:
                 cache = apt.Cache()
                 cache.update()
