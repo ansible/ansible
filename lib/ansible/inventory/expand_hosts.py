@@ -103,7 +103,7 @@ def expand_hostname_range(line = None):
             i_end = string.ascii_letters.index(end)
             if i_beg > i_end:
                 raise errors.AnsibleError("host range must have begin <= end")
-            seq = [string.ascii_letters[i] for i in range(i_beg, i_end+1, int(step))]
+            seq = list(string.ascii_letters[i_beg:i_end+1:int(step)])
         except ValueError:  # not an alpha range
             seq = range(int(beg), int(end)+1, int(step))
 
