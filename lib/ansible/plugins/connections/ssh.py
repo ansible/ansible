@@ -56,8 +56,7 @@ class Connection(ConnectionBase):
         #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
         super(Connection, self).__init__(*args, **kwargs)
-        
-        self._ipv6 = False
+
         self.host = self._play_context.remote_addr
 
     @property
@@ -337,8 +336,6 @@ class Connection(ConnectionBase):
             ssh_cmd.append("-q")
         ssh_cmd += self._common_args
 
-        if self._ipv6:
-            ssh_cmd += ['-6']
         ssh_cmd.append(self.host)
 
         ssh_cmd.append(cmd)
