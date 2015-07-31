@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible import constants as C
 from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
@@ -76,7 +75,7 @@ class Host:
         self.ipv4_address = name
         self.ipv6_address = name
 
-        if port and port != C.DEFAULT_REMOTE_PORT:
+        if port:
             self.set_variable('ansible_ssh_port', int(port))
 
         self._gathered_facts = False

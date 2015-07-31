@@ -108,7 +108,7 @@ class InventoryParser(object):
                 if len(tokens) == 0:
                     continue
                 hostname = tokens[0]
-                port = C.DEFAULT_REMOTE_PORT
+                port = None
                 # Three cases to check:
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port

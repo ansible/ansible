@@ -298,6 +298,10 @@ class PlayContext(Base):
                 if variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
 
+        # make sure we get port defaults if needed
+        if newinfo.port is None and C.DEFAULT_REMOTE_PORT is not None:
+            newinfo.port = int(C.DEFAULT_REMOTE_PORT)
+
         # become legacy updates
         if not new_info.become_pass:
             if new_info.become_method == 'sudo' and new_info.sudo_pass:
