@@ -75,7 +75,6 @@ def expand_hostname_range(line = None):
         #   of hosts and then repeat until none left.
         # - also add an optional third parameter which contains the step. (Default: 1)
         #   so range can be [01:10:2] -> 01 03 05 07 09
-        # FIXME: make this work for alphabetic sequences too.
 
         (head, nrange, tail) = line.replace('[','|',1).replace(']','|',1).split('|')
         bounds = nrange.split(":")
@@ -104,7 +103,7 @@ def expand_hostname_range(line = None):
             i_end = string.ascii_letters.index(end)
             if i_beg > i_end:
                 raise errors.AnsibleError("host range format incorrectly specified!")
-            seq = string.ascii_letters[i_beg:i_end+1]
+            seq = [string.ascii_letters[i] for i in range(i_beg, i_end+1, int(step))]
         except ValueError:  # not an alpha range
             seq = range(int(beg), int(end)+1, int(step))
 
