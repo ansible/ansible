@@ -7,8 +7,8 @@ addons:
   apt:
     sources:
       - deadsnakes
-    packages:
-      - python2.4
+    #packages:
+    #  - python2.4
 install:
   - pip install tox PyYAML Jinja2 sphinx
 script:
