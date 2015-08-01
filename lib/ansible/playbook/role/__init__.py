@@ -93,7 +93,6 @@ class Role(Base, Become, Conditional, Taggable):
 
     @staticmethod
     def load(role_include, play, parent_role=None):
-        # FIXME: add back in the role caching support
         try:
             # The ROLE_CACHE is a dictionary of role names, with each entry
             # containing another dictionary corresponding to a set of parameters
