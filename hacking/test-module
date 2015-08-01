@@ -112,7 +112,11 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
         complex_args = utils_vars.combine_vars(complex_args, loader.load(args))
         args=''
 
-    inject = {}
+    if args:
+        parsed_args = parse_kv(args)
+        complex_args = utils_vars.combine_vars(complex_args, parsed_args)
+
+    task_vars = {}
     if interpreter:
         if '=' not in interpreter:
             print 'interpreter must by in the form of ansible_python_interpreter=/usr/bin/python'
@@ -122,16 +126,15 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
             interpreter_type = 'ansible_%s' % interpreter_type
         if not interpreter_type.endswith('_interpreter'):
             interpreter_type = '%s_interpreter' % interpreter_type
-        inject[interpreter_type] = interpreter_path
+        task_vars[interpreter_type] = interpreter_path
 
     if check:
          complex_args['CHECKMODE'] = True
 
     (module_data, module_style, shebang) = module_common.modify_module(
-        modfile, 
+        modfile,
         complex_args,
-        args,
-        inject 
+        task_vars=task_vars
     )
 
     modfile2_path = os.path.expanduser(destfile)
