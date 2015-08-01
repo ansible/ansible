@@ -132,9 +132,12 @@ class ActionModule(ActionBase):
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
             transport_overridden = True
+            ### FIXME: We think that this was here for v1 because the local
+            # connection didn't support sudo.  In v2 it does so we think it's
+            # safe to remove this now.
+
             # Also disable sudo
-            ### FIXME: Why exactly?
-            self._play_context.become = False
+            #self._play_context.become = False
 
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
         src  = self._task.args.get('src', None)
