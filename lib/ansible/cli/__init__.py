@@ -102,7 +102,10 @@ class CLI(object):
     def run(self):
 
         if self.options.verbosity > 0:
-            self.display.display("Using %s as config file" % C.CONFIG_FILE)
+            if C.CONFIG_FILE:
+                self.display.display("Using %s as config file" % C.CONFIG_FILE)
+            else:
+                self.display.display("No config file found; using defaults")
 
     @staticmethod
     def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
