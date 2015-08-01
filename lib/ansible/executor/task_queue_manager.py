@@ -23,6 +23,7 @@ import multiprocessing
 import os
 import socket
 import sys
+import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -77,6 +78,10 @@ class TaskQueueManager:
         # dictionaries to keep track of failed/unreachable hosts
         self._failed_hosts      = dict()
         self._unreachable_hosts = dict()
+
+        # A temporary file (opened pre-fork) used by connection plugins for
+        # inter-process locking.
+        self._options.connection_lockfile = tempfile.TemporaryFile()
 
         self._final_q = multiprocessing.Queue()
 
