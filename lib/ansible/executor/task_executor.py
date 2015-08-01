@@ -411,7 +411,6 @@ class TaskExecutor:
         correct connection object from the list of connection plugins
         '''
 
-        # FIXME: delegate_to calculation should be done here
         # FIXME: calculation of connection params/auth stuff should be done here
 
         if not self._play_context.remote_addr:
