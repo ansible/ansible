@@ -239,12 +239,13 @@ def create_launch_config(connection, module):
             module.fail_json(msg=str(e))
 
     result = dict(
-            ((a[0], a[1]) for a in vars(launch_configs[0]) if a[0] not in ('connection',)))
+            ((a[0], a[1]) for a in vars(launch_configs[0]).items() if a[0] not in ('connection', 'created_time')))
+    result['created_time'] = str(launch_configs[0].created_time)
 
-    module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
-                     image_id=result.image_id, arn=result.launch_configuration_arn,
-                     security_groups=result.security_groups,
-                     instance_type=result.instance_type,
+    module.exit_json(changed=changed, name=result['name'], created_time=result['created_time'],
+                     image_id=result['image_id'], arn=result['launch_configuration_arn'],
+                     security_groups=result['security_groups'],
+                     instance_type=result['instance_type'],
                      result=result)
 
 
