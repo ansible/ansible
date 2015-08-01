@@ -134,6 +134,18 @@ SU_PROMPT_LOCALIZATIONS = [
     '密碼',
 ]
 
+TASK_ATTRIBUTE_OVERRIDES = (
+    'become',
+    'become_user',
+    'become_pass',
+    'become_method',
+    'connection',
+    'delegate_to',
+    'no_log',
+    'remote_user',
+)
+
+
 class PlayContext(Base):
 
     '''
@@ -285,7 +297,7 @@ class PlayContext(Base):
 
         # loop through a subset of attributes on the task object and set
         # connection fields based on their values
-        for attr in ('connection', 'remote_user', 'become', 'become_user', 'become_pass', 'become_method', 'no_log'):
+        for attr in TASK_ATTRIBUTE_OVERRIDES:
             if hasattr(task, attr):
                 attr_val = getattr(task, attr)
                 if attr_val is not None:
