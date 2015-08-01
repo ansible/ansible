@@ -199,7 +199,6 @@ class PlayContext(Base):
         self.password    = passwords.get('conn_pass','')
         self.become_pass = passwords.get('become_pass','')
 
-        #TODO: just pull options setup to above?
         # set options before play to allow play to override them
         if options:
             self.set_options(options)
@@ -239,7 +238,7 @@ class PlayContext(Base):
         '''
         Configures this connection information instance with data from
         options specified by the user on the command line. These have a
-        higher precedence than those set on the play or host.
+        lower precedence than those set on the play or host.
         '''
 
         if options.connection:
