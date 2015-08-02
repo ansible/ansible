@@ -126,6 +126,7 @@ class ShellModule(object):
 
     def _unquote(self, value):
         '''Remove any matching quotes that wrap the given value.'''
+        value = to_unicode(value or '')
         m = re.match(r'^\s*?\'(.*?)\'\s*?$', value)
         if m:
             return m.group(1)
