@@ -34,7 +34,7 @@ options:
     default: null
   tags:
     description:
-      - "A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }. This module identifies a subnet by CIDR and will update the subnet's tags to match. Tags not in this list will be ignored."
+      - "A dict of tags to apply to the subnet. Any tags currently applied to the subnet and not present here will be removed."
     required: false
     default: null
     aliases: [ 'resource_tags' ]
@@ -103,24 +103,49 @@ class AnsibleTagCreationException(AnsibleVPCSubnetException):
     pass
 
 
+def get_subnet_info(subnet):
+
+    subnet_info = { 'id': subnet.id,
+                    'availability_zone': subnet.availability_zone,
+                    'available_ip_address_count': subnet.available_ip_address_count,
+                    'cidr_block': subnet.cidr_block,
+                    'default_for_az': subnet.defaultForAz,
+                    'map_public_ip_on_launch': subnet.mapPublicIpOnLaunch,
+                    'state': subnet.state,
+                    'tags': subnet.tags,
+                    'vpc_id': subnet.vpc_id
+                  }
+
+    return subnet_info
+
 def subnet_exists(vpc_conn, subnet_id):
     filters = {'subnet-id': subnet_id}
-    return len(vpc_conn.get_all_subnets(filters=filters)) > 0
+    subnet = vpc_conn.get_all_subnets(filters=filters)
+    if subnet[0].state == "available":
+        return subnet[0]
+    else:
+        return False
 
 
-def create_subnet(vpc_conn, vpc_id, cidr, az):
+def create_subnet(vpc_conn, vpc_id, cidr, az, check_mode):
     try:
-        new_subnet = vpc_conn.create_subnet(vpc_id, cidr, az)
+        new_subnet = vpc_conn.create_subnet(vpc_id, cidr, az, dry_run=check_mode)
         # Sometimes AWS takes its time to create a subnet and so using
         # new subnets's id to do things like create tags results in
         # exception.  boto doesn't seem to refresh 'state' of the newly
         # created subnet, i.e.: it's always 'pending'.
-        while not subnet_exists(vpc_conn, new_subnet.id):
+        subnet = False
+        while subnet is False:
+            subnet = subnet_exists(vpc_conn, new_subnet.id)
             time.sleep(0.1)
     except EC2ResponseError as e:
-        raise AnsibleVPCSubnetCreationException(
-            'Unable to create subnet {0}, error: {1}'.format(cidr, e))
-    return new_subnet
+        if e.error_code == "DryRunOperation":
+            subnet = None
+        else:
+          raise AnsibleVPCSubnetCreationException(
+              'Unable to create subnet {0}, error: {1}'.format(cidr, e))
+
+    return subnet
 
 
 def get_resource_tags(vpc_conn, resource_id):
@@ -158,29 +183,25 @@ def ensure_subnet_present(vpc_conn, vpc_id, cidr, az, tags, check_mode):
     subnet = get_matching_subnet(vpc_conn, vpc_id, cidr)
     changed = False
     if subnet is None:
-        if check_mode:
-            return {'changed': True, 'subnet_id': None, 'subnet': {}}
+        subnet = create_subnet(vpc_conn, vpc_id, cidr, az, check_mode)
+        changed = True
+        # Subnet will be None when check_mode is true
+        if subnet is None:
+            return {
+                'changed': changed,
+                'subnet': {}
+            }
 
-        subnet = create_subnet(vpc_conn, vpc_id, cidr, az)
+    if tags != subnet.tags:
+        ensure_tags(vpc_conn, subnet.id, tags, False, check_mode)
+        subnet.tags = tags
         changed = True
 
-    if tags is not None:
-        tag_result = ensure_tags(vpc_conn, subnet.id, tags, add_only=True,
-                                 check_mode=check_mode)
-        tags = tag_result['tags']
-        changed = changed or tag_result['changed']
-    else:
-        tags = get_resource_tags(vpc_conn, subnet.id)
+    subnet_info = get_subnet_info(subnet)
 
     return {
         'changed': changed,
-        'subnet_id': subnet.id,
-        'subnet': {
-            'tags': tags,
-            'cidr': subnet.cidr_block,
-            'az': subnet.availability_zone,
-            'id': subnet.id,
-        }
+        'subnet': subnet_info
     }
 
 
@@ -202,11 +223,11 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            vpc_id = dict(default=None, required=True),
-            resource_tags = dict(default=None, required=False, type='dict'),
-            cidr = dict(default=None, required=True),
             az = dict(default=None, required=False),
-            state = dict(default='present', choices=['present', 'absent'])     
+            cidr = dict(default=None, required=True),
+            state = dict(default='present', choices=['present', 'absent']),
+            tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
+            vpc_id = dict(default=None, required=True)
         )
     )
     
@@ -226,7 +247,7 @@ def main():
         module.fail_json(msg="region must be specified")
 
     vpc_id = module.params.get('vpc_id')
-    tags = module.params.get('resource_tags')
+    tags = module.params.get('tags')
     cidr = module.params.get('cidr')
     az = module.params.get('az')
     state = module.params.get('state')
