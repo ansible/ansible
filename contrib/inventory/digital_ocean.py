@@ -55,6 +55,7 @@ When run against a specific host, this script returns the following variables:
  - do_id
  - do_image - object
  - do_ip_address
+ - do_private_ip_address
  - do_kernel - object
  - do_locked
  - de_memory
@@ -344,7 +345,15 @@ or environment variables (DO_API_TOKEN)'''
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            dest = droplet['ip_address']
+            #when using private_networking, the API reports the private one in "ip_address", which is useless. We need the public one for Ansible to work
+            if 'private_networking' in droplet['features']:
+                for net in droplet['networks']['v4']:
+                    if net['type']=='public':
+                        dest=net['ip_address']
+                    else:
+                        continue
+            else:
+                dest = droplet['ip_address']
 
             self.inventory[droplet['id']] = [dest]
             self.push(self.inventory, droplet['name'], dest)
