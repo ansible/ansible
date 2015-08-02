@@ -89,7 +89,8 @@ options:
     required: false
     version_added: "2.0"
   template_format:
-    description: For local templates, allows specification of json or yaml format
+    description:
+    - For local templates, allows specification of json or yaml format
     default: json
     choices: [ json, yaml ]
     required: false
