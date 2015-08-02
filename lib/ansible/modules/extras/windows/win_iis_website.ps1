@@ -70,7 +70,7 @@ $result = New-Object psobject @{
 };
 
 # Site info
-$site = Get-Website -Name $name
+$site = Get-Website | Where { $_.Name -eq $name }
 
 Try {
   # Add site
@@ -113,7 +113,7 @@ Try {
     $result.changed = $true
   }
 
-  $site = Get-Website -Name $name
+  $site = Get-Website | Where { $_.Name -eq $name }
   If($site) {
     # Change Physical Path if needed
     if($physical_path) {
@@ -165,7 +165,7 @@ Catch
   Fail-Json (New-Object psobject) $_.Exception.Message
 }
 
-$site = Get-Website -Name $name
+$site = Get-Website | Where { $_.Name -eq $name }
 $result.site = New-Object psobject @{
   Name = $site.Name
   ID = $site.ID
