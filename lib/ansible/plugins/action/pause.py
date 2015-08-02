@@ -58,7 +58,7 @@ class ActionModule(ActionBase):
         # Is 'args' empty, then this is the default prompted pause
         if self._task.args is None or len(self._task.args.keys()) == 0:
             pause_type = 'prompt'
-            prompt = "[%s]\nPress enter to continue:\n" % self._task.get_name().strip()
+            prompt = "[%s]\nPress enter to continue:" % self._task.get_name().strip()
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         elif 'minutes' in self._task.args or 'seconds' in self._task.args:
@@ -79,7 +79,7 @@ class ActionModule(ActionBase):
         # Is 'prompt' a key in 'args'?
         elif 'prompt' in self._task.args:
             pause_type = 'prompt'
-            prompt = "[%s]\n%s:\n" % (self._task.get_name().strip(), self._task.args['prompt'])
+            prompt = "[%s]\n%s:" % (self._task.get_name().strip(), self._task.args['prompt'])
 
         else:
             # I have no idea what you're trying to do. But it's so wrong.
@@ -100,7 +100,7 @@ class ActionModule(ActionBase):
                 print("Pausing for %d seconds" % seconds)
                 print("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
             else:
-                print("(press enter to continue, ctrl+C to abort)")
+                print(prompt)
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
