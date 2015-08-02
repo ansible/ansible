@@ -181,7 +181,7 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: local_action: copy src=a dest=b ... pretty common
-            check_raw = action in ('command', 'shell', 'script')
+            check_raw = action in ('command', 'shell', 'script', 'raw')
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -218,7 +218,7 @@ class ModuleArgsParser:
         elif isinstance(thing, string_types):
             # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
             (action, args) = self._split_module_string(thing)
-            check_raw = action in ('command', 'shell', 'script')
+            check_raw = action in ('command', 'shell', 'script', 'raw')
             args = parse_kv(args, check_raw=check_raw)
 
         else:
