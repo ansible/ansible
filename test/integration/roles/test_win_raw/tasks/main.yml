@@ -83,3 +83,12 @@
       - "not sleep_command.stderr"
       - "not sleep_command|failed"
       - "not sleep_command|changed"
+
+- name: run a raw command with key=value arguments
+  raw: echo wwe=raw
+  register: raw_result
+
+- name: make sure raw is really raw and not removing key=value arguments
+  assert:
+    that:
+      - "raw_result.stdout_lines[0] == 'wwe=raw'"
