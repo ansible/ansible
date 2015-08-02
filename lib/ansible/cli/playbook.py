@@ -76,7 +76,7 @@ class PlaybookCLI(CLI):
             raise AnsibleOptionsError("You must specify a playbook file to run")
 
         self.display.verbosity = self.options.verbosity
-        self.validate_conflicts(runas_opts=True, vault_opts=True)
+        self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 
     def run(self):
 

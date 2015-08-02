@@ -186,7 +186,7 @@ class CLI(object):
             self.options.become_method = 'su'
 
 
-    def validate_conflicts(self, vault_opts=False, runas_opts=False):
+    def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
 
         op = self.options
@@ -210,6 +210,10 @@ class CLI(object):
                                   "and su arguments ('-su', '--su-user', and '--ask-su-pass') "
                                   "and become arguments ('--become', '--become-user', and '--ask-become-pass')"
                                   " are exclusive of each other")
+
+        if fork_opts:
+            if op.forks < 1:
+                self.parser.error("The number of processes (--forks) must be >= 1")
 
     @staticmethod
     def expand_tilde(option, opt, value, parser):
