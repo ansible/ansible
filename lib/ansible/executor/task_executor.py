@@ -141,10 +141,18 @@ class TaskExecutor:
         and returns the items result.
         '''
 
+        # create a copy of the job vars here so that we can modify
+        # them temporarily without changing them too early for other
+        # parts of the code that might still need a pristine version
+        vars_copy = self._job_vars.copy()
+
+        # now we update them with the play context vars
+        self._play_context.update_vars(vars_copy)
+
         items = None
         if self._task.loop and self._task.loop in lookup_loader:
-            loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, variables=self._job_vars, loader=self._loader, fail_on_undefined=True)
-            items = lookup_loader.get(self._task.loop, loader=self._loader).run(terms=loop_terms, variables=self._job_vars)
+            loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, variables=vars_copy, loader=self._loader, fail_on_undefined=True)
+            items = lookup_loader.get(self._task.loop, loader=self._loader).run(terms=loop_terms, variables=vars_copy)
 
         return items
 
