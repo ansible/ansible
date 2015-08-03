@@ -137,6 +137,7 @@ try:
 except ImportError:
     HAS_DOCKER_CLIENT = False
 
+DEFAULT_DOCKER_API_VERSION = None
 if HAS_DOCKER_CLIENT:
     try:
         from docker.errors import APIError as DockerAPIError
