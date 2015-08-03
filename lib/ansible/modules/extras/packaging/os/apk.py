@@ -24,6 +24,7 @@ module: apk
 short_description: Manages apk packages
 description:
   - Manages I(apk) packages for Alpine Linux.
+version_added: "2.0"
 options:
   name:
     description:
