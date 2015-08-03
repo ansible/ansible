@@ -38,8 +38,8 @@ options:
 
     state:
         description:
-            - state of the package
-        choices: [ 'present', 'absent', 'installed', 'removed', 'latest' ]
+            - state of the package, you can use "installed" as an alias for C(present) and removed as one for c(absent).
+        choices: [ 'present', 'absent', 'latest' ]
         required: false
         default: present
 
@@ -52,7 +52,6 @@ options:
 
 author: Kim Nørgaard (@KimNorgaard)
 requirements: [ "Slackware" >= 12.2 ]
-notes: []
 '''
 
 EXAMPLES = '''
@@ -61,6 +60,10 @@ EXAMPLES = '''
 
 # Remove packages foo and bar
 - slackpkg: name=foo,bar state=absent
+
+# Make sure that it is the most updated package
+- slackpkg: name=foo state=latest
+
 '''
 
 
@@ -165,9 +168,7 @@ def update_cache(module, slackpkg_path):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            state=dict(default="installed", choices=['installed', 'removed',
-                                                     'absent', 'present',
-                                                     'latest']),
+            state=dict(default="installed", choices=['installed', 'removed', 'absent', 'present', 'latest']),
             name=dict(aliases=["pkg"], required=True, type='list'),
             update_cache=dict(default=False, aliases=["update-cache"],
                               type='bool'),
