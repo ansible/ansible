@@ -42,33 +42,27 @@ class ActionModule(ActionBase):
 
     def _process_origin(self, host, path, user):
 
-        if not host in ['127.0.0.1', 'localhost']:
+        if host not in ('127.0.0.1', 'localhost', '::1'):
             if user:
                 return '%s@%s:%s' % (user, host, path)
             else:
                 return '%s:%s' % (host, path)
-        else:
-            if not ':' in path:
-                if not path.startswith('/'):
-                    path = self._get_absolute_path(path=path)
-            return path
+
+        if ':' not in path and not path.startswith('/'):
+            path = self._get_absolute_path(path=path)
+        return path
 
     def _process_remote(self, host, path, user):
         transport = self._play_context.connection
-        return_data = None
-        if not host in ['127.0.0.1', 'localhost'] or transport != "local":
+        if host not in ('127.0.0.1', 'localhost', '::1') or transport != "local":
             if user:
-                return_data = '%s@%s:%s' % (user, host, path)
+                return '%s@%s:%s' % (user, host, path)
             else:
-                return_data = '%s:%s' % (host, path)
-        else:
-            return_data = path
+                return '%s:%s' % (host, path)
 
-        if not ':' in return_data:
-            if not return_data.startswith('/'):
-                return_data = self._get_absolute_path(path=return_data)
-
-        return return_data
+        if ':' not in path and not path.startswith('/'):
+            path = self._get_absolute_path(path=path)
+        return path
 
     def _override_module_replaced_vars(self, task_vars):
         """ Some vars are substituted into the modules.  Have to make sure
@@ -135,7 +129,7 @@ class ActionModule(ActionBase):
 
         # COMPARE DELEGATE, HOST AND TRANSPORT
         process_args = False
-        if not dest_host is src_host and original_transport != 'local':
+        if dest_host != src_host and original_transport != 'local':
             # interpret and task_vars remote host info into src or dest
             process_args = True
 
