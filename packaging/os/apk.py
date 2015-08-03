@@ -88,10 +88,8 @@ EXAMPLES = '''
 import os
 import re
 
-APK_PATH="/sbin/apk"
-
 def update_package_db(module):
-    cmd = "apk update"
+    cmd = "%s update" % (APK_PATH)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc == 0:
         return True
@@ -99,7 +97,7 @@ def update_package_db(module):
         module.fail_json(msg="could not update package db")
 
 def query_package(module, name):
-    cmd = "apk -v info --installed %s" % (name)
+    cmd = "%s -v info --installed %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc == 0:
         return True
@@ -107,7 +105,7 @@ def query_package(module, name):
         return False
 
 def query_latest(module, name):
-    cmd = "apk version %s" % (name)
+    cmd = "%s version %s" % (APK_PATH, name)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     search_pattern = "(%s)-[\d\.\w]+-[\d\w]+\s+(.)\s+[\d\.\w]+-[\d\w]+\s+" % (name)
     match = re.search(search_pattern, stdout)
@@ -117,9 +115,9 @@ def query_latest(module, name):
 
 def upgrade_packages(module):
     if module.check_mode:
-        cmd = "apk upgrade --simulate"
+        cmd = "%s upgrade --simulate" % (APK_PATH)
     else:
-        cmd = "apk upgrade"
+        cmd = "%s upgrade" % (APK_PATH)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="failed to upgrade packages")
@@ -140,14 +138,14 @@ def install_packages(module, names, state):
     names = " ".join(uninstalled)
     if upgrade:
         if module.check_mode:
-            cmd = "apk add --upgrade --simulate %s" % (names)
+            cmd = "%s add --upgrade --simulate %s" % (APK_PATH, names)
         else:
-            cmd = "apk add --upgrade %s" % (names)
+            cmd = "%s add --upgrade %s" % (APK_PATH, names)
     else:
         if module.check_mode:
-            cmd = "apk add --simulate %s" % (names)
+            cmd = "%s add --simulate %s" % (APK_PATH, names)
         else:
-            cmd = "apk add %s" % (names)
+            cmd = "%s add %s" % (APK_PATH, names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="failed to install %s" % (names))
@@ -162,9 +160,9 @@ def remove_packages(module, names):
         module.exit_json(changed=False, msg="package(s) already removed")
     names = " ".join(installed)
     if module.check_mode:
-        cmd = "apk del --purge --simulate %s" % (names)
+        cmd = "%s del --purge --simulate %s" % (APK_PATH, names)
     else:
-        cmd = "apk del --purge %s" % (names)
+        cmd = "%s del --purge %s" % (APK_PATH, names)
     rc, stdout, stderr = module.run_command(cmd, check_rc=False)
     if rc != 0:
         module.fail_json(msg="failed to remove %s package(s)" % (names))
@@ -185,8 +183,8 @@ def main():
         supports_check_mode = True
     )
 
-    if not os.path.exists(APK_PATH):
-        module.fail_json(msg="cannot find apk, looking for %s" % (APK_PATH))
+    global APK_PATH
+    APK_PATH = module.get_bin_path('apk', required=True)
 
     p = module.params
 
