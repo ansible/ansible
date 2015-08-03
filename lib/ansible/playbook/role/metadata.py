@@ -72,7 +72,7 @@ class RoleMetadata(Base):
         if self._owner:
             current_role_path = os.path.dirname(self._owner._role_path)
 
-        return load_list_of_roles(ds, current_role_path=current_role_path, variable_manager=self._variable_manager, loader=self._loader)
+        return load_list_of_roles(ds, play=self._owner._play, current_role_path=current_role_path, variable_manager=self._variable_manager, loader=self._loader)
 
     def _load_galaxy_info(self, attr, ds):
         '''

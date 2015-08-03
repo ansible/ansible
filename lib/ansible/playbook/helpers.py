@@ -98,7 +98,7 @@ def load_list_of_tasks(ds, play, block=None, role=None, task_include=None, use_h
     return task_list
 
 
-def load_list_of_roles(ds, current_role_path=None, variable_manager=None, loader=None):
+def load_list_of_roles(ds, play, current_role_path=None, variable_manager=None, loader=None):
     '''
     Loads and returns a list of RoleInclude objects from the datastructure
     list of role definitions
@@ -112,7 +112,7 @@ def load_list_of_roles(ds, current_role_path=None, variable_manager=None, loader
 
     roles = []
     for role_def in ds:
-        i = RoleInclude.load(role_def, current_role_path=current_role_path, variable_manager=variable_manager, loader=loader)
+        i = RoleInclude.load(role_def, play=play, current_role_path=current_role_path, variable_manager=variable_manager, loader=loader)
         roles.append(i)
 
     return roles

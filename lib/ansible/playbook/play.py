@@ -211,7 +211,7 @@ class Play(Base, Taggable, Become):
         if ds is None:
             ds = []
 
-        role_includes = load_list_of_roles(ds, variable_manager=self._variable_manager, loader=self._loader)
+        role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
 
         roles = []
         for ri in role_includes:
