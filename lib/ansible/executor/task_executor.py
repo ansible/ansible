@@ -143,7 +143,7 @@ class TaskExecutor:
 
         items = None
         if self._task.loop and self._task.loop in lookup_loader:
-            loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, variables=self._job_vars, loader=self._loader)
+            loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, variables=self._job_vars, loader=self._loader, fail_on_undefined=True)
             items = lookup_loader.get(self._task.loop, loader=self._loader).run(terms=loop_terms, variables=self._job_vars)
 
         return items
