@@ -94,27 +94,6 @@ try:
 except ImportError:
     pass
 
-HAVE_HASHLIB=False
-try:
-    from hashlib import sha1 as _sha1
-    HAVE_HASHLIB=True
-except ImportError:
-    from sha import sha as _sha1
-
-try:
-    from hashlib import md5 as _md5
-except ImportError:
-    try:
-        from md5 import md5 as _md5
-    except ImportError:
-        # MD5 unavailable.  Possibly FIPS mode
-        _md5 = None
-
-try:
-    from hashlib import sha256 as _sha256
-except ImportError:
-    pass
-
 try:
     from systemd import journal
     has_journal = True
@@ -1341,21 +1320,63 @@ class AnsibleModule(object):
                 or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
                 or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
-    def digest_from_file(self, filename, digest_method):
-        ''' Return hex digest of local file for a given digest_method, or None if file is not present. '''
+    def get_available_hash_algorithms(self):
+        ''' Get all hash algorithms that are available on this system as a dict.
+        For example: {
+                       'md5': md5.md5,
+                       'sha1': sha.sha
+                     }
+        '''
+        available_hash_algorithms = dict()
+        try:
+            import hashlib
+
+            # python 2.7.9+ and 2.7.0+
+            for attribute in ('available_algorithms', 'algorithms'):
+                algorithms = getattr(hashlib, attribute, None)
+                if algorithms:
+                    break
+            if algorithms is None:
+                # python 2.5+
+                algorithms = ('md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512')
+            for algorithm in algorithms:
+                available_hash_algorithms[algorithm] = getattr(hashlib, algorithm)
+        except ImportError:
+            import sha
+            available_hash_algorithms = {'sha1': sha.sha}
+            try:
+                import md5
+                available_hash_algorithms['md5'] = md5.md5
+            except ImportError:
+                pass
+
+        return available_hash_algorithms
+
+    def digest_from_file(self, filename, algorithm):
+        ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
         if not os.path.exists(filename):
             return None
         if os.path.isdir(filename):
             self.fail_json(msg="attempted to take checksum of directory: %s" % filename)
-        digest = digest_method
+
+        # preserve old behaviour where the third parameter was a hash algorithm object
+        if hasattr(algorithm, 'hexdigest'):
+            digest_method = algorithm
+        else:
+            try:
+                digest_method = self.get_available_hash_algorithms()[algorithm]()
+            except KeyError:
+                self.fail_json(msg="Could not hash file '%s' with algorithm '%s'. Available algorithms: %s" %
+                                   (filename, algorithm, ', '.join(self.get_available_hash_algorithms())))
+
         blocksize = 64 * 1024
         infile = open(filename, 'rb')
         block = infile.read(blocksize)
         while block:
-            digest.update(block)
+            digest_method.update(block)
             block = infile.read(blocksize)
         infile.close()
-        return digest.hexdigest()
+        return digest_method.hexdigest()
 
     def md5(self, filename):
         ''' Return MD5 hex digest of local file using digest_from_file().
@@ -1368,19 +1389,15 @@ class AnsibleModule(object):
 
         Most uses of this function can use the module.sha1 function instead.
         '''
-        if not _md5:
-            raise ValueError('MD5 not available.  Possibly running in FIPS mode')
-        return self.digest_from_file(filename, _md5())
+        return self.digest_from_file(filename, 'md5')
 
     def sha1(self, filename):
         ''' Return SHA1 hex digest of local file using digest_from_file(). '''
-        return self.digest_from_file(filename, _sha1())
+        return self.digest_from_file(filename, 'sha1')
 
     def sha256(self, filename):
         ''' Return SHA-256 hex digest of local file using digest_from_file(). '''
-        if not HAVE_HASHLIB:
-            self.fail_json(msg="SHA-256 checksums require hashlib, which is available in Python 2.5 and higher")
-        return self.digest_from_file(filename, _sha256())
+        return self.digest_from_file(filename, 'sha256')
 
     def backup_local(self, fn):
         '''make a date-marked backup of the specified file, return True or False on success or failure'''
