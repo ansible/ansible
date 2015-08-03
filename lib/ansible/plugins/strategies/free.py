@@ -53,7 +53,7 @@ class StrategyModule(StrategyBase):
         work_to_do = True
         while work_to_do and not self._tqm._terminated:
 
-            hosts_left = self.get_hosts_remaining(iterator._play)
+            hosts_left = self._inventory.get_hosts(iterator._play.hosts)
             if len(hosts_left) == 0:
                 self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                 result = False
@@ -149,10 +149,9 @@ class StrategyModule(StrategyBase):
         except Exception as e:
             # FIXME: ctrl+c can cause some failures here, so catch them
             #        with the appropriate error type
-            print("wtf: %s" % e)
             pass
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
-        super(StrategyModule, self).run(iterator, play_context)
+        return super(StrategyModule, self).run(iterator, play_context, result)
 
