@@ -912,6 +912,8 @@ class Nagios(object):
         elif self.action == 'enable_alerts':
             if self.services == 'host':
                 self.enable_host_notifications(self.host)
+            elif self.services == 'all':
+                self.enable_host_svc_notifications(self.host)
             else:
                 self.enable_svc_notifications(self.host,
                                               services=self.services)
@@ -919,6 +921,8 @@ class Nagios(object):
         elif self.action == 'disable_alerts':
             if self.services == 'host':
                 self.disable_host_notifications(self.host)
+            elif self.services == 'all':
+                self.disable_host_svc_notifications(self.host)
             else:
                 self.disable_svc_notifications(self.host,
                                                services=self.services)
