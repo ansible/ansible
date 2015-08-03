@@ -111,6 +111,7 @@ New Modules:
   * selinux_permissive
   * sensu_check
   * sensu_subscription
+  * slackpkg
   * vertica_configuration
   * vertica_facts
   * vertica_role
