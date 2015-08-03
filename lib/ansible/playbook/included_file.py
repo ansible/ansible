@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import os
+
 from ansible.template import Templar
 
 class IncludedFile:
@@ -59,8 +61,22 @@ class IncludedFile:
                         continue
 
                     original_task = iterator.get_original_task(res._host, res._task)
-                    if original_task and original_task._role:
-                        include_file = loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_result['include'])
+                    if original_task:
+                        if original_task._role:
+                            include_file = loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_result['include'])
+                        elif original_task._task_include:
+                            # handle relative includes by walking up the list of parent include
+                            # tasks and checking the relative result to see if it exists
+                            parent_include = original_task._task_include
+                            while parent_include is not None:
+                                parent_include_dir = os.path.dirname(parent_include.args.get('_raw_params'))
+                                include_file = loader.path_dwim_relative(loader.get_basedir(), parent_include_dir, include_result['include'])
+                                if os.path.exists(include_file):
+                                    break
+                                else:
+                                    parent_include = parent_include._task_include
+                        else:
+                            include_file = loader.path_dwim(res._task.args.get('_raw_params'))
                     else:
                         include_file = loader.path_dwim(res._task.args.get('_raw_params'))
 

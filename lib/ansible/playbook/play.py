@@ -232,6 +232,14 @@ class Play(Base, Taggable, Become):
         '''
         return value
 
+    # disable validation on various fields which will be validated later in other objects
+    def _post_validate_become(self, attr, value, templar):
+        return value
+    def _post_validate_become_user(self, attr, value, templar):
+        return value
+    def _post_validate_become_method(self, attr, value, templar):
+        return value
+
     # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
 
     def _compile_roles(self):
