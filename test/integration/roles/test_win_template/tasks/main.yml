@@ -39,6 +39,17 @@
     that: 
       - "template_result.changed == true"
 
+- name: fill in a basic template again
+  win_template:
+    src: foo.j2
+    dest: "{{win_output_dir}}/foo.templated"
+  register: template_result2
+
+- name: verify that the template was not changed
+  assert: 
+    that: 
+      - "not template_result2|changed" 
+
 # VERIFY CONTENTS
 
 - name: copy known good into place
