@@ -70,6 +70,27 @@ class ActionModule(ActionBase):
 
         return return_data
 
+    def _override_module_replaced_vars(self, task_vars):
+        """ Some vars are substituted into the modules.  Have to make sure
+        that those are correct for localhost when synchronize creates its own
+        connection to localhost."""
+
+        # Clear the current definition of these variables as they came from the
+        # connection to the remote host
+        if 'ansible_syslog_facility' in task_vars:
+            del task_vars['ansible_syslog_facility']
+        for key in task_vars:
+            if key.startswith("ansible_") and key.endswith("_interpreter"):
+                del task_vars[key]
+
+        # Add the definition from localhost
+        localhost = task_vars['hostvars']['localhost']
+        if 'ansible_syslog_facility' in localhost:
+            task_vars['ansible_syslog_facility'] = localhost['ansible_syslog_facility']
+        for key in localhost:
+            if key.startswith("ansible_") and key.endswith("_interpreter"):
+                task_vars[key] = localhost[key]
+
     def run(self, tmp=None, task_vars=dict()):
         ''' generates params and passes them on to the rsync module '''
 
@@ -132,6 +153,7 @@ class ActionModule(ActionBase):
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
             transport_overridden = True
+            self._override_module_replaced_vars(task_vars)
             ### FIXME: We think that this was here for v1 because the local
             # connection didn't support sudo.  In v2 it does so we think it's
             # safe to remove this now.
