@@ -336,7 +336,6 @@ class PlayContext(Base):
             becomecmd   = None
             randbits    = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
-            #executable = executable or '$SHELL'
             success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
 
             if self.become_method == 'sudo':
@@ -381,7 +380,7 @@ class PlayContext(Base):
 
             self.prompt      = prompt
             self.success_key = success_key
-            return ('%s -c ' % executable) + pipes.quote(becomecmd)
+            return ('%s -c %s' % (executable, pipes.quote(becomecmd)))
 
         return cmd
 
