@@ -393,16 +393,20 @@ class CLI(object):
                 except (IOError, AttributeError):
                     return ''
             f = open(os.path.join(repo_path, "HEAD"))
-            branch = f.readline().split('/')[-1].rstrip("\n")
+            line = f.readline().rstrip("\n")
+            if line.startswith("ref:"):
+                branch_path = os.path.join(repo_path, line[5:])
+            else:
+                branch_path = None
             f.close()
-            branch_path = os.path.join(repo_path, "refs", "heads", branch)
-            if os.path.exists(branch_path):
+            if branch_path and os.path.exists(branch_path):
+                branch = '/'.join(line.split('/')[2:])
                 f = open(branch_path)
                 commit = f.readline()[:10]
                 f.close()
             else:
                 # detached HEAD
-                commit = branch[:10]
+                commit = line[:10]
                 branch = 'detached HEAD'
                 branch_path = os.path.join(repo_path, "HEAD")
 
