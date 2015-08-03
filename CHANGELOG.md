@@ -41,6 +41,7 @@ New Modules:
   * amazon: route53_zone
   * amazon: sts_assume_role
   * amazon: s3_logging
+  * apk
   * bundler
   * centurylink: clc_publicip
   * circonus_annotation
