@@ -29,7 +29,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
-from ansible.plugins import lookup_loader, connection_loader, action_loader
+from ansible.plugins import connection_loader, action_loader
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
@@ -149,10 +149,14 @@ class TaskExecutor:
         # now we update them with the play context vars
         self._play_context.update_vars(vars_copy)
 
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=vars_copy)
         items = None
-        if self._task.loop and self._task.loop in lookup_loader:
-            loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, variables=vars_copy, loader=self._loader, fail_on_undefined=True)
-            items = lookup_loader.get(self._task.loop, loader=self._loader).run(terms=loop_terms, variables=vars_copy)
+        if self._task.loop:
+            if self._task.loop in self._shared_loader_obj.lookup_loader:
+                loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True)
+                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+            else:
+                raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
 
         return items
 

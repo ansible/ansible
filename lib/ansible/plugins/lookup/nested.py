@@ -31,7 +31,7 @@ class LookupModule(LookupBase):
         results = []
         for x in terms:
             try:
-                intermediate = listify_lookup_plugin_terms(x, variables, loader=self._loader, fail_on_undefined=True)
+                intermediate = listify_lookup_plugin_terms(x, templar=self._templar, loader=self._loader, fail_on_undefined=True)
             except UndefinedError, e:
                 raise AnsibleUndefinedVariable("One of the nested variables was undefined. The error was: %s" % e)
             results.append(intermediate)

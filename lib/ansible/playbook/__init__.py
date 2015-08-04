@@ -26,7 +26,7 @@ from ansible.parsing import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
-from ansible.plugins import push_basedir
+from ansible.plugins import get_all_plugin_loaders
 
 
 __all__ = ['Playbook']
@@ -57,8 +57,12 @@ class Playbook:
         # set the loaders basedir
         self._loader.set_basedir(self._basedir)
 
-        # also add the basedir to the list of module directories
-        push_basedir(self._basedir)
+        # dynamically load any plugins from the role directory
+        for name, obj in get_all_plugin_loaders():
+            if obj.subdir:
+                plugin_path = os.path.join(self._basedir, obj.subdir)
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(plugin_path)
 
         ds = self._loader.load_from_file(os.path.basename(file_name))
         if not isinstance(ds, list):

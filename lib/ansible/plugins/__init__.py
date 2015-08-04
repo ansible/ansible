@@ -42,6 +42,11 @@ PATH_CACHE = {}
 PLUGIN_PATH_CACHE = {}
 _basedirs = []
 
+# FIXME: the _basedirs code may be dead, and no longer needed, as
+#        we now use add_directory for all plugin types here instead
+#        of relying on this global variable (which also causes problems
+#        with forked processes). See the Playbook() and Role() classes
+#        for how we now ue get_all_plugin_loaders() below.
 def push_basedir(basedir):
     # avoid pushing the same absolute dir more than once
     basedir = to_unicode(os.path.realpath(basedir))

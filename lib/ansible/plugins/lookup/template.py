@@ -21,7 +21,6 @@ import os
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.template import Templar
 
 class LookupModule(LookupBase):
 
@@ -34,8 +33,6 @@ class LookupModule(LookupBase):
 
         ret = []
 
-        templar = Templar(loader=self._loader, variables=variables)
-
         for term in terms:
             self._display.debug("File lookup term: %s" % term)
 
@@ -44,7 +41,7 @@ class LookupModule(LookupBase):
             if lookupfile and os.path.exists(lookupfile):
                 with open(lookupfile, 'r') as f:
                     template_data = f.read()
-                    res = templar.template(template_data, preserve_trailing_newlines=True)
+                    res = self._templar.template(template_data, preserve_trailing_newlines=True)
                     ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
