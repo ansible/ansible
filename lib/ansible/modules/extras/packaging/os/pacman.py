@@ -3,6 +3,7 @@
 
 # (c) 2012, Afterburn <http://github.com/afterburn>
 # (c) 2013, Aaron Bull Schaefer <aaron@elasticdog.com>
+# (c) 2015, Indrajit Raychaudhuri <irc+code@indrajit.com>
 #
 # This file is part of Ansible
 #
@@ -28,6 +29,7 @@ description:
       Arch Linux and its variants.
 version_added: "1.0"
 author:
+    - "Indrajit Raychaudhuri (@indrajitr)"
     - "'Aaron Bull Schaefer (@elasticdog)' <aaron@elasticdog.com>"
     - "Afterburn"
 notes: []
@@ -52,7 +54,7 @@ options:
               that they are not required by other packages and were not
               explicitly installed by a user.
         required: false
-        default: "no"
+        default: no
         choices: ["yes", "no"]
         version_added: "1.3"
 
@@ -60,7 +62,7 @@ options:
         description:
             - Force remove package, without any checks.
         required: false
-        default: "no"
+        default: no
         choices: ["yes", "no"]
         version_added: "2.0"
 
@@ -69,14 +71,14 @@ options:
             - Whether or not to refresh the master package lists. This can be
               run as part of a package installation or as a separate step.
         required: false
-        default: "no"
+        default: no
         choices: ["yes", "no"]
 
     upgrade:
         description:
             - Whether or not to upgrade whole system
         required: false
-        default: "no"
+        default: no
         choices: ["yes", "no"]
         version_added: "2.0"
 '''
@@ -251,10 +253,10 @@ def main():
         argument_spec    = dict(
             name         = dict(aliases=['pkg']),
             state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
-            recurse      = dict(default='no', choices=BOOLEANS, type='bool'),
-            force        = dict(default='no', choices=BOOLEANS, type='bool'),
-            upgrade      = dict(default='no', choices=BOOLEANS, type='bool'),
-            update_cache = dict(default='no', aliases=['update-cache'], choices=BOOLEANS, type='bool')),
+            recurse      = dict(default=False, type='bool'),
+            force        = dict(default=False, type='bool'),
+            upgrade      = dict(default=False, type='bool'),
+            update_cache = dict(default=False, aliases=['update-cache'], type='bool')),
         required_one_of = [['name', 'update_cache', 'upgrade']],
         supports_check_mode = True)
 
