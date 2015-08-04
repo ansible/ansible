@@ -65,8 +65,6 @@ class Templar:
             self._basedir = './'
 
         if shared_loader_obj:
-            global _basedirs
-            _basedirs = shared_loader_obj.basedirs[:]
             self._filter_loader = getattr(shared_loader_obj, 'filter_loader')
             self._lookup_loader = getattr(shared_loader_obj, 'lookup_loader')
         else:
@@ -250,7 +248,7 @@ class Templar:
         return thing if thing is not None else ''
 
     def _lookup(self, name, *args, **kwargs):
-        instance = self._lookup_loader.get(name.lower(), loader=self._loader)
+        instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
         if instance is not None:
             # safely catch run failures per #5059

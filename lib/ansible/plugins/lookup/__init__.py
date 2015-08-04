@@ -28,8 +28,9 @@ except ImportError:
 __all__ = ['LookupBase']
 
 class LookupBase:
-    def __init__(self, loader=None, **kwargs):
+    def __init__(self, loader=None, templar=None, **kwargs):
         self._loader = loader
+        self._templar = templar
         self._display = display
 
     def get_basedir(self, variables):
