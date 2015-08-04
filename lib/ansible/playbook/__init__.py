@@ -28,6 +28,12 @@ from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
 from ansible.plugins import get_all_plugin_loaders
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 __all__ = ['Playbook']
 
@@ -77,7 +83,10 @@ class Playbook:
 
             if 'include' in entry:
                 pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
-                self._entries.extend(pb._entries)
+                if pb is not None:
+                    self._entries.extend(pb._entries)
+                else:
+                    display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color='cyan')
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)
