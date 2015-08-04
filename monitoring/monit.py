@@ -45,6 +45,7 @@ options:
         many times to perform the requested action. Between each retry Ansible will sleep for 1 second.
     required: false
     default: 10
+    version_added: "2.0"
 requirements: [ ]
 author: "Darryl Stoflet (@dstoflet)" 
 '''
@@ -57,7 +58,7 @@ EXAMPLES = '''
 def main():
     arg_spec = dict(
         name=dict(required=True),
-        max_retries=dict(default=10),
+        max_retries=dict(default=10, type='int'),
         state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'monitored', 'unmonitored', 'reloaded'])
     )
 
