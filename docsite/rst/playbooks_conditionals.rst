@@ -119,11 +119,12 @@ Applying 'when' to roles and includes
 `````````````````````````````````````
 
 Note that if you have several tasks that all share the same conditional statement, you can affix the conditional
-to a task include statement as below.  Note this does not work with playbook includes, just task includes.  All the tasks
-get evaluated, but the conditional is applied to each and every task::
+to a task include statement as below.  All the tasks get evaluated, but the conditional is applied to each and every task::
 
     - include: tasks/sometasks.yml
       when: "'reticulating splines' in output"
+
+.. note:: In versions prior to 2.0 this worked with task includes but not playbook includes.  2.0 allows it to work with both.
 
 Or with a role::
 
