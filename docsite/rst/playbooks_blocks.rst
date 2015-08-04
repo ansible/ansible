@@ -7,11 +7,12 @@ at the block level, which also makes it much easier to set data or directives co
 to the tasks.
 
 
-Example::
+.. code-block:: YAML
+ :emphasize-lines: 2
+ :caption: Block example
 
     tasks:
       - block:
-
           - yum: name={{ item }} state=installed
             with_items:
               - httpd
@@ -25,6 +26,7 @@ Example::
         become: true
         become_user: root
 
+
 In the example above the 3 tasks will be executed only when the block's when condition is met and enables
 privilege escalation for all the enclosed tasks.
 
@@ -35,7 +37,11 @@ Error Handling
 ``````````````
 
 About Blocks
-Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.::
+Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.
+
+.. code-block:: YAML
+ :emphasize-lines: 2,6,10
+ :caption: Block error handling example
 
   tasks:
    - block:
