@@ -42,10 +42,9 @@ class LookupModule(LookupBase):
             lookupfile = self._loader.path_dwim_relative(basedir, 'templates', term)
             self._display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile and os.path.exists(lookupfile):
-                with open(lookupfile, 'r') as f:
-                    template_data = f.read()
-                    res = templar.template(template_data, preserve_trailing_newlines=True)
-                    ret.append(res)
+                path = Templar.FilePath(lookupfile)
+                res = templar.template(path, preserve_trailing_newlines=True)
+                ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
 

@@ -1,0 +1,5 @@
+grandparent template starts
+parent template starts
+foobar
+parent template ends
+grandparent template ends

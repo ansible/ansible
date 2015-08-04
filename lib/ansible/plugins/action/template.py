@@ -25,7 +25,8 @@ import time
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.utils.unicode import to_bytes
+from ansible.template import Templar
 
 class ActionModule(ActionBase):
 
@@ -84,9 +85,6 @@ class ActionModule(ActionBase):
 
         # template the source data locally & get ready to transfer
         try:
-            with open(source, 'r') as f:
-                template_data = to_unicode(f.read())
-
             try:
                 template_uid = pwd.getpwuid(os.stat(source).st_uid).pw_name
             except:
@@ -113,7 +111,7 @@ class ActionModule(ActionBase):
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, convert_data=False)
+            resultant = self._templar.template(Templar.FilePath(source), preserve_trailing_newlines=True, convert_data=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))

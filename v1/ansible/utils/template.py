@@ -220,6 +220,14 @@ class J2Template(jinja2.environment.Template):
     def new_context(self, vars=None, shared=False, locals=None):
         return jinja2.runtime.Context(self.environment, vars.add_locals(locals), self.name, self.blocks)
 
+class J2RelEnvironment(jinja2.Environment):
+    '''
+    This allows jinja templates to refer to other templates via relative
+    paths. See http://stackoverflow.com/a/8530761/351149 for details.
+    '''
+    def join_path(self, template, parent):
+        return os.path.join(os.path.dirname(parent), template)
+
 def template_from_file(basedir, path, vars, vault_password=None):
     ''' run a file through the templating engine '''
 
@@ -235,7 +243,7 @@ def template_from_file(basedir, path, vars, vault_password=None):
     def my_finalize(thing):
         return thing if thing is not None else ''
 
-    environment = jinja2.Environment(loader=loader, trim_blocks=True, extensions=_get_extensions())
+    environment = J2RelEnvironment(loader=loader, trim_blocks=True, extensions=_get_extensions())
     environment.filters.update(_get_filters())
     environment.globals['lookup'] = my_lookup
     environment.globals['finalize'] = my_finalize

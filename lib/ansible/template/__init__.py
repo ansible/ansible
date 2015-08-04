@@ -21,10 +21,11 @@ __metaclass__ = type
 
 import ast
 import re
+import os
 
-from jinja2 import Environment
+from jinja2 import Environment as J2BaseEnvironment
 from jinja2.loaders import FileSystemLoader
-from jinja2.exceptions import TemplateSyntaxError, UndefinedError
+from jinja2.exceptions import TemplateSyntaxError, UndefinedError, TemplateNotFound
 from jinja2.utils import concat as j2_concat
 from jinja2.runtime import StrictUndefined
 
@@ -40,9 +41,6 @@ from numbers import Number
 
 __all__ = ['Templar']
 
-# A regex for checking to see if a variable we're trying to
-# expand is just a single variable name.
-
 # Primitive Types which we don't want Jinja to convert to strings.
 NON_TEMPLATED_TYPES = ( bool, Number )
 
@@ -52,6 +50,20 @@ class Templar:
     '''
     The main class for templating, with the main entry-point of template().
     '''
+
+    class FilePath(str):
+        '''
+        Use to represent an absolute path to a template file.
+        '''
+        pass
+
+    class _J2RelEnvironment(J2BaseEnvironment):
+        '''
+        This allows jinja templates to refer to other templates via relative
+        paths. See http://stackoverflow.com/a/8530761/351149 for details.
+        '''
+        def join_path(self, template, parent):
+            return os.path.join(os.path.dirname(parent), template)
 
     def __init__(self, loader, shared_loader_obj=None, variables=dict()):
         self._loader              = loader
@@ -79,7 +91,7 @@ class Templar:
         self._fail_on_filter_errors    = True
         self._fail_on_undefined_errors = C.DEFAULT_UNDEFINED_VAR_BEHAVIOR
 
-        self.environment = Environment(
+        self.environment = Templar._J2RelEnvironment(
             trim_blocks=True,
             undefined=StrictUndefined,
             extensions=self._get_extensions(),
@@ -90,12 +102,18 @@ class Templar:
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
 
-    def _count_newlines_from_end(self, in_str):
+    def _count_newlines_from_end(self, data):
         '''
         Counts the number of newlines at the end of a string. This is used during
         the jinja2 templating to ensure the count matches the input, since some newlines
         may be thrown away during the templating.
         '''
+
+        if isinstance(data, Templar.FilePath):
+            with open(data, 'r') as f:
+                in_str = f.read()
+        else:
+            in_str = data
 
         i = len(in_str)
         while i > 0:
@@ -166,7 +184,8 @@ class Templar:
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None, convert_data=True):
         '''
-        Templates (possibly recursively) any given data as input. If convert_bare is
+        Templates (possibly recursively) any given data as input. If the template data is
+        in a file, pass a Templar.FilePath. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine. 
         '''
@@ -175,7 +194,9 @@ class Templar:
             if convert_bare:
                 variable = self._convert_bare_variable(variable)
 
-            if isinstance(variable, basestring):
+            if isinstance(variable, Templar.FilePath):
+                return self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+            elif isinstance(variable, basestring):
                 result = variable
                 if self._contains_vars(variable):
 
@@ -269,9 +290,10 @@ class Templar:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
     def _do_template(self, data, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
-
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
+
+        is_filepath = isinstance(data, Templar.FilePath)
 
         try:
             # allows template header overrides to change jinja2 options.
@@ -281,7 +303,7 @@ class Templar:
                 myenv = self.environment.overlay(overrides)
 
             # Get jinja env overrides from template
-            if data.startswith(JINJA2_OVERRIDE):
+            if not is_filepath and data.startswith(JINJA2_OVERRIDE):
                 eol = data.find('\n')
                 line = data[len(JINJA2_OVERRIDE):eol]
                 data = data[eol+1:]
@@ -295,14 +317,19 @@ class Templar:
             myenv.tests.update(self._get_tests())
 
             try:
-                t = myenv.from_string(data)
+                if is_filepath:
+                    t = myenv.get_template(os.path.relpath(str(data)))
+                else:
+                    t = myenv.from_string(data)
             except TemplateSyntaxError, e:
                 raise AnsibleError("template error while templating string: %s" % str(e))
             except Exception, e:
                 if 'recursion' in str(e):
                     raise AnsibleError("recursive loop detected in template string: %s" % data)
-                else:
+                elif not is_filepath:
                     return data
+                else:
+                    raise
 
             t.globals['lookup']   = self._lookup
             t.globals['finalize'] = self._finalize
@@ -338,7 +365,9 @@ class Templar:
         except (UndefinedError, AnsibleUndefinedVariable), e:
             if fail_on_undefined:
                 raise
-            else:
+            elif not is_filepath:
                 #TODO: return warning about undefined var
                 return data
+            else:
+                raise
 
