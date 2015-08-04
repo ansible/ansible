@@ -9,6 +9,7 @@ to the tasks.
 
 Example::
 
+```yaml
     tasks:
       - block:
 
@@ -24,6 +25,7 @@ Example::
         when: ansible_distribution == 'CentOS'
         become: true
         become_user: root
+```
 
 In the example above the 3 tasks will be executed only when the block's when condition is met and enables
 privilege escalation for all the enclosed tasks.
@@ -37,6 +39,7 @@ Error Handling
 About Blocks
 Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.::
 
+```yaml
   tasks:
    - block:
        - debug: msg='i execute normally'
@@ -48,7 +51,7 @@ Blocks also introduce the ability to handle errors in a way similar to exception
        - debug: msg='I also never execute :-('
      always:
        - debug: msg="this always executes"
-
+```
 
 The tasks in the ``block`` would execute normally, if there is any error the ``rescue`` section would get executed
 with whatever you need to do to recover from the previous error. The ``always`` section runs no matter what previous
