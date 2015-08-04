@@ -17,9 +17,44 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
+
+from six import string_types
+
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
+
+def isidentifier(ident):
+    """
+    Determines, if string is valid Python identifier using the ast module.
+    Orignally posted at: http://stackoverflow.com/a/29586366
+    """
+
+    if not isinstance(ident, string_types):
+        return False
+
+    try:
+        root = ast.parse(ident)
+    except SyntaxError:
+        return False
+
+    if not isinstance(root, ast.Module):
+        return False
+
+    if len(root.body) != 1:
+        return False
+
+    if not isinstance(root.body[0], ast.Expr):
+        return False
+
+    if not isinstance(root.body[0].value, ast.Name):
+        return False
+
+    if root.body[0].value.id != ident:
+        return False
+
+    return True
 
 class ActionModule(ActionBase):
 
@@ -30,6 +65,10 @@ class ActionModule(ActionBase):
         if self._task.args:
             for (k, v) in self._task.args.iteritems():
                 k = self._templar.template(k)
+
+                if not isidentifier(k):
+                    return dict(failed=True, msg="The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores." % k)
+
                 if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v)
                 facts[k] = v
