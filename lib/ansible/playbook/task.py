@@ -187,6 +187,13 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).post_validate(templar)
 
+    def _post_validate_loop_args(self, attr, value, templar):
+        '''
+        Override post validation for the loop args field, which is templated
+        specially in the TaskExecutor class when evaluating loops.
+        '''
+        return value
+
     def get_vars(self):
         all_vars = self.vars.copy()
         if self._block:
