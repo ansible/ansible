@@ -7,7 +7,9 @@ at the block level, which also makes it much easier to set data or directives co
 to the tasks.
 
 
-Example::
+Example:
+
+.. code-block:: yaml
 
     tasks:
       - block:
@@ -35,7 +37,9 @@ Error Handling
 ``````````````
 
 About Blocks
-Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.::
+Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.:
+
+.. code-block:: yaml
 
   tasks:
    - block:
