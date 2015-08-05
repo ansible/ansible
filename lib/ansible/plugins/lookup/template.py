@@ -19,6 +19,7 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
@@ -41,6 +42,12 @@ class LookupModule(LookupBase):
             if lookupfile and os.path.exists(lookupfile):
                 with open(lookupfile, 'r') as f:
                     template_data = f.read()
+
+                    self._templar.environment.searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
+                    if 'role_path' in variables:
+                        self._templar.environment.searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                        self._templar.environment.searchpath.insert(1, variables['role_path'])
+
                     res = self._templar.template(template_data, preserve_trailing_newlines=True)
                     ret.append(res)
             else:
