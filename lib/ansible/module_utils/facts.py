@@ -1048,7 +1048,8 @@ class LinuxHardware(Hardware):
                 pciid = m.group(1)
                 did = re.escape(pciid)
                 m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
-                d['host'] = m.group(1)
+                if m:
+                    d['host'] = m.group(1)
 
             d['holders'] = []
             if os.path.isdir(sysdir + "/holders"):
