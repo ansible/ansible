@@ -82,7 +82,7 @@ class Templar:
             undefined=StrictUndefined,
             extensions=self._get_extensions(),
             finalize=self._finalize,
-            loader=FileSystemLoader('.'),
+            loader=FileSystemLoader(self._basedir),
         )
         self.environment.template_class = AnsibleJ2Template
 
