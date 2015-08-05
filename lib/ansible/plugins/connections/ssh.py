@@ -57,11 +57,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).__init__(*args, **kwargs)
 
-        # FIXME: make this work, should be set from connection info
-        self._ipv6 = False
         self.host = self._play_context.remote_addr
-        if self._ipv6:
-            self.host = '[%s]' % self.host
 
     @property
     def transport(self):
@@ -342,8 +338,6 @@ class Connection(ConnectionBase):
             ssh_cmd.append("-q")
         ssh_cmd += self._common_args
 
-        if self._ipv6:
-            ssh_cmd += ['-6']
         ssh_cmd.append(self.host)
 
         ssh_cmd.append(cmd)
@@ -437,15 +431,19 @@ class Connection(ConnectionBase):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         cmd = self._password_cmd()
 
+        # scp and sftp require square brackets for IPv6 addresses, but
+        # accept them for hostnames and IPv4 addresses too.
+        host = '[%s]' % self.host
+
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
             cmd.extend(self._common_args)
-            cmd.extend([in_path, '{0}:{1}'.format(self.host, pipes.quote(out_path))])
+            cmd.extend([in_path, '{0}:{1}'.format(host, pipes.quote(out_path))])
             indata = None
         else:
             cmd.append('sftp')
             cmd.extend(self._common_args)
-            cmd.append(self.host)
+            cmd.append(host)
             indata = "put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
 
         (p, stdin) = self._run(cmd, indata)
