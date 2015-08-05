@@ -1,5 +1,5 @@
-[![PyPI version](https://badge.fury.io/py/ansible.png)](http://badge.fury.io/py/ansible)
-[![PyPI downloads](https://pypip.in/d/ansible/badge.png)](https://pypi.python.org/pypi/ansible)
+[![PyPI version](https://badge.fury.io/py/ansible.svg)](http://badge.fury.io/py/ansible)
+[![PyPI downloads](https://pypip.in/d/ansible/badge.svg)](https://pypi.python.org/pypi/ansible)
 [![Build Status](https://travis-ci.org/ansible/ansible.svg?branch=devel)](https://travis-ci.org/ansible/ansible)
 
 
@@ -51,7 +51,7 @@ Branch Info
 Authors
 =======
 
-Ansible was created by [Michael DeHaan](https://github.com/mpdehaan) (michael.dehaan/gmail/com) and has contributions from over 900 users (and growing).  Thanks everyone!
+Ansible was created by [Michael DeHaan](https://github.com/mpdehaan) (michael.dehaan/gmail/com) and has contributions from over 1000 users (and growing).  Thanks everyone!
 
 Ansible is sponsored by [Ansible, Inc](http://ansible.com)
 

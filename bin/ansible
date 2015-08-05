@@ -18,6 +18,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ########################################################
+from __future__ import (absolute_import, print_function)
+__metaclass__ = type
 
 __requires__ = ['ansible']
 try:
@@ -32,176 +34,77 @@ except Exception:
 
 import os
 import sys
+import traceback
 
-from ansible.runner import Runner
-import ansible.constants as C
-from ansible import utils
-from ansible import errors
-from ansible import callbacks
-from ansible import inventory
-########################################################
+from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.utils.display import Display
 
-class Cli(object):
-    ''' code behind bin/ansible '''
+########################################
+### OUTPUT OF LAST RESORT ###
+class LastResort(object):
+    def display(self, msg):
+        print(msg, file=sys.stderr)
 
-    # ----------------------------------------------
-
-    def __init__(self):
-        self.stats = callbacks.AggregateStats()
-        self.callbacks = callbacks.CliRunnerCallbacks()
-        if C.DEFAULT_LOAD_CALLBACK_PLUGINS:
-            callbacks.load_callback_plugins()
-
-    # ----------------------------------------------
-
-    def parse(self):
-        ''' create an options parser for bin/ansible '''
-
-        parser = utils.base_parser(
-            constants=C,
-            runas_opts=True,
-            subset_opts=True,
-            async_opts=True,
-            output_opts=True,
-            connect_opts=True,
-            check_opts=True,
-            diff_opts=False,
-            usage='%prog <host-pattern> [options]'
-        )
-
-        parser.add_option('-a', '--args', dest='module_args',
-            help="module arguments", default=C.DEFAULT_MODULE_ARGS)
-        parser.add_option('-m', '--module-name', dest='module_name',
-            help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
-            default=C.DEFAULT_MODULE_NAME)
-
-        options, args = parser.parse_args()
-        self.callbacks.options = options
-
-        if len(args) == 0 or len(args) > 1:
-            parser.print_help()
-            sys.exit(1)
-
-        # privlege escalation command line arguments need to be mutually exclusive
-        utils.check_mutually_exclusive_privilege(options, parser)
-
-        if (options.ask_vault_pass and options.vault_password_file):
-            parser.error("--ask-vault-pass and --vault-password-file are mutually exclusive")
-
-        return (options, args)
-
-    # ----------------------------------------------
-
-    def run(self, options, args):
-        ''' use Runner lib to do SSH things '''
-
-        pattern = args[0]
-
-        sshpass = becomepass = vault_pass = become_method = None
-
-        # Never ask for an SSH password when we run with local connection
-        if options.connection == "local":
-            options.ask_pass = False
-        else:
-            options.ask_pass = options.ask_pass or C.DEFAULT_ASK_PASS
-
-        options.ask_vault_pass = options.ask_vault_pass or C.DEFAULT_ASK_VAULT_PASS
-
-        # become
-        utils.normalize_become_options(options)
-        prompt_method = utils.choose_pass_prompt(options)
-        (sshpass, becomepass, vault_pass) = utils.ask_passwords(ask_pass=options.ask_pass, become_ask_pass=options.become_ask_pass, ask_vault_pass=options.ask_vault_pass, become_method=prompt_method)
-
-        # read vault_pass from a file
-        if not options.ask_vault_pass and options.vault_password_file:
-            vault_pass = utils.read_vault_file(options.vault_password_file)
-
-        extra_vars = utils.parse_extra_vars(options.extra_vars, vault_pass)
-
-        inventory_manager = inventory.Inventory(options.inventory, vault_password=vault_pass)
-        if options.subset:
-            inventory_manager.subset(options.subset)
-        hosts = inventory_manager.list_hosts(pattern)
-
-        if len(hosts) == 0:
-            callbacks.display("No hosts matched", stderr=True)
-            sys.exit(0)
-
-        if options.listhosts:
-            for host in hosts:
-                callbacks.display('    %s' % host)
-            sys.exit(0)
-
-        if options.module_name in ['command','shell'] and not options.module_args:
-            callbacks.display("No argument passed to %s module" % options.module_name, color='red', stderr=True)
-            sys.exit(1)
-
-        if options.tree:
-            utils.prepare_writeable_dir(options.tree)
-
-        runner = Runner(
-            module_name=options.module_name,
-            module_path=options.module_path,
-            module_args=options.module_args,
-            remote_user=options.remote_user,
-            remote_pass=sshpass,
-            inventory=inventory_manager,
-            timeout=options.timeout,
-            private_key_file=options.private_key_file,
-            forks=options.forks,
-            pattern=pattern,
-            callbacks=self.callbacks,
-            transport=options.connection,
-            subset=options.subset,
-            check=options.check,
-            diff=options.check,
-            vault_pass=vault_pass,
-            become=options.become,
-            become_method=options.become_method,
-            become_pass=becomepass,
-            become_user=options.become_user,
-            extra_vars=extra_vars,
-        )
-
-        if options.seconds:
-            callbacks.display("background launch...\n\n", color='cyan')
-            results, poller = runner.run_async(options.seconds)
-            results = self.poll_while_needed(poller, options)
-        else:
-            results = runner.run()
-
-        return (runner, results)
-
-    # ----------------------------------------------
-
-    def poll_while_needed(self, poller, options):
-        ''' summarize results from Runner '''
-
-        # BACKGROUND POLL LOGIC when -B and -P are specified
-        if options.seconds and options.poll_interval > 0:
-            poller.wait(options.seconds, options.poll_interval)
-
-        return poller.results
+    def error(self, msg, wrap_text=None):
+        print(msg, file=sys.stderr)
 
 
-########################################################
+########################################
 
 if __name__ == '__main__':
-    callbacks.display("", log_only=True)
-    callbacks.display(" ".join(sys.argv), log_only=True)
-    callbacks.display("", log_only=True)
 
-    cli = Cli()
-    (options, args) = cli.parse()
+    display = LastResort()
+    cli = None
+    me = os.path.basename(sys.argv[0])
+
     try:
-        (runner, results) = cli.run(options, args)
-        for result in results['contacted'].values():
-            if 'failed' in result or result.get('rc', 0) != 0:
-                sys.exit(2)
-        if results['dark']:
-            sys.exit(3)
-    except errors.AnsibleError, e:
-        # Generic handler for ansible specific errors
-        callbacks.display("ERROR: %s" % str(e), stderr=True, color='red')
-        sys.exit(1)
+        display = Display()
 
+        if me == 'ansible-playbook':
+            from ansible.cli.playbook import PlaybookCLI as mycli
+        elif me == 'ansible':
+            from ansible.cli.adhoc import AdHocCLI as mycli
+        elif me == 'ansible-pull':
+            from ansible.cli.pull import PullCLI as mycli
+        elif me == 'ansible-doc':
+            from ansible.cli.doc import DocCLI as mycli
+        elif me == 'ansible-vault':
+            from ansible.cli.vault import VaultCLI as mycli
+        elif me == 'ansible-galaxy':
+            from ansible.cli.galaxy import GalaxyCLI as mycli
+
+        cli = mycli(sys.argv, display=display)
+        if cli:
+            cli.parse()
+            sys.exit(cli.run())
+        else:
+            raise AnsibleError("Program not implemented: %s" % me)
+
+    except AnsibleOptionsError as e:
+        cli.parser.print_help()
+        display.error(str(e), wrap_text=False)
+        sys.exit(5)
+    except AnsibleParserError as e:
+        display.error(str(e), wrap_text=False)
+        sys.exit(4)
+# TQM takes care of these, but leaving comment to reserve the exit codes
+#    except AnsibleHostUnreachable as e:
+#        display.error(str(e))
+#        sys.exit(3)
+#    except AnsibleHostFailed as e:
+#        display.error(str(e))
+#        sys.exit(2)
+    except AnsibleError as e:
+        display.error(str(e), wrap_text=False)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        display.error("User interrupted execution")
+        sys.exit(99)
+    except Exception as e:
+        have_cli_options = cli is not None and cli.options is not None
+        display.error("Unexpected Exception: %s" % str(e), wrap_text=False)
+        if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
+            display.display("the full traceback was:\n\n%s" % traceback.format_exc())
+        else:
+            display.display("to see the full traceback, use -vvv")
+        sys.exit(250)

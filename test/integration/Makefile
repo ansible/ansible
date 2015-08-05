@@ -24,11 +24,7 @@ CONSUL_RUNNING := $(shell python consul_running.py)
 all: parsing test_var_precedence unicode test_templating_settings non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags
 
 parsing:
-	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario1; [ $$? -eq 3 ]
-	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario2; [ $$? -eq 3 ]
-	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario3; [ $$? -eq 3 ]
-	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario4; [ $$? -eq 3 ]
-	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5; [ $$? -eq 3 ]
+	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5
 	ansible-playbook good_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 includes:
@@ -55,7 +51,8 @@ test_group_by:
 	ansible-playbook test_group_by.yml -i inventory.group_by -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
 test_handlers:
-	ansible-playbook test_handlers.yml -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	ansible-playbook test_handlers.yml --tags scenario1 -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+	[ "$$(ansible-playbook test_handlers.yml --tags scenario2 -l A -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | grep -Po 'RUNNING HANDLER \[test_handlers : \K[^\]]+')" = "test handler" ]
 	# Not forcing, should only run on successful host
 	[ "$$(ansible-playbook test_force_handlers.yml --tags normal -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | egrep -o CALLED_HANDLER_. | sort | uniq | xargs)" = "CALLED_HANDLER_B" ]
 	# Forcing from command line
@@ -76,7 +73,7 @@ test_hash:
 	ANSIBLE_HASH_BEHAVIOUR=merge ansible-playbook test_hash.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e '{"test_hash":{"extra_args":"this is an extra arg"}}'
 
 test_var_precedence:
-	ansible-playbook test_var_precedence.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v -e 'extra_var=extra_var' -e 'extra_var_override=extra_var_override'
+	ansible-playbook test_var_precedence.yml -i $(INVENTORY) $(CREDENTIALS_ARG) $(TEST_FLAGS) -v -e 'extra_var=extra_var' -e 'extra_var_override=extra_var_override'
 
 test_vault:
 	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-tasks
@@ -163,7 +160,7 @@ $(CONSUL_RUNNING):
 consul:
 ifeq ($(CONSUL_RUNNING), True)
 	ansible-playbook -i $(INVENTORY) consul.yml ; \
-	ansible-playbook -i ../../plugins/inventory/consul_io.py consul_inventory.yml
+	ansible-playbook -i ../../contrib/inventory/consul_io.py consul_inventory.yml
 else
 	@echo "Consul agent is not running locally. To run a cluster locally see http://github.com/sgargan/consul-vagrant"
 endif

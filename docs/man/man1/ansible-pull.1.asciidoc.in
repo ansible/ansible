@@ -50,19 +50,26 @@ host hostname and finally a playbook named *local.yml*.
 OPTIONS
 -------
 
+*--accept-host-key*::
+
+Adds the hostkey for the repo URL if not already added.
+
+*-K*, *--ask-sudo-pass*::
+
+Ask for sudo password.
+ 
+*-C* 'CHECKOUT', *--checkout=*'CHECKOUT'::
+
+Branch/Tag/Commit to checkout.  If not provided, uses default behavior of module used to check out playbook repository.
+
 *-d* 'DEST', *--directory=*'DEST'::
 
 Directory to checkout repository into. If not provided, a subdirectory of
 ~/.ansible/pull/ will be used.
 
-*-U* 'URL', *--url=*'URL'::
+*-e* 'EXTRA_VARS', *--extra-vars=*'EXTRA_VARS*::
 
-URL of the playbook repository to checkout.
-
-*-C* 'CHECKOUT', *--checkout=*'CHECKOUT'::
-
-Branch/Tag/Commit to checkout.  If not provided, uses default behavior
-of module used to check out playbook repository.
+Set additional variables as key=value or YAML/JSON
 
 *-f*, *--force*::
 
@@ -70,14 +77,17 @@ Force running of playbook even if unable to update playbook repository.  This
 can be useful, for example, to enforce run-time state when a network
 connection may not always be up or possible.
 
+*-h*, *--help*::
+
+Show the help message and exit.
+
 *-i* 'PATH', *--inventory=*'PATH'::
 
-The 'PATH' to the inventory hosts file.  This can be a relative path within
-the checkout.
+The 'PATH' to the inventory hosts file.  This can be a relative path within the checkout.
 
-*--purge*::
+*--key-file=*'KEYFILE'::
 
-Purge the checkout after the playbook is run.
+Pass '-i <key_file>' to the SSH arguments used by git.
 
 *-m* 'NAME', *--module-name=*'NAME'::
 
@@ -85,7 +95,32 @@ Module used to checkout playbook repository.  Defaults to git.
 
 *-o*, *--only-if-changed*::
 
-Run the playbook only if the repository has changed
+Only run the playbook if the repository has been updated.
+
+*--purge*::
+
+Purge the checkout after the playbook is run.
+
+*-s* 'SLEEP', *--sleep=*'SLEEP'::
+
+Sleep for random interval (between 0 and SLEEP number of seconds) before starting.  This is a useful way ot disperse git requests.
+
+*-t* 'TAGS', *--tags=*'TAGS'::
+
+Only run plays and tasks tagged with these values.
+
+*-U* 'URL', *--url=*'URL'::
+
+URL of the playbook repository to checkout.
+
+*--vault-password-file=*'VAULT_PASSWORD_FILE'::
+
+Vault password file.
+
+*-v*, *--verbose*::
+
+Pass -vvv to ansible-playbook.
+
 
 AUTHOR
 ------

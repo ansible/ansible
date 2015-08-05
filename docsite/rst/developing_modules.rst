@@ -18,7 +18,7 @@ The directory "./library", alongside your top level playbooks, is also automatic
 added as a search directory.
 
 Should you develop an interesting Ansible module, consider sending a pull request to the
-`modules-extras project <http://github.com/ansible/ansible-modules-extras>`_.  There's also a core
+`modules-extras project <https://github.com/ansible/ansible-modules-extras>`_.  There's also a core
 repo for more established and widely used modules.  "Extras" modules may be promoted to core periodically,
 but there's no fundamental difference in the end - both ship with ansible, all in one package, regardless
 of how you acquire ansible.
@@ -238,7 +238,8 @@ The 'group' and 'user' modules are reasonably non-trivial and showcase what this
 Key parts include always ending the module file with::
 
     from ansible.module_utils.basic import *
-    main()
+    if __name__ == '__main__':
+        main()
 
 And instantiating the module class like::
 
@@ -291,7 +292,7 @@ will evaluate to True when check mode is enabled. For example::
     )
 
     if module.check_mode:
-        # Check if any changes would be made by don't actually make those changes
+        # Check if any changes would be made but don't actually make those changes
         module.exit_json(changed=check_if_system_state_would_be_changed())
 
 Remember that, as module developer, you are responsible for ensuring that no
@@ -342,7 +343,7 @@ and guidelines:
 
 * If packaging modules in an RPM, they only need to be installed on the control machine and should be dropped into /usr/share/ansible.  This is entirely optional and up to you.
 
-* Modules should output valid JSON only. All return types must be hashes (dictionaries) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
+* Modules must output valid JSON only. The toplevel return type must be a hash (dictionary) although they can be nested.  Lists or simple scalar values are not supported, though they can be trivially contained inside a dictionary.
 
 * In the event of failure, a key of 'failed' should be included, along with a string explanation in 'msg'.  Modules that raise tracebacks (stacktraces) are generally considered 'poor' modules, though Ansible can deal with these returns and will automatically convert anything unparseable into a failed result.  If you are using the AnsibleModule common Python code, the 'failed' element will be included for you automatically when you call 'fail_json'.
 
@@ -370,7 +371,7 @@ See an example documentation string in the checkout under `examples/DOCUMENTATIO
 
 Include it in your module file like this::
 
-    #!/usr/bin/env python
+    #!/usr/bin/python
     # Copyright header....
 
     DOCUMENTATION = '''
@@ -464,7 +465,7 @@ Module checklist
     * Requirements should  be documented, using the `requirements=[]` field
     * Author should be set, name and github id at least
     * Made use of U() for urls, C() for files and options, I() for params, M() for modules?
-    * GPL License header
+    * GPL 3 License header
     * Does module use check_mode? Could it be modified to use it? Document it
     * Examples: make sure they are reproducible
     * Return: document the return structure of the module
@@ -483,11 +484,72 @@ Module checklist
 * The return structure should be consistent, even if NA/None are used for keys normally returned under other options.
 * Are module actions idempotent? If not document in the descriptions or the notes
 * Import module snippets `from ansible.module_utils.basic import *` at the bottom, conserves line numbers for debugging.
+* Call your :func:`main` from a conditional so that it would be possible to
+  test them in the future example::
+
+    if __name__ == '__main__':
+        main()
+
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
 * Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
 * Sometimes you want to split the module, specially if you are adding a list/info state, you want a _facts version
-* If you are asking 'how can i have a module execute other modules' ... you want to write a role
+* If you are asking 'how can I have a module execute other modules' ... you want to write a role
+* Return values must be able to be serialized as json via the python stdlib
+  json library.  basic python types (strings, int, dicts, lists, etc) are
+  serializable.  A common pitfall is to try returning an object via
+  exit_json().  Instead, convert the fields you need from the object into the
+  fields of a dictionary and return the dictionary.
+* Do not use urllib2 to handle urls.  urllib2 does not natively verify TLS
+  certificates and so is insecure for https.  Instead, use either fetch_url or
+  open_url from ansible.module_utils.urls.
+
+Windows modules checklist
+`````````````````````````
+* Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of windows
+* modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
+* look at ansible/lib/ansible/module_utils/powershell.ps1 for commmon code, avoid duplication
+* start with::
+
+    #!powershell
+
+then::
+    <GPL header>
+then::
+    # WANT_JSON
+    # POWERSHELL_COMMON
+
+* Arguments:
+    * Try and use state present and state absent like other modules
+    * You need to check that all your mandatory args are present::
+
+        If ($params.state) {
+            $state = $params.state.ToString().ToLower()
+            If (($state -ne 'started') -and ($state -ne 'stopped') -and ($state -ne 'restarted')) {
+                Fail-Json $result "state is '$state'; must be 'started', 'stopped', or 'restarted'"
+            }
+        }
+
+    * Look at existing modules for more examples of argument checking.
+
+* Results
+    * The result object should allways contain an attribute called changed set to either $true or $false
+    * Create your result object like this::
+
+        $result = New-Object psobject @{
+        changed = $false
+        other_result_attribute = $some_value
+        };
+
+        If all is well, exit with a
+        Exit-Json $result
+
+    * Ensure anything you return, including errors can be converted to json.
+    * Be aware that because exception messages could contain almost anything.
+    * ConvertTo-Json will fail if it encounters a trailing \ in a string.
+    * If all is not well use Fail-Json to exit.
+
+* Have you tested for powershell 3.0 and 4.0 compliance?
 
 
 Deprecating and making module aliases

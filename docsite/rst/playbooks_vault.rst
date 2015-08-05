@@ -5,7 +5,7 @@ Vault
 
 New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitive data such as passwords or keys in encrypted files, rather than as plaintext in your playbooks or roles. These vault files can then be distributed or placed in source control.
 
-To enable this feature, a command line tool, `ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used.
+To enable this feature, a command line tool, `ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used. Alternately, you may specify the location of a password file in your  ansible.cfg file. This option requires no command line flag usage.
 
 .. _what_can_be_encrypted_with_vault:
 
@@ -14,7 +14,7 @@ What Can Be Encrypted With Vault
 
 The vault feature can encrypt any structured data file used by Ansible.  This can include "group_vars/" or "host_vars/" inventory variables, variables loaded by "include_vars" or "vars_files", or variable files passed on the ansible-playbook command line with "-e @file.yml" or "-e @file.json".  Role variables and defaults are also included!
 
-Because Ansible tasks, handlers, and so on are also data, these can also be encrypted with vault.  If you'd like to not betray what variables you are even using, you can go as far to keep an individual task file entirely encrypted.  However, that might be a little much and could annoy your coworkers :)
+Ansible tasks, handlers, and so on are also data so these can be encrypted with vault as well. To hide the names of variables that you're using, you can encrypt the task files in their entirety. However, that might be a little too much and could annoy your coworkers :)
 
 .. _creating_files:
 

@@ -308,7 +308,7 @@ This will return a ginormous amount of variable data, which may look like this, 
             "type": "ether"
         }, 
         "ansible_form_factor": "Other", 
-        "ansible_fqdn": "ubuntu2", 
+        "ansible_fqdn": "ubuntu2.example.com",
         "ansible_hostname": "ubuntu2", 
         "ansible_interfaces": [
             "lo", 
@@ -353,6 +353,7 @@ This will return a ginormous amount of variable data, which may look like this, 
                 "size_total": 20079898624
             }
         ], 
+        "ansible_nodename": "ubuntu2.example.com",
         "ansible_os_family": "Debian", 
         "ansible_pkg_mgr": "apt", 
         "ansible_processor": [
@@ -387,8 +388,11 @@ In the above the model of the first harddrive may be referenced in a template or
 
 Similarly, the hostname as the system reports it is::
 
-    {{ ansible_hostname }}
+    {{ ansible_nodename }}
 
+and the unqualified hostname shows the string before the first period(.)::
+
+    {{ ansible_hostname }}
 
 Facts are frequently used in conditionals (see :doc:`playbooks_conditionals`) and also in templates.
 
@@ -494,7 +498,11 @@ not be necessary to "hit" all servers to reference variables and information abo
 With fact caching enabled, it is possible for machine in one group to reference variables about machines in the other group, despite
 the fact that they have not been communicated with in the current execution of /usr/bin/ansible-playbook.
 
-To configure fact caching, enable it in ansible.cfg as follows::
+To benefit from cached facts, you will want to change the 'gathering' setting to 'smart' or 'explicit' or set 'gather_facts' to False in most plays.
+
+Currently, Ansible ships with two persistent cache plugins: redis and jsonfile.
+
+To configure fact caching using redis, enable it in ansible.cfg as follows::
 
     [defaults]
     gathering = smart
@@ -502,9 +510,6 @@ To configure fact caching, enable it in ansible.cfg as follows::
     fact_caching_timeout = 86400
     # seconds
 
-You might also want to change the 'gathering' setting to 'smart' or 'explicit' or set gather_facts to False in most plays.
-
-At the time of writing, Redis is the only supported fact caching engine.
 To get redis up and running, perform the equivalent OS commands::
 
     yum install redis
@@ -514,6 +519,18 @@ To get redis up and running, perform the equivalent OS commands::
 Note that the Python redis library should be installed from pip, the version packaged in EPEL is too old for use by Ansible.
 
 In current embodiments, this feature is in beta-level state and the Redis plugin does not support port or password configuration, this is expected to change in the near future.
+
+To configure fact caching using jsonfile, enable it in ansible.cfg as follows::
+
+    [defaults]
+    gathering = smart
+    fact_caching = jsonfile
+    fact_caching_connection = /path/to/cachedir
+    fact_caching_timeout = 86400
+    # seconds
+
+`fact_caching_connection` is a local filesystem path to a writeable
+directory (ansible will attempt to create the directory if one does not exist).
 
 .. _registered_variables:
 
@@ -613,6 +630,8 @@ period, without the rest of the domain.
 Don't worry about any of this unless you think you need it.  You'll know when you do.
 
 Also available, *inventory_dir* is the pathname of the directory holding Ansible's inventory host file, *inventory_file* is the pathname and the filename pointing to the Ansible's inventory host file.
+
+And finally, *role_path* will return the current role's pathname (since 1.8). This will only work inside a role.
 
 .. _variable_file_separation_details:
 
@@ -782,7 +801,7 @@ Parameterized roles are useful.
 If you are using a role and want to override a default, pass it as a parameter to the role like so::
 
     roles:
-       - { name: apache, http_port: 8080 }
+       - { role: apache, http_port: 8080 }
 
 This makes it clear to the playbook reader that you've made a conscious choice to override some default in the role, or pass in some
 configuration that the role can't assume by itself.  It also allows you to pass something site-specific that isn't really part of the

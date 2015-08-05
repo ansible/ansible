@@ -21,7 +21,7 @@ Carrier Pigeon?) it's as simple as copying the format of one of the existing mod
 directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
 'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 an later.  Previous versions did not support 'smart'.
 
-More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/runner/connection_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/runner/connection_plugins>`_ and figure things out pretty easily.
+More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/plugins/connections <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connections>`_ and figure things out pretty easily.
 
 .. _developing_lookup_plugins:
 
@@ -30,7 +30,7 @@ Lookup Plugins
 
 Language constructs like "with_fileglob" and "with_items" are implemented via lookup plugins.  Just like other plugin types, you can write your own.
 
-More documentation on writing lookup plugins is pending, though you can jump into `lib/ansible/runner/lookup_plugins <https://github.com/ansible/ansible/tree/devel/lib/ansible/runner/lookup_plugins>`_ and figure
+More documentation on writing lookup plugins is pending, though you can jump into `lib/ansible/plugins/lookup <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/lookup>`_ and figure
 things out pretty easily.
 
 .. _developing_vars_plugins:
@@ -54,7 +54,7 @@ Filter Plugins
 
 If you want more Jinja2 filters available in a Jinja2 template (filters like to_yaml and to_json are provided by default), they can be extended by writing a filter plugin.  Most of the time, when someone comes up with an idea for a new filter they would like to make available in a playbook, we'll just include them in 'core.py' instead.
 
-Jump into `lib/ansible/runner/filter_plugins/ <https://github.com/ansible/ansible/tree/devel/lib/ansible/runner/filter_plugins>`_ for details.
+Jump into `lib/ansible/plugins/filter <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/filter>`_ for details.
 
 .. _developing_callbacks:
 
@@ -68,17 +68,17 @@ Callbacks are one of the more interesting plugin types.  Adding additional callb
 Examples
 ++++++++
 
-Example callbacks are shown in `plugins/callbacks <https://github.com/ansible/ansible/tree/devel/plugins/callbacks>`_.
+Example callbacks are shown in `lib/ansible/plugins/callback <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/callback>`_.
 
 The `log_plays
-<https://github.com/ansible/ansible/blob/devel/plugins/callbacks/log_plays.py>`_
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/log_plays.py>`_
 callback is an example of how to intercept playbook events to a log
 file, and the `mail
-<https://github.com/ansible/ansible/blob/devel/plugins/callbacks/mail.py>`_
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/mail.py>`_
 callback sends email when playbooks complete.
 
 The `osx_say
-<https://github.com/ansible/ansible/blob/devel/plugins/callbacks/osx_say.py>`_
+<https://github.com/ansible/ansible/blob/devel/lib/ansible/plugins/callback/osx_say.py>`_
 callback provided is particularly entertaining -- it will respond with
 computer synthesized speech on OS X in relation to playbook events,
 and is guaranteed to entertain and/or annoy coworkers.

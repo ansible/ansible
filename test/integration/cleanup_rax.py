@@ -138,6 +138,26 @@ def delete_rax_cdb(args):
                                   args.assumeyes)
 
 
+def _force_delete_rax_scaling_group(manager):
+    def wrapped(uri):
+        manager.api.method_delete('%s?force=true' % uri)
+    return wrapped
+
+
+def delete_rax_scaling_group(args):
+    """Function for deleting Autoscale Groups"""
+    print ("--- Cleaning Autoscale Groups matching '%s'" % args.match_re)
+    for region in pyrax.identity.services.autoscale.regions:
+        asg = pyrax.connect_to_autoscale(region=region)
+        for group in rax_list_iterator(asg):
+            if re.search(args.match_re, group.name):
+                group.manager._delete = \
+                    _force_delete_rax_scaling_group(group.manager)
+                prompt_and_delete(group,
+                                  'Delete matching %s? [y/n]: ' % group,
+                                  args.assumeyes)
+
+
 def main():
     if not HAS_PYRAX:
         raise SystemExit('The pyrax python module is required for this script')

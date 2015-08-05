@@ -62,11 +62,11 @@ I'd Like To Report A Bug
 
 Ansible practices responsible disclosure - if this is a security related bug, email `security@ansible.com <mailto:security@ansible.com>`_ instead of filing a ticket or posting to the Google Group and you will receive a prompt response.
 
-Bugs related to the core language should be reported to `github.com/ansible/ansible <http://github.com/ansible/ansible>`_ after 
-signing up for a free github account.  Before reporting a bug, please use the bug/issue search 
-to see if the issue has already been reported.  
+Bugs related to the core language should be reported to `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ after
+signing up for a free github account.  Before reporting a bug, please use the bug/issue search
+to see if the issue has already been reported.
 
-MODULE related bugs however should go to `ansible-modules-core <http://github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <http://github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
+MODULE related bugs however should go to `ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_ or `ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ based on the classification of the module.  This is listed on the bottom of the docs page for any module.
 
 When filing a bug, please use the `issue template <https://github.com/ansible/ansible/raw/devel/ISSUE_TEMPLATE.md>`_ to provide all relevant information, regardless of what repo you are filing a ticket against.
 
@@ -132,9 +132,9 @@ Modules are some of the easiest places to get started.
 Contributing Code (Features or Bugfixes)
 ----------------------------------------
 
-The Ansible project keeps its source on github at `github.com/ansible/ansible <http://github.com/ansible/ansible>`_ for
-the core application, and two sub repos `github.com/ansible/ansible-modules-core <http://github.com/ansible/ansible-modules-core>`_
-and `ansible/ansible-modules-extras <http://github.com/ansible/ansible-modules-extras>`_ for module related items.
+The Ansible project keeps its source on github at `github.com/ansible/ansible <https://github.com/ansible/ansible>`_ for
+the core application, and two sub repos `github.com/ansible/ansible-modules-core <https://github.com/ansible/ansible-modules-core>`_
+and `ansible/ansible-modules-extras <https://github.com/ansible/ansible-modules-extras>`_ for module related items.
 If you need to know if a module is in 'core' or 'extras', consult the web documentation page for that module.
 
 The project takes contributions through `github pull requests <https://help.github.com/articles/using-pull-requests>`_.

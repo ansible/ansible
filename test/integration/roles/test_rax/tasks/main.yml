@@ -119,6 +119,7 @@
     name: "{{ resource_prefix }}-1"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete integration 1"
@@ -141,6 +142,7 @@
     flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-2"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax basic idepmpotency 1
@@ -163,6 +165,7 @@
     flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-2"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax basic idempotency 2
@@ -185,6 +188,7 @@
     name: "{{ resource_prefix }}-2"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete integration 2"
@@ -211,6 +215,7 @@
     meta:
       foo: bar
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax basic idepmpotency with meta 1
@@ -236,6 +241,7 @@
     meta:
       foo: bar
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax basic idempotency with meta 2
@@ -260,6 +266,7 @@
     meta:
       foo: bar
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete integration 3"
@@ -285,6 +292,7 @@
     name: "{{ resource_prefix }}-4"
     count: 2
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax basic idepmpotency multi server 1
@@ -306,6 +314,7 @@
     name: "{{ resource_prefix }}-4"
     count: 2
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax basic idempotency multi server 2
@@ -327,6 +336,7 @@
     name: "{{ resource_prefix }}-4"
     count: 3
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax basic idempotency multi server 3
@@ -349,6 +359,7 @@
     count: 3
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete integration 4"
@@ -375,6 +386,7 @@
     count: 2
     group: "{{ resource_prefix }}-5"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group without exact_count 1
@@ -398,6 +410,7 @@
     count: 2
     group: "{{ resource_prefix }}-5"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
     state: absent
   register: rax
 
@@ -425,6 +438,7 @@
     count: 2
     group: "{{ resource_prefix }}-6"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group without exact_count non-idempotency 1
@@ -448,6 +462,7 @@
     count: 2
     group: "{{ resource_prefix }}-6"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group without exact_count non-idempotency 2
@@ -470,6 +485,7 @@
     count: 4
     group: "{{ resource_prefix }}-6"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
     state: absent
   register: rax
 
@@ -498,6 +514,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-7"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group with exact_count 1
@@ -522,6 +539,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-7"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group with exact_count 2
@@ -545,6 +563,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-7"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group with exact_count 3
@@ -570,6 +589,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-7"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete integration 7"
@@ -597,6 +617,7 @@
     group: "{{ resource_prefix }}-8"
     auto_increment: false
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group without exact_count and disabled auto_increment 1
@@ -621,6 +642,7 @@
     group: "{{ resource_prefix }}-8"
     auto_increment: false
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
     state: absent
   register: rax
 
@@ -649,6 +671,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-9"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group with exact_count and no printf 1
@@ -673,6 +696,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-9"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete integration 9"
@@ -701,6 +725,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-10"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group with exact_count and offset 1
@@ -726,6 +751,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-10"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete integration 10"
@@ -754,6 +780,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-11"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax multi server group with exact_count and offset 1
@@ -779,6 +806,7 @@
     exact_count: true
     group: "{{ resource_prefix }}-11"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete integration 11"
@@ -803,6 +831,7 @@
     flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-12"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate rax instance_ids absent 1 (create)
@@ -827,6 +856,7 @@
       - "{{ rax.success.0.rax_id }}"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax2
 
 - name: Validate rax instance_ids absent 2 (delete)
