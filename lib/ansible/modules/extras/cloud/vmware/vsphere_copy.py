@@ -142,17 +142,17 @@ def main():
     except socket.error, e:
         if isinstance(e.args, tuple) and e[0] == errno.ECONNRESET:
             # VSphere resets connection if the file is in use and cannot be replaced
-            module.fail_json(msg='Failed to upload, image probably in use', status=e[0], reason=str(e), url=url)
+            module.fail_json(msg='Failed to upload, image probably in use', status=None, errno=e[0], reason=str(e), url=url)
         else:
-            module.fail_json(msg=str(e), status=e[0], reason=str(e), url=url)
+            module.fail_json(msg=str(e), status=None, errno=e[0], reason=str(e), url=url)
     except Exception, e:
-        status = -1
+        error_code = -1
         try:
             if isinstance(e[0], int):
-                status = e[0]
+                error_code = e[0]
         except KeyError:
             pass
-        module.fail_json(msg=str(e), status=status, reason=str(e), url=url)
+        module.fail_json(msg=str(e), status=None, errno=error_code, reason=str(e), url=url)
 
     status = r.getcode()
     if 200 <= status < 300:
@@ -164,7 +164,7 @@ def main():
         else:
             chunked = 0
 
-        module.fail_json(msg='Failed to upload', status=status, reason=r.msg, length=length, headers=dict(r.headers), chunked=chunked, url=url)
+        module.fail_json(msg='Failed to upload', errno=None, status=status, reason=r.msg, length=length, headers=dict(r.headers), chunked=chunked, url=url)
 
 # Import module snippets
 from ansible.module_utils.basic import *
