@@ -252,6 +252,7 @@ def main():
             ssh_args = dict(type='str'),
             partial = dict(default='no', type='bool'),
             verify_host = dict(default='no', type='bool'),
+            mode = dict(default='push', choices=['push', 'pull']),
         ),
         supports_check_mode = True
     )
