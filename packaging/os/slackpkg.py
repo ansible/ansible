@@ -51,7 +51,7 @@ options:
         choices: [ true, false ]
 
 author: Kim Nørgaard (@KimNorgaard)
-requirements: [ "Slackware" >= 12.2 ]
+requirements: [ "Slackware >= 12.2" ]
 '''
 
 EXAMPLES = '''
