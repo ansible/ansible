@@ -69,14 +69,14 @@ class Play(Base, Taggable, Become):
     _vars_prompt         = FieldAttribute(isa='list', default=[])
     _vault_password      = FieldAttribute(isa='string')
 
+    # Role Attributes
+    _roles               = FieldAttribute(isa='list', default=[], priority=100)
+
     # Block (Task) Lists Attributes
     _handlers            = FieldAttribute(isa='list', default=[])
     _pre_tasks           = FieldAttribute(isa='list', default=[])
     _post_tasks          = FieldAttribute(isa='list', default=[])
     _tasks               = FieldAttribute(isa='list', default=[])
-
-    # Role Attributes
-    _roles               = FieldAttribute(isa='list', default=[])
 
     # Flag/Setting Attributes
     _any_errors_fatal    = FieldAttribute(isa='bool', default=False)
