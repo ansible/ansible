@@ -77,7 +77,7 @@ class ActionModule(ActionBase):
                 del task_vars[key]
 
         # Add the definitions from localhost
-        localhost = task_vars['hostvars']['localhost']
+        localhost = task_vars['hostvars']['127.0.0.1']
         if 'ansible_syslog_facility' in localhost:
             task_vars['ansible_syslog_facility'] = localhost['ansible_syslog_facility']
         for key in localhost:
@@ -145,12 +145,12 @@ class ActionModule(ActionBase):
             self._override_module_replaced_vars(task_vars)
 
         # COMPARE DELEGATE, HOST AND TRANSPORT
-        process_args = False
+        between_multiple_hosts = False
         if dest_host != src_host and remote_transport:
             # We're not copying two filesystem trees on the same host so we
             # need to correctly format the paths for rsync (like
             # user@host:path/to/tree
-            process_args = True
+            between_multiple_hosts = True
 
         # SWITCH SRC AND DEST HOST PER MODE
         if self._task.args.get('mode', 'push') == 'pull':
@@ -159,7 +159,7 @@ class ActionModule(ActionBase):
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
         src = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
-        if process_args or use_delegate:
+        if between_multiple_hosts or use_delegate:
             # Private key handling
             if use_delegate:
                 private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
@@ -190,6 +190,13 @@ class ActionModule(ActionBase):
                 # src is a local path, dest is a remote path: <user>@<host>
                 src = self._process_origin(src_host, src, user)
                 dest = self._process_remote(dest_host, dest, user)
+        else:
+            # Still need to munge paths (to account for roles) even if we aren't
+            # copying files between hosts
+            if not src.startswith('/'):
+                src = self._get_absolute_path(path=src)
+            if not dest.startswith('/'):
+                dest = self._get_absolute_path(path=dest)
 
         self._task.args['src'] = src
         self._task.args['dest'] = dest
