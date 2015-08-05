@@ -21,13 +21,17 @@ __metaclass__ = type
 
 class Attribute:
 
-    def __init__(self, isa=None, private=False, default=None, required=False, listof=None):
+    def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0):
 
        self.isa = isa
        self.private = private
        self.default = default
        self.required = required
        self.listof = listof
+       self.priority = priority
+
+    def __cmp__(self, other):
+       return cmp(other.priority, self.priority)
 
 class FieldAttribute(Attribute):
     pass

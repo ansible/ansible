@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import itertools
+import operator
 import uuid
 
 from functools import partial
@@ -153,24 +154,18 @@ class Base:
         else:
             self._loader = DataLoader()
 
-        # FIXME: is this required anymore? This doesn't seem to do anything
-        #        helpful, and was added in very early stages of the base class
-        #        development.
-        #if isinstance(ds, string_types) or isinstance(ds, FileIO):
-        #    ds = self._loader.load(ds)
-
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation
         # function on it to ensure there are no incorrect key values
         ds = self.preprocess_data(ds)
         self._validate_attributes(ds)
 
-        # Walk all attributes in the class.
-        #
+        # Walk all attributes in the class. We sort them based on their priority
+        # so that certain fields can be loaded before others, if they are dependent.
         # FIXME: we currently don't do anything with private attributes but
         #        may later decide to filter them out of 'ds' here.
-
-        for name in self._get_base_attributes():
+        base_attributes = self._get_base_attributes()
+        for name, attr in sorted(base_attributes.items(), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
