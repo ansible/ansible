@@ -18,7 +18,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import sys
 import os.path
 
 from ansible.plugins.action import ActionBase
@@ -77,7 +76,7 @@ class ActionModule(ActionBase):
             if key.startswith("ansible_") and key.endswith("_interpreter"):
                 del task_vars[key]
 
-        # Add the definition from localhost
+        # Add the definitions from localhost
         localhost = task_vars['hostvars']['localhost']
         if 'ansible_syslog_facility' in localhost:
             task_vars['ansible_syslog_facility'] = localhost['ansible_syslog_facility']
@@ -89,7 +88,10 @@ class ActionModule(ActionBase):
         ''' generates params and passes them on to the rsync module '''
 
         original_transport = task_vars.get('ansible_connection') or self._play_context.connection
-        transport_overridden = False
+        remote_transport = False
+        if original_transport != 'local':
+            remote_transport = True
+
         try:
             delegate_to = self._play_context.delegate_to
         except (AttributeError, KeyError):
@@ -100,74 +102,65 @@ class ActionModule(ActionBase):
         # Parameter name needed by the ansible module
         self._task.args['_local_rsync_path'] = task_vars.get('ansible_rsync_path') or 'rsync'
 
-        # from the perspective of the rsync call the delegate is the localhost
+        # rsync thinks that one end of the connection is localhost and the
+        # other is the host we're running the task for  (Note: We use
+        # ansible's delegate_to mechanism to determine which host rsync is
+        # running on so localhost could be a non-controller machine if
+        # delegate_to is used)
         src_host = '127.0.0.1'
         dest_host = task_vars.get('ansible_ssh_host') or task_vars.get('inventory_hostname')
 
-        ### FIXME: do we still need to explicitly template ansible_ssh_host here in v2?
-
-        dest_is_local = dest_host in ['127.0.0.1', 'localhost']
-
+        dest_is_local = dest_host in ('127.0.0.1', 'localhost', '::1')
 
         # CHECK FOR NON-DEFAULT SSH PORT
-        dest_port = task_vars.get('ansible_ssh_port') or self._task.args.get('dest_port') or 22
+        if self._task.args.get('dest_port', None) is None:
+            inv_port = task_vars.get('ansible_ssh_port', None) or constants.DEFAULT_REMOTE_PORT
+            if inv_port is not None:
+                self._task.args['dest_port'] = inv_port
 
-        # CHECK DELEGATE HOST INFO
+        # Set use_delegate if we are going to run rsync on a delegated host
+        # instead of localhost
         use_delegate = False
-
         if dest_host == delegate_to:
             # edge case: explicit delegate and dest_host are the same
             # so we run rsync on the remote machine targetting its localhost
             # (itself)
             dest_host = '127.0.0.1'
             use_delegate = True
-        else:
-            if 'hostvars' in task_vars:
-                if delegate_to in task_vars['hostvars'] and original_transport != 'local':
-                    # use a delegate host instead of localhost
-                    use_delegate = True
-
-        # COMPARE DELEGATE, HOST AND TRANSPORT
-        process_args = False
-        if dest_host != src_host and original_transport != 'local':
-            # interpret and task_vars remote host info into src or dest
-            process_args = True
-
-        # SWITCH SRC AND DEST PER MODE
-        if self._task.args.get('mode', 'push') == 'pull':
-            (dest_host, src_host) = (src_host, dest_host)
+        elif delegate_to is not None and remote_transport:
+            # If we're delegating to a remote host then we need to use the
+            # delegate_to settings
+            use_delegate = True
 
         # Delegate to localhost as the source of the rsync unless we've been
         # told (via delegate_to) that a different host is the source of the
         # rsync
         transport_overridden = False
-        if not use_delegate and original_transport != 'local':
+        if not use_delegate and remote_transport:
             # Create a connection to localhost to run rsync on
             new_stdin = self._connection._new_stdin
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
             transport_overridden = True
             self._override_module_replaced_vars(task_vars)
-            ### FIXME: We think that this was here for v1 because the local
-            # connection didn't support sudo.  In v2 it does so we think it's
-            # safe to remove this now.
 
-            # Also disable sudo
-            #self._play_context.become = False
+        # COMPARE DELEGATE, HOST AND TRANSPORT
+        process_args = False
+        if dest_host != src_host and remote_transport:
+            # We're not copying two filesystem trees on the same host so we
+            # need to correctly format the paths for rsync (like
+            # user@host:path/to/tree
+            process_args = True
+
+        # SWITCH SRC AND DEST HOST PER MODE
+        if self._task.args.get('mode', 'push') == 'pull':
+            (dest_host, src_host) = (src_host, dest_host)
 
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
-        src  = self._task.args.get('src', None)
+        src = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
         if process_args or use_delegate:
-
-            user = None
-            if boolean(task_vars.get('set_remote_user', 'yes')):
-                if use_delegate:
-                    user = task_vars['hostvars'][delegate_to].get('ansible_ssh_user')
-
-                if not use_delegate or not user:
-                    user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
-
+            # Private key handling
             if use_delegate:
                 private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
             else:
@@ -177,27 +170,34 @@ class ActionModule(ActionBase):
                 private_key = os.path.expanduser(private_key)
                 self._task.args['private_key'] = private_key
 
+            # Src and dest rsync "path" handling
+            # Determine if we need a user@
+            user = None
+            if boolean(self._task.args.get('set_remote_user', 'yes')):
+                if use_delegate:
+                    if 'hostvars' in task_vars and delegate_to in task_vars['hostvars']:
+                        user = task_vars['hostvars'][delegate_to].get('ansible_ssh_user', None)
+
+                if not use_delegate or not user:
+                    user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
+
             # use the mode to define src and dest's url
             if self._task.args.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
-                src  = self._process_remote(src_host, src, user)
+                src = self._process_remote(src_host, src, user)
                 dest = self._process_origin(dest_host, dest, user)
             else:
                 # src is a local path, dest is a remote path: <user>@<host>
-                src  = self._process_origin(src_host, src, user)
+                src = self._process_origin(src_host, src, user)
                 dest = self._process_remote(dest_host, dest, user)
 
         self._task.args['src'] = src
         self._task.args['dest'] = dest
 
-        # Remove mode as it is handled purely in this action module
-        if 'mode' in self._task.args:
-            del self._task.args['mode']
-
-        # Allow custom rsync path argument.
+        # Allow custom rsync path argument
         rsync_path = self._task.args.get('rsync_path', None)
 
-        # If no rsync_path is set, sudo was originally set, and dest is remote then add 'sudo rsync' argument.
+        # If no rsync_path is set, sudo was originally set, and dest is remote then add 'sudo rsync' argument
         if not rsync_path and transport_overridden and self._play_context.become and self._play_context.become_method == 'sudo' and not dest_is_local:
             rsync_path = 'sudo rsync'
 
