@@ -4,19 +4,47 @@ Ansible Changes By Release
 ## 2.0 "TBD" - ACTIVE DEVELOPMENT
 
 Major Changes:
+ * Introducing the new block/rescue/always directives, allow for making task blocks and introducing exception like semantics
+ * New strategy plugins, allow to control the flow of execution of tasks per play, the default will be the same as before
+ * Improved error handling, now you get much more detailed parser messages. General exception handling and display has been revamped.
+ * Task includes now get evaluated during execution, end behaviour will be the same but it now allows for more dynamic includes and options.
+ * First feature of the more dynamic includes is that with_ loops are now usable with them.
+ * callback, connection and lookup plugin APIs have changed, some will require modification to work with new version
+ * callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg
+ * Many API changes, this will break those currently using it directly, but the new API is much easier to use and test
+ * Settings are now more inheritable, what you set at play, block or role will be automatically inhertited by the contained.
+   This allows for new features to automatically be settable at all levels, previously we had to manually code this
+ * Many more tests, new API makes things more testable and we took advantage of it
  * big_ip modules now support turning off ssl certificate validation (use only for self signed)
- * template code now retains types for bools and Numbers instead of turning them into strings
+ * template code now retains types for bools and numbers instead of turning them into strings.
    If you need the old behaviour, quote the value and it will get passed around as a string
+ * Consiidated code from modules using urllib2 to normalize features, TLS and SNI support
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
   * quantum_network (os_network)
+  * glance_image
   * nova_compute   (os_server)
+  * quantum_floating_ip (os_floating_ip)
 
 New Modules:
-  * find
-  * ec2_ami_find
-  * ec2_win_password
+  * amazon: ec2_ami_copy
+  * amazon: ec2_ami_find
+  * amazon: ec2_eni
+  * amazon: ec2_eni_facts
+  * amazon: ec2_vpc_net
+  * amazon: ec2_vpc_route_table_facts
+  * amazon: ec2_vpc_subnet
+  * amazon: ec2_win_password
+  * amazon: elasticache_subnet_group
+  * amazon: iam
+  * amazon: iam_policy
+  * amazon: route53_zone
+  * amazon: sts_assume_role
+  * amazon: s3_logging
+  * apk
+  * bundler
+  * centurylink: clc_publicip
   * circonus_annotation
   * consul
   * consul_acl
@@ -25,45 +53,130 @@ New Modules:
   * cloudtrail
   * cloudstack: cs_account
   * cloudstack: cs_affinitygroup
+  * cloudstack: cs_facts
   * cloudstack: cs_firewall
   * cloudstack: cs_iso
   * cloudstack: cs_instance
   * cloudstack: cs_instancegroup
+  * cloudstack: cs_network
   * cloudstack: cs_portforward
+  * cloudstack: cs_project
   * cloudstack: cs_sshkeypair
   * cloudstack: cs_securitygroup
   * cloudstack: cs_securitygroup_rule
+  * cloudstack: cs_staticnat
+  * cloudstack: cs_template
   * cloudstack: cs_vmsnapshot
+  * datadog_monitor
+  * dpkg_selections
+  * elasticsearch_plugin
+  * expect
+  * find
+  * hall
+  * libvirt: virt_net
+  * libvirt: virt_pool
   * maven_artifact
+  * openstack: os_ironic
+  * openstack: os_ironic_node
+  * openstack: os_client_config
+  * openstack: os_floating_ip
+  * openstack: os_image
   * openstack: os_network
+  * openstack: os_nova_flavor
+  * openstack: os_object
+  * openstack: os_security_group
+  * openstack: os_security_group_rule
   * openstack: os_server
   * openstack: os_server_actions
   * openstack: os_server_facts
   * openstack: os_server_volume
   * openstack: os_subnet
   * openstack: os_volume
+  * osx_defaults
+  * pam_limits
+  * pear
+  * profitbricks: profitbricks
   * proxmox
+  * proxmox_template 
+  * puppet 
   * pushover
   * pushbullet
+  * rax: rax_mon_alarm
+  * rax: rax_mon_check
+  * rax: rax_mon_entity
+  * rax: rax_mon_notification
+  * rax: rax_mon_notification_plan
   * rabbitmq_binding
   * rabbitmq_exchange
   * rabbitmq_queue
-  * zabbix_host
-  * zabbix_hostmacro
-  * zabbix_screen
+  * selinux_permissive
+  * sensu_check
+  * sensu_subscription
+  * slackpkg
   * vertica_configuration
   * vertica_facts
   * vertica_role
   * vertica_schema
   * vertica_user
-  * vmware_datacenter
+  * vmware: vmware_datacenter
+  * vmware: vca_fw
+  * vmware: vca_nat
+  * vmware: vsphere_copy
+  * webfaction_app
+  * webfaction_db
+  * webfaction_domain
+  * webfaction_mailbox
+  * webfaction_site
   * win_environment
+  * win_scheduled_task
+  * win_iis_virtualdirectory
+  * win_iis_webapplication
+  * win_iis_webapppool
+  * win_iis_webbinding
+  * win_iis_website
+  * win_regedit
+  * win_unzip
+  * xenserver_facts
+  * zabbix_host
+  * zabbix_hostmacro
+  * zabbix_screen
 
 New Inventory scripts:
   * cloudstack
   * fleetctl
+  * openvz
+  * proxmox
+  * serf
 
 Other Notable Changes:
+
+## 1.9.2 "Dancing In the Street" - Jun 26, 2015
+
+* Security fixes to check that hostnames match certificates with https urls (CVE-2015-3908)
+  - get_url and uri modules
+  - url and etcd lookup plugins
+* Security fixes to the zone (Solaris containers), jail (bsd containers),
+  and chroot connection plugins.  These plugins can be used to connect to
+  their respective container types in leiu of the standard ssh connection.
+  Prior to this fix being applied these connection plugins didn't properly
+  handle symlinks within the containers which could lead to files intended to
+  be written to or read from the container being written to or read from the
+  host system instead. (CVE pending)
+* Fixed a bug in the service module where init scripts were being incorrectly used instead of upstart/systemd.
+* Fixed a bug where sudo/su settings were not inherited from ansible.cfg correctly.
+* Fixed a bug in the rds module where a traceback may occur due to an unbound variable.
+* Fixed a bug where certain remote file systems where the SELinux context was not being properly set.
+* Re-enabled several windows modules which had been partially merged (via action plugins):
+  - win_copy.ps1
+  - win_copy.py
+  - win_file.ps1
+  - win_file.py
+  - win_template.py
+* Fix bug using with_sequence and a count that is zero.  Also allows counting backwards isntead of forwards
+* Fix get_url module bug preventing use of custom ports with https urls
+* Fix bug disabling repositories in the yum module.
+* Fix giving yum module a url to install a package from on RHEL/CENTOS5
+* Fix bug in dnf module preventing it from working when yum-utils was not already installed
 
 ## 1.9.1 "Dancing In the Street" - Apr 27, 2015
 
@@ -99,7 +212,7 @@ Major changes:
 * Added travis integration to github for basic tests, this should speed up ticket triage and merging.
 * environment: directive now can also be applied to play and is inhertited by tasks, which can still override it.
 * expanded facts and OS/distribution support for existing facts and improved performance with pypy.
-* new 'wantlist' option to lookups allows for selecting a list typed variable vs a command delimited string as the return.
+* new 'wantlist' option to lookups allows for selecting a list typed variable vs a comma delimited string as the return.
 * the shared module code for file backups now uses a timestamp resolution of seconds (previouslly minutes).
 * allow for empty inventories, this is now a warning and not an error (for those using localhost and cloud modules).
 * sped up YAML parsing in ansible by up to 25% by switching to CParser loader.
@@ -313,7 +426,7 @@ And various other bug fixes and improvements ...
 - Fixes a bug in vault where the password file option was not being used correctly internally.
 - Improved multi-line parsing when using YAML literal blocks (using > or |).
 - Fixed a bug with the file module and the creation of relative symlinks.
-- Fixed a bug where checkmode was not being honored during the templating of files.
+- Fixed a bug where checkmode was not being honoured during the templating of files.
 - Other various bug fixes.
 
 ## 1.7.1 "Summer Nights" - Aug 14, 2014
@@ -356,7 +469,7 @@ New Modules:
 Other notable changes:
 
 * Security fixes
-  - Prevent the use of lookups when using legaxy "{{ }}" syntax around variables and with_* loops.
+  - Prevent the use of lookups when using legacy "{{ }}" syntax around variables and with_* loops.
   - Remove relative paths in TAR-archived file names used by ansible-galaxy.
 * Inventory speed improvements for very large inventories.
 * Vault password files can now be executable, to support scripts that fetch the vault password.
@@ -1033,7 +1146,7 @@ the variable is still registered for the host, with the attribute skipped: True.
 * service pattern argument now correctly read for BSD services
 * fetch location can now be controlled more directly via the 'flat' parameter.
 * added basename and dirname as Jinja2 filters available to all templates
-* pip works better when sudoing from unpriveledged users
+* pip works better when sudoing from unprivileged users
 * fix for user creation with groups specification reporting 'changed' incorrectly in some cases
 * fix for some unicode encoding errors in outputing some data in verbose mode
 * improved FreeBSD, NetBSD and Solaris facts

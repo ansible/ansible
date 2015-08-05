@@ -27,7 +27,7 @@ def run_cmd(cmd, live=False, readsize=10):
 
     cmdargs = shlex.split(cmd)
     p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
+
     stdout = ''
     stderr = ''
     rpipes = [p.stdout, p.stderr]

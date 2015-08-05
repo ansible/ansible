@@ -53,13 +53,15 @@ if [ "$ANSIBLE_HOME" != "$PWD" ] ; then
 else
     current_dir="$ANSIBLE_HOME"
 fi
-cd "$ANSIBLE_HOME"
-if [ "$verbosity" = silent ] ; then
-    gen_egg_info > /dev/null 2>&1
-else
-    gen_egg_info
-fi
-cd "$current_dir"
+(
+	cd "$ANSIBLE_HOME"
+	if [ "$verbosity" = silent ] ; then
+	    gen_egg_info > /dev/null 2>&1
+	else
+	    gen_egg_info
+	fi
+	cd "$current_dir"
+)
 
 if [ "$verbosity" != silent ] ; then
     cat <<- EOF

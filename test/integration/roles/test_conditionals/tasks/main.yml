@@ -148,6 +148,16 @@
     that:
     - "result.skipped == true"
 
+- name: test bad conditional 'is undefined'
+  shell: echo 'testing'
+  when: test_bare is undefined
+  register: result
+
+- name: assert bad conditional 'is undefined' did NOT run
+  assert:
+    that:
+    - "result.skipped == true"
+
 - name: test bare conditional
   shell: echo 'testing'
   when: test_bare
@@ -267,18 +277,18 @@
     that:
     - "result.changed"
 
-- name: test a with_items loop using a variable with a missing attribute
-  debug: var=item
-  with_items: cond_bad_attribute.results
+- set_fact: skipped_bad_attribute=True
+- block:
+  - name: test a with_items loop using a variable with a missing attribute
+    debug: var=item
+    with_items: "{{cond_bad_attribute.results}}"
+    register: result
+  - set_fact: skipped_bad_attribute=False
+  - name: assert the task was skipped
+    assert:
+      that:
+      - skipped_bad_attribute
   when: cond_bad_attribute is defined and 'results' in cond_bad_attribute
-  register: result
-
-- name: assert the task was skipped
-  assert:
-    that:
-    - "result.results|length == 1"
-    - "'skipped' in result.results[0]"
-    - "result.results[0].skipped == True"
 
 - name: test a with_items loop skipping a single item
   debug: var=item

@@ -6,7 +6,7 @@ Rackspace Cloud Guide
 Introduction
 ````````````
 
-.. note:: This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules and how they work together.  Once complete, there will also be examples for Rackspace Cloud in `ansible-examples <http://github.com/ansible/ansible-examples/>`_.
+.. note:: This section of the documentation is under construction. We are in the process of adding more examples about the Rackspace modules and how they work together.  Once complete, there will also be examples for Rackspace Cloud in `ansible-examples <https://github.com/ansible/ansible-examples/>`_.
 
 Ansible contains a number of core modules for interacting with Rackspace Cloud.  
 
@@ -131,7 +131,7 @@ The rax module returns data about the nodes it creates, like IP addresses, hostn
           hostname: "{{ item.name }}"
           ansible_ssh_host: "{{ item.rax_accessipv4 }}"
           ansible_ssh_pass: "{{ item.rax_adminpass }}"
-          groupname: raxhosts
+          groups: raxhosts
       with_items: rax.success
       when: rax.action == 'create'
 
@@ -519,7 +519,7 @@ Build a complete webserver environment with servers, custom networks and load ba
             ansible_ssh_host: "{{ item.rax_accessipv4 }}"
             ansible_ssh_pass: "{{ item.rax_adminpass }}"
             ansible_ssh_user: root
-            groupname: web
+            groups: web
           with_items: rax.success
           when: rax.action == 'create'
     

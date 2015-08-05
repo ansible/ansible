@@ -106,6 +106,33 @@ YAML dictionaries to supply the modules with their key=value arguments.::
             name: httpd
             state: restarted
 
+Playbooks can contain multiple plays. You may have a playbook that targets first
+the web servers, and then the database servers. For example::
+
+    ---
+    - hosts: webservers
+      remote_user: root
+
+      tasks:
+      - name: ensure apache is at the latest version
+        yum: pkg=httpd state=latest
+      - name: write the apache config file
+        template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+
+    - hosts: databases
+      remote_user: root
+
+      tasks:
+      - name: ensure postgresql is at the latest version
+        yum: name=postgresql state=latest
+      - name: ensure that postgresql is started
+        service: name=postgresql state=running
+
+You can use this method to switch between the host group you're targeting,
+the username logging into the remote servers, whether to sudo or not, and so
+forth. Plays, like tasks, run in the order specified in the playbook: top to
+bottom.
+
 Below, we'll break down what the various features of the playbook language are.
 
 .. _playbook_basics:
@@ -338,10 +365,10 @@ The things listed in the 'notify' section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by name.  Handlers are what notifiers
-notify.  If nothing notifies a handler, it will not run.  Regardless
-of how many things notify a handler, it will run only once, after all
-of the tasks complete in a particular play.
+tasks, that are referenced by a globally unique name.  Handlers are
+what notifiers notify.  If nothing notifies a handler, it will not
+run.  Regardless of how many things notify a handler, it will run only
+once, after all of the tasks complete in a particular play.
 
 Here's an example handlers section::
 
@@ -355,7 +382,10 @@ Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
 
 .. note::
-   Notify handlers are always run in the order written.
+   * Notify handlers are always run in the order written.
+   * Handler names live in a global namespace.
+   * If two handler tasks have the same name, only one will run.
+     `* <https://github.com/ansible/ansible/issues/4943>`_
 
 Roles are described later on.  It's worthwhile to point out that handlers are
 automatically processed between 'pre_tasks', 'roles', 'tasks', and 'post_tasks'

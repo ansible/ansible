@@ -62,7 +62,7 @@
 - name: verify that the file checksum is correct
   assert: 
     that: 
-      - "copy_result.checksum[0] == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+      - "copy_result.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
 
 - name: check the stat results of the file
   win_stat: path={{output_file}}
@@ -78,7 +78,7 @@
 #      - "stat_results.stat.isfifo == false"
 #      - "stat_results.stat.isreg == true"
 #      - "stat_results.stat.issock == false"
-      - "stat_results.stat.checksum[0] == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
+      - "stat_results.stat.checksum == 'c79a6506c1c948be0d456ab5104d5e753ab2f3e6'"
 
 - name: overwrite the file via same means
   win_copy: src=foo.txt dest={{output_file}}

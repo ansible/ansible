@@ -28,7 +28,7 @@
       - "win_ping_result.ping == 'pong'"
 
 - name: test win_ping with data
-  win_ping: data=blah
+  win_ping: data=☠
   register: win_ping_with_data_result
 
 - name: check win_ping result with data
@@ -36,21 +36,11 @@
     that:
       - "not win_ping_with_data_result|failed"
       - "not win_ping_with_data_result|changed"
-      - "win_ping_with_data_result.ping == 'blah'"
+      - "win_ping_with_data_result.ping == '☠'"
 
-#- name: test local ping (should use default ping)
-#  local_action: ping
-#  register: local_ping_result
-
-#- name: check local ping result
-#  assert:
-#    that: 
-#      - "not local_ping_result|failed"
-#      - "not local_ping_result|changed"
-#      - "local_ping_result.ping == 'pong'"
-
-- name: test win_ping.ps1 with data
-  win_ping.ps1: data=bleep
+- name: test win_ping.ps1 with data as complex args
+  win_ping.ps1:
+    data: bleep
   register: win_ping_ps1_result
 
 - name: check win_ping.ps1 result with data
@@ -60,13 +50,32 @@
       - "not win_ping_ps1_result|changed"
       - "win_ping_ps1_result.ping == 'bleep'"
 
-#- name: test win_ping with invalid args
-#  win_ping: arg=invalid
-#  register: win_ping_ps1_invalid_args_result
+- name: test win_ping with extra args to verify that v2 module replacer escaping works as expected
+  win_ping:
+    data: bloop
+    a_null: null
+    a_boolean: true
+    another_boolean: false
+    a_number: 299792458
+    another_number: 22.7
+    yet_another_number: 6.022e23
+    a_string: |
+      it's magic
+      "@'
+      '@"
+    an_array:
+      - first
+      - 2
+      - 3.0
+    an_object:
+      - the_thing: the_value
+      - the_other_thing: 0
+      - the_list_of_things: [1, 2, 3, 5]
+  register: win_ping_extra_args_result
 
-#- name: check that win_ping.ps1 with invalid args fails
-#  assert:
-#    that:
-#      - "win_ping_ps1_invalid_args_result|failed"
-#      - "win_ping_ps1_invalid_args_result.msg"
-
+- name: check that win_ping with extra args succeeds and ignores everything except data
+  assert:
+    that:
+      - "not win_ping_extra_args_result|failed"
+      - "not win_ping_extra_args_result|changed"
+      - "win_ping_extra_args_result.ping == 'bloop'"

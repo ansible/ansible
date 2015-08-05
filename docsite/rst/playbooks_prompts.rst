@@ -20,9 +20,12 @@ Here is a most basic example::
         from: "camelot"
 
       vars_prompt:
-        name: "what is your name?"
-        quest: "what is your quest?"
-        favcolor: "what is your favorite color?"
+        - name: "name"
+          prompt: "what is your name?"
+        - name: "quest"
+          prompt: "what is your quest?"
+        - name: "favcolor"
+          prompt: "what is your favorite color?"
 
 If you have a variable that changes infrequently, it might make sense to
 provide a default value that can be overridden.  This can be accomplished using

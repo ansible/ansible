@@ -23,16 +23,19 @@ class ModuleDocFragment(object):
 options:
   cloud:
     description:
-      - Named cloud to operate against. Provides default values for I(auth) and I(auth_plugin)
+      - Named cloud to operate against. Provides default values for I(auth) and
+        I(auth_type). This parameter is not needed if I(auth) is provided or if
+        OpenStack OS_* environment variables are present.
     required: false
   auth:
     description:
       - Dictionary containing auth information as needed by the cloud's auth
-        plugin strategy. For the default I{password) plugin, this would contain
+        plugin strategy. For the default I(password) plugin, this would contain
         I(auth_url), I(username), I(password), I(project_name) and any
         information about domains if the cloud supports them. For other plugins,
         this param will need to contain whatever parameters that auth plugin
-        requires. This parameter is not needed if a named cloud is provided.
+        requires. This parameter is not needed if a named cloud is provided or
+        OpenStack OS_* environment variables are present.
     required: false
   auth_type:
     description:
@@ -77,14 +80,17 @@ options:
       - A path to a CA Cert bundle that can be used as part of verifying
         SSL API requests.
     required: false
+    default: None
   cert:
     description:
       - A path to a client certificate to use as part of the SSL transaction
     required: false
+    default: None
   key:
     description:
       - A path to a client key to use as part of the SSL transaction
     required: false
+    default: None
   endpoint_type:
     description:
         - Endpoint URL type to fetch from the service catalog.
@@ -92,6 +98,7 @@ options:
     required: false
     default: public
 requirements:
+  - python >= 2.7
   - shade
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
@@ -100,5 +107,6 @@ notes:
     can come from a yaml config file in /etc/ansible/openstack.yaml,
     /etc/openstack/clouds.yaml or ~/.config/openstack/clouds.yaml, then from
     standard environment variables, then finally by explicit parameters in
-    plays.
+    plays. More information can be found at
+    U(http://docs.openstack.org/developer/os-client-config)
 '''

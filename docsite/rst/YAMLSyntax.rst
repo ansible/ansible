@@ -107,7 +107,7 @@ with a "{", YAML will think it is a dictionary, so you must quote it, like so::
        Learn what playbooks can do and how to write/run them.
    `YAMLLint <http://yamllint.com/>`_
        YAML Lint (online) helps you debug YAML syntax if you are having problems
-   `Github examples directory <https://github.com/ansible/ansible/tree/devel/examples/playbooks>`_
+   `Github examples directory <https://github.com/ansible/ansible-examples>`_
        Complete playbook files from the github project source
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups

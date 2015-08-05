@@ -122,9 +122,9 @@ def connect_to_api(module, disconnect_atexit=True):
         if disconnect_atexit:
             atexit.register(connect.Disconnect, service_instance)
         return service_instance.RetrieveContent()
-    except vim.fault.InvalidLogin as invalid_login:
+    except vim.fault.InvalidLogin, invalid_login:
         module.fail_json(msg=invalid_login.msg, apierror=str(invalid_login))
-    except requests.ConnectionError as connection_error:
+    except requests.ConnectionError, connection_error:
         module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
 
 

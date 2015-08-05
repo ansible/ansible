@@ -225,7 +225,7 @@
     - "result.msg == 'line added'"
 
 - name: insert a multiple lines at the end of the file
-  lineinfile: dest={{output_dir}}/test.txt state=present line="This is a line\nwith \\\n character" insertafter="EOF"
+  lineinfile: dest={{output_dir}}/test.txt state=present line="This is a line\nwith \\n character" insertafter="EOF"
   register: result
 
 - name: assert that the multiple lines was inserted

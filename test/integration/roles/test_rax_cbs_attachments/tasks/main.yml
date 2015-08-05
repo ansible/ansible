@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_cbs_attachments|failed
-      - rax_cbs_attachments.msg == 'missing required arguments: server,volume,device'
+      - 'rax_cbs_attachments.msg == "missing required arguments: server,volume,device"'
 # ============================================================
 
 
@@ -80,6 +80,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-rax_cbs_attachments"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs
 
 - name: Validate volume build
@@ -102,6 +103,7 @@
     flavor: "{{ rackspace_flavor }}"
     name: "{{ resource_prefix }}-rax_cbs_attachments"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate CloudServer build
@@ -147,6 +149,7 @@
     volume: "{{ rax_cbs.volume.id }}"
     device: /dev/xvde
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs_attachments
 
 - name: Validate rax_cbs_attachments creds, region, server, volume and device (valid)
@@ -166,6 +169,7 @@
     volume: "{{ rax_cbs.volume.id }}"
     device: /dev/xvde
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs_attachments
 
 - name: Validate idempotent present test
@@ -183,6 +187,7 @@
     volume: "{{ rax_cbs.volume.id }}"
     device: /dev/xvde
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
     state: absent
   register: rax_cbs_attachments
 
@@ -202,6 +207,7 @@
     volume: "{{ rax_cbs.volume.id }}"
     device: /dev/xvde
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
     state: absent
   register: rax_cbs_attachments
 
@@ -242,6 +248,7 @@
     instance_ids: "{{ rax.instances[0].id }}"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete"
