@@ -194,8 +194,8 @@ class StrategyModule(StrategyBase):
                             if self._take_step(task):
                                 choose_step = False
                             else:
-                                break
                                 skip_rest = True
+                                break
 
                         self._display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)

@@ -21,6 +21,8 @@ __metaclass__ = type
 
 import time
 
+from ansible.errors import *
+from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.strategies import StrategyBase
 
 try:
@@ -139,6 +141,31 @@ class StrategyModule(StrategyBase):
 
             results = self._process_pending_results(iterator)
             host_results.extend(results)
+
+            try:
+                included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator, loader=self._loader, variable_manager=self._variable_manager)
+            except AnsibleError, e:
+                return False
+
+            if len(included_files) > 0:
+                for included_file in included_files:
+                    # included hosts get the task list while those excluded get an equal-length
+                    # list of noop tasks, to make sure that they continue running in lock-step
+                    try:
+                        new_blocks = self._load_included_file(included_file, iterator=iterator)
+                    except AnsibleError, e:
+                        for host in included_file._hosts:
+                            iterator.mark_host_failed(host)
+                        self._display.warning(str(e))
+                        continue
+
+                    for host in hosts_left:
+                        if host in included_file._hosts:
+                            task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=included_file._task)
+                            final_blocks = []
+                            for new_block in new_blocks:
+                                final_blocks.append(new_block.filter_tagged_tasks(play_context, task_vars))
+                            iterator.add_tasks(host, final_blocks)
 
             # pause briefly so we don't spin lock
             time.sleep(0.05)
