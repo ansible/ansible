@@ -19,9 +19,9 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
-from ansible.template import Templar
 
 class LookupModule(LookupBase):
 
@@ -30,16 +30,27 @@ class LookupModule(LookupBase):
         if not isinstance(terms, list):
             terms = [ terms ]
 
-        templar = Templar(loader=self._loader, variables=variables)
+        basedir = self.get_basedir(variables)
 
         ret = []
+
         for term in terms:
-            path = self._loader.path_dwim(term)
-            if os.path.exists(path):
-                with open(path, 'r') as f:
+            self._display.debug("File lookup term: %s" % term)
+
+            lookupfile = self._loader.path_dwim_relative(basedir, 'templates', term)
+            self._display.vvvv("File lookup using %s as file" % lookupfile)
+            if lookupfile and os.path.exists(lookupfile):
+                with open(lookupfile, 'r') as f:
                     template_data = f.read()
-                    res = templar.template(template_data, preserve_trailing_newlines=True)
+
+                    self._templar.environment.searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
+                    if 'role_path' in variables:
+                        self._templar.environment.searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                        self._templar.environment.searchpath.insert(1, variables['role_path'])
+
+                    res = self._templar.template(template_data, preserve_trailing_newlines=True)
                     ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
+
         return ret

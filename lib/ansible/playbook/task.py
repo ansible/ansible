@@ -68,22 +68,17 @@ class Task(Base, Conditional, Taggable, Become):
     _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
     _ignore_errors        = FieldAttribute(isa='bool')
-
     _loop                 = FieldAttribute(isa='string', private=True)
     _loop_args            = FieldAttribute(isa='list', private=True)
     _local_action         = FieldAttribute(isa='string')
-
-    # FIXME: this should not be a Task
-    _meta                 = FieldAttribute(isa='string')
-
     _name                 = FieldAttribute(isa='string', default='')
-
     _notify               = FieldAttribute(isa='list')
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=1)
     _run_once             = FieldAttribute(isa='bool')
     _until                = FieldAttribute(isa='list') # ?
+    _vars                 = FieldAttribute(isa='dict', default=dict())
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -192,6 +187,13 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).post_validate(templar)
 
+    def _post_validate_loop_args(self, attr, value, templar):
+        '''
+        Override post validation for the loop args field, which is templated
+        specially in the TaskExecutor class when evaluating loops.
+        '''
+        return value
+
     def get_vars(self):
         all_vars = self.vars.copy()
         if self._block:
@@ -199,8 +201,8 @@ class Task(Base, Conditional, Taggable, Become):
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 
-        if isinstance(self.args, dict):
-            all_vars.update(self.args)
+        #if isinstance(self.args, dict):
+        #    all_vars.update(self.args)
 
         if 'tags' in all_vars:
             del all_vars['tags']
@@ -310,4 +312,16 @@ class Task(Base, Conditional, Taggable, Become):
             else:
                 value = parent_value
         return value
+
+    def _get_attr_environment(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        environment = self._attributes['tags']
+        if environment is None:
+            environment = dict()
+
+        environment = self._get_parent_attribute('environment', extend=True)
+
+        return environment
 

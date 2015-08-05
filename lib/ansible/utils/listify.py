@@ -26,19 +26,18 @@ from ansible.template.safe_eval import safe_eval
 __all__ = ['listify_lookup_plugin_terms']
 
 #FIXME: probably just move this into lookup plugin base class
-def listify_lookup_plugin_terms(terms, variables, loader):
+def listify_lookup_plugin_terms(terms, templar, loader, fail_on_undefined=False):
 
     if isinstance(terms, basestring):
         stripped = terms.strip()
-        templar = Templar(loader=loader, variables=variables)
-
         #FIXME: warn/deprecation on bare vars in with_ so we can eventually remove fail on undefined override
-        terms = templar.template(terms, convert_bare=True, fail_on_undefined=False)
-
+        terms = templar.template(terms, convert_bare=True, fail_on_undefined=fail_on_undefined)
         #TODO: check if this is needed as template should also return correct type already
-        terms = safe_eval(terms)
+        #terms = safe_eval(terms)
+    else:
+        terms = templar.template(terms, fail_on_undefined=fail_on_undefined)
 
-        if isinstance(terms, basestring) or not isinstance(terms, Iterable):
-            terms = [ terms ]
+    if isinstance(terms, basestring) or not isinstance(terms, Iterable):
+        terms = [ terms ]
 
     return terms

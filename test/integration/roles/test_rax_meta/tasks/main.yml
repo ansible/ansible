@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_meta|failed
-      - rax_meta.msg == 'one of the following is required: address,id,name'
+      - 'rax_meta.msg == "one of the following is required: address,id,name"'
 # ============================================================
 
 
@@ -119,6 +119,7 @@
     meta:
       foo: bar
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: Validate build
@@ -322,6 +323,7 @@
       - "{{ rax.success.0.rax_id }}"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax
 
 - name: "Validate delete"

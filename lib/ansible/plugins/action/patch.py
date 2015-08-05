@@ -47,14 +47,12 @@ class ActionModule(ActionBase):
         if tmp is None or "-tmp-" not in tmp:
             tmp = self._make_tmp_path()
 
-        tmp_src = self._shell.join_path(tmp, os.path.basename(src))
+        tmp_src = self._connection._shell.join_path(tmp, os.path.basename(src))
         self._connection.put_file(src, tmp_src)
 
-        if self._connection_info.become and self._connection_info.become_user != 'root':
-            # FIXME: noop stuff here
-            #if not self.runner.noop_on_check(inject):
-            #    self._remote_chmod('a+r', tmp_src, tmp)
-            self._remote_chmod('a+r', tmp_src, tmp)
+        if self._play_context.become and self._play_context.become_user != 'root':
+            if not self._play_context.check_mode:
+                self._remote_chmod('a+r', tmp_src, tmp)
 
         new_module_args = self._task.args.copy()
         new_module_args.update(

@@ -1,5 +1,5 @@
-The Ansible Configuration File
-++++++++++++++++++++++++++++++
+Configuration file
+++++++++++++++++++
 
 .. contents:: Topics
 
@@ -144,6 +144,27 @@ different locations::
 
 Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
 
+.. _stdout_callback:
+
+stdout_callback
+===============
+
+.. versionadded:: 2.0
+
+This setting allows you to override the default stdout callback for ansible-playbook.
+
+.. _callback_whitelist:
+
+callback_whitelist
+==================
+
+.. versionadded:: 2.0
+
+Now ansible ships with all included callback plugins ready to use but they are disabled by default,
+this setting lets you enable a list of additional callbacks, this cannot change or override the
+default stdout callback, use :ref:`stdout_callback` for that.
+
+
 .. _command_warnings:
 
 command_warnings
@@ -224,8 +245,7 @@ or ansible action line exactly as written.
 executable
 ==========
 
-This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this in
-rare instances to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
+This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
 
     executable = /bin/bash
 
@@ -286,9 +306,10 @@ gathering
 
 New in 1.6, the 'gathering' setting controls the default policy of facts gathering (variables discovered about remote systems).
 
-The value 'implicit' is the default, meaning facts will be gathered per play unless 'gather_facts: False' is set in the play.  The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
-
-The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.  This option can be useful for those wishing to save fact gathering time.
+The value 'implicit' is the default, which means that the fact cache will be ignored and facts will be gathered per play unless 'gather_facts: False' is set.
+The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
+The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.
+This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the fact cache.
 
 hash_behaviour
 ==============
@@ -680,7 +701,7 @@ If set, this will pass a specific set of options to Ansible rather than Ansible'
     ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 
 In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may
-be appropriate.
+be appropriate. If `ssh_args` is set, the default ``control_path`` setting is not used.
 
 .. _control_path:
 
@@ -700,7 +721,7 @@ may wish to shorten the string to something like the below::
 
 Ansible 1.4 and later will instruct users to run with "-vvvv" in situations where it hits this problem
 and if so it is easy to tell there is too long of a Control Path filename.  This may be frequently
-encountered on EC2.
+encountered on EC2. This setting is ignored if ``ssh_args`` is set.
 
 .. _scp_if_ssh:
 
@@ -802,3 +823,19 @@ If enabled, this setting allows multiple private keys to be uploaded to the daem
 
 New clients first connect to the target node over SSH to upload the key, which is done via a local socket file, so they must have the same access as the user that launched the daemon originally.
 
+.. _selinux_settings:
+
+Selinux Specific Settings
+-------------------------
+
+These are settings that control SELinux interactions.
+
+
+special_context_filesystems
+===========================
+
+.. versionadded:: 1.9
+
+This is a list of file systems that require special treatment when dealing with security context.
+The normal behaviour is for operations to copy the existing context or use the user default, this changes it to use a file system dependent context.
+The default list is: nfs,vboxsf,fuse,ramfs

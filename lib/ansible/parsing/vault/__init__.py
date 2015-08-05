@@ -29,14 +29,16 @@ import shutil
 import tempfile
 from io import BytesIO
 from subprocess import call
-from ansible import errors
+from ansible.errors import AnsibleError
 from hashlib import sha256
-# Note: Only used for loading obsolete VaultAES files.  All files are written
-# using the newer VaultAES256 which does not require md5
-from hashlib import md5
 from binascii import hexlify
 from binascii import unhexlify
 from six import binary_type, PY3, text_type
+
+# Note: Only used for loading obsolete VaultAES files.  All files are written
+# using the newer VaultAES256 which does not require md5
+from hashlib import md5
+
 
 try:
     from six import byte2int
@@ -49,7 +51,6 @@ except ImportError:
         def byte2int(bs):
             return ord(bs[0])
 
-from ansible import constants as C
 from ansible.utils.unicode import to_unicode, to_bytes
 
 
@@ -89,7 +90,7 @@ CIPHER_WHITELIST=['AES', 'AES256']
 def check_prereqs():
 
     if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
-        raise errors.AnsibleError(CRYPTO_UPGRADE)
+        raise AnsibleError(CRYPTO_UPGRADE)
 
 class VaultLib(object):
 
@@ -109,17 +110,17 @@ class VaultLib(object):
         data = to_unicode(data)
 
         if self.is_encrypted(data):
-            raise errors.AnsibleError("data is already encrypted")
+            raise AnsibleError("data is already encrypted")
 
         if not self.cipher_name:
             self.cipher_name = "AES256"
-            # raise errors.AnsibleError("the cipher must be set before encrypting data")
+            # raise AnsibleError("the cipher must be set before encrypting data")
 
         if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST:
             cipher = globals()['Vault' + self.cipher_name]
             this_cipher = cipher()
         else:
-            raise errors.AnsibleError("{0} cipher could not be found".format(self.cipher_name))
+            raise AnsibleError("{0} cipher could not be found".format(self.cipher_name))
 
         """
         # combine sha + data
@@ -138,10 +139,10 @@ class VaultLib(object):
         data = to_bytes(data)
 
         if self.password is None:
-            raise errors.AnsibleError("A vault password must be specified to decrypt data")
+            raise AnsibleError("A vault password must be specified to decrypt data")
 
         if not self.is_encrypted(data):
-            raise errors.AnsibleError("data is not encrypted")
+            raise AnsibleError("data is not encrypted")
 
         # clean out header
         data = self._split_header(data)
@@ -152,12 +153,12 @@ class VaultLib(object):
             cipher = globals()['Vault' + ciphername]
             this_cipher = cipher()
         else:
-            raise errors.AnsibleError("{0} cipher could not be found".format(ciphername))
+            raise AnsibleError("{0} cipher could not be found".format(ciphername))
 
         # try to unencrypt data
         data = this_cipher.decrypt(data, self.password)
         if data is None:
-            raise errors.AnsibleError("Decryption failed")
+            raise AnsibleError("Decryption failed")
 
         return data
 
@@ -167,7 +168,7 @@ class VaultLib(object):
         #tmpdata = hexlify(data)
         tmpdata = [to_bytes(data[i:i+80]) for i in range(0, len(data), 80)]
         if not self.cipher_name:
-            raise errors.AnsibleError("the cipher must be set before adding a header")
+            raise AnsibleError("the cipher must be set before adding a header")
 
         dirty_data = to_bytes(HEADER + ";" + self.version + ";" + self.cipher_name + "\n")
         for l in tmpdata:
@@ -226,6 +227,10 @@ class VaultEditor(object):
         call(self._editor_shell_command(tmp_path))
         tmpdata = self.read_data(tmp_path)
 
+        # Do nothing if the content has not changed
+        if existing_data == tmpdata:
+            return
+
         # create new vault
         this_vault = VaultLib(self.password)
         if cipher:
@@ -247,7 +252,7 @@ class VaultEditor(object):
         check_prereqs()
 
         if os.path.isfile(self.filename):
-            raise errors.AnsibleError("%s exists, please use 'edit' instead" % self.filename)
+            raise AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
         # Let the user specify contents and save file
         self._edit_file_helper(cipher=self.cipher_name)
@@ -257,18 +262,18 @@ class VaultEditor(object):
         check_prereqs()
 
         if not os.path.isfile(self.filename):
-            raise errors.AnsibleError("%s does not exist" % self.filename)
+            raise AnsibleError("%s does not exist" % self.filename)
 
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
         if this_vault.is_encrypted(tmpdata):
             dec_data = this_vault.decrypt(tmpdata)
             if dec_data is None:
-                raise errors.AnsibleError("Decryption failed")
+                raise AnsibleError("Decryption failed")
             else:
                 self.write_data(dec_data, self.filename)
         else:
-            raise errors.AnsibleError("%s is not encrypted" % self.filename)
+            raise AnsibleError("%s is not encrypted" % self.filename)
 
     def edit_file(self):
 
@@ -306,7 +311,7 @@ class VaultEditor(object):
         check_prereqs()
 
         if not os.path.isfile(self.filename):
-            raise errors.AnsibleError("%s does not exist" % self.filename)
+            raise AnsibleError("%s does not exist" % self.filename)
 
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
@@ -315,7 +320,7 @@ class VaultEditor(object):
             enc_data = this_vault.encrypt(tmpdata)
             self.write_data(enc_data, self.filename)
         else:
-            raise errors.AnsibleError("%s is already encrypted" % self.filename)
+            raise AnsibleError("%s is already encrypted" % self.filename)
 
     def rekey_file(self, new_password):
 
@@ -376,11 +381,11 @@ class VaultFile(object):
 
         self.filename = filename
         if not os.path.isfile(self.filename):
-            raise errors.AnsibleError("%s does not exist" % self.filename)
+            raise AnsibleError("%s does not exist" % self.filename)
         try:
             self.filehandle = open(filename, "rb")
-        except Exception, e:
-            raise errors.AnsibleError("Could not open %s: %s" % (self.filename, str(e)))
+        except Exception as e:
+            raise AnsibleError("Could not open %s: %s" % (self.filename, str(e)))
 
         _, self.tmpfile = tempfile.mkstemp()
 
@@ -404,7 +409,7 @@ class VaultFile(object):
             this_vault = VaultLib(self.password)
             dec_data = this_vault.decrypt(tmpdata)
             if dec_data is None:
-                raise errors.AnsibleError("Decryption failed")
+                raise AnsibleError("Decryption failed")
             else:
                 self.tempfile.write(dec_data)
                 return self.tmpfile
@@ -424,7 +429,7 @@ class VaultAES(object):
 
     def __init__(self):
         if not HAS_AES:
-            raise errors.AnsibleError(CRYPTO_UPGRADE)
+            raise AnsibleError(CRYPTO_UPGRADE)
 
     def aes_derive_key_and_iv(self, password, salt, key_length, iv_length):
 
@@ -528,7 +533,7 @@ class VaultAES(object):
         test_sha = sha256(to_bytes(this_data)).hexdigest()
 
         if this_sha != test_sha:
-            raise errors.AnsibleError("Decryption failed")
+            raise AnsibleError("Decryption failed")
 
         return this_data
 
@@ -653,3 +658,4 @@ class VaultAES256(object):
             else:
                 result |= ord(x) ^ ord(y)
         return result == 0
+

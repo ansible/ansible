@@ -36,9 +36,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         ''' handler for fetch operations '''
 
-        # FIXME: is this even required anymore?
-        #if self.runner.noop_on_check(inject):
-        #    return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True, msg='check mode not (yet) supported for this module'))
+        if self._play_context.check_mode:
+            return dict(skipped=True, msg='check mode not (yet) supported for this module')
 
         source            = self._task.args.get('src', None)
         dest              = self._task.args.get('dest', None)
@@ -52,7 +51,7 @@ class ActionModule(ActionBase):
         if source is None or dest is None:
             return dict(failed=True, msg="src and dest are required")
 
-        source = self._shell.join_path(source)
+        source = self._connection._shell.join_path(source)
         source = self._remote_expand_user(source, tmp)
 
         # calculate checksum for the remote file
@@ -60,7 +59,7 @@ class ActionModule(ActionBase):
 
         # use slurp if sudo and permissions are lacking
         remote_data = None
-        if remote_checksum in ('1', '2') or self._connection_info.become:
+        if remote_checksum in ('1', '2') or self._play_context.become:
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
             if slurpres.get('rc') == 0:
                 if slurpres['encoding'] == 'base64':
@@ -78,7 +77,8 @@ class ActionModule(ActionBase):
                 pass
 
         # calculate the destination name
-        if os.path.sep not in self._shell.join_path('a', ''):
+        if os.path.sep not in self._connection._shell.join_path('a', ''):
+            source = self._connection._shell._unquote(source)
             source_local = source.replace('\\', '/')
         else:
             source_local = source
@@ -98,7 +98,7 @@ class ActionModule(ActionBase):
             if 'inventory_hostname' in task_vars:
                 target_name = task_vars['inventory_hostname']
             else:
-                target_name = self._connection_info.remote_addr
+                target_name = self._play_context.remote_addr
             dest = "%s/%s/%s" % (self._loader.path_dwim(dest), target_name, source_local)
 
         dest = dest.replace("//","/")
@@ -132,9 +132,12 @@ class ActionModule(ActionBase):
             if remote_data is None:
                 self._connection.fetch_file(source, dest)
             else:
-                f = open(dest, 'w')
-                f.write(remote_data)
-                f.close()
+                try:
+                    f = open(dest, 'w')
+                    f.write(remote_data)
+                    f.close()
+                except (IOError, OSError) as e:
+                    raise AnsibleError("Failed to fetch the file: %s" % e)
             new_checksum = secure_hash(dest)
             # For backwards compatibility.  We'll return None on FIPS enabled
             # systems

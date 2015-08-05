@@ -26,18 +26,14 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-# Helper function to parse Ansible JSON arguments from a file passed as
-# the single argument to the module
-# Example: $params = Parse-Args $args
-Function Parse-Args($arguments)
-{
-    $parameters = New-Object psobject;
-    If ($arguments.Length -gt 0)
-    {
-        $parameters = Get-Content $arguments[0] | ConvertFrom-Json;
-    }
-    $parameters;
-}
+# Ansible v2 will insert the module arguments below as a string containing
+# JSON; assign them to an environment variable and redefine $args so existing
+# modules will continue to work.
+$complex_args = @'
+<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>
+'@
+Set-Content env:MODULE_COMPLEX_ARGS -Value $complex_args
+$args = @('env:MODULE_COMPLEX_ARGS')
 
 # Helper function to set an "attribute" on a psobject instance in powershell.
 # This is a convenience to make adding Members to the object easier and
@@ -142,14 +138,36 @@ Function ConvertTo-Bool
     return
 }
 
-# Helper function to calculate md5 of a file in a way which powershell 3 
+# Helper function to parse Ansible JSON arguments from a "file" passed as
+# the single argument to the module.
+# Example: $params = Parse-Args $args
+Function Parse-Args($arguments, $supports_check_mode = $false)
+{
+    $parameters = New-Object psobject
+    If ($arguments.Length -gt 0)
+    {
+        $parameters = Get-Content $arguments[0] | ConvertFrom-Json
+    }
+    $check_mode = Get-Attr $parameters "_ansible_check_mode" $false | ConvertTo-Bool
+    If ($check_mode -and -not $supports_check_mode)
+    {
+        $obj = New-Object psobject
+        Set-Attr $obj "skipped" $true
+        Set-Attr $obj "changed" $false
+        Set-Attr $obj "msg" "remote module does not support check mode"
+        Exit-Json $obj
+    }
+    $parameters
+}
+
+# Helper function to calculate a hash of a file in a way which powershell 3 
 # and above can handle:
-Function Get-FileMd5($path)
+Function Get-FileChecksum($path)
 {
     $hash = ""
     If (Test-Path -PathType Leaf $path)
     {
-        $sp = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider;
+        $sp = new-object -TypeName System.Security.Cryptography.SHA1CryptoServiceProvider;
         $fp = [System.IO.File]::Open($path, [System.IO.Filemode]::Open, [System.IO.FileAccess]::Read);
         $hash = [System.BitConverter]::ToString($sp.ComputeHash($fp)).Replace("-", "").ToLower();
         $fp.Dispose();

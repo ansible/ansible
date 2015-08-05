@@ -28,11 +28,8 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
 
-        # FIXME: noop stuff still needs to be sorted out
-        #if self.runner.noop_on_check(inject):
-        #    # in check mode, always skip this module
-        #    return ReturnData(conn=conn, comm_ok=True,
-        #                      result=dict(skipped=True, msg='check mode not supported for this module'))
+        if self._play_context.check_mode:
+            return dict(skipped=True, msg='check mode not supported for this module')
 
         if not tmp:
             tmp = self._make_tmp_path()
@@ -71,12 +68,12 @@ class ActionModule(ActionBase):
             source = self._loader.path_dwim(source)
 
         # transfer the file to a remote tmp location
-        tmp_src = self._shell.join_path(tmp, os.path.basename(source))
+        tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
         self._connection.put_file(source, tmp_src)
 
         sudoable = True
         # set file permissions, more permissive when the copy is done as a different user
-        if self._connection_info.become and self._connection_info.become_user != 'root':
+        if self._play_context.become and self._play_context.become_user != 'root':
             chmod_mode = 'a+rx'
             sudoable = False
         else:

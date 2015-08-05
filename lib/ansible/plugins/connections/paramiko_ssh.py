@@ -43,7 +43,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
 from ansible.utils.path import makedirs_safe
-from ansible.utils.debug import debug
 
 AUTHENTICITY_MSG="""
 paramiko: The authenticity of host '%s' can't be established.
@@ -129,7 +128,7 @@ class Connection(ConnectionBase):
         return 'paramiko'
 
     def _cache_key(self):
-        return "%s__%s__" % (self._connection_info.remote_addr, self._connection_info.remote_user)
+        return "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
 
     def _connect(self):
         cache_key = self._cache_key()
@@ -145,36 +144,42 @@ class Connection(ConnectionBase):
         if not HAVE_PARAMIKO:
             raise AnsibleError("paramiko is not installed")
 
-        port = self._connection_info.port or 22
-        self._display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._connection_info.remote_user, port, self._connection_info.remote_addr), host=self._connection_info.remote_addr)
+        port = self._play_context.port or 22
+        self._display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
 
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
+            try:
+                #TODO: check if we need to look at several possible locations, possible for loop
+                ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
+            except IOError:
+                pass # file was not found, but not required to function
             ssh.load_system_host_keys()
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin))
 
         allow_agent = True
 
-        if self._connection_info.password is not None:
+        if self._play_context.password is not None:
             allow_agent = False
 
         try:
             key_filename = None
-            if self._connection_info.private_key_file:
-                key_filename = os.path.expanduser(self._connection_info.private_key_file)
+            if self._play_context.private_key_file:
+                key_filename = os.path.expanduser(self._play_context.private_key_file)
 
             ssh.connect(
-                self._connection_info.remote_addr,
-                username=self._connection_info.remote_user,
+                self._play_context.remote_addr,
+                username=self._play_context.remote_user,
                 allow_agent=allow_agent,
                 look_for_keys=True,
                 key_filename=key_filename,
-                password=self._connection_info.password,
-                timeout=self._connection_info.timeout,
+                password=self._play_context.password,
+                timeout=self._play_context.timeout,
+                compress=True,
                 port=port,
             )
         except Exception as e:
@@ -183,7 +188,7 @@ class Connection(ConnectionBase):
                 raise AnsibleError("paramiko version issue, please upgrade paramiko on the machine running ansible")
             elif "Private key file is encrypted" in msg:
                 msg = 'ssh %s@%s:%s : %s\nTo connect as a different user, use -u <username>.' % (
-                    self._connection_info.remote_user, self._connection_info.remote_addr, port, msg)
+                    self._play_context.remote_user, self._play_context.remote_addr, port, msg)
                 raise AnsibleConnectionFailure(msg)
             else:
                 raise AnsibleConnectionFailure(msg)
@@ -215,11 +220,7 @@ class Connection(ConnectionBase):
         if C.PARAMIKO_PTY:
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
 
-        self._display.vvv("EXEC %s" % cmd, host=self._connection_info.remote_addr)
-
-
-        if sudoable:
-            cmd, self.prompt, self.success_key = self._connection_info.make_become_cmd(cmd)
+        self._display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
 
         no_prompt_out = ''
         no_prompt_err = ''
@@ -227,26 +228,28 @@ class Connection(ConnectionBase):
 
         try:
             chan.exec_command(cmd)
-            if self.prompt:
-                while True:
-                    debug('Waiting for Privilege Escalation input')
-                    if self.check_become_success(become_output) or self.check_password_prompt(become_output):
-                        break
-                    chunk = chan.recv(bufsize)
-                    if not chunk:
-                        if 'unknown user' in become_output:
-                            raise AnsibleError(
-                                'user %s does not exist' % become_user)
-                        else:
-                            raise AnsibleError('ssh connection ' +
-                                'closed waiting for password prompt')
-                    become_output += chunk
-                if not self.check_become_success(become_output):
-                    if self._connection_info.become:
-                        chan.sendall(self._connection_info.become_pass + '\n')
-                else:
-                    no_prompt_out += become_output
-                    no_prompt_err += become_output
+            if self._play_context.prompt:
+                if self._play_context.become and self._play_context.become_pass:
+                    while True:
+                        self._display.debug('Waiting for Privilege Escalation input')
+                        if self.check_become_success(become_output) or self.check_password_prompt(become_output):
+                            break
+                        chunk = chan.recv(bufsize)
+                        print("chunk is: %s" % chunk)
+                        if not chunk:
+                            if 'unknown user' in become_output:
+                                raise AnsibleError(
+                                    'user %s does not exist' % become_user)
+                            else:
+                                raise AnsibleError('ssh connection ' +
+                                    'closed waiting for password prompt')
+                        become_output += chunk
+                    if not self.check_become_success(become_output):
+                        if self._play_context.become:
+                            chan.sendall(self._play_context.become_pass + '\n')
+                    else:
+                        no_prompt_out += become_output
+                        no_prompt_err += become_output
         except socket.timeout:
             raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 
@@ -260,7 +263,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
+        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
@@ -277,7 +280,7 @@ class Connection(ConnectionBase):
 
     def _connect_sftp(self):
 
-        cache_key = "%s__%s__" % (self._connection_info.remote_addr, self._connection_info.remote_user)
+        cache_key = "%s__%s__" % (self._play_context.remote_addr, self._play_context.remote_user)
         if cache_key in SFTP_CONNECTION_CACHE:
             return SFTP_CONNECTION_CACHE[cache_key]
         else:
@@ -289,7 +292,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._connection_info.remote_addr)
+        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         try:
             self.sftp = self._connect_sftp()

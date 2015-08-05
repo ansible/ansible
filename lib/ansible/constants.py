@@ -16,15 +16,19 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # Make coding more python3-ish
-from __future__ import (absolute_import, division, print_function)
+from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import os
 import pwd
 import sys
-
-from six.moves import configparser
 from string import ascii_letters, digits
+
+from six import string_types
+from six.moves import configparser
+
+from ansible.parsing.splitter import unquote
+from ansible.errors import AnsibleOptionsError
 
 # copied from utils, avoid circular reference fun :)
 def mk_boolean(value):
@@ -47,8 +51,10 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
         elif floating:
             value = float(value)
         elif islist:
-            if isinstance(value, basestring):
+            if isinstance(value, string_types):
                 value = [x.strip() for x in value.split(',')]
+        elif isinstance(value, string_types):
+            value = unquote(value)
     return value
 
 def _get_config(p, section, key, env_var, default):
@@ -72,6 +78,8 @@ def load_config_file():
     path0 = os.getenv("ANSIBLE_CONFIG", None)
     if path0 is not None:
         path0 = os.path.expanduser(path0)
+        if os.path.isdir(path0):
+            path0 += "/ansible.cfg"
     path1 = os.getcwd() + "/ansible.cfg"
     path2 = os.path.expanduser("~/.ansible.cfg")
     path3 = "/etc/ansible/ansible.cfg"
@@ -81,10 +89,9 @@ def load_config_file():
             try:
                 p.read(path)
             except configparser.Error as e:
-                print("Error reading config file: \n{0}".format(e))
-                sys.exit(1)
-            return p
-    return None
+                raise AnsibleOptionsError("Error reading config file: \n{0}".format(e))
+            return p, path
+    return None, ''
 
 def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
@@ -93,7 +100,7 @@ def shell_expand_path(path):
         path = os.path.expanduser(os.path.expandvars(path))
     return path
 
-p = load_config_file()
+p, CONFIG_FILE = load_config_file()
 
 active_user   = pwd.getpwuid(os.geteuid())[0]
 
@@ -104,7 +111,7 @@ YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
 # sections in config file
 DEFAULTS='defaults'
 
-# generaly configurable things
+# generally configurable things
 DEFAULT_DEBUG             = get_config(p, DEFAULTS, 'debug',            'ANSIBLE_DEBUG',            False, boolean=True)
 DEFAULT_HOST_LIST         = shell_expand_path(get_config(p, DEFAULTS, 'hostfile', 'ANSIBLE_HOSTS', get_config(p, DEFAULTS,'inventory','ANSIBLE_INVENTORY', '/etc/ansible/hosts')))
 DEFAULT_MODULE_PATH       = get_config(p, DEFAULTS, 'library',          'ANSIBLE_LIBRARY',          None)
@@ -125,17 +132,20 @@ DEFAULT_ASK_VAULT_PASS    = get_config(p, DEFAULTS, 'ask_vault_pass',    'ANSIBL
 DEFAULT_VAULT_PASSWORD_FILE = shell_expand_path(get_config(p, DEFAULTS, 'vault_password_file', 'ANSIBLE_VAULT_PASSWORD_FILE', None))
 DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'smart')
 DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       False, boolean=True)
+DEFAULT_SFTP_BATCH_MODE   = get_config(p, 'ssh_connection', 'sftp_batch_mode', 'ANSIBLE_SFTP_BATCH_MODE', True, boolean=True)
 DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}')
 DEFAULT_SYSLOG_FACILITY   = get_config(p, DEFAULTS, 'syslog_facility',  'ANSIBLE_SYSLOG_FACILITY', 'LOG_USER')
 DEFAULT_KEEP_REMOTE_FILES = get_config(p, DEFAULTS, 'keep_remote_files', 'ANSIBLE_KEEP_REMOTE_FILES', False, boolean=True)
 DEFAULT_HASH_BEHAVIOUR    = get_config(p, DEFAULTS, 'hash_behaviour', 'ANSIBLE_HASH_BEHAVIOUR', 'replace')
+DEFAULT_PRIVATE_ROLE_VARS = get_config(p, DEFAULTS, 'private_role_vars', 'ANSIBLE_PRIVATE_ROLE_VARS', False, boolean=True)
 DEFAULT_JINJA2_EXTENSIONS = get_config(p, DEFAULTS, 'jinja2_extensions', 'ANSIBLE_JINJA2_EXTENSIONS', None)
 DEFAULT_EXECUTABLE        = get_config(p, DEFAULTS, 'executable', 'ANSIBLE_EXECUTABLE', '/bin/sh')
 DEFAULT_GATHERING         = get_config(p, DEFAULTS, 'gathering', 'ANSIBLE_GATHERING', 'implicit').lower()
 DEFAULT_LOG_PATH          = shell_expand_path(get_config(p, DEFAULTS, 'log_path',           'ANSIBLE_LOG_PATH', ''))
+DEFAULT_FORCE_HANDLERS    = get_config(p, DEFAULTS, 'force_handlers', 'ANSIBLE_FORCE_HANDLERS', False, boolean=True)
 
 # selinux
-DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf', islist=True)
+DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf, ramfs', islist=True)
 
 ### PRIVILEGE ESCALATION ###
 # Backwards Compat
@@ -169,6 +179,7 @@ DEFAULT_CONNECTION_PLUGIN_PATH = get_config(p, DEFAULTS, 'connection_plugins', '
 DEFAULT_LOOKUP_PLUGIN_PATH     = get_config(p, DEFAULTS, 'lookup_plugins',     'ANSIBLE_LOOKUP_PLUGINS', '~/.ansible/plugins/lookup_plugins:/usr/share/ansible_plugins/lookup_plugins')
 DEFAULT_VARS_PLUGIN_PATH       = get_config(p, DEFAULTS, 'vars_plugins',       'ANSIBLE_VARS_PLUGINS', '~/.ansible/plugins/vars_plugins:/usr/share/ansible_plugins/vars_plugins')
 DEFAULT_FILTER_PLUGIN_PATH     = get_config(p, DEFAULTS, 'filter_plugins',     'ANSIBLE_FILTER_PLUGINS', '~/.ansible/plugins/filter_plugins:/usr/share/ansible_plugins/filter_plugins')
+DEFAULT_TEST_PLUGIN_PATH       = get_config(p, DEFAULTS, 'test_plugins',       'ANSIBLE_TEST_PLUGINS', '~/.ansible/plugins/test_plugins:/usr/share/ansible_plugins/test_plugins')
 DEFAULT_STDOUT_CALLBACK        = get_config(p, DEFAULTS, 'stdout_callback',    'ANSIBLE_STDOUT_CALLBACK', 'default')
 
 CACHE_PLUGIN                   = get_config(p, DEFAULTS, 'fact_caching', 'ANSIBLE_CACHE_PLUGIN', 'memory')
@@ -188,6 +199,7 @@ DEPRECATION_WARNINGS           = get_config(p, DEFAULTS, 'deprecation_warnings',
 DEFAULT_CALLABLE_WHITELIST     = get_config(p, DEFAULTS, 'callable_whitelist', 'ANSIBLE_CALLABLE_WHITELIST', [], islist=True)
 COMMAND_WARNINGS               = get_config(p, DEFAULTS, 'command_warnings', 'ANSIBLE_COMMAND_WARNINGS', False, boolean=True)
 DEFAULT_LOAD_CALLBACK_PLUGINS  = get_config(p, DEFAULTS, 'bin_ansible_callbacks', 'ANSIBLE_LOAD_CALLBACK_PLUGINS', False, boolean=True)
+DEFAULT_CALLBACK_WHITELIST     = get_config(p, DEFAULTS, 'callback_whitelist', 'ANSIBLE_CALLBACK_WHITELIST', [], islist=True)
 RETRY_FILES_ENABLED            = get_config(p, DEFAULTS, 'retry_files_enabled', 'ANSIBLE_RETRY_FILES_ENABLED', True, boolean=True)
 RETRY_FILES_SAVE_PATH          = get_config(p, DEFAULTS, 'retry_files_save_path', 'ANSIBLE_RETRY_FILES_SAVE_PATH', '~/')
 
@@ -213,13 +225,14 @@ PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'AN
 # galaxy related
 DEFAULT_GALAXY_URI             = get_config(p, 'galaxy', 'server_uri', 'ANSIBLE_GALAXY_SERVER_URI', 'https://galaxy.ansible.com')
 # this can be configured to blacklist SCMS but cannot add new ones unless the code is also updated
-GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', ['git','hg'], islist=True)
+GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', 'git, hg', islist=True)
 
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
 
 # non-configurable things
 MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
+MODULE_NO_JSON            = ['command', 'shell', 'raw']
 DEFAULT_BECOME_PASS       = None
 DEFAULT_SUDO_PASS         = None
 DEFAULT_REMOTE_PASS       = None
@@ -227,3 +240,4 @@ DEFAULT_SUBSET            = None
 DEFAULT_SU_PASS           = None
 VAULT_VERSION_MIN         = 1.0
 VAULT_VERSION_MAX         = 1.0
+MAX_FILE_SIZE_FOR_DIFF    = 1*1024*1024

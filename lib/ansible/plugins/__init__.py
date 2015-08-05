@@ -28,17 +28,28 @@ import os.path
 import sys
 
 from ansible import constants as C
-from ansible.utils.display import Display
+from ansible.utils.unicode import to_unicode
 from ansible import errors
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 MODULE_CACHE = {}
 PATH_CACHE = {}
 PLUGIN_PATH_CACHE = {}
 _basedirs = []
 
+# FIXME: the _basedirs code may be dead, and no longer needed, as
+#        we now use add_directory for all plugin types here instead
+#        of relying on this global variable (which also causes problems
+#        with forked processes). See the Playbook() and Role() classes
+#        for how we now ue get_all_plugin_loaders() below.
 def push_basedir(basedir):
     # avoid pushing the same absolute dir more than once
-    basedir = os.path.realpath(basedir)
+    basedir = to_unicode(os.path.realpath(basedir))
     if basedir not in _basedirs:
         _basedirs.insert(0, basedir)
 
@@ -224,8 +235,7 @@ class PluginLoader:
                 try:
                     full_paths = (os.path.join(path, f) for f in os.listdir(path))
                 except OSError as e:
-                    d = Display()
-                    d.warning("Error accessing plugin paths: %s" % str(e))
+                    display.warning("Error accessing plugin paths: %s" % str(e))
                 for full_path in (f for f in full_paths if os.path.isfile(f)):
                     for suffix in suffixes:
                         if full_path.endswith(suffix):
@@ -248,9 +258,7 @@ class PluginLoader:
                 # We've already cached all the paths at this point
                 if alias_name in self._plugin_path_cache:
                     if not os.path.islink(self._plugin_path_cache[alias_name]):
-                        d = Display()
-                        d.warning('%s has been deprecated, which means '
-                                  'it is kept for backwards compatibility '
+                        display.deprecated('%s is kept for backwards compatibility '
                                   'but usage is discouraged. The module '
                                   'documentation details page may explain '
                                   'more about this rationale.' %
@@ -378,6 +386,13 @@ filter_loader = PluginLoader(
     'ansible.plugins.filter',
     C.DEFAULT_FILTER_PLUGIN_PATH,
     'filter_plugins',
+)
+
+test_loader = PluginLoader(
+    'TestModule',
+    'ansible.plugins.test',
+    C.DEFAULT_TEST_PLUGIN_PATH,
+    'test_plugins'
 )
 
 fragment_loader = PluginLoader(

@@ -35,12 +35,14 @@ class ActionModule(ActionBase):
         # FIXME: move the LOOKUP_REGEX somewhere else
         elif 'var' in self._task.args: # and not utils.LOOKUP_REGEX.search(self._task.args['var']):
             results = self._templar.template(self._task.args['var'], convert_bare=True)
+            if results == self._task.args['var']:
+                results = "VARIABLE IS NOT DEFINED!"
             result = dict()
             result[self._task.args['var']] = results
         else:
             result = dict(msg='here we are')
 
         # force flag to make debug output module always verbose
-        result['verbose_always'] = True
+        result['_ansible_verbose_always'] = True
 
         return result

@@ -23,9 +23,9 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.executor.connection_info import ConnectionInformation
 from ansible.executor.task_executor import TaskExecutor
-from ansible.plugins import action_loader
+from ansible.playbook.play_context import PlayContext
+from ansible.plugins import action_loader, lookup_loader
 
 from units.mock.loader import DictDataLoader
 
@@ -41,7 +41,7 @@ class TestTaskExecutor(unittest.TestCase):
         fake_loader = DictDataLoader({})
         mock_host = MagicMock()
         mock_task = MagicMock()
-        mock_conn_info = MagicMock()
+        mock_play_context = MagicMock()
         mock_shared_loader = MagicMock()
         new_stdin = None
         job_vars = dict()
@@ -49,7 +49,7 @@ class TestTaskExecutor(unittest.TestCase):
             host = mock_host,
             task = mock_task,
             job_vars = job_vars,
-            connection_info = mock_conn_info,
+            play_context = mock_play_context,
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
@@ -63,7 +63,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task = MagicMock()
         mock_task._role._role_path = '/path/to/role/foo'
 
-        mock_conn_info = MagicMock()
+        mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
 
@@ -74,7 +74,7 @@ class TestTaskExecutor(unittest.TestCase):
             host = mock_host,
             task = mock_task,
             job_vars = job_vars,
-            connection_info = mock_conn_info,
+            play_context = mock_play_context,
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
@@ -104,9 +104,10 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.loop = 'items'
         mock_task.loop_args = ['a', 'b', 'c']
 
-        mock_conn_info = MagicMock()
+        mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
+        mock_shared_loader.lookup_loader = lookup_loader
 
         new_stdin = None
         job_vars = dict()
@@ -115,7 +116,7 @@ class TestTaskExecutor(unittest.TestCase):
             host = mock_host,
             task = mock_task,
             job_vars = job_vars,
-            connection_info = mock_conn_info,
+            play_context = mock_play_context,
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
@@ -138,7 +139,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.copy.side_effect = _copy
 
-        mock_conn_info = MagicMock()
+        mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
 
@@ -149,7 +150,7 @@ class TestTaskExecutor(unittest.TestCase):
             host = mock_host,
             task = mock_task,
             job_vars = job_vars,
-            connection_info = mock_conn_info,
+            play_context = mock_play_context,
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
@@ -180,7 +181,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task = MagicMock()
         mock_task.evaluate_conditional.side_effect = _evaluate_conditional
 
-        mock_conn_info = MagicMock()
+        mock_play_context = MagicMock()
 
         mock_shared_loader = None
 
@@ -191,7 +192,7 @@ class TestTaskExecutor(unittest.TestCase):
             host = mock_host,
             task = mock_task,
             job_vars = job_vars,
-            connection_info = mock_conn_info,
+            play_context = mock_play_context,
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = mock_shared_loader,
@@ -220,9 +221,9 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.failed_when = None
         mock_task.post_validate.return_value = None
 
-        mock_conn_info = MagicMock()
-        mock_conn_info.post_validate.return_value = None
-        mock_conn_info.update_vars.return_value = None
+        mock_play_context = MagicMock()
+        mock_play_context.post_validate.return_value = None
+        mock_play_context.update_vars.return_value = None
 
         mock_connection = MagicMock()
         mock_connection.set_host_overrides.return_value = None
@@ -238,7 +239,7 @@ class TestTaskExecutor(unittest.TestCase):
             host = mock_host,
             task = mock_task,
             job_vars = job_vars,
-            connection_info = mock_conn_info,
+            play_context = mock_play_context,
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = shared_loader,
@@ -275,7 +276,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.async = 3
         mock_task.poll  = 1
 
-        mock_conn_info = MagicMock()
+        mock_play_context = MagicMock()
 
         mock_connection = MagicMock()
 
@@ -289,7 +290,7 @@ class TestTaskExecutor(unittest.TestCase):
             host = mock_host,
             task = mock_task,
             job_vars = job_vars,
-            connection_info = mock_conn_info,
+            play_context = mock_play_context,
             new_stdin = new_stdin,
             loader = fake_loader,
             shared_loader_obj = shared_loader,
@@ -299,7 +300,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         def _get(*args, **kwargs):
             mock_action = MagicMock()
-            mock_action.run.return_value = dict()
+            mock_action.run.return_value = dict(stdout='')
             return mock_action
 
         # testing with some bad values in the result passed to poll async,

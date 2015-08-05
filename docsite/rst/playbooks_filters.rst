@@ -17,8 +17,26 @@ Filters For Formatting Data
 The following filters will take a data structure in a template and render it in a slightly different format.  These
 are occasionally useful for debugging::
 
+    {{ some_variable | to_json }}
+    {{ some_variable | to_yaml }}
+
+For human readable output, you can use::
+
     {{ some_variable | to_nice_json }}
     {{ some_variable | to_nice_yaml }}
+
+Alternatively, you may be reading in some already formatted data::
+
+    {{ some_variable | from_json }}
+    {{ some_variable | from_yaml }}
+
+for example::
+
+    tasks:
+      - shell: cat /some/path/to/file.json
+        register: result
+
+      - set_fact: myvar="{{ result.stdout | from_json }}"
 
 .. _filters_used_with_conditionals:
 
@@ -92,6 +110,10 @@ As of Ansible 1.8, it is possible to use the default filter to omit variables an
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
+.. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
+      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (python null) value will cause the
+      later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
+      the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _list_filters:
 
@@ -300,7 +322,11 @@ Hash types available depend on the master system running ansible,
 Other Useful Filters
 --------------------
 
-To use one value on true and another on false (since 1.9)::
+To add quotes for shell usage::
+
+    - shell: echo={{ string_value | quote }} 
+
+To use one value on true and another on false (new in version 1.9)::
 
    {{ (name == "John") | ternary('Mr','Ms') }}
 
@@ -323,6 +349,15 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 To get the real path of a link (new in version 1.8)::
 
    {{ path | realpath }}
+
+To get the relative path of a link, from a start point (new in version 1.7)::
+
+    {{ path | relpath('/etc') }}
+
+To get the root and extension of a path or filename (new in version 2.0)::
+
+    # with path == 'nginx.conf' the return would be ('nginx', '.conf')
+    {{ path | splitext }}
 
 To work with Base64 encoded strings::
 
@@ -353,6 +388,8 @@ To match strings against a regex, use the "match" or "search" filter::
 
 'match' will require a complete match in the string, while 'search' will require a match inside of the string.
 
+.. versionadded:: 1.6
+
 To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "ansible" to "able"    
@@ -363,6 +400,11 @@ To replace text in a string with regex, use the "regex_replace" filter::
 
 .. note:: If "regex_replace" filter is used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you need to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+
+To escape special characters within a regex, use the "regex_escape" filter::
+
+    # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
+    {{ '^f.*o(.*)$' | regex_escape() }}
 
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones

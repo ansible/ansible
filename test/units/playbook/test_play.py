@@ -39,7 +39,7 @@ class TestPlay(unittest.TestCase):
 
     def test_empty_play(self):
         p = Play.load(dict())
-        self.assertEqual(str(p), "PLAY: ")
+        self.assertEqual(str(p), '')
 
     def test_basic_play(self):
         p = Play.load(dict(
@@ -117,7 +117,7 @@ class TestPlay(unittest.TestCase):
             roles=['foo'],
         ), loader=fake_loader)
 
-        tasks = p.compile()
+        blocks = p.compile()
 
     def test_play_compile(self):
         p = Play.load(dict(
@@ -127,6 +127,8 @@ class TestPlay(unittest.TestCase):
             tasks=[dict(action='shell echo "hello world"')],
         ))
 
-        tasks = p.compile()
-        self.assertEqual(len(tasks), 1)
-        self.assertIsInstance(tasks[0], Block)
+        blocks = p.compile()
+
+        # with a single block, there will still be three
+        # implicit meta flush_handler blocks inserted
+        self.assertEqual(len(blocks), 4)

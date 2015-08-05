@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import getpass
 import multiprocessing
 import os
 import socket
@@ -27,15 +26,13 @@ import sys
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.executor.connection_info import ConnectionInformation
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
+from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader
 from ansible.template import Templar
-
-from ansible.utils.debug import debug
 
 __all__ = ['TaskQueueManager']
 
@@ -60,6 +57,10 @@ class TaskQueueManager:
         self._options          = options
         self._stats            = AggregateStats()
         self.passwords         = passwords
+        self._stdout_callback  = stdout_callback
+
+        self._callbacks_loaded = False
+        self._callback_plugins = []
 
         # a special flag to help us exit cleanly
         self._terminated = False
@@ -72,9 +73,6 @@ class TaskQueueManager:
         self._unreachable_hosts = dict()
 
         self._final_q = multiprocessing.Queue()
-
-        # load callback plugins
-        self._callback_plugins = self._load_callbacks(stdout_callback)
 
         # create the pool of worker threads, based on the number of forks specified
         try:
@@ -117,21 +115,22 @@ class TaskQueueManager:
         for handler in handler_list:
             self._notified_handlers[handler.get_name()] = []
 
-    def _load_callbacks(self, stdout_callback):
+    def load_callbacks(self):
         '''
         Loads all available callbacks, with the exception of those which
         utilize the CALLBACK_TYPE option. When CALLBACK_TYPE is set to 'stdout',
         only one such callback plugin will be loaded.
         '''
 
-        loaded_plugins = []
+        if self._callbacks_loaded:
+            return
 
         stdout_callback_loaded = False
-        if stdout_callback is None:
-            stdout_callback = C.DEFAULT_STDOUT_CALLBACK
+        if self._stdout_callback is None:
+            self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
 
-        if stdout_callback not in callback_loader:
-            raise AnsibleError("Invalid callback for stdout specified: %s" % stdout_callback)
+        if self._stdout_callback not in callback_loader:
+            raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
 
         for callback_plugin in callback_loader.all(class_only=True):
             if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
@@ -141,59 +140,17 @@ class TaskQueueManager:
                 callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
                 (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
                 if callback_type == 'stdout':
-                    if callback_name != stdout_callback or stdout_callback_loaded:
+                    if callback_name != self._stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
+                elif C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST:
+                    continue
 
-                loaded_plugins.append(callback_plugin(self._display))
+                self._callback_plugins.append(callback_plugin(self._display))
             else:
-                loaded_plugins.append(callback_plugin())
+                self._callback_plugins.append(callback_plugin())
 
-        return loaded_plugins
-
-    def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-
-        if prompt and default is not None:
-            msg = "%s [%s]: " % (prompt, default)
-        elif prompt:
-            msg = "%s: " % prompt
-        else:
-            msg = 'input for %s: ' % varname
-
-        def do_prompt(prompt, private):
-            if sys.stdout.encoding:
-                msg = prompt.encode(sys.stdout.encoding)
-            else:
-                # when piping the output, or at other times when stdout
-                # may not be the standard file descriptor, the stdout
-                # encoding may not be set, so default to something sane
-                msg = prompt.encode(locale.getpreferredencoding())
-            if private:
-                return getpass.getpass(msg)
-            return raw_input(msg)
-
-        if confirm:
-            while True:
-                result = do_prompt(msg, private)
-                second = do_prompt("confirm " + msg, private)
-                if result == second:
-                    break
-                display("***** VALUES ENTERED DO NOT MATCH ****")
-        else:
-            result = do_prompt(msg, private)
-
-        # if result is false and default is not None
-        if not result and default is not None:
-            result = default
-
-        # FIXME: make this work with vault or whatever this old method was
-        #if encrypt:
-        #    result = utils.do_encrypt(result, encrypt, salt_size, salt)
-
-        # handle utf-8 chars
-        # FIXME: make this work
-        #result = to_unicode(result, errors='strict')
-        return result
+        self._callbacks_loaded = True
 
     def run(self, play):
         '''
@@ -204,24 +161,8 @@ class TaskQueueManager:
         are done with the current task).
         '''
 
-        if play.vars_prompt:
-            for var in play.vars_prompt:
-                if 'name' not in var:
-                    raise AnsibleError("'vars_prompt' item is missing 'name:'", obj=play._ds)
-
-                vname     = var['name']
-                prompt    = var.get("prompt", vname)
-                default   = var.get("default", None)
-                private   = var.get("private", True)
-
-                confirm   = var.get("confirm", False)
-                encrypt   = var.get("encrypt", None)
-                salt_size = var.get("salt_size", None)
-                salt      = var.get("salt", None)
-
-                if vname not in play.vars:
-                    self.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                    play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+        if not self._callbacks_loaded:
+            self.load_callbacks()
 
         all_vars = self._variable_manager.get_vars(loader=self._loader, play=play)
         templar = Templar(loader=self._loader, variables=all_vars)
@@ -229,10 +170,10 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        connection_info = ConnectionInformation(new_play, self._options, self.passwords)
+        play_context = PlayContext(new_play, self._options, self.passwords)
         for callback_plugin in self._callback_plugins:
-            if hasattr(callback_plugin, 'set_connection_info'):
-                callback_plugin.set_connection_info(connection_info)
+            if hasattr(callback_plugin, 'set_play_context'):
+                callback_plugin.set_play_context(play_context)
 
         self.send_callback('v2_playbook_on_play_start', new_play)
 
@@ -245,13 +186,13 @@ class TaskQueueManager:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
-        iterator = PlayIterator(inventory=self._inventory, play=new_play, connection_info=connection_info, all_vars=all_vars)
+        iterator = PlayIterator(inventory=self._inventory, play=new_play, play_context=play_context, all_vars=all_vars)
 
         # and run the play using the strategy
-        return strategy.run(iterator, connection_info)
+        return strategy.run(iterator, play_context)
 
     def cleanup(self):
-        debug("RUNNING CLEANUP")
+        self._display.debug("RUNNING CLEANUP")
 
         self.terminate()
 
@@ -289,9 +230,12 @@ class TaskQueueManager:
                 continue
             methods = [
                 getattr(callback_plugin, method_name, None),
-                getattr(callback_plugin, 'on_any', None)
+                getattr(callback_plugin, 'v2_on_any', None)
             ]
             for method in methods:
                 if method is not None:
-                    method(*args, **kwargs)
+                    try:
+                        method(*args, **kwargs)
+                    except Exception as e:
+                        self._display.warning('Error when using %s: %s' % (method, str(e)))
 

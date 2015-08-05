@@ -41,6 +41,10 @@ class TestVariableManager(unittest.TestCase):
         vars = v.get_vars(loader=fake_loader, use_cache=False)
         if 'omit' in vars:
             del vars['omit']
+        if 'vars' in vars:
+            del vars['vars']
+        if 'ansible_version' in vars:
+            del vars['ansible_version']
 
         self.assertEqual(vars, dict(playbook_dir='.'))
 

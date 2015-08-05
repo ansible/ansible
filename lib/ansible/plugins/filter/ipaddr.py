@@ -16,6 +16,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from functools import partial
+import types
 
 try:
     import netaddr
@@ -319,7 +320,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
         return False
 
     # Check if value is a list and parse each element
-    elif isinstance(value, (list, tuple)):
+    elif isinstance(value, (list, tuple, types.GeneratorType)):
 
         _ret = []
         for element in value:
@@ -457,7 +458,7 @@ def ipaddr(value, query = '', version = False, alias = 'ipaddr'):
 
 def ipwrap(value, query = ''):
     try:
-        if isinstance(value, (list, tuple)):
+        if isinstance(value, (list, tuple, types.GeneratorType)):
             _ret = []
             for element in value:
                 if ipaddr(element, query, version = False, alias = 'ipwrap'):
@@ -587,6 +588,38 @@ def nthhost(value, query=''):
 
     return False
 
+# Returns the SLAAC address within a network for a given HW/MAC address.
+# Usage:
+#
+#  - prefix | slaac(mac)
+def slaac(value, query = ''):
+    ''' Get the SLAAC address within given network '''
+    try:
+        vtype = ipaddr(value, 'type')
+        if vtype == 'address':
+            v = ipaddr(value, 'cidr')
+        elif vtype == 'network':
+            v = ipaddr(value, 'subnet')
+
+        if v.version != 6:
+            return False
+
+        value = netaddr.IPNetwork(v)
+    except:
+        return False
+
+    if not query:
+        return False
+
+    try:
+        mac = hwaddr(query, alias = 'slaac')
+
+        eui = netaddr.EUI(mac)
+    except:
+        return False
+
+    return eui.ipv6(value.network)
+
 
 # ---- HWaddr / MAC address filters ----
 
@@ -645,6 +678,7 @@ class FilterModule(object):
         'ipv6': ipv6,
         'ipsubnet': ipsubnet,
         'nthhost': nthhost,
+        'slaac': slaac,
 
         # MAC / HW addresses
         'hwaddr': hwaddr,

@@ -31,12 +31,13 @@ from six import with_metaclass
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.plugins import shell_loader
 
-# FIXME: this object should be created upfront and passed through
-#        the entire chain of calls to here, as there are other things
-#        which may want to output display/logs too
-from ansible.utils.display import Display
-
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 __all__ = ['ConnectionBase', 'ensure_connect']
 
@@ -57,24 +58,36 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     has_pipelining = False
     become_methods = C.BECOME_METHODS
 
-    def __init__(self, connection_info, new_stdin, *args, **kwargs):
+    def __init__(self, play_context, new_stdin, *args, **kwargs):
         # All these hasattrs allow subclasses to override these parameters
-        if not hasattr(self, '_connection_info'):
-            self._connection_info = connection_info
+        if not hasattr(self, '_play_context'):
+            self._play_context = play_context
         if not hasattr(self, '_new_stdin'):
             self._new_stdin = new_stdin
         if not hasattr(self, '_display'):
-            self._display = Display(verbosity=connection_info.verbosity)
+            self._display = display
         if not hasattr(self, '_connected'):
             self._connected = False
 
         self.success_key = None
         self.prompt = None
 
+        # load the shell plugin for this action/connection
+        if play_context.shell:
+            shell_type = play_context.shell
+        elif hasattr(self, '_shell_type'):
+            shell_type = getattr(self, '_shell_type')
+        else:
+            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
+
+        self._shell = shell_loader.get(shell_type)
+        if not self._shell:
+            raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
+
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
 
-        if self._connection_info.become_method in self.__class__.become_methods:
+        if self._play_context.become_method in self.become_methods:
             return True
 
         raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_method)
@@ -100,12 +113,12 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         """Connect to the host we've been initialized with"""
 
         # Check if PE is supported
-        if self._connection_info.become:
+        if self._play_context.become:
             self.__become_method_supported()
 
     @ensure_connect
     @abstractmethod
-    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
+    def exec_command(self, cmd, tmp_path, in_data=None, executable=None, sudoable=True):
         """Run a command on the remote host"""
         pass
 
@@ -127,18 +140,18 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         pass
 
     def check_become_success(self, output):
-        return self.success_key in output
+        return self._play_context.success_key in output
 
     def check_password_prompt(self, output):
-        if self.prompt is None:
+        if self._play_context.prompt is None:
             return False
-        elif isinstance(self.prompt, basestring):
-            return output.endswith(self.prompt)
+        elif isinstance(self._play_context.prompt, basestring):
+            return output.endswith(self._play_context.prompt)
         else:
-            return self.prompt(output)
+            return self._play_context.prompt(output)
 
     def check_incorrect_password(self, output):
-        incorrect_password = gettext.dgettext(self._connection_info.become_method, C.BECOME_ERROR_STRINGS[self._connection_info.become_method])
+        incorrect_password = gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method])
         if incorrect_password in output:
-            raise AnsibleError('Incorrect %s password' % self._connection_info.become_method)
+            raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
 

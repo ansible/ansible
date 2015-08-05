@@ -52,55 +52,63 @@ def get_docstring(filename, verbose=False):
         M = ast.parse(''.join(open(filename)))
         for child in M.body:
             if isinstance(child, ast.Assign):
-                if 'DOCUMENTATION' in (t.id for t in child.targets):
-                    doc = yaml.safe_load(child.value.s)
-                    fragment_slug = doc.get('extends_documentation_fragment',
-                                            'doesnotexist').lower()
+                for t in child.targets:
+                    try:
+                        theid = t.id
+                    except AttributeError as e:
+                        continue #TODO: should log these to figure out why this happens
 
-                    # Allow the module to specify a var other than DOCUMENTATION
-                    # to pull the fragment from, using dot notation as a separator
-                    if '.' in fragment_slug:
-                        fragment_name, fragment_var = fragment_slug.split('.', 1)
-                        fragment_var = fragment_var.upper()
-                    else:
-                        fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
+                    if 'DOCUMENTATION' in theid:
+                        doc = yaml.safe_load(child.value.s)
+                        fragments = doc.get('extends_documentation_fragment', [])
 
+                        if isinstance(fragments, basestring):
+                            fragments = [ fragments ]
 
-                    if fragment_slug != 'doesnotexist':
-                        fragment_class = fragment_loader.get(fragment_name)
-                        assert fragment_class is not None
-
-                        fragment_yaml = getattr(fragment_class, fragment_var, '{}')
-                        fragment = yaml.safe_load(fragment_yaml)
-
-                        if fragment.has_key('notes'):
-                            notes = fragment.pop('notes')
-                            if notes:
-                                if not doc.has_key('notes'):
-                                    doc['notes'] = []
-                                doc['notes'].extend(notes)
-
-                        if 'options' not in fragment.keys():
-                            raise Exception("missing options in fragment, possibly misformatted?")
-
-                        for key, value in fragment.items():
-                            if not doc.has_key(key):
-                                doc[key] = value
+                        # Allow the module to specify a var other than DOCUMENTATION
+                        # to pull the fragment from, using dot notation as a separator
+                        for fragment_slug in fragments:
+                            fragment_slug = fragment_slug.lower()
+                            if '.' in fragment_slug:
+                                fragment_name, fragment_var = fragment_slug.split('.', 1)
+                                fragment_var = fragment_var.upper()
                             else:
-                                if isinstance(doc[key], MutableMapping):
-                                    doc[key].update(value)
-                                elif isinstance(doc[key], MutableSet):
-                                    doc[key].add(value)
-                                elif isinstance(doc[key], MutableSequence):
-                                    doc[key] = sorted(frozenset(doc[key] + value))
+                                fragment_name, fragment_var = fragment_slug, 'DOCUMENTATION'
+
+                            fragment_class = fragment_loader.get(fragment_name)
+                            assert fragment_class is not None
+
+                            fragment_yaml = getattr(fragment_class, fragment_var, '{}')
+                            fragment = yaml.safe_load(fragment_yaml)
+
+                            if fragment.has_key('notes'):
+                                notes = fragment.pop('notes')
+                                if notes:
+                                    if not doc.has_key('notes'):
+                                        doc['notes'] = []
+                                    doc['notes'].extend(notes)
+
+                            if 'options' not in fragment.keys():
+                                raise Exception("missing options in fragment, possibly misformatted?")
+
+                            for key, value in fragment.items():
+                                if not doc.has_key(key):
+                                    doc[key] = value
                                 else:
-                                    raise Exception("Attempt to extend a documentation fragement of unknown type")
+                                    if isinstance(doc[key], MutableMapping):
+                                        doc[key].update(value)
+                                    elif isinstance(doc[key], MutableSet):
+                                        doc[key].add(value)
+                                    elif isinstance(doc[key], MutableSequence):
+                                        doc[key] = sorted(frozenset(doc[key] + value))
+                                    else:
+                                        raise Exception("Attempt to extend a documentation fragement of unknown type")
 
-                if 'EXAMPLES' in (t.id for t in child.targets):
-                    plainexamples = child.value.s[1:]  # Skip first empty line
+                    elif 'EXAMPLES' in theid:
+                        plainexamples = child.value.s[1:]  # Skip first empty line
 
-                if 'RETURN' in (t.id for t in child.targets):
-                    returndocs = child.value.s[1:]
+                    elif 'RETURN' in theid:
+                        returndocs = child.value.s[1:]
     except:
         traceback.print_exc() # temp
         if verbose == True:

@@ -11,7 +11,7 @@ How can I set the PATH or any other environment variable for a task or entire pl
 Setting environment variables can be done with the `environment` keyword. It can be used at task or playbook level::
 
     environment:
-      PATH: {{ ansible_env.PATH }}:/thingy/bin
+      PATH: "{{ ansible_env.PATH }}:/thingy/bin"
       SOME: value
 
 

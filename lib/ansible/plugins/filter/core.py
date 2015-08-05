@@ -85,55 +85,6 @@ def to_nice_json(a, *args, **kw):
         return to_json(a, *args, **kw)
     return json.dumps(a, indent=4, sort_keys=True, *args, **kw)
 
-def failed(*a, **kw):
-    ''' Test if task result yields failed '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|failed expects a dictionary")
-    rc = item.get('rc',0)
-    failed = item.get('failed',False)
-    if rc != 0 or failed:
-        return True
-    else:
-        return False
-
-def success(*a, **kw):
-    ''' Test if task result yields success '''
-    return not failed(*a, **kw)
-
-def changed(*a, **kw):
-    ''' Test if task result yields changed '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|changed expects a dictionary")
-    if not 'changed' in item:
-        changed = False
-        if ('results' in item    # some modules return a 'results' key
-                and type(item['results']) == list
-                and type(item['results'][0]) == dict):
-            for result in item['results']:
-                changed = changed or result.get('changed', False)
-    else:
-        changed = item.get('changed', False)
-    return changed
-
-def skipped(*a, **kw):
-    ''' Test if task result yields skipped '''
-    item = a[0]
-    if type(item) != dict:
-        raise errors.AnsibleFilterError("|skipped expects a dictionary")
-    skipped = item.get('skipped', False)
-    return skipped
-
-def mandatory(a):
-    ''' Make a variable mandatory '''
-    try:
-        a
-    except NameError:
-        raise errors.AnsibleFilterError('Mandatory variable not defined.')
-    else:
-        return a
-
 def bool(a):
     ''' return a bool for the arg '''
     if a is None or type(a) == bool:
@@ -152,27 +103,6 @@ def quote(a):
 def fileglob(pathname):
     ''' return list of matched files for glob '''
     return glob.glob(pathname)
-
-def regex(value='', pattern='', ignorecase=False, match_type='search'):
-    ''' Expose `re` as a boolean filter using the `search` method by default.
-        This is likely only useful for `search` and `match` which already
-        have their own filters.
-    '''
-    if ignorecase:
-        flags = re.I
-    else:
-        flags = 0
-    _re = re.compile(pattern, flags=flags)
-    _bool = __builtins__.get('bool')
-    return _bool(getattr(_re, match_type, 'search')(value))
-
-def match(value, pattern='', ignorecase=False):
-    ''' Perform a `re.match` returning a boolean '''
-    return regex(value, pattern, ignorecase, 'match')
-
-def search(value, pattern='', ignorecase=False):
-    ''' Perform a `re.search` returning a boolean '''
-    return regex(value, pattern, ignorecase, 'search')
 
 def regex_replace(value='', pattern='', replacement='', ignorecase=False):
     ''' Perform a `re.sub` returning a string '''
@@ -221,6 +151,10 @@ def version_compare(value, version, operator='eq', strict=False):
         return method(Version(str(value)), Version(str(version)))
     except Exception, e:
         raise errors.AnsibleFilterError('Version comparison: %s' % e)
+
+def regex_escape(string):
+    '''Escape all regular expressions special characters from STRING.'''
+    return re.escape(string)
 
 @environmentfilter
 def rand(environment, end, start=None, step=None):
@@ -316,19 +250,7 @@ class FilterModule(object):
             'expanduser': partial(unicode_wrap, os.path.expanduser),
             'realpath': partial(unicode_wrap, os.path.realpath),
             'relpath': partial(unicode_wrap, os.path.relpath),
-
-            # failure testing
-            'failed'  : failed,
-            'success' : success,
-
-            # changed testing
-            'changed' : changed,
-
-            # skip testing
-            'skipped' : skipped,
-
-            # variable existence
-            'mandatory': mandatory,
+            'splitext': partial(unicode_wrap, os.path.splitext),
 
             # value as boolean
             'bool': bool,
@@ -351,10 +273,8 @@ class FilterModule(object):
             'fileglob': fileglob,
 
             # regex
-            'match': match,
-            'search': search,
-            'regex': regex,
             'regex_replace': regex_replace,
+            'regex_escape': regex_escape,
 
             # ? : ;
             'ternary': ternary,

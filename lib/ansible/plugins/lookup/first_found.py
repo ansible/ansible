@@ -123,9 +123,8 @@ import os
 
 from jinja2.exceptions import UndefinedError
 
-from ansible.errors import AnsibleUndefinedVariable
+from ansible.errors import AnsibleLookupError, AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
-from ansible.template import Templar
 from ansible.utils.boolean import boolean
 
 class LookupModule(LookupBase):
@@ -174,11 +173,10 @@ class LookupModule(LookupBase):
         else:
             total_search = terms
 
-        templar = Templar(loader=self._loader, variables=variables)
         roledir = variables.get('roledir')
         for fn in total_search:
             try:
-                fn = templar.template(fn)
+                fn = self._templar.template(fn)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 continue
 
@@ -202,5 +200,5 @@ class LookupModule(LookupBase):
             if skip:
                 return []
             else:
-                return [None]
+                raise AnsibleLookupError("No file was found when using with_first_found. Use the 'skip: true' option to allow this task to be skipped if no files are found")
 

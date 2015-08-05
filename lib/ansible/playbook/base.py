@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import itertools
 import uuid
 
 from functools import partial
@@ -46,9 +47,8 @@ class Base:
     _port                = FieldAttribute(isa='int')
     _remote_user         = FieldAttribute(isa='string')
 
-    # vars and flags
-    _vars                = FieldAttribute(isa='dict', default=dict())
-    _environment         = FieldAttribute(isa='dict', default=dict())
+    # flags and misc. settings
+    _environment         = FieldAttribute(isa='list', default=[])
     _no_log              = FieldAttribute(isa='bool', default=False)
 
     def __init__(self):
@@ -153,8 +153,11 @@ class Base:
         else:
             self._loader = DataLoader()
 
-        if isinstance(ds, string_types) or isinstance(ds, FileIO):
-            ds = self._loader.load(ds)
+        # FIXME: is this required anymore? This doesn't seem to do anything
+        #        helpful, and was added in very early stages of the base class
+        #        development.
+        #if isinstance(ds, string_types) or isinstance(ds, FileIO):
+        #    ds = self._loader.load(ds)
 
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation
@@ -232,6 +235,10 @@ class Base:
         new_me._loader           = self._loader
         new_me._variable_manager = self._variable_manager
 
+        # if the ds value was set on the object, copy it to the new copy too
+        if hasattr(self, '_ds'):
+            new_me._ds = self._ds
+
         return new_me
 
     def post_validate(self, templar):
@@ -244,6 +251,9 @@ class Base:
         basedir = None
         if self._loader is not None:
             basedir = self._loader.get_basedir()
+
+        # save the omit value for later checking
+        omit_value = templar._available_variables.get('omit')
 
         for (name, attribute) in iteritems(self._get_base_attributes()):
 
@@ -263,6 +273,12 @@ class Base:
                     # if the attribute contains a variable, template it now
                     value = templar.template(getattr(self, name))
 
+                # if this evaluated to the omit value, set the value back to
+                # the default specified in the FieldAttribute and move on
+                if omit_value is not None and value == omit_value:
+                    value = attribute.default
+                    continue
+
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
@@ -274,8 +290,17 @@ class Base:
                     elif attribute.isa == 'list':
                         if not isinstance(value, list):
                             value = [ value ]
+                        if attribute.listof is not None:
+                            for item in value:
+                                if not isinstance(item, attribute.listof):
+                                    raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                    elif attribute.isa == 'set':
+                        if not isinstance(value, (list, set)):
+                            value = [ value ]
+                        if not isinstance(value, set):
+                            value = set(value)
                     elif attribute.isa == 'dict' and not isinstance(value, dict):
-                        raise TypeError()
+                        raise TypeError("%s is not a dictionary" % value)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
@@ -336,7 +361,8 @@ class Base:
         if not isinstance(new_value, list):
             new_value = [ new_value ]
 
-        return list(set(value + new_value))
+        #return list(set(value + new_value))
+        return [i for i,_ in itertools.groupby(value + new_value)]
 
     def __getstate__(self):
         return self.serialize()

@@ -70,14 +70,21 @@ from itertools import imap, repeat
 
 try:
     import json
+    # Detect the python-json library which is incompatible
+    # Look for simplejson if that's the case
+    try:
+        if not isinstance(json.loads, types.FunctionType) or not isinstance(json.dumps, types.FunctionType):
+            raise ImportError
+    except AttributeError:
+        raise ImportError
 except ImportError:
     try:
         import simplejson as json
     except ImportError:
-        sys.stderr.write('Error: ansible requires a json module, none found!')
+        print('{"msg": "Error: ansible requires the stdlib json or simplejson module, neither was found!", "failed": true}')
         sys.exit(1)
     except SyntaxError:
-        sys.stderr.write('SyntaxError: probably due to json and python being for different versions')
+        print('{"msg": "SyntaxError: probably due to installed simplejson being for a different python version", "failed": true}')
         sys.exit(1)
 
 HAVE_SELINUX=False
@@ -351,9 +358,9 @@ class AnsibleModule(object):
         self.check_mode = False
         self.no_log = no_log
         self.cleanup_files = []
-        
+
         self.aliases = {}
-        
+
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.iteritems():
                 if k not in self.argument_spec:
@@ -366,7 +373,7 @@ class AnsibleModule(object):
         self.params = self._load_params()
 
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log']
-        
+
         self.aliases = self._handle_aliases()
 
         if check_invalid_arguments:
@@ -380,10 +387,20 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=True)
 
+
+        self._CHECK_ARGUMENT_TYPES_DISPATCHER = {
+                'str': self._check_type_str,
+                'list': self._check_type_list,
+                'dict': self._check_type_dict,
+                'bool': self._check_type_bool,
+                'int': self._check_type_int,
+                'float': self._check_type_float,
+                'path': self._check_type_path,
+            }
         if not bypass_checks:
             self._check_required_arguments()
-            self._check_argument_values()
             self._check_argument_types()
+            self._check_argument_values()
             self._check_required_together(required_together)
             self._check_required_one_of(required_one_of)
             self._check_required_if(required_if)
@@ -898,11 +915,11 @@ class AnsibleModule(object):
 
     def _check_for_check_mode(self):
         for (k,v) in self.params.iteritems():
-            if k == '_ansible_check_mode':
+            if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
-                if self.supports_check_mode:
-                    self.check_mode = True
+                self.check_mode = True
+                break
 
     def _check_for_no_log(self):
         for (k,v) in self.params.iteritems():
@@ -968,7 +985,7 @@ class AnsibleModule(object):
             missing = []
             if key in self.params and self.params[key] == val:
                 for check in requirements:
-                    count = self._count_terms(check)
+                    count = self._count_terms((check,))
                     if count == 0:
                         missing.append(check)
             if len(missing) > 0:
@@ -1021,6 +1038,101 @@ class AnsibleModule(object):
                 return (str, e)
             return str
 
+    def _check_type_str(self, value):
+        if isinstance(value, basestring):
+            return value
+        # Note: This could throw a unicode error if value's __str__() method
+        # returns non-ascii.  Have to port utils.to_bytes() if that happens
+        return str(value)
+
+    def _check_type_list(self, value):
+        if isinstance(value, list):
+            return value
+
+        if isinstance(value, basestring):
+            return value.split(",")
+        elif isinstance(value, int) or isinstance(value, float):
+            return [ str(value) ]
+
+        raise TypeError('%s cannot be converted to a list' % type(value))
+
+    def _check_type_dict(self, value):
+        if isinstance(value, dict):
+            return value
+
+        if isinstance(value, basestring):
+            if value.startswith("{"):
+                try:
+                    return json.loads(value)
+                except:
+                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
+                    if exc is not None:
+                        raise TypeError('unable to evaluate string as dictionary')
+                    return result
+            elif '=' in value:
+                fields = []
+                field_buffer = []
+                in_quote = False
+                in_escape = False
+                for c in value.strip():
+                    if in_escape:
+                        field_buffer.append(c)
+                        in_escape = False
+                    elif c == '\\':
+                        in_escape = True
+                    elif not in_quote and c in ('\'', '"'):
+                        in_quote = c
+                    elif in_quote and in_quote == c:
+                        in_quote = False
+                    elif not in_quote and c in (',', ' '):
+                        field = ''.join(field_buffer)
+                        if field:
+                            fields.append(field)
+                        field_buffer = []
+                    else:
+                        field_buffer.append(c)
+
+                field = ''.join(field_buffer)
+                if field:
+                    fields.append(field)
+                return dict(x.split("=", 1) for x in fields)
+            else:
+                raise TypeError("dictionary requested, could not parse JSON or key=value")
+
+        raise TypeError('%s cannot be converted to a dict' % type(value))
+
+    def _check_type_bool(self, value):
+        if isinstance(value, bool):
+            return value
+
+        if isinstance(value, basestring):
+            return self.boolean(value)
+
+        raise TypeError('%s cannot be converted to a bool' % type(value))
+
+    def _check_type_int(self, value):
+        if isinstance(value, int):
+            return value
+
+        if isinstance(value, basestring):
+            return int(value)
+
+        raise TypeError('%s cannot be converted to an int' % type(value))
+
+    def _check_type_float(self, value):
+        if isinstance(value, float):
+            return value
+
+        if isinstance(value, basestring):
+            return float(value)
+
+        raise TypeError('%s cannot be converted to a float' % type(value))
+
+    def _check_type_path(self, value):
+        value = self._check_type_str(value)
+        return os.path.expanduser(os.path.expandvars(value))
+
+
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.iteritems():
@@ -1031,62 +1143,15 @@ class AnsibleModule(object):
                 continue
 
             value = self.params[k]
-            is_invalid = False
 
             try:
-                if wanted == 'str':
-                    if not isinstance(value, basestring):
-                        self.params[k] = str(value)
-                elif wanted == 'list':
-                    if not isinstance(value, list):
-                        if isinstance(value, basestring):
-                            self.params[k] = value.split(",")
-                        elif isinstance(value, int) or isinstance(value, float):
-                            self.params[k] = [ str(value) ]
-                        else:
-                            is_invalid = True
-                elif wanted == 'dict':
-                    if not isinstance(value, dict):
-                        if isinstance(value, basestring):
-                            if value.startswith("{"):
-                                try:
-                                    self.params[k] = json.loads(value)
-                                except:
-                                    (result, exc) = self.safe_eval(value, dict(), include_exceptions=True)
-                                    if exc is not None:
-                                        self.fail_json(msg="unable to evaluate dictionary for %s" % k)
-                                    self.params[k] = result
-                            elif '=' in value:
-                                self.params[k] = dict([x.strip().split("=", 1) for x in value.split(",")])
-                            else:
-                                self.fail_json(msg="dictionary requested, could not parse JSON or key=value")
-                        else:
-                            is_invalid = True
-                elif wanted == 'bool':
-                    if not isinstance(value, bool):
-                        if isinstance(value, basestring):
-                            self.params[k] = self.boolean(value)
-                        else:
-                            is_invalid = True
-                elif wanted == 'int':
-                    if not isinstance(value, int):
-                        if isinstance(value, basestring):
-                            self.params[k] = int(value)
-                        else:
-                            is_invalid = True
-                elif wanted == 'float':
-                    if not isinstance(value, float):
-                        if isinstance(value, basestring):
-                            self.params[k] = float(value)
-                        else:
-                            is_invalid = True
-                else:
-                    self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
-
-                if is_invalid:
-                    self.fail_json(msg="argument %s is of invalid type: %s, required: %s" % (k, type(value), wanted))
-            except ValueError:
-                self.fail_json(msg="value of argument %s is not of type %s and we were unable to automatically convert" % (k, wanted))
+                type_checker = self._CHECK_ARGUMENT_TYPES_DISPATCHER[wanted]
+            except KeyError:
+                self.fail_json(msg="implementation error: unknown type %s requested for %s" % (wanted, k))
+            try:
+                self.params[k] = type_checker(value)
+            except (TypeError, ValueError):
+                self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s" % (k, type(value), wanted))
 
     def _set_defaults(self, pre=True):
         for (k,v) in self.argument_spec.iteritems():
@@ -1378,8 +1443,9 @@ class AnsibleModule(object):
             # Optimistically try a rename, solves some corner cases and can avoid useless work, throws exception if not atomic.
             os.rename(src, dest)
         except (IOError,OSError), e:
-            # only try workarounds for errno 18 (cross device), 1 (not permitted) and 13 (permission denied)
-            if e.errno != errno.EPERM and e.errno != errno.EXDEV and e.errno != errno.EACCES:
+            # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
+            # and 26 (text file busy) which happens on vagrant synced folders
+            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY]:
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
             dest_dir = os.path.dirname(dest)

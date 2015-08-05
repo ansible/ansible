@@ -108,7 +108,7 @@ class InventoryParser(object):
                 if len(tokens) == 0:
                     continue
                 hostname = tokens[0]
-                port = C.DEFAULT_REMOTE_PORT
+                port = None
                 # Three cases to check:
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port
@@ -146,10 +146,10 @@ class InventoryParser(object):
                                 (k,v) = t.split("=", 1)
                             except ValueError, e:
                                 raise AnsibleError("Invalid ini entry in %s: %s - %s" % (self.filename, t, str(e)))
+                            v = self._parse_value(v)
                             if k == 'ansible_ssh_host':
-                                host.ipv4_address = self._parse_value(v)
-                            else:
-                                host.set_variable(k, self._parse_value(v))
+                                host.ipv4_address = v
+                            host.set_variable(k, v)
                     self.groups[active_group_name].add_host(host)
 
     # [southeast:children]

@@ -30,7 +30,7 @@ options:
   auth:
     description:
       - Dictionary containing auth information as needed by the cloud's auth
-        plugin strategy. For the default I{password) plugin, this would contain
+        plugin strategy. For the default I(password) plugin, this would contain
         I(auth_url), I(username), I(password), I(project_name) and any
         information about domains if the cloud supports them. For other plugins,
         this param will need to contain whatever parameters that auth plugin
@@ -98,6 +98,7 @@ options:
     required: false
     default: public
 requirements:
+  - python >= 2.7
   - shade
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)

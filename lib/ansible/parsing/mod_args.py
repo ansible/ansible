@@ -23,7 +23,8 @@ from six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError
 from ansible.plugins import module_loader
-from ansible.parsing.splitter import parse_kv
+from ansible.parsing.splitter import parse_kv, split_args
+from ansible.template import Templar
 
 # For filtering out modules correctly below
 RAW_PARAM_MODULES = ([
@@ -91,7 +92,7 @@ class ModuleArgsParser:
         self._task_ds = task_ds
 
 
-    def _split_module_string(self, str):
+    def _split_module_string(self, module_string):
         '''
         when module names are expressed like:
         action: copy src=a dest=b
@@ -99,7 +100,7 @@ class ModuleArgsParser:
         and the rest are strings pertaining to the arguments.
         '''
 
-        tokens = str.split()
+        tokens = split_args(module_string)
         if len(tokens) > 1:
             return (tokens[0], " ".join(tokens[1:]))
         else:
@@ -180,7 +181,7 @@ class ModuleArgsParser:
             args = thing
         elif isinstance(thing, string_types):
             # form is like: local_action: copy src=a dest=b ... pretty common
-            check_raw = action in ('command', 'shell', 'script')
+            check_raw = action in ('command', 'shell', 'script', 'raw')
             args = parse_kv(thing, check_raw=check_raw)
         elif thing is None:
             # this can happen with modules which take no params, like ping:
@@ -217,7 +218,7 @@ class ModuleArgsParser:
         elif isinstance(thing, string_types):
             # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
             (action, args) = self._split_module_string(thing)
-            check_raw = action in ('command', 'shell', 'script')
+            check_raw = action in ('command', 'shell', 'script', 'raw')
             args = parse_kv(args, check_raw=check_raw)
 
         else:
@@ -240,17 +241,13 @@ class ModuleArgsParser:
         args        = dict()
 
 
-        #
-        # We can have one of action, local_action, or module specified
-        #
-
-
         # this is the 'extra gross' scenario detailed above, so we grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
         # FIXME: add test cases for this
         additional_args = self._task_ds.get('args', dict())
 
+        # We can have one of action, local_action, or module specified
         # action
         if 'action' in self._task_ds:
             # an old school 'action' statement
@@ -282,7 +279,12 @@ class ModuleArgsParser:
         if action is None:
             raise AnsibleParserError("no action detected in task", obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
-            raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES)), obj=self._task_ds)
+            templar = Templar(loader=None)
+            raw_params = args.pop('_raw_params')
+            if templar._contains_vars(raw_params):
+                args['_variable_params'] = raw_params
+            else:
+                raise AnsibleParserError("this task '%s' has extra params, which is only allowed in the following modules: %s" % (action, ", ".join(RAW_PARAM_MODULES)), obj=self._task_ds)
 
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)

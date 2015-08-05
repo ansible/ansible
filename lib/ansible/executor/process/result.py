@@ -58,7 +58,7 @@ class ResultProcess(multiprocessing.Process):
         super(ResultProcess, self).__init__()
 
     def _send_result(self, result):
-        debug("sending result: %s" % (result,))
+        debug(u"sending result: %s" % ([unicode(x) for x in result],))
         self._final_q.put(result, block=False)
         debug("done sending result")
 
@@ -107,7 +107,7 @@ class ResultProcess(multiprocessing.Process):
 
                 # if this task is registering a result, do it now
                 if result._task.register:
-                    self._send_result(('set_host_var', result._host, result._task.register, result._result))
+                    self._send_result(('register_host_var', result._host, result._task.register, result._result))
 
                 # send callbacks, execute other options based on the result status
                 # FIXME: this should all be cleaned up and probably moved to a sub-function.
@@ -122,18 +122,6 @@ class ResultProcess(multiprocessing.Process):
                 elif result.is_skipped():
                     self._send_result(('host_task_skipped', result))
                 else:
-                    # if this task is notifying a handler, do it now
-                    if result._task.notify:
-                        # The shared dictionary for notified handlers is a proxy, which
-                        # does not detect when sub-objects within the proxy are modified.
-                        # So, per the docs, we reassign the list so the proxy picks up and
-                        # notifies all other threads
-                        for notify in result._task.notify:
-                            if result._task._role:
-                                role_name = result._task._role.get_name()
-                                notify = "%s : %s" %(role_name, notify)
-                            self._send_result(('notify_handler', result._host, notify))
-
                     if result._task.loop:
                         # this task had a loop, and has more than one result, so
                         # loop over all of them instead of a single result
@@ -142,25 +130,35 @@ class ResultProcess(multiprocessing.Process):
                         result_items = [ result._result ]
 
                     for result_item in result_items:
-                        #if 'include' in result_item:
-                        #    include_variables = result_item.get('include_variables', dict())
-                        #    if 'item' in result_item:
-                        #        include_variables['item'] = result_item['item']
-                        #    self._send_result(('include', result._host, result._task, result_item['include'], include_variables))
-                        #elif 'add_host' in result_item:
+                        # if this task is notifying a handler, do it now
+                        if '_ansible_notify' in result_item:
+                            if result.is_changed():
+                                # The shared dictionary for notified handlers is a proxy, which
+                                # does not detect when sub-objects within the proxy are modified.
+                                # So, per the docs, we reassign the list so the proxy picks up and
+                                # notifies all other threads
+                                for notify in result_item['_ansible_notify']:
+                                    if result._task._role:
+                                        role_name = result._task._role.get_name()
+                                        notify = "%s : %s" % (role_name, notify)
+                                    self._send_result(('notify_handler', result, notify))
+                            # now remove the notify field from the results, as its no longer needed
+                            result_item.pop('_ansible_notify')
+
                         if 'add_host' in result_item:
                             # this task added a new host (add_host module)
                             self._send_result(('add_host', result_item))
                         elif 'add_group' in result_item:
                             # this task added a new group (group_by module)
-                            self._send_result(('add_group', result._host, result_item))
+                            self._send_result(('add_group', result._task))
                         elif 'ansible_facts' in result_item:
                             # if this task is registering facts, do that now
+                            item = result_item.get('item', None)
                             if result._task.action in ('set_fact', 'include_vars'):
                                 for (key, value) in result_item['ansible_facts'].iteritems():
-                                    self._send_result(('set_host_var', result._host, key, value))
+                                    self._send_result(('set_host_var', result._host, result._task, item, key, value))
                             else:
-                                self._send_result(('set_host_facts', result._host, result_item['ansible_facts']))
+                                self._send_result(('set_host_facts', result._host, result._task, item, result_item['ansible_facts']))
 
                     # finally, send the ok for this task
                     self._send_result(('host_task_ok', result))

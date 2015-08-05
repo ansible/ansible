@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
 import re
 
 from jinja2 import Environment
@@ -29,7 +30,7 @@ from jinja2.runtime import StrictUndefined
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleFilterError, AnsibleUndefinedVariable
-from ansible.plugins import filter_loader, lookup_loader
+from ansible.plugins import _basedirs, filter_loader, lookup_loader, test_loader
 from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
@@ -46,7 +47,6 @@ __all__ = ['Templar']
 NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
-JINJA2_ALLOWED_OVERRIDES = frozenset(['trim_blocks', 'lstrip_blocks', 'newline_sequence', 'keep_trailing_newline'])
 
 class Templar:
     '''
@@ -55,9 +55,14 @@ class Templar:
 
     def __init__(self, loader, shared_loader_obj=None, variables=dict()):
         self._loader              = loader
-        self._basedir             = loader.get_basedir()
         self._filters             = None
+        self._tests               = None
         self._available_variables = variables
+
+        if loader:
+            self._basedir = loader.get_basedir()
+        else:
+            self._basedir = './'
 
         if shared_loader_obj:
             self._filter_loader = getattr(shared_loader_obj, 'filter_loader')
@@ -77,7 +82,7 @@ class Templar:
             undefined=StrictUndefined,
             extensions=self._get_extensions(),
             finalize=self._finalize,
-            loader=FileSystemLoader('.'),
+            loader=FileSystemLoader(self._basedir),
         )
         self.environment.template_class = AnsibleJ2Template
 
@@ -111,11 +116,28 @@ class Templar:
         self._filters = dict()
         for fp in plugins:
             self._filters.update(fp.filters())
+        self._filters.update(self._get_tests())
 
         return self._filters.copy()
 
+    def _get_tests(self):
+        '''
+        Returns tests plugins, after loading and caching them if need be
+        '''
+
+        if self._tests is not None:
+            return self._tests.copy()
+
+        plugins = [x for x in test_loader.all()]
+
+        self._tests = dict()
+        for fp in plugins:
+            self._tests.update(fp.tests())
+
+        return self._tests.copy()
+
     def _get_extensions(self):
-        ''' 
+        '''
         Return jinja2 extensions to load.
 
         If some extensions are set via jinja_extensions in ansible.cfg, we try
@@ -140,7 +162,7 @@ class Templar:
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None, convert_data=True):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -168,14 +190,16 @@ class Templar:
 
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
 
-                    # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                    if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or result.startswith("[") or result in ("True", "False"):
-                        eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
-                        if eval_results[1] is None:
-                            result = eval_results[0]
-                        else:
-                            # FIXME: if the safe_eval raised an error, should we do something with it?
-                            pass
+                    if convert_data:
+                        # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                        if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                           result.startswith("[") or result in ("True", "False"):
+                            eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                            if eval_results[1] is None:
+                                result = eval_results[0]
+                            else:
+                                # FIXME: if the safe_eval raised an error, should we do something with it?
+                                pass
 
                 return result
 
@@ -208,8 +232,9 @@ class Templar:
         '''
 
         if isinstance(variable, basestring):
-            first_part = variable.split(".")[0].split("[")[0]
-            if first_part in self._available_variables and self.environment.variable_start_string not in variable:
+            contains_filters = "|" in variable
+            first_part = variable.split("|")[0].split(".")[0].split("[")[0]
+            if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
                 return "%s%s%s" % (self.environment.variable_start_string, variable, self.environment.variable_end_string)
 
         # the variable didn't meet the conditions to be converted,
@@ -223,7 +248,7 @@ class Templar:
         return thing if thing is not None else ''
 
     def _lookup(self, name, *args, **kwargs):
-        instance = self._lookup_loader.get(name.lower(), loader=self._loader)
+        instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
         if instance is not None:
             # safely catch run failures per #5059
@@ -251,11 +276,21 @@ class Templar:
             if overrides is None:
                 myenv = self.environment.overlay()
             else:
-                overrides = JINJA2_ALLOWED_OVERRIDES.intersection(set(overrides))
                 myenv = self.environment.overlay(overrides)
+
+            # Get jinja env overrides from template
+            if data.startswith(JINJA2_OVERRIDE):
+                eol = data.find('\n')
+                line = data[len(JINJA2_OVERRIDE):eol]
+                data = data[eol+1:]
+                for pair in line.split(','):
+                    (key,val) = pair.split(':')
+                    key = key.strip()
+                    setattr(myenv, key, ast.literal_eval(val.strip()))
 
             #FIXME: add tests
             myenv.filters.update(self._get_filters())
+            myenv.tests.update(self._get_tests())
 
             try:
                 t = myenv.from_string(data)

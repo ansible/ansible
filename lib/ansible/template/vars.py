@@ -63,9 +63,6 @@ class AnsibleJ2Vars:
         return False
 
     def __getitem__(self, varname):
-        # FIXME: are we still going to need HostVars?
-        #from ansible.runner import HostVars
-
         if varname not in self._templar._available_variables:
             if varname in self._locals:
                 return self._locals[varname]

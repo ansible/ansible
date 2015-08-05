@@ -49,7 +49,7 @@ class GalaxyRole(object):
 
         self.name = name
         self.version = version
-        self.src = src
+        self.src = src or name
         self.scm = scm
 
         self.path = (os.path.join(galaxy.roles_path, self.name))
@@ -178,33 +178,34 @@ class GalaxyRole(object):
 
         return False
 
-    def fetch(self, target, role_data):
+    def fetch(self, role_data):
         """
-        Downloads the archived role from github to a temp location, extracts
-        it, and then copies the extracted role to the role library path.
+        Downloads the archived role from github to a temp location
         """
+        if role_data:
 
-        # first grab the file and save it to a temp location
-        if self.src:
-            archive_url = self.src
-        else:
-            archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], target)
-        self.display.display("- downloading role from %s" % archive_url)
+            # first grab the file and save it to a temp location
+            if "github_user" in role_data and "github_repo" in role_data:
+                archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
+            else:
+                archive_url = self.src
+            self.display.display("- downloading role from %s" % archive_url)
 
-        try:
-            url_file = urlopen(archive_url)
-            temp_file = tempfile.NamedTemporaryFile(delete=False)
-            data = url_file.read()
-            while data:
-                temp_file.write(data)
+            try:
+                url_file = urlopen(archive_url)
+                temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
-            temp_file.close()
-            return temp_file.name
-        except:
-            # TODO: better urllib2 error handling for error
-            #       messages that are more exact
-            self.display.error("failed to download the file.")
-            return False
+                while data:
+                    temp_file.write(data)
+                    data = url_file.read()
+                temp_file.close()
+                return temp_file.name
+            except:
+                # TODO: better urllib2 error handling for error
+                #       messages that are more exact
+                self.display.error("failed to download the file.")
+
+        return False
 
     def install(self, role_filename):
         # the file is a tar, so open it that way and extract it
@@ -293,3 +294,21 @@ class GalaxyRole(object):
         }
         """
         return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)
+
+
+    @staticmethod
+    def url_to_spec(roleurl):
+        # gets the role name out of a repo like
+        # http://git.example.com/repos/repo.git" => "repo"
+
+        if '://' not in roleurl and '@' not in roleurl:
+            return roleurl
+        trailing_path = roleurl.split('/')[-1]
+        if trailing_path.endswith('.git'):
+            trailing_path = trailing_path[:-4]
+        if trailing_path.endswith('.tar.gz'):
+            trailing_path = trailing_path[:-7]
+        if ',' in trailing_path:
+            trailing_path = trailing_path.split(',')[0]
+        return trailing_path
+

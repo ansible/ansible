@@ -31,17 +31,19 @@ import time
 import datetime
 import subprocess
 import cgi
+import warnings
 from jinja2 import Environment, FileSystemLoader
 
 from ansible.utils import module_docs
 from ansible.utils.vars import merge_hash
+from ansible.errors import AnsibleError
 
 #####################################################################################
 # constants and paths
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TO_OLD_TO_BE_NOTABLE = 1.0
+TO_OLD_TO_BE_NOTABLE = 1.3
 
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
@@ -66,11 +68,14 @@ NOTCORE    = " (E)"
 def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
 
-    t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
-    t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-    t = _MODULE.sub(r':ref:`' + r"\1 <\1>" + r"`", t)
-    t = _URL.sub(r"\1", t)
-    t = _CONST.sub(r'``' + r"\1" + r"``", t)
+    try:
+        t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
+        t = _BOLD.sub(r'**' + r"\1" + r"**", t)
+        t = _MODULE.sub(r':ref:`' + r"\1 <\1>" + r"`", t)
+        t = _URL.sub(r"\1", t)
+        t = _CONST.sub(r'``' + r"\1" + r"``", t)
+    except Exception as e:
+        raise AnsibleError("Could not process (%s) : %s" % (str(text), str(e)))
 
     return t
 
@@ -214,6 +219,17 @@ def jinja2_environment(template_dir, typ):
     return env, template, outputname
 
 #####################################################################################
+def too_old(added):
+    if not added:
+        return False
+    try:
+        added_tokens = str(added).split(".")
+        readded = added_tokens[0] + "." + added_tokens[1]
+        added_float = float(readded)
+    except ValueError as e:
+        warnings.warn("Could not parse %s: %s" % (added, str(e)))
+        return False
+    return (added_float < TO_OLD_TO_BE_NOTABLE)
 
 def process_module(module, options, env, template, outputname, module_map, aliases):
 
@@ -271,15 +287,14 @@ def process_module(module, options, env, template, outputname, module_map, alias
         added = doc['version_added']
 
     # don't show version added information if it's too old to be called out
-    if added:
-        added_tokens = str(added).split(".")
-        added = added_tokens[0] + "." + added_tokens[1]
-        added_float = float(added)
-        if added and added_float < TO_OLD_TO_BE_NOTABLE:
-            del doc['version_added']
+    if too_old(added):
+        del doc['version_added']
 
-    if 'options' in doc:
+    if 'options' in doc and doc['options']:
         for (k,v) in doc['options'].iteritems():
+            # don't show version added information if it's too old to be called out
+            if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
+                del doc['options'][k]['version_added']
             all_keys.append(k)
 
     all_keys = sorted(all_keys)
@@ -297,7 +312,10 @@ def process_module(module, options, env, template, outputname, module_map, alias
 
     # here is where we build the table of contents...
 
-    text = template.render(doc)
+    try:
+        text = template.render(doc)
+    except Exception as e:
+        raise AnsibleError("Failed to render doc for %s: %s" % (fname, str(e)))
     write_data(text, options, outputname, module)
     return doc['short_description']
 
@@ -315,7 +333,7 @@ def print_modules(module, category_file, deprecated, core, options, env, templat
     result = process_module(modname, options, env, template, outputname, module_map, aliases)
 
     if result != "SKIPPED":
-        category_file.write("  %s - %s <%s_module>\n" % (modstring, result, module))
+        category_file.write("  %s - %s <%s_module>\n" % (modstring, rst_ify(result), module))
 
 def process_category(category, categories, options, env, template, outputname):
 
@@ -329,7 +347,7 @@ def process_category(category, categories, options, env, template, outputname):
     category_file = open(category_file_path, "w")
     print "*** recording category %s in %s ***" % (category, category_file_path)
 
-    # TODO: start a new category file
+    # start a new category file
 
     category = category.replace("_"," ")
     category = category.title()
@@ -352,7 +370,6 @@ def process_category(category, categories, options, env, template, outputname):
                 deprecated.append(module)
             elif '/core/' in module_map[module]:
                 core.append(module)
-
         modules.append(module)
 
     modules.sort()

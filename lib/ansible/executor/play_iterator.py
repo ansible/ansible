@@ -19,6 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import fnmatch
+
+from ansible import constants as C
+
 from ansible.errors import *
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
@@ -87,18 +91,29 @@ class PlayIterator:
     FAILED_RESCUE      = 4
     FAILED_ALWAYS      = 8
 
-    def __init__(self, inventory, play, connection_info, all_vars):
+    def __init__(self, inventory, play, play_context, all_vars):
         self._play = play
 
         self._blocks = []
         for block in self._play.compile():
-            new_block = block.filter_tagged_tasks(connection_info, all_vars)
+            new_block = block.filter_tagged_tasks(play_context, all_vars)
             if new_block.has_tasks():
                 self._blocks.append(new_block)
 
         self._host_states = {}
         for host in inventory.get_hosts(self._play.hosts):
              self._host_states[host.name] = HostState(blocks=self._blocks)
+             # if we're looking to start at a specific task, iterate through
+             # the tasks for this host until we find the specified task
+             if play_context.start_at_task is not None:
+                 while True:
+                     (s, task) = self.get_next_task_for_host(host, peek=True)
+                     if s.run_state == self.ITERATING_COMPLETE:
+                         break
+                     if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task):
+                         break
+                     else:
+                         self.get_next_task_for_host(host)
 
         # Extend the play handlers list to include the handlers defined in roles
         self._play.handlers.extend(play.compile_roles_handlers())
@@ -119,7 +134,18 @@ class PlayIterator:
         elif s.run_state == self.ITERATING_SETUP:
             s.run_state = self.ITERATING_TASKS
             s.pending_setup = True
-            if self._play.gather_facts == 'smart' and not host._gathered_facts or boolean(self._play.gather_facts):
+
+            # Gather facts if the default is 'smart' and we have not yet
+            # done it for this host; or if 'explicit' and the play sets
+            # gather_facts to True; or if 'implicit' and the play does
+            # NOT explicitly set gather_facts to False.
+
+            gathering = C.DEFAULT_GATHERING
+            implied = self._play.gather_facts is None or boolean(self._play.gather_facts)
+
+            if (gathering == 'implicit' and implied) or \
+               (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
+               (gathering == 'smart' and implied and not host._gathered_facts):
                 if not peek:
                     # mark the host as having gathered facts
                     host.set_gathered_facts(True)
@@ -242,7 +268,7 @@ class PlayIterator:
         self._host_states[host.name] = s
 
     def get_failed_hosts(self):
-        return dict((host, True) for (host, state) in self._host_states.iteritems() if state.fail_state != self.FAILED_NONE)
+        return dict((host, True) for (host, state) in self._host_states.iteritems() if state.run_state == self.ITERATING_COMPLETE and state.fail_state != self.FAILED_NONE)
 
     def get_original_task(self, host, task):
         '''
@@ -277,6 +303,11 @@ class PlayIterator:
 
         s = self.get_host_state(host)
         for block in s._blocks:
+            res = _search_block(block, task)
+            if res:
+                return res
+
+        for block in self._play.handlers:
             res = _search_block(block, task)
             if res:
                 return res

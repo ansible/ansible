@@ -31,10 +31,11 @@ class LookupModule(LookupBase):
             terms = [ terms ]
 
         ret = []
+
+        basedir = self.get_basedir(variables)
+
         for term in terms:
-            basedir_path  = self._loader.path_dwim(term)
-            relative_path = None
-            playbook_path = None
+            self._display.debug("File lookup term: %s" % term)
 
             # Special handling of the file lookup, used primarily when the
             # lookup is done from a role. If the file isn't found in the
@@ -42,23 +43,15 @@ class LookupModule(LookupBase):
             # role/files/ directory, and finally the playbook directory
             # itself (which will be relative to the current working dir)
 
-            if 'role_path' in variables:
-                relative_path = self._loader.path_dwim_relative(variables['role_path'], 'files', term)
-
-            # FIXME: the original file stuff still needs to be worked out, but the
-            #        playbook_dir stuff should be able to be removed as it should
-            #        be covered by the fact that the loader contains that info
-            if 'playbook_dir' in variables:
-                playbook_path = self._loader.path_dwim_relative(variables['playbook_dir'],'files', term)
-
-            for path in (basedir_path, relative_path, playbook_path):
-                try:
-                    contents, show_data = self._loader._get_file_contents(path)
+            lookupfile = self._loader.path_dwim_relative(basedir, 'files', term)
+            self._display.vvvv("File lookup using %s as file" % lookupfile)
+            try:
+                if lookupfile:
+                    contents, show_data = self._loader._get_file_contents(lookupfile)
                     ret.append(contents.rstrip())
-                    break
-                except AnsibleParserError:
-                    continue
-            else:
+                else:
+                    raise AnsibleParserError()
+            except AnsibleParserError:
                 raise AnsibleError("could not locate file in lookup: %s" % term)
 
         return ret

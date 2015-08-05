@@ -40,6 +40,124 @@
         - "sync_result.msg.startswith('>f+')"
         - "sync_result.msg.endswith('+ foo.txt\n')"
 
+- name: test that the file was really copied over
+  stat:
+    path: "{{ output_dir }}/foo.result"
+  register: stat_result
+
+- assert:
+    that:
+      - "stat_result.stat.exists == True"
+      - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
+
+- name: test that the file is not copied a second time
+  synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.result
+  register: sync_result
+
+- assert:
+    that:
+     - "sync_result.changed == False"
+
+- name: Cleanup
+  file:
+    state: absent
+    path: "{{output_dir}}/{{item}}"
+  with_items:
+    - foo.result
+    - bar.result
+
+- name: Synchronize using the mode=push param
+  synchronize:
+    src: "{{output_dir}}/foo.txt"
+    dest: "{{output_dir}}/foo.result"
+    mode: push
+  register: sync_result
+
+- assert:
+    that:
+        - "'changed' in sync_result"
+        - "sync_result.changed == true"
+        - "'cmd' in sync_result"
+        - "'rsync' in sync_result.cmd"
+        - "'msg' in sync_result"
+        - "sync_result.msg.startswith('>f+')"
+        - "sync_result.msg.endswith('+ foo.txt\n')"
+
+- name: test that the file was really copied over
+  stat:
+    path: "{{ output_dir }}/foo.result"
+  register: stat_result
+
+- assert:
+    that:
+      - "stat_result.stat.exists == True"
+      - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
+
+- name: test that the file is not copied a second time
+  synchronize:
+    src: "{{output_dir}}/foo.txt"
+    dest: "{{output_dir}}/foo.result"
+    mode: push
+  register: sync_result
+
+- assert:
+    that:
+     - "sync_result.changed == False"
+
+- name: Cleanup
+  file:
+    state: absent
+    path: "{{output_dir}}/{{item}}"
+  with_items:
+    - foo.result
+    - bar.result
+
+- name: Synchronize using the mode=pull param
+  synchronize:
+    src: "{{output_dir}}/foo.txt"
+    dest: "{{output_dir}}/foo.result"
+    mode: pull
+  register: sync_result
+
+- assert:
+    that:
+        - "'changed' in sync_result"
+        - "sync_result.changed == true"
+        - "'cmd' in sync_result"
+        - "'rsync' in sync_result.cmd"
+        - "'msg' in sync_result"
+        - "sync_result.msg.startswith('>f+')"
+        - "sync_result.msg.endswith('+ foo.txt\n')"
+
+- name: test that the file was really copied over
+  stat:
+    path: "{{ output_dir }}/foo.result"
+  register: stat_result
+
+- assert:
+    that:
+      - "stat_result.stat.exists == True"
+      - "stat_result.stat.checksum == '2aae6c35c94fcfb415dbe95f408b9ce91ee846ed'"
+
+- name: test that the file is not copied a second time
+  synchronize:
+    src: "{{output_dir}}/foo.txt"
+    dest: "{{output_dir}}/foo.result"
+    mode: pull
+  register: sync_result
+
+- assert:
+    that:
+     - "sync_result.changed == False"
+
+- name: Cleanup
+  file:
+    state: absent
+    path: "{{output_dir}}/{{item}}"
+  with_items:
+    - foo.result
+    - bar.result
+
 - name: synchronize files using with_items (issue#5965)
   synchronize: src={{output_dir}}/{{item}} dest={{output_dir}}/{{item}}.result
   with_items:
@@ -47,7 +165,6 @@
     - bar.txt
   register: sync_result
 
-- debug: var=sync_result
 - assert:
     that:
         - "sync_result.changed"
@@ -61,7 +178,6 @@
   synchronize: src={{output_dir}}/foo.txt dest={{output_dir}}/foo.rsync_path rsync_path="sudo rsync"
   register: sync_result
 
-- debug: var=sync_result
 - assert:
     that:
         - "'changed' in sync_result"

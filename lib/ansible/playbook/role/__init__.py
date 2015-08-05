@@ -41,7 +41,7 @@ from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import combine_vars
 
 
-__all__ = ['Role', 'ROLE_CACHE', 'hash_params']
+__all__ = ['Role', 'hash_params']
 
 # FIXME: this should be a utility function, but can't be a member of
 #        the role due to the fact that it would require the use of self
@@ -64,23 +64,16 @@ def hash_params(params):
                 s.update((k, v))
         return frozenset(s)
 
-# The role cache is used to prevent re-loading roles, which
-# may already exist. Keys into this cache are the SHA1 hash
-# of the role definition (for dictionary definitions, this
-# will be based on the repr() of the dictionary object)
-ROLE_CACHE = dict()
-
-
 class Role(Base, Become, Conditional, Taggable):
 
-    def __init__(self):
+    def __init__(self, play=None):
         self._role_name        = None
         self._role_path        = None
         self._role_params      = dict()
         self._loader           = None
 
         self._metadata         = None
-        self._play             = None
+        self._play             = play
         self._parents          = []
         self._dependencies     = []
         self._task_blocks      = []
@@ -99,30 +92,43 @@ class Role(Base, Become, Conditional, Taggable):
         return self._role_name
 
     @staticmethod
-    def load(role_include, parent_role=None):
-        # FIXME: add back in the role caching support
+    def load(role_include, play, parent_role=None):
         try:
             # The ROLE_CACHE is a dictionary of role names, with each entry
             # containing another dictionary corresponding to a set of parameters
             # specified for a role as the key and the Role() object itself.
             # We use frozenset to make the dictionary hashable.
 
-            #hashed_params = frozenset(role_include.get_role_params().iteritems())
-            hashed_params = hash_params(role_include.get_role_params())
-            if role_include.role in ROLE_CACHE:
-                for (entry, role_obj) in ROLE_CACHE[role_include.role].iteritems():
+            params = role_include.get_role_params()
+            if role_include.when is not None:
+                params['when'] = role_include.when
+            if role_include.tags is not None:
+                params['tags'] = role_include.tags
+            hashed_params = hash_params(params)
+            if role_include.role in play.ROLE_CACHE:
+                for (entry, role_obj) in play.ROLE_CACHE[role_include.role].iteritems():
                     if hashed_params == entry:
                         if parent_role:
                             role_obj.add_parent(parent_role)
                         return role_obj
 
-            r = Role()
+            r = Role(play=play)
             r._load_role_data(role_include, parent_role=parent_role)
 
-            if role_include.role not in ROLE_CACHE:
-                ROLE_CACHE[role_include.role] = dict()
+            if role_include.role not in play.ROLE_CACHE:
+                play.ROLE_CACHE[role_include.role] = dict()
 
-            ROLE_CACHE[role_include.role][hashed_params] = r
+            if parent_role:
+                if parent_role.when:
+                    new_when = parent_role.when[:]
+                    new_when.extend(r.when or [])
+                    r.when = new_when
+                if parent_role.tags:
+                    new_tags = parent_role.tags[:]
+                    new_tags.extend(r.tags or [])
+                    r.tags = new_tags
+
+            play.ROLE_CACHE[role_include.role][hashed_params] = r
             return r
 
         except RuntimeError:
@@ -165,14 +171,16 @@ class Role(Base, Become, Conditional, Taggable):
         if metadata:
             self._metadata = RoleMetadata.load(metadata, owner=self, loader=self._loader)
             self._dependencies = self._load_dependencies()
+        else:
+            self._metadata = RoleMetadata()
 
         task_data = self._load_role_yaml('tasks')
         if task_data:
-            self._task_blocks = load_list_of_blocks(task_data, play=None, role=self, loader=self._loader)
+            self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = load_list_of_blocks(handler_data, play=None, role=self, use_handlers=True, loader=self._loader)
+            self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader)
 
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')
@@ -221,7 +229,7 @@ class Role(Base, Become, Conditional, Taggable):
         deps = []
         if self._metadata:
             for role_include in self._metadata.dependencies:
-                r = Role.load(role_include, parent_role=self)
+                r = Role.load(role_include, play=self._play, parent_role=self)
                 deps.append(r)
 
         return deps
@@ -247,16 +255,16 @@ class Role(Base, Become, Conditional, Taggable):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self):
+    def get_inherited_vars(self, dep_chain=[]):
         inherited_vars = dict()
-        for parent in self._parents:
-            inherited_vars = combine_vars(inherited_vars, parent.get_inherited_vars())
+
+        for parent in dep_chain:
             inherited_vars = combine_vars(inherited_vars, parent._role_vars)
             inherited_vars = combine_vars(inherited_vars, parent._role_params)
         return inherited_vars
 
-    def get_vars(self):
-        all_vars = self.get_inherited_vars()
+    def get_vars(self, dep_chain=[]):
+        all_vars = self.get_inherited_vars(dep_chain)
 
         for dep in self.get_all_dependencies():
             all_vars = combine_vars(all_vars, dep.get_vars())
@@ -301,7 +309,7 @@ class Role(Base, Become, Conditional, Taggable):
         at least one task was run
         '''
 
-        return self._had_task_run and self._completed
+        return self._had_task_run and self._completed and not self._metadata.allow_duplicates
 
     def compile(self, play, dep_chain=[]):
         '''

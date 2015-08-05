@@ -38,14 +38,14 @@ class RoleInclude(RoleDefinition):
     FIXME: docstring
     """
 
-    def __init__(self, role_basedir=None):
-        super(RoleInclude, self).__init__(role_basedir=role_basedir)
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
+        super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager, loader=loader)
 
     @staticmethod
-    def load(data, current_role_path=None, parent_role=None, variable_manager=None, loader=None):
+    def load(data, play, current_role_path=None, parent_role=None, variable_manager=None, loader=None):
 
         assert isinstance(data, string_types) or isinstance(data, dict) or isinstance(data, AnsibleBaseYAMLObject)
 
-        ri = RoleInclude(role_basedir=current_role_path)
+        ri = RoleInclude(play=play, role_basedir=current_role_path, variable_manager=variable_manager, loader=loader)
         return ri.load_data(data, variable_manager=variable_manager, loader=loader)
 

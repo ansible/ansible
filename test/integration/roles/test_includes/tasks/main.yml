@@ -26,11 +26,15 @@
       - "cb == '2'"
       - "cc == '3'"
 
-# Fact takes precedence over include param as fact is host-specific
 - set_fact: 
      a: 101
      b: 102
      c: 103
+
+# Params specified via k=v values are strings, while those
+# that come from variables will keep the type they were previously.
+# Prior to v2.0, facts too priority over include params, however
+# this is no longer the case.
 
 - include: included_task1.yml a={{a}} b={{b}} c=103
 
@@ -39,7 +43,7 @@
     that:
       - "ca == 101"
       - "cb == 102"
-      - "cc == 103"
+      - "cc == '103'"
 
 # Test that strings are not turned into numbers
 - set_fact: 
@@ -57,26 +61,23 @@
       - "cc == '103'"
 
 # now try long form includes
-#
-# FIXME: not sure if folks were using this, or if vars were top level, but seems like
-# it should be a thing.
-#
-#- include: included_task1.yml
-#  vars:
-#    a: 201
-#    b: 202
-#    c: 203
-#
-#- debug: var=a
-#- debug: var=b
-#- debug: var=c
-#
-#- name: verify long-form include params
-#  assert: 
-#    that:
-#      - "ca == 201"
-#      - "cb == 202"
-#      - "cc == 203"
+
+- include: included_task1.yml
+  vars:
+    a: 201
+    b: 202
+    c: 203
+
+- debug: var=a
+- debug: var=b
+- debug: var=c
+
+- name: verify long-form include params
+  assert:
+    that:
+      - "ca == 201"
+      - "cb == 202"
+      - "cc == 203"
 
 - name: test handlers with includes
   shell: echo 1

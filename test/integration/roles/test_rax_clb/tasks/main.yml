@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_clb|failed
-      - rax_clb.msg == 'missing required arguments: name'
+      - 'rax_clb.msg == "missing required arguments: name"'
 # ============================================================
 
 
@@ -60,7 +60,7 @@
   assert:
     that:
       - rax_clb|failed
-      - rax_clb.msg == 'missing required arguments: name'
+      - 'rax_clb.msg == "missing required arguments: name"'
 # ============================================================
 
 
@@ -73,6 +73,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-1"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb with creds, region and name
@@ -95,6 +96,7 @@
     name: "{{ resource_prefix }}-1"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 1"
@@ -116,6 +118,7 @@
     name: "{{ resource_prefix }}-2"
     protocol: TCP
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb with creds, region, name and protocol
@@ -137,6 +140,7 @@
     name: "{{ resource_prefix }}-2"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 2"
@@ -158,6 +162,7 @@
     protocol: TCP
     port: 8080
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb with creds, region, name, protocol and port
@@ -179,6 +184,7 @@
     name: "{{ resource_prefix }}-3"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 3"
@@ -201,6 +207,7 @@
     port: 8080
     type: SERVICENET
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb with creds, region, name, protocol and type
@@ -222,6 +229,7 @@
     name: "{{ resource_prefix }}-4"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 4"
@@ -245,6 +253,7 @@
     type: SERVICENET
     timeout: 1
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   ignore_errors: true
   register: rax_clb
 
@@ -269,6 +278,7 @@
     type: SERVICENET
     timeout: 60
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb with creds, region, name, protocol, type and timeout
@@ -290,6 +300,7 @@
     name: "{{ resource_prefix }}-5"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 5"
@@ -314,6 +325,7 @@
     timeout: 60
     algorithm: RANDOM
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb with creds, region, name, protocol, type, timeout and algorithm
@@ -336,6 +348,7 @@
     name: "{{ resource_prefix }}-6"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 6"
@@ -357,6 +370,7 @@
     type: BAD
     timeout: 1
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   ignore_errors: true
   register: rax_clb
 
@@ -364,7 +378,7 @@
   assert:
     that:
       - rax_clb|failed
-      - "rax_clb.msg == 'value of type must be one of: PUBLIC,SERVICENET, got: BAD'"
+      - 'rax_clb.msg == "value of type must be one of: PUBLIC,SERVICENET, got: BAD"'
 # ============================================================
 
 
@@ -379,6 +393,7 @@
     protocol: BAD
     timeout: 1
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   ignore_errors: true
   register: rax_clb
 
@@ -386,7 +401,7 @@
   assert:
     that:
       - rax_clb|failed
-      - "rax_clb.msg == 'value of protocol must be one of: DNS_TCP,DNS_UDP,FTP,HTTP,HTTPS,IMAPS,IMAPv4,LDAP,LDAPS,MYSQL,POP3,POP3S,SMTP,TCP,TCP_CLIENT_FIRST,UDP,UDP_STREAM,SFTP, got: BAD'"
+      - 'rax_clb.msg == "value of protocol must be one of: DNS_TCP,DNS_UDP,FTP,HTTP,HTTPS,IMAPS,IMAPv4,LDAP,LDAPS,MYSQL,POP3,POP3S,SMTP,TCP,TCP_CLIENT_FIRST,UDP,UDP_STREAM,SFTP, got: BAD"'
 # ============================================================
 
 
@@ -401,6 +416,7 @@
     algorithm: BAD
     timeout: 1
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   ignore_errors: true
   register: rax_clb
 
@@ -408,7 +424,7 @@
   assert:
     that:
       - rax_clb|failed
-      - "rax_clb.msg == 'value of algorithm must be one of: RANDOM,LEAST_CONNECTIONS,ROUND_ROBIN,WEIGHTED_LEAST_CONNECTIONS,WEIGHTED_ROUND_ROBIN, got: BAD'"
+      - 'rax_clb.msg == "value of algorithm must be one of: RANDOM,LEAST_CONNECTIONS,ROUND_ROBIN,WEIGHTED_LEAST_CONNECTIONS,WEIGHTED_ROUND_ROBIN, got: BAD"'
 # ============================================================
 
 
@@ -428,6 +444,7 @@
     meta:
       foo: bar
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb with creds, region, name, protocol, type, timeout, algorithm and metadata
@@ -451,6 +468,7 @@
     name: "{{ resource_prefix }}-7"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 7"
@@ -470,6 +488,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-8-HTTP"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_http
 
 - name: Validate rax_clb with shared VIP HTTP
@@ -489,6 +508,7 @@
     protocol: HTTPS
     port: 443
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
     vip_id: "{{ (rax_clb_http.balancer.virtual_ips|first).id }}"
   register: rax_clb_https
 
@@ -508,6 +528,7 @@
     name: "{{ resource_prefix }}-8-HTTP"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_http
 
 - name: "Delete integration 8 HTTPS"
@@ -518,6 +539,7 @@
     name: "{{ resource_prefix }}-8-HTTPS"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_http
 
 - name: "Validate delete integration 8"
@@ -537,6 +559,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-9"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_p1
 
 - name: Validate rax_clb with updated protocol 1
@@ -555,6 +578,7 @@
     name: "{{ resource_prefix }}-9"
     protocol: TCP
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_p2
 
 - name: Validate rax_clb with updated protocol 2
@@ -574,6 +598,7 @@
     name: "{{ resource_prefix }}-9"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 9"
@@ -592,6 +617,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-10"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_a1
 
 - name: Validate rax_clb with updated algorithm 1
@@ -609,6 +635,7 @@
     name: "{{ resource_prefix }}-10"
     algorithm: RANDOM
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_a2
 
 - name: Validate rax_clb with updated algorithm 2
@@ -628,6 +655,7 @@
     name: "{{ resource_prefix }}-10"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 10"
@@ -647,6 +675,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-11"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_1
 
 - name: Validate rax_clb with updated port 1
@@ -664,6 +693,7 @@
     name: "{{ resource_prefix }}-11"
     port: 8080
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_2
 
 - name: Validate rax_clb with updated port 2
@@ -683,6 +713,7 @@
     name: "{{ resource_prefix }}-11"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 11"
@@ -702,6 +733,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-12"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_1
 
 - name: Validate rax_clb with updated timeout 1
@@ -719,6 +751,7 @@
     name: "{{ resource_prefix }}-12"
     timeout: 60
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_2
 
 - name: Validate rax_clb with updated timeout 2
@@ -738,6 +771,7 @@
     name: "{{ resource_prefix }}-12"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 12"
@@ -757,6 +791,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-13"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_1
 
 - name: Validate rax_clb with invalid updated type 1
@@ -773,6 +808,7 @@
     name: "{{ resource_prefix }}-13"
     type: SERVICENET
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_2
   ignore_errors: true
 
@@ -790,6 +826,7 @@
     name: "{{ resource_prefix }}-13"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 13"
@@ -809,6 +846,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-14"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_1
 
 - name: Validate rax_clb with updated meta 1
@@ -827,6 +865,7 @@
     meta:
       foo: bar
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_2
 
 - name: Validate rax_clb with updated meta 2
@@ -847,6 +886,7 @@
     name: "{{ resource_prefix }}-14"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 14"

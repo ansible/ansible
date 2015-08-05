@@ -29,7 +29,6 @@ _ESCAPE_SEQUENCE_RE = re.compile(r'''
     ( \\U{0}           # 8-digit hex escapes
     | \\u{1}           # 4-digit hex escapes
     | \\x{2}           # 2-digit hex escapes
-    | \\[0-7]{{1,3}}   # Octal escapes
     | \\N\{{[^}}]+\}}  # Unicode characters by name
     | \\[\\'"abfnrtv]  # Single-character escapes
     )'''.format(_HEXCHAR*8, _HEXCHAR*4, _HEXCHAR*2), re.UNICODE | re.VERBOSE)
@@ -264,7 +263,7 @@ def split_args(args):
     return params
 
 def is_quoted(data):
-    return len(data) > 0 and (data[0] == '"' and data[-1] == '"' or data[0] == "'" and data[-1] == "'")
+    return len(data) > 1 and data[0] == data[-1] and data[0] in ('"', "'") and data[-2] != '\\'
 
 def unquote(data):
     ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''

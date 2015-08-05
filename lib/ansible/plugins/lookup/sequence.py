@@ -22,7 +22,6 @@ from re import compile as re_compile, IGNORECASE
 from ansible.errors import *
 from ansible.parsing.splitter import parse_kv
 from ansible.plugins.lookup import LookupBase
-from ansible.template import Templar
 
 # shortcut format
 NUM = "(0?x?[0-9a-f]+)"
@@ -152,15 +151,26 @@ class LookupModule(LookupBase):
             )
         elif self.count is not None:
             # convert count to end
-            self.end = self.start + self.count * self.stride - 1
+            if self.count != 0:
+                self.end = self.start + self.count * self.stride - 1
+            else:
+                self.start = 0
+                self.end = 0
+                self.stride = 0
             del self.count
-        if self.end < self.start:
-            raise AnsibleError("can't count backwards")
+        if self.stride > 0 and self.end < self.start:
+            raise AnsibleError("to count backwards make stride negative")
+        if self.stride < 0 and self.end > self.start:
+            raise AnsibleError("to count forward don't make stride negative")
         if self.format.count('%') != 1:
             raise AnsibleError("bad formatting string: %s" % self.format)
 
     def generate_sequence(self):
-        numbers = xrange(self.start, self.end + 1, self.stride)
+        if self.stride > 0:
+            adjust = 1
+        else:
+            adjust = -1
+        numbers = xrange(self.start, self.end + adjust, self.stride)
 
         for i in numbers:
             try:
@@ -177,13 +187,11 @@ class LookupModule(LookupBase):
         if isinstance(terms, basestring):
             terms = [ terms ]
 
-        templar = Templar(loader=self._loader, variables=variables)
-
         for term in terms:
             try:
                 self.reset()  # clear out things for this iteration
 
-                term = templar.template(term)
+                term = self._templar.template(term)
                 try:
                     if not self.parse_simple_args(term):
                         self.parse_kv_args(parse_kv(term))
@@ -191,13 +199,13 @@ class LookupModule(LookupBase):
                     raise AnsibleError("unknown error parsing with_sequence arguments: %r. Error was: %s" % (term, e))
 
                 self.sanity_check()
-
-                results.extend(self.generate_sequence())
+                if self.stride != 0:
+                    results.extend(self.generate_sequence())
             except AnsibleError:
                 raise
-            except Exception:
+            except Exception as e:
                 raise AnsibleError(
-                    "unknown error generating sequence"
+                    "unknown error generating sequence: %s" % e
                 )
 
         return results

@@ -21,6 +21,8 @@ __metaclass__ = type
 
 
 from ansible import constants as C
+from ansible.parsing.splitter import parse_kv
+from ansible.utils.unicode import to_unicode
 
 def combine_vars(a, b):
 
@@ -49,3 +51,18 @@ def merge_hash(a, b):
 
     return result
 
+def load_extra_vars(loader, options):
+    extra_vars = {}
+    for extra_vars_opt in options.extra_vars:
+        extra_vars_opt = to_unicode(extra_vars_opt, errors='strict')
+        if extra_vars_opt.startswith(u"@"):
+            # Argument is a YAML file (JSON is a subset of YAML)
+            data = loader.load_from_file(extra_vars_opt[1:])
+        elif extra_vars_opt and extra_vars_opt[0] in u'[{':
+            # Arguments as YAML
+            data = loader.load(extra_vars_opt)
+        else:
+            # Arguments as Key-value
+            data = parse_kv(extra_vars_opt)
+        extra_vars = combine_vars(extra_vars, data)
+    return extra_vars

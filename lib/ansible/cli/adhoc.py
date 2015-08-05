@@ -17,15 +17,14 @@
 
 ########################################################
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.cli import CLI
+from ansible.errors import AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
-from ansible.cli import CLI
-from ansible.utils.display import Display
-from ansible.utils.vault import read_vault_file
+from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
 ########################################################
@@ -61,7 +60,7 @@ class AdHocCLI(CLI):
             raise AnsibleOptionsError("Missing target hosts")
 
         self.display.verbosity = self.options.verbosity
-        self.validate_conflicts(runas_opts=True, vault_opts=True)
+        self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 
         return True
 
@@ -75,6 +74,9 @@ class AdHocCLI(CLI):
 
     def run(self):
         ''' use Runner lib to do SSH things '''
+
+        super(AdHocCLI, self).run()
+
 
         # only thing left should be host pattern
         pattern = self.args[0]
@@ -93,12 +95,13 @@ class AdHocCLI(CLI):
 
         if self.options.vault_password_file:
             # read vault_pass from a file
-            vault_pass = read_vault_file(self.options.vault_password_file)
+            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file)
         elif self.options.ask_vault_pass:
             vault_pass = self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)[0]
 
         loader = DataLoader(vault_password=vault_pass)
         variable_manager = VariableManager()
+        variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
 
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
         variable_manager.set_inventory(inventory)
@@ -108,12 +111,16 @@ class AdHocCLI(CLI):
             self.display.warning("provided hosts list is empty, only localhost is available")
 
         if self.options.listhosts:
+            self.display.display('  hosts (%d):' % len(hosts))
             for host in hosts:
                 self.display.display('    %s' % host)
             return 0
 
         if self.options.module_name in C.MODULE_REQUIRE_ARGS and not self.options.module_args:
-            raise AnsibleOptionsError("No argument passed to %s module" % self.options.module_name)
+            err = "No argument passed to %s module" % self.options.module_name
+            if pattern.endswith(".yml"):
+                err = err + ' (did you mean to run ansible-playbook?)'
+            raise AnsibleOptionsError(err)
 
         #TODO: implement async support
         #if self.options.seconds:
@@ -127,6 +134,11 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
+        if self.options.one_line:
+            cb = 'oneline'
+        else:
+            cb = 'minimal'
+
         # now create a task queue manager to execute the play
         self._tqm = None
         try:
@@ -137,7 +149,7 @@ class AdHocCLI(CLI):
                     display=self.display,
                     options=self.options,
                     passwords=passwords,
-                    stdout_callback='minimal',
+                    stdout_callback=cb,
                 )
             result = self._tqm.run(play)
         finally:

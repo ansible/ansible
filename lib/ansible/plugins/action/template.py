@@ -18,10 +18,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
+import datetime
 import os
+import time
 
+from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
+from ansible.utils.unicode import to_bytes, to_unicode
 
 class ActionModule(ActionBase):
 
@@ -51,7 +55,7 @@ class ActionModule(ActionBase):
 
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
-        faf     = task_vars.get('first_available_file', None)
+        faf    = self._task.first_available_file
 
         if (source is None and faf is not None) or dest is None:
             return dict(failed=True, msg="src and dest are required")
@@ -60,23 +64,8 @@ class ActionModule(ActionBase):
             tmp = self._make_tmp_path()
 
         if faf:
-            #FIXME: issue deprecation warning for first_available_file, use with_first_found or lookup('first_found',...) instead
-            found = False
-            for fn in faf:
-                fn_orig = fn
-                fnt = self._templar.template(fn)
-                fnd = self._loader.path_dwim(self._task._role_._role_path, 'templates', fnt)
-
-                if not os.path.exists(fnd):
-                    of = task_vars.get('_original_file', None)
-                    if of is not None:
-                        fnd = self._loader.path_dwim(self._task._role_._role_path, 'templates', of)
-
-                if os.path.exists(fnd):
-                    source = fnd
-                    found = True
-                    break
-            if not found:
+            source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
+            if source is None:
                 return dict(failed=True, msg="could not find src in first_available_file list")
         else:
             if self._task._role is not None:
@@ -96,8 +85,41 @@ class ActionModule(ActionBase):
         # template the source data locally & get ready to transfer
         try:
             with open(source, 'r') as f:
-                template_data = f.read()
-            resultant = self._templar.template(template_data, preserve_trailing_newlines=True)
+                template_data = to_unicode(f.read())
+
+            try:
+                template_uid = pwd.getpwuid(os.stat(source).st_uid).pw_name
+            except:
+                template_uid = os.stat(source).st_uid
+
+            temp_vars = task_vars.copy()
+            temp_vars['template_host']     = os.uname()[1]
+            temp_vars['template_path']     = source
+            temp_vars['template_mtime']    = datetime.datetime.fromtimestamp(os.path.getmtime(source))
+            temp_vars['template_uid']      = template_uid
+            temp_vars['template_fullpath'] = os.path.abspath(source)
+            temp_vars['template_run_date'] = datetime.datetime.now()
+
+            managed_default = C.DEFAULT_MANAGED_STR
+            managed_str = managed_default.format(
+                host = temp_vars['template_host'],
+                uid  = temp_vars['template_uid'],
+                file = to_bytes(temp_vars['template_path'])
+            )
+            temp_vars['ansible_managed'] = time.strftime(
+                managed_str,
+                time.localtime(os.path.getmtime(source))
+            )
+
+            self._templar.environment.searchpath = [self._loader._basedir, os.path.dirname(source)]
+            if self._task._role is not None:
+                self._templar.environment.searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                self._templar.environment.searchpath.insert(1, self._task._role._role_path)
+
+            old_vars = self._templar._available_variables
+            self._templar.set_available_variables(temp_vars)
+            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, convert_data=False)
+            self._templar.set_available_variables(old_vars)
         except Exception as e:
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
 
@@ -107,50 +129,40 @@ class ActionModule(ActionBase):
             # Error from remote_checksum is a dict.  Valid return is a str
             return remote_checksum
 
+        diff = {}
+        new_module_args = self._task.args.copy()
+
         if local_checksum != remote_checksum:
-            # if showing diffs, we need to get the remote value
             dest_contents = ''
 
-            # FIXME: still need to implement diff mechanism
-            #if self.runner.diff:
-            #    # using persist_files to keep the temp directory around to avoid needing to grab another
-            #    dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, task_vars=task_vars, persist_files=True)
-            #    if 'content' in dest_result.result:
-            #        dest_contents = dest_result.result['content']
-            #        if dest_result.result['encoding'] == 'base64':
-            #            dest_contents = base64.b64decode(dest_contents)
-            #        else:
-            #            raise Exception("unknown encoding, failed: %s" % dest_result.result)
- 
-            xfered = self._transfer_data(self._shell.join_path(tmp, 'source'), resultant)
+            # if showing diffs, we need to get the remote value
+            if self._play_context.diff:
+                diff = self._get_diff_data(tmp, dest, resultant, task_vars, source_file=False)
 
-            # fix file permissions when the copy is done as a different user
-            if self._connection_info.become and self._connection_info.become_user != 'root':
-                self._remote_chmod('a+r', xfered, tmp)
+            if not self._play_context.check_mode: # do actual work thorugh copy
+                xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
-            # run the copy module
-            new_module_args = self._task.args.copy()
-            new_module_args.update(
-               dict(
-                   src=xfered,
-                   dest=dest,
-                   original_basename=os.path.basename(source),
-                   follow=True,
-                ),
-            )
+                # fix file permissions when the copy is done as a different user
+                if self._play_context.become and self._play_context.become_user != 'root':
+                    self._remote_chmod('a+r', xfered, tmp)
 
-            # FIXME: noop stuff needs to be sorted out
-            #if self.runner.noop_on_check(task_vars):
-            #    return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))
-            #else:
-            #    res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, task_vars=task_vars, complex_args=complex_args)
-            #    if res.result.get('changed', False):
-            #        res.diff = dict(before=dest_contents, after=resultant)
-            #    return res
+                # run the copy module
+                new_module_args.update(
+                   dict(
+                       src=xfered,
+                       dest=dest,
+                       original_basename=os.path.basename(source),
+                       follow=True,
+                    ),
+                )
+                result = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+            else:
+                result=dict(changed=True)
 
-            result = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
-            if result.get('changed', False):
-                result['diff'] = dict(before=dest_contents, after=resultant)
+            if result.get('changed', False) and self._play_context.diff:
+                result['diff'] = diff
+            #    result['diff'] = dict(before=dest_contents, after=resultant, before_header=dest, after_header=source)
+
             return result
 
         else:
@@ -160,7 +172,6 @@ class ActionModule(ActionBase):
             # the module to follow links.  When doing that, we have to set
             # original_basename to the template just in case the dest is
             # a directory.
-            new_module_args = self._task.args.copy()
             new_module_args.update(
                 dict(
                     src=None,
@@ -168,13 +179,6 @@ class ActionModule(ActionBase):
                     follow=True,
                 ),
             )
-
-            # FIXME: this may not be required anymore, as the checkmod params
-            #        should be in the regular module args?
-            # be sure to task_vars the check mode param into the module args and
-            # rely on the file module to report its changed status
-            #if self.runner.noop_on_check(task_vars):
-            #    new_module_args['CHECKMODE'] = True
 
             return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
 

@@ -34,6 +34,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.utils.unicode import to_bytes
 from ansible.utils.display import Display
+from ansible.utils.path import is_executable
 
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
@@ -99,7 +100,12 @@ class CLI(object):
         raise Exception("Need to implement!")
 
     def run(self):
-        raise Exception("Need to implement!")
+
+        if self.options.verbosity > 0:
+            if C.CONFIG_FILE:
+                self.display.display("Using %s as config file" % C.CONFIG_FILE)
+            else:
+                self.display.display("No config file found; using defaults")
 
     @staticmethod
     def ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=False, confirm_vault=False, confirm_new=False):
@@ -108,21 +114,24 @@ class CLI(object):
         vault_pass = None
         new_vault_pass = None
 
-        if ask_vault_pass:
-            vault_pass = getpass.getpass(prompt="Vault password: ")
+        try:
+            if ask_vault_pass:
+                vault_pass = getpass.getpass(prompt="Vault password: ")
 
-        if ask_vault_pass and confirm_vault:
-            vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
-            if vault_pass != vault_pass2:
-                raise errors.AnsibleError("Passwords do not match")
+            if ask_vault_pass and confirm_vault:
+                vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
+                if vault_pass != vault_pass2:
+                    raise errors.AnsibleError("Passwords do not match")
 
-        if ask_new_vault_pass:
-            new_vault_pass = getpass.getpass(prompt="New Vault password: ")
+            if ask_new_vault_pass:
+                new_vault_pass = getpass.getpass(prompt="New Vault password: ")
 
-        if ask_new_vault_pass and confirm_new:
-            new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
-            if new_vault_pass != new_vault_pass2:
-                raise errors.AnsibleError("Passwords do not match")
+            if ask_new_vault_pass and confirm_new:
+                new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
+                if new_vault_pass != new_vault_pass2:
+                    raise errors.AnsibleError("Passwords do not match")
+        except EOFError:
+            pass
 
         # enforce no newline chars at the end of passwords
         if vault_pass:
@@ -141,20 +150,23 @@ class CLI(object):
         becomepass = None
         become_prompt = ''
 
-        if op.ask_pass:
-            sshpass = getpass.getpass(prompt="SSH password: ")
-            become_prompt = "%s password[defaults to SSH password]: " % op.become_method.upper()
-            if sshpass:
-                sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
-        else:
-            become_prompt = "%s password: " % op.become_method.upper()
+        try:
+            if op.ask_pass:
+                sshpass = getpass.getpass(prompt="SSH password: ")
+                become_prompt = "%s password[defaults to SSH password]: " % op.become_method.upper()
+                if sshpass:
+                    sshpass = to_bytes(sshpass, errors='strict', nonstring='simplerepr')
+            else:
+                become_prompt = "%s password: " % op.become_method.upper()
 
-        if op.become_ask_pass:
-            becomepass = getpass.getpass(prompt=become_prompt)
-            if op.ask_pass and becomepass == '':
-                becomepass = sshpass
-            if becomepass:
-                becomepass = to_bytes(becomepass)
+            if op.become_ask_pass:
+                becomepass = getpass.getpass(prompt=become_prompt)
+                if op.ask_pass and becomepass == '':
+                    becomepass = sshpass
+                if becomepass:
+                    becomepass = to_bytes(becomepass)
+        except EOFError:
+            pass
 
         return (sshpass, becomepass)
 
@@ -171,10 +183,10 @@ class CLI(object):
             self.options.become_method = 'sudo'
         elif self.options.su:
             self.options.become = True
-            options.become_method = 'su'
+            self.options.become_method = 'su'
 
 
-    def validate_conflicts(self, vault_opts=False, runas_opts=False):
+    def validate_conflicts(self, vault_opts=False, runas_opts=False, fork_opts=False):
         ''' check for conflicting options '''
 
         op = self.options
@@ -199,6 +211,14 @@ class CLI(object):
                                   "and become arguments ('--become', '--become-user', and '--ask-become-pass')"
                                   " are exclusive of each other")
 
+        if fork_opts:
+            if op.forks < 1:
+                self.parser.error("The number of processes (--forks) must be >= 1")
+
+    @staticmethod
+    def expand_tilde(option, opt, value, parser):
+        setattr(parser.values, option.dest, os.path.expanduser(value))
+
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False,
         async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False, epilog=None, fork_opts=False):
@@ -215,11 +235,12 @@ class CLI(object):
         if runtask_opts:
             parser.add_option('-i', '--inventory-file', dest='inventory',
                 help="specify inventory host file (default=%s)" % C.DEFAULT_HOST_LIST,
-                default=C.DEFAULT_HOST_LIST)
+                default=C.DEFAULT_HOST_LIST, action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
                 help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-M', '--module-path', dest='module_path',
-                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None)
+                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None,
+                action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
                 help="set additional variables as key=value or YAML/JSON", default=[])
 
@@ -233,8 +254,8 @@ class CLI(object):
             parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
                 help='ask for vault password')
             parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
-                dest='vault_password_file', help="vault password file")
-
+                dest='vault_password_file', help="vault password file", action="callback",
+                callback=CLI.expand_tilde, type=str)
 
         if subset_opts:
             parser.add_option('-t', '--tags', dest='tags', default='all',
@@ -305,7 +326,7 @@ class CLI(object):
             )
 
         if meta_opts:
-            parser.add_option('--force-handlers', dest='force_handlers', action='store_true',
+            parser.add_option('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',
                 help="run handlers even if a task fails")
             parser.add_option('--flush-cache', dest='flush_cache', action='store_true',
                 help="clear the fact cache")
@@ -319,6 +340,7 @@ class CLI(object):
         gitinfo = CLI._gitinfo()
         if gitinfo:
             result = result + " {0}".format(gitinfo)
+        result += "\n  config file = %s" % C.CONFIG_FILE
         result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
         return result
 
@@ -449,3 +471,33 @@ class CLI(object):
         t = self._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
 
         return t
+
+    @staticmethod
+    def read_vault_password_file(vault_password_file):
+        """
+        Read a vault password from a file or if executable, execute the script and
+        retrieve password from STDOUT
+        """
+
+        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
+        if not os.path.exists(this_path):
+            raise AnsibleError("The vault password file %s was not found" % this_path)
+
+        if is_executable(this_path):
+            try:
+                # STDERR not captured to make it easier for users to prompt for input in their scripts
+                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
+            except OSError as e:
+                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
+            stdout, stderr = p.communicate()
+            vault_pass = stdout.strip('\r\n')
+        else:
+            try:
+                f = open(this_path, "rb")
+                vault_pass=f.read().strip()
+                f.close()
+            except (OSError, IOError) as e:
+                raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
+
+        return vault_pass
+

@@ -19,11 +19,25 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 __all__ = ['LookupBase']
 
 class LookupBase:
-    def __init__(self, loader=None, **kwargs):
+    def __init__(self, loader=None, templar=None, **kwargs):
         self._loader = loader
+        self._templar = templar
+        self._display = display
+
+    def get_basedir(self, variables):
+        if 'role_path' in variables:
+            return variables['role_path']
+        else:
+            return self._loader.get_basedir()
 
     def _flatten(self, terms):
         ret = []

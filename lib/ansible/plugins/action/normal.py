@@ -23,7 +23,13 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=dict()):
 
-        #vv("REMOTE_MODULE %s %s" % (module_name, module_args), host=conn.host)
-        return self._execute_module(tmp, task_vars=task_vars)
+        results = self._execute_module(tmp=tmp, task_vars=task_vars)
 
+        # Remove special fields from the result, which can only be set
+        # internally by the executor engine. We do this only here in
+        # the 'normal' action, as other action plugins may set this.
+        for field in ('ansible_notify',):
+            if field in results:
+                results.pop(field)
 
+        return results

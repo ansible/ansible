@@ -19,9 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
-
 from ansible.plugins.callback import CallbackBase
+from ansible import constants as C
 
 
 class CallbackModule(CallbackBase):
@@ -33,9 +32,17 @@ class CallbackModule(CallbackBase):
 
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
+    CALLBACK_NAME = 'minimal'
 
-    def v2_on_any(self, *args, **kwargs):
-        pass
+    def _command_generic_msg(self, host, result,  caption):
+        ''' output the result of a command run '''
+
+        buf = "%s | %s | rc=%s >>\n" % (host, caption, result.get('rc',0))
+        buf += result.get('stdout','')
+        buf += result.get('stderr','')
+        buf += result.get('msg','')
+
+        return buf + "\n"
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
         if 'exception' in result._result:
@@ -51,65 +58,24 @@ class CallbackModule(CallbackBase):
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
-        self._display.display("%s | FAILED! => %s" % (result._host.get_name(), result._result), color='red')
+        if result._task.action in C.MODULE_NO_JSON:
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"FAILED"), color='red')
+        else:
+            self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color='red')
 
     def v2_runner_on_ok(self, result):
-        self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), json.dumps(result._result, indent=4)), color='green')
+        if result._task.action in C.MODULE_NO_JSON:
+            self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"SUCCESS"), color='green')
+        else:
+            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color='green')
+            self._handle_warnings(result._result)
 
     def v2_runner_on_skipped(self, result):
-        pass
+        self._display.display("%s | SKIPPED" % (result._host.get_name()), color='cyan')
 
     def v2_runner_on_unreachable(self, result):
         self._display.display("%s | UNREACHABLE!" % result._host.get_name(), color='yellow')
 
-    def v2_runner_on_no_hosts(self, task):
-        pass
-
-    def v2_runner_on_async_poll(self, host, res, jid, clock):
-        pass
-
-    def v2_runner_on_async_ok(self, host, res, jid):
-        pass
-
-    def v2_runner_on_async_failed(self, host, res, jid):
-        pass
-
-    def v2_playbook_on_start(self):
-        pass
-
-    def v2_playbook_on_notify(self, host, handler):
-        pass
-
-    def v2_playbook_on_no_hosts_matched(self):
-        pass
-
-    def v2_playbook_on_no_hosts_remaining(self):
-        pass
-
-    def v2_playbook_on_task_start(self, task, is_conditional):
-        pass
-
-    def v2_playbook_on_cleanup_task_start(self, task):
-        pass
-
-    def v2_playbook_on_handler_task_start(self, task):
-        pass
-
-    def v2_playbook_on_vars_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-        pass
-
-    def v2_playbook_on_setup(self):
-        pass
-
-    def v2_playbook_on_import_for_host(self, result, imported_file):
-        pass
-
-    def v2_playbook_on_not_import_for_host(self, result, missing_file):
-        pass
-
-    def v2_playbook_on_play_start(self, play):
-        pass
-
-    def v2_playbook_on_stats(self, stats):
-        pass
-
+    def v2_on_file_diff(self, result):
+        if 'diff' in result._result and result._result['diff'] != {}:
+            self._display.display(self._get_diff(result._result['diff']))
