@@ -52,8 +52,7 @@ options:
     version_added: "1.4"
   reuse_existing_ip_allowed:
     description:
-      - Reuse an EIP that is not associated to an instance (when available),'''
-''' instead of allocating a new one.
+      - Reuse an EIP that is not associated to an instance (when available), instead of allocating a new one.
     required: false
     default: false
     version_added: "1.6"
