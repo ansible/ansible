@@ -26,4 +26,5 @@
       with_items: [ 'value_section', 'other_section' ]
     - name: "Reading unknown value"
       set_fact:
-        value2_section2:  "{{lookup('ini', 'value2           section=section1 file=lookup.ini')}}"
+        unknown:  "{{lookup('ini', 'value2           default=unknown section=section1 file=lookup.ini')}}"
+    - debug: var=unknown

@@ -43,9 +43,11 @@ class LookupModule(object):
         # Retrieve all values from a section using a regexp
         if is_regexp:
             return [v for k, v in self.cp.items(section) if re.match(key, k)]
+        value = None
         # Retrieve a single value
-        value = self.cp.get(section, key)
-        if value == None:
+        try:
+            value = self.cp.get(section, key)
+        except ConfigParser.NoOptionError, e:
             return dflt
         return value
 
