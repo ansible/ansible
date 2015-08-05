@@ -63,7 +63,7 @@ class Playbook:
         # set the loaders basedir
         self._loader.set_basedir(self._basedir)
 
-        # dynamically load any plugins from the role directory
+        # dynamically load any plugins from the playbook directory
         for name, obj in get_all_plugin_loaders():
             if obj.subdir:
                 plugin_path = os.path.join(self._basedir, obj.subdir)
