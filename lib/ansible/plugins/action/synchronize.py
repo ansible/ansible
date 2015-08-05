@@ -177,6 +177,10 @@ class ActionModule(ActionBase):
                 private_key = os.path.expanduser(private_key)
                 self._task.args['private_key'] = private_key
 
+            password = inject.get('ansible_ssh_passwd', None)
+            if password is not None:
+                options['ssh_passwd'] = password
+
             # use the mode to define src and dest's url
             if self._task.args.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
