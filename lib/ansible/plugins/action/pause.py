@@ -115,16 +115,13 @@ class ActionModule(ActionBase):
 
             while True:
                 try:
-                    if seconds:
-                        key_pressed = self._connection._new_stdin.read(1)
-                        if key_pressed == '\x03':
-                            raise KeyboardInterrupt
-                    else:
+                    key_pressed = self._connection._new_stdin.read(1)
+                    if key_pressed == '\x03':
+                        raise KeyboardInterrupt
+
+                    if not seconds:
                         # read key presses and act accordingly
-                        key_pressed = self._connection._new_stdin.read(1)
-                        if key_pressed == '\x03':
-                            raise KeyboardInterrupt
-                        elif key_pressed == '\r':
+                        if key_pressed == '\r':
                             break
                         else:
                             result['user_input'] += key_pressed
