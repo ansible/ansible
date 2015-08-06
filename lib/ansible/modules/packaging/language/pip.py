@@ -20,6 +20,7 @@
 #
 
 import tempfile
+import re
 import os
 
 DOCUMENTATION = '''
@@ -321,17 +322,15 @@ def main():
 
     # Automatically apply -e option to extra_args when source is a VCS url. VCS
     # includes those beginning with svn+, git+, hg+ or bzr+
-    if name:
-        if module.params['editable']:
-            if name.startswith('svn+') or name.startswith('git+') or \
-                    name.startswith('hg+') or name.startswith('bzr+'):
-                args_list = []  # used if extra_args is not used at all
-                if extra_args:
-                    args_list = extra_args.split(' ')
-                if '-e' not in args_list:
-                    args_list.append('-e')
-                    # Ok, we will reconstruct the option string
-                    extra_args = ' '.join(args_list)
+    has_vcs = bool(name and re.match(r'(svn|git|hg|bzr)\+', name))
+    if has_vcs and module.params['editable']:
+        args_list = []  # used if extra_args is not used at all
+        if extra_args:
+            args_list = extra_args.split(' ')
+        if '-e' not in args_list:
+            args_list.append('-e')
+            # Ok, we will reconstruct the option string
+            extra_args = ' '.join(args_list)
 
     if extra_args:
         cmd += ' %s' % extra_args
@@ -344,8 +343,7 @@ def main():
     if module.check_mode:
         if extra_args or requirements or state == 'latest' or not name:
             module.exit_json(changed=True)
-        elif name.startswith('svn+') or name.startswith('git+') or \
-                name.startswith('hg+') or name.startswith('bzr+'):
+        elif has_vcs:
             module.exit_json(changed=True)
 
         freeze_cmd = '%s freeze' % pip
@@ -363,7 +361,7 @@ def main():
         changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
         module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
-    if requirements:
+    if requirements or has_vcs:
         freeze_cmd = '%s freeze' % pip
         out_freeze_before = module.run_command(freeze_cmd, cwd=chdir)[1]
     else:
