@@ -1,5 +1,5 @@
-[![PyPI version](https://badge.fury.io/py/ansible.svg)](http://badge.fury.io/py/ansible)
-[![PyPI downloads](https://pypip.in/d/ansible/badge.svg)](https://pypi.python.org/pypi/ansible)
+[![PyPI version](https://img.shields.io/pypi/v/ansible.svg)](https://pypi.python.org/pypi/ansible)
+[![PyPI downloads](https://img.shields.io/pypi/dm/ansible.svg)](https://pypi.python.org/pypi/ansible)
 [![Build Status](https://travis-ci.org/ansible/ansible.svg?branch=devel)](https://travis-ci.org/ansible/ansible)
 
 
