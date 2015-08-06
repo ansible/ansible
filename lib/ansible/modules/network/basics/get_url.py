@@ -55,6 +55,14 @@ options:
         If C(dest) is a directory, the file will always be
         downloaded (regardless of the force option), but replaced only if the contents changed.
     required: true
+  tmp_dest:
+    description:
+      - absolute path of where temporary file is downloaded to.
+      - Defaults to TMPDIR, TEMP or TMP env variables or a platform specific value
+      - https://docs.python.org/2/library/tempfile.html#tempfile.tempdir
+    required: false
+    default: ''
+    version_added: '2.0'
   force:
     description:
       - If C(yes) and C(dest) is not a directory, will download the file every
@@ -175,7 +183,7 @@ def url_filename(url):
         return 'index.html'
     return fn
 
-def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None):
+def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, headers=None, tmp_dest=''):
     """
     Download data from the url and store in a temporary file.
 
@@ -191,7 +199,19 @@ def url_get(module, url, dest, use_proxy, last_mod_time, force, timeout=10, head
     if info['status'] != 200:
         module.fail_json(msg="Request failed", status_code=info['status'], response=info['msg'], url=url, dest=dest)
 
-    fd, tempname = tempfile.mkstemp()
+    if tmp_dest != '':
+        # tmp_dest should be an existing dir
+        tmp_dest_is_dir = os.path.isdir(tmp_dest)
+        if not tmp_dest_is_dir:
+            if os.path.exists(tmp_dest):
+                module.fail_json(msg="%s is a file but should be a directory." % tmp_dest)
+            else:
+                module.fail_json(msg="%s directoy does not exist." % tmp_dest)
+
+        fd, tempname = tempfile.mkstemp(dir=tmp_dest)
+    else:
+        fd, tempname = tempfile.mkstemp()
+
     f = os.fdopen(fd, 'wb')
     try:
         shutil.copyfileobj(rsp, f)
@@ -235,6 +255,7 @@ def main():
         checksum = dict(default=''),
         timeout = dict(required=False, type='int', default=10),
         headers = dict(required=False, default=None),
+        tmp_dest = dict(required=False, default=''),
     )
 
     module = AnsibleModule(
@@ -250,7 +271,8 @@ def main():
     checksum = module.params['checksum']
     use_proxy = module.params['use_proxy']
     timeout = module.params['timeout']
-    
+    tmp_dest = os.path.expanduser(module.params['tmp_dest'])
+
     # Parse headers to dict
     if module.params['headers']:
         try:
@@ -303,7 +325,7 @@ def main():
         last_mod_time = datetime.datetime.utcfromtimestamp(mtime)
 
     # download to tmpsrc
-    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers)
+    tmpsrc, info = url_get(module, url, dest, use_proxy, last_mod_time, force, timeout, headers, tmp_dest)
 
     # Now the request has completed, we can finally generate the final
     # destination file name from the info dict.
