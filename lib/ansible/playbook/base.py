@@ -65,6 +65,13 @@ class Base:
         # and initialize the base attributes
         self._initialize_base_attributes()
 
+        try:
+            from __main__ import display
+            self._display = display
+        except ImportError:
+            from ansible.utils.display import Display
+            self._display = Display()
+
     # The following three functions are used to programatically define data
     # descriptors (aka properties) for the Attributes of all of the playbook
     # objects (tasks, blocks, plays, etc).
