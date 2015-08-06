@@ -1877,10 +1877,12 @@ class LinuxNetwork(Network):
                     if not line:
                         continue
                     words = line.split()
+                    broadcast = ''
                     if words[0] == 'inet':
                         if '/' in words[1]:
                             address, netmask_length = words[1].split('/')
-                            broadcast = words[3]
+                            if len(words) > 3:
+                                broadcast = words[3]
                         else:
                             # pointopoint interfaces do not have a prefix
                             address = words[1]
