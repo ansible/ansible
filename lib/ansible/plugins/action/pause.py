@@ -90,6 +90,7 @@ class ActionModule(ActionBase):
 
         start = time.time()
         result['start'] = str(datetime.datetime.now())
+        result['user_input'] = ''
 
         try:
             if seconds is not None:
@@ -97,10 +98,10 @@ class ActionModule(ActionBase):
                 signal.signal(signal.SIGALRM, timeout_handler)
                 signal.alarm(seconds)
                 # show the prompt
-                print("Pausing for %d seconds" % seconds)
-                print("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+                self._display.display("Pausing for %d seconds" % seconds)
+                self._display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
             else:
-                print(prompt)
+                self._display.display(prompt)
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
@@ -127,6 +128,9 @@ class ActionModule(ActionBase):
                         raise KeyboardInterrupt
                     elif key_pressed == '\r':
                         break
+                    else:
+                        result['user_input'] += key_pressed
+
         except KeyboardInterrupt:
             # cancel the previously set alarm signal
             if seconds is not None:
