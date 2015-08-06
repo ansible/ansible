@@ -640,7 +640,6 @@ class Inventory(object):
         else:
             basedirs = [self._playbook_basedir]
 
-        cur_loader_basedir = self._loader.get_basedir()
         for basedir in basedirs:
 
             # this can happen from particular API usages, particularly if not run
@@ -661,16 +660,13 @@ class Inventory(object):
             # FIXME: these should go to VariableManager
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
-                self._loader.set_basedir(basedir)
-                base_path = os.path.join("group_vars", group.name)
+                base_path = os.path.join(basedir, "group_vars/%s" % group.name)
                 results = self._variable_manager.add_group_vars_file(base_path, self._loader)
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
-                self._loader.set_basedir(basedir)
-                base_path = os.path.join("host_vars", host.name)
+                base_path = os.path.join(basedir, "host_vars/%s" % host.name)
                 results = self._variable_manager.add_host_vars_file(base_path, self._loader)
 
-        self._loader.set_basedir(cur_loader_basedir)
         # all done, results is a dictionary of variables for this particular host.
         return results
 
