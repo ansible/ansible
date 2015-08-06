@@ -77,7 +77,7 @@ options:
       - Kernel id for the EC2 instance
     required: false
     default: null
-    aliases: []    
+    aliases: []
   spot_price:
     description:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
@@ -239,8 +239,22 @@ def create_launch_config(connection, module):
             module.fail_json(msg=str(e))
 
     result = dict(
-            ((a[0], a[1]) for a in vars(launch_configs[0]).items() if a[0] not in ('connection', 'created_time')))
+                 ((a[0], a[1]) for a in vars(launch_configs[0]).items()
+                  if a[0] not in ('connection', 'created_time', 'instance_monitoring'))
+                 )
     result['created_time'] = str(launch_configs[0].created_time)
+    # Looking at boto's launchconfig.py, it looks like this could be a boolean
+    # value or an object with an enabled attribute.  The enabled attribute
+    # could be a boolean or a string representation of a boolean.  Since
+    # I can't test all permutations myself to see if my reading of the code is
+    # correct, have to code this *very* defensively
+    if launch_configs[0].instance_monitoring is True:
+        result['instance_monitoring'] = True
+    else:
+        try:
+            result['instance_monitoring'] = module.boolean(launch_configs[0].instance_monitoring.enabled)
+        except AttributeError:
+            result['instance_monitoring'] = False
 
     module.exit_json(changed=changed, name=result['name'], created_time=result['created_time'],
                      image_id=result['image_id'], arn=result['launch_configuration_arn'],
