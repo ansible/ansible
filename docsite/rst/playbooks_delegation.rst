@@ -192,7 +192,7 @@ Interrupt execution on any error
 
 With option ''any_errors_fatal'' any failure on any host in a multi-host play will be treated as fatal and Ansible will exit immediately without waiting for the other hosts.
 
-This option is used when ''serial'' keyword is used. But sometimes ''serial'' execution is unsuitable - number of hosts is unpredictable (because of dynamic inventory), speed is crucial (simultaneous execution is required). But all tasks must be 100% successful to continue playbook execution.
+Sometimes ''serial'' execution is unsuitable - number of hosts is unpredictable (because of dynamic inventory), speed is crucial (simultaneous execution is required). But all tasks must be 100% successful to continue playbook execution.
 
 For example there is a service located in many datacenters, there a some load balancers to pass traffic from users to service. There is a deploy playbook to upgrade service deb-packages. Playbook stages:
 
@@ -213,8 +213,6 @@ For datacenter "A" playbook can be written this way::
         command: /usr/bin/disable-dc
     
     - hosts: frontends_dc_a
-      serial: '100%'
-      max_fail_percentage: 19
       tasks:
       - name: 'stopping service'
         command: /usr/bin/stop-software
