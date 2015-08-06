@@ -27,6 +27,7 @@ Other Notable Changes:
   * twilio
   * typetalk
 * Fix docker module's parsing of docker-py version for dev checkouts
+* Fix docker module to work with docker server api 1.19
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
