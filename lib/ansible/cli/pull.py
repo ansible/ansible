@@ -51,6 +51,7 @@ class PullCLI(CLI):
             connect_opts=True,
             vault_opts=True,
             runtask_opts=True,
+            subset_opts=True,
         )
 
         # options unique to pull
