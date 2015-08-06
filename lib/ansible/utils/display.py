@@ -199,7 +199,7 @@ class Display:
 
         #FIXME: make this dynamic on tty size (look and ansible-doc)
         msg = msg.strip()
-        star_len = (self.columns + 1 - len(msg))
+        star_len = (79 - len(msg))
         if star_len < 0:
             star_len = 3
         stars = "*" * star_len
