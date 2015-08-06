@@ -161,11 +161,11 @@ class Display:
         else:
             raise AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
 
-        wrapped = textwrap.wrap(new_msg, 79)
-        new_msg = "\n".join(wrapped) + "\n"
+        wrapped = textwrap.wrap(new_msg, 79, replace_whitespace=False, drop_whitespace=False)
+        new_msg = "\n".join(wrapped)
 
         if new_msg not in self._deprecations:
-            self.display(new_msg, color='purple', stderr=True)
+            self.display(new_msg.strip(), color='purple', stderr=True)
             self._deprecations[new_msg] = 1
 
     def warning(self, msg):
