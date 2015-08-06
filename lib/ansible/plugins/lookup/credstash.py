@@ -43,9 +43,9 @@ class LookupModule(LookupBase):
             try:
                 val = credstash.getSecret(term, **kwargs)
             except credstash.ItemNotFound:
-                raise AnsibleError('Key {} not found'.format(term))
+                raise AnsibleError('Key {0} not found'.format(term))
             except Exception, e:
-                raise AnsibleError('Encountered exception while fetching {}: {}'.format(term, e.message))
+                raise AnsibleError('Encountered exception while fetching {0}: {1}'.format(term, e.message))
             ret.append(val)
 
         return ret
