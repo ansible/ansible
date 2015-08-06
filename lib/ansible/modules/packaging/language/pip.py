@@ -363,6 +363,12 @@ def main():
         changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
         module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
+    if requirements:
+        freeze_cmd = '%s freeze' % pip
+        out_freeze_before = module.run_command(freeze_cmd, cwd=chdir)[1]
+    else:
+        out_freeze_before = None
+
     rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
     out += out_pip
     err += err_pip
@@ -375,7 +381,11 @@ def main():
     if state == 'absent':
         changed = 'Successfully uninstalled' in out_pip
     else:
-        changed = 'Successfully installed' in out_pip
+        if out_freeze_before is None:
+            changed = 'Successfully installed' in out_pip
+        else:
+            out_freeze_after = module.run_command(freeze_cmd, cwd=chdir)[1]
+            changed = out_freeze_before != out_freeze_after
 
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                      state=state, requirements=requirements, virtualenv=env,
