@@ -36,6 +36,7 @@ import os
 import sys
 import traceback
 
+import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
 
@@ -103,8 +104,11 @@ if __name__ == '__main__':
     except Exception as e:
         have_cli_options = cli is not None and cli.options is not None
         display.error("Unexpected Exception: %s" % str(e), wrap_text=False)
-        if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
+        if not have_cli_options or have_cli_options and cli.options.verbosity > 2 or C.DEFAULT_DEBUG:
             display.display("the full traceback was:\n\n%s" % traceback.format_exc())
         else:
             display.display("to see the full traceback, use -vvv")
-        sys.exit(250)
+        if C.DEFAULT_DEBUG:
+            raise
+        else:
+            sys.exit(250)
