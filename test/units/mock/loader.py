@@ -29,10 +29,10 @@ class DictDataLoader(DataLoader):
     def __init__(self, file_mapping=dict()):
         assert type(file_mapping) == dict
 
+        super(DictDataLoader, self).__init__()
+
         self._file_mapping = file_mapping
         self._build_known_directories()
-
-        super(DictDataLoader, self).__init__()
 
     def load_from_file(self, path):
         if path in self._file_mapping:
@@ -73,7 +73,7 @@ class DictDataLoader(DataLoader):
         rebuild_dirs = False
         if path not in self._file_mapping:
             rebuild_dirs = True
-    
+
         self._file_mapping[path] = content
 
         if rebuild_dirs:
