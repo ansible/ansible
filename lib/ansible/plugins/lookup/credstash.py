@@ -29,12 +29,11 @@ except ImportError:
     CREDSTASH_INSTALLED = False
 
 
-if not CREDSTASH_INSTALLED:
-    raise AnsibleError('The credstash lookup plugin requires credstash to be installed.')
-
-
 class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
+
+        if not CREDSTASH_INSTALLED:
+            raise AnsibleError('The credstash lookup plugin requires credstash to be installed.')
 
         if isinstance(terms, basestring):
             terms = [terms]
