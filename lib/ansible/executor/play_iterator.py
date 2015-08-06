@@ -169,7 +169,7 @@ class PlayIterator:
             (s, task) = self._get_next_task_from_state(s, peek=peek)
 
         if task and task._role:
-            # if we had a current role, mar that role as completed
+            # if we had a current role, mark that role as completed
             if s.cur_role and task._role != s.cur_role and s.cur_role._had_task_run and not peek and (last_host == host):
                 s.cur_role._completed = True
             s.cur_role = task._role
