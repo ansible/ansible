@@ -112,15 +112,19 @@ class DataLoader():
         return parsed_data
 
     def path_exists(self, path):
+        path = self.path_dwim(path)
         return os.path.exists(path)
 
     def is_file(self, path):
+        path = self.path_dwim(path)
         return os.path.isfile(path)
 
     def is_directory(self, path):
+        path = self.path_dwim(path)
         return os.path.isdir(path)
 
     def list_directory(self, path):
+        path = self.path_dwim(path)
         return os.listdir(path)
 
     def _safe_load(self, stream, file_name=None):
