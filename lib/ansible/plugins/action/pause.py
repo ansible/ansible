@@ -110,32 +110,35 @@ class ActionModule(ActionBase):
             tty.setraw(fd)
 
             # flush the buffer to make sure no previous key presses
-            # are read in below 
+            # are read in below
             termios.tcflush(self._connection._new_stdin, termios.TCIFLUSH)
 
-            # read key presses and act accordingly
             while True:
-                key_pressed = self._connection._new_stdin.read(1)
-                if pause_type in ('minutes', 'seconds'):
-                    if key_pressed == '\x03':
+                try:
+                    if seconds:
                         key_pressed = self._connection._new_stdin.read(1)
-                        if key_pressed == 'a':
+                        if key_pressed == '\x03':
                             raise KeyboardInterrupt
-                        elif key_pressed == 'c':
-                            break
-                else:
-                    if key_pressed == '\x03':
-                        raise KeyboardInterrupt
-                    elif key_pressed == '\r':
-                        break
                     else:
-                        result['user_input'] += key_pressed
+                        # read key presses and act accordingly
+                        key_pressed = self._connection._new_stdin.read(1)
+                        if key_pressed == '\x03':
+                            raise KeyboardInterrupt
+                        elif key_pressed == '\r':
+                            break
+                        else:
+                            result['user_input'] += key_pressed
 
-        except KeyboardInterrupt:
-            # cancel the previously set alarm signal
-            if seconds is not None:
-                signal.alarm(0)
-            raise AnsibleError('user requested abort!')
+                except KeyboardInterrupt:
+                    if seconds is not None:
+                        signal.alarm(0)
+                    self._display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                    key_pressed = self._connection._new_stdin.read(1)
+                    if key_pressed.lower() == 'a':
+                        raise AnsibleError('user requested abort!')
+                    elif key_pressed.lower() == 'c':
+                        break
+
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal
             # fires, so we simply ignore it to move into the cleanup
@@ -153,7 +156,6 @@ class ActionModule(ActionBase):
                 duration = round(duration / 60.0, 2)
             else:
                 duration = round(duration, 2)
-
             result['stdout'] = "Paused for %s %s" % (duration, duration_unit)
 
         return result
