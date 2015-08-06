@@ -24,6 +24,7 @@ import termios
 import time
 import tty
 
+from os import isatty
 from ansible.errors import *
 from ansible.plugins.action import ActionBase
 
@@ -106,12 +107,13 @@ class ActionModule(ActionBase):
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
             fd = self._connection._new_stdin.fileno()
-            old_settings = termios.tcgetattr(fd)
-            tty.setraw(fd)
+            if isatty(fd):
+                old_settings = termios.tcgetattr(fd)
+                tty.setraw(fd)
 
-            # flush the buffer to make sure no previous key presses
-            # are read in below
-            termios.tcflush(self._connection._new_stdin, termios.TCIFLUSH)
+                # flush the buffer to make sure no previous key presses
+                # are read in below
+                termios.tcflush(self._connection._new_stdin, termios.TCIFLUSH)
 
             while True:
                 try:
@@ -120,6 +122,9 @@ class ActionModule(ActionBase):
                         raise KeyboardInterrupt
 
                     if not seconds:
+                        if not isatty(fd):
+                            self._display.warning("Not waiting from prompt as stdin is not interactive")
+                            break
                         # read key presses and act accordingly
                         if key_pressed == '\r':
                             break
@@ -143,7 +148,8 @@ class ActionModule(ActionBase):
         finally:
             # cleanup and save some information
             # restore the old settings for the duped stdin fd
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+            if isatty(fd):
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
             duration = time.time() - start
             result['stop'] = str(datetime.datetime.now())
