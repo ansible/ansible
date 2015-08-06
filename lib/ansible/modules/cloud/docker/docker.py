@@ -1409,12 +1409,12 @@ class DockerManager(object):
             mem_limit = _human_to_bytes(self.module.params.get('memory_limit'))
         except ValueError as e:
             self.module.fail_json(msg=str(e))
+        api_version = self.client.version()['ApiVersion']
 
         params = {'image':        self.module.params.get('image'),
                   'command':      self.module.params.get('command'),
                   'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
-                  'mem_limit':    mem_limit,
                   'environment':  self.env,
                   'hostname':     self.module.params.get('hostname'),
                   'domainname':   self.module.params.get('domainname'),
@@ -1441,6 +1441,13 @@ class DockerManager(object):
 
         if self.ensure_capability('host_config', fail=False):
             params['host_config'] = self.get_host_config()
+
+        #For v1.19 API and above use HostConfig, otherwise use Config
+        if api_version < 1.19:
+            params['mem_limit'] = mem_limit
+        else:
+            params['host_config']['mem_limit'] = mem_limit
+
 
         def do_create(count, params):
             results = []
