@@ -24,47 +24,45 @@ import traceback
 import os
 import shlex
 import subprocess
-from ansible import errors
+from ansible.errors import AnsibleError
 from ansible import utils
 from ansible.utils.unicode import to_bytes
-from ansible.callbacks import vvv
 import ansible.constants as C
 
-BUFSIZE = 65536
 
-class Connection(object):
+class Connection(ConnectionBase):
     ''' Local chroot based connections '''
 
-    def __init__(self, runner, host, port, *args, **kwargs):
-        self.chroot = host
-        self.has_pipelining = False
-        self.become_methods_supported=C.BECOME_METHODS
+    BUFSIZE = 65536
+    has_pipelining = False
+
+    def __init__(self, *args, **kwargs):
+
+        super(Connection, self).__init__(*args, **kwargs)
+
+        self.chroot = self._play_context.remote_addr
 
         if os.geteuid() != 0:
-            raise errors.AnsibleError("chroot connection requires running as root")
+            raise AnsibleError("chroot connection requires running as root")
 
         # we're running as root on the local system so do some
         # trivial checks for ensuring 'host' is actually a chroot'able dir
         if not os.path.isdir(self.chroot):
-            raise errors.AnsibleError("%s is not a directory" % self.chroot)
+            raise AnsibleError("%s is not a directory" % self.chroot)
 
         chrootsh = os.path.join(self.chroot, 'bin/sh')
         if not utils.is_executable(chrootsh):
-            raise errors.AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
+            raise AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
 
         self.chroot_cmd = distutils.spawn.find_executable('chroot')
         if not self.chroot_cmd:
-            raise errors.AnsibleError("chroot command not found in PATH")
+            raise AnsibleError("chroot command not found in PATH")
 
-        self.runner = runner
-        self.host = host
-        # port is unused, since this is local
-        self.port = port
 
-    def connect(self, port=None):
+    def _connect(self, port=None):
         ''' connect to the chroot; nothing to do here '''
 
-        vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
+        self._display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
 
         return self
 
@@ -89,15 +87,15 @@ class Connection(object):
         '''
 
         if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
+            raise AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         # We enter zone as root so we ignore privilege escalation (probably need to fix in case we have to become a specific used [ex: postgres admin])?
         local_cmd = self._generate_cmd(executable, cmd)
 
-        vvv("EXEC %s" % (local_cmd), host=self.chroot)
+        self._display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
         p = subprocess.Popen(local_cmd, shell=False,
                              cwd=self.runner.basedir,
                              stdin=stdin,
@@ -116,33 +114,33 @@ class Connection(object):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to chroot '''
 
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
+        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
 
         try:
             with open(in_path, 'rb') as in_file:
                 try:
                     p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), None, stdin=in_file)
                 except OSError:
-                    raise errors.AnsibleError("chroot connection requires dd command in the chroot")
+                    raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:
                     stdout, stderr = p.communicate()
                 except:
                     traceback.print_exc()
-                    raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                    raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
-                    raise errors.AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
         except IOError:
-            raise errors.AnsibleError("file or module does not exist at: %s" % in_path)
+            raise AnsibleError("file or module does not exist at: %s" % in_path)
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from chroot to local '''
 
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
+        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
 
         try:
             p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
         except OSError:
-            raise errors.AnsibleError("chroot connection requires dd command in the chroot")
+            raise AnsibleError("chroot connection requires dd command in the chroot")
 
         with open(out_path, 'wb+') as out_file:
             try:
@@ -152,10 +150,10 @@ class Connection(object):
                     chunk = p.stdout.read(BUFSIZE)
             except:
                 traceback.print_exc()
-                raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise errors.AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
