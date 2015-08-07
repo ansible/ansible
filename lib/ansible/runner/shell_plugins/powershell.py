@@ -22,7 +22,7 @@ import random
 import shlex
 import time
 
-_common_args = ['PowerShell', '-NoProfile', '-NonInteractive']
+_common_args = ['PowerShell', '-NoProfile', '-NonInteractive','-ExecutionPolicy', 'Unrestricted']
 
 # Primarily for testing, allow explicitly specifying PowerShell version via
 # an environment variable.
@@ -57,7 +57,7 @@ def _build_file_cmd(cmd_parts, quote_args=True):
     '''Build command line to run a file, given list of file name plus args.'''
     if quote_args:
         cmd_parts = ['"%s"' % x for x in cmd_parts]
-    return ' '.join(_common_args + ['-ExecutionPolicy', 'Unrestricted', '-File'] + cmd_parts)
+    return ' '.join(['&'] + cmd_parts)
 
 class ShellModule(object):
 
