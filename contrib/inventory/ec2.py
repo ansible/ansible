@@ -338,7 +338,7 @@ class Ec2Inventory(object):
                 self.pattern_include = re.compile(pattern_include)
             else:
                 self.pattern_include = None
-        except configparser.NoOptionError as e:
+        except configparser.NoOptionError:
             self.pattern_include = None
 
         # Do we need to exclude hosts that match a pattern?
@@ -348,7 +348,7 @@ class Ec2Inventory(object):
                 self.pattern_exclude = re.compile(pattern_exclude)
             else:
                 self.pattern_exclude = None
-        except configparser.NoOptionError as e:
+        except configparser.NoOptionError:
             self.pattern_exclude = None
 
         # Instance filters (see boto and EC2 API docs). Ignore invalid filters.
