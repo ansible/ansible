@@ -171,7 +171,6 @@ class Ec2Inventory(object):
 
         print(data_to_print)
 
-
     def is_cache_valid(self):
         ''' Determines if the cache files have expired, or if it is still valid '''
 
@@ -183,7 +182,6 @@ class Ec2Inventory(object):
                     return True
 
         return False
-
 
     def read_settings(self):
         ''' Reads the settings from the ec2.ini file '''
@@ -374,7 +372,6 @@ class Ec2Inventory(object):
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                             help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
         self.args = parser.parse_args()
-
 
     def do_api_calls_update_cache(self):
         ''' Do API calls to each region, and save data in cache files '''
@@ -676,7 +673,6 @@ class Ec2Inventory(object):
 
         self.inventory["_meta"]["hostvars"][dest] = self.get_host_info_dict_from_instance(instance)
 
-
     def add_rds_instance(self, instance, region):
         ''' Adds an RDS instance to the inventory and index, as long as it is
         addressable '''
@@ -741,7 +737,6 @@ class Ec2Inventory(object):
             except AttributeError:
                 self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                                 'Please upgrade boto >= 2.3.0.']))
-
 
         # Inventory: Group by engine
         if self.group_by_rds_engine:
@@ -1023,7 +1018,6 @@ class Ec2Inventory(object):
                     self.route53_records.setdefault(resource, set())
                     self.route53_records[resource].add(record_name)
 
-
     def get_instance_route53_names(self, instance):
         ''' Check if an instance is referenced in the records we have from
         Route53. If it is, return the list of domain names pointing to said
@@ -1221,14 +1215,12 @@ class Ec2Inventory(object):
         json_inventory = cache.read()
         return json_inventory
 
-
     def load_index_from_cache(self):
         ''' Reads the index from the cache file sets self.index '''
 
         cache = open(self.cache_path_index, 'r')
         json_index = cache.read()
         self.index = json.loads(json_index)
-
 
     def write_to_cache(self, data, filename):
         ''' Writes data in JSON format to a file '''
