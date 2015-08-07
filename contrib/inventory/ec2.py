@@ -368,11 +368,11 @@ class Ec2Inventory(object):
 
         parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on EC2')
         parser.add_argument('--list', action='store_true', default=True,
-                           help='List instances (default: True)')
+                            help='List instances (default: True)')
         parser.add_argument('--host', action='store',
-                           help='Get all the variables about a specific instance')
+                            help='Get all the variables about a specific instance')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
-                           help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
+                            help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
         self.args = parser.parse_args()
 
 
@@ -642,8 +642,8 @@ class Ec2Inventory(object):
                     if self.nested_groups:
                         self.push_group(self.inventory, 'security_groups', key)
             except AttributeError:
-                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
-                                            'Please upgrade boto >= 2.3.0.']))
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.',
+                                                'Please upgrade boto >= 2.3.0.']))
 
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
@@ -739,8 +739,8 @@ class Ec2Inventory(object):
                         self.push_group(self.inventory, 'security_groups', key)
 
             except AttributeError:
-                self.fail_with_error('\n'.join(['Package boto seems a bit older.', 
-                                            'Please upgrade boto >= 2.3.0.']))
+                self.fail_with_error('\n'.join(['Package boto seems a bit older.',
+                                                'Please upgrade boto >= 2.3.0.']))
 
 
         # Inventory: Group by engine
