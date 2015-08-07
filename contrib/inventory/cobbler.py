@@ -169,19 +169,13 @@ class CobblerInventory(object):
             dns_name = host['hostname'] #None
             ksmeta = None
             interfaces = host['interfaces']
-            #for (iname, ivalue) in interfaces.iteritems():
-            #    if ivalue['management']:
-            #        this_dns_name = ivalue.get('dns_name', None)
-            #        #this_dns_name = ivalue.get('ip_address', None)
-            #        if this_dns_name is not None and this_dns_name is not "":
-            #            dns_name = this_dns_name
 
             if dns_name is None:
                 continue
 
             status = host['status']
             profile = host['profile']
-            classes = host[orderby_keyname] #host['mgmt_classes']
+            classes = host[orderby_keyname]
 
             if status not in self.inventory:
                 self.inventory[status] = []
@@ -200,7 +194,7 @@ class CobblerInventory(object):
 
             # The old way was ksmeta only -- provide backwards compatibility
 
-            self.cache[dns_name] = host #dict()   # sub dict with host to output json
+            self.cache[dns_name] = host
             if "ks_meta" in host:
                 for key, value in host["ks_meta"].iteritems():
                     self.cache[dns_name][key] = value
@@ -249,7 +243,6 @@ class CobblerInventory(object):
 
     def write_to_cache(self, data, filename):
         """ Writes data in JSON format to a file """
-        #if data: print "DEBUG: data = " + str(data)
         json_data = self.json_format_dict(data, True)
         cache = open(filename, 'w')
         cache.write(json_data)
