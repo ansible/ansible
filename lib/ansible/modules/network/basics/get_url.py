@@ -78,13 +78,13 @@ options:
     default: null
   checksum:
     description:
-      - If a checksum is passed to this parameter, the digest of the
+      - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
         Format: <algorithm>:<checksum>, e.g.: checksum="sha256:d98291acbedd510e3dbd36dbfdd83cbca8415220af43b327c0a0c574b6dc7b97"
         If you worry about portability, only the sha1 algorithm is available 
         on all platforms and python versions.  The third party hashlib 
-        library can be installed for access to additional algorithms.
+        library can be installed for access to additional algorithms.'
     version_added: "2.0"
     required: false
     default: null
