@@ -240,7 +240,7 @@ def create_launch_config(connection, module):
 
     result = dict(
                  ((a[0], a[1]) for a in vars(launch_configs[0]).items()
-                  if a[0] not in ('connection', 'created_time', 'instance_monitoring'))
+                  if a[0] not in ('connection', 'created_time', 'instance_monitoring', 'block_device_mappings'))
                  )
     result['created_time'] = str(launch_configs[0].created_time)
     # Looking at boto's launchconfig.py, it looks like this could be a boolean
@@ -255,6 +255,13 @@ def create_launch_config(connection, module):
             result['instance_monitoring'] = module.boolean(launch_configs[0].instance_monitoring.enabled)
         except AttributeError:
             result['instance_monitoring'] = False
+    if launch_configs[0].block_device_mappings is not None:
+        result['block_device_mappings'] = []
+        for bdm in launch_configs[0].block_device_mappings:
+            result['block_device_mappings'].append(dict(device_name=bdm.device_name, virtual_name=bdm.virtual_name))
+            if bdm.ebs is not None:
+                result['block_device_mappings'][-1]['ebs'] = dict(snapshot_id=bdm.ebs.snapshot_id, volume_size=bdm.ebs.volume_size)
+
 
     module.exit_json(changed=changed, name=result['name'], created_time=result['created_time'],
                      image_id=result['image_id'], arn=result['launch_configuration_arn'],
