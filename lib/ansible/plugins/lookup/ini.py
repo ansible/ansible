@@ -14,19 +14,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-from ansible import utils, errors
 import StringIO
 import os
 import codecs
 import ConfigParser
 import re
 
-class LookupModule(object):
+from ansible.errors import *
+from ansible.plugins.lookup import LookupBase
 
-    def __init__(self, basedir=None, **kwargs):
-        self.basedir = basedir
-        self.cp      = ConfigParser.ConfigParser()
+class LookupModule(LookupBase):
 
     def read_properties(self, filename, key, dflt, is_regexp):
         config = StringIO.StringIO()
@@ -51,12 +51,14 @@ class LookupModule(object):
             return dflt
         return value
 
-    def run(self, terms, inject=None, **kwargs):
-
-        terms = utils.listify_lookup_plugin_terms(terms, self.basedir, inject)
+    def run(self, terms, variables=None, **kwargs):
 
         if isinstance(terms, basestring):
             terms = [ terms ]
+
+        basedir = self.get_basedir(variables)
+        self.basedir = basedir
+        self.cp      = ConfigParser.ConfigParser()
 
         ret = []
         for term in terms:
@@ -80,7 +82,7 @@ class LookupModule(object):
             except (ValueError, AssertionError), e:
                 raise errors.AnsibleError(e)
 
-            path = utils.path_dwim(self.basedir, paramvals['file'])
+            path = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])
             if paramvals['type'] == "properties":
                 var = self.read_properties(path, key, paramvals['default'], paramvals['re'])
             else:
