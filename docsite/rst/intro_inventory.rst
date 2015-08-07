@@ -223,7 +223,7 @@ Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for furthe
     ansible_become_pass
       Equivalent to ansible_sudo_pass or ansible_su_pass, allows you to set the privilege escalation password
 
-Remote host environnement parameters::
+Remote host environment parameters::
 
     ansible_shell_type
       The shell type of the target system. Commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
