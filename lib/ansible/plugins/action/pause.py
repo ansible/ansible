@@ -135,11 +135,10 @@ class ActionModule(ActionBase):
                     if seconds is not None:
                         signal.alarm(0)
                     self._display.display("Press 'C' to continue the play or 'A' to abort \r"),
-                    key_pressed = self._connection._new_stdin.read(1)
-                    if key_pressed.lower() == 'a':
-                        raise AnsibleError('user requested abort!')
-                    elif key_pressed.lower() == 'c':
+                    if self._c_or_a():
                         break
+                    else:
+                        raise AnsibleError('user requested abort!')
 
         except AnsibleTimeoutExceeded:
             # this is the exception we expect when the alarm signal
@@ -163,3 +162,10 @@ class ActionModule(ActionBase):
 
         return result
 
+    def _c_or_a(self):
+        while True:
+            key_pressed = self._connection._new_stdin.read(1)
+            if key_pressed.lower() == 'a':
+                return False
+            elif key_pressed.lower() == 'c':
+                return True
