@@ -152,6 +152,7 @@ New Inventory scripts:
 
 New Lookups:
  * credstash
+ * ini
 
 Other Notable Changes:
 
