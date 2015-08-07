@@ -35,6 +35,7 @@ except Exception:
 import os
 import sys
 import traceback
+import glob
 
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
@@ -58,19 +59,28 @@ if __name__ == '__main__':
     display = LastResort()
     cli = None
     me = os.path.basename(sys.argv[0])
+    bindir = os.path.dirname(sys.argv[0])
 
     try:
         display = Display()
         display.debug("starting run")
 
+        clis = [os.path.basename(f) for f in glob.glob(os.path.join(bindir, 'ansible-*'))]
         sub = None
         try:
-            if me.find('-') != -1:
+            if me.find('-') != -1 and me in clis:
                 target = me.split('-')
                 if len(target) > 1:
                     sub = target[1]
-                    myclass = "%sCLI" % sub.capitalize()
-                    mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
+            else:
+                action = set([f.split('-')[1] for f in clis]).intersection(sys.argv)
+                if action:
+                    sub = action.pop()
+                    sys.argv.remove(sub)
+
+            if sub:
+                myclass = "%sCLI" % sub.capitalize()
+                mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
             elif me == 'ansible':
                 from ansible.cli.adhoc import AdHocCLI as mycli
             else:
