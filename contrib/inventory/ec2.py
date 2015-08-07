@@ -1063,7 +1063,7 @@ class Ec2Inventory(object):
                 instance_vars[key] = value
             elif isinstance(value, six.string_types):
                 instance_vars[key] = value.strip()
-            elif type(value) == type(None):
+            elif value is None:
                 instance_vars[key] = ''
             elif key == 'ec2_region':
                 instance_vars[key] = value.name
@@ -1166,7 +1166,7 @@ class Ec2Inventory(object):
 
             # Target: Everything
             # Replace None by an empty string
-            elif type(value) == type(None):
+            elif value is None:
                 host_info[key] = ''
 
             else:
