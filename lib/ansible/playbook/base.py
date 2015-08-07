@@ -36,9 +36,8 @@ from ansible.parsing import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
-
 from ansible.utils.debug import debug
-
+from ansible.utils.vars import combine_vars
 from ansible.template import template
 
 class Base:
@@ -47,6 +46,9 @@ class Base:
     _connection          = FieldAttribute(isa='string')
     _port                = FieldAttribute(isa='int')
     _remote_user         = FieldAttribute(isa='string')
+
+    # variables
+    _vars                = FieldAttribute(isa='dict', default=dict())
 
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list', default=[])
@@ -350,6 +352,30 @@ class Base:
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
+
+    def _load_vars(self, attr, ds):
+        '''
+        Vars in a play can be specified either as a dictionary directly, or
+        as a list of dictionaries. If the later, this method will turn the
+        list into a single dictionary.
+        '''
+
+        try:
+            if isinstance(ds, dict):
+                return ds
+            elif isinstance(ds, list):
+                all_vars = dict()
+                for item in ds:
+                    if not isinstance(item, dict):
+                        raise ValueError
+                    all_vars = combine_vars(all_vars, item)
+                return all_vars
+            elif ds is None:
+                return {}
+            else:
+                raise ValueError
+        except ValueError:
+            raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__, obj=ds)
 
     def _extend_value(self, value, new_value):
         '''

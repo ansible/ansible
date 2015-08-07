@@ -53,7 +53,7 @@ class Block(Base, Become, Conditional, Taggable):
         of a role or task include which does, so return those if present.
         '''
 
-        all_vars = dict()
+        all_vars = self.vars.copy()
 
         if self._role:
             all_vars.update(self._role.get_vars(self._dep_chain))
