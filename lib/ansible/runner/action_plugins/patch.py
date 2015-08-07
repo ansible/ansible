@@ -16,6 +16,7 @@
 
 import os
 from ansible import utils
+import ansible.constants as C
 from ansible.runner.return_data import ReturnData
 
 class ActionModule(object):
@@ -32,7 +33,7 @@ class ActionModule(object):
 
         src = options.get('src', None)
         dest = options.get('dest', None)
-        remote_src = utils.boolean(options.get('remote_src', 'yes'))
+        remote_src = utils.boolean(options.get('remote_src', 'no'))
 
         if src is None:
             result = dict(failed=True, msg="src is required")
@@ -47,12 +48,13 @@ class ActionModule(object):
         else:
             src = utils.path_dwim(self.runner.basedir, src)
 
-        tmp_src = tmp + src
+        tmp_path = self.runner._make_tmp_path(conn)
+        tmp_src = tmp_path + 'patch_source'
         conn.put_file(src, tmp_src)
 
         if self.runner.become and self.runner.become_user != 'root':
             if not self.runner.noop_on_check(inject):
-                self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp)
+                self.runner._remote_chmod(conn, 'a+r', tmp_src, tmp_path)
 
         new_module_args = dict(
             src=tmp_src,
@@ -63,4 +65,8 @@ class ActionModule(object):
 
         module_args = utils.merge_module_args(module_args, new_module_args)
 
-        return self.runner._execute_module(conn, tmp, 'patch', module_args, inject=inject, complex_args=complex_args)
+        data = self.runner._execute_module(conn, tmp, 'patch', module_args, inject=inject, complex_args=complex_args)
+        if not C.DEFAULT_KEEP_REMOTE_FILES:
+            self.runner._remove_tmp_path(conn, tmp_path)
+
+        return data
