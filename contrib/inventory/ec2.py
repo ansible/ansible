@@ -1128,9 +1128,9 @@ class Ec2Inventory(object):
                         host_info['ec2_primary_cluster_port'] = node['ReadEndpoint']['Port']
                         host_info['ec2_primary_cluster_id'] = node['CacheClusterId']
                     elif node['CurrentRole'] == 'replica':
-                        host_info['ec2_replica_cluster_address_'+ str(replica_count)] = node['ReadEndpoint']['Address']
-                        host_info['ec2_replica_cluster_port_'+ str(replica_count)] = node['ReadEndpoint']['Port']
-                        host_info['ec2_replica_cluster_id_'+ str(replica_count)] = node['CacheClusterId']
+                        host_info['ec2_replica_cluster_address_' + str(replica_count)] = node['ReadEndpoint']['Address']
+                        host_info['ec2_replica_cluster_port_' + str(replica_count)] = node['ReadEndpoint']['Port']
+                        host_info['ec2_replica_cluster_id_' + str(replica_count)] = node['CacheClusterId']
                         replica_count += 1
 
             # Target: Redis Replication Groups
