@@ -412,7 +412,7 @@ class StrategyBase:
 
         # set the vars for this task from those specified as params to the include
         for b in block_list:
-            b.vars = included_file._args.copy()
+            b.vars.update(included_file._args.copy())
 
         return block_list
 

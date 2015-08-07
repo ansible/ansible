@@ -78,7 +78,6 @@ class Task(Base, Conditional, Taggable, Become):
     _retries              = FieldAttribute(isa='int', default=1)
     _run_once             = FieldAttribute(isa='bool')
     _until                = FieldAttribute(isa='list') # ?
-    _vars                 = FieldAttribute(isa='dict', default=dict())
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
@@ -166,9 +165,9 @@ class Task(Base, Conditional, Taggable, Become):
         # be adding things to them below (special handling for includes).
         # When that deprecated feature is removed, this can be too.
         if 'vars' in ds:
-            if not isinstance(ds['vars'], dict):
-                raise AnsibleError("vars specified on a task must be a dictionary (got a %s)" % type(ds['vars']), obj=new_ds)
-            new_ds['vars'] = ds.pop('vars')
+            # _load_vars is defined in Base, and is used to load a dictionary
+            # or list of dictionaries in a standard way
+            new_ds['vars'] = self._load_vars(None, ds.pop('vars'))
         else:
             new_ds['vars'] = dict()
 

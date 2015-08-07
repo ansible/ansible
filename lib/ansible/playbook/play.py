@@ -32,8 +32,6 @@ from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.playbook.task import Task
 
-from ansible.utils.vars import combine_vars
-
 
 __all__ = ['Play']
 
@@ -64,7 +62,6 @@ class Play(Base, Taggable, Become):
     _name                = FieldAttribute(isa='string', default='')
 
     # Variable Attributes
-    _vars                = FieldAttribute(isa='dict', default=dict())
     _vars_files          = FieldAttribute(isa='list', default=[])
     _vars_prompt         = FieldAttribute(isa='list', default=[])
     _vault_password      = FieldAttribute(isa='string')
@@ -149,30 +146,6 @@ class Play(Base, Taggable, Become):
                 ds[idx] = "%s" % item
 
         return ds
-
-    def _load_vars(self, attr, ds):
-        '''
-        Vars in a play can be specified either as a dictionary directly, or
-        as a list of dictionaries. If the later, this method will turn the
-        list into a single dictionary.
-        '''
-
-        try:
-            if isinstance(ds, dict):
-                return ds
-            elif isinstance(ds, list):
-                all_vars = dict()
-                for item in ds:
-                    if not isinstance(item, dict):
-                        raise ValueError
-                    all_vars = combine_vars(all_vars, item)
-                return all_vars
-            elif ds is None:
-                return {}
-            else:
-                raise ValueError
-        except ValueError:
-            raise AnsibleParserError("Vars in a playbook must be specified as a dictionary, or a list of dictionaries", obj=ds)
 
     def _load_tasks(self, attr, ds):
         '''
