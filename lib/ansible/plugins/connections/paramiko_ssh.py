@@ -235,7 +235,7 @@ class Connection(ConnectionBase):
                         if self.check_become_success(become_output) or self.check_password_prompt(become_output):
                             break
                         chunk = chan.recv(bufsize)
-                        print("chunk is: %s" % chunk)
+                        self._display.debug("chunk is: %s" % chunk)
                         if not chunk:
                             if 'unknown user' in become_output:
                                 raise AnsibleError(
