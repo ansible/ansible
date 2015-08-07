@@ -148,9 +148,14 @@ New Inventory scripts:
   * proxmox
   * serf
 
+New Lookups:
+ * credstash
+
 Other Notable Changes:
 
 * synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting
+* play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
+* vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
