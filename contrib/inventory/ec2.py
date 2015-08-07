@@ -307,6 +307,7 @@ class Ec2Inventory(object):
 
         # Configure which groups should be created.
         group_by_options = [
+            'group_by_maintenance',
             'group_by_instance_id',
             'group_by_region',
             'group_by_availability_zone',
@@ -418,9 +419,13 @@ class Ec2Inventory(object):
             else:
                 reservations = conn.get_all_instances()
 
+            region_statuses = conn.get_all_instance_status()
+            status_dict = dict(((status.id, status) for status in region_statuses))
+
             for reservation in reservations:
                 for instance in reservation.instances:
-                    self.add_instance(instance, region)
+                    status = status_dict.get(instance.id, {})
+                    self.add_instance(instance, status, region)
 
         except boto.exception.BotoServerError as e:
             if e.error_code == 'AuthFailure':
@@ -552,7 +557,7 @@ class Ec2Inventory(object):
             for instance in reservation.instances:
                 return instance
 
-    def add_instance(self, instance, region):
+    def add_instance(self, instance, status, region):
         ''' Adds an instance to the inventory and index, as long as it is
         addressable '''
 
@@ -584,6 +589,19 @@ class Ec2Inventory(object):
 
         # Add to index
         self.index[dest] = [region, instance.id]
+
+
+        # Inventory: Group by ec2 maintenance
+        if self.group_by_maintenance:
+            if status.events:
+                for event in status.events:
+
+                    if 'Completed' in event.description:
+                        continue
+
+                    type_name = self.to_safe('maintenance_' + event.code)
+                    self.push(self.inventory, type_name, dest)
+                    self.push(self.inventory, 'maintenance', dest)
 
         # Inventory: Group by instance ID (always a group of 1)
         if self.group_by_instance_id:
