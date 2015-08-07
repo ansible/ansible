@@ -32,6 +32,7 @@ New Modules:
   * amazon: ec2_ami_find
   * amazon: ec2_eni
   * amazon: ec2_eni_facts
+  * amazon: ec2_remote_facts
   * amazon: ec2_vpc_net
   * amazon: ec2_vpc_route_table_facts
   * amazon: ec2_vpc_subnet
@@ -53,6 +54,7 @@ New Modules:
   * cloudtrail
   * cloudstack: cs_account
   * cloudstack: cs_affinitygroup
+  * cloudstack: cs_domain
   * cloudstack: cs_facts
   * cloudstack: cs_firewall
   * cloudstack: cs_iso
