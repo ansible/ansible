@@ -2,29 +2,30 @@ Using Lookups
 =============
 
 Lookup plugins allow access of data in Ansible from outside sources.  This can include the filesystem
-but also external datastores.  These values are then made available using the standard templating system
+and also external datastores.  These values are made available using the standard templating system
 in Ansible, and are typically used to load variables or templates with information from those systems.
 
-.. note:: This is considered an advanced feature, and many users will probably not rely on these features.  
+.. note:: This is considered an advanced feature, and many users will probably not rely on these features.
 
 .. contents:: Topics
 
 .. _getting_file_contents:
 
-Intro to Lookups: Getting File Contents
-```````````````````````````````````````
+Getting File Contents
+`````````````````````
 
 The file lookup is the most basic lookup type.
 
 Contents can be read off the filesystem as follows::
 
     - hosts: all
+
       vars:
-         contents: "{{ lookup('file', '/etc/foo.txt') }}"
+        contents: "{{ lookup('file', '/etc/foo.txt') }}"
 
       tasks:
 
-         - debug: msg="the value of foo.txt is {{ contents }}"
+        - debug: msg="the value of foo.txt is {{ contents }}"
 
 .. _password_lookup:
 
@@ -36,10 +37,10 @@ The Password Lookup
     A great alternative to the password lookup plugin, if you don't need to generate random passwords on a per-host basis, would be to use :doc:`playbooks_vault`.  Read the documentation there and consider using it first, it will be more desirable for most applications.
 
 ``password`` generates a random plaintext password and stores it in
-a file at a given filepath.  
+a file at a given filepath.
 
 (Docs about crypted save modes are pending)
- 
+
 If the file exists previously, it will retrieve its contents, behaving just like with_file. Usage of variables like "{{ inventory_hostname }}" in the filepath can be used to set
 up random passwords per host (what simplifies password management in 'host_vars' variables).
 
@@ -59,7 +60,7 @@ This length can be changed by passing an extra parameter::
 
         (...)
 
-.. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string        
+.. note:: If the file already exists, no data will be written to it. If the file has contents, those contents will be read in as the password. Empty files cause the password to return as an empty string.
 
 Starting in version 1.4, password accepts a "chars" parameter to allow defining a custom character set in the generated passwords. It accepts comma separated list of names that are either string module attributes (ascii_letters,digits, etc) or are used literally::
 
@@ -108,22 +109,27 @@ Here are some examples::
 
       tasks:
 
-         - debug: msg="{{ lookup('env','HOME') }} is an environment variable"
+        - debug: msg="{{ lookup('env','HOME') }} is an environment variable"
 
-         - debug: msg="{{ item }} is a line from the result of this command"
+        - debug: msg="{{ item }} is a line from the result of this command"
            with_lines:
              - cat /etc/motd
 
-         - debug: msg="{{ lookup('pipe','date') }} is the raw result of running this command"
+        - debug: msg="{{ lookup('pipe','date') }} is the raw result of running this command"
 
-         - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
+        - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,somekey') }} is value in Redis for somekey"
 
-         - debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
+        - debug: msg="{{ lookup('dnstxt', 'example.com') }} is a DNS TXT record for example.com"
 
-         - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
+        - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
+
+.. _variables:
+
+Variables
+`````````
 
 As an alternative you can also assign lookup plugins to variables or use them
-elsewhere.  This macros are evaluated each time they are used in a task (or
+elsewhere.  These macros are evaluated each time they are used in a task (or
 template)::
 
     vars:
@@ -132,6 +138,17 @@ template)::
     tasks:
 
       - debug: msg="motd value is {{ motd_value }}"
+
+You can also use variables inside your lookups with string concatenation. Let's take an example from the Redis lookup and use some variables to form the key::
+
+    vars:
+      my_environment: dev
+
+    tasks:
+
+      - debug: msg="{{ lookup('redis_kv', 'redis://localhost:6379,' + my_environment + '-id') }}
+
+The above example will take the value of "{{ my_environment }}", combine it with a string value of '-id' and return the value from the Redis key "dev-id."
 
 .. seealso::
 
