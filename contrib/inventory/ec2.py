@@ -1006,7 +1006,7 @@ class Ec2Inventory(object):
         all_zones = r53_conn.get_zones()
 
         route53_zones = [zone for zone in all_zones if zone.name[:-1]
-                          not in self.route53_excluded_zones]
+                         not in self.route53_excluded_zones]
 
         self.route53_records = {}
 
@@ -1030,7 +1030,7 @@ class Ec2Inventory(object):
         instance. If nothing points to it, return an empty list. '''
 
         instance_attributes = ['public_dns_name', 'private_dns_name',
-                                'ip_address', 'private_ip_address']
+                               'ip_address', 'private_ip_address']
 
         name_list = set()
 
