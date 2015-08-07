@@ -1182,10 +1182,10 @@ class Ec2Inventory(object):
             # Need to load index from cache
             self.load_index_from_cache()
 
-        if not self.args.host in self.index:
+        if self.args.host not in self.index:
             # try updating the cache
             self.do_api_calls_update_cache()
-            if not self.args.host in self.index:
+            if self.args.host not in self.index:
                 # host might not exist anymore
                 return self.json_format_dict({}, True)
 
