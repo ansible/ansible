@@ -414,7 +414,7 @@ class Ec2Inventory(object):
             reservations = []
             if self.ec2_instance_filters:
                 for filter_key, filter_values in self.ec2_instance_filters.items():
-                    reservations.extend(conn.get_all_instances(filters = { filter_key: filter_values }))
+                    reservations.extend(conn.get_all_instances(filters = {filter_key: filter_values}))
             else:
                 reservations = conn.get_all_instances()
 
@@ -1005,8 +1005,8 @@ class Ec2Inventory(object):
         r53_conn = route53.Route53Connection()
         all_zones = r53_conn.get_zones()
 
-        route53_zones = [ zone for zone in all_zones if zone.name[:-1]
-                          not in self.route53_excluded_zones ]
+        route53_zones = [zone for zone in all_zones if zone.name[:-1]
+                          not in self.route53_excluded_zones]
 
         self.route53_records = {}
 
@@ -1029,8 +1029,8 @@ class Ec2Inventory(object):
         Route53. If it is, return the list of domain names pointing to said
         instance. If nothing points to it, return an empty list. '''
 
-        instance_attributes = [ 'public_dns_name', 'private_dns_name',
-                                'ip_address', 'private_ip_address' ]
+        instance_attributes = ['public_dns_name', 'private_dns_name',
+                                'ip_address', 'private_ip_address']
 
         name_list = set()
 
