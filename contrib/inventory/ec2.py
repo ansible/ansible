@@ -414,7 +414,7 @@ class Ec2Inventory(object):
             reservations = []
             if self.ec2_instance_filters:
                 for filter_key, filter_values in self.ec2_instance_filters.items():
-                    reservations.extend(conn.get_all_instances(filters = {filter_key: filter_values}))
+                    reservations.extend(conn.get_all_instances(filters={filter_key: filter_values}))
             else:
                 reservations = conn.get_all_instances()
 
