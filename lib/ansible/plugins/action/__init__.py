@@ -454,7 +454,8 @@ class ActionBase:
             self._display.debug("no command, exiting _low_level_execute_command()")
             return dict(stdout='', stderr='')
 
-        if sudoable:
+        if sudoable and self._play_context.become:
+            self._display.debug("using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         self._display.debug("executing the command %s through the connection" % cmd)
