@@ -139,6 +139,65 @@ default      empty string   return value if the key is not in the csv file
 
 .. note:: The default delimiter is TAB, *not* comma.
 
+.. _ini_lookup:
+
+The INI File Lookup
+```````````````````
+.. versionadded:: 2.0
+
+The ``ini`` lookup reads the contents of a file in INI format (key1=value1).
+This plugin retrieve the value on the right side after the equal sign ('=') of
+a given section ([section]). You can also read a property file which - in this
+case - does not contain section.
+
+Here's a simple example of an INI file with user/password configuration::
+
+    [production]
+    # My production information
+    user=robert
+    pass=somerandompassword
+
+    [integration]
+    # My integration information
+    user=gertrude
+    pass=anotherpassword
+
+
+We can use the ``ini`` plugin to lookup user configuration::
+
+    - debug: msg="User in integration is {{ lookup('ini', 'user section=integration file=users.ini') }}"
+    - debug: msg="User in production  is {{ lookup('ini', 'user section=production  file=users.ini') }}"
+
+Another example for this plugin is for looking for a value on java properties.
+Here's a simple properties we'll take as an example::
+
+    user.name=robert
+    user.pass=somerandompassword
+
+You can retrieve the ``user.name`` field with the following lookup::
+
+    - debug: msg="user.name is {{ lookup('ini', 'user.name type=property file=user.properties') }}"
+
+The ``ini`` lookup supports several arguments like the csv plugin. The format for passing
+arguments is::
+
+    lookup('ini', 'key [type=<properties|ini>] [section=section] [file=file.ini] [re=true] [default=<defaultvalue>]')
+
+The first value in the argument is the ``key``, which must be an entry that
+appears exactly once on keys. All other arguments are optional.
+
+
+==========   ============   =========================================================================================
+Field        Default        Description
+----------   ------------   -----------------------------------------------------------------------------------------
+type         ini            Type of the file. Can be ini or properties (for java properties).
+file         ansible.ini    Name of the file to load
+section      global         Default section where to lookup for key.
+re           False          The key is a regexp.
+default      empty string   return value if the key is not in the ini file
+==========   ============   =========================================================================================
+
+.. note:: In java properties files, there's no need to specify a section.
 
 .. _credstash_lookup:
 
