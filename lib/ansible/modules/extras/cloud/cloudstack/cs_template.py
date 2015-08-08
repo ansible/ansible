@@ -181,7 +181,7 @@ EXAMPLES = '''
 # Register a systemvm template
 - local_action:
     module: cs_template
-    name: systemvm-4.5
+    name: systemvm-vmware-4.5
     url: "http://packages.shapeblue.com/systemvmtemplate/4.5/systemvm64template-4.5-vmware.ova"
     hypervisor: VMware
     format: OVA
