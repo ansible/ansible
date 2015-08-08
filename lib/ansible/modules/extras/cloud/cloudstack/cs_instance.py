@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: cs_instance
 short_description: Manages instances and virtual machines on Apache CloudStack based clouds.
 description:
-    - Deploy, start, restart, stop and destroy instances.
+    - Deploy, start, update, scale, restart, stop and destroy instances.
 version_added: '2.0'
 author: "René Moser (@resmo)"
 options:
