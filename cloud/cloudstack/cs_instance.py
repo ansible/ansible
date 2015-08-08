@@ -732,7 +732,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             if 'instancename' in instance:
                 self.result['instance_name'] = instance['instancename']
             if 'publicip' in instance:
-                self.result['public_ip'] = instance['public_ip']
+                self.result['public_ip'] = instance['publicip']
             if 'passwordenabled' in instance:
                 self.result['password_enabled'] = instance['passwordenabled']
             if 'password' in instance:
