@@ -107,6 +107,11 @@ options:
       - Disk size in GByte required if deploying instance from ISO.
     required: false
     default: null
+  root_disk_size:
+    description:
+      - Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup (need CloudStack >= 4.4, cloud-initramfs-growroot installed and enabled in the template)
+    required: false
+    default: null
   security_groups:
     description:
       - List of security groups the instance to be applied to.
@@ -521,6 +526,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['group']               = self.module.params.get('group')
         args['keypair']             = self.module.params.get('ssh_key')
         args['size']                = self.module.params.get('disk_size')
+        args['rootdisksize']        = self.module.params.get('root_disk_size')
         args['securitygroupnames']  = ','.join(self.module.params.get('security_groups'))
         args['affinitygroupnames']  = ','.join(self.module.params.get('affinity_groups'))
 
@@ -789,6 +795,7 @@ def main():
             ip6_address = dict(defaul=None),
             disk_offering = dict(default=None),
             disk_size = dict(type='int', default=None),
+            root_disk_size = dict(type='int', default=None),
             keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
             hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM'], default=None),
             security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
