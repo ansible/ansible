@@ -104,7 +104,6 @@ network_domain:
   returned: success
   type: string
   sample: example.local
-
 '''
 
 try:
