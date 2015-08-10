@@ -142,6 +142,7 @@ New Modules:
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
+  * znode
 
 New Inventory scripts:
   * cloudstack
