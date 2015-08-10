@@ -359,7 +359,7 @@ class Service(object):
                         self.changed = True
 
             # Add line to the list.
-            new_rc_conf.append(rcline)
+            new_rc_conf.append(rcline.strip() + '\n')
 
         # We are done with reading the current rc.conf, close it.
         RCFILE.close()
