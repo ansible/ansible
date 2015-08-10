@@ -533,7 +533,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
                 self.result['type'] = network['type']
             if 'traffictype' in network:
                 self.result['traffic_type'] = network['traffictype']
-            if 'zone' in network:
+            if 'zonename' in network:
                 self.result['zone'] = network['zonename']
             if 'domain' in network:
                 self.result['domain'] = network['domain']
