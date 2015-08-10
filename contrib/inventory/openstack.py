@@ -53,9 +53,9 @@ class OpenStackInventory(object):
     def __init__(self, private=False, refresh=False):
         self.openstack_config = os_client_config.config.OpenStackConfig(
             os_client_config.config.CONFIG_FILES.append(
-                '/etc/ansible/openstack.yml'),
-            private)
+                '/etc/ansible/openstack.yml'))
         self.clouds = shade.openstack_clouds(self.openstack_config)
+        self.private = private
         self.refresh = refresh
 
         self.cache_max_age = self.openstack_config.get_cache_max_age()
@@ -93,6 +93,7 @@ class OpenStackInventory(object):
 
         for cloud in self.clouds:
 
+            cloud.private = self.private
             # Cycle on servers
             for server in cloud.list_servers():
 
