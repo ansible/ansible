@@ -56,7 +56,7 @@ options:
     default: null
   zone:
     description:
-      - Name of the zone in which the virtual machine is in.
+      - Name of the zone in which the IP address is in.
       - If not set, default zone is used.
     required: false
     default: null
