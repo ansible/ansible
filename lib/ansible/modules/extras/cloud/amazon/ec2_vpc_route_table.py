@@ -369,11 +369,10 @@ def ensure_propagation(vpc_conn, route_table_id, propagating_vgw_ids,
     # and do not disable any others.
     changed = False
     for vgw_id in propagating_vgw_ids:
-        if vgw_id not in original_association_ids:
-            changed = True
-            vpc_conn.enable_vgw_route_propagation(route_table_id,
-                                                  vgw_id,
-                                                  dry_run=check_mode)
+        changed = True
+        vpc_conn.enable_vgw_route_propagation(route_table_id,
+                                              vgw_id,
+                                              dry_run=check_mode)
 
     return {'changed': changed}
 
