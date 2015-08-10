@@ -27,9 +27,6 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        if not isinstance(terms, list):
-            terms = [ terms ]
-
         basedir = self.get_basedir(variables)
 
         ret = []

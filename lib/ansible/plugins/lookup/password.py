@@ -59,9 +59,6 @@ class LookupModule(LookupBase):
 
         ret = []
 
-        if not isinstance(terms, list):
-            terms = [ terms ]
-
         for term in terms:
             # you can't have escaped spaces in yor pathname
             params = term.split()

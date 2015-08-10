@@ -184,9 +184,6 @@ class LookupModule(LookupBase):
     def run(self, terms, variables, **kwargs):
         results = []
 
-        if isinstance(terms, basestring):
-            terms = [ terms ]
-
         for term in terms:
             try:
                 self.reset()  # clear out things for this iteration

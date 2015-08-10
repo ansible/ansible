@@ -25,7 +25,7 @@ from ansible.utils.listify import listify_lookup_plugin_terms
 
 class LookupModule(LookupBase):
 
-    def __lookup_variables(self, terms, variables):
+    def _lookup_variables(self, terms, variables):
         foo = variables.copy()
         foo.pop('vars')
         results = []
@@ -39,7 +39,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
 
-        terms = self.__lookup_variables(terms, variables)
+        terms = self._lookup_variables(terms, variables)
 
         my_list = terms[:]
         my_list.reverse()
