@@ -72,7 +72,7 @@ EXAMPLES = '''
 # Associate an IP address
 - local_action:
     module: cs_ip_address
-    account: My Account
+    network: My Network
   register: ip_address
   when: create_instance|changed
 
