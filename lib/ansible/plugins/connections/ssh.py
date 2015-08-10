@@ -121,9 +121,10 @@ class Connection(ConnectionBase):
         self._common_args += ("-o", "ConnectTimeout={0}".format(self._play_context.timeout))
 
         # If any extra SSH arguments are specified in the inventory for
-        # this host, add them in.
-        if self.ssh_extra_args is not None:
-            extra_args = self.ssh_extra_args
+        # this host, or specified as an override on the command line,
+        # add them in.
+        extra_args = self._play_context.ssh_extra_args or self.ssh_extra_args
+        if extra_args is not None:
             self._common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
 
         self._connected = True
