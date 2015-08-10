@@ -251,7 +251,7 @@ class Templar:
         instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
         if instance is not None:
-            loop_terms = listify_lookup_plugin_terms(terms=8args, templar=self, loader=self._loader, fail_on_undefined=True)
+            loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True)
             # safely catch run failures per #5059
             try:
                 ran = instance.run(*args, variables=self._available_variables, **kwargs)
