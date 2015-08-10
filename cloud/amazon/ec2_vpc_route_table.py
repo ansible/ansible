@@ -373,7 +373,7 @@ def ensure_propagation(vpc_conn, route_table_id, propagating_vgw_ids,
             changed = True
             vpc_conn.enable_vgw_route_propagation(route_table_id,
                                                   vgw_id,
-                                                  test_run=check_mode)
+                                                  dry_run=check_mode)
 
     return {'changed': changed}
 
