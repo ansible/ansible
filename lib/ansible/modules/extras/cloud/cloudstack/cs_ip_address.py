@@ -23,16 +23,15 @@ DOCUMENTATION = '''
 module: cs_ip_address
 short_description: Manages Public/Secondary IP address associations
 description:
-    - Acquires and associates a public IP to an account. Due to API limitations,
-    - this is not an idempotent call, so be sure to only conditionally call this
-    - when C(state=present)
+    - Acquires and associates a public IP to an account or project. Due to API
+      limitations this is not an idempotent call, so be sure to only
+      conditionally call this when C(state=present)
 version_added: '2.0'
 author: "Darren Worrall @dazworrall"
 options:
   ip_address:
     description:
-      - Public IP address.
-      - Required if C(state=absent)
+      - Public IP address. Required if C(state=absent)
     required: true
   domain:
     description:
