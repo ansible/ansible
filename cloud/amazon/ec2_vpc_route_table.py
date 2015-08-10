@@ -290,7 +290,8 @@ def index_of_matching_route(route_spec, routes_to_match):
             return i
 
 
-def ensure_routes(vpc_conn, route_table, route_specs, check_mode):
+def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
+                  check_mode):
     routes_to_match = list(route_table.routes)
     route_specs_to_create = []
     for route_spec in route_specs:
@@ -299,8 +300,16 @@ def ensure_routes(vpc_conn, route_table, route_specs, check_mode):
             route_specs_to_create.append(route_spec)
         else:
             del routes_to_match[i]
+
+    # NOTE: As of boto==2.38.0, the origin of a route is not available
+    # (for example, whether it came from a gateway with route propagation
+    # enabled). Testing for origin == 'EnableVgwRoutePropagation' is more
+    # correct than checking whether the route uses a propagating VGW.
+    # The current logic will leave non-propagated routes using propagating
+    # VGWs in place.
     routes_to_delete = [r for r in routes_to_match
-                        if r.gateway_id != 'local']
+                        if r.gateway_id != 'local'
+                        and r.gateway_id not in propagating_vgw_ids]
 
     changed = routes_to_delete or route_specs_to_create
     if changed:
@@ -433,7 +442,8 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
 
     if routes is not None:
         try:
-            result = ensure_routes(vpc_conn, route_table, routes, check_mode)
+            result = ensure_routes(vpc_conn, route_table, routes,
+                                   propagating_vgw_ids, check_mode)
             changed = changed or result['changed']
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
