@@ -32,7 +32,8 @@ options:
   ip_address:
     description:
       - Public IP address. Required if C(state=absent)
-    required: true
+    required: false
+    default: null
   domain:
     description:
       - Domain the IP address is related to.
@@ -73,7 +74,7 @@ EXAMPLES = '''
     module: cs_ip_address
     network: My Network
   register: ip_address
-  when: create_instance|changed
+  when: instance.public_ip is undefined
 
 # Disassociate an IP address
 - local_action:
