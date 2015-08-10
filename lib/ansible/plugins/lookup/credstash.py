@@ -35,9 +35,6 @@ class LookupModule(LookupBase):
         if not CREDSTASH_INSTALLED:
             raise AnsibleError('The credstash lookup plugin requires credstash to be installed.')
 
-        if isinstance(terms, basestring):
-            terms = [terms]
-
         ret = []
         for term in terms:
             try:

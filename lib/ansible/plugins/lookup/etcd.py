@@ -66,9 +66,6 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        if isinstance(terms, basestring):
-            terms = [ terms ]
-
         validate_certs = kwargs.get('validate_certs', True)
 
         etcd = Etcd(validate_certs=validate_certs)
