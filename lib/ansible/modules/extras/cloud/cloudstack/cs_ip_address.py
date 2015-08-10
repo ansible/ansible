@@ -162,7 +162,6 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
         args['account'] = self.get_account(key='name')
         args['domainid'] = self.get_domain(key='id')
         args['projectid'] = self.get_project(key='id')
-        args['listall'] = True
         ip_addresses = self.cs.listPublicIpAddresses(**args)
 
         if ip_addresses:
