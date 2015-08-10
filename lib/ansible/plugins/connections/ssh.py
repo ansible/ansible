@@ -59,11 +59,14 @@ class Connection(ConnectionBase):
 
         self.host = self._play_context.remote_addr
         self.ssh_extra_args = ''
+        self.ssh_args = ''
 
     def set_host_overrides(self, host):
         v = host.get_vars()
         if 'ansible_ssh_extra_args' in v:
             self.ssh_extra_args = v['ansible_ssh_extra_args']
+        if 'ansible_ssh_args' in v:
+            self.ssh_args = v['ansible_ssh_args']
 
     @property
     def transport(self):
@@ -78,10 +81,10 @@ class Connection(ConnectionBase):
         if self._connected:
             return self
 
-        extra_args = C.ANSIBLE_SSH_ARGS
-        if extra_args is not None:
+        ssh_args = self.ssh_args or C.ANSIBLE_SSH_ARGS
+        if ssh_args is not None:
             # make sure there is no empty string added as this can produce weird errors
-            self._common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
+            self._common_args += [x.strip() for x in shlex.split(ssh_args) if x.strip()]
         else:
             self._common_args += (
                 "-o", "ControlMaster=auto",

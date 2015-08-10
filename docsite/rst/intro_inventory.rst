@@ -211,9 +211,11 @@ SSH connection::
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
+    ansible_ssh_args
+      This setting overrides any ``ssh_args`` configured in ``ansible.cfg``.
     ansible_ssh_extra_args
       Additional arguments for ssh. Useful to configure a ``ProxyCommand`` for a certain host (or group).
-      This is used in addition to any ``ssh_args`` configured in ``ansible.cfg``.
+      This is used in addition to any ``ssh_args`` configured in ``ansible.cfg`` or the inventory.
 
 Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details)::
 
