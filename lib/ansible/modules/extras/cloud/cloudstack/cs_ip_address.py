@@ -172,7 +172,9 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
     def associate_ip_address(self):
         self.result['changed'] = True
         args = {}
-        args['account'] = self.get_account(key='id')
+        args['account'] = self.get_account(key='name')
+        args['domainid'] = self.get_domain(key='id')
+        args['projectid'] = self.get_project(key='id')
         args['networkid'] = self.get_network(key='id')
         args['zoneid'] = self.get_zone(key='id')
         ip_address = {}
