@@ -421,7 +421,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
             )
 
     if propagating_vgw_ids is not None:
-        result = ensure_propagation(vpc_conn, route_table_id,
+        result = ensure_propagation(vpc_conn, route_table.id,
                                     propagating_vgw_ids,
                                     check_mode=check_mode)
         changed = changed or result['changed']
