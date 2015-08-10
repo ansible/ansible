@@ -369,17 +369,22 @@ def ensure_subnet_associations(vpc_conn, vpc_id, route_table, subnets,
     return {'changed': changed}
 
 
-def ensure_propagation(vpc_conn, route_table_id, propagating_vgw_ids,
+def ensure_propagation(vpc_conn, route_table, propagating_vgw_ids,
                        check_mode):
 
-    # NOTE: As of boto==2.15.0, it is not yet possible to query the existing
-    # propagating gateways. However, EC2 does support this as evidenced by
-    # the describe-route-tables tool. For now, just enable the given VGWs
-    # and do not disable any others.
+    # NOTE: As of boto==2.38.0, it is not yet possible to query the existing
+    # propagating gateways. However, EC2 does support this as shown in its API
+    # documentation. For now, a reasonable proxy for this is the presence of
+    # propagated routes using the gateway in the route table. If such a route
+    # is found, propagation is almost certainly enabled.
     changed = False
     for vgw_id in propagating_vgw_ids:
+        for r in list(route_table.routes):
+            if r.gateway_id == vgw_id:
+                return {'changed': False}
+
         changed = True
-        vpc_conn.enable_vgw_route_propagation(route_table_id,
+        vpc_conn.enable_vgw_route_propagation(route_table.id,
                                               vgw_id,
                                               dry_run=check_mode)
 
@@ -430,7 +435,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
             )
 
     if propagating_vgw_ids is not None:
-        result = ensure_propagation(vpc_conn, route_table.id,
+        result = ensure_propagation(vpc_conn, route_table,
                                     propagating_vgw_ids,
                                     check_mode=check_mode)
         changed = changed or result['changed']
