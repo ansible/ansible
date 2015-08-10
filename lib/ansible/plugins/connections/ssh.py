@@ -58,6 +58,12 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
+        self.ssh_extra_args = ''
+
+    def set_host_overrides(self, host):
+        v = host.get_vars()
+        if 'ansible_ssh_extra_args' in v:
+            self.ssh_extra_args = v['ansible_ssh_extra_args']
 
     @property
     def transport(self):
@@ -113,6 +119,12 @@ class Connection(ConnectionBase):
         if self._play_context.remote_user is not None and self._play_context.remote_user != pwd.getpwuid(os.geteuid())[0]:
             self._common_args += ("-o", "User={0}".format(self._play_context.remote_user))
         self._common_args += ("-o", "ConnectTimeout={0}".format(self._play_context.timeout))
+
+        # If any extra SSH arguments are specified in the inventory for
+        # this host, add them in.
+        if self.ssh_extra_args is not None:
+            extra_args = self.ssh_extra_args
+            self._common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
 
         self._connected = True
 
