@@ -153,7 +153,7 @@ class TaskExecutor:
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
-                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=self._task.loop_args, variables=vars_copy)
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
 
