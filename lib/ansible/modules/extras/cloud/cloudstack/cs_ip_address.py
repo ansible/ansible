@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: cs_ip_address
-short_description: Manages Public/Secondary IP address associations
+short_description: Manages public IP address associations on Apache CloudStack based clouds.
 description:
     - Acquires and associates a public IP to an account or project. Due to API
       limitations this is not an idempotent call, so be sure to only
@@ -31,8 +31,10 @@ author: "Darren Worrall @dazworrall"
 options:
   ip_address:
     description:
-      - Public IP address. Required if C(state=absent)
-    required: true
+      - Public IP address.
+      - Required if C(state=absent)
+    required: false
+    default: null
   domain:
     description:
       - Domain the IP address is related to.
@@ -68,7 +70,7 @@ extends_documentation_fragment: cloudstack
 '''
 
 EXAMPLES = '''
-# Associate an IP address
+# Associate an IP address conditonally
 - local_action:
     module: cs_ip_address
     network: My Network
@@ -148,6 +150,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
                 break
         self.module.fail_json(msg="Network '%s' not found" % network)
 
+
     #TODO: Merge changes here with parent class
     def get_ip_address(self, key=None):
         if self.ip_address:
@@ -167,6 +170,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
         if ip_addresses:
             self.ip_address = ip_addresses['publicipaddress'][0]
         return self._get_by_key(key, self.ip_address)
+
 
     def associate_ip_address(self):
         self.result['changed'] = True
@@ -188,6 +192,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             ip_address = res
         return ip_address
 
+
     def disassociate_ip_address(self):
         ip_address = self.get_ip_address()
         if ip_address is None:
@@ -204,6 +209,7 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
             if poll_async:
                 res = self._poll_job(res, 'ipaddress')
         return ip_address
+
 
     def get_result(self, ip_address):
         if ip_address:
