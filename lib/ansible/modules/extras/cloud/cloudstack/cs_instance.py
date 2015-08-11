@@ -103,6 +103,7 @@ options:
       - Mutually exclusive with C(networks) option.
     required: false
     default: null
+    aliases: [ 'ip_to_network' ]
   disk_offering:
     description:
       - Name of the disk offering to be used.
@@ -827,7 +828,7 @@ def main():
             template = dict(default=None),
             iso = dict(default=None),
             networks = dict(type='list', aliases=[ 'network' ], default=None),
-            ip_to_networks = dict(type='list', default=None),
+            ip_to_networks = dict(type='list', aliases=['ip_to_network'], default=None),
             ip_address = dict(defaul=None),
             ip6_address = dict(defaul=None),
             disk_offering = dict(default=None),
