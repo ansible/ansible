@@ -73,9 +73,6 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
-        if isinstance(terms, basestring):
-            terms = [ terms ]
-
         vault_args = terms[0].split(' ')
         vault_dict = {}
         ret = []

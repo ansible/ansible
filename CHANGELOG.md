@@ -154,6 +154,7 @@ New Inventory scripts:
 
 New Lookups:
  * credstash
+ * hashi_vault
  * ini
 
 Other Notable Changes:
