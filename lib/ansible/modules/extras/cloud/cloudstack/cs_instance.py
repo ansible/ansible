@@ -478,7 +478,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             self.module.fail_json(msg="networks and ip_to_networks are mutually exclusive.")
 
         network_names = [n['network'] for n in network_mappings]
-        ids = self.get_network_ids(network_names).split(',')
+        ids = self.get_network_ids(network_names)
         res = []
         for i, data in enumerate(network_mappings):
             res.append({'networkid': ids[i], 'ip': data['ip']})
@@ -513,7 +513,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if len(network_ids) != len(network_names):
             self.module.fail_json(msg="Could not find all networks, networks list found: %s" % network_displaytexts)
 
-        return ','.join(network_ids)
+        return network_ids
 
 
     def present_instance(self):
@@ -539,6 +539,9 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def deploy_instance(self):
         self.result['changed'] = True
+        networkids = self.get_network_ids()
+        if networkids is not None:
+            networkids = ','.join(networkids)
 
         args                        = {}
         args['templateid']          = self.get_template_or_iso(key='id')
@@ -548,7 +551,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['domainid']            = self.get_domain(key='id')
         args['projectid']           = self.get_project(key='id')
         args['diskofferingid']      = self.get_disk_offering_id()
-        args['networkids']          = self.get_network_ids()
+        args['networkids']          = networkids
         args['iptonetworklist']     = self.get_iptonetwork_mappings()
         args['userdata']            = self.get_user_data()
         args['keyboard']            = self.module.params.get('keyboard')
