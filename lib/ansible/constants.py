@@ -241,3 +241,4 @@ DEFAULT_SU_PASS           = None
 VAULT_VERSION_MIN         = 1.0
 VAULT_VERSION_MAX         = 1.0
 MAX_FILE_SIZE_FOR_DIFF    = 1*1024*1024
+TREE_DIR                  = None
