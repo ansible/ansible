@@ -402,9 +402,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if not template and not iso:
             self.module.fail_json(msg="Template or ISO is required.")
 
-        if template and iso:
-            self.module.fail_json(msg="Template are ISO are mutually exclusive.")
-
         args                = {}
         args['account']     = self.get_account(key='name')
         args['domainid']    = self.get_domain(key='id')
@@ -852,6 +849,9 @@ def main():
             api_url = dict(default=None),
             api_http_method = dict(choices=['get', 'post'], default='get'),
             api_timeout = dict(type='int', default=10),
+        ),
+        mutually_exclusive = (
+            ['template', 'iso'],
         ),
         required_together = (
             ['api_key', 'api_secret', 'api_url'],
