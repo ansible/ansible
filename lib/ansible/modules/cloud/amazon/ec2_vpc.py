@@ -67,7 +67,7 @@ options:
     choices: [ "yes", "no" ]
   route_tables:
     description:
-      - 'A dictionary array of route tables to add of the form: { subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }. Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids in addition igw. resource_tags is optional and uses dictionary form: { "Name": "public", ... }. This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
+      - 'A dictionary array of route tables to add of the form: { subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }. Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids, interface-ids, and vpc-peering-connection-ids in addition igw. resource_tags is optional and uses dictionary form: { "Name": "public", ... }. This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
     required: false
     default: null
   wait:
@@ -223,25 +223,29 @@ def routes_match(rt_list=None, rt=None, igw=None):
 
     Returns:
         True when there provided routes and remote routes are the same. 
-        False when provided routes and remote routes are diffrent.
+        False when provided routes and remote routes are different.
     """
 
     local_routes = []
     remote_routes = []
     for route in rt_list:
-        route_kwargs = {}
+        route_kwargs = {
+            'gateway_id': None,
+            'instance_id': None,
+            'interface_id': None,
+            'vpc_peering_connection_id': None,
+            'state': 'active'
+        }
         if route['gw'] == 'igw':
             route_kwargs['gateway_id'] = igw.id
-            route_kwargs['instance_id'] = None
-            route_kwargs['state'] = 'active'
         elif route['gw'].startswith('i-'):
             route_kwargs['instance_id'] = route['gw']
-            route_kwargs['gateway_id'] = None
-            route_kwargs['state'] = 'active'
+        elif route['gw'].startswith('eni-'):
+            route_kwargs['interface_id'] = route['gw']
+        elif route['gw'].startswith('pcx-'):
+            route_kwargs['vpc_peering_connection_id'] = route['gw']
         else:
             route_kwargs['gateway_id'] = route['gw']
-            route_kwargs['instance_id'] = None
-            route_kwargs['state'] = 'active'
         route_kwargs['destination_cidr_block'] = route['dest']
         local_routes.append(route_kwargs)
     for j in rt.routes:
@@ -269,7 +273,7 @@ def rtb_changed(route_tables=None, vpc_conn=None, module=None, vpc=None, igw=Non
     igw          : The internet gateway object for this vpc
 
     Returns:
-        True when there is diffrence beween the provided routes and remote routes and if subnet assosications are diffrent.
+        True when there is difference between the provided routes and remote routes and if subnet associations are different.
         False when both routes and subnet associations matched.
  
     """
@@ -494,6 +498,10 @@ def create_vpc(module, vpc_conn):
                         route_kwargs['gateway_id'] = igw.id
                     elif route['gw'].startswith('i-'):
                         route_kwargs['instance_id'] = route['gw']
+                    elif route['gw'].startswith('eni-'):
+                        route_kwargs['interface_id'] = route['gw']
+                    elif route['gw'].startswith('pcx-'):
+                        route_kwargs['vpc_peering_connection_id'] = route['gw']
                     else:
                         route_kwargs['gateway_id'] = route['gw']
                     vpc_conn.create_route(new_rt.id, route['dest'], **route_kwargs)
@@ -636,6 +644,7 @@ def terminate_vpc(module, vpc_conn, vpc_id=None, cidr=None):
                     msg='Unable to delete VPC {0}, error: {1}'.format(vpc.id, e)
                 )
             changed = True
+            vpc_dict['state'] = "terminated"
 
     return (changed, vpc_dict, terminated_vpc_id)
 
