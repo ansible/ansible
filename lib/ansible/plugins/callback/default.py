@@ -68,10 +68,11 @@ class CallbackModule(CallbackBase):
 
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
+        else:
 
-        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result and result._task.action != 'include':
-            msg += " => %s" % self._dump_results(result._result)
-        self._display.display(msg, color=color)
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result and result._task.action != 'include':
+                msg += " => %s" % self._dump_results(result._result)
+            self._display.display(msg, color=color)
 
         self._handle_warnings(result._result)
 

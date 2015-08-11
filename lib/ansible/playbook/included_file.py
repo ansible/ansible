@@ -51,6 +51,8 @@ class IncludedFile:
 
             if res._task.action == 'include':
                 if res._task.loop:
+                    if 'results' not in res._result:
+                        continue
                     include_results = res._result['results']
                 else:
                     include_results = [ res._result ]
@@ -82,13 +84,13 @@ class IncludedFile:
 
                     task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=res._host, task=original_task)
                     #task_vars = tqm.add_tqm_variables(task_vars, play=iterator._play)
-                    templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())
                     if 'item' in include_result:
                         include_variables['item'] = include_result['item']
                         task_vars['item'] = include_result['item']
 
+                    templar = Templar(loader=loader, variables=task_vars)
                     include_file = templar.template(include_file)
                     inc_file = IncludedFile(include_file, include_variables, original_task)
 
