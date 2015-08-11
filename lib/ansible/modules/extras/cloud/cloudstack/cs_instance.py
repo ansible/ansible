@@ -97,7 +97,7 @@ options:
       - IPv6 address for default instance's network.
     required: false
     default: null
-  iptonetwork:
+  ip_to_networks:
     description:
       - List of mappings in the form {'network': NetworkName, 'ip': 1.2.3.4}
       - Mutually exclusive with C(networks) option.
@@ -226,7 +226,7 @@ EXAMPLES = '''
     name: web-vm-1
     template: Linux Debian 7 64-bit
     service_offering: Tiny
-    iptonetwork:
+    ip_to_networks:
       - {'network': NetworkA, 'ip': '10.1.1.1'}
       - {'network': NetworkB, 'ip': '192.168.1.1'}
 
@@ -470,12 +470,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return self.instance
 
     def get_iptonetwork_mappings(self):
-        network_mappings = self.module.params.get('iptonetwork')
+        network_mappings = self.module.params.get('ip_to_networks')
         if network_mappings is None:
             return
 
         if network_mappings and self.module.params.get('networks'):
-            self.module.fail_json(msg="networks and iptonetwork are mutually exclusive.")
+            self.module.fail_json(msg="networks and ip_to_networks are mutually exclusive.")
 
         network_names = [n['network'] for n in network_mappings]
         ids = self.get_network_ids(network_names).split(',')
@@ -824,7 +824,7 @@ def main():
             template = dict(default=None),
             iso = dict(default=None),
             networks = dict(type='list', aliases=[ 'network' ], default=None),
-            iptonetwork = dict(type='list', default=None),
+            ip_to_networks = dict(type='list', default=None),
             ip_address = dict(defaul=None),
             ip6_address = dict(defaul=None),
             disk_offering = dict(default=None),
