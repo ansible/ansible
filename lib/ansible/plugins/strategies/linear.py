@@ -170,7 +170,7 @@ class StrategyModule(StrategyBase):
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
-                    if task._role and task._role.has_run():
+                    if task._role and task._role.has_run(host):
                         # If there is no metadata, the default behavior is to not allow duplicates,
                         # if there is metadata, check to see if the allow_duplicates flag was set to true
                         if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:

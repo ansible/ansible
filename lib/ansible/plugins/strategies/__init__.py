@@ -205,14 +205,8 @@ class StrategyBase:
                         # lookup the role in the ROLE_CACHE to make sure we're dealing
                         # with the correct object and mark it as executed
                         for (entry, role_obj) in iterator._play.ROLE_CACHE[task_result._task._role._role_name].iteritems():
-                            params = task_result._task._role._role_params
-                            if task_result._task._role.tags is not None:
-                                params['tags'] = task_result._task._role.tags
-                            if task_result._task._role.when is not None:
-                                params['when'] = task_result._task._role.when
-                            hashed_entry = hash_params(params)
-                            if entry == hashed_entry:
-                                role_obj._had_task_run = True
+                            if role_obj._uuid == task_result._task._role._uuid:
+                                role_obj._had_task_run[host.name] = True
 
                     ret_results.append(task_result)
 
