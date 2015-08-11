@@ -80,8 +80,8 @@ class Role(Base, Become, Conditional, Taggable):
         self._handler_blocks   = []
         self._default_vars     = dict()
         self._role_vars        = dict()
-        self._had_task_run     = False
-        self._completed        = False
+        self._had_task_run     = dict()
+        self._completed        = dict()
 
         super(Role, self).__init__()
 
@@ -303,13 +303,13 @@ class Role(Base, Become, Conditional, Taggable):
         block_list.extend(self._handler_blocks)
         return block_list
 
-    def has_run(self):
+    def has_run(self, host):
         '''
         Returns true if this role has been iterated over completely and
         at least one task was run
         '''
 
-        return self._had_task_run and self._completed and not self._metadata.allow_duplicates
+        return host.name in self._completed and not self._metadata.allow_duplicates
 
     def compile(self, play, dep_chain=[]):
         '''
@@ -348,8 +348,8 @@ class Role(Base, Become, Conditional, Taggable):
         res['_role_vars']    = self._role_vars
         res['_role_params']  = self._role_params
         res['_default_vars'] = self._default_vars
-        res['_had_task_run'] = self._had_task_run
-        res['_completed']    = self._completed
+        res['_had_task_run'] = self._had_task_run.copy()
+        res['_completed']    = self._completed.copy()
 
         if self._metadata:
             res['_metadata'] = self._metadata.serialize()
@@ -373,8 +373,8 @@ class Role(Base, Become, Conditional, Taggable):
 	self._role_vars    = data.get('_role_vars', dict())
         self._role_params  = data.get('_role_params', dict())
         self._default_vars = data.get('_default_vars', dict())
-        self._had_task_run = data.get('_had_task_run', False)
-        self._completed    = data.get('_completed', False)
+        self._had_task_run = data.get('_had_task_run', dict())
+        self._completed    = data.get('_completed', dict())
 
         if include_deps:
             deps = []

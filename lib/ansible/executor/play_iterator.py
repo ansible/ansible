@@ -162,8 +162,8 @@ class PlayIterator:
 
         if task and task._role:
             # if we had a current role, mark that role as completed
-            if s.cur_role and task._role != s.cur_role and s.cur_role._had_task_run and not peek:
-                s.cur_role._completed = True
+            if s.cur_role and task._role != s.cur_role and host.name in s.cur_role._had_task_run and not peek:
+                s.cur_role._completed[host.name] = True
             s.cur_role = task._role
 
         if not peek:
