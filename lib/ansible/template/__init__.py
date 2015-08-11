@@ -35,6 +35,7 @@ from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
+from ansible.utils.listify import listify_lookup_plugin_terms
 
 from numbers import Number
 
