@@ -35,7 +35,6 @@ from ansible.template.safe_eval import safe_eval
 from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
-from ansible.utils.listify import listify_lookup_plugin_terms
 
 from numbers import Number
 
@@ -252,6 +251,7 @@ class Templar:
         instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
         if instance is not None:
+            from ansible.utils.listify import listify_lookup_plugin_terms
             loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
             # safely catch run failures per #5059
             try:
