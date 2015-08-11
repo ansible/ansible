@@ -93,6 +93,7 @@ class PlayIterator:
 
     def __init__(self, inventory, play, play_context, all_vars):
         self._play = play
+        self._inventory = inventory
 
         self._blocks = []
         for block in self._play.compile():
@@ -101,7 +102,7 @@ class PlayIterator:
                 self._blocks.append(new_block)
 
         self._host_states = {}
-        for host in inventory.get_hosts(self._play.hosts):
+        for host in self._inventory.get_hosts(self._play.hosts):
              self._host_states[host.name] = HostState(blocks=self._blocks)
              # if we're looking to start at a specific task, iterate through
              # the tasks for this host until we find the specified task
@@ -127,6 +128,13 @@ class PlayIterator:
     def get_next_task_for_host(self, host, peek=False):
 
         s = self.get_host_state(host)
+
+        # Capture the restriction and remove it so we can see what the last
+        # host is. Restore the restriction when we're finished.
+        restriction = self._inventory._restriction
+        self._inventory.remove_restriction()
+        last_host = self._inventory.get_hosts(self._play.hosts)[-1]
+        self._inventory._restriction = restriction
 
         task = None
         if s.run_state == self.ITERATING_COMPLETE:
@@ -162,7 +170,7 @@ class PlayIterator:
 
         if task and task._role:
             # if we had a current role, mark that role as completed
-            if s.cur_role and task._role != s.cur_role and s.cur_role._had_task_run and not peek:
+            if s.cur_role and task._role != s.cur_role and s.cur_role._had_task_run and not peek and (last_host == host):
                 s.cur_role._completed = True
             s.cur_role = task._role
 
