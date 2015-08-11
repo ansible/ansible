@@ -14,5 +14,5 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-__version__ = '1.9.2'
+__version__ = '1.9.3'
 __author__ = 'Ansible, Inc.'
