@@ -97,6 +97,12 @@ options:
       - IPv6 address for default instance's network.
     required: false
     default: null
+  iptonetwork:
+    description:
+      - List of mappings in the form {'network': NetworkName, 'ip': 1.2.3.4}
+      - Mutually exclusive with C(networks) option.
+    required: false
+    default: null
   disk_offering:
     description:
       - Name of the disk offering to be used.
@@ -213,6 +219,16 @@ EXAMPLES = '''
     tags:
       - { key: admin, value: john }
       - { key: foo,   value: bar }
+
+# Create an instance with multiple interfaces specifying the IP addresses
+- local_action:
+    module: cs_instance
+    name: web-vm-1
+    template: Linux Debian 7 64-bit
+    service_offering: Tiny
+    iptonetwork:
+      - {'network': NetworkA, 'ip': '10.1.1.1'}
+      - {'network': NetworkB, 'ip': '192.168.1.1'}
 
 # Ensure a instance has stopped
 - local_action: cs_instance name=web-vm-1 state=stopped
@@ -453,9 +469,25 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                         break
         return self.instance
 
+    def get_iptonetwork_mappings(self):
+        network_mappings = self.module.params.get('iptonetwork')
+        if network_mappings is None:
+            return
 
-    def get_network_ids(self):
-        network_names = self.module.params.get('networks')
+        if network_mappings and self.module.params.get('networks'):
+            self.module.fail_json(msg="networks and iptonetwork are mutually exclusive.")
+
+        network_names = [n['network'] for n in network_mappings]
+        ids = self.get_network_ids(network_names).split(',')
+        res = []
+        for i, data in enumerate(network_mappings):
+            res.append({'networkid': ids[i], 'ip': data['ip']})
+        return res
+
+    def get_network_ids(self, network_names=None):
+        if network_names is None:
+            network_names = self.module.params.get('networks')
+
         if not network_names:
             return None
 
@@ -517,6 +549,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['projectid']           = self.get_project(key='id')
         args['diskofferingid']      = self.get_disk_offering_id()
         args['networkids']          = self.get_network_ids()
+        args['iptonetworklist']     = self.get_iptonetwork_mappings()
         args['userdata']            = self.get_user_data()
         args['keyboard']            = self.module.params.get('keyboard')
         args['ipaddress']           = self.module.params.get('ip_address')
@@ -791,6 +824,7 @@ def main():
             template = dict(default=None),
             iso = dict(default=None),
             networks = dict(type='list', aliases=[ 'network' ], default=None),
+            iptonetwork = dict(type='list', default=None),
             ip_address = dict(defaul=None),
             ip6_address = dict(defaul=None),
             disk_offering = dict(default=None),
