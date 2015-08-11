@@ -22,6 +22,7 @@ import codecs
 
 from ansible.errors import *
 from ansible.plugins.lookup import LookupBase
+from ansible.utils.listify import listify_lookup_plugin_terms
 
 class LookupModule(LookupBase):
 
@@ -30,6 +31,7 @@ class LookupModule(LookupBase):
         ret = []
 
         basedir = self.get_basedir(variables)
+        terms = listify_lookup_plugin_terms(terms, templar=self._templar, loader=self._loader)
 
         for term in terms:
             self._display.debug("File lookup term: %s" % term)
