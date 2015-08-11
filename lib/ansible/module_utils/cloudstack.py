@@ -366,3 +366,18 @@ class AnsibleCloudStack:
                     break
                 time.sleep(2)
         return job
+
+
+    def get_result(self, resource):
+        if resource:
+            if 'id' in resource:
+                self.result['id'] = resource['id']
+            if 'project' in resource:
+                self.result['project'] = resource['project']
+            if 'domain' in resource:
+                self.result['domain'] = resource['domain']
+            if 'account' in resource:
+                self.result['account'] = resource['account']
+            if 'zonename' in resource:
+                self.result['zone'] = resource['zonename']
+        return self.result
