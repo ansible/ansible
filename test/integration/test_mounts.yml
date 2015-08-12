@@ -1,0 +1,17 @@
+---
+- name: "Mount check"
+  hosts: "localhost"
+  gather_facts: "yes"
+  tasks:
+    - name: "Get corresponding mountpoint from a given path"
+      set_fact:
+        mount1:            "{{'/tmp/test'|getmountfrompath(ansible_mounts)}}"
+        mount2:            "{{'/home/test'|getmountfrompath(ansible_mounts)}}"
+    - debug: var=mount1
+    - debug: var=mount2
+    - assert:
+        that: mount1.size_available_pc > 1
+    - name: "4G equals =>"
+      debug: msg="{{4|unit('g')}}"
+    - assert:
+        that: mount2.size_available > 4|unit('g')

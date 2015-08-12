@@ -222,6 +222,34 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
+def getmountfrompath(path, mounts):
+    '''return the closest corresponding mount for a given path'''
+    current_string_length = 0
+    current_mount = None
+    for mount in mounts:
+        if mount['mount'].startswith('/'):
+            if current_string_length < len(mount['mount']) and path.startswith(mount['mount']):
+                current_string_length = len(mount['mount'])
+                current_mount = mount
+    return current_mount
+
+def unit(size, unit = ''):
+    '''Convert humean readable size into bytes'''
+    unit = unit[0].upper()
+    unit_sizes = {
+        'Z': (1<<70L),
+        'E': (1<<60L),
+        'P': (1<<50L),
+        'T': (1<<40L),
+        'G': (1<<30L),
+        'M': (1<<20L),
+        'K': (1<<10L),
+        'B': (1)
+    }
+    if unit_sizes[unit]:
+        return size * unit_sizes[unit]
+    return size
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -251,6 +279,8 @@ class FilterModule(object):
             'realpath': partial(unicode_wrap, os.path.realpath),
             'relpath': partial(unicode_wrap, os.path.relpath),
             'splitext': partial(unicode_wrap, os.path.splitext),
+            'getmountfrompath': getmountfrompath,
+            'unit': unit,
 
             # value as boolean
             'bool': bool,
