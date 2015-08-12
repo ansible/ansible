@@ -113,6 +113,9 @@
      }
   </style>
 
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300'
+    rel='stylesheet' type='text/css'>
+
 </head>
 
 <body class="wy-body-for-nav">
@@ -122,16 +125,32 @@
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f); })(window,document,'script','dataLayer','GTM-PSB293');</script>
   <!-- End Google Tag Manager -->
 
+  <a class="DocSite-nav" href="http://docs.ansible.com/">
+    <img class="DocSiteNav-logo"
+      src="{{ pathto('_static/', 1) }}images/logo_invert.png"
+      alt="Ansible Logo">
+    <div class="DocSiteNav-title">
+      Documentation
+    </div>
+  </a>
+
   <div class="wy-grid-for-nav">
 
     {# SIDE NAV, TOGGLES ON MOBILE #}
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div style='background-color:#64C5C7'>
-        <br/>
-        <center><a href="{{ pathto(master_doc) }}"><img src="http://cdn2.hubspot.net/hub/330046/file-445792629-png/ANSI_logotype_web_white.png" style="border-radius:0;background-color:#64C5C7;width:214px;height:26px;margin:'auto auto auto auto'"></a></center>
-        <br/>      
+
+      <div style="background-color:#5bbdbf;height=80px;margin:'auto auto auto auto'">
+        <a class="DocSiteProduct-header DocSiteProduct-header--core"
+          href="http://docs.ansible.com/ansible/">
+          <div class="DocSiteProduct-productName">
+            <div class="DocSiteProduct-logoText">
+              ANSIBLE
+            </div>
+          </div>
+        </a>
       </div>
-      <div class="wy-side-nav-search" style="background-color:#64C5C7;height=80px;margin:'auto auto auto auto'">
+
+      <div class="wy-side-nav-search" style="background-color:#5bbdbf;height=80px;margin:'auto auto auto auto'">
         <!-- <a href="{{ pathto(master_doc) }}" class="icon icon-home"> {{ project }}</a> -->
         {% include "searchbox.html" %}
       </div>
@@ -177,17 +196,15 @@
       <div class="wy-nav-content">
         <div class="rst-content">
 
-<!-- AnsibleFest and free eBook preview stuff -->
-<center>
-<a href="http://www.ansible.com/tower?utm_source=docs">
-<img src="http://www.ansible.com/hs-fs/hub/330046/file-2031636235-png/DL_Folder/festlondon-docs.png">
-</a>
-<a href="http://www.ansible.com/ansible-book">
-<img src="http://www.ansible.com/hs-fs/hub/330046/file-2031636250-png/DL_Folder/Ebook-docs.png">
-</a>
-<br/>&nbsp;<br/>
-<br/>&nbsp;<br/>
-</center>
+          <!-- Tower ads -->
+          <a class="DocSiteBanner" href="http://www.ansible.com/tower?utm_source=docs">
+            <div class="DocSiteBanner-imgWrapper">
+              <img src="{{ pathto('_static/', 1) }}images/banner_ad_1.png">
+            </div>
+            <div class="DocSiteBanner-imgWrapper">
+              <img src="{{ pathto('_static/', 1) }}images/banner_ad_2.png">
+            </div>
+          </a>
 
           {% include "breadcrumbs.html" %}
           <div id="page-content">

@@ -55,7 +55,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'Ansible Documentation'
-copyright = "2013 Ansible, Inc"
+copyright = "2013-2015 Ansible, Inc"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -99,6 +99,8 @@ exclude_patterns = ['modules']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
+
+highlight_language = 'YAML'
 
 
 # Options for HTML output

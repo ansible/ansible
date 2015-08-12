@@ -225,7 +225,7 @@
     - "result.msg == 'line added'"
 
 - name: insert a multiple lines at the end of the file
-  lineinfile: dest={{output_dir}}/test.txt state=present line="This is a line\nwith \\\n character" insertafter="EOF"
+  lineinfile: dest={{output_dir}}/test.txt state=present line="This is a line\nwith \\n character" insertafter="EOF"
   register: result
 
 - name: assert that the multiple lines was inserted
@@ -354,5 +354,23 @@
   assert:
     that:
     - "result.stat.checksum == '73b271c2cc1cef5663713bc0f00444b4bf9f4543'"
+
+- name: insert a line into the quoted file with many double quotation strings
+  lineinfile: dest={{output_dir}}/test_quoting.txt line="\"quote\" and \"unquote\""
+  register: result
+
+- name: assert that the quoted file was changed
+  assert:
+    that:
+    - result.changed
+
+- name: stat the quote test file
+  stat: path={{output_dir}}/test_quoting.txt
+  register: result
+
+- name: assert test checksum matches after backref line was replaced
+  assert:
+    that:
+    - "result.stat.checksum == 'b10ab2a3c3b6492680c8d0b1d6f35aa6b8f9e731'"
 
 ###################################################################

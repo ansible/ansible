@@ -32,21 +32,20 @@ try:
 except:
     HAS_LOOSE_VERSION = False
 
-AWS_REGIONS = [
-    'ap-northeast-1',
-    'ap-southeast-1',
-    'ap-southeast-2',
-    'cn-north-1',
-    'eu-central-1',
-    'eu-west-1',
-    'eu-central-1',
-    'sa-east-1',
-    'us-east-1',
-    'us-west-1',
-    'us-west-2',
-    'us-gov-west-1',
-]
 
+def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
+    if conn_type not in ['both', 'resource', 'client']:
+        module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
+
+    resource = boto3.session.Session().resource(resource, region_name=region, endpoint_url=endpoint, **params)
+    client = resource.meta.client
+
+    if conn_type == 'resource':
+        return resource
+    elif conn_type == 'client':
+        return client
+    else:
+        return client, resource
 
 def aws_common_argument_spec():
     return dict(
@@ -54,7 +53,7 @@ def aws_common_argument_spec():
         aws_secret_key=dict(aliases=['ec2_secret_key', 'secret_key'], no_log=True),
         aws_access_key=dict(aliases=['ec2_access_key', 'access_key']),
         validate_certs=dict(default=True, type='bool'),
-        security_token=dict(no_log=True),
+        security_token=dict(aliases=['access_token'], no_log=True),
         profile=dict(),
     )
 
@@ -63,7 +62,7 @@ def ec2_argument_spec():
     spec = aws_common_argument_spec()
     spec.update(
         dict(
-            region=dict(aliases=['aws_region', 'ec2_region'], choices=AWS_REGIONS),
+            region=dict(aliases=['aws_region', 'ec2_region']),
         )
     )
     return spec
@@ -73,7 +72,7 @@ def boto_supports_profile_name():
     return hasattr(boto.ec2.EC2Connection, 'profile_name')
 
 
-def get_aws_connection_info(module):
+def get_aws_connection_info(module, boto3=False):
 
     # Check module args for credentials, then check environment vars
     # access_key
@@ -87,38 +86,38 @@ def get_aws_connection_info(module):
     validate_certs = module.params.get('validate_certs')
 
     if not ec2_url:
-        if 'EC2_URL' in os.environ:
-            ec2_url = os.environ['EC2_URL']
-        elif 'AWS_URL' in os.environ:
+        if 'AWS_URL' in os.environ:
             ec2_url = os.environ['AWS_URL']
+        elif 'EC2_URL' in os.environ:
+            ec2_url = os.environ['EC2_URL']
 
     if not access_key:
-        if 'EC2_ACCESS_KEY' in os.environ:
-            access_key = os.environ['EC2_ACCESS_KEY']
-        elif 'AWS_ACCESS_KEY_ID' in os.environ:
+        if 'AWS_ACCESS_KEY_ID' in os.environ:
             access_key = os.environ['AWS_ACCESS_KEY_ID']
         elif 'AWS_ACCESS_KEY' in os.environ:
             access_key = os.environ['AWS_ACCESS_KEY']
+        elif 'EC2_ACCESS_KEY' in os.environ:
+            access_key = os.environ['EC2_ACCESS_KEY']
         else:
             # in case access_key came in as empty string
             access_key = None
 
     if not secret_key:
-        if 'EC2_SECRET_KEY' in os.environ:
-            secret_key = os.environ['EC2_SECRET_KEY']
-        elif 'AWS_SECRET_ACCESS_KEY' in os.environ:
+        if 'AWS_SECRET_ACCESS_KEY' in os.environ:
             secret_key = os.environ['AWS_SECRET_ACCESS_KEY']
         elif 'AWS_SECRET_KEY' in os.environ:
             secret_key = os.environ['AWS_SECRET_KEY']
+        elif 'EC2_SECRET_KEY' in os.environ:
+            secret_key = os.environ['EC2_SECRET_KEY']
         else:
             # in case secret_key came in as empty string
             secret_key = None
 
     if not region:
-        if 'EC2_REGION' in os.environ:
-            region = os.environ['EC2_REGION']
-        elif 'AWS_REGION' in os.environ:
+        if 'AWS_REGION' in os.environ:
             region = os.environ['AWS_REGION']
+        elif 'EC2_REGION' in os.environ:
+            region = os.environ['EC2_REGION']
         else:
             # boto.config.get returns None if config not found
             region = boto.config.get('Boto', 'aws_region')
@@ -128,23 +127,37 @@ def get_aws_connection_info(module):
     if not security_token:
         if 'AWS_SECURITY_TOKEN' in os.environ:
             security_token = os.environ['AWS_SECURITY_TOKEN']
+        elif 'EC2_SECURITY_TOKEN' in os.environ:
+            security_token = os.environ['EC2_SECURITY_TOKEN']
         else:
             # in case security_token came in as empty string
             security_token = None
 
-    boto_params = dict(aws_access_key_id=access_key,
-                       aws_secret_access_key=secret_key,
-                       security_token=security_token)
+    if boto3:
+        boto_params = dict(aws_access_key_id=access_key,
+                           aws_secret_access_key=secret_key,
+                           aws_session_token=security_token)
+        if validate_certs:
+            boto_params['verify'] = validate_certs
 
-    # profile_name only works as a key in boto >= 2.24
-    # so only set profile_name if passed as an argument
-    if profile_name:
-        if not boto_supports_profile_name():
-            module.fail_json("boto does not support profile_name before 2.24")
-        boto_params['profile_name'] = profile_name
+        if profile_name:
+            boto_params['profile_name'] = profile_name
 
-    if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
-        boto_params['validate_certs'] = validate_certs
+
+    else:
+        boto_params = dict(aws_access_key_id=access_key,
+                           aws_secret_access_key=secret_key,
+                           security_token=security_token)
+
+       # profile_name only works as a key in boto >= 2.24
+        # so only set profile_name if passed as an argument
+        if profile_name:
+            if not boto_supports_profile_name():
+                module.fail_json("boto does not support profile_name before 2.24")
+            boto_params['profile_name'] = profile_name
+
+        if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
+            boto_params['validate_certs'] = validate_certs
 
     return region, ec2_url, boto_params
 
@@ -168,7 +181,7 @@ def connect_to_aws(aws_module, region, **params):
     conn = aws_module.connect_to_region(region, **params)
     if not conn:
         if region not in [aws_module_region.name for aws_module_region in aws_module.regions()]:
-            raise StandardError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade boto" % (region, aws_module.__name__))
+            raise StandardError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade boto or extend with endpoints_path" % (region, aws_module.__name__))
         else:
             raise StandardError("Unknown problem connecting to region %s for aws module %s." % (region, aws_module.__name__))
     if params.get('profile_name'):

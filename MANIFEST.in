@@ -1,3 +1,9 @@
+prune v2
+prune docsite
+prune ticket_stubs
+prune packaging
+prune test
+prune hacking
 include README.md packaging/rpm/ansible.spec COPYING
 include examples/hosts
 include examples/ansible.cfg
@@ -7,5 +13,9 @@ recursive-include docs *
 include Makefile
 include VERSION
 include MANIFEST.in
+include contrib/README.md
+include contrib/inventory *
+exclude lib/ansible/modules/core/.git*
+exclude lib/ansible/modules/extras/.git*
 prune lib/ansible/modules/core/.git
 prune lib/ansible/modules/extras/.git

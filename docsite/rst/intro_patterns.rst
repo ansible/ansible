@@ -72,7 +72,7 @@ As an advanced usage, you can also select the numbered server in a group::
    
     webservers[0]
 
-Or a portion of servers in a group::
+Or a range of servers in a group::
 
     webservers[0:25]
 

@@ -7,7 +7,7 @@
 # __Test Outline__
 #
 # __ec2_elb_lb__
-# create test elb with listeners and certificat
+# create test elb with listeners and certificate
 # change AZ's
 # change listeners
 # remove listeners
