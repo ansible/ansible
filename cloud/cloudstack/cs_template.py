@@ -596,9 +596,6 @@ def main():
             ['api_key', 'api_secret', 'api_url'],
             ['format', 'url', 'hypervisor'],
         ),
-        required_one_of = (
-            ['url', 'vm'],
-        ),
         supports_check_mode=True
     )
 
@@ -612,11 +609,12 @@ def main():
         if state in ['absent']:
             tpl = acs_tpl.remove_template()
         else:
-            url = module.params.get('url')
-            if url:
+            if module.params.get('url'):
                 tpl = acs_tpl.register_template()
-            else:
+            elif module.params.get('vm'):
                 tpl = acs_tpl.create_template()
+            else:
+                module.fail_json(msg="one of the following is required on state=present: url,vm")
 
         result = acs_tpl.get_result(tpl)
 
