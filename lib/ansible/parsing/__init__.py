@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import copy
 import json
 import os
 
@@ -100,16 +101,17 @@ class DataLoader():
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
         if file_name in self._FILE_CACHE:
-            return self._FILE_CACHE[file_name]
+            parsed_data = self._FILE_CACHE[file_name]
+        else:
+            # read the file contents and load the data structure from them
+            (file_data, show_content) = self._get_file_contents(file_name)
+            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
 
-        # read the file contents and load the data structure from them
-        (file_data, show_content) = self._get_file_contents(file_name)
-        parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
+            # cache the file contents for next time
+            self._FILE_CACHE[file_name] = parsed_data
 
-        # cache the file contents for next time
-        self._FILE_CACHE[file_name] = parsed_data
-
-        return parsed_data
+        # return a deep copy here, so the cache is not affected
+        return copy.deepcopy(parsed_data)
 
     def path_exists(self, path):
         path = self.path_dwim(path)
