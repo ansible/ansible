@@ -103,6 +103,20 @@ does not cause handlers to fire::
       - shell: wall 'beep'
         changed_when: False
 
+Aborting the play
+`````````````````
+
+Sometimes it's desirable to abort the entire play on failure, not just skip remaining tasks for a host.
+
+The ``any_errors_fatal`` play option will mark all hosts as failed if any fails, causing an immediate abort.
+
+     - hosts: somehosts
+       any_errors_fatal: true
+       roles:
+         - myrole
+
+for finer-grained control ``max_fail_percentage`` can be used to abort the run after a given percentage of hosts has failed.
+
 
 .. seealso::
 
