@@ -18,6 +18,7 @@
 ########################################################
 import datetime
 import os
+import platform
 import random
 import shutil
 import socket
@@ -107,7 +108,9 @@ class PullCLI(CLI):
 
         # Build Checkout command
         # Now construct the ansible command
-        limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
+        node = platform.node()
+        host = socket.getfqdn()
+        limit_opts = 'localhost:%s:127.0.0.1' % ':'.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
         base_opts = '-c local "%s"' % limit_opts
         if self.options.verbosity > 0:
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
