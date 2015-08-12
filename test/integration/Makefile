@@ -184,3 +184,6 @@ test_galaxy_yaml:
     RC=$$? ; \
     rm -rf $$mytmpdir ; \
     exit $$RC
+
+test_lookup_paths:
+	ansible-playbook lookup_paths/play.yml -i $(INVENTORY) -v $(TEST_FLAGS)
