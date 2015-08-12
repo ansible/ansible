@@ -23,12 +23,11 @@ import random
 import shutil
 import socket
 import sys
+import time
 
-from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleOptionsError
 from ansible.cli import CLI
 from ansible.plugins import module_loader
-from ansible.utils.display import Display
 from ansible.utils.cmd_functions import run_cmd
 
 ########################################################
@@ -219,7 +218,7 @@ class PullCLI(CLI):
             fqdn = socket.getfqdn()
             hostpb = os.path.join(path, fqdn + '.yml')
             shorthostpb = os.path.join(path, fqdn.split('.')[0] + '.yml')
-            localpb = os.path.join(path, DEFAULT_PLAYBOOK)
+            localpb = os.path.join(path, self.DEFAULT_PLAYBOOK)
             errors = []
             for pb in [hostpb, shorthostpb, localpb]:
                 rc = self.try_playbook(pb)
