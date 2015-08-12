@@ -255,7 +255,7 @@ class Templar:
             loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
             # safely catch run failures per #5059
             try:
-                ran = instance.run(*loop_terms, variables=self._available_variables, **kwargs)
+                ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
             except (AnsibleUndefinedVariable, UndefinedError):
                 raise
             except Exception, e:
