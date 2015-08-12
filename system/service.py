@@ -980,7 +980,11 @@ class FreeBsdService(Service):
 
         rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
         cmd = "%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments)
-        rcvars = shlex.split(stdout, comments=True)
+        try:
+            rcvars = shlex.split(stdout, comments=True)
+        except:
+            #TODO: add a warning to the output with the failure
+            continue
 
         if not rcvars:
             self.module.fail_json(msg="unable to determine rcvar", stdout=stdout, stderr=stderr)
