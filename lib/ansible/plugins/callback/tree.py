@@ -34,24 +34,28 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'tree'
 
-    def write_tree_file(self, tree, hostname, buf):
+    def __init__(self, display):
+        super(CallbackModule, self).__init__(display)
+
+        self.tree = TREE_DIR
+        if not self.tree:
+            self._display.warnings("Disabling tree callback, invalid directory provided to tree option: %s" % self.tree)
+
+    def write_tree_file(self, hostname, buf):
         ''' write something into treedir/hostname '''
 
-        makedirs_safe(tree)
         try:
-            path = os.path.join(tree, hostname)
-            fd = open(path, "a+")
+            makedirs_safe(self.tree)
+            path = os.path.join(self.tree, hostname)
+            fd = open(path, "w+")
             fd.write(buf)
             fd.close()
         except (OSError, IOError) as e:
             self._display.warnings("Unable to write to %s's file: %s" % (hostname, str(e)))
 
     def result_to_tree(self, result):
-        tree = TREE_DIR
-        if tree:
-            self.write_tree_file(tree, result._host.get_name(), self._dump_results(result._result))
-        else:
-            self._display.warnings("Invalid directory provided to tree option: %s" % tree)
+        if self.tree:
+            self.write_tree_file(result._host.get_name(), self._dump_results(result._result))
 
     def v2_runner_on_ok(self, result):
         self.result_to_tree(result)
