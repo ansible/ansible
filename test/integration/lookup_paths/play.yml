@@ -1,0 +1,60 @@
+- name: setup state
+  hosts: testhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - copy: dest={{playbook_dir}}/roles/showfile/files/testfile content='in role files'
+    - copy: dest={{playbook_dir}}/roles/showfile/tasks/testfile content='in role tasks'
+    - copy: dest={{playbook_dir}}/roles/showfile/testfile content='in role'
+    - copy: dest={{playbook_dir}}/files/testfile content='in files'
+    - copy: dest={{playbook_dir}}/testfile content='in local'
+    - set_fact: role_out="in role files" play_out="in files"
+
+- include: testplay.yml
+
+- name: remove from role/files
+  hosts: testhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - file: path={{playbook_dir}}/roles/showfile/files/testfile state=absent
+    - set_fact: role_out="in role tasks" play_out="in files"
+
+- include: testplay.yml
+
+- name: remove from role/tasks
+  hosts: testhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - file: path={{playbook_dir}}/roles/showfile/tasks/testfile state=absent
+    - set_fact: role_out="in files" play_out="in files"
+
+- include: testplay.yml
+
+- name: remove from role dir
+  hosts: testhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - file: path={{playbook_dir}}/roles/showfile/testfile state=absent
+    - set_fact: role_out="in files" play_out="in files"
+
+- include: testplay.yml
+
+- name: remove from play/files
+  hosts: testhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - file: path={{playbook_dir}}/files/testfile state=absent
+    - set_fact: role_out="in local" play_out="in local"
+
+- include: testplay.yml
+
+- name: cleanup
+  hosts: testhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - file: path={{playbook_dir}}/testfile state=absent
