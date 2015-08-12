@@ -212,19 +212,19 @@ class Task(Base, Conditional, Taggable, Become):
         return value
 
     def get_vars(self):
-        all_vars = self.vars.copy()
+        all_vars = dict()
         if self._block:
             all_vars.update(self._block.get_vars())
         if self._task_include:
             all_vars.update(self._task_include.get_vars())
 
-        #if isinstance(self.args, dict):
-        #    all_vars.update(self.args)
+        all_vars.update(self.vars)
 
         if 'tags' in all_vars:
             del all_vars['tags']
         if 'when' in all_vars:
             del all_vars['when']
+
         return all_vars
 
     def copy(self, exclude_block=False):

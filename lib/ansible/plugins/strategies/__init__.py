@@ -406,9 +406,9 @@ class StrategyBase:
 
         # set the vars for this task from those specified as params to the include
         for b in block_list:
-            temp_vars = b.vars.copy()
+            temp_vars = b._task_include.vars.copy()
             temp_vars.update(included_file._args.copy())
-            b.vars = temp_vars
+            b._task_include.vars = temp_vars
 
         return block_list
 
