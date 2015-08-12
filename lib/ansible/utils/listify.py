@@ -26,7 +26,7 @@ from ansible.template.safe_eval import safe_eval
 __all__ = ['listify_lookup_plugin_terms']
 
 #FIXME: probably just move this into lookup plugin base class
-def listify_lookup_plugin_terms(terms, templar, loader, fail_on_undefined=False, convert_bare=False):
+def listify_lookup_plugin_terms(terms, templar, loader, fail_on_undefined=False, convert_bare=True):
 
     if isinstance(terms, basestring):
         stripped = terms.strip()
