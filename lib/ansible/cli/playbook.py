@@ -20,19 +20,12 @@
 ########################################################
 import os
 import stat
-import sys
 
-from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
-from ansible.parsing.splitter import parse_kv
-from ansible.playbook import Playbook
-from ansible.playbook.task import Task
-from ansible.utils.display import Display
-from ansible.utils.unicode import to_unicode
 from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
