@@ -1,5 +1,5 @@
 - name: test initial state
-  hosts: localhost
+  hosts: testhost
   connection: local
   gather_facts: false
   roles:
@@ -8,7 +8,7 @@
     - name: from play
       set_fact: play_result="{{lookup('file', 'testfile')}}"
 
-    - name: output output
+    - name: output output {{stage}}
       debug: msg="play> {{play_out}}, role> {{role_out}}"
 
     - name: verify that result match expected
