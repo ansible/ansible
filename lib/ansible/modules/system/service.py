@@ -503,10 +503,21 @@ class LinuxService(Service):
             self.svc_initctl = location['initctl']
 
     def get_systemd_service_enabled(self):
-        (rc, out, err) = self.execute_command("%s is-enabled %s" % (self.enable_cmd, self.__systemd_unit,))
+        def sysv_exists(name):
+            script = '/etc/init.d/' + name
+            return os.access(script, os.X_OK)
+
+        def sysv_is_enabled(name):
+            return bool(glob.glob('/etc/rc?.d/S??' + name))
+
+        service_name = self.__systemd_unit
+        (rc, out, err) = self.execute_command("%s is-enabled %s" % (self.enable_cmd, service_name,))
         if rc == 0:
             return True
-        return False
+        elif sysv_exists(service_name):
+            return sysv_is_enabled(service_name)
+        else:
+            return False
 
     def get_systemd_status_dict(self):
         (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit,))
