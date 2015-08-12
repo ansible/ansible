@@ -275,7 +275,7 @@ class VariableManager:
         copied_vars = all_vars.copy()
         if 'hostvars' in copied_vars:
             del copied_vars['hostvars']
-        all_vars['vars'] = all_vars.copy()
+        all_vars['vars'] = copied_vars
 
         #CACHED_VARS[cache_entry] = all_vars
 
