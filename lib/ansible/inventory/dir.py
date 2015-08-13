@@ -27,10 +27,57 @@ from ansible.errors import AnsibleError
 
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible.inventory.ini import InventoryParser
-from ansible.inventory.script import InventoryScript
-from ansible.utils.path import is_executable
 from ansible.utils.vars import combine_vars
+
+from ansible.utils.path import is_executable
+from ansible.inventory.ini import InventoryParser as InventoryINIParser
+from ansible.inventory.script import InventoryScript
+
+__all__ = ['get_file_parser']
+
+def get_file_parser(hostsfile, loader):
+    # check to see if the specified file starts with a
+    # shebang (#!/), so if an error is raised by the parser
+    # class we can show a more apropos error
+
+    shebang_present = False
+    processed = False
+    myerr = []
+    parser = None
+
+    try:
+        inv_file = open(hostsfile)
+        first_line = inv_file.readlines()[0]
+        inv_file.close()
+        if first_line.startswith('#!'):
+            shebang_present = True
+    except:
+        pass
+
+    if is_executable(hostsfile):
+        try:
+            parser = InventoryScript(loader=loader, filename=hostsfile)
+            processed = True
+        except Exception as e:
+            myerr.append("The file %s is marked as executable, but failed to execute correctly. " % hostsfile + \
+                            "If this is not supposed to be an executable script, correct this with `chmod -x %s`." % hostsfile)
+            myerr.append(str(e))
+
+    if not processed:
+        try:
+            parser = InventoryINIParser(filename=hostsfile)
+            processed = True
+        except Exception as e:
+            if shebang_present and not is_executable(hostsfile):
+                myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. " % hostsfile + \
+                              "Perhaps you want to correct this with `chmod +x %s`?" % hostsfile)
+            else:
+                myerr.append(str(e))
+
+    if not processed and myerr:
+        raise AnsibleError( '\n'.join(myerr) )
+
+    return parser
 
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
@@ -48,7 +95,7 @@ class InventoryDirectory(object):
         for i in self.names:
 
             # Skip files that end with certain extensions or characters
-            if any(i.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".cfg", ".retry", ".pyc", ".pyo")):
+            if any(i.endswith(ext) for ext in C.DEFAULT_INVENTORY_IGNORE):
                 continue
             # Skip hidden files
             if i.startswith('.') and not i.startswith('./'):
@@ -59,10 +106,14 @@ class InventoryDirectory(object):
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
                 parser = InventoryDirectory(loader=loader, filename=fullpath)
-            elif is_executable(fullpath):
-                parser = InventoryScript(loader=loader, filename=fullpath)
             else:
-                parser = InventoryParser(filename=fullpath)
+                parser = get_file_parser(fullpath, loader)
+                if parser is None:
+                    #FIXME: needs to use display
+                    import warnings
+                    warnings.warning("Could not find parser for %s, skipping" % fullpath)
+                    continue
+
             self.parsers.append(parser)
 
             # retrieve all groups and hosts form the parser and add them to
