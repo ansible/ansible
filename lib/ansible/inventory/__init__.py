@@ -178,10 +178,11 @@ class Inventory(object):
         applied subsets.
         """
 
-        # process patterns
+        # Enumerate all hosts matching the given pattern (which may be
+        # either a list of patterns or a string like 'pat1:pat2').
         if isinstance(pattern, list):
-            pattern = ';'.join(pattern)
-        patterns = self._split_pattern(pattern.replace(";",":"))
+            pattern = ':'.join(pattern)
+        patterns = self._split_pattern(pattern)
         hosts = self._get_hosts(patterns)
 
         # exclude hosts not in a subset, if defined
@@ -520,8 +521,7 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
-            subset_pattern = subset_pattern.replace(',',':')
-            subset_patterns = self._split_pattern(subset_pattern.replace(";",":"))
+            subset_patterns = self._split_pattern(subset_pattern)
             results = []
             # allow Unix style @filename data
             for x in subset_patterns:

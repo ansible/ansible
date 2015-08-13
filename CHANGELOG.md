@@ -165,6 +165,11 @@ Other Notable Changes:
 * play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
 * vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
 
+Minor changes:
+
+* The undocumented semicolon-separated "pattern1;pattern2" syntax to
+  match hosts is no longer supported.
+
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
 * Security fixes to check that hostnames match certificates with https urls (CVE-2015-3908)
