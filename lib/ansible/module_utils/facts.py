@@ -2313,6 +2313,42 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
     """
     platform = 'AIX'
 
+    def parse_entstat(self, entstat_path, current_if):
+        """Parse the output of the entstat command for this interface"""
+
+        if not current_if['device'].startswith('en'):
+            return
+
+        rc, out, err = module.run_command([entstat_path, current_if['device'] ])
+        if rc:
+            return
+
+        for line in out.split('\n'):
+            if not line:
+                continue
+
+            buff = re.match('^Hardware Address: (.*)', line)
+            if buff:
+                current_if['macaddress'] = buff.group(1)
+
+            if line.startswith('Device Type:') and 'Ethernet' in line:
+                current_if['type'] = 'ether'
+
+    def parse_lsattr(self, lsattr_path, current_if):
+        """Parse the output of the lsattr command for this interface"""
+
+        rc, out, err = module.run_command([lsattr_path,'-El', current_if['device'] ])
+        if rc:
+            return
+
+        for line in out.split('\n'):
+            if not line:
+                continue
+
+            words = line.split()
+            if words[0] == 'mtu':
+                current_if['mtu'] = words[1]
+
     # AIX 'ifconfig -a' does not have three words in the interface line
     def get_interfaces_info(self, ifconfig_path, ifconfig_options):
         interfaces = {}
@@ -2321,6 +2357,19 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
             all_ipv4_addresses = [],
             all_ipv6_addresses = [],
         )
+
+        in_wpar = False
+        uname_path = module.get_bin_path('uname')
+        if uname_path:
+            rc, uname_out, err = module.run_command([uname_path, '-W'])
+            # If "uname -W" works and its output starts with something
+            # other than "0", then this host is in a WPAR.
+            if not rc and uname_out.split()[0] != '0':
+                in_wpar = True
+
+        entstat_path = module.get_bin_path('entstat')
+        lsattr_path = module.get_bin_path('lsattr')
+
         rc, out, err = module.run_command([ifconfig_path, ifconfig_options])
 
         for line in out.split('\n'):
@@ -2332,6 +2381,12 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
                 if re.match('^\w*\d*:', line):
                     current_if = self.parse_interface_line(words)
                     interfaces[ current_if['device'] ] = current_if
+                    if not in_wpar:
+                        if entstat_path:
+                            self.parse_entstat(entstat_path, current_if)
+                        if lsattr_path:
+                            self.parse_lsattr(lsattr_path, current_if)
+
                 elif words[0].startswith('options='):
                     self.parse_options_line(words, current_if, ips)
                 elif words[0] == 'nd6':
@@ -2350,43 +2405,9 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
                     self.parse_inet6_line(words, current_if, ips)
                 else:
                     self.parse_unknown_line(words, current_if, ips)
-            uname_path = module.get_bin_path('uname')
-            if uname_path:
-                rc, out, err = module.run_command([uname_path, '-W'])
-                # don't bother with wpars it does not work
-                # zero means not in wpar
-                if not rc and out.split()[0] == '0':
-                    if current_if['macaddress'] == 'unknown' and re.match('^en', current_if['device']):
-                        entstat_path = module.get_bin_path('entstat')
-                        if entstat_path:
-                            rc, out, err = module.run_command([entstat_path, current_if['device'] ])
-                            if rc != 0:
-                                break
-                            for line in out.split('\n'):
-                                if not line:
-                                    pass
-                                buff = re.match('^Hardware Address: (.*)', line)
-                                if buff:
-                                    current_if['macaddress'] = buff.group(1)
 
-                                buff = re.match('^Device Type:', line)
-                                if buff and re.match('.*Ethernet', line):
-                                    current_if['type'] = 'ether'
-                    # device must have mtu attribute in ODM
-                    if 'mtu' not in current_if:
-                        lsattr_path = module.get_bin_path('lsattr')
-                        if lsattr_path:
-                            rc, out, err = module.run_command([lsattr_path,'-El', current_if['device'] ])
-                            if rc != 0:
-                                break
-                            for line in out.split('\n'):
-                                if line:
-                                    words = line.split()
-                                    if words[0] == 'mtu':
-                                        current_if['mtu'] = words[1]
         return interfaces, ips
 
-    # AIX 'ifconfig -a' does not inform about MTU, so remove current_if['mtu'] here
     def parse_interface_line(self, words):
         device = words[0][0:-1]
         current_if = {'device': device, 'ipv4': [], 'ipv6': [], 'type': 'unknown'}
