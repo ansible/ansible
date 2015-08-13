@@ -533,7 +533,12 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
+<<<<<<< HEAD
             subset_patterns = self._split_pattern(subset_pattern)
+=======
+            subset_pattern = subset_pattern.replace(',',':')
+            subset_patterns = self._split_pattern(subset_pattern.replace(";",":"))
+>>>>>>> Introduce _split_pattern to parse an "x:y:z" pattern
             results = []
             # allow Unix style @filename data
             for x in subset_patterns:
