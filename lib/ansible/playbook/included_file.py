@@ -63,13 +63,21 @@ class IncludedFile:
                         continue
 
                     original_task = iterator.get_original_task(res._host, res._task)
+
+                    task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=res._host, task=original_task)
+                    templar = Templar(loader=loader, variables=task_vars)
+
+                    include_variables = include_result.get('include_variables', dict())
+                    if 'item' in include_result:
+                        task_vars['item'] = include_variables['item'] = include_result['item']
+
                     if original_task:
                         if original_task._task_include:
                             # handle relative includes by walking up the list of parent include
                             # tasks and checking the relative result to see if it exists
                             parent_include = original_task._task_include
                             while parent_include is not None:
-                                parent_include_dir = os.path.dirname(parent_include.args.get('_raw_params'))
+                                parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
                                 if original_task._role:
                                     new_basedir = os.path.join(original_task._role._role_path, 'tasks', parent_include_dir)
                                     include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_result['include'])
@@ -87,15 +95,6 @@ class IncludedFile:
                     else:
                         include_file = loader.path_dwim(res._task.args.get('_raw_params'))
 
-                    task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=res._host, task=original_task)
-                    #task_vars = tqm.add_tqm_variables(task_vars, play=iterator._play)
-
-                    include_variables = include_result.get('include_variables', dict())
-                    if 'item' in include_result:
-                        include_variables['item'] = include_result['item']
-                        task_vars['item'] = include_result['item']
-
-                    templar = Templar(loader=loader, variables=task_vars)
                     include_file = templar.template(include_file)
                     inc_file = IncludedFile(include_file, include_variables, original_task)
 
