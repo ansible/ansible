@@ -21,6 +21,7 @@ import sys
 import base64
 import json
 import os.path
+import ntpath
 import types
 import pipes
 import glob
@@ -251,6 +252,8 @@ class FilterModule(object):
             'realpath': partial(unicode_wrap, os.path.realpath),
             'relpath': partial(unicode_wrap, os.path.relpath),
             'splitext': partial(unicode_wrap, os.path.splitext),
+            'win_basename': partial(unicode_wrap, ntpath.basename),
+            'win_dirname': partial(unicode_wrap, ntpath.dirname),
 
             # value as boolean
             'bool': bool,

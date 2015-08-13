@@ -338,9 +338,17 @@ To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
     {{ path | basename }}
 
+To get the last name of a windows style file path (new in version 2.0)::
+
+    {{ path | win_basename }}
+
 To get the directory from a path::
 
     {{ path | dirname }}
+
+To get the directory from a windows path (new version 2.0)::
+
+    {{ path | win_dirname }}
 
 To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
