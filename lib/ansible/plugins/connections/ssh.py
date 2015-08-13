@@ -150,14 +150,7 @@ class Connection(ConnectionBase):
                 ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(key)))
             )
 
-        if self._play_context.password:
-            self.add_args(
-                "ansible_password/ansible_ssh_pass set", (
-                    "-o", "GSSAPIAuthentication=no",
-                    "-o", "PubkeyAuthentication=no"
-                )
-            )
-        else:
+        if not self._play_context.password:
             self.add_args(
                 "ansible_password/ansible_ssh_pass not set", (
                     "-o", "KbdInteractiveAuthentication=no",
