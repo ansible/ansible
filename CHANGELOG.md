@@ -158,6 +158,7 @@ New Lookups:
  * credstash
  * hashi_vault
  * ini
+ * shelvefile
 
 Other Notable Changes:
 
