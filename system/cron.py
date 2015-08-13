@@ -120,13 +120,16 @@ options:
   disabled:
     description:
       - If the job should be disabled (commented out) in the crontab. Only has effect if state=present
-    version_added: "1.9"
+    version_added: "2.0"
     required: false
     default: false
 requirements:
   - cron
-author: "Dane Summers (@dsummersl)"
-updates: [ 'Mike Grozak', 'Patrick Callahan', 'Evan Kaufman' ]
+author:
+    - "Dane Summers (@dsummersl)"
+    - 'Mike Grozak'
+    - 'Patrick Callahan'
+    - 'Evan Kaufman (@EvanK)'
 """
 
 EXAMPLES = '''
