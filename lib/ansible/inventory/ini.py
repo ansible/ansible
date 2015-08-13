@@ -38,6 +38,7 @@ class InventoryParser(object):
 
     def __init__(self, filename=C.DEFAULT_HOST_LIST):
         self.filename = filename
+
         with open(filename) as fh:
             self.lines = fh.readlines()
             self.groups = {}
@@ -90,7 +91,9 @@ class InventoryParser(object):
         self.groups = dict(all=all, ungrouped=ungrouped)
         active_group_name = 'ungrouped'
 
+        i = 0
         for line in self.lines:
+            i += 1
             line = self._before_comment(line).strip()
             if line.startswith("[") and line.endswith("]"):
                 active_group_name = line.replace("[","").replace("]","")
@@ -104,7 +107,11 @@ class InventoryParser(object):
             elif line.startswith(";") or line == '':
                 pass
             elif active_group_name:
-                tokens = shlex.split(line)
+                try:
+                    tokens = shlex.split(line)
+                except ValueError as e:
+                    raise AnsibleError("Error in %s, unable to parse L#%d: %s\n\n\t%s\n" % (self.filename, i, str(e), line))
+
                 if len(tokens) == 0:
                     continue
                 hostname = tokens[0]
