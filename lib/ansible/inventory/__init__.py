@@ -34,6 +34,12 @@ from ansible.inventory.host import Host
 from ansible.plugins import vars_loader
 from ansible.utils.vars import combine_vars
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class Inventory(object):
     """
     Host inventory for ansible.
@@ -183,6 +189,10 @@ class Inventory(object):
         # either a list of patterns or a string like 'pat1:pat2').
         if isinstance(pattern, list):
             pattern = ':'.join(pattern)
+
+        if ';' in pattern or ',' in pattern:
+            display.deprecated("The use of ',' or ';' in host patterns has been removed", version=2.0, removed=True)
+
         patterns = self._split_pattern(pattern)
         hosts = self._evaluate_patterns(patterns)
 
