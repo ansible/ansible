@@ -4,7 +4,7 @@
   gather_facts: false
   tasks:
     - file: path={{playbook_dir}}/files state=directory
-    - file: path={{playbook_dir}}/roles/files state=directory
+    - file: path={{playbook_dir}}/roles/showfile/files state=directory
     - copy: dest={{playbook_dir}}/roles/showfile/files/testfile content='in role files'
     - copy: dest={{playbook_dir}}/roles/showfile/tasks/testfile content='in role tasks'
     - copy: dest={{playbook_dir}}/roles/showfile/testfile content='in role'
