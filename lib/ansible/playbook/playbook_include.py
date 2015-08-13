@@ -74,7 +74,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
         for entry in pb._entries:
-            entry.vars.update(new_obj.vars)
+            temp_vars = entry.vars.copy()
+            temp_vars.update(new_obj.vars)
+            entry.vars = temp_vars
             entry.tags = list(set(entry.tags).union(new_obj.tags))
 
         return pb
