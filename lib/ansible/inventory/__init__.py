@@ -39,7 +39,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    #__slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset',
+    #__slots__ = [ 'host_list', 'groups', '_restriction', '_subset',
     #              'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
     #              '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
@@ -70,7 +70,6 @@ class Inventory(object):
 
         # a list of host(names) to contain current inquiries to
         self._restriction = None
-        self._also_restriction = None
         self._subset = None
 
         self.parse_inventory(host_list)
@@ -176,8 +175,6 @@ class Inventory(object):
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
             hosts = [ h for h in hosts if h in self._restriction ]
-        if self._also_restriction is not None:
-            hosts = [ h for h in hosts if h in self._also_restriction ]
 
         return hosts
 
@@ -489,22 +486,13 @@ class Inventory(object):
     def restrict_to_hosts(self, restriction):
         """ 
         Restrict list operations to the hosts given in restriction.  This is used
-        to exclude failed hosts in main playbook code, don't use this for other
+        to batch serial operations in main playbook code, don't use this for other
         reasons.
         """
         if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._restriction = restriction
 
-    def also_restrict_to(self, restriction):
-        """
-        Works like restict_to but offers an additional restriction.  Playbooks use this
-        to implement serial behavior.
-        """
-        if not isinstance(restriction, list):
-            restriction = [ restriction ]
-        self._also_restriction = restriction
-    
     def subset(self, subset_pattern):
         """ 
         Limits inventory results to a subset of inventory that matches a given
@@ -532,10 +520,6 @@ class Inventory(object):
         """ Do not restrict list operations """
         self._restriction = None
     
-    def lift_also_restriction(self):
-        """ Clears the also restriction """
-        self._also_restriction = None
-
     def is_file(self):
         """ did inventory come from a file? """
         if not isinstance(self.host_list, basestring):
