@@ -166,7 +166,7 @@ Similar groups are available for regions and other classifications, and can be s
 Autoscaling with Ansible Pull
 `````````````````````````````
 
-Amazon Autoscaling features automatically increase or decrease capacity based on load.  There are also Ansible ansibles shown in the cloud documentation that
+Amazon Autoscaling features automatically increase or decrease capacity based on load.  There are also Ansible modules shown in the cloud documentation that
 can configure autoscaling policy.
 
 When nodes come online, it may not be sufficient to wait for the next cycle of an ansible command to come along and configure that node.  
