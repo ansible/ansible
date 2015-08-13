@@ -155,6 +155,23 @@ class Inventory(object):
                 results.append(item)
         return results
 
+    def _split_pattern(self, pattern):
+        """
+        takes e.g. "webservers[0:5]:dbservers:others"
+        and returns ["webservers[0:5]", "dbservers", "others"]
+        """
+
+        term = re.compile(
+            r'''(?:             # We want to match something comprising:
+                    [^:\[\]]    # (anything other than ':', '[', or ']'
+                    |           # ...or...
+                    \[[^\]]*\]  # a single complete bracketed expression)
+                )*              # repeated as many times as possible
+            ''', re.X
+        )
+
+        return [x for x in term.findall(pattern) if x]
+
     def get_hosts(self, pattern="all"):
         """ 
         find all host names matching a pattern string, taking into account any inventory restrictions or
@@ -164,7 +181,7 @@ class Inventory(object):
         # process patterns
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
-        patterns = pattern.replace(";",":").split(":")
+        patterns = self._split_pattern(pattern.replace(";",":"))
         hosts = self._get_hosts(patterns)
 
         # exclude hosts not in a subset, if defined
@@ -504,10 +521,10 @@ class Inventory(object):
             self._subset = None
         else:
             subset_pattern = subset_pattern.replace(',',':')
-            subset_pattern = subset_pattern.replace(";",":").split(":")
+            subset_patterns = self._split_pattern(subset_pattern.replace(";",":"))
             results = []
             # allow Unix style @filename data
-            for x in subset_pattern:
+            for x in subset_patterns:
                 if x.startswith("@"):
                     fd = open(x[1:])
                     results.extend(fd.read().split("\n"))
