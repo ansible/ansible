@@ -61,4 +61,4 @@
   tasks:
     - file: path={{playbook_dir}}/testfile state=absent
     - file: path={{playbook_dir}}/files state=absent
-    - file: path={{playbook_dir}}/roles/files state=absent
+    - file: path={{playbook_dir}}/roles/showfile/files state=absent
