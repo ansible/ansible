@@ -39,7 +39,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    #__slots__ = [ 'host_list', 'groups', '_restriction', '_also_restriction', '_subset',
+    #__slots__ = [ 'host_list', 'groups', '_restriction', '_subset',
     #              'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
     #              '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
@@ -70,7 +70,6 @@ class Inventory(object):
 
         # a list of host(names) to contain current inquiries to
         self._restriction = None
-        self._also_restriction = None
         self._subset = None
 
         self.parse_inventory(host_list)
@@ -156,35 +155,52 @@ class Inventory(object):
                 results.append(item)
         return results
 
-    def get_hosts(self, pattern="all"):
-        """ 
-        find all host names matching a pattern string, taking into account any inventory restrictions or
-        applied subsets.
+    def _split_pattern(self, pattern):
+        """
+        takes e.g. "webservers[0:5]:dbservers:others"
+        and returns ["webservers[0:5]", "dbservers", "others"]
         """
 
-        # process patterns
+        term = re.compile(
+            r'''(?:             # We want to match something comprising:
+                    [^:\[\]]    # (anything other than ':', '[', or ']'
+                    |           # ...or...
+                    \[[^\]]*\]  # a single complete bracketed expression)
+                )*              # repeated as many times as possible
+            ''', re.X
+        )
+
+        return [x for x in term.findall(pattern) if x]
+
+    def get_hosts(self, pattern="all"):
+        """ 
+        Takes a pattern or list of patterns and returns a list of matching
+        inventory host names, taking into account any active restrictions
+        or applied subsets
+        """
+
+        # Enumerate all hosts matching the given pattern (which may be
+        # either a list of patterns or a string like 'pat1:pat2').
         if isinstance(pattern, list):
-            pattern = ';'.join(pattern)
-        patterns = pattern.replace(";",":").split(":")
-        hosts = self._get_hosts(patterns)
+            pattern = ':'.join(pattern)
+        patterns = self._split_pattern(pattern)
+        hosts = self._evaluate_patterns(patterns)
 
         # exclude hosts not in a subset, if defined
         if self._subset:
-            subset = self._get_hosts(self._subset)
+            subset = self._evaluate_patterns(self._subset)
             hosts = [ h for h in hosts if h in subset ]
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
         if self._restriction is not None:
             hosts = [ h for h in hosts if h in self._restriction ]
-        if self._also_restriction is not None:
-            hosts = [ h for h in hosts if h in self._also_restriction ]
 
         return hosts
 
-    def _get_hosts(self, patterns):
+    def _evaluate_patterns(self, patterns):
         """
-        finds hosts that match a list of patterns. Handles negative
-        matches as well as intersection matches.
+        Takes a list of patterns and returns a list of matching host names,
+        taking into account any negative and intersection patterns.
         """
 
         # Host specifiers should be sorted to ensure consistent behavior
@@ -215,7 +231,7 @@ class Inventory(object):
             if p in self._hosts_cache:
                 hosts.append(self.get_host(p))
             else:
-                that = self.__get_hosts(p)
+                that = self._match_one_pattern(p)
                 if p.startswith("!"):
                     hosts = [ h for h in hosts if h not in that ]
                 elif p.startswith("&"):
@@ -225,10 +241,11 @@ class Inventory(object):
                     hosts.extend(to_append)
         return hosts
 
-    def __get_hosts(self, pattern):
+    def _match_one_pattern(self, pattern):
         """ 
-        finds hosts that positively match a particular pattern.  Does not
-        take into account negative matches.
+        Takes a single pattern (i.e., not "p1:p2") and returns a list of
+        matching hosts names. Does not take negatives or intersections
+        into account.
         """
 
         if pattern in self._pattern_cache:
@@ -489,22 +506,13 @@ class Inventory(object):
     def restrict_to_hosts(self, restriction):
         """ 
         Restrict list operations to the hosts given in restriction.  This is used
-        to exclude failed hosts in main playbook code, don't use this for other
+        to batch serial operations in main playbook code, don't use this for other
         reasons.
         """
         if not isinstance(restriction, list):
             restriction = [ restriction ]
         self._restriction = restriction
 
-    def also_restrict_to(self, restriction):
-        """
-        Works like restict_to but offers an additional restriction.  Playbooks use this
-        to implement serial behavior.
-        """
-        if not isinstance(restriction, list):
-            restriction = [ restriction ]
-        self._also_restriction = restriction
-    
     def subset(self, subset_pattern):
         """ 
         Limits inventory results to a subset of inventory that matches a given
@@ -515,11 +523,10 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
-            subset_pattern = subset_pattern.replace(',',':')
-            subset_pattern = subset_pattern.replace(";",":").split(":")
+            subset_patterns = self._split_pattern(subset_pattern)
             results = []
             # allow Unix style @filename data
-            for x in subset_pattern:
+            for x in subset_patterns:
                 if x.startswith("@"):
                     fd = open(x[1:])
                     results.extend(fd.read().split("\n"))
@@ -532,10 +539,6 @@ class Inventory(object):
         """ Do not restrict list operations """
         self._restriction = None
     
-    def lift_also_restriction(self):
-        """ Clears the also restriction """
-        self._also_restriction = None
-
     def is_file(self):
         """ did inventory come from a file? """
         if not isinstance(self.host_list, basestring):
