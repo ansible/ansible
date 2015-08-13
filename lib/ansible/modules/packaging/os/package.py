@@ -33,7 +33,8 @@ description:
 options:
   name:
     description:
-      - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file.  To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages."
+      - "Package name, or package specifier with version, like C(name-1.0)."
+      - "Be aware that packages are not always named the same and this module will not 'translate' them per distro."
     required: true
   state:
     description:
@@ -42,6 +43,7 @@ options:
   use:
     description:
       - The required package manager module to use (yum, apt, etc). The default 'auto' will use existing facts or try to autodetect it.
+      - You should only use this field if the automatic selection is not working for some reason.
     required: false
     default: auto
 requirements:
