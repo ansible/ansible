@@ -174,8 +174,9 @@ class Inventory(object):
 
     def get_hosts(self, pattern="all"):
         """ 
-        find all host names matching a pattern string, taking into account any inventory restrictions or
-        applied subsets.
+        Takes a pattern or list of patterns and returns a list of matching
+        inventory host names, taking into account any active restrictions
+        or applied subsets
         """
 
         # Enumerate all hosts matching the given pattern (which may be
@@ -183,11 +184,11 @@ class Inventory(object):
         if isinstance(pattern, list):
             pattern = ':'.join(pattern)
         patterns = self._split_pattern(pattern)
-        hosts = self._get_hosts(patterns)
+        hosts = self._evaluate_patterns(patterns)
 
         # exclude hosts not in a subset, if defined
         if self._subset:
-            subset = self._get_hosts(self._subset)
+            subset = self._evaluate_patterns(self._subset)
             hosts = [ h for h in hosts if h in subset ]
 
         # exclude hosts mentioned in any restriction (ex: failed hosts)
@@ -196,10 +197,10 @@ class Inventory(object):
 
         return hosts
 
-    def _get_hosts(self, patterns):
+    def _evaluate_patterns(self, patterns):
         """
-        finds hosts that match a list of patterns. Handles negative
-        matches as well as intersection matches.
+        Takes a list of patterns and returns a list of matching host names,
+        taking into account any negative and intersection patterns.
         """
 
         # Host specifiers should be sorted to ensure consistent behavior
@@ -230,7 +231,7 @@ class Inventory(object):
             if p in self._hosts_cache:
                 hosts.append(self.get_host(p))
             else:
-                that = self.__get_hosts(p)
+                that = self._match_one_pattern(p)
                 if p.startswith("!"):
                     hosts = [ h for h in hosts if h not in that ]
                 elif p.startswith("&"):
@@ -240,10 +241,11 @@ class Inventory(object):
                     hosts.extend(to_append)
         return hosts
 
-    def __get_hosts(self, pattern):
+    def _match_one_pattern(self, pattern):
         """ 
-        finds hosts that positively match a particular pattern.  Does not
-        take into account negative matches.
+        Takes a single pattern (i.e., not "p1:p2") and returns a list of
+        matching hosts names. Does not take negatives or intersections
+        into account.
         """
 
         if pattern in self._pattern_cache:
