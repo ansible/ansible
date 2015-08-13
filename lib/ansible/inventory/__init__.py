@@ -110,7 +110,7 @@ class Inventory(object):
                 host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(loader=self._loader, filename=host_list)
             else:
-                self.parser = get_file_parser(hostsfile, self._loader)
+                self.parser = get_file_parser(host_list, self._loader)
                 vars_loader.add_directory(self.basedir(), with_subdir=True)
 
             if self.parser:
