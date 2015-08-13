@@ -162,7 +162,7 @@ size:
     type: int
     sample: 1220
 state:
-    description: permissions of the target, after execution
+    description: state of the target, after execution
     returned: success
     type: string
     sample: "file"
