@@ -21,7 +21,7 @@
 DOCUMENTATION = '''
 ---
 module: service
-author: 
+author:
     - "Ansible Core Team"
     - "Michael DeHaan"
 version_added: "0.1"
@@ -984,7 +984,7 @@ class FreeBsdService(Service):
             rcvars = shlex.split(stdout, comments=True)
         except:
             #TODO: add a warning to the output with the failure
-            continue
+            pass
 
         if not rcvars:
             self.module.fail_json(msg="unable to determine rcvar", stdout=stdout, stderr=stderr)
