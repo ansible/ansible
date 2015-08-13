@@ -99,7 +99,7 @@ options:
     default: null
   ip_to_networks:
     description:
-      - List of mappings in the form {'network': NetworkName, 'ip': 1.2.3.4}
+      - "List of mappings in the form {'network': NetworkName, 'ip': 1.2.3.4}"
       - Mutually exclusive with C(networks) option.
     required: false
     default: null
