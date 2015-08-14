@@ -191,7 +191,7 @@ class Inventory(object):
             pattern = ':'.join(pattern)
 
         if ';' in pattern or ',' in pattern:
-            display.deprecated("The use of ',' or ';' in host patterns has been removed", version=2.0, removed=True)
+            display.deprecated("Use ':' instead of ',' or ';' to separate host patterns", version=2.0, removed=True)
 
         patterns = self._split_pattern(pattern)
         hosts = self._evaluate_patterns(patterns)
@@ -533,6 +533,9 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
+            if ';' in subset_pattern or ',' in subset_pattern:
+                display.deprecated("Use ':' instead of ',' or ';' to separate host patterns", version=2.0, removed=True)
+
             subset_patterns = self._split_pattern(subset_pattern)
             results = []
             # allow Unix style @filename data
