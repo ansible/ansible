@@ -19,11 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import string_types
+
 from ansible.errors import AnsibleError
 
 from ansible.parsing.mod_args import ModuleArgsParser
 from ansible.parsing.splitter import parse_kv
-from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
+from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
 
 from ansible.plugins import module_loader, lookup_loader
 
@@ -210,6 +212,17 @@ class Task(Base, Conditional, Taggable, Become):
         specially in the TaskExecutor class when evaluating loops.
         '''
         return value
+
+    def _post_validate_environment(self, attr, value, templar):
+        '''
+        Override post validation of vars on the play, as we don't want to
+        template these too early.
+        '''
+        for env_item in value:
+            if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
+                self._display.deprecated("Using bare variables for environment is deprecated. Update your playbooks so that the environment value uses the full variable syntax ('{{foo}}')")
+                break
+        return templar.template(value, convert_bare=True)
 
     def get_vars(self):
         all_vars = dict()
