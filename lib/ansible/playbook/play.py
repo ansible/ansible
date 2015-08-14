@@ -598,7 +598,7 @@ class Play(object):
                 if x['meta'] == 'flush_handlers':
                     if role_name and 'role_name' not in x:
                         x['role_name'] = role_name
-                    results.append(Task(self, x, module_vars=task_vars, role_name=role_name))
+                    results.append(Task(self, x, module_vars=task_vars, role_name=role_name, no_tags=False))
                     continue
 
             if 'include' in x:

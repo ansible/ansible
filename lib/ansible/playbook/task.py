@@ -43,7 +43,7 @@ class Task(object):
         'async', 'connection', 'include', 'poll',
     ] + _t_common)
 
-    def __init__(self, play, ds, module_vars=None, play_vars=None, play_file_vars=None, role_vars=None, role_params=None, default_vars=None, additional_conditions=None, role_name=None):
+    def __init__(self, play, ds, module_vars=None, play_vars=None, play_file_vars=None, role_vars=None, role_params=None, default_vars=None, additional_conditions=None, role_name=None, no_tags=True):
         ''' constructor loads from a task or handler datastructure '''
 
         # meta directives are used to tell things like ansible/playbook to run
@@ -51,7 +51,10 @@ class Task(object):
         # normally.
         if 'meta' in ds:
             self.meta = ds['meta']
-            self.tags = []
+            if no_tags:
+                self.tags = []
+            else:
+                self.tags = self._load_tags(ds, module_vars)
             self.module_vars = module_vars
             self.role_name = role_name
             return
@@ -124,7 +127,6 @@ class Task(object):
 
         # load various attributes
         self.name         = ds.get('name', None)
-        self.tags         = [ 'untagged' ]
         self.register     = ds.get('register', None)
         self.environment  = ds.get('environment', play.environment)
         self.role_name    = role_name
@@ -291,13 +293,6 @@ class Task(object):
         if len(tokens) > 1:
             self.module_args = " ".join(tokens[1:])
 
-        import_tags = self.module_vars.get('tags',[])
-        if type(import_tags) in [int,float]:
-            import_tags = str(import_tags)
-        elif type(import_tags) in [str,unicode]:
-            # allow the user to list comma delimited tags
-            import_tags = import_tags.split(",")
-
         # handle mutually incompatible options
         incompatibles = [ x for x in [ self.first_available_file, self.items_lookup_plugin ] if x is not None ]
         if len(incompatibles) > 1:
@@ -325,22 +320,37 @@ class Task(object):
         self.module_vars['failed_when'] = self.failed_when
         self.module_vars['always_run'] = self.always_run
 
-        # tags allow certain parts of a playbook to be run without running the whole playbook
-        apply_tags = ds.get('tags', None)
-        if apply_tags is not None:
-            if type(apply_tags) in [ str, unicode ]:
-                self.tags.append(apply_tags)
-            elif type(apply_tags) in [ int, float ]:
-                self.tags.append(str(apply_tags))
-            elif type(apply_tags) == list:
-                self.tags.extend(apply_tags)
-        self.tags.extend(import_tags)
-
-        if len(self.tags) > 1:
-            self.tags.remove('untagged')
+        self.tags = self._load_tags(ds, self.module_vars)
 
         if additional_conditions:
             new_conditions = additional_conditions[:]
             if self.when:
                 new_conditions.append(self.when)
             self.when = new_conditions
+
+    def _load_tags(self, ds, module_vars):
+        tags = ['untagged']
+
+        import_tags = module_vars.get('tags',[])
+        if type(import_tags) in [int,float]:
+            import_tags = str(import_tags)
+        elif type(import_tags) in [str,unicode]:
+            # allow the user to list comma delimited tags
+            import_tags = import_tags.split(",")
+
+        # tags allow certain parts of a playbook to be run without running the whole playbook
+        apply_tags = ds.get('tags', None)
+        if apply_tags is not None:
+            if type(apply_tags) in [ str, unicode ]:
+                tags.append(apply_tags)
+            elif type(apply_tags) in [ int, float ]:
+                tags.append(str(apply_tags))
+            elif type(apply_tags) == list:
+                tags.extend(apply_tags)
+
+        tags.extend(import_tags)
+
+        if len(tags) > 1:
+            tags.remove('untagged')
+
+        return tags
