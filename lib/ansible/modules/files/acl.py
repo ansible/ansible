@@ -21,6 +21,8 @@ version_added: "1.4"
 short_description: Sets and retrieves file ACL information.
 description:
      - Sets and retrieves file ACL information.
+notes:
+    - As of Ansible 2.0, this module only supports Linux distributions.
 options:
   name:
     required: true
@@ -80,7 +82,7 @@ options:
       - DEPRECATED. The acl to set or remove.  This must always be quoted in the form of '<etype>:<qualifier>:<perms>'.  The qualifier may be empty for some types, but the type and perms are always requried. '-' can be used as placeholder when you do not care about permissions. This is now superseded by entity, type and permissions fields.
 
   recursive:
-    version_added: "@@@"
+    version_added: "2.0"
     required: false
     default: no
     choices: [ 'yes', 'no' ]
@@ -150,7 +152,10 @@ def split_entry(entry):
 
 def build_entry(etype, entity, permissions=None):
     '''Builds and returns an entry string. Does not include the permissions bit if they are not provided.'''
-    return etype + ':' + entity + (':' + permissions if permissions else '')
+    if permissions:
+        return etype + ':' + entity + ':' + permissions
+    else:
+        return etype + ':' + entity
 
 
 def build_command(module, mode, path, follow, default, recursive, entry=''):
@@ -163,6 +168,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
         cmd.append('-x "%s"' % entry)
     else:  # mode == 'get'
         cmd = [module.get_bin_path('getfacl', True)]
+        # prevents absolute path warnings and removes headers
         cmd.append('--omit-header')
         cmd.append('--absolute-names')
 
@@ -187,7 +193,11 @@ def acl_changed(module, cmd):
     cmd = cmd[:]  # lists are mutables so cmd would be overriden without this
     cmd.insert(1, '--test')
     lines = run_acl(module, cmd)
-    return not all(line.endswith('*,*') for line in lines)
+
+    for line in lines:
+        if not line.endswith('*,*'):
+            return False
+    return True
 
 
 def run_acl(module, cmd, check_rc=True):
@@ -206,6 +216,9 @@ def run_acl(module, cmd, check_rc=True):
 
 
 def main():
+    if get_platform().lower() != 'linux':
+        module.fail_json(msg="The acl module is only available for Linux distributions.")
+
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, aliases=['path'], type='str'),
@@ -295,7 +308,7 @@ def main():
             run_acl(module, command, False)
         msg = "%s is absent" % entry
 
-    else:
+    elif state == 'query':
         msg = "current acl"
 
     acl = run_acl(
