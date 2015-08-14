@@ -87,7 +87,7 @@ options:
     default: no
     choices: [ 'yes', 'no' ]
     description:
-      - Recursively sets the specified ACL (added in Ansible @@@). Incompatible with C(state=query).
+      - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
 
 author: "Brian Coca (@bcoca)"
 notes:
