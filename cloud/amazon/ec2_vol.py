@@ -146,6 +146,7 @@ EXAMPLES = '''
 # Example: Launch an instance and then add a volume if not already attached
 #   * Volume will be created with the given name if not already created.
 #   * Nothing will happen if the volume is already attached.
+#   * Requires Ansible 2.0
 
 - ec2:
     keypair: "{{ keypair }}"
