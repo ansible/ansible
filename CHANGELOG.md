@@ -118,6 +118,7 @@ New Modules:
   * sensu_check
   * sensu_subscription
   * slackpkg
+  * solaris_zone
   * vertica_configuration
   * vertica_facts
   * vertica_role
