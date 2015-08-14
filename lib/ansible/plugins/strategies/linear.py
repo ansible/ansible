@@ -58,6 +58,9 @@ class StrategyModule(StrategyBase):
                 continue
 
             (s, t) = v
+            if t is None:
+                continue
+
             if s.cur_block < lowest_cur_block and s.run_state != PlayIterator.ITERATING_COMPLETE:
                 lowest_cur_block = s.cur_block
 

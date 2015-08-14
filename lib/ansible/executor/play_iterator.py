@@ -130,7 +130,7 @@ class PlayIterator:
 
         task = None
         if s.run_state == self.ITERATING_COMPLETE:
-            return None
+            return (None, None)
         elif s.run_state == self.ITERATING_SETUP:
             s.run_state = self.ITERATING_TASKS
             s.pending_setup = True
