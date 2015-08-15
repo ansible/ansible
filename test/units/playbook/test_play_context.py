@@ -116,7 +116,7 @@ class TestPlayContext(unittest.TestCase):
         default_cmd = "/bin/foo"
         default_exe = "/bin/bash"
         sudo_exe    = C.DEFAULT_SUDO_EXE
-        sudo_flags  = C.DEFAULT_SUDO_FLAGS
+        sudo_flags  = C.DEFAULT_SUDO_FLAGS + " -n "
         su_exe      = C.DEFAULT_SU_EXE
         su_flags    = C.DEFAULT_SU_FLAGS
         pbrun_exe   = 'pbrun'
@@ -132,7 +132,7 @@ class TestPlayContext(unittest.TestCase):
 
         play_context.become_method = 'sudo'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -c '%s -k && %s %s -S -p "%s" -u %s %s -c '"'"'echo %s; %s'"'"''""" % (default_exe, sudo_exe, sudo_exe, sudo_flags, play_context.prompt, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(cmd, """%s -c '%s %s -S -p "%s" -u %s %s -c '"'"'echo %s; %s'"'"''""" % (default_exe, sudo_exe, sudo_flags, play_context.prompt, play_context.become_user, default_exe, play_context.success_key, default_cmd))
 
         play_context.become_method = 'su'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
