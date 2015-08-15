@@ -231,7 +231,7 @@ def package_status(m, pkgname, version, cache, state):
                 provided_packages = cache.get_providing_packages(pkgname)
                 if provided_packages:
                     is_installed = False
-                    # when virtual package providing only one package, look up status of target package 
+                    # when virtual package providing only one package, look up status of target package
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
                         package = provided_packages[0]
                         installed, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
@@ -386,7 +386,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         if default_release:
             cmd += " -t '%s'" % (default_release,)
         if not install_recommends:
-            cmd += " --no-install-recommends"
+            cmd += " -o APT::Install-Recommends=no"
+        else:
+            cmd += " -o APT::Install-Recommends=yes"
 
         rc, out, err = m.run_command(cmd)
         if rc:
