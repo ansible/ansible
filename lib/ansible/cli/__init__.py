@@ -432,21 +432,20 @@ class CLI(object):
         return result
 
 
-    @staticmethod
-    def pager(text):
+    def pager(self, text):
         ''' find reasonable way to display text '''
         # this is a much simpler form of what is in pydoc.py
         if not sys.stdout.isatty():
-            print(text)
+            self.display.display(text)
         elif 'PAGER' in os.environ:
             if sys.platform == 'win32':
-                print(text)
+                self.display.display(text)
             else:
-                CLI.pager_pipe(text, os.environ['PAGER'])
+                self.pager_pipe(text, os.environ['PAGER'])
         elif subprocess.call('(less --version) 2> /dev/null', shell = True) == 0:
-            CLI.pager_pipe(text, 'less')
+            self.pager_pipe(text, 'less')
         else:
-            print(text)
+            self.display.display(text)
 
     @staticmethod
     def pager_pipe(text, cmd):
@@ -455,7 +454,7 @@ class CLI(object):
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
             cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
-            cmd.communicate(input=text)
+            cmd.communicate(input=text.encode(sys.stdout.encoding))
         except IOError:
             pass
         except KeyboardInterrupt:

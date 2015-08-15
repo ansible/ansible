@@ -139,6 +139,10 @@ class AdHocCLI(CLI):
         else:
             cb = 'minimal'
 
+        if self.options.tree:
+            C.DEFAULT_CALLBACK_WHITELIST.append('tree')
+            C.TREE_DIR = self.options.tree
+
         # now create a task queue manager to execute the play
         self._tqm = None
         try:
@@ -168,4 +172,3 @@ class AdHocCLI(CLI):
             poller.wait(self.options.seconds, self.options.poll_interval)
 
         return poller.results
-

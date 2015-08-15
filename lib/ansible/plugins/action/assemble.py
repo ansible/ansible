@@ -108,7 +108,7 @@ class ActionModule(ActionBase):
 
         path_checksum = checksum_s(path)
         dest = self._remote_expand_user(dest, tmp)
-        remote_checksum = self._remote_checksum(tmp, dest)
+        remote_checksum = self._remote_checksum(tmp, dest, all_vars=task_vars)
 
         if path_checksum != remote_checksum:
             resultant = file(path).read()

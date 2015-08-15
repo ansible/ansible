@@ -167,6 +167,9 @@ except ImportError:
     print('pyrax is required for this module')
     sys.exit(1)
 
+from time import time
+
+
 NON_CALLABLES = (basestring, bool, dict, int, list, type(None))
 
 
@@ -214,7 +217,7 @@ def host(regions, hostname):
     print(json.dumps(hostvars, sort_keys=True, indent=4))
 
 
-def _list(regions):
+def _list_into_cache(regions):
     groups = collections.defaultdict(list)
     hostvars = collections.defaultdict(dict)
     images = {}
@@ -334,7 +337,31 @@ def _list(regions):
 
     if hostvars:
         groups['_meta'] = {'hostvars': hostvars}
-    print(json.dumps(groups, sort_keys=True, indent=4))
+
+    with open(get_cache_file_path(regions), 'w') as cache_file:
+        json.dump(groups, cache_file)
+
+
+def get_cache_file_path(regions):
+    regions_str = '.'.join([reg.strip().lower() for reg in regions])
+    ansible_tmp_path = os.path.join(os.path.expanduser("~"), '.ansible', 'tmp')
+    if not os.path.exists(ansible_tmp_path):
+        os.makedirs(ansible_tmp_path)
+    return os.path.join(ansible_tmp_path,
+                        'ansible-rax-%s-%s.cache' % (
+                            pyrax.identity.username, regions_str))
+
+
+def _list(regions, refresh_cache=True):
+    if (not os.path.exists(get_cache_file_path(regions)) or
+        refresh_cache or
+        (time() - os.stat(get_cache_file_path(regions))[-1]) > 600):
+        # Cache file doesn't exist or older than 10m or refresh cache requested
+        _list_into_cache(regions)
+
+    with open(get_cache_file_path(regions), 'r') as cache_file:
+        groups = json.load(cache_file)
+        print(json.dumps(groups, sort_keys=True, indent=4))
 
 
 def parse_args():
@@ -344,6 +371,9 @@ def parse_args():
     group.add_argument('--list', action='store_true',
                        help='List active servers')
     group.add_argument('--host', help='List details about the specific host')
+    parser.add_argument('--refresh-cache', action='store_true', default=False,
+                        help=('Force refresh of cache, making API requests to'
+                              'RackSpace (default: False - use cache files)'))
     return parser.parse_args()
 
 
@@ -410,7 +440,7 @@ def main():
     args = parse_args()
     regions = setup()
     if args.list:
-        _list(regions)
+        _list(regions, refresh_cache=args.refresh_cache)
     elif args.host:
         host(regions, args.host)
     sys.exit(0)

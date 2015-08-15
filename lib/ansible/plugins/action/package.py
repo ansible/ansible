@@ -38,7 +38,10 @@ class ActionModule(ActionBase):
                 pass # could not get it from template!
 
         if module == 'auto':
-            module = self._execute_module(module_name=setup, module_args={filter: 'ansible_pkg_mgr'}, task_vars=task_vars)
+            facts = self._execute_module(module_name='setup', module_args=dict(filter='ansible_pkg_mgr'), task_vars=task_vars)
+            self._display.degug("Facts %s" % facts)
+            if not 'failed' in facts:
+                module = getattr(facts['ansible_facts'], 'ansible_pkg_mgr', 'auto')
 
         if module != 'auto':
             # run the 'package' module
@@ -46,6 +49,7 @@ class ActionModule(ActionBase):
             if 'use' in new_module_args:
                 del new_module_args['use']
 
+            self._display.vvvv("Running %s" % module)
             return self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars)
 
         else:

@@ -66,8 +66,6 @@ class Conditional:
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
-        except UndefinedError, e:
-            raise AnsibleError("The conditional check '%s' failed due to an undefined variable. The error was: %s" % (conditional, e), obj=ds)
         except Exception, e:
             raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (conditional, e), obj=ds)
 
@@ -96,7 +94,7 @@ class Conditional:
 
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-        conditional = templar.template(presented)
+        conditional = templar.template(presented, fail_on_undefined=False)
 
         val = conditional.strip()
         if val == presented:

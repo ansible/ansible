@@ -164,7 +164,7 @@ class ActionBase:
 
         tmp_mode = None
         if self._play_context.remote_user != 'root' or self._play_context.become and self._play_context.become_user != 'root':
-            tmp_mode = 'a+rx'
+            tmp_mode = 0755
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         self._display.debug("executing _low_level_execute_command to create the tmp path")
@@ -250,14 +250,13 @@ class ActionBase:
         self._display.debug("done with chmod call")
         return res
 
-    def _remote_checksum(self, tmp, path):
+    def _remote_checksum(self, tmp, path, all_vars):
         '''
         Takes a remote checksum and returns 1 if no file
         '''
 
-        # FIXME: figure out how this will work, probably pulled from the variable manager data
-        #python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
-        python_interp = 'python'
+        python_interp = all_vars.get('ansible_python_interpreter', 'python')
+
         cmd = self._connection._shell.checksum(path, python_interp)
         self._display.debug("calling _low_level_execute_command to get the remote checksum")
         data = self._low_level_execute_command(cmd, tmp, sudoable=True)
@@ -273,13 +272,8 @@ class ActionBase:
             else:
                 return data2.split()[0]
         except IndexError:
-            # FIXME: this should probably not print to sys.stderr, but should instead
-            #        fail in a more normal way?
-            sys.stderr.write("warning: Calculating checksum failed unusually, please report this to the list so it can be fixed\n")
-            sys.stderr.write("command: %s\n" % cmd)
-            sys.stderr.write("----\n")
-            sys.stderr.write("output: %s\n" % data)
-            sys.stderr.write("----\n")
+            self._display.warning("Calculating checksum failed unusually, please report this to " + \
+                "the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n") % (cmd, data)
             # this will signal that it changed and allow things to keep going
             return "INVALIDCHECKSUM"
 
@@ -459,7 +453,8 @@ class ActionBase:
             self._display.debug("no command, exiting _low_level_execute_command()")
             return dict(stdout='', stderr='')
 
-        if sudoable:
+        if sudoable and self._play_context.become:
+            self._display.debug("using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         self._display.debug("executing the command %s through the connection" % cmd)

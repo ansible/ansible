@@ -34,7 +34,6 @@ class LookupModule(LookupBase):
                 "subelements lookup expects a list of two or three items, "
                 + msg)
 
-        terms = listify_lookup_plugin_terms(terms, templar=self._templar, loader=self._loader)
         terms[0] = listify_lookup_plugin_terms(terms[0], templar=self._templar, loader=self._loader)
 
         # check lookup terms - check number of terms

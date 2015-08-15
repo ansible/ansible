@@ -205,14 +205,8 @@ class StrategyBase:
                         # lookup the role in the ROLE_CACHE to make sure we're dealing
                         # with the correct object and mark it as executed
                         for (entry, role_obj) in iterator._play.ROLE_CACHE[task_result._task._role._role_name].iteritems():
-                            params = task_result._task._role._role_params
-                            if task_result._task._role.tags is not None:
-                                params['tags'] = task_result._task._role.tags
-                            if task_result._task._role.when is not None:
-                                params['when'] = task_result._task._role.when
-                            hashed_entry = hash_params(params)
-                            if entry == hashed_entry:
-                                role_obj._had_task_run = True
+                            if role_obj._uuid == task_result._task._role._uuid:
+                                role_obj._had_task_run[host.name] = True
 
                     ret_results.append(task_result)
 
@@ -412,7 +406,9 @@ class StrategyBase:
 
         # set the vars for this task from those specified as params to the include
         for b in block_list:
-            b.vars.update(included_file._args.copy())
+            temp_vars = b._task_include.vars.copy()
+            temp_vars.update(included_file._args.copy())
+            b._task_include.vars = temp_vars
 
         return block_list
 
@@ -510,3 +506,21 @@ class StrategyBase:
         self._display.banner(msg)
 
         return ret
+
+    def _execute_meta(self, task, play_context, iterator):
+
+        # meta tasks store their args in the _raw_params field of args,
+        # since they do not use k=v pairs, so get that
+        meta_action = task.args.get('_raw_params')
+
+        if meta_action == 'noop':
+            # FIXME: issue a callback for the noop here?
+            pass
+        elif meta_action == 'flush_handlers':
+            self.run_handlers(iterator, play_context)
+        elif meta_action == 'refresh_inventory':
+            self._inventory.refresh_inventory()
+        #elif meta_action == 'reset_connection':
+        #    connection_info.connection.close()
+        else:
+            raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)

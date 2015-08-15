@@ -190,7 +190,7 @@ class VariableManager:
 
         if play:
             all_vars = self._combine_vars(all_vars, play.get_vars())
-            
+
             for vars_file_item in play.get_vars_files():
                 try:
                     # create a set of temporary vars here, which incorporate the
@@ -215,11 +215,6 @@ class VariableManager:
                             break
                     else:
                         raise AnsibleError("vars file %s was not found" % vars_file_item)
-                except AnsibleError, e:
-                    # FIXME: get_vars should probably be taking a flag to determine
-                    #        whether or not vars files errors should be fatal at this
-                    #        stage, or just base it on whether a host was specified?
-                    pass
                 except UndefinedError, e:
                     continue
 
@@ -275,7 +270,7 @@ class VariableManager:
         copied_vars = all_vars.copy()
         if 'hostvars' in copied_vars:
             del copied_vars['hostvars']
-        all_vars['vars'] = all_vars.copy()
+        all_vars['vars'] = copied_vars
 
         #CACHED_VARS[cache_entry] = all_vars
 

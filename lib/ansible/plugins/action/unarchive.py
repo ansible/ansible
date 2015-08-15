@@ -61,9 +61,12 @@ class ActionModule(ActionBase):
             if '_original_file' in task_vars:
                 source = self._loader.path_dwim_relative(task_vars['_original_file'], 'files', source)
             else:
-                source = self._loader.path_dwim(source)
+                if self._task._role is not None:
+                    source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
+                else:
+                    source = self._loader.path_dwim(source)
 
-        remote_checksum = self._remote_checksum(tmp, dest)
+        remote_checksum = self._remote_checksum(tmp, dest, all_vars=task_vars)
         if remote_checksum != '3':
             return dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
         elif remote_checksum == '4':

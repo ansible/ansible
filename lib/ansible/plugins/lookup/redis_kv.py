@@ -43,9 +43,6 @@ class LookupModule(LookupBase):
         if not HAVE_REDIS:
             raise AnsibleError("Can't LOOKUP(redis_kv): module redis is not installed")
 
-        if not isinstance(terms, list):
-            terms = [ terms ]
-
         ret = []
         for term in terms:
             (url,key) = term.split(',')

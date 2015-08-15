@@ -18,16 +18,16 @@
 ########################################################
 import datetime
 import os
+import platform
 import random
 import shutil
 import socket
 import sys
+import time
 
-from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleOptionsError
 from ansible.cli import CLI
 from ansible.plugins import module_loader
-from ansible.utils.display import Display
 from ansible.utils.cmd_functions import run_cmd
 
 ########################################################
@@ -107,7 +107,9 @@ class PullCLI(CLI):
 
         # Build Checkout command
         # Now construct the ansible command
-        limit_opts = 'localhost:%s:127.0.0.1' % socket.getfqdn()
+        node = platform.node()
+        host = socket.getfqdn()
+        limit_opts = 'localhost:%s:127.0.0.1' % ':'.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
         base_opts = '-c local "%s"' % limit_opts
         if self.options.verbosity > 0:
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
@@ -216,7 +218,7 @@ class PullCLI(CLI):
             fqdn = socket.getfqdn()
             hostpb = os.path.join(path, fqdn + '.yml')
             shorthostpb = os.path.join(path, fqdn.split('.')[0] + '.yml')
-            localpb = os.path.join(path, DEFAULT_PLAYBOOK)
+            localpb = os.path.join(path, self.DEFAULT_PLAYBOOK)
             errors = []
             for pb in [hostpb, shorthostpb, localpb]:
                 rc = self.try_playbook(pb)

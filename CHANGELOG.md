@@ -19,6 +19,8 @@ Major Changes:
  * template code now retains types for bools and numbers instead of turning them into strings.
    If you need the old behaviour, quote the value and it will get passed around as a string
  * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support
+ * Consiidated code from modules using urllib2 to normalize features, TLS and SNI support
+ * added meta: refresh_inventory to force rereading the inventory in a play
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
@@ -60,6 +62,7 @@ New Modules:
   * cloudstack: cs_iso
   * cloudstack: cs_instance
   * cloudstack: cs_instancegroup
+  * cloudstack: cs_ip_address
   * cloudstack: cs_network
   * cloudstack: cs_portforward
   * cloudstack: cs_project
@@ -115,6 +118,7 @@ New Modules:
   * sensu_check
   * sensu_subscription
   * slackpkg
+  * solaris_zone
   * vertica_configuration
   * vertica_facts
   * vertica_role
@@ -142,6 +146,7 @@ New Modules:
   * zabbix_host
   * zabbix_hostmacro
   * zabbix_screen
+  * znode
 
 New Inventory scripts:
   * cloudstack
@@ -152,12 +157,20 @@ New Inventory scripts:
 
 New Lookups:
  * credstash
+ * hashi_vault
+ * ini
+ * shelvefile
 
 Other Notable Changes:
 
 * synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting
 * play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
 * vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
+
+Minor changes:
+
+* The undocumented semicolon-separated "pattern1;pattern2" syntax to
+  match hosts is no longer supported.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 

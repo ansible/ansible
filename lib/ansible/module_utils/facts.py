@@ -186,15 +186,20 @@ class Facts(object):
         if self.facts['system'] == 'Linux':
             self.get_distribution_facts()
         elif self.facts['system'] == 'AIX':
-            try:
-                rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
+            # Attempt to use getconf to figure out architecture
+            # fall back to bootinfo if needed
+            if module.get_bin_path('getconf'):
+                rc, out, err = module.run_command([module.get_bin_path('getconf'),
+                                                   'MACHINE_ARCHITECTURE'])
                 data = out.split('\n')
                 self.facts['architecture'] = data[0]
-            except:
-                self.facts['architecture'] = 'Not Available'
+            else:
+                rc, out, err = module.run_command([module.get_bin_path('bootinfo'),
+                                                   '-p'])
+                data = out.split('\n')
+                self.facts['architecture'] = data[0]
         elif self.facts['system'] == 'OpenBSD':
             self.facts['architecture'] = platform.uname()[5]
-
 
     def get_local_facts(self):
 
@@ -724,6 +729,7 @@ class LinuxHardware(Hardware):
         self.get_dmi_facts()
         self.get_device_facts()
         self.get_uptime_facts()
+        self.get_lvm_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
@@ -1101,6 +1107,37 @@ class LinuxHardware(Hardware):
     def get_uptime_facts(self):
         uptime_seconds_string = get_file_content('/proc/uptime').split(' ')[0]
         self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
+
+    def get_lvm_facts(self):
+        """ Get LVM Facts if running as root and lvm utils are available """
+
+        if os.getuid() == 0 and module.get_bin_path('vgs'):
+            lvm_util_options = '--noheadings --nosuffix --units g'
+
+            vgs_path = module.get_bin_path('vgs')
+            #vgs fields: VG #PV #LV #SN Attr VSize VFree
+            vgs={}
+            if vgs_path:
+                rc, vg_lines, err = module.run_command( '%s %s' % (vgs_path, lvm_util_options))
+                for vg_line in vg_lines.splitlines():
+                    items = vg_line.split()
+                    vgs[items[0]] = {'size_g':items[-2],
+                                     'free_g':items[-1],
+                                     'num_lvs': items[2],
+                                     'num_pvs': items[1]}
+
+            lvs_path = module.get_bin_path('lvs')
+            #lvs fields:
+            #LV VG Attr LSize Pool Origin Data% Move Log Copy% Convert
+            lvs = {}
+            if lvs_path:
+                rc, lv_lines, err = module.run_command( '%s %s' % (lvs_path, lvm_util_options))
+                for lv_line in lv_lines.splitlines():
+                    items = lv_line.split()
+                    lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
+
+            self.facts['lvm'] = {'lvs': lvs, 'vgs': vgs}
+
 
 class SunOSHardware(Hardware):
     """
@@ -2314,6 +2351,26 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
     It uses the GenericBsdIfconfigNetwork unchanged.
     """
     platform = 'AIX'
+
+    def get_default_interfaces(self, route_path):
+        netstat_path = module.get_bin_path('netstat')
+
+        rc, out, err = module.run_command([netstat_path, '-nr'])
+
+        interface = dict(v4 = {}, v6 = {})
+
+        lines = out.split('\n')
+        for line in lines:
+            words = line.split()
+            if len(words) > 1 and words[0] == 'default':
+                if '.' in words[1]:
+                    interface['v4']['gateway'] = words[1]
+                    interface['v4']['interface'] = words[5]
+                elif ':' in words[1]:
+                    interface['v6']['gateway'] = words[1]
+                    interface['v6']['interface'] = words[5]
+
+        return interface['v4'], interface['v6']
 
     # AIX 'ifconfig -a' does not have three words in the interface line
     def get_interfaces_info(self, ifconfig_path, ifconfig_options):

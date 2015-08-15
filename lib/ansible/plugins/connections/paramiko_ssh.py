@@ -230,23 +230,29 @@ class Connection(ConnectionBase):
             chan.exec_command(cmd)
             if self._play_context.prompt:
                 if self._play_context.become and self._play_context.become_pass:
+                    passprompt = False
                     while True:
                         self._display.debug('Waiting for Privilege Escalation input')
-                        if self.check_become_success(become_output) or self.check_password_prompt(become_output):
+                        if self.check_become_success(become_output):
                             break
+                        elif self.check_password_prompt(become_output):
+                            passprompt = True
+                            break
+
                         chunk = chan.recv(bufsize)
-                        print("chunk is: %s" % chunk)
+                        self._display.debug("chunk is: %s" % chunk)
                         if not chunk:
                             if 'unknown user' in become_output:
-                                raise AnsibleError(
-                                    'user %s does not exist' % become_user)
+                                raise AnsibleError( 'user %s does not exist' % become_user)
                             else:
-                                raise AnsibleError('ssh connection ' +
-                                    'closed waiting for password prompt')
+                                break
+                                #raise AnsibleError('ssh connection closed waiting for password prompt')
                         become_output += chunk
-                    if not self.check_become_success(become_output):
-                        if self._play_context.become:
+                    if passprompt:
+                        if self._play_context.become and self._play_context.become_pass:
                             chan.sendall(self._play_context.become_pass + '\n')
+                        else:
+                            raise AnsibleError("A password is reqired but none was supplied")
                     else:
                         no_prompt_out += become_output
                         no_prompt_err += become_output

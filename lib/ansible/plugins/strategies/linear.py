@@ -58,6 +58,9 @@ class StrategyModule(StrategyBase):
                 continue
 
             (s, t) = v
+            if t is None:
+                continue
+
             if s.cur_block < lowest_cur_block and s.run_state != PlayIterator.ITERATING_COMPLETE:
                 lowest_cur_block = s.cur_block
 
@@ -170,7 +173,7 @@ class StrategyModule(StrategyBase):
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
-                    if task._role and task._role.has_run():
+                    if task._role and task._role.has_run(host):
                         # If there is no metadata, the default behavior is to not allow duplicates,
                         # if there is metadata, check to see if the allow_duplicates flag was set to true
                         if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
@@ -178,16 +181,7 @@ class StrategyModule(StrategyBase):
                             continue
 
                     if task.action == 'meta':
-                        # meta tasks store their args in the _raw_params field of args,
-                        # since they do not use k=v pairs, so get that
-                        meta_action = task.args.get('_raw_params')
-                        if meta_action == 'noop':
-                            # FIXME: issue a callback for the noop here?
-                            continue
-                        elif meta_action == 'flush_handlers':
-                            self.run_handlers(iterator, play_context)
-                        else:
-                            raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
+                        self._execute_meta(task, play_context, iterator)
                     else:
                         # handle step if needed, skip meta actions as they are used internally
                         if self._step and choose_step:

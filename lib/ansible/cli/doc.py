@@ -73,7 +73,7 @@ class DocCLI(CLI):
             for path in paths:
                 self.find_modules(path)
 
-            CLI.pager(self.get_module_list_text())
+            self.pager(self.get_module_list_text())
             return 0
 
         if len(self.args) == 0:
@@ -125,7 +125,7 @@ class DocCLI(CLI):
                 self.display.vvv(traceback.print_exc())
                 raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 
-        CLI.pager(text)
+        self.pager(text)
         return 0
 
     def find_modules(self, path):
