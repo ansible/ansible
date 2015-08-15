@@ -38,7 +38,7 @@ class ActionModule(ActionBase):
                 pass # could not get it from template!
 
         if module == 'auto':
-            module = self._execute_module(module_name=setup, module_args={filter: 'ansible_pkg_mgr'}, task_vars=task_vars)
+            module = self._execute_module(module_name='setup', module_args={filter: 'ansible_pkg_mgr'}, task_vars=task_vars)
 
         if module != 'auto':
             # run the 'package' module
