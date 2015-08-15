@@ -25,7 +25,7 @@ DOCUMENTATION = '''
 ---
 module: a10_virtual_server
 version_added: 1.8
-short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
+short_description: Manage A10 Networks devices' virtual servers
 description:
     - Manage slb virtual server objects on A10 Networks devices via aXAPI
 author: "Mischa Peters (@mischapeters)"
