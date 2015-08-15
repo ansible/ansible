@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -88,8 +89,9 @@ options:
     choices: [ 'yes', 'no' ]
     description:
       - Recursively sets the specified ACL (added in Ansible 2.0). Incompatible with C(state=query).
-
-author: "Brian Coca (@bcoca)"
+author:
+    - "Brian Coca (@bcoca)"
+    - "Jérémie Astori (@astorije)"
 notes:
     - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
 '''
