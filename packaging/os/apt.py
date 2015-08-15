@@ -549,7 +549,7 @@ def main():
             package = dict(default=None, aliases=['pkg', 'name'], type='list'),
             deb = dict(default=None),
             default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default='default', aliases=['install-recommends'], choices=['default', 'yes', 'no'),
+            install_recommends = dict(default='default', aliases=['install-recommends'], choices=['default', 'yes', 'no']),
             force = dict(default='no', type='bool'),
             upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS)
