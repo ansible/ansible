@@ -62,7 +62,7 @@ options:
     default: null
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). Default behavior (C(yes)) replicates apt's default behavior; C(no) does not install recommended packages. Suggested packages are never installed.
+      - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
     required: false
     default: yes
     choices: [ "yes", "no" ]
@@ -339,7 +339,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     return new_pkgspec
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
-            install_recommends=True, force=False,
+            install_recommends, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False):
     pkg_list = []
@@ -385,9 +385,9 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
-        if not install_recommends:
+        if install_recommends == 'no':
             cmd += " -o APT::Install-Recommends=no"
-        else:
+        elif install_recommends == 'yes':
             cmd += " -o APT::Install-Recommends=yes"
 
         rc, out, err = m.run_command(cmd)
@@ -549,7 +549,7 @@ def main():
             package = dict(default=None, aliases=['pkg', 'name'], type='list'),
             deb = dict(default=None),
             default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
+            install_recommends = dict(default='default', aliases=['install-recommends'], choices=['default', 'yes', 'no'),
             force = dict(default='no', type='bool'),
             upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS)
