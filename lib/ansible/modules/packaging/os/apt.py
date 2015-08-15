@@ -339,7 +339,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     return new_pkgspec
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
-            install_recommends, force=False,
+            install_recommends='default', force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False):
     pkg_list = []
