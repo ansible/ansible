@@ -255,9 +255,8 @@ class ActionBase:
         Takes a remote checksum and returns 1 if no file
         '''
 
-        # FIXME: figure out how this will work, probably pulled from the variable manager data
-        #python_interp = inject['hostvars'][inject['inventory_hostname']].get('ansible_python_interpreter', 'python')
-        python_interp = 'python'
+        python_interp = self._templar._available_variables\
+            .get('ansible_python_interpreter', 'python')
         cmd = self._connection._shell.checksum(path, python_interp)
         self._display.debug("calling _low_level_execute_command to get the remote checksum")
         data = self._low_level_execute_command(cmd, tmp, sudoable=True)
