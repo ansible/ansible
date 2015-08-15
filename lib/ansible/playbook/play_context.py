@@ -346,9 +346,13 @@ class PlayContext(Base):
                 # sudo prompt set with the -p option.
                 prompt = '[sudo via ansible, key=%s] password: ' % randbits
                 exe = self.become_exe or self.sudo_exe or 'sudo'
-                flags = self.become_flags or self.sudo_flags or ''
-                becomecmd = '%s -k && %s %s -S -p "%s" -u %s %s -c %s' % \
-                    (exe, exe, flags or C.DEFAULT_SUDO_FLAGS, prompt, self.become_user, executable, success_cmd)
+                flags = self.become_flags or self.sudo_flags or C.DEFAULT_SUDO_FLAGS
+
+                # force quick error if password is required but not supplied, should prevent sudo hangs.
+                if not self.become_pass:
+                    flags += " -n "
+
+                becomecmd = '%s %s -S -p "%s" -u %s %s -c %s' % (exe, flags, prompt, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'su':
 
