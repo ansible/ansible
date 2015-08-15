@@ -66,7 +66,7 @@ class ActionModule(ActionBase):
                 else:
                     source = self._loader.path_dwim(source)
 
-        remote_checksum = self._remote_checksum(tmp, dest)
+        remote_checksum = self._remote_checksum(tmp, dest, all_vars=task_vars)
         if remote_checksum != '3':
             return dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
         elif remote_checksum == '4':

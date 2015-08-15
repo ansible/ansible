@@ -145,7 +145,7 @@ class ActionModule(ActionBase):
                 dest_file = self._connection._shell.join_path(dest)
 
             # Attempt to get the remote checksum
-            remote_checksum = self._remote_checksum(tmp, dest_file)
+            remote_checksum = self._remote_checksum(tmp, dest_file, all_vars=task_vars)
 
             if remote_checksum == '3':
                 # The remote_checksum was executed on a directory.
@@ -156,7 +156,7 @@ class ActionModule(ActionBase):
                 else:
                     # Append the relative source location to the destination and retry remote_checksum
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    remote_checksum = self._remote_checksum(tmp, dest_file)
+                    remote_checksum = self._remote_checksum(tmp, dest_file, all_vars=task_vars)
 
             if remote_checksum != '1' and not force:
                 # remote_file does not exist so continue to next iteration.

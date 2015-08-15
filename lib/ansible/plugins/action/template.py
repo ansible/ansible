@@ -31,8 +31,8 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def get_checksum(self, tmp, dest, try_directory=False, source=None):
-        remote_checksum = self._remote_checksum(tmp, dest)
+    def get_checksum(self, tmp, dest, all_vars, try_directory=False, source=None):
+        remote_checksum = self._remote_checksum(tmp, dest, all_vars=all_vars)
 
         if remote_checksum in ('0', '2', '3', '4'):
             # Note: 1 means the file is not present which is fine; template
@@ -40,7 +40,7 @@ class ActionModule(ActionBase):
             if try_directory and remote_checksum == '3' and source:
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
-                remote_checksum = self.get_checksum(tmp, dest, try_directory=False)
+                remote_checksum = self.get_checksum(tmp, dest, all_vars=all_vars, try_directory=False)
                 if remote_checksum not in ('0', '2', '3', '4'):
                     return remote_checksum
 
@@ -124,7 +124,7 @@ class ActionModule(ActionBase):
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
 
         local_checksum = checksum_s(resultant)
-        remote_checksum = self.get_checksum(tmp, dest, not directory_prepended, source=source)
+        remote_checksum = self.get_checksum(tmp, dest, task_vars, not directory_prepended, source=source)
         if isinstance(remote_checksum, dict):
             # Error from remote_checksum is a dict.  Valid return is a str
             return remote_checksum

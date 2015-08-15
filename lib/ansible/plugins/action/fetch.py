@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
         source = self._remote_expand_user(source, tmp)
 
         # calculate checksum for the remote file
-        remote_checksum = self._remote_checksum(tmp, source)
+        remote_checksum = self._remote_checksum(tmp, source, all_vars=task_vars)
 
         # use slurp if sudo and permissions are lacking
         remote_data = None
