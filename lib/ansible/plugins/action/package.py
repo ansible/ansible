@@ -40,8 +40,8 @@ class ActionModule(ActionBase):
         if module == 'auto':
             facts = self._execute_module(module_name='setup', module_args=dict(filter='ansible_pkg_mgr'), task_vars=task_vars)
             self._display.degug("Facts %s" % facts)
-            module = getattr(facts['ansible_facts'], 'ansible_pkg_mgr', 'auto')
-
+            if not 'failed' in facts:
+                module = getattr(facts['ansible_facts'], 'ansible_pkg_mgr', 'auto')
 
         if module != 'auto':
             # run the 'package' module
