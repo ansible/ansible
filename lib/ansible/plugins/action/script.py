@@ -65,7 +65,7 @@ class ActionModule(ActionBase):
         if self._task._role is not None:
             source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
         else:
-            source = self._loader.path_dwim(source)
+            source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
         # transfer the file to a remote tmp location
         tmp_src = self._connection._shell.join_path(tmp, os.path.basename(source))
