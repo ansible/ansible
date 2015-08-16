@@ -73,7 +73,7 @@ class TestTemplar(unittest.TestCase):
         #self.assertEqual(templar.template("{{lookup('file', '/path/to/my_file.txt')}}"), "foo")
 
         # force errors
-        self.assertRaises(AnsibloeUndefinedVariable, templar.template, "{{bad_var}}")
+        self.assertRaises(AnsibleUndefinedVariable, templar.template, "{{bad_var}}")
         self.assertRaises(AnsibleUndefinedVariable, templar.template, "{{lookup('file', bad_var)}}")
         self.assertRaises(AnsibleError, templar.template, "{{lookup('bad_lookup')}}")
         self.assertRaises(AnsibleError, templar.template, "{{recursive}}")
