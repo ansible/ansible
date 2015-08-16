@@ -199,7 +199,7 @@ Host connection::
     ansible_connection
       Connection type to the host. Candidates are local, smart, ssh or paramiko.  The default is smart.
 
-Ssh connection::
+SSH connection::
 
     ansible_ssh_host
       The name of the host to connect to, if different from the alias you wish to give to it.
