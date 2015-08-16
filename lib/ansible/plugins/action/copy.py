@@ -268,8 +268,8 @@ class ActionModule(ActionBase):
         else:
             result = dict(dest=dest, src=source, changed=changed)
 
-        if len(diffs) == 1:
-            result['diff'] = diffs[0]
+        if diffs:
+            result['diff'] = diffs
 
         return result
 
