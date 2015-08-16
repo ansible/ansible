@@ -1446,7 +1446,7 @@ class DockerManager(object):
         if api_version < 1.19:
             params['mem_limit'] = mem_limit
         else:
-            params['host_config']['mem_limit'] = mem_limit
+            params['host_config']['Memory'] = mem_limit
 
 
         def do_create(count, params):
