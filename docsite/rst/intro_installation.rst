@@ -105,7 +105,7 @@ open source projects.
 
 .. note::
   
-   If you are intending to use Tower as the Control Machine, do not use a source install. Please use apt/yum/pip for a stable version
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (eg. apt/yum) or pip to install a stable version.
 
 
 To install from source.

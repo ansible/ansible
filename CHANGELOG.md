@@ -47,7 +47,10 @@ New Modules:
   * amazon: s3_logging
   * apk
   * bundler
+  * centurylink: clc_loadbalancer
+  * centurylink: clc_modify_server
   * centurylink: clc_publicip
+  * centurylink: clc_server
   * circonus_annotation
   * consul
   * consul_acl
@@ -101,6 +104,9 @@ New Modules:
   * pam_limits
   * pear
   * profitbricks: profitbricks
+  * profitbricks: profitbricks_datacenter
+  * profitbricks: profitbricks_nic
+  * profitbricks: profitbricks_volume
   * proxmox
   * proxmox_template 
   * puppet 
@@ -117,6 +123,7 @@ New Modules:
   * selinux_permissive
   * sensu_check
   * sensu_subscription
+  * seport
   * slackpkg
   * solaris_zone
   * vertica_configuration
