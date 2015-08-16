@@ -96,8 +96,7 @@ class ActionModule(ActionBase):
         elif self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
-            # the source is local, so expand it here
-            src = self._loader.path_dwim(os.path.expanduser(src))
+            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
 
         _re = None
         if regexp is not None:

@@ -71,7 +71,7 @@ class ActionModule(ActionBase):
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
             else:
-                source = self._loader.path_dwim(source)
+                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
 
         # Expand any user home dir specification
         dest = self._remote_expand_user(dest, tmp)

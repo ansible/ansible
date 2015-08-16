@@ -88,7 +88,7 @@ class ActionModule(ActionBase):
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
             else:
-                source = self._loader.path_dwim(source)
+                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = []
