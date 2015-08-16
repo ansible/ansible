@@ -123,6 +123,20 @@ options:
             is supplied, m will be used by default e.g. 1 will be 1m
         required: false
         default: None
+    http:
+        description:
+          - checks can be registered with an http endpoint. This means that consul
+            will check that the http endpoint returns a successful http status.
+            Interval must also be provided with this option.
+        required: false
+        default: None
+    timeout:
+        description:
+          - A custom HTTP check timeout. The consul default is 10 seconds.
+            Similar to the interval this is a number with a s or m suffix to
+            signify the units of seconds or minutes, e.g. 15s or 1m.
+        required: false
+        default: None
     token:
         description:
           - the token key indentifying an ACL rule set. May be required to register services.
@@ -142,6 +156,13 @@ EXAMPLES = '''
       service_port: 80
       script: "curl http://localhost"
       interval: 60s
+
+  - name: register nginx with an http check
+    consul:
+      name: nginx
+      service_port: 80
+      interval: 60s
+      http: /status
 
   - name: register nginx with some service tags
     consul:
@@ -235,7 +256,9 @@ def add_check(module, check):
                      check_name=check.name,
                      script=check.script,
                      interval=check.interval,
-                     ttl=check.ttl)
+                     ttl=check.ttl,
+                     http=check.http,
+                     timeout=check.timeout)
 
 
 def remove_check(module, check_id):
@@ -302,12 +325,12 @@ def get_service_by_id(consul_api, service_id):
 
 def parse_check(module):
 
-    if module.params.get('script') and module.params.get('ttl'):
+    if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
         module.fail_json(
-            msg='check are either script or ttl driven, supplying both does'\
-            ' not make sense')
+            msg='check are either script, http or ttl driven, supplying more'\
+                ' than one does not make sense')
 
-    if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl'):
+    if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
 
        return ConsulCheck(
             module.params.get('check_id'),
@@ -317,7 +340,9 @@ def parse_check(module):
             module.params.get('script'),
             module.params.get('interval'),
             module.params.get('ttl'),
-            module.params.get('notes')
+            module.params.get('notes'),
+            module.params.get('http'),
+            module.params.get('timeout')
         )
 
 
@@ -357,14 +382,13 @@ class ConsulService():
     def register(self, consul_api):
         if len(self.checks) > 0:
             check = self.checks[0]
+
             consul_api.agent.service.register(
                 self.name,
                 service_id=self.id,
                 port=self.port,
                 tags=self.tags,
-                script=check.script,
-                interval=check.interval,
-                ttl=check.ttl)
+                check=check.check)
         else:
             consul_api.agent.service.register(
                 self.name,
@@ -405,17 +429,33 @@ class ConsulService():
 class ConsulCheck():
 
     def __init__(self, check_id, name, node=None, host='localhost',
-                    script=None, interval=None, ttl=None, notes=None):
+                    script=None, interval=None, ttl=None, notes=None, http=None, timeout=None):
         self.check_id = self.name = name
         if check_id:
             self.check_id = check_id
-        self.script = script
-        self.interval = self.validate_duration('interval', interval)
-        self.ttl = self.validate_duration('ttl', ttl)
         self.notes = notes
         self.node = node
         self.host = host
 
+        self.interval = self.validate_duration('interval', interval)
+        self.ttl = self.validate_duration('ttl', ttl)
+        self.script = script
+        self.http = http
+        self.timeout = self.validate_duration('timeout', timeout)
+
+        self.check = None
+
+        if script:
+            self.check = consul.Check.script(script, self.interval)
+
+        if ttl:
+            self.check = consul.Check.ttl(self.ttl)
+
+        if http:
+            if interval == None:
+                raise Exception('http check must specify interval')
+
+            self.check = consul.Check.http(http, self.interval, self.timeout)
         
 
     def validate_duration(self, name, duration):
@@ -428,9 +468,8 @@ class ConsulCheck():
 
     def register(self, consul_api):
         consul_api.agent.check.register(self.name, check_id=self.check_id,
-                                        script=self.script,
-                                        interval=self.interval,
-                                        ttl=self.ttl, notes=self.notes)
+                                        notes=self.notes,
+                                        check=self.check)
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)
@@ -452,6 +491,8 @@ class ConsulCheck():
         self._add(data, 'host')
         self._add(data, 'interval')
         self._add(data, 'ttl')
+        self._add(data, 'http')
+        self._add(data, 'timeout')
         return data
 
     def _add(self, data, key, attr=None):
@@ -484,6 +525,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent']),
             interval=dict(required=False, type='str'),
             ttl=dict(required=False, type='str'),
+            http=dict(required=False, type='str'),
+            timeout=dict(required=False, type='str'),
             tags=dict(required=False, type='list'),
             token=dict(required=False)
         ),
