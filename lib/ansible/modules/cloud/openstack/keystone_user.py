@@ -252,8 +252,17 @@ def ensure_user_exists(keystone, user_name, password, email, tenant_name,
                                  email=email, tenant_id=tenant.id)
     return (True, user.id)
 
+def ensure_role_exists(keystone, role_name):
+    # Get the role if it exists
+    try:
+        role = get_role(keystone, role_name)
+    except KeyError:
+        # Role doesn't exist yet
+        role = keystone.roles.create(role_name)
+    return (True, role.id)
 
-def ensure_role_exists(keystone, user_name, tenant_name, role_name,
+
+def ensure_user_role_exists(keystone, user_name, tenant_name, role_name,
                        check_mode):
     """ Check if role exists
 
@@ -297,9 +306,11 @@ def ensure_user_absent(keystone, user, check_mode):
     raise NotImplementedError("Not yet implemented")
 
 
-def ensure_role_absent(keystone, uesr, tenant, role, check_mode):
+def ensure_user_role_absent(keystone, uesr, tenant, role, check_mode):
     raise NotImplementedError("Not yet implemented")
 
+def ensure_role_absent(keystone, role_name):
+    raise NotImplementedError("Not yet implemented")
 
 def main():
 
@@ -378,14 +389,18 @@ def dispatch(keystone, user=None, password=None, tenant=None,
           X                  absent      ensure_tenant_absent
           X      X           present     ensure_user_exists
           X      X           absent      ensure_user_absent
-          X      X     X     present     ensure_role_exists
-          X      X     X     absent      ensure_role_absent
-
-
+          X      X     X     present     ensure_user_role_exists
+          X      X     X     absent      ensure_user_role_absent
+                       X     present     ensure_role_exists
+                       X     absent      ensure_role_absent
         """
     changed = False
     id = None
-    if tenant and not user and not role and state == "present":
+    if not tenant and not user and role and state == "present":
+        ensure_role_exists(keystone, role)
+    elif not tenant and not user and role and state == "absent":
+        ensure_role_absent(keystone, role)
+    elif tenant and not user and not role and state == "present":
         changed, id = ensure_tenant_exists(keystone, tenant,
                                            tenant_description, check_mode)
     elif tenant and not user and not role and state == "absent":
@@ -396,10 +411,10 @@ def dispatch(keystone, user=None, password=None, tenant=None,
     elif tenant and user and not role and state == "absent":
         changed = ensure_user_absent(keystone, user, check_mode)
     elif tenant and user and role and state == "present":
-        changed, id = ensure_role_exists(keystone, user, tenant, role,
+        changed, id = ensure_user_role_exists(keystone, user, tenant, role,
                                          check_mode)
     elif tenant and user and role and state == "absent":
-        changed = ensure_role_absent(keystone, user, tenant, role, check_mode)
+        changed = ensure_user_role_absent(keystone, user, tenant, role, check_mode)
     else:
         # Should never reach here
         raise ValueError("Code should never reach here")
