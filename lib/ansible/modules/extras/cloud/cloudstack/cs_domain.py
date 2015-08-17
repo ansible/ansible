@@ -80,7 +80,7 @@ local_action:
 RETURN = '''
 ---
 id:
-  description: ID of the domain.
+  description: UUID of the domain.
   returned: success
   type: string
   sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
@@ -119,7 +119,12 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackDomain(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackDomain, self).__init__(module)
+        self.returns = {
+            'path':             'path',
+            'networkdomain':    'network_domain',
+            'parentdomainname': 'parent_domain',
+        }
         self.domain = None
 
 
@@ -231,20 +236,6 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
                     res = self._poll_job(res, 'domain')
         return domain
 
-
-    def get_result(self, domain):
-        if domain:
-            if 'id' in domain:
-                self.result['id'] = domain['id']
-            if 'name' in domain:
-                self.result['name'] = domain['name']
-            if 'path' in domain:
-                self.result['path'] = domain['path']
-            if 'parentdomainname' in domain:
-                self.result['parent_domain'] = domain['parentdomainname']
-            if 'networkdomain' in domain:
-                self.result['network_domain'] = domain['networkdomain']
-        return self.result
 
 
 def main():

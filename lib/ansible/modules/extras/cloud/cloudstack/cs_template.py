@@ -219,6 +219,11 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+id:
+  description: UUID of the template.
+  returned: success
+  type: string
+  sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the template.
   returned: success
@@ -344,7 +349,23 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackTemplate, self).__init__(module)
+        self.returns = {
+            'checksum':         'checksum',
+            'status':           'status',
+            'isready':          'is_ready',
+            'templatetag':      'template_tag',
+            'sshkeyenabled':    'sshkey_enabled',
+            'passwordenabled':  'password_enabled',
+            'tempaltetype':     'template_type',
+            'ostypename':       'os_type',
+            'crossZones':       'cross_zones',
+            'isextractable':    'is_extractable',
+            'isfeatured':       'is_featured',
+            'ispublic':         'is_public',
+            'format':           'format',
+            'hypervisor':       'hypervisor',
+        }
 
 
     def _get_args(self):
@@ -496,60 +517,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                     res = self._poll_job(res, 'template')
         return template
 
-
-    def get_result(self, template):
-        if template:
-            if 'displaytext' in template:
-                self.result['displaytext'] = template['displaytext']
-            if 'name' in template:
-                self.result['name'] = template['name']
-            if 'hypervisor' in template:
-                self.result['hypervisor'] = template['hypervisor']
-            if 'zonename' in template:
-                self.result['zone'] = template['zonename']
-            if 'checksum' in template:
-                self.result['checksum'] = template['checksum']
-            if 'format' in template:
-                self.result['format'] = template['format']
-            if 'isready' in template:
-                self.result['is_ready'] = template['isready']
-            if 'ispublic' in template:
-                self.result['is_public'] = template['ispublic']
-            if 'isfeatured' in template:
-                self.result['is_featured'] = template['isfeatured']
-            if 'isextractable' in template:
-                self.result['is_extractable'] = template['isextractable']
-            # and yes! it is really camelCase!
-            if 'crossZones' in template:
-                self.result['cross_zones'] = template['crossZones']
-            if 'ostypename' in template:
-                self.result['os_type'] = template['ostypename']
-            if 'templatetype' in template:
-                self.result['template_type'] = template['templatetype']
-            if 'passwordenabled' in template:
-                self.result['password_enabled'] = template['passwordenabled']
-            if 'sshkeyenabled' in template:
-                self.result['sshkey_enabled'] = template['sshkeyenabled']
-            if 'status' in template:
-                self.result['status'] = template['status']
-            if 'created' in template:
-                self.result['created'] = template['created']
-            if 'templatetag' in template:
-                self.result['template_tag'] = template['templatetag']
-            if 'tags' in template:
-                self.result['tags'] = []
-                for tag in template['tags']:
-                    result_tag          = {}
-                    result_tag['key']   = tag['key']
-                    result_tag['value'] = tag['value']
-                    self.result['tags'].append(result_tag)
-            if 'domain' in template:
-                self.result['domain'] = template['domain']
-            if 'account' in template:
-                self.result['account'] = template['account']
-            if 'project' in template:
-                self.result['project'] = template['project']
-        return self.result
 
 
 def main():

@@ -244,7 +244,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 id:
-  description: ID of the instance.
+  description: UUID of the instance.
   returned: success
   type: string
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
@@ -375,7 +375,20 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackInstance, self).__init__(module)
+        self.returns = {
+            'group':                'group',
+            'hypervisor':           'hypervisor',
+            'instancename':         'instance_name',
+            'publicip':             'public_ip',
+            'passwordenabled':      'password_enabled',
+            'password':             'password',
+            'serviceofferingname':  'service_offering',
+            'isoname':              'iso',
+            'templatename':         'template',
+            'keypair':              'ssh_key',
+            'securitygroup':        'security_group',
+        }
         self.instance = None
         self.template = None
         self.iso = None
@@ -752,52 +765,8 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
 
     def get_result(self, instance):
+        super(AnsibleCloudStackInstance, self).get_result(instance)
         if instance:
-            if 'id' in instance:
-                self.result['id'] = instance['id']
-            if 'name' in instance:
-                self.result['name'] = instance['name']
-            if 'displayname' in instance:
-                self.result['display_name'] = instance['displayname']
-            if 'group' in instance:
-                self.result['group'] = instance['group']
-            if 'domain' in instance:
-                self.result['domain'] = instance['domain']
-            if 'account' in instance:
-                self.result['account'] = instance['account']
-            if 'project' in instance:
-                self.result['project'] = instance['project']
-            if 'hypervisor' in instance:
-                self.result['hypervisor'] = instance['hypervisor']
-            if 'instancename' in instance:
-                self.result['instance_name'] = instance['instancename']
-            if 'publicip' in instance:
-                self.result['public_ip'] = instance['publicip']
-            if 'passwordenabled' in instance:
-                self.result['password_enabled'] = instance['passwordenabled']
-            if 'password' in instance:
-                self.result['password'] = instance['password']
-            if 'serviceofferingname' in instance:
-                self.result['service_offering'] = instance['serviceofferingname']
-            if 'zonename' in instance:
-                self.result['zone'] = instance['zonename']
-            if 'templatename' in instance:
-                self.result['template'] = instance['templatename']
-            if 'isoname' in instance:
-                self.result['iso'] = instance['isoname']
-            if 'keypair' in instance:
-                self.result['ssh_key'] = instance['keypair']
-            if 'created' in instance:
-                self.result['created'] = instance['created']
-            if 'state' in instance:
-                self.result['state'] = instance['state']
-            if 'tags' in instance:
-                self.result['tags'] = []
-                for tag in instance['tags']:
-                    result_tag          = {}
-                    result_tag['key']   = tag['key']
-                    result_tag['value'] = tag['value']
-                    self.result['tags'].append(result_tag)
             if 'securitygroup' in instance:
                 security_groups = []
                 for securitygroup in instance['securitygroup']:
