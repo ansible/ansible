@@ -64,12 +64,12 @@ class AdHocCLI(CLI):
 
         return True
 
-    def _play_ds(self, pattern):
+    def _play_ds(self, pattern, async, poll):
         return dict(
             name = "Ansible Ad-Hoc",
             hosts = pattern,
             gather_facts = 'no',
-            tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args))), ]
+            tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args)), async=async, poll=poll) ]
         )
 
     def run(self):
@@ -122,16 +122,7 @@ class AdHocCLI(CLI):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
 
-        #TODO: implement async support
-        #if self.options.seconds:
-        #    callbacks.display("background launch...\n\n", color='cyan')
-        #    results, poller = runner.run_async(self.options.seconds)
-        #    results = self.poll_while_needed(poller)
-        #else:
-        #    results = runner.run()
-
-        # create a pseudo-play to execute the specified module via a single task
-        play_ds = self._play_ds(pattern)
+        play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
         if self.options.one_line:
