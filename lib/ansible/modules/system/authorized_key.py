@@ -109,7 +109,7 @@ EXAMPLES = '''
 # Using key_options:
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
-                  key_options='no-port-forwarding,host="10.0.1.1"'
+                  key_options='no-port-forwarding,from="10.0.1.1"'
 
 # Set up authorized_keys exclusively with one key
 - authorized_key: user=root key=public_keys/doe-jane state=present
