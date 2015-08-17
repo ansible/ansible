@@ -257,8 +257,8 @@ which is totally ok if the command is something like
 be used to make these modules also idempotent.
 
 Every task should have a `name`, which is included in the output from
-running the playbook.   This is output for humans, so it is
-nice to have reasonably good descriptions of each task step.  If the name
+running the playbook.   This is human readable output, and so it is 
+useful to have provide good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
 
