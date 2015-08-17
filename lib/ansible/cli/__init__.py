@@ -308,8 +308,7 @@ class CLI(object):
                 help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
 
         if async_opts:
-            parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int',
-                dest='poll_interval',
+            parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',
                 help="set the poll interval if using -B (default=%s)" % C.DEFAULT_POLL_INTERVAL)
             parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
                 help='run asynchronously, failing after X seconds (default=N/A)')
