@@ -37,12 +37,13 @@ class Block(Base, Become, Conditional, Taggable):
     # similar to the 'else' clause for exceptions
     #_otherwise = FieldAttribute(isa='list')
 
-    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False):
+    def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
         self._play         = play
         self._role         = role
         self._task_include = task_include
         self._parent_block = parent_block
         self._use_handlers = use_handlers
+        self._implicit     = implicit
         self._dep_chain    = []
 
         super(Block, self).__init__()
@@ -66,8 +67,19 @@ class Block(Base, Become, Conditional, Taggable):
 
     @staticmethod
     def load(data, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, variable_manager=None, loader=None):
-        b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers)
+        implicit = not Block.is_block(data)
+        b = Block(play=play, parent_block=parent_block, role=role, task_include=task_include, use_handlers=use_handlers, implicit=implicit)
         return b.load_data(data, variable_manager=variable_manager, loader=loader)
+
+    @staticmethod
+    def is_block(ds):
+        is_block = False
+        if isinstance(ds, dict):
+            for attr in ('block', 'rescue', 'always'):
+                if attr in ds:
+                    is_block = True
+                    break
+        return is_block
 
     def preprocess_data(self, ds):
         '''
@@ -75,13 +87,7 @@ class Block(Base, Become, Conditional, Taggable):
         is created, which goes in the main portion of the block
         '''
 
-        is_block = False
-        for attr in ('block', 'rescue', 'always'):
-            if attr in ds:
-                is_block = True
-                break
-
-        if not is_block:
+        if not Block.is_block(ds):
             if isinstance(ds, list):
                 return super(Block, self).preprocess_data(dict(block=ds))
             else:
