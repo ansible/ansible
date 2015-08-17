@@ -151,6 +151,11 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+id:
+  description: UUID of the rule.
+  returned: success
+  type: string
+  sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
 ip_address:
   description: IP address of the rule if C(type=ingress)
   returned: success
@@ -211,7 +216,16 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackFirewall, self).__init__(module)
+        self.returns = {
+            'cidrlist':     'cidr',
+            'startport':    'start_port',
+            'endpoint':     'end_port',
+            'protocol':     'protocol',
+            'ipaddress':    'ip_address',
+            'icmpcode':     'icmp_code',
+            'icmptype':     'icmp_type',
+        }
         self.firewall_rule = None
 
 
@@ -368,22 +382,9 @@ class AnsibleCloudStackFirewall(AnsibleCloudStack):
 
 
     def get_result(self, firewall_rule):
+        super(AnsibleCloudStackFirewall, self).get_result(firewall_rule)
         if firewall_rule:
             self.result['type'] = self.module.params.get('type')
-            if 'cidrlist' in firewall_rule:
-                self.result['cidr'] = firewall_rule['cidrlist']
-            if 'startport' in firewall_rule:
-                self.result['start_port'] = int(firewall_rule['startport'])
-            if 'endport' in firewall_rule:
-                self.result['end_port'] = int(firewall_rule['endport'])
-            if 'protocol' in firewall_rule:
-                self.result['protocol'] = firewall_rule['protocol']
-            if 'ipaddress' in firewall_rule:
-                self.result['ip_address'] = firewall_rule['ipaddress']
-            if 'icmpcode' in firewall_rule:
-                self.result['icmp_code'] = int(firewall_rule['icmpcode'])
-            if 'icmptype' in firewall_rule:
-                self.result['icmp_type'] = int(firewall_rule['icmptype'])
             if 'networkid' in firewall_rule:
                 self.result['network'] = self.get_network(key='displaytext', network=firewall_rule['networkid'])
         return self.result

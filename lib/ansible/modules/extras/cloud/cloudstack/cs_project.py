@@ -95,7 +95,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 id:
-  description: ID of the project.
+  description: UUID of the project.
   returned: success
   type: string
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
@@ -142,10 +142,6 @@ from ansible.module_utils.cloudstack import *
 
 
 class AnsibleCloudStackProject(AnsibleCloudStack):
-
-    def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
-        self.project = None
 
 
     def get_project(self):
@@ -260,27 +256,6 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
                     res = self._poll_job(res, 'project')
             return project
 
-
-    def get_result(self, project):
-        if project:
-            if 'name' in project:
-                self.result['name'] = project['name']
-            if 'displaytext' in project:
-                self.result['displaytext'] = project['displaytext']
-            if 'account' in project:
-                self.result['account'] = project['account']
-            if 'domain' in project:
-                self.result['domain'] = project['domain']
-            if 'state' in project:
-                self.result['state'] = project['state']
-            if 'tags' in project:
-                self.result['tags'] = []
-                for tag in project['tags']:
-                    result_tag          = {}
-                    result_tag['key']   = tag['key']
-                    result_tag['value'] = tag['value']
-                    self.result['tags'].append(result_tag)
-        return self.result
 
 
 def main():

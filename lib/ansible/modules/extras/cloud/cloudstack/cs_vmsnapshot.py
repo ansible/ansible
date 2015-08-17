@@ -104,6 +104,11 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+id:
+  description: UUID of the snapshot.
+  returned: success
+  type: string
+  sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the snapshot.
   returned: success
@@ -170,7 +175,11 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackVmSnapshot, self).__init__(module)
+        self.returns = {
+            'type':     'type',
+            'current':  'current',
+        }
 
 
     def get_snapshot(self):
@@ -245,30 +254,6 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 
         self.module.fail_json(msg="snapshot not found, could not revert VM")
 
-
-    def get_result(self, snapshot):
-        if snapshot:
-            if 'displayname' in snapshot:
-                self.result['displayname'] = snapshot['displayname']
-            if 'created' in snapshot:
-                self.result['created'] = snapshot['created']
-            if 'current' in snapshot:
-                self.result['current'] = snapshot['current']
-            if 'state' in snapshot:
-                self.result['state'] = snapshot['state']
-            if 'type' in snapshot:
-                self.result['type'] = snapshot['type']
-            if 'name' in snapshot:
-                self.result['name'] = snapshot['name']
-            if 'description' in snapshot:
-                self.result['description'] = snapshot['description']
-            if 'domain' in snapshot:
-                self.result['domain'] = snapshot['domain']
-            if 'account' in snapshot:
-                self.result['account'] = snapshot['account']
-            if 'project' in snapshot:
-                self.result['project'] = snapshot['project']
-        return self.result
 
 
 def main():

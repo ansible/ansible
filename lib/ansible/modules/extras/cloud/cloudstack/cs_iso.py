@@ -140,6 +140,11 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+id:
+  description: UUID of the ISO.
+  returned: success
+  type: string
+  sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the ISO.
   returned: success
@@ -205,7 +210,12 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackIso(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackIso, self).__init__(module)
+        self.returns = {
+            'checksum': 'checksum',
+            'status':   'status',
+            'isready':  'is_ready',
+        }
         self.iso = None
 
     def register_iso(self):
@@ -282,30 +292,6 @@ class AnsibleCloudStackIso(AnsibleCloudStack):
                 res = self.cs.deleteIso(**args)
         return iso
 
-
-    def get_result(self, iso):
-        if iso:
-            if 'displaytext' in iso:
-                self.result['displaytext'] = iso['displaytext']
-            if 'name' in iso:
-                self.result['name'] = iso['name']
-            if 'zonename' in iso:
-                self.result['zone'] = iso['zonename']
-            if 'checksum' in iso:
-                self.result['checksum'] = iso['checksum']
-            if 'status' in iso:
-                self.result['status'] = iso['status']
-            if 'isready' in iso:
-                self.result['is_ready'] = iso['isready']
-            if 'created' in iso:
-                self.result['created'] = iso['created']
-            if 'project' in iso:
-                self.result['project'] = iso['project']
-            if 'domain' in iso:
-                self.result['domain'] = iso['domain']
-            if 'account' in iso:
-                self.result['account'] = iso['account']
-        return self.result
 
 
 def main():
