@@ -88,10 +88,12 @@ class StrategyModule(StrategyBase):
                 if host_state_task is None:
                     continue
                 (s, t) = host_state_task
+                if t is None:
+                    continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
                     new_t = iterator.get_next_task_for_host(host)
                     #if new_t != t:
-                    #    raise AnsibleError("iterator error, wtf?")
+                    #    raise AnsibleError("iterator error, wtf?") FIXME
                     rvals.append((host, t))
                 else:
                     rvals.append((host, noop_task))
