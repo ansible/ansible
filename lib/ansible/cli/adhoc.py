@@ -152,14 +152,3 @@ class AdHocCLI(CLI):
                 self._tqm.cleanup()
 
         return result
-
-    # ----------------------------------------------
-
-    def poll_while_needed(self, poller):
-        ''' summarize results from Runner '''
-
-        # BACKGROUND POLL LOGIC when -B and -P are specified
-        if self.options.seconds and self.options.poll_interval > 0:
-            poller.wait(self.options.seconds, self.options.poll_interval)
-
-        return poller.results
