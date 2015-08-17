@@ -285,7 +285,7 @@ def main():
             artifact_id = dict(default=None),
             version = dict(default=None),
             classifier = dict(default=None),
-            extension = dict(default=None),
+            extension = dict(default=None, required=True),
             repository_url = dict(default=None),
             username = dict(default=None),
             password = dict(default=None),
@@ -309,7 +309,8 @@ def main():
     if not repository_url:
         repository_url = "http://repo1.maven.org/maven2"
 
-    downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
+    #downloader = MavenDownloader(module, repository_url, repository_username, repository_password)
+    downloader = MavenDownloader(module, repository_url)
 
     try:
         artifact = Artifact(group_id, artifact_id, version, classifier, extension)
