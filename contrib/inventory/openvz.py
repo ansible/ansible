@@ -26,6 +26,7 @@
 # Groups are determined by the description field of openvz guests
 # multiple groups can be seperated by commas: webserver,dbserver
 
+from ansible import constants as C
 from subprocess import Popen,PIPE
 import sys
 import json
@@ -42,7 +43,7 @@ def get_guests():
     #Loop through vzhosts
     for h in vzhosts:
         #SSH to vzhost and get the list of guests in json
-        pipe = Popen(['ssh', h,'vzlist','-j'], stdout=PIPE, universal_newlines=True)
+        pipe = Popen([C.ANSIBLE_SSH_BINARY, h,'vzlist','-j'], stdout=PIPE, universal_newlines=True)
 
         #Load Json info of guests
         json_data = json.loads(pipe.stdout.read())
