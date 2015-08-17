@@ -141,15 +141,15 @@ def semanage_port_add(module, ports, proto, setype, do_reload, serange='s0', ses
                 seport.add(port, proto, serange, setype)
             change = change or not exists
 
-    except ValueError as e:
+    except ValueError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except IOError as e:
+    except IOError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except KeyError as e:
+    except KeyError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except OSError as e:
+    except OSError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except RuntimeError as e:
+    except RuntimeError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
 
     return change
@@ -186,15 +186,15 @@ def semanage_port_del(module, ports, proto, do_reload, sestore=''):
                 seport.delete(port, proto)
             change = change or not exists
 
-    except ValueError as e:
+    except ValueError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except IOError as e:
+    except IOError,e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except KeyError as e:
+    except KeyError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except OSError as e:
+    except OSError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
-    except RuntimeError as e:
+    except RuntimeError, e:
         module.fail_json(msg="%s: %s\n" % (e.__class__.__name__, str(e)))
 
     return change
