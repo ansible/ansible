@@ -143,10 +143,15 @@ def create_or_update_dynamo_table(connection, module):
     read_capacity = module.params.get('read_capacity')
     write_capacity = module.params.get('write_capacity')
 
-    schema = [
-        HashKey(hash_key_name, DYNAMO_TYPE_MAP.get(hash_key_type)),
-        RangeKey(range_key_name, DYNAMO_TYPE_MAP.get(range_key_type))
-    ]
+    if range_key_name:
+        schema = [
+            HashKey(hash_key_name, DYNAMO_TYPE_MAP.get(hash_key_type)),
+            RangeKey(range_key_name, DYNAMO_TYPE_MAP.get(range_key_type))
+        ]
+    else:
+        schema = [
+            HashKey(hash_key_name, DYNAMO_TYPE_MAP.get(hash_key_type))
+        ]
     throughput = {
         'read': read_capacity,
         'write': write_capacity
