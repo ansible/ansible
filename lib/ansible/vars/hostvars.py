@@ -54,8 +54,15 @@ class HostVars(collections.Mapping):
         if item and item is not j2undefined:
             return True
         return False
+
     def __iter__(self):
         raise NotImplementedError('HostVars does not support iteration as hosts are discovered on an as needed basis.')
 
     def __len__(self):
         raise NotImplementedError('HostVars does not support len.  hosts entries are discovered dynamically as needed')
+
+    def __getstate__(self):
+        return self._lookup
+
+    def __setstate__(self, data):
+        self._lookup = data
