@@ -363,9 +363,9 @@ The things listed in the 'notify' section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by a globally unique name.  Handlers are
-what notifiers notify.  If nothing notifies a handler, it will not
-run.  Regardless of how many things notify a handler, it will run only
+tasks, that are referenced by a globally unique name, and are notified 
+by notifiers.  If nothing notifies a handler, it will not
+run.  Regardless of how many tasks notify a handler, it will run only
 once, after all of the tasks complete in a particular play.
 
 Here's an example handlers section::
