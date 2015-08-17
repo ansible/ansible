@@ -73,10 +73,9 @@ For starters, here's a playbook that contains just one play::
         - name: restart apache
           service: name=httpd state=restarted
 
-We can also break task items out over multiple lines using the YAML dictionary
-types to supply module arguments. This can be helpful when working with tasks
-that have really long parameters or modules that take many parameters to keep
-them well structured. Below is another version of the above example but using
+When working with tasks that have really long parameters or modules that take 
+many parameters, you can break tasks items over multiple lines to improve the 
+structure. Below is another version of the above example but using
 YAML dictionaries to supply the modules with their key=value arguments.::
 
     ---
