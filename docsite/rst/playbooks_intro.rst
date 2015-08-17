@@ -247,10 +247,9 @@ The goal of each task is to execute a module, with very specific arguments.
 Variables, as mentioned above, can be used in arguments to modules.
 
 Modules are 'idempotent', meaning if you run them
-again, they will make only the changes they must in order to bring the
-system to the desired state.  This makes it very safe to rerun
-the same playbook multiple times.  They won't change things
-unless they have to change things.
+again, they will make only makes changes if necessary to in order to bring the
+system to the desired state.  This makes it safe to rerun
+the same playbook multiple times.
 
 The `command` and `shell` modules will typically rerun the same command again,
 which is totally ok if the command is something like
