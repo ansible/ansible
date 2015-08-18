@@ -157,11 +157,11 @@ class Task(Base, Conditional, Taggable, Become):
         # and the delegate_to value from the various possible forms
         # supported as legacy
         args_parser = ModuleArgsParser(task_ds=ds)
-        (action, args, delegate_to) = args_parser.parse()
+        (action, args, connection) = args_parser.parse()
 
         new_ds['action']      = action
         new_ds['args']        = args
-        new_ds['delegate_to'] = delegate_to
+        new_ds['connection'] = connection
 
         # we handle any 'vars' specified in the ds here, as we may
         # be adding things to them below (special handling for includes).
@@ -174,7 +174,7 @@ class Task(Base, Conditional, Taggable, Become):
             new_ds['vars'] = dict()
 
         for (k,v) in ds.iteritems():
-            if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
+            if k in ('action', 'local_action', 'args', 'connection') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were
                 # determined by the ModuleArgsParser() above
                 continue
