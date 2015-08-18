@@ -44,7 +44,7 @@ class TestPlayContext(unittest.TestCase):
             connect_opts = True,
             subset_opts  = True,
             check_opts   = True,
-            diff_opts    = True,
+            inventory_opts = True,
         )
 
     def tearDown(self):
