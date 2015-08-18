@@ -103,10 +103,7 @@ class Connection(ConnectionBase):
             self._common_args += ("-o", "Port={0}".format(self._play_context.port))
         if self._play_context.private_key_file is not None:
             self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self._play_context.private_key_file)))
-        if self._play_context.password:
-            self._common_args += ("-o", "GSSAPIAuthentication=no",
-                                 "-o", "PubkeyAuthentication=no")
-        else:
+        if not self._play_context.password:
             self._common_args += ("-o", "KbdInteractiveAuthentication=no",
                                  "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
                                  "-o", "PasswordAuthentication=no")
