@@ -403,19 +403,20 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
     for deb_file in debs.split(','):
         try:
             pkg = apt.debfile.DebPackage(deb_file)
-        except SystemError, e:
-            m.fail_json(msg="System Error: %s" % str(e))
 
-        # Check if it's already installed
-        if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
-            continue
-        # Check if package is installable
-        if not pkg.check() and not force:
-            m.fail_json(msg=pkg._failure_string)
+            # Check if it's already installed
+            if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
+                continue
+            # Check if package is installable
+            if not pkg.check() and not force:
+                m.fail_json(msg=pkg._failure_string)
 
-        # add any missing deps to the list of deps we need
-        # to install so they're all done in one shot
-        deps_to_install.extend(pkg.missing_deps)
+            # add any missing deps to the list of deps we need
+            # to install so they're all done in one shot
+            deps_to_install.extend(pkg.missing_deps)
+
+        except Exception, e:
+            m.fail_json(msg="Unable to install package: %s" % str(e))
 
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
