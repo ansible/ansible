@@ -68,6 +68,7 @@ import shlex
 import os
 import sys
 import pipes
+import re
 
 def query_package(module, pkgin_path, name):
     """Search for the package by name.
@@ -95,33 +96,46 @@ def query_package(module, pkgin_path, name):
     # rc will not be 0 unless the search was a success
     if rc == 0:
 
-        # Get first line
-        line = out.split('\n')[0]
+        # Search results may contain more than one line (e.g., 'emacs'), so iterate
+        # through each line to see if we have a match.
+        packages = out.split('\n')
 
-        # Break up line at spaces.  The first part will be the package with its
-        # version (e.g. 'gcc47-libs-4.7.2nb4'), and the second will be the state
-        # of the package:
-        #     ''  - not installed
-        #     '<' - installed but out of date
-        #     '=' - installed and up to date
-        #     '>' - installed but newer than the repository version
-        pkgname_with_version, raw_state = out.split(splitchar)[0:2]
+        for package in packages:
 
-        # Strip version
-        # (results in sth like 'gcc47-libs')
-        pkgname_without_version = '-'.join(pkgname_with_version.split('-')[:-1])
+            # Break up line at spaces.  The first part will be the package with its
+            # version (e.g. 'gcc47-libs-4.7.2nb4'), and the second will be the state
+            # of the package:
+            #     ''  - not installed
+            #     '<' - installed but out of date
+            #     '=' - installed and up to date
+            #     '>' - installed but newer than the repository version
+            pkgname_with_version, raw_state = package.split(splitchar)[0:2]
 
-        if name != pkgname_without_version:
-            return False
-        # no fall-through
+            # Search for package, stripping version
+            # (results in sth like 'gcc47-libs' or 'emacs24-nox11')
+            pkg_search_obj = re.search(r'^([a-zA-Z]+[0-9]*[\-]*\w*)-[0-9]', pkgname_with_version, re.M)
 
-        # The package was found; now return its state
-        if raw_state == '<':
-            return 'outdated'
-        elif raw_state == '=' or raw_state == '>':
-            return 'present'
-        else:
-            return False
+            # Do not proceed unless we have a match
+            if not pkg_search_obj:
+                continue
+
+            # Grab matched string
+            pkgname_without_version = pkg_search_obj.group(1)
+
+            if name != pkgname_without_version:
+                continue
+
+            # The package was found; now return its state
+            if raw_state == '<':
+                return 'outdated'
+            elif raw_state == '=' or raw_state == '>':
+                return 'present'
+            else:
+                return False
+            # no fall-through
+
+        # No packages were matched, so return False
+        return False
 
 
 def format_action_message(module, action, count):
