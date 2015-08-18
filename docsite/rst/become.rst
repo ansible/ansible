@@ -23,7 +23,7 @@ become_user
     equivalent to adding 'sudo_user:' or 'su_user:' to a play or task, set to user with desired privileges
 
 become_method
-    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'
+    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'
 
 
 New ansible\_ variables
@@ -54,7 +54,7 @@ New command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root)
