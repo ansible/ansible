@@ -34,6 +34,10 @@ options:
         description:
             - File system path to the MSI file to install
         required: true
+    extra_args:
+        description:
+            - Additional arguments to pass to the msiexec.exe command
+        required: false
     state:
         description:
             - Whether the MSI file should be installed or uninstalled
