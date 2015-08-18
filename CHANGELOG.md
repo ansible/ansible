@@ -172,7 +172,6 @@ Minor changes:
  * Now when you delegate a action that returns ansible_facts, these facts will now be applied to the delegated host,
    unlike before which they were applied to the current host.
  * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support
- * Consiidated code from modules using urllib2 to normalize features, TLS and SNI support
  * synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting
  * play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
  * vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
