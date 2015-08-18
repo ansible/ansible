@@ -174,7 +174,7 @@ def update_acl(module):
         module.fail_json(msg="Could not create/update acl %s" % e)
 
     module.exit_json(changed=changed,
-                     token=obfuscate_token(token),
+                     token=token,
                      rules=rules,
                      name=name,
                      type=token_type)
@@ -190,10 +190,7 @@ def remove_acl(module):
     if changed:
         token = consul.acl.destroy(token)
 
-    module.exit_json(changed=changed, token=obfuscate_token(token))
-
-def obfuscate_token(token):
-    return token[:4] + "*" * (len(token) - 5)
+    module.exit_json(changed=changed, token=token)
 
 def load_rules_for_token(module, consul_api, token):
     try:
