@@ -40,7 +40,7 @@ Other Notable Changes:
   Prior to this fix being applied these connection plugins didn't properly
   handle symlinks within the containers which could lead to files intended to
   be written to or read from the container being written to or read from the
-  host system instead. (CVE pending)
+  host system instead. (CVE-2015-6240)
 * Fixed a bug in the service module where init scripts were being incorrectly used instead of upstart/systemd.
 * Fixed a bug where sudo/su settings were not inherited from ansible.cfg correctly.
 * Fixed a bug in the rds module where a traceback may occur due to an unbound variable.
