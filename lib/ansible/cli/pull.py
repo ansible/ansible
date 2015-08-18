@@ -184,7 +184,7 @@ class PullCLI(CLI):
         if self.options.tags:
             cmd += ' -t "%s"' % self.options.tags
         if self.options.limit:
-        cmd += ' -l "%s"' % self.options.limit
+            cmd += ' -l "%s"' % self.options.limit
 
         os.chdir(self.options.dest)
 
