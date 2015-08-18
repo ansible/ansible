@@ -139,6 +139,11 @@ local_action:
 
 RETURN = '''
 ---
+id:
+  description: UUID of the account.
+  returned: success
+  type: string
+  sample: 87b1e0ce-4e01-11e4-bb66-0050569e64b8
 name:
   description: Name of the account.
   returned: success
@@ -149,7 +154,7 @@ account_type:
   returned: success
   type: string
   sample: user
-account_state:
+state:
   description: State of the account.
   returned: success
   type: string
@@ -179,7 +184,10 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackAccount(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackAccount, self).__init__(module)
+        self.returns = {
+            'networkdomain': 'network_domain',
+        }
         self.account = None
         self.account_types = {
             'user':         0,
@@ -328,20 +336,13 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
 
 
     def get_result(self, account):
+        super(AnsibleCloudStackAccount, self).get_result(account)
         if account:
-            if 'name' in account:
-                self.result['name'] = account['name']
             if 'accounttype' in account:
                 for key,value in self.account_types.items():
                     if value == account['accounttype']:
                         self.result['account_type'] = key
                         break
-            if 'state' in account:
-                self.result['account_state'] = account['state']
-            if 'domain' in account:
-                self.result['domain'] = account['domain']
-            if 'networkdomain' in account:
-                self.result['network_domain'] = account['networkdomain']
         return self.result
 
 
