@@ -38,6 +38,7 @@ class AdHocCLI(CLI):
         self.parser = CLI.base_parser(
             usage='%prog <host-pattern> [options]',
             runas_opts=True,
+            inventory_opts=True,
             async_opts=True,
             output_opts=True,
             connect_opts=True,
