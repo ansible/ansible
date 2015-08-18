@@ -72,7 +72,7 @@ class ResultProcess(multiprocessing.Process):
                 self._cur_worker = 0
 
             try:
-                if rslt_q.qsize() > 0:
+                if not rslt_q.empty():
                     debug("worker %d has data to read" % self._cur_worker)
                     result = rslt_q.get()
                     debug("got a result from worker %d: %s" % (self._cur_worker, result))
