@@ -90,8 +90,8 @@ In addition, if an instance has AWS Tags associated with it, each tag is a new
 variable named:
  - ec2_tag_[Key] = [Value]
 
-Security groups are comma-separated in 'ec2_security_group_ids' and
-'ec2_security_group_names'.
+By default, Security groups are comma-separated in 'ec2_security_group_ids' and
+'ec2_security_group_names'.  This can be toggled to return a list.
 '''
 
 # (c) 2012, Peter Sankauskas
@@ -220,6 +220,9 @@ class Ec2Inventory(object):
         # Destination addresses
         self.destination_variable = config.get('ec2', 'destination_variable')
         self.vpc_destination_variable = config.get('ec2', 'vpc_destination_variable')
+
+        # Return the listing of security groups as scalar or list value
+        self.security_groups_as_list = config.getboolean('ec2', 'security_groups_as_list')
 
         # Route53
         self.route53_enabled = config.getboolean('ec2', 'route53')
@@ -1079,8 +1082,12 @@ class Ec2Inventory(object):
                 for group in value:
                     group_ids.append(group.id)
                     group_names.append(group.name)
-                instance_vars["ec2_security_group_ids"] = ','.join([str(i) for i in group_ids])
-                instance_vars["ec2_security_group_names"] = ','.join([str(i) for i in group_names])
+                if self.security_groups_as_list:
+                    instance_vars["ec2_security_group_ids"] = json.dumps([str(i) for i in group_ids])
+                    instance_vars["ec2_security_group_names"] = json.dumps([str(i) for i in group_names])
+                else:
+                    instance_vars["ec2_security_group_ids"] = ','.join([str(i) for i in group_ids])
+                    instance_vars["ec2_security_group_names"] = ','.join([str(i) for i in group_names])
             else:
                 pass
                 # TODO Product codes if someone finds them useful
