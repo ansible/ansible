@@ -81,6 +81,11 @@
   with_sequence: count=0
   register: count_of_zero
 
+- name: test with_sequence does 1 when start == end
+  debug: msg='should run once'
+  with_sequence: start=1 end=1
+  register: start_equal_end
+
 - name: test with_sequence count 1
   set_fact: "{{ 'x' + item }}={{ item }}"
   with_sequence: count=1
@@ -88,6 +93,7 @@
 
 - assert:
     that:
+        - not start_equal_end| skipped
         - count_of_zero | skipped
         - not count_of_one | skipped
 
@@ -97,7 +103,7 @@
   set_fact: "random={{ item }}"
   with_random_choice:
     - "foo"
-    - "bar" 
+    - "bar"
 
 - name: verify with_random_choice
   assert:
