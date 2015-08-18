@@ -5,8 +5,17 @@
   with_items:
       - service1
       - service2
+      - http_check
       - with_check
       - with_tags
+
+- name: cleanup previous checks
+  consul:
+    check_id: '{{item}}'
+    state: absent
+  with_items: 
+    - node_level
+    - node_level_http
 
 - name: register very basic service with consul gets default id
   consul:
@@ -37,12 +46,28 @@
         - basic2_result.service_id == 'service2'
         - basic2_result.service_name == 'Basic Service'
 
+- name: register a service with an http check
+  consul:
+    service_name: http_check
+    service_id: http_check
+    service_port: 80
+    http: "http://localhost/status"
+    interval: 60s
+  register: http_result
+
+- name: verify service with an http check
+  assert:
+    that:
+      - http_result.changed
+      - http_result.service_port == 80
+      - http_result.checks | length == 1
+
 - name: register very basic service with check script
   consul:
     service_name: with_check
     service_port: 80
     script: "sh -c true"
-    interval: 60
+    interval: 60s
   register: script_result
 
 - name: verify service with check registration
@@ -85,6 +110,25 @@
         - nodelevel_result.check_id == 'node_level'
         - nodelevel_result.script == 'sh -c true'
         - nodelevel_result.interval == '50m'
+
+- name: create a node level http check
+  consul:
+    check_name: Node Level HTTP Check
+    check_id: node_level_http
+    http: 'http://localhost/status'
+    interval: 1m
+    timeout: 30s
+  register: nodelevel_http_result
+
+- name: verify node level http check
+  assert:
+    that:
+      - nodelevel_http_result.changed
+      - nodelevel_http_result.check_name == 'Node Level HTTP Check'
+      - nodelevel_http_result.check_id == 'node_level_http'
+      - nodelevel_http_result.http == 'http://localhost/status'
+      - nodelevel_http_result.interval == '1m'
+      - nodelevel_http_result.timeout == '30s'
 
 - name: remove a service
   consul:
