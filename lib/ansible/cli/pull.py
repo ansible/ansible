@@ -63,6 +63,7 @@ class PullCLI(CLI):
         self.parser.add_option('-f', '--force', dest='force', default=False, action='store_true',
             help='run the playbook even if the repository could not be updated')
         self.parser.add_option('-d', '--directory', dest='dest', default=None, help='directory to checkout repository to')
+        self.parser.add_option('-l', '--limit', dest='limit', default=None, help='further limit selected hosts to the given pattern')
         self.parser.add_option('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
         self.parser.add_option('-C', '--checkout', dest='checkout',
             help='branch/tag/commit to checkout.  ' 'Defaults to behavior of repository module.')
@@ -180,6 +181,8 @@ class PullCLI(CLI):
             cmd += ' -e "%s"' % ev
         if self.options.ask_sudo_pass:
             cmd += ' -K'
+        if self.options.limit:
+            cmd += ' -l "%s"' % self.options.limit
         if self.options.tags:
             cmd += ' -t "%s"' % self.options.tags
 
