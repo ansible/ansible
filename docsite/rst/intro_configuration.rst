@@ -651,7 +651,7 @@ The equivalent of adding sudo: or su: to a play or task, set to true/yes to acti
 become_method
 =============
 
-Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``::
+Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``, ``doas``::
 
     become_method=su
 
