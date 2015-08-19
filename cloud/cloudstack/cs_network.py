@@ -281,7 +281,7 @@ acl_type:
   returned: success
   type: string
   sample: Account
-broadcast_domaintype:
+broadcast_domain_type:
   description: Broadcast domain type of the network.
   returned: success
   type: string
@@ -344,7 +344,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
             'gateway':              'gateway',
             'cidr':                 'cidr',
             'netmask':              'netmask',
-            'broadcastdomaintype':  'broadcast_domaintype',
+            'broadcastdomaintype':  'broadcast_domain_type',
             'dns1':                 'dns1',
             'dns2':                 'dns2',
         }
