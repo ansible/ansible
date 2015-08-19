@@ -17,6 +17,7 @@
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
+
 __metaclass__ = type
 
 import collections
@@ -27,16 +28,17 @@ from ansible.template import Templar
 
 __all__ = ['HostVars']
 
+
 # Note -- this is a Mapping, not a MutableMapping
 class HostVars(collections.Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
     def __init__(self, vars_manager, play, inventory, loader):
         self._vars_manager = vars_manager
-        self._play         = play
-        self._inventory    = inventory
-        self._loader       = loader
-        self._lookup       = {}
+        self._play = play
+        self._inventory = inventory
+        self._loader = loader
+        self._lookup = {}
 
     def __getitem__(self, host_name):
 
@@ -62,7 +64,18 @@ class HostVars(collections.Mapping):
         raise NotImplementedError('HostVars does not support len.  hosts entries are discovered dynamically as needed')
 
     def __getstate__(self):
-        return self._lookup
+        to_pickle = {
+            'vars_manager': self._vars_manager,
+            'play': self._play,
+            'inventory': self._inventory,
+            'loader': self._loader,
+            'lookup': self._lookup
+        }
+        return to_pickle
 
-    def __setstate__(self, data):
-        self._lookup = data
+    def __setstate__(self, to_unpickle):
+        self._vars_manager = to_unpickle['vars_manager']
+        self._play = to_unpickle['play']
+        self._inventory = to_unpickle['inventory']
+        self._loader = to_unpickle['loader']
+        self._lookup = to_unpickle['lookup']
