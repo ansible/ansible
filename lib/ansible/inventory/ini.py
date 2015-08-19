@@ -65,6 +65,9 @@ class InventoryParser(object):
 
         # Note: we could discard self.hosts after this point.
 
+    def _raise_error(self, message):
+        raise AnsibleError("%s:%d: " % (self.filename, self.lineno) + message)
+
     def _parse(self, lines):
         '''
         Populates self.groups from the given array of lines. Raises an error on
@@ -82,9 +85,9 @@ class InventoryParser(object):
         groupname = 'ungrouped'
         state = 'hosts'
 
-        i = 0
+        self.lineno = 0
         for line in lines:
-            i += 1
+            self.lineno += 1
 
             line = line.strip()
 
@@ -102,7 +105,7 @@ class InventoryParser(object):
                 state = state or 'hosts'
                 if state not in ['hosts', 'children', 'vars']:
                     title = ":".join(m.groups())
-                    raise AnsibleError("%s:%d: Section [%s] has unknown type: %s" % (self.filename, i, title, state))
+                    self._raise_error("Section [%s] has unknown type: %s" % (title, state))
 
                 # If we haven't seen this group before, we add a new Group.
                 #
@@ -116,7 +119,7 @@ class InventoryParser(object):
                     self.groups[groupname] = Group(name=groupname)
 
                     if state == 'vars':
-                        pending_declarations[groupname] = dict(line=i, state=state, name=groupname)
+                        pending_declarations[groupname] = dict(line=self.lineno, state=state, name=groupname)
 
                 # When we see a declaration that we've been waiting for, we can
                 # delete the note.
@@ -133,14 +136,14 @@ class InventoryParser(object):
             # [groupname] contains host definitions that must be added to
             # the current group.
             if state == 'hosts':
-                hosts = self._parse_host_definition(line, i)
+                hosts = self._parse_host_definition(line)
                 for h in hosts:
                     self.groups[groupname].add_host(h)
 
             # [groupname:vars] contains variable definitions that must be
             # applied to the current group.
             elif state == 'vars':
-                (k, v) = self._parse_variable_definition(line, i)
+                (k, v) = self._parse_variable_definition(line)
                 self.groups[groupname].set_variable(k, v)
 
             # [groupname:children] contains subgroup names that must be
@@ -148,11 +151,11 @@ class InventoryParser(object):
             # must themselves be declared as groups, but as before, they
             # may only be declared later.
             elif state == 'children':
-                child = self._parse_group_name(line, i)
+                child = self._parse_group_name(line)
 
                 if child not in self.groups:
                     self.groups[child] = Group(name=child)
-                    pending_declarations[child] = dict(line=i, state=state, name=child, parent=groupname)
+                    pending_declarations[child] = dict(line=self.lineno, state=state, name=child, parent=groupname)
 
                 self.groups[groupname].add_child_group(self.groups[child])
 
@@ -162,7 +165,7 @@ class InventoryParser(object):
             # This is a fencepost. It can happen only if the state checker
             # accepts a state that isn't handled above.
             else:
-                raise AnsibleError("%s:%d: Entered unhandled state: %s" % (self.filename, i, state))
+                self._raise_error("Entered unhandled state: %s" % (state))
 
         # Any entries in pending_declarations not removed by a group declaration
         # above mean that there was an unresolved forward reference. We report
@@ -175,7 +178,7 @@ class InventoryParser(object):
             elif decl['state'] == 'children':
                 raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (self.filename, decl['line'], decl['parent'], decl['name']))
 
-    def _parse_group_name(self, line, i):
+    def _parse_group_name(self, line):
         '''
         Takes a single line and tries to parse it as a group name. Returns the
         group name if successful, or raises an error.
@@ -185,9 +188,9 @@ class InventoryParser(object):
         if m:
             return m.group(1)
 
-        raise AnsibleError("%s:%d: Expected group name, got: %s" % (self.filename, i, line))
+        self._raise_error("Expected group name, got: %s" % (line))
 
-    def _parse_variable_definition(self, line, i):
+    def _parse_variable_definition(self, line):
         '''
         Takes a string and tries to parse it as a variable definition. Returns
         the key and value if successful, or raises an error.
@@ -202,9 +205,9 @@ class InventoryParser(object):
             (k, v) = [e.strip() for e in line.split("=", 1)]
             return (k, self._parse_value(v))
 
-        raise AnsibleError("%s:%d: Expected key=value, got: %s" % (self.filename, i, line))
+        self._raise_error("Expected key=value, got: %s" % (line))
 
-    def _parse_host_definition(self, line, i):
+    def _parse_host_definition(self, line):
         '''
         Takes a single line and tries to parse it as a host definition. Returns
         a list of Hosts if successful, or raises an error.
@@ -223,7 +226,7 @@ class InventoryParser(object):
         try:
             tokens = shlex.split(line, comments=True)
         except ValueError as e:
-            raise AnsibleError("%s:%d: Error parsing host definition '%s': %s" % (self.filename, i, varstring, e))
+            self._raise_error("Error parsing host definition '%s': %s" % (varstring, e))
 
         (hostnames, port) = self._expand_hostpattern(tokens[0])
         hosts = self._Hosts(hostnames, port)
@@ -233,7 +236,7 @@ class InventoryParser(object):
         variables = {}
         for t in tokens[1:]:
             if '=' not in t:
-                raise AnsibleError("%s:%d: Expected key=value host variable assignment, got: %s" % (self.filename, i, t))
+                self._raise_error("Expected key=value host variable assignment, got: %s" % (t))
             (k, v) = t.split('=', 1)
             variables[k] = self._parse_value(v)
 
