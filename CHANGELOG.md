@@ -17,6 +17,7 @@ Major Changes:
  * template code now retains types for bools and numbers instead of turning them into strings.
    If you need the old behaviour, quote the value and it will get passed around as a string
  * added meta: refresh_inventory to force rereading the inventory in a play
+ * vars are now settable at play, block, role and task level
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
