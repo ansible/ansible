@@ -80,7 +80,7 @@ class InventoryParser(object):
         # subgroups, and setting variables as we go.
 
         pending_declarations = {}
-        section = 'ungrouped'
+        groupname = 'ungrouped'
         state = 'hosts'
 
         i = 0
@@ -99,14 +99,14 @@ class InventoryParser(object):
 
             m = self.patterns['section'].match(line)
             if m:
-                (section, state) = m.groups()
+                (groupname, state) = m.groups()
 
                 state = state or 'hosts'
                 if state not in ['hosts', 'children', 'vars']:
                     title = ":".join(m.groups())
                     raise AnsibleError("%s:%d: Section [%s] has unknown type: %s" % (self.filename, i, title, state))
 
-                # If we haven't seen this section before, we add a new Group.
+                # If we haven't seen this group before, we add a new Group.
                 #
                 # Either [groupname] or [groupname:children] is sufficient to
                 # declare a group, but [groupname:vars] is allowed only if the
@@ -114,17 +114,17 @@ class InventoryParser(object):
                 # the group anyway, but make a note in pending_declarations to
                 # check at the end.
 
-                if section not in self.groups:
-                    self.groups[section] = Group(name=section)
+                if groupname not in self.groups:
+                    self.groups[groupname] = Group(name=groupname)
 
                     if state == 'vars':
-                        pending_declarations[section] = dict(line=i, state=state, name=section)
+                        pending_declarations[groupname] = dict(line=i, state=state, name=groupname)
 
                 # When we see a declaration that we've been waiting for, we can
                 # delete the note.
 
-                if section in pending_declarations and state != 'vars':
-                    del pending_declarations[section]
+                if groupname in pending_declarations and state != 'vars':
+                    del pending_declarations[groupname]
 
                 continue
 
@@ -137,13 +137,13 @@ class InventoryParser(object):
             if state == 'hosts':
                 hosts = self._parse_host_definition(line, i)
                 for h in hosts:
-                    self.groups[section].add_host(h)
+                    self.groups[groupname].add_host(h)
 
             # [groupname:vars] contains variable definitions that must be
             # applied to the current group.
             elif state == 'vars':
                 (k, v) = self._parse_variable_definition(line, i)
-                self.groups[section].set_variable(k, v)
+                self.groups[groupname].set_variable(k, v)
 
             # [groupname:children] contains subgroup names that must be
             # added as children of the current group. The subgroup names
@@ -154,9 +154,9 @@ class InventoryParser(object):
 
                 if child not in self.groups:
                     self.groups[child] = Group(name=child)
-                    pending_declarations[child] = dict(line=i, state=state, name=child, parent=section)
+                    pending_declarations[child] = dict(line=i, state=state, name=child, parent=groupname)
 
-                self.groups[section].add_child_group(self.groups[child])
+                self.groups[groupname].add_child_group(self.groups[child])
 
                 # Note: there's no reason why we couldn't accept variable
                 # definitions here, and set them on the named child group.
