@@ -54,8 +54,7 @@ class InventoryParser(object):
         # inventory file.
 
         with open(filename) as fh:
-            self.lines = fh.readlines()
-            self._parse()
+            self._parse(fh.readlines())
 
         # Finally, add all top-level groups (including 'ungrouped') as
         # children of 'all'.
@@ -66,10 +65,10 @@ class InventoryParser(object):
 
         # Note: we could discard self.hosts after this point.
 
-    def _parse(self):
+    def _parse(self, lines):
         '''
-        Populates self.groups from the contents of self.lines. Raises an error
-        on any parse failure.
+        Populates self.groups from the given array of lines. Raises an error on
+        any parse failure.
         '''
 
         self._compile_patterns()
@@ -84,10 +83,9 @@ class InventoryParser(object):
         state = 'hosts'
 
         i = 0
-        for line in self.lines:
+        for line in lines:
             i += 1
 
-            # Is there a better way to get rid of the ending \n?
             line = line.strip()
 
             # Skip empty lines and comments
