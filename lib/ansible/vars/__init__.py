@@ -253,9 +253,9 @@ class VariableManager:
             all_vars['inventory_dir'] = self._inventory.basedir()
             if play:
                 # add the list of hosts in the play, as adjusted for limit/filters
-                # FIXME: play_hosts should be deprecated in favor of ansible_play_hosts,
-                #        however this would take work in the templating engine, so for now
-                #        we'll add both so we can give users something transitional to use
+                # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_hosts,
+                #             however this would take work in the templating engine, so for now
+                #             we'll add both so we can give users something transitional to use
                 host_list = [x.name for x in self._inventory.get_hosts()]
                 all_vars['play_hosts'] = host_list
                 all_vars['ansible_play_hosts'] = host_list
