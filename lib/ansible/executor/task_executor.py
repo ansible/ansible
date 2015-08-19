@@ -496,30 +496,31 @@ class TaskExecutor:
 
         # get the vars for the delegate by its name
         try:
+            self._display.debug("Delegating to %s" % self._task.delegate_to)
             this_info = variables['hostvars'][self._task.delegate_to]
 
             # get the real ssh_address for the delegate and allow ansible_ssh_host to be templated
-            #self._play_context.remote_user      = self._compute_delegate_user(self.delegate_to, delegate['inject'])
             self._play_context.remote_addr      = this_info.get('ansible_ssh_host', self._task.delegate_to)
+            self._play_context.remote_user      = this_info.get('ansible_remote_user', self._task.remote_user)
+            self._play_context.connection       = this_info.get('ansible_connection', self._task.connection)
             self._play_context.port             = this_info.get('ansible_ssh_port', self._play_context.port)
             self._play_context.password         = this_info.get('ansible_ssh_pass', self._play_context.password)
             self._play_context.private_key_file = this_info.get('ansible_ssh_private_key_file', self._play_context.private_key_file)
-            self._play_context.connection       = this_info.get('ansible_connection', C.DEFAULT_TRANSPORT)
             self._play_context.become_pass      = this_info.get('ansible_sudo_pass', self._play_context.become_pass)
-        except:
+        except Exception as e:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
-
-        if self._play_context.remote_addr in ('127.0.0.1', 'localhost'):
-             self._play_context.connection = 'local'
+            self._display.debug("Delegate due to: %s" % str(e))
 
         # Last chance to get private_key_file from global variables.
         # this is useful if delegated host is not defined in the inventory
-        #if delegate['private_key_file'] is None:
-        #    delegate['private_key_file'] = remote_inject.get('ansible_ssh_private_key_file', None)
+        if self._play_context.private_key_file is None:
+            self._play_context.private_key_file = this_info.get('ansible_ssh_private_key_file', None)
 
-        #if delegate['private_key_file'] is not None:
-        #    delegate['private_key_file'] = os.path.expanduser(delegate['private_key_file'])
+        if self._play_context.private_key_file is None:
+            key = this_info.get('private_key_file', None)
+            if key:
+                self._play_context.private_key_file = os.path.expanduser(key)
 
         for i in this_info:
             if i.startswith("ansible_") and i.endswith("_interpreter"):
