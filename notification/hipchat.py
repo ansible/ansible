@@ -1,6 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 ---
 module: hipchat
@@ -71,10 +85,10 @@ EXAMPLES = '''
 
 # Use Hipchat API version 2
 
-- hipchat: 
+- hipchat:
     api: "https://api.hipchat.com/v2/"
     token: OAUTH2_TOKEN
-    room: notify 
+    room: notify
     msg: "Ansible task finished"
 '''
 
@@ -103,7 +117,7 @@ def send_msg_v1(module, token, room, msg_from, msg, msg_format='text',
     params['color'] = color
     params['api'] = api
     params['notify'] = int(notify)
-  
+
     url = api + MSG_URI_V1 + "?auth_token=%s" % (token)
     data = urllib.urlencode(params)
 
@@ -129,10 +143,10 @@ def send_msg_v2(module, token, room, msg_from, msg, msg_format='text',
     body['message'] = msg
     body['color'] = color
     body['message_format'] = msg_format
-    params['notify'] = notify
+    body['notify'] = notify
 
     POST_URL = api + NOTIFY_URI_V2
-    
+
     url = POST_URL.replace('{id_or_name}', room)
     data = json.dumps(body)
 

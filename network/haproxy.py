@@ -22,75 +22,74 @@ DOCUMENTATION = '''
 ---
 module: haproxy
 version_added: "1.9"
-short_description: An Ansible module to handle states enable/disable server and set weight to backend host in haproxy using socket commands.
+short_description: Enable, disable, and set weights for HAProxy backend servers using socket commands.
 description:
-    - The Enable Haproxy Backend Server, with
-      supports get current weight for server (default) and
-      set weight for haproxy backend server when provides.
-
-    - The Disable Haproxy Backend Server, with
-      supports get current weight for server (default) and
-      shutdown sessions while disabling backend host server.
+    - Enable, disable, and set weights for HAProxy backend servers using socket
+      commands.
 notes:
-    - "enable or disable commands are restricted and can only be issued on sockets configured for level 'admin', "
-    - "Check - http://haproxy.1wt.eu/download/1.5/doc/configuration.txt, "
-    - "Example: 'stats socket /var/run/haproxy.sock level admin'"
+    - Enable and disable commands are restricted and can only be issued on
+      sockets configured for level 'admin'. For example, you can add the line
+      'stats socket /var/run/haproxy.sock level admin' to the general section of
+      haproxy.cfg. See http://haproxy.1wt.eu/download/1.5/doc/configuration.txt.
 options:
-  state:
-    description:
-      - describe the desired state of the given host in lb pool.
-    required: true
-    default: null
-    choices: [ "enabled", "disabled" ]
-  host:
-    description:
-      - Host (backend) to operate in Haproxy.
-    required: true
-    default: null
-  socket:
-    description:
-      - Haproxy socket file name with path.
-    required: false
-    default: /var/run/haproxy.sock
   backend:
     description:
-      - Name of the haproxy backend pool.
-        Required, else auto-detection applied.
+      - Name of the HAProxy backend pool.
     required: false
     default: auto-detected
-  weight:
+  host:
     description:
-      - The value passed in argument. If the value ends with the '%' sign, then the new weight will be relative to the initially cnfigured weight. Relative weights are only permitted between 0 and 100% and absolute weights are permitted between 0 and 256.
-    required: false
+      - Name of the backend host to change.
+    required: true
     default: null
   shutdown_sessions:
     description:
-      - When disabling server, immediately terminate all the sessions attached to the specified server. This can be used to terminate long-running sessions after a server is put into maintenance mode, for instance.
+      - When disabling a server, immediately terminate all the sessions attached
+        to the specified server. This can be used to terminate long-running
+        sessions after a server is put into maintenance mode.
     required: false
     default: false
+  socket:
+    description:
+      - Path to the HAProxy socket file.
+    required: false
+    default: /var/run/haproxy.sock
+  state:
+    description:
+      - Desired state of the provided backend host.
+    required: true
+    default: null
+    choices: [ "enabled", "disabled" ]
   wait:
     description:
-      - Wait until the server reports a status of 'UP' when state=enabled, or status of 'MAINT' when state=disabled
+      - Wait until the server reports a status of 'UP' when `state=enabled`, or
+        status of 'MAINT' when `state=disabled`.
     required: false
     default: false
-    version_added: "2.0"
-  wait_retries:
-    description:
-      - number of times to check for status after changing the state
-    required: false
-    default: 25
     version_added: "2.0"
   wait_interval:
     description:
-      - number of seconds to wait between retries
+      - Number of seconds to wait between retries.
     required: false
     default: 5
     version_added: "2.0"
+  wait_retries:
+    description:
+      - Number of times to check for status after changing the state.
+    required: false
+    default: 25
+    version_added: "2.0"
+  weight:
+    description:
+      - The value passed in argument. If the value ends with the `%` sign, then
+        the new weight will be relative to the initially configured weight.
+        Relative weights are only permitted between 0 and 100% and absolute
+        weights are permitted between 0 and 256.
+    required: false
+    default: null
 '''
 
 EXAMPLES = '''
-examples:
-
 # disable server in 'www' backend pool
 - haproxy: state=disabled host={{ inventory_hostname }} backend=www
 

@@ -158,9 +158,9 @@ options:
       - 32 or 64 bits support.
     required: false
     default: '64'
-  displaytext:
+  display_text:
     description:
-      - the display text of the template.
+      - Display text of the template.
     required: true
     default: null
   state:
@@ -181,7 +181,7 @@ EXAMPLES = '''
 # Register a systemvm template
 - local_action:
     module: cs_template
-    name: systemvm-4.5
+    name: systemvm-vmware-4.5
     url: "http://packages.shapeblue.com/systemvmtemplate/4.5/systemvm64template-4.5-vmware.ova"
     hypervisor: VMware
     format: OVA
@@ -219,13 +219,18 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+id:
+  description: UUID of the template.
+  returned: success
+  type: string
+  sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 name:
   description: Name of the template.
   returned: success
   type: string
   sample: Debian 7 64-bit
-displaytext:
-  description: Displaytext of the template.
+display_text:
+  description: Display text of the template.
   returned: success
   type: string
   sample: Debian 7.7 64-bit minimal 2015-03-19
@@ -344,13 +349,29 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackTemplate(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackTemplate, self).__init__(module)
+        self.returns = {
+            'checksum':         'checksum',
+            'status':           'status',
+            'isready':          'is_ready',
+            'templatetag':      'template_tag',
+            'sshkeyenabled':    'sshkey_enabled',
+            'passwordenabled':  'password_enabled',
+            'tempaltetype':     'template_type',
+            'ostypename':       'os_type',
+            'crossZones':       'cross_zones',
+            'isextractable':    'is_extractable',
+            'isfeatured':       'is_featured',
+            'ispublic':         'is_public',
+            'format':           'format',
+            'hypervisor':       'hypervisor',
+        }
 
 
     def _get_args(self):
         args                            = {}
         args['name']                    = self.module.params.get('name')
-        args['displaytext']             = self.module.params.get('displaytext')
+        args['displaytext']             = self.get_or_fallback('display_text', 'name')
         args['bits']                    = self.module.params.get('bits')
         args['isdynamicallyscalable']   = self.module.params.get('is_dynamically_scalable')
         args['isextractable']           = self.module.params.get('is_extractable')
@@ -364,8 +385,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
         if not args['ostypeid']:
             self.module.fail_json(msg="Missing required arguments: os_type")
 
-        if not args['displaytext']:
-            args['displaytext'] = self.module.params.get('name')
         return args
 
 
@@ -497,66 +516,12 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
         return template
 
 
-    def get_result(self, template):
-        if template:
-            if 'displaytext' in template:
-                self.result['displaytext'] = template['displaytext']
-            if 'name' in template:
-                self.result['name'] = template['name']
-            if 'hypervisor' in template:
-                self.result['hypervisor'] = template['hypervisor']
-            if 'zonename' in template:
-                self.result['zone'] = template['zonename']
-            if 'checksum' in template:
-                self.result['checksum'] = template['checksum']
-            if 'format' in template:
-                self.result['format'] = template['format']
-            if 'isready' in template:
-                self.result['is_ready'] = template['isready']
-            if 'ispublic' in template:
-                self.result['is_public'] = template['ispublic']
-            if 'isfeatured' in template:
-                self.result['is_featured'] = template['isfeatured']
-            if 'isextractable' in template:
-                self.result['is_extractable'] = template['isextractable']
-            # and yes! it is really camelCase!
-            if 'crossZones' in template:
-                self.result['cross_zones'] = template['crossZones']
-            if 'ostypename' in template:
-                self.result['os_type'] = template['ostypename']
-            if 'templatetype' in template:
-                self.result['template_type'] = template['templatetype']
-            if 'passwordenabled' in template:
-                self.result['password_enabled'] = template['passwordenabled']
-            if 'sshkeyenabled' in template:
-                self.result['sshkey_enabled'] = template['sshkeyenabled']
-            if 'status' in template:
-                self.result['status'] = template['status']
-            if 'created' in template:
-                self.result['created'] = template['created']
-            if 'templatetag' in template:
-                self.result['template_tag'] = template['templatetag']
-            if 'tags' in template:
-                self.result['tags'] = []
-                for tag in template['tags']:
-                    result_tag          = {}
-                    result_tag['key']   = tag['key']
-                    result_tag['value'] = tag['value']
-                    self.result['tags'].append(result_tag)
-            if 'domain' in template:
-                self.result['domain'] = template['domain']
-            if 'account' in template:
-                self.result['account'] = template['account']
-            if 'project' in template:
-                self.result['project'] = template['project']
-        return self.result
-
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            displaytext = dict(default=None),
+            display_text = dict(default=None),
             url = dict(default=None),
             vm = dict(default=None),
             snapshot = dict(default=None),
@@ -569,7 +534,7 @@ def main():
             is_routing = dict(type='bool', choices=BOOLEANS, default=False),
             checksum = dict(default=None),
             template_filter = dict(default='self', choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
-            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM'], default=None),
+            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator'], default=None),
             requires_hvm = dict(type='bool', choices=BOOLEANS, default=False),
             password_enabled = dict(type='bool', choices=BOOLEANS, default=False),
             template_tag = dict(default=None),
@@ -596,9 +561,6 @@ def main():
             ['api_key', 'api_secret', 'api_url'],
             ['format', 'url', 'hypervisor'],
         ),
-        required_one_of = (
-            ['url', 'vm'],
-        ),
         supports_check_mode=True
     )
 
@@ -612,11 +574,12 @@ def main():
         if state in ['absent']:
             tpl = acs_tpl.remove_template()
         else:
-            url = module.params.get('url')
-            if url:
+            if module.params.get('url'):
                 tpl = acs_tpl.register_template()
-            else:
+            elif module.params.get('vm'):
                 tpl = acs_tpl.create_template()
+            else:
+                module.fail_json(msg="one of the following is required on state=present: url,vm")
 
         result = acs_tpl.get_result(tpl)
 

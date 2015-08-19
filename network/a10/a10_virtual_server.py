@@ -25,15 +25,13 @@ DOCUMENTATION = '''
 ---
 module: a10_virtual_server
 version_added: 1.8
-short_description: Manage A10 Networks AX/SoftAX/Thunder/vThunder devices
+short_description: Manage A10 Networks devices' virtual servers
 description:
     - Manage slb virtual server objects on A10 Networks devices via aXAPI
 author: "Mischa Peters (@mischapeters)"
 notes:
     - Requires A10 Networks aXAPI 2.1
-requirements:
-    - urllib2
-    - re
+requirements: []
 options:
   host:
     description:
@@ -294,6 +292,6 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 from ansible.module_utils.a10 import *
-
-main()
+if __name__ == '__main__':
+    main()
 

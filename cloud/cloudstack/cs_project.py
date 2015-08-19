@@ -31,10 +31,10 @@ options:
     description:
       - Name of the project.
     required: true
-  displaytext:
+  display_text:
     description:
-      - Displaytext of the project.
-      - If not specified, C(name) will be used as displaytext.
+      - Display text of the project.
+      - If not specified, C(name) will be used as C(display_text).
     required: false
     default: null
   state:
@@ -71,7 +71,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_project
     name: web
-    displaytext: my web project
+    display_text: my web project
 
 # Suspend an existing project
 - local_action:
@@ -95,7 +95,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 id:
-  description: ID of the project.
+  description: UUID of the project.
   returned: success
   type: string
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
@@ -104,7 +104,7 @@ name:
   returned: success
   type: string
   sample: web project
-displaytext:
+display_text:
   description: Display text of the project.
   returned: success
   type: string
@@ -143,17 +143,6 @@ from ansible.module_utils.cloudstack import *
 
 class AnsibleCloudStackProject(AnsibleCloudStack):
 
-    def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
-        self.project = None
-
-
-    def get_displaytext(self):
-        displaytext = self.module.params.get('displaytext')
-        if not displaytext:
-            displaytext = self.module.params.get('name')
-        return displaytext
-
 
     def get_project(self):
         if not self.project:
@@ -184,7 +173,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
     def update_project(self, project):
         args                = {}
         args['id']          = project['id']
-        args['displaytext'] = self.get_displaytext()
+        args['displaytext'] = self.get_or_fallback('display_text', 'name')
 
         if self._has_changed(args, project):
             self.result['changed'] = True
@@ -205,7 +194,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
         args                = {}
         args['name']        = self.module.params.get('name')
-        args['displaytext'] = self.get_displaytext()
+        args['displaytext'] = self.get_or_fallback('display_text', 'name')
         args['account']     = self.get_account('name')
         args['domainid']    = self.get_domain('id')
 
@@ -268,33 +257,12 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
             return project
 
 
-    def get_result(self, project):
-        if project:
-            if 'name' in project:
-                self.result['name'] = project['name']
-            if 'displaytext' in project:
-                self.result['displaytext'] = project['displaytext']
-            if 'account' in project:
-                self.result['account'] = project['account']
-            if 'domain' in project:
-                self.result['domain'] = project['domain']
-            if 'state' in project:
-                self.result['state'] = project['state']
-            if 'tags' in project:
-                self.result['tags'] = []
-                for tag in project['tags']:
-                    result_tag          = {}
-                    result_tag['key']   = tag['key']
-                    result_tag['value'] = tag['value']
-                    self.result['tags'].append(result_tag)
-        return self.result
-
 
 def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            displaytext = dict(default=None),
+            display_text = dict(default=None),
             state = dict(choices=['present', 'absent', 'active', 'suspended' ], default='present'),
             domain = dict(default=None),
             account = dict(default=None),

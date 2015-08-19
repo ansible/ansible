@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 module: cs_instance
 short_description: Manages instances and virtual machines on Apache CloudStack based clouds.
 description:
-    - Deploy, start, restart, stop and destroy instances.
+    - Deploy, start, update, scale, restart, stop and destroy instances.
 version_added: '2.0'
 author: "René Moser (@resmo)"
 options:
@@ -97,6 +97,13 @@ options:
       - IPv6 address for default instance's network.
     required: false
     default: null
+  ip_to_networks:
+    description:
+      - "List of mappings in the form {'network': NetworkName, 'ip': 1.2.3.4}"
+      - Mutually exclusive with C(networks) option.
+    required: false
+    default: null
+    aliases: [ 'ip_to_network' ]
   disk_offering:
     description:
       - Name of the disk offering to be used.
@@ -105,6 +112,11 @@ options:
   disk_size:
     description:
       - Disk size in GByte required if deploying instance from ISO.
+    required: false
+    default: null
+  root_disk_size:
+    description:
+      - Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup (need CloudStack >= 4.4, cloud-initramfs-growroot installed and enabled in the template)
     required: false
     default: null
   security_groups:
@@ -209,6 +221,16 @@ EXAMPLES = '''
       - { key: admin, value: john }
       - { key: foo,   value: bar }
 
+# Create an instance with multiple interfaces specifying the IP addresses
+- local_action:
+    module: cs_instance
+    name: web-vm-1
+    template: Linux Debian 7 64-bit
+    service_offering: Tiny
+    ip_to_networks:
+      - {'network': NetworkA, 'ip': '10.1.1.1'}
+      - {'network': NetworkB, 'ip': '192.168.1.1'}
+
 # Ensure a instance has stopped
 - local_action: cs_instance name=web-vm-1 state=stopped
 
@@ -222,7 +244,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 id:
-  description: ID of the instance.
+  description: UUID of the instance.
   returned: success
   type: string
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
@@ -353,7 +375,20 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackInstance, self).__init__(module)
+        self.returns = {
+            'group':                'group',
+            'hypervisor':           'hypervisor',
+            'instancename':         'instance_name',
+            'publicip':             'public_ip',
+            'passwordenabled':      'password_enabled',
+            'password':             'password',
+            'serviceofferingname':  'service_offering',
+            'isoname':              'iso',
+            'templatename':         'template',
+            'keypair':              'ssh_key',
+            'securitygroup':        'security_group',
+        }
         self.instance = None
         self.template = None
         self.iso = None
@@ -379,9 +414,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
         if not template and not iso:
             self.module.fail_json(msg="Template or ISO is required.")
-
-        if template and iso:
-            self.module.fail_json(msg="Template are ISO are mutually exclusive.")
 
         args                = {}
         args['account']     = self.get_account(key='name')
@@ -448,9 +480,25 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                         break
         return self.instance
 
+    def get_iptonetwork_mappings(self):
+        network_mappings = self.module.params.get('ip_to_networks')
+        if network_mappings is None:
+            return
 
-    def get_network_ids(self):
-        network_names = self.module.params.get('networks')
+        if network_mappings and self.module.params.get('networks'):
+            self.module.fail_json(msg="networks and ip_to_networks are mutually exclusive.")
+
+        network_names = [n['network'] for n in network_mappings]
+        ids = self.get_network_ids(network_names)
+        res = []
+        for i, data in enumerate(network_mappings):
+            res.append({'networkid': ids[i], 'ip': data['ip']})
+        return res
+
+    def get_network_ids(self, network_names=None):
+        if network_names is None:
+            network_names = self.module.params.get('networks')
+
         if not network_names:
             return None
 
@@ -476,7 +524,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if len(network_ids) != len(network_names):
             self.module.fail_json(msg="Could not find all networks, networks list found: %s" % network_displaytexts)
 
-        return ','.join(network_ids)
+        return network_ids
 
 
     def present_instance(self):
@@ -485,8 +533,10 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             instance = self.deploy_instance()
         else:
             instance = self.update_instance(instance)
-        
-        instance = self.ensure_tags(resource=instance, resource_type='UserVm')
+
+        # In check mode, we do not necessarely have an instance
+        if instance:
+            instance = self.ensure_tags(resource=instance, resource_type='UserVm')
 
         return instance
 
@@ -498,15 +548,11 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return user_data
 
 
-    def get_display_name(self):
-        display_name = self.module.params.get('display_name')
-        if not display_name:
-            display_name = self.module.params.get('name')
-        return display_name
-
-
     def deploy_instance(self):
         self.result['changed'] = True
+        networkids = self.get_network_ids()
+        if networkids is not None:
+            networkids = ','.join(networkids)
 
         args                        = {}
         args['templateid']          = self.get_template_or_iso(key='id')
@@ -516,15 +562,18 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['domainid']            = self.get_domain(key='id')
         args['projectid']           = self.get_project(key='id')
         args['diskofferingid']      = self.get_disk_offering_id()
-        args['networkids']          = self.get_network_ids()
+        args['networkids']          = networkids
+        args['iptonetworklist']     = self.get_iptonetwork_mappings()
         args['userdata']            = self.get_user_data()
         args['keyboard']            = self.module.params.get('keyboard')
         args['ipaddress']           = self.module.params.get('ip_address')
         args['ip6address']          = self.module.params.get('ip6_address')
         args['name']                = self.module.params.get('name')
+        args['displayname']         = self.get_or_fallback('display_name', 'name')
         args['group']               = self.module.params.get('group')
         args['keypair']             = self.module.params.get('ssh_key')
         args['size']                = self.module.params.get('disk_size')
+        args['rootdisksize']        = self.module.params.get('root_disk_size')
         args['securitygroupnames']  = ','.join(self.module.params.get('security_groups'))
         args['affinitygroupnames']  = ','.join(self.module.params.get('affinity_groups'))
 
@@ -553,7 +602,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_instance_update                        = {}
         args_instance_update['id']                  = instance['id']
         args_instance_update['group']               = self.module.params.get('group')
-        args_instance_update['displayname']         = self.get_display_name()
+        args_instance_update['displayname']         = self.get_or_fallback('display_name', 'name')
         args_instance_update['userdata']            = self.get_user_data()
         args_instance_update['ostypeid']            = self.get_os_type(key='id')
 
@@ -716,52 +765,8 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
 
     def get_result(self, instance):
+        super(AnsibleCloudStackInstance, self).get_result(instance)
         if instance:
-            if 'id' in instance:
-                self.result['id'] = instance['id']
-            if 'name' in instance:
-                self.result['name'] = instance['name']
-            if 'displayname' in instance:
-                self.result['display_name'] = instance['displayname']
-            if 'group' in instance:
-                self.result['group'] = instance['group']
-            if 'domain' in instance:
-                self.result['domain'] = instance['domain']
-            if 'account' in instance:
-                self.result['account'] = instance['account']
-            if 'project' in instance:
-                self.result['project'] = instance['project']
-            if 'hypervisor' in instance:
-                self.result['hypervisor'] = instance['hypervisor']
-            if 'instancename' in instance:
-                self.result['instance_name'] = instance['instancename']
-            if 'publicip' in instance:
-                self.result['public_ip'] = instance['public_ip']
-            if 'passwordenabled' in instance:
-                self.result['password_enabled'] = instance['passwordenabled']
-            if 'password' in instance:
-                self.result['password'] = instance['password']
-            if 'serviceofferingname' in instance:
-                self.result['service_offering'] = instance['serviceofferingname']
-            if 'zonename' in instance:
-                self.result['zone'] = instance['zonename']
-            if 'templatename' in instance:
-                self.result['template'] = instance['templatename']
-            if 'isoname' in instance:
-                self.result['iso'] = instance['isoname']
-            if 'keypair' in instance:
-                self.result['ssh_key'] = instance['keypair']
-            if 'created' in instance:
-                self.result['created'] = instance['created']
-            if 'state' in instance:
-                self.result['state'] = instance['state']
-            if 'tags' in instance:
-                self.result['tags'] = []
-                for tag in instance['tags']:
-                    result_tag          = {}
-                    result_tag['key']   = tag['key']
-                    result_tag['value'] = tag['value']
-                    self.result['tags'].append(result_tag)
             if 'securitygroup' in instance:
                 security_groups = []
                 for securitygroup in instance['securitygroup']:
@@ -789,12 +794,14 @@ def main():
             template = dict(default=None),
             iso = dict(default=None),
             networks = dict(type='list', aliases=[ 'network' ], default=None),
+            ip_to_networks = dict(type='list', aliases=['ip_to_network'], default=None),
             ip_address = dict(defaul=None),
             ip6_address = dict(defaul=None),
             disk_offering = dict(default=None),
             disk_size = dict(type='int', default=None),
+            root_disk_size = dict(type='int', default=None),
             keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
-            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM'], default=None),
+            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator'], default=None),
             security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
             affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
             domain = dict(default=None),
@@ -811,6 +818,9 @@ def main():
             api_url = dict(default=None),
             api_http_method = dict(choices=['get', 'post'], default='get'),
             api_timeout = dict(type='int', default=10),
+        ),
+        mutually_exclusive = (
+            ['template', 'iso'],
         ),
         required_together = (
             ['api_key', 'api_secret', 'api_url'],

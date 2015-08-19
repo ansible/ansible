@@ -95,21 +95,30 @@ def zypper_version(module):
 def _parse_repos(module):
     """parses the output of zypper -x lr and returns a parse repo dictionary"""
     cmd = ['/usr/bin/zypper', '-x', 'lr']
-    repos = []
-
     from xml.dom.minidom import parseString as parseXML
-    rc, stdout, stderr = module.run_command(cmd, check_rc=True)
-    dom = parseXML(stdout)
-    repo_list = dom.getElementsByTagName('repo')
-    for repo in repo_list:
-        opts = {}
-        for o in REPO_OPTS:
-            opts[o] = repo.getAttribute(o)
-        opts['url'] = repo.getElementsByTagName('url')[0].firstChild.data
-        # A repo can be uniquely identified by an alias + url
-        repos.append(opts)
-
-    return repos
+    rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+    if rc == 0:
+        repos = []
+        dom = parseXML(stdout)
+        repo_list = dom.getElementsByTagName('repo')
+        for repo in repo_list:
+            opts = {}
+            for o in REPO_OPTS:
+                opts[o] = repo.getAttribute(o)
+            opts['url'] = repo.getElementsByTagName('url')[0].firstChild.data
+            # A repo can be uniquely identified by an alias + url
+            repos.append(opts)
+        return repos
+    # exit code 6 is ZYPPER_EXIT_NO_REPOS (no repositories defined)
+    elif rc == 6:
+        return []
+    else:
+        d = { 'zypper_exit_code': rc }
+        if stderr:
+            d['stderr'] = stderr
+        if stdout:
+            d['stdout'] = stdout
+        module.fail_json(msg='Failed to execute "%s"' % " ".join(cmd), **d)
 
 def _parse_repos_old(module):
     """parses the output of zypper sl and returns a parse repo dictionary"""

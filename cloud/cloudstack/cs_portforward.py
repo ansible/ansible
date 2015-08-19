@@ -148,6 +148,11 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+id:
+  description: UUID of the public IP address.
+  returned: success
+  type: string
+  sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 ip_address:
   description: Public IP address.
   returned: success
@@ -212,21 +217,24 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackPortforwarding, self).__init__(module)
+        self.returns = {
+            'virtualmachinedisplayname':    'vm_display_name',
+            'virtualmachinename':           'vm_name',
+            'ipaddress':                    'ip_address',
+            'vmguestip':                    'vm_guest_ip',
+            'publicip':                     'public_ip',
+            'protocol':                     'protocol',
+        }
+        # these values will be casted to int
+        self.returns_to_int = {
+            'publicport':       'public_port',
+            'publicendport':    'public_end_port',
+            'privateport':      'private_port',
+            'private_end_port': 'private_end_port',
+        }
         self.portforwarding_rule = None
         self.vm_default_nic = None
-
-
-    def get_public_end_port(self):
-        if not self.module.params.get('public_end_port'):
-            return self.module.params.get('public_port')
-        return self.module.params.get('public_end_port')
-
-
-    def get_private_end_port(self):
-        if not self.module.params.get('private_end_port'):
-            return self.module.params.get('private_port')
-        return self.module.params.get('private_end_port')
 
 
     def get_vm_guest_ip(self):
@@ -259,9 +267,9 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         if not self.portforwarding_rule:
             protocol            = self.module.params.get('protocol')
             public_port         = self.module.params.get('public_port')
-            public_end_port     = self.get_public_end_port()
+            public_end_port     = self.get_or_fallback('public_end_port', 'public_port')
             private_port        = self.module.params.get('private_port')
-            private_end_port    = self.get_public_end_port()
+            private_end_port    = self.get_or_fallback('private_end_port', 'private_port')
 
             args = {}
             args['ipaddressid'] = self.get_ip_address(key='id')
@@ -290,9 +298,9 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         args = {}
         args['protocol']            = self.module.params.get('protocol')
         args['publicport']          = self.module.params.get('public_port')
-        args['publicendport']       = self.get_public_end_port()
+        args['publicendport']       = self.get_or_fallback('public_end_port', 'public_port')
         args['privateport']         = self.module.params.get('private_port')
-        args['privateendport']      = self.get_private_end_port()
+        args['privateendport']      = self.get_or_fallback('private_end_port', 'private_port')
         args['openfirewall']        = self.module.params.get('open_firewall')
         args['vmguestip']           = self.get_vm_guest_ip()
         args['ipaddressid']         = self.get_ip_address(key='id')
@@ -312,9 +320,9 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         args = {}
         args['protocol']            = self.module.params.get('protocol')
         args['publicport']          = self.module.params.get('public_port')
-        args['publicendport']       = self.get_public_end_port()
+        args['publicendport']       = self.get_or_fallback('public_end_port', 'public_port')
         args['privateport']         = self.module.params.get('private_port')
-        args['privateendport']      = self.get_private_end_port()
+        args['privateendport']      = self.get_or_fallback('private_end_port', 'private_port')
         args['openfirewall']        = self.module.params.get('open_firewall')
         args['vmguestip']           = self.get_vm_guest_ip()
         args['ipaddressid']         = self.get_ip_address(key='id')
@@ -350,34 +358,12 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
 
 
     def get_result(self, portforwarding_rule):
+        super(AnsibleCloudStackPortforwarding, self).get_result(portforwarding_rule)
         if portforwarding_rule:
-            if 'id' in portforwarding_rule:
-                self.result['id'] = portforwarding_rule['id']
-            if 'virtualmachinedisplayname' in portforwarding_rule:
-                self.result['vm_display_name'] = portforwarding_rule['virtualmachinedisplayname']
-            if 'virtualmachinename' in portforwarding_rule:
-                self.result['vm_name'] = portforwarding_rule['virtualmachinename']
-            if 'ipaddress' in portforwarding_rule:
-                self.result['ip_address'] = portforwarding_rule['ipaddress']
-            if 'vmguestip' in portforwarding_rule:
-                self.result['vm_guest_ip'] = portforwarding_rule['vmguestip']
-            if 'publicport' in portforwarding_rule:
-                self.result['public_port'] = int(portforwarding_rule['publicport'])
-            if 'publicendport' in portforwarding_rule:
-                self.result['public_end_port'] = int(portforwarding_rule['publicendport'])
-            if 'privateport' in portforwarding_rule:
-                self.result['private_port'] = int(portforwarding_rule['privateport'])
-            if 'privateendport' in portforwarding_rule:
-                self.result['private_end_port'] = int(portforwarding_rule['privateendport'])
-            if 'protocol' in portforwarding_rule:
-                self.result['protocol'] = portforwarding_rule['protocol']
-            if 'tags' in portforwarding_rule:
-                self.result['tags'] = []
-                for tag in portforwarding_rule['tags']:
-                    result_tag          = {}
-                    result_tag['key']   = tag['key']
-                    result_tag['value'] = tag['value']
-                    self.result['tags'].append(result_tag)
+            # Bad bad API does not always return int when it should.
+            for search_key, return_key in returns_to_int.iteritems():
+                if search_key in resource:
+                    self.result[return_key] = int(resource[search_key])
         return self.result
 
 

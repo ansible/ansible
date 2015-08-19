@@ -71,7 +71,7 @@ EXAMPLES = '''
 RETURN = '''
 ---
 id:
-  description: ID of the instance group.
+  description: UUID of the instance group.
   returned: success
   type: string
   sample: 04589590-ac63-4ffc-93f5-b698b8ac38b6
@@ -115,7 +115,7 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackInstanceGroup, self).__init__(module)
         self.instance_group = None
 
 
@@ -167,23 +167,6 @@ class AnsibleCloudStackInstanceGroup(AnsibleCloudStack):
                 if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
         return instance_group
-
-
-    def get_result(self, instance_group):
-        if instance_group:
-            if 'id' in instance_group:
-                self.result['id'] = instance_group['id']
-            if 'created' in instance_group:
-                self.result['created'] = instance_group['created']
-            if 'name' in instance_group:
-                self.result['name'] = instance_group['name']
-            if 'project' in instance_group:
-                self.result['project'] = instance_group['project']
-            if 'domain' in instance_group:
-                self.result['domain'] = instance_group['domain']
-            if 'account' in instance_group:
-                self.result['account'] = instance_group['account']
-        return self.result
 
 
 def main():

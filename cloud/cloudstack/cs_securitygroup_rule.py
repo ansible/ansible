@@ -139,6 +139,11 @@ EXAMPLES = '''
 
 RETURN = '''
 ---
+id:
+  description: UUID of the of the rule.
+  returned: success
+  type: string
+  sample: a6f7a5fc-43f8-11e5-a151-feff819cdc9f
 security_group:
   description: security group of the rule.
   returned: success
@@ -189,7 +194,16 @@ from ansible.module_utils.cloudstack import *
 class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
     def __init__(self, module):
-        AnsibleCloudStack.__init__(self, module)
+        super(AnsibleCloudStackSecurityGroupRule, self).__init__(module)
+        self.returns = {
+            'icmptype':             'icmp_type',
+            'icmpcode':             'icmp_code',
+            'endport':              'end_port',
+            'startport':            'start_port',
+            'protocol':             'protocol',
+            'cidr':                 'cidr',
+            'securitygroupname':    'user_security_group',
+        }
 
 
     def _tcp_udp_match(self, rule, protocol, start_port, end_port):
@@ -222,18 +236,12 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
                and cidr == rule['cidr']
 
 
-    def get_end_port(self):
-        if self.module.params.get('end_port'):
-            return self.module.params.get('end_port')
-        return self.module.params.get('start_port')
-
-
     def _get_rule(self, rules):
         user_security_group_name = self.module.params.get('user_security_group')
         cidr                     = self.module.params.get('cidr')
         protocol                 = self.module.params.get('protocol')
         start_port               = self.module.params.get('start_port')
-        end_port                 = self.get_end_port()
+        end_port                 = self.get_or_fallback('end_port', 'start_port')
         icmp_code                = self.module.params.get('icmp_code')
         icmp_type                = self.module.params.get('icmp_type')
 
@@ -291,7 +299,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
         args['protocol']        = self.module.params.get('protocol')
         args['startport']       = self.module.params.get('start_port')
-        args['endport']         = self.get_end_port()
+        args['endport']         = self.get_or_fallback('end_port', 'start_port')
         args['icmptype']        = self.module.params.get('icmp_type')
         args['icmpcode']        = self.module.params.get('icmp_code')
         args['projectid']       = self.get_project('id')
@@ -355,27 +363,11 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
 
     def get_result(self, security_group_rule):
-
+        super(AnsibleCloudStackSecurityGroupRule, self).get_result(security_group_rule)
         self.result['type'] = self.module.params.get('type')
         self.result['security_group'] = self.module.params.get('security_group')
-        
-        if security_group_rule:
-            rule = security_group_rule
-            if 'securitygroupname' in rule:
-                self.result['user_security_group'] = rule['securitygroupname']
-            if 'cidr' in rule:
-                self.result['cidr'] = rule['cidr']
-            if 'protocol' in rule:
-                self.result['protocol'] = rule['protocol']
-            if 'startport' in rule:
-                self.result['start_port'] = rule['startport']
-            if 'endport' in rule:
-                self.result['end_port'] = rule['endport']
-            if 'icmpcode' in rule:
-                self.result['icmp_code'] = rule['icmpcode']
-            if 'icmptype' in rule:
-                self.result['icmp_type'] = rule['icmptype']
         return self.result
+
 
 
 def main():

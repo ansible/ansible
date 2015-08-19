@@ -20,8 +20,6 @@
 #
 
 
-import base64
-
 DOCUMENTATION = '''
 ---
 module: librato_annotation
@@ -29,9 +27,8 @@ short_description: create an annotation in librato
 description:
     - Create an annotation event on the given annotation stream :name. If the annotation stream does not exist, it will be created automatically
 version_added: "1.6"
-author: "Seth Edwards (@sedward)" 
-requirements:
-    - base64
+author: "Seth Edwards (@sedward)"
+requirements: []
 options:
     user:
         description:
@@ -105,9 +102,6 @@ EXAMPLES = '''
     end_time: 1395954406
 '''
 
-
-import urllib2
-
 def post_annotation(module):
     user = module.params['user']
     api_key = module.params['api_key']
@@ -133,11 +127,12 @@ def post_annotation(module):
 
     headers = {}
     headers['Content-Type'] = 'application/json'
-    headers['Authorization'] = "Basic " + base64.b64encode(user + ":" + api_key).strip()
-    req = urllib2.Request(url, json_body, headers)
-    try:
-        response = urllib2.urlopen(req)
-    except urllib2.HTTPError, e:
+
+    # Hack send parameters the way fetch_url wants them
+    module.params['url_username'] = user
+    module.params['url_password'] = api_key
+    response, info = fetch_url(module, url, data=json_body, headers=headers)
+    if info['status'] != 200:
         module.fail_json(msg="Request Failed", reason=e.reason)
     response = response.read()
     module.exit_json(changed=True, annotation=response)
@@ -161,4 +156,6 @@ def main():
   post_annotation(module)
 
 from ansible.module_utils.basic import *
-main()
+from ansible.module_utils.urls import *
+if __name__ == '__main__':
+    main()

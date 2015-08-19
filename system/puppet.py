@@ -55,12 +55,12 @@ options:
     required: false
     default: None
   facter_basename:
-    desciption:
+    description:
       - Basename of the facter output file
     required: false
     default: ansible
   environment:
-    desciption:
+    description:
       - Puppet environment to be used.
     required: false
     default: None
@@ -161,9 +161,9 @@ def main():
                    base_cmd=base_cmd,
                    )
         if p['puppetmaster']:
-            cmd += " -- server %s" % pipes.quote(p['puppetmaster'])
+            cmd += " --server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
-            cmd += " --show-diff"
+            cmd += " --show_diff"
         if p['environment']:
             cmd += " --environment '%s'" % p['environment']
         if module.check_mode:
