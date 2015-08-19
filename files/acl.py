@@ -199,8 +199,8 @@ def acl_changed(module, cmd):
 
     for line in lines:
         if not line.endswith('*,*'):
-            return False
-    return True
+            return True
+    return False
 
 
 def run_acl(module, cmd, check_rc=True):
