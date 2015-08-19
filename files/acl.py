@@ -21,7 +21,7 @@ module: acl
 version_added: "1.4"
 short_description: Sets and retrieves file ACL information.
 description:
-     - Sets and retrieves file ACL information.
+    - Sets and retrieves file ACL information.
 notes:
     - As of Ansible 2.0, this module only supports Linux distributions.
 options:
@@ -122,6 +122,7 @@ acl:
     sample: [ "user::rwx", "group::rwx", "other::rwx" ]
 '''
 
+
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
 
@@ -161,7 +162,7 @@ def build_entry(etype, entity, permissions=None):
 
 
 def build_command(module, mode, path, follow, default, recursive, entry=''):
-    '''Builds and returns agetfacl/setfacl command.'''
+    '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
         cmd = [module.get_bin_path('setfacl', True)]
         cmd.append('-m "%s"' % entry)
