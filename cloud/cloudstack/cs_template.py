@@ -534,7 +534,7 @@ def main():
             is_routing = dict(type='bool', choices=BOOLEANS, default=False),
             checksum = dict(default=None),
             template_filter = dict(default='self', choices=['featured', 'self', 'selfexecutable', 'sharedexecutable', 'executable', 'community']),
-            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM'], default=None),
+            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator'], default=None),
             requires_hvm = dict(type='bool', choices=BOOLEANS, default=False),
             password_enabled = dict(type='bool', choices=BOOLEANS, default=False),
             template_tag = dict(default=None),
