@@ -67,6 +67,7 @@ class Inventory(object):
         self._groups_list    = {}
         self._pattern_cache  = {}
         self._vars_plugins   = []
+        self._groups_cache   = {}
 
         # to be set by calling set_playbook_basedir by playbook code
         self._playbook_basedir = None
@@ -394,6 +395,7 @@ class Inventory(object):
                     if a.name not in groups:
                         groups[a.name] = [h.name for h in a.get_hosts()]
             self._groups_list = groups
+            self._groups_cache = {}
         return self._groups_list
 
     def get_groups(self):
@@ -422,10 +424,11 @@ class Inventory(object):
         return matching_host
 
     def get_group(self, groupname):
-        for group in self.groups:
-            if group.name == groupname:
-                return group
-        return None
+        if not self._groups_cache:
+            for group in self.groups:
+                self._groups_cache[group.name] = group
+
+        return self._groups_cache.get(groupname)
 
     def get_group_variables(self, groupname, update_cached=False, vault_password=None):
         if groupname not in self._vars_per_group or update_cached:
@@ -499,6 +502,7 @@ class Inventory(object):
         if group.name not in self.groups_list():
             self.groups.append(group)
             self._groups_list = None  # invalidate internal cache 
+            self._groups_cache = {}
         else:
             raise AnsibleError("group already in inventory: %s" % group.name)
 
@@ -668,6 +672,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._groups_list    = {}
+        self._groups_cache   = {}
         self.groups = []
 
         self.parse_inventory(self.host_list)
