@@ -150,7 +150,7 @@ name:
   returned: success
   type: string
   sample: Debian 7 64-bit
-displaytext:
+display_text:
   description: Text to be displayed of the ISO.
   returned: success
   type: string
