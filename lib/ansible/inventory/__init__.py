@@ -672,6 +672,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._groups_list    = {}
+        self._groups_cache   = {}
         self.groups = []
 
         self.parse_inventory(self.host_list)
