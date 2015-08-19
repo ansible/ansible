@@ -91,9 +91,11 @@ options:
         validate is passed in via '%s' which must be present as in the sshd example below.
         The command is passed securely so shell features like expansion and pipes won't work.
     required: false
-    default: ""
+    default: null
+    version_added: "2.0"
 author: "Stephen Fromm (@sfromm)"
-extends_documentation_fragment: files
+extends_documentation_fragment:
+    - files
 '''
 
 EXAMPLES = '''
@@ -104,7 +106,7 @@ EXAMPLES = '''
 - assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf delimiter='### START FRAGMENT ###'
 
 # Copy a new "sshd_config" file into place, after passing validation with sshd
-- assemble: src=/etc/ssh/conf.d/ dest=/etc/ssh/sshd_config validate='sshd -t -f %s'
+- assemble: src=/etc/ssh/conf.d/ dest=/etc/ssh/sshd_config validate='/usr/sbin/sshd -t -f %s'
 '''
 
 # ===========================================
