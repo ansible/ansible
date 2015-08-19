@@ -351,7 +351,7 @@ class Inventory(object):
         pattern = pattern.replace("!","").replace("&", "")
 
         def __append_host_to_results(host):
-            if host not in results and host.name not in hostnames:
+            if host.name not in hostnames:
                 hostnames.add(host.name)
                 results.append(host)
 
@@ -413,12 +413,13 @@ class Inventory(object):
                 if host.name in self.LOCALHOST_ALIASES:
                     return host
             return self._create_implicit_localhost(hostname)
-        else:
-            for group in self.groups:
-                for host in group.get_hosts():
-                    if hostname == host.name:
-                        return host
-        return None
+        matching_host = None
+        for group in self.groups:
+            for host in group.get_hosts():
+                if hostname == host.name:
+                    matching_host = host
+                self._hosts_cache[host.name] = host
+        return matching_host
 
     def get_group(self, groupname):
         for group in self.groups:
