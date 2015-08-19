@@ -8,7 +8,7 @@ Here are some commonly-asked questions and their answers.
 How can I set the PATH or any other environment variable for a task or entire playbook?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Setting environment variables can be done with the `environment` keyword. It can be used at task or playbook level::
+Setting environment variables can be done with the `environment` keyword. It can be used at task or play level::
 
     environment:
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
