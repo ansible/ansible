@@ -31,10 +31,10 @@ options:
     description:
       - Name (case sensitive) of the network.
     required: true
-  displaytext:
+  display_text:
     description:
-      - Displaytext of the network.
-      - If not specified, C(name) will be used as displaytext.
+      - Display text of the network.
+      - If not specified, C(name) will be used as C(display_text).
     required: false
     default: null
   network_offering:
@@ -177,7 +177,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_network
     name: my network
-    displaytext: network of domain example.local
+    display_text: network of domain example.local
     network_domain: example.local
 
 # restart a network with clean up
@@ -206,7 +206,7 @@ name:
   returned: success
   type: string
   sample: web project
-displaytext:
+display_text:
   description: Display text of the network.
   returned: success
   type: string
@@ -390,7 +390,7 @@ class AnsibleCloudStackNetwork(AnsibleCloudStack):
     def _get_args(self):
         args                        = {}
         args['name']                = self.module.params.get('name')
-        args['displaytext']         = self.get_or_fallback('displaytext', 'name')
+        args['displaytext']         = self.get_or_fallback('display_text', 'name')
         args['networkdomain']       = self.module.params.get('network_domain')
         args['networkofferingid']   = self.get_network_offering(key='id')
         return args
@@ -525,7 +525,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            displaytext = dict(default=None),
+            display_text = dict(default=None),
             network_offering = dict(default=None),
             zone = dict(default=None),
             start_ip = dict(default=None),

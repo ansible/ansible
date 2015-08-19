@@ -28,9 +28,9 @@ author: "René Moser (@resmo)"
 options:
   name:
     description:
-      - Unique Name of the snapshot. In CloudStack terms C(displayname).
+      - Unique Name of the snapshot. In CloudStack terms display name.
     required: true
-    aliases: ['displayname']
+    aliases: ['display_name']
   vm:
     description:
       - Name of the virtual machine.
@@ -114,8 +114,8 @@ name:
   returned: success
   type: string
   sample: snapshot before update
-displayname:
-  description: displayname of the snapshot.
+display_name:
+  description: Display name of the snapshot.
   returned: success
   type: string
   sample: snapshot before update
@@ -140,7 +140,6 @@ type:
   type: string
   sample: DiskAndMemory
 description:
-  description:
   description: description of vm snapshot
   returned: success
   type: string
@@ -259,7 +258,7 @@ class AnsibleCloudStackVmSnapshot(AnsibleCloudStack):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(required=True, aliases=['displayname']),
+            name = dict(required=True, aliases=['display_name']),
             vm = dict(required=True),
             description = dict(default=None),
             zone = dict(default=None),
