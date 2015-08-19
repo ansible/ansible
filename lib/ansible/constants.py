@@ -245,3 +245,4 @@ VAULT_VERSION_MIN         = 1.0
 VAULT_VERSION_MAX         = 1.0
 MAX_FILE_SIZE_FOR_DIFF    = 1*1024*1024
 TREE_DIR                  = None
+LOCALHOST                 = frozenset(['127.0.0.1', 'localhost', '::1'])

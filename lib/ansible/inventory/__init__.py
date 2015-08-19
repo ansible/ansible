@@ -49,7 +49,6 @@ class Inventory(object):
     #              'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
     #              '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
-    LOCALHOST_ALIASES = frozenset(('localhost', '127.0.0.1', '::1'))
     def __init__(self, loader, variable_manager, host_list=C.DEFAULT_HOST_LIST):
 
         # the host file file, or script path, or list of hosts
@@ -370,7 +369,7 @@ class Inventory(object):
                     for host in matching_hosts:
                         __append_host_to_results(host)
 
-        if pattern in self.LOCALHOST_ALIASES and len(results) == 0:
+        if pattern in C.LOCALHOST and len(results) == 0:
             new_host = self._create_implicit_localhost(pattern)
             results.append(new_host)
         return results
@@ -404,15 +403,15 @@ class Inventory(object):
     def get_host(self, hostname):
         if hostname not in self._hosts_cache:
             self._hosts_cache[hostname] = self._get_host(hostname)
-            if hostname in self.LOCALHOST_ALIASES:
-                for host in self.LOCALHOST_ALIASES.difference((hostname,)):
+            if hostname in C.LOCALHOST:
+                for host in C.LOCALHOST.difference((hostname,)):
                     self._hosts_cache[host] = self._hosts_cache[hostname]
         return self._hosts_cache[hostname]
 
     def _get_host(self, hostname):
-        if hostname in self.LOCALHOST_ALIASES:
+        if hostname in C.LOCALHOST:
             for host in self.get_group('all').get_hosts():
-                if host.name in self.LOCALHOST_ALIASES:
+                if host.name in C.LOCALHOST:
                     return host
             return self._create_implicit_localhost(hostname)
         matching_host = None
@@ -511,7 +510,7 @@ class Inventory(object):
         """ return a list of hostnames for a pattern """
 
         result = [ h for h in self.get_hosts(pattern) ]
-        if len(result) == 0 and pattern in self.LOCALHOST_ALIASES:
+        if len(result) == 0 and pattern in C.LOCALHOST:
             result = [pattern]
         return result
 
