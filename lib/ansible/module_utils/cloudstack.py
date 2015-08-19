@@ -56,8 +56,8 @@ class AnsibleCloudStack(object):
             'project':      'project',
             'account':      'account',
             'domain':       'domain',
-            'displaytext':  'displaytext',
-            'displayname':  'displayname',
+            'displaytext':  'display_text',
+            'displayname':  'display_name',
             'description':  'description',
         }
 

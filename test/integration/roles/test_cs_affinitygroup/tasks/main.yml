@@ -15,7 +15,7 @@
   assert:
     that:
     - ag|failed
-    - ag.msg == "missing required arguments: name"
+    - "ag.msg == 'missing required arguments: name'"
 
 - name: test present affinity group
   cs_affinitygroup: name={{ cs_resource_prefix }}_ag

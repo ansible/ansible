@@ -15,7 +15,7 @@
   assert:
     that:
     - ig|failed
-    - ig.msg == "missing required arguments: name"
+    - "ig.msg == 'missing required arguments: name'"
 
 - name: test present instance group
   cs_instancegroup: name={{ cs_resource_prefix }}_ig

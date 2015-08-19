@@ -4,6 +4,8 @@
   gather_facts: no
   tags:
     - cloudstack
+  vars:
+    cs_resource_prefix: "cs{{ resource_prefix | default('') }}"
   roles:
     - { role: test_cs_sshkeypair,           tags: test_cs_sshkeypair }
     - { role: test_cs_affinitygroup,        tags: test_cs_affinitygroup }
