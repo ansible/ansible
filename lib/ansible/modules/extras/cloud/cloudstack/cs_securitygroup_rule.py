@@ -198,7 +198,7 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
             'icmptype':             'icmp_type',
             'icmpcode':             'icmp_code',
             'endport':              'end_port',
-            'start_port':           'start_port',
+            'startport':            'start_port',
             'protocol':             'protocol',
             'cidr':                 'cidr',
             'securitygroupname':    'user_security_group',
