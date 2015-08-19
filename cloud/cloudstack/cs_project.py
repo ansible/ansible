@@ -31,10 +31,10 @@ options:
     description:
       - Name of the project.
     required: true
-  displaytext:
+  display_text:
     description:
-      - Displaytext of the project.
-      - If not specified, C(name) will be used as displaytext.
+      - Display text of the project.
+      - If not specified, C(name) will be used as C(display_text).
     required: false
     default: null
   state:
@@ -71,7 +71,7 @@ EXAMPLES = '''
 - local_action:
     module: cs_project
     name: web
-    displaytext: my web project
+    display_text: my web project
 
 # Suspend an existing project
 - local_action:
@@ -104,7 +104,7 @@ name:
   returned: success
   type: string
   sample: web project
-displaytext:
+display_text:
   description: Display text of the project.
   returned: success
   type: string
@@ -173,7 +173,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
     def update_project(self, project):
         args                = {}
         args['id']          = project['id']
-        args['displaytext'] = self.get_or_fallback('displaytext', 'name')
+        args['displaytext'] = self.get_or_fallback('display_text', 'name')
 
         if self._has_changed(args, project):
             self.result['changed'] = True
@@ -194,7 +194,7 @@ class AnsibleCloudStackProject(AnsibleCloudStack):
 
         args                = {}
         args['name']        = self.module.params.get('name')
-        args['displaytext'] = self.get_or_fallback('displaytext', 'name')
+        args['displaytext'] = self.get_or_fallback('display_text', 'name')
         args['account']     = self.get_account('name')
         args['domainid']    = self.get_domain('id')
 
@@ -262,7 +262,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            displaytext = dict(default=None),
+            display_text = dict(default=None),
             state = dict(choices=['present', 'absent', 'active', 'suspended' ], default='present'),
             domain = dict(default=None),
             account = dict(default=None),

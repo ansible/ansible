@@ -158,9 +158,9 @@ options:
       - 32 or 64 bits support.
     required: false
     default: '64'
-  displaytext:
+  display_text:
     description:
-      - the display text of the template.
+      - Display text of the template.
     required: true
     default: null
   state:
@@ -229,8 +229,8 @@ name:
   returned: success
   type: string
   sample: Debian 7 64-bit
-displaytext:
-  description: Displaytext of the template.
+display_text:
+  description: Display text of the template.
   returned: success
   type: string
   sample: Debian 7.7 64-bit minimal 2015-03-19
@@ -371,7 +371,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
     def _get_args(self):
         args                            = {}
         args['name']                    = self.module.params.get('name')
-        args['displaytext']             = self.module.params.get('displaytext')
+        args['displaytext']             = self.get_or_fallback('display_text', 'name')
         args['bits']                    = self.module.params.get('bits')
         args['isdynamicallyscalable']   = self.module.params.get('is_dynamically_scalable')
         args['isextractable']           = self.module.params.get('is_extractable')
@@ -385,8 +385,6 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
         if not args['ostypeid']:
             self.module.fail_json(msg="Missing required arguments: os_type")
 
-        if not args['displaytext']:
-            args['displaytext'] = self.module.params.get('name')
         return args
 
 
@@ -523,7 +521,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            displaytext = dict(default=None),
+            display_text = dict(default=None),
             url = dict(default=None),
             vm = dict(default=None),
             snapshot = dict(default=None),
