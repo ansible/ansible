@@ -276,10 +276,10 @@ def main():
         if etype or entity or permissions:
             module.fail_json(msg="'entry' MUST NOT be set when 'entity', 'etype' or 'permissions' are set.")
 
-        if state == 'present' and entry.count(":") != 3:
+        if state == 'present' and entry.count(":") != 2:
             module.fail_json(msg="'entry' MUST have 3 sections divided by ':' when 'state=present'.")
 
-        if state == 'absent' and entry.count(":") != 2:
+        if state == 'absent' and entry.count(":") != 1:
             module.fail_json(msg="'entry' MUST have 2 sections divided by ':' when 'state=absent'.")
 
         default, etype, entity, permissions = split_entry(entry)
