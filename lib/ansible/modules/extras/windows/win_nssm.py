@@ -35,8 +35,6 @@ options:
     description:
       - Name of the service to operate on
     required: true
-    default: null
-    aliases: []
 
   state:
     description:
@@ -48,35 +46,30 @@ options:
       - restarted
       - absent
     default: started
-    aliases: []
 
   application:
     description:
       - The application binary to run as a service
     required: false
     default: null
-    aliases: []
   
   stdout_file:
     description:
       - Path to receive output
     required: false
     default: null
-    aliases: []
 
   stderr_file:
     description:
       - Path to receive error output
     required: false
     default: null
-    aliases: []
 
   app_parameters:
     description:
       - Parameters to be passed to the application when it starts
     required: false
     default: null
-    aliases: []
 author: "Adam Keech (@smadam813), George Frank (@georgefrank)"
 '''
 
