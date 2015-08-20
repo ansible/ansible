@@ -98,7 +98,7 @@ Function Service-Exists
         [string]$name
     )
 
-    return ,[bool](Get-Service "$name" -ErrorAction SilentlyContinue)
+    return [bool](Get-Service "$name" -ErrorAction SilentlyContinue)
 }
 
 Function Nssm-Remove
