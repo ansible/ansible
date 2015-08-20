@@ -28,10 +28,46 @@ On a Linux control machine::
 
    pip install https://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
 
-If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host)::
+Active Directory Support
+++++++++++++++++++++++++
+
+If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host), you will need to install the "python-kerberos" module and the MIT krb5 libraries it depends on.
+
+Installing python-kerberos dependencies
+---------------------------------------
+
+.. code-block:: bash
+
+   # Via Yum
+   yum -y install python-devel krb5-devel krb5-libs krb5-workstation
+   
+   # Via Apt (Ubuntu)
+   sudo apt-get install python-dev libkrb5-dev
+   
+   # Via Portage (Gentoo)
+   emerge -av app-crypt/mit-krb5 
+   emerge -av dev-python/setuptools
+
+   # Via pkg (FreeBSD)
+   sudo pkg install security/krb5
+   
+   # Via OpenCSW (Solaris)
+   pkgadd -d http://get.opencsw.org/now
+   /opt/csw/bin/pkgutil -U
+   /opt/csw/bin/pkgutil -y -i libkrb5_3 
+   
+   # Via Pacman (Arch Linux)
+   pacman -S krb5
+
+Installing python-kerberos
+--------------------------
+
+Once you've installed the necessary dependencies, the python-kerberos wrapper can be installed via pip::
+
+.. code-block:: bash
 
    pip install kerberos
-
+   
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 
 .. _windows_inventory:
