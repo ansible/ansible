@@ -275,6 +275,9 @@ def main():
         if state == 'absent' and entry.count(":") != 1:
             module.fail_json(msg="'entry' MUST have 2 sections divided by ':' when 'state=absent'.")
 
+        if state == 'query':
+            module.fail_json(msg="'entry' MUST NOT be set when 'state=query'.")
+
         etype, entity, permissions = split_entry(entry)
 
     changed = False
