@@ -172,7 +172,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
         cmd.append('--recursive')
 
     if not follow:
-        cmd.append('-h')
+        cmd.append('--physical')
 
     if default:
         if(mode == 'rm'):
