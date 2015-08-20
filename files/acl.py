@@ -127,12 +127,10 @@ def split_entry(entry):
     ''' splits entry and ensures normalized return'''
 
     a = entry.split(':')
-    a.reverse()
-    try:
-        p, e, t = a
-    except ValueError, e:
-        print "wtf?? %s => %s" % (entry, a)
-        raise e
+    if len(a) == 2:
+        a.append(None)
+
+    t, e, p = a
 
     if t.startswith("u"):
         t = "user"
