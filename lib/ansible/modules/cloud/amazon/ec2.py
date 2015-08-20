@@ -830,7 +830,10 @@ def create_instances(module, ec2, vpc, override_count=None):
 
     vpc_id = None
     if vpc_subnet_id:
-        vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
+        if not vpc:
+            module.fail_json(msg="region must be specified")
+        else:
+            vpc_id = vpc.get_all_subnets(subnet_ids=[vpc_subnet_id])[0].vpc_id
     else:
         vpc_id = None
 
@@ -1303,7 +1306,7 @@ def main():
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
     else:
-        module.fail_json(msg="region must be specified")
+        vpc = None
 
     tagged_instances = []
 
