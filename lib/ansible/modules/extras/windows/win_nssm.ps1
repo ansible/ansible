@@ -39,10 +39,6 @@ If ($params.state)
 {
     $state = $params.state.ToString().ToLower()
     $validStates = "present", "absent", "started", "stopped", "restarted"
-    
-    # These don't really fit the declarative style of ansible
-    # If you need to do these things, you can just write a command for it
-    # "paused", "continued", "rotated"
 
     If ($validStates -notcontains $state)
     {
@@ -137,11 +133,6 @@ Function Nssm-Install
         [Parameter(Mandatory=$true)]
         [string]$application
     )
-
-    #note: the application name must look like the following, if the directory includes spaces:
-    # nssm install service "c:\Program Files\app.exe" """C:\Path with spaces"""
-    #see https://git.nssm.cc/?p=nssm/nssm.git;a=commit;h=0b386fc1984ab74ee59b7bed14b7e8f57212c22b for more info
-
 
     if (!$application)
     {
