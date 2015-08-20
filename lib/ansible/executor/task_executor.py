@@ -502,11 +502,15 @@ class TaskExecutor:
             # get the real ssh_address for the delegate and allow ansible_ssh_host to be templated
             self._play_context.remote_addr      = this_info.get('ansible_ssh_host', self._task.delegate_to)
             self._play_context.remote_user      = this_info.get('ansible_remote_user', self._task.remote_user)
-            self._play_context.connection       = this_info.get('ansible_connection', self._task.connection)
             self._play_context.port             = this_info.get('ansible_ssh_port', self._play_context.port)
             self._play_context.password         = this_info.get('ansible_ssh_pass', self._play_context.password)
             self._play_context.private_key_file = this_info.get('ansible_ssh_private_key_file', self._play_context.private_key_file)
             self._play_context.become_pass      = this_info.get('ansible_sudo_pass', self._play_context.become_pass)
+
+            conn = this_info.get('ansible_connection', self._task.connection)
+            if conn:
+                self._play_context.connection   = conn
+
         except Exception as e:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
