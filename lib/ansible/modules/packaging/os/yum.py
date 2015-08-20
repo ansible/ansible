@@ -621,10 +621,7 @@ def install(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             except Exception, e:
                 module.fail_json(msg="Failure deleting temp directory %s, %s" % (tempdir, e))
 
-            for p in pkgs:
-                # take note of which packages are getting installed
-                res['results'].append('%s will be installed' % p)
-            module.exit_json(changed=True, results=res['results'])
+            module.exit_json(changed=True, results=res['results'], changes=dict(installed=pkgs))
 
         changed = True
 
@@ -692,10 +689,7 @@ def remove(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
         cmd = yum_basecmd + ["remove"] + pkgs
 
         if module.check_mode:
-            # take note of which packages are getting removed
-            for p in pkgs:
-                res['results'].append('%s will be removed' % p)
-            module.exit_json(changed=True, results=res['results'])
+            module.exit_json(changed=True, results=res['results'], changes=dict(removed=pkgs))
 
         rc, out, err = module.run_command(cmd)
 
@@ -757,7 +751,7 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 continue
             else:
                 pkg, version, repo = line
-                name, dist = pkg.split('.')
+                name, dist = pkg.rsplit('.', 1)
                 updates.update({name: {'version': version, 'dist': dist, 'repo': repo}})
     elif rc == 1:
         res['msg'] = err
@@ -812,15 +806,15 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     # check_mode output
     if module.check_mode:
+        to_update = []
         for w in will_update:
             if w.startswith('@'):
+                to_update.append((w, None))
                 msg = '%s will be updated' % w
             else:
-                msg = '%s will be updated with %s-%s.%s from %s' % (w, w, updates[w]['version'],  updates[w]['dist'], updates[w]['repo'])
-            res['results'].append(msg)
+                to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 
-        for p in pkgs['install']:
-            res['results'].append('%s will be installed' % p)
+        res['changes'] = dict(installed=pkgs['install'], updated=to_update)
 
         if len(will_update) > 0 or len(pkgs['install']) > 0:
             res['changed'] = True
