@@ -80,11 +80,6 @@ options:
 author: "Adam Keech (@smadam813), George Frank (@georgefrank)"
 '''
 
-# TODO:
-# * Better parsing when a package has dependencies - currently fails
-# * Time each item that is run
-# * Support 'changed' with gems - would require shelling out to `gem list` first and parsing, kinda defeating the point of using chocolatey.
-
 EXAMPLES = '''
   # Install and start the foo service
   win_nssm:
