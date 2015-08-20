@@ -250,43 +250,36 @@ class InventoryParser(object):
 
         return hosts
 
-    def _expand_hostpattern(self, pattern):
+    def _expand_hostpattern(self, hostpattern):
         '''
         Takes a single host pattern and returns a list of hostnames and an
         optional port number that applies to all of them.
         '''
 
-        # First, we extract the port number. This is usually ":NN" at the end of
-        # the expression, but for IPv6 addresses it's ".NN" instead. In either
-        # case, we remove it.
+        # Is a port number specified?
+        #
+        # This may be a mandatory :NN suffix on any square-bracketed expression
+        # (IPv6 address, IPv4 address, host name, host pattern), or an optional
+        # :NN suffix on an IPv4 address, host name, or pattern. IPv6 addresses
+        # must be in square brackets if a port is specified.
 
         port = None
-        if ':' in pattern:
-            pos = pattern.rindex(':')
-            try:
-                port = int(pattern[pos+1:])
-                pattern = pattern[0:pos]
-            except ValueError:
-                pass
-        else:
-            m = self.patterns['ipv6_hostport'].match(pattern)
+
+        for type in ['bracketed_hostport', 'hostport']:
+            m = self.patterns[type].match(hostpattern)
             if m:
-                (pattern, port) = m.groups()
-
-                # We're done, because we know this is a single IPv6 address.
-                # But should we support ranges for IPv6 address generation?
-                # See the FIXME note below. We should probably just accept
-                # "[xxx]:nn" syntax instead, and then let xxx be expanded.
-
-                return ([pattern], int(port))
+                (hostpattern, port) = m.groups()
+                continue
 
         # Now we're left with just the pattern, which results in a list of one
         # or more hostnames, depending on whether it contains any [x:y] ranges.
+        #
+        # FIXME: We could be more strict here about validation.
 
-        if detect_range(pattern):
-            hostnames = expand_hostname_range(pattern)
+        if detect_range(hostpattern):
+            hostnames = expand_hostname_range(hostpattern)
         else:
-            hostnames = [pattern]
+            hostnames = [hostpattern]
 
         return (hostnames, port)
 
@@ -362,7 +355,7 @@ class InventoryParser(object):
         # should they be? At the moment, they must be non-empty sequences of non
         # whitespace characters excluding ':' and ']', but we should define more
         # precise rules in order to support better diagnostics. The same applies
-        # to hostnames.
+        # to hostnames. It seems sensible for them both to follow DNS rules.
 
         self.patterns['groupname'] = re.compile(
             r'''^
@@ -373,18 +366,28 @@ class InventoryParser(object):
             ''', re.X
         )
 
-        # This matches an IPv6 address, a '.', and a port number. It's not yet
-        # very strict about matching the IPv6 address.
-        #
-        # FIXME: There are various shortcomings in the IPv6 handling in the
-        # old code, which aren't fixed here yet. For example, Inventory's
-        # parse_inventory() method seems to accept "[ipv6]:nn" syntax. We
-        # should pick one and stick with it.
+        # The following patterns match the various ways in which a port number
+        # may be specified on an IPv6 address, IPv4 address, hostname, or host
+        # pattern. All of the above may be enclosed in square brackets with a
+        # mandatory :NN suffix; or all but the first may be given without any
+        # brackets but with an :NN suffix.
 
-        self.patterns['ipv6_hostport'] = re.compile(
+        self.patterns['bracketed_hostport'] = re.compile(
             r'''^
-                ([a-fA-F0-9:]+)
-                \.([0-9]+)
+                \[(.+)\]                    # [host identifier]
+                :([0-9]+)                   # :port number
+                $
+            ''', re.X
+        )
+
+        self.patterns['hostport'] = re.compile(
+            r'''^
+                ((?:                        # We want to match:
+                    [^:\[\]]                # (a non-range character
+                    |                       # ...or...
+                    \[[^\]]*\]              # a complete bracketed expression)
+                )*)                         # repeated as many times as possible
+                :([0-9]+)                   # followed by a port number
                 $
             ''', re.X
         )
