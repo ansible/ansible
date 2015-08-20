@@ -256,11 +256,14 @@ def ensure_role_exists(keystone, role_name):
     # Get the role if it exists
     try:
         role = get_role(keystone, role_name)
+        # Role does exist, we're done
+        return (False, role.id)
     except KeyError:
         # Role doesn't exist yet
-        role = keystone.roles.create(role_name)
-    return (True, role.id)
+        pass
 
+    role = keystone.roles.create(role_name)
+    return (True, role.id)
 
 def ensure_user_role_exists(keystone, user_name, tenant_name, role_name,
                        check_mode):
@@ -397,9 +400,9 @@ def dispatch(keystone, user=None, password=None, tenant=None,
     changed = False
     id = None
     if not tenant and not user and role and state == "present":
-        ensure_role_exists(keystone, role)
+        changed, id = ensure_role_exists(keystone, role)
     elif not tenant and not user and role and state == "absent":
-        ensure_role_absent(keystone, role)
+        changed = ensure_role_absent(keystone, role)
     elif tenant and not user and not role and state == "present":
         changed, id = ensure_tenant_exists(keystone, tenant,
                                            tenant_description, check_mode)
