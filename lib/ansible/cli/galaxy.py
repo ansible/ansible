@@ -50,7 +50,7 @@ class GalaxyCLI(CLI):
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
-    
+
     def __init__(self, args):
         self.api = None
         self.galaxy = None
@@ -63,6 +63,9 @@ class GalaxyCLI(CLI):
             usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
             epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
+
+        # Workaround for #12004: show version without supplying a dummy action
+        self.parser.parse_args()
 
         self.set_action()
 
@@ -141,7 +144,7 @@ class GalaxyCLI(CLI):
         return True
 
     def run(self):
-        
+
         super(GalaxyCLI, self).run()
 
         # if not offline, get connect to galaxy api
