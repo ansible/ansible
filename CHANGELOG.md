@@ -28,6 +28,9 @@ Other Notable Changes:
   * typetalk
 * Fix docker module's parsing of docker-py version for dev checkouts
 * Fix docker module to work with docker server api 1.19
+* Change yum module's state=latest feature to update all packages specified in
+  a single transaction.  This is the same type of fix as was made for yum's
+  state=installed in 1.9.2 and both solves the same problems and with the same caveats.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
