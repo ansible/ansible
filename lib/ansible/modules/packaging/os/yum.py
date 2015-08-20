@@ -972,10 +972,15 @@ def main():
         # loaded and plugins are discovered
         my.conf
         repoquery = None
-        if 'rhnplugin' in my.plugins._plugins:
-            repoquerybin = ensure_yum_utils(module)
-            if repoquerybin:
-                repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
+        try:
+            yum_plugins = my.plugins._plugins
+        except AttributeError:
+            pass
+        else:
+            if 'rhnplugin' in yum_plugins:
+                repoquerybin = ensure_yum_utils(module)
+                if repoquerybin:
+                    repoquery = [repoquerybin, '--show-duplicates', '--plugins', '--quiet']
 
         pkg = [ p.strip() for p in params['name']]
         exclude = params['exclude']
