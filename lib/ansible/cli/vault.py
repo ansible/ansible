@@ -45,6 +45,10 @@ class VaultCLI(CLI):
             epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
 
+        # Workaround for #12004: show version without supplying a dummy action
+        if sys.argv[1] == '--version':
+            self.parser.parse_args()
+
         self.set_action()
 
         # options specific to self.actions
