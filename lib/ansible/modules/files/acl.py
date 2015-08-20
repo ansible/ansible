@@ -128,16 +128,11 @@ def split_entry(entry):
 
     a = entry.split(':')
     a.reverse()
-    if len(a) == 3:
-        a.append(False)
     try:
-        p, e, t, d = a
+        p, e, t = a
     except ValueError, e:
         print "wtf?? %s => %s" % (entry, a)
         raise e
-
-    if d:
-        d = True
 
     if t.startswith("u"):
         t = "user"
@@ -150,7 +145,7 @@ def split_entry(entry):
     else:
         t = None
 
-    return [d, t, e, p]
+    return [t, e, p]
 
 
 def build_entry(etype, entity, permissions=None):
@@ -282,7 +277,7 @@ def main():
         if state == 'absent' and entry.count(":") != 1:
             module.fail_json(msg="'entry' MUST have 2 sections divided by ':' when 'state=absent'.")
 
-        default, etype, entity, permissions = split_entry(entry)
+        etype, entity, permissions = split_entry(entry)
 
     changed = False
     msg = ""
