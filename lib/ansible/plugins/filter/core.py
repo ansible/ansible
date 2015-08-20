@@ -254,6 +254,7 @@ class FilterModule(object):
             'splitext': partial(unicode_wrap, os.path.splitext),
             'win_basename': partial(unicode_wrap, ntpath.basename),
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
+            'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
 
             # value as boolean
             'bool': bool,
