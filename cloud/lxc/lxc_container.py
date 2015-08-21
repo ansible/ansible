@@ -39,6 +39,7 @@ options:
           - loop
           - btrfs
           - overlayfs
+          - zfs
         description:
           - Backend storage type for the container.
         required: false
