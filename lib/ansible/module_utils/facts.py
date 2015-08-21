@@ -937,6 +937,18 @@ class LinuxHardware(Hardware):
     @timeout(10)
     def get_mount_facts(self):
         self.facts['mounts'] = []
+        bind_mounts = []
+        findmntPath = module.get_bin_path("findmnt")
+        rc, out, err = module.run_command("%s -lnur" % ( findmntPath ), use_unsafe_shell=True)
+        if rc == 0:
+            # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
+            for line in out.split('\n'):
+                fields = line.rstrip('\n').split()
+                if(len(fields) < 2):
+                    continue
+                if(re.match(".*\]",fields[1])):
+                    bind_mounts.append(fields[0])
+
         mtab = get_file_content('/etc/mtab', '')
         for line in mtab.split('\n'):
             if line.startswith('/'):
@@ -958,6 +970,11 @@ class LinuxHardware(Hardware):
 
                         if rc == 0:
                             uuid = out.strip()
+
+                    if fields[1] in bind_mounts:
+                        # only add if not already there, we might have a plain /etc/mtab
+                        if not re.match(".*bind.*", fields[3]):
+                            fields[3] += ",bind"
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],
