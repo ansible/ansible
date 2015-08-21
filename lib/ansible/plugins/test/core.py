@@ -58,15 +58,6 @@ def skipped(*a, **kw):
     skipped = item.get('skipped', False)
     return skipped
 
-def mandatory(a):
-    ''' Make a variable mandatory '''
-    try:
-        a
-    except NameError:
-        raise errors.AnsibleFilterError('Mandatory variable not defined.')
-    else:
-        return a
-
 def regex(value='', pattern='', ignorecase=False, match_type='search'):
     ''' Expose `re` as a boolean filter using the `search` method by default.
         This is likely only useful for `search` and `match` which already
@@ -87,6 +78,14 @@ def match(value, pattern='', ignorecase=False):
 def search(value, pattern='', ignorecase=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, 'search')
+
+def mandatory(a):
+    from jinja2.runtime import Undefined
+
+    ''' Make a variable mandatory '''
+    if isinstance(a, Undefined):
+        raise errors.AnsibleFilterError('Mandatory variable not defined.')
+    return a
 
 class TestModule(object):
     ''' Ansible core jinja2 tests '''
