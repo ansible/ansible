@@ -523,7 +523,9 @@ class Inventory(object):
         to batch serial operations in main playbook code, don't use this for other
         reasons.
         """
-        if not isinstance(restriction, list):
+        if restriction is None:
+            return
+        elif not isinstance(restriction, list):
             restriction = [ restriction ]
         self._restriction = restriction
 
