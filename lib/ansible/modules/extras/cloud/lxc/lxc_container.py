@@ -454,6 +454,9 @@ LXC_BACKING_STORE = {
     ],
     'overlayfs': [
         'lv_name', 'vg_name', 'fs_type', 'fs_size', 'thinpool', 'zfs_root'
+    ],
+    'zfs': [
+        'lv_name', 'vg_name', 'fs_type', 'fs_size', 'thinpool'
     ]
 }
 
