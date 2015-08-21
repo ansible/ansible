@@ -84,6 +84,26 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
+    def _preprocess_vars(self, a):
+        '''
+        Ensures that vars contained in the parameter passed in are
+        returned as a list of dictionaries, to ensure for instance
+        that vars loaded from a file conform to an expected state.
+        '''
+
+        if a is None:
+            return None
+        elif not isinstance(a, list):
+            data = [ a ]
+        else:
+            data = a
+
+        for item in data:
+            if not isinstance(item, MutableMapping):
+                raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
+
+        return data
+
     def _validate_both_dicts(self, a, b):
         '''
         Validates that both arguments are dictionaries, or an error is raised.
@@ -127,7 +147,7 @@ class VariableManager:
 
         return result
 
-    def get_vars(self, loader, play=None, host=None, task=None, use_cache=True):
+    def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -168,16 +188,22 @@ class VariableManager:
 
             # we merge in the special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
-                all_vars = self._combine_vars(all_vars, self._group_vars_files['all'])
+                data = self._preprocess_vars(self._group_vars_files['all'])
+                for item in data:
+                    all_vars = self._combine_vars(all_vars, item)
 
             for group in host.get_groups():
                 all_vars = self._combine_vars(all_vars, group.get_vars())
                 if group.name in self._group_vars_files and group.name != 'all':
-                    all_vars = self._combine_vars(all_vars, self._group_vars_files[group.name])
+                    data = self._preprocess_vars(self._group_vars_files[group.name])
+                    for item in data:
+                        all_vars = self._combine_vars(all_vars, item)
 
             host_name = host.get_name()
             if host_name in self._host_vars_files:
-                all_vars = self._combine_vars(all_vars, self._host_vars_files[host_name])
+                data = self._preprocess_vars(self._host_vars_files[host_name])
+                for item in data:
+                    all_vars = self._combine_vars(all_vars, self._host_vars_files[host_name])
 
             # then we merge in vars specified for this host
             all_vars = self._combine_vars(all_vars, host.get_vars())
@@ -209,9 +235,10 @@ class VariableManager:
                     # as soon as we read one from the list. If none are found, we
                     # raise an error, which is silently ignored at this point.
                     for vars_file in vars_file_list:
-                        data = loader.load_from_file(vars_file)
+                        data = self._preprocess_vars(loader.load_from_file(vars_file))
                         if data is not None:
-                            all_vars = self._combine_vars(all_vars, data)
+                            for item in data:
+                                all_vars = self._combine_vars(all_vars, item)
                             break
                     else:
                         raise AnsibleError("vars file %s was not found" % vars_file_item)
@@ -222,13 +249,13 @@ class VariableManager:
                 for role in play.get_roles():
                     all_vars = self._combine_vars(all_vars, role.get_vars())
 
-        if host:
-            all_vars = self._combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
-
         if task:
             if task._role:
                 all_vars = self._combine_vars(all_vars, task._role.get_vars())
             all_vars = self._combine_vars(all_vars, task.get_vars())
+
+        if host:
+            all_vars = self._combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
 
         all_vars = self._combine_vars(all_vars, self._extra_vars)
 
@@ -241,9 +268,10 @@ class VariableManager:
             all_vars['groups'] = [group.name for group in host.get_groups()]
 
             if self._inventory is not None:
-                hostvars = HostVars(vars_manager=self, play=play, inventory=self._inventory, loader=loader)
-                all_vars['hostvars'] = hostvars
                 all_vars['groups']   = self._inventory.groups_list()
+                if include_hostvars:
+                    hostvars = HostVars(vars_manager=self, play=play, inventory=self._inventory, loader=loader)
+                    all_vars['hostvars'] = hostvars
 
         if task:
             if task._role:
