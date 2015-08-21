@@ -21,7 +21,7 @@ VAULT_PASSWORD_FILE = vault-password
 
 CONSUL_RUNNING := $(shell python consul_running.py)
 
-all: parsing test_var_precedence unicode test_templating_settings non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths
+all: parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5
@@ -37,6 +37,9 @@ unicode:
 
 test_templating_settings:
 	ansible-playbook test_templating_settings.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
+
+environment:
+	ansible-playbook test_environment.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS)
 
 non_destructive:
 	ansible-playbook non_destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
