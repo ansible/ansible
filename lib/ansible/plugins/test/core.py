@@ -79,14 +79,6 @@ def search(value, pattern='', ignorecase=False):
     ''' Perform a `re.search` returning a boolean '''
     return regex(value, pattern, ignorecase, 'search')
 
-def mandatory(a):
-    from jinja2.runtime import Undefined
-
-    ''' Make a variable mandatory '''
-    if isinstance(a, Undefined):
-        raise errors.AnsibleFilterError('Mandatory variable not defined.')
-    return a
-
 class TestModule(object):
     ''' Ansible core jinja2 tests '''
 
@@ -101,9 +93,6 @@ class TestModule(object):
 
             # skip testing
             'skipped' : skipped,
-
-            # variable existence
-            'mandatory': mandatory,
 
             # regex
             'match': match,
