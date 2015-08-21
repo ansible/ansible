@@ -223,6 +223,14 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
+def mandatory(a):
+    from jinja2.runtime import Undefined
+
+    ''' Make a variable mandatory '''
+    if isinstance(a, Undefined):
+        raise errors.AnsibleFilterError('Mandatory variable not defined.')
+    return a
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -290,4 +298,6 @@ class FilterModule(object):
             # random stuff
             'random': rand,
             'shuffle': randomize_list,
+            # undefined
+            'mandatory': mandatory,
         }
