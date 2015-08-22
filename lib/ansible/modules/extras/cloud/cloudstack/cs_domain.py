@@ -37,7 +37,7 @@ options:
       - Network domain for networks in the domain.
     required: false
     default: null
-  cleanup:
+  clean_up:
     description:
       - Clean up all domain resources like child domains and accounts.
       - Considered on C(state=absent).
@@ -225,7 +225,7 @@ class AnsibleCloudStackDomain(AnsibleCloudStack):
             if not self.module.check_mode:
                 args            = {}
                 args['id']      = domain['id']
-                args['cleanup'] = self.module.params.get('cleanup')
+                args['cleanup'] = self.module.params.get('clean_up')
                 res = self.cs.deleteDomain(**args)
 
                 if 'errortext' in res:
@@ -244,7 +244,7 @@ def main():
             path = dict(required=True),
             state = dict(choices=['present', 'absent'], default='present'),
             network_domain = dict(default=None),
-            cleanup = dict(choices=BOOLEANS, default=False),
+            clean_up = dict(choices=BOOLEANS, default=False),
             poll_async = dict(choices=BOOLEANS, default=True),
             api_key = dict(default=None),
             api_secret = dict(default=None, no_log=True),
