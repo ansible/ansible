@@ -42,7 +42,7 @@ from ansible.playbook.role.requirement import RoleRequirement
 class GalaxyCLI(CLI):
 
     VALID_ACTIONS = ("init", "info", "install", "list", "remove", "search")
-    SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
+    SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url", "src" )
 
     def __init__(self, args, display=None):
 
@@ -184,6 +184,7 @@ class GalaxyCLI(CLI):
 
         text = "\nRole: %s \n" % role_info['name']
         text += "\tdescription: %s \n" % role_info['description']
+        text += "\tsrc: %s \n" % role_info['src']
 
         for k in sorted(role_info.keys()):
 
