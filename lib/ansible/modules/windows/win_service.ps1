@@ -24,26 +24,25 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If (-not $params.name.GetType)
-{
-    Fail-Json $result "missing required arguments: name"
-}
+$name = Get-Attr $params "name" -failifempty $true
+$state = Get-Attr $params "state" $false
+$startMode = Get-Attr $params "start_mode" $false
 
-If ($params.state) {
-    $state = $params.state.ToString().ToLower()
+If ($state) {
+    $state = $state.ToString().ToLower()
     If (($state -ne 'started') -and ($state -ne 'stopped') -and ($state -ne 'restarted')) {
         Fail-Json $result "state is '$state'; must be 'started', 'stopped', or 'restarted'"
     }
 }
 
-If ($params.start_mode) {
-    $startMode = $params.start_mode.ToString().ToLower()
+If ($startMode) {
+    $startMode = $startMode.ToString().ToLower()
     If (($startMode -ne 'auto') -and ($startMode -ne 'manual') -and ($startMode -ne 'disabled')) {
         Fail-Json $result "start mode is '$startMode'; must be 'auto', 'manual', or 'disabled'"
     }
 }
 
-$svcName = $params.name
+$svcName = $name
 $svc = Get-Service -Name $svcName -ErrorAction SilentlyContinue
 If (-not $svc) {
     Fail-Json $result "Service '$svcName' not installed"
