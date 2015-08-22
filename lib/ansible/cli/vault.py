@@ -64,8 +64,8 @@ class VaultCLI(CLI):
         self.options, self.args = self.parser.parse_args()
         self.display.verbosity = self.options.verbosity
 
-        if len(self.args) == 0 or len(self.args) > 1:
-            raise AnsibleOptionsError("Vault requires a single filename as a parameter")
+        if len(self.args) == 0:
+            raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
 
     def run(self):
 
@@ -83,6 +83,9 @@ class VaultCLI(CLI):
         self.execute()
 
     def execute_create(self):
+
+        if len(self.args) > 1:
+            raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
         cipher = getattr(self.options, 'cipher', self.CIPHER)
         this_editor = VaultEditor(cipher, self.vault_pass, self.args[0])
