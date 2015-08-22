@@ -52,6 +52,7 @@ class PullCLI(CLI):
             vault_opts=True,
             runtask_opts=True,
             subset_opts=True,
+            inventory_opts=True,
         )
 
         # options unique to pull
@@ -182,6 +183,8 @@ class PullCLI(CLI):
             cmd += ' -K'
         if self.options.tags:
             cmd += ' -t "%s"' % self.options.tags
+        if self.options.limit:
+            cmd += ' -l "%s"' % self.options.limit
 
         os.chdir(self.options.dest)
 

@@ -381,8 +381,8 @@ Include it in your module file like this::
     # ... snip ...
     '''
 
-The ``description``, and ``notes`` fields 
-support formatting with some special macros.  
+The ``description``, and ``notes`` fields
+support formatting with some special macros.
 
 These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
 for URL, module, italic, and constant-width respectively. It is suggested
@@ -425,11 +425,12 @@ built and appear in the 'docsite/' directory.
 Module Paths
 ````````````
 
-If you are having trouble getting your module "found" by ansible, be sure it is in the ANSIBLE_LIBRARY_PATH.
+If you are having trouble getting your module "found" by ansible, be
+sure it is in the ``ANSIBLE_LIBRARY`` environment variable.
 
 If you have a fork of one of the ansible module projects, do something like this::
 
-    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras 
+    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras
 
 And this will make the items in your fork be loaded ahead of what ships with Ansible.  Just be sure
 to make sure you're not reporting bugs on versions from your fork!
@@ -555,7 +556,7 @@ then::
 Deprecating and making module aliases
 ``````````````````````````````````````
 
-Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to 
+Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to
 _old_cloud.py, This will keep the module available but hide it from the primary docs and listing.
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
@@ -584,5 +585,3 @@ This example allows the stat module to be called with fileinfo, making the follo
        Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

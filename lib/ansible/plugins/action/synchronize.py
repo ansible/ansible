@@ -23,7 +23,7 @@ import os.path
 from ansible.plugins.action import ActionBase
 from ansible.plugins import connection_loader
 from ansible.utils.boolean import boolean
-from ansible import constants
+from ansible import constants as C
 
 
 class ActionModule(ActionBase):
@@ -31,7 +31,12 @@ class ActionModule(ActionBase):
     def _get_absolute_path(self, path):
         if self._task._role is not None:
             original_path = path
-            path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
+
+            if self._task._role is not None:
+                path = self._loader.path_dwim_relative(self._task._role._role_path, 'files', path)
+            else:
+                path = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', path)
+
             if original_path and original_path[-1] == '/' and path[-1] != '/':
                 # make sure the dwim'd path ends in a trailing "/"
                 # if the original path did
@@ -41,7 +46,7 @@ class ActionModule(ActionBase):
 
     def _process_origin(self, host, path, user):
 
-        if host not in ('127.0.0.1', 'localhost', '::1'):
+        if host not in C.LOCALHOST:
             if user:
                 return '%s@%s:%s' % (user, host, path)
             else:
@@ -53,7 +58,7 @@ class ActionModule(ActionBase):
 
     def _process_remote(self, host, path, user):
         transport = self._play_context.connection
-        if host not in ('127.0.0.1', 'localhost', '::1') or transport != "local":
+        if host not in C.LOCALHOST or transport != "local":
             if user:
                 return '%s@%s:%s' % (user, host, path)
             else:
@@ -110,11 +115,11 @@ class ActionModule(ActionBase):
         src_host = '127.0.0.1'
         dest_host = task_vars.get('ansible_ssh_host') or task_vars.get('inventory_hostname')
 
-        dest_is_local = dest_host in ('127.0.0.1', 'localhost', '::1')
+        dest_is_local = dest_host in C.LOCALHOST
 
         # CHECK FOR NON-DEFAULT SSH PORT
         if self._task.args.get('dest_port', None) is None:
-            inv_port = task_vars.get('ansible_ssh_port', None) or constants.DEFAULT_REMOTE_PORT
+            inv_port = task_vars.get('ansible_ssh_port', None) or C.DEFAULT_REMOTE_PORT
             if inv_port is not None:
                 self._task.args['dest_port'] = inv_port
 
@@ -213,7 +218,7 @@ class ActionModule(ActionBase):
             self._task.args['rsync_path'] = '"%s"' % rsync_path
 
         if use_ssh_args:
-            self._task.args['ssh_args'] = constants.ANSIBLE_SSH_ARGS
+            self._task.args['ssh_args'] = C.ANSIBLE_SSH_ARGS
 
         # run the module and store the result
         result = self._execute_module('synchronize', task_vars=task_vars)

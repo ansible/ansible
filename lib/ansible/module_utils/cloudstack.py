@@ -48,14 +48,17 @@ class AnsibleCloudStack(object):
         # Common returns, will be merged with self.returns
         # search_for_key: replace_with_key
         self.common_returns = {
-            'id':       'id',
-            'name':     'name',
-            'created':  'created',
-            'zonename': 'zone',
-            'state':    'state',
-            'project':  'project',
-            'account':  'account',
-            'domain':   'domain',
+            'id':           'id',
+            'name':         'name',
+            'created':      'created',
+            'zonename':     'zone',
+            'state':        'state',
+            'project':      'project',
+            'account':      'account',
+            'domain':       'domain',
+            'displaytext':  'display_text',
+            'displayname':  'display_name',
+            'description':  'description',
         }
 
         # Init returns dict for use in subclasses

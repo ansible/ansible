@@ -1,4 +1,4 @@
-# (c) 2014, Brian Coca <bcoca@ansible.com>
+# (c) 2015, Ansible, Inc
 #
 # This file is part of Ansible
 #
@@ -15,22 +15,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import absolute_import
-
-import math
+from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount
 from ansible import errors
 
-def isnotanumber(x):
-    try:
-        return math.isnan(x)
-    except TypeError:
-        return False
-
 class TestModule(object):
-    ''' Ansible math jinja2 tests '''
+    ''' Ansible file jinja2 tests '''
 
     def tests(self):
         return {
-            # general math
-            'isnan': isnotanumber,
+            # file testing
+            'is_dir'  : isdir,
+            'is_file' : isfile,
+            'is_link' : islink,
+            'exists' : exists,
+            'link_exists' : lexists,
+
+            # path testing
+            'is_abs' : isabs,
+            'is_same_file' : samefile,
+            'is_mount' : ismount,
         }

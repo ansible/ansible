@@ -221,7 +221,7 @@ class CLI(object):
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False,
-        async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, diff_opts=False, epilog=None, fork_opts=False):
+        async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False):
         ''' create an options parser for most ansible scripts '''
 
         #FIXME: implemente epilog parsing
@@ -232,12 +232,16 @@ class CLI(object):
         parser.add_option('-v','--verbose', dest='verbosity', default=0, action="count",
             help="verbose mode (-vvv for more, -vvvv to enable connection debugging)")
 
-        if runtask_opts:
+        if inventory_opts:
             parser.add_option('-i', '--inventory-file', dest='inventory',
                 help="specify inventory host file (default=%s)" % C.DEFAULT_HOST_LIST,
                 default=C.DEFAULT_HOST_LIST, action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
                 help='outputs a list of matching hosts; does not execute anything else')
+            parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
+                help='further limit selected hosts to an additional pattern')
+
+        if runtask_opts:
             parser.add_option('-M', '--module-path', dest='module_path',
                 help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None,
                 action="callback", callback=CLI.expand_tilde, type=str)
@@ -247,8 +251,6 @@ class CLI(object):
         if fork_opts:
             parser.add_option('-f','--forks', dest='forks', default=C.DEFAULT_FORKS, type='int',
                 help="specify number of parallel processes to use (default=%s)" % C.DEFAULT_FORKS)
-            parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
-                help='further limit selected hosts to an additional pattern')
 
         if vault_opts:
             parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
@@ -308,8 +310,7 @@ class CLI(object):
                 help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
 
         if async_opts:
-            parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int',
-                dest='poll_interval',
+            parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',
                 help="set the poll interval if using -B (default=%s)" % C.DEFAULT_POLL_INTERVAL)
             parser.add_option('-B', '--background', dest='seconds', type='int', default=0,
                 help='run asynchronously, failing after X seconds (default=N/A)')
@@ -319,11 +320,8 @@ class CLI(object):
                 help="don't make any changes; instead, try to predict some of the changes that may occur")
             parser.add_option('--syntax-check', dest='syntax', action='store_true',
                 help="perform a syntax check on the playbook, but do not execute it")
-
-        if diff_opts:
             parser.add_option("-D", "--diff", default=False, dest='diff', action='store_true',
-                help="when changing (small) files and templates, show the differences in those files; works great with --check"
-            )
+                help="when changing (small) files and templates, show the differences in those files; works great with --check")
 
         if meta_opts:
             parser.add_option('--force-handlers', default=C.DEFAULT_FORCE_HANDLERS, dest='force_handlers', action='store_true',

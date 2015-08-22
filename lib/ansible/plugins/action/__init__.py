@@ -541,7 +541,7 @@ class ActionBase:
                     diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
                 else:
                     diff['after_header'] = source
-                    diff['after'] = src.read()
+                    diff['after'] = src_contents
             else:
                 self._display.debug("source of file passed in")
                 diff['after_header'] = 'dynamically generated'

@@ -42,6 +42,7 @@ class ActionModule(ActionBase):
         raw     = boolean(self._task.args.get('raw', 'no'))
         force   = boolean(self._task.args.get('force', 'yes'))
         faf     = self._task.first_available_file
+        remote_src = boolean(self._task.args.get('remote_src', False))
 
         if (source is None and content is None and faf is None) or dest is None:
             return dict(failed=True, msg="src (or content) and dest are required")
@@ -77,11 +78,17 @@ class ActionModule(ActionBase):
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None))
             if source is None:
                 return  dict(failed=True, msg="could not find src in first_available_file list")
+
+        elif remote_src:
+            new_module_args = self._task.args.copy()
+            del new_module_args['remote_src']
+            return self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=False)
+
         else:
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
             else:
-                source = self._loader.path_dwim(source)
+                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = []
@@ -109,7 +116,6 @@ class ActionModule(ActionBase):
             source_files.append((source, os.path.basename(source)))
 
         changed = False
-        diffs = []
         module_result = {"changed": False}
 
         # A register for if we executed a module.
@@ -127,6 +133,7 @@ class ActionModule(ActionBase):
         # expand any user home dir specifier
         dest = self._remote_expand_user(dest, tmp)
 
+        diffs = []
         for source_full, source_rel in source_files:
 
             # Generate a hash of the local file.
@@ -256,14 +263,13 @@ class ActionModule(ActionBase):
         if (not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp) or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
             self._remove_tmp_path(tmp)
 
-        # TODO: Support detailed status/diff for multiple files
         if module_executed and len(source_files) == 1:
             result = module_return
         else:
             result = dict(dest=dest, src=source, changed=changed)
 
-        if len(diffs) == 1:
-            result['diff']=diffs[0]
+        if diffs:
+            result['diff'] = diffs
 
         return result
 

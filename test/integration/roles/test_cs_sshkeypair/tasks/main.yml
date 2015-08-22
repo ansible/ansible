@@ -10,7 +10,7 @@
   assert:
     that:
     - sshkey|failed
-    - sshkey.msg == "missing required arguments: name"
+    - "sshkey.msg == 'missing required arguments: name'"
 
 - name: test ssh key creation
   cs_sshkeypair: name={{ cs_resource_prefix }}-sshkey

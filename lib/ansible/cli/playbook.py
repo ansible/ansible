@@ -44,7 +44,7 @@ class PlaybookCLI(CLI):
             runas_opts=True,
             subset_opts=True,
             check_opts=True,
-            diff_opts=True,
+            inventory_opts=True,
             runtask_opts=True,
             vault_opts=True,
             fork_opts=True,

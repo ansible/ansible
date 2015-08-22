@@ -1,0 +1,52 @@
+- hosts: testhost
+  vars:
+    - test1:
+        key1: val1
+  roles:
+    - { role: prepare_tests }
+  tasks:
+    - name: check that envvar does not exist
+      shell: echo $key1
+      register: test_env
+
+    - assert:
+        that:
+            - '"val1" not in test_env.stdout'
+
+    - name: check that envvar does exist
+      shell: echo $key1
+      environment: "{{test1}}"
+      register: test_env2
+
+    - assert:
+        that:
+            - '"val1" in test_env2.stdout'
+
+- hosts: testhost
+  tasks:
+  vars:
+    - test1:
+        key1: val1
+    - test2:
+        key1: not1
+        other1: val2
+  environment: "{{test1}}"
+  tasks:
+    - name: check that play envvar does exist
+      shell: echo $key1
+      register: test_env
+
+    - assert:
+        that:
+            - '"val1" in test_env.stdout'
+
+    - name: check that task envvar does exist
+      shell: echo $key1; echo $other1
+      register: test_env2
+      environment: "{{test2}}"
+
+    - assert:
+        that:
+            - '"val1" not in test_env2.stdout'
+            - '"not1" in test_env2.stdout'
+            - '"val2" in test_env2.stdout'

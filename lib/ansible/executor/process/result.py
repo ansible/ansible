@@ -74,7 +74,7 @@ class ResultProcess(multiprocessing.Process):
             try:
                 if not rslt_q.empty():
                     debug("worker %d has data to read" % self._cur_worker)
-                    result = rslt_q.get(block=False)
+                    result = rslt_q.get()
                     debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
             except queue.Empty:
@@ -102,7 +102,7 @@ class ResultProcess(multiprocessing.Process):
             try:
                 result = self._read_worker_result()
                 if result is None:
-                    time.sleep(0.1)
+                    time.sleep(0.01)
                     continue
 
                 # if this task is registering a result, do it now

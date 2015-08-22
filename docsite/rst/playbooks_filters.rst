@@ -342,6 +342,18 @@ To get the last name of a windows style file path (new in version 2.0)::
 
     {{ path | win_basename }}
 
+To separate the windows drive letter from the rest of a file path (new in version 2.0)::
+
+    {{ path | win_splitdrive }}
+
+To get only the windows drive letter
+
+    {{ path | win_splitdrive | first }} 
+    
+To get the rest of the path without the drive letter
+
+    {{ path | win_splitdrive | last }} 
+
 To get the directory from a path::
 
     {{ path | dirname }}

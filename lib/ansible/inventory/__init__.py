@@ -49,7 +49,6 @@ class Inventory(object):
     #              'parser', '_vars_per_host', '_vars_per_group', '_hosts_cache', '_groups_list',
     #              '_pattern_cache', '_vault_password', '_vars_plugins', '_playbook_basedir']
 
-    LOCALHOST_ALIASES = frozenset(('localhost', '127.0.0.1', '::1'))
     def __init__(self, loader, variable_manager, host_list=C.DEFAULT_HOST_LIST):
 
         # the host file file, or script path, or list of hosts
@@ -67,6 +66,7 @@ class Inventory(object):
         self._groups_list    = {}
         self._pattern_cache  = {}
         self._vars_plugins   = []
+        self._groups_cache   = {}
 
         # to be set by calling set_playbook_basedir by playbook code
         self._playbook_basedir = None
@@ -351,7 +351,7 @@ class Inventory(object):
         pattern = pattern.replace("!","").replace("&", "")
 
         def __append_host_to_results(host):
-            if host not in results and host.name not in hostnames:
+            if host.name not in hostnames:
                 hostnames.add(host.name)
                 results.append(host)
 
@@ -369,7 +369,7 @@ class Inventory(object):
                     for host in matching_hosts:
                         __append_host_to_results(host)
 
-        if pattern in self.LOCALHOST_ALIASES and len(results) == 0:
+        if pattern in C.LOCALHOST and len(results) == 0:
             new_host = self._create_implicit_localhost(pattern)
             results.append(new_host)
         return results
@@ -394,6 +394,7 @@ class Inventory(object):
                     if a.name not in groups:
                         groups[a.name] = [h.name for h in a.get_hosts()]
             self._groups_list = groups
+            self._groups_cache = {}
         return self._groups_list
 
     def get_groups(self):
@@ -402,29 +403,31 @@ class Inventory(object):
     def get_host(self, hostname):
         if hostname not in self._hosts_cache:
             self._hosts_cache[hostname] = self._get_host(hostname)
-            if hostname in self.LOCALHOST_ALIASES:
-                for host in self.LOCALHOST_ALIASES.difference((hostname,)):
+            if hostname in C.LOCALHOST:
+                for host in C.LOCALHOST.difference((hostname,)):
                     self._hosts_cache[host] = self._hosts_cache[hostname]
         return self._hosts_cache[hostname]
 
     def _get_host(self, hostname):
-        if hostname in self.LOCALHOST_ALIASES:
+        if hostname in C.LOCALHOST:
             for host in self.get_group('all').get_hosts():
-                if host.name in self.LOCALHOST_ALIASES:
+                if host.name in C.LOCALHOST:
                     return host
             return self._create_implicit_localhost(hostname)
-        else:
-            for group in self.groups:
-                for host in group.get_hosts():
-                    if hostname == host.name:
-                        return host
-        return None
+        matching_host = None
+        for group in self.groups:
+            for host in group.get_hosts():
+                if hostname == host.name:
+                    matching_host = host
+                self._hosts_cache[host.name] = host
+        return matching_host
 
     def get_group(self, groupname):
-        for group in self.groups:
-            if group.name == groupname:
-                return group
-        return None
+        if not self._groups_cache:
+            for group in self.groups:
+                self._groups_cache[group.name] = group
+
+        return self._groups_cache.get(groupname)
 
     def get_group_variables(self, groupname, update_cached=False, vault_password=None):
         if groupname not in self._vars_per_group or update_cached:
@@ -498,6 +501,7 @@ class Inventory(object):
         if group.name not in self.groups_list():
             self.groups.append(group)
             self._groups_list = None  # invalidate internal cache 
+            self._groups_cache = {}
         else:
             raise AnsibleError("group already in inventory: %s" % group.name)
 
@@ -506,7 +510,7 @@ class Inventory(object):
         """ return a list of hostnames for a pattern """
 
         result = [ h for h in self.get_hosts(pattern) ]
-        if len(result) == 0 and pattern in self.LOCALHOST_ALIASES:
+        if len(result) == 0 and pattern in C.LOCALHOST:
             result = [pattern]
         return result
 
@@ -519,7 +523,9 @@ class Inventory(object):
         to batch serial operations in main playbook code, don't use this for other
         reasons.
         """
-        if not isinstance(restriction, list):
+        if restriction is None:
+            return
+        elif not isinstance(restriction, list):
             restriction = [ restriction ]
         self._restriction = restriction
 
@@ -667,6 +673,7 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._groups_list    = {}
+        self._groups_cache   = {}
         self.groups = []
 
         self.parse_inventory(self.host_list)

@@ -379,6 +379,28 @@ class PlayContext(Base):
                 # No user as it uses it's own exec_attr to figure it out
                 becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
 
+            elif self.become_method == 'runas':
+                raise AnsibleError("'runas' is not yet implemented")
+                #TODO: figure out prompt
+                # this is not for use with winrm plugin but if they ever get ssh native on windoez
+                exe = self.become_exe or 'runas'
+                flags = self.become_flags or ''
+                becomecmd = '%s %s /user:%s "%s"' % (exe, flags, self.become_user, success_cmd)
+
+            elif self.become_method == 'doas':
+
+                prompt = 'Password:'
+                exe = self.become_exe or 'doas'
+                flags = self.become_flags or ''
+
+                if not self.become_pass:
+                    flags += ' -n '
+
+                if self.become_user:
+                    flags += ' -u %s ' % self.become_user
+
+                becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 

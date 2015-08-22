@@ -81,6 +81,18 @@ try:
 except ImportError:
     HAS_AES = False
 
+# OpenSSL pbkdf2_hmac
+HAS_PBKDF2HMAC = False
+try:
+    from cryptography.hazmat.primitives.hashes import SHA256 as c_SHA256
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    from cryptography.hazmat.backends import default_backend
+    HAS_PBKDF2HMAC = True
+except ImportError:
+    pass
+
+HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
+
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 HEADER=u'$ANSIBLE_VAULT'
@@ -89,7 +101,7 @@ CIPHER_WHITELIST=['AES', 'AES256']
 
 def check_prereqs():
 
-    if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2 or not HAS_HASH:
+    if not HAS_AES or not HAS_COUNTER or not HAS_ANY_PBKDF2HMAC or not HAS_HASH:
         raise AnsibleError(CRYPTO_UPGRADE)
 
 class VaultLib(object):
@@ -551,13 +563,7 @@ class VaultAES256(object):
 
         check_prereqs()
 
-    def gen_key_initctr(self, password, salt):
-        # 16 for AES 128, 32 for AES256
-        keylength = 32
-
-        # match the size used for counter.new to avoid extra work
-        ivlength = 16
-
+    def create_key(self, password, salt, keylength, ivlength):
         hash_function = SHA256
 
         # make two keys and one iv
@@ -566,6 +572,26 @@ class VaultAES256(object):
 
         derivedkey = PBKDF2(password, salt, dkLen=(2 * keylength) + ivlength,
                             count=10000, prf=pbkdf2_prf)
+        return derivedkey
+
+    def gen_key_initctr(self, password, salt):
+        # 16 for AES 128, 32 for AES256
+        keylength = 32
+
+        # match the size used for counter.new to avoid extra work
+        ivlength = 16
+
+        if HAS_PBKDF2HMAC:
+            backend = default_backend()
+            kdf = PBKDF2HMAC(
+                algorithm=c_SHA256(),
+                length=2 * keylength + ivlength,
+                salt=salt,
+                iterations=10000,
+                backend=backend)
+            derivedkey = kdf.derive(password)
+        else:
+            derivedkey = self.create_key(password, salt, keylength, ivlength)
 
         key1 = derivedkey[:keylength]
         key2 = derivedkey[keylength:(keylength * 2)]

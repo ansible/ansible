@@ -58,15 +58,6 @@ def skipped(*a, **kw):
     skipped = item.get('skipped', False)
     return skipped
 
-def mandatory(a):
-    ''' Make a variable mandatory '''
-    try:
-        a
-    except NameError:
-        raise errors.AnsibleFilterError('Mandatory variable not defined.')
-    else:
-        return a
-
 def regex(value='', pattern='', ignorecase=False, match_type='search'):
     ''' Expose `re` as a boolean filter using the `search` method by default.
         This is likely only useful for `search` and `match` which already
@@ -102,9 +93,6 @@ class TestModule(object):
 
             # skip testing
             'skipped' : skipped,
-
-            # variable existence
-            'mandatory': mandatory,
 
             # regex
             'match': match,

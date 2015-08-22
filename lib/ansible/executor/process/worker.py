@@ -92,40 +92,36 @@ class WorkerProcess(multiprocessing.Process):
         while True:
             task = None
             try:
-                if not self._main_q.empty():
-                    debug("there's work to be done!")
-                    (host, task, basedir, job_vars, play_context, shared_loader_obj) = self._main_q.get(block=False)
-                    debug("got a task/handler to work on: %s" % task)
+                (host, task, basedir, job_vars, play_context, shared_loader_obj) = self._main_q.get()
+                debug("there's work to be done!")
+                debug("got a task/handler to work on: %s" % task)
 
-                    # because the task queue manager starts workers (forks) before the
-                    # playbook is loaded, set the basedir of the loader inherted by
-                    # this fork now so that we can find files correctly
-                    self._loader.set_basedir(basedir)
+                # because the task queue manager starts workers (forks) before the
+                # playbook is loaded, set the basedir of the loader inherted by
+                # this fork now so that we can find files correctly
+                self._loader.set_basedir(basedir)
 
-                    # Serializing/deserializing tasks does not preserve the loader attribute,
-                    # since it is passed to the worker during the forking of the process and
-                    # would be wasteful to serialize. So we set it here on the task now, and
-                    # the task handles updating parent/child objects as needed.
-                    task.set_loader(self._loader)
+                # Serializing/deserializing tasks does not preserve the loader attribute,
+                # since it is passed to the worker during the forking of the process and
+                # would be wasteful to serialize. So we set it here on the task now, and
+                # the task handles updating parent/child objects as needed.
+                task.set_loader(self._loader)
 
-                    # apply the given task's information to the connection info,
-                    # which may override some fields already set by the play or
-                    # the options specified on the command line
-                    new_play_context = play_context.set_task_and_variable_override(task=task, variables=job_vars)
+                # apply the given task's information to the connection info,
+                # which may override some fields already set by the play or
+                # the options specified on the command line
+                new_play_context = play_context.set_task_and_variable_override(task=task, variables=job_vars)
 
-                    # execute the task and build a TaskResult from the result
-                    debug("running TaskExecutor() for %s/%s" % (host, task))
-                    executor_result = TaskExecutor(host, task, job_vars, new_play_context, self._new_stdin, self._loader, shared_loader_obj).run()
-                    debug("done running TaskExecutor() for %s/%s" % (host, task))
-                    task_result = TaskResult(host, task, executor_result)
+                # execute the task and build a TaskResult from the result
+                debug("running TaskExecutor() for %s/%s" % (host, task))
+                executor_result = TaskExecutor(host, task, job_vars, new_play_context, self._new_stdin, self._loader, shared_loader_obj).run()
+                debug("done running TaskExecutor() for %s/%s" % (host, task))
+                task_result = TaskResult(host, task, executor_result)
 
-                    # put the result on the result queue
-                    debug("sending task result")
-                    self._rslt_q.put(task_result, block=False)
-                    debug("done sending task result")
-
-                else:
-                    time.sleep(0.1)
+                # put the result on the result queue
+                debug("sending task result")
+                self._rslt_q.put(task_result)
+                debug("done sending task result")
 
             except queue.Empty:
                 pass

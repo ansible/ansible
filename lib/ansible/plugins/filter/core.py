@@ -234,6 +234,14 @@ def getmountfrompath(path, mounts):
                 current_mount = mount
     return current_mount
 
+def mandatory(a):
+    from jinja2.runtime import Undefined
+
+    ''' Make a variable mandatory '''
+    if isinstance(a, Undefined):
+        raise errors.AnsibleFilterError('Mandatory variable not defined.')
+    return a
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -265,6 +273,7 @@ class FilterModule(object):
             'splitext': partial(unicode_wrap, os.path.splitext),
             'win_basename': partial(unicode_wrap, ntpath.basename),
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
+            'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
             'getmountfrompath': getmountfrompath,
 
             # value as boolean
@@ -301,4 +310,6 @@ class FilterModule(object):
             # random stuff
             'random': rand,
             'shuffle': randomize_list,
+            # undefined
+            'mandatory': mandatory,
         }

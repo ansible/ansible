@@ -8,7 +8,7 @@ Here are some commonly-asked questions and their answers.
 How can I set the PATH or any other environment variable for a task or entire playbook?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Setting environment variables can be done with the `environment` keyword. It can be used at task or playbook level::
+Setting environment variables can be done with the `environment` keyword. It can be used at task or play level::
 
     environment:
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
@@ -235,7 +235,9 @@ Once the library is ready, SHA512 password values can then be generated as follo
 Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  See `our Guru offering <http://www.ansible.com/ansible-guru>`_ for online support, and support is also included with :doc:`tower`. You can also read our `service page <http://www.ansible.com/ansible-services>`_ and email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <http://www.ansible.com/services>`_ for information on our services and training offerings. Support is also included with :doc:`tower`. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+
+We also offer free web-based training classes on a regular basis. See our `webinar page <http://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
 
 .. _web_interface:
 

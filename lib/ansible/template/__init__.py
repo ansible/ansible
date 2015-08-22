@@ -37,6 +37,7 @@ from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
 
 from numbers import Number
+from types import NoneType
 
 __all__ = ['Templar']
 
@@ -187,6 +188,8 @@ class Templar:
                             resolved_val = self._available_variables[var_name]
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
+                            elif isinstance(resolved_val, NoneType):
+                                return C.DEFAULT_NULL_REPRESENTATION
 
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
 
@@ -256,8 +259,8 @@ class Templar:
             # safely catch run failures per #5059
             try:
                 ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
-            except (AnsibleUndefinedVariable, UndefinedError):
-                raise
+            except (AnsibleUndefinedVariable, UndefinedError) as e:
+                raise AnsibleUndefinedVariable(e)
             except Exception, e:
                 if self._fail_on_lookup_errors:
                     raise
@@ -337,7 +340,7 @@ class Templar:
             return res
         except (UndefinedError, AnsibleUndefinedVariable), e:
             if fail_on_undefined:
-                raise
+                raise AnsibleUndefinedVariable(e)
             else:
                 #TODO: return warning about undefined var
                 return data

@@ -109,11 +109,11 @@ class TestModArgsDwim(unittest.TestCase):
 
     def test_local_action_string(self):
         m = ModuleArgsParser(dict(local_action='copy src=a dest=b'))
-        mod, args, to = m.parse()
-        self._debug(mod, args, to)
+        mod, args, connection = m.parse()
+        self._debug(mod, args, connection)
         self.assertEqual(mod, 'copy')
         self.assertEqual(args, dict(src='a', dest='b'))
-        self.assertIs(to, 'localhost')
+        self.assertIs(connection, 'local')
 
     def test_multiple_actions(self):
         m = ModuleArgsParser(dict(action='shell echo hi', local_action='shell echo hi'))

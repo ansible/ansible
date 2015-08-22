@@ -234,10 +234,9 @@ class ModuleArgsParser:
         task, dealing with all sorts of levels of fuzziness.
         '''
 
-        thing      = None
-
+        thing       = None
         action      = None
-        delegate_to = self._task_ds.get('delegate_to', None)
+        connection  = self._task_ds.get('connection', None)
         args        = dict()
 
 
@@ -256,11 +255,11 @@ class ModuleArgsParser:
 
         # local_action
         if 'local_action' in self._task_ds:
-            # local_action is similar but also implies a delegate_to
+            # local_action is similar but also implies a connection='local'
             if action is not None:
                 raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
             thing = self._task_ds.get('local_action', '')
-            delegate_to = 'localhost'
+            connection = 'local'
             action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
         # module: <stuff> is the more new-style invocation
@@ -289,4 +288,4 @@ class ModuleArgsParser:
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)
 
-        return (action, args, delegate_to)
+        return (action, args, connection)

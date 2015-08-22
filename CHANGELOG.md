@@ -8,19 +8,23 @@ Major Changes:
  * New strategy plugins, allow to control the flow of execution of tasks per play, the default will be the same as before
  * Improved error handling, now you get much more detailed parser messages. General exception handling and display has been revamped.
  * Task includes now get evaluated during execution, end behaviour will be the same but it now allows for more dynamic includes and options.
- * First feature of the more dynamic includes is that with_ loops are now usable with them.
+ * First feature of the more dynamic includes is that "with\_<lookup>" loops are now usable with them.
  * callback, connection and lookup plugin APIs have changed, some will require modification to work with new version
  * callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg
  * Many API changes, this will break those currently using it directly, but the new API is much easier to use and test
  * Settings are now more inheritable, what you set at play, block or role will be automatically inhertited by the contained.
    This allows for new features to automatically be settable at all levels, previously we had to manually code this
- * Many more tests, new API makes things more testable and we took advantage of it
- * big_ip modules now support turning off ssl certificate validation (use only for self signed)
  * template code now retains types for bools and numbers instead of turning them into strings.
    If you need the old behaviour, quote the value and it will get passed around as a string
- * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support
- * Consiidated code from modules using urllib2 to normalize features, TLS and SNI support
  * added meta: refresh_inventory to force rereading the inventory in a play
+ * vars are now settable at play, block, role and task level
+ * template code now retains types for bools, and Numbers instead of turning them into strings
+   If you need the old behaviour, quote the value and it will get passed around as a string. In the
+   case of nulls, the output used to be an empty string.
+ * Empty variables and variables set to null in yaml will no longer be converted to empty strings.
+   They will retain the value of `None`.  To go back to the old behaviour, you can override
+   the `null_representation` setting to an empty string in your config file or by setting the
+   `ANSIBLE_NULL_REPRESENTATION` environment variable.
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
@@ -168,16 +172,18 @@ New Lookups:
  * ini
  * shelvefile
 
-Other Notable Changes:
-
-* synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting
-* play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
-* vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
-
 Minor changes:
 
-* The undocumented semicolon-separated "pattern1;pattern2" syntax to
-  match hosts is no longer supported.
+ * Many more tests, new API makes things more testable and we took advantage of it
+ * big_ip modules now support turning off ssl certificate validation (use only for self signed)
+ * The undocumented semicolon-separated "pattern1;pattern2" syntax to match hosts is no longer supported.
+ * Now when you delegate a action that returns ansible_facts, these facts will now be applied to the delegated host,
+   unlike before which they were applied to the current host.
+ * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support
+ * synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting
+ * play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
+ * vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
+ * Support for OpenBSD's 'doas' privilege escalation method.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 

@@ -44,7 +44,7 @@ class TestPlayContext(unittest.TestCase):
             connect_opts = True,
             subset_opts  = True,
             check_opts   = True,
-            diff_opts    = True,
+            inventory_opts = True,
         )
 
     def tearDown(self):
@@ -123,6 +123,8 @@ class TestPlayContext(unittest.TestCase):
         pbrun_flags = ''
         pfexec_exe   = 'pfexec'
         pfexec_flags = ''
+        doas_exe    = 'doas'
+        doas_flags  = ' -n  -u foo '
 
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
         self.assertEqual(cmd, default_cmd)
@@ -145,6 +147,10 @@ class TestPlayContext(unittest.TestCase):
         play_context.become_method = 'pfexec'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
         self.assertEqual(cmd, """%s -c '%s %s "'"'"'echo %s; %s'"'"'"'""" % (default_exe, pfexec_exe, pfexec_flags, play_context.success_key, default_cmd))
+
+        play_context.become_method = 'doas'
+        cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
+        self.assertEqual(cmd, """%s -c '%s %s echo %s && %s %s env ANSIBLE=true %s'""" % (default_exe, doas_exe, doas_flags, play_context.success_key, doas_exe, doas_flags, default_cmd))
 
         play_context.become_method = 'bad'
         self.assertRaises(AnsibleError, play_context.make_become_cmd, cmd=default_cmd, executable="/bin/bash")
