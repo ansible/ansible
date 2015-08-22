@@ -21,36 +21,28 @@
 
 $params = Parse-Args $args;
 
-$result = New-Object psobject;
-Set-Attr $result "changed" $false;
+$path = Get-Attr $params "path" -failifempty $true
+$state = Get-Attr $params "state" "present"
+$creates = Get-Attr $params "creates" $false
+$extra_args = Get-Attr $params "extra_args" ""
 
-If (-not $params.path.GetType)
-{
-    Fail-Json $result "missing required arguments: path"
-}
+$result = New-Object psobject @{
+    changed = $false
+};
 
-$extra_args = ""
-If ($params.extra_args.GetType)
+If (($creates -ne $false) -and ($state -ne "absent") -and (Test-Path $creates))
 {
-    $extra_args = $params.extra_args;
-}
-
-If ($params.creates.GetType -and $params.state.GetType -and $params.state -ne "absent")
-{
-    If (Test-File $creates)
-    {
-        Exit-Json $result;
-    }
+    Exit-Json $result;
 }
 
 $logfile = [IO.Path]::GetTempFileName();
-if ($params.state.GetType -and $params.state -eq "absent")
+if ($state -eq "absent")
 {
-    msiexec.exe /x $params.path /qb /l $logfile $extra_args;
+    msiexec.exe /x $path /qn /l $logfile $extra_args
 }
 Else
 {
-    msiexec.exe /i $params.path /qb /l $logfile $extra_args;
+    msiexec.exe /i $path /qn /l $logfile $extra_args
 }
 
 Set-Attr $result "changed" $true;

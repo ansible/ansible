@@ -24,35 +24,31 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If (-not $params.name.GetType) {
-    Fail-Json $result "missing required arguments: name"
+$name = Get-Attr $params "name" -failifempty $true
+
+$state = Get-Attr $params "state" "present"
+$state = $state.ToString().ToLower()
+If (($state -ne "present") -and ($state -ne "absent")) {
+    Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
 }
 
-If ($params.state) {
-    $state = $params.state.ToString().ToLower()
-    If (($state -ne "present") -and ($state -ne "absent")) {
-        Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
-    }
-}
-Elseif (-not $params.state) {
-    $state = "present"
-}
+$description = Get-Attr $params "description" $null
 
 $adsi = [ADSI]"WinNT://$env:COMPUTERNAME"
-$group = $adsi.Children | Where-Object {$_.SchemaClassName -eq 'group' -and $_.Name -eq $params.name }
+$group = $adsi.Children | Where-Object {$_.SchemaClassName -eq 'group' -and $_.Name -eq $name }
 
 try {
     If ($state -eq "present") {
         If (-not $group) {
-            $group = $adsi.Create("Group", $params.name)
+            $group = $adsi.Create("Group", $name)
             $group.SetInfo()
 
             Set-Attr $result "changed" $true
         }
 
-        If ($params.description.GetType) {
-            IF (-not $group.description -or $group.description -ne $params.description) {
-                $group.description = $params.description
+        If ($null -ne $description) {
+            IF (-not $group.description -or $group.description -ne $description) {
+                $group.description = $description
                 $group.SetInfo()
                 Set-Attr $result "changed" $true
             }
