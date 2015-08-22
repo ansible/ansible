@@ -26,6 +26,8 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+Set-StrictMode -Version Latest
+
 # Ansible v2 will insert the module arguments below as a string containing
 # JSON; assign them to an environment variable and redefine $args so existing
 # modules will continue to work.
@@ -47,7 +49,14 @@ Function Set-Attr($obj, $name, $value)
         $obj = New-Object psobject
     }
 
-    $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
+    Try
+    {
+        $obj.$name = $value
+    }
+    Catch
+    {
+        $obj | Add-Member -Force -MemberType NoteProperty -Name $name -Value $value
+    }
 }
 
 # Helper function to convert a powershell object to JSON to echo it, exiting
@@ -78,7 +87,7 @@ Function Fail-Json($obj, $message = $null)
         $obj = New-Object psobject
     }
     # If the first args is undefined or not an object, make it an object
-    ElseIf (-not $obj.GetType -or $obj.GetType().Name -ne "PSCustomObject")
+    ElseIf (-not $obj -or -not $obj.GetType -or $obj.GetType().Name -ne "PSCustomObject")
     {
         $obj = New-Object psobject
     }
@@ -94,24 +103,32 @@ Function Fail-Json($obj, $message = $null)
 # slightly more pythonic
 # Example: $attr = Get-Attr $response "code" -default "1"
 #Note that if you use the failifempty option, you do need to specify resultobject as well.
-Function Get-Attr($obj, $name, $default = $null,$resultobj, $failifempty=$false, $emptyattributefailmessage)
+Function Get-Attr($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage)
 {
-    # Check if the provided Member $name exists in $obj and return it or the
-    # default
-    If ($obj.$name.GetType)
+    # Check if the provided Member $name exists in $obj and return it or the default. 
+    Try
     {
+        If (-not $obj.$name.GetType)
+        {
+            throw
+        }
         $obj.$name
     }
-    Elseif($failifempty -eq $false)
+    Catch
     {
-        $default
+        If ($failifempty -eq $false)
+        {
+            $default
+        }
+        Else
+        {
+            If (!$emptyattributefailmessage)
+            {
+                $emptyattributefailmessage = "Missing required argument: $name"
+            }
+            Fail-Json -obj $resultobj -message $emptyattributefailmessage
+        }
     }
-    else
-    {
-        if (!$emptyattributefailmessage) {$emptyattributefailmessage = "Missing required argument: $name"}
-        Fail-Json -obj $resultobj -message $emptyattributefailmessage
-    }
-    return
 }
 
 # Helper filter/pipeline function to convert a value to boolean following current
