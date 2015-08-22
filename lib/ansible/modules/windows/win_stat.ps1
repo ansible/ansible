@@ -42,14 +42,14 @@ If (Test-Path $path)
     Set-Attr $result.stat "exists" $TRUE;
     $info = Get-Item $path;
     $epoch_date = Get-Date -Date "01/01/1970"
-    If ($info.Directory) # Only files have the .Directory attribute.
+    If ($info.PSIsContainer)
     {
-        Set-Attr $result.stat "isdir" $FALSE;
-        Set-Attr $result.stat "size" $info.Length;
+        Set-Attr $result.stat "isdir" $TRUE;
     }
     Else
     {
-        Set-Attr $result.stat "isdir" $TRUE;
+        Set-Attr $result.stat "isdir" $FALSE;
+        Set-Attr $result.stat "size" $info.Length;
     }
     Set-Attr $result.stat "extension" $info.Extension;
     Set-Attr $result.stat "attributes" $info.Attributes.ToString();

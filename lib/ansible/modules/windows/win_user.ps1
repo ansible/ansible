@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# WANT_JSON
 # POWERSHELL_COMMON
 
 ########
@@ -55,33 +54,21 @@ $result = New-Object psobject @{
     changed = $false
 };
 
-If (-not $params.name.GetType) {
-    Fail-Json $result "missing required arguments: name"
-}
-
-$username = Get-Attr $params "name"
+$username = Get-Attr $params "name" -failifempty $true
 $fullname = Get-Attr $params "fullname"
 $description = Get-Attr $params "description"
 $password = Get-Attr $params "password"
 
-If ($params.state) {
-    $state = $params.state.ToString().ToLower()
-    If (($state -ne 'present') -and ($state -ne 'absent') -and ($state -ne 'query')) {
-        Fail-Json $result "state is '$state'; must be 'present', 'absent' or 'query'"
-    }
-}
-ElseIf (!$params.state) {
-    $state = "present"
+$state = Get-Attr $params "state" "present"
+$state = $state.ToString().ToLower()
+If (($state -ne 'present') -and ($state -ne 'absent') -and ($state -ne 'query')) {
+    Fail-Json $result "state is '$state'; must be 'present', 'absent' or 'query'"
 }
 
-If ($params.update_password) {
-    $update_password = $params.update_password.ToString().ToLower()
-    If (($update_password -ne 'always') -and ($update_password -ne 'on_create')) {
-        Fail-Json $result "update_password is '$update_password'; must be 'always' or 'on_create'"
-    }
-}
-ElseIf (!$params.update_password) {
-    $update_password = "always"
+$update_password = Get-Attr $params "update_password" "always"
+$update_password = $update_password.ToString().ToLower()
+If (($update_password -ne 'always') -and ($update_password -ne 'on_create')) {
+    Fail-Json $result "update_password is '$update_password'; must be 'always' or 'on_create'"
 }
 
 $password_expired = Get-Attr $params "password_expired" $null
@@ -126,14 +113,10 @@ If ($groups -ne $null) {
     }
 }
 
-If ($params.groups_action) {
-    $groups_action = $params.groups_action.ToString().ToLower()
-    If (($groups_action -ne 'replace') -and ($groups_action -ne 'add') -and ($groups_action -ne 'remove')) {
-        Fail-Json $result "groups_action is '$groups_action'; must be 'replace', 'add' or 'remove'"
-    }
-}
-ElseIf (!$params.groups_action) {
-    $groups_action = "replace"
+$groups_action = Get-Attr $params "groups_action" "replace"
+$groups_action = $groups_action.ToString().ToLower()
+If (($groups_action -ne 'replace') -and ($groups_action -ne 'add') -and ($groups_action -ne 'remove')) {
+    Fail-Json $result "groups_action is '$groups_action'; must be 'replace', 'add' or 'remove'"
 }
 
 $user_obj = Get-User $username
@@ -141,7 +124,7 @@ $user_obj = Get-User $username
 If ($state -eq 'present') {
     # Add or update user
     try {
-        If (!$user_obj.GetType) {
+        If (-not $user_obj -or -not $user_obj.GetType) {
             $user_obj = $adsi.Create("User", $username)
             If ($password -ne $null) {
                 $user_obj.SetPassword($password)
@@ -200,13 +183,13 @@ If ($state -eq 'present') {
         If ($result.changed) {
             $user_obj.SetInfo()
         }
-        If ($groups.GetType) {
+        If ($null -ne $groups) {
             [string[]]$current_groups = $user_obj.Groups() | ForEach { $_.GetType().InvokeMember("Name", "GetProperty", $null, $_, $null) }
             If (($groups_action -eq "remove") -or ($groups_action -eq "replace")) {
                 ForEach ($grp in $current_groups) {
                     If ((($groups_action -eq "remove") -and ($groups -contains $grp)) -or (($groups_action -eq "replace") -and ($groups -notcontains $grp))) {
                         $group_obj = $adsi.Children | where { $_.SchemaClassName -eq 'Group' -and $_.Name -eq $grp }
-                        If ($group_obj.GetType) {
+                        If ($group_obj -and $group_obj.GetType) {
                             $group_obj.Remove($user_obj.Path)
                             $result.changed = $true
                         }
@@ -239,7 +222,7 @@ If ($state -eq 'present') {
 ElseIf ($state -eq 'absent') {
     # Remove user
     try {
-        If ($user_obj.GetType) {
+        If ($user_obj -and $user_obj.GetType) {
             $username = $user_obj.Name.Value
             $adsi.delete("User", $user_obj.Name.Value)
             $result.changed = $true
@@ -252,7 +235,7 @@ ElseIf ($state -eq 'absent') {
 }
 
 try {
-    If ($user_obj.GetType) {
+    If ($user_obj -and $user_obj.GetType) {
         $user_obj.RefreshCache()
         Set-Attr $result "name" $user_obj.Name[0]
         Set-Attr $result "fullname" $user_obj.FullName[0]
