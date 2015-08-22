@@ -79,3 +79,68 @@
       - "not win_ping_extra_args_result|failed"
       - "not win_ping_extra_args_result|changed"
       - "win_ping_extra_args_result.ping == 'bloop'"
+
+- name: test modified win_ping that throws an exception
+  action: win_ping_throw
+  register: win_ping_throw_result
+  ignore_errors: true
+
+- name: check win_ping_throw result
+  assert:
+    that:
+      - "win_ping_throw_result|failed"
+      - "not win_ping_throw_result|changed"
+      - "win_ping_throw_result.msg == 'ScriptHalted'"
+      - "win_ping_throw_result.exception"
+      - "win_ping_throw_result.error_record"
+
+- name: test modified win_ping that throws a string exception
+  action: win_ping_throw_string
+  register: win_ping_throw_string_result
+  ignore_errors: true
+
+- name: check win_ping_throw_string result
+  assert:
+    that:
+      - "win_ping_throw_string_result|failed"
+      - "not win_ping_throw_string_result|changed"
+      - "win_ping_throw_string_result.msg == 'no ping for you'"
+      - "win_ping_throw_string_result.exception"
+      - "win_ping_throw_string_result.error_record"
+
+- name: test modified win_ping that has a syntax error
+  action: win_ping_syntax_error
+  register: win_ping_syntax_error_result
+  ignore_errors: true
+
+- name: check win_ping_syntax_error result
+  assert:
+    that:
+      - "win_ping_syntax_error_result|failed"
+      - "not win_ping_syntax_error_result|changed"
+      - "win_ping_syntax_error_result.msg"
+      - "win_ping_syntax_error_result.exception"
+
+- name: test modified win_ping that has an error that only surfaces when strict mode is on
+  action: win_ping_strict_mode_error
+  register: win_ping_strict_mode_error_result
+  ignore_errors: true
+
+- name: check win_ping_strict_mode_error result
+  assert:
+    that:
+      - "win_ping_strict_mode_error_result|failed"
+      - "not win_ping_strict_mode_error_result|changed"
+      - "win_ping_strict_mode_error_result.msg"
+      - "win_ping_strict_mode_error_result.exception"
+
+- name: test modified win_ping to verify a Set-Attr fix
+  action: win_ping_set_attr data="fixed"
+  register: win_ping_set_attr_result
+
+- name: check win_ping_set_attr_result result
+  assert:
+    that:
+      - "not win_ping_set_attr_result|failed"
+      - "not win_ping_set_attr_result|changed"
+      - "win_ping_set_attr_result.ping == 'fixed'"
