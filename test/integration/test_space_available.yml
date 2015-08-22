@@ -12,13 +12,14 @@
         mount2:            "{{file2|getmountfrompath(ansible_mounts)}}"
     - debug: var=mount1
     - debug: var=mount2
+    - set_fact: size_available_pc="{{mount1.size_available|int / mount1.size_total|int * 100}}"
     - name: "check 1% of free space available for first file"
       assert:
-        that: mount1.size_available_pc > 1
+        that: size_available_pc > 1
       ignore_errors: yes
     - name: "1M in bytes equals =>"
-      debug: msg="{{1|unit('M')}}"
+      debug: msg="{{"1M"|human_bytes}}"
     - name: "check 1M available for second file"
       assert:
-        that: mount2.size_available > 1|unit('M')
+        that: mount2.size_available > "1M"|human_bytes
       ignore_errors: yes

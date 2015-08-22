@@ -944,24 +944,18 @@ class LinuxHardware(Hardware):
                 if(fields[2] != 'none'):
                     size_total        = None
                     size_available    = None
-                    size_available_pc = None
                     size_used         = None
-                    size_used_pc      = None
                     block_used        = None
                     block_reserved    = None
                     inode_used        = None
                     inode_reserved    = None
-                    inode_free_pc     = None
-                    inode_used_pc     = None
-
+                    
                     try:
                         statvfs_result = os.statvfs(fields[1])
                         # Size total/available/used
                         size_total     = statvfs_result.f_bsize * statvfs_result.f_blocks
                         size_available = statvfs_result.f_bsize * statvfs_result.f_bavail
-                        size_available_pc = size_available      * 100 / float(size_total)
                         size_used      = size_total             - size_available
-                        size_used_pc   = size_used              * 100 / float(size_total)
 
                         # Block allocation + reserved
                         block_used     = statvfs_result.f_blocks - statvfs_result.f_bfree
@@ -970,8 +964,6 @@ class LinuxHardware(Hardware):
                         # Inode allocation + reserved
                         inode_used     = statvfs_result.f_files  - statvfs_result.f_ffree
                         inode_reserved = statvfs_result.f_ffree  - statvfs_result.f_favail
-                        inode_free_pc  = statvfs_result.f_favail * 100 / float(statvfs_result.f_files)
-                        inode_used_pc  = inode_used              * 100 / float(statvfs_result.f_files)
 
                     except OSError, e:
                         continue
@@ -992,15 +984,11 @@ class LinuxHardware(Hardware):
                          # statvfs data
                          'size_total':        size_total,
                          'size_available':    size_available,
-                         'size_available_pc': size_available_pc,
                          'size_used':         size_used,
-                         'size_used_pc':      size_used_pc,
                          'block_used':        block_used,
                          'block_reserved':    block_reserved,
                          'inode_used':        inode_used,
                          'inode_reserved':    inode_reserved,
-                         'inode_free_pc':     inode_free_pc,
-                         'inode_used_pc':     inode_used_pc,
                          'uuid': uuid,
                          })
 

@@ -234,23 +234,6 @@ def getmountfrompath(path, mounts):
                 current_mount = mount
     return current_mount
 
-def unit(size, unit = ''):
-    '''Convert humean readable size into bytes'''
-    unit = unit[0].upper()
-    unit_sizes = {
-        'Z': (1<<70L),
-        'E': (1<<60L),
-        'P': (1<<50L),
-        'T': (1<<40L),
-        'G': (1<<30L),
-        'M': (1<<20L),
-        'K': (1<<10L),
-        'B': (1)
-    }
-    if unit_sizes[unit]:
-        return size * unit_sizes[unit]
-    return size
-
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -283,7 +266,6 @@ class FilterModule(object):
             'win_basename': partial(unicode_wrap, ntpath.basename),
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
             'getmountfrompath': getmountfrompath,
-            'unit': unit,
 
             # value as boolean
             'bool': bool,
