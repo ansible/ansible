@@ -21,10 +21,10 @@
 #
 ########################################################################
 import json
-from urllib2 import urlopen, quote as urlquote
+from urllib2 import urlopen, quote as urlquote, HTTPError
 from urlparse import urlparse
 
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 
 class GalaxyAPI(object):
     ''' This class is meant to be used as a API client for an Ansible Galaxy server '''
@@ -139,3 +139,34 @@ class GalaxyAPI(object):
             return results
         except Exception as error:
             raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
+
+    def search_roles(self, search, platforms=None, categories=None):
+
+        search_url = self.baseurl + '/roles/?page=1'
+
+        if search:
+            search_url += '&search=' + urlquote(search)
+
+        if categories is None:
+            categories = []
+        elif isinstance(categories, basestring):
+            categories = categories.split(',')
+
+        for cat in categories:
+            search_url += '&chain__categories__name=' + urlquote(cat)
+
+        if platforms is None:
+            platforms = []
+        elif isinstance(platforms, basestring):
+            platforms = platforms.split(',')
+
+        for plat in platforms:
+            search_url += '&chain__platforms__name=' + urlquote(plat)
+
+        self.galaxy.display.debug("Executing query: %s" % search_url)
+        try:
+            data = json.load(urlopen(search_url))
+        except HTTPError as e:
+            raise AnsibleError("Unsuccessful request to server: %s" % str(e))
+
+        return data
