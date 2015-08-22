@@ -361,9 +361,9 @@ class AnsibleCloudStackPortforwarding(AnsibleCloudStack):
         super(AnsibleCloudStackPortforwarding, self).get_result(portforwarding_rule)
         if portforwarding_rule:
             # Bad bad API does not always return int when it should.
-            for search_key, return_key in returns_to_int.iteritems():
-                if search_key in resource:
-                    self.result[return_key] = int(resource[search_key])
+            for search_key, return_key in self.returns_to_int.iteritems():
+                if search_key in portforwarding_rule:
+                    self.result[return_key] = int(portforwarding_rule[search_key])
         return self.result
 
 
