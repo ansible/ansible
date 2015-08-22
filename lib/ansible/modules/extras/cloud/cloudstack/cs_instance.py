@@ -779,7 +779,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 self.result['affinity_groups'] = affinity_groups
             if 'nic' in instance:
                 for nic in instance['nic']:
-                    if nic['isdefault']:
+                    if nic['isdefault'] and 'ipaddress' in nic:
                         self.result['default_ip'] = nic['ipaddress']
         return self.result
 
