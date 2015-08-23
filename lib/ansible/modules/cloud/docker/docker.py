@@ -1025,7 +1025,7 @@ class DockerManager(object):
 
             expected_volume_keys = set((image['ContainerConfig']['Volumes'] or {}).keys())
             if self.volumes:
-                expected_volume_keys.update(self.volumes.keys())
+                expected_volume_keys.update(self.volumes)
 
             actual_volume_keys = set((container['Config']['Volumes'] or {}).keys())
 
