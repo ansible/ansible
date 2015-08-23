@@ -136,48 +136,6 @@ class Inventory(object):
         for host in self.get_hosts():
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
 
-
-    def _match(self, str, pattern_str):
-        try:
-            if pattern_str.startswith('~'):
-                return re.search(pattern_str[1:], str)
-            else:
-                return fnmatch.fnmatch(str, pattern_str)
-        except Exception, e:
-            raise AnsibleError('invalid host pattern: %s' % pattern_str)
-
-    def _match_list(self, items, item_attr, pattern_str):
-        results = []
-        try:
-            if not pattern_str.startswith('~'):
-                pattern = re.compile(fnmatch.translate(pattern_str))
-            else:
-                pattern = re.compile(pattern_str[1:])
-        except Exception, e:
-            raise AnsibleError('invalid host pattern: %s' % pattern_str)
-
-        for item in items:
-            if pattern.match(getattr(item, item_attr)):
-                results.append(item)
-        return results
-
-    def _split_pattern(self, pattern):
-        """
-        takes e.g. "webservers[0:5]:dbservers:others"
-        and returns ["webservers[0:5]", "dbservers", "others"]
-        """
-
-        term = re.compile(
-            r'''(?:             # We want to match something comprising:
-                    [^:\[\]]    # (anything other than ':', '[', or ']'
-                    |           # ...or...
-                    \[[^\]]*\]  # a single complete bracketed expression)
-                )*              # repeated as many times as possible
-            ''', re.X
-        )
-
-        return [x for x in term.findall(pattern) if x]
-
     def get_hosts(self, pattern="all"):
         """ 
         Takes a pattern or list of patterns and returns a list of matching
@@ -201,11 +159,28 @@ class Inventory(object):
             subset = self._evaluate_patterns(self._subset)
             hosts = [ h for h in hosts if h in subset ]
 
-        # exclude hosts mentioned in any restriction (ex: failed hosts)
+        # exclude hosts mentioned in any restriction
         if self._restriction is not None:
             hosts = [ h for h in hosts if h in self._restriction ]
 
         return hosts
+
+    def _split_pattern(self, pattern):
+        """
+        takes e.g. "webservers[0:5]:dbservers:others"
+        and returns ["webservers[0:5]", "dbservers", "others"]
+        """
+
+        term = re.compile(
+            r'''(?:             # We want to match something comprising:
+                    [^:\[\]]    # (anything other than ':', '[', or ']'
+                    |           # ...or...
+                    \[[^\]]*\]  # a single complete bracketed expression)
+                )*              # repeated as many times as possible
+            ''', re.X
+        )
+
+        return [x for x in term.findall(pattern) if x]
 
     def _evaluate_patterns(self, patterns):
         """
@@ -326,20 +301,6 @@ class Inventory(object):
         except IndexError:
             raise AnsibleError("no hosts matching the pattern '%s' were found" % pat)
 
-    def _create_implicit_localhost(self, pattern):
-        new_host = Host(pattern)
-        new_host.set_variable("ansible_python_interpreter", sys.executable)
-        new_host.set_variable("ansible_connection", "local")
-        new_host.ipv4_address = '127.0.0.1'
-
-        ungrouped = self.get_group("ungrouped")
-        if ungrouped is None:
-            self.add_group(Group('ungrouped'))
-            ungrouped = self.get_group('ungrouped')
-            self.get_group('all').add_child_group(ungrouped)
-        ungrouped.add_host(new_host)
-        return new_host
-
     def _hosts_in_unenumerated_pattern(self, pattern):
         """ Get all host names matching the pattern """
 
@@ -373,6 +334,44 @@ class Inventory(object):
             new_host = self._create_implicit_localhost(pattern)
             results.append(new_host)
         return results
+
+    def _match(self, str, pattern_str):
+        try:
+            if pattern_str.startswith('~'):
+                return re.search(pattern_str[1:], str)
+            else:
+                return fnmatch.fnmatch(str, pattern_str)
+        except Exception, e:
+            raise AnsibleError('invalid host pattern: %s' % pattern_str)
+
+    def _match_list(self, items, item_attr, pattern_str):
+        results = []
+        try:
+            if not pattern_str.startswith('~'):
+                pattern = re.compile(fnmatch.translate(pattern_str))
+            else:
+                pattern = re.compile(pattern_str[1:])
+        except Exception, e:
+            raise AnsibleError('invalid host pattern: %s' % pattern_str)
+
+        for item in items:
+            if pattern.match(getattr(item, item_attr)):
+                results.append(item)
+        return results
+
+    def _create_implicit_localhost(self, pattern):
+        new_host = Host(pattern)
+        new_host.set_variable("ansible_python_interpreter", sys.executable)
+        new_host.set_variable("ansible_connection", "local")
+        new_host.ipv4_address = '127.0.0.1'
+
+        ungrouped = self.get_group("ungrouped")
+        if ungrouped is None:
+            self.add_group(Group('ungrouped'))
+            ungrouped = self.get_group('ungrouped')
+            self.get_group('all').add_child_group(ungrouped)
+        ungrouped.add_host(new_host)
+        return new_host
 
     def clear_pattern_cache(self):
         ''' called exclusively by the add_host plugin to allow patterns to be recalculated '''
