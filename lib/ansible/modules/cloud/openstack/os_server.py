@@ -368,7 +368,7 @@ def _get_server_state(module, cloud):
     state = module.params['state']
     server = cloud.get_server(module.params['name'])
     if server and state == 'present':
-        if server.status != 'ACTIVE':
+        if server.status not in ('ACTIVE', 'SHUTOFF', 'PAUSED', 'SUSPENDED'):
             module.fail_json(
                 msg="The instance is available but not Active state: "
                     + server.status)

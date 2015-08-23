@@ -55,7 +55,7 @@ options:
      description:
        - Perform the given action. The lock and unlock actions always return
          changed as the servers API does not provide lock status.
-     choices: [pause, unpause, lock, unlock, suspend, resume]
+     choices: [stop, start, pause, unpause, lock, unlock, suspend, resume]
      default: present
 requirements:
     - "python >= 2.6"
@@ -75,7 +75,9 @@ EXAMPLES = '''
        timeout: 200
 '''
 
-_action_map = {'pause': 'PAUSED',
+_action_map = {'stop': 'SHUTOFF',
+               'start': 'ACTIVE',
+               'pause': 'PAUSED',
                'unpause': 'ACTIVE',
                'lock': 'ACTIVE', # API doesn't show lock/unlock status
                'unlock': 'ACTIVE',
@@ -87,11 +89,11 @@ _admin_actions = ['pause', 'unpause', 'suspend', 'resume', 'lock', 'unlock']
 def _wait(timeout, cloud, server, action):
     """Wait for the server to reach the desired state for the given action."""
 
-    for count in shade._iterate_timeout(
+    for count in shade._utils._iterate_timeout(
             timeout,
             "Timeout waiting for server to complete %s" % action):
         try:
-           server = cloud.get_server(server.id)
+            server = cloud.get_server(server.id)
         except Exception:
             continue
 
@@ -110,8 +112,8 @@ def _system_state_change(action, status):
 def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=True),
-        action=dict(required=True, choices=['pause', 'unpause', 'lock', 'unlock', 'suspend',
-                                            'resume']),
+        action=dict(required=True, choices=['stop', 'start', 'pause', 'unpause',
+                                            'lock', 'unlock', 'suspend', 'resume']),
     )
 
     module_kwargs = openstack_module_kwargs()
@@ -136,6 +138,24 @@ def main():
 
         if module.check_mode:
             module.exit_json(changed=_system_state_change(action, status))
+
+        if action == 'stop':
+            if not _system_state_change(action, status):
+                module.exit_json(changed=False)
+
+            cloud.nova_client.servers.stop(server=server.id)
+            if wait:
+                _wait(timeout, cloud, server, action)
+                module.exit_json(changed=True)
+
+        if action == 'start':
+            if not _system_state_change(action, status):
+                module.exit_json(changed=False)
+
+            cloud.nova_client.servers.start(server=server.id)
+            if wait:
+                _wait(timeout, cloud, server, action)
+                module.exit_json(changed=True)
 
         if action == 'pause':
             if not _system_state_change(action, status):
