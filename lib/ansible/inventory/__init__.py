@@ -229,9 +229,12 @@ class Inventory(object):
     def _match_one_pattern(self, pattern):
         """ 
         Takes a single pattern (i.e., not "p1:p2") and returns a list of
-        matching hosts names. Does not take negatives or intersections
+        matching host names. Does not take negatives or intersections
         into account.
         """
+
+        if pattern.startswith("&") or pattern.startswith("!"):
+            pattern = pattern[1:]
 
         if pattern in self._pattern_cache:
             return self._pattern_cache[pattern]
@@ -307,9 +310,6 @@ class Inventory(object):
         results = []
         hosts = []
         hostnames = set()
-
-        # ignore any negative checks here, this is handled elsewhere
-        pattern = pattern.replace("!","").replace("&", "")
 
         def __append_host_to_results(host):
             if host.name not in hostnames:
