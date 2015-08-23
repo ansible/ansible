@@ -49,7 +49,7 @@ class TaskExecutor:
 
     # Modules that we optimize by squashing loop items into a single call to
     # the module
-    SQUASH_ACTIONS = frozenset(('apt', 'yum', 'pkgng', 'zypper', 'dnf'))
+    SQUASH_ACTIONS = frozenset(C.DEFAULT_SQUASH_ACTIONS)
 
     def __init__(self, host, task, job_vars, play_context, new_stdin, loader, shared_loader_obj):
         self._host              = host
