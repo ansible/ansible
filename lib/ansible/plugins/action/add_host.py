@@ -81,5 +81,5 @@ def _parse_ip_host_and_port(hostname):
         else:
             return hostname, None
     elif ':' in hostname:
-        return hostname.split(':')
+        return hostname.rsplit(':', 1)
     return hostname, None
