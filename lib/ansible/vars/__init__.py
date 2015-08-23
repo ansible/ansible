@@ -294,11 +294,8 @@ class VariableManager:
 
         all_vars['ansible_version'] = CLI.version_info(gitinfo=False)
 
-        # make vars self referential, so people can do things like 'vars[var_name]'
-        copied_vars = all_vars.copy()
-        if 'hostvars' in copied_vars:
-            del copied_vars['hostvars']
-        all_vars['vars'] = copied_vars
+        if 'hostvars' in all_vars and host:
+            all_vars['vars'] = all_vars['hostvars'][host.get_name()]
 
         #CACHED_VARS[cache_entry] = all_vars
 
