@@ -267,76 +267,81 @@ class Inventory(object):
         if pattern.startswith("&") or pattern.startswith("!"):
             pattern = pattern[1:]
 
-        if pattern in self._pattern_cache:
-            return self._pattern_cache[pattern]
+        if pattern not in self._pattern_cache:
+            (expr, slice) = self._split_subscript(pattern)
+            hosts = self._enumerate_matches(expr)
+            try:
+                hosts = self._apply_subscript(hosts, slice)
+            except IndexError:
+                raise AnsibleError("No hosts matched the subscripted pattern '%s'" % pattern)
+            self._pattern_cache[pattern] = hosts
 
-        (name, enumeration_details) = self._enumeration_info(pattern)
-        hpat = self._hosts_in_unenumerated_pattern(name)
-        result = self._apply_ranges(pattern, hpat)
-        self._pattern_cache[pattern] = result
-        return result
+        return self._pattern_cache[pattern]
 
-    def _enumeration_info(self, pattern):
+    def _split_subscript(self, pattern):
         """
-        returns (pattern, limits) taking a regular pattern and finding out
-        which parts of it correspond to start/stop offsets.  limits is
-        a tuple of (start, stop) or None
+        Takes a pattern, checks if it has a subscript, and returns the pattern
+        without the subscript and a (start,end) tuple representing the given
+        subscript (or None if there is no subscript).
+
+        Validates that the subscript is in the right syntax, but doesn't make
+        sure the actual indices make sense in context.
         """
 
         # Do not parse regexes for enumeration info
         if pattern.startswith('~'):
             return (pattern, None)
 
-        # The regex used to match on the range, which can be [x] or [x-y].
-        pattern_re = re.compile("^(.*)\[([-]?[0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
-        m = pattern_re.match(pattern)
-        if m:
-            (target, first, last, rest) = m.groups()
-            first = int(first)
-            if last:
-                if first < 0:
-                    raise AnsibleError("invalid range: negative indices cannot be used as the first item in a range")
-                last = int(last)
-            else:
-                last = first
-            return (target, (first, last))
-        else:
-            return (pattern, None)
+        # We want a pattern followed by an integer or range subscript.
+        # (We can't be more restrictive about the expression because the
+        # fnmatch semantics permit [\[:\]] to occur.)
 
-    def _apply_ranges(self, pat, hosts):
+        pattern_with_subscript = re.compile(
+            r'''^
+                (.+)                    # A pattern expression ending with...
+                \[(?:                   # A [subscript] expression comprising:
+                    (-?[0-9]+)          # A single positive or negative number
+                    |                   # Or a numeric range
+                    ([0-9]+)([:-])([0-9]+)
+                )\]
+                $
+            ''', re.X
+        )
+
+        subscript = None
+        m = pattern_with_subscript.match(pattern)
+        if m:
+            (pattern, idx, start, sep, end) = m.groups()
+            if idx:
+                subscript = (int(idx), None)
+            else:
+                subscript = (int(start), int(end))
+                if sep == '-':
+                    display.deprecated("Use [x:y] inclusive subscripts instead of [x-y]", version=2.0, removed=True)
+
+        return (pattern, subscript)
+
+    def _apply_subscript(self, hosts, subscript):
         """
-        given a pattern like foo, that matches hosts, return all of hosts
-        given a pattern like foo[0:5], where foo matches hosts, return the first 6 hosts
+        Takes a list of hosts and a (start,end) tuple and returns the subset of
+        hosts based on the subscript (which may be None to return all hosts).
         """ 
 
-        # If there are no hosts to select from, just return the
-        # empty set. This prevents trying to do selections on an empty set.
-        # issue#6258
-        if not hosts:
+        if not hosts or not subscript:
             return hosts
 
-        (loose_pattern, limits) = self._enumeration_info(pat)
-        if not limits:
-            return hosts
+        (start, end) = subscript
 
-        (left, right) = limits
+        if end:
+            return hosts[start:end+1]
+        else:
+            return [ hosts[start] ]
 
-        if left == '':
-            left = 0
-        if right == '':
-            right = 0
-        left=int(left)
-        right=int(right)
-        try:
-            if left != right:
-                return hosts[left:right]
-            else:
-                return [ hosts[left] ]
-        except IndexError:
-            raise AnsibleError("no hosts matching the pattern '%s' were found" % pat)
-
-    def _hosts_in_unenumerated_pattern(self, pattern):
-        """ Get all host names matching the pattern """
+    def _enumerate_matches(self, pattern):
+        """
+        Returns a list of host names matching the given pattern according to the
+        rules explained above in _match_one_pattern.
+        """
 
         results = []
         hosts = []
