@@ -48,6 +48,7 @@ New Modules:
   * amazon: iam_policy
   * amazon: route53_zone
   * amazon: sts_assume_role
+  * amazon: s3_bucket
   * amazon: s3_logging
   * apk
   * bundler
