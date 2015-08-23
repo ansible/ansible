@@ -557,7 +557,7 @@ class Inventory(object):
     def remove_restriction(self):
         """ Do not restrict list operations """
         self._restriction = None
-    
+
     def is_file(self):
         """ did inventory come from a file? """
         if not isinstance(self.host_list, basestring):
@@ -566,12 +566,16 @@ class Inventory(object):
 
     def basedir(self):
         """ if inventory came from a file, what's the directory? """
+        dname = self.host_list
         if not self.is_file():
-            return None
-        dname = os.path.dirname(self.host_list)
-        if dname is None or dname == '' or dname == '.':
-            cwd = os.getcwd()
-            return os.path.abspath(cwd) 
+            dname = None
+        elif os.path.isdir(self.host_list):
+            dname = self.host_list
+        else:
+            dname = os.path.dirname(self.host_list)
+            if dname is None or dname == '' or dname == '.':
+                cwd = os.getcwd()
+                dname = cwd
         return os.path.abspath(dname)
 
     def src(self):
@@ -636,6 +640,7 @@ class Inventory(object):
             basedirs = [self._playbook_basedir]
 
         for basedir in basedirs:
+            display.debug('getting vars from %s' % basedir)
 
             # this can happen from particular API usages, particularly if not run
             # from /usr/bin/ansible-playbook
