@@ -138,6 +138,7 @@ New Modules:
   * vertica_schema
   * vertica_user
   * vmware: vmware_datacenter
+  * vmware: vmware_cluster
   * vmware: vca_fw
   * vmware: vca_nat
   * vmware: vsphere_copy
