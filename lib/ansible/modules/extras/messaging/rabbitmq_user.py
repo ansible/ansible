@@ -108,7 +108,7 @@ class RabbitMqUser(object):
         self.username = username
         self.password = password
         self.node = node
-        if tags is None:
+        if not tags:
             self.tags = list()
         else:
             self.tags = tags.split(',')
