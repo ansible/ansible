@@ -942,12 +942,34 @@ class LinuxHardware(Hardware):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
                 if(fields[2] != 'none'):
-                    size_total = None
-                    size_available = None
+                    size_total        = None
+                    size_available    = None
+                    size_used         = None
+                    block_size        = None
+                    block_total       = None
+                    block_available   = None
+                    block_used        = None
+                    inode_total       = None
+                    inode_available   = None
+                    inode_used        = None
                     try:
                         statvfs_result = os.statvfs(fields[1])
-                        size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
-                        size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
+                        # Size total/available/used
+                        size_total      = statvfs_result.f_bsize * statvfs_result.f_blocks
+                        size_available  = statvfs_result.f_bsize * statvfs_result.f_bavail
+                        size_used       = size_total             - size_available
+
+                        # Block total/available/used
+                        block_size      = statvfs_result.f_bsize
+                        block_total     = statvfs_result.f_blocks
+                        block_available = statvfs_result.f_bavail
+                        block_used      = block_total - block_available
+
+                        # Inode total/available/used
+                        inode_total     = statvfs_result.f_files
+                        inode_available = statvfs_result.f_favail
+                        inode_used      = inode_total - inode_available
+
                     except OSError, e:
                         continue
 
@@ -965,8 +987,16 @@ class LinuxHardware(Hardware):
                          'fstype': fields[2],
                          'options': fields[3],
                          # statvfs data
-                         'size_total': size_total,
-                         'size_available': size_available,
+                         'size_total':        size_total,
+                         'size_available':    size_available,
+                         'size_used':         size_used,
+                         'block_size':        block_size,
+                         'block_total':       block_total,
+                         'block_available':   block_available,
+                         'block_used':        block_used,
+                         'inode_total':       inode_total,
+                         'inode_available':   inode_available,
+                         'inode_used':        inode_used,
                          'uuid': uuid,
                          })
 
