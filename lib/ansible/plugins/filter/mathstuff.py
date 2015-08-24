@@ -33,19 +33,22 @@ def unique(a):
                 c.append(x)
     return c
 
-def intersect(a, b):
+def intersect(a, b, strict=False):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) & set(b)
     elif isinstance(a, Mapping) and isinstance(b, Mapping):
         c = {}
         for k in intersect(a.keys(),b.keys()):
-            if a[k] == b[k]:
+            if strict:
+                if a[k] == b[k]:
+                    c[k] = a[k]
+            else:
                 c[k] = a[k]
     else:
         c = unique(filter(lambda x: x in b, a))
     return c
 
-def difference(a, b):
+def difference(a, b, strict=False):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) - set(b)
     elif isinstance(a, Mapping) and isinstance(b, Mapping):
@@ -53,15 +56,17 @@ def difference(a, b):
         # get keys that are different
         for k in difference(a.keys(),b.keys()):
             c[k] = a[k]
-        # get values that are different
-        for k in intersect(a.keys(), b.keys()):
-            if a[k] != b[k]:
-                c[k] = a[k]
+
+        if strict:
+            # get values that are different
+            for k in intersect(a.keys(), b.keys()):
+                if a[k] != b[k]:
+                    c[k] = a[k]
     else:
         c = unique(filter(lambda x: x not in b, a))
     return c
 
-def symmetric_difference(a, b):
+def symmetric_difference(a, b, strict=False):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) ^ set(b)
     elif isinstance(a, Mapping) and isinstance(b, Mapping):
@@ -72,10 +77,12 @@ def symmetric_difference(a, b):
                 c[k] = b[k]
             else:
                 c[k] = a[k]
-        # get values that are different
-        for k in intersect(a.keys(), b.keys()):
-            if a[k] != b[k]:
-                c[k] = a[k]
+
+        if strict:
+            # get values that are different
+            for k in intersect(a.keys(), b.keys()):
+                if a[k] != b[k]:
+                    c[k] = a[k]
     else:
         c = unique(filter(lambda x: x not in intersect(a,b), union(a,b)))
     return c
