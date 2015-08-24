@@ -22,6 +22,7 @@
 import os
 import subprocess
 import time
+import re
 
 from ansible import errors
 from ansible.plugins.connections import ConnectionBase
@@ -38,9 +39,44 @@ class Connection(ConnectionBase):
         else:
             self.docker_cmd = 'docker'
 
+        self.can_copy_bothways = False
+
+        docker_version = self._get_docker_version()
+        if self.compare_versions(docker_version, '1.8.0') >= 0:
+            self.can_copy_bothways = True
+
+    def _get_docker_version(self):
+
+        def sanitize_version(version):
+            return re.sub('[^0-9a-zA-Z\.]', '', version)
+
+        cmd = [self.docker_cmd, 'version']
+
+        cmd_output = subprocess.check_output(cmd)
+
+        for line in cmd_output.split('\n'):
+            if line.startswith('Server version:'): # old docker versions
+                return sanitize_version(line.split()[2])
+
+        # no result yet, must be newer Docker version
+        new_docker_cmd = [
+            self.docker_cmd,
+            'version', '--format', "'{{.Server.Version}}'"
+        ]
+
+        cmd_output = subprocess.check_output(new_docker_cmd)
+
+        return sanitize_version(cmd_output)
+
     @property
     def transport(self):
         return 'docker'
+
+    def compare_versions(self, version1, version2):
+        # Source: https://stackoverflow.com/questions/1714027/version-number-comparison
+        def normalize(v):
+            return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
+        return cmp(normalize(version1), normalize(version2))
 
     def _connect(self, port=None):
         """ Connect to the container. Nothing to do """
@@ -84,17 +120,27 @@ class Connection(ConnectionBase):
     # containers, so we use docker exec to implement this
     def put_file(self, in_path, out_path):
         """ Transfer a file from local to container """
-        args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, "bash", "-c",
-                "dd of=%s bs=%s" % (format(out_path), BUFSIZE)]
-
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
-
         if not os.path.exists(in_path):
             raise errors.AnsibleFileNotFound(
                 "file or module does not exist: %s" % in_path)
-        p = subprocess.Popen(args, stdin=open(in_path),
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        p.communicate()
+
+        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+
+        if self.can_copy_bothways: # only docker >= 1.8.1 can do this natively
+            args = [
+                self.docker_cmd,
+                "cp",
+                "%s" % in_path,
+                "%s:%s" % (self._play_context.remote_addr, out_path)
+            ]
+            subprocess.check_call(args)
+        else:
+            args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, "bash", "-c",
+                    "dd of=%s bs=%s" % (format(out_path), BUFSIZE)]
+
+            p = subprocess.Popen(args, stdin=open(in_path),
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p.communicate()
 
     def fetch_file(self, in_path, out_path):
         """ Fetch a file from container to local. """
