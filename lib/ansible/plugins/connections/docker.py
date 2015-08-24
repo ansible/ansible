@@ -80,6 +80,12 @@ class Connection(ConnectionBase):
 
     def _connect(self, port=None):
         """ Connect to the container. Nothing to do """
+        if not self._connected:
+            self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(
+                self._play_context.remote_user, host=self._play_context.remote_addr)
+            )
+            self._connected = True
+
         return self
 
     def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False,
@@ -162,4 +168,4 @@ class Connection(ConnectionBase):
 
     def close(self):
         """ Terminate the connection. Nothing to do for Docker"""
-        pass
+        self._connected = False
