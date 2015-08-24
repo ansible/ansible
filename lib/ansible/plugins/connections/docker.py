@@ -24,6 +24,8 @@ import subprocess
 import time
 import re
 
+import ansible.constants as C
+
 from ansible import errors
 from ansible.plugins.connections import ConnectionBase
 
@@ -88,25 +90,16 @@ class Connection(ConnectionBase):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, sudo_user=None, sudoable=False,
-                     executable='/bin/sh', in_data=None, su=None,
-                     su_user=None):
-
+    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=False):
         """ Run a command on the local host """
+        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
 
         # Don't currently support su
-        if su or su_user:
-            raise errors.AnsibleError("Internal Error: this module does not "
-                                      "support running commands via su")
-
         if in_data:
             raise errors.AnsibleError("Internal Error: this module does not "
                                       "support optimized module pipelining")
 
-        if sudoable and sudo_user:
-            raise errors.AnsibleError("Internal Error: this module does not "
-                                      "support running commands via sudo")
-
+        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
         if executable:
             local_cmd = [self.docker_cmd, "exec", self._play_context.remote_addr, executable,
                          '-c', cmd]
