@@ -36,6 +36,7 @@ Deprecated Modules (new ones in parens):
 New Modules:
   * amazon: ec2_ami_copy
   * amazon: ec2_ami_find
+  * amazon: ec2_elb_facts
   * amazon: ec2_eni
   * amazon: ec2_eni_facts
   * amazon: ec2_remote_facts
