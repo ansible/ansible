@@ -27,6 +27,8 @@ import sys
 import time
 import traceback
 
+# TODO: not needed if we use the cryptography library with its default RNG
+# engine
 HAS_ATFORK=True
 try:
     from Crypto.Random import atfork
