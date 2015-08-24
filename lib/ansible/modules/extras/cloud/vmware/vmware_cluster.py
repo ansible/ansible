@@ -68,7 +68,6 @@ options:
             - If set to True will enable vSAN when the cluster is created.
         required: False
         default: False
-notes: []
 '''
 
 EXAMPLES = '''
