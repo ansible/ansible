@@ -140,6 +140,9 @@ New Modules:
   * vmware: vmware_datacenter
   * vmware: vmware_cluster
   * vmware: vmware_dns_config
+  * vmware: vmware_dvs_host
+  * vmware: vmware_vsan_cluster
+  * vmware: vmware_vswitch
   * vmware: vca_fw
   * vmware: vca_nat
   * vmware: vsphere_copy
