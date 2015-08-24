@@ -22,12 +22,12 @@ description:
 version_added: "2.0"
 author: "Michael Schultz (github.com/mjschultz)"
 options:
-  name:
+  names:
     description:
       - List of ELB names to gather facts about. Pass this option to gather facts about a set of ELBs, otherwise, all ELBs are returned.
     required: false
     default: null
-    aliases: ['elb_id']
+    aliases: ['elb_ids', 'ec2_elbs']
 extends_documentation_fragment: aws
 '''
 
@@ -48,7 +48,7 @@ EXAMPLES = '''
 # Gather facts about a particular ELB
 - action:
     module: ec2_elb_facts
-    name: frontend-prod-elb
+    names: frontend-prod-elb
   register: elb_facts
 
 - action:
@@ -58,7 +58,7 @@ EXAMPLES = '''
 # Gather facts about a set of ELBs
 - action:
     module: ec2_elb_facts
-    name:
+    names:
     - frontend-prod-elb
     - backend-prod-elb
   register: elb_facts
@@ -148,7 +148,7 @@ def get_elb_info(elb):
 
 
 def list_elb(connection, module):
-    elb_names = module.params.get("name")
+    elb_names = module.params.get("names")
     if not elb_names:
         elb_names = None
 
@@ -168,7 +168,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            name={'default': None, 'type': 'list'}
+            names={'default': None, 'type': 'list'}
         )
     )
 
