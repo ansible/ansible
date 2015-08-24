@@ -68,7 +68,7 @@ EXAMPLES = '''
 - openvswitch_db: table=open_vswitch record=. col=other_config key=max-idle
                   value=50000
 
-# Disable in band
+# Disable in band copy
 - openvswitch_db: table=Bridge record=br-int col=other_config
                   key=disable-in-band value=true
 '''
@@ -76,6 +76,7 @@ EXAMPLES = '''
 
 def cmd_run(module, cmd, check_rc=True):
     """ Log and run ovs-vsctl command. """
+    syslog.syslog(syslog.LOG_NOTICE, cmd)
     return module.run_command(cmd.split(" "), check_rc=check_rc)
 
 
@@ -84,13 +85,18 @@ def params_set(module):
 
     changed = False
 
-    fmt = "ovs-vsctl -t %(timeout)s get %(table)s %(record)s %(col)s:%(key)s"
+    ##
+    # Place in params dictionary in order to support the string format below.
+    module.params["ovs-vsctl"] = module.get_bin_path("ovs-vsctl", True)
+
+    fmt = "%(ovs-vsctl)s -t %(timeout)s get %(table)s %(record)s " \
+          "%(col)s:%(key)s"
 
     cmd = fmt % module.params
 
     (_, output, _) = cmd_run(module, cmd, False)
     if module.params['value'] not in output:
-        fmt = "ovs-vsctl -t %(timeout)s set %(table)s %(record)s " \
+        fmt = "%(ovs-vsctl)s -t %(timeout)s set %(table)s %(record)s " \
               "%(col)s:%(key)s=%(value)s"
         cmd = fmt % module.params
         ##
