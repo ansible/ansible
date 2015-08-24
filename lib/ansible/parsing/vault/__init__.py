@@ -12,11 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# ansible-pull is a script that runs ansible in local mode
-# after checking out a playbooks directory from source repo.  There is an
-# example playbook to bootstrap this script in the examples/ dir which
-# installs ansible and sets it up to run on cron.
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
