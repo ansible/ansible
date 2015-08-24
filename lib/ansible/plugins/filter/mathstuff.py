@@ -39,7 +39,8 @@ def intersect(a, b):
     elif isinstance(a, Mapping) and isinstance(b, Mapping):
         c = {}
         for k in intersect(a.keys(),b.keys()):
-            c[k] = a[k]
+            if a[k] == b[k]:
+                c[k] = a[k]
     else:
         c = unique(filter(lambda x: x in b, a))
     return c
@@ -83,8 +84,8 @@ def union(a, b):
     if isinstance(a, Hashable) and isinstance(b, Hashable):
         c = set(a) | set(b)
     elif isinstance(a, Mapping) and isinstance(b, Mapping):
-        c = a.copy()
-        c.update(b)
+        c = b.copy()
+        c.update(a)
     else:
         c = unique(a + b)
     return c
