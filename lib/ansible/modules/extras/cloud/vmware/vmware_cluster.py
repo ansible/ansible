@@ -25,7 +25,7 @@ short_description: Create VMware vSphere Cluster
 description:
     - Create VMware vSphere Cluster
 version_added: 2.0
-author: Joseph Callen
+author: Joseph Callen (@jcpowermac)
 notes:
 requirements:
     - Tested on ESXi 5.5
@@ -35,47 +35,40 @@ options:
         description:
             - The hostname or IP address of the vSphere vCenter
         required: True
-        version_added: 2.0
     username:
         description:
             - The username of the vSphere vCenter
         required: True
         aliases: ['user', 'admin']
-        version_added: 2.0
     password:
         description:
             - The password of the vSphere vCenter
         required: True
         aliases: ['pass', 'pwd']
-        version_added: 2.0
     datacenter_name:
         description:
             - The name of the datacenter the cluster will be created in.
         required: True
-        version_added: 2.0
     cluster_name:
         description:
             - The name of the cluster that will be created
         required: True
-        version_added: 2.0
     enable_ha:
         description:
             - If set to True will enable HA when the cluster is created.
         required: False
         default: False
-        version_added: 2.0
     enable_drs:
         description:
             - If set to True will enable DRS when the cluster is created.
         required: False
         default: False
-        version_added: 2.0
     enable_vsan:
         description:
             - If set to True will enable vSAN when the cluster is created.
         required: False
         default: False
-        version_added: 2.0
+notes: []
 '''
 
 EXAMPLES = '''
