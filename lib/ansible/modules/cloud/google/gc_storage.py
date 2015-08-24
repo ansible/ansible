@@ -218,15 +218,6 @@ def create_dirkey(module, gs, bucket, obj):
     except gs.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
 
-def upload_file_check(src):
-    if os.path.exists(src):
-        file_exists is True
-    else:
-        file_exists is False
-    if os.path.isdir(src):
-        module.fail_json(msg="Specifying a directory is not a valid source for upload.", failed=True)
-    return file_exists
-
 def path_check(path):
     if os.path.exists(path):
         return True 
