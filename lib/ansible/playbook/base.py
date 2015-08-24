@@ -298,6 +298,9 @@ class Base:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
                                     raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                                elif attribute.required and attribute.listof == string_types:
+                                    if item is None or item.strip() == "":
+                                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
                     elif attribute.isa == 'set':
                         if not isinstance(value, (list, set)):
                             value = [ value ]
