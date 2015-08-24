@@ -324,6 +324,19 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
+def regex_capture(value='', pattern=''):
+    ''' return first capturing group from matched pattern '''
+
+    re_pattern = re.compile(pattern)
+    re_match = re_pattern.match(value)
+
+    if re_match:
+        try:
+            return re_match.group(1)
+        except IndexError:
+            raise errors.AnsibleFilterError('No capture group matched')
+    else:
+        raise errors.AnsibleFilterError('No match found')
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -381,6 +394,7 @@ class FilterModule(object):
             # regex
             'regex_replace': regex_replace,
             'regex_escape': regex_escape,
+            'regex_capture': regex_capture,
 
             # ? : ;
             'ternary': ternary,

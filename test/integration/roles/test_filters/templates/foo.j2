@@ -46,6 +46,10 @@ files to exist and are passthrus to the python os.path functions
 /etc/motd with basename = {{ '/etc/motd' | basename }}
 /etc/motd with dirname  = {{ '/etc/motd' | dirname }}
 
+Regex capturing group
+
+capturing group = {{ 'myapp-1.0' | regex_capture('^[a-zA-Z]+-([0-9]+\.[0-9]+)$') }}
+
 TODO: realpath follows symlinks.  There isn't a test for this just now.
 
 TODO: add tests for set theory operations like union
