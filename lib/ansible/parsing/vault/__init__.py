@@ -91,7 +91,8 @@ HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 HEADER=u'$ANSIBLE_VAULT'
-CIPHER_WHITELIST=['AES', 'AES256']
+CIPHER_READ_WHITELIST=['AES', 'AES256']
+CIPHER_WRITE_WHITELIST=['AES256']
 
 
 def check_prereqs():
@@ -123,7 +124,7 @@ class VaultLib(object):
             self.cipher_name = "AES256"
             # raise AnsibleError("the cipher must be set before encrypting data")
 
-        if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST:
+        if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WRITE_WHITELIST:
             cipher = globals()['Vault' + self.cipher_name]
             this_cipher = cipher()
         else:
@@ -156,7 +157,7 @@ class VaultLib(object):
 
         # create the cipher object
         ciphername = to_unicode(self.cipher_name)
-        if 'Vault' + ciphername in globals() and ciphername in CIPHER_WHITELIST:
+        if 'Vault' + ciphername in globals() and ciphername in CIPHER_READ_WHITELIST:
             cipher = globals()['Vault' + ciphername]
             this_cipher = cipher()
         else:
@@ -457,40 +458,7 @@ class VaultAES(object):
 
         """ Read plaintext data from in_file and write encrypted to out_file """
 
-
-        # combine sha + data
-        this_sha = sha256(to_bytes(data)).hexdigest()
-        tmp_data = this_sha + "\n" + data
-
-        in_file = BytesIO(to_bytes(tmp_data))
-        in_file.seek(0)
-        out_file = BytesIO()
-
-        bs = AES.block_size
-
-        # Get a block of random data. EL does not have Crypto.Random.new()
-        # so os.urandom is used for cross platform purposes
-        salt = os.urandom(bs - len('Salted__'))
-
-        key, iv = self.aes_derive_key_and_iv(password, salt, key_length, bs)
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        full = to_bytes(b'Salted__' + salt)
-        out_file.write(full)
-        finished = False
-        while not finished:
-            chunk = in_file.read(1024 * bs)
-            if len(chunk) == 0 or len(chunk) % bs != 0:
-                padding_length = (bs - len(chunk) % bs) or bs
-                chunk += to_bytes(padding_length * chr(padding_length))
-                finished = True
-            out_file.write(cipher.encrypt(chunk))
-
-        out_file.seek(0)
-        enc_data = out_file.read()
-        tmp_data = hexlify(enc_data)
-
-        return tmp_data
-
+        raise AnsibleError("Encryption disabled for deprecated VaultAES class")
 
     def decrypt(self, data, password, key_length=32):
 
