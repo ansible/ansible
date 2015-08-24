@@ -29,7 +29,6 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
 from ansible.utils.unicode import to_bytes
-from ansible.parsing.vault import VaultLib
 
 class ActionModule(ActionBase):
 

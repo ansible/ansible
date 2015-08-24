@@ -64,7 +64,7 @@ class TestVaultLib(unittest.TestCase):
         slots = ['is_encrypted',
                  'encrypt',
                  'decrypt',
-                 '_add_header',
+                 '_format_output',
                  '_split_header',]
         for slot in slots:
             assert hasattr(v, slot), "VaultLib is missing the %s method" % slot
@@ -75,11 +75,11 @@ class TestVaultLib(unittest.TestCase):
         data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         assert v.is_encrypted(data), "encryption check on headered text failed"
 
-    def test_add_header(self):
+    def test_format_output(self):
         v = VaultLib('ansible')
         v.cipher_name = "TEST"
         sensitive_data = "ansible"
-        data = v._add_header(sensitive_data)
+        data = v._format_output(sensitive_data)
         lines = data.split(b'\n')
         assert len(lines) > 1, "failed to properly add header"
         header = to_unicode(lines[0])
@@ -87,7 +87,7 @@ class TestVaultLib(unittest.TestCase):
         header_parts = header.split(';')
         assert len(header_parts) == 3, "header has the wrong number of parts"
         assert header_parts[0] == '$ANSIBLE_VAULT', "header does not start with $ANSIBLE_VAULT"
-        assert header_parts[1] == v.version, "header version is incorrect"
+        assert header_parts[1] == v.b_version, "header version is incorrect"
         assert header_parts[2] == 'TEST', "header does end with cipher name"
 
     def test_split_header(self):
@@ -97,7 +97,7 @@ class TestVaultLib(unittest.TestCase):
         lines = rdata.split(b'\n')
         assert lines[0] == b"ansible"
         assert v.cipher_name == 'TEST', "cipher name was not set"
-        assert v.version == "9.9"
+        assert v.b_version == "9.9"
 
     def test_encrypt_decrypt_aes(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
