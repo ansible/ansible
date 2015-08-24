@@ -100,24 +100,24 @@ def inversepower(x, base=2):
     except TypeError, e:
         raise errors.AnsibleFilterError('root() can only be used on numbers: %s' % str(e))
 
+size_ranges = (
+    (1<<80L, 'Y'),
+    (1<<70L, 'Z'),
+    (1<<60L, 'E'),
+    (1<<50L, 'P'),
+    (1<<40L, 'T'),
+    (1<<30L, 'G'),
+    (1<<20L, 'M'),
+    (1<<10L, 'K'),
+    (1, '')
+)
 
 def human_readable(size, isbits=False, unit=None):
 
     base = 'bits' if isbits else 'Bytes'
     suffix = ''
 
-    ranges = (
-            (1<<70L, 'Z'),
-            (1<<60L, 'E'),
-            (1<<50L, 'P'),
-            (1<<40L, 'T'),
-            (1<<30L, 'G'),
-            (1<<20L, 'M'),
-            (1<<10L, 'K'),
-            (1, base)
-        )
-
-    for limit, suffix in ranges:
+    for limit, suffix in size_ranges:
         if (unit is None and size >= limit) or \
             unit is not None and unit.upper() == suffix:
             break
@@ -126,6 +126,23 @@ def human_readable(size, isbits=False, unit=None):
         suffix += base[0]
 
     return '%.2f %s' % (float(size)/ limit, suffix)
+
+def human_bytes(size):
+    init = size
+    num = ""
+    while size and size[0:1].isdigit() or size[0:1] == '.':
+        num += size[0]
+        size = size[1:]
+    num = float(num)
+    unit = size.strip()
+    unit = unit[0].upper()
+
+    for limit, suffix in size_ranges:
+        if unit == suffix:
+            break
+    else:
+        raise errors.AnsibleFilterError("human_bytes() can't interpret following string: %r" % init)
+    return int(num * limit)
 
 class FilterModule(object):
     ''' Ansible math jinja2 filters '''
@@ -151,5 +168,6 @@ class FilterModule(object):
 
             # computer theory
             'human_readable' : human_readable,
+            'human_bytes': human_bytes,
 
         }

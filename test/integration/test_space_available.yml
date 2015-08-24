@@ -1,0 +1,25 @@
+---
+- name: "Mount check"
+  hosts: "localhost"
+  gather_facts: "yes"
+  vars:
+    file1: "/tmp/test"
+    file2: "/home/test"
+  tasks:
+    - name: "Get corresponding mountpoint from a given path"
+      set_fact:
+        mount1:            "{{file1|getmountfrompath(ansible_mounts)}}"
+        mount2:            "{{file2|getmountfrompath(ansible_mounts)}}"
+    - debug: var=mount1
+    - debug: var=mount2
+    - set_fact: size_available_pc="{{mount1.size_available|int / mount1.size_total|int * 100}}"
+    - name: "check 1% of free space available for first file"
+      assert:
+        that: size_available_pc > 1
+      ignore_errors: yes
+    - name: "1M in bytes equals =>"
+      debug: msg="{{"1M"|human_bytes}}"
+    - name: "check 1M available for second file"
+      assert:
+        that: mount2.size_available > "1M"|human_bytes
+      ignore_errors: yes

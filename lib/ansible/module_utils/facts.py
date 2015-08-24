@@ -942,12 +942,29 @@ class LinuxHardware(Hardware):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
                 if(fields[2] != 'none'):
-                    size_total = None
-                    size_available = None
+                    size_total        = None
+                    size_available    = None
+                    size_used         = None
+                    block_used        = None
+                    block_reserved    = None
+                    inode_used        = None
+                    inode_reserved    = None
+                    
                     try:
                         statvfs_result = os.statvfs(fields[1])
-                        size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
-                        size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
+                        # Size total/available/used
+                        size_total     = statvfs_result.f_bsize * statvfs_result.f_blocks
+                        size_available = statvfs_result.f_bsize * statvfs_result.f_bavail
+                        size_used      = size_total             - size_available
+
+                        # Block allocation + reserved
+                        block_used     = statvfs_result.f_blocks - statvfs_result.f_bfree
+                        block_reserved = statvfs_result.f_bfree  - statvfs_result.f_bavail
+
+                        # Inode allocation + reserved
+                        inode_used     = statvfs_result.f_files  - statvfs_result.f_ffree
+                        inode_reserved = statvfs_result.f_ffree  - statvfs_result.f_favail
+
                     except OSError, e:
                         continue
 
@@ -965,8 +982,13 @@ class LinuxHardware(Hardware):
                          'fstype': fields[2],
                          'options': fields[3],
                          # statvfs data
-                         'size_total': size_total,
-                         'size_available': size_available,
+                         'size_total':        size_total,
+                         'size_available':    size_available,
+                         'size_used':         size_used,
+                         'block_used':        block_used,
+                         'block_reserved':    block_reserved,
+                         'inode_used':        inode_used,
+                         'inode_reserved':    inode_reserved,
                          'uuid': uuid,
                          })
 

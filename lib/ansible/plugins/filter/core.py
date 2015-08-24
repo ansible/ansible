@@ -223,6 +223,17 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
 def to_uuid(string):
     return str(uuid.uuid5(UUID_NAMESPACE_ANSIBLE, str(string)))
 
+def getmountfrompath(path, mounts):
+    '''return the closest corresponding mount for a given path'''
+    current_string_length = 0
+    current_mount = None
+    for mount in mounts:
+        if mount['mount'].startswith('/'):
+            if current_string_length < len(mount['mount']) and path.startswith(mount['mount']):
+                current_string_length = len(mount['mount'])
+                current_mount = mount
+    return current_mount
+
 def mandatory(a):
     from jinja2.runtime import Undefined
 
@@ -263,6 +274,7 @@ class FilterModule(object):
             'win_basename': partial(unicode_wrap, ntpath.basename),
             'win_dirname': partial(unicode_wrap, ntpath.dirname),
             'win_splitdrive': partial(unicode_wrap, ntpath.splitdrive),
+            'getmountfrompath': getmountfrompath,
 
             # value as boolean
             'bool': bool,

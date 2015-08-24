@@ -61,10 +61,24 @@
         - 'diff_result.stdout == ""' 
 
 - name: Verify human_readable
+  tags: "human_readable"
   assert:
     that:
         - '"10.00 KB" == 10240|human_readable'
         - '"97.66 MB" == 102400000|human_readable'
         - '"0.10 GB" == 102400000|human_readable(unit="G")'
         - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
+
+- name: Verify human_bytes
+  tags: "human_bytes"
+  assert:
+    that:
+        - "{{'10.00 KB'|human_bytes}} == 10240"
+        - "{{   '11 MB'|human_bytes}} == 11534336"
+        - "{{  '1.1 GB'|human_bytes}} == 1181116006"
+
+- name: Verify human_bytes (bad string)
+  tags: "human_bytes"
+  set_fact: bad_string="{{'10.00 foo'|human_bytes}}"
+  ignore_errors: yes
 
