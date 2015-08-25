@@ -257,6 +257,7 @@ class VaultEditor:
 
         # Do nothing if the content has not changed
         if existing_data == tmpdata and not force_save:
+            os.remove(tmp_path)
             return
 
         # create new vault
