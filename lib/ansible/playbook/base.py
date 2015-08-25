@@ -51,8 +51,8 @@ class Base:
     _vars                = FieldAttribute(isa='dict', default=dict())
 
     # flags and misc. settings
-    _environment         = FieldAttribute(isa='list', default=[])
-    _no_log              = FieldAttribute(isa='bool', default=False)
+    _environment         = FieldAttribute(isa='list')
+    _no_log              = FieldAttribute(isa='bool')
 
     def __init__(self):
 
@@ -292,7 +292,9 @@ class Base:
                     elif attribute.isa == 'bool':
                         value = boolean(value)
                     elif attribute.isa == 'list':
-                        if not isinstance(value, list):
+                        if value is None:
+                            value = []
+                        elif not isinstance(value, list):
                             value = [ value ]
                         if attribute.listof is not None:
                             for item in value:
@@ -302,12 +304,18 @@ class Base:
                                     if item is None or item.strip() == "":
                                         raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
                     elif attribute.isa == 'set':
-                        if not isinstance(value, (list, set)):
-                            value = [ value ]
-                        if not isinstance(value, set):
-                            value = set(value)
-                    elif attribute.isa == 'dict' and not isinstance(value, dict):
-                        raise TypeError("%s is not a dictionary" % value)
+                        if value is None:
+                            value = set()
+                        else:
+                            if not isinstance(value, (list, set)):
+                                value = [ value ]
+                            if not isinstance(value, set):
+                                value = set(value)
+                    elif attribute.isa == 'dict':
+                        if value is None:
+                            value = dict()
+                        elif not isinstance(value, dict):
+                            raise TypeError("%s is not a dictionary" % value)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
