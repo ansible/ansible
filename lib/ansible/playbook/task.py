@@ -256,7 +256,7 @@ class Task(Base, Conditional, Taggable, Become):
 
         new_me._task_include = None
         if self._task_include:
-            new_me._task_include = self._task_include.copy()
+            new_me._task_include = self._task_include.copy(exclude_block=exclude_block)
 
         return new_me
 

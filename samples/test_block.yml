@@ -1,5 +1,4 @@
 - hosts: all
-  connection: local
   gather_facts: yes
   tasks:
   - block:
