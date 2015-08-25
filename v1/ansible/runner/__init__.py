@@ -232,7 +232,7 @@ class Runner(object):
                 # see if SSH can support ControlPersist if not use paramiko
                 cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 (out, err) = cmd.communicate()
-                if "Bad configuration option" in err:
+                if "Bad configuration option" in err or "Usage:" in err:
                     self.transport = "paramiko"
 
         # save the original transport, in case it gets
