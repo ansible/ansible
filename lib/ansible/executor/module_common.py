@@ -188,9 +188,11 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
                 interpreter = to_bytes(task_vars[interpreter_config], errors='strict')
                 lines[0] = shebang = b"#!{0} {1}".format(interpreter, b" ".join(args[1:]))
 
-            lines.insert(1, ENCODING_STRING)
+            if interpreter.startswith('python'):
+                lines.insert(1, ENCODING_STRING)
         else:
-            lines.insert(0, ENCODING_STRING)
+            # No shebang, assume a binary module?
+            pass
 
         module_data = b"\n".join(lines)
 
