@@ -218,6 +218,9 @@ class Task(Base, Conditional, Taggable, Become):
         Override post validation of vars on the play, as we don't want to
         template these too early.
         '''
+        if value is None:
+            return dict()
+
         for env_item in value:
             if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
                 self._display.deprecated("Using bare variables for environment is deprecated. Update your playbooks so that the environment value uses the full variable syntax ('{{foo}}')")
@@ -347,11 +350,9 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Override for the 'tags' getattr fetcher, used from Base.
         '''
-        environment = self._attributes['tags']
+        environment = self._attributes['environment']
         if environment is None:
-            environment = dict()
-
-        environment = self._get_parent_attribute('environment', extend=True)
+            environment = self._get_parent_attribute('environment')
 
         return environment
 

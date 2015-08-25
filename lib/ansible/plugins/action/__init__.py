@@ -116,6 +116,8 @@ class ActionBase:
                 environments = [ environments ]
 
             for environment in environments:
+                if environment is None:
+                    continue
                 if not isinstance(environment, dict):
                     raise AnsibleError("environment must be a dictionary, received %s (%s)" % (environment, type(environment)))
                 # very deliberatly using update here instead of combine_vars, as
