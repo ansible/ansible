@@ -12,7 +12,7 @@
     - name: assert no val in stdout
       assert:
         that:
-            - '"val1" not in test_env.stdout'
+            - '"val1" not in test_env.stdout_lines'
 
     - name: check that envvar does exist
       shell: echo $key1
@@ -22,7 +22,7 @@
     - name: assert val1 in stdout
       assert:
         that:
-            - '"val1" in test_env2.stdout'
+            - '"val1" in test_env2.stdout_lines'
 
 - hosts: testhost
   tasks:
@@ -41,7 +41,7 @@
     - name: assert val1 in stdout
       assert:
         that:
-            - '"val1" in test_env3.stdout'
+            - '"val1" in test_env3.stdout_lines'
 
     - name: check that task envvar does exist
       shell: echo $key1; echo $other1
@@ -51,6 +51,19 @@
     - name: assert all vars appear as expected
       assert:
         that:
-            - '"val1" not in test_env4.stdout'
-            - '"not1" in test_env4.stdout'
-            - '"val2" in test_env4.stdout'
+            - '"val1" not in test_env4.stdout_lines'
+            - '"not1" in test_env4.stdout_lines'
+            - '"val2" in test_env4.stdout_lines'
+
+    - block:
+        - name: check that task envvar does exist in block
+          shell: echo $key1; echo $other1
+          register: test_env5
+
+        - name: assert all vars appear as expected in block
+          assert:
+            that:
+                - '"val1" not in test_env5.stdout_lines'
+                - '"not1" in test_env5.stdout_lines'
+                - '"val2" in test_env5.stdout_lines'
+      environment: "{{test2}}"
