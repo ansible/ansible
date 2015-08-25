@@ -1586,6 +1586,10 @@ def restarted(manager, containers, count, name):
 
     containers.refresh()
 
+    for container in manager.get_differing_containers():
+        manager.stop_containers([container])
+        manager.remove_containers([container])
+
     manager.restart_containers(containers.running)
     started(manager, containers, count, name)
 
