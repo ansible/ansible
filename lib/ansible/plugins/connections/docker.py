@@ -26,6 +26,8 @@ import subprocess
 import time
 import re
 
+from distutils.version import LooseVersion
+
 import ansible.constants as C
 
 from ansible import errors
@@ -46,7 +48,7 @@ class Connection(ConnectionBase):
         self.can_copy_bothways = False
 
         docker_version = self._get_docker_version()
-        if self.compare_versions(docker_version, '1.8.0') >= 0:
+        if LooseVersion(docker_version) >= LooseVersion('1.8.0'):
             self.can_copy_bothways = True
 
     def _get_docker_version(self):
@@ -75,12 +77,6 @@ class Connection(ConnectionBase):
     @property
     def transport(self):
         return 'docker'
-
-    def compare_versions(self, version1, version2):
-        # Source: https://stackoverflow.com/questions/1714027/version-number-comparison
-        def normalize(v):
-            return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
-        return cmp(normalize(version1), normalize(version2))
 
     def _connect(self, port=None):
         """ Connect to the container. Nothing to do """
