@@ -179,6 +179,9 @@ New Lookups:
  * ini
  * shelvefile
 
+New Connection Methods:
+ *  Added a connection plugin for talking to docker containers on the ansible controller machine without using ssh
+
 Minor changes:
 
  * Many more tests, new API makes things more testable and we took advantage of it
