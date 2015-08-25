@@ -132,11 +132,11 @@ class VaultLib:
         if self.is_encrypted(b_data):
             raise AnsibleError("data is already encrypted")
 
-        if not self.cipher_name:
+        if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
             self.cipher_name = u"AES256"
 
         cipher_class_name = u'Vault{0}'.format(self.cipher_name)
-        if cipher_class_name in globals() and self.cipher_name in CIPHER_WHITELIST:
+        if cipher_class_name in globals():
             Cipher = globals()[cipher_class_name]
             this_cipher = Cipher()
         else:
