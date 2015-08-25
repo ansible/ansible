@@ -30,6 +30,21 @@ See http://ansible.github.com/api.html for more info
 Tested with Cobbler 2.0.11.
 
 Changelog:
+    - 2015-08-25 gregmark: Refactored to leverage Cobbler system, profile, and management class
+        parameters to produce a more robust and exact output; all configurable in cobbler.ini:
+        o  assigning system objects to groups based on owners and/or status and/or profiles,
+           and/or management classes. 
+        o  assigning groups to parent groups based on the special management class parameter
+           "parent". Only one parent per class is currently supported.
+        o  assigning group and hostvars based on either or both ks_meta params or management
+           parameters.
+        o  Optional: have system objects inherit vars from their respective profiles  
+        o  Optional: Only include system objects with at least one interface w/ management = 1
+        o  Limitations: there is no good way to assign groupvars or children to groups based on
+           owners or status. Currently, parents can not be assigned in profiles and only one
+           parent can be assigned per child group (this could be added easily).
+        Tested with Cobbler 2.6.7.
+
     - 2015-06-21 dmccue: Modified to support run-once _meta retrieval, results in
          higher performance at ansible startup.  Groups are determined by owner rather than
          default mgmt_classes.  DNS name determined from hostname. cobbler values are written
@@ -76,8 +91,6 @@ except ImportError:
 # server, so it does not attempt to login with a username and password.
 # this will be addressed in a future version of this script.
 
-orderby_keyname = 'owners'  # alternatively 'mgmt_classes'
-
 
 class CobblerInventory(object):
 
@@ -110,7 +123,7 @@ class CobblerInventory(object):
         else:
             self.inventory['_meta'] = { 'hostvars': {} }
             for hostname in self.cache:
-                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
+                self.inventory['_meta']['hostvars'][hostname] = self.cache[hostname]
             data_to_print += self.json_format_dict(self.inventory, True)
 
         print data_to_print
@@ -145,6 +158,21 @@ class CobblerInventory(object):
         self.cache_path_inventory = cache_path + "/ansible-cobbler.index"
         self.cache_max_age = config.getint('cobbler', 'cache_max_age')
 
+        # Group related
+        self.owner_groups = config.getboolean('cobbler', 'owner_groups')
+        self.status_groups = config.getboolean('cobbler', 'status_groups')
+        self.profile_groups = config.getboolean('cobbler', 'profile_groups')
+        self.mgmt_class_groups = config.getboolean('cobbler', 'mgmt_class_groups')
+
+        # Hostvar related
+        self.ksmeta_params = config.getboolean('cobbler', 'ksmeta_params')
+        self.mgmt_params = config.getboolean('cobbler', 'mgmt_params')
+
+        # Other
+        self.require_management = config.getboolean('cobbler', 'require_management')
+        self.inherit_profiles = config.getboolean('cobbler', 'inherit_profiles')
+        self.inherit_children = config.getboolean('cobbler', 'inherit_children')
+
     def parse_cli_args(self):
         """ Command line argument processing """
 
@@ -159,48 +187,155 @@ class CobblerInventory(object):
         """ Make calls to cobbler and save the output in a cache """
 
         self._connect()
-        self.groups = dict()
-        self.hosts = dict()
 
         data = self.conn.get_systems()
+        p_data = dict()
+        profile_data = dict()
+        c_data = dict()
+        class_data = dict()
+        parents = dict()
+        found_groups = []
 
+        if self.inherit_profiles:
+            p_data = self.conn.get_profiles() 
+            # Refactor, with profile name as key, profile hash as value
+            for _profile in p_data:
+                p_name = _profile['name']
+                profile_data[p_name] = _profile
+
+        if self.mgmt_class_groups:
+            c_data = self.conn.get_mgmtclasses()
+            #refactor
+            for _class in c_data:
+                c_name = _class['name']
+                class_data[c_name] = _class
+
+        """ HOSTS """
         for host in data:
             # Get the FQDN for the host and add it to the right groups
-            dns_name = host['hostname'] #None
+            dns_name = None
             ksmeta = None
+            hostname = host['hostname']
             interfaces = host['interfaces']
 
-            if dns_name is None:
-                continue
-
+            owners = host['owners']
             status = host['status']
             profile = host['profile']
-            classes = host[orderby_keyname]
+            classes = host['mgmt_classes']
 
-            if status not in self.inventory:
-                self.inventory[status] = []
-            self.inventory[status].append(dns_name)
+            # Prevent redundancy
+            if self.profile_groups and self.inherit_profiles:
+                self.inherit_pofiles = False
 
-            if profile not in self.inventory:
-                self.inventory[profile] = []
-            self.inventory[profile].append(dns_name)
+            # If set, require at least one cb sys object interface have management = 1
+            if self.require_management:
+                for (iname, ivalue) in interfaces.iteritems():
+                    if ivalue['management']:
+                        this_dns_name = ivalue.get('dns_name', None)
+                        if this_dns_name is not None and this_dns_name is not "":
+                            dns_name = this_dns_name
+                            break
+            else:
+                dns_name = hostname
 
-            for cls in classes:
-                if cls not in self.inventory:
-                    self.inventory[cls] = []
-                self.inventory[cls].append(dns_name)
+            if dns_name is None or dns_name is "":
+                continue
 
+            # So if A) cobbler.ini param "management = 0" and the cb sys object lacks an
+            # interface with cb param "management = 1", we default to the object hostname,
+            # rather that search for the first valid dns_name? I thought about changing
+            # this behavior, but it was accepted in the last pull request maybe for a 
+            # good reason? Dunno.
+
+            """ GROUP ASSIGNMENTS """
+            # Assign cb sys object dns_name's to groups
+            # Ensure groups can be assigned safely from all group sources at once, if required
+            # Precedence: mgmt classes > profiles > status > owners
+
+            if self.owner_groups:
+                for own in owners:
+                    self.assign_list(self.inventory, own, "hosts", dns_name)
+                    self.push_list(found_groups, own)
+
+            if self.status_groups:
+                self.assign_list(self.inventory, status, "hosts", dns_name)
+                self.push_list(found_groups, status)
+
+            if self.profile_groups:
+                self.assign_list(self.inventory, profile, "hosts", dns_name)
+                self.push_list(found_groups, profile)
+
+            if self.mgmt_class_groups:
+                for cls in classes:
+                    self.assign_list(self.inventory, cls, "hosts", dns_name)
+                    self.push_list(found_groups, cls)
+
+
+            """ HOSTVARS """
             # Since we already have all of the data for the host, update the host details as well
-
             # The old way was ksmeta only -- provide backwards compatibility
+            # cb mgmt_parameters overwrite ks_meta vars if both are enabled
 
-            self.cache[dns_name] = host
-            if "ks_meta" in host:
-                for key, value in host["ks_meta"].iteritems():
-                    self.cache[dns_name][key] = value
+
+            # Inherit First from profiles
+            if self.inherit_profiles and self.ksmeta_params:
+                self.assign_dict(profile_data[profile], self.cache, "ks_meta", dns_name)
+
+            if self.inherit_profiles and self.mgmt_params:
+                self.assign_dict(profile_data[profile], self.cache, "mgmt_parameters", dns_name)
+
+            # Now assign or override from system object params
+            if self.ksmeta_params:
+                self.assign_dict(host, self.cache, "ks_meta", dns_name)
+
+            if self.mgmt_params:
+                self.assign_dict(host, self.cache, "mgmt_parameters", dns_name)
+
+        """ GROUPVARS """
+        # We alao create a dict of parents and children to save time
+        for grp in found_groups:
+
+            if self.profile_groups:
+                if grp in profile_data:
+                    if self.ksmeta_params:
+                        self.assign_dict(profile_data[grp], self.inventory[grp], "ks_meta", "vars")
+                    if self.mgmt_params:
+                        self.assign_dict(profile_data[grp], self.inventory[grp], "mgmt_parameters", "vars")
+
+            if self.mgmt_class_groups:
+                if grp in class_data:
+                    self.assign_dict(class_data[grp], self.inventory[grp], "params", "vars")
+                    if self.inherit_children and 'parent' in class_data[grp]['params']:
+                        prt = class_data[grp]['params']['parent']
+                        #self.push(parents, prt, grp)
+                        parents[grp] = prt 
+
+        """ PARENTS AND CHILDREN """
+        if self.inherit_children:
+            for child in parents:
+                parent = parents[child]
+                self.assign_list(self.inventory, parent, "children", child)
+
+                # Add groups that were reference as a parent, but not directly assigned to a system object
+                if parent not in found_groups:
+                    self.assign_dict(class_data[parent], self.inventory[parent], "params", "vars")
 
         self.write_to_cache(self.cache, self.cache_path_cache)
         self.write_to_cache(self.inventory, self.cache_path_inventory)
+
+    def assign_list(self, my_dict, og_key, new_key, my_val):
+        if og_key is not None and og_key is not "":
+            if og_key not in my_dict:
+                my_dict[og_key] = { new_key : [] }
+            my_dict[og_key][new_key].append(my_val)
+
+    def assign_dict(self, dict_src, dict_dst, key_src, key_dst): 
+        if key_src in dict_src:
+            if isinstance(dict_src[key_src], dict):
+                if key_dst not in dict_dst:
+                    dict_dst[key_dst] = dict(dict_src[key_src])
+                else:
+                    dict_dst[key_dst].update(dict_src[key_src])
 
     def get_host_info(self):
         """ Get variables about a specific host """
@@ -218,6 +353,10 @@ class CobblerInventory(object):
                 return self.json_format_dict({}, True)
 
         return self.json_format_dict(self.cache[self.args.host], True)
+
+    def push_list(self, my_list, element):
+        if element not in my_list and element is not "":
+            my_list.append(element)
 
     def push(self, my_dict, key, element):
         """ Pushed an element onto an array that may not have been defined in the dict """
