@@ -96,7 +96,7 @@ class Base:
     @staticmethod
     def _generic_g(prop_name, self):
         method = "_get_attr_%s" % prop_name
-        if method in dir(self):
+        if hasattr(self, method):
             return getattr(self, method)()
 
         return self._attributes[prop_name]
