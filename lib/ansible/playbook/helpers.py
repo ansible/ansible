@@ -32,7 +32,7 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
     return a list of Block() objects, where implicit blocks
     are created for each bare Task.
     '''
- 
+
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
 
@@ -52,13 +52,7 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
                 variable_manager=variable_manager,
                 loader=loader
             )
-            # Implicit blocks are created by bare tasks listed in a play withou
-            # an explicit block statement. If we have two implicit blocks in a row,
-            # squash them down to a single block to save processing time later.
-            if b._implicit and len(block_list) > 0 and block_list[-1]._implicit:
-                block_list[-1].block.extend(b.block)
-            else:
-                block_list.append(b)
+            block_list.append(b)
 
     return block_list
 
