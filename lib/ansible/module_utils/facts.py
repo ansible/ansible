@@ -939,15 +939,16 @@ class LinuxHardware(Hardware):
         self.facts['mounts'] = []
         bind_mounts = []
         findmntPath = module.get_bin_path("findmnt")
-        rc, out, err = module.run_command("%s -lnur" % ( findmntPath ), use_unsafe_shell=True)
-        if rc == 0:
-            # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
-            for line in out.split('\n'):
-                fields = line.rstrip('\n').split()
-                if(len(fields) < 2):
-                    continue
-                if(re.match(".*\]",fields[1])):
-                    bind_mounts.append(fields[0])
+        if findmntPath:
+            rc, out, err = module.run_command("%s -lnur" % ( findmntPath ), use_unsafe_shell=True)
+            if rc == 0:
+                # find bind mounts, in case /etc/mtab is a symlink to /proc/mounts
+                for line in out.split('\n'):
+                    fields = line.rstrip('\n').split()
+                    if(len(fields) < 2):
+                        continue
+                    if(re.match(".*\]",fields[1])):
+                        bind_mounts.append(fields[0])
 
         mtab = get_file_content('/etc/mtab', '')
         for line in mtab.split('\n'):
