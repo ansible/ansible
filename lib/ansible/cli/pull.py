@@ -53,6 +53,7 @@ class PullCLI(CLI):
             runtask_opts=True,
             subset_opts=True,
             inventory_opts=True,
+            module_opts=True,
         )
 
         # options unique to pull

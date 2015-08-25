@@ -46,10 +46,9 @@ class DocCLI(CLI):
         self.parser = CLI.base_parser(
             usage='usage: %prog [options] [module...]',
             epilog='Show Ansible module documentation',
+            module_opts=True,
         )
 
-        self.parser.add_option("-M", "--module-path", action="store", dest="module_path", default=C.DEFAULT_MODULE_PATH,
-                help="Ansible modules/ directory")
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
                 help='List available modules')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
