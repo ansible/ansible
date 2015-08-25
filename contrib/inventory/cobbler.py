@@ -35,14 +35,16 @@ Changelog:
         o  assigning system objects to groups based on owners and/or status and/or profiles,
            and/or management classes. 
         o  assigning groups to parent groups based on the special management class parameter
-           "parent". Only one parent per class is currently supported.
+           "parent". Only one parent per class is currently supported. Profile mgmt classes
+            can be inherited, optionally.
         o  assigning group and hostvars based on either or both ks_meta params or management
            parameters.
         o  Optional: have system objects inherit vars from their respective profiles  
         o  Optional: Only include system objects with at least one interface w/ management = 1
         o  Limitations: there is no good way to assign groupvars or children to groups based on
            owners or status. Currently, parents can not be assigned in profiles and only one
-           parent can be assigned per child group (this could be added easily).
+           parent can be assigned per child group (this could be added easily). inherit_profiles
+           and profile_groups are mutually exclusive, with the former preferred.
         Tested with Cobbler 2.6.7.
 
     - 2015-06-21 dmccue: Modified to support run-once _meta retrieval, results in
@@ -81,6 +83,7 @@ import os
 import re
 from time import time
 import xmlrpclib
+import pprint
 
 try:
     import json
@@ -265,11 +268,15 @@ class CobblerInventory(object):
                 self.assign_list(self.inventory, profile, "hosts", dns_name)
                 self.push_list(found_groups, profile)
 
+            if self.inherit_profiles:
+                for pcls in profile_data[profile]['mgmt_classes']:
+                    self.assign_list(self.inventory, pcls, "hosts", dns_name)
+                    self.push_list(found_groups, pcls)
+
             if self.mgmt_class_groups:
                 for cls in classes:
                     self.assign_list(self.inventory, cls, "hosts", dns_name)
                     self.push_list(found_groups, cls)
-
 
             """ HOSTVARS """
             # Since we already have all of the data for the host, update the host details as well
@@ -292,7 +299,7 @@ class CobblerInventory(object):
                 self.assign_dict(host, self.cache, "mgmt_parameters", dns_name)
 
         """ GROUPVARS """
-        # We alao create a dict of parents and children to save time
+        # We also create a dict of parents and children to save time
         for grp in found_groups:
 
             if self.profile_groups:
@@ -307,7 +314,6 @@ class CobblerInventory(object):
                     self.assign_dict(class_data[grp], self.inventory[grp], "params", "vars")
                     if self.inherit_children and 'parent' in class_data[grp]['params']:
                         prt = class_data[grp]['params']['parent']
-                        #self.push(parents, prt, grp)
                         parents[grp] = prt 
 
         """ PARENTS AND CHILDREN """
@@ -327,11 +333,14 @@ class CobblerInventory(object):
         if og_key is not None and og_key is not "":
             if og_key not in my_dict:
                 my_dict[og_key] = { new_key : [] }
-            my_dict[og_key][new_key].append(my_val)
+            # no duplicate entries
+            if my_val not in my_dict[og_key][new_key]:
+                my_dict[og_key][new_key].append(my_val)
 
     def assign_dict(self, dict_src, dict_dst, key_src, key_dst): 
         if key_src in dict_src:
-            if isinstance(dict_src[key_src], dict):
+            # do not create empty hostvars
+            if isinstance(dict_src[key_src], dict) and dict_src[key_src]:
                 if key_dst not in dict_dst:
                     dict_dst[key_dst] = dict(dict_src[key_src])
                 else:
