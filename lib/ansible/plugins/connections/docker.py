@@ -4,6 +4,8 @@
 # (c) 2014, Lorin Hochstein
 # (c) 2015, Leendert Brouwer
 #
+# Maintainer: Leendert Brouwer (https://github.com/objectified)
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
