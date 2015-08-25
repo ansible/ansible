@@ -31,22 +31,31 @@ from ansible.utils.boolean import boolean
 
 __all__ = ['PlayIterator']
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class HostState:
     def __init__(self, blocks):
         self._blocks          = blocks[:]
 
-        self.cur_block        = 0
-        self.cur_regular_task = 0
-        self.cur_rescue_task  = 0
-        self.cur_always_task  = 0
-        self.cur_role         = None
-        self.run_state        = PlayIterator.ITERATING_SETUP
-        self.fail_state       = PlayIterator.FAILED_NONE
-        self.pending_setup    = False
-        self.child_state      = None
+        self.cur_block          = 0
+        self.cur_regular_task   = 0
+        self.cur_rescue_task    = 0
+        self.cur_always_task    = 0
+        self.cur_role           = None
+        self.run_state          = PlayIterator.ITERATING_SETUP
+        self.fail_state         = PlayIterator.FAILED_NONE
+        self.pending_setup      = False
+        self.tasks_child_state  = None
+        self.rescue_child_state = None
+        self.always_child_state = None
 
     def __repr__(self):
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%d, fail_state=%d, pending_setup=%s, child state? %s" % (
+        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%d, fail_state=%d, pending_setup=%s, tasks child state? %s, rescue child state? %s, always child state? %s" % (
             self.cur_block,
             self.cur_regular_task,
             self.cur_rescue_task,
@@ -55,7 +64,9 @@ class HostState:
             self.run_state,
             self.fail_state,
             self.pending_setup,
-            self.child_state,
+            self.tasks_child_state,
+            self.rescue_child_state,
+            self.always_child_state,
         )
 
     def get_current_block(self):
@@ -71,7 +82,12 @@ class HostState:
         new_state.run_state        = self.run_state
         new_state.fail_state       = self.fail_state
         new_state.pending_setup    = self.pending_setup
-        new_state.child_state      = self.child_state
+        if self.tasks_child_state is not None:
+            new_state.tasks_child_state = self.tasks_child_state.copy()
+        if self.rescue_child_state is not None:
+            new_state.rescue_child_state = self.rescue_child_state.copy()
+        if self.always_child_state is not None:
+            new_state.always_child_state = self.always_child_state.copy()
         return new_state
 
 class PlayIterator:
@@ -126,10 +142,12 @@ class PlayIterator:
 
     def get_next_task_for_host(self, host, peek=False):
 
+        display.debug("getting the next task for host %s" % host.name)
         s = self.get_host_state(host)
 
         task = None
         if s.run_state == self.ITERATING_COMPLETE:
+            display.debug("host %s is done iterating, returning" % host.name)
             return (None, None)
         elif s.run_state == self.ITERATING_SETUP:
             s.run_state = self.ITERATING_TASKS
@@ -169,21 +187,15 @@ class PlayIterator:
         if not peek:
             self._host_states[host.name] = s
 
+        display.debug("done getting next task for host %s" % host.name)
+        display.debug(" ^ task is: %s" % task)
+        display.debug(" ^ state is: %s" % s)
         return (s, task)
 
 
     def _get_next_task_from_state(self, state, peek):
 
         task = None
-
-        # if we previously encountered a child block and we have a
-        # saved child state, try and get the next task from there
-        if state.child_state:
-            (state.child_state, task) = self._get_next_task_from_state(state.child_state, peek=peek)
-            if task:
-                return (state.child_state, task)
-            else:
-                state.child_state = None
 
         # try and find the next task, given the current state.
         while True:
@@ -207,7 +219,19 @@ class PlayIterator:
                     state.run_state = self.ITERATING_ALWAYS
                 else:
                     task = block.block[state.cur_regular_task]
-                    state.cur_regular_task += 1
+                    # if the current task is actually a child block, we dive into it
+                    if isinstance(task, Block) or state.tasks_child_state is not None:
+                        if state.tasks_child_state is None:
+                            state.tasks_child_state = HostState(blocks=[task])
+                            state.tasks_child_state.run_state = self.ITERATING_TASKS
+                            state.tasks_child_state.cur_role = state.cur_role
+                        (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, peek=peek)
+                        if task is None:
+                            state.tasks_child_state = None
+                            state.cur_regular_task += 1
+                            continue
+                    else:
+                        state.cur_regular_task += 1
 
             elif state.run_state == self.ITERATING_RESCUE:
                 if state.fail_state & self.FAILED_RESCUE == self.FAILED_RESCUE:
@@ -218,7 +242,18 @@ class PlayIterator:
                     state.run_state = self.ITERATING_ALWAYS
                 else:
                     task = block.rescue[state.cur_rescue_task]
-                    state.cur_rescue_task += 1
+                    if isinstance(task, Block) or state.rescue_child_state is not None:
+                        if state.rescue_child_state is None:
+                            state.rescue_child_state = HostState(blocks=[task])
+                            state.rescue_child_state.run_state = self.ITERATING_TASKS
+                            state.rescue_child_state.cur_role = state.cur_role
+                        (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, peek=peek)
+                        if task is None:
+                            state.rescue_child_state = None
+                            state.cur_rescue_task += 1
+                            continue
+                    else:
+                        state.cur_rescue_task += 1
 
             elif state.run_state == self.ITERATING_ALWAYS:
                 if state.cur_always_task >= len(block.always):
@@ -233,38 +268,55 @@ class PlayIterator:
                         state.child_state = None
                 else:
                     task = block.always[state.cur_always_task]
-                    state.cur_always_task += 1
+                    if isinstance(task, Block) or state.always_child_state is not None:
+                        if state.always_child_state is None:
+                            state.always_child_state = HostState(blocks=[task])
+                            state.always_child_state.run_state = self.ITERATING_TASKS
+                            state.always_child_state.cur_role = state.cur_role
+                        (state.always_child_state, task) = self._get_next_task_from_state(state.always_child_state, peek=peek)
+                        if task is None:
+                            state.always_child_state = None
+                            state.cur_always_task += 1
+                            continue
+                    else:
+                        state.cur_always_task += 1
 
             elif state.run_state == self.ITERATING_COMPLETE:
                 return (state, None)
 
-            # if the current task is actually a child block, we dive into it
-            if isinstance(task, Block):
-                state.child_state = HostState(blocks=[task])
-                state.child_state.run_state = self.ITERATING_TASKS
-                state.child_state.cur_role = state.cur_role
-                (state.child_state, task) = self._get_next_task_from_state(state.child_state, peek=peek)
-             
             # if something above set the task, break out of the loop now
             if task:
                 break
 
         return (state, task)
 
+    def _set_failed_state(self, state):
+        if state.pending_setup:
+            state.fail_state |= self.FAILED_SETUP
+            state.run_state = self.ITERATING_COMPLETE
+        elif state.run_state == self.ITERATING_TASKS:
+            if state.tasks_child_state is not None:
+                state.tasks_child_state = self._set_failed_state(state.tasks_child_state)
+            else:
+                state.fail_state |= self.FAILED_TASKS
+                state.run_state = self.ITERATING_RESCUE
+        elif state.run_state == self.ITERATING_RESCUE:
+            if state.rescue_child_state is not None:
+                state.rescue_child_state = self._set_failed_state(state.rescue_child_state)
+            else:
+                state.fail_state |= self.FAILED_RESCUE
+                state.run_state = self.ITERATING_ALWAYS
+        elif state.run_state == self.ITERATING_ALWAYS:
+            if state.always_child_state is not None:
+                state.always_child_state = self._set_failed_state(state.always_child_state)
+            else:
+                state.fail_state |= self.FAILED_ALWAYS
+                state.run_state = self.ITERATING_COMPLETE
+        return state
+
     def mark_host_failed(self, host):
         s = self.get_host_state(host)
-        if s.pending_setup:
-            s.fail_state |= self.FAILED_SETUP
-            s.run_state = self.ITERATING_COMPLETE
-        elif s.run_state == self.ITERATING_TASKS:
-            s.fail_state |= self.FAILED_TASKS
-            s.run_state = self.ITERATING_RESCUE
-        elif s.run_state == self.ITERATING_RESCUE:
-            s.fail_state |= self.FAILED_RESCUE
-            s.run_state = self.ITERATING_ALWAYS
-        elif s.run_state == self.ITERATING_ALWAYS:
-            s.fail_state |= self.FAILED_ALWAYS
-            s.run_state = self.ITERATING_COMPLETE
+        s = self._set_failed_state(s)
         self._host_states[host.name] = s
 
     def get_failed_hosts(self):
@@ -278,34 +330,37 @@ class PlayIterator:
         allows us to find the original task passed into the executor engine.
         '''
         def _search_block(block, task):
-            for t in block.block:
-                if isinstance(t, Block):
-                    res = _search_block(t, task)
-                    if res:
-                        return res
-                elif t._uuid == task._uuid:
-                    return t
-            for t in block.rescue:
-                if isinstance(t, Block):
-                    res = _search_block(t, task)
-                    if res: 
-                        return res
-                elif t._uuid == task._uuid:
-                    return t
-            for t in block.always:
-                if isinstance(t, Block):
-                    res = _search_block(t, task)
-                    if res: 
-                        return res
-                elif t._uuid == task._uuid:
-                    return t
+            '''
+            helper method to check a block's task lists (block/rescue/always)
+            for a given task uuid. If a Block is encountered in the place of a
+            task, it will be recursively searched (this happens when a task
+            include inserts one or more blocks into a task list).
+            '''
+            for b in (block.block, block.rescue, block.always):
+                for t in b:
+                    if isinstance(t, Block):
+                        res = _search_block(t, task)
+                        if res:
+                            return res
+                    elif t._uuid == task._uuid:
+                        return t
+            return None
+
+        def _search_state(state, task):
+            for block in state._blocks:
+                res = _search_block(block, task)
+                if res:
+                    return res
+            for child_state in (state.tasks_child_state, state.rescue_child_state, state.always_child_state):
+                res = _search_state(child_state, task)
+                if res:
+                    return res
             return None
 
         s = self.get_host_state(host)
-        for block in s._blocks:
-            res = _search_block(block, task)
-            if res:
-                return res
+        res = _search_state(s, task)
+        if res:
+            return res
 
         for block in self._play.handlers:
             res = _search_block(block, task)
@@ -314,23 +369,36 @@ class PlayIterator:
 
         return None
 
+    def _insert_tasks_into_state(self, state, task_list):
+        if state.run_state == self.ITERATING_TASKS:
+            if state.tasks_child_state:
+                state.tasks_child_state = self._insert_tasks_into_state(state.tasks_child_state, task_list)
+            else:
+                target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
+                before = target_block.block[:state.cur_regular_task]
+                after  = target_block.block[state.cur_regular_task:]
+                target_block.block = before + task_list + after
+                state._blocks[state.cur_block] = target_block
+        elif state.run_state == self.ITERATING_RESCUE:
+            if state.rescue_child_state:
+                state.rescue_child_state = self._insert_tasks_into_state(state.rescue_child_state, task_list)
+            else:
+                target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
+                before = target_block.rescue[:state.cur_rescue_task]
+                after  = target_block.rescue[state.cur_rescue_task:]
+                target_block.rescue = before + task_list + after
+                state._blocks[state.cur_block] = target_block
+        elif state.run_state == self.ITERATING_ALWAYS:
+            if state.always_child_state:
+                state.always_child_state = self._insert_tasks_into_state(state.always_child_state, task_list)
+            else:
+                target_block = state._blocks[state.cur_block].copy(exclude_parent=True)
+                before = target_block.always[:state.cur_always_task]
+                after  = target_block.always[state.cur_always_task:]
+                target_block.always = before + task_list + after
+                state._blocks[state.cur_block] = target_block
+        return state
+
     def add_tasks(self, host, task_list):
-        s = self.get_host_state(host)
-        target_block = s._blocks[s.cur_block].copy(exclude_parent=True)
-
-        if s.run_state == self.ITERATING_TASKS:
-            before = target_block.block[:s.cur_regular_task]
-            after  = target_block.block[s.cur_regular_task:]
-            target_block.block = before + task_list + after
-        elif s.run_state == self.ITERATING_RESCUE:
-            before = target_block.rescue[:s.cur_rescue_task]
-            after  = target_block.rescue[s.cur_rescue_task:]
-            target_block.rescue = before + task_list + after
-        elif s.run_state == self.ITERATING_ALWAYS:
-            before = target_block.always[:s.cur_always_task]
-            after  = target_block.always[s.cur_always_task:]
-            target_block.always = before + task_list + after
-
-        s._blocks[s.cur_block] = target_block
-        self._host_states[host.name] = s
+        self._host_states[host.name] = self._insert_tasks_into_state(self.get_host_state(host), task_list)
 

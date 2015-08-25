@@ -325,16 +325,20 @@ class Block(Base, Become, Conditional, Taggable):
         def evaluate_and_append_task(target):
             tmp_list = []
             for task in target:
-                if task.action in ('meta', 'include') or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
+                if isinstance(task, Block):
+                    tmp_list.append(evaluate_block(task))
+                elif task.action in ('meta', 'include') or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 
-        new_block = self.copy()
-        new_block.block  = evaluate_and_append_task(self.block)
-        new_block.rescue = evaluate_and_append_task(self.rescue)
-        new_block.always = evaluate_and_append_task(self.always)
+        def evaluate_block(block):
+            new_block = self.copy()
+            new_block.block  = evaluate_and_append_task(block.block)
+            new_block.rescue = evaluate_and_append_task(block.rescue)
+            new_block.always = evaluate_and_append_task(block.always)
+            return new_block
 
-        return new_block
+        return evaluate_block(self)
 
     def has_tasks(self):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0

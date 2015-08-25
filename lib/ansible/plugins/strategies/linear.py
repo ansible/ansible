@@ -28,6 +28,13 @@ from ansible.plugins import action_loader
 from ansible.plugins.strategies import StrategyBase
 from ansible.template import Templar
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class StrategyModule(StrategyBase):
 
     def _get_next_task_lockstep(self, hosts, iterator):
@@ -43,8 +50,10 @@ class StrategyModule(StrategyBase):
         noop_task.set_loader(iterator._play._loader)
 
         host_tasks = {}
+        display.debug("building list of next tasks for hosts")
         for host in hosts:
             host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
+        display.debug("done building task lists")
 
         num_setups = 0
         num_tasks  = 0
@@ -53,6 +62,7 @@ class StrategyModule(StrategyBase):
 
         lowest_cur_block = len(iterator._blocks)
 
+        display.debug("counting tasks in each state of execution")
         for (k, v) in host_tasks.iteritems():
             if v is None:
                 continue
@@ -72,6 +82,7 @@ class StrategyModule(StrategyBase):
                 num_rescue += 1
             elif s.run_state == PlayIterator.ITERATING_ALWAYS:
                 num_always += 1
+        display.debug("done counting tasks in each state of execution")
 
         def _advance_selected_hosts(hosts, cur_block, cur_state):
             '''
@@ -83,6 +94,7 @@ class StrategyModule(StrategyBase):
             # we return the values in the order they were originally
             # specified in the given hosts array
             rvals = []
+            display.debug("starting to advance hosts")
             for host in hosts:
                 host_state_task = host_tasks[host.name]
                 if host_state_task is None:
@@ -92,36 +104,39 @@ class StrategyModule(StrategyBase):
                     continue
                 if s.run_state == cur_state and s.cur_block == cur_block:
                     new_t = iterator.get_next_task_for_host(host)
-                    #if new_t != t:
-                    #    raise AnsibleError("iterator error, wtf?") FIXME
                     rvals.append((host, t))
                 else:
                     rvals.append((host, noop_task))
+            display.debug("done advancing hosts to next task")
             return rvals
-
 
         # if any hosts are in ITERATING_SETUP, return the setup task
         # while all other hosts get a noop
         if num_setups:
+            display.debug("advancing hosts in ITERATING_SETUP")
             return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_SETUP)
 
         # if any hosts are in ITERATING_TASKS, return the next normal
         # task for these hosts, while all other hosts get a noop
         if num_tasks:
+            display.debug("advancing hosts in ITERATING_TASKS")
             return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_TASKS)
 
         # if any hosts are in ITERATING_RESCUE, return the next rescue
         # task for these hosts, while all other hosts get a noop
         if num_rescue:
+            display.debug("advancing hosts in ITERATING_RESCUE")
             return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_RESCUE)
 
         # if any hosts are in ITERATING_ALWAYS, return the next always
         # task for these hosts, while all other hosts get a noop
         if num_always:
+            display.debug("advancing hosts in ITERATING_ALWAYS")
             return _advance_selected_hosts(hosts, lowest_cur_block, PlayIterator.ITERATING_ALWAYS)
 
         # at this point, everything must be ITERATING_COMPLETE, so we
         # return None for all hosts in the list
+        display.debug("all hosts are done, so returning None's for all hosts")
         return [(host, None) for host in hosts]
 
     def run(self, iterator, play_context):
@@ -200,15 +215,22 @@ class StrategyModule(StrategyBase):
                         self._display.debug("done getting variables")
 
                         if not callback_sent:
-                            temp_task = task.copy()
+                            display.debug("sending task start callback, copying the task so we can template it temporarily")
+                            saved_name = task.name
+                            display.debug("done copying, going to template now")
                             try:
-                                temp_task.name = unicode(templar.template(temp_task.name, fail_on_undefined=False))
+                                task.name = unicode(templar.template(task.name, fail_on_undefined=False))
+                                display.debug("done templating")
                             except:
                                 # just ignore any errors during task name templating,
                                 # we don't care if it just shows the raw name
+                                display.debug("templating failed for some reason")
                                 pass
-                            self._tqm.send_callback('v2_playbook_on_task_start', temp_task, is_conditional=False)
+                            display.debug("here goes the callback...")
+                            self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
+                            task.name = saved_name
                             callback_sent = True
+                            display.debug("sending task start callback")
 
                         self._blocked_hosts[host.get_name()] = True
                         self._queue_task(host, task, task_vars, play_context)
