@@ -179,8 +179,8 @@ APT_ENV_VARS = dict(
 )
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
-APT_GET_ZERO = "0 upgraded, 0 newly installed"
-APTITUDE_ZERO = "0 packages upgraded, 0 newly installed"
+APT_GET_ZERO = "\n0 upgraded, 0 newly installed"
+APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 
