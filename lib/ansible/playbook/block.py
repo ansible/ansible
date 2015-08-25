@@ -310,11 +310,9 @@ class Block(Base, Become, Conditional, Taggable):
         '''
         Override for the 'tags' getattr fetcher, used from Base.
         '''
-        environment = self._attributes['tags']
+        environment = self._attributes['environment']
         if environment is None:
-            environment = dict()
-
-        environment = self._get_parent_attribute('environment', extend=True)
+            environment = self._get_parent_attribute('environment', extend=True)
 
         return environment
 
