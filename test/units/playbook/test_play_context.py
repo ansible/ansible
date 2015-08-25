@@ -63,7 +63,7 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(play_context.shell, None)
         self.assertEqual(play_context.verbosity, 2)
         self.assertEqual(play_context.check_mode, True)
-        self.assertEqual(play_context.no_log, False)
+        self.assertEqual(play_context.no_log, None)
 
         mock_play = MagicMock()
         mock_play.connection    = 'mock'
