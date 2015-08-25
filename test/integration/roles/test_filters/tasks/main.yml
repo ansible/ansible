@@ -36,7 +36,7 @@
   copy: src=9851.txt dest={{output_dir}}/9851.txt
 
 - name: 9851 - Compare generated json to known good
-  shell: diff {{output_dir}}/9851.out {{output_dir}}/9851.txt
+  shell: diff -w {{output_dir}}/9851.out {{output_dir}}/9851.txt
   register: 9851_diff_result
 
 - name: 9851 - verify generated file matches known good
