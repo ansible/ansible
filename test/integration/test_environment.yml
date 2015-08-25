@@ -9,7 +9,8 @@
       shell: echo $key1
       register: test_env
 
-    - assert:
+    - name: assert no val in stdout
+      assert:
         that:
             - '"val1" not in test_env.stdout'
 
@@ -18,7 +19,8 @@
       environment: "{{test1}}"
       register: test_env2
 
-    - assert:
+    - name: assert val1 in stdout
+      assert:
         that:
             - '"val1" in test_env2.stdout'
 
@@ -34,19 +36,21 @@
   tasks:
     - name: check that play envvar does exist
       shell: echo $key1
-      register: test_env
+      register: test_env3
 
-    - assert:
+    - name: assert val1 in stdout
+      assert:
         that:
-            - '"val1" in test_env.stdout'
+            - '"val1" in test_env3.stdout'
 
     - name: check that task envvar does exist
       shell: echo $key1; echo $other1
-      register: test_env2
+      register: test_env4
       environment: "{{test2}}"
 
-    - assert:
+    - name: assert all vars appear as expected
+      assert:
         that:
-            - '"val1" not in test_env2.stdout'
-            - '"not1" in test_env2.stdout'
-            - '"val2" in test_env2.stdout'
+            - '"val1" not in test_env4.stdout'
+            - '"not1" in test_env4.stdout'
+            - '"val2" in test_env4.stdout'
