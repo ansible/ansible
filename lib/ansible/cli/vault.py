@@ -77,6 +77,10 @@ class VaultCLI(CLI):
         else:
             self.vault_pass, _= self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
 
+        if self.options.new_vault_password_file:
+            # for rekey only
+            self.new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file)
+
         if not self.vault_pass:
             raise AnsibleOptionsError("A password is required to use Ansible's Vault")
 
@@ -125,7 +129,11 @@ class VaultCLI(CLI):
         for f in self.args:
             if not (os.path.isfile(f)):
                 raise AnsibleError(f + " does not exist")
-        __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
+
+        if self.new_vault_pass:
+            new_password = self.new_vault_pass
+        else:
+            __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
         for f in self.args:
             this_editor = VaultEditor(None, self.vault_pass, f)
