@@ -19,6 +19,7 @@ from __future__ import absolute_import
 
 import sys
 import base64
+import itertools
 import json
 import os.path
 import ntpath
@@ -42,6 +43,7 @@ from ansible import errors
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap, to_unicode
+from ansible.utils.vars import merge_hash
 
 try:
     import passlib.hash
@@ -231,6 +233,20 @@ def mandatory(a):
         raise errors.AnsibleFilterError('Mandatory variable not defined.')
     return a
 
+def combine(*terms, **kwargs):
+    recursive = kwargs.get('recursive', False)
+    if len(kwargs) > 1 or (len(kwargs) == 1 and 'recursive' not in kwargs):
+        raise errors.AnsibleFilterError("'recursive' is the only valid keyword argument")
+
+    for t in terms:
+        if not isinstance(t, dict):
+            raise errors.AnsibleFilterError("|combine expects dictionaries, got " + repr(t))
+
+    if recursive:
+        return reduce(merge_hash, terms)
+    else:
+        return dict(itertools.chain(*map(dict.iteritems, terms)))
+
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
 
@@ -300,4 +316,7 @@ class FilterModule(object):
             'shuffle': randomize_list,
             # undefined
             'mandatory': mandatory,
+
+            # merge dicts
+            'combine': combine,
         }
