@@ -63,7 +63,7 @@ options:
       - Only install dependencies
     required: false
     default: false
-    version_added: 2.0
+    version_added: "2.0"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
 author: "Franck Cuny (@franckcuny)"
