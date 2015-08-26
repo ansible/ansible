@@ -25,6 +25,7 @@ __metaclass__ = type
 import os
 import shlex
 import shutil
+import sys
 import tempfile
 from io import BytesIO
 from subprocess import call
@@ -235,7 +236,7 @@ class VaultEditor:
     # file I/O, ditto read_file(self, filename) and launch_editor(self, filename)
     # ... "Don't Repeat Yourself", etc.
 
-    def __init__(self, cipher_name, password, filename):
+    def __init__(self, cipher_name, password, filename=None):
         # instantiates a member variable for VaultLib
         self.cipher_name = cipher_name
         self.password = password
@@ -369,6 +370,24 @@ class VaultEditor:
         # re-encrypt data and re-write file
         enc_data = new_vault.encrypt(dec_data)
         self.write_data(enc_data, self.filename)
+
+    def filter(self, action):
+
+        check_prereqs()
+
+        input = sys.stdin.read()
+        vault = VaultLib(self.password)
+
+        if action == 'encrypt':
+            if vault.is_encrypted(input):
+                raise AnsibleError("input is already encrypted")
+            output = vault.encrypt(input)
+        else:
+            if not vault.is_encrypted(input):
+                raise AnsibleError("input is not encrypted")
+            output = vault.decrypt(input)
+
+        sys.stdout.write(to_bytes(output, errors='strict'))
 
     def read_data(self, filename):
         f = open(filename, "rb")

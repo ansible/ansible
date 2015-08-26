@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: ansible-vault
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 07/28/2015
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 08/26/2015
 .\"    Manual: System administration commands
 .\"    Source: Ansible 2.0.0
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-VAULT" "1" "07/28/2015" "Ansible 2\&.0\&.0" "System administration commands"
+.TH "ANSIBLE\-VAULT" "1" "08/26/2015" "Ansible 2\&.0\&.0" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -31,7 +31,7 @@
 ansible-vault \- manage encrypted YAML data\&.
 .SH "SYNOPSIS"
 .sp
-ansible\-vault [create|decrypt|edit|encrypt|rekey] [\-\-help] [options] file_name
+ansible\-vault [create|decrypt|edit|encrypt|rekey|filter] [\-\-help] [options] file_name
 .SH "DESCRIPTION"
 .sp
 \fBansible\-vault\fR can encrypt any structured data file used by Ansible\&. This can include \fBgroup_vars/\fR or \fBhost_vars/\fR inventory variables, variables loaded by \fBinclude_vars\fR or \fBvars_files\fR, or variable files passed on the ansible\-playbook command line with \fB\-e @file\&.yml\fR or \fB\-e @file\&.json\fR\&. Role variables and defaults are also included!
@@ -80,19 +80,26 @@ The \fBedit\fR sub\-command is used to modify a file which was previously encryp
 This command will decrypt the file to a temporary file and allow you to edit the file, saving it back when done and removing the temporary file\&.
 .SH "REKEY"
 .sp
-*$ ansible\-vault rekey [options] FILE_1 [FILE_2, \&..., FILE_N]
+\fB$ ansible\-vault rekey [options] FILE_1 [FILE_2, \&..., FILE_N]\fR
 .sp
 The \fBrekey\fR command is used to change the password on a vault\-encrypted files\&. This command can update multiple files at once, and will prompt for both the old and new passwords before modifying any data\&.
 .SH "ENCRYPT"
 .sp
-*$ ansible\-vault encrypt [options] FILE_1 [FILE_2, \&..., FILE_N]
+\fB$ ansible\-vault encrypt [options] FILE_1 [FILE_2, \&..., FILE_N]\fR
 .sp
 The \fBencrypt\fR sub\-command is used to encrypt pre\-existing data files\&. As with the \fBrekey\fR command, you can specify multiple files in one command\&.
 .SH "DECRYPT"
 .sp
-*$ ansible\-vault decrypt [options] FILE_1 [FILE_2, \&..., FILE_N]
+\fB$ ansible\-vault decrypt [options] FILE_1 [FILE_2, \&..., FILE_N]\fR
 .sp
 The \fBdecrypt\fR sub\-command is used to remove all encryption from data files\&. The files will be stored as plain\-text YAML once again, so be sure that you do not run this command on data files with active passwords or other sensitive data\&. In most cases, users will want to use the \fBedit\fR sub\-command to modify the files securely\&.
+.SH "FILTER"
+.sp
+\fB$ cat unencrypted\-file|ansible\-vault filter \-\-encrypt > encrypted\-file\fR
+.sp
+\fB$ cat encrypted\-file|ansible\-vault filter \-\-decrypt > unencrypted\-file\fR
+.sp
+The \fBfilter\fR sub\-command accepts text on stdin and writes filtered text (i\&.e\&. encrypted or unencrypted, depending on the option specified) to stdout\&.
 .SH "AUTHOR"
 .sp
 Ansible was originally written by Michael DeHaan\&. See the AUTHORS file for a complete list of contributors\&.

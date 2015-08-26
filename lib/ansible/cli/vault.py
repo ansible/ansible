@@ -29,7 +29,7 @@ from ansible.utils.display import Display
 class VaultCLI(CLI):
     """ Vault command line class """
 
-    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
+    VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view", "filter")
     CIPHER = 'AES256'
 
     def __init__(self, args, display=None):
@@ -60,12 +60,21 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog encrypt [options] file_name")
         elif self.action == "rekey":
             self.parser.set_usage("usage: %prog rekey [options] file_name")
+        elif self.action == "filter":
+            self.parser.set_usage("usage: cat input|%prog filter [-d|-e] > output")
 
         self.options, self.args = self.parser.parse_args()
         self.display.verbosity = self.options.verbosity
 
-        if len(self.args) == 0:
-            raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
+        if self.action == "filter":
+            if len(self.args) != 0:
+                raise AnsibleOptionsError("ansible-vault filter does not take any arguments")
+        else:
+            if len(self.args) == 0:
+                raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
+            if self.options.filter_action is not None:
+                raise AnsibleOptionsError("The -e/-d options can only be used with ansible-vault filter")
+
 
     def run(self):
 
@@ -140,3 +149,11 @@ class VaultCLI(CLI):
             this_editor.rekey_file(new_password)
 
         self.display.display("Rekey successful")
+
+    def execute_filter(self):
+
+        cipher = getattr(self.options, 'cipher', self.CIPHER)
+        filter_action = self.options.filter_action or 'encrypt'
+
+        this_editor = VaultEditor(cipher, self.vault_pass)
+        this_editor.filter(filter_action)
