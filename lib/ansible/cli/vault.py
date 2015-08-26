@@ -128,6 +128,6 @@ class VaultCLI(CLI):
             __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
         for f in self.args:
-            self.editor.rekey_file(new_password, f)
+            self.editor.rekey_file(f, new_password)
 
         self.display.display("Rekey successful", stderr=True)

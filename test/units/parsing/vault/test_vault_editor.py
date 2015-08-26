@@ -185,7 +185,7 @@ class TestVaultEditor(unittest.TestCase):
         # make sure the password functions for the cipher
         error_hit = False
         try:
-            ve.rekey_file('ansible2', v10_file.name)
+            ve.rekey_file(v10_file.name, 'ansible2')
         except errors.AnsibleError as e:
             error_hit = True
 
