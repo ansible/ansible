@@ -36,6 +36,12 @@ options:
         choices: [ 'present', 'absent' ]
         required: false
         default: present
+    force:
+        description:
+            - opkg --force parameter used
+        choices: ["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove", "checksum", "removal-of-dependent-packages"]
+        required: false
+        default: absent
     update_cache:
         description:
             - update the package db first
@@ -49,6 +55,7 @@ EXAMPLES = '''
 - opkg: name=foo state=present update_cache=yes
 - opkg: name=foo state=absent
 - opkg: name=foo,bar state=absent
+- opkg: name=foo state=present force=overwrite
 '''
 
 import pipes
