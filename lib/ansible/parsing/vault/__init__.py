@@ -12,11 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
-#
-# ansible-pull is a script that runs ansible in local mode
-# after checking out a playbooks directory from source repo.  There is an
-# example playbook to bootstrap this script in the examples/ dir which
-# installs ansible and sets it up to run on cron.
 
 # Make coding more python3-ish
 from __future__ import (absolute_import, division, print_function)
@@ -137,11 +132,11 @@ class VaultLib:
         if self.is_encrypted(b_data):
             raise AnsibleError("data is already encrypted")
 
-        if not self.cipher_name:
+        if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
             self.cipher_name = u"AES256"
 
         cipher_class_name = u'Vault{0}'.format(self.cipher_name)
-        if cipher_class_name in globals() and self.cipher_name in CIPHER_WHITELIST:
+        if cipher_class_name in globals():
             Cipher = globals()[cipher_class_name]
             this_cipher = Cipher()
         else:
@@ -230,18 +225,11 @@ class VaultLib:
 
 
 class VaultEditor:
-    # uses helper methods for write_file(self, filename, data)
-    # to write a file so that code isn't duplicated for simple
-    # file I/O, ditto read_file(self, filename) and launch_editor(self, filename)
-    # ... "Don't Repeat Yourself", etc.
 
-    def __init__(self, cipher_name, password, filename):
-        # instantiates a member variable for VaultLib
-        self.cipher_name = cipher_name
+    def __init__(self, password):
         self.password = password
-        self.filename = filename
 
-    def _edit_file_helper(self, existing_data=None, cipher=None, force_save=False):
+    def _edit_file_helper(self, filename, existing_data=None, force_save=False):
         # make sure the umask is set to a sane value
         old_umask = os.umask(0o077)
 
@@ -262,70 +250,68 @@ class VaultEditor:
 
         # create new vault
         this_vault = VaultLib(self.password)
-        if cipher:
-            this_vault.cipher_name = cipher
 
         # encrypt new data and write out to tmp
         enc_data = this_vault.encrypt(tmpdata)
         self.write_data(enc_data, tmp_path)
 
         # shuffle tmp file into place
-        self.shuffle_files(tmp_path, self.filename)
+        self.shuffle_files(tmp_path, filename)
 
         # and restore umask
         os.umask(old_umask)
 
-    def create_file(self):
+    def create_file(self, filename):
         """ create a new encrypted file """
 
         check_prereqs()
 
-        if os.path.isfile(self.filename):
-            raise AnsibleError("%s exists, please use 'edit' instead" % self.filename)
+        if os.path.isfile(filename):
+            raise AnsibleError("%s exists, please use 'edit' instead" % filename)
 
         # Let the user specify contents and save file
-        self._edit_file_helper(cipher=self.cipher_name)
+        self._edit_file_helper(filename)
 
-    def decrypt_file(self):
+    def decrypt_file(self, filename):
 
         check_prereqs()
 
-        if not os.path.isfile(self.filename):
-            raise AnsibleError("%s does not exist" % self.filename)
+        if not os.path.isfile(filename):
+            raise AnsibleError("%s does not exist" % filename)
 
-        tmpdata = self.read_data(self.filename)
+        tmpdata = self.read_data(filename)
         this_vault = VaultLib(self.password)
         if this_vault.is_encrypted(tmpdata):
             dec_data = this_vault.decrypt(tmpdata)
             if dec_data is None:
                 raise AnsibleError("Decryption failed")
             else:
-                self.write_data(dec_data, self.filename)
+                self.write_data(dec_data, filename)
         else:
-            raise AnsibleError("%s is not encrypted" % self.filename)
+            raise AnsibleError("%s is not encrypted" % filename)
 
-    def edit_file(self):
+    def edit_file(self, filename):
 
         check_prereqs()
 
         # decrypt to tmpfile
-        tmpdata = self.read_data(self.filename)
+        tmpdata = self.read_data(filename)
         this_vault = VaultLib(self.password)
         dec_data = this_vault.decrypt(tmpdata)
 
         # let the user edit the data and save
         if this_vault.cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
-            self._edit_file_helper(existing_data=dec_data, cipher=None, force_save=True)
+            self._edit_file_helper(filename, existing_data=dec_data, force_save=True)
         else:
-            self._edit_file_helper(existing_data=dec_data, cipher=this_vault.cipher_name, force_save=False)
+            self._edit_file_helper(filename, existing_data=dec_data, force_save=False)
 
-    def view_file(self):
+    def view_file(self, filename):
 
         check_prereqs()
 
         # decrypt to tmpfile
-        tmpdata = self.read_data(self.filename)
+        tmpdata = self.read_data(filename)
         this_vault = VaultLib(self.password)
         dec_data = this_vault.decrypt(tmpdata)
         _, tmp_path = tempfile.mkstemp()
@@ -335,40 +321,36 @@ class VaultEditor:
         call(self._pager_shell_command(tmp_path))
         os.remove(tmp_path)
 
-    def encrypt_file(self):
+    def encrypt_file(self, filename):
 
         check_prereqs()
 
-        if not os.path.isfile(self.filename):
-            raise AnsibleError("%s does not exist" % self.filename)
+        if not os.path.isfile(filename):
+            raise AnsibleError("%s does not exist" % filename)
 
-        tmpdata = self.read_data(self.filename)
+        tmpdata = self.read_data(filename)
         this_vault = VaultLib(self.password)
-        this_vault.cipher_name = self.cipher_name
         if not this_vault.is_encrypted(tmpdata):
             enc_data = this_vault.encrypt(tmpdata)
-            self.write_data(enc_data, self.filename)
+            self.write_data(enc_data, filename)
         else:
-            raise AnsibleError("%s is already encrypted" % self.filename)
+            raise AnsibleError("%s is already encrypted" % filename)
 
-    def rekey_file(self, new_password):
+    def rekey_file(self, filename, new_password):
 
         check_prereqs()
 
         # decrypt
-        tmpdata = self.read_data(self.filename)
+        tmpdata = self.read_data(filename)
         this_vault = VaultLib(self.password)
         dec_data = this_vault.decrypt(tmpdata)
 
         # create new vault
         new_vault = VaultLib(new_password)
 
-        # we want to force cipher to the default
-        #new_vault.cipher_name = this_vault.cipher_name
-
         # re-encrypt data and re-write file
         enc_data = new_vault.encrypt(dec_data)
-        self.write_data(enc_data, self.filename)
+        self.write_data(enc_data, filename)
 
     def read_data(self, filename):
         f = open(filename, "rb")
