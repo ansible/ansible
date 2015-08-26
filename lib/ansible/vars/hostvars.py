@@ -43,7 +43,7 @@ class HostVars(collections.Mapping):
         # in inventory
         restriction = inventory._restriction
         inventory.remove_restriction()
-        hosts = inventory.get_hosts()
+        hosts = inventory.get_hosts(ignore_limits_and_restrictions=True)
         inventory.restrict_to_hosts(restriction)
 
         # check to see if localhost is in the hosts list, as we
