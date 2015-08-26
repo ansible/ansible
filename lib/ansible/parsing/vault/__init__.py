@@ -20,6 +20,7 @@ __metaclass__ = type
 import os
 import shlex
 import shutil
+import sys
 import tempfile
 from io import BytesIO
 from subprocess import call
@@ -258,21 +259,21 @@ class VaultEditor:
         # and restore umask
         os.umask(old_umask)
 
-    def encrypt_file(self, filename):
+    def encrypt_file(self, filename, output_file=None):
 
         check_prereqs()
 
         plaintext = self.read_data(filename)
         ciphertext = self.vault.encrypt(plaintext)
-        self.write_data(ciphertext, filename)
+        self.write_data(ciphertext, output_file or filename)
 
-    def decrypt_file(self, filename):
+    def decrypt_file(self, filename, output_file=None):
 
         check_prereqs()
 
         ciphertext = self.read_data(filename)
         plaintext = self.vault.decrypt(ciphertext)
-        self.write_data(plaintext, filename)
+        self.write_data(plaintext, output_file or filename)
 
     def create_file(self, filename):
         """ create a new encrypted file """
@@ -327,7 +328,10 @@ class VaultEditor:
 
     def read_data(self, filename):
         try:
-            f = open(filename, "rb")
+            if filename == '-':
+                f = sys.stdin
+            else:
+                f = open(filename, "rb")
             data = f.read()
             f.close()
         except Exception as e:
@@ -336,9 +340,12 @@ class VaultEditor:
         return data
 
     def write_data(self, data, filename):
-        if os.path.isfile(filename):
-            os.remove(filename)
-        f = open(filename, "wb")
+        if filename == '-':
+            f = sys.stdout
+        else:
+            if os.path.isfile(filename):
+                os.remove(filename)
+            f = open(filename, "wb")
         f.write(to_bytes(data, errors='strict'))
         f.close()
 

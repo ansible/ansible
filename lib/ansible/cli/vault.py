@@ -63,7 +63,19 @@ class VaultCLI(CLI):
         self.options, self.args = self.parser.parse_args()
         self.display.verbosity = self.options.verbosity
 
-        if len(self.args) == 0:
+        if self.options.output_file:
+            if self.action not in ['encrypt','decrypt']:
+                raise AnsibleOptionsError("The --output option can be used only with ansible-vault encrypt/decrypt")
+
+            # This restriction should remain in place until it's possible to
+            # load multiple YAML records from a single file, or it's too easy
+            # to create an encrypted file that can't be read back in. But in
+            # the meanwhile, "cat a b c|ansible-vault encrypt --output x" is
+            # a workaround.
+            if len(self.args) > 1:
+                raise AnsibleOptionsError("At most one input file may be used with the --output option")
+
+        elif len(self.args) == 0:
             raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
 
     def run(self):
@@ -87,19 +99,26 @@ class VaultCLI(CLI):
 
         self.execute()
 
+    def execute_encrypt(self):
+
+        for f in self.args or ['-']:
+            self.editor.encrypt_file(f, output_file=self.options.output_file)
+
+        self.display.display("Encryption successful", stderr=True)
+
+    def execute_decrypt(self):
+
+        for f in self.args or ['-']:
+            self.editor.decrypt_file(f, output_file=self.options.output_file)
+
+        self.display.display("Decryption successful", stderr=True)
+
     def execute_create(self):
 
         if len(self.args) > 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
         self.editor.create_file(self.args[0])
-
-    def execute_decrypt(self):
-
-        for f in self.args:
-            self.editor.decrypt_file(f)
-
-        self.display.display("Decryption successful", stderr=True)
 
     def execute_edit(self):
         for f in self.args:
@@ -109,13 +128,6 @@ class VaultCLI(CLI):
 
         for f in self.args:
             self.editor.view_file(f)
-
-    def execute_encrypt(self):
-
-        for f in self.args:
-            self.editor.encrypt_file(f)
-
-        self.display.display("Encryption successful", stderr=True)
 
     def execute_rekey(self):
         for f in self.args:

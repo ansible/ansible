@@ -262,6 +262,8 @@ class CLI(object):
             parser.add_option('--new-vault-password-file',
                 dest='new_vault_password_file', help="new vault password file for rekey", action="callback",
                 callback=CLI.expand_tilde, type=str)
+            parser.add_option('--output', default=None, dest='output_file',
+                help='output file name for encrypt or decrypt; use - for stdout')
 
 
         if subset_opts:
