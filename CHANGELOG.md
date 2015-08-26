@@ -53,6 +53,8 @@ New Modules:
   * amazon: s3_logging
   * apk
   * bundler
+  * centurylink: clc_blueprint_package
+  * centurylink: clc_firewall_policy
   * centurylink: clc_loadbalancer
   * centurylink: clc_modify_server
   * centurylink: clc_publicip
@@ -112,7 +114,9 @@ New Modules:
   * profitbricks: profitbricks
   * profitbricks: profitbricks_datacenter
   * profitbricks: profitbricks_nic
+  * profitbricks: profitbricks_snapshot
   * profitbricks: profitbricks_volume
+  * profitbricks: profitbricks_volume_attachments
   * proxmox
   * proxmox_template 
   * puppet 
@@ -141,6 +145,8 @@ New Modules:
   * vmware: vmware_cluster
   * vmware: vmware_dns_config
   * vmware: vmware_dvs_host
+  * vmware: vmware_portgroup
+  * vmware: vmware_vm_facts
   * vmware: vmware_vsan_cluster
   * vmware: vmware_vswitch
   * vmware: vca_fw
