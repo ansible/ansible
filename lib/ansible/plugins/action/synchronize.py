@@ -77,7 +77,7 @@ class ActionModule(ActionBase):
         # connection to the remote host
         if 'ansible_syslog_facility' in task_vars:
             del task_vars['ansible_syslog_facility']
-        for key in task_vars:
+        for key in task_vars.keys():
             if key.startswith("ansible_") and key.endswith("_interpreter"):
                 del task_vars[key]
 
