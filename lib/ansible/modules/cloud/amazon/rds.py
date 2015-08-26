@@ -610,7 +610,7 @@ def await_resource(conn, resource, status, module):
     while wait_timeout > time.time() and resource.status != status:
         time.sleep(5)
         if wait_timeout <= time.time():
-            module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
+            module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
         if module.params.get('command') == 'snapshot':
             # Temporary until all the rds2 commands have their responses parsed
             if resource.name is None:
