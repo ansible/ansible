@@ -576,7 +576,9 @@ class Inventory(object):
             if dname is None or dname == '' or dname == '.':
                 cwd = os.getcwd()
                 dname = cwd
-        return os.path.abspath(dname)
+        if dname:
+            dname = os.path.abspath(dname)
+        return dname
 
     def src(self):
         """ if inventory came from a file, what's the directory and file name? """
