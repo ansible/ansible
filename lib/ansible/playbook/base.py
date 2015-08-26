@@ -289,8 +289,16 @@ class Base:
                         value = unicode(value)
                     elif attribute.isa == 'int':
                         value = int(value)
+                    elif attribute.isa == 'float':
+                        value = float(value)
                     elif attribute.isa == 'bool':
                         value = boolean(value)
+                    elif attribute.isa == 'percent':
+                        # special value, which may be an integer or float
+                        # with an optional '%' at the end
+                        if isinstance(value, string_types) and '%' in value:
+                            value = value.replace('%', '')
+                        value = float(value)
                     elif attribute.isa == 'list':
                         if value is None:
                             value = []

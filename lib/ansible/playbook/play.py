@@ -78,7 +78,7 @@ class Play(Base, Taggable, Become):
     # Flag/Setting Attributes
     _any_errors_fatal    = FieldAttribute(isa='bool', default=False)
     _force_handlers      = FieldAttribute(isa='bool')
-    _max_fail_percentage = FieldAttribute(isa='string', default='0')
+    _max_fail_percentage = FieldAttribute(isa='percent')
     _serial              = FieldAttribute(isa='int', default=0)
     _strategy            = FieldAttribute(isa='string', default='linear')
 
