@@ -124,7 +124,7 @@ class Inventory(object):
                 # should never happen, but JIC
                 raise AnsibleError("Unable to parse %s as an inventory source" % host_list)
 
-            self._vars_plugins = [ x for x in vars_loader.all(self) ]
+        self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
         # FIXME: shouldn't be required, since the group/host vars file
         #        management will be done in VariableManager
