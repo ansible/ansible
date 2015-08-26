@@ -58,6 +58,12 @@ options:
       - Use the mirror's index file instead of the CPAN Meta DB
     required: false
     default: false
+  installdeps:
+    description:
+      - Only install dependencies
+    required: false
+    default: false
+    version_added: "2.0"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
 author: "Franck Cuny (@franckcuny)"
@@ -91,10 +97,11 @@ def _is_package_installed(module, name, locallib, cpanm):
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
     if res == 0:
        return True
-    else: 
+    else:
        return False
 
-def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, cpanm):
+def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only,
+                    installdeps, cpanm):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
     # don't copy stuff like this
     if from_path:
@@ -114,6 +121,9 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, cpan
     if mirror_only is True:
         cmd = "{cmd} --mirror-only".format(cmd=cmd)
 
+    if installdeps is True:
+        cmd = "{cmd} --installdeps".format(cmd=cmd)
+
     return cmd
 
 
@@ -125,6 +135,7 @@ def main():
         locallib=dict(default=None, required=False),
         mirror=dict(default=None, required=False),
         mirror_only=dict(default=False, type='bool'),
+        installdeps=dict(default=False, type='bool'),
     )
 
     module = AnsibleModule(
@@ -139,6 +150,7 @@ def main():
     locallib    = module.params['locallib']
     mirror      = module.params['mirror']
     mirror_only = module.params['mirror_only']
+    installdeps = module.params['installdeps']
 
     changed   = False
 
@@ -146,7 +158,8 @@ def main():
 
     if not installed:
         out_cpanm = err_cpanm = ''
-        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, cpanm)
+        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror,
+                                    mirror_only, installdeps, cpanm)
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
 
