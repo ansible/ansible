@@ -614,12 +614,12 @@ def await_resource(conn, resource, status, module):
         if module.params.get('command') == 'snapshot':
             # Temporary until all the rds2 commands have their responses parsed
             if resource.name is None:
-                module.fail_json(msg="Problem with snapshot %s" % resource.snapshot)
+                module.fail_json(msg="There was a problem waiting for RDS snapshot %s" % resource.snapshot)
             resource = conn.get_db_snapshot(resource.name)
         else:
             # Temporary until all the rds2 commands have their responses parsed
             if resource.name is None:
-                module.fail_json(msg="Problem with instance %s" % resource.instance)
+                module.fail_json(msg="There was a problem waiting for RDS instance %s" % resource.instance)
             resource = conn.get_db_instance(resource.name)
             if resource is None:
                 break
@@ -653,7 +653,7 @@ def create_db_instance(module, conn):
                     module.params.get('username'), module.params.get('password'), **params)
             changed = True
         except RDSException, e:
-            module.fail_json(msg="failed to create instance: %s" % e.message)
+            module.fail_json(msg="Failed to create instance: %s" % e.message)
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
@@ -680,7 +680,7 @@ def replicate_db_instance(module, conn):
             result = conn.create_db_instance_read_replica(instance_name, source_instance, **params)
             changed = True
         except RDSException, e:
-            module.fail_json(msg="failed to create replica instance: %s " % e.message)
+            module.fail_json(msg="Failed to create replica instance: %s " % e.message)
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
@@ -719,7 +719,7 @@ def delete_db_instance_or_snapshot(module, conn):
         else:
             result = conn.delete_db_snapshot(snapshot)
     except RDSException, e:
-        module.fail_json(msg="failed to delete instance: %s" % e.message)
+        module.fail_json(msg="Failed to delete instance: %s" % e.message)
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
@@ -745,11 +745,11 @@ def facts_db_instance_or_snapshot(module, conn):
     snapshot = module.params.get('snapshot')
 
     if instance_name and snapshot:
-        module.fail_json(msg="facts must be called with either instance_name or snapshot, not both")
+        module.fail_json(msg="Facts must be called with either instance_name or snapshot, not both")
     if instance_name:
         resource = conn.get_db_instance(instance_name)
         if not resource:
-            module.fail_json(msg="DB Instance %s does not exist" % instance_name)
+            module.fail_json(msg="DB instance %s does not exist" % instance_name)
     if snapshot:
         resource = conn.get_db_snapshot(snapshot)
         if not resource:
@@ -1037,7 +1037,7 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
-        module.fail_json(msg="region not specified and unable to determine region from EC2_REGION.")
+        module.fail_json(msg="Region not specified. Unable to determine region from EC2_REGION.")
 
     # connect to the rds endpoint
     if has_rds2:
