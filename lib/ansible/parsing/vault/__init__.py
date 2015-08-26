@@ -336,7 +336,7 @@ class VaultEditor:
         else:
             raise AnsibleError("%s is already encrypted" % filename)
 
-    def rekey_file(self, new_password, filename):
+    def rekey_file(self, filename, new_password):
 
         check_prereqs()
 
