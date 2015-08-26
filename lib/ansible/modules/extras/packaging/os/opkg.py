@@ -77,6 +77,11 @@ def query_package(module, opkg_path, name, state="present"):
 def remove_packages(module, opkg_path, packages):
     """ Uninstalls one or more packages if installed. """
 
+    p = module.params
+    force = p["force"]
+    if force:
+        force = "--force-%s" % force
+
     remove_c = 0
     # Using a for loop incase of error, we can report the package that failed
     for package in packages:
@@ -84,7 +89,7 @@ def remove_packages(module, opkg_path, packages):
         if not query_package(module, opkg_path, package):
             continue
 
-        rc, out, err = module.run_command("%s remove %s" % (opkg_path, package))
+        rc, out, err = module.run_command("%s remove %s %s" % (opkg_path, force, package))
 
         if query_package(module, opkg_path, package):
             module.fail_json(msg="failed to remove %s: %s" % (package, out))
@@ -101,13 +106,18 @@ def remove_packages(module, opkg_path, packages):
 def install_packages(module, opkg_path, packages):
     """ Installs one or more packages if not already installed. """
 
+    p = module.params
+    force = p["force"]
+    if force:
+        force = "--force-%s" % force
+
     install_c = 0
 
     for package in packages:
         if query_package(module, opkg_path, package):
             continue
 
-        rc, out, err = module.run_command("%s install %s" % (opkg_path, package))
+        rc, out, err = module.run_command("%s install %s %s" % (opkg_path, force, package))
 
         if not query_package(module, opkg_path, package):
             module.fail_json(msg="failed to install %s: %s" % (package, out))
@@ -125,6 +135,7 @@ def main():
         argument_spec = dict(
             name = dict(aliases=["pkg"], required=True),
             state = dict(default="present", choices=["present", "installed", "absent", "removed"]),
+            force = dict(default="", choices=["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove", "checksum", "removal-of-dependent-packages"]),
             update_cache = dict(default="no", aliases=["update-cache"], type='bool')
         )
     )
