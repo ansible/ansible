@@ -227,7 +227,7 @@ class VaultLib:
 class VaultEditor:
 
     def __init__(self, password):
-        self.password = password
+        self.vault = VaultLib(password)
 
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
         # make sure the umask is set to a sane value
@@ -248,11 +248,8 @@ class VaultEditor:
             os.remove(tmp_path)
             return
 
-        # create new vault
-        this_vault = VaultLib(self.password)
-
         # encrypt new data and write out to tmp
-        enc_data = this_vault.encrypt(tmpdata)
+        enc_data = self.vault.encrypt(tmpdata)
         self.write_data(enc_data, tmp_path)
 
         # shuffle tmp file into place
@@ -280,9 +277,8 @@ class VaultEditor:
             raise AnsibleError("%s does not exist" % filename)
 
         tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        if this_vault.is_encrypted(tmpdata):
-            dec_data = this_vault.decrypt(tmpdata)
+        if self.vault.is_encrypted(tmpdata):
+            dec_data = self.vault.decrypt(tmpdata)
             if dec_data is None:
                 raise AnsibleError("Decryption failed")
             else:
@@ -296,11 +292,10 @@ class VaultEditor:
 
         # decrypt to tmpfile
         tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        dec_data = this_vault.decrypt(tmpdata)
+        dec_data = self.vault.decrypt(tmpdata)
 
         # let the user edit the data and save
-        if this_vault.cipher_name not in CIPHER_WRITE_WHITELIST:
+        if self.vault.cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
             self._edit_file_helper(filename, existing_data=dec_data, force_save=True)
         else:
@@ -312,8 +307,7 @@ class VaultEditor:
 
         # decrypt to tmpfile
         tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        dec_data = this_vault.decrypt(tmpdata)
+        dec_data = self.vault.decrypt(tmpdata)
         _, tmp_path = tempfile.mkstemp()
         self.write_data(dec_data, tmp_path)
 
@@ -329,9 +323,8 @@ class VaultEditor:
             raise AnsibleError("%s does not exist" % filename)
 
         tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        if not this_vault.is_encrypted(tmpdata):
-            enc_data = this_vault.encrypt(tmpdata)
+        if not self.vault.is_encrypted(tmpdata):
+            enc_data = self.vault.encrypt(tmpdata)
             self.write_data(enc_data, filename)
         else:
             raise AnsibleError("%s is already encrypted" % filename)
@@ -342,8 +335,7 @@ class VaultEditor:
 
         # decrypt
         tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        dec_data = this_vault.decrypt(tmpdata)
+        dec_data = self.vault.decrypt(tmpdata)
 
         # create new vault
         new_vault = VaultLib(new_password)
