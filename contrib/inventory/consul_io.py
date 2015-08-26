@@ -129,6 +129,58 @@ import sys
 import ConfigParser
 import urllib, urllib2, base64
 
+
+def get_log_filename():
+    tty_filename = '/dev/tty'
+    stdout_filename = '/dev/stdout'
+
+    if not os.path.exists(tty_filename):
+        return stdout_filename
+    if not os.access(tty_filename, os.W_OK):
+        return stdout_filename
+    if os.getenv('TEAMCITY_VERSION'):
+        return stdout_filename
+
+    return tty_filename
+
+
+def setup_logging():
+    filename = get_log_filename()
+
+    import logging.config
+    logging.config.dictConfig({
+        'version': 1,
+        'formatters': {
+            'simple': {
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            },
+        },
+        'root': {
+            'level': os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_LEVEL', 'WARN'),
+            'handlers': ['console'],
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.FileHandler',
+                'filename': filename,
+                'formatter': 'simple',
+            },
+        },
+        'loggers': {
+            'iso8601': {
+                'qualname': 'iso8601',
+                'level': 'INFO',
+            },
+        },
+    })
+    logger = logging.getLogger('consul_io.py')
+    logger.debug('Invoked with %r', sys.argv)
+
+
+if os.getenv('ANSIBLE_INVENTORY_CONSUL_IO_LOG_ENABLED'):
+    setup_logging()
+
+
 try:
   import json
 except ImportError:
