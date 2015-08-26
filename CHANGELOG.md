@@ -145,8 +145,13 @@ New Modules:
   * vmware: vmware_cluster
   * vmware: vmware_dns_config
   * vmware: vmware_dvs_host
+  * vmware: vmware_dvs_portgroup
+  * vmware: vmware_dvswitch
+  * vmware: vmware_host
+  * vmware: vmware_vmkernel_ip_config
   * vmware: vmware_portgroup
   * vmware: vmware_vm_facts
+  * vmware: vmware_vmkernel
   * vmware: vmware_vsan_cluster
   * vmware: vmware_vswitch
   * vmware: vca_fw
