@@ -82,7 +82,10 @@ class ActionModule(ActionBase):
                 del task_vars[key]
 
         # Add the definitions from localhost
-        localhost = task_vars['hostvars']['127.0.0.1']
+        for host in C.LOCALHOST:
+            if host in task_vars['hostvars']:
+                localhost = task_vars['hostvars'][host]
+                break
         if 'ansible_syslog_facility' in localhost:
             task_vars['ansible_syslog_facility'] = localhost['ansible_syslog_facility']
         for key in localhost:
