@@ -20,14 +20,16 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import distutils.spawn
-import traceback
 import os
 import shlex
 import subprocess
+import traceback
+
+from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible import utils
+from ansible.plugins.connections import ConnectionBase
+from ansible.utils.path import is_executable
 from ansible.utils.unicode import to_bytes
-import ansible.constants as C
 
 
 class Connection(ConnectionBase):
@@ -51,13 +53,17 @@ class Connection(ConnectionBase):
             raise AnsibleError("%s is not a directory" % self.chroot)
 
         chrootsh = os.path.join(self.chroot, 'bin/sh')
-        if not utils.is_executable(chrootsh):
+        if not is_executable(chrootsh):
             raise AnsibleError("%s does not look like a chrootable dir (/bin/sh missing)" % self.chroot)
 
         self.chroot_cmd = distutils.spawn.find_executable('chroot')
         if not self.chroot_cmd:
             raise AnsibleError("chroot command not found in PATH")
 
+    @property
+    def transport(self):
+        ''' used to identify this connection object '''
+        return 'chroot'
 
     def _connect(self, port=None):
         ''' connect to the chroot; nothing to do here '''
@@ -86,8 +92,8 @@ class Connection(ConnectionBase):
         return the process's exit code immediately.
         '''
 
-        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
-            raise AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
+        if sudoable and self._play_context.become and self._play_context.become_method not in self.become_methods_supported:
+            raise AnsibleError("Internal Error: this module does not support running commands via %s" % self._play_context.become_method)
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -96,8 +102,9 @@ class Connection(ConnectionBase):
         local_cmd = self._generate_cmd(executable, cmd)
 
         self._display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
+        # FIXME: cwd= needs to be set to the basedir of the playbook, which
+        #        should come from loader, but is not in the connection plugins
         p = subprocess.Popen(local_cmd, shell=False,
-                             cwd=self.runner.basedir,
                              stdin=stdin,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -119,7 +126,7 @@ class Connection(ConnectionBase):
         try:
             with open(in_path, 'rb') as in_file:
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), None, stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, self.BUFSIZE), None, stdin=in_file)
                 except OSError:
                     raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:
@@ -138,16 +145,16 @@ class Connection(ConnectionBase):
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
 
         try:
-            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, self.BUFSIZE), None)
         except OSError:
             raise AnsibleError("chroot connection requires dd command in the chroot")
 
         with open(out_path, 'wb+') as out_file:
             try:
-                chunk = p.stdout.read(BUFSIZE)
+                chunk = p.stdout.read(self.BUFSIZE)
                 while chunk:
                     out_file.write(chunk)
-                    chunk = p.stdout.read(BUFSIZE)
+                    chunk = p.stdout.read(self.BUFSIZE)
             except:
                 traceback.print_exc()
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
