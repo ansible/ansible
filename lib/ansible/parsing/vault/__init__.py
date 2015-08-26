@@ -225,10 +225,6 @@ class VaultLib:
 
 
 class VaultEditor:
-    # uses helper methods for write_file(self, filename, data)
-    # to write a file so that code isn't duplicated for simple
-    # file I/O, ditto read_file(self, filename) and launch_editor(self, filename)
-    # ... "Don't Repeat Yourself", etc.
 
     def __init__(self, password, filename):
         self.password = password
