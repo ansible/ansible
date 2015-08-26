@@ -210,6 +210,10 @@ class TaskQueueManager:
             main_q.close()
             worker_prc.terminate()
 
+    def clear_failed_hosts(self):
+        self._failed_hosts      = dict()
+        self._unreachable_hosts = dict()
+
     def get_inventory(self):
         return self._inventory
 

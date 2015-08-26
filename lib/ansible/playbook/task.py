@@ -39,6 +39,13 @@ from ansible.playbook.taggable import Taggable
 
 __all__ = ['Task']
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class Task(Base, Conditional, Taggable, Become):
 
     """
@@ -192,6 +199,14 @@ class Task(Base, Conditional, Taggable, Become):
                     new_ds[k] = v
 
         return super(Task, self).preprocess_data(new_ds)
+
+    def _load_any_errors_fatal(self, attr, value):
+        '''
+        Exists only to show a deprecation warning, as this attribute is not valid
+        at the task level.
+        '''
+        display.deprecated("Setting any_errors_fatal on a task is no longer supported. This should be set at the play level only")
+        return None
 
     def post_validate(self, templar):
         '''
