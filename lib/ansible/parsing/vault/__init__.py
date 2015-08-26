@@ -230,13 +230,11 @@ class VaultEditor:
     # file I/O, ditto read_file(self, filename) and launch_editor(self, filename)
     # ... "Don't Repeat Yourself", etc.
 
-    def __init__(self, cipher_name, password, filename):
-        # instantiates a member variable for VaultLib
-        self.cipher_name = cipher_name
+    def __init__(self, password, filename):
         self.password = password
         self.filename = filename
 
-    def _edit_file_helper(self, existing_data=None, cipher=None, force_save=False):
+    def _edit_file_helper(self, existing_data=None, force_save=False):
         # make sure the umask is set to a sane value
         old_umask = os.umask(0o077)
 
@@ -257,8 +255,6 @@ class VaultEditor:
 
         # create new vault
         this_vault = VaultLib(self.password)
-        if cipher:
-            this_vault.cipher_name = cipher
 
         # encrypt new data and write out to tmp
         enc_data = this_vault.encrypt(tmpdata)
@@ -279,7 +275,7 @@ class VaultEditor:
             raise AnsibleError("%s exists, please use 'edit' instead" % self.filename)
 
         # Let the user specify contents and save file
-        self._edit_file_helper(cipher=self.cipher_name)
+        self._edit_file_helper()
 
     def decrypt_file(self):
 
@@ -311,9 +307,9 @@ class VaultEditor:
         # let the user edit the data and save
         if this_vault.cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
-            self._edit_file_helper(existing_data=dec_data, cipher=None, force_save=True)
+            self._edit_file_helper(existing_data=dec_data, force_save=True)
         else:
-            self._edit_file_helper(existing_data=dec_data, cipher=this_vault.cipher_name, force_save=False)
+            self._edit_file_helper(existing_data=dec_data, force_save=False)
 
     def view_file(self):
 
@@ -339,7 +335,6 @@ class VaultEditor:
 
         tmpdata = self.read_data(self.filename)
         this_vault = VaultLib(self.password)
-        this_vault.cipher_name = self.cipher_name
         if not this_vault.is_encrypted(tmpdata):
             enc_data = this_vault.encrypt(tmpdata)
             self.write_data(enc_data, self.filename)
@@ -357,9 +352,6 @@ class VaultEditor:
 
         # create new vault
         new_vault = VaultLib(new_password)
-
-        # we want to force cipher to the default
-        #new_vault.cipher_name = this_vault.cipher_name
 
         # re-encrypt data and re-write file
         enc_data = new_vault.encrypt(dec_data)

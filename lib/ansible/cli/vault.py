@@ -30,7 +30,6 @@ class VaultCLI(CLI):
     """ Vault command line class """
 
     VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
-    CIPHER = 'AES256'
 
     def __init__(self, args, display=None):
 
@@ -91,15 +90,13 @@ class VaultCLI(CLI):
         if len(self.args) > 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
-        cipher = getattr(self.options, 'cipher', self.CIPHER)
-        this_editor = VaultEditor(cipher, self.vault_pass, self.args[0])
+        this_editor = VaultEditor(self.vault_pass, self.args[0])
         this_editor.create_file()
 
     def execute_decrypt(self):
 
-        cipher = getattr(self.options, 'cipher', self.CIPHER)
         for f in self.args:
-            this_editor = VaultEditor(cipher, self.vault_pass, f)
+            this_editor = VaultEditor(self.vault_pass, f)
             this_editor.decrypt_file()
 
         self.display.display("Decryption successful")
@@ -107,20 +104,19 @@ class VaultCLI(CLI):
     def execute_edit(self):
 
         for f in self.args:
-            this_editor = VaultEditor(None, self.vault_pass, f)
+            this_editor = VaultEditor(self.vault_pass, f)
             this_editor.edit_file()
 
     def execute_view(self):
 
         for f in self.args:
-            this_editor = VaultEditor(None, self.vault_pass, f)
+            this_editor = VaultEditor(self.vault_pass, f)
             this_editor.view_file()
 
     def execute_encrypt(self):
 
-        cipher = getattr(self.options, 'cipher', self.CIPHER)
         for f in self.args:
-            this_editor = VaultEditor(cipher, self.vault_pass, f)
+            this_editor = VaultEditor(self.vault_pass, f)
             this_editor.encrypt_file()
 
         self.display.display("Encryption successful")
@@ -136,7 +132,7 @@ class VaultCLI(CLI):
             __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
         for f in self.args:
-            this_editor = VaultEditor(None, self.vault_pass, f)
+            this_editor = VaultEditor(self.vault_pass, f)
             this_editor.rekey_file(new_password)
 
         self.display.display("Rekey successful")
