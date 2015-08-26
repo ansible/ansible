@@ -226,8 +226,9 @@ asking about prospective feature design, or discussions about extending ansible 
 about new releases of Ansible, and also rare infrequent event information, such as announcements about an AnsibleFest coming up,
 which is our official conference series.
 
-To subscribe to a group from a non-google account, you can email the subscription address, for
-example ansible-devel+subscribe@googlegroups.com.
+`Ansible Lockdown List <https://groups.google.com/forum/#!forum/ansible-lockdown>`_ is for all things related to Ansible Lockdown projects, including DISA STIG automation and CIS Benchmarks.
+
+To subscribe to a group from a non-google account, you can send an email to the subscription address requesting the subscription. For example: ansible-devel+subscribe@googlegroups.com
 
 Release Numbering
 -----------------
