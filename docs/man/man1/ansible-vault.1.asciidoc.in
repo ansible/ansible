@@ -12,7 +12,7 @@ ansible-vault - manage encrypted YAML data.
 
 SYNOPSIS
 --------
-ansible-vault [create|decrypt|edit|encrypt|rekey] [--help] [options] file_name
+ansible-vault [create|decrypt|edit|encrypt|rekey|filter] [--help] [options] file_name
 
 
 DESCRIPTION
@@ -84,7 +84,7 @@ file, saving it back when done and removing the temporary file.
 REKEY
 -----
 
-*$ ansible-vault rekey [options] FILE_1 [FILE_2, ..., FILE_N]
+*$ ansible-vault rekey [options] FILE_1 [FILE_2, ..., FILE_N]*
 
 The *rekey* command is used to change the password on a vault-encrypted files.
 This command can update multiple files at once, and will prompt for both the
@@ -93,7 +93,7 @@ old and new passwords before modifying any data.
 ENCRYPT
 -------
 
-*$ ansible-vault encrypt [options] FILE_1 [FILE_2, ..., FILE_N]
+*$ ansible-vault encrypt [options] FILE_1 [FILE_2, ..., FILE_N]*
 
 The *encrypt* sub-command is used to encrypt pre-existing data files. As with the
 *rekey* command, you can specify multiple files in one command.
@@ -101,13 +101,23 @@ The *encrypt* sub-command is used to encrypt pre-existing data files. As with th
 DECRYPT
 -------
 
-*$ ansible-vault decrypt [options] FILE_1 [FILE_2, ..., FILE_N]
+*$ ansible-vault decrypt [options] FILE_1 [FILE_2, ..., FILE_N]*
 
 The *decrypt* sub-command is used to remove all encryption from data files. The files
 will be stored as plain-text YAML once again, so be sure that you do not run this
 command on data files with active passwords or other sensitive data. In most cases, 
 users will want to use the *edit* sub-command to modify the files securely.
 
+FILTER
+------
+
+*$ cat unencrypted-file|ansible-vault filter --encrypt > encrypted-file*
+
+*$ cat encrypted-file|ansible-vault filter --decrypt > unencrypted-file*
+
+The *filter* sub-command accepts text on stdin and writes filtered text
+(i.e. encrypted or unencrypted, depending on the option specified) to
+stdout.
 
 AUTHOR
 ------

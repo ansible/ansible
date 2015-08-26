@@ -262,6 +262,10 @@ class CLI(object):
             parser.add_option('--new-vault-password-file',
 			    dest='new_vault_password_file', help="new vault password file for rekey", action="callback",
 			    callback=CLI.expand_tilde, type=str)
+            parser.add_option('--encrypt', dest='filter_action', action='store_const', const='encrypt',
+                help='encrypt using ansible-vault filter')
+            parser.add_option('--decrypt', dest='filter_action', action='store_const', const='decrypt',
+                help='decrypt using ansible-vault filter')
 
 
         if subset_opts:
