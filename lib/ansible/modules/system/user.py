@@ -577,11 +577,13 @@ class User(object):
 
     def ssh_key_gen(self):
         info = self.user_info()
-        if not os.path.exists(info[5]):
+        if not os.path.exists(info[5]) and not self.module.check_mode:
             return (1, '', 'User %s home directory does not exist' % self.name)
         ssh_key_file = self.get_ssh_key_path()
         ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
+            if self.module.check_mode:
+                return (0, '', '')
             try:
                 os.mkdir(ssh_dir, 0700)
                 os.chown(ssh_dir, info[2], info[3])
@@ -589,6 +591,8 @@ class User(object):
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
         if os.path.exists(ssh_key_file):
             return (None, 'Key already exists', '')
+        if self.module.check_mode:
+            return (0, '', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)
@@ -2148,6 +2152,7 @@ def main():
 
         # deal with ssh key
         if user.sshkeygen:
+            # generate ssh key (note: this function is check mode aware)
             (rc, out, err) = user.ssh_key_gen()
             if rc is not None and rc != 0:
                 module.fail_json(name=user.name, msg=err, rc=rc)
