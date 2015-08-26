@@ -83,6 +83,8 @@ class VaultCLI(CLI):
         if not self.vault_pass:
             raise AnsibleOptionsError("A password is required to use Ansible's Vault")
 
+        self.editor = VaultEditor(self.vault_pass)
+
         self.execute()
 
     def execute_create(self):
@@ -90,36 +92,30 @@ class VaultCLI(CLI):
         if len(self.args) > 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
-        this_editor = VaultEditor(self.vault_pass, self.args[0])
-        this_editor.create_file()
+        self.editor.create_file(self.args[0])
 
     def execute_decrypt(self):
 
         for f in self.args:
-            this_editor = VaultEditor(self.vault_pass, f)
-            this_editor.decrypt_file()
+            self.editor.decrypt_file(f)
 
-        self.display.display("Decryption successful")
+        self.display.display("Decryption successful", stderr=True)
 
     def execute_edit(self):
-
         for f in self.args:
-            this_editor = VaultEditor(self.vault_pass, f)
-            this_editor.edit_file()
+            self.editor.edit_file(f)
 
     def execute_view(self):
 
         for f in self.args:
-            this_editor = VaultEditor(self.vault_pass, f)
-            this_editor.view_file()
+            self.editor.view_file(f)
 
     def execute_encrypt(self):
 
         for f in self.args:
-            this_editor = VaultEditor(self.vault_pass, f)
-            this_editor.encrypt_file()
+            self.editor.encrypt_file(f)
 
-        self.display.display("Encryption successful")
+        self.display.display("Encryption successful", stderr=True)
 
     def execute_rekey(self):
         for f in self.args:
@@ -132,7 +128,6 @@ class VaultCLI(CLI):
             __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
         for f in self.args:
-            this_editor = VaultEditor(self.vault_pass, f)
-            this_editor.rekey_file(new_password)
+            self.editor.rekey_file(new_password, f)
 
-        self.display.display("Rekey successful")
+        self.display.display("Rekey successful", stderr=True)
