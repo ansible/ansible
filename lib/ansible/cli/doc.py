@@ -233,7 +233,10 @@ class DocCLI(CLI):
         text = []
         text.append("> %s\n" % doc['module'].upper())
 
-        desc = " ".join(doc['description'])
+        if isinstance(doc['description'], list):
+            desc = " ".join(doc['description'])
+        else:
+            desc = doc['description']
 
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
 
@@ -250,7 +253,10 @@ class DocCLI(CLI):
 
             text.append("%s %s" % (opt_leadin, o))
 
-            desc = " ".join(opt['description'])
+            if isinstance(doc['description'], list):
+                desc = " ".join(doc['description'])
+            else:
+                desc = doc['description']
 
             if 'choices' in opt:
                 choices = ", ".join(str(i) for i in opt['choices'])
