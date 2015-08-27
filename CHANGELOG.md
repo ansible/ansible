@@ -109,6 +109,7 @@ New Modules:
   * openstack: os_subnet
   * openstack: os_volume
   * osx_defaults
+  * pagerduty_alert
   * pam_limits
   * pear
   * profitbricks: profitbricks
