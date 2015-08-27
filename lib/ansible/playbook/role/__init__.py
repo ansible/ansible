@@ -370,7 +370,7 @@ class Role(Base, Become, Conditional, Taggable):
     def deserialize(self, data, include_deps=True):
         self._role_name    = data.get('_role_name', '')
         self._role_path    = data.get('_role_path', '')
-	self._role_vars    = data.get('_role_vars', dict())
+        self._role_vars    = data.get('_role_vars', dict())
         self._role_params  = data.get('_role_params', dict())
         self._default_vars = data.get('_default_vars', dict())
         self._had_task_run = data.get('_had_task_run', dict())
