@@ -63,20 +63,21 @@ class VaultCLI(CLI):
         self.options, self.args = self.parser.parse_args()
         self.display.verbosity = self.options.verbosity
 
-        if self.options.output_file:
-            if self.action not in ['encrypt','decrypt']:
-                raise AnsibleOptionsError("The --output option can be used only with ansible-vault encrypt/decrypt")
+        can_output = ['encrypt', 'decrypt']
 
+        if self.action not in can_output:
+            if self.options.output_file:
+                raise AnsibleOptionsError("The --output option can be used only with ansible-vault %s" % '/'.join(can_output))
+            if len(self.args) == 0:
+                raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
+        else:
             # This restriction should remain in place until it's possible to
             # load multiple YAML records from a single file, or it's too easy
             # to create an encrypted file that can't be read back in. But in
             # the meanwhile, "cat a b c|ansible-vault encrypt --output x" is
             # a workaround.
-            if len(self.args) > 1:
+            if self.options.output_file and len(self.args) > 1:
                 raise AnsibleOptionsError("At most one input file may be used with the --output option")
-
-        elif len(self.args) == 0:
-            raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
 
     def run(self):
 
