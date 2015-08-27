@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 2.0 "TBD" - ACTIVE DEVELOPMENT
+## 2.0 "Over the Hills and Far Away" - ACTIVE DEVELOPMENT
 
 Major Changes:
  * Introducing the new block/rescue/always directives, allow for making task blocks and introducing exception like semantics
