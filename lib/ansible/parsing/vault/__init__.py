@@ -104,8 +104,6 @@ class VaultLib:
 
     def __init__(self, password):
         self.b_password = to_bytes(password, errors='strict', encoding='utf-8')
-        self.cipher_name = None
-        self.b_version = b'1.1'
 
     def is_encrypted(self, data):
         """ Test if this is vault encrypted data
@@ -119,7 +117,17 @@ class VaultLib:
             return True
         return False
 
-    def encrypt(self, data):
+    def _cipher(self, cipher_name):
+
+        cipher_class_name = u'Vault{0}'.format(cipher_name)
+        if cipher_class_name in globals():
+            Cipher = globals()[cipher_class_name]
+        else:
+            raise AnsibleError(u"{0} cipher could not be found".format(cipher_name))
+
+        return Cipher
+
+    def encrypt(self, data, cipher_name=None):
         """Vault encrypt a piece of data.
 
         :arg data: a utf-8 byte str or unicode string to encrypt.
@@ -128,27 +136,20 @@ class VaultLib:
             formatted to newline terminated lines of 80 characters.  This is
             suitable for dumping as is to a vault file.
         """
-        b_data = to_bytes(data, errors='strict', encoding='utf-8')
+        b_plaintext = to_bytes(data, errors='strict', encoding='utf-8')
 
-        if self.is_encrypted(b_data):
+        if self.is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
-            self.cipher_name = u"AES256"
+        if not cipher_name or cipher_name not in CIPHER_WRITE_WHITELIST:
+            cipher_name = u"AES256"
 
-        cipher_class_name = u'Vault{0}'.format(self.cipher_name)
-        if cipher_class_name in globals():
-            Cipher = globals()[cipher_class_name]
-            this_cipher = Cipher()
-        else:
-            raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
+        cipher = self._cipher(cipher_name)()
 
-        # encrypt data
-        b_enc_data = this_cipher.encrypt(b_data, self.b_password)
+        b_ciphertext = cipher.encrypt(b_plaintext, self.b_password)
+        b_data = self._format_output(cipher_name, cipher.version, b_ciphertext)
 
-        # format the data for output to the file
-        b_tmp_data = self._format_output(b_enc_data)
-        return b_tmp_data
+        return b_data
 
     def decrypt(self, data):
         """Decrypt a piece of vault encrypted data.
@@ -162,46 +163,40 @@ class VaultLib:
         if self.b_password is None:
             raise AnsibleError("A vault password must be specified to decrypt data")
 
-        if not self.is_encrypted(b_data):
+        (cipher_name, version, b_ciphertext) = self._parse_vault_file(b_data)
+
+        if not cipher_name:
             raise AnsibleError("input is not encrypted")
 
-        # clean out header
-        b_data = self._split_header(b_data)
+        if not cipher_name in CIPHER_WHITELIST:
+            raise AnsibleError("Vault file encrypted with unrecognised cipher: {0}".format(cipher_name))
 
-        # create the cipher object
-        cipher_class_name = u'Vault{0}'.format(self.cipher_name)
-        if cipher_class_name in globals() and self.cipher_name in CIPHER_WHITELIST:
-            Cipher = globals()[cipher_class_name]
-            this_cipher = Cipher()
-        else:
-            raise AnsibleError("{0} cipher could not be found".format(self.cipher_name))
+        cipher = self._cipher(cipher_name)()
 
-        # try to unencrypt data
-        b_data = this_cipher.decrypt(b_data, self.b_password)
-        if b_data is None:
+        b_plaintext = cipher.decrypt(b_ciphertext, self.b_password, version=version)
+        if b_plaintext is None:
             raise AnsibleError("Decryption failed")
 
-        return b_data
+        return b_plaintext
 
-    def _format_output(self, b_data):
+    def _format_output(self, cipher_name, version, b_data):
         """ Add header and format to 80 columns
 
-            :arg b_data: the encrypted and hexlified data as a byte string
+            :arg cipher_name: cipher name as a unicode string
+            :arg version: cipher version as a unicode string
+            :arg b_data: the text-encoded ciphertext as a byte string
             :returns: a byte str that should be dumped into a file.  It's
                 formatted to 80 char columns and has the header prepended
         """
 
-        if not self.cipher_name:
-            raise AnsibleError("the cipher must be set before adding a header")
+        b_cipher = to_bytes(cipher_name, errors='strict', encoding='utf-8')
+        b_version = to_bytes(version, errors='strict', encoding='utf-8')
+        lines = [b'%s\n' % b_data[i:i+80] for i in range(0, len(b_data), 80)]
+        data = b'%s;%s;%s\n%s' % (b_HEADER, b_version, b_cipher, ''.join(lines))
 
-        tmpdata = [b'%s\n' % b_data[i:i+80] for i in range(0, len(b_data), 80)]
-        tmpdata.insert(0, b'%s;%s;%s\n' % (b_HEADER, self.b_version,
-            to_bytes(self.cipher_name, errors='strict', encoding='utf-8')))
-        tmpdata = b''.join(tmpdata)
+        return data
 
-        return tmpdata
-
-    def _split_header(self, b_data):
+    def _parse_vault_file(self, b_data):
         """Retrieve information about the Vault and  clean the data
 
         When data is saved, it has a header prepended and is formatted into 80
@@ -210,20 +205,26 @@ class VaultLib:
         is suitable for processing by the Cipher classes.
 
         :arg b_data: byte str containing the data from a save file
-        :returns: a byte str suitable for passing to a Cipher class's
-            decrypt() function.
+        :returns: cipher name as unicode, version as unicode, and data as a
+            byte str suitable for passing to a Cipher class's decrypt() function.
+            If any of the above is None, the header is not valid.
         """
-        # used by decrypt
 
-        tmpdata = b_data.split(b'\n')
-        tmpheader = tmpdata[0].strip().split(b';')
+        lines = b_data.split(b'\n', 1)
+        header = lines[0].strip().split(b';')
 
-        self.b_version = tmpheader[1].strip()
-        self.cipher_name = to_unicode(tmpheader[2].strip())
-        clean_data = b''.join(tmpdata[1:])
+        version = None
+        cipher_name = None
+        b_data = None
 
-        return clean_data
+        if len(header) == 3 and header[0] == b_HEADER:
+            version = to_unicode(header[1].strip())
+            cipher_name = to_unicode(header[2].strip())
 
+        if len(lines) > 1:
+            b_data = lines[1].replace(b'\n','')
+
+        return (cipher_name, version, b_data)
 
 class VaultEditor:
 
@@ -415,6 +416,7 @@ class VaultAES:
     def __init__(self):
         if not HAS_AES:
             raise AnsibleError(CRYPTO_UPGRADE)
+        self.version = u'1.1'
 
     def aes_derive_key_and_iv(self, password, salt, key_length, iv_length):
 
@@ -437,7 +439,7 @@ class VaultAES:
 
         raise AnsibleError("Encryption disabled for deprecated VaultAES class")
 
-    def decrypt(self, data, password, key_length=32):
+    def decrypt(self, data, password, key_length=32, version=None):
 
         """ Read encrypted data from in_file and write decrypted to out_file """
 
@@ -503,6 +505,8 @@ class VaultAES256:
 
         check_prereqs()
 
+        self.version = u'1.1'
+
     def create_key(self, password, salt, keylength, ivlength):
         hash_function = SHA256
 
@@ -566,15 +570,15 @@ class VaultAES256:
         # ENCRYPT PADDED DATA
         cryptedData = cipher.encrypt(data)
 
-        # COMBINE SALT, DIGEST AND DATA
+        # COMBINE SALT, MAC, AND DATA
         hmac = HMAC.new(key2, cryptedData, SHA256)
         message = b'%s\n%s\n%s' % (hexlify(salt), to_bytes(hmac.hexdigest()), hexlify(cryptedData))
         message = hexlify(message)
         return message
 
-    def decrypt(self, data, password):
+    def decrypt(self, data, password, version=None):
 
-        # SPLIT SALT, DIGEST, AND DATA
+        # SPLIT SALT, MAC, AND DATA
         data = unhexlify(data)
         salt, cryptedHmac, cryptedData = data.split(b"\n", 2)
         salt = unhexlify(salt)
@@ -582,7 +586,7 @@ class VaultAES256:
 
         key1, key2, iv = self.gen_key_initctr(password, salt)
 
-        # EXIT EARLY IF DIGEST DOESN'T MATCH
+        # EXIT EARLY IF MAC DOESN'T VALIDATE
         hmacDecrypt = HMAC.new(key2, cryptedData, SHA256)
         if not self.is_equal(cryptedHmac, to_bytes(hmacDecrypt.hexdigest())):
             return None
