@@ -38,7 +38,6 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.role import GalaxyRole
 from ansible.playbook.role.requirement import RoleRequirement
 
-
 class GalaxyCLI(CLI):
 
     VALID_ACTIONS = ("init", "info", "install", "list", "remove", "search")
@@ -360,6 +359,7 @@ class GalaxyCLI(CLI):
         if role_file:
             self.display.debug('Getting roles from %s' % role_file)
             try:
+                self.display.debug('Processing role file: %s' % role_file)
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
                     try:
@@ -389,12 +389,13 @@ class GalaxyCLI(CLI):
             role = roles_left.pop(0)
             role_path = role.path
 
-            self.display.debug('Installing role %s' % role_path)
 
             if role_path:
                 self.options.roles_path = role_path
             else:
                 self.options.roles_path = roles_path
+
+            self.display.debug('Installing role %s from %s' % (role.name, self.options.roles_path))
 
             tmp_file = None
             installed = False
@@ -404,7 +405,7 @@ class GalaxyCLI(CLI):
             else:
                 if role.scm:
                     # create tar file from scm url
-                    tmp_file = scm_archive_role(role.scm, role.src, role.version, role.name)
+                    tmp_file = GalaxyRole.scm_archive_role(role.scm, role.src, role.version, role.name)
                 if role.src:
                     if '://' not in role.src:
                         role_data = self.api.lookup_role_by_name(role.src)
