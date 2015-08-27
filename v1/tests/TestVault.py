@@ -85,23 +85,11 @@ class TestVaultLib(TestCase):
         assert v.cipher_name == 'TEST', "cipher name was not set"
         assert v.version == "9.9"
 
-    def test_encrypt_decrypt_aes(self):
-        if self._is_fips():
-            raise SkipTest('MD5 not available on FIPS enabled systems')
+    def test_encrypt_decrypt_aes256ctr(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         v = VaultLib('ansible')
-        v.cipher_name = 'AES'
-        enc_data = v.encrypt("foobar")
-        dec_data = v.decrypt(enc_data)
-        assert enc_data != "foobar", "encryption failed"
-        assert dec_data == "foobar", "decryption failed"
-
-    def test_encrypt_decrypt_aes256(self):
-        if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
-            raise SkipTest
-        v = VaultLib('ansible')
-        v.cipher_name = 'AES256'
+        v.cipher_name = 'AES256CTR'
         enc_data = v.encrypt("foobar")
         dec_data = v.decrypt(enc_data)
         assert enc_data != "foobar", "encryption failed"
@@ -144,4 +132,4 @@ class TestVaultLib(TestCase):
         except errors.AnsibleError, e:
             error_hit = True
         assert not error_hit, "An error was thrown when trying to encrypt data without the cipher set"    
-        assert v.cipher_name == "AES256", "cipher name is not set to AES256: %s" % v.cipher_name               
+        assert v.cipher_name == "AES256CTR", "cipher name is not set to AES256: %s" % v.cipher_name               

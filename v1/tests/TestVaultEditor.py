@@ -173,7 +173,7 @@ class TestVaultEditor(TestCase):
         except errors.AnsibleError, e:
             error_hit = True
 
-        assert vl.cipher_name == "AES256", "wrong cipher name set after rekey: %s" % vl.cipher_name
+        assert vl.cipher_name == "AES256CTR", "wrong cipher name set after rekey: %s" % vl.cipher_name
         assert error_hit == False, "error decrypting migrated 1.0 file"            
         assert dec_data.strip() == "foo", "incorrect decryption of rekeyed/migrated file: %s" % dec_data
 

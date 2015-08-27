@@ -72,7 +72,8 @@ except ImportError:
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 HEADER='$ANSIBLE_VAULT'
-CIPHER_WHITELIST=['AES', 'AES256']
+CIPHER_WHITELIST = ['AES', 'AES256', 'AES256CTR']
+
 
 class VaultLib(object):
 
@@ -93,8 +94,7 @@ class VaultLib(object):
             raise errors.AnsibleError("data is already encrypted")
 
         if not self.cipher_name:
-            self.cipher_name = "AES256"
-            #raise errors.AnsibleError("the cipher must be set before encrypting data")
+            self.cipher_name = 'AES256CTR'
 
         if 'Vault' + self.cipher_name in globals() and self.cipher_name in CIPHER_WHITELIST: 
             cipher = globals()['Vault' + self.cipher_name]
@@ -364,7 +364,15 @@ class VaultEditor(object):
 #               CIPHERS                #
 ########################################
 
-class VaultAES(object):
+
+class VaultCipher(object):
+    def encrypt(self, *args, **kwargs):
+        raise NotImplementedError(
+            'Encryption for this cipher is no longer supported',
+        )
+
+
+class VaultAES(VaultCipher):
 
     # this version has been obsoleted by the VaultAES256 class
     # which uses encrypt-then-mac (fixing order) and also improving the KDF used
@@ -391,44 +399,6 @@ class VaultAES(object):
 
         return key, iv
 
-    def encrypt(self, data, password, key_length=32):
-
-        """ Read plaintext data from in_file and write encrypted to out_file """
-
-
-        # combine sha + data
-        this_sha = sha256(data).hexdigest()
-        tmp_data = this_sha + "\n" + data
-
-        in_file = BytesIO(tmp_data)
-        in_file.seek(0)
-        out_file = BytesIO()
-
-        bs = AES.block_size
-
-        # Get a block of random data. EL does not have Crypto.Random.new() 
-        # so os.urandom is used for cross platform purposes
-        salt = os.urandom(bs - len('Salted__'))
-
-        key, iv = self.aes_derive_key_and_iv(password, salt, key_length, bs)
-        cipher = AES.new(key, AES.MODE_CBC, iv)
-        out_file.write('Salted__' + salt)
-        finished = False
-        while not finished:
-            chunk = in_file.read(1024 * bs)
-            if len(chunk) == 0 or len(chunk) % bs != 0:
-                padding_length = (bs - len(chunk) % bs) or bs
-                chunk += padding_length * chr(padding_length)
-                finished = True
-            out_file.write(cipher.encrypt(chunk))
-
-        out_file.seek(0)
-        enc_data = out_file.read()
-        tmp_data = hexlify(enc_data)
-
-        return tmp_data
-
- 
     def decrypt(self, data, password, key_length=32):
 
         """ Read encrypted data from in_file and write decrypted to out_file """
@@ -474,9 +444,11 @@ class VaultAES(object):
         return this_data
 
 
-class VaultAES256(object):
+class VaultAES256(VaultCipher):
 
     """
+    AES256 with padding, for backwards compatibility.
+
     Vault implementation using AES-CTR with an HMAC-SHA256 authentication code. 
     Keys are derived using PBKDF2
     """
@@ -509,39 +481,6 @@ class VaultAES256(object):
         iv = derivedkey[(keylength * 2):(keylength * 2) + ivlength]
 
         return key1, key2, hexlify(iv)
-
-
-    def encrypt(self, data, password):
-
-        salt = os.urandom(32)
-        key1, key2, iv = self.gen_key_initctr(password, salt)
-
-        # PKCS#7 PAD DATA http://tools.ietf.org/html/rfc5652#section-6.3
-        bs = AES.block_size
-        padding_length = (bs - len(data) % bs) or bs
-        data += padding_length * chr(padding_length)
-
-        # COUNTER.new PARAMETERS
-        # 1) nbits (integer) - Length of the counter, in bits.
-        # 2) initial_value (integer) - initial value of the counter. "iv" from gen_key_initctr
-
-        ctr = Counter.new(128, initial_value=long(iv, 16))
-
-        # AES.new PARAMETERS
-        # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from gen_key_initctr
-        # 2) MODE_CTR, is the recommended mode
-        # 3) counter=<CounterObject>
-
-        cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
-
-        # ENCRYPT PADDED DATA
-        cryptedData = cipher.encrypt(data)                
-
-        # COMBINE SALT, DIGEST AND DATA
-        hmac = HMAC.new(key2, cryptedData, SHA256)
-        message = "%s\n%s\n%s" % ( hexlify(salt), hmac.hexdigest(), hexlify(cryptedData) )
-        message = hexlify(message)
-        return message
 
     def decrypt(self, data, password):
 
@@ -580,6 +519,72 @@ class VaultAES256(object):
         result = 0
         for x, y in zip(a, b):
             result |= ord(x) ^ ord(y)
-        return result == 0     
+        return result == 0
 
 
+class VaultAES256CTR(VaultAES256):
+
+    """
+    Vault implementation using AES-CTR with an HMAC-SHA256 authentication code. 
+    Keys are derived using PBKDF2
+    """
+
+    # http://www.daemonology.net/blog/2009-06-11-cryptographic-right-answers.html
+
+    def encrypt(self, data, password):
+
+        salt = os.urandom(32)
+        key1, key2, iv = self.gen_key_initctr(password, salt)
+
+        # COUNTER.new PARAMETERS
+        # 1) nbits (integer) - Length of the counter, in bits.
+        # 2) initial_value (integer) - initial value of the counter. "iv" from
+        #    gen_key_initctr
+
+        ctr = Counter.new(128, initial_value=long(iv, 16))
+
+        # AES.new PARAMETERS
+        # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from gen
+        #    key_initctr
+        # 2) MODE_CTR, is the recommended mode
+        # 3) counter=<CounterObject>
+
+        cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
+
+        # ENCRYPT DATA
+        cryptedData = cipher.encrypt(data)
+
+        # COMBINE SALT, DIGEST AND DATA
+        hmac = HMAC.new(key2, cryptedData, SHA256)
+        message = "%s\n%s\n%s" % (
+            hexlify(salt),
+            hmac.hexdigest(),
+            hexlify(cryptedData),
+        )
+        message = hexlify(message)
+        return message
+
+    def decrypt(self, data, password):
+
+        # SPLIT SALT, DIGEST, AND DATA
+        data = ''.join(data.split("\n"))
+        data = unhexlify(data)
+        salt, cryptedHmac, cryptedData = data.split("\n", 2)
+        salt = unhexlify(salt)
+        cryptedData = unhexlify(cryptedData)
+
+        key1, key2, iv = self.gen_key_initctr(password, salt)
+
+        # EXIT EARLY IF DIGEST DOESN'T MATCH
+        hmacDecrypt = HMAC.new(key2, cryptedData, SHA256)
+        if not self.is_equal(cryptedHmac, hmacDecrypt.hexdigest()):
+            return None
+
+        # SET THE COUNTER AND THE CIPHER
+        ctr = Counter.new(128, initial_value=long(iv, 16))
+        cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
+
+        # DECRYPT DATA
+        decryptedData = cipher.decrypt(cryptedData)
+
+        return decryptedData
