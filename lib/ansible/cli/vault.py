@@ -63,8 +63,21 @@ class VaultCLI(CLI):
         self.options, self.args = self.parser.parse_args()
         self.display.verbosity = self.options.verbosity
 
-        if len(self.args) == 0:
-            raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
+        can_output = ['encrypt', 'decrypt']
+
+        if self.action not in can_output:
+            if self.options.output_file:
+                raise AnsibleOptionsError("The --output option can be used only with ansible-vault %s" % '/'.join(can_output))
+            if len(self.args) == 0:
+                raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
+        else:
+            # This restriction should remain in place until it's possible to
+            # load multiple YAML records from a single file, or it's too easy
+            # to create an encrypted file that can't be read back in. But in
+            # the meanwhile, "cat a b c|ansible-vault encrypt --output x" is
+            # a workaround.
+            if self.options.output_file and len(self.args) > 1:
+                raise AnsibleOptionsError("At most one input file may be used with the --output option")
 
     def run(self):
 
@@ -87,19 +100,34 @@ class VaultCLI(CLI):
 
         self.execute()
 
+    def execute_encrypt(self):
+
+        if len(self.args) == 0 and sys.stdin.isatty():
+            self.display.display("Reading plaintext input from stdin", stderr=True)
+
+        for f in self.args or ['-']:
+            self.editor.encrypt_file(f, output_file=self.options.output_file)
+
+        if sys.stdout.isatty():
+            self.display.display("Encryption successful", stderr=True)
+
+    def execute_decrypt(self):
+
+        if len(self.args) == 0 and sys.stdin.isatty():
+            self.display.display("Reading ciphertext input from stdin", stderr=True)
+
+        for f in self.args or ['-']:
+            self.editor.decrypt_file(f, output_file=self.options.output_file)
+
+        if sys.stdout.isatty():
+            self.display.display("Decryption successful", stderr=True)
+
     def execute_create(self):
 
         if len(self.args) > 1:
             raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
 
         self.editor.create_file(self.args[0])
-
-    def execute_decrypt(self):
-
-        for f in self.args:
-            self.editor.decrypt_file(f)
-
-        self.display.display("Decryption successful", stderr=True)
 
     def execute_edit(self):
         for f in self.args:
@@ -109,13 +137,6 @@ class VaultCLI(CLI):
 
         for f in self.args:
             self.editor.view_file(f)
-
-    def execute_encrypt(self):
-
-        for f in self.args:
-            self.editor.encrypt_file(f)
-
-        self.display.display("Encryption successful", stderr=True)
 
     def execute_rekey(self):
         for f in self.args:

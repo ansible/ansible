@@ -20,6 +20,7 @@ __metaclass__ = type
 import os
 import shlex
 import shutil
+import sys
 import tempfile
 from io import BytesIO
 from subprocess import call
@@ -130,7 +131,7 @@ class VaultLib:
         b_data = to_bytes(data, errors='strict', encoding='utf-8')
 
         if self.is_encrypted(b_data):
-            raise AnsibleError("data is already encrypted")
+            raise AnsibleError("input is already encrypted")
 
         if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
             self.cipher_name = u"AES256"
@@ -162,7 +163,7 @@ class VaultLib:
             raise AnsibleError("A vault password must be specified to decrypt data")
 
         if not self.is_encrypted(b_data):
-            raise AnsibleError("data is not encrypted")
+            raise AnsibleError("input is not encrypted")
 
         # clean out header
         b_data = self._split_header(b_data)
@@ -227,7 +228,7 @@ class VaultLib:
 class VaultEditor:
 
     def __init__(self, password):
-        self.password = password
+        self.vault = VaultLib(password)
 
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
         # make sure the umask is set to a sane value
@@ -248,11 +249,8 @@ class VaultEditor:
             os.remove(tmp_path)
             return
 
-        # create new vault
-        this_vault = VaultLib(self.password)
-
         # encrypt new data and write out to tmp
-        enc_data = this_vault.encrypt(tmpdata)
+        enc_data = self.vault.encrypt(tmpdata)
         self.write_data(enc_data, tmp_path)
 
         # shuffle tmp file into place
@@ -261,109 +259,94 @@ class VaultEditor:
         # and restore umask
         os.umask(old_umask)
 
+    def encrypt_file(self, filename, output_file=None):
+
+        check_prereqs()
+
+        plaintext = self.read_data(filename)
+        ciphertext = self.vault.encrypt(plaintext)
+        self.write_data(ciphertext, output_file or filename)
+
+    def decrypt_file(self, filename, output_file=None):
+
+        check_prereqs()
+
+        ciphertext = self.read_data(filename)
+        plaintext = self.vault.decrypt(ciphertext)
+        self.write_data(plaintext, output_file or filename)
+
     def create_file(self, filename):
         """ create a new encrypted file """
 
         check_prereqs()
 
+        # FIXME: If we can raise an error here, we can probably just make it
+        # behave like edit instead.
         if os.path.isfile(filename):
             raise AnsibleError("%s exists, please use 'edit' instead" % filename)
 
-        # Let the user specify contents and save file
         self._edit_file_helper(filename)
-
-    def decrypt_file(self, filename):
-
-        check_prereqs()
-
-        if not os.path.isfile(filename):
-            raise AnsibleError("%s does not exist" % filename)
-
-        tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        if this_vault.is_encrypted(tmpdata):
-            dec_data = this_vault.decrypt(tmpdata)
-            if dec_data is None:
-                raise AnsibleError("Decryption failed")
-            else:
-                self.write_data(dec_data, filename)
-        else:
-            raise AnsibleError("%s is not encrypted" % filename)
 
     def edit_file(self, filename):
 
         check_prereqs()
 
-        # decrypt to tmpfile
-        tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        dec_data = this_vault.decrypt(tmpdata)
+        ciphertext = self.read_data(filename)
+        plaintext = self.vault.decrypt(ciphertext)
 
-        # let the user edit the data and save
-        if this_vault.cipher_name not in CIPHER_WRITE_WHITELIST:
+        if self.vault.cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
-            self._edit_file_helper(filename, existing_data=dec_data, force_save=True)
+            self._edit_file_helper(filename, existing_data=plaintext, force_save=True)
         else:
-            self._edit_file_helper(filename, existing_data=dec_data, force_save=False)
+            self._edit_file_helper(filename, existing_data=plaintext, force_save=False)
 
     def view_file(self, filename):
 
         check_prereqs()
 
-        # decrypt to tmpfile
-        tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        dec_data = this_vault.decrypt(tmpdata)
+        # FIXME: Why write this to a temporary file at all? It would be safer
+        # to feed it to the PAGER on stdin.
         _, tmp_path = tempfile.mkstemp()
-        self.write_data(dec_data, tmp_path)
+        ciphertext = self.read_data(filename)
+        plaintext = self.vault.decrypt(ciphertext)
+        self.write_data(plaintext, tmp_path)
 
         # drop the user into pager on the tmp file
         call(self._pager_shell_command(tmp_path))
         os.remove(tmp_path)
 
-    def encrypt_file(self, filename):
-
-        check_prereqs()
-
-        if not os.path.isfile(filename):
-            raise AnsibleError("%s does not exist" % filename)
-
-        tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        if not this_vault.is_encrypted(tmpdata):
-            enc_data = this_vault.encrypt(tmpdata)
-            self.write_data(enc_data, filename)
-        else:
-            raise AnsibleError("%s is already encrypted" % filename)
-
     def rekey_file(self, filename, new_password):
 
         check_prereqs()
 
-        # decrypt
-        tmpdata = self.read_data(filename)
-        this_vault = VaultLib(self.password)
-        dec_data = this_vault.decrypt(tmpdata)
+        ciphertext = self.read_data(filename)
+        plaintext = self.vault.decrypt(ciphertext)
 
-        # create new vault
         new_vault = VaultLib(new_password)
-
-        # re-encrypt data and re-write file
-        enc_data = new_vault.encrypt(dec_data)
-        self.write_data(enc_data, filename)
+        new_ciphertext = new_vault.encrypt(plaintext)
+        self.write_data(new_ciphertext, filename)
 
     def read_data(self, filename):
-        f = open(filename, "rb")
-        tmpdata = f.read()
-        f.close()
-        return tmpdata
+        try:
+            if filename == '-':
+                data = sys.stdin.read()
+            else:
+                with open(filename, "rb") as fh:
+                    data = fh.read()
+        except Exception as e:
+            raise AnsibleError(str(e))
+
+        return data
 
     def write_data(self, data, filename):
-        if os.path.isfile(filename):
-            os.remove(filename)
-        f = open(filename, "wb")
-        f.write(to_bytes(data, errors='strict'))
-        f.close()
+        bytes = to_bytes(data, errors='strict')
+        if filename == '-':
+            sys.stdout.write(bytes)
+        else:
+            if os.path.isfile(filename):
+                os.remove(filename)
+            with open(filename, "wb") as fh:
+                fh.write(bytes)
 
     def shuffle_files(self, src, dest):
         # overwrite dest with src
