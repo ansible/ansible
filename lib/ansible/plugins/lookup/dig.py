@@ -141,7 +141,7 @@ class LookupModule(LookupBase):
                         try:
                             nsaddr = dns.resolver.query(ns)[0].address
                             nameservers.append(nsaddr)
-                        except Exception, e:
+                        except Exception as e:
                             raise AnsibleError("dns lookup NS: ", str(e))
                     myres.nameservers = nameservers
                 continue
@@ -176,7 +176,7 @@ class LookupModule(LookupBase):
                 domain = n.to_text()
             except dns.exception.SyntaxError:
                 pass
-            except Exception, e:
+            except Exception as e:
                 raise AnsibleError("dns.reversename unhandled exception", str(e))
 
         try:
@@ -196,7 +196,7 @@ class LookupModule(LookupBase):
                         rd['ttl']       = answers.rrset.ttl
 
                         ret.append(rd)
-                    except Exception, e:
+                    except Exception as e:
                         ret.append(str(e))
 
         except dns.resolver.NXDOMAIN:
@@ -205,7 +205,7 @@ class LookupModule(LookupBase):
             ret.append("")
         except dns.resolver.Timeout:
             ret.append('')
-        except dns.exception.DNSException, e:
+        except dns.exception.DNSException as e:
             raise AnsibleError("dns.resolver unhandled exception", e)
 
         return ret

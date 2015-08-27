@@ -6,6 +6,6 @@ if __name__ == '__main__':
         import consul
         consul = consul.Consul(host='0.0.0.0', port=8500)
         consul.catalog.nodes()
-        print "True"
+        print("True")
     except:
         pass

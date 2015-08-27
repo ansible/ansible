@@ -70,7 +70,7 @@ class ShellModule(object):
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
         if mode:
-            tmp_umask = 0777 & ~mode
+            tmp_umask = 0o777 & ~mode
             cmd = '(umask %o && %s)' % (tmp_umask, cmd)
 
         return cmd

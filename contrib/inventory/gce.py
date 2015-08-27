@@ -237,7 +237,7 @@ class GceInventory(object):
         '''Gets details about a specific instance '''
         try:
             return self.driver.ex_get_node(instance_name)
-        except Exception, e:
+        except Exception as e:
             return None
 
     def group_instances(self):

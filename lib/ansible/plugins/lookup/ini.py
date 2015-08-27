@@ -47,7 +47,7 @@ class LookupModule(LookupBase):
         # Retrieve a single value
         try:
             value = self.cp.get(section, key)
-        except ConfigParser.NoOptionError, e:
+        except ConfigParser.NoOptionError as e:
             return dflt
         return value
 
@@ -76,7 +76,7 @@ class LookupModule(LookupBase):
                     name, value = param.split('=')
                     assert(name in paramvals)
                     paramvals[name] = value
-            except (ValueError, AssertionError), e:
+            except (ValueError, AssertionError) as e:
                 raise errors.AnsibleError(e)
 
             path = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])

@@ -125,14 +125,14 @@ class TaskExecutor:
             result = json.dumps(res)
             debug("done dumping result, returning")
             return result
-        except AnsibleError, e:
+        except AnsibleError as e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
         finally:
             try:
                 self._connection.close()
             except AttributeError:
                 pass
-            except Exception, e:
+            except Exception as e:
                 debug("error closing connection: %s" % to_unicode(e))
 
     def _get_loop_items(self):
@@ -187,7 +187,7 @@ class TaskExecutor:
 
             try:
                 tmp_task = self._task.copy()
-            except AnsibleParserError, e:
+            except AnsibleParserError as e:
                 results.append(dict(failed=True, msg=str(e)))
                 continue
 
