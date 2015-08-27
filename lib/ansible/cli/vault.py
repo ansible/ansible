@@ -102,17 +102,25 @@ class VaultCLI(CLI):
 
     def execute_encrypt(self):
 
+        if len(self.args) == 0 and sys.stdin.isatty():
+            self.display.display("Reading plaintext input from stdin", stderr=True)
+
         for f in self.args or ['-']:
             self.editor.encrypt_file(f, output_file=self.options.output_file)
 
-        self.display.display("Encryption successful", stderr=True)
+        if sys.stdout.isatty():
+            self.display.display("Encryption successful", stderr=True)
 
     def execute_decrypt(self):
+
+        if len(self.args) == 0 and sys.stdin.isatty():
+            self.display.display("Reading ciphertext input from stdin", stderr=True)
 
         for f in self.args or ['-']:
             self.editor.decrypt_file(f, output_file=self.options.output_file)
 
-        self.display.display("Decryption successful", stderr=True)
+        if sys.stdout.isatty():
+            self.display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
 
