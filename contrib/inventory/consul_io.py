@@ -136,7 +136,7 @@ except ImportError:
 
 try:
   import consul
-except ImportError, e:
+except ImportError as e:
   print """failed=True msg='python-consul required for this module. see
   http://python-consul.readthedocs.org/en/latest/#installation'"""
   sys.exit(1)

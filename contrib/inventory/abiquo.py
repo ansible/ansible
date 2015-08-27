@@ -76,7 +76,7 @@ def save_cache(data, config):
         cache = open('/'.join([dpath,'inventory']), 'w')
         cache.write(json.dumps(data))
         cache.close()
-    except IOError, e:
+    except IOError as e:
         pass # not really sure what to do here
 
 
@@ -88,7 +88,7 @@ def get_cache(cache_item, config):
         cache = open('/'.join([dpath,'inventory']), 'r')
         inv = cache.read()
         cache.close()
-    except IOError, e:
+    except IOError as e:
         pass # not really sure what to do here
 
     return inv
@@ -172,7 +172,7 @@ def generate_inv_from_api(enterprise_entity,config):
                         else:
                             vm_metadata = metadata['metadata']['metadata']
                         inventory['_meta']['hostvars'][vm_nic] = vm_metadata
-                    except Exception, e:
+                    except Exception as e:
                         pass
 
                 inventory[vm_vapp]['children'].append(vmcollection['name'])
@@ -183,7 +183,7 @@ def generate_inv_from_api(enterprise_entity,config):
                 inventory[vmcollection['name']].append(vm_nic)
 
         return inventory
-    except Exception, e:
+    except Exception as e:
         # Return empty hosts output
         return { 'all': {'hosts': []}, '_meta': { 'hostvars': {} } }
 
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     try:
         login = api_get(None,config)
         enterprise = next(link for link in (login['links']) if (link['rel']=='enterprise'))
-    except Exception, e:
+    except Exception as e:
         enterprise = None
 
     if cache_available(config):

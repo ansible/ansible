@@ -132,7 +132,7 @@ try:
 	for group in spacewalk_report('system-groups'):
 	    org_groups[group['spacewalk_group_id']] = group['spacewalk_org_id']
 
-except (OSError), e:
+except (OSError) as e:
 	print >> sys.stderr, 'Problem executing the command "%s system-groups": %s' % \
 	    (SW_REPORT, str(e))
 	sys.exit(2)
@@ -148,7 +148,7 @@ if options.list:
         for item in spacewalk_report('inventory'):
             host_vars[ item['spacewalk_profile_name'] ] = dict( ( key, ( value.split(';') if ';' in value else value) ) for key, value in item.items() )
 
-    except (OSError), e:
+    except (OSError) as e:
         print >> sys.stderr, 'Problem executing the command "%s inventory": %s' % \
             (SW_REPORT, str(e))
         sys.exit(2)
@@ -185,7 +185,7 @@ if options.list:
                 if system['spacewalk_server_name'] in host_vars and not system['spacewalk_server_name'] in meta[ "hostvars" ]:
                         meta[ "hostvars" ][ system['spacewalk_server_name'] ] = host_vars[ system['spacewalk_server_name'] ]
 
-    except (OSError), e:
+    except (OSError) as e:
         print >> sys.stderr, 'Problem executing the command "%s system-groups-systems": %s' % \
             (SW_REPORT, str(e))
         sys.exit(2)
@@ -212,7 +212,7 @@ elif options.host:
                 host_details = system
                 break
 
-    except (OSError), e:
+    except (OSError) as e:
         print >> sys.stderr, 'Problem executing the command "%s inventory": %s' % \
             (SW_REPORT, str(e))
         sys.exit(2)

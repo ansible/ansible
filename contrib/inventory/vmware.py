@@ -164,7 +164,7 @@ class VMwareInventory(object):
                     obj_info = self._get_obj_info(val, depth - 1, seen)
                     if obj_info != ():
                         d[attr] = obj_info
-                except Exception, e:
+                except Exception as e:
                     pass
             return d
         elif isinstance(obj, SudsObject):
@@ -207,7 +207,7 @@ class VMwareInventory(object):
                 host_info[k] = v
         try:
             host_info['ipAddress'] = host.config.network.vnic[0].spec.ip.ipAddress
-        except Exception, e:
+        except Exception as e:
             print >> sys.stderr, e
         host_info = self._flatten_dict(host_info, prefix)
         if ('%s_ipAddress' % prefix) in host_info:

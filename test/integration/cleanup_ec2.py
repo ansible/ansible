@@ -175,5 +175,5 @@ if __name__ == '__main__':
         filters = {"tag:Name":opts.match_re.replace('^',''), "instance-state-name": ['running', 'pending', 'stopped' ]}
         delete_aws_instances(aws.get_all_instances(filters=filters), opts)
 
-    except KeyboardInterrupt, e:
+    except KeyboardInterrupt as e:
         print "\nExiting on user command."

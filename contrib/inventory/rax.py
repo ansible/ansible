@@ -412,7 +412,7 @@ def setup():
             pyrax.keyring_auth(keyring_username, region=region)
         else:
             pyrax.set_credential_file(creds_file, region=region)
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("%s: %s\n" % (e, e.message))
         sys.exit(1)
 
