@@ -316,6 +316,41 @@ To get a sha256 password hash with a specific salt::
 Hash types available depend on the master system running ansible,
 'hash' depends on hashlib password_hash depends on crypt.
 
+.. _combine_filter:
+
+Combining hashes/dictionaries
+-----------------------------
+
+.. versionadded:: 2.0
+
+The `combine` filter allows hashes to be merged. For example, the
+following would override keys in one hash:
+
+    {{ {'a':1, 'b':2}|combine({'b':3}) }}
+
+The resulting hash would be:
+
+    {'a':1, 'b':3}
+
+The filter also accepts an optional `recursive=True` parameter to not
+only override keys in the first hash, but also recurse into nested
+hashes and merge their keys too:
+
+    {{ {'a':{'foo':1, 'bar':2}, 'b':2}|combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
+
+This would result in:
+
+    {'a':{'foo':1, 'bar':3, 'baz':4}, 'b':2}
+
+The filter can also take multiple arguments to merge:
+
+    {{ a|combine(b, c, d) }}
+
+In this case, keys in `d` would override those in `c`, which would
+override those in `b`, and so on.
+
+This behaviour does not depend on the value of the `hash_behaviour`
+setting in `ansible.cfg`.
 
 .. _other_useful_filters:
 

@@ -334,6 +334,11 @@ official examples repos do not use this setting::
 
 The valid values are either 'replace' (the default) or 'merge'.
 
+.. versionadded: '2.0'
+
+If you want to merge hashes without changing the global settings, use
+the `combine` filter described in :doc:`playbooks_filters`.
+
 .. _hostfile:
 
 hostfile
