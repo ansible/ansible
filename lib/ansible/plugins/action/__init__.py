@@ -166,7 +166,7 @@ class ActionBase:
 
         tmp_mode = None
         if self._play_context.remote_user != 'root' or self._play_context.become and self._play_context.become_user != 'root':
-            tmp_mode = 0755
+            tmp_mode = 0o755
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         self._display.debug("executing _low_level_execute_command to create the tmp path")
