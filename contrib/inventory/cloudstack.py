@@ -98,7 +98,7 @@ class CloudStackInventory(object):
         options = parser.parse_args()
         try:
             self.cs = CloudStack(**read_config())
-        except CloudStackException, e:
+        except CloudStackException as e:
             print >> sys.stderr, "Error: Could not connect to CloudStack API"
 
         project_id = ''
