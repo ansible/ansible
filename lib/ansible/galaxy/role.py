@@ -312,3 +312,49 @@ class GalaxyRole(object):
             trailing_path = trailing_path.split(',')[0]
         return trailing_path
 
+    @staticmethod
+    def scm_archive_role(scm, role_url, role_version, role_name):
+        if scm not in ['hg', 'git']:
+            self.display.display("- scm %s is not currently supported" % scm)
+            return False
+        tempdir = tempfile.mkdtemp()
+        clone_cmd = [scm, 'clone', role_url, role_name]
+        with open('/dev/null', 'w') as devnull:
+            try:
+                self.display.display("- executing: %s" % " ".join(clone_cmd))
+                popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+            except:
+                raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
+            rc = popen.wait()
+        if rc != 0:
+            self.display.display("- command %s failed" % ' '.join(clone_cmd))
+            self.display.display("  in directory %s" % tempdir)
+            return False
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
+        if scm == 'hg':
+            archive_cmd = ['hg', 'archive', '--prefix', "%s/" % role_name]
+            if role_version:
+                archive_cmd.extend(['-r', role_version])
+            archive_cmd.append(temp_file.name)
+        if scm == 'git':
+            archive_cmd = ['git', 'archive', '--prefix=%s/' % role_name, '--output=%s' % temp_file.name]
+            if role_version:
+                archive_cmd.append(role_version)
+            else:
+                archive_cmd.append('HEAD')
+
+        with open('/dev/null', 'w') as devnull:
+            self.display.display("- executing: %s" % " ".join(archive_cmd))
+            popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, role_name),
+                                     stderr=devnull, stdout=devnull)
+            rc = popen.wait()
+        if rc != 0:
+            self.display.display("- command %s failed" % ' '.join(archive_cmd))
+            self.display.display("  in directory %s" % tempdir)
+            return False
+
+        shutil.rmtree(tempdir, ignore_errors=True)
+
+        return temp_file.name
+
