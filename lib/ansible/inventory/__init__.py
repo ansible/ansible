@@ -178,7 +178,7 @@ class Inventory(object):
 
         return [x for x in term.findall(pattern) if x]
 
-    def get_hosts(self, pattern="all"):
+    def get_hosts(self, pattern="all", ignore_limits_and_restrictions=False):
         """ 
         Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
@@ -196,14 +196,16 @@ class Inventory(object):
         patterns = self._split_pattern(pattern)
         hosts = self._evaluate_patterns(patterns)
 
-        # exclude hosts not in a subset, if defined
-        if self._subset:
-            subset = self._evaluate_patterns(self._subset)
-            hosts = [ h for h in hosts if h in subset ]
+        # mainly useful for hostvars[host] access
+        if not ignore_limits_and_restrictions:
+            # exclude hosts not in a subset, if defined
+            if self._subset:
+                subset = self._evaluate_patterns(self._subset)
+                hosts = [ h for h in hosts if h in subset ]
 
-        # exclude hosts mentioned in any restriction (ex: failed hosts)
-        if self._restriction is not None:
-            hosts = [ h for h in hosts if h in self._restriction ]
+            # exclude hosts mentioned in any restriction (ex: failed hosts)
+            if self._restriction is not None:
+                hosts = [ h for h in hosts if h in self._restriction ]
 
         return hosts
 
