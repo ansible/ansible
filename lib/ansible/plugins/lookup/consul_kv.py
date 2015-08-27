@@ -67,7 +67,7 @@ except ImportError:
 try:
     import consul
     HAS_CONSUL = True
-except ImportError, e:
+except ImportError as e:
     HAS_CONSUL = False
 
 
@@ -104,7 +104,7 @@ class LookupModule(LookupBase):
                             values.append(r['Value'])
                     else:
                         values.append(results[1]['Value'])
-        except Exception, e:
+        except Exception as e:
             raise AnsibleError(
                 "Error locating '%s' in kv store. Error was %s" % (term, e))
 
@@ -127,7 +127,7 @@ class LookupModule(LookupBase):
                     name, value = param.split('=')
                     assert name in paramvals, "% not a valid consul lookup parameter" % name
                     paramvals[name] = value
-        except (ValueError, AssertionError), e:
+        except (ValueError, AssertionError) as e:
             raise AnsibleError(e)
 
         return paramvals

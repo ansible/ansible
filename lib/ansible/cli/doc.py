@@ -120,7 +120,7 @@ class DocCLI(CLI):
                     # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
-            except Exception, e:
+            except Exception as e:
                 self.display.vvv(traceback.print_exc())
                 raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 

@@ -55,7 +55,7 @@ class LookupModule(LookupBase):
                     assert(name in paramvals)
                     paramvals[name] = value
 
-            except (ValueError, AssertionError), e:
+            except (ValueError, AssertionError) as e:
                 # In case "file" or "key" are not present
                 raise AnsibleError(e)
 

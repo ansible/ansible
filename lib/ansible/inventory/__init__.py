@@ -143,7 +143,7 @@ class Inventory(object):
                 return re.search(pattern_str[1:], str)
             else:
                 return fnmatch.fnmatch(str, pattern_str)
-        except Exception, e:
+        except Exception as e:
             raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
     def _match_list(self, items, item_attr, pattern_str):
@@ -153,7 +153,7 @@ class Inventory(object):
                 pattern = re.compile(fnmatch.translate(pattern_str))
             else:
                 pattern = re.compile(pattern_str[1:])
-        except Exception, e:
+        except Exception as e:
             raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
         for item in items:
