@@ -1,8 +1,0 @@
-[major-god] # group with inline comments
-zeus var_a="3\#4" # host with inline comments and "#" in the var string
-# A comment
-thor
-
-[minor-god] # group with inline comment and unbalanced quotes: ' "
-morpheus # host with inline comments and unbalanced quotes: ' "
-# A comment with unbalanced quotes: ' "
