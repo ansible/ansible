@@ -329,25 +329,24 @@ class VaultEditor:
     def read_data(self, filename):
         try:
             if filename == '-':
-                f = sys.stdin
+                data = sys.stdin.read()
             else:
-                f = open(filename, "rb")
-            data = f.read()
-            f.close()
+                with open(filename, "rb") as fh:
+                    data = fh.read()
         except Exception as e:
             raise AnsibleError(str(e))
 
         return data
 
     def write_data(self, data, filename):
+        bytes = to_bytes(data, errors='strict')
         if filename == '-':
-            f = sys.stdout
+            sys.stdout.write(bytes)
         else:
             if os.path.isfile(filename):
                 os.remove(filename)
-            f = open(filename, "wb")
-        f.write(to_bytes(data, errors='strict'))
-        f.close()
+            with open(filename, "wb") as fh:
+                fh.write(bytes)
 
     def shuffle_files(self, src, dest):
         # overwrite dest with src
