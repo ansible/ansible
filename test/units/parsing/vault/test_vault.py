@@ -64,8 +64,8 @@ class TestVaultLib(unittest.TestCase):
         slots = ['is_encrypted',
                  'encrypt',
                  'decrypt',
-                 '_format_output',
-                 '_split_header',]
+                 '_add_vault_header',
+                 '_parse_vault_header',]
         for slot in slots:
             assert hasattr(v, slot), "VaultLib is missing the %s method" % slot
 
@@ -75,56 +75,85 @@ class TestVaultLib(unittest.TestCase):
         data = u"$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(b"ansible")
         assert v.is_encrypted(data), "encryption check on headered text failed"
 
-    def test_format_output(self):
+    def test_add_vault_header(self):
         v = VaultLib('ansible')
-        v.cipher_name = "TEST"
-        sensitive_data = b"ansible"
-        data = v._format_output(sensitive_data)
+        sensitive_data = "ansible"
+        data = v._add_vault_header(u'TEST', u'1.23', sensitive_data)
         lines = data.split(b'\n')
         assert len(lines) > 1, "failed to properly add header"
-        header = to_bytes(lines[0])
-        assert header.endswith(b';TEST'), "header does end with cipher name"
-        header_parts = header.split(b';')
-        assert len(header_parts) == 3, "header has the wrong number of parts"
-        assert header_parts[0] == b'$ANSIBLE_VAULT', "header does not start with $ANSIBLE_VAULT"
-        assert header_parts[1] == v.b_version, "header version is incorrect"
-        assert header_parts[2] == b'TEST', "header does end with cipher name"
+        header = to_unicode(lines[0])
+        assert header.endswith(';TEST;1.23'), "header does end with cipher name"
+        header_parts = header.split(';')
+        assert len(header_parts) == 4, "header has the wrong number of parts"
+        assert header_parts[0] == '$ANSIBLE_VAULT', "header does not start with $ANSIBLE_VAULT"
+        assert header_parts[1] == b'1.2', "header version is incorrect"
+        assert header_parts[2] == 'TEST', "cipher name is incorrect"
+        assert header_parts[3] == b'1.23', "cipher version is incorrect"
 
-    def test_split_header(self):
+    def test_parse_vault_header(self):
         v = VaultLib('ansible')
-        data = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
-        rdata = v._split_header(data)
+        data = b"$ANSIBLE_VAULT;0.9;TEST\nansible"
+        (vault_version, cipher_name, cipher_version, rdata) = v._parse_vault_header(data)
         lines = rdata.split(b'\n')
-        assert lines[0] == b"ansible"
-        assert v.cipher_name == 'TEST', "cipher name was not set"
-        assert v.b_version == b"9.9"
+        self.assertEqual(lines[0], b"ansible")
+        self.assertEqual(cipher_name, b'TEST', msg="cipher name was not set")
+        self.assertEqual(vault_version, b"0.9")
+        self.assertEqual(cipher_version, vault_version)
+
+        data = b"$ANSIBLE_VAULT;1.1;TEST\nansible"
+        (vault_version, cipher_name, cipher_version, rdata) = v._parse_vault_header(data)
+        lines = rdata.split(b'\n')
+        self.assertEqual(lines[0], b"ansible")
+        self.assertEqual(cipher_name, b'TEST', msg="cipher name was not set")
+        self.assertEqual(vault_version, b"1.1")
+        self.assertEqual(cipher_version, vault_version)
+
+        data = b"$ANSIBLE_VAULT;1.2;TEST;3.2\nansible"
+        (vault_version, cipher_name, cipher_version, rdata) = v._parse_vault_header(data)
+        lines = rdata.split(b'\n')
+        self.assertEqual(lines[0], b"ansible")
+        self.assertEqual(cipher_name, b'TEST', msg="cipher name was not set")
+        self.assertEqual(vault_version, b"1.2")
+        self.assertEqual(cipher_version, b'3.2')
+
+        data = b"$ANSIBLE_VAULT;9.9;TEST;8.9\nansible"
+        (vault_version, cipher_name, cipher_version, rdata) = v._parse_vault_header(data)
+        lines = rdata.split(b'\n')
+        self.assertEqual(lines[0], b"ansible")
+        self.assertEqual(cipher_name, b'TEST', msg="cipher name was not set")
+        self.assertEqual(vault_version, b"9.9")
+        self.assertEqual(cipher_version, b"8.9")
+
+
+        data = b"$ANSIBLE_VAULT;1.1;TEST;3.2\nansible"
+        self.assertRaisesRegexp(errors.AnsibleError, r"Malformed vault header.*3 fields.*vault 1\.1", v._parse_vault_header, data)
+
+        data = b"$ANSIBLE_VAULT;1.2;TEST\nansible"
+        self.assertRaisesRegexp(errors.AnsibleError, r"Malformed vault header.*4 fields.*vault 1\.2", v._parse_vault_header, data)
 
     def test_encrypt_decrypt_aes(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         v = VaultLib('ansible')
-        v.cipher_name = u'AES'
         # AES encryption code has been removed, so this is old output for
         # AES-encrypted 'foobar' with password 'ansible'.
-        enc_data = b'$ANSIBLE_VAULT;1.1;AES\n53616c7465645f5fc107ce1ef4d7b455e038a13b053225776458052f8f8f332d554809d3f150bfa3\nfe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e\n786a5a15efeb787e1958cbdd480d076c\n'
-        dec_data = v.decrypt(enc_data)
-        assert dec_data == b"foobar", "decryption failed"
+        enc_data = '$ANSIBLE_VAULT;1.1;AES\n53616c7465645f5fc107ce1ef4d7b455e038a13b053225776458052f8f8f332d554809d3f150bfa3\nfe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e\n786a5a15efeb787e1958cbdd480d076c\n'
+        dec_data = v.decrypt(enc_data)[-1]
+        self.assertEqual(dec_data, "foobar", msg="decryption failed")
 
     def test_encrypt_decrypt_aes256(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         v = VaultLib('ansible')
-        v.cipher_name = 'AES256'
-        enc_data = v.encrypt(b"foobar")
-        dec_data = v.decrypt(enc_data)
-        assert enc_data != b"foobar", "encryption failed"
-        assert dec_data == b"foobar", "decryption failed"
+        enc_data = v.encrypt("foobar", 'AES256')
+        dec_data = v.decrypt(enc_data)[-1]
+        self.assertNotEqual(enc_data, "foobar", msg="encryption failed")
+        self.assertEqual(dec_data, "foobar", msg="decryption failed")
 
     def test_encrypt_encrypted(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
             raise SkipTest
         v = VaultLib('ansible')
-        v.cipher_name = 'AES'
         data = "$ANSIBLE_VAULT;9.9;TEST\n%s" % hexlify(six.b("ansible"))
         error_hit = False
         try:
@@ -157,4 +186,4 @@ class TestVaultLib(unittest.TestCase):
         except errors.AnsibleError as e:
             error_hit = True
         assert not error_hit, "An error was thrown when trying to encrypt data without the cipher set"
-        assert v.cipher_name == "AES256", "cipher name is not set to AES256: %s" % v.cipher_name
+        assert ';AES256' in enc_data, "cipher name is not set to AES256"

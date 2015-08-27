@@ -165,7 +165,7 @@ class DataLoader():
             with open(file_name, 'rb') as f:
                 data = f.read()
                 if self._vault.is_encrypted(data):
-                    data = self._vault.decrypt(data)
+                    data = self._vault.decrypt(data)[-1]
                     show_content = False
 
             data = to_unicode(data, errors='strict')
