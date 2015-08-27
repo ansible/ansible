@@ -305,7 +305,7 @@ class CLI(object):
 
 
         if connect_opts:
-            parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
+            parser.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                 help='ask for connection password')
             parser.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
                 help='use this file to authenticate the connection')
