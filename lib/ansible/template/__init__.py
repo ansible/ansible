@@ -37,7 +37,6 @@ from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
 
 from numbers import Number
-from types import NoneType
 
 __all__ = ['Templar']
 
@@ -188,7 +187,7 @@ class Templar:
                             resolved_val = self._available_variables[var_name]
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
-                            elif isinstance(resolved_val, NoneType):
+                            elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
