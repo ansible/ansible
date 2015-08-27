@@ -261,7 +261,7 @@ class Templar:
                 ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 raise AnsibleUndefinedVariable(e)
-            except Exception, e:
+            except Exception as e:
                 if self._fail_on_lookup_errors:
                     raise
                 ran = None
@@ -299,9 +299,9 @@ class Templar:
 
             try:
                 t = myenv.from_string(data)
-            except TemplateSyntaxError, e:
+            except TemplateSyntaxError as e:
                 raise AnsibleError("template error while templating string: %s" % str(e))
-            except Exception, e:
+            except Exception as e:
                 if 'recursion' in str(e):
                     raise AnsibleError("recursive loop detected in template string: %s" % data)
                 else:
@@ -317,7 +317,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
-            except TypeError, te:
+            except TypeError as te:
                 if 'StrictUndefined' in str(te):
                     raise AnsibleUndefinedVariable(
                         "Unable to look up a name or access an attribute in template string. " + \
@@ -338,7 +338,7 @@ class Templar:
                     res += '\n' * (data_newlines - res_newlines)
 
             return res
-        except (UndefinedError, AnsibleUndefinedVariable), e:
+        except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:
                 raise AnsibleUndefinedVariable(e)
             else:

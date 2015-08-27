@@ -258,7 +258,7 @@ class StrategyModule(StrategyBase):
 
                 try:
                     included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator, loader=self._loader, variable_manager=self._variable_manager)
-                except AnsibleError, e:
+                except AnsibleError as e:
                     return False
 
                 if len(included_files) > 0:
@@ -273,7 +273,7 @@ class StrategyModule(StrategyBase):
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             new_blocks = self._load_included_file(included_file, iterator=iterator)
-                        except AnsibleError, e:
+                        except AnsibleError as e:
                             for host in included_file._hosts:
                                 iterator.mark_host_failed(host)
                             self._display.warning(str(e))
@@ -296,7 +296,7 @@ class StrategyModule(StrategyBase):
                         iterator.add_tasks(host, all_blocks[host])
 
                 self._display.debug("results queue empty")
-            except (IOError, EOFError), e:
+            except (IOError, EOFError) as e:
                 self._display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return False

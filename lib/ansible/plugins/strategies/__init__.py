@@ -382,7 +382,7 @@ class StrategyBase:
             data = self._loader.load_from_file(included_file._filename)
             if data is None:
                 return []
-        except AnsibleError, e:
+        except AnsibleError as e:
             for host in included_file._hosts:
                 tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=str(e)))
                 iterator.mark_host_failed(host)
@@ -455,7 +455,7 @@ class StrategyBase:
                             loader=self._loader,
                             variable_manager=self._variable_manager
                         )
-                    except AnsibleError, e:
+                    except AnsibleError as e:
                         return False
 
                     if len(included_files) > 0:
@@ -475,7 +475,7 @@ class StrategyBase:
                                     # and add the new blocks to the list of handler blocks
                                     handler_block.block.extend(block.block)
                                 #iterator._play.handlers.extend(new_blocks)
-                            except AnsibleError, e:
+                            except AnsibleError as e:
                                 for host in included_file._hosts:
                                     iterator.mark_host_failed(host)
                                     self._tqm._failed_hosts[host.name] = True

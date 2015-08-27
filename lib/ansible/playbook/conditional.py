@@ -66,7 +66,7 @@ class Conditional:
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
-        except Exception, e:
+        except Exception as e:
             raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (conditional, e), obj=ds)
 
         return True

@@ -242,7 +242,7 @@ class VariableManager:
                             break
                     else:
                         raise AnsibleError("vars file %s was not found" % vars_file_item)
-                except UndefinedError, e:
+                except UndefinedError as e:
                     continue
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
