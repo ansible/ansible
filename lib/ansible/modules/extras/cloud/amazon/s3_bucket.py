@@ -20,10 +20,10 @@ short_description: Manage s3 buckets in AWS
 description:
     - Manage s3 buckets in AWS
 version_added: "2.0"
-author: Rob White (@wimnat)
+author: "Rob White (@wimnat)"
 options:
   force:
-    description: 
+    description:
       - When trying to delete a bucket, delete all keys in the bucket first (an s3 bucket must be empty for a successful deletion)
     required: false
     default: no
@@ -40,11 +40,12 @@ options:
     default: null
   region:
     description:
-     - AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.
+      - AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard.
     required: false
     default: null
   s3_url:
-    description: S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
+    description:
+      - S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
     default: null
     aliases: [ S3_URL ]
   requester_pays:
@@ -65,12 +66,12 @@ options:
     required: false
     default: null
   versioning:
-    description: 
+    description:
       - Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
     required: false
     default: no
     choices: [ 'yes', 'no' ]
-    
+
 extends_documentation_fragment: aws
 '''
 
