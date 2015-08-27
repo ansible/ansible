@@ -74,4 +74,4 @@ if __name__ == '__main__':
       # Delete matching disks
       delete_gce_resources(gce.list_volumes, 'name', opts)
     except KeyboardInterrupt as e:
-        print "\nExiting on user command."
+        print("\nExiting on user command.")
