@@ -53,6 +53,21 @@ options:
       - If not set, first found service offering is used.
     required: false
     default: null
+  cpu_count:
+    description:
+      - The number of CPUs to allocate to the instance, used with custom service offerings
+    required: false
+    default: null
+  cpu_speed:
+    description:
+      - The clock speed/shares allocated to the instance, used with custom service offerings
+    required: false
+    default: null
+  memory:
+    description:
+      - The clock speed/shares allocated to the instance, used with custom service offerings
+    required: false
+    default: null
   template:
     description:
       - Name or id of the template to be used for creating the new instance.
@@ -547,6 +562,20 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             user_data = base64.b64encode(user_data)
         return user_data
 
+    def get_details(self):
+        res = None
+        cpu = self.module.params.get('cpu')
+        cpu_speed = self.module.params.get('cpu_speed')
+        memory = self.module.params.get('memory')
+        if all([cpu, cpu_speed, memory]):
+            res = [{
+                'cpuNumber': cpu,
+                'cpuSpeed': cpu_speed,
+                'memory': memory,
+            }]
+        elif any([cpu, cpu_speed, memory]):
+            self.module.fail_json(msg='cpu, cpu_speed and memory must be used together')
+        return res
 
     def deploy_instance(self, start_vm=True):
         self.result['changed'] = True
@@ -577,6 +606,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['rootdisksize']        = self.module.params.get('root_disk_size')
         args['securitygroupnames']  = ','.join(self.module.params.get('security_groups'))
         args['affinitygroupnames']  = ','.join(self.module.params.get('affinity_groups'))
+        args['details']             = self.get_details()
 
         template_iso = self.get_template_or_iso()
         if 'hypervisor' not in template_iso:
@@ -798,6 +828,9 @@ def main():
             group = dict(default=None),
             state = dict(choices=['present', 'deployed', 'started', 'stopped', 'restarted', 'absent', 'destroyed', 'expunged'], default='present'),
             service_offering = dict(default=None),
+            cpu = dict(default=None, type='int'),
+            cpu_speed = dict(default=None, type='int'),
+            memory = dict(default=None, type='int'),
             template = dict(default=None),
             iso = dict(default=None),
             networks = dict(type='list', aliases=[ 'network' ], default=None),
