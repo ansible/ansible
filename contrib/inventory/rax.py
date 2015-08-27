@@ -245,7 +245,7 @@ def _list_into_cache(regions):
         if cs is None:
             warnings.warn(
                 'Connecting to Rackspace region "%s" has caused Pyrax to '
-                'return a NoneType. Is this a valid region?' % region,
+                'return None. Is this a valid region?' % region,
                 RuntimeWarning)
             continue
         for server in cs.servers.list():
@@ -412,7 +412,7 @@ def setup():
             pyrax.keyring_auth(keyring_username, region=region)
         else:
             pyrax.set_credential_file(creds_file, region=region)
-    except Exception, e:
+    except Exception as e:
         sys.stderr.write("%s: %s\n" % (e, e.message))
         sys.exit(1)
 

@@ -20,7 +20,7 @@ else:
 def createDaemon():
    try:
       pid = os.fork()
-   except OSError, e:
+   except OSError as e:
       raise Exception, "%s [%d]" % (e.strerror, e.errno)
 
    if (pid == 0):
@@ -28,7 +28,7 @@ def createDaemon():
 
       try:
          pid = os.fork()
-      except OSError, e:
+      except OSError as e:
          raise Exception, "%s [%d]" % (e.strerror, e.errno)
 
       if (pid == 0):

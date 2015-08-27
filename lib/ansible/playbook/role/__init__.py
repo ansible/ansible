@@ -25,7 +25,6 @@ import inspect
 import os
 
 from hashlib import sha1
-from types import NoneType
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.parsing import DataLoader
@@ -184,16 +183,16 @@ class Role(Base, Become, Conditional, Taggable):
 
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')
-        if not isinstance(self._role_vars, (dict, NoneType)):
-            raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
-        elif self._role_vars is None:
+        if self._role_vars is None:
             self._role_vars = dict()
+        elif not isinstance(self._role_vars, dict):
+            raise AnsibleParserError("The vars/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
         self._default_vars = self._load_role_yaml('defaults')
-        if not isinstance(self._default_vars, (dict, NoneType)):
-            raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
-        elif self._default_vars is None:
+        if self._default_vars is None:
             self._default_vars = dict()
+        elif not isinstance(self._default_vars, dict):
+            raise AnsibleParserError("The default/main.yml file for role '%s' must contain a dictionary of variables" % self._role_name)
 
     def _load_role_yaml(self, subdir):
         file_path = os.path.join(self._role_path, subdir)
@@ -370,7 +369,7 @@ class Role(Base, Become, Conditional, Taggable):
     def deserialize(self, data, include_deps=True):
         self._role_name    = data.get('_role_name', '')
         self._role_path    = data.get('_role_path', '')
-	self._role_vars    = data.get('_role_vars', dict())
+        self._role_vars    = data.get('_role_vars', dict())
         self._role_params  = data.get('_role_params', dict())
         self._default_vars = data.get('_default_vars', dict())
         self._had_task_run = data.get('_had_task_run', dict())

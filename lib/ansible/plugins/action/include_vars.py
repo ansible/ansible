@@ -19,8 +19,6 @@ __metaclass__ = type
 
 import os
 
-from types import NoneType
-
 from ansible.errors import AnsibleError
 from ansible.parsing import DataLoader
 from ansible.plugins.action import ActionBase

@@ -196,7 +196,7 @@ class PullCLI(CLI):
             os.chdir('/')
             try:
                 shutil.rmtree(self.options.dest)
-            except Exception, e:
+            except Exception as e:
                 self.display.error("Failed to remove %s: %s" % (self.options.dest, str(e)))
 
         return rc

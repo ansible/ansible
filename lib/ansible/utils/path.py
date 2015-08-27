@@ -45,6 +45,6 @@ def makedirs_safe(path, mode=None):
                 os.makedirs(path, mode)
             else:
                 os.makedirs(path)
-        except OSError, e:
+        except OSError as e:
             if e.errno != EEXIST:
                 raise

@@ -101,7 +101,7 @@ except:
         from chube.linode_obj import Linode
 
         sys.path = old_path
-    except Exception, e:
+    except Exception as e:
         raise Exception("could not import chube")
 
 load_chube_config()
@@ -184,7 +184,7 @@ class LinodeInventory(object):
         try:
             for node in Linode.search(status=Linode.STATUS_RUNNING):
                 self.add_node(node)
-        except chube_api.linode_api.ApiError, e:
+        except chube_api.linode_api.ApiError as e:
             print "Looks like Linode's API is down:"
             print
             print e
@@ -194,7 +194,7 @@ class LinodeInventory(object):
         """Gets details about a specific node."""
         try:
             return Linode.find(api_id=linode_id)
-        except chube_api.linode_api.ApiError, e:
+        except chube_api.linode_api.ApiError as e:
             print "Looks like Linode's API is down:"
             print
             print e
