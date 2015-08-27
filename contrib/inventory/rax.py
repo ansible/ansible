@@ -245,7 +245,7 @@ def _list_into_cache(regions):
         if cs is None:
             warnings.warn(
                 'Connecting to Rackspace region "%s" has caused Pyrax to '
-                'return a NoneType. Is this a valid region?' % region,
+                'return None. Is this a valid region?' % region,
                 RuntimeWarning)
             continue
         for server in cs.servers.list():
