@@ -14,47 +14,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import ast
-
-from six import string_types
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
+from ansible.utils.vars import isidentifier
 
-def isidentifier(ident):
-    """
-    Determines, if string is valid Python identifier using the ast module.
-    Orignally posted at: http://stackoverflow.com/a/29586366
-    """
-
-    if not isinstance(ident, string_types):
-        return False
-
-    try:
-        root = ast.parse(ident)
-    except SyntaxError:
-        return False
-
-    if not isinstance(root, ast.Module):
-        return False
-
-    if len(root.body) != 1:
-        return False
-
-    if not isinstance(root.body[0], ast.Expr):
-        return False
-
-    if not isinstance(root.body[0].value, ast.Name):
-        return False
-
-    if root.body[0].value.id != ident:
-        return False
-
-    return True
 
 class ActionModule(ActionBase):
 
