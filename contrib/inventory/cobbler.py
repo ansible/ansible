@@ -113,7 +113,7 @@ class CobblerInventory(object):
                 self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
             data_to_print += self.json_format_dict(self.inventory, True)
 
-        print data_to_print
+        print(data_to_print)
 
     def _connect(self):
         if not self.conn:

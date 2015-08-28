@@ -41,7 +41,7 @@ def list_groups(api):
 
     inventory['_meta'] = {'hostvars': hostvars}
     inv_string = json.dumps(inventory, indent=1, sort_keys=True)
-    print inv_string
+    print(inv_string)
     
     return None
 
@@ -69,7 +69,7 @@ def print_host(host):
     This function expects one string, this hostname to lookup variables for.
     '''
 
-    print json.dumps({})
+    print(json.dumps({}))
 
     return None
 
