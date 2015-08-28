@@ -573,8 +573,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                 'cpuSpeed': cpu_speed,
                 'memory': memory,
             }]
-        elif any([cpu, cpu_speed, memory]):
-            self.module.fail_json(msg='cpu, cpu_speed and memory must be used together')
         return res
 
     def deploy_instance(self, start_vm=True):
@@ -865,6 +863,7 @@ def main():
         ),
         required_together = (
             ['api_key', 'api_secret', 'api_url'],
+            ['cpu', 'cpu_speed', 'memory'],
         ),
         supports_check_mode=True
     )
