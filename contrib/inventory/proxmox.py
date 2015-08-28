@@ -172,7 +172,7 @@ def main():
     if options.pretty:
         indent = 2
 
-    print json.dumps(data, indent=indent)
+    print(json.dumps(data, indent=indent))
 
 if __name__ == '__main__':
     main()
