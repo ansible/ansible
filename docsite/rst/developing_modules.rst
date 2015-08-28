@@ -457,7 +457,7 @@ Module checklist
 * The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
 * Documentation: Make sure it exists
     * `required` should always be present, be it true or false
-    * If `required` is false you need to document `default`, even if its 'null'
+    * If `required` is false you need to document `default`, even if the default is 'None' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code. 
     * `default` is not needed for `required: true`
     * Remove unnecessary doc like `aliases: []` or `choices: []`
     * The version is not a float number and value the current development version
