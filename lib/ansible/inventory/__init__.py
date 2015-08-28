@@ -325,11 +325,14 @@ class Inventory(object):
             raise AnsibleError("no hosts matching the pattern '%s' were found" % pat)
 
     def _create_implicit_localhost(self, pattern):
-        new_host = Host(pattern)
+        new_host = self.add_ungrouped_host(pattern)
         new_host.set_variable("ansible_python_interpreter", sys.executable)
         new_host.set_variable("ansible_connection", "local")
         new_host.ipv4_address = '127.0.0.1'
+        return new_host
 
+    def add_ungrouped_host(self, pattern):
+        new_host = Host(pattern)
         ungrouped = self.get_group("ungrouped")
         if ungrouped is None:
             self.add_group(Group('ungrouped'))

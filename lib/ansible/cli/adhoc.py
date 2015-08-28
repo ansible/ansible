@@ -55,6 +55,9 @@ class AdHocCLI(CLI):
         self.parser.add_option('-m', '--module-name', dest='module_name',
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
+        self.parser.add_option('--allow-hosts-not-in-inventory',
+            action='store_true', dest='allow_hosts_not_in_inventory',
+            help="Allow targeting hosts not in inventory", default=True)
 
         self.options, self.args = self.parser.parse_args()
 
@@ -107,6 +110,9 @@ class AdHocCLI(CLI):
 
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
         variable_manager.set_inventory(inventory)
+
+        if self.options.allow_hosts_not_in_inventory:
+            inventory.add_ungrouped_host(pattern)
 
         hosts = inventory.list_hosts(pattern)
         if len(hosts) == 0:
