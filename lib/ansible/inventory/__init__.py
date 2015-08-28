@@ -132,7 +132,6 @@ class Inventory(object):
         for host in self.get_hosts():
             host.vars = combine_vars(host.vars, self.get_host_variables(host.name))
 
-
     def _match(self, str, pattern_str):
         try:
             if pattern_str.startswith('~'):
@@ -205,6 +204,23 @@ class Inventory(object):
 
         return hosts
 
+    def _split_pattern(self, pattern):
+        """
+        takes e.g. "webservers[0:5]:dbservers:others"
+        and returns ["webservers[0:5]", "dbservers", "others"]
+        """
+
+        term = re.compile(
+            r'''(?:             # We want to match something comprising:
+                    [^:\[\]]    # (anything other than ':', '[', or ']'
+                    |           # ...or...
+                    \[[^\]]*\]  # a single complete bracketed expression)
+                )*              # repeated as many times as possible
+            ''', re.X
+        )
+
+        return [x for x in term.findall(pattern) if x]
+
     def _evaluate_patterns(self, patterns):
         """
         Takes a list of patterns and returns a list of matching host names,
@@ -251,102 +267,124 @@ class Inventory(object):
 
     def _match_one_pattern(self, pattern):
         """ 
-        Takes a single pattern (i.e., not "p1:p2") and returns a list of
-        matching hosts names. Does not take negatives or intersections
-        into account.
+        Takes a single pattern and returns a list of matching host names.
+        Ignores intersection (&) and exclusion (!) specifiers.
+
+        The pattern may be:
+
+            1. A regex starting with ~, e.g. '~[abc]*'
+            2. A shell glob pattern with ?/*/[chars]/[!chars], e.g. 'foo'
+            3. An ordinary word that matches itself only, e.g. 'foo'
+
+        The pattern is matched using the following rules:
+
+            1. If it's 'all', it matches all hosts in all groups.
+            2. Otherwise, for each known group name:
+                (a) if it matches the group name, the results include all hosts
+                    in the group or any of its children.
+                (b) otherwise, if it matches any hosts in the group, the results
+                    include the matching hosts.
+
+        This means that 'foo*' may match one or more groups (thus including all
+        hosts therein) but also hosts in other groups.
+
+        The built-in groups 'all' and 'ungrouped' are special. No pattern can
+        match these group names (though 'all' behaves as though it matches, as
+        described above). The word 'ungrouped' can match a host of that name,
+        and patterns like 'ungr*' and 'al*' can match either hosts or groups
+        other than all and ungrouped.
+
+        If the pattern matches one or more group names according to these rules,
+        it may have an optional range suffix to select a subset of the results.
+        This is allowed only if the pattern is not a regex, i.e. '~foo[1]' does
+        not work (the [1] is interpreted as part of the regex), but 'foo*[1]'
+        would work if 'foo*' matched the name of one or more groups.
+
+        Duplicate matches are always eliminated from the results.
         """
 
-        if pattern in self._pattern_cache:
-            return self._pattern_cache[pattern]
+        if pattern.startswith("&") or pattern.startswith("!"):
+            pattern = pattern[1:]
 
-        (name, enumeration_details) = self._enumeration_info(pattern)
-        hpat = self._hosts_in_unenumerated_pattern(name)
-        result = self._apply_ranges(pattern, hpat)
-        self._pattern_cache[pattern] = result
-        return result
+        if pattern not in self._pattern_cache:
+            (expr, slice) = self._split_subscript(pattern)
+            hosts = self._enumerate_matches(expr)
+            try:
+                hosts = self._apply_subscript(hosts, slice)
+            except IndexError:
+                raise AnsibleError("No hosts matched the subscripted pattern '%s'" % pattern)
+            self._pattern_cache[pattern] = hosts
 
-    def _enumeration_info(self, pattern):
+        return self._pattern_cache[pattern]
+
+    def _split_subscript(self, pattern):
         """
-        returns (pattern, limits) taking a regular pattern and finding out
-        which parts of it correspond to start/stop offsets.  limits is
-        a tuple of (start, stop) or None
+        Takes a pattern, checks if it has a subscript, and returns the pattern
+        without the subscript and a (start,end) tuple representing the given
+        subscript (or None if there is no subscript).
+
+        Validates that the subscript is in the right syntax, but doesn't make
+        sure the actual indices make sense in context.
         """
 
         # Do not parse regexes for enumeration info
         if pattern.startswith('~'):
             return (pattern, None)
 
-        # The regex used to match on the range, which can be [x] or [x-y].
-        pattern_re = re.compile("^(.*)\[([-]?[0-9]+)(?:(?:-)([0-9]+))?\](.*)$")
-        m = pattern_re.match(pattern)
-        if m:
-            (target, first, last, rest) = m.groups()
-            first = int(first)
-            if last:
-                if first < 0:
-                    raise AnsibleError("invalid range: negative indices cannot be used as the first item in a range")
-                last = int(last)
-            else:
-                last = first
-            return (target, (first, last))
-        else:
-            return (pattern, None)
+        # We want a pattern followed by an integer or range subscript.
+        # (We can't be more restrictive about the expression because the
+        # fnmatch semantics permit [\[:\]] to occur.)
 
-    def _apply_ranges(self, pat, hosts):
+        pattern_with_subscript = re.compile(
+            r'''^
+                (.+)                    # A pattern expression ending with...
+                \[(?:                   # A [subscript] expression comprising:
+                    (-?[0-9]+)          # A single positive or negative number
+                    |                   # Or a numeric range
+                    ([0-9]+)([:-])([0-9]+)
+                )\]
+                $
+            ''', re.X
+        )
+
+        subscript = None
+        m = pattern_with_subscript.match(pattern)
+        if m:
+            (pattern, idx, start, sep, end) = m.groups()
+            if idx:
+                subscript = (int(idx), None)
+            else:
+                subscript = (int(start), int(end))
+                if sep == '-':
+                    display.deprecated("Use [x:y] inclusive subscripts instead of [x-y]", version=2.0, removed=True)
+
+        return (pattern, subscript)
+
+    def _apply_subscript(self, hosts, subscript):
         """
-        given a pattern like foo, that matches hosts, return all of hosts
-        given a pattern like foo[0:5], where foo matches hosts, return the first 6 hosts
+        Takes a list of hosts and a (start,end) tuple and returns the subset of
+        hosts based on the subscript (which may be None to return all hosts).
         """ 
 
-        # If there are no hosts to select from, just return the
-        # empty set. This prevents trying to do selections on an empty set.
-        # issue#6258
-        if not hosts:
+        if not hosts or not subscript:
             return hosts
 
-        (loose_pattern, limits) = self._enumeration_info(pat)
-        if not limits:
-            return hosts
+        (start, end) = subscript
 
-        (left, right) = limits
+        if end:
+            return hosts[start:end+1]
+        else:
+            return [ hosts[start] ]
 
-        if left == '':
-            left = 0
-        if right == '':
-            right = 0
-        left=int(left)
-        right=int(right)
-        try:
-            if left != right:
-                return hosts[left:right]
-            else:
-                return [ hosts[left] ]
-        except IndexError:
-            raise AnsibleError("no hosts matching the pattern '%s' were found" % pat)
-
-    def _create_implicit_localhost(self, pattern):
-        new_host = Host(pattern)
-        new_host.set_variable("ansible_python_interpreter", sys.executable)
-        new_host.set_variable("ansible_connection", "local")
-        new_host.ipv4_address = '127.0.0.1'
-
-        ungrouped = self.get_group("ungrouped")
-        if ungrouped is None:
-            self.add_group(Group('ungrouped'))
-            ungrouped = self.get_group('ungrouped')
-            self.get_group('all').add_child_group(ungrouped)
-        ungrouped.add_host(new_host)
-        return new_host
-
-    def _hosts_in_unenumerated_pattern(self, pattern):
-        """ Get all host names matching the pattern """
+    def _enumerate_matches(self, pattern):
+        """
+        Returns a list of host names matching the given pattern according to the
+        rules explained above in _match_one_pattern.
+        """
 
         results = []
         hosts = []
         hostnames = set()
-
-        # ignore any negative checks here, this is handled elsewhere
-        pattern = pattern.replace("!","").replace("&", "")
 
         def __append_host_to_results(host):
             if host.name not in hostnames:
@@ -371,6 +409,20 @@ class Inventory(object):
             new_host = self._create_implicit_localhost(pattern)
             results.append(new_host)
         return results
+
+    def _create_implicit_localhost(self, pattern):
+        new_host = Host(pattern)
+        new_host.set_variable("ansible_python_interpreter", sys.executable)
+        new_host.set_variable("ansible_connection", "local")
+        new_host.ipv4_address = '127.0.0.1'
+
+        ungrouped = self.get_group("ungrouped")
+        if ungrouped is None:
+            self.add_group(Group('ungrouped'))
+            ungrouped = self.get_group('ungrouped')
+            self.get_group('all').add_child_group(ungrouped)
+        ungrouped.add_host(new_host)
+        return new_host
 
     def clear_pattern_cache(self):
         ''' called exclusively by the add_host plugin to allow patterns to be recalculated '''
