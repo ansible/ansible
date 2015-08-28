@@ -19,6 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import ast
+
+from six import string_types
 
 from ansible import constants as C
 from ansible.parsing.splitter import parse_kv
@@ -66,3 +69,35 @@ def load_extra_vars(loader, options):
             data = parse_kv(extra_vars_opt)
         extra_vars = combine_vars(extra_vars, data)
     return extra_vars
+
+def isidentifier(ident):
+    """
+    Determines, if string is valid Python identifier using the ast module.
+    Orignally posted at: http://stackoverflow.com/a/29586366
+    """
+
+    if not isinstance(ident, string_types):
+        return False
+
+    try:
+        root = ast.parse(ident)
+    except SyntaxError:
+        return False
+
+    if not isinstance(root, ast.Module):
+        return False
+
+    if len(root.body) != 1:
+        return False
+
+    if not isinstance(root.body[0], ast.Expr):
+        return False
+
+    if not isinstance(root.body[0].value, ast.Name):
+        return False
+
+    if root.body[0].value.id != ident:
+        return False
+
+    return True
+

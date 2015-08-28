@@ -37,7 +37,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
 from ansible.utils.debug import debug
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, isidentifier
 from ansible.template import template
 
 class Base:
@@ -379,14 +379,21 @@ class Base:
         list into a single dictionary.
         '''
 
+        def _validate_variable_keys(ds):
+            for key in ds:
+                if not isidentifier(key):
+                    raise TypeError("%s is not a valid variable name" % key)
+
         try:
             if isinstance(ds, dict):
+                _validate_variable_keys(ds)
                 return ds
             elif isinstance(ds, list):
                 all_vars = dict()
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
+                    _validate_variable_keys(item)
                     all_vars = combine_vars(all_vars, item)
                 return all_vars
             elif ds is None:
@@ -395,6 +402,8 @@ class Base:
                 raise ValueError
         except ValueError:
             raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__, obj=ds)
+        except TypeError, e:
+            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
 
     def _extend_value(self, value, new_value):
         '''
