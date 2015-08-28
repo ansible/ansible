@@ -16,6 +16,8 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 ########################################################
+import os
+
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleOptionsError
@@ -24,6 +26,7 @@ from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
+from ansible.plugins import module_loader
 from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
@@ -79,6 +82,8 @@ class AdHocCLI(CLI):
 
         super(AdHocCLI, self).run()
 
+        # ensure that modules under ./library are loaded
+        module_loader.add_directory(os.getcwd(), True)
 
         # only thing left should be host pattern
         pattern = self.args[0]
