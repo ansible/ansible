@@ -94,7 +94,8 @@ class AnsibleCloudStack(object):
                 method=api_http_method
                 )
         else:
-            self.cs = CloudStack(**read_config())
+            api_region = self.module.params.get('api_region', 'cloudstack')
+            self.cs = CloudStack(**read_config(api_region))
 
 
     def get_or_fallback(self, key=None, fallback_key=None):
