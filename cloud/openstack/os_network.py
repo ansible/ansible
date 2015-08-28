@@ -57,8 +57,13 @@ requirements: ["shade"]
 
 EXAMPLES = '''
 - os_network:
-    name=t1network
-    state=present
+    name: t1network
+    state: present
+    auth:
+      auth_url: https://your_api_url.com:9000/v2.0
+      username: user
+      password: password
+      project_name: someproject
 '''
 
 
