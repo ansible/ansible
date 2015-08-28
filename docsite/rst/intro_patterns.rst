@@ -68,13 +68,19 @@ It's also ok to mix wildcard patterns and groups at the same time::
 
     one*.com:dbservers
 
-As an advanced usage, you can also select the numbered server in a group::
-   
-    webservers[0]
+You can select a host or subset of hosts from a group by their position. For example, given the following group::
 
-Or a range of servers in a group::
+    [webservers]
+    cobweb
+    webbing
+    weber
 
-    webservers[0:25]
+You can refer to hosts within the group by adding a subscript to the group name:
+
+    webservers[0]       # == cobweb
+    webservers[-1]      # == weber
+    webservers[0:1]     # == webservers[0]:webservers[1]
+                        # == cobweb:webbing
 
 Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
 
