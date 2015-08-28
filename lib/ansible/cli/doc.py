@@ -62,6 +62,9 @@ class DocCLI(CLI):
 
         super(DocCLI, self).run()
 
+        # ensure that modules under ./library are loaded
+        module_loader.add_directory(os.getcwd(), True)
+
         if self.options.module_path is not None:
             for i in self.options.module_path.split(os.pathsep):
                 module_loader.add_directory(i)
