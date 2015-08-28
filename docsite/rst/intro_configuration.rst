@@ -717,6 +717,18 @@ If set, this will pass a specific set of options to Ansible rather than Ansible'
 In particular, users may wish to raise the ControlPersist time to encourage performance.  A value of 30 minutes may
 be appropriate. If `ssh_args` is set, the default ``control_path`` setting is not used.
 
+.. _ssh_specific_args:
+
+ssh_specific_args
+=================
+
+If set, this will pass additional options to ssh, but not scp or sftp::
+
+    ssh_specific_args = -R 12346:localhost:12345
+
+This can be used if you need to use ssh options that aren't valid for
+scp. You won't ordinarily need this setting.
+
 .. _control_path:
 
 control_path

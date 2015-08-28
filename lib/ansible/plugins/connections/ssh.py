@@ -83,6 +83,10 @@ class Connection(ConnectionBase):
                 "-o", "ControlPath=\"{0}\"".format(C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir)),
             )
 
+        self.ssh_specific_args = []
+        if C.ANSIBLE_SSH_SPECIFIC_ARGS:
+            self.ssh_specific_args += shlex.split(C.ANSIBLE_SSH_SPECIFIC_ARGS)
+
         cp_in_use = False
         cp_path_set = False
         for arg in self._common_args:
@@ -337,6 +341,7 @@ class Connection(ConnectionBase):
         else:
             ssh_cmd.append("-q")
         ssh_cmd += self._common_args
+        ssh_cmd += self.ssh_specific_args
 
         ssh_cmd.append(self.host)
 
