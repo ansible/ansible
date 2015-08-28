@@ -4,7 +4,7 @@ Homepage and documentation source for Ansible
 This project hosts the source behind [docs.ansible.com](http://docs.ansible.com/)
 
 Contributions to the documentation are welcome.  To make changes, submit a pull request
-that changes the reStructuredText files in the "rst/" directory only, and Michael can
+that changes the reStructuredText files in the "rst/" directory only, and the core team can
 do a docs build and push the static files. 
 
 If you wish to verify output from the markup
