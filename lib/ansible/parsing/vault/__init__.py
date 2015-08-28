@@ -1,4 +1,5 @@
 # (c) 2014, James Tanner <tanner.jc@gmail.com>
+# Copyright 2015 Abhijit Menon-Sen <ams@2ndQuadrant.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +23,7 @@ import shlex
 import shutil
 import sys
 import tempfile
+import base64
 from io import BytesIO
 from subprocess import call
 from ansible.errors import AnsibleError
@@ -505,7 +507,7 @@ class VaultAES256:
 
         check_prereqs()
 
-        self.version = u'1.1'
+        self.version = u'1.2'
 
     def create_key(self, password, salt, keylength, ivlength):
         hash_function = SHA256
@@ -513,17 +515,32 @@ class VaultAES256:
         # make two keys and one iv
         pbkdf2_prf = lambda p, s: HMAC.new(p, s, hash_function).digest()
 
-
         derivedkey = PBKDF2(password, salt, dkLen=(2 * keylength) + ivlength,
                             count=10000, prf=pbkdf2_prf)
         return derivedkey
 
-    def gen_key_initctr(self, password, salt):
+    def gen_key_initctr(self, password, salt, generate_iv=False):
+        '''
+        Takes a password and random 32-byte salt and stretches it using
+        PBKDF2 into an 32-byte AES key, a 32-byte HMAC-SHA-256 key, and
+        (optionally) a 16-byte IV for AES-CTR.
+
+        The initial value for the counter is zero by default, but we support
+        generating a value using PBKDF2 for backwards compatibility.
+
+        CTR mode requires that the same key and the same counter are only ever
+        used once to encrypt data. Since we generate the key using a random salt
+        each time, the initial counter value can be 0. Using PBKDF2 to generate
+        the value just slows things down (specifically, it adds 10000 iterations
+        of the PRF, and then throws half of the 32-byte output away).
+        '''
         # 16 for AES 128, 32 for AES256
         keylength = 32
 
         # match the size used for counter.new to avoid extra work
-        ivlength = 16
+        ivlength = 0
+        if generate_iv:
+            ivlength = 16
 
         if HAS_PBKDF2HMAC:
             backend = default_backend()
@@ -539,26 +556,25 @@ class VaultAES256:
 
         key1 = derivedkey[:keylength]
         key2 = derivedkey[keylength:(keylength * 2)]
-        iv = derivedkey[(keylength * 2):(keylength * 2) + ivlength]
 
-        return key1, key2, hexlify(iv)
+        iv = 0
+        if generate_iv:
+            iv = derivedkey[(keylength * 2):(keylength * 2) + ivlength]
+            iv = int(hexlify(iv), 16)
+
+        return key1, key2, iv
 
 
-    def encrypt(self, data, password):
+    def encrypt(self, plaintext, password):
 
         salt = os.urandom(32)
         key1, key2, iv = self.gen_key_initctr(password, salt)
-
-        # PKCS#7 PAD DATA http://tools.ietf.org/html/rfc5652#section-6.3
-        bs = AES.block_size
-        padding_length = (bs - len(data) % bs) or bs
-        data += to_bytes(padding_length * chr(padding_length), encoding='ascii', errors='strict')
 
         # COUNTER.new PARAMETERS
         # 1) nbits (integer) - Length of the counter, in bits.
         # 2) initial_value (integer) - initial value of the counter. "iv" from gen_key_initctr
 
-        ctr = Counter.new(128, initial_value=int(iv, 16))
+        ctr = Counter.new(128, initial_value=iv)
 
         # AES.new PARAMETERS
         # 1) AES key, must be either 16, 24, or 32 bytes long -- "key" from gen_key_initctr
@@ -567,46 +583,50 @@ class VaultAES256:
 
         cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
 
-        # ENCRYPT PADDED DATA
-        cryptedData = cipher.encrypt(data)
+        ciphertext = cipher.encrypt(plaintext)
+        hmac = HMAC.new(key2, ciphertext, SHA256)
 
-        # COMBINE SALT, MAC, AND DATA
-        hmac = HMAC.new(key2, cryptedData, SHA256)
-        message = b'%s\n%s\n%s' % (hexlify(salt), to_bytes(hmac.hexdigest()), hexlify(cryptedData))
-        message = hexlify(message)
+        message = base64.b64encode(salt+hmac.digest()+ciphertext)
+
         return message
 
-    def decrypt(self, data, password, version=None):
+    def decrypt(self, message, password, version=None):
 
-        # SPLIT SALT, MAC, AND DATA
-        data = unhexlify(data)
-        salt, cryptedHmac, cryptedData = data.split(b"\n", 2)
-        salt = unhexlify(salt)
-        cryptedData = unhexlify(cryptedData)
-
-        key1, key2, iv = self.gen_key_initctr(password, salt)
+        if version == u'1.1':
+            message = unhexlify(message)
+            salt, mac, ciphertext = message.split(b'\n', 2)
+            salt = unhexlify(salt)
+            mac = unhexlify(mac)
+            ciphertext = unhexlify(ciphertext)
+            key1, key2, iv = self.gen_key_initctr(password, salt, generate_iv=True)
+        else:
+            message = base64.b64decode(message)
+            salt = message[0:32]
+            mac = message[32:64]
+            ciphertext = message[64:]
+            key1, key2, iv = self.gen_key_initctr(password, salt)
 
         # EXIT EARLY IF MAC DOESN'T VALIDATE
-        hmacDecrypt = HMAC.new(key2, cryptedData, SHA256)
-        if not self.is_equal(cryptedHmac, to_bytes(hmacDecrypt.hexdigest())):
+        hmac = HMAC.new(key2, ciphertext, SHA256)
+        if not self.is_equal(mac, to_bytes(hmac.digest())):
             return None
 
         # SET THE COUNTER AND THE CIPHER
-        ctr = Counter.new(128, initial_value=int(iv, 16))
+        ctr = Counter.new(128, initial_value=iv)
         cipher = AES.new(key1, AES.MODE_CTR, counter=ctr)
 
-        # DECRYPT PADDED DATA
-        decryptedData = cipher.decrypt(cryptedData)
+        plaintext = cipher.decrypt(ciphertext)
 
-        # UNPAD DATA
-        try:
-            padding_length = ord(decryptedData[-1])
-        except TypeError:
-            padding_length = decryptedData[-1]
+        # We used spurious padding in v1.1, which we must remove.
+        if version == u'1.1':
+            try:
+                padding_length = ord(plaintext[-1])
+            except TypeError:
+                padding_length = plaintext[-1]
 
-        decryptedData = decryptedData[:-padding_length]
+            plaintext = plaintext[:-padding_length]
 
-        return decryptedData
+        return plaintext
 
     def is_equal(self, a, b):
         """
