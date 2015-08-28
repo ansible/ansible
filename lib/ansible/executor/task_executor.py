@@ -29,7 +29,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
-from ansible.plugins import connection_loader, action_loader
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
@@ -400,7 +399,7 @@ class TaskExecutor:
         # Because this is an async task, the action handler is async. However,
         # we need the 'normal' action handler for the status check, so get it
         # now via the action_loader
-        normal_handler = action_loader.get(
+        normal_handler = self._shared_loader_obj.action_loader.get(
             'normal',
             task=async_task,
             connection=self._connection,
@@ -457,7 +456,7 @@ class TaskExecutor:
                 except OSError:
                     conn_type = "paramiko"
 
-        connection = connection_loader.get(conn_type, self._play_context, self._new_stdin)
+        connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
 
@@ -468,7 +467,7 @@ class TaskExecutor:
         Returns the correct action plugin to handle the requestion task action
         '''
 
-        if self._task.action in action_loader:
+        if self._task.action in self._shared_loader_obj.action_loader:
             if self._task.async != 0:
                 raise AnsibleError("async mode is not supported with the %s module" % module_name)
             handler_name = self._task.action
@@ -477,7 +476,7 @@ class TaskExecutor:
         else:
             handler_name = 'async'
 
-        handler = action_loader.get(
+        handler = self._shared_loader_obj.action_loader.get(
             handler_name,
             task=self._task,
             connection=connection,
