@@ -21,7 +21,7 @@ __metaclass__ = type
 
 class Attribute:
 
-    def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0):
+    def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0, always_post_validate=False):
 
        self.isa = isa
        self.private = private
@@ -29,6 +29,7 @@ class Attribute:
        self.required = required
        self.listof = listof
        self.priority = priority
+       self.always_post_validate = always_post_validate
 
     def __cmp__(self, other):
        return cmp(other.priority, self.priority)
