@@ -111,4 +111,4 @@ if __name__ == '__main__':
         inventory = get_hosts()
 
     import pprint
-    print pprint.pprint(inventory)
+    pprint.pprint(inventory)
