@@ -53,7 +53,7 @@ options:
       - If not set, first found service offering is used.
     required: false
     default: null
-  cpu_count:
+  cpu:
     description:
       - The number of CPUs to allocate to the instance, used with custom service offerings
     required: false
