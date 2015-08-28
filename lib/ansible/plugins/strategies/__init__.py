@@ -31,7 +31,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.role import hash_params
-from ansible.plugins import _basedirs, filter_loader, lookup_loader, module_loader
+from ansible.plugins import _basedirs, action_loader, connection_loader, filter_loader, lookup_loader, module_loader
 from ansible.template import Templar
 
 try:
@@ -51,7 +51,9 @@ class SharedPluginLoaderObj:
     the forked processes over the queue easier
     '''
     def __init__(self):
-        self.basedirs      = _basedirs[:]
+        self.basedirs = _basedirs[:]
+        self.action_loader = action_loader
+        self.connection_loader = connection_loader
         self.filter_loader = filter_loader
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
