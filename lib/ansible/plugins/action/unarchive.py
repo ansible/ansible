@@ -64,7 +64,7 @@ class ActionModule(ActionBase):
                 if self._task._role is not None:
                     source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
                 else:
-                    source = self._loader.path_dwim_relative(tself._loader.get_basedir(), 'files', source)
+                    source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
         remote_checksum = self._remote_checksum(tmp, dest, all_vars=task_vars)
         if remote_checksum != '3':
