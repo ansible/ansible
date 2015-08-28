@@ -507,7 +507,7 @@ class Inventory(object):
 
         host = self.get_host(hostname)
         if not host:
-            raise Exception("host not found: %s" % hostname)
+            raise AnsibleError("no vars as host is not in inventory: %s" % hostname)
         return host.get_vars()
 
     def get_host_variables(self, hostname, update_cached=False, vault_password=None):
@@ -520,7 +520,7 @@ class Inventory(object):
 
         host = self.get_host(hostname)
         if host is None:
-            raise AnsibleError("host not found: %s" % hostname)
+            raise AnsibleError("no host vars as host is not in inventory: %s" % hostname)
 
         vars = {}
 
