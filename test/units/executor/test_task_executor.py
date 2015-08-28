@@ -282,7 +282,9 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_action = MagicMock()
 
-        shared_loader = None
+        shared_loader = MagicMock()
+        shared_loader.action_loader = action_loader
+
         new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
 
