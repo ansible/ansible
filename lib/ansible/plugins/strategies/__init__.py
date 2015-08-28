@@ -22,7 +22,8 @@ __metaclass__ = type
 from six.moves import queue as Queue
 import time
 
-from ansible.errors import *
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
