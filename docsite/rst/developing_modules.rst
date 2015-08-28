@@ -501,9 +501,8 @@ Module checklist
   serializable.  A common pitfall is to try returning an object via
   exit_json().  Instead, convert the fields you need from the object into the
   fields of a dictionary and return the dictionary.
-* Do not use urllib2 to handle urls.  urllib2 does not natively verify TLS
-  certificates and so is insecure for https.  Instead, use either fetch_url or
-  open_url from ansible.module_utils.urls.
+* When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
+  rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
 
 Windows modules checklist
 `````````````````````````
