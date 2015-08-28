@@ -402,7 +402,7 @@ class Base:
                 raise ValueError
         except ValueError:
             raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__, obj=ds)
-        except TypeError, e:
+        except TypeError as e:
             raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
 
     def _extend_value(self, value, new_value):
