@@ -70,8 +70,8 @@ def get_guests():
 
 if len(sys.argv) == 2 and sys.argv[1] == '--list':
     inv_json = get_guests()
-    print json.dumps(inv_json, sort_keys=True)
+    print(json.dumps(inv_json, sort_keys=True))
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-    print json.dumps({});
+    print(json.dumps({}))
 else:
-    print "Need an argument, either --list or --host <host>"
+    print("Need an argument, either --list or --host <host>")

@@ -51,7 +51,7 @@ try:
     from azure import WindowsAzureError
     from azure.servicemanagement import ServiceManagementService
 except ImportError as e:
-    print "failed=True msg='`azure` library required for this script'"
+    print("failed=True msg='`azure` library required for this script'")
     sys.exit(1)
 
 
@@ -109,7 +109,7 @@ class AzureInventory(object):
 
                 # JSONify the data.
                 data_to_print = self.json_format_dict(data, pretty=True)
-        print data_to_print
+        print(data_to_print)
 
     def get_host(self, hostname, jsonify=True):
         """Return information about the given hostname, based on what
@@ -195,9 +195,9 @@ class AzureInventory(object):
             for cloud_service in self.sms.list_hosted_services():
                 self.add_deployments(cloud_service)
         except WindowsAzureError as e:
-            print "Looks like Azure's API is down:"
-            print
-            print e
+            print("Looks like Azure's API is down:")
+            print("")
+            print(e)
             sys.exit(1)
 
     def add_deployments(self, cloud_service):
@@ -208,9 +208,9 @@ class AzureInventory(object):
             for deployment in self.sms.get_hosted_service_properties(cloud_service.service_name,embed_detail=True).deployments.deployments:
                 self.add_deployment(cloud_service, deployment)
         except WindowsAzureError as e:
-            print "Looks like Azure's API is down:"
-            print
-            print e
+            print("Looks like Azure's API is down:")
+            print("")
+            print(e)
             sys.exit(1)
 
     def add_deployment(self, cloud_service, deployment):

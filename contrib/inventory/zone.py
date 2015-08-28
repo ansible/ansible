@@ -36,8 +36,8 @@ result['all']['vars'] = {}
 result['all']['vars']['ansible_connection'] = 'zone'
 
 if len(sys.argv) == 2 and sys.argv[1] == '--list':
-    print json.dumps(result)
+    print(json.dumps(result))
 elif len(sys.argv) == 3 and sys.argv[1] == '--host':
-    print json.dumps({'ansible_connection': 'zone'})
+    print(json.dumps({'ansible_connection': 'zone'}))
 else:
-    print "Need an argument, either --list or --host <host>"
+    print("Need an argument, either --list or --host <host>")

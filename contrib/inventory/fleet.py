@@ -81,7 +81,7 @@ if options.list:
     for data in ssh_config:
         hosts['coreos'].append(data['Host'])
 
-    print json.dumps(hosts)
+    print(json.dumps(hosts))
     sys.exit(1)
 
 # Get out the host details
@@ -96,7 +96,7 @@ elif options.host:
         result = details[0]
         result
 
-    print json.dumps(result)
+    print(json.dumps(result))
     sys.exit(1)
 
 
