@@ -65,7 +65,7 @@ options:
     default: null
   memory:
     description:
-      - The clock speed/shares allocated to the instance, used with custom service offerings
+      - The memory allocated to the instance, used with custom service offerings
     required: false
     default: null
   template:
