@@ -65,6 +65,30 @@ options:
       - Skip SSL certificate validation if true
     required: false
     default: false
+  proxy_url:
+    description:
+      - The full URL of the proxy server a file to download through it.
+    version_added: "2.0"
+    required: false
+    choices: null
+    default: null
+  proxy_username:
+    description:
+      - Name of the user for authorization of the proxy server.
+    version_added: "2.0"
+    required: false
+    choices: null
+    default: null
+  proxy_password:
+    description:
+      - Password of the user for authorization of the proxy server.
+    version_added: "2.0"
+    required: false
+    choices: null
+    default: null
+author:
+    - "Paul Durivage (@angstwad)"
+    - "Takeshi Kuramochi (tksarah)"
 '''
 
 EXAMPLES = '''
@@ -83,4 +107,12 @@ $ ansible -i hosts -c winrm -m win_get_url -a "url=http://www.example.com/earthr
     url: 'http://www.example.com/earthrise.jpg'
     dest: 'C:\Users\RandomUser\earthrise.jpg'
     force: no
+
+- name: Download earthrise.jpg to 'C:\Users\RandomUser\earthrise.jpg' through the proxy server.
+  win_get_url:
+    url: 'http://www.example.com/earthrise.jpg'
+    dest: 'C:\Users\RandomUser\earthrise.jpg'
+    proxy_url: 'http://10.0.0.1:8080'
+    proxy_username: 'username'
+    proxy_password: 'password'
 '''
