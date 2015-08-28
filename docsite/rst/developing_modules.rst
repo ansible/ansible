@@ -461,7 +461,7 @@ Module checklist
     * `default` is not needed for `required: true`
     * Remove unnecessary doc like `aliases: []` or `choices: []`
     * The version is not a float number and value the current development version
-    * The verify that arguments in doc and module spec dict are identical
+    * Verify  that arguments in doc and module spec dict are identical
     * For password / secret arguments no_log=True should be set
     * Requirements should  be documented, using the `requirements=[]` field
     * Author should be set, name and github id at least
