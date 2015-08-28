@@ -169,8 +169,15 @@ class CobblerInventory(object):
             dns_name = host['hostname'] #None
             ksmeta = None
             interfaces = host['interfaces']
+            # hostname is often empty for non-static IP hosts
+            if dns_name == '':
+                for (iname, ivalue) in interfaces.iteritems():
+                    if ivalue['management'] or not ivalue['static']:
+                        this_dns_name = ivalue.get('dns_name', None)
+                        if this_dns_name is not None and this_dns_name is not "":
+                            dns_name = this_dns_name
 
-            if dns_name is None:
+            if dns_name == ''; 
                 continue
 
             status = host['status']
