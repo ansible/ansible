@@ -75,7 +75,7 @@ class CacheModule(BaseCacheModule):
     def _expire_keys(self):
         if self._timeout > 0:
             expiry_age = time.time() - self._timeout
-        self._cache.zremrangebyscore(self._keys_set, 0, expiry_age)
+            self._cache.zremrangebyscore(self._keys_set, 0, expiry_age)
 
     def keys(self):
         self._expire_keys()
