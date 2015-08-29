@@ -491,6 +491,11 @@ class DebianHostname(Hostname):
     distribution = 'Debian'
     strategy_class = DebianStrategy
 
+class KaliHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Kali'
+    strategy_class = DebianStrategy
+
 class UbuntuHostname(Hostname):
     platform = 'Linux'
     distribution = 'Ubuntu'
