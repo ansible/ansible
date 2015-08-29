@@ -213,8 +213,8 @@ Minor changes:
 Vault changes:
  * most vault operations can now be done over multilple files
  * ansible-vault encrypt/decrypt read from stdin if no other input file is given,
-   and can write to a given ``--output file``. This lets you avoid ever writing
-   sensitive plaintext to disk.
+   and can write to a given ``--output file`` (including stdout, '-'). This lets
+   you avoid ever writing sensitive plaintext to disk.
  * ansible-vault rekey accepts the --new-vault-password-file option.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
