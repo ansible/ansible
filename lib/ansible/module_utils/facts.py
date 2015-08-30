@@ -519,33 +519,37 @@ class Facts(object):
     def get_init_facts(self):
         self.facts['init'] = 'unknown'
         if self.facts['system'] == 'Linux':
+            binaries = [ 'chkconfig', 'update-rc.d', 'rc-service', 'rc-update', 'initctl', 'systemctl', 'insserv' ]
+            location = dict()
+            for binary in binaries:
+                location[binary] = module.get_bin_path(binary)
             if location.get('systemctl',False):
                 try:
                     f = open('/proc/1/comm', 'r')
                     for line in f:
                         if 'systemd' in line:
-                            self.facts['init'] = service['systemd']
+                            self.facts['init'] = 'systemd'
                 finally:
                     f.close()
             elif location.get('initctl', False):
                 try:
                     f = open('/proc/1/cmdline', "r")
-                    init_path = check_file.read()
+                    init_path = f.read()
                     rc, out, err = module.run_command([init_path, "--version"])
                     if rc == 0:
                         if 'upstart' in out:
-                            self.facts['init'] = service['upstart']
+                            self.facts['init'] = 'upstart'
                 finally:
                     f.close()
             elif location.get('rc-service', False):
-                self.facts['init'] = service['openrc']
+                self.facts['init'] = 'openrc'
             # service is managed by with SysV init scripts
             elif location.get('update-rc.d', False):
-                self.facts['init'] = service['update-rc.d']
+                self.facts['init'] = 'update-rc.d'
             elif location.get('insserv', None):
-                self.facts['init'] = service['insserv']
+                self.facts['init'] = 'insserv'
             elif location.get('chkconfig', False):
-                self.facts['init'] = service['chkconfig']
+                self.facts['init'] = 'chkconfig'
 
     def get_lsb_facts(self):
         lsb_path = module.get_bin_path('lsb_release')
