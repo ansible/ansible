@@ -30,6 +30,7 @@ class ShellModule(object):
 
     # How to end lines in a python script one-liner
     _SHELL_EMBEDDED_PY_EOL = '\n'
+    _SHELL_REDIRECT_ALLNULL = '> /dev/null 2>&1'
 
     def env_prefix(self, **kwargs):
         '''Build command prefix with environment variables.'''
@@ -53,10 +54,10 @@ class ShellModule(object):
 
     def remove(self, path, recurse=False):
         path = pipes.quote(path)
+        cmd = 'rm -f '
         if recurse:
-            return "rm -rf %s >/dev/null 2>&1" % path
-        else:
-            return "rm -f %s >/dev/null 2>&1" % path
+            cmd += '-r '
+        return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
     def mkdtemp(self, basefile=None, system=False, mode=None):
         if not basefile:
@@ -139,5 +140,5 @@ class ShellModule(object):
         cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
         new_cmd = " ".join(cmd_parts)
         if rm_tmp:
-            new_cmd = '%s; rm -rf "%s" >/dev/null 2>&1' % (new_cmd, rm_tmp)
+            new_cmd = '%s; rm -rf "%s" %s' % (new_cmd, rm_tmp, self._SHELL_REDIRECT_ALLNULL)
         return new_cmd
