@@ -20,50 +20,47 @@ short_description: Manage route tables for AWS virtual private clouds
 description:
     - Manage route tables for AWS virtual private clouds
 version_added: "2.0"
-author: Robert Estelle (@erydo)
+author: Robert Estelle (@erydo), Rob White (@wimnat)
 options:
-  vpc_id:
+  lookup:
     description:
-      - VPC ID of the VPC in which to create the route table.
-    required: true
+      - "Look up route table by either tags or by route table ID. Non-unique tag lookup will fail. If no tags are specifed then no lookup for an existing route table is performed and a new route table will be created. To change tags of a route table, you must look up by id."
+    required: false
+    default: tag
+    choices: [ 'tag', 'id' ]
+  propagating_vgw_ids:
+    description:
+      - "Enable route propagation from virtual gateways specified by ID."
+    required: false
   route_table_id:
     description:
-      - The ID of the route table to update or delete.
-    required: false
-    default: null
-  resource_tags:
-    description:
-      - A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }. Tags in this list are used to uniquely identify route tables within a VPC when the route_table_id is not supplied.
+      - "The ID of the route table to update or delete."
     required: false
     default: null
   routes:
     description:
-      - List of routes in the route table. Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id', 'instance_id', 'interface_id', or 'vpc_peering_connection'. If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'.
+      - "List of routes in the route table. Routes are specified as dicts containing the keys 'dest' and one of 'gateway_id', 'instance_id', 'interface_id', or 'vpc_peering_connection'. If 'gateway_id' is specified, you can refer to the VPC's IGW by using the value 'igw'."
     required: true
-  subnets:
-    description:
-      - An array of subnets to add to this route table. Subnets may be specified by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'.
-    required: true
-  propagating_vgw_ids:
-    description:
-      - Enable route propagation from virtual gateways specified by ID.
-    required: false
-  wait:
-    description:
-      - Wait for the VPC to be in state 'available' before returning.
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-  wait_timeout:
-    description:
-      - How long before wait gives up, in seconds.
-    default: 300
   state:
     description:
-      - Create or destroy the VPC route table
+      - "Create or destroy the VPC route table"
     required: false
     default: present
     choices: [ 'present', 'absent' ]
+  subnets:
+    description:
+      - "An array of subnets to add to this route table. Subnets may be specified by either subnet ID, Name tag, or by a CIDR such as '10.0.0.0/24'."
+    required: true
+  tags:
+    description:
+      - "A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }. Tags in this list are used to uniquely identify route tables within a VPC when the route_table_id is not supplied."
+    required: false
+    default: null
+    aliases: [ "resource_tags" ]
+  vpc_id:
+    description:
+      - "VPC ID of the VPC in which to create the route table."
+    required: true
 
 extends_documentation_fragment: aws
 '''
@@ -73,36 +70,35 @@ EXAMPLES = '''
 
 # Basic creation example:
 - name: Set up public subnet route table
-  local_action:
-    module: ec2_vpc_route_table
+  ec2_vpc_route_table:
     vpc_id: vpc-1245678
     region: us-west-1
-    resource_tags:
+    tags:
       Name: Public
     subnets:
-      - '{{jumpbox_subnet.subnet_id}}'
-      - '{{frontend_subnet.subnet_id}}'
-      - '{{vpn_subnet.subnet_id}}'
+      - "{{ jumpbox_subnet.subnet_id }}"
+      - "{{ frontend_subnet.subnet_id }}"
+      - "{{ vpn_subnet.subnet_id }}"
     routes:
       - dest: 0.0.0.0/0
-        gateway_id: '{{igw.gateway_id}}'
+        gateway_id: "{{ igw.gateway_id }}"
   register: public_route_table
 
 - name: Set up NAT-protected route table
-  local_action:
-    module: ec2_vpc_route_table
+  ec2_vpc_route_table:
     vpc_id: vpc-1245678
     region: us-west-1
-    resource_tags:
+    tags:
       - Name: Internal
     subnets:
-      - '{{application_subnet.subnet_id}}'
+      - "{{ application_subnet.subnet_id }}"
       - 'Database Subnet'
       - '10.0.0.0/8'
     routes:
       - dest: 0.0.0.0/0
-        instance_id: '{{nat.instance_id}}'
+        instance_id: "{{ nat.instance_id }}"
   register: nat_route_table
+  
 '''
 
 
@@ -210,12 +206,12 @@ def find_igw(vpc_conn, vpc_id):
         filters={'attachment.vpc-id': vpc_id})
 
     if not igw:
-        return AnsibleIgwSearchException('No IGW found for VPC "{0}"'.
+        raise AnsibleIgwSearchException('No IGW found for VPC {0}'.
                                          format(vpc_id))
     elif len(igw) == 1:
         return igw[0].id
     else:
-        raise AnsibleIgwSearchException('Multiple IGWs found for VPC "{0}"'.
+        raise AnsibleIgwSearchException('Multiple IGWs found for VPC {0}'.
                                         format(vpc_id))
 
 
@@ -251,17 +247,29 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, check_mode):
 
 
 def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
-    route_tables = vpc_conn.get_all_route_tables(
-        route_table_ids=[route_table_id], filters={'vpc_id': vpc_id})
-    return route_tables[0] if route_tables else None
 
-
+    route_table = None
+    route_tables = vpc_conn.get_all_route_tables(route_table_ids=[route_table_id], filters={'vpc_id': vpc_id})
+    if route_tables:
+        route_table = route_tables[0]
+    
+    return route_table
+    
 def get_route_table_by_tags(vpc_conn, vpc_id, tags):
+    
+    count = 0
+    route_table = None 
     route_tables = vpc_conn.get_all_route_tables(filters={'vpc_id': vpc_id})
-    for route_table in route_tables:
-        this_tags = get_resource_tags(vpc_conn, route_table.id)
+    for table in route_tables:
+        this_tags = get_resource_tags(vpc_conn, table.id)
         if tags_match(tags, this_tags):
-            return route_table
+            route_table = table
+            count +=1
+    
+    if count > 1:
+        raise RuntimeError("Tags provided do not identify a unique route table")
+    else:        
+        return route_table
 
 
 def route_spec_matches_route(route_spec, route):
@@ -391,75 +399,132 @@ def ensure_propagation(vpc_conn, route_table, propagating_vgw_ids,
     return {'changed': changed}
 
 
-def ensure_route_table_absent(vpc_conn, vpc_id, route_table_id, resource_tags,
-                              check_mode):
-    if route_table_id:
-        route_table = get_route_table_by_id(vpc_conn, vpc_id, route_table_id)
-    elif resource_tags:
-        route_table = get_route_table_by_tags(vpc_conn, vpc_id, resource_tags)
-    else:
-        raise AnsibleRouteTableException(
-            'must provide route_table_id or resource_tags')
+def ensure_route_table_absent(connection, module):
+
+    lookup = module.params.get('lookup')
+    route_table_id = module.params.get('route_table_id')
+    tags = module.params.get('tags')
+    vpc_id = module.params.get('vpc_id')
+    check_mode = module.params.get('check_mode')
+
+    if lookup == 'tag':
+        if tags is not None:
+            try:
+                route_table = get_route_table_by_tags(connection, vpc_id, tags)
+            except EC2ResponseError as e:
+                module.fail_json(msg=e.message)
+            except RuntimeError as e:
+                module.fail_json(msg=e.args[0])
+        else:
+            route_table = None
+    elif lookup == 'id':
+        try:
+            route_table = get_route_table_by_id(connection, vpc_id, route_table_id)
+        except EC2ResponseError as e:
+            module.fail_json(msg=e.message)
 
     if route_table is None:
         return {'changed': False}
 
-    vpc_conn.delete_route_table(route_table.id, dry_run=check_mode)
+    try:
+        connection.delete_route_table(route_table.id, dry_run=check_mode)
+    except EC2ResponseError as e:
+        module.fail_json(msg=e.message)
+
     return {'changed': True}
 
 
-def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
-                               routes, subnets, propagating_vgw_ids,
-                               check_mode):
+def get_route_table_info(route_table):
+
+    # Add any routes to array
+    routes = []
+    for route in route_table.routes:
+        routes.append(route.__dict__)
+
+    route_table_info = { 'id': route_table.id,
+                         'routes': routes,
+                         'tags': route_table.tags,
+                         'vpc_id': route_table.vpc_id
+                       }
+
+    return route_table_info
+
+def create_route_spec(connection, routes, vpc_id):
+
+    for route_spec in routes:
+        rename_key(route_spec, 'dest', 'destination_cidr_block')
+
+        if 'gateway_id' in route_spec and route_spec['gateway_id'] and \
+                route_spec['gateway_id'].lower() == 'igw':
+            igw = find_igw(connection, vpc_id)
+            route_spec['gateway_id'] = igw
+
+    return routes
+
+def ensure_route_table_present(connection, module):
+    
+    lookup = module.params.get('lookup')
+    propagating_vgw_ids = module.params.get('propagating_vgw_ids', [])
+    route_table_id = module.params.get('route_table_id')
+    subnets = module.params.get('subnets')
+    tags = module.params.get('tags')
+    vpc_id = module.params.get('vpc_id')
+    check_mode = module.params.get('check_mode')
+    try:
+        routes = create_route_spec(connection, module.params.get('routes'), vpc_id)
+    except AnsibleIgwSearchException as e:
+        module.fail_json(msg=e[0])
+    
     changed = False
     tags_valid = False
-    if route_table_id:
-        route_table = get_route_table_by_id(vpc_conn, vpc_id, route_table_id)
-    elif resource_tags:
-        route_table = get_route_table_by_tags(vpc_conn, vpc_id, resource_tags)
-        tags_valid = route_table is not None
-    else:
-        raise AnsibleRouteTableException(
-            'must provide route_table_id or resource_tags')
 
-    if check_mode and route_table is None:
-        return {'changed': True}
-
-    if route_table is None:
+    if lookup == 'tag':
+        if tags is not None:
+            try:
+                route_table = get_route_table_by_tags(connection, vpc_id, tags)
+            except EC2ResponseError as e:
+                module.fail_json(msg=e.message)
+            except RuntimeError as e:
+                module.fail_json(msg=e.args[0])
+        else:
+            route_table = None
+    elif lookup == 'id':
         try:
-            route_table = vpc_conn.create_route_table(vpc_id)
+            route_table = get_route_table_by_id(connection, vpc_id, route_table_id)
         except EC2ResponseError as e:
-            raise AnsibleRouteTableException(
-                'Unable to create route table {0}, error: {1}'
-                .format(route_table_id or resource_tags, e)
-            )
+            module.fail_json(msg=e.message)
+        
+    # If no route table returned then create new route table
+    if route_table is None:
+        print route_table.keys()
+        try:
+            route_table = connection.create_route_table(vpc_id, check_mode)
+            changed = True
+        except EC2ResponseError, e:
+            module.fail_json(msg=e.message)
+        
+    if routes is not None:
+        try:
+            result = ensure_routes(connection, route_table, routes, propagating_vgw_ids, check_mode)
+            changed = changed or result['changed']
+        except EC2ResponseError as e:
+            module.fail_json(msg=e.message)
 
     if propagating_vgw_ids is not None:
-        result = ensure_propagation(vpc_conn, route_table,
+        result = ensure_propagation(vpc_conn, route_table_id,
                                     propagating_vgw_ids,
                                     check_mode=check_mode)
         changed = changed or result['changed']
 
-    if not tags_valid and resource_tags is not None:
-        result = ensure_tags(vpc_conn, route_table.id, resource_tags,
+    if not tags_valid and tags is not None:
+        result = ensure_tags(connection, route_table.id, tags,
                              add_only=True, check_mode=check_mode)
         changed = changed or result['changed']
-
-    if routes is not None:
-        try:
-            result = ensure_routes(vpc_conn, route_table, routes,
-                                   propagating_vgw_ids, check_mode)
-            changed = changed or result['changed']
-        except EC2ResponseError as e:
-            raise AnsibleRouteTableException(
-                'Unable to ensure routes for route table {0}, error: {1}'
-                .format(route_table, e)
-            )
 
     if subnets:
         associated_subnets = []
         try:
-            associated_subnets = find_subnets(vpc_conn, vpc_id, subnets)
+            associated_subnets = find_subnets(connection, vpc_id, subnets)
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
                 'Unable to find subnets for route table {0}, error: {1}'
@@ -467,8 +532,7 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
             )
 
         try:
-            result = ensure_subnet_associations(
-                vpc_conn, vpc_id, route_table, associated_subnets, check_mode)
+            result = ensure_subnet_associations(connection, vpc_id, route_table, associated_subnets, check_mode)
             changed = changed or result['changed']
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
@@ -476,23 +540,21 @@ def ensure_route_table_present(vpc_conn, vpc_id, route_table_id, resource_tags,
                 .format(route_table, e)
             )
 
-    return {
-        'changed': changed,
-        'route_table_id': route_table.id,
-    }
+    module.exit_json(changed=changed, route_table=get_route_table_info(route_table))
 
 
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            vpc_id = dict(default=None, required=True),
-            route_table_id = dict(default=None, required=False),
+            lookup = dict(default='tag', required=False, choices=['tag', 'id']),
             propagating_vgw_ids = dict(default=None, required=False, type='list'),
-            resource_tags = dict(default=None, required=False, type='dict'),
+            route_table_id = dict(default=None, required=False),
             routes = dict(default=None, required=False, type='list'),
+            state = dict(default='present', choices=['present', 'absent']),
             subnets = dict(default=None, required=False, type='list'),
-            state = dict(default='present', choices=['present', 'absent'])
+            tags = dict(default=None, required=False, type='dict', aliases=['resource_tags']),
+            vpc_id = dict(default=None, required=True)
         )
     )
     
@@ -511,34 +573,18 @@ def main():
     else:
         module.fail_json(msg="region must be specified")
 
-    vpc_id = module.params.get('vpc_id')
+    lookup = module.params.get('lookup')
     route_table_id = module.params.get('route_table_id')
-    resource_tags = module.params.get('resource_tags')
-    propagating_vgw_ids = module.params.get('propagating_vgw_ids', [])
-
-    routes = module.params.get('routes')
-    for route_spec in routes:
-        rename_key(route_spec, 'dest', 'destination_cidr_block')
-
-        if 'gateway_id' in route_spec and route_spec['gateway_id'] and \
-                route_spec['gateway_id'].lower() == 'igw':
-            igw = find_igw(connection, vpc_id)
-            route_spec['gateway_id'] = igw
-
-    subnets = module.params.get('subnets')
     state = module.params.get('state', 'present')
+
+    if lookup == 'id' and route_table_id is None:
+        module.fail_json("You must specify route_table_id if lookup is set to id")
 
     try:
         if state == 'present':
-            result = ensure_route_table_present(
-                connection, vpc_id, route_table_id, resource_tags,
-                routes, subnets, propagating_vgw_ids, module.check_mode
-            )
+            result = ensure_route_table_present(connection, module)
         elif state == 'absent':
-            result = ensure_route_table_absent(
-                connection, vpc_id, route_table_id, resource_tags,
-                module.check_mode
-            )
+            result = ensure_route_table_absent(connection, module)
     except AnsibleRouteTableException as e:
         module.fail_json(msg=str(e))
 
