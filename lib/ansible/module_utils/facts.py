@@ -134,11 +134,6 @@ class Facts(object):
                  { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
     ]
 
-    # A list of dicts. Init system
-    INIT_SYSTEM_MGRS = [ { 'path': '/proc/1/comm',  'name' : 'systemd' },
-                         { 'path': '/proc/1/comm',  'name' : 'init' },
-    ]
-
     def __init__(self, load_on_init=True):
 
         self.facts = {}
@@ -151,7 +146,7 @@ class Facts(object):
             self.get_selinux_facts()
             self.get_fips_facts()
             self.get_pkg_mgr_facts()
-            self.get_service_mrg_facts()
+            self.get_init_facts()
             self.get_lsb_facts()
             self.get_date_time_facts()
             self.get_user_facts()
@@ -521,14 +516,36 @@ class Facts(object):
         if self.facts['system'] == 'OpenBSD':
                 self.facts['pkg_mgr'] = 'openbsd_pkg'
 
-    def get_service_mrg_facts(self):
-        self.facts['service_mgr'] = 'auto'
-        for service in Facts.INIT_SYSTEM_MGRS:
-            if os.path.exists(service['path']):
-                with open(service['path'], "r") as check_file:
-                    if service['name'] in check_file.read():
-                        self.facts['service_mgr'] = service['name']
-
+    def get_init_facts(self):
+        self.facts['init'] = 'unknown'
+        if self.facts['system'] == 'Linux':
+            if location.get('systemctl',False):
+                try:
+                    f = open('/proc/1/comm', 'r')
+                    for line in f:
+                        if 'systemd' in line:
+                            self.facts['init'] = service['systemd']
+                finally:
+                    f.close()
+            elif location.get('initctl', False):
+                try:
+                    f = open('/proc/1/cmdline', "r")
+                    init_path = check_file.read()
+                    rc, out, err = module.run_command([init_path, "--version"])
+                    if rc == 0:
+                        if 'upstart' in out:
+                            self.facts['init'] = service['upstart']
+                finally:
+                    f.close()
+            elif location.get('rc-service', False):
+                self.facts['init'] = service['openrc']
+            # service is managed by with SysV init scripts
+            elif location.get('update-rc.d', False):
+                self.facts['init'] = service['update-rc.d']
+            elif location.get('insserv', None):
+                self.facts['init'] = service['insserv']
+            elif location.get('chkconfig', False):
+                self.facts['init'] = service['chkconfig']
 
     def get_lsb_facts(self):
         lsb_path = module.get_bin_path('lsb_release')
