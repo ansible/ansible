@@ -23,6 +23,7 @@ class ShellModule(ShModule):
 
     # How to end lines in a python script one-liner
     _SHELL_EMBEDDED_PY_EOL = '\\\n'
+    _SHELL_REDIRECT_ALLNULL = '>& /dev/null'
 
     def env_prefix(self, **kwargs):
         return 'env %s' % super(ShellModule, self).env_prefix(**kwargs)
