@@ -90,6 +90,12 @@ options:
     required: false
     default: null
     version_added: "1.0"
+  editable:
+    description:
+      - Pass the editable flag for versioning URLs.
+    required: false
+    default: yes
+    version_added: "2.0"
   chdir:
     description:
       - cd into this directory before running the command
@@ -120,6 +126,9 @@ EXAMPLES = '''
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'
+
+# Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
+- pip: name='git+http://myrepo/app/MyApp' editable=false
 
 # Install (MyApp) from local tarball
 - pip: name='file:///path/to/MyApp.tar.gz'
@@ -239,6 +248,7 @@ def main():
             virtualenv_python=dict(default=None, required=False, type='str'),
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
+            editable=dict(default='yes', type='bool', required=False),
             chdir=dict(default=None, required=False, type='path'),
             executable=dict(default=None, required=False),
         ),
@@ -312,15 +322,16 @@ def main():
     # Automatically apply -e option to extra_args when source is a VCS url. VCS
     # includes those beginning with svn+, git+, hg+ or bzr+
     if name:
-        if name.startswith('svn+') or name.startswith('git+') or \
-                name.startswith('hg+') or name.startswith('bzr+'):
-            args_list = []  # used if extra_args is not used at all
-            if extra_args:
-                args_list = extra_args.split(' ')
-            if '-e' not in args_list:
-                args_list.append('-e')
-                # Ok, we will reconstruct the option string
-                extra_args = ' '.join(args_list)
+        if module.params['editable']:
+            if name.startswith('svn+') or name.startswith('git+') or \
+                    name.startswith('hg+') or name.startswith('bzr+'):
+                args_list = []  # used if extra_args is not used at all
+                if extra_args:
+                    args_list = extra_args.split(' ')
+                if '-e' not in args_list:
+                    args_list.append('-e')
+                    # Ok, we will reconstruct the option string
+                    extra_args = ' '.join(args_list)
 
     if extra_args:
         cmd += ' %s' % extra_args
