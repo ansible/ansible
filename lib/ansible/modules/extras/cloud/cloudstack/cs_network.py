@@ -552,6 +552,7 @@ def main():
             api_url = dict(default=None),
             api_http_method = dict(choices=['get', 'post'], default='get'),
             api_timeout = dict(type='int', default=10),
+            api_region = dict(default='cloudstack'),
         ),
         required_together = (
             ['api_key', 'api_secret', 'api_url'],
