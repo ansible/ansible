@@ -18,6 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function
 import os
 import glob
 import sys
@@ -120,7 +121,7 @@ def write_data(text, options, outputname, module):
         f.write(text.encode('utf-8'))
         f.close()
     else:
-        print text
+        print(text)
 
 #####################################################################################
 
@@ -249,7 +250,7 @@ def process_module(module, options, env, template, outputname, module_map, alias
         deprecated = True
         module = module.replace("_","",1)
 
-    print "rendering: %s" % module
+    print("rendering: %s" % module)
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
     doc, examples, returndocs = module_docs.get_docstring(fname, verbose=options.verbose)
@@ -345,7 +346,7 @@ def process_category(category, categories, options, env, template, outputname):
 
     category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
     category_file = open(category_file_path, "w")
-    print "*** recording category %s in %s ***" % (category, category_file_path)
+    print("*** recording category %s in %s ***" % (category, category_file_path))
 
     # start a new category file
 
@@ -419,13 +420,13 @@ def validate_options(options):
     ''' validate option parser options '''
 
     if not options.module_dir:
-        print >>sys.stderr, "--module-dir is required"
+        print("--module-dir is required", file=sys.stderr)
         sys.exit(1)
     if not os.path.exists(options.module_dir):
-        print >>sys.stderr, "--module-dir does not exist: %s" % options.module_dir
+        print("--module-dir does not exist: %s" % options.module_dir, file=sys.stderr)
         sys.exit(1)
     if not options.template_dir:
-        print "--template-dir must be specified"
+        print("--template-dir must be specified")
         sys.exit(1)
 
 #####################################################################################
