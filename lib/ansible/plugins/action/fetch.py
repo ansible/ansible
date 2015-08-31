@@ -61,7 +61,7 @@ class ActionModule(ActionBase):
         remote_data = None
         if remote_checksum in ('1', '2') or self._play_context.become:
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
-            if slurpres.get('rc') == 0:
+            if not slurpres.get('failed', False):
                 if slurpres['encoding'] == 'base64':
                     remote_data = base64.b64decode(slurpres['content'])
                 if remote_data is not None:
