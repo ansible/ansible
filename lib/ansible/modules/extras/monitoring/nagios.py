@@ -75,8 +75,8 @@ options:
   servicegroup:
     version_added: "2.0"
     description:
-      - the Servicegroup we want to set downtimes/alerts for.
-      B(Required) option when using the C(servicegroup_service_downtime) amd C(servicegroup_host_downtime).
+      - The Servicegroup we want to set downtimes/alerts for.
+        B(Required) option when using the C(servicegroup_service_downtime) amd C(servicegroup_host_downtime).
   command:
     description:
       - The raw command to send to nagios, which
@@ -85,7 +85,7 @@ options:
     required: true
     default: null
 
-author: "Tim Bielawa (@tbielawa)" 
+author: "Tim Bielawa (@tbielawa)"
 requirements: [ "Nagios" ]
 '''
 
