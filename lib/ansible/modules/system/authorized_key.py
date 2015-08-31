@@ -112,8 +112,10 @@ EXAMPLES = '''
                   key_options='no-port-forwarding,from="10.0.1.1"'
 
 # Set up authorized_keys exclusively with one key
-- authorized_key: user=root key=public_keys/doe-jane state=present
+- authorized_key: user=root key="{{ item }}" state=present
                    exclusive=yes
+  with_file:
+    - public_keys/doe-jane
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
