@@ -44,7 +44,7 @@ def detect_range(line = None):
 
     Returnes True if the given line contains a pattern, else False.
     '''
-    if 0 <= line.find("[") < line.find(":") < line.find("]"):
+    if '[' in line:
         return True
     else:
         return False
