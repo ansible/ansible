@@ -20,6 +20,7 @@ __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
 
+
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
@@ -43,7 +44,7 @@ class ActionModule(ActionBase):
             if not 'failed' in facts:
                 module = getattr(facts['ansible_facts'], 'ansible_service_mgr', 'auto')
 
-        if not module or module == 'auto':
+        if not module or module == 'auto' or module not in self._shared_loader_obj.module_loader:
             module = 'service'
 
         if module != 'auto':
