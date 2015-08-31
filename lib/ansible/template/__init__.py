@@ -48,6 +48,48 @@ NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
 
+def _preserve_backslashes(data, jinja_env):
+    """Double backslashes within jinja2 expressions
+
+    A user may enter something like this in a playbook::
+
+      debug:
+        msg: "Test Case 1\\3; {{ test1_name | regex_replace('^(.*)_name$', '\\1')}}"
+
+    The string inside of the {{ gets interpreted multiple times First by yaml.
+    Then by python.  And finally by jinja2 as part of it's variable.  Because
+    it is processed by both python and jinja2, the backslash escaped
+    characters get unescaped twice.  This means that we'd normally have to use
+    four backslashes to escape that.  This is painful for playbook authors as
+    they have to remember different rules for inside vs outside of a jinja2
+    expression (The backslashes outside of the "{{ }}" only get processed by
+    yaml and python.  So they only need to be escaped once).  The following
+    code fixes this by automatically performing the extra quoting of
+    backslashes inside of a jinja2 expression.
+
+    """
+    if '\\' in data and '{{' in data:
+        new_data = []
+        d2 = jinja_env.preprocess(data)
+        in_var = False
+
+        for token in jinja_env.lex(d2):
+            if token[1] == 'variable_begin':
+                in_var = True
+                new_data.append(token[2])
+            elif token[1] == 'variable_end':
+                in_var = False
+                new_data.append(token[2])
+            elif in_var and token[1] == 'string':
+                # Double backslashes only if we're inside of a jinja2 variable
+                new_data.append(token[2].replace('\\','\\\\'))
+            else:
+                new_data.append(token[2])
+
+        data = ''.join(new_data)
+
+    return data
+
 class Templar:
     '''
     The main class for templating, with the main entry-point of template().
@@ -295,6 +337,8 @@ class Templar:
             #FIXME: add tests
             myenv.filters.update(self._get_filters())
             myenv.tests.update(self._get_tests())
+
+            data = _preserve_backslashes(data, myenv)
 
             try:
                 t = myenv.from_string(data)
