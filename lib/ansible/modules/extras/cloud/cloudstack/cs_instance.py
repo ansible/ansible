@@ -548,7 +548,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return user_data
 
 
-    def deploy_instance(self):
+    def deploy_instance(self, start_vm=True):
         self.result['changed'] = True
         networkids = self.get_network_ids()
         if networkids is not None:
@@ -573,6 +573,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['group']               = self.module.params.get('group')
         args['keypair']             = self.module.params.get('ssh_key')
         args['size']                = self.module.params.get('disk_size')
+        args['startvm']             = start_vm
         args['rootdisksize']        = self.module.params.get('root_disk_size')
         args['securitygroupnames']  = ','.join(self.module.params.get('security_groups'))
         args['affinitygroupnames']  = ','.join(self.module.params.get('affinity_groups'))
@@ -700,10 +701,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def stop_instance(self):
         instance = self.get_instance()
-        if not instance:
-            self.module.fail_json(msg="Instance named '%s' not found" % self.module.params.get('name'))
 
-        if instance['state'].lower() in ['stopping', 'stopped']:
+        if not instance:
+            instance = self.deploy_instance(start_vm=False)
+            return instance
+
+        elif instance['state'].lower() in ['stopping', 'stopped']:
             return instance
 
         if instance['state'].lower() in ['starting', 'running']:
@@ -722,10 +725,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def start_instance(self):
         instance = self.get_instance()
-        if not instance:
-            self.module.fail_json(msg="Instance named '%s' not found" % module.params.get('name'))
 
-        if instance['state'].lower() in ['starting', 'running']:
+        if not instance:
+            instance = self.deploy_instance()
+            return instance
+
+        elif instance['state'].lower() in ['starting', 'running']:
             return instance
 
         if instance['state'].lower() in ['stopped', 'stopping']:
@@ -744,10 +749,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def restart_instance(self):
         instance = self.get_instance()
-        if not instance:
-            module.fail_json(msg="Instance named '%s' not found" % self.module.params.get('name'))
 
-        if instance['state'].lower() in [ 'running', 'starting' ]:
+        if not instance:
+            instance = self.deploy_instance()
+            return instance
+
+        elif instance['state'].lower() in [ 'running', 'starting' ]:
             self.result['changed'] = True
             if not self.module.check_mode:
                 instance = self.cs.rebootVirtualMachine(id=instance['id'])
