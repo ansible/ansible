@@ -200,7 +200,7 @@ class CallbackBase:
         self.runner_on_ok(host, result._result)
 
     def v2_runner_on_skipped(self, result):
-        if not C.DISPLAY_SKIPPED_HOSTS:
+        if C.DISPLAY_SKIPPED_HOSTS:
             host = result._host.get_name()
             #FIXME, get item to pass through
             item = None

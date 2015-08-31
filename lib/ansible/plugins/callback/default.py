@@ -78,7 +78,7 @@ class CallbackModule(CallbackBase):
         self._handle_warnings(result._result)
 
     def v2_runner_on_skipped(self, result):
-        if not C.DISPLAY_SKIPPED_HOSTS:
+        if C.DISPLAY_SKIPPED_HOSTS:
             msg = "skipping: [%s]" % result._host.get_name()
             if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
                 msg += " => %s" % self._dump_results(result._result)
