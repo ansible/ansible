@@ -53,6 +53,7 @@ class Base:
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list')
     _no_log              = FieldAttribute(isa='bool')
+    _no_syslog           = FieldAttribute(isa='bool')
 
     def __init__(self):
 
