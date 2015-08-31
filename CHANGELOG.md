@@ -25,6 +25,19 @@ Major Changes:
    They will retain the value of `None`.  To go back to the old behaviour, you can override
    the `null_representation` setting to an empty string in your config file or by setting the
    `ANSIBLE_NULL_REPRESENTATION` environment variable.
+ * backslashes used when specifying parameters in jinja2 expressions in YAML
+   dicts sometimes needed to be escaped twice.  This has been fixed so that
+   escaping once works.  Here's an example of how playbooks need to be modified::
+
+     # Syntax in 1.9.x
+     - debug:
+         msg: "{{ 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') }}"
+     # Syntax in 2.0.x
+     - debug:
+         msg: "{{ 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') }}"
+
+     # Output:
+     "msg": "test1 1\\3"
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)

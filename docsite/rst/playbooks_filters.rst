@@ -448,13 +448,13 @@ To match strings against a regex, use the "match" or "search" filter::
 To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "ansible" to "able"    
-    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}         
+    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
 
     # convert "foobar" to "bar"
     {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
 
-.. note:: If "regex_replace" filter is used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
-   then you need to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+.. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
+   then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
 
 To escape special characters within a regex, use the "regex_escape" filter::
 
