@@ -86,6 +86,12 @@ options:
       - Only used if C(state) is present.
     required: false
     default: false
+  cross_zones:
+    description:
+      - Whether the template should be syned across zones.
+      - Only used if C(state) is present.
+    required: false
+    default: false
   project:
     description:
       - Name of the project the template to be registered in.
@@ -185,9 +191,8 @@ EXAMPLES = '''
     url: "http://packages.shapeblue.com/systemvmtemplate/4.5/systemvm64template-4.5-vmware.ova"
     hypervisor: VMware
     format: OVA
-    zone: tokio-ix
+    cross_zones: yes
     os_type: Debian GNU/Linux 7(64-bit)
-    is_routing: yes
 
 # Create a template from a stopped virtual machine's volume
 - local_action:
@@ -456,10 +461,14 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
             args['isrouting']       = self.module.params.get('is_routing')
             args['sshkeyenabled']   = self.module.params.get('sshkey_enabled')
             args['hypervisor']      = self.get_hypervisor()
-            args['zoneid']          = self.get_zone(key='id')
             args['domainid']        = self.get_domain(key='id')
             args['account']         = self.get_account(key='name')
             args['projectid']       = self.get_project(key='id')
+
+            if not self.module.params.get('cross_zones'):
+                args['zoneid'] = self.get_zone(key='id')
+            else:
+                args['zoneid'] = -1
 
             if not self.module.check_mode:
                 res = self.cs.registerTemplate(**args)
@@ -473,10 +482,12 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
         args                    = {}
         args['isready']         = self.module.params.get('is_ready')
         args['templatefilter']  = self.module.params.get('template_filter')
-        args['zoneid']          = self.get_zone(key='id')
         args['domainid']        = self.get_domain(key='id')
         args['account']         = self.get_account(key='name')
         args['projectid']       = self.get_project(key='id')
+
+        if not self.module.params.get('cross_zones'):
+            args['zoneid'] = self.get_zone(key='id')
 
         # if checksum is set, we only look on that.
         checksum = self.module.params.get('checksum')
@@ -543,6 +554,7 @@ def main():
             details = dict(default=None),
             bits = dict(type='int', choices=[ 32, 64 ], default=64),
             state = dict(choices=['present', 'absent'], default='present'),
+            cross_zones = dict(type='bool', choices=BOOLEANS, default=False),
             zone = dict(default=None),
             domain = dict(default=None),
             account = dict(default=None),
