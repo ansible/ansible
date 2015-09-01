@@ -215,7 +215,11 @@ Minor changes:
 
  * Many more tests, new API makes things more testable and we took advantage of it
  * big_ip modules now support turning off ssl certificate validation (use only for self signed)
- * The undocumented semicolon-separated "pattern1;pattern2" syntax to match hosts is no longer supported.
+ * Use "pattern1:pattern2" to combine host matching patterns. The undocumented
+   use of semicolons or commas to combine patterns is no longer supported.
+ * Use ``hosts: groupname[x:y]`` to select a subset of hosts in a group; the
+   ``[x-y]`` range syntax is no longer supported. Note that ``[0:1]`` matches
+   two hosts, i.e. the range is inclusive of its endpoints.
  * Now when you delegate a action that returns ansible_facts, these facts will now be applied to the delegated host,
    unlike before which they were applied to the current host.
  * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support
@@ -225,8 +229,8 @@ Minor changes:
  * Support for OpenBSD's 'doas' privilege escalation method.
  * most vault operations can now be done over multilple files
  * ansible-vault encrypt/decrypt read from stdin if no other input file is given,
-   and can write to a given ``--output file``. This lets you avoid ever writing
-   sensitive plaintext to disk.
+   and can write to a given ``--output file`` (including stdout, '-'). This lets
+   you avoid ever writing sensitive plaintext to disk.
  * ansible-vault rekey accepts the --new-vault-password-file option.
  * many fixes and new options added to modules, too many to list here.
 
