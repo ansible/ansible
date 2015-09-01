@@ -520,7 +520,13 @@ class LinuxService(Service):
             return False
 
     def get_systemd_status_dict(self):
-        (rc, out, err) = self.execute_command("%s show %s" % (self.enable_cmd, self.__systemd_unit,))
+
+        # Check status first as show will not fail if service does not exist
+        (rc, out, err) = self.execute_command("%s status '%s'" % (self.enable_cmd, self.__systemd_unit,))
+        if rc != 0:
+            self.module.fail_json(msg='failure %d running systemctl status for %r: %s' % (rc, self.__systemd_unit, err))
+
+        (rc, out, err) = self.execute_command("%s show '%s'" % (self.enable_cmd, self.__systemd_unit,))
         if rc != 0:
             self.module.fail_json(msg='failure %d running systemctl show for %r: %s' % (rc, self.__systemd_unit, err))
         key = None
