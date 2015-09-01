@@ -82,6 +82,15 @@ class Inventory(object):
             if "," in host_list:
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
+            if not os.path.exists(host_list):
+                inventory_plugins_dir = os.path.join(
+                    os.path.dirname(C.__file__),
+                    'plugins', 'inventory', 'plugins')
+                for path in (os.path.join(inventory_plugins_dir, host_list),
+                             os.path.join(inventory_plugins_dir, host_list + '.py')):
+                    if os.path.exists(path):
+                        host_list = os.path.realpath(path)
+                        self.host_list = host_list
 
         if host_list is None:
             self.parser = None
