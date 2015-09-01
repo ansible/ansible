@@ -158,6 +158,7 @@ EXAMPLES = '''
 # Returns changed = True and a adds ansible_facts from the new VM
 # State will set the power status of a guest upon creation. Use powered_on to create and boot.
 # Options ['state', 'vm_extra_config', 'vm_disk', 'vm_nic', 'vm_hardware', 'esxi'] are required together
+# Note: vm_floppy support added in 2.0
 
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
