@@ -6,11 +6,3 @@
 	path = lib/ansible/modules/extras
 	url = https://github.com/ansible/ansible-modules-extras.git
 	branch = stable-1.9
-[submodule "v2/ansible/modules/core"]
-	path = v2/ansible/modules/core
-	url = https://github.com/ansible/ansible-modules-core.git
-	branch = stable-1.9
-[submodule "v2/ansible/modules/extras"]
-	path = v2/ansible/modules/extras
-	url = https://github.com/ansible/ansible-modules-extras.git
-	branch = stable-1.9

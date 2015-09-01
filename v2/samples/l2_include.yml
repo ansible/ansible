@@ -1,4 +1,0 @@
-- debug: msg="this is the l2 include"
-- debug: msg="a second task for l2"
-- include: common_include.yml
-
