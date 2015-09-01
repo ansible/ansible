@@ -130,6 +130,8 @@ class PlayIterator:
                          break
                      else:
                          self.get_next_task_for_host(host)
+                 # finally, reset the host's state to ITERATING_SETUP
+                 self._host_states[host.name].run_state = self.ITERATING_SETUP
 
         # Extend the play handlers list to include the handlers defined in roles
         self._play.handlers.extend(play.compile_roles_handlers())
