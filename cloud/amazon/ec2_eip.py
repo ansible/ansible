@@ -22,14 +22,11 @@ description:
     - This module associates AWS EC2 elastic IP addresses with instances
 version_added: "1.4"
 options:
-  instance_id:
+  device_id:
     description:
-      - The EC2 instance id
+      - The id of the device for the EIP. Can be an EC2 Instance id or Elastic Network Interface (ENI) id.
     required: false
-  network_interface_id:
-    description:
-      - The Elastic Network Interface (ENI) id
-    required: false
+    aliases: [ instance_id ]
     version_added: "2.0"
   public_ip:
     description:
@@ -61,8 +58,15 @@ options:
     required: false
     default: false
     version_added: "1.6"
+  release_on_disassociation:
+    description:
+      - whether or not to automatically release the EIP when it is disassociated
+    required: false
+    default: false
+    version_added: "2.0"
 extends_documentation_fragment: aws
 author: "Lorin Hochstein (@lorin) <lorin@nimbisservices.com>"
+author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
    - This module will return C(public_ip) on success, which will contain the
      public IP address associated with the instance.
@@ -70,19 +74,22 @@ notes:
      the cloud instance is reachable via the new address. Use wait_for and
      pause to delay further playbook execution until the instance is reachable,
      if necessary.
+   - This module returns multiple changed statuses on disassociation or release.
+     It returns an overall status based on any changes occuring. It also returns
+     individual changed statuses for disassociation and release.
 '''
 
 EXAMPLES = '''
 - name: associate an elastic IP with an instance
-  ec2_eip: instance_id=i-1212f003 ip=93.184.216.119
+  ec2_eip: device_id=i-1212f003 ip=93.184.216.119
 - name: associate an elastic IP with a device
-  ec2_eip: network_interface_id=eni-c8ad70f3 ip=93.184.216.119
+  ec2_eip: device_id=eni-c8ad70f3 ip=93.184.216.119
 - name: disassociate an elastic IP from an instance
-  ec2_eip: instance_id=i-1212f003 ip=93.184.216.119 state=absent
+  ec2_eip: device_id=i-1212f003 ip=93.184.216.119 state=absent
 - name: disassociate an elastic IP with a device
-  ec2_eip: network_interface_id=eni-c8ad70f3 ip=93.184.216.119 state=absent
+  ec2_eip: device_id=eni-c8ad70f3 ip=93.184.216.119 state=absent
 - name: allocate a new elastic IP and associate it with an instance
-  ec2_eip: instance_id=i-1212f003
+  ec2_eip: device_id=i-1212f003
 - name: allocate a new elastic IP without associating it to anything
   action: ec2_eip
   register: eip
@@ -95,7 +102,7 @@ EXAMPLES = '''
 ''' group=webserver count=3
   register: ec2
 - name: associate new elastic IPs with each of the instances
-  ec2_eip: "instance_id={{ item }}"
+  ec2_eip: "device_id={{ item }}"
   with_items: ec2.instance_ids
 - name: allocate a new elastic IP inside a VPC in us-west-2
   ec2_eip: region=us-west-2 in_vpc=yes
@@ -292,14 +299,14 @@ def ensure_absent(ec2, domain, address, device_id, check_mode, isinstance=True):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        instance_id=dict(required=False),
-        network_interface_id=dict(required=False),
+        device_id=dict(required=False, aliases=['instance_id']),
         public_ip=dict(required=False, aliases=['ip']),
         state=dict(required=False, default='present',
                    choices=['present', 'absent']),
         in_vpc=dict(required=False, type='bool', default=False),
         reuse_existing_ip_allowed=dict(required=False, type='bool',
                                        default=False),
+        release_on_disassociation=dict(required=False, type='bool', default=False),
         wait_timeout=dict(default=300),
     ))
 
@@ -313,42 +320,46 @@ def main():
 
     ec2 = ec2_connect(module)
 
-    instance_id = module.params.get('instance_id')
-    network_interface_id = module.params.get('network_interface_id')
+    device_id = module.params.get('device_id')
     public_ip = module.params.get('public_ip')
     state = module.params.get('state')
     in_vpc = module.params.get('in_vpc')
     domain = 'vpc' if in_vpc else None
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
+    release_on_disassociation = module.params.get('release_on_disassociation')
+
+    if device_id and device_id.startswith('i-'):
+        is_instance=True
+    elif device_id:
+        is_instance=False
 
     try:
-        if network_interface_id:
-            address = find_address(ec2, public_ip, network_interface_id, isinstance=False)
-        elif instance_id:
-            address = find_address(ec2, public_ip, instance_id)
+        if device_id:
+            address = find_address(ec2, public_ip, device_id, isinstance=is_instance)
         else:
             address = False
 
         if state == 'present':
-            if instance_id:
-                result = ensure_present(ec2, domain, address, instance_id,
+            if device_id:
+                result = ensure_present(ec2, domain, address, device_id,
                                     reuse_existing_ip_allowed,
-                                    module.check_mode)
-            elif network_interface_id:
-                result = ensure_present(ec2, domain, address, network_interface_id,
-                                    reuse_existing_ip_allowed,
-                                    module.check_mode, isinstance=False)
+                                    module.check_mode, isinstance=is_instance)
             else:
                 address = allocate_address(ec2, domain, reuse_existing_ip_allowed)
                 result = {'changed': True, 'public_ip': address.public_ip}
         else:
-            if network_interface_id:
-                result = ensure_absent(ec2, domain, address, network_interface_id, module.check_mode, isinstance=False)
-            elif instance_id:
-                result = ensure_absent(ec2, domain, address, instance_id, module.check_mode)
+            if device_id:
+                disassociated = ensure_absent(ec2, domain, address, device_id, module.check_mode, isinstance=is_instance)
+
+                if release_on_disassociation and disassociated['changed']:
+                    released = release_address(ec2, address, module.check_mode)
+                    result = { 'changed': True, 'disassociated': disassociated, 'released': released }
+                else:
+                    result = { 'changed': disassociated['changed'], 'disassociated': disassociated, 'released': { 'changed': False } }
             else:
                 address = find_address(ec2, public_ip, None)
-                result = release_address(ec2, address, module.check_mode)
+                released = release_address(ec2, address, module.check_mode)
+                result = { 'changed': released['changed'], 'disassociated': { 'changed': False }, 'released': released }
 
     except (boto.exception.EC2ResponseError, EIPException) as e:
         module.fail_json(msg=str(e))
