@@ -409,6 +409,13 @@ class StrategyBase:
 
         # set the vars for this task from those specified as params to the include
         for b in block_list:
+            # first make a copy of the including task, so that each has a unique copy to modify
+            # FIXME: not sure if this is the best way to fix this, as we might be losing
+            #        information in the copy. Previously we assigned the include params to
+            #        the block variables directly, which caused other problems, so we may
+            #        need to figure out a third option if this also presents problems.
+            b._task_include = b._task_include.copy(exclude_block=True)
+            # then we create a temporary set of vars to ensure the variable reference is unique
             temp_vars = b._task_include.vars.copy()
             temp_vars.update(included_file._args.copy())
             b._task_include.vars = temp_vars
