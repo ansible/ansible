@@ -121,7 +121,9 @@ class VariableManager:
         if C.DEFAULT_HASH_BEHAVIOUR == "merge":
             return self._merge_dicts(a, b)
         else:
-            return dict(a.items() + b.items())
+            result = a.copy()
+            result.update(b)
+            return result
 
     def _merge_dicts(self, a, b):
         '''
