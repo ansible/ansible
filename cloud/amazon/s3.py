@@ -93,6 +93,12 @@ options:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
     required: false
     default: null
+  permission:
+    description:
+      - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read'.
+    required: false
+    default: private
+    version_added: "2.0"
   prefix:
     description:
       - Limits the response to keys that begin with the specified prefix for list mode
@@ -167,7 +173,7 @@ EXAMPLES = '''
 - s3: bucket=mybucket mode=list prefix=/my/desired/ marker=/my/desired/0023.txt max_keys=472
 
 # Create an empty bucket
-- s3: bucket=mybucket mode=create
+- s3: bucket=mybucket mode=create permission=public-read
 
 # Create a bucket with key as directory, in the EU region
 - s3: bucket=mybucket object=/my/directory/path mode=create region=eu-west-1
@@ -236,6 +242,7 @@ def create_bucket(module, s3, bucket, location=None):
         location = Location.DEFAULT
     try:
         bucket = s3.create_bucket(bucket, location=location)
+        bucket.set_acl(module.params.get('permission'))
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
     if bucket:
@@ -297,6 +304,7 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
                 key.set_metadata(meta_key, metadata[meta_key])
 
         key.set_contents_from_filename(src, encrypt_key=encrypt, headers=headers)
+        key.set_acl(module.params.get('permission'))
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
     except s3.provider.storage_copy_error, e:
@@ -369,6 +377,7 @@ def main():
             metadata       = dict(type='dict'),
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
             object         = dict(),
+            permission     = dict(choices=['private', 'public-read', 'public-read-write', 'authenticated-read'], default='private'),
             version        = dict(default=None),
             overwrite      = dict(aliases=['force'], default='always'),
             prefix         = dict(default=None),
