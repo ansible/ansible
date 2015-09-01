@@ -347,7 +347,7 @@ class ActionBase:
         if self._play_context.no_log:
             module_args['_ansible_no_log'] = True
 
-        self._display.debug("in _execute_module (%s, %s)" % (module_name, module_args))
+        self._display.vvv("Module: %s, args: %s" % (module_name, module_args))
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang:
