@@ -24,7 +24,13 @@ setup(name='ansible',
       package_dir={ '': 'lib' },
       packages=find_packages('lib'),
       package_data={
-         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1'],
+          '': [
+              'galaxy/data/metadata_template.j2',
+              'galaxy/data/readme',
+              'module_utils/*.ps1',
+              'modules/core/windows/*.ps1',
+              'modules/extras/windows/*.ps1',
+          ],
       },
       classifiers=[
           'Development Status :: 5 - Production/Stable',
