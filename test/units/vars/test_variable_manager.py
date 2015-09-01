@@ -48,20 +48,6 @@ class TestVariableManager(unittest.TestCase):
 
         self.assertEqual(vars, dict(playbook_dir='.'))
 
-        self.assertEqual(
-            v._merge_dicts(
-                dict(a=1),
-                dict(b=2)
-            ), dict(a=1, b=2)
-        )
-        self.assertEqual(
-            v._merge_dicts(
-                dict(a=1, c=dict(foo='bar')),
-                dict(b=2, c=dict(baz='bam'))
-            ), dict(a=1, b=2, c=dict(foo='bar', baz='bam'))
-        )
-
-
     def test_variable_manager_extra_vars(self):
         fake_loader = DictDataLoader({})
 
