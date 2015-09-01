@@ -65,10 +65,10 @@ def get_config(p, section, key, env_var, default, boolean=False, integer=False, 
         elif isnone:
             if value == "None":
                 value = None
-        elif isinstance(value, string_types):
-            value = unquote(value)
         elif ispath:
             value = shell_expand(value)
+        elif isinstance(value, string_types):
+            value = unquote(value)
     return value
 
 def _get_config(p, section, key, env_var, default):
