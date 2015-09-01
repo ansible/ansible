@@ -195,6 +195,7 @@ New Inventory scripts:
   * cloudstack
   * fleetctl
   * openvz
+  * nagios_ndo
   * proxmox
   * serf
 
@@ -222,13 +223,12 @@ Minor changes:
  * play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
  * vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
  * Support for OpenBSD's 'doas' privilege escalation method.
-
-Vault changes:
  * most vault operations can now be done over multilple files
  * ansible-vault encrypt/decrypt read from stdin if no other input file is given,
    and can write to a given ``--output file``. This lets you avoid ever writing
    sensitive plaintext to disk.
  * ansible-vault rekey accepts the --new-vault-password-file option.
+ * many fixes and new options added to modules, too many to list here.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
