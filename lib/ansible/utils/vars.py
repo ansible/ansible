@@ -32,7 +32,9 @@ def combine_vars(a, b):
     if C.DEFAULT_HASH_BEHAVIOUR == "merge":
         return merge_hash(a, b)
     else:
-        return dict(a.items() + b.items())
+        result = a.copy()
+        result.update(b)
+        return result
 
 def merge_hash(a, b):
     ''' recursively merges hash b into a
