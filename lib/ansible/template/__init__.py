@@ -206,7 +206,7 @@ class Templar:
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None, convert_data=True):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, fail_on_undefined=None, overrides=None, convert_data=True):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -316,7 +316,7 @@ class Templar:
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
-    def _do_template(self, data, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
+    def _do_template(self, data, preserve_trailing_newlines=True, fail_on_undefined=None, overrides=None):
 
         # For preserving the number of input newlines in the output (used
         # later in this method)
