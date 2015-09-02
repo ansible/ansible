@@ -39,6 +39,11 @@ Major Changes:
      # Output:
      "msg": "test1 1\\3"
 
+ * When a string with a trailing newline was specified in the playbook via yaml
+   dict format, the trailing newline was stripped.  When specified in key=value
+   format the trailing newlines were kept.  In v2, both methods of specifying the
+   string will keep the trailing newlines.
+
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
   * quantum_network (os_network)
