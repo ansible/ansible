@@ -316,6 +316,10 @@ class Templar:
 
     def _do_template(self, data, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
 
+        # For preserving the number of input newlines in the output (used
+        # later in this method)
+        data_newlines = self._count_newlines_from_end(data)
+
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
 
@@ -377,8 +381,15 @@ class Templar:
                 # characters at the end of the input data, so we use the
                 # calculate the difference in newlines and append them
                 # to the resulting output for parity
+                #
+                # jinja2 added a keep_trailing_newline option in 2.7 when
+                # creating an Environment.  That would let us make this code
+                # better (remove a single newline if
+                # preserve_trailing_newlines is False).  Once we can depend on
+                # that version being present, modify our code to set that when
+                # initializing self.environment and remove a single trailing
+                # newline here if preserve_newlines is False.
                 res_newlines  = self._count_newlines_from_end(res)
-                data_newlines = self._count_newlines_from_end(data)
                 if data_newlines > res_newlines:
                     res += '\n' * (data_newlines - res_newlines)
 
