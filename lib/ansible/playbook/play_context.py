@@ -345,6 +345,13 @@ class PlayContext(Base):
                   getattr(C, 'DEFAULT_%s_EXE' % self.become_method.upper(), None) or \
                   self.become_method
 
+            # set flags to use for the privilege escalation method, with various overrides
+            flags = self.become_flags or \
+                    getattr(self, '%s_flags' % self.become_method, None) or \
+                    C.DEFAULT_BECOME_FLAGS or \
+                    getattr(C, 'DEFAULT_%s_FLAGS' % self.become_method.upper(), None) or \
+                    ''
+
             if self.become_method == 'sudo':
                 # Rather than detect if sudo wants a password this time, -k makes sudo always ask for
                 # a password if one is required. Passing a quoted compound command to sudo (or sudo -s)
@@ -352,7 +359,6 @@ class PlayContext(Base):
                 # string to the user's shell.  We loop reading output until we see the randomly-generated
                 # sudo prompt set with the -p option.
                 prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                flags = self.become_flags or self.sudo_flags or C.DEFAULT_SUDO_FLAGS
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if not self.become_pass:
@@ -367,18 +373,15 @@ class PlayContext(Base):
                     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
 
                 prompt = detect_su_prompt
-                flags = self.become_flags or self.su_flags or ''
                 becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'pbrun':
 
                 prompt='assword:'
-                flags = self.become_flags or ''
                 becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'pfexec':
 
-                flags = self.become_flags or ''
                 # No user as it uses it's own exec_attr to figure it out
                 becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
 
@@ -386,14 +389,12 @@ class PlayContext(Base):
                 raise AnsibleError("'runas' is not yet implemented")
                 #TODO: figure out prompt
                 # this is not for use with winrm plugin but if they ever get ssh native on windoez
-                flags = self.become_flags or ''
                 becomecmd = '%s %s /user:%s "%s"' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'doas':
 
                 prompt = 'Password:'
                 exe = self.become_exe or 'doas'
-                flags = self.become_flags or ''
 
                 if not self.become_pass:
                     flags += ' -n '
