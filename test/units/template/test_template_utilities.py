@@ -22,8 +22,10 @@ __metaclass__ = type
 import jinja2
 from ansible.compat.tests import unittest
 
-from ansible.template import _preserve_backslashes
+from ansible.template import _preserve_backslashes, _count_newlines_from_end
 
+# These are internal utility functions only needed for templating.  They're
+# algorithmic so good candidates for unittesting by themselves
 
 class TestBackslashEscape(unittest.TestCase):
 
@@ -83,3 +85,28 @@ class TestBackslashEscape(unittest.TestCase):
             args = test['args']
             self.assertEquals(template.render(**args), test['expectation'])
 
+class TestCountNewlines(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_short_string(self):
+        self.assertEquals(_count_newlines_from_end('The quick\n'), 1)
+
+    def test_one_newline(self):
+        self.assertEquals(_count_newlines_from_end('The quick brown fox jumped over the lazy dog' * 1000 + '\n'), 1)
+
+    def test_multiple_newlines(self):
+        self.assertEquals(_count_newlines_from_end('The quick brown fox jumped over the lazy dog' * 1000 + '\n\n\n'), 3)
+
+    def test_zero_newlines(self):
+        self.assertEquals(_count_newlines_from_end('The quick brown fox jumped over the lazy dog' * 1000 + '\n\n\n'), 3)
+
+    def test_all_newlines(self):
+        self.assertEquals(_count_newlines_from_end('\n' * 10), 10)
+
+    def test_mostly_newlines(self):
+        self.assertEquals(_count_newlines_from_end('The quick brown fox jumped over the lazy dog' + '\n' * 1000), 1000)

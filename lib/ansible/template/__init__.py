@@ -90,6 +90,21 @@ def _preserve_backslashes(data, jinja_env):
 
     return data
 
+def _count_newlines_from_end(in_str):
+    '''
+    Counts the number of newlines at the end of a string. This is used during
+    the jinja2 templating to ensure the count matches the input, since some newlines
+    may be thrown away during the templating.
+    '''
+
+    i = len(in_str)
+    while i > 0:
+        if in_str[i-1] != '\n':
+            break
+        i -= 1
+
+    return len(in_str) - i
+
 class Templar:
     '''
     The main class for templating, with the main entry-point of template().
@@ -129,21 +144,6 @@ class Templar:
         self.environment.template_class = AnsibleJ2Template
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
-
-    def _count_newlines_from_end(self, in_str):
-        '''
-        Counts the number of newlines at the end of a string. This is used during
-        the jinja2 templating to ensure the count matches the input, since some newlines
-        may be thrown away during the templating.
-        '''
-
-        i = len(in_str)
-        while i > 0:
-            if in_str[i-1] != '\n':
-                break
-            i -= 1
-
-        return len(in_str) - i
 
     def _get_filters(self):
         '''
@@ -318,7 +318,7 @@ class Templar:
 
         # For preserving the number of input newlines in the output (used
         # later in this method)
-        data_newlines = self._count_newlines_from_end(data)
+        data_newlines = _count_newlines_from_end(data)
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
@@ -389,7 +389,7 @@ class Templar:
                 # that version being present, modify our code to set that when
                 # initializing self.environment and remove a single trailing
                 # newline here if preserve_newlines is False.
-                res_newlines  = self._count_newlines_from_end(res)
+                res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
                     res += '\n' * (data_newlines - res_newlines)
 
