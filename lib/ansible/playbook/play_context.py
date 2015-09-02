@@ -341,6 +341,7 @@ class PlayContext(Base):
             # set executable to use for the privilege escalation method, with various overrides
             exe = self.become_exe or \
                   getattr(self, '%s_exe' % self.become_method, None) or \
+                  C.DEFAULT_BECOME_EXE or \
                   getattr(C, 'DEFAULT_%s_EXE' % self.become_method.upper(), None) or \
                   self.become_method
 
