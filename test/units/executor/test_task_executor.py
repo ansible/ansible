@@ -323,5 +323,5 @@ class TestTaskExecutor(unittest.TestCase):
         with patch.object(action_loader, 'get', _get):
             mock_templar = MagicMock()
             res = te._poll_async_result(result=dict(ansible_job_id=1), templar=mock_templar)
-            self.assertEqual(res, dict(finished=1))
+            self.assertTrue(('finished', 1) in res.items())
 

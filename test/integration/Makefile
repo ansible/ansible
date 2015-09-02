@@ -53,6 +53,9 @@ check_mode:
 test_group_by:
 	ansible-playbook test_group_by.yml -i inventory.group_by -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
+no_log:
+	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -vvvvv | grep DO_NOT_LOG)" = "" ]
+
 test_handlers:
 	ansible-playbook test_handlers.yml --tags scenario1 -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 	[ "$$(ansible-playbook test_handlers.yml --tags scenario2 -l A -i inventory.handlers -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | grep -Po 'RUNNING HANDLER \[test_handlers : \K[^\]]+')" = "test handler" ]
