@@ -43,7 +43,7 @@ class TestVariableUtils(unittest.TestCase):
             dict(
                 a=defaultdict(a=1, c=defaultdict(foo='bar')),
                 b=dict(b=2, c=dict(baz='bam')),
-                result=defaultdict(a=1, b=2, c=defaultdict(foo='bar', baz='bam'))
+                result=dict(a=1, b=2, c=dict(foo='bar', baz='bam'))
             ),
         )
     test_replace_data = (
@@ -60,7 +60,7 @@ class TestVariableUtils(unittest.TestCase):
             dict(
                 a=defaultdict(a=1, c=dict(foo='bar')),
                 b=dict(b=2, c=defaultdict(baz='bam')),
-                result=defaultdict(a=1, b=2, c=defaultdict(baz='bam'))
+                result=dict(a=1, b=2, c=dict(baz='bam'))
             ),
         )
 
@@ -96,3 +96,12 @@ class TestVariableUtils(unittest.TestCase):
         with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'merge'):
             for test in self.test_merge_data:
                 self.assertEqual(combine_vars(test['a'], test['b']), test['result'])
+
+    def test_combine_vars_dict_type(self):
+        # Regression test for https://github.com/ansible/ansible/issues/12206
+        with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'replace'):
+            for test in self.test_replace_data:
+                self.assertEqual(type(combine_vars(test['a'], test['b'])), dict)
+        with mock.patch('ansible.constants.DEFAULT_HASH_BEHAVIOUR', 'merge'):
+            for test in self.test_merge_data:
+                self.assertEqual(type(combine_vars(test['a'], test['b'])), dict)
