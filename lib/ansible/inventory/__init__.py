@@ -204,23 +204,6 @@ class Inventory(object):
 
         return hosts
 
-    def _split_pattern(self, pattern):
-        """
-        takes e.g. "webservers[0:5]:dbservers:others"
-        and returns ["webservers[0:5]", "dbservers", "others"]
-        """
-
-        term = re.compile(
-            r'''(?:             # We want to match something comprising:
-                    [^:\[\]]    # (anything other than ':', '[', or ']'
-                    |           # ...or...
-                    \[[^\]]*\]  # a single complete bracketed expression)
-                )*              # repeated as many times as possible
-            ''', re.X
-        )
-
-        return [x for x in term.findall(pattern) if x]
-
     def _evaluate_patterns(self, patterns):
         """
         Takes a list of patterns and returns a list of matching host names,
