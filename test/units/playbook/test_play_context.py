@@ -118,7 +118,7 @@ class TestPlayContext(unittest.TestCase):
         sudo_exe    = C.DEFAULT_SUDO_EXE or 'sudo'
         sudo_flags  = C.DEFAULT_SUDO_FLAGS + " -n "
         su_exe      = C.DEFAULT_SU_EXE or 'su'
-        su_flags    = C.DEFAULT_SU_FLAGS
+        su_flags    = C.DEFAULT_SU_FLAGS or ''
         pbrun_exe   = 'pbrun'
         pbrun_flags = ''
         pfexec_exe   = 'pfexec'
