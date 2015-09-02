@@ -496,7 +496,6 @@ def ensure_route_table_present(connection, module):
         
     # If no route table returned then create new route table
     if route_table is None:
-        print route_table.keys()
         try:
             route_table = connection.create_route_table(vpc_id, check_mode)
             changed = True
@@ -511,7 +510,7 @@ def ensure_route_table_present(connection, module):
             module.fail_json(msg=e.message)
 
     if propagating_vgw_ids is not None:
-        result = ensure_propagation(vpc_conn, route_table_id,
+        result = ensure_propagation(connection, route_table,
                                     propagating_vgw_ids,
                                     check_mode=check_mode)
         changed = changed or result['changed']
