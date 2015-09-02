@@ -54,6 +54,7 @@ New Modules:
   * amazon: ec2_eni_facts
   * amazon: ec2_remote_facts
   * amazon: ec2_vpc_net
+  * amazon: ec2_vpc_route_table
   * amazon: ec2_vpc_route_table_facts
   * amazon: ec2_vpc_subnet
   * amazon: ec2_win_password
