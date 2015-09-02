@@ -111,10 +111,14 @@ class ActionModule(ActionBase):
                 time.localtime(os.path.getmtime(source))
             )
 
-            self._templar.environment.searchpath = [self._loader._basedir, os.path.dirname(source)]
+            # Create a new searchpath list to assign to the templar environment's file
+            # loader, so that it knows about the other paths to find template files
+            searchpath = [self._loader._basedir, os.path.dirname(source)]
             if self._task._role is not None:
-                self._templar.environment.searchpath.insert(1, C.DEFAULT_ROLES_PATH)
-                self._templar.environment.searchpath.insert(1, self._task._role._role_path)
+                searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                searchpath.insert(1, self._task._role._role_path)
+
+            self._templar.environment.loader.searchpath = searchpath
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)

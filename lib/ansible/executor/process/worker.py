@@ -27,6 +27,8 @@ import sys
 import time
 import traceback
 
+# TODO: not needed if we use the cryptography library with its default RNG
+# engine
 HAS_ATFORK=True
 try:
     from Crypto.Random import atfork
@@ -65,7 +67,7 @@ class WorkerProcess(multiprocessing.Process):
             if fileno is not None:
                 try:
                     self._new_stdin = os.fdopen(os.dup(fileno))
-                except OSError, e:
+                except OSError as e:
                     # couldn't dupe stdin, most likely because it's
                     # not a valid file descriptor, so we just rely on
                     # using the one that was passed in
@@ -135,7 +137,7 @@ class WorkerProcess(multiprocessing.Process):
                 except:
                     # FIXME: most likely an abort, catch those kinds of errors specifically
                     break
-            except Exception, e:
+            except Exception as e:
                 debug("WORKER EXCEPTION: %s" % e)
                 debug("WORKER EXCEPTION: %s" % traceback.format_exc())
                 try:

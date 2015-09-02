@@ -46,10 +46,9 @@ class DocCLI(CLI):
         self.parser = CLI.base_parser(
             usage='usage: %prog [options] [module...]',
             epilog='Show Ansible module documentation',
+            module_opts=True,
         )
 
-        self.parser.add_option("-M", "--module-path", action="store", dest="module_path", default=C.DEFAULT_MODULE_PATH,
-                help="Ansible modules/ directory")
         self.parser.add_option("-l", "--list", action="store_true", default=False, dest='list_dir',
                 help='List available modules')
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
@@ -121,7 +120,7 @@ class DocCLI(CLI):
                     # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
-            except Exception, e:
+            except Exception as e:
                 self.display.vvv(traceback.print_exc())
                 raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 
@@ -234,7 +233,10 @@ class DocCLI(CLI):
         text = []
         text.append("> %s\n" % doc['module'].upper())
 
-        desc = " ".join(doc['description'])
+        if isinstance(doc['description'], list):
+            desc = " ".join(doc['description'])
+        else:
+            desc = doc['description']
 
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
 
@@ -251,7 +253,10 @@ class DocCLI(CLI):
 
             text.append("%s %s" % (opt_leadin, o))
 
-            desc = " ".join(opt['description'])
+            if isinstance(doc['description'], list):
+                desc = " ".join(doc['description'])
+            else:
+                desc = doc['description']
 
             if 'choices' in opt:
                 choices = ", ".join(str(i) for i in opt['choices'])
@@ -262,7 +267,7 @@ class DocCLI(CLI):
             text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent=opt_indent,
                                  subsequent_indent=opt_indent))
 
-        if 'notes' in doc and len(doc['notes']) > 0:
+        if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             notes = " ".join(doc['notes'])
             text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), initial_indent="  ",
                                 subsequent_indent=opt_indent))

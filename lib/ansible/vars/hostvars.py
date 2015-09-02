@@ -20,9 +20,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import collections
+import sys
 
 from jinja2 import Undefined as j2undefined
 
+from ansible import constants as C
+from ansible.inventory.host import Host
 from ansible.template import Templar
 
 __all__ = ['HostVars']
@@ -32,22 +35,47 @@ class HostVars(collections.Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
     def __init__(self, vars_manager, play, inventory, loader):
-        self._vars_manager = vars_manager
-        self._play         = play
-        self._inventory    = inventory
-        self._loader       = loader
-        self._lookup       = {}
+        self._lookup = {}
+        self._loader = loader
+
+        # temporarily remove the inventory filter restriction
+        # so we can compile the variables for all of the hosts
+        # in inventory
+        restriction = inventory._restriction
+        inventory.remove_restriction()
+        hosts = inventory.get_hosts(ignore_limits_and_restrictions=True)
+        inventory.restrict_to_hosts(restriction)
+
+        # check to see if localhost is in the hosts list, as we
+        # may have it referenced via hostvars but if created implicitly
+        # it doesn't sow up in the hosts list
+        has_localhost = False
+        for host in hosts:
+            if host.name in C.LOCALHOST:
+                has_localhost = True
+                break
+
+        # we don't use the method in inventory to create the implicit host,
+        # because it also adds it to the 'ungrouped' group, and we want to
+        # avoid any side-effects
+        if not has_localhost:
+            new_host =  Host(name='localhost')
+            new_host.set_variable("ansible_python_interpreter", sys.executable)
+            new_host.set_variable("ansible_connection", "local")
+            new_host.ipv4_address = '127.0.0.1'
+            hosts.append(new_host)
+
+        for host in hosts:
+            self._lookup[host.name] = vars_manager.get_vars(loader=loader, play=play, host=host, include_hostvars=False)
 
     def __getitem__(self, host_name):
 
         if host_name not in self._lookup:
-            host = self._inventory.get_host(host_name)
-            if not host:
-                return j2undefined
-            result = self._vars_manager.get_vars(loader=self._loader, play=self._play, host=host)
-            templar = Templar(variables=result, loader=self._loader)
-            self._lookup[host_name] = templar.template(result, fail_on_undefined=False)
-        return self._lookup[host_name]
+            return j2undefined
+
+        data = self._lookup.get(host_name)
+        templar = Templar(variables=data, loader=self._loader)
+        return templar.template(data, fail_on_undefined=False)
 
     def __contains__(self, host_name):
         item = self.get(host_name)
@@ -62,7 +90,9 @@ class HostVars(collections.Mapping):
         raise NotImplementedError('HostVars does not support len.  hosts entries are discovered dynamically as needed')
 
     def __getstate__(self):
-        return self._lookup
+        data = self._lookup.copy()
+        return dict(loader=self._loader, data=data)
 
     def __setstate__(self, data):
-        self._lookup = data
+        self._lookup = data.get('data')
+        self._loader = data.get('loader')

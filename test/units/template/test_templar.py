@@ -58,8 +58,9 @@ class TestTemplar(unittest.TestCase):
 
         # test some basic templating
         self.assertEqual(templar.template("{{foo}}"), "bar")
-        self.assertEqual(templar.template("{{foo}}\n"), "bar")
+        self.assertEqual(templar.template("{{foo}}\n"), "bar\n")
         self.assertEqual(templar.template("{{foo}}\n", preserve_trailing_newlines=True), "bar\n")
+        self.assertEqual(templar.template("{{foo}}\n", preserve_trailing_newlines=False), "bar")
         self.assertEqual(templar.template("foo", convert_bare=True), "bar")
         self.assertEqual(templar.template("{{bam}}"), "bar")
         self.assertEqual(templar.template("{{num}}"), 1)

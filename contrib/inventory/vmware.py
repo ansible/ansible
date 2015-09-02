@@ -28,6 +28,8 @@ take precedence over options present in the INI file.  An INI file is not
 required if these options are specified using environment variables.
 '''
 
+from __future__ import print_function
+
 import collections
 import json
 import logging
@@ -164,7 +166,7 @@ class VMwareInventory(object):
                     obj_info = self._get_obj_info(val, depth - 1, seen)
                     if obj_info != ():
                         d[attr] = obj_info
-                except Exception, e:
+                except Exception as e:
                     pass
             return d
         elif isinstance(obj, SudsObject):
@@ -207,8 +209,8 @@ class VMwareInventory(object):
                 host_info[k] = v
         try:
             host_info['ipAddress'] = host.config.network.vnic[0].spec.ip.ipAddress
-        except Exception, e:
-            print >> sys.stderr, e
+        except Exception as e:
+            print(e, file=sys.stderr)
         host_info = self._flatten_dict(host_info, prefix)
         if ('%s_ipAddress' % prefix) in host_info:
             host_info['ansible_ssh_host'] = host_info['%s_ipAddress' % prefix]

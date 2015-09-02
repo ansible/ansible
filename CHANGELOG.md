@@ -1,7 +1,7 @@
 Ansible Changes By Release
 ==========================
 
-## 2.0 "TBD" - ACTIVE DEVELOPMENT
+## 2.0 "Over the Hills and Far Away" - ACTIVE DEVELOPMENT
 
 Major Changes:
  * Introducing the new block/rescue/always directives, allow for making task blocks and introducing exception like semantics
@@ -25,6 +25,19 @@ Major Changes:
    They will retain the value of `None`.  To go back to the old behaviour, you can override
    the `null_representation` setting to an empty string in your config file or by setting the
    `ANSIBLE_NULL_REPRESENTATION` environment variable.
+ * backslashes used when specifying parameters in jinja2 expressions in YAML
+   dicts sometimes needed to be escaped twice.  This has been fixed so that
+   escaping once works.  Here's an example of how playbooks need to be modified::
+
+     # Syntax in 1.9.x
+     - debug:
+         msg: "{{ 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') }}"
+     # Syntax in 2.0.x
+     - debug:
+         msg: "{{ 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') }}"
+
+     # Output:
+     "msg": "test1 1\\3"
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
@@ -36,10 +49,12 @@ Deprecated Modules (new ones in parens):
 New Modules:
   * amazon: ec2_ami_copy
   * amazon: ec2_ami_find
+  * amazon: ec2_elb_facts
   * amazon: ec2_eni
   * amazon: ec2_eni_facts
   * amazon: ec2_remote_facts
   * amazon: ec2_vpc_net
+  * amazon: ec2_vpc_route_table
   * amazon: ec2_vpc_route_table_facts
   * amazon: ec2_vpc_subnet
   * amazon: ec2_win_password
@@ -48,9 +63,12 @@ New Modules:
   * amazon: iam_policy
   * amazon: route53_zone
   * amazon: sts_assume_role
+  * amazon: s3_bucket
   * amazon: s3_logging
   * apk
   * bundler
+  * centurylink: clc_blueprint_package
+  * centurylink: clc_firewall_policy
   * centurylink: clc_loadbalancer
   * centurylink: clc_modify_server
   * centurylink: clc_publicip
@@ -105,12 +123,15 @@ New Modules:
   * openstack: os_subnet
   * openstack: os_volume
   * osx_defaults
+  * pagerduty_alert
   * pam_limits
   * pear
   * profitbricks: profitbricks
   * profitbricks: profitbricks_datacenter
   * profitbricks: profitbricks_nic
+  * profitbricks: profitbricks_snapshot
   * profitbricks: profitbricks_volume
+  * profitbricks: profitbricks_volume_attachments
   * proxmox
   * proxmox_template 
   * puppet 
@@ -136,6 +157,18 @@ New Modules:
   * vertica_schema
   * vertica_user
   * vmware: vmware_datacenter
+  * vmware: vmware_cluster
+  * vmware: vmware_dns_config
+  * vmware: vmware_dvs_host
+  * vmware: vmware_dvs_portgroup
+  * vmware: vmware_dvswitch
+  * vmware: vmware_host
+  * vmware: vmware_vmkernel_ip_config
+  * vmware: vmware_portgroup
+  * vmware: vmware_vm_facts
+  * vmware: vmware_vmkernel
+  * vmware: vmware_vsan_cluster
+  * vmware: vmware_vswitch
   * vmware: vca_fw
   * vmware: vca_nat
   * vmware: vsphere_copy
@@ -163,6 +196,7 @@ New Inventory scripts:
   * cloudstack
   * fleetctl
   * openvz
+  * nagios_ndo
   * proxmox
   * serf
 
@@ -172,11 +206,21 @@ New Lookups:
  * ini
  * shelvefile
 
+New filters:
+ * combine
+
+New Connection Methods:
+ *  Added a connection plugin for talking to docker containers on the ansible controller machine without using ssh
+
 Minor changes:
 
  * Many more tests, new API makes things more testable and we took advantage of it
  * big_ip modules now support turning off ssl certificate validation (use only for self signed)
- * The undocumented semicolon-separated "pattern1;pattern2" syntax to match hosts is no longer supported.
+ * Use "pattern1:pattern2" to combine host matching patterns. The undocumented
+   use of semicolons or commas to combine patterns is no longer supported.
+ * Use ``hosts: groupname[x:y]`` to select a subset of hosts in a group; the
+   ``[x-y]`` range syntax is no longer supported. Note that ``[0:1]`` matches
+   two hosts, i.e. the range is inclusive of its endpoints.
  * Now when you delegate a action that returns ansible_facts, these facts will now be applied to the delegated host,
    unlike before which they were applied to the current host.
  * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support
@@ -184,6 +228,12 @@ Minor changes:
  * play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
  * vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
  * Support for OpenBSD's 'doas' privilege escalation method.
+ * most vault operations can now be done over multilple files
+ * ansible-vault encrypt/decrypt read from stdin if no other input file is given,
+   and can write to a given ``--output file`` (including stdout, '-'). This lets
+   you avoid ever writing sensitive plaintext to disk.
+ * ansible-vault rekey accepts the --new-vault-password-file option.
+ * many fixes and new options added to modules, too many to list here.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 

@@ -1,13 +1,13 @@
 '\" t
 .\"     Title: ansible-vault
 .\"    Author: [see the "AUTHOR" section]
-.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 12/09/2014
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 08/27/2015
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.9
+.\"    Source: Ansible 2.0.0
 .\"  Language: English
 .\"
-.TH "ANSIBLE\-VAULT" "1" "12/09/2014" "Ansible 1\&.9" "System administration commands"
+.TH "ANSIBLE\-VAULT" "1" "08/27/2015" "Ansible 2\&.0\&.0" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -43,7 +43,12 @@ The following options are available to all sub\-commands:
 .PP
 \fB\-\-vault\-password\-file=\fR\fIFILE\fR
 .RS 4
-A file containing the vault password to be used during the encryption/decryption steps\&. Be sure to keep this file secured if it is used\&.
+A file containing the vault password to be used during the encryption/decryption steps\&. Be sure to keep this file secured if it is used\&. If the file is executable, it will be run and its standard output will be used as the password\&.
+.RE
+.PP
+\fB\-\-new\-vault\-password\-file=\fR\fIFILE\fR
+.RS 4
+A file containing the new vault password to be used when rekeying a file\&. Be sure to keep this file secured if it is used\&. If the file is executable, it will be run and its standard output will be used as the password\&.
 .RE
 .PP
 \fB\-h\fR, \fB\-\-help\fR
@@ -75,19 +80,35 @@ The \fBedit\fR sub\-command is used to modify a file which was previously encryp
 This command will decrypt the file to a temporary file and allow you to edit the file, saving it back when done and removing the temporary file\&.
 .SH "REKEY"
 .sp
-*$ ansible\-vault rekey [options] FILE_1 [FILE_2, \&..., FILE_N]
+\fB$ ansible\-vault rekey [options] FILE_1 [FILE_2, \&..., FILE_N]\fR
 .sp
 The \fBrekey\fR command is used to change the password on a vault\-encrypted files\&. This command can update multiple files at once, and will prompt for both the old and new passwords before modifying any data\&.
 .SH "ENCRYPT"
 .sp
-*$ ansible\-vault encrypt [options] FILE_1 [FILE_2, \&..., FILE_N]
+\fB$ ansible\-vault encrypt [options] FILE_1 [FILE_2, \&..., FILE_N]\fR
 .sp
 The \fBencrypt\fR sub\-command is used to encrypt pre\-existing data files\&. As with the \fBrekey\fR command, you can specify multiple files in one command\&.
+.sp
+Starting with version 2\&.0, the \fBencrypt\fR command accepts an \fB\-\-output FILENAME\fR option to determine where encrypted output is stored\&. With this option, input is read from the (at most one) filename given on the command line; if no input file is given, input is read from stdin\&. Either the input or the output file may be given as \fI\-\fR for stdin and stdout respectively\&. If neither input nor output file is given, the command acts as a filter, reading plaintext from stdin and writing it to stdout\&.
+.sp
+Thus any of the following invocations can be used:
+.sp
+\fB$ ansible\-vault encrypt\fR
+.sp
+\fB$ ansible\-vault encrypt \-\-output OUTFILE\fR
+.sp
+\fB$ ansible\-vault encrypt INFILE \-\-output OUTFILE\fR
+.sp
+\fB$ echo secret|ansible\-vault encrypt \-\-output OUTFILE\fR
+.sp
+Reading from stdin and writing only encrypted output is a good way to prevent sensitive data from ever hitting disk (either interactively or from a script)\&.
 .SH "DECRYPT"
 .sp
-*$ ansible\-vault decrypt [options] FILE_1 [FILE_2, \&..., FILE_N]
+\fB$ ansible\-vault decrypt [options] FILE_1 [FILE_2, \&..., FILE_N]\fR
 .sp
 The \fBdecrypt\fR sub\-command is used to remove all encryption from data files\&. The files will be stored as plain\-text YAML once again, so be sure that you do not run this command on data files with active passwords or other sensitive data\&. In most cases, users will want to use the \fBedit\fR sub\-command to modify the files securely\&.
+.sp
+As with \fBencrypt\fR, the \fBdecrypt\fR subcommand also accepts the \fB\-\-output FILENAME\fR option to specify where plaintext output is stored, and stdin/stdout is handled as described above\&.
 .SH "AUTHOR"
 .sp
 Ansible was originally written by Michael DeHaan\&. See the AUTHORS file for a complete list of contributors\&.

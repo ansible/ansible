@@ -52,22 +52,22 @@ class Play(Base, Taggable, Become):
     # Connection-Related Attributes
 
     # TODO: generalize connection
-    _accelerate          = FieldAttribute(isa='bool', default=False)
-    _accelerate_ipv6     = FieldAttribute(isa='bool', default=False)
-    _accelerate_port     = FieldAttribute(isa='int', default=5099) # should be alias of port
+    _accelerate          = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _accelerate_ipv6     = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _accelerate_port     = FieldAttribute(isa='int', default=5099, always_post_validate=True)
 
     # Connection
-    _gather_facts        = FieldAttribute(isa='bool', default=None)
-    _hosts               = FieldAttribute(isa='list', default=[], required=True, listof=string_types)
-    _name                = FieldAttribute(isa='string', default='')
+    _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
+    _hosts               = FieldAttribute(isa='list', default=[], required=True, listof=string_types, always_post_validate=True)
+    _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
 
     # Variable Attributes
-    _vars_files          = FieldAttribute(isa='list', default=[])
-    _vars_prompt         = FieldAttribute(isa='list', default=[])
-    _vault_password      = FieldAttribute(isa='string')
+    _vars_files          = FieldAttribute(isa='list', default=[], priority=99)
+    _vars_prompt         = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _vault_password      = FieldAttribute(isa='string', always_post_validate=True)
 
     # Role Attributes
-    _roles               = FieldAttribute(isa='list', default=[], priority=100)
+    _roles               = FieldAttribute(isa='list', default=[], priority=90)
 
     # Block (Task) Lists Attributes
     _handlers            = FieldAttribute(isa='list', default=[])
@@ -76,11 +76,11 @@ class Play(Base, Taggable, Become):
     _tasks               = FieldAttribute(isa='list', default=[])
 
     # Flag/Setting Attributes
-    _any_errors_fatal    = FieldAttribute(isa='bool', default=False)
-    _force_handlers      = FieldAttribute(isa='bool')
-    _max_fail_percentage = FieldAttribute(isa='string', default='0')
-    _serial              = FieldAttribute(isa='int', default=0)
-    _strategy            = FieldAttribute(isa='string', default='linear')
+    _any_errors_fatal    = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _force_handlers      = FieldAttribute(isa='bool', always_post_validate=True)
+    _max_fail_percentage = FieldAttribute(isa='percent', always_post_validate=True)
+    _serial              = FieldAttribute(isa='int', default=0, always_post_validate=True)
+    _strategy            = FieldAttribute(isa='string', default='linear', always_post_validate=True)
 
     # =================================================================================
 
@@ -190,28 +190,6 @@ class Play(Base, Taggable, Become):
         for ri in role_includes:
             roles.append(Role.load(ri, play=self))
         return roles
-
-    def _post_validate_vars(self, attr, value, templar):
-        '''
-        Override post validation of vars on the play, as we don't want to
-        template these too early.
-        '''
-        return value
-
-    def _post_validate_vars_files(self, attr, value, templar):
-        '''
-        Override post validation of vars_files on the play, as we don't want to
-        template these too early.
-        '''
-        return value
-
-    # disable validation on various fields which will be validated later in other objects
-    def _post_validate_become(self, attr, value, templar):
-        return value
-    def _post_validate_become_user(self, attr, value, templar):
-        return value
-    def _post_validate_become_method(self, attr, value, templar):
-        return value
 
     # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
 

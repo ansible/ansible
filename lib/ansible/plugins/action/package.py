@@ -44,6 +44,10 @@ class ActionModule(ActionBase):
                 module = getattr(facts['ansible_facts'], 'ansible_pkg_mgr', 'auto')
 
         if module != 'auto':
+
+            if module not in self._shared_loader_obj.module_loader:
+                return {'failed': True, 'msg': 'Could not find a module for %s.' % module}
+
             # run the 'package' module
             new_module_args = self._task.args.copy()
             if 'use' in new_module_args:

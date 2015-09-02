@@ -30,7 +30,6 @@ class VaultCLI(CLI):
     """ Vault command line class """
 
     VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
-    CIPHER = 'AES256'
 
     def __init__(self, args, display=None):
 
@@ -64,8 +63,21 @@ class VaultCLI(CLI):
         self.options, self.args = self.parser.parse_args()
         self.display.verbosity = self.options.verbosity
 
-        if len(self.args) == 0 or len(self.args) > 1:
-            raise AnsibleOptionsError("Vault requires a single filename as a parameter")
+        can_output = ['encrypt', 'decrypt']
+
+        if self.action not in can_output:
+            if self.options.output_file:
+                raise AnsibleOptionsError("The --output option can be used only with ansible-vault %s" % '/'.join(can_output))
+            if len(self.args) == 0:
+                raise AnsibleOptionsError("Vault requires at least one filename as a parameter")
+        else:
+            # This restriction should remain in place until it's possible to
+            # load multiple YAML records from a single file, or it's too easy
+            # to create an encrypted file that can't be read back in. But in
+            # the meanwhile, "cat a b c|ansible-vault encrypt --output x" is
+            # a workaround.
+            if self.options.output_file and len(self.args) > 1:
+                raise AnsibleOptionsError("At most one input file may be used with the --output option")
 
     def run(self):
 
@@ -77,55 +89,66 @@ class VaultCLI(CLI):
         else:
             self.vault_pass, _= self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
 
+        if self.options.new_vault_password_file:
+            # for rekey only
+            self.new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file)
+
         if not self.vault_pass:
             raise AnsibleOptionsError("A password is required to use Ansible's Vault")
 
+        self.editor = VaultEditor(self.vault_pass)
+
         self.execute()
 
-    def execute_create(self):
+    def execute_encrypt(self):
 
-        cipher = getattr(self.options, 'cipher', self.CIPHER)
-        this_editor = VaultEditor(cipher, self.vault_pass, self.args[0])
-        this_editor.create_file()
+        if len(self.args) == 0 and sys.stdin.isatty():
+            self.display.display("Reading plaintext input from stdin", stderr=True)
+
+        for f in self.args or ['-']:
+            self.editor.encrypt_file(f, output_file=self.options.output_file)
+
+        if sys.stdout.isatty():
+            self.display.display("Encryption successful", stderr=True)
 
     def execute_decrypt(self):
 
-        cipher = getattr(self.options, 'cipher', self.CIPHER)
-        for f in self.args:
-            this_editor = VaultEditor(cipher, self.vault_pass, f)
-            this_editor.decrypt_file()
+        if len(self.args) == 0 and sys.stdin.isatty():
+            self.display.display("Reading ciphertext input from stdin", stderr=True)
 
-        self.display.display("Decryption successful")
+        for f in self.args or ['-']:
+            self.editor.decrypt_file(f, output_file=self.options.output_file)
+
+        if sys.stdout.isatty():
+            self.display.display("Decryption successful", stderr=True)
+
+    def execute_create(self):
+
+        if len(self.args) > 1:
+            raise AnsibleOptionsError("ansible-vault create can take only one filename argument")
+
+        self.editor.create_file(self.args[0])
 
     def execute_edit(self):
-
         for f in self.args:
-            this_editor = VaultEditor(None, self.vault_pass, f)
-            this_editor.edit_file()
+            self.editor.edit_file(f)
 
     def execute_view(self):
 
         for f in self.args:
-            this_editor = VaultEditor(None, self.vault_pass, f)
-            this_editor.view_file()
-
-    def execute_encrypt(self):
-
-        cipher = getattr(self.options, 'cipher', self.CIPHER)
-        for f in self.args:
-            this_editor = VaultEditor(cipher, self.vault_pass, f)
-            this_editor.encrypt_file()
-
-        self.display.display("Encryption successful")
+            self.editor.view_file(f)
 
     def execute_rekey(self):
         for f in self.args:
             if not (os.path.isfile(f)):
                 raise AnsibleError(f + " does not exist")
-        __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
+
+        if self.new_vault_pass:
+            new_password = self.new_vault_pass
+        else:
+            __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
 
         for f in self.args:
-            this_editor = VaultEditor(None, self.vault_pass, f)
-            this_editor.rekey_file(new_password)
+            self.editor.rekey_file(f, new_password)
 
-        self.display.display("Rekey successful")
+        self.display.display("Rekey successful", stderr=True)

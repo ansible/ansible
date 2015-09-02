@@ -220,7 +220,7 @@ class CLI(object):
         setattr(parser.values, option.dest, os.path.expanduser(value))
 
     @staticmethod
-    def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False,
+    def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
         async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False):
         ''' create an options parser for most ansible scripts '''
 
@@ -241,10 +241,11 @@ class CLI(object):
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
                 help='further limit selected hosts to an additional pattern')
 
-        if runtask_opts:
-            parser.add_option('-M', '--module-path', dest='module_path',
-                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH, default=None,
+        if module_opts:
+            parser.add_option('-M', '--module-path', dest='module_path', default=None,
+                help="specify path(s) to module library (default=%s)" % C.DEFAULT_MODULE_PATH,
                 action="callback", callback=CLI.expand_tilde, type=str)
+        if runtask_opts:
             parser.add_option('-e', '--extra-vars', dest="extra_vars", action="append",
                 help="set additional variables as key=value or YAML/JSON", default=[])
 
@@ -258,6 +259,12 @@ class CLI(object):
             parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
                 dest='vault_password_file', help="vault password file", action="callback",
                 callback=CLI.expand_tilde, type=str)
+            parser.add_option('--new-vault-password-file',
+                dest='new_vault_password_file', help="new vault password file for rekey", action="callback",
+                callback=CLI.expand_tilde, type=str)
+            parser.add_option('--output', default=None, dest='output_file',
+                help='output file name for encrypt or decrypt; use - for stdout')
+
 
         if subset_opts:
             parser.add_option('-t', '--tags', dest='tags', default='all',
@@ -298,7 +305,7 @@ class CLI(object):
 
 
         if connect_opts:
-            parser.add_option('-k', '--ask-pass', default=False, dest='ask_pass', action='store_true',
+            parser.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
                 help='ask for connection password')
             parser.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
                 help='use this file to authenticate the connection')

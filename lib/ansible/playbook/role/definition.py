@@ -119,7 +119,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         # if we have the required datastructures, and if the role_name
         # contains a variable, try and template it now
-        if self._play and self._variable_manager:
+        if self._variable_manager:
             all_vars = self._variable_manager.get_vars(loader=self._loader, play=self._play)
             templar = Templar(loader=self._loader, variables=all_vars)
             if templar._contains_vars(role_name):

@@ -151,12 +151,15 @@ class DataLoader():
 
         show_content = True
         try:
-            with open(file_name, 'r') as f:
+            with open(file_name, 'rb') as f:
                 data = f.read()
                 if self._vault.is_encrypted(data):
                     data = self._vault.decrypt(data)
                     show_content = False
+
+            data = to_unicode(data, errors='strict')
             return (data, show_content)
+
         except (IOError, OSError) as e:
             raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)))
 

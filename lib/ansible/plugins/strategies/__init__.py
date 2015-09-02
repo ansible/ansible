@@ -22,7 +22,8 @@ __metaclass__ = type
 from six.moves import queue as Queue
 import time
 
-from ansible.errors import *
+from ansible import constants as C
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -30,7 +31,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.role import hash_params
-from ansible.plugins import _basedirs, filter_loader, lookup_loader, module_loader
+from ansible.plugins import _basedirs, action_loader, connection_loader, filter_loader, lookup_loader, module_loader
 from ansible.template import Templar
 
 try:
@@ -50,7 +51,9 @@ class SharedPluginLoaderObj:
     the forked processes over the queue easier
     '''
     def __init__(self):
-        self.basedirs      = _basedirs[:]
+        self.basedirs = _basedirs[:]
+        self.action_loader = action_loader
+        self.connection_loader = connection_loader
         self.filter_loader = filter_loader
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
@@ -382,7 +385,7 @@ class StrategyBase:
             data = self._loader.load_from_file(included_file._filename)
             if data is None:
                 return []
-        except AnsibleError, e:
+        except AnsibleError as e:
             for host in included_file._hosts:
                 tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=str(e)))
                 iterator.mark_host_failed(host)
@@ -406,6 +409,13 @@ class StrategyBase:
 
         # set the vars for this task from those specified as params to the include
         for b in block_list:
+            # first make a copy of the including task, so that each has a unique copy to modify
+            # FIXME: not sure if this is the best way to fix this, as we might be losing
+            #        information in the copy. Previously we assigned the include params to
+            #        the block variables directly, which caused other problems, so we may
+            #        need to figure out a third option if this also presents problems.
+            b._task_include = b._task_include.copy(exclude_block=True)
+            # then we create a temporary set of vars to ensure the variable reference is unique
             temp_vars = b._task_include.vars.copy()
             temp_vars.update(included_file._args.copy())
             b._task_include.vars = temp_vars
@@ -455,7 +465,7 @@ class StrategyBase:
                             loader=self._loader,
                             variable_manager=self._variable_manager
                         )
-                    except AnsibleError, e:
+                    except AnsibleError as e:
                         return False
 
                     if len(included_files) > 0:
@@ -475,7 +485,7 @@ class StrategyBase:
                                     # and add the new blocks to the list of handler blocks
                                     handler_block.block.extend(block.block)
                                 #iterator._play.handlers.extend(new_blocks)
-                            except AnsibleError, e:
+                            except AnsibleError as e:
                                 for host in included_file._hosts:
                                     iterator.mark_host_failed(host)
                                     self._tqm._failed_hosts[host.name] = True

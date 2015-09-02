@@ -116,6 +116,8 @@ class ActionBase:
                 environments = [ environments ]
 
             for environment in environments:
+                if environment is None:
+                    continue
                 if not isinstance(environment, dict):
                     raise AnsibleError("environment must be a dictionary, received %s (%s)" % (environment, type(environment)))
                 # very deliberatly using update here instead of combine_vars, as
@@ -164,7 +166,7 @@ class ActionBase:
 
         tmp_mode = None
         if self._play_context.remote_user != 'root' or self._play_context.become and self._play_context.become_user != 'root':
-            tmp_mode = 0755
+            tmp_mode = 0o755
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         self._display.debug("executing _low_level_execute_command to create the tmp path")
@@ -345,7 +347,7 @@ class ActionBase:
         if self._play_context.no_log:
             module_args['_ansible_no_log'] = True
 
-        self._display.debug("in _execute_module (%s, %s)" % (module_name, module_args))
+        self._display.vvv("Module: %s, args: %s" % (module_name, module_args))
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang:

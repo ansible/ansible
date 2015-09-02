@@ -107,7 +107,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
         parsed_tree = ast.parse(expr, mode='eval')
         cnv.visit(parsed_tree)
         compiled = compile(parsed_tree, expr, 'eval')
-        result = eval(compiled, {}, locals)
+        result = eval(compiled, {}, dict(locals))
 
         if include_exceptions:
             return (result, None)

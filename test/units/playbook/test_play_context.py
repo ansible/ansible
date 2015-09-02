@@ -63,7 +63,7 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(play_context.shell, None)
         self.assertEqual(play_context.verbosity, 2)
         self.assertEqual(play_context.check_mode, True)
-        self.assertEqual(play_context.no_log, False)
+        self.assertEqual(play_context.no_log, None)
 
         mock_play = MagicMock()
         mock_play.connection    = 'mock'
@@ -115,10 +115,10 @@ class TestPlayContext(unittest.TestCase):
 
         default_cmd = "/bin/foo"
         default_exe = "/bin/bash"
-        sudo_exe    = C.DEFAULT_SUDO_EXE
+        sudo_exe    = C.DEFAULT_SUDO_EXE or 'sudo'
         sudo_flags  = C.DEFAULT_SUDO_FLAGS + " -n "
-        su_exe      = C.DEFAULT_SU_EXE
-        su_flags    = C.DEFAULT_SU_FLAGS
+        su_exe      = C.DEFAULT_SU_EXE or 'su'
+        su_flags    = C.DEFAULT_SU_FLAGS or ''
         pbrun_exe   = 'pbrun'
         pbrun_flags = ''
         pfexec_exe   = 'pfexec'

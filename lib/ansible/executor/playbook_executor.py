@@ -28,7 +28,6 @@ from ansible import constants as C
 from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
-from ansible.plugins import module_loader
 from ansible.template import Templar
 
 from ansible.utils.color import colorize, hostcolor
@@ -51,12 +50,6 @@ class PlaybookExecutor:
         self._display          = display
         self._options          = options
         self.passwords         = passwords
-
-        # make sure the module path (if specified) is parsed and
-        # added to the module_loader object
-        if options.module_path is not None:
-            for path in options.module_path.split(os.pathsep):
-                module_loader.add_directory(path)
 
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
             self._tqm = None
@@ -135,15 +128,29 @@ class PlaybookExecutor:
                                 self._tqm.send_callback('v2_playbook_on_play_start', new_play)
                                 self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
                                 break
+
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
                             result = self._tqm.run(play=play)
-                            # if the last result wasn't zero, break out of the serial batch loop
-                            if result != 0:
+
+                            # check the number of failures here, to see if they're above the maximum
+                            # failure percentage allowed, or if any errors are fatal. If either of those
+                            # conditions are met, we break out, otherwise we only break out if the entire
+                            # batch failed
+                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts)
+                            if new_play.any_errors_fatal and failed_hosts_count > 0:
+                                break
+                            elif new_play.max_fail_percentage is not None and \
+                               int((new_play.max_fail_percentage)/100.0 * len(batch)) > int((len(batch) - failed_hosts_count) / len(batch) * 100.0):
+                                break
+                            elif len(batch) == failed_hosts_count:
                                 break
 
-                        # if the last result wasn't zero, break out of the play loop
+                            # clear the failed hosts dictionaires in the TQM for the next batch
+                            self._tqm.clear_failed_hosts()
+
+                        # if the last result wasn't zero, break out of the serial batch loop
                         if result != 0:
                             break
 

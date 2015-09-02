@@ -164,3 +164,36 @@ class RoleRequirement(RoleDefinition):
         return dict(scm=scm, src=role_url, version=role_version, role_name=role_name)
 
 
+def role_yaml_parse(role):
+    if 'role' in role:
+        # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+        role_info = role_spec_parse(role['role'])
+        if isinstance(role_info, dict):
+            # Warning: Slight change in behaviour here.  name may be being
+            # overloaded.  Previously, name was only a parameter to the role.
+            # Now it is both a parameter to the role and the name that
+            # ansible-galaxy will install under on the local system.
+            if 'name' in role and 'name' in role_info:
+                del role_info['name']
+            role.update(role_info)
+    else:
+        # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+        if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
+            role["src"] = "git+" + role["src"]
+
+        if '+' in role["src"]:
+            (scm, src) = role["src"].split('+')
+            role["scm"] = scm
+            role["src"] = src
+
+        if 'name' not in role:
+            role["name"] = repo_url_to_role_name(role["src"])
+
+        if 'version' not in role:
+            role['version'] = ''
+
+        if 'scm' not in role:
+            role['scm'] = None
+
+    return role
+

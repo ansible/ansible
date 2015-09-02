@@ -40,6 +40,8 @@ Tested with Ansible 1.9.2 and spacewalk 2.3
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 
+from __future__ import print_function
+
 import sys
 import os
 import time
@@ -60,7 +62,7 @@ INI_FILE = os.path.join(base_dir, "spacewalk.ini")
 
     # Sanity check
 if not os.path.exists(SW_REPORT):
-    print >> sys.stderr, 'Error: %s is required for operation.' % (SW_REPORT)
+    print('Error: %s is required for operation.' % (SW_REPORT), file=sys.stderr)
     sys.exit(1)
 
 # Pre-startup work
@@ -132,9 +134,9 @@ try:
 	for group in spacewalk_report('system-groups'):
 	    org_groups[group['spacewalk_group_id']] = group['spacewalk_org_id']
 
-except (OSError), e:
-	print >> sys.stderr, 'Problem executing the command "%s system-groups": %s' % \
-	    (SW_REPORT, str(e))
+except (OSError) as e:
+	print('Problem executing the command "%s system-groups": %s' %
+          (SW_REPORT, str(e)), file=sys.stderr)
 	sys.exit(2)
 
 
@@ -148,9 +150,9 @@ if options.list:
         for item in spacewalk_report('inventory'):
             host_vars[ item['spacewalk_profile_name'] ] = dict( ( key, ( value.split(';') if ';' in value else value) ) for key, value in item.items() )
 
-    except (OSError), e:
-        print >> sys.stderr, 'Problem executing the command "%s inventory": %s' % \
-            (SW_REPORT, str(e))
+    except (OSError) as e:
+        print('Problem executing the command "%s inventory": %s' %
+              (SW_REPORT, str(e)), file=sys.stderr)
         sys.exit(2)
 
     groups = {}
@@ -185,19 +187,19 @@ if options.list:
                 if system['spacewalk_server_name'] in host_vars and not system['spacewalk_server_name'] in meta[ "hostvars" ]:
                         meta[ "hostvars" ][ system['spacewalk_server_name'] ] = host_vars[ system['spacewalk_server_name'] ]
 
-    except (OSError), e:
-        print >> sys.stderr, 'Problem executing the command "%s system-groups-systems": %s' % \
-            (SW_REPORT, str(e))
+    except (OSError) as e:
+        print('Problem executing the command "%s system-groups-systems": %s' %
+              (SW_REPORT, str(e)), file=sys.stderr)
         sys.exit(2)
 
     if options.human:
         for group, systems in groups.iteritems():
-            print '[%s]\n%s\n' % (group, '\n'.join(systems))
+            print('[%s]\n%s\n' % (group, '\n'.join(systems)))
     else:
         final = dict( [ (k, list(s)) for k, s in groups.iteritems() ] )
         final["_meta"] = meta
-        print json.dumps( final )
-        #print json.dumps(groups)
+        print(json.dumps( final ))
+        #print(json.dumps(groups))
     sys.exit(0)
 
 
@@ -212,17 +214,17 @@ elif options.host:
                 host_details = system
                 break
 
-    except (OSError), e:
-        print >> sys.stderr, 'Problem executing the command "%s inventory": %s' % \
-            (SW_REPORT, str(e))
+    except (OSError) as e:
+        print('Problem executing the command "%s inventory": %s' %
+              (SW_REPORT, str(e)), file=sys.stderr)
         sys.exit(2)
     
     if options.human:
-        print 'Host: %s' % options.host
+        print('Host: %s' % options.host)
         for k, v in host_details.iteritems():
-            print '  %s: %s' % (k, '\n    '.join(v.split(';')))
+            print('  %s: %s' % (k, '\n    '.join(v.split(';'))))
     else:
-        print json.dumps( dict( ( key, ( value.split(';') if ';' in value else value) ) for key, value in host_details.items() ) )
+        print( json.dumps( dict( ( key, ( value.split(';') if ';' in value else value) ) for key, value in host_details.items() ) ) )
     sys.exit(0)
 
 else:

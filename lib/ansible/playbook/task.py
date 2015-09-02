@@ -39,6 +39,13 @@ from ansible.playbook.taggable import Taggable
 
 __all__ = ['Task']
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class Task(Base, Conditional, Taggable, Become):
 
     """
@@ -193,6 +200,14 @@ class Task(Base, Conditional, Taggable, Become):
 
         return super(Task, self).preprocess_data(new_ds)
 
+    def _load_any_errors_fatal(self, attr, value):
+        '''
+        Exists only to show a deprecation warning, as this attribute is not valid
+        at the task level.
+        '''
+        display.deprecated("Setting any_errors_fatal on a task is no longer supported. This should be set at the play level only")
+        return None
+
     def post_validate(self, templar):
         '''
         Override of base class post_validate, to also do final validation on
@@ -218,6 +233,9 @@ class Task(Base, Conditional, Taggable, Become):
         Override post validation of vars on the play, as we don't want to
         template these too early.
         '''
+        if value is None:
+            return dict()
+
         for env_item in value:
             if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
                 self._display.deprecated("Using bare variables for environment is deprecated. Update your playbooks so that the environment value uses the full variable syntax ('{{foo}}')")
@@ -253,7 +271,7 @@ class Task(Base, Conditional, Taggable, Become):
 
         new_me._task_include = None
         if self._task_include:
-            new_me._task_include = self._task_include.copy()
+            new_me._task_include = self._task_include.copy(exclude_block=exclude_block)
 
         return new_me
 
@@ -347,11 +365,9 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Override for the 'tags' getattr fetcher, used from Base.
         '''
-        environment = self._attributes['tags']
+        environment = self._attributes['environment']
         if environment is None:
-            environment = dict()
-
-        environment = self._get_parent_attribute('environment', extend=True)
+            environment = self._get_parent_attribute('environment')
 
         return environment
 

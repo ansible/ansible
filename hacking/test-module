@@ -119,7 +119,7 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
     task_vars = {}
     if interpreter:
         if '=' not in interpreter:
-            print 'interpreter must by in the form of ansible_python_interpreter=/usr/bin/python'
+            print("interpreter must by in the form of ansible_python_interpreter=/usr/bin/python")
             sys.exit(1)
         interpreter_type, interpreter_path = interpreter.split('=')
         if not interpreter_type.startswith('ansible_'):
@@ -138,8 +138,8 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
     )
 
     modfile2_path = os.path.expanduser(destfile)
-    print "* including generated source, if any, saving to: %s" % modfile2_path
-    print "* this may offset any line numbers in tracebacks/debuggers!"
+    print("* including generated source, if any, saving to: %s" % modfile2_path)
+    print("* this may offset any line numbers in tracebacks/debuggers!")
     modfile2 = open(modfile2_path, 'w')
     modfile2.write(module_data)
     modfile2.close()
@@ -153,28 +153,28 @@ def runtest( modfile, argspath):
     os.system("chmod +x %s" % modfile)
 
     invoke = "%s" % (modfile)
-    if argspath is not None:     
+    if argspath is not None:
         invoke = "%s %s" % (modfile, argspath)
 
     cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
 
     try:
-        print "***********************************"
-        print "RAW OUTPUT"
-        print out
-        print err
+        print("***********************************")
+        print("RAW OUTPUT")
+        print(out)
+        print(err)
         results = json.loads(out)
     except:
-        print "***********************************"
-        print "INVALID OUTPUT FORMAT"
-        print out
+        print("***********************************")
+        print("INVALID OUTPUT FORMAT")
+        print(out)
         traceback.print_exc()
         sys.exit(1)
 
-    print "***********************************"
-    print "PARSED OUTPUT"
-    print jsonify(results,format=True)
+    print("***********************************")
+    print("PARSED OUTPUT")
+    print(jsonify(results,format=True))
 
 def rundebug(debugger, modfile, argspath):
     """Run interactively with console debugger."""
@@ -184,7 +184,7 @@ def rundebug(debugger, modfile, argspath):
     else:
         subprocess.call("%s %s" % (debugger, modfile), shell=True)
 
-def main(): 
+def main():
 
     options, args = parse()
     (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter, options.check, options.filename)
@@ -202,7 +202,7 @@ def main():
             rundebug(options.debugger, modfile, argspath)
         else:
             runtest(modfile, argspath)
-        
+
 if __name__ == "__main__":
     main()
 

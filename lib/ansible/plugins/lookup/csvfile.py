@@ -30,7 +30,7 @@ class LookupModule(LookupBase):
 
         try:
             f = codecs.open(filename, 'r', encoding='utf-8')
-            creader = csv.reader(f, delimiter=delimiter)
+            creader = csv.reader(f, delimiter=str(delimiter))
 
             for row in creader:
                 if row[0] == key:
@@ -70,7 +70,7 @@ class LookupModule(LookupBase):
                 paramvals['delimiter'] = "\t"
 
             lookupfile = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])
-            var = self.read_csv(lookupfile, key, paramvals['delimiter'], paramvals['default'], paramvals['col'])
+            var = self.read_csv(lookupfile, key, str(paramvals['delimiter']), paramvals['default'], paramvals['col'])
             if var is not None:
                 if type(var) is list:
                     for v in var:

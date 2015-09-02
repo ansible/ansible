@@ -46,6 +46,7 @@ class AdHocCLI(CLI):
             runtask_opts=True,
             vault_opts=True,
             fork_opts=True,
+            module_opts=True,
         )
 
         # options unique to ansible ad-hoc
@@ -87,7 +88,7 @@ class AdHocCLI(CLI):
             self.options.ask_pass = False
 
         sshpass    = None
-        becomepass    = None
+        becomepass = None
         vault_pass = None
 
         self.normalize_become_options()

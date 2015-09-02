@@ -31,7 +31,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import callback_loader, strategy_loader
+from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 
 __all__ = ['TaskQueueManager']
@@ -61,6 +61,12 @@ class TaskQueueManager:
 
         self._callbacks_loaded = False
         self._callback_plugins = []
+
+        # make sure the module path (if specified) is parsed and
+        # added to the module_loader object
+        if options.module_path is not None:
+            for path in options.module_path.split(os.pathsep):
+                module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False
@@ -203,6 +209,10 @@ class TaskQueueManager:
             rslt_q.close()
             main_q.close()
             worker_prc.terminate()
+
+    def clear_failed_hosts(self):
+        self._failed_hosts      = dict()
+        self._unreachable_hosts = dict()
 
     def get_inventory(self):
         return self._inventory

@@ -314,7 +314,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         base_params = dict(
             path = '/path/to/file',
-            mode = 0600,
+            mode = 0o600,
             owner = 'root',
             group = 'root',
             seuser = '_default',
@@ -711,9 +711,9 @@ class TestModuleUtilsBasic(unittest.TestCase):
         )
 
         mock_stat1 = MagicMock()
-        mock_stat1.st_mode = 0444
+        mock_stat1.st_mode = 0o444
         mock_stat2 = MagicMock()
-        mock_stat2.st_mode = 0660
+        mock_stat2.st_mode = 0o660
 
         with patch('os.lstat', side_effect=[mock_stat1]):
             self.assertEqual(am.set_mode_if_different('/path/to/file', None, True), True)
@@ -723,13 +723,13 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with patch('os.lstat') as m:
             with patch('os.lchmod', return_value=None, create=True) as m_os:
                 m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 0660, False), True)
-                m_os.assert_called_with('/path/to/file', 0660)
+                self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
+                m_os.assert_called_with('/path/to/file', 0o660)
 
                 m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                am._symbolic_mode_to_octal = MagicMock(return_value=0660)
+                am._symbolic_mode_to_octal = MagicMock(return_value=0o660)
                 self.assertEqual(am.set_mode_if_different('/path/to/file', 'o+w,g+w,a-r', False), True)
-                m_os.assert_called_with('/path/to/file', 0660)
+                m_os.assert_called_with('/path/to/file', 0o660)
 
                 m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
                 am._symbolic_mode_to_octal = MagicMock(side_effect=Exception)
@@ -737,7 +737,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
                 m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
                 am.check_mode = True
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 0660, False), True)
+                self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
                 am.check_mode = False
 
         # FIXME: this isn't working yet
@@ -746,11 +746,11 @@ class TestModuleUtilsBasic(unittest.TestCase):
         #        del m_os.lchmod
         #        with patch('os.path.islink', return_value=False):
         #            with patch('os.chmod', return_value=None) as m_chmod:
-        #                self.assertEqual(am.set_mode_if_different('/path/to/file/no_lchmod', 0660, False), True)
-        #                m_chmod.assert_called_with('/path/to/file', 0660)
+        #                self.assertEqual(am.set_mode_if_different('/path/to/file/no_lchmod', 0o660, False), True)
+        #                m_chmod.assert_called_with('/path/to/file', 0o660)
         #        with patch('os.path.islink', return_value=True):
         #            with patch('os.chmod', return_value=None) as m_chmod:
         #                with patch('os.stat', return_value=mock_stat2):
-        #                    self.assertEqual(am.set_mode_if_different('/path/to/file', 0660, False), True)
-        #                    m_chmod.assert_called_with('/path/to/file', 0660)
+        #                    self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
+        #                    m_chmod.assert_called_with('/path/to/file', 0o660)
 

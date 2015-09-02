@@ -29,7 +29,6 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
 from ansible.utils.unicode import to_bytes
-from ansible.parsing.vault import VaultLib
 
 class ActionModule(ActionBase):
 
@@ -97,7 +96,7 @@ class ActionModule(ActionBase):
         if os.path.isdir(source):
             # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
-                sz = len(source) + 1
+                sz = len(source)
             else:
                 sz = len(source.rsplit('/', 1)[0]) + 1
 

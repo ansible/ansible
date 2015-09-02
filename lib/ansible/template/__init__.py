@@ -37,7 +37,6 @@ from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
 
 from numbers import Number
-from types import NoneType
 
 __all__ = ['Templar']
 
@@ -48,6 +47,65 @@ __all__ = ['Templar']
 NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
+
+def _preserve_backslashes(data, jinja_env):
+    """Double backslashes within jinja2 expressions
+
+    A user may enter something like this in a playbook::
+
+      debug:
+        msg: "Test Case 1\\3; {{ test1_name | regex_replace('^(.*)_name$', '\\1')}}"
+
+    The string inside of the {{ gets interpreted multiple times First by yaml.
+    Then by python.  And finally by jinja2 as part of it's variable.  Because
+    it is processed by both python and jinja2, the backslash escaped
+    characters get unescaped twice.  This means that we'd normally have to use
+    four backslashes to escape that.  This is painful for playbook authors as
+    they have to remember different rules for inside vs outside of a jinja2
+    expression (The backslashes outside of the "{{ }}" only get processed by
+    yaml and python.  So they only need to be escaped once).  The following
+    code fixes this by automatically performing the extra quoting of
+    backslashes inside of a jinja2 expression.
+
+    """
+    if '\\' in data and '{{' in data:
+        new_data = []
+        d2 = jinja_env.preprocess(data)
+        in_var = False
+
+        for token in jinja_env.lex(d2):
+            if token[1] == 'variable_begin':
+                in_var = True
+                new_data.append(token[2])
+            elif token[1] == 'variable_end':
+                in_var = False
+                new_data.append(token[2])
+            elif in_var and token[1] == 'string':
+                # Double backslashes only if we're inside of a jinja2 variable
+                new_data.append(token[2].replace('\\','\\\\'))
+            else:
+                new_data.append(token[2])
+
+        data = ''.join(new_data)
+
+    return data
+
+def _count_newlines_from_end(in_str):
+    '''
+    Counts the number of newlines at the end of a string. This is used during
+    the jinja2 templating to ensure the count matches the input, since some newlines
+    may be thrown away during the templating.
+    '''
+
+    try:
+        i = len(in_str)
+        j = i -1
+        while in_str[j] == '\n':
+            j -= 1
+        return i - 1 - j
+    except IndexError:
+        # Uncommon cases: zero length string and string containing only newlines
+        return i
 
 class Templar:
     '''
@@ -88,21 +146,6 @@ class Templar:
         self.environment.template_class = AnsibleJ2Template
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
-
-    def _count_newlines_from_end(self, in_str):
-        '''
-        Counts the number of newlines at the end of a string. This is used during
-        the jinja2 templating to ensure the count matches the input, since some newlines
-        may be thrown away during the templating.
-        '''
-
-        i = len(in_str)
-        while i > 0:
-            if in_str[i-1] != '\n':
-                break
-            i -= 1
-
-        return len(in_str) - i
 
     def _get_filters(self):
         '''
@@ -163,7 +206,7 @@ class Templar:
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None, convert_data=True):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, fail_on_undefined=None, overrides=None, convert_data=True):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -188,7 +231,7 @@ class Templar:
                             resolved_val = self._available_variables[var_name]
                             if isinstance(resolved_val, NON_TEMPLATED_TYPES):
                                 return resolved_val
-                            elif isinstance(resolved_val, NoneType):
+                            elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
                     result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
@@ -210,8 +253,10 @@ class Templar:
                 return [self.template(v, convert_bare=convert_bare, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides) for v in variable]
             elif isinstance(variable, dict):
                 d = {}
-                for (k, v) in variable.iteritems():
-                    d[k] = self.template(v, convert_bare=convert_bare, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                # we don't use iteritems() here to avoid problems if the underlying dict
+                # changes sizes due to the templating, which can happen with hostvars
+                for k in variable.keys():
+                    d[k] = self.template(variable[k], convert_bare=convert_bare, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
                 return d
             else:
                 return variable
@@ -261,7 +306,7 @@ class Templar:
                 ran = instance.run(loop_terms, variables=self._available_variables, **kwargs)
             except (AnsibleUndefinedVariable, UndefinedError) as e:
                 raise AnsibleUndefinedVariable(e)
-            except Exception, e:
+            except Exception as e:
                 if self._fail_on_lookup_errors:
                     raise
                 ran = None
@@ -271,7 +316,11 @@ class Templar:
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
-    def _do_template(self, data, preserve_trailing_newlines=False, fail_on_undefined=None, overrides=None):
+    def _do_template(self, data, preserve_trailing_newlines=True, fail_on_undefined=None, overrides=None):
+
+        # For preserving the number of input newlines in the output (used
+        # later in this method)
+        data_newlines = _count_newlines_from_end(data)
 
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
@@ -297,11 +346,13 @@ class Templar:
             myenv.filters.update(self._get_filters())
             myenv.tests.update(self._get_tests())
 
+            data = _preserve_backslashes(data, myenv)
+
             try:
                 t = myenv.from_string(data)
-            except TemplateSyntaxError, e:
+            except TemplateSyntaxError as e:
                 raise AnsibleError("template error while templating string: %s" % str(e))
-            except Exception, e:
+            except Exception as e:
                 if 'recursion' in str(e):
                     raise AnsibleError("recursive loop detected in template string: %s" % data)
                 else:
@@ -317,7 +368,7 @@ class Templar:
 
             try:
                 res = j2_concat(rf)
-            except TypeError, te:
+            except TypeError as te:
                 if 'StrictUndefined' in str(te):
                     raise AnsibleUndefinedVariable(
                         "Unable to look up a name or access an attribute in template string. " + \
@@ -332,13 +383,20 @@ class Templar:
                 # characters at the end of the input data, so we use the
                 # calculate the difference in newlines and append them
                 # to the resulting output for parity
-                res_newlines  = self._count_newlines_from_end(res)
-                data_newlines = self._count_newlines_from_end(data)
+                #
+                # jinja2 added a keep_trailing_newline option in 2.7 when
+                # creating an Environment.  That would let us make this code
+                # better (remove a single newline if
+                # preserve_trailing_newlines is False).  Once we can depend on
+                # that version being present, modify our code to set that when
+                # initializing self.environment and remove a single trailing
+                # newline here if preserve_newlines is False.
+                res_newlines = _count_newlines_from_end(res)
                 if data_newlines > res_newlines:
                     res += '\n' * (data_newlines - res_newlines)
 
             return res
-        except (UndefinedError, AnsibleUndefinedVariable), e:
+        except (UndefinedError, AnsibleUndefinedVariable) as e:
             if fail_on_undefined:
                 raise AnsibleUndefinedVariable(e)
             else:

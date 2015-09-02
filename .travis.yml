@@ -4,6 +4,7 @@ env:
   - TOKENV=py24
   - TOXENV=py26
   - TOXENV=py27
+  - TOXENV=py34
 addons:
   apt:
     sources:

@@ -33,11 +33,12 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.debug import debug
+from ansible.utils.vars import combine_vars
 from ansible.vars.hostvars import HostVars
 
 CACHED_VARS = dict()
@@ -84,50 +85,28 @@ class VariableManager:
     def set_inventory(self, inventory):
         self._inventory = inventory
 
-    def _validate_both_dicts(self, a, b):
+    def _preprocess_vars(self, a):
         '''
-        Validates that both arguments are dictionaries, or an error is raised.
-        '''
-        if not (isinstance(a, MutableMapping) and isinstance(b, MutableMapping)):
-            raise AnsibleError("failed to combine variables, expected dicts but got a '%s' and a '%s'" % (type(a).__name__, type(b).__name__))
-
-    def _combine_vars(self, a, b):
-        '''
-        Combines dictionaries of variables, based on the hash behavior
+        Ensures that vars contained in the parameter passed in are
+        returned as a list of dictionaries, to ensure for instance
+        that vars loaded from a file conform to an expected state.
         '''
 
-        self._validate_both_dicts(a, b)
-
-        if C.DEFAULT_HASH_BEHAVIOUR == "merge":
-            return self._merge_dicts(a, b)
+        if a is None:
+            return None
+        elif not isinstance(a, list):
+            data = [ a ]
         else:
-            return dict(a.items() + b.items())
+            data = a
 
-    def _merge_dicts(self, a, b):
-        '''
-        Recursively merges dict b into a, so that keys
-        from b take precedence over keys from a.
-        '''
+        for item in data:
+            if not isinstance(item, MutableMapping):
+                raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
 
-        result = dict()
+        return data
 
-        self._validate_both_dicts(a, b)
 
-        for dicts in a, b:
-            # next, iterate over b keys and values
-            for k, v in dicts.iteritems():
-                # if there's already such key in a
-                # and that key contains dict
-                if k in result and isinstance(result[k], dict):
-                    # merge those dicts recursively
-                    result[k] = self._merge_dicts(a[k], v)
-                else:
-                    # otherwise, just copy a value from b to a
-                    result[k] = v
-
-        return result
-
-    def get_vars(self, loader, play=None, host=None, task=None, use_cache=True):
+    def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -159,7 +138,13 @@ class VariableManager:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                all_vars = self._combine_vars(all_vars, role.get_default_vars())
+                all_vars = combine_vars(all_vars, role.get_default_vars())
+
+            # if we have a task in this context, and that task has a role, make
+            # sure it sees its defaults above any other roles, as we previously
+            # (v1) made sure each task had a copy of its roles default vars
+            if task and task._role is not None:
+                all_vars = combine_vars(all_vars, task._role.get_default_vars())
 
         if host:
             # next, if a host is specified, we load any vars from group_vars
@@ -168,34 +153,40 @@ class VariableManager:
 
             # we merge in the special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
-                all_vars = self._combine_vars(all_vars, self._group_vars_files['all'])
+                data = self._preprocess_vars(self._group_vars_files['all'])
+                for item in data:
+                    all_vars = combine_vars(all_vars, item)
 
             for group in host.get_groups():
-                all_vars = self._combine_vars(all_vars, group.get_vars())
+                all_vars = combine_vars(all_vars, group.get_vars())
                 if group.name in self._group_vars_files and group.name != 'all':
-                    all_vars = self._combine_vars(all_vars, self._group_vars_files[group.name])
+                    data = self._preprocess_vars(self._group_vars_files[group.name])
+                    for item in data:
+                        all_vars = combine_vars(all_vars, item)
 
             host_name = host.get_name()
             if host_name in self._host_vars_files:
-                all_vars = self._combine_vars(all_vars, self._host_vars_files[host_name])
+                data = self._preprocess_vars(self._host_vars_files[host_name])
+                for item in data:
+                    all_vars = combine_vars(all_vars, self._host_vars_files[host_name])
 
             # then we merge in vars specified for this host
-            all_vars = self._combine_vars(all_vars, host.get_vars())
+            all_vars = combine_vars(all_vars, host.get_vars())
 
             # next comes the facts cache and the vars cache, respectively
             try:
-                all_vars = self._combine_vars(all_vars, self._fact_cache.get(host.name, dict()))
+                all_vars = combine_vars(all_vars, self._fact_cache.get(host.name, dict()))
             except KeyError:
                 pass
 
         if play:
-            all_vars = self._combine_vars(all_vars, play.get_vars())
+            all_vars = combine_vars(all_vars, play.get_vars())
 
             for vars_file_item in play.get_vars_files():
                 try:
                     # create a set of temporary vars here, which incorporate the
                     # extra vars so we can properly template the vars_files entries
-                    temp_vars = self._combine_vars(all_vars, self._extra_vars)
+                    temp_vars = combine_vars(all_vars, self._extra_vars)
                     templar = Templar(loader=loader, variables=temp_vars)
 
                     # we assume each item in the list is itself a list, as we
@@ -209,28 +200,29 @@ class VariableManager:
                     # as soon as we read one from the list. If none are found, we
                     # raise an error, which is silently ignored at this point.
                     for vars_file in vars_file_list:
-                        data = loader.load_from_file(vars_file)
+                        data = self._preprocess_vars(loader.load_from_file(vars_file))
                         if data is not None:
-                            all_vars = self._combine_vars(all_vars, data)
+                            for item in data:
+                                all_vars = combine_vars(all_vars, item)
                             break
                     else:
                         raise AnsibleError("vars file %s was not found" % vars_file_item)
-                except UndefinedError, e:
+                except UndefinedError:
                     continue
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = self._combine_vars(all_vars, role.get_vars())
-
-        if host:
-            all_vars = self._combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+                    all_vars = combine_vars(all_vars, role.get_vars())
 
         if task:
             if task._role:
-                all_vars = self._combine_vars(all_vars, task._role.get_vars())
-            all_vars = self._combine_vars(all_vars, task.get_vars())
+                all_vars = combine_vars(all_vars, task._role.get_vars())
+            all_vars = combine_vars(all_vars, task.get_vars())
 
-        all_vars = self._combine_vars(all_vars, self._extra_vars)
+        if host:
+            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+
+        all_vars = combine_vars(all_vars, self._extra_vars)
 
         # FIXME: make sure all special vars are here
         # Finally, we create special vars
@@ -241,9 +233,10 @@ class VariableManager:
             all_vars['groups'] = [group.name for group in host.get_groups()]
 
             if self._inventory is not None:
-                hostvars = HostVars(vars_manager=self, play=play, inventory=self._inventory, loader=loader)
-                all_vars['hostvars'] = hostvars
                 all_vars['groups']   = self._inventory.groups_list()
+                if include_hostvars:
+                    hostvars = HostVars(vars_manager=self, play=play, inventory=self._inventory, loader=loader)
+                    all_vars['hostvars'] = hostvars
 
         if task:
             if task._role:
@@ -266,11 +259,8 @@ class VariableManager:
 
         all_vars['ansible_version'] = CLI.version_info(gitinfo=False)
 
-        # make vars self referential, so people can do things like 'vars[var_name]'
-        copied_vars = all_vars.copy()
-        if 'hostvars' in copied_vars:
-            del copied_vars['hostvars']
-        all_vars['vars'] = copied_vars
+        if 'hostvars' in all_vars and host:
+            all_vars['vars'] = all_vars['hostvars'][host.get_name()]
 
         #CACHED_VARS[cache_entry] = all_vars
 
@@ -312,7 +302,7 @@ class VariableManager:
             for p in paths:
                 _found, results = self._load_inventory_file(path=p, loader=loader)
                 if results is not None:
-                    data = self._combine_vars(data, results)
+                    data = combine_vars(data, results)
 
         else:
             file_name, ext = os.path.splitext(path)

@@ -457,11 +457,11 @@ Module checklist
 * The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
 * Documentation: Make sure it exists
     * `required` should always be present, be it true or false
-    * If `required` is false you need to document `default`, even if its 'null'
+    * If `required` is false you need to document `default`, even if the default is 'None' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code. 
     * `default` is not needed for `required: true`
     * Remove unnecessary doc like `aliases: []` or `choices: []`
     * The version is not a float number and value the current development version
-    * The verify that arguments in doc and module spec dict are identical
+    * Verify  that arguments in doc and module spec dict are identical
     * For password / secret arguments no_log=True should be set
     * Requirements should  be documented, using the `requirements=[]` field
     * Author should be set, name and github id at least
@@ -501,9 +501,8 @@ Module checklist
   serializable.  A common pitfall is to try returning an object via
   exit_json().  Instead, convert the fields you need from the object into the
   fields of a dictionary and return the dictionary.
-* Do not use urllib2 to handle urls.  urllib2 does not natively verify TLS
-  certificates and so is insecure for https.  Instead, use either fetch_url or
-  open_url from ansible.module_utils.urls.
+* When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
+  rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
 
 Windows modules checklist
 `````````````````````````

@@ -37,7 +37,7 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
 from ansible.utils.debug import debug
-from ansible.utils.vars import combine_vars
+from ansible.utils.vars import combine_vars, isidentifier
 from ansible.template import template
 
 class Base:
@@ -48,11 +48,11 @@ class Base:
     _remote_user         = FieldAttribute(isa='string')
 
     # variables
-    _vars                = FieldAttribute(isa='dict', default=dict())
+    _vars                = FieldAttribute(isa='dict', default=dict(), priority=100)
 
     # flags and misc. settings
-    _environment         = FieldAttribute(isa='list', default=[])
-    _no_log              = FieldAttribute(isa='bool', default=False)
+    _environment         = FieldAttribute(isa='list')
+    _no_log              = FieldAttribute(isa='bool')
 
     def __init__(self):
 
@@ -96,7 +96,7 @@ class Base:
     @staticmethod
     def _generic_g(prop_name, self):
         method = "_get_attr_%s" % prop_name
-        if method in dir(self):
+        if hasattr(self, method):
             return getattr(self, method)()
 
         return self._attributes[prop_name]
@@ -266,6 +266,11 @@ class Base:
                     continue
                 else:
                     raise AnsibleParserError("the field '%s' is required but was not set" % name)
+            elif not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext'):
+                # Intermediate objects like Play() won't have their fields validated by
+                # default, as their values are often inherited by other objects and validated
+                # later, so we don't want them to fail out early
+                continue
 
             try:
                 # Run the post-validator if present. These methods are responsible for
@@ -289,22 +294,41 @@ class Base:
                         value = unicode(value)
                     elif attribute.isa == 'int':
                         value = int(value)
+                    elif attribute.isa == 'float':
+                        value = float(value)
                     elif attribute.isa == 'bool':
                         value = boolean(value)
+                    elif attribute.isa == 'percent':
+                        # special value, which may be an integer or float
+                        # with an optional '%' at the end
+                        if isinstance(value, string_types) and '%' in value:
+                            value = value.replace('%', '')
+                        value = float(value)
                     elif attribute.isa == 'list':
-                        if not isinstance(value, list):
+                        if value is None:
+                            value = []
+                        elif not isinstance(value, list):
                             value = [ value ]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
                                     raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                                elif attribute.required and attribute.listof == string_types:
+                                    if item is None or item.strip() == "":
+                                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
                     elif attribute.isa == 'set':
-                        if not isinstance(value, (list, set)):
-                            value = [ value ]
-                        if not isinstance(value, set):
-                            value = set(value)
-                    elif attribute.isa == 'dict' and not isinstance(value, dict):
-                        raise TypeError("%s is not a dictionary" % value)
+                        if value is None:
+                            value = set()
+                        else:
+                            if not isinstance(value, (list, set)):
+                                value = [ value ]
+                            if not isinstance(value, set):
+                                value = set(value)
+                    elif attribute.isa == 'dict':
+                        if value is None:
+                            value = dict()
+                        elif not isinstance(value, dict):
+                            raise TypeError("%s is not a dictionary" % value)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
@@ -360,14 +384,21 @@ class Base:
         list into a single dictionary.
         '''
 
+        def _validate_variable_keys(ds):
+            for key in ds:
+                if not isidentifier(key):
+                    raise TypeError("%s is not a valid variable name" % key)
+
         try:
             if isinstance(ds, dict):
+                _validate_variable_keys(ds)
                 return ds
             elif isinstance(ds, list):
                 all_vars = dict()
                 for item in ds:
                     if not isinstance(item, dict):
                         raise ValueError
+                    _validate_variable_keys(item)
                     all_vars = combine_vars(all_vars, item)
                 return all_vars
             elif ds is None:
@@ -376,6 +407,8 @@ class Base:
                 raise ValueError
         except ValueError:
             raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__, obj=ds)
+        except TypeError as e:
+            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
 
     def _extend_value(self, value, new_value):
         '''

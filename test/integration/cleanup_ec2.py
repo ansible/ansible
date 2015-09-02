@@ -57,7 +57,7 @@ def delete_aws_eips(get_func, attr, opts):
     try:
       eip_log = open(opts.eip_log, 'r').read().splitlines()
     except IOError:
-      print opts.eip_log, 'not found.'
+      print('%s not found.' % opts.eip_log)
       return
 
     for item in get_func():
@@ -175,5 +175,5 @@ if __name__ == '__main__':
         filters = {"tag:Name":opts.match_re.replace('^',''), "instance-state-name": ['running', 'pending', 'stopped' ]}
         delete_aws_instances(aws.get_all_instances(filters=filters), opts)
 
-    except KeyboardInterrupt, e:
-        print "\nExiting on user command."
+    except KeyboardInterrupt as e:
+        print("\nExiting on user command.")
