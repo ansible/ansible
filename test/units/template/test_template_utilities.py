@@ -32,42 +32,41 @@ class TestBackslashEscape(unittest.TestCase):
     test_data = (
                 # Test backslashes in a filter arg are double escaped
                 dict(
-                    template="{{ 'test2 %s' | format('\\1') }}",
-                    intermediate="{{ 'test2 %s' | format('\\\\1') }}",
-                    expectation="test2 \\1",
+                    template=u"{{ 'test2 %s' | format('\\1') }}",
+                    intermediate=u"{{ 'test2 %s' | format('\\\\1') }}",
+                    expectation=u"test2 \\1",
                     args=dict()
                 ),
                 # Test backslashes inside the jinja2 var itself are double
                 # escaped
                 dict(
-                    template="Test 2\\3: {{ '\\1 %s' | format('\\2') }}",
-                    intermediate="Test 2\\3: {{ '\\\\1 %s' | format('\\\\2') }}",
-                    expectation="Test 2\\3: \\1 \\2",
+                    template=u"Test 2\\3: {{ '\\1 %s' | format('\\2') }}",
+                    intermediate=u"Test 2\\3: {{ '\\\\1 %s' | format('\\\\2') }}",
+                    expectation=u"Test 2\\3: \\1 \\2",
                     args=dict()
                 ),
                 # Test backslashes outside of the jinja2 var are not double
                 # escaped
                 dict(
-                    template="Test 2\\3: {{ 'test2 %s' | format('\\1') }}; \\done",
-                    intermediate="Test 2\\3: {{ 'test2 %s' | format('\\\\1') }}; \\done",
-                    expectation="Test 2\\3: test2 \\1; \\done",
+                    template=u"Test 2\\3: {{ 'test2 %s' | format('\\1') }}; \\done",
+                    intermediate=u"Test 2\\3: {{ 'test2 %s' | format('\\\\1') }}; \\done",
+                    expectation=u"Test 2\\3: test2 \\1; \\done",
                     args=dict()
                 ),
                 # Test backslashes in a variable sent to a filter are handled
                 dict(
-                    template="{{ 'test2 %s' | format(var1) }}",
-                    #intermediate="{{ 'test2 %s' | format('\\\\1') }}",
-                    intermediate="{{ 'test2 %s' | format(var1) }}",
-                    expectation="test2 \\1",
-                    args=dict(var1='\\1')
+                    template=u"{{ 'test2 %s' | format(var1) }}",
+                    intermediate=u"{{ 'test2 %s' | format(var1) }}",
+                    expectation=u"test2 \\1",
+                    args=dict(var1=u'\\1')
                 ),
                 # Test backslashes in a variable expanded by jinja2 are double
                 # escaped
                 dict(
-                    template="Test 2\\3: {{ var1 | format('\\2') }}",
-                    intermediate="Test 2\\3: {{ var1 | format('\\\\2') }}",
-                    expectation="Test 2\\3: \\1 \\2",
-                    args=dict(var1='\\1 %s')
+                    template=u"Test 2\\3: {{ var1 | format('\\2') }}",
+                    intermediate=u"Test 2\\3: {{ var1 | format('\\\\2') }}",
+                    expectation=u"Test 2\\3: \\1 \\2",
+                    args=dict(var1=u'\\1 %s')
                 ),
             )
     def setUp(self):
@@ -93,20 +92,23 @@ class TestCountNewlines(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def test_zero_length_string(self):
+        self.assertEquals(_count_newlines_from_end(u''), 0)
+
     def test_short_string(self):
-        self.assertEquals(_count_newlines_from_end('The quick\n'), 1)
+        self.assertEquals(_count_newlines_from_end(u'The quick\n'), 1)
 
     def test_one_newline(self):
-        self.assertEquals(_count_newlines_from_end('The quick brown fox jumped over the lazy dog' * 1000 + '\n'), 1)
+        self.assertEquals(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000 + u'\n'), 1)
 
     def test_multiple_newlines(self):
-        self.assertEquals(_count_newlines_from_end('The quick brown fox jumped over the lazy dog' * 1000 + '\n\n\n'), 3)
+        self.assertEquals(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000 + u'\n\n\n'), 3)
 
     def test_zero_newlines(self):
-        self.assertEquals(_count_newlines_from_end('The quick brown fox jumped over the lazy dog' * 1000 + '\n\n\n'), 3)
+        self.assertEquals(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' * 1000), 0)
 
     def test_all_newlines(self):
-        self.assertEquals(_count_newlines_from_end('\n' * 10), 10)
+        self.assertEquals(_count_newlines_from_end(u'\n' * 10), 10)
 
     def test_mostly_newlines(self):
-        self.assertEquals(_count_newlines_from_end('The quick brown fox jumped over the lazy dog' + '\n' * 1000), 1000)
+        self.assertEquals(_count_newlines_from_end(u'The quick brown fox jumped over the lazy dog' + u'\n' * 1000), 1000)
