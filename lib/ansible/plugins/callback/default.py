@@ -115,6 +115,9 @@ class CallbackModule(CallbackBase):
         if 'diff' in result._result and result._result['diff']:
             self._display.display(self._get_diff(result._result['diff']))
 
+    def _get_censored_item(self, result):
+        return result._result['item'] if '_ansible_no_log' not in result._result else "(censored, no_log)"
+
     def v2_playbook_item_on_ok(self, result):
 
         if result._task.action == 'include':
@@ -127,7 +130,7 @@ class CallbackModule(CallbackBase):
             msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
 
-        msg += " => (item=%s)" % result._result['item']
+        msg += " => (item=%s)" % self._get_censored_item(result)
 
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result and result._task.action != 'include':
             msg += " => %s" % self._dump_results(result._result)
@@ -147,12 +150,11 @@ class CallbackModule(CallbackBase):
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
-        self._display.display("failed: [%s] => (item=%s) => %s" % (result._host.get_name(), result._result['item'], self._dump_results(result._result)), color='red')
+        self._display.display("failed: [%s] => (item=%s) => %s" % (result._host.get_name(), self._get_censored_item(result), self._dump_results(result._result)), color='red')
         self._handle_warnings(result._result)
 
     def v2_playbook_item_on_skipped(self, result):
-        msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), result._result['item'])
+        msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), self._get_censored_item(result))
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color='cyan')
-

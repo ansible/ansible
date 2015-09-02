@@ -252,7 +252,11 @@ class TaskExecutor:
         # variable not being present which would otherwise cause validation to fail
         if not self._task.evaluate_conditional(templar, variables):
             debug("when evaulation failed, skipping this task")
-            return dict(changed=False, skipped=True, skip_reason='Conditional check failed')
+            skip_result = dict(changed=False, skipped=True, skip_reason='Conditional check failed')
+            # propagate no_log into the result if necessary
+            if self._play_context.no_log:
+                skip_result['_ansible_no_log'] = True
+            return skip_result
 
         # Now we do final validation on the task, which sets all fields to their final values.
         # In the case of debug tasks, we save any 'var' params and restore them after validating
@@ -315,6 +319,10 @@ class TaskExecutor:
             debug("running the handler")
             result = self._handler.run(task_vars=variables)
             debug("handler run complete")
+
+            # propagate no_log into the result if necessary
+            if self._play_context.no_log:
+                result["_ansible_no_log"] = True
 
             if self._task.async > 0:
                 # the async_wrapper module returns dumped JSON via its stdout
@@ -422,6 +430,9 @@ class TaskExecutor:
         if int(async_result.get('finished', 0)) != 1:
             return dict(failed=True, msg="async task did not complete within the requested time")
         else:
+            # propagate no_log into the result if necessary
+            if self._play_context.no_log:
+                async_result['_ansible_no_log'] = True
             return async_result
 
     def _get_connection(self, variables):
