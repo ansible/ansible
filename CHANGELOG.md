@@ -233,6 +233,7 @@ Minor changes:
    and can write to a given ``--output file`` (including stdout, '-'). This lets
    you avoid ever writing sensitive plaintext to disk.
  * ansible-vault rekey accepts the --new-vault-password-file option.
+ * configuration items defined as paths (local only) will now all support shell style interpolations
  * many fixes and new options added to modules, too many to list here.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
