@@ -97,13 +97,15 @@ def _count_newlines_from_end(in_str):
     may be thrown away during the templating.
     '''
 
-    i = len(in_str)
-    while i > 0:
-        if in_str[i-1] != '\n':
-            break
-        i -= 1
-
-    return len(in_str) - i
+    try:
+        i = len(in_str)
+        j = i -1
+        while in_str[j] == '\n':
+            j -= 1
+        return i - 1 - j
+    except IndexError:
+        # Uncommon cases: zero length string and string containing only newlines
+        return i
 
 class Templar:
     '''
