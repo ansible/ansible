@@ -52,6 +52,10 @@ class ActionModule(ActionBase):
         ''' formats rsync rsh target, escaping ipv6 addresses if needed '''
 
         user_prefix = ''
+
+        if 'rsync://' in path:
+            return path
+
         if user:
             user_prefix = '%s@' % (user, )
 
