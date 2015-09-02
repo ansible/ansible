@@ -448,7 +448,7 @@ LXC_BACKING_STORE = {
         'zfs_root'
     ],
     'btrfs': [
-        'lv_name', 'vg_name', 'thinpool', 'zfs_root'
+        'lv_name', 'vg_name', 'thinpool', 'zfs_root', 'fs_type', 'fs_size'
     ],
     'loop': [
         'lv_name', 'vg_name', 'thinpool', 'zfs_root'

@@ -52,7 +52,7 @@ options:
       - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
     required: false
     default: system-default(public)
-    choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block"]
+    choices: [ "work", "drop", "internal", "external", "trusted", "home", "dmz", "public", "block" ]
   permanent:
     description:
       - "Should this configuration be in the running firewalld configuration or persist across reboots."
@@ -67,6 +67,7 @@ options:
     description:
       - "Should this port accept(enabled) or reject(disabled) connections."
     required: true
+    choices: [ "enabled", "disabled" ]
   timeout:
     description:
       - "The amount of time the rule should be in effect for when non-permanent."
