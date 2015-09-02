@@ -19,20 +19,39 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+
 class Attribute:
 
     def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0, always_post_validate=False):
 
-       self.isa = isa
-       self.private = private
-       self.default = default
-       self.required = required
-       self.listof = listof
-       self.priority = priority
-       self.always_post_validate = always_post_validate
+        self.isa = isa
+        self.private = private
+        self.default = default
+        self.required = required
+        self.listof = listof
+        self.priority = priority
+        self.always_post_validate = always_post_validate
 
-    def __cmp__(self, other):
-       return cmp(other.priority, self.priority)
+    def __eq__(self, other):
+        return other.priority == self.priority
+
+    def __ne__(self, other):
+        return other.priority != self.priority
+
+    # NB: higher priority numbers sort first
+
+    def __lt__(self, other):
+        return other.priority < self.priority
+
+    def __gt__(self, other):
+        return other.priority > self.priority
+
+    def __le__(self, other):
+        return other.priority <= self.priority
+
+    def __ge__(self, other):
+        return other.priority >= self.priority
+
 
 class FieldAttribute(Attribute):
     pass
