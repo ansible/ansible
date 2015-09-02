@@ -56,7 +56,7 @@ def combine_vars(a, b):
     else:
         # HASH_BEHAVIOUR == 'replace'
         _validate_mutable_mappings(a, b)
-        result = a.copy()
+        result = dict(a)
         result.update(b)
         return result
 
@@ -66,7 +66,7 @@ def merge_hash(a, b):
     """
 
     _validate_mutable_mappings(a, b)
-    result = a.copy()
+    result = dict(a)
 
     # next, iterate over b keys and values
     for k, v in iteritems(b):
