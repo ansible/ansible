@@ -143,6 +143,11 @@ Run operations with su as this user (default=root)
 
 Run the command as the user given by -u and sudo to root.
 
+*--ssh-extra-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
+
+Add the specified arguments to any ssh command-line. Useful to set a
+ProxyCommand to use a jump host, but any arguments may be specified.
+
 *-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
 
 Sudo to 'SUDO_USERNAME' instead of root.  Implies --sudo.

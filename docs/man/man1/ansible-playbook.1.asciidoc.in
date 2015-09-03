@@ -151,6 +151,11 @@ run operations with su as this user (default=root)
 
 Run operations with sudo (nopasswd) (deprecated, use become)
 
+*--ssh-extra-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
+
+Add the specified arguments to any ssh command-line. Useful to set a
+ProxyCommand to use a jump host, but any arguments may be specified.
+
 *-U*, 'SUDO_USER', *--sudo-user=*'SUDO_USER'::
 
 Desired sudo user (default=root) (deprecated, use become).
