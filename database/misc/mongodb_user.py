@@ -48,6 +48,7 @@ options:
         required: false
         default: 27017
     login_database:
+        version_added: "2.0"
         description:
             - The database where login credentials are stored
         required: false
