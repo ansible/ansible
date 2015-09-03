@@ -22,8 +22,9 @@ __metaclass__ = type
 import os
 import subprocess
 import sys
-
 from collections import Mapping
+
+from six import iteritems
 
 from ansible import constants as C
 from ansible.errors import *
@@ -122,7 +123,7 @@ class InventoryScript:
                     raise AnsibleError("You defined a group \"%s\" with bad "
                         "data for variables:\n %s" % (group_name, data))
 
-                for k, v in data['vars'].iteritems():
+                for k, v in iteritems(data['vars']):
                     if group.name == all.name:
                         all.set_variable(k, v)
                     else:

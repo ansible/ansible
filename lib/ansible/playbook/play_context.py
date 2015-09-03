@@ -25,6 +25,8 @@ import pipes
 import random
 import re
 
+from six import iteritems
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.attribute import Attribute, FieldAttribute
@@ -308,7 +310,7 @@ class PlayContext(Base):
 
         # finally, use the MAGIC_VARIABLE_MAPPING dictionary to update this
         # connection info object with 'magic' variables from the variable list
-        for (attr, variable_names) in MAGIC_VARIABLE_MAPPING.iteritems():
+        for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
                 if variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])

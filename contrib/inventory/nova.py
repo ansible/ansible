@@ -26,6 +26,7 @@ import re
 import os
 import ConfigParser
 from novaclient import client as nova_client
+from six import iteritems
 
 try:
     import json
@@ -194,7 +195,7 @@ if (len(sys.argv) == 2 and sys.argv[1] == '--list') or len(sys.argv) == 1:
         push(groups, server.name, access_ip)
 
         # Run through each metadata item and add instance to it
-        for key, value in server.metadata.iteritems():
+        for key, value in iteritems(server.metadata):
             composed_key = to_safe('tag_{0}_{1}'.format(key, value))
             push(groups, composed_key, access_ip)
 
