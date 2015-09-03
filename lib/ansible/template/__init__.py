@@ -213,6 +213,9 @@ class Templar:
         before being sent through the template engine. 
         '''
 
+        if hasattr(variable, '__UNSAFE__'):
+            return variable
+
         try:
             if convert_bare:
                 variable = self._convert_bare_variable(variable)
@@ -250,13 +253,13 @@ class Templar:
                 return result
 
             elif isinstance(variable, (list, tuple)):
-                return [self.template(v, convert_bare=convert_bare, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides) for v in variable]
+                return [self.template(v, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides) for v in variable]
             elif isinstance(variable, dict):
                 d = {}
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
                 for k in variable.keys():
-                    d[k] = self.template(variable[k], convert_bare=convert_bare, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                    d[k] = self.template(variable[k], preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
                 return d
             else:
                 return variable
