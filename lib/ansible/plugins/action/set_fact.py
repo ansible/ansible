@@ -18,6 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import iteritems
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
@@ -32,7 +33,7 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         facts = dict()
         if self._task.args:
-            for (k, v) in self._task.args.iteritems():
+            for (k, v) in iteritems(self._task.args):
                 k = self._templar.template(k)
 
                 if not isidentifier(k):

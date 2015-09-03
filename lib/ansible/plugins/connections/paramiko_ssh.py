@@ -39,6 +39,8 @@ import sys
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 
+from six import iteritems
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
@@ -306,8 +308,8 @@ class Connection(ConnectionBase):
     def _any_keys_added(self):
 
         added_any = False
-        for hostname, keys in self.ssh._host_keys.iteritems():
-            for keytype, key in keys.iteritems():
+        for hostname, keys in iteritems(self.ssh._host_keys):
+            for keytype, key in iteritems(keys):
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     return True
@@ -327,18 +329,18 @@ class Connection(ConnectionBase):
 
         f = open(filename, 'w')
 
-        for hostname, keys in self.ssh._host_keys.iteritems():
+        for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in keys.iteritems():
+            for keytype, key in iteritems(keys):
 
                 # was f.write
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if not added_this_time:
                     f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-        for hostname, keys in self.ssh._host_keys.iteritems():
+        for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in keys.iteritems():
+            for keytype, key in iteritems(keys):
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))

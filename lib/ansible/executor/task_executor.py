@@ -25,6 +25,8 @@ import subprocess
 import sys
 import time
 
+from six import iteritems
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.playbook.conditional import Conditional
@@ -289,7 +291,7 @@ class TaskExecutor:
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:
-            self._task.args = dict(filter(lambda x: x[1] != omit_token, self._task.args.iteritems()))
+            self._task.args = dict(filter(lambda x: x[1] != omit_token, iteritems(self._task.args)))
 
         # Read some values from the task, so that we can modify them if need be
         retries = self._task.retries

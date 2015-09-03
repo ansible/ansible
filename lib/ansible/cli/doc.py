@@ -24,6 +24,8 @@ import termios
 import traceback
 import textwrap
 
+from six import iteritems
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.plugins import module_loader
@@ -101,7 +103,7 @@ class DocCLI(CLI):
                 if doc is not None:
 
                     all_keys = []
-                    for (k,v) in doc['options'].iteritems():
+                    for (k,v) in iteritems(doc['options']):
                         all_keys.append(k)
                     all_keys = sorted(all_keys)
                     doc['option_keys'] = all_keys

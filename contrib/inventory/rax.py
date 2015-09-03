@@ -153,6 +153,8 @@ import warnings
 import collections
 import ConfigParser
 
+from six import iteritems
+
 from ansible.constants import get_config, mk_boolean
 
 try:
@@ -267,7 +269,7 @@ def _list_into_cache(regions):
 
             hostvars[server.name]['rax_region'] = region
 
-            for key, value in server.metadata.iteritems():
+            for key, value in iteritems(server.metadata):
                 groups['%s_%s_%s' % (prefix, key, value)].append(server.name)
 
             groups['instance-%s' % server.id].append(server.name)
