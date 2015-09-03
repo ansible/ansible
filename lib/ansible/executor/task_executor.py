@@ -291,7 +291,7 @@ class TaskExecutor:
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:
-            self._task.args = dict(filter(lambda x: x[1] != omit_token, iteritems(self._task.args)))
+            self._task.args = dict((i[0], i[1]) for i in iteritems(self._task.args) if i[1] != omit_token)
 
         # Read some values from the task, so that we can modify them if need be
         retries = self._task.retries
