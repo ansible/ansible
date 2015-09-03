@@ -61,6 +61,17 @@ ipv4_component = r'''
     )
 '''.format(range=numeric_range)
 
+# A hostname label, e.g. 'foo' in 'foo.example.com'. Consists of alphanumeric
+# characters plus dashes (and underscores) or valid ranges. The label may not
+# start or end with a hyphen or an underscore. This is interpolated into the
+# hostname pattern below. We don't try to enforce the 63-char length limit.
+
+label = r'''
+    (?:[\w]|{range})                    # Starts with an alphanumeric or a range
+    (?:[\w_-]|{range})*                 # Then zero or more of the same or [_-]
+    (?<![_-])                           # ...as long as it didn't end with [_-]
+'''.format(range=alphanumeric_range)
+
 patterns = {
     # This matches a square-bracketed expression with a port specification. What
     # is inside the square brackets is validated later.
@@ -138,14 +149,11 @@ patterns = {
     # 253 characters total) or make any attempt to process IDNs.
 
     'hostname': re.compile(
-        r'''^                           # We need at least one label,
-            (?:                         # which comprises:
-                [a-z0-9_-]|             # (a valid domain label character
-                {0}                     # or a bracketed alphanumeric range)
-            )+
-            (?:\.(?:[a-z0-9_-]|{0})+)*  # Followed by zero or more .labels
+        r'''^
+            {label}                     # We must have at least one label
+            (?:\.{label})*              # Followed by zero or more .labels
             $
-        '''.format(alphanumeric_range), re.X|re.I
+        '''.format(label=label), re.X|re.I|re.UNICODE
     ),
 }
 
