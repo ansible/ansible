@@ -109,7 +109,7 @@ class PlayIterator:
     FAILED_RESCUE      = 4
     FAILED_ALWAYS      = 8
 
-    def __init__(self, inventory, play, play_context, all_vars):
+    def __init__(self, inventory, play, play_context, variable_manager, all_vars):
         self._play = play
 
         self._blocks = []
@@ -121,6 +121,10 @@ class PlayIterator:
         self._host_states = {}
         for host in inventory.get_hosts(self._play.hosts):
              self._host_states[host.name] = HostState(blocks=self._blocks)
+             # if the host's name is in the variable manager's fact cache, then set
+             # its _gathered_facts flag to true for smart gathering tests later
+             if host.name in variable_manager._fact_cache:
+                 host._gathered_facts = True
              # if we're looking to start at a specific task, iterate through
              # the tasks for this host until we find the specified task
              if play_context.start_at_task is not None:

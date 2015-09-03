@@ -197,7 +197,13 @@ class TaskQueueManager:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
-        iterator = PlayIterator(inventory=self._inventory, play=new_play, play_context=play_context, all_vars=all_vars)
+        iterator = PlayIterator(
+            inventory=self._inventory,
+            play=new_play,
+            play_context=play_context,
+            variable_manager=self._variable_manager,
+            all_vars=all_vars,
+        )
 
         # and run the play using the strategy
         return strategy.run(iterator, play_context)
