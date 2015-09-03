@@ -37,6 +37,7 @@ import re
 from time import time
 import ConfigParser
 
+from six import iteritems
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 import libcloud.security as sec
@@ -268,7 +269,7 @@ class LibcloudInventory(object):
             elif key == 'ec2_region':
                 instance_vars[key] = value.name
             elif key == 'ec2_tags':
-                for k, v in value.iteritems():
+                for k, v in iteritems(value):
                     key = self.to_safe('ec2_tag_' + k)
                     instance_vars[key] = v
             elif key == 'ec2_groups':

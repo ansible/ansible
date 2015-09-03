@@ -38,6 +38,7 @@ import uuid
 import yaml
 from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
+from six import iteritems
 
 from ansible import errors
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -245,7 +246,7 @@ def combine(*terms, **kwargs):
     if recursive:
         return reduce(merge_hash, terms)
     else:
-        return dict(itertools.chain(*map(dict.iteritems, terms)))
+        return dict(itertools.chain(*map(iteritems, terms)))
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''

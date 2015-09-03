@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import iteritems
+
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.playbook.block import Block
@@ -63,7 +65,7 @@ class StrategyModule(StrategyBase):
         lowest_cur_block = len(iterator._blocks)
 
         display.debug("counting tasks in each state of execution")
-        for (k, v) in host_tasks.iteritems():
+        for (k, v) in iteritems(host_tasks):
             if v is None:
                 continue
 

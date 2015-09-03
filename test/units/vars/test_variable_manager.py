@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import iteritems
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
@@ -57,7 +59,7 @@ class TestVariableManager(unittest.TestCase):
 
         vars = v.get_vars(loader=fake_loader, use_cache=False)
 
-        for (key, val) in extra_vars.iteritems():
+        for (key, val) in iteritems(extra_vars):
             self.assertEqual(vars.get(key), val)
 
         self.assertIsNot(v.extra_vars, extra_vars)
