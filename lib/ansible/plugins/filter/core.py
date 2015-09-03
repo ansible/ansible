@@ -34,6 +34,7 @@ from functools import partial
 import operator as py_operator
 from random import SystemRandom, shuffle
 import uuid
+import time
 
 import yaml
 from jinja2.filters import environmentfilter
@@ -98,6 +99,15 @@ def bool(a):
         return True
     else:
         return False
+
+def strftime(string_format, second = None):
+    ''' return a date string using string. See https://docs.python.org/2/library/time.html#time.strftime for format '''
+    if second is not None:
+        try:
+            second = int(second)
+        except:
+            raise errors.AnsibleFilterError('Invalid value for epoch value (%s)' % second)
+    return time.strftime(string_format, time.localtime(second))
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
@@ -282,6 +292,9 @@ class FilterModule(object):
 
             # value as boolean
             'bool': bool,
+
+            # date formating
+            'strftime': strftime,
 
             # quote string for shell usage
             'quote': quote,
