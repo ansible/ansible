@@ -573,8 +573,8 @@ class ElbManager(object):
         # N.B. string manipulations on protocols below (str(), upper()) is to
         # ensure format matches output from ELB API
         listener_list = [
-            listener['load_balancer_port'],
-            listener['instance_port'],
+            int(listener['load_balancer_port']),
+            int(listener['instance_port']),
             str(listener['protocol'].upper()),
         ]
 
