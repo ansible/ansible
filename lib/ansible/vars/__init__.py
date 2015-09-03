@@ -40,6 +40,7 @@ from ansible.template import Templar
 from ansible.utils.debug import debug
 from ansible.utils.vars import combine_vars
 from ansible.vars.hostvars import HostVars
+from ansible.vars.unsafe_proxy import UnsafeProxy
 
 CACHED_VARS = dict()
 
@@ -175,7 +176,10 @@ class VariableManager:
 
             # next comes the facts cache and the vars cache, respectively
             try:
-                all_vars = combine_vars(all_vars, self._fact_cache.get(host.name, dict()))
+                host_facts = self._fact_cache.get(host.name, dict())
+                for k in host_facts.keys():
+                    host_facts[k] = UnsafeProxy(host_facts[k])
+                all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
 
