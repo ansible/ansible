@@ -231,6 +231,10 @@ class PlayIterator:
                             state.tasks_child_state.cur_role = state.cur_role
                         (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, peek=peek)
                         if task is None:
+                            # check to see if the child state was failed, if so we need to
+                            # fail here too so we don't continue iterating tasks
+                            if state.tasks_child_state.fail_state != self.FAILED_NONE:
+                                state.fail_state |= self.FAILED_TASKS
                             state.tasks_child_state = None
                             state.cur_regular_task += 1
                             continue
@@ -253,6 +257,10 @@ class PlayIterator:
                             state.rescue_child_state.cur_role = state.cur_role
                         (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, peek=peek)
                         if task is None:
+                            # check to see if the child state was failed, if so we need to
+                            # fail here too so we don't continue iterating rescue
+                            if state.tasks_child_state.fail_state != self.FAILED_NONE:
+                                state.fail_state |= self.FAILED_RESCUE
                             state.rescue_child_state = None
                             state.cur_rescue_task += 1
                             continue
@@ -279,6 +287,10 @@ class PlayIterator:
                             state.always_child_state.cur_role = state.cur_role
                         (state.always_child_state, task) = self._get_next_task_from_state(state.always_child_state, peek=peek)
                         if task is None:
+                            # check to see if the child state was failed, if so we need to
+                            # fail here too so we don't continue iterating always
+                            if state.tasks_child_state.fail_state != self.FAILED_NONE:
+                                state.fail_state |= self.FAILED_ALWAYS
                             state.always_child_state = None
                             state.cur_always_task += 1
                             continue
@@ -356,9 +368,10 @@ class PlayIterator:
                 if res:
                     return res
             for child_state in (state.tasks_child_state, state.rescue_child_state, state.always_child_state):
-                res = _search_state(child_state, task)
-                if res:
-                    return res
+                if child_state is not None:
+                    res = _search_state(child_state, task)
+                    if res:
+                        return res
             return None
 
         s = self.get_host_state(host)
