@@ -42,7 +42,27 @@ Major Changes:
  * When a string with a trailing newline was specified in the playbook via yaml
    dict format, the trailing newline was stripped.  When specified in key=value
    format the trailing newlines were kept.  In v2, both methods of specifying the
-   string will keep the trailing newlines.
+   string will keep the trailing newlines.  If you relied on the trailing
+   newline being stripped you can change your playbook like this::
+
+     # Syntax in 1.9.2
+     vars:
+       message: >
+         Testing
+         some things
+     tasks:
+     - debug:
+         msg: "{{ message }}"
+     # Syntax in 2.0.x
+     vars:
+       old_message: >
+         Testing
+         some things
+       message: "{{ old_messsage[:-1] }}"
+     - debug:
+         msg: "{{ message }}"
+     # Output
+     "msg": "Testing some things"
 
 Deprecated Modules (new ones in parens):
   * ec2_ami_search (ec2_ami_find)
