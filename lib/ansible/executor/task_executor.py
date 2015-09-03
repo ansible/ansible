@@ -188,15 +188,18 @@ class TaskExecutor:
 
             try:
                 tmp_task = self._task.copy()
+                tmp_play_context = self._play_context.copy()
             except AnsibleParserError as e:
                 results.append(dict(failed=True, msg=str(e)))
                 continue
 
-            # now we swap the internal task with the copy, execute,
-            # and swap them back so we can do the next iteration cleanly
+            # now we swap the internal task and play context with their copies,
+            # execute, and swap them back so we can do the next iteration cleanly
             (self._task, tmp_task) = (tmp_task, self._task)
+            (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
             res = self._execute(variables=task_vars)
             (self._task, tmp_task) = (tmp_task, self._task)
+            (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
             # now update the result with the item info, and append the result
             # to the list of results
