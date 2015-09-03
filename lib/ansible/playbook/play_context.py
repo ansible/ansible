@@ -24,6 +24,7 @@ __metaclass__ = type
 import pipes
 import random
 import re
+import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -161,7 +162,6 @@ class PlayContext(Base):
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
-    _connection_lockfd= FieldAttribute(isa='int', default=None)
 
     # privilege escalation fields
     _become           = FieldAttribute(isa='bool')
@@ -199,6 +199,10 @@ class PlayContext(Base):
 
         self.password    = passwords.get('conn_pass','')
         self.become_pass = passwords.get('become_pass','')
+
+        # A temporary file (opened pre-fork) used by connection
+        # plugins for inter-process locking.
+        self.connection_lockf = tempfile.TemporaryFile()
 
         # set options before play to allow play to override them
         if options:
@@ -244,11 +248,6 @@ class PlayContext(Base):
 
         if options.connection:
             self.connection = options.connection
-
-        # The lock file is opened in the parent process, and the workers will
-        # inherit the open file, so we just need to help them find it.
-        if options.connection_lockfile:
-            self.connection_lockfd = options.connection_lockfile.fileno()
 
         self.remote_user = options.remote_user
         self.private_key_file = options.private_key_file
@@ -327,6 +326,11 @@ class PlayContext(Base):
                setattr(new_info, 'become_pass', new_info.su_pass)
 
         return new_info
+
+    def copy(self, exclude_block=False):
+        new_me = super(PlayContext, self).copy()
+        new_me.connection_lockf = self.connection_lockf
+        return new_me
 
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """

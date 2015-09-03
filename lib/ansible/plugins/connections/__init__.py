@@ -156,12 +156,12 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
 
     def lock_connection(self):
-        f = self._play_context.connection_lockfd
-        self._display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f))
-        fcntl.lockf(f, fcntl.LOCK_EX)
-        self._display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f))
+        f = self._play_context.connection_lockf
+        self._display.vvvv('CONNECTION: pid %d waiting for lock on %d' % (os.getpid(), f.fileno()))
+        fcntl.lockf(f.fileno(), fcntl.LOCK_EX)
+        self._display.vvvv('CONNECTION: pid %d acquired lock on %d' % (os.getpid(), f.fileno()))
 
     def unlock_connection(self):
-        f = self._play_context.connection_lockfd
-        fcntl.lockf(f, fcntl.LOCK_UN)
-        self._display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f))
+        f = self._play_context.connection_lockf
+        fcntl.lockf(f.fileno(), fcntl.LOCK_UN)
+        self._display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f.fileno()))
