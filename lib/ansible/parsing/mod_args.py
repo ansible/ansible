@@ -38,6 +38,7 @@ RAW_PARAM_MODULES = ([
     'set_fact',
     'raw',
     'meta',
+    'debug',
 ])
 
 class ModuleArgsParser:
