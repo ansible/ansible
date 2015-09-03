@@ -87,6 +87,8 @@ class TaskQueueManager:
         except ValueError:
             fileno = None
 
+        # A temporary file (opened pre-fork) used by connection
+        # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
         self._workers = []
