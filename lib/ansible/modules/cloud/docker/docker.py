@@ -806,7 +806,8 @@ class DockerManager(object):
 
         optionals = {}
         for optional_param in ('dns', 'volumes_from', 'restart_policy',
-                'restart_policy_retry', 'pid'):
+                'restart_policy_retry', 'pid', 'extra_hosts', 'log_driver',
+                'cap_add', 'cap_drop'):
             optionals[optional_param] = self.module.params.get(optional_param)
 
         if optionals['dns'] is not None:
@@ -823,13 +824,35 @@ class DockerManager(object):
             if params['restart_policy']['Name'] == 'on-failure':
                 params['restart_policy']['MaximumRetryCount'] = optionals['restart_policy_retry']
 
+        # docker_py only accepts 'host' or None
+        if 'pid' in optionals and not optionals['pid']:
+            optionals['pid'] = None
+
         if optionals['pid'] is not None:
             self.ensure_capability('pid')
             params['pid_mode'] = optionals['pid']
 
+        if optionals['extra_hosts'] is not None:
+            self.ensure_capability('extra_hosts')
+            params['extra_hosts'] = optionals['extra_hosts']
+
+        if optionals['log_driver'] is not None:
+            self.ensure_capability('log_driver')
+            log_config = docker.utils.LogConfig(type=docker.utils.LogConfig.types.JSON)
+            log_config.type = optionals['log_driver']
+            params['log_config'] = log_config
+
+        if optionals['cap_add'] is not None:
+            self.ensure_capability('cap_add')
+            params['cap_add'] = optionals['cap_add']
+
+        if optionals['cap_drop'] is not None:
+            self.ensure_capability('cap_drop')
+            params['cap_drop'] = optionals['cap_drop']
+
         return params
 
-    def get_host_config(self):
+    def create_host_config(self):
         """
         Create HostConfig object
         """
@@ -1345,65 +1368,6 @@ class DockerManager(object):
         except Exception as e:
             self.module.fail_json(msg="Failed to pull the specified image: %s" % resource, error=repr(e))
 
-    def create_host_config(self):
-        params = {
-            'lxc_conf': self.lxc_conf,
-            'binds': self.binds,
-            'port_bindings': self.port_bindings,
-            'publish_all_ports': self.module.params.get('publish_all_ports'),
-            'privileged': self.module.params.get('privileged'),
-            'links': self.links,
-            'network_mode': self.module.params.get('net'),
-        }
-
-        optionals = {}
-        for optional_param in ('dns', 'volumes_from', 'restart_policy',
-                'restart_policy_retry', 'pid', 'extra_hosts', 'log_driver',
-                'cap_add', 'cap_drop'):
-            optionals[optional_param] = self.module.params.get(optional_param)
-
-        if optionals['dns'] is not None:
-            self.ensure_capability('dns')
-            params['dns'] = optionals['dns']
-
-        if optionals['volumes_from'] is not None:
-            self.ensure_capability('volumes_from')
-            params['volumes_from'] = optionals['volumes_from']
-
-        if optionals['restart_policy'] is not None:
-            self.ensure_capability('restart_policy')
-            params['restart_policy'] = { 'Name': optionals['restart_policy'] }
-            if params['restart_policy']['Name'] == 'on-failure':
-                params['restart_policy']['MaximumRetryCount'] = optionals['restart_policy_retry']
-
-        # docker_py only accepts 'host' or None
-        if 'pid' in optionals and not optionals['pid']:
-            optionals['pid'] = None
-
-        if optionals['pid'] is not None:
-            self.ensure_capability('pid')
-            params['pid_mode'] = optionals['pid']
-
-        if optionals['extra_hosts'] is not None:
-            self.ensure_capability('extra_hosts')
-            params['extra_hosts'] = optionals['extra_hosts']
-
-        if optionals['log_driver'] is not None:
-            self.ensure_capability('log_driver')
-            log_config = docker.utils.LogConfig(type=docker.utils.LogConfig.types.JSON)
-            log_config.type = optionals['log_driver']
-            params['log_config'] = log_config
-
-        if optionals['cap_add'] is not None:
-            self.ensure_capability('cap_add')
-            params['cap_add'] = optionals['cap_add']
-
-        if optionals['cap_drop'] is not None:
-            self.ensure_capability('cap_drop')
-            params['cap_drop'] = optionals['cap_drop']
-
-        return docker.utils.create_host_config(**params)
-
     def create_containers(self, count=1):
         try:
             mem_limit = _human_to_bytes(self.module.params.get('memory_limit'))
@@ -1425,7 +1389,6 @@ class DockerManager(object):
                   'volumes_from': self.module.params.get('volumes_from'),
                   'dns':          self.module.params.get('dns'),
                   'cpuset':       self.module.params.get('cpu_set'),
-                  'host_config':  self.create_host_config(),
                   'user':         self.module.params.get('docker_user'),
                   }
         if docker.utils.compare_version('1.10', self.client.version()['ApiVersion']) >= 0:
@@ -1440,7 +1403,7 @@ class DockerManager(object):
                 extra_params['insecure_registry'] = self.module.params.get('insecure_registry')
 
         if self.ensure_capability('host_config', fail=False):
-            params['host_config'] = self.get_host_config()
+            params['host_config'] = self.create_host_config()
 
         #For v1.19 API and above use HostConfig, otherwise use Config
         if api_version < 1.19:
