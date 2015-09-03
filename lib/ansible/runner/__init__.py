@@ -49,6 +49,7 @@ from ansible.module_common import ModuleReplacer
 from ansible.module_utils.splitter import split_args, unquote
 from ansible.cache import FactCache
 from ansible.utils import update_hash
+from ansible.utils.unicode import to_bytes
 
 module_replacer = ModuleReplacer(strip_comments=False)
 
@@ -590,7 +591,7 @@ class Runner(object):
                 self.callbacks.on_unreachable(host, exec_rc.result)
             return exec_rc
         except errors.AnsibleError, ae:
-            msg = str(ae)
+            msg = to_bytes(ae)
             self.callbacks.on_unreachable(host, msg)
             return ReturnData(host=host, comm_ok=False, result=dict(failed=True, msg=msg))
         except Exception:
