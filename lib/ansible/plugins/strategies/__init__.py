@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import queue as Queue
+from six import iteritems
+
 import time
 
 from ansible import constants as C
@@ -207,7 +209,7 @@ class StrategyBase:
                     if task_result._task._role is not None and result[0] in ('host_task_ok', 'host_task_failed'):
                         # lookup the role in the ROLE_CACHE to make sure we're dealing
                         # with the correct object and mark it as executed
-                        for (entry, role_obj) in iterator._play.ROLE_CACHE[task_result._task._role._role_name].iteritems():
+                        for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[task_result._task._role._role_name]):
                             if role_obj._uuid == task_result._task._role._uuid:
                                 role_obj._had_task_run[host.name] = True
 
@@ -358,7 +360,7 @@ class StrategyBase:
                     groups[group_name] = []
                 groups[group_name].append(host)
 
-        for group_name, hosts in groups.iteritems():
+        for group_name, hosts in iteritems(groups):
             new_group = self._inventory.get_group(group_name)
             if not new_group:
                 # create the new group and add it to inventory

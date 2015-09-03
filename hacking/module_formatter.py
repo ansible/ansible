@@ -34,6 +34,7 @@ import subprocess
 import cgi
 import warnings
 from jinja2 import Environment, FileSystemLoader
+from six import iteritems
 
 from ansible.utils import module_docs
 from ansible.utils.vars import merge_hash
@@ -292,7 +293,7 @@ def process_module(module, options, env, template, outputname, module_map, alias
         del doc['version_added']
 
     if 'options' in doc and doc['options']:
-        for (k,v) in doc['options'].iteritems():
+        for (k,v) in iteritems(doc['options']):
             # don't show version added information if it's too old to be called out
             if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
                 del doc['options'][k]['version_added']

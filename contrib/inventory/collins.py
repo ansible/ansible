@@ -83,6 +83,8 @@ try:
 except ImportError:
     import simplejson as json
 
+from six import iteritems
+
 
 class CollinsDefaults(object):
     ASSETS_API_ENDPOINT = '%s/api/assets'
@@ -174,7 +176,7 @@ class CollinsInventory(object):
         # the CQL search feature as described here:
         # http://tumblr.github.io/collins/recipes.html
         attributes_query = [ '='.join(attr_pair)
-            for attr_pair in attributes.iteritems() ]
+            for attr_pair in iteritems(attributes) ]
         query_parameters = {
             'details': ['True'],
             'operation': [operation],

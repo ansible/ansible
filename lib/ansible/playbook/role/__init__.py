@@ -51,7 +51,7 @@ def hash_params(params):
         return params
     else:
         s = set()
-        for k,v in params.iteritems():
+        for k,v in iteritems(params):
             if isinstance(v, dict):
                 s.update((k, hash_params(v)))
             elif isinstance(v, list):
@@ -105,7 +105,7 @@ class Role(Base, Become, Conditional, Taggable):
                 params['tags'] = role_include.tags
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
-                for (entry, role_obj) in play.ROLE_CACHE[role_include.role].iteritems():
+                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
                     if hashed_params == entry:
                         if parent_role:
                             role_obj.add_parent(parent_role)
