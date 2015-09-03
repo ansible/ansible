@@ -68,12 +68,16 @@ class TestPlayIterator(unittest.TestCase):
         inventory.get_hosts.return_value = hosts
         inventory.filter_hosts.return_value = hosts
 
+        mock_var_manager = MagicMock()
+        mock_var_manager._fact_cache = dict()
+
         play_context = PlayContext(play=p._entries[0])
 
         itr = PlayIterator(
             inventory=inventory,
             play=p._entries[0],
             play_context=play_context,
+            variable_manager=mock_var_manager,
             all_vars=dict(),
         )
 
