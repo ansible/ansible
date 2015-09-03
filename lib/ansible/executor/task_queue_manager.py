@@ -23,6 +23,7 @@ import multiprocessing
 import os
 import socket
 import sys
+import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -85,6 +86,8 @@ class TaskQueueManager:
             fileno = sys.stdin.fileno()
         except ValueError:
             fileno = None
+
+        self._connection_lockfile = tempfile.TemporaryFile()
 
         self._workers = []
         for i in range(self._options.forks):
@@ -176,7 +179,7 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        play_context = PlayContext(new_play, self._options, self.passwords)
+        play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)

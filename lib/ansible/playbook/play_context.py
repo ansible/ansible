@@ -24,7 +24,6 @@ __metaclass__ = type
 import pipes
 import random
 import re
-import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -190,7 +189,7 @@ class PlayContext(Base):
     _step             = FieldAttribute(isa='bool', default=False)
     _diff             = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None, options=None, passwords=None):
+    def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
 
         super(PlayContext, self).__init__()
 
@@ -202,7 +201,7 @@ class PlayContext(Base):
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
-        self.connection_lockf = tempfile.TemporaryFile()
+        self.connection_lockfd = connection_lockfd
 
         # set options before play to allow play to override them
         if options:
@@ -329,7 +328,7 @@ class PlayContext(Base):
 
     def copy(self, exclude_block=False):
         new_me = super(PlayContext, self).copy()
-        new_me.connection_lockf = self.connection_lockf
+        new_me.connection_lockfd = self.connection_lockfd
         return new_me
 
     def make_become_cmd(self, cmd, executable=None):
