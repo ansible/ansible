@@ -178,10 +178,11 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         role_def = dict()
         role_params = dict()
+        base_attribute_names = frozenset(self._get_base_attributes().keys())
         for (key, value) in iteritems(ds):
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)
-            if key not in [attr_name for (attr_name, attr_value) in iteritems(self._get_base_attributes())]:
+            if key not in base_attribute_names:
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value
             else:
