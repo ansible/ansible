@@ -24,6 +24,7 @@ __metaclass__ = type
 import pipes
 import random
 import re
+import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -199,6 +200,10 @@ class PlayContext(Base):
         self.password    = passwords.get('conn_pass','')
         self.become_pass = passwords.get('become_pass','')
 
+        # A temporary file (opened pre-fork) used by connection
+        # plugins for inter-process locking.
+        self.connection_lockf = tempfile.TemporaryFile()
+
         # set options before play to allow play to override them
         if options:
             self.set_options(options)
@@ -321,6 +326,11 @@ class PlayContext(Base):
                setattr(new_info, 'become_pass', new_info.su_pass)
 
         return new_info
+
+    def copy(self, exclude_block=False):
+        new_me = super(PlayContext, self).copy()
+        new_me.connection_lockf = self.connection_lockf
+        return new_me
 
     def make_become_cmd(self, cmd, executable=None):
         """ helper function to create privilege escalation commands """

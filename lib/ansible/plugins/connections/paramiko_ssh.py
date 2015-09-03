@@ -71,16 +71,15 @@ class MyAddPolicy(object):
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
-    def __init__(self, new_stdin):
+    def __init__(self, new_stdin, connection):
         self._new_stdin = new_stdin
+        self.connection = connection
 
     def missing_host_key(self, client, hostname, key):
 
         if C.HOST_KEY_CHECKING:
 
-            # FIXME: need to fix lock file stuff
-            #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
-            #fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
+            self.connection.lock_connection()
 
             old_stdin = sys.stdin
             sys.stdin = self._new_stdin
@@ -94,16 +93,10 @@ class MyAddPolicy(object):
             inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
 
+            self.connection.unlock_connection()
+
             if inp not in ['yes','y','']:
-                # FIXME: lock file stuff
-                #fcntl.flock(self.runner.output_lockfile, fcntl.LOCK_UN)
-                #fcntl.flock(self.runner.process_lockfile, fcntl.LOCK_UN)
                 raise AnsibleError("host connection rejected by user")
-
-            # FIXME: lock file stuff
-            #fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
-            #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
-
 
         key._added_by_ansible_this_time = True
 
@@ -159,7 +152,7 @@ class Connection(ConnectionBase):
                 pass # file was not found, but not required to function
             ssh.load_system_host_keys()
 
-        ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin))
+        ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
         allow_agent = True
 
@@ -365,6 +358,9 @@ class Connection(ConnectionBase):
         if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 
             # add any new SSH host keys -- warning -- this could be slow
+            # (This doesn't acquire the connection lock because it needs
+            # to exclude only other known_hosts writers, not connections
+            # that are starting up.)
             lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
             makedirs_safe(dirname)
