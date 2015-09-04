@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import errno
 import string
 import random
 
@@ -29,10 +28,13 @@ from string import ascii_letters, digits
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
+from ansible.parsing.splitter import parse_kv
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.path import makedirs_safe
 
 DEFAULT_LENGTH = 20
+VALID_PARAMS = frozenset(('length', 'encrypt', 'chars'))
+
 
 class LookupModule(LookupBase):
 
@@ -60,37 +62,36 @@ class LookupModule(LookupBase):
         ret = []
 
         for term in terms:
-            # you can't have escaped spaces in yor pathname
-            params = term.split()
-            relpath = params[0]
+            params = parse_kv(term)
+            if '_raw_params' in params:
+                relpath = params['_raw_params']
+                del params['_raw_params']
+            else:
+                relpath = params
 
-            paramvals = {
-                'length': DEFAULT_LENGTH,
-                'encrypt': None,
-                'chars': ['ascii_letters','digits',".,:-_"],
-            }
+            # Check that we parsed the params correctly
+            if not term.startswith(relpath):
+                # Likely, the user had a non parameter following a parameter.
+                # Reject this as a user typo
+                raise AnsibleError('Unrecognized value after key=value parameters given to password lookup')
 
-            # get non-default parameters if specified
-            try:
-                for param in params[1:]:
-                    name, value = param.split('=')
-                    assert(name in paramvals)
-                    if name == 'length':
-                        paramvals[name] = int(value)
-                    elif name == 'chars':
-                        use_chars=[]
-                        if ",," in value: 
-                            use_chars.append(',')
-                        use_chars.extend(value.replace(',,',',').split(','))
-                        paramvals['chars'] = use_chars
-                    else:
-                        paramvals[name] = value
-            except (ValueError, AssertionError) as e:
-                raise AnsibleError(e)
+            invalid_params = frozenset(params.keys()).difference(VALID_PARAMS)
+            if invalid_params:
+                raise AnsibleError('Unrecognized parameter(s) given to password lookup: %s' % ', '.join(invalid_params))
 
-            length  = paramvals['length']
-            encrypt = paramvals['encrypt']
-            use_chars = paramvals['chars']
+            length = int(params.get('length', DEFAULT_LENGTH))
+            encrypt = params.get('encrypt', None)
+
+            use_chars = params.get('chars', None)
+            if use_chars:
+                tmp_chars = []
+                if ',,' in use_chars:
+                    tmp_chars.append(',')
+                tmp_chars.extend(use_chars.replace(',,', ',').split(','))
+                use_chars = tmp_chars
+            else:
+                # Default chars for password
+                use_chars = ['ascii_letters', 'digits', ".,:-_"]
 
             # get password or create it if file doesn't exist
             path = self._loader.path_dwim(relpath)
@@ -101,7 +102,7 @@ class LookupModule(LookupBase):
                 except OSError as e:
                     raise AnsibleError("cannot create the path for the password lookup: %s (error was %s)" % (pathdir, str(e)))
 
-                chars = "".join([getattr(string,c,c) for c in use_chars]).replace('"','').replace("'",'')
+                chars = "".join(getattr(string, c, c) for c in use_chars).replace('"', '').replace("'", '')
                 password = ''.join(random.choice(chars) for _ in range(length))
 
                 if encrypt is not None:
@@ -118,7 +119,7 @@ class LookupModule(LookupBase):
 
                 if sep >= 0:
                     password = content[:sep]
-                    salt = content[sep+1:].split('=')[1]
+                    salt = content[sep + 1:].split('=')[1]
                 else:
                     password = content
                     salt = None
@@ -142,4 +143,3 @@ class LookupModule(LookupBase):
             ret.append(password)
 
         return ret
-
