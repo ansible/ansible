@@ -52,6 +52,13 @@ LOCALE_NORMALIZATION = {
     ".utf8": ".UTF-8",
     ".eucjp": ".EUC-JP",
     ".iso885915": ".ISO-8859-15",
+    ".cp1251": ".CP1251",
+    ".koi8r": ".KOI8-R",
+    ".armscii8": ".ARMSCII-8",
+    ".euckr": ".EUC-KR",
+    ".gbk": ".GBK",
+    ".gb18030": ".GB18030",
+    ".euctw": ".EUC-TW",
 }
 
 # ===========================================
