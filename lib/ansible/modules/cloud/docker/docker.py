@@ -273,7 +273,7 @@ options:
   read_only:
     description:
       - Mount the container's root filesystem as read only
-    default: false
+    default: null
     aliases: []
     version_added: "2.0"
   restart_policy:
@@ -801,13 +801,12 @@ class DockerManager(object):
             'privileged': self.module.params.get('privileged'),
             'links': self.links,
             'network_mode': self.module.params.get('net'),
-            'read_only': self.module.params.get('read_only'),
         }
 
         optionals = {}
         for optional_param in ('dns', 'volumes_from', 'restart_policy',
                 'restart_policy_retry', 'pid', 'extra_hosts', 'log_driver',
-                'cap_add', 'cap_drop'):
+                'cap_add', 'cap_drop', 'read_only'):
             optionals[optional_param] = self.module.params.get(optional_param)
 
         if optionals['dns'] is not None:
@@ -849,6 +848,10 @@ class DockerManager(object):
         if optionals['cap_drop'] is not None:
             self.ensure_capability('cap_drop')
             params['cap_drop'] = optionals['cap_drop']
+
+        if optionals['read_only'] is not None:
+            self.ensure_capability('read_only')
+            params['read_only'] = optionals['read_only']
 
         return params
 
@@ -1645,7 +1648,7 @@ def main():
             cpu_set         = dict(default=None),
             cap_add         = dict(default=None, type='list'),
             cap_drop        = dict(default=None, type='list'),
-            read_only       = dict(default=False, type='bool'),
+            read_only       = dict(default=None, type='bool'),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
