@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import queue
-from six import iteritems
+from six import iteritems, text_type
 
 import multiprocessing
 import os
@@ -62,7 +62,7 @@ class ResultProcess(multiprocessing.Process):
         super(ResultProcess, self).__init__()
 
     def _send_result(self, result):
-        debug(u"sending result: %s" % ([unicode(x) for x in result],))
+        debug(u"sending result: %s" % ([text_type(x) for x in result],))
         self._final_q.put(result, block=False)
         debug("done sending result")
 

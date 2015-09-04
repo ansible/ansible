@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems
+from six import iteritems, text_type
 
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
@@ -221,7 +221,7 @@ class StrategyModule(StrategyBase):
                             saved_name = task.name
                             display.debug("done copying, going to template now")
                             try:
-                                task.name = unicode(templar.template(task.name, fail_on_undefined=False))
+                                task.name = text_type(templar.template(task.name, fail_on_undefined=False))
                                 display.debug("done templating")
                             except:
                                 # just ignore any errors during task name templating,
