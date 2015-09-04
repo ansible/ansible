@@ -25,6 +25,8 @@ import pipes
 import random
 import re
 
+from six import iteritems
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.attribute import Attribute, FieldAttribute
@@ -161,6 +163,8 @@ class PlayContext(Base):
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
+    _ssh_extra_args   = FieldAttribute(isa='string')
+    _connection_lockfd= FieldAttribute(isa='int')
 
     # privilege escalation fields
     _become           = FieldAttribute(isa='bool')
@@ -189,7 +193,7 @@ class PlayContext(Base):
     _step             = FieldAttribute(isa='bool', default=False)
     _diff             = FieldAttribute(isa='bool', default=False)
 
-    def __init__(self, play=None, options=None, passwords=None):
+    def __init__(self, play=None, options=None, passwords=None, connection_lockfd=None):
 
         super(PlayContext, self).__init__()
 
@@ -198,6 +202,9 @@ class PlayContext(Base):
 
         self.password    = passwords.get('conn_pass','')
         self.become_pass = passwords.get('become_pass','')
+
+        # a file descriptor to be used during locking operations
+        self.connection_lockfd = connection_lockfd
 
         # set options before play to allow play to override them
         if options:
@@ -246,6 +253,7 @@ class PlayContext(Base):
 
         self.remote_user = options.remote_user
         self.private_key_file = options.private_key_file
+        self.ssh_extra_args = options.ssh_extra_args
 
         # privilege escalation
         self.become        = options.become
@@ -304,7 +312,7 @@ class PlayContext(Base):
 
         # finally, use the MAGIC_VARIABLE_MAPPING dictionary to update this
         # connection info object with 'magic' variables from the variable list
-        for (attr, variable_names) in MAGIC_VARIABLE_MAPPING.iteritems():
+        for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
                 if variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
@@ -327,6 +335,7 @@ class PlayContext(Base):
 
         prompt      = None
         success_key = None
+        self.prompt = None
 
         if executable is None:
             executable = C.DEFAULT_EXECUTABLE
@@ -358,13 +367,14 @@ class PlayContext(Base):
                 # directly doesn't work, so we shellquote it with pipes.quote() and pass the quoted
                 # string to the user's shell.  We loop reading output until we see the randomly-generated
                 # sudo prompt set with the -p option.
-                prompt = '[sudo via ansible, key=%s] password: ' % randbits
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
-                if not self.become_pass:
-                    flags += " -n "
+                if self.become_pass:
+                    prompt = '[sudo via ansible, key=%s] password: ' % randbits
+                    becomecmd = '%s %s -p "%s" -S -u %s %s -c %s' % (exe, flags, prompt, self.become_user, executable, success_cmd)
+                else:
+                    becomecmd = '%s %s -n -S -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
 
-                becomecmd = '%s %s -S -p "%s" -u %s %s -c %s' % (exe, flags, prompt, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'su':
 
@@ -407,7 +417,8 @@ class PlayContext(Base):
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
-            self.prompt      = prompt
+            if self.become_pass:
+                self.prompt = prompt
             self.success_key = success_key
             return ('%s -c %s' % (executable, pipes.quote(becomecmd)))
 

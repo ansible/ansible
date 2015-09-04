@@ -37,6 +37,7 @@ from hashlib import sha1
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
+from ansible.utils.path import unfrackpath, makedirs_safe
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
@@ -49,20 +50,39 @@ class Connection(ConnectionBase):
         self._common_args = []
         self.HASHED_KEY_MAGIC = "|1|"
 
-        # FIXME: move the lockfile locations to ActionBase?
-        #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
-        #self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
-        self._cp_dir = '/tmp'
-        #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
-
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
+        self.ssh_extra_args = ''
+        self.ssh_args = ''
+
+    def set_host_overrides(self, host):
+        v = host.get_vars()
+        if 'ansible_ssh_extra_args' in v:
+            self.ssh_extra_args = v['ansible_ssh_extra_args']
+        if 'ansible_ssh_args' in v:
+            self.ssh_args = v['ansible_ssh_args']
 
     @property
     def transport(self):
         ''' used to identify this connection object from other classes '''
         return 'ssh'
+
+    def _split_args(self, argstring):
+        """
+        Takes a string like '-o Foo=1 -o Bar="foo bar"' and returns a
+        list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
+        the argument list. The list will not contain any empty elements.
+        """
+        return [x.strip() for x in shlex.split(argstring) if x.strip()]
+
+    def add_args(self, explanation, args):
+        """
+        Adds the given args to _common_args and displays a
+        caller-supplied explanation of why they were added.
+        """
+        self._common_args += args
+        self._display.vvvvv('SSH: ' + explanation + ': (%s)' % ')('.join(args), host=self._play_context.remote_addr)
 
     def _connect(self):
         ''' connect to the remote host '''
@@ -72,16 +92,25 @@ class Connection(ConnectionBase):
         if self._connected:
             return self
 
-        extra_args = C.ANSIBLE_SSH_ARGS
-        if extra_args is not None:
-            # make sure there is no empty string added as this can produce weird errors
-            self._common_args += [x.strip() for x in shlex.split(extra_args) if x.strip()]
+        # We start with ansible_ssh_args from the inventory if it's set,
+        # or [ssh_connection]ssh_args from ansible.cfg, or the default
+        # Control* settings.
+
+        if self.ssh_args:
+            args = self._split_args(self.ssh_args)
+            self.add_args("inventory set ansible_ssh_args", args)
+        elif C.ANSIBLE_SSH_ARGS:
+            args = self._split_args(C.ANSIBLE_SSH_ARGS)
+            self.add_args("ansible.cfg set ssh_args", args)
         else:
-            self._common_args += (
+            args = (
                 "-o", "ControlMaster=auto",
-                "-o", "ControlPersist=60s",
-                "-o", "ControlPath=\"{0}\"".format(C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir)),
+                "-o", "ControlPersist=60s"
             )
+            self.add_args("default arguments", args)
+
+        # If any of the above have set ControlPersist but not a
+        # ControlPath, add one ourselves.
 
         cp_in_use = False
         cp_path_set = False
@@ -92,27 +121,68 @@ class Connection(ConnectionBase):
                 cp_path_set = True
 
         if cp_in_use and not cp_path_set:
-            self._common_args += ("-o", "ControlPath=\"{0}\"".format(
+            self._cp_dir = unfrackpath('$HOME/.ansible/cp')
+
+            args = ("-o", "ControlPath=\"{0}\"".format(
                 C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir))
             )
+            self.add_args("found only ControlPersist; added ControlPath", args)
+
+            # The directory must exist and be writable.
+            makedirs_safe(self._cp_dir, 0o700)
+            if not os.access(self._cp_dir, os.W_OK):
+                raise AnsibleError("Cannot write to ControlPath %s" % self._cp_dir)
 
         if not C.HOST_KEY_CHECKING:
-            self._common_args += ("-o", "StrictHostKeyChecking=no")
+            self.add_args(
+                "ANSIBLE_HOST_KEY_CHECKING/host_key_checking disabled",
+                ("-o", "StrictHostKeyChecking=no")
+            )
 
         if self._play_context.port is not None:
-            self._common_args += ("-o", "Port={0}".format(self._play_context.port))
-        if self._play_context.private_key_file is not None:
-            self._common_args += ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(self._play_context.private_key_file)))
-        if self._play_context.password:
-            self._common_args += ("-o", "GSSAPIAuthentication=no",
-                                 "-o", "PubkeyAuthentication=no")
-        else:
-            self._common_args += ("-o", "KbdInteractiveAuthentication=no",
-                                 "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
-                                 "-o", "PasswordAuthentication=no")
-        if self._play_context.remote_user is not None and self._play_context.remote_user != pwd.getpwuid(os.geteuid())[0]:
-            self._common_args += ("-o", "User={0}".format(self._play_context.remote_user))
-        self._common_args += ("-o", "ConnectTimeout={0}".format(self._play_context.timeout))
+            self.add_args(
+                "ANSIBLE_REMOTE_PORT/remote_port/ansible_ssh_port set",
+                ("-o", "Port={0}".format(self._play_context.port))
+            )
+
+        key = self._play_context.private_key_file
+        if key:
+            self.add_args(
+                "ANSIBLE_PRIVATE_KEY_FILE/private_key_file/ansible_ssh_private_key_file set",
+                ("-o", "IdentityFile=\"{0}\"".format(os.path.expanduser(key)))
+            )
+
+        if not self._play_context.password:
+            self.add_args(
+                "ansible_password/ansible_ssh_pass not set", (
+                    "-o", "KbdInteractiveAuthentication=no",
+                    "-o", "PreferredAuthentications=gssapi-with-mic,gssapi-keyex,hostbased,publickey",
+                    "-o", "PasswordAuthentication=no"
+                )
+            )
+
+        user = self._play_context.remote_user
+        if user and user != pwd.getpwuid(os.geteuid())[0]:
+            self.add_args(
+                "ANSIBLE_REMOTE_USER/remote_user/ansible_ssh_user/user/-u set",
+                ("-o", "User={0}".format(self._play_context.remote_user))
+            )
+
+        self.add_args(
+            "ANSIBLE_TIMEOUT/timeout set",
+            ("-o", "ConnectTimeout={0}".format(self._play_context.timeout))
+        )
+
+        # If any extra SSH arguments are specified in the inventory for
+        # this host, or specified as an override on the command line,
+        # add them in.
+
+        if self._play_context.ssh_extra_args:
+            args = self._split_args(self._play_context.ssh_extra_args)
+            self.add_args("command-line added --ssh-extra-args", args)
+        elif self.ssh_extra_args:
+            args = self._split_args(self.ssh_extra_args)
+            self.add_args("inventory added ansible_ssh_extra_args", args)
 
         self._connected = True
 
@@ -207,73 +277,17 @@ class Connection(ConnectionBase):
         stdin.close()
         return (p.returncode, stdout, stderr)
 
-    def not_in_host_file(self, host):
-        if 'USER' in os.environ:
-            user_host_file = os.path.expandvars("~${USER}/.ssh/known_hosts")
-        else:
-            user_host_file = "~/.ssh/known_hosts"
-        user_host_file = os.path.expanduser(user_host_file)
-
-        host_file_list = []
-        host_file_list.append(user_host_file)
-        host_file_list.append("/etc/ssh/ssh_known_hosts")
-        host_file_list.append("/etc/ssh/ssh_known_hosts2")
-
-        hfiles_not_found = 0
-        for hf in host_file_list:
-            if not os.path.exists(hf):
-                hfiles_not_found += 1
-                continue
-            try:
-                host_fh = open(hf)
-            except IOError as e:
-                hfiles_not_found += 1
-                continue
-            else:
-                data = host_fh.read()
-                host_fh.close()
-
-            for line in data.split("\n"):
-                if line is None or " " not in line:
-                    continue
-                tokens = line.split()
-                if not tokens:
-                    continue
-
-                if isinstance(tokens, list) and tokens: # skip invalid hostlines
-                    if tokens[0].find(self.HASHED_KEY_MAGIC) == 0:
-                        # this is a hashed known host entry
-                        try:
-                            (kn_salt,kn_host) = tokens[0][len(self.HASHED_KEY_MAGIC):].split("|",2)
-                            hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
-                            hash.update(host)
-                            if hash.digest() == kn_host.decode('base64'):
-                                return False
-                        except:
-                            # invalid hashed host key, skip it
-                            continue
-                    else:
-                        # standard host file entry
-                        if host in tokens[0]:
-                            return False
-
-        if (hfiles_not_found == len(host_file_list)):
-            self._display.vvv("EXEC previous known host file not found for {0}".format(host))
-        return True
-
     def lock_host_keys(self, lock):
 
-        if C.HOST_KEY_CHECKING and  self.not_in_host_file(self.host):
-            if lock:
-               action = fcntl.LOCK_EX
-            else:
-               action = fcntl.LOCK_UN
+        # lock around the initial SSH connectivity so the user prompt about
+        # whether to add the host to known hosts is not intermingled with
+        # multiprocess output.
+        #
+        # This is a noop for now, pending further investigation. The lock file
+        # should be opened in TaskQueueManager and passed down through the
+        # PlayContext.
 
-            # lock around the initial SSH connectivity so the user prompt about whether to add
-            # the host to known hosts is not intermingled with multiprocess output.
-        # FIXME: move the locations of these lock files, same as init above, these came from runner, probably need to be in task_executor
-        #    fcntl.lockf(self.process_lockfile, action)
-        #    fcntl.lockf(self.output_lockfile, action)
+        pass
 
     def exec_command(self, *args, **kwargs):
         """
@@ -364,54 +378,53 @@ class Connection(ConnectionBase):
 
             self._display.debug("Handling privilege escalation password prompt.")
 
-            if self._play_context.become and self._play_context.become_pass:
 
-                fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
-                fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-                become_output = ''
-                become_errput = ''
-                passprompt = False
-                while True:
-                    self._display.debug('Waiting for Privilege Escalation input')
+            become_output = ''
+            become_errput = ''
+            passprompt = False
+            while True:
+                self._display.debug('Waiting for Privilege Escalation input')
 
-                    if self.check_become_success(become_output + become_errput):
-                        self._display.debug('Succeded!')
-                        break
-                    elif self.check_password_prompt(become_output) or self.check_password_prompt(become_errput):
-                        self._display.debug('Password prompt!')
-                        passprompt = True
-                        break
+                if self.check_become_success(become_output + become_errput):
+                    self._display.debug('Succeded!')
+                    break
+                elif self.check_password_prompt(become_output) or self.check_password_prompt(become_errput):
+                    self._display.debug('Password prompt!')
+                    passprompt = True
+                    break
 
-                    self._display.debug('Read next chunks')
-                    rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._play_context.timeout)
-                    if not rfd:
-                        # timeout. wrap up process communication
-                        stdout, stderr = p.communicate()
-                        raise AnsibleError('Connection error waiting for privilege escalation password prompt: %s' % become_output)
+                self._display.debug('Read next chunks')
+                rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._play_context.timeout)
+                if not rfd:
+                    # timeout. wrap up process communication
+                    stdout, stderr = p.communicate()
+                    raise AnsibleError('Connection error waiting for privilege escalation password prompt: %s' % become_output)
 
-                    elif p.stderr in rfd:
-                        chunk = p.stderr.read()
-                        become_errput += chunk
-                        self._display.debug('stderr chunk is: %s' % chunk)
-                        self.check_incorrect_password(become_errput)
+                elif p.stderr in rfd:
+                    chunk = p.stderr.read()
+                    become_errput += chunk
+                    self._display.debug('stderr chunk is: %s' % chunk)
+                    self.check_incorrect_password(become_errput)
 
-                    elif p.stdout in rfd:
-                        chunk = p.stdout.read()
-                        become_output += chunk
-                        self._display.debug('stdout chunk is: %s' % chunk)
+                elif p.stdout in rfd:
+                    chunk = p.stdout.read()
+                    become_output += chunk
+                    self._display.debug('stdout chunk is: %s' % chunk)
 
 
-                    if not chunk:
-                        break
-                        #raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
+                if not chunk:
+                    break
+                    #raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
 
-                if passprompt:
-                    self._display.debug("Sending privilege escalation password.")
-                    stdin.write(self._play_context.become_pass + '\n')
-                else:
-                    no_prompt_out = become_output
-                    no_prompt_err = become_errput
+            if passprompt:
+                self._display.debug("Sending privilege escalation password.")
+                stdin.write(self._play_context.become_pass + '\n')
+            else:
+                no_prompt_out = become_output
+                no_prompt_err = become_errput
 
 
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, sudoable=sudoable)

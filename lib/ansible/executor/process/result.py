@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import queue
+from six import iteritems, text_type
+
 import multiprocessing
 import os
 import signal
@@ -60,7 +62,7 @@ class ResultProcess(multiprocessing.Process):
         super(ResultProcess, self).__init__()
 
     def _send_result(self, result):
-        debug(u"sending result: %s" % ([unicode(x) for x in result],))
+        debug(u"sending result: %s" % ([text_type(x) for x in result],))
         self._final_q.put(result, block=False)
         debug("done sending result")
 
@@ -157,7 +159,7 @@ class ResultProcess(multiprocessing.Process):
                             # if this task is registering facts, do that now
                             item = result_item.get('item', None)
                             if result._task.action in ('set_fact', 'include_vars'):
-                                for (key, value) in result_item['ansible_facts'].iteritems():
+                                for (key, value) in iteritems(result_item['ansible_facts']):
                                     self._send_result(('set_host_var', result._host, result._task, item, key, value))
                             else:
                                 self._send_result(('set_host_facts', result._host, result._task, item, result_item['ansible_facts']))

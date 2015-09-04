@@ -25,6 +25,9 @@ import os
 import sys
 from optparse import OptionParser
 
+from six import iteritems
+
+
 class ProxmoxNodeList(list):
     def get_names(self):
         return [node['node'] for node in self]
@@ -32,7 +35,7 @@ class ProxmoxNodeList(list):
 class ProxmoxQemu(dict):
     def get_variables(self):
         variables = {}
-        for key, value in self.iteritems():
+        for key, value in iteritems(self):
             variables['proxmox_' + key] = value
         return variables
 

@@ -23,6 +23,7 @@ import multiprocessing
 import os
 import socket
 import sys
+import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -85,6 +86,10 @@ class TaskQueueManager:
             fileno = sys.stdin.fileno()
         except ValueError:
             fileno = None
+
+        # A temporary file (opened pre-fork) used by connection
+        # plugins for inter-process locking.
+        self._connection_lockfile = tempfile.TemporaryFile()
 
         self._workers = []
         for i in range(self._options.forks):
@@ -176,7 +181,7 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        play_context = PlayContext(new_play, self._options, self.passwords)
+        play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)
@@ -192,7 +197,13 @@ class TaskQueueManager:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
-        iterator = PlayIterator(inventory=self._inventory, play=new_play, play_context=play_context, all_vars=all_vars)
+        iterator = PlayIterator(
+            inventory=self._inventory,
+            play=new_play,
+            play_context=play_context,
+            variable_manager=self._variable_manager,
+            all_vars=all_vars,
+        )
 
         # and run the play using the strategy
         return strategy.run(iterator, play_context)

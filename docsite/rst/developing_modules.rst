@@ -67,7 +67,7 @@ Testing Modules
 
 There's a useful test script in the source checkout for ansible::
 
-    git clone git@github.com:ansible/ansible.git --recursive
+    git clone git://github.com/ansible/ansible.git --recursive
     source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
 
@@ -191,7 +191,7 @@ a lot shorter than this::
 
 Let's test that module::
 
-    ansible/hacking/test-module -m ./time -a time=\"March 14 12:23\"
+    ansible/hacking/test-module -m ./time -a "time=\"March 14 12:23\""
 
 This should return something like::
 

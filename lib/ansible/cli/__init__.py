@@ -315,6 +315,8 @@ class CLI(object):
                 help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
             parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
                 help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+            parser.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
+                help="specify extra arguments to pass to ssh (e.g. ProxyCommand)")
 
         if async_opts:
             parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',

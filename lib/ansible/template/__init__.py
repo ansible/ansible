@@ -48,7 +48,7 @@ NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
 
-def _preserve_backslashes(data, jinja_env):
+def _escape_backslashes(data, jinja_env):
     """Double backslashes within jinja2 expressions
 
     A user may enter something like this in a playbook::
@@ -206,7 +206,7 @@ class Templar:
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, fail_on_undefined=None, overrides=None, convert_data=True):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -234,7 +234,7 @@ class Templar:
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
-                    result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                    result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
 
                     if convert_data:
                         # if this looks like a dictionary or list, convert it to such using the safe_eval method
@@ -316,7 +316,7 @@ class Templar:
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)
 
-    def _do_template(self, data, preserve_trailing_newlines=True, fail_on_undefined=None, overrides=None):
+    def _do_template(self, data, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None):
 
         # For preserving the number of input newlines in the output (used
         # later in this method)
@@ -346,7 +346,10 @@ class Templar:
             myenv.filters.update(self._get_filters())
             myenv.tests.update(self._get_tests())
 
-            data = _preserve_backslashes(data, myenv)
+            if escape_backslashes:
+                # Allow users to specify backslashes in playbooks as "\\"
+                # instead of as "\\\\".
+                data = _escape_backslashes(data, myenv)
 
             try:
                 t = myenv.from_string(data)

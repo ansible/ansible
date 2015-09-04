@@ -39,6 +39,8 @@ import sys
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 
+from six import iteritems
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
@@ -71,16 +73,15 @@ class MyAddPolicy(object):
     local L{HostKeys} object, and saving it.  This is used by L{SSHClient}.
     """
 
-    def __init__(self, new_stdin):
+    def __init__(self, new_stdin, connection):
         self._new_stdin = new_stdin
+        self.connection = connection
 
     def missing_host_key(self, client, hostname, key):
 
         if C.HOST_KEY_CHECKING:
 
-            # FIXME: need to fix lock file stuff
-            #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
-            #fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_EX)
+            self.connection.lock_connection()
 
             old_stdin = sys.stdin
             sys.stdin = self._new_stdin
@@ -94,16 +95,10 @@ class MyAddPolicy(object):
             inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
 
+            self.connection.unlock_connection()
+
             if inp not in ['yes','y','']:
-                # FIXME: lock file stuff
-                #fcntl.flock(self.runner.output_lockfile, fcntl.LOCK_UN)
-                #fcntl.flock(self.runner.process_lockfile, fcntl.LOCK_UN)
                 raise AnsibleError("host connection rejected by user")
-
-            # FIXME: lock file stuff
-            #fcntl.lockf(self.runner.output_lockfile, fcntl.LOCK_UN)
-            #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
-
 
         key._added_by_ansible_this_time = True
 
@@ -159,7 +154,7 @@ class Connection(ConnectionBase):
                 pass # file was not found, but not required to function
             ssh.load_system_host_keys()
 
-        ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin))
+        ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
         allow_agent = True
 
@@ -229,33 +224,32 @@ class Connection(ConnectionBase):
         try:
             chan.exec_command(cmd)
             if self._play_context.prompt:
-                if self._play_context.become and self._play_context.become_pass:
-                    passprompt = False
-                    while True:
-                        self._display.debug('Waiting for Privilege Escalation input')
-                        if self.check_become_success(become_output):
-                            break
-                        elif self.check_password_prompt(become_output):
-                            passprompt = True
-                            break
+                passprompt = False
+                while True:
+                    self._display.debug('Waiting for Privilege Escalation input')
+                    if self.check_become_success(become_output):
+                        break
+                    elif self.check_password_prompt(become_output):
+                        passprompt = True
+                        break
 
-                        chunk = chan.recv(bufsize)
-                        self._display.debug("chunk is: %s" % chunk)
-                        if not chunk:
-                            if 'unknown user' in become_output:
-                                raise AnsibleError( 'user %s does not exist' % become_user)
-                            else:
-                                break
-                                #raise AnsibleError('ssh connection closed waiting for password prompt')
-                        become_output += chunk
-                    if passprompt:
-                        if self._play_context.become and self._play_context.become_pass:
-                            chan.sendall(self._play_context.become_pass + '\n')
+                    chunk = chan.recv(bufsize)
+                    self._display.debug("chunk is: %s" % chunk)
+                    if not chunk:
+                        if 'unknown user' in become_output:
+                            raise AnsibleError( 'user %s does not exist' % become_user)
                         else:
-                            raise AnsibleError("A password is reqired but none was supplied")
+                            break
+                            #raise AnsibleError('ssh connection closed waiting for password prompt')
+                    become_output += chunk
+                if passprompt:
+                    if self._play_context.become and self._play_context.become_pass:
+                        chan.sendall(self._play_context.become_pass + '\n')
                     else:
-                        no_prompt_out += become_output
-                        no_prompt_err += become_output
+                        raise AnsibleError("A password is reqired but none was supplied")
+                else:
+                    no_prompt_out += become_output
+                    no_prompt_err += become_output
         except socket.timeout:
             raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 
@@ -313,8 +307,8 @@ class Connection(ConnectionBase):
     def _any_keys_added(self):
 
         added_any = False
-        for hostname, keys in self.ssh._host_keys.iteritems():
-            for keytype, key in keys.iteritems():
+        for hostname, keys in iteritems(self.ssh._host_keys):
+            for keytype, key in iteritems(keys):
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     return True
@@ -334,18 +328,18 @@ class Connection(ConnectionBase):
 
         f = open(filename, 'w')
 
-        for hostname, keys in self.ssh._host_keys.iteritems():
+        for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in keys.iteritems():
+            for keytype, key in iteritems(keys):
 
                 # was f.write
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if not added_this_time:
                     f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
 
-        for hostname, keys in self.ssh._host_keys.iteritems():
+        for hostname, keys in iteritems(self.ssh._host_keys):
 
-            for keytype, key in keys.iteritems():
+            for keytype, key in iteritems(keys):
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
                 if added_this_time:
                     f.write("%s %s %s\n" % (hostname, keytype, key.get_base64()))
@@ -365,6 +359,9 @@ class Connection(ConnectionBase):
         if C.HOST_KEY_CHECKING and C.PARAMIKO_RECORD_HOST_KEYS and self._any_keys_added():
 
             # add any new SSH host keys -- warning -- this could be slow
+            # (This doesn't acquire the connection lock because it needs
+            # to exclude only other known_hosts writers, not connections
+            # that are starting up.)
             lockfile = self.keyfile.replace("known_hosts",".known_hosts.lock")
             dirname = os.path.dirname(self.keyfile)
             makedirs_safe(dirname)

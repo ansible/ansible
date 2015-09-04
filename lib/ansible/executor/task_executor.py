@@ -25,6 +25,8 @@ import subprocess
 import sys
 import time
 
+from six import iteritems
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.playbook.conditional import Conditional
@@ -126,13 +128,6 @@ class TaskExecutor:
             return result
         except AnsibleError as e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
-        finally:
-            try:
-                self._connection.close()
-            except AttributeError:
-                pass
-            except Exception as e:
-                debug("error closing connection: %s" % to_unicode(e))
 
     def _get_loop_items(self):
         '''
@@ -186,15 +181,18 @@ class TaskExecutor:
 
             try:
                 tmp_task = self._task.copy()
+                tmp_play_context = self._play_context.copy()
             except AnsibleParserError as e:
                 results.append(dict(failed=True, msg=str(e)))
                 continue
 
-            # now we swap the internal task with the copy, execute,
-            # and swap them back so we can do the next iteration cleanly
+            # now we swap the internal task and play context with their copies,
+            # execute, and swap them back so we can do the next iteration cleanly
             (self._task, tmp_task) = (tmp_task, self._task)
+            (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
             res = self._execute(variables=task_vars)
             (self._task, tmp_task) = (tmp_task, self._task)
+            (self._play_context, tmp_play_context) = (tmp_play_context, self._play_context)
 
             # now update the result with the item info, and append the result
             # to the list of results
@@ -289,7 +287,7 @@ class TaskExecutor:
         # And filter out any fields which were set to default(omit), and got the omit token value
         omit_token = variables.get('omit')
         if omit_token is not None:
-            self._task.args = dict(filter(lambda x: x[1] != omit_token, self._task.args.iteritems()))
+            self._task.args = dict((i[0], i[1]) for i in iteritems(self._task.args) if i[1] != omit_token)
 
         # Read some values from the task, so that we can modify them if need be
         retries = self._task.retries

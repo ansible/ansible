@@ -21,6 +21,8 @@ __metaclass__ = type
 
 import os
 
+from six import iteritems
+
 from ansible.errors import AnsibleParserError
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
@@ -95,7 +97,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if isinstance(ds, AnsibleBaseYAMLObject):
             new_ds.ansible_pos = ds.ansible_pos
 
-        for (k,v) in ds.iteritems():
+        for (k,v) in iteritems(ds):
             if k == 'include':
                 self._preprocess_include(ds, new_ds, k, v)
             else:

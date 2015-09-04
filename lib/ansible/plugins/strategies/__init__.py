@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import queue as Queue
+from six import iteritems, text_type
+
 import time
 
 from ansible import constants as C
@@ -166,7 +168,7 @@ class StrategyBase:
         while not self._final_q.empty() and not self._tqm._terminated:
             try:
                 result = self._final_q.get(block=False)
-                self._display.debug("got result from result worker: %s" % ([unicode(x) for x in result],))
+                self._display.debug("got result from result worker: %s" % ([text_type(x) for x in result],))
 
                 # all host status messages contain 2 entries: (msg, task_result)
                 if result[0] in ('host_task_ok', 'host_task_failed', 'host_task_skipped', 'host_unreachable'):
@@ -207,7 +209,7 @@ class StrategyBase:
                     if task_result._task._role is not None and result[0] in ('host_task_ok', 'host_task_failed'):
                         # lookup the role in the ROLE_CACHE to make sure we're dealing
                         # with the correct object and mark it as executed
-                        for (entry, role_obj) in iterator._play.ROLE_CACHE[task_result._task._role._role_name].iteritems():
+                        for (entry, role_obj) in iteritems(iterator._play.ROLE_CACHE[task_result._task._role._role_name]):
                             if role_obj._uuid == task_result._task._role._uuid:
                                 role_obj._had_task_run[host.name] = True
 
@@ -358,7 +360,7 @@ class StrategyBase:
                     groups[group_name] = []
                 groups[group_name].append(host)
 
-        for group_name, hosts in groups.iteritems():
+        for group_name, hosts in iteritems(groups):
             new_group = self._inventory.get_group(group_name)
             if not new_group:
                 # create the new group and add it to inventory

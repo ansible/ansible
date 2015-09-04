@@ -23,6 +23,7 @@ from ansible import utils
 import os
 import yaml
 import sys
+from six import iteritems
 
 class InventoryParserYaml(object):
     ''' Host inventory parser for ansible '''
@@ -176,7 +177,7 @@ if __name__ == "__main__":
         groupfh.write(yaml.dump(record.get_variables()))
         groupfh.close()
 
-    for (host_name, host_record) in yamlp._hosts.iteritems():
+    for (host_name, host_record) in iteritems(yamlp._hosts):
         hostfiledir = os.path.join(dirname, "host_vars")
         if not os.path.exists(hostfiledir):
             print "* creating: %s" % hostfiledir
