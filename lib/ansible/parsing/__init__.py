@@ -24,6 +24,7 @@ import json
 import os
 
 from yaml import load, YAMLError
+from six import text_type
 
 from ansible.errors import AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
@@ -80,7 +81,7 @@ class DataLoader():
                 # they are unable to cope with our subclass.
                 # Unwrap and re-wrap the unicode so we can keep track of line
                 # numbers
-                new_data = unicode(data)
+                new_data = text_type(data)
             else:
                 new_data = data
             try:
