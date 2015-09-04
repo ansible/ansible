@@ -89,13 +89,15 @@ class PlaybookCLI(CLI):
             (sshpass, becomepass) = self.ask_passwords()
             passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
 
+        loader = DataLoader()
+
         if self.options.vault_password_file:
             # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file)
+            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
+            loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
             vault_pass = self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)[0]
-
-        loader = DataLoader(vault_password=vault_pass)
+            loader.set_vault_password(vault_pass)
 
         # initial error check, to make sure all specified playbooks are accessible
         # before we start running anything through the playbook executor

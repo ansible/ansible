@@ -66,7 +66,8 @@ class TestDataLoader(unittest.TestCase):
 class TestDataLoaderWithVault(unittest.TestCase):
 
     def setUp(self):
-        self._loader = DataLoader(vault_password='ansible')
+        self._loader = DataLoader()
+        self._loader.set_vault_password('ansible')
 
     def tearDown(self):
         pass

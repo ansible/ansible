@@ -22,6 +22,7 @@ __metaclass__ = type
 import copy
 import json
 import os
+import stat
 
 from yaml import load, YAMLError
 from six import text_type
@@ -56,11 +57,15 @@ class DataLoader():
         ds = dl.load_from_file('/path/to/file')
     '''
 
-    def __init__(self, vault_password=None):
+    def __init__(self):
         self._basedir = '.'
-        self._vault_password = vault_password
         self._FILE_CACHE = dict()
 
+        # initialize the vault stuff with an empty password
+        self.set_vault_password(None)
+
+    def set_vault_password(self, vault_password):
+        self._vault_password = vault_password
         self._vault = VaultLib(password=vault_password)
 
     def load(self, data, file_name='<string>', show_content=True):
@@ -129,6 +134,11 @@ class DataLoader():
     def list_directory(self, path):
         path = self.path_dwim(path)
         return os.listdir(path)
+
+    def is_executable(self, path):
+        '''is the given path executable?'''
+        path = self.path_dwim(path)
+        return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
@@ -248,4 +258,30 @@ class DataLoader():
                 break
 
         return candidate
+
+    def read_vault_password_file(self, vault_password_file):
+        """
+        Read a vault password from a file or if executable, execute the script and
+        retrieve password from STDOUT
+        """
+
+        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
+        if not os.path.exists(this_path):
+            raise AnsibleError("The vault password file %s was not found" % this_path)
+
+        if self.is_executable(this_path):
+            try:
+                # STDERR not captured to make it easier for users to prompt for input in their scripts
+                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
+            except OSError as e:
+                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
+            stdout, stderr = p.communicate()
+            self.set_vault_password(stdout.strip('\r\n'))
+        else:
+            try:
+                f = open(this_path, "rb")
+                self.set_vault_password(f.read().strip())
+                f.close()
+            except (OSError, IOError) as e:
+                raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
 

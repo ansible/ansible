@@ -22,11 +22,7 @@ import stat
 from time import sleep
 from errno import EEXIST
 
-__all__ = ['is_executable', 'unfrackpath']
-
-def is_executable(path):
-    '''is the given path executable?'''
-    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+__all__ = ['unfrackpath']
 
 def unfrackpath(path):
     '''

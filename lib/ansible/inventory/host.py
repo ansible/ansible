@@ -114,12 +114,15 @@ class Host:
     def get_vars(self):
 
         results = {}
-        groups = self.get_groups()
-        for group in sorted(groups, key=lambda g: g.depth):
-            results = combine_vars(results, group.get_vars())
         results = combine_vars(results, self.vars)
         results['inventory_hostname'] = self.name
         results['inventory_hostname_short'] = self.name.split('.')[0]
-        results['group_names'] = sorted([ g.name for g in groups if g.name != 'all'])
+        results['group_names'] = sorted([ g.name for g in self.get_groups() if g.name != 'all'])
         return results
 
+    def get_group_vars(self):
+        results = {}
+        groups = self.get_groups()
+        for group in sorted(groups, key=lambda g: g.depth):
+            results = combine_vars(results, group.get_vars())
+        return results

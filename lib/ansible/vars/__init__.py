@@ -119,11 +119,11 @@ class VariableManager:
         - host_vars_files[host] (if there is a host context)
         - host->get_vars (if there is a host context)
         - fact_cache[host] (if there is a host context)
-        - vars_cache[host] (if there is a host context)
         - play vars (if there is a play context)
         - play vars_files (if there's no host context, ignore
           file names that cannot be templated)
         - task->get_vars (if there is a task context)
+        - vars_cache[host] (if there is a host context)
         - extra vars
         '''
 
@@ -152,29 +152,34 @@ class VariableManager:
             # files and then any vars from host_vars files which may apply to
             # this host or the groups it belongs to
 
-            # we merge in the special 'all' group_vars first, if they exist
+            # we merge in vars from groups specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_group_vars())
+
+            # then we merge in the special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
                 data = self._preprocess_vars(self._group_vars_files['all'])
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
             for group in host.get_groups():
-                all_vars = combine_vars(all_vars, group.get_vars())
                 if group.name in self._group_vars_files and group.name != 'all':
-                    data = self._preprocess_vars(self._group_vars_files[group.name])
+                    for data in self._group_vars_files[group.name]:
+                        data = self._preprocess_vars(data)
+                        for item in data:
+                            all_vars = combine_vars(all_vars, item)
+
+            # then we merge in vars from the host specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_vars())
+
+            # then we merge in the host_vars/<hostname> file, if it exists
+            host_name = host.get_name()
+            if host_name in self._host_vars_files:
+                for data in self._host_vars_files[host_name]:
+                    data = self._preprocess_vars(data)
                     for item in data:
                         all_vars = combine_vars(all_vars, item)
 
-            host_name = host.get_name()
-            if host_name in self._host_vars_files:
-                data = self._preprocess_vars(self._host_vars_files[host_name])
-                for item in data:
-                    all_vars = combine_vars(all_vars, self._host_vars_files[host_name])
-
-            # then we merge in vars specified for this host
-            all_vars = combine_vars(all_vars, host.get_vars())
-
-            # next comes the facts cache and the vars cache, respectively
+            # finally, the facts cache for this host, if it exists
             try:
                 host_facts = self._fact_cache.get(host.name, dict())
                 for k in host_facts.keys():
@@ -333,7 +338,9 @@ class VariableManager:
 
         (name, data) = self._load_inventory_file(path, loader)
         if data:
-            self._host_vars_files[name] = data
+            if name not in self._host_vars_files:
+                self._host_vars_files[name] = []
+            self._host_vars_files[name].append(data)
             return data
         else:
             return dict()
@@ -347,7 +354,9 @@ class VariableManager:
 
         (name, data) = self._load_inventory_file(path, loader)
         if data:
-            self._group_vars_files[name] = data
+            if name not in self._group_vars_files:
+                self._group_vars_files[name] = []
+            self._group_vars_files[name].append(data)
             return data
         else:
             return dict()

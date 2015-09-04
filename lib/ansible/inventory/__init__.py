@@ -104,9 +104,9 @@ class Inventory(object):
                             all.add_host(Host(tokens[0], tokens[1]))
                     else:
                         all.add_host(Host(x))
-        elif os.path.exists(host_list):
+        elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
-            if os.path.isdir(host_list):
+            if self._loader.is_directory(host_list):
                 # Ensure basedir is inside the directory
                 host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(loader=self._loader, filename=host_list)
@@ -595,14 +595,14 @@ class Inventory(object):
         """ did inventory come from a file? """
         if not isinstance(self.host_list, basestring):
             return False
-        return os.path.exists(self.host_list)
+        return self._loader.path_exists(self.host_list)
 
     def basedir(self):
         """ if inventory came from a file, what's the directory? """
         dname = self.host_list
         if not self.is_file():
             dname = None
-        elif os.path.isdir(self.host_list):
+        elif self._loader.is_directory(self.host_list):
             dname = self.host_list
         else:
             dname = os.path.dirname(self.host_list)
