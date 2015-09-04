@@ -22,7 +22,7 @@ __metaclass__ = type
 import jinja2
 from ansible.compat.tests import unittest
 
-from ansible.template import _preserve_backslashes, _count_newlines_from_end
+from ansible.template import _escape_backslashes, _count_newlines_from_end
 
 # These are internal utility functions only needed for templating.  They're
 # algorithmic so good candidates for unittesting by themselves
@@ -78,7 +78,7 @@ class TestBackslashEscape(unittest.TestCase):
     def test_backslash_escaping(self):
 
         for test in self.test_data:
-            intermediate = _preserve_backslashes(test['template'], self.env)
+            intermediate = _escape_backslashes(test['template'], self.env)
             self.assertEquals(intermediate, test['intermediate'])
             template = jinja2.Template(intermediate)
             args = test['args']
