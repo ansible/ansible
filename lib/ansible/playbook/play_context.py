@@ -335,6 +335,7 @@ class PlayContext(Base):
 
         prompt      = None
         success_key = None
+        self.prompt = None
 
         if executable is None:
             executable = C.DEFAULT_EXECUTABLE
@@ -366,13 +367,14 @@ class PlayContext(Base):
                 # directly doesn't work, so we shellquote it with pipes.quote() and pass the quoted
                 # string to the user's shell.  We loop reading output until we see the randomly-generated
                 # sudo prompt set with the -p option.
-                prompt = '[sudo via ansible, key=%s] password: ' % randbits
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
-                if not self.become_pass:
-                    flags += " -n "
+                if self.become_pass:
+                    prompt = '[sudo via ansible, key=%s] password: ' % randbits
+                    becomecmd = '%s %s -p "%s" -S -u %s %s -c %s' % (exe, flags, prompt, self.become_user, executable, success_cmd)
+                else:
+                    becomecmd = '%s %s -n -S -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
 
-                becomecmd = '%s %s -S -p "%s" -u %s %s -c %s' % (exe, flags, prompt, self.become_user, executable, success_cmd)
 
             elif self.become_method == 'su':
 
@@ -415,7 +417,8 @@ class PlayContext(Base):
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
 
-            self.prompt      = prompt
+            if self.become_pass:
+                self.prompt = prompt
             self.success_key = success_key
             return ('%s -c %s' % (executable, pipes.quote(becomecmd)))
 

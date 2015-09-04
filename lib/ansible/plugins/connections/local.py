@@ -70,7 +70,7 @@ class Connection(ConnectionBase):
         )
         self._display.debug("done running command with Popen()")
 
-        if self._play_context.prompt  and self._play_context.become_pass and sudoable:
+        if self._play_context.prompt and sudoable:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
             become_output = ''
