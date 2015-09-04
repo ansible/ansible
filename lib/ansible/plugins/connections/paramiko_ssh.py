@@ -224,33 +224,32 @@ class Connection(ConnectionBase):
         try:
             chan.exec_command(cmd)
             if self._play_context.prompt:
-                if self._play_context.become and self._play_context.become_pass:
-                    passprompt = False
-                    while True:
-                        self._display.debug('Waiting for Privilege Escalation input')
-                        if self.check_become_success(become_output):
-                            break
-                        elif self.check_password_prompt(become_output):
-                            passprompt = True
-                            break
+                passprompt = False
+                while True:
+                    self._display.debug('Waiting for Privilege Escalation input')
+                    if self.check_become_success(become_output):
+                        break
+                    elif self.check_password_prompt(become_output):
+                        passprompt = True
+                        break
 
-                        chunk = chan.recv(bufsize)
-                        self._display.debug("chunk is: %s" % chunk)
-                        if not chunk:
-                            if 'unknown user' in become_output:
-                                raise AnsibleError( 'user %s does not exist' % become_user)
-                            else:
-                                break
-                                #raise AnsibleError('ssh connection closed waiting for password prompt')
-                        become_output += chunk
-                    if passprompt:
-                        if self._play_context.become and self._play_context.become_pass:
-                            chan.sendall(self._play_context.become_pass + '\n')
+                    chunk = chan.recv(bufsize)
+                    self._display.debug("chunk is: %s" % chunk)
+                    if not chunk:
+                        if 'unknown user' in become_output:
+                            raise AnsibleError( 'user %s does not exist' % become_user)
                         else:
-                            raise AnsibleError("A password is reqired but none was supplied")
+                            break
+                            #raise AnsibleError('ssh connection closed waiting for password prompt')
+                    become_output += chunk
+                if passprompt:
+                    if self._play_context.become and self._play_context.become_pass:
+                        chan.sendall(self._play_context.become_pass + '\n')
                     else:
-                        no_prompt_out += become_output
-                        no_prompt_err += become_output
+                        raise AnsibleError("A password is reqired but none was supplied")
+                else:
+                    no_prompt_out += become_output
+                    no_prompt_err += become_output
         except socket.timeout:
             raise AnsibleError('ssh timed out waiting for privilege escalation.\n' + become_output)
 
