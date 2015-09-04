@@ -37,6 +37,7 @@ from hashlib import sha1
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connections import ConnectionBase
+from ansible.utils.path import unfrackpath, makedirs_safe
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
@@ -48,12 +49,6 @@ class Connection(ConnectionBase):
         # SSH connection specific init stuff
         self._common_args = []
         self.HASHED_KEY_MAGIC = "|1|"
-
-        # FIXME: move the lockfile locations to ActionBase?
-        #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_EX)
-        #self.cp_dir = utils.prepare_writeable_dir('$HOME/.ansible/cp',mode=0700)
-        self._cp_dir = '/tmp'
-        #fcntl.lockf(self.runner.process_lockfile, fcntl.LOCK_UN)
 
         super(Connection, self).__init__(*args, **kwargs)
 
@@ -126,10 +121,17 @@ class Connection(ConnectionBase):
                 cp_path_set = True
 
         if cp_in_use and not cp_path_set:
+            self._cp_dir = unfrackpath('$HOME/.ansible/cp')
+
             args = ("-o", "ControlPath=\"{0}\"".format(
                 C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir))
             )
             self.add_args("found only ControlPersist; added ControlPath", args)
+
+            # The directory must exist and be writable.
+            makedirs_safe(self._cp_dir, 0o700)
+            if not os.access(self._cp_dir, os.W_OK):
+                raise AnsibleError("Cannot write to ControlPath %s" % self._cp_dir)
 
         if not C.HOST_KEY_CHECKING:
             self.add_args(
