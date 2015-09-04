@@ -81,7 +81,7 @@ class MyAddPolicy(object):
 
         if C.HOST_KEY_CHECKING:
 
-            self.connection.lock_connection()
+            self.connection.connection_lock()
 
             old_stdin = sys.stdin
             sys.stdin = self._new_stdin
@@ -95,7 +95,7 @@ class MyAddPolicy(object):
             inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
 
-            self.connection.unlock_connection()
+            self.connection.connection_unlock()
 
             if inp not in ['yes','y','']:
                 raise AnsibleError("host connection rejected by user")
