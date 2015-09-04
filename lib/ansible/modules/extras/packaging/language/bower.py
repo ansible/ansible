@@ -43,6 +43,7 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
+    version_added: "2.0"
   path:
     description:
       - The base path where to install the bower packages
