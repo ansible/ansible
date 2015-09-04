@@ -37,7 +37,7 @@ import re
 from time import time
 import ConfigParser
 
-from six import iteritems
+from six import iteritems, string_types
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 import libcloud.security as sec
@@ -262,7 +262,7 @@ class LibcloudInventory(object):
             # Handle complex types
             if type(value) in [int, bool]:
                 instance_vars[key] = value
-            elif type(value) in [str, unicode]:
+            elif type(value) in string_types:
                 instance_vars[key] = value.strip()
             elif type(value) == type(None):
                 instance_vars[key] = ''

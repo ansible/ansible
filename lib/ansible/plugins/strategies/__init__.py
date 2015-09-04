@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import queue as Queue
-from six import iteritems
+from six import iteritems, text_type
 
 import time
 
@@ -168,7 +168,7 @@ class StrategyBase:
         while not self._final_q.empty() and not self._tqm._terminated:
             try:
                 result = self._final_q.get(block=False)
-                self._display.debug("got result from result worker: %s" % ([unicode(x) for x in result],))
+                self._display.debug("got result from result worker: %s" % ([text_type(x) for x in result],))
 
                 # all host status messages contain 2 entries: (msg, task_result)
                 if result[0] in ('host_task_ok', 'host_task_failed', 'host_task_skipped', 'host_unreachable'):
