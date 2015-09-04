@@ -378,54 +378,53 @@ class Connection(ConnectionBase):
 
             self._display.debug("Handling privilege escalation password prompt.")
 
-            if self._play_context.become and self._play_context.become_pass:
 
-                fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
-                fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
+            fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-                become_output = ''
-                become_errput = ''
-                passprompt = False
-                while True:
-                    self._display.debug('Waiting for Privilege Escalation input')
+            become_output = ''
+            become_errput = ''
+            passprompt = False
+            while True:
+                self._display.debug('Waiting for Privilege Escalation input')
 
-                    if self.check_become_success(become_output + become_errput):
-                        self._display.debug('Succeded!')
-                        break
-                    elif self.check_password_prompt(become_output) or self.check_password_prompt(become_errput):
-                        self._display.debug('Password prompt!')
-                        passprompt = True
-                        break
+                if self.check_become_success(become_output + become_errput):
+                    self._display.debug('Succeded!')
+                    break
+                elif self.check_password_prompt(become_output) or self.check_password_prompt(become_errput):
+                    self._display.debug('Password prompt!')
+                    passprompt = True
+                    break
 
-                    self._display.debug('Read next chunks')
-                    rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._play_context.timeout)
-                    if not rfd:
-                        # timeout. wrap up process communication
-                        stdout, stderr = p.communicate()
-                        raise AnsibleError('Connection error waiting for privilege escalation password prompt: %s' % become_output)
+                self._display.debug('Read next chunks')
+                rfd, wfd, efd = select.select([p.stdout, p.stderr], [], [p.stdout], self._play_context.timeout)
+                if not rfd:
+                    # timeout. wrap up process communication
+                    stdout, stderr = p.communicate()
+                    raise AnsibleError('Connection error waiting for privilege escalation password prompt: %s' % become_output)
 
-                    elif p.stderr in rfd:
-                        chunk = p.stderr.read()
-                        become_errput += chunk
-                        self._display.debug('stderr chunk is: %s' % chunk)
-                        self.check_incorrect_password(become_errput)
+                elif p.stderr in rfd:
+                    chunk = p.stderr.read()
+                    become_errput += chunk
+                    self._display.debug('stderr chunk is: %s' % chunk)
+                    self.check_incorrect_password(become_errput)
 
-                    elif p.stdout in rfd:
-                        chunk = p.stdout.read()
-                        become_output += chunk
-                        self._display.debug('stdout chunk is: %s' % chunk)
+                elif p.stdout in rfd:
+                    chunk = p.stdout.read()
+                    become_output += chunk
+                    self._display.debug('stdout chunk is: %s' % chunk)
 
 
-                    if not chunk:
-                        break
-                        #raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
+                if not chunk:
+                    break
+                    #raise AnsibleError('Connection closed waiting for privilege escalation password prompt: %s ' % become_output)
 
-                if passprompt:
-                    self._display.debug("Sending privilege escalation password.")
-                    stdin.write(self._play_context.become_pass + '\n')
-                else:
-                    no_prompt_out = become_output
-                    no_prompt_err = become_errput
+            if passprompt:
+                self._display.debug("Sending privilege escalation password.")
+                stdin.write(self._play_context.become_pass + '\n')
+            else:
+                no_prompt_out = become_output
+                no_prompt_err = become_errput
 
 
         (returncode, stdout, stderr) = self._communicate(p, stdin, in_data, sudoable=sudoable)
