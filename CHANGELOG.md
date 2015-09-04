@@ -89,6 +89,7 @@ New Modules:
   * amazon: route53_zone
   * amazon: sts_assume_role
   * amazon: s3_bucket
+  * amazon: s3_lifecycle
   * amazon: s3_logging
   * apk
   * bundler
@@ -203,6 +204,7 @@ New Modules:
   * webfaction_mailbox
   * webfaction_site
   * win_environment
+  * win_package
   * win_scheduled_task
   * win_iis_virtualdirectory
   * win_iis_webapplication
