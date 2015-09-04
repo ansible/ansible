@@ -27,48 +27,18 @@ $result = New-Object PSObject -Property @{
     changed = $false
 }
 
-If ($params.name) {
-    $name = $params.name -split ',' | % { $_.Trim() }
-}
-Else {
-    Fail-Json $result "mising required argument: name"
+$name = Get-Attr $params "name" -failifempty $true
+$name = $name -split ',' | % { $_.Trim() }
+
+$state = Get-Attr $params "state" "present"
+$state = $state.ToString().ToLower()
+If (($state -ne 'present') -and ($state -ne 'absent')) {
+    Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
 }
 
-If ($params.state) {
-    $state = $params.state.ToString().ToLower()
-    If (($state -ne 'present') -and ($state -ne 'absent')) {
-        Fail-Json $result "state is '$state'; must be 'present' or 'absent'"
-    }
-}
-Elseif (!$params.state) {
-    $state = "present"
-}
-
-If ($params.restart) {
-    $restart = $params.restart | ConvertTo-Bool
-}
-Else
-{
-    $restart = $false
-}
-
-if ($params.include_sub_features)
-{
-    $includesubfeatures = $params.include_sub_features | ConvertTo-Bool
-}
-Else
-{
-    $includesubfeatures = $false
-}
-
-if ($params.include_management_tools)
-{
-    $includemanagementtools = $params.include_management_tools | ConvertTo-Bool
-}
-Else
-{
-    $includemanagementtools = $false
-}
+$restart = Get-Attr $params "restart" $false | ConvertTo-Bool
+$includesubfeatures = Get-Attr $params "include_sub_features" $false | ConvertTo-Bool
+$includemanagementtools = Get-Attr $params "include_management_tools" $false | ConvertTo-Bool
 
 If ($state -eq "present") {
     try {
