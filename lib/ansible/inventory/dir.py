@@ -29,7 +29,6 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
-from ansible.utils.path import is_executable
 from ansible.inventory.ini import InventoryParser as InventoryINIParser
 from ansible.inventory.script import InventoryScript
 
@@ -54,7 +53,7 @@ def get_file_parser(hostsfile, loader):
     except:
         pass
 
-    if is_executable(hostsfile):
+    if loader.is_executable(hostsfile):
         try:
             parser = InventoryScript(loader=loader, filename=hostsfile)
             processed = True
@@ -65,10 +64,10 @@ def get_file_parser(hostsfile, loader):
 
     if not processed:
         try:
-            parser = InventoryINIParser(filename=hostsfile)
+            parser = InventoryINIParser(loader=loader, filename=hostsfile)
             processed = True
         except Exception as e:
-            if shebang_present and not is_executable(hostsfile):
+            if shebang_present and not loader.is_executable(hostsfile):
                 myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. " % hostsfile + \
                               "Perhaps you want to correct this with `chmod +x %s`?" % hostsfile)
             else:

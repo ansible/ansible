@@ -37,7 +37,8 @@ class InventoryParser(object):
     with their associated hosts and variable settings.
     """
 
-    def __init__(self, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
+        self._loader = loader
         self.filename = filename
 
         # Start with an empty host list and the default 'all' and
@@ -53,8 +54,14 @@ class InventoryParser(object):
         # Read in the hosts, groups, and variables defined in the
         # inventory file.
 
-        with open(filename) as fh:
-            self._parse(fh.readlines())
+        if loader:
+            (data, private) = loader._get_file_contents(filename)
+            data = data.split('\n')
+        else:
+            with open(filename) as fh:
+                data = fh.readlines()
+
+        self._parse(data)
 
         # Finally, add all top-level groups (including 'ungrouped') as
         # children of 'all'.
