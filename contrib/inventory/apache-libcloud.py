@@ -260,11 +260,11 @@ class LibcloudInventory(object):
             key = self.to_safe('ec2_' + key)
 
             # Handle complex types
-            if type(value) in [int, bool]:
+            if isinstance(value, (int, bool)):
                 instance_vars[key] = value
-            elif type(value) in string_types:
+            elif isinstance(value, string_types):
                 instance_vars[key] = value.strip()
-            elif type(value) == type(None):
+            elif value is None:
                 instance_vars[key] = ''
             elif key == 'ec2_region':
                 instance_vars[key] = value.name
