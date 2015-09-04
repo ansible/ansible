@@ -39,6 +39,8 @@ import sys
 import time
 import ConfigParser
 
+from six import text_type
+
 # Disable logging message trigged by pSphere/suds.
 try:
     from logging import NullHandler
@@ -149,7 +151,7 @@ class VMwareInventory(object):
         seen = seen or set()
         if isinstance(obj, ManagedObject):
             try:
-                obj_unicode = unicode(getattr(obj, 'name'))
+                obj_unicode = text_type(getattr(obj, 'name'))
             except AttributeError:
                 obj_unicode = ()
             if obj in seen:

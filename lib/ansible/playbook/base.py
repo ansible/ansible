@@ -27,7 +27,7 @@ from functools import partial
 from inspect import getmembers
 from io import FileIO
 
-from six import iteritems, string_types
+from six import iteritems, string_types, text_type
 
 from jinja2.exceptions import UndefinedError
 
@@ -291,7 +291,7 @@ class Base:
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = unicode(value)
+                        value = text_type(value)
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':

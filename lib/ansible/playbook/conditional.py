@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from jinja2.exceptions import UndefinedError
+from six import text_type
 
 from ansible.errors import *
 from ansible.playbook.attribute import FieldAttribute
@@ -82,7 +83,7 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        if conditional in all_vars and '-' not in unicode(all_vars[conditional]):
+        if conditional in all_vars and '-' not in text_type(all_vars[conditional]):
             conditional = all_vars[conditional]
 
         # make sure the templar is using the variables specifed to this method
