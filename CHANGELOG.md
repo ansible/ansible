@@ -9,7 +9,11 @@ New Modules:
 
 Other Notable Changes:
 
-## 1.9.3 "Dancing In the Street" - TBD
+## 1.9.4 "Dancing In the Street" - TBD
+
+* Fixes a bug where yum state=latest would error if there were no updates to install.
+
+## 1.9.3 "Dancing In the Street" - Sep 3, 2015
 
 * Fixes a bug related to keyczar messing up encodings internally, resulting in decrypted
   messages coming out as empty strings.
