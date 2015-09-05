@@ -73,16 +73,19 @@ def openstack_find_nova_addresses(addresses, ext_tag, key_name=None):
 def openstack_full_argument_spec(**kwargs):
     spec = dict(
         cloud=dict(default=None),
-        auth_plugin=dict(default=None),
+        auth_type=dict(default=None),
         auth=dict(default=None),
-        auth_token=dict(default=None),
         region_name=dict(default=None),
         availability_zone=dict(default=None),
-        state=dict(default='present', choices=['absent', 'present']),
+        verify=dict(default=True, aliases=['validate_certs']),
+        cacert=dict(default=None),
+        cert=dict(default=None),
+        key=dict(default=None),
         wait=dict(default=True, type='bool'),
         timeout=dict(default=180, type='int'),
+        api_timeout=dict(default=None, type='int'),
         endpoint_type=dict(
-            default='publicURL', choices=['publicURL', 'internalURL']
+            default='public', choices=['public', 'internal', 'admin']
         )
     )
     spec.update(kwargs)
@@ -90,15 +93,7 @@ def openstack_full_argument_spec(**kwargs):
 
 
 def openstack_module_kwargs(**kwargs):
-    ret = dict(
-        required_one_of=[
-            ['cloud', 'auth'],
-        ],
-        mutually_exclusive=[
-            ['auth', 'auth_token'],
-            ['auth_plugin', 'auth_token'],
-        ],
-    )
+    ret = {}
     for key in ('mutually_exclusive', 'required_together', 'required_one_of'):
         if key in kwargs:
             if key in ret:

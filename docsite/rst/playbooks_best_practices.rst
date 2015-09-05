@@ -28,7 +28,7 @@ Directory Layout
 The top level of the directory would contain files and directories like so::
 
     production                # inventory file for production servers
-    stage                     # inventory file for stage environment 
+    staging                   # inventory file for staging environment 
 
     group_vars/
        group1                 # here we assign variables to particular groups
@@ -78,10 +78,10 @@ If you are using a cloud provider, you should not be managing your inventory in 
 This does not just apply to clouds -- If you have another system maintaining a canonical list of systems
 in your infrastructure, usage of dynamic inventory is a great idea in general.
 
-.. _stage_vs_prod:
+.. _staging_vs_prod:
 
-How to Differentiate  Stage vs Production
-`````````````````````````````````````````
+How to Differentiate Staging vs Production
+``````````````````````````````````````````
 
 If managing static inventory, it is frequently asked how to differentiate different types of environments.  The following example
 shows a good way to do this.  Similar methods of grouping could be adapted to dynamic inventory (for instance, consider applying the AWS
@@ -285,14 +285,14 @@ all the time -- you can have situational plays that you use at different times a
 Ansible allows you to deploy and configure using the same tool, so you would likely reuse groups and just
 keep the OS configuration in separate playbooks from the app deployment.
 
-.. _stage_vs_production:
+.. _staging_vs_production:
 
-Stage vs Production
-+++++++++++++++++++
+Staging vs Production
++++++++++++++++++++++
 
-As also mentioned above, a good way to keep your stage (or testing) and production environments separate is to use a separate inventory file for stage and production.   This way you pick with -i what you are targeting.  Keeping them all in one file can lead to surprises!
+As also mentioned above, a good way to keep your staging (or testing) and production environments separate is to use a separate inventory file for staging and production.   This way you pick with -i what you are targeting.  Keeping them all in one file can lead to surprises!
 
-Testing things in a stage environment before trying in production is always a great idea.  Your environments need not be the same
+Testing things in a staging environment before trying in production is always a great idea.  Your environments need not be the same
 size and you can use group variables to control the differences between those environments.
 
 .. _rolling_update:

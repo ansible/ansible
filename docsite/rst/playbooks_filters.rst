@@ -3,6 +3,7 @@ Jinja2 filters
 
 .. contents:: Topics
 
+
 Filters in Jinja2 are a way of transforming template expressions from one kind of data into another.  Jinja2
 ships with many of these. See `builtin filters`_ in the official Jinja2 template documentation.
 
@@ -16,8 +17,26 @@ Filters For Formatting Data
 The following filters will take a data structure in a template and render it in a slightly different format.  These
 are occasionally useful for debugging::
 
+    {{ some_variable | to_json }}
+    {{ some_variable | to_yaml }}
+
+For human readable output, you can use::
+
     {{ some_variable | to_nice_json }}
     {{ some_variable | to_nice_yaml }}
+
+Alternatively, you may be reading in some already formatted data::
+
+    {{ some_variable | from_json }}
+    {{ some_variable | from_yaml }}
+
+for example::
+
+    tasks:
+      - shell: cat /some/path/to/file.json
+        register: result
+
+      - set_fact: myvar="{{ result.stdout | from_json }}"
 
 .. _filters_used_with_conditionals:
 
@@ -91,6 +110,10 @@ As of Ansible 1.8, it is possible to use the default filter to omit variables an
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.
 
+.. note:: If you are "chaining" additional filters after the `default(omit)` filter, you should instead do something like this:
+      `"{{ foo | default(None) | some_filter or omit }}"`. In this example, the default `None` (python null) value will cause the
+      later filters to fail, which will trigger the `or omit` portion of the logic. Using omit in this manner is very specific to
+      the later filters you're chaining though, so be prepared for some trial and error if you do this.
 
 .. _list_filters:
 
@@ -277,7 +300,7 @@ Get a string checksum::
 
     {{ 'test2'|checksum }}
 
-Other hashes (platform dependant)::
+Other hashes (platform dependent)::
 
     {{ 'test2'|hash('blowfish') }}
 
@@ -293,15 +316,54 @@ To get a sha256 password hash with a specific salt::
 Hash types available depend on the master system running ansible,
 'hash' depends on hashlib password_hash depends on crypt.
 
+.. _combine_filter:
+
+Combining hashes/dictionaries
+-----------------------------
+
+.. versionadded:: 2.0
+
+The `combine` filter allows hashes to be merged. For example, the
+following would override keys in one hash:
+
+    {{ {'a':1, 'b':2}|combine({'b':3}) }}
+
+The resulting hash would be:
+
+    {'a':1, 'b':3}
+
+The filter also accepts an optional `recursive=True` parameter to not
+only override keys in the first hash, but also recurse into nested
+hashes and merge their keys too:
+
+    {{ {'a':{'foo':1, 'bar':2}, 'b':2}|combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
+
+This would result in:
+
+    {'a':{'foo':1, 'bar':3, 'baz':4}, 'b':2}
+
+The filter can also take multiple arguments to merge:
+
+    {{ a|combine(b, c, d) }}
+
+In this case, keys in `d` would override those in `c`, which would
+override those in `b`, and so on.
+
+This behaviour does not depend on the value of the `hash_behaviour`
+setting in `ansible.cfg`.
 
 .. _other_useful_filters:
 
 Other Useful Filters
 --------------------
 
-To use one value on true and another on false (since 1.9)::
+To add quotes for shell usage::
 
-   {{ name == "John" | ternary('Mr','Ms') }}
+    - shell: echo={{ string_value | quote }} 
+
+To use one value on true and another on false (new in version 1.9)::
+
+   {{ (name == "John") | ternary('Mr','Ms') }}
 
 To concatenate a list into a string::
 
@@ -311,9 +373,29 @@ To get the last name of a file path, like 'foo.txt' out of '/etc/asdf/foo.txt'::
 
     {{ path | basename }}
 
+To get the last name of a windows style file path (new in version 2.0)::
+
+    {{ path | win_basename }}
+
+To separate the windows drive letter from the rest of a file path (new in version 2.0)::
+
+    {{ path | win_splitdrive }}
+
+To get only the windows drive letter
+
+    {{ path | win_splitdrive | first }} 
+    
+To get the rest of the path without the drive letter
+
+    {{ path | win_splitdrive | last }} 
+
 To get the directory from a path::
 
     {{ path | dirname }}
+
+To get the directory from a windows path (new version 2.0)::
+
+    {{ path | win_dirname }}
 
 To expand a path containing a tilde (`~`) character (new in version 1.5)::
 
@@ -322,6 +404,15 @@ To expand a path containing a tilde (`~`) character (new in version 1.5)::
 To get the real path of a link (new in version 1.8)::
 
    {{ path | realpath }}
+
+To get the relative path of a link, from a start point (new in version 1.7)::
+
+    {{ path | relpath('/etc') }}
+
+To get the root and extension of a path or filename (new in version 2.0)::
+
+    # with path == 'nginx.conf' the return would be ('nginx', '.conf')
+    {{ path | splitext }}
 
 To work with Base64 encoded strings::
 
@@ -352,16 +443,23 @@ To match strings against a regex, use the "match" or "search" filter::
 
 'match' will require a complete match in the string, while 'search' will require a match inside of the string.
 
+.. versionadded:: 1.6
+
 To replace text in a string with regex, use the "regex_replace" filter::
 
     # convert "ansible" to "able"    
-    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}         
+    {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
 
     # convert "foobar" to "bar"
     {{ 'foobar' | regex_replace('^f.*o(.*)$', '\\1') }}
 
-.. note:: If "regex_replace" filter is used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
-   then you need to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+.. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
+   then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
+
+To escape special characters within a regex, use the "regex_escape" filter::
+
+    # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
+    {{ '^f.*o(.*)$' | regex_escape() }}
 
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones

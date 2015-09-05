@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_keypair|failed
-      - rax_keypair.msg == 'missing required arguments: name'
+      - 'rax_keypair.msg == "missing required arguments: name"'
 # ============================================================
 
 

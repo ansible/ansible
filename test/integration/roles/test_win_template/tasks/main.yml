@@ -39,13 +39,24 @@
     that: 
       - "template_result.changed == true"
 
+- name: fill in a basic template again
+  win_template:
+    src: foo.j2
+    dest: "{{win_output_dir}}/foo.templated"
+  register: template_result2
+
+- name: verify that the template was not changed
+  assert: 
+    that: 
+      - "not template_result2|changed" 
+
 # VERIFY CONTENTS
 
 - name: copy known good into place
-  win_copy: src=foo.txt dest={{win_output_dir}}\foo.txt
+  win_copy: src=foo.txt dest={{win_output_dir}}\\foo.txt
 
 - name: compare templated file to known good
-  raw: fc.exe {{win_output_dir}}\foo.templated {{win_output_dir}}\foo.txt 
+  raw: fc.exe {{win_output_dir}}\\foo.templated {{win_output_dir}}\\foo.txt 
   register: diff_result
 
 - debug: var=diff_result

@@ -17,6 +17,11 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # ============================================================
+
+- name: make sure the test database is not there
+  command: mysql "-e drop database '{{db_name}}';"
+  ignore_errors: True
+
 - name: test state=present for a database name (expect changed=true)
   mysql_db: name={{ db_name }} state=present
   register: result

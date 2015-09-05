@@ -2,12 +2,12 @@
 .\"     Title: ansible
 .\"    Author: :doctype:manpage
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 12/09/2014
+.\"      Date: 07/15/2015
 .\"    Manual: System administration commands
-.\"    Source: Ansible 1.9
+.\"    Source: Ansible %VERSION%
 .\"  Language: English
 .\"
-.TH "ANSIBLE" "1" "12/09/2014" "Ansible 1\&.9" "System administration commands"
+.TH "ANSIBLE" "1" "07/15/2015" "Ansible %VERSION%" "System administration commands"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -43,9 +43,86 @@ A name of a group in the inventory file, a shell\-like glob selecting hosts in i
 .RE
 .SH "OPTIONS"
 .PP
-\fB\-v\fR, \fB\-\-verbose\fR
+\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
 .RS 4
-Verbose mode, more output from successful actions will be shown\&. Give up to three times for more output\&.
+The
+\fIARGUMENTS\fR
+to pass to the module\&.
+.RE
+.PP
+\fB\-\-ask\-become\-pass\fR
+.RS 4
+Ask for privilege escalation password\&.
+.RE
+.PP
+\fB\-k\fR, \fB\-\-ask\-pass\fR
+.RS 4
+Prompt for the SSH password instead of assuming key\-based authentication with ssh\-agent\&.
+.RE
+.PP
+\fB\-\-ask\-su\-pass\fR
+.RS 4
+Prompt for su password (deprecated, use become)\&.
+.RE
+.PP
+\fB\-K\fR, \fB\-\-ask\-sudo\-pass\fR
+.RS 4
+Prompt for the password to use with \-\-sudo, if any\&.
+.RE
+.PP
+\fB\-\-ask\-vault\-pass\fR
+.RS 4
+Prompt for vault password\&.
+.RE
+.PP
+\fB\-B\fR \fINUM\fR, \fB\-\-background=\fR\fINUM\fR
+.RS 4
+Run commands in the background, killing the task after
+\fINUM\fR
+seconds\&.
+.RE
+.PP
+\fB\-\-become\-method=\fR\fIBECOME_METHOD\fR
+.RS 4
+Privilege escalation method to use (default=sudo), valid choices: [ sudo | su | pbrun | pfexec | runas | doas ]
+.RE
+.PP
+\fB\-\-become\-user=\fR\fIBECOME_USER\fR
+.RS 4
+Run operations as this user (default=None)\&.
+.RE
+.PP
+\fB\-C\fR, \fB\-\-check\fR
+.RS 4
+Don\(cqt make any changes; instead try to predict some of the changes that may occur\&.
+.RE
+.PP
+\fB\-c\fR \fICONNECTION\fR, \fB\-\-connection=\fR\fICONNECTION\fR
+.RS 4
+Connection type to use\&. Possible options are
+\fIparamiko\fR
+(SSH),
+\fIssh\fR, and
+\fIlocal\fR\&.
+\fIlocal\fR
+is mostly useful for crontab or kickstarts\&.
+.RE
+.PP
+\fB\-e\fR \fIEXTRA_VARS*, \fR\fI\fB\-\-extra\-vars=\fR\fR\fI\*(AqEXTRA_VARS\fR
+.RS 4
+Set additional variables as key=value or YAML/JSON\&.
+.RE
+.PP
+\fB\-f\fR \fINUM\fR, \fB\-\-forks=\fR\fINUM\fR
+.RS 4
+Level of parallelism\&.
+\fINUM\fR
+is specified as an integer, the default is 5\&.
+.RE
+.PP
+\fB\-h\fR, \fB\-\-help\fR
+.RS 4
+Show help message and exit\&.
 .RE
 .PP
 \fB\-i\fR \fIPATH\fR, \fB\-\-inventory=\fR\fIPATH\fR
@@ -56,16 +133,19 @@ to the inventory hosts file, which defaults to
 \fI/etc/ansible/hosts\fR\&.
 .RE
 .PP
-\fB\-f\fR \fINUM\fR, \fB\-\-forks=\fR\fINUM\fR
+\fB\-l\fR \fISUBSET\fR, \fB\-\-limit=\fR\fISUBSET\fR
 .RS 4
-Level of parallelism\&.
-\fINUM\fR
-is specified as an integer, the default is 5\&.
+Further limits the selected host/group patterns\&.
 .RE
 .PP
-\fB\-\-private\-key=\fR\fIPRIVATE_KEY_FILE\fR
+\fB\-l\fR \fI~REGEX\fR, \fB\-\-limit=\fR\fI~REGEX\fR
 .RS 4
-Use this file to authenticate the connection\&.
+Further limits hosts with a regex pattern\&.
+.RE
+.PP
+\fB\-\-list\-hosts\fR
+.RS 4
+Outputs a list of matching hosts; does not execute anything else\&.
 .RE
 .PP
 \fB\-m\fR \fINAME\fR, \fB\-\-module\-name=\fR\fINAME\fR
@@ -82,41 +162,44 @@ search path to load modules from\&. The default is
 \fI/usr/share/ansible\fR\&. This can also be set with the ANSIBLE_LIBRARY environment variable\&.
 .RE
 .PP
-\fB\-a\fR \*(Aq\fIARGUMENTS\fR\*(Aq, \fB\-\-args=\fR\*(Aq\fIARGUMENTS\fR\*(Aq
-.RS 4
-The
-\fIARGUMENTS\fR
-to pass to the module\&.
-.RE
-.PP
-\fB\-k\fR, \fB\-\-ask\-pass\fR  
-.RS 4
-Prompt for the SSH password instead of assuming key\-based authentication with ssh\-agent\&.
-.RE
-.PP
-\fB--ask-su-pass\fR
-.RS 4
-Prompt for the su password instead of assuming key\-based authentication with ssh\-agent\&.
-.RE
-.PP
-\fB\-K\fR, \fB\-\-ask\-sudo\-pass\fR
-.RS 4
-Prompt for the password to use with \-\-sudo, if any\&.
-.RE
-.PP
 \fB\-o\fR, \fB\-\-one\-line\fR
 .RS 4
 Try to output everything on one line\&.
 .RE
 .PP
-\fB\-s\fR, \fB\-\-sudo\fR
+\fB\-P\fR \fINUM\fR, \fB\-\-poll=\fR\fINUM\fR
 .RS 4
-Run the command as the user given by \-u and sudo to root.
+Poll a background job every
+\fINUM\fR
+seconds\&. Requires
+\fB\-B\fR\&.
+.RE
+.PP
+\fB\-\-private\-key=\fR\fIPRIVATE_KEY_FILE\fR
+.RS 4
+Use this file to authenticate the connection\&.
 .RE
 .PP
 \fB\-S\fR, \fB\-\-su\fR
 .RS 4
-Run operations with su\&.
+Run operations with su (deprecated, use become)\&.
+.RE
+.PP
+\fB\-R\fR \fISU_USER\fR, \fB\-\-se\-user=\fR\fISUDO_USER\fR
+.RS 4
+Run operations with su as this user (default=root) (deprecated, use become)
+.RE
+.PP
+\fB\-s\fR, \fB\-\-sudo\fR
+.RS 4
+Run the command as the user given by \-u and sudo to root\&.
+.RE
+.PP
+\fB\-U\fR \fISUDO_USERNAME\fR, \fB\-\-sudo\-user=\fR\fISUDO_USERNAME\fR
+.RS 4
+Sudo to
+\fISUDO_USERNAME\fR
+instead of root\&. Implies \-\-sudo\&.
 .RE
 .PP
 \fB\-t\fR \fIDIRECTORY\fR, \fB\-\-tree=\fR\fIDIRECTORY\fR
@@ -131,21 +214,6 @@ Connection timeout to use when trying to talk to hosts, in
 \fISECONDS\fR\&.
 .RE
 .PP
-\fB\-B\fR \fINUM\fR, \fB\-\-background=\fR\fINUM\fR
-.RS 4
-Run commands in the background, killing the task after
-\fINUM\fR
-seconds\&.
-.RE
-.PP
-\fB\-P\fR \fINUM\fR, \fB\-\-poll=\fR\fINUM\fR
-.RS 4
-Poll a background job every
-\fINUM\fR
-seconds\&. Requires
-\fB\-B\fR\&.
-.RE
-.PP
 \fB\-u\fR \fIUSERNAME\fR, \fB\-\-user=\fR\fIUSERNAME\fR
 .RS 4
 Use this remote
@@ -153,37 +221,19 @@ Use this remote
 instead of the current user\&.
 .RE
 .PP
-\fB\-U\fR \fISUDO_USERNAME\fR, \fB\-\-sudo\-user=\fR\fISUDO_USERNAME\fR
+\fB\-\-vault\-password\-file=\fR\fIVAULT_PASSWORD_FILE\fR
 .RS 4
-Sudo to
-\fISUDO_USERNAME\fR
-instead of root\&. Implies \-\-sudo\&.
+Vault password file\&.
 .RE
 .PP
-\fB\-c\fR \fICONNECTION\fR, \fB\-\-connection=\fR\fICONNECTION\fR
+\fB\-v\fR, \fB\-\-verbose\fR
 .RS 4
-Connection type to use\&. Possible options are
-\fIparamiko\fR
-(SSH),
-\fIssh\fR, and
-\fIlocal\fR\&.
-\fIlocal\fR
-is mostly useful for crontab or kickstarts\&.
+Verbose mode, more output from successful actions will be shown\&. Give up to three times for more output\&.
 .RE
 .PP
-\fB\-l\fR \fISUBSET\fR, \fB\-\-limit=\fR\fISUBSET\fR
+\fB\-\-version\fR
 .RS 4
-Further limits the selected host/group patterns\&.
-.RE
-.PP
-\fB\-l\fR \fI~REGEX\fR, \fB\-\-limit=\fR\fI~REGEX\fR
-.RS 4
-Further limits hosts with a regex pattern\&.
-.RE
-.PP
-\fB\-\-list\-hosts\fR
-.RS 4
-Outputs a list of matching hosts; does not execute anything else\&.
+Show program version number and exit\&.
 .RE
 .SH "INVENTORY"
 .sp
@@ -203,7 +253,7 @@ Ranges of hosts are also supported\&. For more information and additional option
 .sp
 The following environment variables may be specified\&.
 .sp
-ANSIBLE_HOSTS  \(em Override the default ansible hosts file
+ANSIBLE_INVENTORY  \(em Override the default ansible inventory file
 .sp
 ANSIBLE_LIBRARY \(em Override the default ansible module library path
 .sp
@@ -221,3 +271,9 @@ Ansible is released under the terms of the GPLv3 License\&.
 \fBansible\-playbook\fR(1), \fBansible\-pull\fR(1), \fBansible\-doc\fR(1)
 .sp
 Extensive documentation is available in the documentation site: http://docs\&.ansible\&.com\&. IRC and mailing list info can be found in file CONTRIBUTING\&.md, available in: https://github\&.com/ansible/ansible
+.SH "AUTHOR"
+.PP
+\fB:doctype:manpage\fR
+.RS 4
+Author.
+.RE

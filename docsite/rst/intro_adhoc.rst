@@ -108,7 +108,7 @@ Using the :ref:`shell` module looks like this::
 When running any command with the Ansible *ad hoc* CLI (as opposed to
 :doc:`Playbooks <playbooks>`), pay particular attention to shell quoting rules, so
 the local shell doesn't eat a variable before it gets passed to Ansible.
-For example, using double vs single quotes in the above example would
+For example, using double rather than single quotes in the above example would
 evaluate the variable on the box you were on.
 
 So far we've been demoing simple command execution, but most Ansible modules usually do not work like

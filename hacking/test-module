@@ -26,7 +26,8 @@
 #    test-module -m ../library/commands/command -a "/bin/sleep 3"
 #    test-module -m ../library/system/service -a "name=httpd ensure=restarted"
 #    test-module -m ../library/system/service -a "name=httpd ensure=restarted" --debugger /usr/bin/pdb
-#    test-modulr -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
+#    test-module -m ../library/file/lineinfile -a "dest=/etc/exports line='/srv/home hostname1(rw,sync)'" --check
+#    test-module -m ../library/commands/command -a "echo hello" -n -o "test_hello"
 
 import sys
 import base64
@@ -34,8 +35,11 @@ import os
 import subprocess
 import traceback
 import optparse
-import ansible.utils as utils
-import ansible.module_common as module_common
+import ansible.utils.vars as utils_vars
+from ansible.parsing import DataLoader
+from ansible.parsing.utils.jsonify import jsonify
+from ansible.parsing.splitter import parse_kv
+import ansible.executor.module_common as module_common
 import ansible.constants as C
 
 try:
@@ -59,9 +63,15 @@ def parse():
         help="path to python debugger (e.g. /usr/bin/pdb)")
     parser.add_option('-I', '--interpreter', dest='interpreter',
         help="path to interpreter to use for this module (e.g. ansible_python_interpreter=/usr/bin/python)",
-        metavar='INTERPRETER_TYPE=INTERPRETER_PATH')
+        metavar='INTERPRETER_TYPE=INTERPRETER_PATH',
+        default='python={}'.format(sys.executable))
     parser.add_option('-c', '--check', dest='check', action='store_true',
         help="run the module in check mode")
+    parser.add_option('-n', '--noexecute', dest='execute', action='store_false',
+        default=True, help="do not run the resulting module")
+    parser.add_option('-o', '--output', dest='filename',
+        help="Filename for resulting module",
+        default="~/.ansible_module_generated")
     options, args = parser.parse_args()
     if not options.module_path:
         parser.print_help()
@@ -74,58 +84,62 @@ def write_argsfile(argstring, json=False):
     argspath = os.path.expanduser("~/.ansible_test_module_arguments")
     argsfile = open(argspath, 'w')
     if json:
-        args = utils.parse_kv(argstring)
-        argstring = utils.jsonify(args)
+        args = parse_kv(argstring)
+        argstring = jsonify(args)
     argsfile.write(argstring)
     argsfile.close()
     return argspath
 
-def boilerplate_module(modfile, args, interpreter, check):
+def boilerplate_module(modfile, args, interpreter, check, destfile):
     """ simulate what ansible does with new style modules """
 
     #module_fh = open(modfile)
     #module_data = module_fh.read()
     #module_fh.close()
 
-    replacer = module_common.ModuleReplacer()
+    #replacer = module_common.ModuleReplacer()
+    loader = DataLoader()
 
     #included_boilerplate = module_data.find(module_common.REPLACER) != -1 or module_data.find("import ansible.module_utils") != -1
 
     complex_args = {}
     if args.startswith("@"):
         # Argument is a YAML file (JSON is a subset of YAML)
-        complex_args = utils.combine_vars(complex_args, utils.parse_yaml_from_file(args[1:]))
+        complex_args = utils_vars.combine_vars(complex_args, loader.load_from_file(args[1:]))
         args=''
     elif args.startswith("{"):
         # Argument is a YAML document (not a file)
-        complex_args = utils.combine_vars(complex_args, utils.parse_yaml(args))
+        complex_args = utils_vars.combine_vars(complex_args, loader.load(args))
         args=''
 
-    inject = {}
+    if args:
+        parsed_args = parse_kv(args)
+        complex_args = utils_vars.combine_vars(complex_args, parsed_args)
+
+    task_vars = {}
     if interpreter:
         if '=' not in interpreter:
-            print 'interpreter must by in the form of ansible_python_interpreter=/usr/bin/python'
+            print("interpreter must by in the form of ansible_python_interpreter=/usr/bin/python")
             sys.exit(1)
         interpreter_type, interpreter_path = interpreter.split('=')
         if not interpreter_type.startswith('ansible_'):
             interpreter_type = 'ansible_%s' % interpreter_type
         if not interpreter_type.endswith('_interpreter'):
             interpreter_type = '%s_interpreter' % interpreter_type
-        inject[interpreter_type] = interpreter_path
+        task_vars[interpreter_type] = interpreter_path
 
     if check:
          complex_args['CHECKMODE'] = True
 
-    (module_data, module_style, shebang) = replacer.modify_module(
-        modfile, 
+    (module_data, module_style, shebang) = module_common.modify_module(
+        modfile,
         complex_args,
-        args,
-        inject 
+        task_vars=task_vars
     )
 
-    modfile2_path = os.path.expanduser("~/.ansible_module_generated")
-    print "* including generated source, if any, saving to: %s" % modfile2_path
-    print "* this may offset any line numbers in tracebacks/debuggers!"
+    modfile2_path = os.path.expanduser(destfile)
+    print("* including generated source, if any, saving to: %s" % modfile2_path)
+    print("* this may offset any line numbers in tracebacks/debuggers!")
     modfile2 = open(modfile2_path, 'w')
     modfile2.write(module_data)
     modfile2.close()
@@ -139,28 +153,28 @@ def runtest( modfile, argspath):
     os.system("chmod +x %s" % modfile)
 
     invoke = "%s" % (modfile)
-    if argspath is not None:     
+    if argspath is not None:
         invoke = "%s %s" % (modfile, argspath)
 
     cmd = subprocess.Popen(invoke, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     (out, err) = cmd.communicate()
 
     try:
-        print "***********************************"
-        print "RAW OUTPUT"
-        print out
-        print err
-        results = utils.parse_json(out)
+        print("***********************************")
+        print("RAW OUTPUT")
+        print(out)
+        print(err)
+        results = json.loads(out)
     except:
-        print "***********************************"
-        print "INVALID OUTPUT FORMAT"
-        print out
+        print("***********************************")
+        print("INVALID OUTPUT FORMAT")
+        print(out)
         traceback.print_exc()
         sys.exit(1)
 
-    print "***********************************"
-    print "PARSED OUTPUT"
-    print utils.jsonify(results,format=True)
+    print("***********************************")
+    print("PARSED OUTPUT")
+    print(jsonify(results,format=True))
 
 def rundebug(debugger, modfile, argspath):
     """Run interactively with console debugger."""
@@ -170,12 +184,12 @@ def rundebug(debugger, modfile, argspath):
     else:
         subprocess.call("%s %s" % (debugger, modfile), shell=True)
 
-def main(): 
+def main():
 
     options, args = parse()
-    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter, options.check)
+    (modfile, module_style) = boilerplate_module(options.module_path, options.module_args, options.interpreter, options.check, options.filename)
 
-    argspath=None
+    argspath = None
     if module_style != 'new':
         if module_style == 'non_native_want_json':
             argspath = write_argsfile(options.module_args, json=True)
@@ -183,11 +197,12 @@ def main():
             argspath = write_argsfile(options.module_args, json=False)
         else:
             raise Exception("internal error, unexpected module style: %s" % module_style)
-    if options.debugger: 
-        rundebug(options.debugger, modfile, argspath)
-    else:
-        runtest(modfile, argspath)
-        
+    if options.execute:
+        if options.debugger:
+            rundebug(options.debugger, modfile, argspath)
+        else:
+            runtest(modfile, argspath)
+
 if __name__ == "__main__":
     main()
 

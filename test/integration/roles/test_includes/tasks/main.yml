@@ -27,7 +27,7 @@
       - "cc == '3'"
 
 - set_fact: 
-     a: 101 
+     a: 101
      b: 102
      c: 103
 
@@ -36,31 +36,43 @@
 - name: verify variable include params
   assert: 
     that:
+      - "ca == 101"
+      - "cb == 102"
+      - "cc == 103"
+
+# Test that strings are not turned into numbers
+- set_fact:
+     a: "101"
+     b: "102"
+     c: "103"
+
+- include: included_task1.yml a={{a}} b={{b}} c=103
+
+- name: verify variable include params
+  assert:
+    that:
       - "ca == '101'"
       - "cb == '102'"
       - "cc == '103'"
 
 # now try long form includes
-#
-# FIXME: not sure if folks were using this, or if vars were top level, but seems like
-# it should be a thing.
-#
-#- include: included_task1.yml
-#  vars:
-#    a: 201
-#    b: 202
-#    c: 203
-#
-#- debug: var=a
-#- debug: var=b
-#- debug: var=c
-#
-#- name: verify long-form include params
-#  assert: 
-#    that:
-#      - "ca == 201"
-#      - "cb == 202"
-#      - "cc == 203"
+
+- include: included_task1.yml
+  vars:
+    a: 201
+    b: 202
+    c: 203
+
+- debug: var=a
+- debug: var=b
+- debug: var=c
+
+- name: verify long-form include params
+  assert:
+    that:
+      - "ca == 201"
+      - "cb == 202"
+      - "cc == 203"
 
 - name: test handlers with includes
   shell: echo 1

@@ -38,8 +38,9 @@ And you may also tag basic include statements::
 
     - include: foo.yml tags=web,foo
 
-Both of these have the function of tagging every single task inside the include statement.
-
+Both of these apply the specified tags to every task inside the included
+file or role, so that these tasks can be selectively run when the playbook
+is invoked with the corresponding tags.
 
 Special Tags
 ````````````
@@ -59,7 +60,9 @@ Example::
             - tag1
 
 There are another 3 special keywords for tags, 'tagged', 'untagged' and 'all', which run only tagged, only untagged
-and all tasks respectively. By default ansible runs as if --tags all had been specified.
+and all tasks respectively.
+
+By default ansible runs as if '--tags all' had been specified.
 
 
 .. seealso::

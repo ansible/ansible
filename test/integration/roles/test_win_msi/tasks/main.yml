@@ -17,7 +17,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 - name: use win_get_url module to download msi
-  win_get_url: url=http://downloads.sourceforge.net/project/sevenzip/7-Zip/9.22/7z922-x64.msi dest='C:\7z922-x64.msi'
+  win_get_url: url=http://downloads.sourceforge.net/project/sevenzip/7-Zip/9.22/7z922-x64.msi dest='C:\\7z922-x64.msi'
   register: win_get_url_result
 
 - name: install 7zip msi

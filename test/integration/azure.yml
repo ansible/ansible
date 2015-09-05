@@ -1,0 +1,7 @@
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tags:
+    - test_azure
+  roles:
+    - { role: test_azure }

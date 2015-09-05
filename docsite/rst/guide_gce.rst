@@ -22,7 +22,7 @@ The GCE modules all require the apache-libcloud module, which you can install fr
 Credentials
 -----------
 
-To work with the GCE modules, you'll first need to get some credentials. You can create new one from the `console <https://console.developers.google.com/>`_ by going to the "APIs and Auth" section and choosing to create a new client ID for a service account. Once you've created a new client ID and downloaded the generated private key (in the `pkcs12 format <http://en.wikipedia.org/wiki/PKCS_12>`_), you'll need to convert the key by running the following command:
+To work with the GCE modules, you'll first need to get some credentials. You can create new one from the `console <https://console.developers.google.com/>`_ by going to the "APIs and Auth" section and choosing to create a new client ID for a service account. Once you've created a new client ID and downloaded (you must click **Generate new P12 Key**) the generated private key (in the `pkcs12 format <http://en.wikipedia.org/wiki/PKCS_12>`_), you'll need to convert the key by running the following command:
 
 .. code-block:: bash
 
@@ -79,6 +79,8 @@ Create a file ``secrets.py`` looking like following, and put it in some folder w
     GCE_PARAMS = ('i...@project.googleusercontent.com', '/path/to/project.pem')
     GCE_KEYWORD_PARAMS = {'project': 'project_id'}
 
+Ensure to enter the email address from the created services account and not the one from your main account.
+
 Now the modules can be used as above, but the account information can be omitted.
 
 GCE Dynamic Inventory
@@ -86,9 +88,9 @@ GCE Dynamic Inventory
 
 The best way to interact with your hosts is to use the gce inventory plugin, which dynamically queries GCE and tells Ansible what nodes can be managed.
 
-Note that when using the inventory script ``gce.py``, you also need to populate the ``gce.ini`` file that you can find in the plugins/inventory directory of the ansible checkout.
+Note that when using the inventory script ``gce.py``, you also need to populate the ``gce.ini`` file that you can find in the contrib/inventory directory of the ansible checkout.
 
-To use the GCE dynamic inventory script, copy ``gce.py`` from ``plugins/inventory`` into your inventory directory and make it executable. You can specify credentials for ``gce.py`` using the ``GCE_INI_PATH`` environment variable -- the default is to look for gce.ini in the same directory as the inventory script.
+To use the GCE dynamic inventory script, copy ``gce.py`` from ``contrib/inventory`` into your inventory directory and make it executable. You can specify credentials for ``gce.py`` using the ``GCE_INI_PATH`` environment variable -- the default is to look for gce.ini in the same directory as the inventory script.
 
 Let's see if inventory is working:
 
@@ -109,7 +111,7 @@ Now let's see if we can use the inventory script to talk to Google.
           "x.x.x.x"
         ],
 
-As with all dynamic inventory plugins in Ansible, you can configure the inventory path in ansible.cfg.  The recommended way to use the inventory is to create an ``inventory`` directory, and place both the ``gce.py`` script and a file containing ``localhost`` in it.  This can allow for cloud inventory to be used alongside local inventory (such as a physical datacenter) or machines running in different providers.
+As with all dynamic inventory scripts in Ansible, you can configure the inventory path in ansible.cfg.  The recommended way to use the inventory is to create an ``inventory`` directory, and place both the ``gce.py`` script and a file containing ``localhost`` in it.  This can allow for cloud inventory to be used alongside local inventory (such as a physical datacenter) or machines running in different providers.
 
 Executing ``ansible`` or ``ansible-playbook`` and specifying the ``inventory`` directory instead of an individual file will cause ansible to evaluate each file in that directory for inventory.
 

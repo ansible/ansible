@@ -23,7 +23,7 @@ To save some typing, repeated tasks can be written in short-hand like so::
 
 If you have defined a YAML list in a variables file, or the 'vars' section, you can also do::
 
-    with_items: somelist
+    with_items: "{{somelist}}"
 
 The above would be the equivalent of::
 
@@ -58,12 +58,12 @@ Loops can be nested as well::
         - [ 'alice', 'bob' ]
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
-As with the case of 'with_items' above, you can use previously defined variables. Just specify the variable's name without templating it with '{{ }}'::
+As with the case of 'with_items' above, you can use previously defined variables.::
 
     - name: here, 'users' contains the above list of employees
       mysql_user: name={{ item[0] }} priv={{ item[1] }}.*:ALL append_privs=yes password=foo
       with_nested:
-        - users
+        - "{{users}}"
         - [ 'clientdb', 'employeedb', 'providerdb' ]
 
 .. _looping_over_hashes:
@@ -89,7 +89,7 @@ And you want to print every user's name and phone number.  You can loop through 
     tasks:
       - name: Print phone records
         debug: msg="User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
-        with_dict: users
+        with_dict: "{{users}}"
 
 .. _looping_over_fileglobs:
 
@@ -111,7 +111,7 @@ be used like this::
         - copy: src={{ item }} dest=/etc/fooapp/ owner=root mode=600
           with_fileglob:
             - /playbooks/files/fooapp/*
-            
+
 .. note:: When using a relative path with ``with_fileglob`` in a role, Ansible resolves the path relative to the `roles/<rolename>/files` directory.
 
 Looping over Parallel Sets of Data
@@ -130,39 +130,70 @@ And you want the set of '(a, 1)' and '(b, 2)' and so on.   Use 'with_together' t
     tasks:
         - debug: msg="{{ item.0 }} and {{ item.1 }}"
           with_together:
-            - alpha
-            - numbers
+            - "{{alpha}}"
+            - "{{numbers}}"
 
 Looping over Subelements
 ````````````````````````
 
 Suppose you want to do something like loop over a list of users, creating them, and allowing them to login by a certain set of
-SSH keys. 
+SSH keys.
 
 How might that be accomplished?  Let's assume you had the following defined and loaded in via "vars_files" or maybe a "group_vars/all" file::
 
     ---
     users:
       - name: alice
-        authorized: 
+        authorized:
           - /tmp/alice/onekey.pub
           - /tmp/alice/twokey.pub
+        mysql:
+            password: mysql-password
+            hosts:
+              - "%"
+              - "127.0.0.1"
+              - "::1"
+              - "localhost"
+            privs:
+              - "*.*:SELECT"
+              - "DB1.*:ALL"
       - name: bob
         authorized:
           - /tmp/bob/id_rsa.pub
+        mysql:
+            password: other-mysql-password
+            hosts:
+              - "db1"
+            privs:
+              - "*.*:SELECT"
+              - "DB2.*:ALL"
 
 It might happen like so::
 
     - user: name={{ item.name }} state=present generate_ssh_key=yes
-      with_items: users
+      with_items: "{{users}}"
 
     - authorized_key: "user={{ item.0.name }} key='{{ lookup('file', item.1) }}'"
       with_subelements:
          - users
          - authorized
 
-Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given key inside of those
+Given the mysql hosts and privs subkey lists, you can also iterate over a list in a nested subkey::
+
+    - name: Setup MySQL users
+      mysql_user: name={{ item.0.user }} password={{ item.0.mysql.password }} host={{ item.1 }} priv={{ item.0.mysql.privs | join('/') }}
+      with_subelements:
+        - users
+        - mysql.hosts
+
+Subelements walks a list of hashes (aka dictionaries) and then traverses a list with a given (nested sub-)key inside of those
 records.
+
+Optionally,  you can add a third element to the subelements list, that holds a
+dictionary of flags. Currently you can add the 'skip_missing' flag. If set to
+True, the lookup plugin will skip the lists items that do not contain the given
+subkey. Without this flag, or if that flag is set to False, the plugin will
+yield an error and complain about the missing subkey.
 
 The authorized_key pattern is exactly where it comes up most.
 
@@ -298,7 +329,7 @@ Should you ever need to execute a command remotely, you would not use the above 
 
     - name: Do something with each result
       shell: /usr/bin/something_else --param {{ item }}
-      with_items: command_result.stdout_lines
+      with_items: "{{command_result.stdout_lines}}"
 
 .. _indexed_lists:
 
@@ -314,7 +345,55 @@ It's uncommonly used::
 
     - name: indexed loop demo
       debug: msg="at array position {{ item.0 }} there is a value {{ item.1 }}"
-      with_indexed_items: some_list
+      with_indexed_items: "{{some_list}}"
+
+.. _using_ini_with_a_loop:
+
+Using ini file with a loop
+``````````````````````````
+.. versionadded: 2.0
+
+The ini plugin can use regexp to retrieve a set of keys. As a consequence, we can loop over this set. Here is the ini file we'll use::
+
+    [section1]
+    value1=section1/value1
+    value2=section1/value2
+
+    [section2]
+    value1=section2/value1
+    value2=section2/value2
+
+Here is an example of using ``with_ini``::
+
+    - debug: msg="{{item}}"
+      with_ini: value[1-2] section=section1 file=lookup.ini re=true
+
+And here is the returned value::
+
+    {
+          "changed": false, 
+          "msg": "All items completed", 
+          "results": [
+              {
+                  "invocation": {
+                      "module_args": "msg=\"section1/value1\"", 
+                      "module_name": "debug"
+                  }, 
+                  "item": "section1/value1", 
+                  "msg": "section1/value1", 
+                  "verbose_always": true
+              }, 
+              {
+                  "invocation": {
+                      "module_args": "msg=\"section1/value2\"", 
+                      "module_name": "debug"
+                  }, 
+                  "item": "section1/value2", 
+                  "msg": "section1/value2", 
+                  "verbose_always": true
+              }
+          ]
+      }
 
 .. _flattening_a_list:
 
@@ -339,8 +418,8 @@ As you can see the formatting of packages in these lists is all over the place. 
     - name: flattened loop demo
       yum: name={{ item }} state=installed 
       with_flattened:
-         - packages_base
-         - packages_apps
+         - "{{packages_base}}"
+         - "{{packages_apps}}"
 
 That's how!
 
@@ -404,7 +483,7 @@ Subsequent loops over the registered variable to inspect the results may look li
       fail:
         msg: "The command ({{ item.cmd }}) did not have a 0 return code"
       when: item.rc != 0
-      with_items: echo.results
+      with_items: "{{echo.results}}"
 
 .. _writing_your_own_iterators:
 

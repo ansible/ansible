@@ -23,28 +23,27 @@ class ModuleDocFragment(object):
 options:
   cloud:
     description:
-      - Named cloud to operate against. Provides default values for I(auth) and I(auth_plugin)
-     required: false
+      - Named cloud to operate against. Provides default values for I(auth) and
+        I(auth_type). This parameter is not needed if I(auth) is provided or if
+        OpenStack OS_* environment variables are present.
+    required: false
   auth:
     description:
       - Dictionary containing auth information as needed by the cloud's auth
-        plugin strategy. For the default I{password) plugin, this would contain
+        plugin strategy. For the default I(password) plugin, this would contain
         I(auth_url), I(username), I(password), I(project_name) and any
         information about domains if the cloud supports them. For other plugins,
         this param will need to contain whatever parameters that auth plugin
-        requires. This parameter is not needed if a named cloud is provided.
+        requires. This parameter is not needed if a named cloud is provided or
+        OpenStack OS_* environment variables are present.
     required: false
-  auth_plugin:
+  auth_type:
     description:
       - Name of the auth plugin to use. If the cloud uses something other than
         password authentication, the name of the plugin should be indicated here
         and the contents of the I(auth) parameter should be updated accordingly.
     required: false
     default: password
-  auth_token:
-    description:
-      - An auth token obtained previously. If I(auth_token) is given,
-        I(auth) and I(auth_plugin) are not needed.
   region_name:
     description:
       - Name of the region.
@@ -53,11 +52,6 @@ options:
     description:
       - Name of the availability zone.
     required: false
-  state:
-    description:
-      - Should the resource be present or absent.
-    choices: [present, absent]
-    default: present
   wait:
     description:
       - Should ansible wait until the requested resource is complete.
@@ -69,13 +63,42 @@ options:
       - How long should ansible wait for the requested resource.
     required: false
     default: 180
+  api_timeout:
+    description:
+      - How long should the socket layer wait before timing out for API calls.
+        If this is omitted, nothing will be passed to the requests library.
+    required: false
+    default: None
+  validate_certs:
+    description:
+      - Whether or not SSL API requests should be verified.
+    required: false
+    default: True
+    aliases: ['verify']
+  cacert:
+    description:
+      - A path to a CA Cert bundle that can be used as part of verifying
+        SSL API requests.
+    required: false
+    default: None
+  cert:
+    description:
+      - A path to a client certificate to use as part of the SSL transaction
+    required: false
+    default: None
+  key:
+    description:
+      - A path to a client key to use as part of the SSL transaction
+    required: false
+    default: None
   endpoint_type:
     description:
-      - Endpoint URL type to fetch from the service catalog.
-    choices: [publicURL, internalURL]
+        - Endpoint URL type to fetch from the service catalog.
+    choices: [public, internal, admin]
     required: false
-    default: publicURL
+    default: public
 requirements:
+  - python >= 2.7
   - shade
 notes:
   - The standard OpenStack environment variables, such as C(OS_USERNAME)
@@ -84,5 +107,6 @@ notes:
     can come from a yaml config file in /etc/ansible/openstack.yaml,
     /etc/openstack/clouds.yaml or ~/.config/openstack/clouds.yaml, then from
     standard environment variables, then finally by explicit parameters in
-    plays.
+    plays. More information can be found at
+    U(http://docs.openstack.org/developer/os-client-config)
 '''

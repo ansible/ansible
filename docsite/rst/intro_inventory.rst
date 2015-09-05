@@ -46,7 +46,7 @@ To make things explicit, it is suggested that you set them if things are not run
 
     badwolf.example.com:5309
 
-Suppose you have just static IPs and want to set up some aliases that don't live in your host file, or you are connecting through tunnels.  You can do things like this::
+Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
 
     jumper ansible_ssh_port=5555 ansible_ssh_host=192.168.1.50
 
@@ -106,9 +106,7 @@ Variables can also be applied to an entire group at once::
 Groups of Groups, and Group Variables
 +++++++++++++++++++++++++++++++++++++
 
-It is also possible to make groups of groups and assign
-variables to groups.  These variables can be used by /usr/bin/ansible-playbook, but not
-/usr/bin/ansible::
+It is also possible to make groups of groups using the ``:children`` suffix. Just like above, you can apply variables using ``:vars``::
 
    [atlanta]
    host1
@@ -194,8 +192,14 @@ is an excellent way to track changes to your inventory and host variables.
 List of Behavioral Inventory Parameters
 +++++++++++++++++++++++++++++++++++++++
 
-As alluded to above, setting the following variables controls how ansible interacts with remote hosts. Some we have already
-mentioned::
+As alluded to above, setting the following variables controls how ansible interacts with remote hosts.
+
+Host connection::
+
+    ansible_connection
+      Connection type to the host. Candidates are local, smart, ssh or paramiko.  The default is smart.
+
+SSH connection::
 
     ansible_ssh_host
       The name of the host to connect to, if different from the alias you wish to give to it.
@@ -205,18 +209,29 @@ mentioned::
       The default ssh user name to use.
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
-    ansible_sudo
-      The boolean to decide if sudo should be used for this host. Defaults to false.
-    ansible_sudo_pass
-      The sudo password to use (this is insecure, we strongly recommend using --ask-sudo-pass)
-    ansible_sudo_exe (new in version 1.8)
-      The sudo command path.
-    ansible_connection
-      Connection type of the host. Candidates are local, ssh or paramiko.  The default is paramiko before Ansible 1.2, and 'smart' afterwards which detects whether usage of 'ssh' would be feasible based on whether ControlPersist is supported.
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
+    ansible_ssh_args
+      This setting overrides any ``ssh_args`` configured in ``ansible.cfg``.
+    ansible_ssh_extra_args
+      Additional arguments for ssh. Useful to configure a ``ProxyCommand`` for a certain host (or group).
+      This is used in addition to any ``ssh_args`` configured in ``ansible.cfg`` or the inventory.
+
+Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details)::
+
+    ansible_become
+      Equivalent to ansible_sudo or ansible_su, allows to force privilege escalation
+    ansible_become_method
+      Allows to set privilege escalation method
+    ansible_become_user
+      Equivalent to ansible_sudo_user or ansible_su_user, allows to set the user you become through privilege escalation
+    ansible_become_pass
+      Equivalent to ansible_sudo_pass or ansible_su_pass, allows you to set the privilege escalation password
+
+Remote host environment parameters::
+
     ansible_shell_type
-      The shell type of the target system. By default commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
+      The shell type of the target system. Commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
       The target host python path. This is useful for systems with more
       than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
@@ -242,7 +257,7 @@ Examples from a host file::
    :doc:`intro_adhoc`
        Examples of basic commands
    :doc:`playbooks`
-       Learning ansible's configuration management language
+       Learning Ansible’s configuration, deployment, and orchestration language.
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_network|failed
-      - rax_network.msg == 'missing required arguments: label'
+      - 'rax_network.msg == "missing required arguments: label"'
 # ============================================================
 
 
@@ -61,7 +61,7 @@
   assert:
     that:
       - rax_network|failed
-      - rax_network.msg == 'missing required arguments: cidr'
+      - 'rax_network.msg == "missing required arguments: cidr"'
 # ============================================================
 
 

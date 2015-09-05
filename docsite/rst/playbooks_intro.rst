@@ -106,6 +106,33 @@ YAML dictionaries to supply the modules with their key=value arguments.::
             name: httpd
             state: restarted
 
+Playbooks can contain multiple plays. You may have a playbook that targets first
+the web servers, and then the database servers. For example::
+
+    ---
+    - hosts: webservers
+      remote_user: root
+
+      tasks:
+      - name: ensure apache is at the latest version
+        yum: pkg=httpd state=latest
+      - name: write the apache config file
+        template: src=/srv/httpd.j2 dest=/etc/httpd.conf
+
+    - hosts: databases
+      remote_user: root
+
+      tasks:
+      - name: ensure postgresql is at the latest version
+        yum: name=postgresql state=latest
+      - name: ensure that postgresql is started
+        service: name=postgresql state=running
+
+You can use this method to switch between the host group you're targeting,
+the username logging into the remote servers, whether to sudo or not, and so
+forth. Plays, like tasks, run in the order specified in the playbook: top to
+bottom.
+
 Below, we'll break down what the various features of the playbook language are.
 
 .. _playbook_basics:
@@ -148,7 +175,7 @@ Remote users can also be defined per task::
     The `remote_user` parameter for tasks was added in 1.4.
 
 
-Support for running things from sudo is also available::
+Support for running things as another user is also available (see :doc:`become`)::
 
     ---
     - hosts: webservers
@@ -162,31 +189,44 @@ You can also use sudo on a particular task instead of the whole play::
       remote_user: yourname
       tasks:
         - service: name=nginx state=started
-          sudo: yes
+          become: yes
+          become_method: sudo
 
+.. note::
 
-You can also login as you, and then sudo to different users than root::
+    The become syntax deprecates the old sudo/su specific syntax beginning in 1.9.
+
+You can also login as you, and then become a user different than root::
 
     ---
     - hosts: webservers
       remote_user: yourname
-      sudo: yes
-      sudo_user: postgres
+      become: yes
+      become_user: postgres
 
-If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-sudo-pass`` (`-K`).
-If you run a sudo playbook and the playbook seems to hang, it's probably stuck at the sudo prompt.
-Just `Control-C` to kill it and run it again with `-K`.
+You can also use other privilege escalation methods, like su::
+
+    ---
+    - hosts: webservers
+      remote_user: yourname
+      become: yes
+      become_method: su
+
+If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-become-pass`` or
+when using the old sudo syntax ``--ask-sudo-pass`` (`-K`).  If you run a become playbook and the
+playbook seems to hang, it's probably stuck at the privilege escalation prompt.
+Just `Control-C` to kill it and run it again adding the appropriate password.
 
 .. important::
 
-   When using `sudo_user` to a user other than root, the module
+   When using `become_user` to a user other than root, the module
    arguments are briefly written into a random tempfile in /tmp.
    These are deleted immediately after the command is executed.  This
-   only occurs when sudoing from a user like 'bob' to 'timmy', not
-   when going from 'bob' to 'root', or logging in directly as 'bob' or
+   only occurs when changing privileges from a user like 'bob' to 'timmy',
+   not when going from 'bob' to 'root', or logging in directly as 'bob' or
    'root'.  If it concerns you that this data is briefly readable
    (not writable), avoid transferring unencrypted passwords with
-   `sudo_user` set.  In other cases, '/tmp' is not used and this does
+   `become_user` set.  In other cases, '/tmp' is not used and this does
    not come into play. Ansible also takes care to not log password
    parameters.
 
@@ -301,7 +341,7 @@ The old form continues to work in newer versions without any plan of deprecation
 Handlers: Running Operations On Change
 ``````````````````````````````````````
 
-As we've mentioned, modules are written to be 'idempotent' and can relay  when
+As we've mentioned, modules are written to be 'idempotent' and can relay when
 they have made a change on the remote system.   Playbooks recognize this and
 have a basic event system that can be used to respond to change.
 
@@ -325,16 +365,16 @@ The things listed in the 'notify' section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
-tasks, that are referenced by name.  Handlers are what notifiers
-notify.  If nothing notifies a handler, it will not run.  Regardless
-of how many things notify a handler, it will run only once, after all
-of the tasks complete in a particular play.
+tasks, that are referenced by a globally unique name.  Handlers are
+what notifiers notify.  If nothing notifies a handler, it will not
+run.  Regardless of how many things notify a handler, it will run only
+once, after all of the tasks complete in a particular play.
 
 Here's an example handlers section::
 
     handlers:
         - name: restart memcached
-          service:  name=memcached state=restarted
+          service: name=memcached state=restarted
         - name: restart apache
           service: name=apache state=restarted
 
@@ -342,7 +382,10 @@ Handlers are best used to restart services and trigger reboots.  You probably
 won't need them for much else.
 
 .. note::
-   Notify handlers are always run in the order written.
+   * Notify handlers are always run in the order written.
+   * Handler names live in a global namespace.
+   * If two handler tasks have the same name, only one will run.
+     `* <https://github.com/ansible/ansible/issues/4943>`_
 
 Roles are described later on.  It's worthwhile to point out that handlers are
 automatically processed between 'pre_tasks', 'roles', 'tasks', and 'post_tasks'

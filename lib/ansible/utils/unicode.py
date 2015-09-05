@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import string_types, text_type, binary_type, PY3
+
 # to_bytes and to_unicode were written by Toshio Kuratomi for the
 # python-kitchen library https://pypi.python.org/pypi/kitchen
 # They are licensed in kitchen under the terms of the GPLv2+
@@ -34,6 +36,9 @@ _LATIN1_ALIASES = frozenset(('latin-1', 'LATIN-1', 'latin1', 'LATIN1',
     'ISO8859-1', 'iso-8859-1', 'ISO-8859-1'))
 
 # EXCEPTION_CONVERTERS is defined below due to using to_unicode
+
+if PY3:
+    basestring = (str, bytes)
 
 def to_unicode(obj, encoding='utf-8', errors='replace', nonstring=None):
     '''Convert an object into a :class:`unicode` string
@@ -89,12 +94,12 @@ def to_unicode(obj, encoding='utf-8', errors='replace', nonstring=None):
     # Could use isbasestring/isunicode here but we want this code to be as
     # fast as possible
     if isinstance(obj, basestring):
-        if isinstance(obj, unicode):
+        if isinstance(obj, text_type):
             return obj
         if encoding in _UTF8_ALIASES:
-            return unicode(obj, 'utf-8', errors)
+            return text_type(obj, 'utf-8', errors)
         if encoding in _LATIN1_ALIASES:
-            return unicode(obj, 'latin-1', errors)
+            return text_type(obj, 'latin-1', errors)
         return obj.decode(encoding, errors)
 
     if not nonstring:
@@ -110,19 +115,19 @@ def to_unicode(obj, encoding='utf-8', errors='replace', nonstring=None):
             simple = None
         if not simple:
             try:
-                simple = str(obj)
+                simple = text_type(obj)
             except UnicodeError:
                 try:
                     simple = obj.__str__()
                 except (UnicodeError, AttributeError):
                     simple = u''
-        if isinstance(simple, str):
-            return unicode(simple, encoding, errors)
+        if isinstance(simple, binary_type):
+            return text_type(simple, encoding, errors)
         return simple
     elif nonstring in ('repr', 'strict'):
         obj_repr = repr(obj)
-        if isinstance(obj_repr, str):
-            obj_repr = unicode(obj_repr, encoding, errors)
+        if isinstance(obj_repr, binary_type):
+            obj_repr = text_type(obj_repr, encoding, errors)
         if nonstring == 'repr':
             return obj_repr
         raise TypeError('to_unicode was given "%(obj)s" which is neither'
@@ -198,14 +203,14 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
     # Could use isbasestring, isbytestring here but we want this to be as fast
     # as possible
     if isinstance(obj, basestring):
-        if isinstance(obj, str):
+        if isinstance(obj, binary_type):
             return obj
         return obj.encode(encoding, errors)
     if not nonstring:
         nonstring = 'simplerepr'
 
     if nonstring == 'empty':
-        return ''
+        return b''
     elif nonstring == 'passthru':
         return obj
     elif nonstring == 'simplerepr':
@@ -220,19 +225,19 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
             try:
                 simple = obj.__unicode__()
             except (AttributeError, UnicodeError):
-                simple = ''
-        if isinstance(simple, unicode):
+                simple = b''
+        if isinstance(simple, text_type):
             simple = simple.encode(encoding, 'replace')
         return simple
     elif nonstring in ('repr', 'strict'):
         try:
             obj_repr = obj.__repr__()
         except (AttributeError, UnicodeError):
-            obj_repr = ''
-        if isinstance(obj_repr, unicode):
+            obj_repr = b''
+        if isinstance(obj_repr, text_type):
             obj_repr =  obj_repr.encode(encoding, errors)
         else:
-            obj_repr = str(obj_repr)
+            obj_repr = binary_type(obj_repr)
         if nonstring == 'repr':
             return obj_repr
         raise TypeError('to_bytes was given "%(obj)s" which is neither'

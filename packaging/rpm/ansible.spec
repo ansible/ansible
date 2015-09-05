@@ -28,6 +28,7 @@ Requires: python26-jinja2
 Requires: python26-keyczar
 Requires: python26-httplib2
 Requires: python26-setuptools
+Requires: python26-six
 %endif
 
 # RHEL == 6
@@ -45,6 +46,7 @@ Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 # FEDORA > 17
@@ -57,6 +59,7 @@ Requires: python-jinja2
 Requires: python-keyczar
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 # SuSE/openSuSE
@@ -69,6 +72,7 @@ Requires: python-keyczar
 Requires: python-yaml
 Requires: python-httplib2
 Requires: python-setuptools
+Requires: python-six
 %endif
 
 Requires: sshpass
@@ -109,6 +113,12 @@ rm -rf %{buildroot}
 %doc %{_mandir}/man1/ansible*
 
 %changelog
+
+* Mon Apr 27 2015 Ansible, Inc. <support@ansible.com> - 1.9.1
+- Release 1.9.1
+
+* Wed Mar 25 2015 Ansible, Inc. <support@ansible.com> - 1.9.0
+- Release 1.9.0
 
 * Thu Feb 19 2015 Ansible, Inc. <support@ansible.com> - 1.8.4
 - Release 1.8.4

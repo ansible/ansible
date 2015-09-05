@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_cbs|failed
-      - rax_cbs.msg == 'missing required arguments: name'
+      - 'rax_cbs.msg == "missing required arguments: name"'
 # ============================================================
 
 
@@ -55,6 +55,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-1"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs
 
 - name: Validate rax_cbs creds, region and name
@@ -116,6 +117,7 @@
     name: "{{ resource_prefix }}-2"
     size: 150
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs
 
 - name: Validate rax_cbs creds, region and valid size
@@ -163,7 +165,7 @@
   assert:
     that:
       - rax_cbs|failed
-      - "rax_cbs.msg == 'value of volume_type must be one of: SSD,SATA, got: fail'"
+      - 'rax_cbs.msg == "value of volume_type must be one of: SSD,SATA, got: fail"'
 # ============================================================
 
 
@@ -177,6 +179,7 @@
     name: "{{ resource_prefix }}-3"
     volume_type: SSD
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs
 
 - name: Validate rax_cbs creds, region and valid volume_size
@@ -218,6 +221,7 @@
     name: "{{ resource_prefix }}-4"
     description: "{{ resource_prefix }}-4 description"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs
 
 - name: Validate rax_cbs creds, region and description
@@ -261,6 +265,7 @@
     meta:
       foo: bar
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs
 
 - name: Validate rax_cbs creds, region and meta
@@ -302,6 +307,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-6"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cbs_1
 
 - name: Validate rax_cbs with idempotency 1

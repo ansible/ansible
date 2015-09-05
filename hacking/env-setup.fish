@@ -43,6 +43,7 @@ if test -e $PREFIX_PYTHONPATH/ansible*.egg-info
     rm -r $PREFIX_PYTHONPATH/ansible*.egg-info
 end
 mv ansible*egg-info $PREFIX_PYTHONPATH
+find . -type f -name "*.pyc" -delete
 popd
 
 

@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_cdb_database|failed
-      - rax_cdb_database.msg == 'missing required arguments: name,cdb_id'
+      - 'rax_cdb_database.msg == "missing required arguments: name,cdb_id"'
 # ============================================================
 
 
@@ -24,7 +24,7 @@
   assert:
     that:
       - rax_cdb_database|failed
-      - rax_cdb_database.msg == 'missing required arguments: cdb_id'
+      - 'rax_cdb_database.msg == "missing required arguments: cdb_id"'
 # ============================================================
 
 
@@ -92,6 +92,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-rax_cdb_database"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: Validate build
@@ -204,6 +205,7 @@
     name: "{{ resource_prefix }}-rax_cdb_database"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: Validate Delete

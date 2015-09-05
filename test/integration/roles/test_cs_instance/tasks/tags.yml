@@ -1,0 +1,82 @@
+---
+- name: test add tags to instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags:
+     - { key: "{{ cs_resource_prefix }}-tag1", value: "{{ cs_resource_prefix }}-value1" }
+     - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
+  register: instance
+- name: verify add tags to instance
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.tags|length == 2
+    - instance.tags[0]['key'] == "{{ cs_resource_prefix }}-tag1"
+    - instance.tags[1]['key'] == "{{ cs_resource_prefix }}-tag2"
+    - instance.tags[0]['value'] == "{{ cs_resource_prefix }}-value1"
+    - instance.tags[1]['value'] == "{{ cs_resource_prefix }}-value2"
+
+
+- name: test tags to instance idempotence
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags:
+     - { key: "{{ cs_resource_prefix }}-tag1", value: "{{ cs_resource_prefix }}-value1" }
+     - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
+  register: instance
+- name: verify tags to instance idempotence
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.tags|length == 2
+    - instance.tags[0]['key'] == "{{ cs_resource_prefix }}-tag1"
+    - instance.tags[1]['key'] == "{{ cs_resource_prefix }}-tag2"
+    - instance.tags[0]['value'] == "{{ cs_resource_prefix }}-value1"
+    - instance.tags[1]['value'] == "{{ cs_resource_prefix }}-value2"
+
+- name: test change tags of instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags:
+     - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
+     - { key: "{{ cs_resource_prefix }}-tag3", value: "{{ cs_resource_prefix }}-value3" }
+  register: instance
+- name: verify tags to instance idempotence
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.tags|length == 2
+    - instance.tags[0]['key'] == "{{ cs_resource_prefix }}-tag1"
+    - instance.tags[1]['key'] == "{{ cs_resource_prefix }}-tag3"
+    - instance.tags[0]['value'] == "{{ cs_resource_prefix }}-value1"
+    - instance.tags[1]['value'] == "{{ cs_resource_prefix }}-value3"
+
+- name: test not touch tags of instance if no param tags
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+  register: instance
+- name: verify not touch tags of instance if no param tags
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.tags|length == 2
+    - instance.tags[0]['key'] == "{{ cs_resource_prefix }}-tag1"
+    - instance.tags[1]['key'] == "{{ cs_resource_prefix }}-tag3"
+    - instance.tags[0]['value'] == "{{ cs_resource_prefix }}-value1"
+    - instance.tags[1]['value'] == "{{ cs_resource_prefix }}-value3"
+
+- name: test remove tags
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    tags: []
+  register: instance
+- name: verify remove tags
+  assert:
+    that:
+    - instance|success
+    - not instance|changed
+    - instance.tags|length == 0

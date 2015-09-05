@@ -34,22 +34,44 @@ The names of one or more YAML format files to run as ansible playbooks.
 OPTIONS
 -------
 
-*-v*, *--verbose*::
+*-k*, *--ask-pass*::
 
-Verbose mode, more output from successful actions will be shown. Give
-up to three times for more output.
+Prompt for the SSH password instead of assuming key-based
+authentication with ssh-agent.
 
-*-i* 'PATH', *--inventory=*'PATH'::
+*-K*, *--ask-sudo-pass*::
 
-The 'PATH' to the inventory hosts file, which defaults to
-'/etc/ansible/hosts'.
+Prompt for the password to use for playbook plays that request sudo
+access, if any.
 
+*-b*, *--become*::
 
-*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
+Run operations with become (nopasswd implied)
 
-The 'DIRECTORY' search path to load modules from. The default is
-'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
-environment variable.
+*--become-method=BECOME_METHOD*::
+
+Privilege escalation method to use (default=sudo),
+valid choices: [ sudo | su | pbrun | pfexec | runas | doas ]
+
+*--become-user=BECOME_USER*::
+
+Run operations as this user (default=None).
+
+*-C*, *--check*::
+
+Do not make any changes on the remote system, but test resources to see what might
+have changed.  Note this can not scan all possible resource types and is only
+a simulation.
+
+*-c* 'CONNECTION', *--connection=*'CONNECTION'::
+
+Connection type to use.  Possible options are 'paramiko' (SSH), 'ssh',
+and 'local'.  'local' is mostly useful for crontab or kickstarts.
+
+*-D*, *--diff*::
+
+When changing any templated files, show the unified diffs of how they changed.  When
+used with --check, shows how the files would have changed if --check were not used.
 
 *-e* 'VARS', *--extra-vars=*'VARS'::
 
@@ -57,68 +79,26 @@ Extra variables to inject into a playbook, in key=value key=value format or
 as quoted JSON (hashes and arrays). To load variables from a file, specify
 the file preceded by @ (e.g. @vars.yml).
 
+*--flush-cache*::
+
+Clear the fact cache.
+
+*--force-handlers*::
+
+Run handlers even if a task fails.
+
 *-f* 'NUM', *--forks=*'NUM'::
 
 Level of parallelism. 'NUM' is specified as an integer, the default is 5.
 
+*-h*, *--help*::
 
-*-k*, *--ask-pass*::
+Show help page and exit
 
-Prompt for the SSH password instead of assuming key-based
-authentication with ssh-agent.
+*-i* 'PATH', *--inventory=*'PATH'::
 
-
-*-K*, *--ask-sudo-pass*::
-
-Prompt for the password to use for playbook plays that request sudo
-access, if any.
-
-*-U*, 'SUDO_USER', *--sudo-user=*'SUDO_USER'::
-
-Desired sudo user (default=root).
-
-*-t*, 'TAGS', *--tags=*'TAGS'::
-
-Only run plays and tasks tagged with these values.
-
-*--skip-tags=*'SKIP_TAGS'::
-
-Only run plays and tasks whose tags do not match these values.
-
-*--syntax-check*::
-
-Look for syntax errors in the playbook, but don't run anything
-
-*--check*::
-
-Do not make any changes on the remote system, but test resources to see what might
-have changed.  Note this can not scan all possible resource types and is only
-a simulation.
-
-*--diff*::
-
-When changing any templated files, show the unified diffs of how they changed.  When
-used with --check, shows how the files would have changed if --check were not used.
-
-*-T* 'SECONDS', *--timeout=*'SECONDS'::
-
-Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
-
-
-*-s*, *--sudo*::
-
-Force all plays to use sudo, even if not marked as such.
-
-
-*-u* 'USERNAME', *--user=*'USERNAME'::
-
-Use this remote user name on playbook steps that do not indicate a
-user name to run as.
-
-*-c* 'CONNECTION', *--connection=*'CONNECTION'::
-
-Connection type to use.  Possible options are 'paramiko' (SSH), 'ssh',
-and 'local'.  'local' is mostly useful for crontab or kickstarts.
+The 'PATH' to the inventory hosts file, which defaults to
+'/etc/ansible/hosts'.
 
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 
@@ -128,12 +108,98 @@ Further limits the selected host/group patterns.
 
 Outputs a list of matching hosts; does not execute anything else.
 
+*--list-tags*::
+
+List all available tags.
+
+*--list-tasks*::
+
+List all tasks that would be executed
+
+*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
+
+The 'DIRECTORY' search path to load modules from. The default is
+'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
+environment variable.
+
+*--private-key=*'PRIVATE_KEY_FILE'::
+
+Use this file to authenticate the connection
+
+*--skip-tages=*'SKIP_TAGS'::
+
+Only run plays and tasks whose tags do not match these values.
+
+*--start-at-task=*'START_AT'::
+
+Start the playbook at the task matching this name.
+
+*--step*::
+
+One-step-at-a-time: confirm each task before running.
+
+*-S*, --su*::
+
+Run operations with su (deprecated, use become)
+
+*-R SU-USER*, *--su-user=*'SU_USER'::
+
+run operations with su as this user (default=root)
+(deprecated, use become)
+
+*-s*, *--sudo*::
+
+Run operations with sudo (nopasswd) (deprecated, use become)
+
+*--ssh-extra-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
+
+Add the specified arguments to any ssh command-line. Useful to set a
+ProxyCommand to use a jump host, but any arguments may be specified.
+
+*-U*, 'SUDO_USER', *--sudo-user=*'SUDO_USER'::
+
+Desired sudo user (default=root) (deprecated, use become).
+
+*--skip-tags=*'SKIP_TAGS'::
+
+Only run plays and tasks whose tags do not match these values.
+
+*--syntax-check*::
+
+Look for syntax errors in the playbook, but don't run anything
+
+*-t*, 'TAGS', *--tags=*'TAGS'::
+
+Only run plays and tasks tagged with these values.
+
+*-T* 'SECONDS', *--timeout=*'SECONDS'::
+
+Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
+
+*-u* 'USERNAME', *--user=*'USERNAME'::
+
+Use this remote user name on playbook steps that do not indicate a
+user name to run as.
+
+*--vault-password-file=*'VAULT_PASSWORD_FILE'::
+
+Vault password file.
+
+*-v*, *--verbose*::
+
+Verbose mode, more output from successful actions will be shown. Give
+up to three times for more output.
+
+*--version*::
+
+Show program's version number and exit.
+
 ENVIRONMENT
 -----------
 
 The following environment variables may be specified.
 
-ANSIBLE_HOSTS  -- Override the default ansible hosts file
+ANSIBLE_INVENTORY  -- Override the default ansible inventory file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
 

@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_clb_nodes|failed
-      - rax_clb_nodes.msg == 'missing required arguments: load_balancer_id'
+      - 'rax_clb_nodes.msg == "missing required arguments: load_balancer_id"'
 # ============================================================
 
 
@@ -74,6 +74,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-clb"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: Validate rax_clb creation
@@ -158,6 +159,7 @@
     address: '172.16.0.1'
     port: 80
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_nodes
 
 - name: Validate rax_clb_nodes creds, region, load_balancer_id, address and port
@@ -180,6 +182,7 @@
     node_id: "{{ rax_clb_nodes.node.id }}"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb_nodes
 
 - name: Validate delete integration 1
@@ -201,6 +204,7 @@
     port: 80
     type: secondary
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   ignore_errors: true
   register: rax_clb_nodes
 
@@ -222,6 +226,7 @@
     name: "{{ rax_clb.balancer.name }}"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_clb
 
 - name: "Validate delete integration 3"

@@ -9,7 +9,7 @@ This in particular is very applicable when setting up continuous deployment infr
 
 Additional features allow for tuning the orders in which things complete, and assigning a batch window size for how many machines to process at once during a rolling update.
 
-This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <http://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
+This section covers all of these features.  For examples of these items in use, `please see the ansible-examples repository <https://github.com/ansible/ansible-examples/>`_. There are quite a few examples of zero-downtime update procedures for different kinds of applications.
 
 You should also consult the :doc:`modules` section, various modules like 'ec2_elb', 'nagios', and 'bigip_pool', and 'netscaler' dovetail neatly with the concepts mentioned here.  
 
@@ -185,11 +185,53 @@ use the default remote connection type::
     - hosts: 127.0.0.1
       connection: local
 
+.. _interrupt_execution_on_any_error:
+
+Interrupt execution on any error
+````````````````````````````````
+
+With option ''any_errors_fatal'' any failure on any host in a multi-host play will be treated as fatal and Ansible will exit immediately without waiting for the other hosts.
+
+Sometimes ''serial'' execution is unsuitable - number of hosts is unpredictable (because of dynamic inventory), speed is crucial (simultaneous execution is required). But all tasks must be 100% successful to continue playbook execution.
+
+For example there is a service located in many datacenters, there a some load balancers to pass traffic from users to service. There is a deploy playbook to upgrade service deb-packages. Playbook stages:
+
+- disable traffic on load balancers (must be turned off simultaneously)
+- gracefully stop service
+- upgrade software (this step includes tests and starting service)
+- enable traffic on load balancers (should be turned off simultaneously)
+
+Service can't be stopped with "alive" load balancers, they must be disabled, all of them. So second stage can't be played if any server failed on "stage 1".
+
+For datacenter "A" playbook can be written this way::
+
+    ---
+    - hosts: load_balancers_dc_a
+      any_errors_fatal: True
+      tasks:
+      - name: 'shutting down datacenter [ A ]'
+        command: /usr/bin/disable-dc
+    
+    - hosts: frontends_dc_a
+      tasks:
+      - name: 'stopping service'
+        command: /usr/bin/stop-software
+      - name: 'updating software'
+        command: /usr/bin/upgrade-software
+    
+    - hosts: load_balancers_dc_a
+      tasks:
+      - name: 'Starting datacenter [ A ]'
+        command: /usr/bin/enable-dc
+
+
+In this example Ansible will start software upgrade on frontends only if all load balancers are successfully disabled.
+
 .. seealso::
 
    :doc:`playbooks`
        An introduction to playbooks
-   `Ansible Examples on GitHub <http://github.com/ansible/ansible-examples>`_
+   `Ansible Examples on GitHub <https://github.com/ansible/ansible-examples>`_
        Many examples of full-stack deployments
    `User Mailing List <http://groups.google.com/group/ansible-devel>`_
        Have a question?  Stop by the google group!

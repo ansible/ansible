@@ -8,8 +8,8 @@ Installation
 Getting Ansible
 ```````````````
 
-You may also wish to follow the `Github project <https://github.com/ansible/ansible>`_ if
-you have a github account.  This is also where we keep the issue tracker for sharing
+You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
+you have a GitHub account.  This is also where we keep the issue tracker for sharing
 bugs and feature ideas.
 
 .. _what_will_be_installed:
@@ -46,7 +46,7 @@ information about running from source.  It's not necessary to install the progra
 Control Machine Requirements
 ````````````````````````````
 
-Currently Ansible can be run from any machine with Python 2.6 installed (Windows isn't supported for the control machine).
+Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
   
@@ -103,6 +103,11 @@ when they are implemented, and also easily contribute to the project. Because th
 nothing to install, following the development version is significantly easier than most
 open source projects.
 
+.. note::
+  
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (eg. apt/yum) or pip to install a stable version.
+
+
 To install from source.
 
 .. code-block:: bash
@@ -121,7 +126,7 @@ If you don't have pip installed in your version of Python, install pip::
 
 Ansible also uses the following Python modules that need to be installed::
 
-    $ sudo pip install paramiko PyYAML Jinja2 httplib2
+    $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
 
 Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
 which point at Ansible's own modules (not the same kind of modules, alas).
@@ -132,13 +137,17 @@ which point at Ansible's own modules (not the same kind of modules, alas).
     $ git submodule update --init --recursive
 
 Once running the env-setup script you'll be running from checkout and the default inventory file
-will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`) 
+will be /etc/ansible/hosts.  You can optionally specify an inventory file (see :doc:`intro_inventory`)
 other than /etc/ansible/hosts:
 
 .. code-block:: bash
 
     $ echo "127.0.0.1" > ~/ansible_hosts
-    $ export ANSIBLE_HOSTS=~/ansible_hosts
+    $ export ANSIBLE_INVENTORY=~/ansible_hosts
+
+.. note::
+
+    ANSIBLE_INVENTORY is available starting at 1.9 and substitutes the deprecated ANSIBLE_HOSTS
 
 You can read more about the inventory file in later parts of the manual.
 
@@ -237,17 +246,14 @@ You may also wish to install from ports, run:
 
     $ sudo make -C /usr/ports/sysutils/ansible install
 
-.. _from_brew:
+.. _on_macos:
 
-Latest Releases Via Homebrew (Mac OSX)
+Latest Releases on Mac OSX
 ++++++++++++++++++++++++++++++++++++++
 
-To install on a Mac, make sure you have Homebrew, then run:
+The preferred way to install ansible on a Mac is via pip.
 
-.. code-block:: bash
-
-    $ brew update
-    $ brew install ansible
+The instructions can be found in `Latest Releases Via Pip`_ section.
 
 .. _from_pkgutil:
 
@@ -260,6 +266,24 @@ Ansible is available for Solaris as `SysV package from OpenCSW <https://www.open
 
     # pkgadd -d http://get.opencsw.org/now
     # /opt/csw/bin/pkgutil -i ansible
+
+.. _from_pacman:
+
+Latest Releases Via Pacman (Arch Linux)
++++++++++++++++++++++++++++++++++++++++
+
+Ansible is available in the Community repository::
+
+    $ pacman -S ansible
+
+The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_.
+
+Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
+
+.. note::
+
+   If you have Python 3 as a default Python slot on your Arch nodes (default setting), then you
+   must set ``ansible_python_interpreter = /usr/bin/python2`` in your group or inventory variables.
 
 .. _from_pip:
 

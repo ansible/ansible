@@ -1,8 +1,20 @@
-ansible (1.9) unstable; urgency=low
+ansible (%VERSION%-%RELEASE%~%DIST%) %DIST%; urgency=low
 
-  * 1.9 release (PENDING)
+  * %VERSION% release
 
- -- Ansible, Inc. <support@ansible.com>  Wed, 21 Oct 2015 04:29:00 -0500
+ -- Ansible, Inc. <support@ansible.com>  %DATE%
+
+ansible (1.9.1) unstable; urgency=low
+
+  * 1.9.1
+
+ -- Ansible, Inc. <support@ansible.com>  Mon, 27 Apr 2015 17:00:00 -0500
+
+ansible (1.9.0.1) unstable; urgency=low
+
+  * 1.9.0.1
+
+ -- Ansible, Inc. <support@ansible.com>  Wed, 25 Mar 2015 15:00:00 -0500
 
 ansible (1.8.4) unstable; urgency=low
 

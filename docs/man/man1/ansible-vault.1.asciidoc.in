@@ -36,7 +36,15 @@ The following options are available to all sub-commands:
 *--vault-password-file=*'FILE'::
 
 A file containing the vault password to be used during the encryption/decryption
-steps. Be sure to keep this file secured if it is used.
+steps. Be sure to keep this file secured if it is used. If the file is executable,
+it will be run and its standard output will be used as the password.
+
+*--new-vault-password-file=*'FILE'::
+
+A file containing the new vault password to be used when rekeying a
+file. Be sure to keep this file secured if it is used. If the file
+is executable, it will be run and its standard output will be used as
+the password.
 
 *-h*, *--help*::
 
@@ -76,7 +84,7 @@ file, saving it back when done and removing the temporary file.
 REKEY
 -----
 
-*$ ansible-vault rekey [options] FILE_1 [FILE_2, ..., FILE_N]
+*$ ansible-vault rekey [options] FILE_1 [FILE_2, ..., FILE_N]*
 
 The *rekey* command is used to change the password on a vault-encrypted files.
 This command can update multiple files at once, and will prompt for both the
@@ -85,21 +93,45 @@ old and new passwords before modifying any data.
 ENCRYPT
 -------
 
-*$ ansible-vault encrypt [options] FILE_1 [FILE_2, ..., FILE_N]
+*$ ansible-vault encrypt [options] FILE_1 [FILE_2, ..., FILE_N]*
 
 The *encrypt* sub-command is used to encrypt pre-existing data files. As with the
 *rekey* command, you can specify multiple files in one command.
 
+Starting with version 2.0, the *encrypt* command accepts an *--output FILENAME*
+option to determine where encrypted output is stored. With this option, input is
+read from the (at most one) filename given on the command line; if no input file
+is given, input is read from stdin. Either the input or the output file may be
+given as '-' for stdin and stdout respectively. If neither input nor output file
+is given, the command acts as a filter, reading plaintext from stdin and writing
+it to stdout.
+
+Thus any of the following invocations can be used:
+
+*$ ansible-vault encrypt*
+
+*$ ansible-vault encrypt --output OUTFILE*
+
+*$ ansible-vault encrypt INFILE --output OUTFILE*
+
+*$ echo secret|ansible-vault encrypt --output OUTFILE*
+
+Reading from stdin and writing only encrypted output is a good way to prevent
+sensitive data from ever hitting disk (either interactively or from a script).
+
 DECRYPT
 -------
 
-*$ ansible-vault decrypt [options] FILE_1 [FILE_2, ..., FILE_N]
+*$ ansible-vault decrypt [options] FILE_1 [FILE_2, ..., FILE_N]*
 
 The *decrypt* sub-command is used to remove all encryption from data files. The files
 will be stored as plain-text YAML once again, so be sure that you do not run this
 command on data files with active passwords or other sensitive data. In most cases, 
 users will want to use the *edit* sub-command to modify the files securely.
 
+As with *encrypt*, the *decrypt* subcommand also accepts the *--output FILENAME*
+option to specify where plaintext output is stored, and stdin/stdout is handled
+as described above.
 
 AUTHOR
 ------

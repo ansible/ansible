@@ -34,85 +34,67 @@ semicolons.
 OPTIONS
 -------
 
-*-v*, *--verbose*::
-
-Verbose mode, more output from successful actions will be shown. Give
-up to three times for more output.
-
-*-i* 'PATH', *--inventory=*'PATH'::
-
-The 'PATH' to the inventory hosts file, which defaults to '/etc/ansible/hosts'.
-
-
-*-f* 'NUM', *--forks=*'NUM'::
-
-Level of parallelism. 'NUM' is specified as an integer, the default is 5.
-
-*--private-key=*'PRIVATE_KEY_FILE'::
-
-Use this file to authenticate the connection.
-
-
-*-m* 'NAME', *--module-name=*'NAME'::
-
-Execute the module called 'NAME'.
-
-
-*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
-
-The 'DIRECTORY' search path to load modules from. The default is
-'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
-environment variable.
-
 *-a* \'_ARGUMENTS_', *--args=*\'_ARGUMENTS_'::
 
 The 'ARGUMENTS' to pass to the module.
+
+*--ask-become-pass*::
+
+Ask for privilege  escalation password.
 
 *-k*, *--ask-pass*::
 
 Prompt for the SSH password instead of assuming key-based authentication with ssh-agent.
 
+*--ask-su-pass*::
+
+Prompt for su password (deprecated, use become).
+
 *-K*, *--ask-sudo-pass*::
 
-Prompt for the password to use with --sudo, if any
+Prompt for the password to use with --sudo, if any.
 
-*-o*, *--one-line*::
+*--ask-vault-pass*::
 
-Try to output everything on one line.
-
-*-s*, *--sudo*::
-
-Run the command as the user given by -u and sudo to root.
-
-*-t* 'DIRECTORY', *--tree=*'DIRECTORY'::
-
-Save contents in this output 'DIRECTORY', with the results saved in a
-file named after each host.
-
-*-T* 'SECONDS', *--timeout=*'SECONDS'::
-
-Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
+Prompt for vault password.
 
 *-B* 'NUM', *--background=*'NUM'::
 
 Run commands in the background, killing the task after 'NUM' seconds.
 
-*-P* 'NUM', *--poll=*'NUM'::
+*--become-method=*'BECOME_METHOD'::
 
-Poll a background job every 'NUM' seconds. Requires *-B*.
+Privilege escalation method to use (default=sudo),
+valid choices: [ sudo | su | pbrun | pfexec | runas | doas ]
 
-*-u* 'USERNAME', *--user=*'USERNAME'::
+*--become-user=*'BECOME_USER'::
 
-Use this remote 'USERNAME' instead of the current user.
+Run operations as this user (default=None).
 
-*-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
+*-C*, *--check*::
 
-Sudo to 'SUDO_USERNAME' instead of root.  Implies --sudo.
+Don't make any changes; instead try to predict some of the changes that may occur.
 
 *-c* 'CONNECTION', *--connection=*'CONNECTION'::
 
 Connection type to use.  Possible options are 'paramiko' (SSH), 'ssh',
 and 'local'.  'local' is mostly useful for crontab or kickstarts.
+
+*-e* 'EXTRA_VARS*, *--extra-vars=*'EXTRA_VARS'::
+
+Set additional variables as key=value or YAML/JSON.
+
+*-f* 'NUM', *--forks=*'NUM'::
+
+Level of parallelism. 'NUM' is specified as an integer, the default is 5.
+
+*-h*, *--help*::
+
+Show help message and exit.
+
+*-i* 'PATH', *--inventory=*'PATH'::
+
+The 'PATH' to the inventory hosts file, which defaults to '/etc/ansible/hosts'.
 
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 
@@ -125,6 +107,76 @@ Further limits hosts with a regex pattern.
 *--list-hosts*::
 
 Outputs a list of matching hosts; does not execute anything else.
+
+*-m* 'NAME', *--module-name=*'NAME'::
+
+Execute the module called 'NAME'.
+
+*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
+
+The 'DIRECTORY' search path to load modules from. The default is
+'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
+environment variable.
+
+*-o*, *--one-line*::
+
+Try to output everything on one line.
+
+*-P* 'NUM', *--poll=*'NUM'::
+
+Poll a background job every 'NUM' seconds. Requires *-B*.
+
+*--private-key=*'PRIVATE_KEY_FILE'::
+
+Use this file to authenticate the connection.
+
+*-S*, *--su*::
+
+Run operations with su (deprecated, use become).
+
+*-R* 'SU_USER', *--se-user=*'SUDO_USER'::
+
+Run operations with su as this user (default=root)
+(deprecated, use become)
+
+*-s*, *--sudo*::
+
+Run the command as the user given by -u and sudo to root.
+
+*--ssh-extra-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
+
+Add the specified arguments to any ssh command-line. Useful to set a
+ProxyCommand to use a jump host, but any arguments may be specified.
+
+*-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
+
+Sudo to 'SUDO_USERNAME' instead of root.  Implies --sudo.
+
+*-t* 'DIRECTORY', *--tree=*'DIRECTORY'::
+
+Save contents in this output 'DIRECTORY', with the results saved in a
+file named after each host.
+
+*-T* 'SECONDS', *--timeout=*'SECONDS'::
+
+Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
+
+*-u* 'USERNAME', *--user=*'USERNAME'::
+
+Use this remote 'USERNAME' instead of the current user.
+
+*--vault-password-file=*'VAULT_PASSWORD_FILE'::
+
+Vault password file.
+
+*-v*, *--verbose*::
+
+Verbose mode, more output from successful actions will be shown. Give
+up to three times for more output.
+
+*--version*::
+
+Show program version number and exit.
 
 INVENTORY
 ---------
@@ -153,7 +205,7 @@ ENVIRONMENT
 
 The following environment variables may be specified.
 
-ANSIBLE_HOSTS  -- Override the default ansible hosts file
+ANSIBLE_INVENTORY  -- Override the default ansible inventory file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
 

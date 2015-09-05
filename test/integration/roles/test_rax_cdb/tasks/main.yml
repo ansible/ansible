@@ -8,7 +8,7 @@
   assert:
     that:
       - rax_cdb|failed
-      - rax_cdb.msg == 'missing required arguments: name'
+      - 'rax_cdb.msg == "missing required arguments: name"'
 # ============================================================
 
 
@@ -60,7 +60,7 @@
   assert:
     that:
       - rax_cdb|failed
-      - rax_cdb.msg == 'missing required arguments: name'
+      - 'rax_cdb.msg == "missing required arguments: name"'
 # ============================================================
 
 
@@ -73,6 +73,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-1"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: Validate rax_cdb with creds, region and name
@@ -92,6 +93,7 @@
     name: "{{ resource_prefix }}-1"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: "Validate delete integration 1"
@@ -113,6 +115,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-2"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: Validate rax_cdb idempotent test 1
@@ -130,6 +133,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-2"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: Validate rax_cdb idempotent test 2
@@ -148,6 +152,7 @@
     name: "{{ resource_prefix }}-2"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: "Validate delete integration 2"
@@ -167,6 +172,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-3"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: Validate rax_cdb resize volume 1
@@ -185,6 +191,7 @@
     name: "{{ resource_prefix }}-3"
     volume: 3
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
     wait_timeout: 600
   register: rax_cdb
 
@@ -204,6 +211,7 @@
     name: "{{ resource_prefix }}-3"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: "Validate delete integration 3"
@@ -223,6 +231,7 @@
     region: "{{ rackspace_region }}"
     name: "{{ resource_prefix }}-4"
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: Validate rax_cdb resize flavor 1
@@ -241,6 +250,7 @@
     name: "{{ resource_prefix }}-4"
     flavor: 2
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
     wait_timeout: 600
   register: rax_cdb
 
@@ -260,6 +270,7 @@
     name: "{{ resource_prefix }}-4"
     state: absent
     wait: true
+    wait_timeout: "{{ rackspace_wait_timeout }}"
   register: rax_cdb
 
 - name: "Validate delete integration 4"

@@ -16,19 +16,25 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-- hosts: lamini
+- name: Create overall groups
+  hosts: lamini
   gather_facts: false
   tasks:
+    - debug: var=genus
     - name: group by genus
       group_by: key={{ genus }}
+
     - name: group by first three letters of genus with key in quotes
       group_by: key="{{ genus | truncate(3, true, '') }}"
+
     - name: group by first two letters of genus with key not in quotes
       group_by: key={{ genus | truncate(2, true, '') }}
+
     - name: group by genus in uppercase using complex args
       group_by: { key: "{{ genus | upper() }}" }
 
-- hosts: vicugna
+- name: Vicunga group validation
+  hosts: vicugna
   gather_facts: false
   tasks:
     - name: verify that only the alpaca is in this group
@@ -36,7 +42,8 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_vicugna=true
 
-- hosts: lama
+- name: Lama group validation
+  hosts: lama
   gather_facts: false
   tasks:
     - name: verify that only the llama is in this group
@@ -44,7 +51,8 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_lama=true
 
-- hosts: vic
+- name: Vic group validation
+  hosts: vic
   gather_facts: false
   tasks:
     - name: verify that only the alpaca is in this group
@@ -52,7 +60,8 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_vic=true
 
-- hosts: lam
+- name: Lam group validation
+  hosts: lam
   gather_facts: false
   tasks:
     - name: verify that only the llama is in this group
@@ -60,7 +69,8 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_lam=true
 
-- hosts: vi
+- name: Vi group validation
+  hosts: vi
   gather_facts: false
   tasks:
     - name: verify that only the alpaca is in this group
@@ -68,7 +78,8 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_vi=true
 
-- hosts: la
+- name: La group validation
+  hosts: la
   gather_facts: false
   tasks:
     - name: verify that only the llama is in this group
@@ -76,7 +87,8 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_la=true
 
-- hosts: VICUGNA
+- name: VICUGNA group validation
+  hosts: VICUGNA
   gather_facts: false
   tasks:
     - name: verify that only the alpaca is in this group
@@ -84,7 +96,8 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_VICUGNA=true
 
-- hosts: LAMA
+- name: LAMA group validation
+  hosts: LAMA
   gather_facts: false
   tasks:
     - name: verify that only the llama is in this group
@@ -92,19 +105,22 @@
     - name: set a fact to check that we ran this play
       set_fact: genus_LAMA=true
 
-- hosts: 'genus'
+- name: genus group validation (expect skipped)
+  hosts: 'genus'
   gather_facts: false
   tasks:
     - name: no hosts should match this group
       fail: msg="should never get here"
 
-- hosts: alpaca
+- name: alpaca validation of groups
+  hosts: alpaca
   gather_facts: false
   tasks:
     - name: check that alpaca matched all four groups
       assert: { that: ["genus_vicugna", "genus_vic", "genus_vi", "genus_VICUGNA"] }
 
-- hosts: llama
+- name: llama validation of groups
+  hosts: llama
   gather_facts: false
   tasks:
     - name: check that llama matched all four groups

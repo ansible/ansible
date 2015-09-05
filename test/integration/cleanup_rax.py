@@ -54,8 +54,8 @@ def authenticate():
 def prompt_and_delete(item, prompt, assumeyes):
     if not assumeyes:
         assumeyes = raw_input(prompt).lower() == 'y'
-    assert (hasattr(item, 'delete') or hasattr(item, 'terminate'),
-            "Class <%s> has no delete or terminate attribute" % item.__class__)
+    assert hasattr(item, 'delete') or hasattr(item, 'terminate'), \
+            "Class <%s> has no delete or terminate attribute" % item.__class__
     if assumeyes:
         if hasattr(item, 'delete'):
             item.delete()
@@ -135,6 +135,26 @@ def delete_rax_cdb(args):
             if re.search(args.match_re, db.name):
                 prompt_and_delete(db,
                                   'Delete matching %s? [y/n]: ' % db,
+                                  args.assumeyes)
+
+
+def _force_delete_rax_scaling_group(manager):
+    def wrapped(uri):
+        manager.api.method_delete('%s?force=true' % uri)
+    return wrapped
+
+
+def delete_rax_scaling_group(args):
+    """Function for deleting Autoscale Groups"""
+    print ("--- Cleaning Autoscale Groups matching '%s'" % args.match_re)
+    for region in pyrax.identity.services.autoscale.regions:
+        asg = pyrax.connect_to_autoscale(region=region)
+        for group in rax_list_iterator(asg):
+            if re.search(args.match_re, group.name):
+                group.manager._delete = \
+                    _force_delete_rax_scaling_group(group.manager)
+                prompt_and_delete(group,
+                                  'Delete matching %s? [y/n]: ' % group,
                                   args.assumeyes)
 
 

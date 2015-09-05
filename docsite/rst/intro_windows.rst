@@ -11,7 +11,7 @@ Windows: How Does It Work
 As you may have already read, Ansible manages Linux/Unix machines using SSH by default.  
 
 Starting in version 1.7, Ansible also contains support for managing Windows machines.  This uses
-native powershell remoting, rather than SSH.
+native PowerShell remoting, rather than SSH.
 
 Ansible will still be run from a Linux control machine, and uses the "winrm" Python module to talk to remote hosts.
 
@@ -26,12 +26,48 @@ Installing on the Control Machine
 
 On a Linux control machine::
 
-   pip install http://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
+   pip install https://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
 
-If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host)::
+Active Directory Support
+++++++++++++++++++++++++
+
+If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host), you will need to install the "python-kerberos" module and the MIT krb5 libraries it depends on.
+
+Installing python-kerberos dependencies
+---------------------------------------
+
+.. code-block:: bash
+
+   # Via Yum
+   yum -y install python-devel krb5-devel krb5-libs krb5-workstation
+   
+   # Via Apt (Ubuntu)
+   sudo apt-get install python-dev libkrb5-dev
+   
+   # Via Portage (Gentoo)
+   emerge -av app-crypt/mit-krb5 
+   emerge -av dev-python/setuptools
+
+   # Via pkg (FreeBSD)
+   sudo pkg install security/krb5
+   
+   # Via OpenCSW (Solaris)
+   pkgadd -d http://get.opencsw.org/now
+   /opt/csw/bin/pkgutil -U
+   /opt/csw/bin/pkgutil -y -i libkrb5_3 
+   
+   # Via Pacman (Arch Linux)
+   pacman -S krb5
+
+Installing python-kerberos
+--------------------------
+
+Once you've installed the necessary dependencies, the python-kerberos wrapper can be installed via pip::
+
+.. code-block:: bash
 
    pip install kerberos
-
+   
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 
 .. _windows_inventory:
@@ -57,7 +93,7 @@ In group_vars/windows.yml, define the following inventory variables::
 
 Notice that the ssh_port is not actually for SSH, but this is a holdover variable name from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH.
 
-If you have installed the ``kerberos`` module, Ansible will first attempt Kerberos authentication. *This uses the principal you are authenticated to Kerberos with on the control machine and not the ``ansible_ssh_user`` specified above*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
+If you have installed the ``kerberos`` module and ``ansible_ssh_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not ``ansible_ssh_user``*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
 
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
 
@@ -67,7 +103,7 @@ communication channel that leverages Windows remoting::
     ansible windows [-i inventory] -m win_ping --ask-vault-pass
 
 If you haven't done anything to prep your systems yet, this won't work yet.  This is covered in a later
-section about how to enable powershell remoting - and if necessary - how to upgrade powershell to
+section about how to enable PowerShell remoting - and if necessary - how to upgrade PowerShell to
 a version that is 3 or higher.
 
 You'll run this command again later though, to make sure everything is working.
@@ -77,21 +113,32 @@ You'll run this command again later though, to make sure everything is working.
 Windows System Prep
 ```````````````````
 
-In order for Ansible to manage your windows machines, you will have to enable Powershell remoting configured.
+In order for Ansible to manage your windows machines, you will have to enable PowerShell remoting configured.
 
-To automate setup of WinRM, you can run `this powershell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine. 
+To automate setup of WinRM, you can run `this PowerShell script <https://github.com/ansible/ansible/blob/devel/examples/scripts/ConfigureRemotingForAnsible.ps1>`_ on the remote machine. 
 
 Admins may wish to modify this setup slightly, for instance to increase the timeframe of
 the certificate.
 
+.. note::
+   On Windows 7 and Server 2008 R2 machines, due to a bug in Windows 
+   Management Framework 3.0, it may be necessary to install this
+   hotfix http://support.microsoft.com/kb/2842230 to avoid receiving
+   out of memory and stack overflow exceptions.  Newly-installed Server 2008
+   R2 systems which are not fully up to date with windows updates are known
+   to have this issue.   
+
+   Windows 8.1 and Server 2012 R2 are not affected by this issue as they
+   come with Windows Management Framework 4.0.
+
 .. _getting_to_powershell_three_or_higher:
 
-Getting to Powershell 3.0 or higher
+Getting to PowerShell 3.0 or higher
 ```````````````````````````````````
 
-Powershell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script.
+PowerShell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script. Note that PowerShell 3.0 is only supported on Windows 7 SP1, Windows Server 2008 SP1, and later releases of Windows.
 
-Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a powershell console as an administrator.  You will now be running Powershell 3 and can try connectivity again using the win_ping technique referenced above.
+Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the win_ping technique referenced above.
 
 .. _what_windows_modules_are_available:
 
@@ -105,7 +152,7 @@ Browse this index to see what is available.
 
 In many cases, it may not be necessary to even write or use an Ansible module.
 
-In particular, the "script" module can be used to run arbitrary powershell scripts, allowing Windows administrators familiar with powershell a very native way to do things, as in the following playbook::
+In particular, the "script" module can be used to run arbitrary PowerShell scripts, allowing Windows administrators familiar with PowerShell a very native way to do things, as in the following playbook::
 
     - hosts: windows
       tasks:
@@ -118,13 +165,13 @@ Note there are a few other Ansible modules that don't start with "win" that also
 Developers: Supported modules and how it works
 ``````````````````````````````````````````````
 
-Developing ansible modules are covered in a `later section of the documentation <http://developing_modules.html>`_, with a focus on Linux/Unix.
+Developing ansible modules are covered in a `later section of the documentation <http://docs.ansible.com/developing_modules.html>`_, with a focus on Linux/Unix.
 What if you want to write Windows modules for ansible though?
 
-For Windows, ansible modules are implemented in Powershell.  Skim those Linux/Unix module development chapters before proceeding.
+For Windows, ansible modules are implemented in PowerShell.  Skim those Linux/Unix module development chapters before proceeding.
 
 Windows modules live in a "windows/" subfolder in the Ansible "library/" subtree.  For example, if a module is named
-"library/windows/win_ping", there will be embedded documentation in the "win_ping" file, and the actual powershell code will live in a "win_ping.ps1" file.  Take a look at the sources and this will make more sense.
+"library/windows/win_ping", there will be embedded documentation in the "win_ping" file, and the actual PowerShell code will live in a "win_ping.ps1" file.  Take a look at the sources and this will make more sense.
 
 Modules (ps1 files) should start as follows::
 
@@ -169,7 +216,7 @@ Windows Playbook Examples
 
 Look to the list of windows modules for most of what is possible, though also some modules like "raw" and "script" also work on Windows, as do "fetch" and "slurp".
 
-Here is an example of pushing and running a powershell script::
+Here is an example of pushing and running a PowerShell script::
 
     - name: test script module
       hosts: windows
@@ -223,7 +270,7 @@ form of new modules, tweaks to existing modules, documentation, or something els
    :doc:`playbooks`
        Learning ansible's configuration management language
    `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
-       Windows specific module list, all implemented in powershell
+       Windows specific module list, all implemented in PowerShell
    `Mailing List <http://groups.google.com/group/ansible-project>`_
        Questions? Help? Ideas?  Stop by the list on Google Groups
    `irc.freenode.net <http://irc.freenode.net>`_

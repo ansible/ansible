@@ -77,7 +77,7 @@ following::
 .. note::
    If the value of ``async:`` is not high enough, this will cause the 
    "check on it later" task to fail because the temporary status file that
-   the ``async_status:`` is looking for will not have been written 
+   the ``async_status:`` is looking for will not have been written or no longer exist 
 
 .. seealso::
 

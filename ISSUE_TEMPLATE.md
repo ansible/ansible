@@ -1,10 +1,21 @@
 ##### Issue Type:
 
-Can you help us out in labelling this by telling us what kind of ticket this this?  You can say “Bug Report”, “Feature Idea”, “Feature Pull Request”, “New Module Pull Request”, “Bugfix Pull Request”, “Documentation Report”, or “Docs Pull Request”.
+Can you help us out in labelling this by telling us what kind of ticket this this?  You can say:
+  - Bug Report
+  - Feature Idea
+  - Feature Pull Request
+  - New Module Pull Request
+  - Bugfix Pull Request
+  - Documentation Report
+  - Docs Pull Request
 
 ##### Ansible Version:
 
 Let us know what version of Ansible you are using.  Please supply the verbatim output from running “ansible --version”.  If you're filing a ticket on a version of Ansible which is not the latest, we'd greatly appreciate it if you could retest on the latest version first.  We don't expect you to test against the development branch most of the time, but we may ask for that if you have cycles.  Thanks!
+
+##### Ansible Configuration:
+
+What have you changed about your Ansible installation?  What configuration settings have you changed/added/removed?  Compare your /etc/ansible/ansible.cfg against a clean version from Github and let us know what's different.
 
 ##### Environment:
 
