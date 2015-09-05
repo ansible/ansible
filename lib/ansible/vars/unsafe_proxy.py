@@ -72,6 +72,8 @@ class UnsafeProxy(object):
         return bool(object.__getattribute__(self, "_obj"))
     def __str__(self):
         return str(object.__getattribute__(self, "_obj"))
+    def __unicode__(self):
+        return unicode(object.__getattribute__(self, "_obj"))
     def __repr__(self):
         return repr(object.__getattribute__(self, "_obj"))
     
@@ -89,7 +91,7 @@ class UnsafeProxy(object):
         '__long__', '__lshift__', '__lt__', '__mod__', '__mul__', '__ne__', 
         '__neg__', '__oct__', '__or__', '__pos__', '__pow__', '__radd__', 
         '__rand__', '__rdiv__', '__rdivmod__', '__reduce__', '__reduce_ex__', 
-        '__repr__', '__reversed__', '__rfloorfiv__', '__rlshift__', '__rmod__', 
+        '__repr__', '__reversed__', '__rfloordiv__', '__rlshift__', '__rmod__',
         '__rmul__', '__ror__', '__rpow__', '__rrshift__', '__rshift__', '__rsub__', 
         '__rtruediv__', '__rxor__', '__setitem__', '__setslice__', '__sub__', 
         '__truediv__', '__xor__', 'next',
@@ -127,6 +129,5 @@ class UnsafeProxy(object):
         except KeyError:
             cache[obj.__class__] = theclass = cls._create_class_proxy(obj.__class__)
         ins = object.__new__(theclass)
-        theclass.__init__(ins, obj, *args, **kwargs)
         return ins
 
