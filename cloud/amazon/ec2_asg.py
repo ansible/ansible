@@ -126,6 +126,13 @@ options:
     version_added: "1.9"
     default: yes
     required: False
+  termination_policies:
+    description:
+        - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
+    required: false
+    default: Default. Eg, when used to create a new autoscaling group, the “Default” value is used. When used to change an existent autoscaling group, the current termination policies are mantained
+    choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
+    version_added: "2.0"
 extends_documentation_fragment: aws
 """
 
@@ -421,7 +428,8 @@ def create_autoscaling_group(connection, module):
                  tags=asg_tags,
                  health_check_period=health_check_period,
                  health_check_type=health_check_type,
-                 default_cooldown=default_cooldown)
+                 default_cooldown=default_cooldown,
+                 termination_policies=termination_policies)
 
         try:
             connection.create_auto_scaling_group(ag)
@@ -783,7 +791,8 @@ def main():
             health_check_period=dict(type='int', default=300),
             health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
             default_cooldown=dict(type='int', default=300),
-            wait_for_instances=dict(type='bool', default=True)
+            wait_for_instances=dict(type='bool', default=True),
+            termination_policies=dict(type='list', default=None)
         ),
     )
     

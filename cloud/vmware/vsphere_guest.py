@@ -152,6 +152,7 @@ EXAMPLES = '''
 # Returns changed = True and a adds ansible_facts from the new VM
 # State will set the power status of a guest upon creation. Use powered_on to create and boot.
 # Options ['state', 'vm_extra_config', 'vm_disk', 'vm_nic', 'vm_hardware', 'esxi'] are required together
+# Note: vm_floppy support added in 2.0
 
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
@@ -185,6 +186,9 @@ EXAMPLES = '''
       vm_cdrom:
         type: "iso"
         iso_path: "DatastoreName/cd-image.iso"
+      vm_floppy:
+        type: "image"
+        image_path: "DatastoreName/floppy-image.flp"
     esxi:
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
@@ -374,6 +378,44 @@ def add_cdrom(module, s, config_target, config, devices, default_devs, type="cli
                 " cdrom type can either be iso or client" % (type))
 
         devices.append(cd_spec)
+
+
+def add_floppy(module, s, config_target, config, devices, default_devs, type="image", vm_floppy_image_path=None):
+    # Add a floppy
+    # Make sure the datastore exists.
+    if vm_floppy_image_path:
+        image_location = vm_floppy_image_path.split('/', 1)
+        datastore, ds = find_datastore(
+            module, s, image_location[0], config_target)
+        image_path = image_location[1]
+
+    floppy_spec = config.new_deviceChange()
+    floppy_spec.set_element_operation('add')
+    floppy_ctrl = VI.ns0.VirtualFloppy_Def("floppy_ctrl").pyclass()
+
+    if type == "image":
+        image = VI.ns0.VirtualFloppyImageBackingInfo_Def("image").pyclass()
+        ds_ref = image.new_datastore(ds)
+        ds_ref.set_attribute_type(ds.get_attribute_type())
+        image.set_element_datastore(ds_ref)
+        image.set_element_fileName("%s %s" % (datastore, image_path))
+        floppy_ctrl.set_element_backing(image)
+        floppy_ctrl.set_element_key(3)
+        floppy_spec.set_element_device(floppy_ctrl)
+    elif type == "client":
+        client = VI.ns0.VirtualFloppyRemoteDeviceBackingInfo_Def(
+            "client").pyclass()
+        client.set_element_deviceName("/dev/fd0")
+        floppy_ctrl.set_element_backing(client)
+        floppy_ctrl.set_element_key(3)
+        floppy_spec.set_element_device(floppy_ctrl)
+    else:
+        s.disconnect()
+        module.fail_json(
+            msg="Error adding floppy of type %s to vm spec. "
+            " floppy type can either be image or client" % (type))
+
+    devices.append(floppy_spec)
 
 
 def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name="VM Network", network_type="standard"):
@@ -946,6 +988,27 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         # Add a CD-ROM device to the VM.
         add_cdrom(module, vsphere_client, config_target, config, devices,
                   default_devs, cdrom_type, cdrom_iso_path)
+    if 'vm_floppy' in vm_hardware:
+        floppy_image_path = None
+        floppy_type = None
+        try:
+            floppy_type = vm_hardware['vm_floppy']['type']
+        except KeyError:
+            vsphere_client.disconnect()
+            module.fail_json(
+                msg="Error on %s definition. floppy type needs to be"
+                " specified." % vm_hardware['vm_floppy'])
+        if floppy_type == 'image':
+            try:
+                floppy_image_path = vm_hardware['vm_floppy']['image_path']
+            except KeyError:
+                vsphere_client.disconnect()
+                module.fail_json(
+                    msg="Error on %s definition. floppy image_path needs"
+                    " to be specified." % vm_hardware['vm_floppy'])
+        # Add a floppy to the VM.
+        add_floppy(module, vsphere_client, config_target, config, devices,
+                  default_devs, floppy_type, floppy_image_path)
     if vm_nic:
         for nic in sorted(vm_nic.iterkeys()):
             try:

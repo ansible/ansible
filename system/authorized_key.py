@@ -112,8 +112,10 @@ EXAMPLES = '''
                   key_options='no-port-forwarding,from="10.0.1.1"'
 
 # Set up authorized_keys exclusively with one key
-- authorized_key: user=root key=public_keys/doe-jane state=present
+- authorized_key: user=root key="{{ item }}" state=present
                    exclusive=yes
+  with_file:
+    - public_keys/doe-jane
 '''
 
 # Makes sure the public key line is present or absent in the user's .ssh/authorized_keys.
@@ -169,16 +171,15 @@ def keyfile(module, user, write=False, path=None, manage_dir=True):
     :return: full path string to authorized_keys for user
     """
 
-    if module.check_mode:
-        if path is None:
-            module.fail_json(msg="You must provide full path to key file in check mode")
-        else:
-            keysfile = path
-            return keysfile
+    if module.check_mode and path is not None:
+        keysfile = path
+        return keysfile
 
     try:
         user_entry = pwd.getpwnam(user)
     except KeyError, e:
+        if module.check_mode and path is None:
+            module.fail_json(msg="Either user must exist or you must provide full path to key file in check mode")
         module.fail_json(msg="Failed to lookup user %s: %s" % (user, str(e)))
     if path is None:
         homedir    = user_entry.pw_dir

@@ -124,7 +124,7 @@ options:
     version_added: "2.0"
   classic_link_vpc_security_groups:
     description:
-       - A list of security group id’s with which to associate the ClassicLink VPC instances.
+      - A list of security group id's with which to associate the ClassicLink VPC instances.
     required: false
     default: null
     version_added: "2.0"

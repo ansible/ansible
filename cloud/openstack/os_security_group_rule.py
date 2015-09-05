@@ -213,12 +213,14 @@ def _find_matching_rule(module, secgroup):
     remote_ip_prefix = module.params['remote_ip_prefix']
     ethertype = module.params['ethertype']
     direction = module.params['direction']
+    remote_group_id = module.params['remote_group']
 
     for rule in secgroup['security_group_rules']:
         if (protocol == rule['protocol']
                 and remote_ip_prefix == rule['remote_ip_prefix']
                 and ethertype == rule['ethertype']
                 and direction == rule['direction']
+                and remote_group_id == rule['remote_group_id']
                 and _ports_match(protocol,
                                  module.params['port_range_min'],
                                  module.params['port_range_max'],
