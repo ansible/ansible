@@ -37,6 +37,13 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
+  production:
+    description:
+      - Install with --production flag
+    required: false
+    default: no
+    choices: [ "yes", "no" ]
+    version_added: "2.0"
   path:
     description:
       - The base path where to install the bower packages
@@ -76,6 +83,7 @@ class Bower(object):
         self.module = module
         self.name = kwargs['name']
         self.offline = kwargs['offline']
+        self.production = kwargs['production']
         self.path = kwargs['path']
         self.version = kwargs['version']
 
@@ -93,6 +101,9 @@ class Bower(object):
 
             if self.offline:
                 cmd.append('--offline')
+
+            if self.production:
+                cmd.append('--production')
 
             # If path is specified, cd into that path and run the command.
             cwd = None
@@ -148,6 +159,7 @@ def main():
     arg_spec = dict(
         name=dict(default=None),
         offline=dict(default='no', type='bool'),
+        production=dict(default='no', type='bool'),
         path=dict(required=True),
         state=dict(default='present', choices=['present', 'absent', 'latest', ]),
         version=dict(default=None),
@@ -158,6 +170,7 @@ def main():
 
     name = module.params['name']
     offline = module.params['offline']
+    production = module.params['production']
     path = os.path.expanduser(module.params['path'])
     state = module.params['state']
     version = module.params['version']
@@ -165,7 +178,7 @@ def main():
     if state == 'absent' and not name:
         module.fail_json(msg='uninstalling a package is only available for named packages')
 
-    bower = Bower(module, name=name, offline=offline, path=path, version=version)
+    bower = Bower(module, name=name, offline=offline, production=production, path=path, version=version)
 
     changed = False
     if state == 'present':
