@@ -326,7 +326,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
             if not self.module.check_mode:
                 res = self.cs.deleteAccount(id=account['id'])
 
-                if 'errortext' in account:
+                if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
                 poll_async = self.module.params.get('poll_async')
