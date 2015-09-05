@@ -20,7 +20,7 @@ short_description: Manage s3 bucket lifecycle rules in AWS
 description:
     - Manage s3 bucket lifecycle rules in AWS
 version_added: "2.0"
-author: Rob White (@wimnat)
+author: "Rob White (@wimnat)"
 notes:
   - If specifying expiration time as days then transition time must also be specified in days
   - If specifying expiration time as a date then transition time must also be specified as a date
@@ -35,7 +35,7 @@ options:
     description:
       - "Indicates the lifetime of the objects that are subject to the rule by the date they will expire. The value must be ISO-8601 format, the time must be midnight and a GMT timezone must be specified."
     required: false
-    default: null  
+    default: null
   expiration_days:
     description:
       - "Indicates the lifetime, in days, of the objects that are subject to the rule. The value must be a non-zero positive integer."
@@ -43,9 +43,9 @@ options:
     default: null
   prefix:
     description:
-      - "Prefix identifying one or more objects to which the rule applies. If no prefix is specified, the rule will apply to the whole bucket."
-      required: false
-      default: null
+      - "Prefix identifying one or more objects to which the rule applies.  If no prefix is specified, the rule will apply to the whole bucket."
+    required: false
+    default: null
   region:
     description:
      - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard."
@@ -54,8 +54,8 @@ options:
   rule_id:
     description:
       - "Unique identifier for the rule. The value cannot be longer than 255 characters. A unique value for the rule will be generated if no value is provided."
-      required: false
-      default: null
+    required: false
+    default: null
   state:
     description:
       - "Create or remove the lifecycle rule"

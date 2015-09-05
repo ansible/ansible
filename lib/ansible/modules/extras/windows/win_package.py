@@ -44,7 +44,7 @@ options:
   product_id:
     description:
       - product id of the installed package (used for checking if already installed)
-	required: false
+    required: false
     default: null
     aliases: []
   arguments:
@@ -54,20 +54,20 @@ options:
     aliases: []
   state:
     description:
-	  - Install or Uninstall
-	choices:
+      - Install or Uninstall
+    choices:
       - present
       - absent
     default: present
     aliases: [ensure]
   user_name:
     description:
-	  - Username of an account with access to the package if its located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_password for this to function properly.
+      - Username of an account with access to the package if its located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_password for this to function properly.
     default: null
     aliases: []
   user_password:
     description:
-	  - Password of an account with access to the package if its located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_name for this to function properly.
+      - Password of an account with access to the package if its located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_name for this to function properly.
     default: null
     aliases: []
 author: Trond Hindenes
