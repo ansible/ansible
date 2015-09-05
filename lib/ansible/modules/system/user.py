@@ -52,7 +52,7 @@ options:
     seuser:
         required: false
         description:
-            - Optionally sets the seuser type (user_u).
+            - Optionally sets the seuser type (user_u) on selinux enabled systems.
     group:
         required: false
         description:
