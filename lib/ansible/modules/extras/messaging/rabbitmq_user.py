@@ -136,6 +136,9 @@ class RabbitMqUser(object):
         users = self._exec(['list_users'], True)
 
         for user_tag in users:
+            if '\t' not in user_tag:
+                continue
+
             user, tags = user_tag.split('\t')
 
             if user == self.username:
