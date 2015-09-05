@@ -34,7 +34,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.utils.unicode import to_bytes
 from ansible.utils.display import Display
-from ansible.utils.path import is_executable
 
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
@@ -479,7 +478,7 @@ class CLI(object):
         return t
 
     @staticmethod
-    def read_vault_password_file(vault_password_file):
+    def read_vault_password_file(vault_password_file, loader):
         """
         Read a vault password from a file or if executable, execute the script and
         retrieve password from STDOUT
@@ -489,7 +488,7 @@ class CLI(object):
         if not os.path.exists(this_path):
             raise AnsibleError("The vault password file %s was not found" % this_path)
 
-        if is_executable(this_path):
+        if loader.is_executable(this_path):
             try:
                 # STDERR not captured to make it easier for users to prompt for input in their scripts
                 p = subprocess.Popen(this_path, stdout=subprocess.PIPE)

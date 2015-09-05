@@ -57,6 +57,10 @@ class DictDataLoader(DataLoader):
     def list_directory(self, path):
         return [x for x in self._known_directories]
 
+    def is_executable(self, path):
+        # FIXME: figure out a way to make paths return true for this
+        return False
+
     def _add_known_directory(self, directory):
         if directory not in self._known_directories:
             self._known_directories.append(directory)
