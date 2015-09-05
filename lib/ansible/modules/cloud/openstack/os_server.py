@@ -287,8 +287,12 @@ def _create_server(module, cloud):
 
     if flavor:
         flavor_dict = cloud.get_flavor(flavor)
+        if not flavor_dict:
+            module.fail_json(msg="Could not find flavor %s" % flavor) 
     else:
         flavor_dict = cloud.get_flavor_by_ram(flavor_ram, flavor_include)
+        if not flavor_dict:
+            module.fail_json(msg="Could not find any matching flavor") 
 
     nics = _network_args(module, cloud)
 
