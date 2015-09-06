@@ -93,6 +93,17 @@ are transferred to managed machines automatically.
 
 %install
 %{__python} setup.py install -O1 --prefix=%{_prefix} --root=%{buildroot}
+
+# Amazon Linux doesn't install to dist-packages but python_sitelib expands to
+# that location and the python interpreter expects things to be there.
+if expr x'%{python_sitelib}' : 'x.*dist-packages/\?' ; then
+    DEST_DIR='%{buildroot}%{python_sitelib}'
+    SOURCE_DIR=$(echo "$DEST_DIR" | sed 's/dist-packages/site-packages/g')
+    if test -d "$SOURCE_DIR" -a ! -d "$DEST_DIR" ; then
+        mv $SOURCE_DIR $DEST_DIR
+    fi
+fi
+
 mkdir -p %{buildroot}/etc/ansible/
 cp examples/hosts %{buildroot}/etc/ansible/
 cp examples/ansible.cfg %{buildroot}/etc/ansible/
