@@ -243,7 +243,6 @@ options:
       - A list of existing network interfaces to attach to the instance at launch. When specifying existing network interfaces, none of the assign_public_ip, private_ip, vpc_subnet_id, group, or group_id parameters may be used. (Those parameters are for creating a new network interface at launch.)
     required: false
     default: null
-    aliases: []
 
 author:
     - "Tim Gerla (@tgerla)"
