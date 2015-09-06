@@ -120,8 +120,8 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            vpc_id = dict(required=True, default=None),
-            state = dict(required=False, default='present', choices=['present', 'absent'])
+            vpc_id = dict(required=True),
+            state = dict(default='present', choices=['present', 'absent'])
         )
     )
 
@@ -144,7 +144,7 @@ def main():
         module.fail_json(msg="region must be specified")
 
     vpc_id = module.params.get('vpc_id')
-    state = module.params.get('state')
+    state = module.params.get('state', 'present')
 
     try:
         if state == 'present':
