@@ -144,20 +144,23 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         pass
 
     def check_become_success(self, output):
-        return self._play_context.success_key in output
+        return self._play_context.success_key == output.rstrip()
 
     def check_password_prompt(self, output):
         if self._play_context.prompt is None:
             return False
         elif isinstance(self._play_context.prompt, basestring):
-            return output.endswith(self._play_context.prompt)
+            return output.startswith(self._play_context.prompt)
         else:
             return self._play_context.prompt(output)
 
     def check_incorrect_password(self, output):
         incorrect_password = gettext.dgettext(self._play_context.become_method, C.BECOME_ERROR_STRINGS[self._play_context.become_method])
-        if incorrect_password in output:
-            raise AnsibleError('Incorrect %s password' % self._play_context.become_method)
+        return incorrect_password and incorrect_password in output
+
+    def check_missing_password(self, output):
+        missing_password = gettext.dgettext(self._play_context.become_method, C.BECOME_MISSING_STRINGS[self._play_context.become_method])
+        return missing_password and missing_password in output
 
     def connection_lock(self):
         f = self._play_context.connection_lockfd

@@ -171,6 +171,9 @@ class PlayContext(Base):
         self.password    = passwords.get('conn_pass','')
         self.become_pass = passwords.get('become_pass','')
 
+        self.prompt      = ''
+        self.success_key = ''
+
         # a file descriptor to be used during locking operations
         self.connection_lockfd = connection_lockfd
 
