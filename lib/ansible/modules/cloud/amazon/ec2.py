@@ -243,6 +243,7 @@ options:
       - A list of existing network interfaces to attach to the instance at launch. When specifying existing network interfaces, none of the assign_public_ip, private_ip, vpc_subnet_id, group, or group_id parameters may be used. (Those parameters are for creating a new network interface at launch.)
     required: false
     default: null
+    aliases: ['network_interface']
 
 author:
     - "Tim Gerla (@tgerla)"
@@ -355,7 +356,13 @@ EXAMPLES = '''
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
 
-# Example using pre-existing network interfaces
+# Examples using pre-existing network interfaces
+- ec2:
+    key_name: mykey
+    instance_type: t2.small
+    image: ami-f005ba11
+    network_interface: eni-deadbeef
+
 - ec2:
     key_name: mykey
     instance_type: t2.small
@@ -947,6 +954,8 @@ def create_instances(module, ec2, vpc, override_count=None):
                     params['network_interfaces'] = interfaces
             else:
                 if network_interfaces:
+                    if isinstance(network_interfaces, basestring):
+                        network_interfaces = [network_interfaces]
                     interfaces = []
                     for i, network_interface_id in enumerate(network_interfaces):
                         interface = boto.ec2.networkinterface.NetworkInterfaceSpecification(
@@ -1314,7 +1323,7 @@ def main():
             volumes = dict(type='list'),
             ebs_optimized = dict(type='bool', default=False),
             tenancy = dict(default='default'),
-            network_interfaces = dict(type='list')
+            network_interfaces = dict(type='list', aliases=['network_interface'])
         )
     )
 
