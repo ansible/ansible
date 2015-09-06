@@ -355,6 +355,13 @@ EXAMPLES = '''
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
 
+# Example using pre-existing network interfaces
+- ec2:
+    key_name: mykey
+    instance_type: t2.small
+    image: ami-f005ba11
+    network_interfaces: ['eni-deadbeef', 'eni-5ca1ab1e']
+
 # Launch instances, runs some tasks
 # and then terminate them
 
