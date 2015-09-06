@@ -111,7 +111,7 @@ options:
     choices: ['EC2', 'ELB']
   default_cooldown:
     description:
-        - The number of seconds after a scaling activity completes before another can begin.
+      - The number of seconds after a scaling activity completes before another can begin.
     required: false
     default: 300 seconds
     version_added: "2.0"
