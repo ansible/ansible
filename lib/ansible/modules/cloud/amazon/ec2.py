@@ -849,15 +849,6 @@ def create_instances(module, ec2, vpc, override_count=None):
     if group_id and group_name:
         module.fail_json(msg = str("Use only one type of parameter (group_name) or (group_id)"))
 
-    if (network_interfaces and
-            (assign_public_ip or private_ip or vpc_subnet_id
-                or group_name or group_id)):
-        module.fail_json(
-            msg=str("network_interfaces must not be set when specifying " +
-                    "assign_public_ip, private_ip, vpc_subnet_id, group, " +
-                    "or group_id, which are used to create a new network " +
-                    "interface."))
-
     vpc_id = None
     if vpc_subnet_id:
         if not vpc:
@@ -1332,7 +1323,12 @@ def main():
         mutually_exclusive = [
                                 ['exact_count', 'count'],
                                 ['exact_count', 'state'],
-                                ['exact_count', 'instance_ids']
+                                ['exact_count', 'instance_ids'],
+                                ['network_interfaces', 'assign_public_ip'],
+                                ['network_interfaces', 'group'],
+                                ['network_interfaces', 'group_id'],
+                                ['network_interfaces', 'private_ip'],
+                                ['network_interfaces', 'vpc_subnet_id'],
                              ],
     )
 
