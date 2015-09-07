@@ -48,9 +48,9 @@ class ActionModule(ActionBase):
 
         if host not in C.LOCALHOST:
             if user:
-                return '%s@%s:%s' % (user, host, path)
+                return '%s@[%s]:%s' % (user, host, path)
             else:
-                return '%s:%s' % (host, path)
+                return '[%s]:%s' % (host, path)
 
         if ':' not in path and not path.startswith('/'):
             path = self._get_absolute_path(path=path)
@@ -60,9 +60,9 @@ class ActionModule(ActionBase):
         transport = self._play_context.connection
         if host not in C.LOCALHOST or transport != "local":
             if user:
-                return '%s@%s:%s' % (user, host, path)
+                return '%s@[%s]:%s' % (user, host, path)
             else:
-                return '%s:%s' % (host, path)
+                return '[%s]:%s' % (host, path)
 
         if ':' not in path and not path.startswith('/'):
             path = self._get_absolute_path(path=path)
