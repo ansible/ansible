@@ -213,9 +213,9 @@ def create_eni(connection, module):
                 except BotoServerError as ex:
                     eni.delete()
                     raise
+                # Wait to allow creation / attachment to finish
+                wait_for_eni(eni, "attached")
             changed = True
-            # Wait to allow creation / attachment to finish
-            wait_for_eni(eni, "attached")
             eni.update()
             
     except BotoServerError as e:
