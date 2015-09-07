@@ -33,12 +33,13 @@ from ansible.errors import AnsibleError
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.utils.unicode import to_bytes
 
-REPLACER         = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
-REPLACER_ARGS    = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
-REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
-REPLACER_WINDOWS = "# POWERSHELL_COMMON"
-REPLACER_WINARGS = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
-REPLACER_VERSION = "\"<<ANSIBLE_VERSION>>\""
+REPLACER          = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
+REPLACER_ARGS     = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
+REPLACER_COMPLEX  = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
+REPLACER_WINDOWS  = "# POWERSHELL_COMMON"
+REPLACER_WINARGS  = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
+REPLACER_JSONARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
+REPLACER_VERSION  = "\"<<ANSIBLE_VERSION>>\""
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
@@ -67,6 +68,8 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
     if REPLACER in module_data:
         module_style = 'new'
     elif REPLACER_WINDOWS in module_data:
+        module_style = 'new'
+    elif REPLACER_JSONARGS in module_data:
         module_style = 'new'
     elif 'from ansible.module_utils.' in module_data:
         module_style = 'new'
@@ -162,13 +165,14 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
 
         (module_data, module_style) = _find_snippet_imports(module_data, module_path, strip_comments)
 
-        module_args_json = json.dumps(module_args)
-        encoded_args = repr(module_args_json.encode('utf-8'))
+        module_args_json = json.dumps(module_args).encode('utf-8')
+        python_repred_args = repr(module_args_json)
 
         # these strings should be part of the 'basic' snippet which is required to be included
         module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
-        module_data = module_data.replace(REPLACER_COMPLEX, encoded_args)
-        module_data = module_data.replace(REPLACER_WINARGS, module_args_json.encode('utf-8'))
+        module_data = module_data.replace(REPLACER_COMPLEX, python_repred_args)
+        module_data = module_data.replace(REPLACER_WINARGS, module_args_json)
+        module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
 
         if module_style == 'new':
             facility = C.DEFAULT_SYSLOG_FACILITY
