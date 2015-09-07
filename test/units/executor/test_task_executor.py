@@ -220,6 +220,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.changed_when = None
         mock_task.failed_when = None
         mock_task.post_validate.return_value = None
+        mock_task.async = 1
 
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
