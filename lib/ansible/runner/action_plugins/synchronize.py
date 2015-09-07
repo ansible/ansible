@@ -45,9 +45,9 @@ class ActionModule(object):
 
         if not host in ['127.0.0.1', 'localhost']:
             if user:
-                return '%s@%s:%s' % (user, host, path)
+                return '%s@[%s]:%s' % (user, host, path)
             else:
-                return '%s:%s' % (host, path)
+                return '[%s]:%s' % (host, path)
         else:
             if not ':' in path:
                 if not path.startswith('/'):
@@ -59,9 +59,9 @@ class ActionModule(object):
         return_data = None
         if not host in ['127.0.0.1', 'localhost'] or transport != "local":
             if user:
-                return_data = '%s@%s:%s' % (user, host, path)
+                return_data = '%s@[%s]:%s' % (user, host, path)
             else:
-                return_data = '%s:%s' % (host, path)
+                return_data = '[%s]:%s' % (host, path)
         else:
             return_data = path
 
