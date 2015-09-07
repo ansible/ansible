@@ -20,18 +20,25 @@ short_description: Manage an AWS VPC Internet gateway
 description:
     - Manage an AWS VPC Internet gateway
 version_added: "2.0"
-author: Robert Estelle, @erydo
+author: Robert Estelle (@erydo)
 options:
   vpc_id:
     description:
       - The VPC ID for the VPC in which to manage the Internet Gateway.
     required: true
     default: null
+  region:
+    description:
+      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used. See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
+    required: false
+    default: null
+    aliases: [ 'aws_region', 'ec2_region' ]
   state:
     description:
       - Create or terminate the IGW
     required: false
     default: present
+    choices: [ 'present', 'absent' ]
 extends_documentation_fragment: aws
 '''
 
@@ -39,16 +46,13 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Ensure that the VPC has an Internet Gateway.
-# The Internet Gateway ID is can be accessed via {{igw.gateway_id}} for use
-# in setting up NATs etc.
-      local_action:
-        module: ec2_vpc_igw
-        vpc_id: {{vpc.vpc_id}}
-        region: {{vpc.vpc.region}}
-        state: present
-      register: igw
-'''
+# The Internet Gateway ID is can be accessed via {{igw.gateway_id}} for use in setting up NATs etc.
+ec2_vpc_igw:
+  vpc_id: vpc-abcdefgh
+  state: present
+register: igw
 
+'''
 
 import sys  # noqa
 
@@ -117,7 +121,7 @@ def main():
     argument_spec.update(
         dict(
             vpc_id = dict(required=True),
-            state = dict(choices=['present', 'absent'], default='present')
+            state = dict(default='present', choices=['present', 'absent'])
         )
     )
 
