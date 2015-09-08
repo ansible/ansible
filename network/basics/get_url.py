@@ -81,7 +81,7 @@ options:
       - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
-        Format: <algorithm>:<checksum>, e.g.: checksum="sha256:shagoeshere"
+        Format: <algorithm>:<checksum>, e.g.: checksum="sha256:D98291AC[...]B6DC7B97"
         If you worry about portability, only the sha1 algorithm is available 
         on all platforms and python versions.  The third party hashlib 
         library can be installed for access to additional algorithms.'
