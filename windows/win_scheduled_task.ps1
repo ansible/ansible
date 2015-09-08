@@ -38,14 +38,15 @@ if($state -eq "present") {
     $execute = Get-Attr -obj $params -name execute -failifempty $true -resultobj $result
     $frequency = Get-Attr -obj $params -name frequency -failifempty $true -resultobj $result
     $time = Get-Attr -obj $params -name time -failifempty $true -resultobj $result
+    $user = Get-Attr -obj $params -name user -failifempty $true -resultobj $result
 }
-if ($params.daysOfWeek)
+if ($params.days_of_week)
 {
-    $daysOfWeek = $params.daysOfWeek
+    $days_of_week = $params.days_of_week
 }
 elseif ($frequency -eq "weekly")
 {
-    Fail-Json $result "missing required argument: daysOfWeek"
+    Fail-Json $result "missing required argument: days_of_week"
 }
 
 # Vars with defaults
@@ -119,7 +120,7 @@ try {
             $trigger =  New-ScheduledTaskTrigger -Daily -At $time
         }
         elseif ($frequency -eq "weekly"){
-            $trigger =  New-ScheduledTaskTrigger -Weekly -At $time -DaysOfWeek $daysOfWeek
+            $trigger =  New-ScheduledTaskTrigger -Weekly -At $time -DaysOfWeek $days_of_week
         }
         else {
             Fail-Json $result "frequency must be daily or weekly"
@@ -137,13 +138,15 @@ try {
         Exit-Json $result
     }
 
+    $principal = New-ScheduledTaskPrincipal -UserId "$user" -LogonType ServiceAccount
+
     if ($enabled -eq $false){
         $settings = New-ScheduledTaskSettingsSet -Disable
     }
     else {
         $settings = New-ScheduledTaskSettingsSet
     }
-    
+
     if ($argument) {
         $action = New-ScheduledTaskAction -Execute $execute -Argument $argument
     }
@@ -153,19 +156,19 @@ try {
 
     if ( ($state -eq "present") -and ($exists -eq $false) ){
         $action = New-ScheduledTaskAction -Execute $execute
-        Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings
+        Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings -Principal $principal
         $task = Get-ScheduledTask -TaskName $name
         Set-Attr $result "msg" "Added new task $name"
         $result.changed = $true
     }
     elseif( ($state -eq "present") -and ($exists -eq $true) ) {
-        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $execute -and $taskState -eq $enabled) {
-            #No change in the task yet
+        if ($task.Description -eq $description -and $task.TaskName -eq $name -and $task.TaskPath -eq $path -and $task.Actions.Execute -eq $execute -and $taskState -eq $enabled -and $task.Principal.UserId -eq $user) {
+            #No change in the task
             Set-Attr $result "msg" "No change in task $name"
         }
         else {
             Unregister-ScheduledTask -TaskName $name -Confirm:$false
-            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings  -Principal $principal
+            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings -Principal $principal
             Set-Attr $result "msg" "Updated task $name"
             $result.changed = $true
         }
