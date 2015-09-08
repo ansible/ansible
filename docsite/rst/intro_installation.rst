@@ -53,7 +53,7 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 .. note::
 
     As of 2.0 ansible uses a few more file handles to manage it's forks, OS X has a very low setting so if you want to use 15 or more forks
-    you'll need to raise the ulimit, like so `sudo launchctl limit maxfiles 1024 2048`. Or just any time you see a "Too many open files" error.
+    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 2048``. Or just any time you see a "Too many open files" error.
 
 
 .. _managed_node_requirements:
@@ -61,9 +61,10 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you need a way to communicate, normally ssh. By default this uses sftp, if not available you can switch to scp in ansible.cfg.
+Also you need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
 
-* ``python-simplejson`` 
+* ``python-simplejson``
 
 .. note::
 
