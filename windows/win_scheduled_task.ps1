@@ -26,22 +26,29 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-if ($params.name)
-{
-    $name = $params.name
+#Required vars
+$name = Get-Attr -obj $params -name name -failifempty $true -resultobj $result
+$state = Get-Attr -obj $params -name state -failifempty $true -resultobj $result
+if( ($state -ne "present") -and ($state -ne "absent") ) {
+    Fail-Json $result "state must be present or absent"
 }
-else
-{
-    Fail-Json $result "missing required argument: name"
+
+#Vars conditionally required
+if($state -eq "present") {
+    $execute = Get-Attr -obj $params -name execute -failifempty $true -resultobj $result
+    $frequency = Get-Attr -obj $params -name frequency -failifempty $true -resultobj $result
+    $time = Get-Attr -obj $params -name time -failifempty $true -resultobj $result
 }
-if ($params.state)
+if ($params.daysOfWeek)
 {
-    $state = $params.state
+    $daysOfWeek = $params.daysOfWeek
 }
-else
+elseif ($frequency -eq "weekly")
 {
-    Fail-Json $result "missing required argument: state"
+    Fail-Json $result "missing required argument: daysOfWeek"
 }
+
+# Vars with defaults
 if ($params.enabled)
 {
   $enabled = $params.enabled | ConvertTo-Bool
@@ -58,17 +65,6 @@ else
 {
   $description = " "  #default
 }
-if ($params.execute)
-{
-  $execute = $params.execute
-}
-elseif ($state -eq "present")
-{
-  Fail-Json $result "missing required argument: execute"
-}
-if( $state -ne "present" -and $state -ne "absent") {
-    Fail-Json $result "state must be present or absent"
-}
 if ($params.path)
 {
   $path = "\{0}\" -f $params.path
@@ -76,30 +72,6 @@ if ($params.path)
 else
 {
   $path = "\"  #default
-}
-if ($params.frequency)
-{
-  $frequency = $params.frequency
-}
-elseif($state -eq "present")
-{
-  Fail-Json $result "missing required argument: frequency"
-}
-if ($params.time)
-{
-  $time = $params.time
-}
-elseif($state -eq "present")
-{
-  Fail-Json $result "missing required argument: time"
-}
-if ($params.daysOfWeek)
-{
-  $daysOfWeek = $params.daysOfWeek
-}
-elseif ($frequency -eq "weekly")
-{
-  Fail-Json $result "missing required argument: daysOfWeek"
 }
 
 try {
