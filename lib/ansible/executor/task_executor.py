@@ -34,6 +34,7 @@ from ansible.playbook.task import Task
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
+from ansible.utils.vars import json_variable_cleaner
 
 from ansible.utils.debug import debug
 
@@ -123,7 +124,7 @@ class TaskExecutor:
                 res['changed'] = False
 
             debug("dumping result to json")
-            result = json.dumps(res)
+            result = json.dumps(res, default=json_variable_cleaner)
             debug("done dumping result, returning")
             return result
         except AnsibleError as e:
@@ -160,6 +161,11 @@ class TaskExecutor:
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
 
+        if items:
+            from ansible.vars.unsafe_proxy import UnsafeProxy
+            for idx, item in enumerate(items):
+                if item is not None and not isinstance(item, UnsafeProxy):
+                    items[idx] = UnsafeProxy(item)
         return items
 
     def _run_loop(self, items):
