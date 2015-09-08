@@ -110,7 +110,7 @@ try {
     }
     else {
         # This should never occur
-        Fail-Json $result "$measure.count scheduled tasks found"
+        Fail-Json $result "$($measure.count) scheduled tasks found"
     }
 
     Set-Attr $result "exists" "$exists"
