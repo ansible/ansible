@@ -62,12 +62,12 @@ Installing python-kerberos dependencies
 Installing python-kerberos
 --------------------------
 
-Once you've installed the necessary dependencies, the python-kerberos wrapper can be installed via pip::
+Once you've installed the necessary dependencies, the python-kerberos wrapper can be installed via pip:
 
 .. code-block:: bash
 
    pip install kerberos
-   
+
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 
 .. _windows_inventory:
