@@ -85,6 +85,12 @@ If you would like to access sudo mode, there are also flags to do that:
     # as bruce, sudoing to batman
     $ ansible all -m ping -u bruce --sudo --sudo-user batman
 
+    # With latest version of ansible `sudo` is deprecated so use become
+    # as bruce, sudoing to root
+    $ ansible all -m ping -u bruce -b
+    # as bruce, sudoing to batman
+    $ ansible all -m ping -u bruce -b --become-user batman
+
 (The sudo implementation is changeable in Ansible's configuration file if you happen to want to use a sudo
 replacement.  Flags passed to sudo (like -H) can also be set there.)
 
