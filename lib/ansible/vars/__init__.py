@@ -317,9 +317,9 @@ class VariableManager:
         else:
             file_name, ext = os.path.splitext(path)
             data = None
-            if not ext:
-                for ext in C.YAML_FILENAME_EXTENSIONS:
-                    new_path = path + ext
+            if not ext or ext not in C.YAML_FILENAME_EXTENSIONS:
+                for test_ext in C.YAML_FILENAME_EXTENSIONS:
+                    new_path = path + test_ext
                     if loader.path_exists(new_path):
                         data = loader.load_from_file(new_path)
                         break
