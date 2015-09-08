@@ -111,6 +111,14 @@ options:
       - none
       - syslog
     version_added: "2.0"
+  log_opt:
+    description:
+      - Additional options to pass to the logging driver selected above. See Docker log-driver
+        documentation for more information (https://docs.docker.com/reference/logging/overview/).
+        Requires docker >=1.7.0.
+    required: false
+    default: null
+    version_added: "2.0"
   memory_limit:
     description:
       - RAM allocated to the container as a number of bytes or as a human-readable
@@ -420,6 +428,19 @@ EXAMPLES = '''
     name: ohno
     image: someuser/oldandbusted
     state: absent
+
+# Example Syslogging Output
+
+- name: myservice container
+  docker:
+    name: myservice
+    image: someservice/someimage
+    state: reloaded
+    log_driver: syslog
+    log_opt:
+      syslog-address: tcp://my-syslog-server:514
+      syslog-facility: daemon
+      syslog-tag: myservice
 '''
 
 HAS_DOCKER_PY = True
@@ -575,6 +596,7 @@ class DockerManager(object):
             'extra_hosts': ((0, 7, 0), '1.3.1'),
             'pid': ((1, 0, 0), '1.17'),
             'log_driver': ((1, 2, 0), '1.18'),
+            'log_opt': ((1, 2, 0), '1.18'),
             'host_config': ((0, 7, 0), '1.15'),
             'cpu_set': ((0, 6, 0), '1.14'),
             'cap_add': ((0, 5, 0), '1.14'),
@@ -806,7 +828,7 @@ class DockerManager(object):
         optionals = {}
         for optional_param in ('dns', 'volumes_from', 'restart_policy',
                 'restart_policy_retry', 'pid', 'extra_hosts', 'log_driver',
-                'cap_add', 'cap_drop', 'read_only'):
+                'cap_add', 'cap_drop', 'read_only', 'log_opt'):
             optionals[optional_param] = self.module.params.get(optional_param)
 
         if optionals['dns'] is not None:
@@ -838,6 +860,9 @@ class DockerManager(object):
         if optionals['log_driver'] is not None:
             self.ensure_capability('log_driver')
             log_config = docker.utils.LogConfig(type=docker.utils.LogConfig.types.JSON)
+            if optionals['log_opt'] is not None:
+                for k, v in optionals['log_opt'].iteritems():
+                    log_config.set_config_value(k, v)
             log_config.type = optionals['log_driver']
             params['log_config'] = log_config
 
@@ -1267,13 +1292,24 @@ class DockerManager(object):
 
             # LOG_DRIVER
 
-            if self.ensure_capability('log_driver', False) :
+            if self.ensure_capability('log_driver', False):
                 expected_log_driver = self.module.params.get('log_driver') or 'json-file'
                 actual_log_driver = container['HostConfig']['LogConfig']['Type']
                 if actual_log_driver != expected_log_driver:
                     self.reload_reasons.append('log_driver ({0} => {1})'.format(actual_log_driver, expected_log_driver))
                     differing.append(container)
                     continue
+
+            if self.ensure_capability('log_opt', False):
+                expected_logging_opts = self.module.params.get('log_opt') or {}
+                actual_log_opts = container['HostConfig']['LogConfig']['Config']
+                if len(set(expected_logging_opts.items()) - set(actual_log_opts.items())) != 0:
+                    log_opt_reasons = {
+                        'added': dict(set(expected_logging_opts.items()) - set(actual_log_opts.items())),
+                        'removed': dict(set(actual_log_opts.items()) - set(expected_logging_opts.items()))
+                    }
+                    self.reload_reasons.append('log_opt ({0})'.format(log_opt_reasons))
+                    differing.append(container)
 
         return differing
 
@@ -1645,6 +1681,7 @@ def main():
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
             log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog']),
+            log_opt         = dict(default=None, type='dict'),
             cpu_set         = dict(default=None),
             cap_add         = dict(default=None, type='list'),
             cap_drop        = dict(default=None, type='list'),
