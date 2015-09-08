@@ -183,7 +183,8 @@ class VariableManager:
             try:
                 host_facts = self._fact_cache.get(host.name, dict())
                 for k in host_facts.keys():
-                    host_facts[k] = UnsafeProxy(host_facts[k])
+                    if not isinstance(host_facts[k], UnsafeProxy):
+                        host_facts[k] = UnsafeProxy(host_facts[k])
                 all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
