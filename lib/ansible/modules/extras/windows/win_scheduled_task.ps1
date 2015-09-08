@@ -155,7 +155,6 @@ try {
     }
 
     if ( ($state -eq "present") -and ($exists -eq $false) ){
-        $action = New-ScheduledTaskAction -Execute $execute
         Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings -Principal $principal
         $task = Get-ScheduledTask -TaskName $name
         Set-Attr $result "msg" "Added new task $name"
