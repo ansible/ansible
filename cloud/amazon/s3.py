@@ -95,7 +95,7 @@ options:
     default: null
   permission:
     description:
-      - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read'.
+      - This option let's the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private', 'public-read', 'public-read-write', 'authenticated-read'. Multiple permissions can be specified as a list.
     required: false
     default: private
     version_added: "2.0"
@@ -198,6 +198,7 @@ try:
     from boto.s3.connection import Location
     from boto.s3.connection import OrdinaryCallingFormat
     from boto.s3.connection import S3Connection
+    from boto.s3.acl import CannedACLStrings
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -242,7 +243,8 @@ def create_bucket(module, s3, bucket, location=None):
         location = Location.DEFAULT
     try:
         bucket = s3.create_bucket(bucket, location=location)
-        bucket.set_acl(module.params.get('permission'))
+        for acl in module.params.get('permission'):
+            bucket.set_acl(acl)
     except s3.provider.storage_response_error, e:
         module.fail_json(msg= str(e))
     if bucket:
@@ -304,7 +306,8 @@ def upload_s3file(module, s3, bucket, obj, src, expiry, metadata, encrypt, heade
                 key.set_metadata(meta_key, metadata[meta_key])
 
         key.set_contents_from_filename(src, encrypt_key=encrypt, headers=headers)
-        key.set_acl(module.params.get('permission'))
+        for acl in module.params.get('permission'):
+            key.set_acl(acl)
         url = key.generate_url(expiry)
         module.exit_json(msg="PUT operation complete", url=url, changed=True)
     except s3.provider.storage_copy_error, e:
@@ -377,7 +380,7 @@ def main():
             metadata       = dict(type='dict'),
             mode           = dict(choices=['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list'], required=True),
             object         = dict(),
-            permission     = dict(choices=['private', 'public-read', 'public-read-write', 'authenticated-read'], default='private'),
+            permission     = dict(type='list', default=['private']),
             version        = dict(default=None),
             overwrite      = dict(aliases=['force'], default='always'),
             prefix         = dict(default=None),
@@ -408,6 +411,10 @@ def main():
     retries = module.params.get('retries')
     s3_url = module.params.get('s3_url')
     src = module.params.get('src')
+
+    for acl in module.params.get('permission'):
+        if acl not in CannedACLStrings:
+            module.fail_json(msg='Unknown permission specified: %s' % str(acl))
 
     if overwrite not in  ['always', 'never', 'different']:
         if module.boolean(overwrite):
