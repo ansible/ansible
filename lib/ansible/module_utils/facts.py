@@ -258,7 +258,7 @@ class Facts(object):
             OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
             XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', Slackware = 'Slackware', SLES = 'Suse',
             SLED = 'Suse', openSUSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
-            Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
+            Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
             FreeBSD = 'FreeBSD', HPUX = 'HP-UX'
