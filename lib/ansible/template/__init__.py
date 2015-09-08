@@ -213,8 +213,15 @@ class Templar:
         before being sent through the template engine. 
         '''
 
+        # Don't template unsafe variables, instead drop them back down to
+        # their constituent type.
         if hasattr(variable, '__UNSAFE__'):
-            return variable
+            if isinstance(variable, unicode):
+                return unicode(variable)
+            elif isinstance(variable, str):
+                return str(variable)
+            else:
+                return variable
 
         try:
             if convert_bare:
@@ -313,8 +320,11 @@ class Templar:
                 if self._fail_on_lookup_errors:
                     raise
                 ran = None
+
             if ran:
-                ran = ",".join(ran)
+                from ansible.vars.unsafe_proxy import UnsafeProxy
+                ran = UnsafeProxy(",".join(ran))
+
             return ran
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)

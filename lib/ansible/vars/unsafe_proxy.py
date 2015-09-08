@@ -59,10 +59,15 @@ class UnsafeProxy(object):
     # proxying (special cases)
     #
     def __getattribute__(self, name):
-        if name == '__UNSAFE__':
+        if name == '_obj':
+            return object.__getattribute__(self, "_obj")
+        elif name == '__UNSAFE__':
             return True
         else:
             return getattr(object.__getattribute__(self, "_obj"), name)
+
+    def __eq__(self, obj):
+        return object.__getattribute__(self, "_obj") == obj
     def __delattr__(self, name):
         delattr(object.__getattribute__(self, "_obj"), name)
     def __setattr__(self, name, value):
@@ -108,7 +113,7 @@ class UnsafeProxy(object):
         
         namespace = {}
         for name in cls._special_names:
-            if hasattr(theclass, name):
+            if hasattr(theclass, name) and not hasattr(cls, name):
                 namespace[name] = make_method(name)
         return type("%s(%s)" % (cls.__name__, theclass.__name__), (cls,), namespace)
     
