@@ -74,6 +74,12 @@ else
   $path = "\"  #default
 }
 
+# Optional vars
+if ($params.argument)
+{
+  $argument = $params.argument
+}
+
 try {
     $task = Get-ScheduledTask -TaskPath "$path" | Where-Object {$_.TaskName -eq "$name"}
 
@@ -137,6 +143,13 @@ try {
     else {
         $settings = New-ScheduledTaskSettingsSet
     }
+    
+    if ($argument) {
+        $action = New-ScheduledTaskAction -Execute $execute -Argument $argument
+    }
+    else {
+        $action = New-ScheduledTaskAction -Execute $execute
+    }
 
     if ( ($state -eq "present") -and ($exists -eq $false) ){
         $action = New-ScheduledTaskAction -Execute $execute
@@ -152,9 +165,7 @@ try {
         }
         else {
             Unregister-ScheduledTask -TaskName $name -Confirm:$false
-            $action = New-ScheduledTaskAction -Execute $execute
-            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings
-            $task = Get-ScheduledTask -TaskName $name
+            Register-ScheduledTask -Action $action -Trigger $trigger -TaskName $name -Description $description -TaskPath $path -Settings $settings  -Principal $principal
             Set-Attr $result "msg" "Updated task $name"
             $result.changed = $true
         }
