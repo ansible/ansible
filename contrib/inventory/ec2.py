@@ -187,10 +187,10 @@ class Ec2Inventory(object):
 
     def read_settings(self):
         ''' Reads the settings from the ec2.ini file '''
-        if six.PY2:
-            config = configparser.SafeConfigParser()
-        else:
+        if six.PY3:
             config = configparser.ConfigParser()
+        else:
+            config = configparser.SafeConfigParser()
         ec2_default_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'ec2.ini')
         ec2_ini_path = os.path.expanduser(os.path.expandvars(os.environ.get('EC2_INI_PATH', ec2_default_ini_path)))
         config.read(ec2_ini_path)
