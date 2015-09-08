@@ -61,7 +61,7 @@ options:
         - The type of service we are authenticating against
       required: false
       default: vca
-      choices: [ "vca", "vchs", "vcd" ] 
+      choices: [ "vca", "vchs", "vcd" ]
     state:
       description:
         - if the object should be added or removed
@@ -108,7 +108,7 @@ EXAMPLES = '''
        instance_id: 'b15ff1e5-1024-4f55-889f-ea0209726282'
        vdc_name: 'benz_ansible'
        state: 'present'
-       nat_rules: 
+       nat_rules:
          - rule_type: SNAT
            original_ip: 192.168.2.10
            translated_ip: 107.189.95.208
@@ -121,7 +121,7 @@ EXAMPLES = '''
        instance_id: 'b15ff1e5-1024-4f55-889f-ea0209726282'
        vdc_name: 'benz_ansible'
        state: 'present'
-       nat_rules: 
+       nat_rules:
          - rule_type: DNAT
            original_ip: 107.189.95.208
            original_port: 22
@@ -144,6 +144,12 @@ LOGIN_HOST            = {}
 LOGIN_HOST['vca']     = 'vca.vmware.com'
 LOGIN_HOST['vchs']    = 'vchs.vmware.com'
 VALID_RULE_KEYS       = ['rule_type', 'original_ip', 'original_port', 'translated_ip', 'translated_port', 'protocol']
+
+def serialize_instances(instance_list):
+    instances = []
+    for i in instance_list:
+        instances.append(dict(apiUrl=i['apiUrl'], instance_id=i['id']))
+    return instances
 
 def vca_login(module=None):
     service_type    = module.params.get('service_type')
@@ -216,7 +222,7 @@ def vca_login(module=None):
         if not vca.login(token=vca.token, org=org, org_url=vca.vcloud_session.org_url):
             module.fail_json(msg = "Failed to login to org", error=vca.response.content)
         return vca
-  
+
 def validate_nat_rules(module=None, nat_rules=None):
     for rule in nat_rules:
         if not isinstance(rule, dict):
@@ -301,7 +307,7 @@ def main():
     if service_type == 'vcd':
         if not host:
             module.fail_json(msg="When service type is vcd host parameter is mandatory")
-    
+
     vca = vca_login(module)
     vdc = vca.get_vdc(vdc_name)
     if not vdc:
@@ -368,7 +374,7 @@ def main():
 
     module.exit_json(changed=True, rules_added=mod_rules)
 
-    
+
 # import module snippets
 from ansible.module_utils.basic import *
 if __name__ == '__main__':
