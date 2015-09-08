@@ -62,18 +62,18 @@ options:
     required: false
   frequency:
     description:
-      - The frequency of the command
+      - The frequency of the command, not idempotent
     required: false
     choices:
       - daily
       - weekly
   time:
     description:
-      - Time to execute scheduled task
+      - Time to execute scheduled task, not idempotent
     required: false
   days_of_week:
     description:
-      - Days of the week to run a weekly task
+      - Days of the week to run a weekly task, not idempotent
     required: false
   path:
     description:
