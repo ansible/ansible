@@ -222,8 +222,7 @@ class TaskQueueManager:
             worker_prc.terminate()
 
     def clear_failed_hosts(self):
-        self._failed_hosts      = dict()
-        self._unreachable_hosts = dict()
+        self._failed_hosts = dict()
 
     def get_inventory(self):
         return self._inventory
