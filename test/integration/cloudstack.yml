@@ -7,6 +7,7 @@
   vars:
     cs_resource_prefix: "{{ resource_prefix | default('cs-') }}"
   roles:
+    - { role: test_cs_user,                 tags: test_cs_user }
     - { role: test_cs_project,              tags: test_cs_project }
     - { role: test_cs_iso,                  tags: test_cs_iso }
     - { role: test_cs_domain,               tags: test_cs_domain }
