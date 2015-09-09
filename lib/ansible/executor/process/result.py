@@ -158,7 +158,7 @@ class ResultProcess(multiprocessing.Process):
                         elif 'ansible_facts' in result_item:
                             # if this task is registering facts, do that now
                             item = result_item.get('item', None)
-                            if result._task.action in ('set_fact', 'include_vars'):
+                            if result._task.action == 'include_vars':
                                 for (key, value) in iteritems(result_item['ansible_facts']):
                                     self._send_result(('set_host_var', result._host, result._task, item, key, value))
                             else:
