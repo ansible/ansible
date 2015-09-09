@@ -139,7 +139,7 @@ options:
         - Boot instance from a volume
      required: false
      default: None
-     terminate_volume:
+   terminate_volume:
      description:
         - If true, delete volume when deleting instance (if booted from volume)
      default: false
