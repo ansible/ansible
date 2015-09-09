@@ -60,8 +60,6 @@ options:
             - How long to wait for ovs-vswitchd to respond
 """
 
-DOCUMENTATION = __doc__
-
 EXAMPLES = '''
 # Increase the maximum idle time to 50 seconds before pruning unused kernel
 # rules.
@@ -76,7 +74,6 @@ EXAMPLES = '''
 
 def cmd_run(module, cmd, check_rc=True):
     """ Log and run ovs-vsctl command. """
-    syslog.syslog(syslog.LOG_NOTICE, cmd)
     return module.run_command(cmd.split(" "), check_rc=check_rc)
 
 
