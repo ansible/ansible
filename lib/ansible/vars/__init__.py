@@ -44,6 +44,26 @@ from ansible.vars.unsafe_proxy import UnsafeProxy
 
 CACHED_VARS = dict()
 
+def preprocess_vars(a):
+    '''
+    Ensures that vars contained in the parameter passed in are
+    returned as a list of dictionaries, to ensure for instance
+    that vars loaded from a file conform to an expected state.
+    '''
+
+    if a is None:
+        return None
+    elif not isinstance(a, list):
+        data = [ a ]
+    else:
+        data = a
+
+    for item in data:
+        if not isinstance(item, MutableMapping):
+            raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
+
+    return data
+
 class VariableManager:
 
     def __init__(self):
@@ -157,14 +177,14 @@ class VariableManager:
 
             # then we merge in the special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
-                data = self._preprocess_vars(self._group_vars_files['all'])
+                data = preprocess_vars(self._group_vars_files['all'])
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
             for group in host.get_groups():
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
-                        data = self._preprocess_vars(data)
+                        data = preprocess_vars(data)
                         for item in data:
                             all_vars = combine_vars(all_vars, item)
 
@@ -175,7 +195,7 @@ class VariableManager:
             host_name = host.get_name()
             if host_name in self._host_vars_files:
                 for data in self._host_vars_files[host_name]:
-                    data = self._preprocess_vars(data)
+                    data = preprocess_vars(data)
                     for item in data:
                         all_vars = combine_vars(all_vars, item)
 
@@ -211,7 +231,7 @@ class VariableManager:
                     # as soon as we read one from the list. If none are found, we
                     # raise an error, which is silently ignored at this point.
                     for vars_file in vars_file_list:
-                        data = self._preprocess_vars(loader.load_from_file(vars_file))
+                        data = preprocess_vars(loader.load_from_file(vars_file))
                         if data is not None:
                             for item in data:
                                 all_vars = combine_vars(all_vars, item)
