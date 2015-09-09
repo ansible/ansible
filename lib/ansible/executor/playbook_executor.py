@@ -50,6 +50,7 @@ class PlaybookExecutor:
         self._display          = display
         self._options          = options
         self.passwords         = passwords
+        self._unreachable_hosts = dict()
 
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
             self._tqm = None
@@ -121,6 +122,7 @@ class PlaybookExecutor:
                     else:
                         # make sure the tqm has callbacks loaded
                         self._tqm.load_callbacks()
+                        self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
                         # we are actually running plays
                         for batch in self._get_serialized_batches(new_play):
@@ -148,10 +150,12 @@ class PlaybookExecutor:
                                 break
 
                             # clear the failed hosts dictionaires in the TQM for the next batch
+                            self._unreachable_hosts.update(self._tqm._unreachable_hosts)
                             self._tqm.clear_failed_hosts()
 
-                        # if the last result wasn't zero, break out of the serial batch loop
-                        if result != 0:
+                        # if the last result wasn't zero or 3 (some hosts were unreachable),
+                        # break out of the serial batch loop
+                        if result not in (0, 3):
                             break
 
                     i = i + 1 # per play
@@ -161,7 +165,7 @@ class PlaybookExecutor:
 
                 # if the last result wasn't zero, break out of the playbook file name loop
                 if result != 0:
-                    break
+                        break
 
             if entrylist:
                 return entrylist

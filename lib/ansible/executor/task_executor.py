@@ -28,7 +28,7 @@ import time
 from six import iteritems
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -324,7 +324,10 @@ class TaskExecutor:
                 result['attempts'] = attempt + 1
 
             debug("running the handler")
-            result = self._handler.run(task_vars=variables)
+            try:
+                result = self._handler.run(task_vars=variables)
+            except AnsibleConnectionFailure as e:
+                return dict(unreachable=True, msg=str(e))
             debug("handler run complete")
 
             if self._task.async > 0:
