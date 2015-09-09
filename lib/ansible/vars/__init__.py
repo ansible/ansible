@@ -48,14 +48,14 @@ class VariableManager:
 
     def __init__(self):
 
-        self._fact_cache       = FactCache()
-        self._vars_cache       = defaultdict(dict)
-        self._extra_vars       = defaultdict(dict)
-        self._host_vars_files  = defaultdict(dict)
+        self._fact_cache = FactCache()
+        self._nonpersistent_fact_cache = defaultdict(dict)
+        self._vars_cache = defaultdict(dict)
+        self._extra_vars = defaultdict(dict)
+        self._host_vars_files = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
-        self._inventory        = None
-
-        self._omit_token       = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
+        self._inventory = None
+        self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
@@ -179,13 +179,14 @@ class VariableManager:
                     for item in data:
                         all_vars = combine_vars(all_vars, item)
 
-            # finally, the facts cache for this host, if it exists
+            # finally, the facts caches for this host, if it exists
             try:
                 host_facts = self._fact_cache.get(host.name, dict())
                 for k in host_facts.keys():
                     if host_facts[k] is not None and not isinstance(host_facts[k], UnsafeProxy):
                         host_facts[k] = UnsafeProxy(host_facts[k])
                 all_vars = combine_vars(all_vars, host_facts)
+                all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
             except KeyError:
                 pass
 
@@ -370,12 +371,12 @@ class VariableManager:
         assert isinstance(facts, dict)
 
         if host.name not in self._fact_cache:
-            self._fact_cache[host.name] = facts
+            self._nonpersistent_fact_cache[host.name] = facts
         else:
             try:
-                self._fact_cache[host.name].update(facts)
+                self._nonpersistent_fact_cache[host.name].update(facts)
             except KeyError:
-                self._fact_cache[host.name] = facts
+                self._nonpersistent_fact_cache[host.name] = facts
 
     def set_host_variable(self, host, varname, value):
         '''
