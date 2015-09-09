@@ -161,7 +161,7 @@ class PlaybookExecutor:
 
                 # if the last result wasn't zero, break out of the playbook file name loop
                 if result != 0:
-                        break
+                    break
 
             if entrylist:
                 return entrylist
