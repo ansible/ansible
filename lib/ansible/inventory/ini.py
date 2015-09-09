@@ -29,7 +29,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_bytes
 
 class InventoryParser(object):
     """
@@ -56,10 +56,10 @@ class InventoryParser(object):
 
         if loader:
             (data, private) = loader._get_file_contents(filename)
-            data = data.split('\n')
         else:
             with open(filename) as fh:
-                data = fh.readlines()
+                data = to_unicode(fh.read())
+        data = data.split('\n')
 
         self._parse(data)
 
@@ -230,11 +230,13 @@ class InventoryParser(object):
         # beta:2345 user=admin      # we'll tell shlex
         # gamma sudo=True user=root # to ignore comments
 
+        line = to_bytes(line)
         try:
             tokens = shlex.split(line, comments=True)
         except ValueError as e:
             self._raise_error("Error parsing host definition '%s': %s" % (varstring, e))
 
+        tokens = [ to_unicode(t) for t in tokens]
         (hostnames, port) = self._expand_hostpattern(tokens[0])
         hosts = self._Hosts(hostnames, port)
 
@@ -313,8 +315,8 @@ class InventoryParser(object):
     @staticmethod
     def _parse_value(v):
         '''
-        Does something with something and returns something. Not for mere
-        mortals such as myself to interpret.
+        Attempt to transform the string value from an ini file into a basic python object
+        (int, dict, list, unicode string, etc).
         '''
         if "#" not in v:
             try:

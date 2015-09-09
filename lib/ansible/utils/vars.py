@@ -128,3 +128,14 @@ def isidentifier(ident):
 
     return True
 
+def json_variable_cleaner(obj):
+    '''
+    Used as the default= parameter to json.dumps(), this method helps
+    clear out UnsafeProxy variables so they can be properly JSON encoded
+    '''
+    from ansible.vars.unsafe_proxy import UnsafeProxy
+    if isinstance(obj, UnsafeProxy):
+        return obj._obj
+    else:
+        return obj
+

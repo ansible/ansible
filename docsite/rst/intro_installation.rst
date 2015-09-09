@@ -49,15 +49,22 @@ Control Machine Requirements
 Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
-  
+
+.. note::
+
+    As of 2.0 ansible uses a few more file handles to manage it's forks, OS X has a very low setting so if you want to use 15 or more forks
+    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 2048``. Or just any time you see a "Too many open files" error.
+
+
 .. _managed_node_requirements:
 
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you need a way to communicate, normally ssh. By default this uses sftp, if not available you can switch to scp in ansible.cfg.
+Also you need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
 
-* ``python-simplejson`` 
+* ``python-simplejson``
 
 .. note::
 
@@ -185,7 +192,7 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
     $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
     $ make rpm
-    $ sudo rpm -Uvh ./rpmbuild/ansible-*.noarch.rpm
+    $ sudo rpm -Uvh ./rpm-build/ansible-*.noarch.rpm
 
 .. _from_apt:
 

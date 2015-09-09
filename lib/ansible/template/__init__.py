@@ -22,6 +22,7 @@ __metaclass__ = type
 import ast
 import re
 
+from six import string_types
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
@@ -213,14 +214,21 @@ class Templar:
         before being sent through the template engine. 
         '''
 
+        # Don't template unsafe variables, instead drop them back down to
+        # their constituent type.
         if hasattr(variable, '__UNSAFE__'):
-            return variable
+            if isinstance(variable, unicode):
+                return unicode(variable)
+            elif isinstance(variable, str):
+                return str(variable)
+            else:
+                return variable
 
         try:
             if convert_bare:
                 variable = self._convert_bare_variable(variable)
 
-            if isinstance(variable, basestring):
+            if isinstance(variable, string_types):
                 result = variable
                 if self._contains_vars(variable):
 
@@ -282,7 +290,7 @@ class Templar:
         in jinja2 variable braces so that it is evaluated properly.
         '''
 
-        if isinstance(variable, basestring):
+        if isinstance(variable, string_types):
             contains_filters = "|" in variable
             first_part = variable.split("|")[0].split(".")[0].split("[")[0]
             if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
@@ -313,8 +321,11 @@ class Templar:
                 if self._fail_on_lookup_errors:
                     raise
                 ran = None
+
             if ran:
-                ran = ",".join(ran)
+                from ansible.vars.unsafe_proxy import UnsafeProxy
+                ran = UnsafeProxy(",".join(ran))
+
             return ran
         else:
             raise AnsibleError("lookup plugin (%s) not found" % name)

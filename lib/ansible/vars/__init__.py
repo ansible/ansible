@@ -183,7 +183,8 @@ class VariableManager:
             try:
                 host_facts = self._fact_cache.get(host.name, dict())
                 for k in host_facts.keys():
-                    host_facts[k] = UnsafeProxy(host_facts[k])
+                    if host_facts[k] is not None and not isinstance(host_facts[k], UnsafeProxy):
+                        host_facts[k] = UnsafeProxy(host_facts[k])
                 all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
@@ -316,9 +317,9 @@ class VariableManager:
         else:
             file_name, ext = os.path.splitext(path)
             data = None
-            if not ext:
-                for ext in C.YAML_FILENAME_EXTENSIONS:
-                    new_path = path + ext
+            if not ext or ext not in C.YAML_FILENAME_EXTENSIONS:
+                for test_ext in C.YAML_FILENAME_EXTENSIONS:
+                    new_path = path + test_ext
                     if loader.path_exists(new_path):
                         data = loader.load_from_file(new_path)
                         break
