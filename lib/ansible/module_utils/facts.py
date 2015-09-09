@@ -43,6 +43,12 @@ except ImportError:
     HAVE_SELINUX=False
 
 try:
+    import firewall.config
+    HAS_FIREWALLD = True
+except ImportError:
+    HAS_FIREWALLD = False
+
+try:
     import json
     # Detect python-json which is incompatible and fallback to simplejson in
     # that case
@@ -145,6 +151,7 @@ class Facts(object):
             self.get_cmdline()
             self.get_public_ssh_host_keys()
             self.get_selinux_facts()
+            self.get_firewalld_facts()
             self.get_fips_facts()
             self.get_pkg_mgr_facts()
             self.get_lsb_facts()
@@ -321,7 +328,7 @@ class Facts(object):
                                 self.facts['distribution'] = name
                             else:
                                 self.facts['distribution'] = data.split()[0]
-                            break  
+                            break
                         elif name == 'Slackware':
                             data = get_file_content(path)
                             if 'Slackware' in data:
@@ -329,7 +336,7 @@ class Facts(object):
                                 version = re.findall('\w+[.]\w+', data)
                                 if version:
                                     self.facts['distribution_version'] = version[0]
-                            break      
+                            break
                         elif name == 'OracleLinux':
                             data = get_file_content(path)
                             if 'Oracle Linux' in data:
@@ -606,6 +613,13 @@ class Facts(object):
                     self.facts['selinux']['type'] = 'unknown'
             except OSError, e:
                 self.facts['selinux']['type'] = 'unknown'
+
+
+    def get_firewalld_facts(self):
+        self.facts['firewalld'] = False
+        if HAS_FIREWALLD:
+            self.facts['firewalld'] = {}
+            self.facts['firewalld']['version'] = firewall.config.VERSION
 
 
     def get_fips_facts(self):
@@ -1975,7 +1989,7 @@ class LinuxNetwork(Network):
 
                         # If this is the default address, update default_ipv4
                         if 'address' in default_ipv4 and default_ipv4['address'] == address:
-                            default_ipv4['broadcast'] = broadcast 
+                            default_ipv4['broadcast'] = broadcast
                             default_ipv4['netmask'] = netmask
                             default_ipv4['network'] = network
                             default_ipv4['macaddress'] = macaddress
