@@ -340,7 +340,7 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
 
         ssh_cmd = self._password_cmd()
-        ssh_cmd += ("ssh", "-C")
+        ssh_cmd += (C.ANSIBLE_SSH_BINARY, "-C")
         if not in_data:
             # we can only use tty when we are not pipelining the modules. piping data into /usr/bin/python
             # inside a tty automatically invokes the python interactive-mode but the modules are not
@@ -462,11 +462,15 @@ class Connection(ConnectionBase):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
+            cmd.append('-S')
+            cmd.append(C.ANSIBLE_SSH_BINARY)
             cmd.extend(self._common_args)
             cmd.extend([in_path, '{0}:{1}'.format(host, pipes.quote(out_path))])
             indata = None
         else:
             cmd.append('sftp')
+            cmd.append('-S')
+            cmd.append(C.ANSIBLE_SSH_BINARY)
             cmd.extend(self._common_args)
             cmd.append(host)
             indata = "put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
@@ -491,11 +495,15 @@ class Connection(ConnectionBase):
 
         if C.DEFAULT_SCP_IF_SSH:
             cmd.append('scp')
+            cmd.append('-S')
+            cmd.append(C.ANSIBLE_SSH_BINARY)
             cmd.extend(self._common_args)
             cmd.extend(['{0}:{1}'.format(self.host, in_path), out_path])
             indata = None
         else:
             cmd.append('sftp')
+            cmd.append('-S')
+            cmd.append(C.ANSIBLE_SSH_BINARY)
             # sftp batch mode allows us to correctly catch failed transfers,
             # but can be disabled if for some reason the client side doesn't
             # support the option
@@ -519,7 +527,7 @@ class Connection(ConnectionBase):
         if self._connected:
 
             if 'ControlMaster' in self._common_args:
-                cmd = ['ssh','-O','stop']
+                cmd = [C.ANSIBLE_SSH_BINARY,'-O','stop']
                 cmd.extend(self._common_args)
                 cmd.append(self._play_context.remote_addr)
 
