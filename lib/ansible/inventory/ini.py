@@ -313,8 +313,8 @@ class InventoryParser(object):
     @staticmethod
     def _parse_value(v):
         '''
-        Does something with something and returns something. Not for mere
-        mortals such as myself to interpret.
+        Attempt to transform the string value from an ini file into a basic python object
+        (int, dict, list, unicode string, etc).
         '''
         if "#" not in v:
             try:
