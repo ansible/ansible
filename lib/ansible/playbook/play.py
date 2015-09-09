@@ -750,7 +750,7 @@ class Play(object):
                 prompt_msg = "%s: " % prompt
                 if vname not in self.playbook.extra_vars:
                     vars[vname] = self.playbook.callbacks.on_vars_prompt(
-                                     varname=vname, private=False, prompt=prompt_msg, default=None
+                                     varname=vname, private=True, prompt=prompt_msg, default=None
                                   )
 
         else:
