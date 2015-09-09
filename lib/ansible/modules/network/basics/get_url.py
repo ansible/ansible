@@ -153,7 +153,7 @@ EXAMPLES='''
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf force_basic_auth=yes
 
 - name: download file with custom HTTP headers
-  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf headers: 'key:value,key:value'
+  get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf headers='key:value,key:value'
 
 - name: download file with check
   get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf checksum=sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
