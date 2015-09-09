@@ -165,12 +165,12 @@ class PluginLoader(object):
             else:
                 suffixes = ['.py', '']
 
-        potential_names = frozenset('%s%s' % (name, s) for s in suffixes)
-        for full_name in potential_names:
-            if full_name in self._plugin_path_cache:
-                return self._plugin_path_cache[full_name]
+        try:
+            return self._plugin_path_cache[name]
+        except KeyError:
+            # Cache miss.  Now let's find the the plugin
+            pass
 
-        found = None
         for path in [p for p in self._get_paths() if p not in self._searched_paths]:
             if os.path.isdir(path):
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))
@@ -178,24 +178,32 @@ class PluginLoader(object):
                     for suffix in suffixes:
                         if full_path.endswith(suffix):
                             full_name = os.path.basename(full_path)
+                            if suffix:
+                                base_name = full_name[:-len(suffix)]
+                            else:
+                                base_name = full_name
                             break
                     else: # Yes, this is a for-else: http://bit.ly/1ElPkyg
                         continue
 
-                    if full_name not in self._plugin_path_cache:
-                        self._plugin_path_cache[full_name] = full_path
+                    # Module found, now see if it's already in the cache
+                    if base_name not in self._plugin_path_cache:
+                        self._plugin_path_cache[base_name] = full_path
 
             self._searched_paths.add(path)
-            for full_name in potential_names:
-                if full_name in self._plugin_path_cache:
-                    return self._plugin_path_cache[full_name]
+            try:
+                return self._plugin_path_cache[name]
+            except KeyError:
+                # Didn't find the plugin in this directory.  Load modules from
+                # the next one
+                pass
 
         # if nothing is found, try finding alias/deprecated
         if not name.startswith('_'):
-            for alias_name in ('_%s' % n for n in potential_names):
-                # We've already cached all the paths at this point
-                if alias_name in self._plugin_path_cache:
-                    return self._plugin_path_cache[alias_name]
+            alias_name = '_' + name
+            # We've already cached all the paths at this point
+            if alias_name in self._plugin_path_cache:
+                return self._plugin_path_cache[alias_name]
 
         return None
 
