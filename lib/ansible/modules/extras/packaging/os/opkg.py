@@ -42,6 +42,7 @@ options:
         choices: ["", "depends", "maintainer", "reinstall", "overwrite", "downgrade", "space", "postinstall", "remove", "checksum", "removal-of-dependent-packages"]
         required: false
         default: absent
+        version_added: "2.0"
     update_cache:
         description:
             - update the package db first
