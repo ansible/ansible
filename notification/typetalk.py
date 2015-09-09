@@ -72,14 +72,14 @@ def do_request(module, url, params, headers=None):
         raise exc
     return r
 
-def get_access_token(client_id, client_secret):
+def get_access_token(module, client_id, client_secret):
     params = {
         'client_id': client_id,
         'client_secret': client_secret,
         'grant_type': 'client_credentials',
         'scope': 'topic.post'
     }
-    res = do_request('https://typetalk.in/oauth2/access_token', params)
+    res = do_request(module, 'https://typetalk.in/oauth2/access_token', params)
     return json.load(res)['access_token']
 
 
@@ -88,7 +88,7 @@ def send_message(module, client_id, client_secret, topic, msg):
     send message to typetalk
     """
     try:
-        access_token = get_access_token(client_id, client_secret)
+        access_token = get_access_token(module, client_id, client_secret)
         url = 'https://typetalk.in/api/v1/topics/%d' % topic
         headers = {
             'Authorization': 'Bearer %s' % access_token,
