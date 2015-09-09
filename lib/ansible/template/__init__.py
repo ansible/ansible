@@ -22,6 +22,7 @@ __metaclass__ = type
 import ast
 import re
 
+from six import string_types
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
@@ -227,7 +228,7 @@ class Templar:
             if convert_bare:
                 variable = self._convert_bare_variable(variable)
 
-            if isinstance(variable, basestring):
+            if isinstance(variable, string_types):
                 result = variable
                 if self._contains_vars(variable):
 
@@ -289,7 +290,7 @@ class Templar:
         in jinja2 variable braces so that it is evaluated properly.
         '''
 
-        if isinstance(variable, basestring):
+        if isinstance(variable, string_types):
             contains_filters = "|" in variable
             first_part = variable.split("|")[0].split(".")[0].split("[")[0]
             if (contains_filters or first_part in self._available_variables) and self.environment.variable_start_string not in variable:
