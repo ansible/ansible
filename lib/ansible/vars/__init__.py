@@ -390,7 +390,7 @@ class VariableManager:
 
         assert isinstance(facts, dict)
 
-        if host.name not in self._fact_cache:
+        if host.name not in self._nonpersistent_fact_cache:
             self._nonpersistent_fact_cache[host.name] = facts
         else:
             try:
