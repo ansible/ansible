@@ -31,9 +31,17 @@ from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.playbook.task import Task
+from ansible.vars import preprocess_vars
 
 
 __all__ = ['Play']
+
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class Play(Base, Taggable, Become):
@@ -120,9 +128,6 @@ class Play(Base, Taggable, Become):
             ds['remote_user'] = ds['user']
             del ds['user']
 
-        if 'vars_prompt' in ds and not isinstance(ds['vars_prompt'], list):
-            ds['vars_prompt'] = [ ds['vars_prompt'] ]
-
         return super(Play, self).preprocess_data(ds)
 
     def _load_hosts(self, attr, ds):
@@ -191,8 +196,28 @@ class Play(Base, Taggable, Become):
             roles.append(Role.load(ri, play=self))
         return roles
 
-    # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
+    def _load_vars_prompt(self, attr, ds):
+        new_ds = preprocess_vars(ds)
+        vars_prompts = []
+        for prompt_data in new_ds:
+            if 'name' not in prompt_data:
+                self._display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
+                for vname, prompt in prompt_data.iteritems():
+                    vars_prompts.append(dict(
+                        name      = vname,
+                        prompt    = prompt,
+                        default   = None,
+                        private   = None,
+                        confirm   = None,
+                        encrypt   = None,
+                        salt_size = None,
+                        salt      = None,
+                    ))
+            else:
+                vars_prompts.append(prompt_data)
+        return vars_prompts
 
+    # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
     def _compile_roles(self):
         '''
         Handles the role compilation step, returning a flat list of tasks

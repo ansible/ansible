@@ -88,14 +88,10 @@ class PlaybookExecutor:
 
                     if play.vars_prompt:
                         for var in play.vars_prompt:
-                            if 'name' not in var:
-                                raise AnsibleError("'vars_prompt' item is missing 'name:'", obj=play._ds)
-
                             vname     = var['name']
                             prompt    = var.get("prompt", vname)
                             default   = var.get("default", None)
                             private   = var.get("private", True)
-
                             confirm   = var.get("confirm", False)
                             encrypt   = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
