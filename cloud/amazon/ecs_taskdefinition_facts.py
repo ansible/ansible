@@ -20,7 +20,7 @@ module: ecs_taskdefinition_facts
 short_description: return facts about task definitions in ecs
 description:
     - Describes or lists task definitions.
-version_added: 1.9
+version_added: 2.0
 requirements: [ json, os, boto, botocore, boto3 ]
 options:
     details:
@@ -105,7 +105,7 @@ class EcsTaskManager:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound, e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json(msg="Can't authorize connection - "+str(e))
 
     def transmogrify(self, params, field, dictionary, arg_name):
         if field in params and params[field] is not None:
