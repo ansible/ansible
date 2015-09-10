@@ -23,14 +23,9 @@ notes:
     - It will also wait for a cluster to have instances registered to it.
 description:
     - Creates or terminates ecs clusters.
-version_added: "1.9"
+version_added: "2.0"
 requirements: [ json, time, boto, boto3 ]
 options:
-        state=dict(required=True, choices=['present', 'absent', 'has_instances'] ),
-        name=dict(required=True, type='str' ),
-        delay=dict(required=False, type='int', default=10),
-        repeat=dict(required=False, type='int', default=10)
-
     state:
         description:
             - The desired state of the cluster
@@ -43,11 +38,11 @@ options:
     delay:
         description:
             - Number of seconds to wait
-        required: true
-    name:
+        required: false
+    repeat:
         description:
-            - The cluster name
-        required: true
+            - The number of times to wait for the cluster to have an instance
+        required: false
 '''
 
 EXAMPLES = '''
@@ -128,7 +123,7 @@ class EcsClusterManager:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound, e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json(msg="Can't authorize connection - "+str(e))
 
     def find_in_array(self, array_of_clusters, cluster_name, field_name='clusterArn'):
         for c in array_of_clusters:
@@ -183,7 +178,7 @@ def main():
     try:
         existing = cluster_mgr.describe_cluster(module.params['name'])
     except Exception, e:
-        module.fail_json(msg=str(e))
+        module.fail_json(msg="Exception describing cluster '"+module.params['name']+"': "+str(e))
 
     results = dict(changed=False)
     if module.params['state'] == 'present':
