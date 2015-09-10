@@ -24,8 +24,8 @@ Setting inventory variables in the inventory file is the easiest way.
 For instance, suppose these hosts have different usernames and ports::
 
     [webservers]
-    asdf.example.com  ansible_ssh_port=5000   ansible_ssh_user=alice
-    jkl.example.com   ansible_ssh_port=5001   ansible_ssh_user=bob
+    asdf.example.com  ansible_port=5000   ansible_user=alice
+    jkl.example.com   ansible_port=5001   ansible_user=bob
 
 You can also dictate the connection type to be used, if you want::
 
@@ -66,8 +66,8 @@ ssh command line when connecting to the relevant host(s), so it's a good
 way to set a `ProxyCommand`. Consider the following inventory group:
 
     [gatewayed]
-    foo ansible_ssh_host=192.0.2.1
-    bar ansible_ssh_host=192.0.2.2
+    foo ansible_host=192.0.2.1
+    bar ansible_host=192.0.2.2
 
 You can create `group_vars/gatewayed.yml` with the following contents:
 
