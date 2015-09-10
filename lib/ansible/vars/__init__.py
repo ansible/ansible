@@ -390,6 +390,21 @@ class VariableManager:
 
         assert isinstance(facts, dict)
 
+        if host.name not in self._fact_cache:
+            self._fact_cache[host.name] = facts
+        else:
+            try:
+                self._fact_cache[host.name].update(facts)
+            except KeyError:
+                self._fact_cache[host.name] = facts
+
+    def set_nonpersistent_facts(self, host, facts):
+        '''
+        Sets or updates the given facts for a host in the fact cache.
+        '''
+
+        assert isinstance(facts, dict)
+
         if host.name not in self._nonpersistent_fact_cache:
             self._nonpersistent_fact_cache[host.name] = facts
         else:
