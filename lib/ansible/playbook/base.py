@@ -54,6 +54,12 @@ class Base:
     _environment         = FieldAttribute(isa='list')
     _no_log              = FieldAttribute(isa='bool')
 
+    # param names which have been deprecated/removed
+    DEPRECATED_ATTRIBUTES = [
+        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
+        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
+    ]
+
     def __init__(self):
 
         # initialize the data loader and variable manager, which will be provided
