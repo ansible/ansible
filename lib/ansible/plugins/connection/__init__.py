@@ -57,6 +57,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     has_pipelining = False
     become_methods = C.BECOME_METHODS
+    # When running over this connection type, prefer modules written in a certain language
+    # as discovered by the specified file extension.  An empty string as the
+    # language means any language.
+    module_implementation_preferences = ('',)
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         # All these hasattrs allow subclasses to override these parameters
