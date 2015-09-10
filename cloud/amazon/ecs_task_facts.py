@@ -20,7 +20,7 @@ module: ecs_task_facts
 short_description: return facts about tasks in ecs
 description:
     - Describes or lists tasks.
-version_added: 1.9
+version_added: 2.0
 options:
     details:
         description:
@@ -64,37 +64,16 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Basic listing example
-- ecs_task:
+- ecs_task_facts:
     cluster=test-cluster
     task_list=123456789012345678901234567890123456
 
-# Basic example of deregistering task
-- ecs_task:
-    state: absent
-    family: console-test-tdn
-    revision: 1
-'''
-RETURN = '''
-cache_updated:
-    description: if the cache was updated or not
-    returned: success, in some cases
-    type: boolean
-    sample: True
-cache_update_time:
-    description: time of the last cache update (0 if unknown)
-    returned: success, in some cases
-    type: datetime
-    sample: 1425828348000
-stdout:
-    description: output from apt
-    returned: success, when needed
-    type: string
-    sample: "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following extra packages will be installed:\n  apache2-bin ..."
-stderr:
-    description: error output from apt
-    returned: success, when needed
-    type: string
-    sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
+# Listing tasks with details
+- ecs_task_facts:
+    details: true
+    cluster=test-cluster
+    task_list=123456789012345678901234567890123456
+
 '''
 try:
     import json, os
@@ -125,7 +104,7 @@ class EcsTaskManager:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound, e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json(msg="Can't authorize connection - "+str(e))
 
     def transmogrify(self, params, field, dictionary, arg_name):
         if field in params and params[field] is not None:
