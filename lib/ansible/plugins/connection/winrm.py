@@ -52,10 +52,11 @@ from ansible.utils.unicode import to_bytes, to_unicode
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
+    module_implementation_preferences = ('.ps1', '')
+
     def __init__(self,  *args, **kwargs):
 
         self.has_pipelining   = False
-        self.default_suffixes = ['.ps1', '']
         self.protocol         = None
         self.shell_id         = None
         self.delegate         = None
