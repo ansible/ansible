@@ -94,7 +94,7 @@ options:
   newline:
     required: false
     description:
-      - Specifies the line separator style to use for the modified file. This defaults to the windows line separator (\r\n). Note that the indicated line separator will be used for file output regardless of the original line seperator that appears in the input file.
+      - "Specifies the line separator style to use for the modified file. This defaults to the windows line separator (\r\n). Note that the indicated line separator will be used for file output regardless of the original line seperator that appears in the input file."
     choices: [ "windows", "unix" ]
     default: "windows"
 """
