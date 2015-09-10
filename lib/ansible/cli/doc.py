@@ -94,7 +94,7 @@ class DocCLI(CLI):
                     continue
 
                 try:
-                    doc, plainexamples, returndocs = module_docs.get_docstring(filename)
+                    doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
                     self.display.vvv(traceback.print_exc())
                     self.display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
