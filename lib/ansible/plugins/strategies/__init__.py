@@ -35,6 +35,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.role import hash_params
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader
 from ansible.template import Templar
+from ansible.vars.unsafe_proxy import UnsafeProxy
 
 try:
     from __main__ import display
@@ -242,6 +243,30 @@ class StrategyBase:
                     host      = result[1]
                     var_name  = result[2]
                     var_value = result[3]
+
+                    def _wrap_var(v):
+                        if isinstance(v, dict):
+                            v = _wrap_dict(v)
+                        elif isinstance(v, list):
+                            v = _wrap_list(v)
+                        else:
+                            if v is not None and not isinstance(v, UnsafeProxy):
+                                v = UnsafeProxy(v)
+                        return v
+
+                    def _wrap_dict(v):
+                        for k in v.keys():
+                            if v[k] is not None and not isinstance(v[k], UnsafeProxy):
+                                v[k] = _wrap_var(v[k])
+                        return v
+
+                    def _wrap_list(v):
+                        for idx, item in enumerate(v):
+                            if item is not None and not isinstance(item, UnsafeProxy):
+                                v[idx] = _wrap_var(item)
+                        return v
+
+                    var_value = _wrap_var(var_value)
                     self._variable_manager.set_host_facts(host, {var_name: var_value})
 
                 elif result[0] in ('set_host_var', 'set_host_facts'):
