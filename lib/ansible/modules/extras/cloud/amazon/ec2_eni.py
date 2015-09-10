@@ -215,8 +215,8 @@ def create_eni(connection, module):
                     raise
                 # Wait to allow creation / attachment to finish
                 wait_for_eni(eni, "attached")
+                eni.update()
             changed = True
-            eni.update()
             
     except BotoServerError as e:
         module.fail_json(msg=get_error_message(e.args[2]))
