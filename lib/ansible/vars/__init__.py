@@ -300,7 +300,7 @@ class VariableManager:
 
     def _get_inventory_basename(self, path):
         '''
-        Returns the bsaename minus the extension of the given path, so the
+        Returns the basename minus the extension of the given path, so the
         bare filename can be matched against host/group names later
         '''
 
