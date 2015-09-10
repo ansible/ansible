@@ -20,7 +20,7 @@ module: ecs_cluster_facts
 short_description: list or describe clusters or their instances in ecs
 description:
     - Lists or describes clusters or cluster instances in ecs.
-version_added: 1.9
+version_added: "2.0"
 options:
     details:
         description:
@@ -94,7 +94,7 @@ class EcsClusterManager:
                 module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
             self.ecs = boto3_conn(module, conn_type='client', resource='ecs', region=region, endpoint=ec2_url, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound, e:
-            self.module.fail_json(msg=str(e))
+            self.module.fail_json(msg="Can't authorize connection - "+str(e))
 
     def list_container_instances(self, cluster):
         response = self.ecs.list_container_instances(cluster=cluster)
