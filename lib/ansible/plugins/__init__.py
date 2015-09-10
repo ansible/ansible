@@ -40,18 +40,6 @@ except ImportError:
 MODULE_CACHE = {}
 PATH_CACHE = {}
 PLUGIN_PATH_CACHE = {}
-_basedirs = []
-
-# FIXME: the _basedirs code may be dead, and no longer needed, as
-#        we now use add_directory for all plugin types here instead
-#        of relying on this global variable (which also causes problems
-#        with forked processes). See the Playbook() and Role() classes
-#        for how we now ue get_all_plugin_loaders() below.
-def push_basedir(basedir):
-    # avoid pushing the same absolute dir more than once
-    basedir = to_unicode(os.path.realpath(basedir))
-    if basedir not in _basedirs:
-        _basedirs.insert(0, basedir)
 
 def get_all_plugin_loaders():
     return [(name, obj) for (name, obj) in inspect.getmembers(sys.modules[__name__]) if isinstance(obj, PluginLoader)]
@@ -165,22 +153,6 @@ class PluginLoader:
             return self._paths
 
         ret = self._extra_dirs[:]
-        for basedir in _basedirs:
-            fullpath = os.path.realpath(os.path.join(basedir, self.subdir))
-            if os.path.isdir(fullpath):
-                files = glob.glob("%s/*" % fullpath)
-
-                # allow directories to be two levels deep
-                files2 = glob.glob("%s/*/*" % fullpath)
-
-                if files2 is not None:
-                    files.extend(files2)
-
-                for file in files:
-                    if os.path.isdir(file) and file not in ret:
-                        ret.append(file)
-                if fullpath not in ret:
-                    ret.append(fullpath)
 
         # look in any configured plugin paths, allow one level deep for subcategories
         if self.config is not None:
