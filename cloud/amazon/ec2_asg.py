@@ -67,7 +67,7 @@ options:
       - Number of instances you'd like to replace at a time.  Used with replace_all_instances.
     required: false
     version_added: "1.8"
-    default: 1  
+    default: 1
   replace_instances:
     description:
       - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch configuration.
@@ -129,8 +129,9 @@ options:
   termination_policies:
     description:
         - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
+        - For 'Default', when used to create a new autoscaling group, the "Default" value is used. When used to change an existent autoscaling group, the current termination policies are mantained
     required: false
-    default: Default. Eg, when used to create a new autoscaling group, the “Default” value is used. When used to change an existent autoscaling group, the current termination policies are mantained
+    default: Default
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
     version_added: "2.0"
 extends_documentation_fragment: aws
