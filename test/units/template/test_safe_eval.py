@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import sys
 from collections import defaultdict
 
 from ansible.compat.tests import unittest
@@ -45,3 +46,6 @@ class TestSafeEval(unittest.TestCase):
             self.assertEqual(safe_eval('[]', locals=locals_vars), [])
             self.assertEqual(safe_eval('{}', locals=locals_vars), {})
 
+    @unittest.skipUnless(sys.version_info[:2] >= (2, 7), "Python 2.6 has no set literals")
+    def test_set_literals(self):
+        self.assertEqual(safe_eval('{0}'), set([0]))
