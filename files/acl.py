@@ -21,7 +21,7 @@ module: acl
 version_added: "1.4"
 short_description: Sets and retrieves file ACL information.
 description:
-     - Sets and retrieves file ACL information.
+    - Sets and retrieves file ACL information.
 notes:
     - As of Ansible 2.0, this module only supports Linux distributions.
 options:
@@ -122,21 +122,15 @@ acl:
     sample: [ "user::rwx", "group::rwx", "other::rwx" ]
 '''
 
+
 def split_entry(entry):
     ''' splits entry and ensures normalized return'''
 
     a = entry.split(':')
-    a.reverse()
-    if len(a) == 3:
-        a.append(False)
-    try:
-        p, e, t, d = a
-    except ValueError, e:
-        print "wtf?? %s => %s" % (entry, a)
-        raise e
+    if len(a) == 2:
+        a.append(None)
 
-    if d:
-        d = True
+    t, e, p = a
 
     if t.startswith("u"):
         t = "user"
@@ -149,7 +143,7 @@ def split_entry(entry):
     else:
         t = None
 
-    return [d, t, e, p]
+    return [t, e, p]
 
 
 def build_entry(etype, entity, permissions=None):
@@ -161,7 +155,7 @@ def build_entry(etype, entity, permissions=None):
 
 
 def build_command(module, mode, path, follow, default, recursive, entry=''):
-    '''Builds and returns agetfacl/setfacl command.'''
+    '''Builds and returns a getfacl/setfacl command.'''
     if mode == 'set':
         cmd = [module.get_bin_path('setfacl', True)]
         cmd.append('-m "%s"' % entry)
@@ -178,7 +172,7 @@ def build_command(module, mode, path, follow, default, recursive, entry=''):
         cmd.append('--recursive')
 
     if not follow:
-        cmd.append('-h')
+        cmd.append('--physical')
 
     if default:
         if(mode == 'rm'):
@@ -198,8 +192,8 @@ def acl_changed(module, cmd):
 
     for line in lines:
         if not line.endswith('*,*'):
-            return False
-    return True
+            return True
+    return False
 
 
 def run_acl(module, cmd, check_rc=True):
@@ -275,13 +269,16 @@ def main():
         if etype or entity or permissions:
             module.fail_json(msg="'entry' MUST NOT be set when 'entity', 'etype' or 'permissions' are set.")
 
-        if state == 'present' and entry.count(":") != 3:
+        if state == 'present' and entry.count(":") != 2:
             module.fail_json(msg="'entry' MUST have 3 sections divided by ':' when 'state=present'.")
 
-        if state == 'absent' and entry.count(":") != 2:
+        if state == 'absent' and entry.count(":") != 1:
             module.fail_json(msg="'entry' MUST have 2 sections divided by ':' when 'state=absent'.")
 
-        default, etype, entity, permissions = split_entry(entry)
+        if state == 'query':
+            module.fail_json(msg="'entry' MUST NOT be set when 'state=query'.")
+
+        etype, entity, permissions = split_entry(entry)
 
     changed = False
     msg = ""
