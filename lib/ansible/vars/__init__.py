@@ -206,7 +206,6 @@ class VariableManager:
                     if host_facts[k] is not None and not isinstance(host_facts[k], UnsafeProxy):
                         host_facts[k] = UnsafeProxy(host_facts[k])
                 all_vars = combine_vars(all_vars, host_facts)
-                all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
             except KeyError:
                 pass
 
@@ -252,6 +251,7 @@ class VariableManager:
 
         if host:
             all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
         all_vars = combine_vars(all_vars, self._extra_vars)
 
