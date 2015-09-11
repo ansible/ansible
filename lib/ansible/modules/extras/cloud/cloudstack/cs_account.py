@@ -221,7 +221,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
     def enable_account(self):
         account = self.get_account()
         if not account:
-            self.module.fail_json(msg="Failed: account not present")
+            account = self.present_account()
 
         if account['state'].lower() != 'enabled':
             self.result['changed'] = True
@@ -248,7 +248,7 @@ class AnsibleCloudStackAccount(AnsibleCloudStack):
     def lock_or_disable_account(self, lock=False):
         account = self.get_account()
         if not account:
-            self.module.fail_json(msg="Failed: account not present")
+            account = self.present_account()
 
         # we need to enable the account to lock it.
         if lock and account['state'].lower() == 'disabled':
