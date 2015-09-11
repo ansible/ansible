@@ -20,6 +20,7 @@ __metaclass__ = type
 import ast
 import sys
 
+from six import string_types
 from six.moves import builtins
 
 from ansible import constants as C
@@ -73,6 +74,14 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             )
         )
 
+    # And in Python 3.4 too
+    if sys.version_info[:2] >= (3, 4):
+        SAFE_NODES.update(
+            set(
+                (ast.NameConstant,)
+            )
+        )
+
     filter_list = []
     for filter in filter_loader.all():
         filter_list.extend(filter.filters().keys())
@@ -96,7 +105,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
             for child_node in ast.iter_child_nodes(node):
                 self.generic_visit(child_node, inside_call)
 
-    if not isinstance(expr, basestring):
+    if not isinstance(expr, string_types):
         # already templated to a datastructure, perhaps?
         if include_exceptions:
             return (expr, None)
