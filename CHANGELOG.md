@@ -13,6 +13,7 @@ Other Notable Changes:
 
 * Fixes a bug where yum state=latest would error if there were no updates to install.
 * Fixes a bug in lineinfile relating to escape sequences.
+* Fixes a bug where vars_prompt was not keeping passwords private by default.
 
 ## 1.9.3 "Dancing In the Street" - Sep 3, 2015
 
