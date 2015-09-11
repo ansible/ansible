@@ -68,28 +68,7 @@ class ActionModule(ActionBase):
             if source is None:
                 return dict(failed=True, msg="could not find src in first_available_file list")
         else:
-            if self._task._task_include is not None:
-                parent_include = self._task._task_include
-                while parent_include is not None:
-                    parent_include_dir = self._templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
-                    while parent_include_dir:
-                        if self._task._role:
-                            new_basedir = os.path.join(self._task._role._role_path, 'tasks', parent_include_dir)
-                            source = self._loader.path_dwim_relative(new_basedir, 'tasks', source)
-                        else:
-                            new_basedir = os.path.join(self._loader.get_basedir(), parent_include_dir)
-                            source = self._loader.path_dwim_relative(new_basedir, 'templates', os.path.basename(source))
-
-                        if os.path.exists(source):
-                            break
-                        else:
-                            parent_include_dir = os.path.dirname(parent_include_dir)
-
-                    if os.path.exists(source):
-                        break
-                    else:
-                        parent_include = parent_include._task_include
-            elif self._task._role is not None:
+            if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
             else:
                 source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
