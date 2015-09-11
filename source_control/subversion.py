@@ -78,6 +78,13 @@ options:
     version_added: "1.6"
     description:
       - If C(yes), do export instead of checkout/update.
+  switch:
+    required: false
+    default: "yes"
+    choices: [ "yes", "no" ]
+    version_added: "2.0"
+    description:
+      - If C(no), do not call svn switch before update.
 '''
 
 EXAMPLES = '''
@@ -103,7 +110,8 @@ class Subversion(object):
         self.password = password
         self.svn_path = svn_path
 
-    def _exec(self, args):
+    def _exec(self, args, check_rc=True):
+        '''Execute a subversion command, and return output. If check_rc is False, returns the return code instead of the output.'''
         bits = [
             self.svn_path,
             '--non-interactive',
@@ -115,13 +123,21 @@ class Subversion(object):
         if self.password:
             bits.extend(["--password", self.password])
         bits.extend(args)
-        rc, out, err = self.module.run_command(bits, check_rc=True)
-        return out.splitlines()
+        rc, out, err = self.module.run_command(bits, check_rc)
+        if check_rc:
+            return out.splitlines()
+        else:
+            return rc
+
+    def is_svn_repo(self):
+        '''Checks if path is a SVN Repo.'''
+        rc = self._exec(["info", self.dest], check_rc=False)
+        return rc == 0
 
     def checkout(self):
         '''Creates new svn working directory if it does not already exist.'''
         self._exec(["checkout", "-r", self.revision, self.repo, self.dest])
-		
+
     def export(self, force=False):
         '''Export svn repo to directory'''
         cmd = ["export"]
@@ -153,8 +169,9 @@ class Subversion(object):
 
     def has_local_mods(self):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
-        lines = self._exec(["status", "--quiet", self.dest])
+        lines = self._exec(["status", "--quiet", "--ignore-externals",  self.dest])
         # The --quiet option will return only modified files.
+
         # Has local mods if more than 0 modifed revisioned files.
         return len(filter(len, lines)) > 0
 
@@ -183,6 +200,7 @@ def main():
             password=dict(required=False),
             executable=dict(default=None),
             export=dict(default=False, required=False, type='bool'),
+            switch=dict(default=True, required=False, type='bool'),
         ),
         supports_check_mode=True
     )
@@ -195,6 +213,7 @@ def main():
     password = module.params['password']
     svn_path = module.params['executable'] or module.get_bin_path('svn', True)
     export = module.params['export']
+    switch = module.params['switch']
 
     os.environ['LANG'] = 'C'
     svn = Subversion(module, dest, repo, revision, username, password, svn_path)
@@ -208,7 +227,7 @@ def main():
             svn.checkout()
         else:
             svn.export(force=force)
-    elif os.path.exists("%s/.svn" % (dest, )):
+    elif svn.is_svn_repo():
         # Order matters. Need to get local mods before switch to avoid false
         # positives. Need to switch before revert to ensure we are reverting to
         # correct repo.
@@ -217,7 +236,8 @@ def main():
             module.exit_json(changed=check, before=before, after=after)
         before = svn.get_revision()
         local_mods = svn.has_local_mods()
-        svn.switch()
+        if switch:
+            svn.switch()
         if local_mods:
             if force:
                 svn.revert()

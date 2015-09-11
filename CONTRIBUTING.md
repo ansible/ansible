@@ -22,6 +22,10 @@ I'd also read the community page above, but in particular, make sure you copy [t
 
 Also please make sure you are testing on the latest released version of Ansible or the development branch.
 
+If you'd like to contribute code to an existing module
+======================================================
+Each module in Core is maintained by the owner of that module; each module's owner is indicated in the documentation section of the module itself. Any pull request for a module that is given a +1 by the owner in the comments will be merged by the Ansible team.
+
 Thanks!
 
 

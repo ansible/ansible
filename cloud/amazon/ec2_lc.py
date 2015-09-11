@@ -77,7 +77,7 @@ options:
       - Kernel id for the EC2 instance
     required: false
     default: null
-    aliases: []    
+    aliases: []
   spot_price:
     description:
       - The spot price you are bidding. Only applies for an autoscaling group with spot instances.
@@ -116,6 +116,18 @@ options:
     default: false
     aliases: []
     version_added: "1.8"
+  classic_link_vpc_id:
+    description:
+      - Id of ClassicLink enabled VPC
+    required: false
+    default: null
+    version_added: "2.0"
+  classic_link_vpc_security_groups:
+    description:
+      - A list of security group id's with which to associate the ClassicLink VPC instances.
+    required: false
+    default: null
+    version_added: "2.0"
 extends_documentation_fragment: aws
 """
 
@@ -184,6 +196,8 @@ def create_launch_config(connection, module):
     ramdisk_id = module.params.get('ramdisk_id')
     instance_profile_name = module.params.get('instance_profile_name')
     ebs_optimized = module.params.get('ebs_optimized')
+    classic_link_vpc_id = module.params.get('classic_link_vpc_id')
+    classic_link_vpc_security_groups = module.params.get('classic_link_vpc_security_groups')
     bdm = BlockDeviceMapping()
 
     if volumes:
@@ -206,10 +220,12 @@ def create_launch_config(connection, module):
         kernel_id=kernel_id,
         spot_price=spot_price,
         instance_monitoring=instance_monitoring,
-        associate_public_ip_address = assign_public_ip,
+        associate_public_ip_address=assign_public_ip,
         ramdisk_id=ramdisk_id,
         instance_profile_name=instance_profile_name,
         ebs_optimized=ebs_optimized,
+        classic_link_vpc_security_groups=classic_link_vpc_security_groups,
+        classic_link_vpc_id=classic_link_vpc_id,
     )
 
     launch_configs = connection.get_all_launch_configurations(names=[name])
@@ -221,11 +237,37 @@ def create_launch_config(connection, module):
             changed = True
         except BotoServerError, e:
             module.fail_json(msg=str(e))
-    result = launch_configs[0]
 
-    module.exit_json(changed=changed, name=result.name, created_time=str(result.created_time),
-                     image_id=result.image_id, arn=result.launch_configuration_arn,
-                     security_groups=result.security_groups, instance_type=instance_type)
+    result = dict(
+                 ((a[0], a[1]) for a in vars(launch_configs[0]).items()
+                  if a[0] not in ('connection', 'created_time', 'instance_monitoring', 'block_device_mappings'))
+                 )
+    result['created_time'] = str(launch_configs[0].created_time)
+    # Looking at boto's launchconfig.py, it looks like this could be a boolean
+    # value or an object with an enabled attribute.  The enabled attribute
+    # could be a boolean or a string representation of a boolean.  Since
+    # I can't test all permutations myself to see if my reading of the code is
+    # correct, have to code this *very* defensively
+    if launch_configs[0].instance_monitoring is True:
+        result['instance_monitoring'] = True
+    else:
+        try:
+            result['instance_monitoring'] = module.boolean(launch_configs[0].instance_monitoring.enabled)
+        except AttributeError:
+            result['instance_monitoring'] = False
+    if launch_configs[0].block_device_mappings is not None:
+        result['block_device_mappings'] = []
+        for bdm in launch_configs[0].block_device_mappings:
+            result['block_device_mappings'].append(dict(device_name=bdm.device_name, virtual_name=bdm.virtual_name))
+            if bdm.ebs is not None:
+                result['block_device_mappings'][-1]['ebs'] = dict(snapshot_id=bdm.ebs.snapshot_id, volume_size=bdm.ebs.volume_size)
+
+
+    module.exit_json(changed=changed, name=result['name'], created_time=result['created_time'],
+                     image_id=result['image_id'], arn=result['launch_configuration_arn'],
+                     security_groups=result['security_groups'],
+                     instance_type=result['instance_type'],
+                     result=result)
 
 
 def delete_launch_config(connection, module):
@@ -257,7 +299,9 @@ def main():
             ebs_optimized=dict(default=False, type='bool'),
             associate_public_ip_address=dict(type='bool'),
             instance_monitoring=dict(default=False, type='bool'),
-            assign_public_ip=dict(type='bool')
+            assign_public_ip=dict(type='bool'),
+            classic_link_vpc_security_groups=dict(type='list'),
+            classic_link_vpc_id=dict(type='str')
         )
     )
 

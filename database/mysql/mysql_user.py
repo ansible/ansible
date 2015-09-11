@@ -109,7 +109,7 @@ options:
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
      is as easy as apt-get install python-mysqldb.
-   - Both C(login_password) and C(login_username) are required when you are
+   - Both C(login_password) and C(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
      default login of 'root' with no password.
@@ -157,6 +157,7 @@ password=n<_665{vS43y
 
 import getpass
 import tempfile
+import re
 try:
     import MySQLdb
 except ImportError:
@@ -291,7 +292,7 @@ def privileges_get(cursor, user,host):
             return x
 
     for grant in grants:
-        res = re.match("GRANT (.+) ON (.+) TO '.+'@'.+'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
+        res = re.match("GRANT (.+) ON (.+) TO '.*'@'.+'( IDENTIFIED BY PASSWORD '.+')? ?(.*)", grant[0])
         if res is None:
             raise InvalidPrivsError('unable to parse the MySQL grant string: %s' % grant[0])
         privileges = res.group(1).split(", ")
@@ -316,13 +317,22 @@ def privileges_unpack(priv):
     not specified in the string, as MySQL will always provide this by default.
     """
     output = {}
+    privs = []
     for item in priv.strip().split('/'):
         pieces = item.strip().split(':')
         dbpriv = pieces[0].rsplit(".", 1)
-        pieces[0] = "`%s`.%s" % (dbpriv[0].strip('`'), dbpriv[1])
+        # Do not escape if privilege is for database '*' (all databases)
+        if dbpriv[0].strip('`') != '*':
+            pieces[0] = "`%s`.%s" % (dbpriv[0].strip('`'), dbpriv[1])
 
-        output[pieces[0]] = [s.strip() for s in pieces[1].upper().split(',')]
-        new_privs = frozenset(output[pieces[0]])
+        if '(' in pieces[1]:
+            output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
+            for i in output[pieces[0]]:
+                privs.append(re.sub(r'\(.*\)','',i))
+        else:
+            output[pieces[0]] = pieces[1].upper().split(',')
+            privs = output[pieces[0]]
+        new_privs = frozenset(privs)
         if not new_privs.issubset(VALID_PRIVS):
             raise InvalidPrivsError('Invalid privileges specified: %s' % new_privs.difference(VALID_PRIVS))
 

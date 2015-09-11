@@ -24,147 +24,123 @@ description:
 options:
   command:
     description:
-      - Specifies the action to take.  
+      - Specifies the action to take.
     required: true
-    default: null
-    aliases: []
-    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'restore' ]
+    choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'reboot', 'restore' ]
   instance_name:
     description:
       - Database instance identifier. Required except when using command=facts or command=delete on just a snapshot
     required: false
     default: null
-    aliases: []
   source_instance:
     description:
       - Name of the database to replicate. Used only when command=replicate.
     required: false
     default: null
-    aliases: []
   db_engine:
     description:
-      - The type of database.  Used only when command=create. 
+      - The type of database.  Used only when command=create.
     required: false
     default: null
-    aliases: []
     choices: [ 'MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres']
   size:
     description:
       - Size in gigabytes of the initial storage for the DB instance. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   instance_type:
     description:
-      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore. If not specified then the replica inherits the same instance type as the source instance. 
+      - The instance type of the database.  Must be specified when command=create. Optional when command=replicate, command=modify or command=restore. If not specified then the replica inherits the same instance type as the source instance.
     required: false
     default: null
-    aliases: []
   username:
     description:
       - Master database username. Used only when command=create.
     required: false
     default: null
-    aliases: []
   password:
     description:
       - Password for the master database username. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   region:
     description:
       - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
     required: true
-    default: null
     aliases: [ 'aws_region', 'ec2_region' ]
   db_name:
     description:
       - Name of a database to create within the instance.  If not specified then no database is created. Used only when command=create.
     required: false
     default: null
-    aliases: []
   engine_version:
     description:
       - Version number of the database engine to use. Used only when command=create. If not specified then the current Amazon RDS default engine version is used.
     required: false
     default: null
-    aliases: []
   parameter_group:
     description:
       - Name of the DB parameter group to associate with this instance.  If omitted then the RDS default DBParameterGroup will be used. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   license_model:
     description:
-      - The license model for this DB instance. Used only when command=create or command=restore. 
+      - The license model for this DB instance. Used only when command=create or command=restore.
     required: false
     default: null
-    aliases: []
     choices:  [ 'license-included', 'bring-your-own-license', 'general-public-license', 'postgresql-license' ]
   multi_zone:
     description:
       - Specifies if this is a Multi-availability-zone deployment. Can not be used in conjunction with zone parameter. Used only when command=create or command=modify.
-    choices: [ "yes", "no" ] 
+    choices: [ "yes", "no" ]
     required: false
     default: null
-    aliases: []
   iops:
     description:
       - Specifies the number of IOPS for the instance.  Used only when command=create or command=modify. Must be an integer greater than 1000.
     required: false
     default: null
-    aliases: []
   security_groups:
     description:
       - Comma separated list of one or more security groups.  Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   vpc_security_groups:
     description:
       - Comma separated list of one or more vpc security group ids. Also requires `subnet` to be specified. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   port:
     description:
       - Port number that the DB instance uses for connections.  Defaults to 3306 for mysql. Must be changed to 1521 for Oracle, 1433 for SQL Server, 5432 for PostgreSQL. Used only when command=create or command=replicate.
     required: false
     default: null
-    aliases: []
   upgrade:
     description:
       - Indicates that minor version upgrades should be applied automatically. Used only when command=create or command=replicate. 
     required: false
     default: no
     choices: [ "yes", "no" ]
-    aliases: []
   option_group:
     description:
       - The name of the option group to use.  If not specified then the default option group is used. Used only when command=create.
     required: false
     default: null
-    aliases: []
   maint_window:
     description:
       - "Maintenance window in format of ddd:hh24:mi-ddd:hh24:mi.  (Example: Mon:22:00-Mon:23:15) If not specified then a random maintenance window is assigned. Used only when command=create or command=modify."
     required: false
     default: null
-    aliases: []
   backup_window:
     description:
       - Backup window in format of hh24:mi-hh24:mi.  If not specified then a random backup window is assigned. Used only when command=create or command=modify.
     required: false
     default: null
-    aliases: []
   backup_retention:
     description:
       - "Number of days backups are retained.  Set to 0 to disable backups.  Default is 1 day.  Valid range: 0-35. Used only when command=create or command=modify."
     required: false
     default: null
-    aliases: []
   zone:
     description:
       - availability zone in which to launch the instance. Used only when command=create, command=replicate or command=restore.
@@ -176,18 +152,15 @@ options:
       - VPC subnet group.  If specified then a VPC instance is created. Used only when command=create.
     required: false
     default: null
-    aliases: []
   snapshot:
     description:
       - Name of snapshot to take. When command=delete, if no snapshot name is provided then no snapshot is taken. If used with command=delete with no instance_name, the snapshot is deleted. Used with command=facts, command=delete or command=snapshot.
     required: false
     default: null
-    aliases: []
   aws_secret_key:
     description:
       - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used. 
     required: false
-    default: null
     aliases: [ 'ec2_secret_key', 'secret_key' ]
   aws_access_key:
     description:
@@ -201,46 +174,46 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-    aliases: []
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
-    aliases: []
   apply_immediately:
     description:
       - Used only when command=modify.  If enabled, the modifications will be applied as soon as possible rather than waiting for the next preferred maintenance window.
     default: no
     choices: [ "yes", "no" ]
-    aliases: []
+  force_failover:
+    description:
+      - Used only when command=reboot.  If enabled, the reboot is done using a MultiAZ failover.
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "2.0"
   new_instance_name:
     description:
       - Name to rename an instance to. Used only when command=modify.
     required: false
     default: null
-    aliases: []
-    version_added: 1.5
+    version_added: "1.5"
   character_set_name:
     description:
       - Associate the DB instance with a specified character set. Used with command=create.
     required: false
     default: null
-    aliases: []
-    version_added: 1.9
+    version_added: "1.9"
   publicly_accessible:
     description:
       - explicitly set whether the resource should be publicly accessible or not. Used with command=create, command=replicate. Requires boto >= 2.26.0
     required: false
     default: null
-    aliases: []
-    version_added: 1.9
+    version_added: "1.9"
   tags:
     description:
       - tags dict to apply to a resource. Used with command=create, command=replicate, command=restore. Requires boto >= 2.26.0
     required: false
     default: null
-    aliases: []
-    version_added: 1.9
+    version_added: "1.9"
 requirements:
     - "python >= 2.6"
     - "boto"
@@ -292,6 +265,13 @@ EXAMPLES = '''
     instance_name: new-database
     new_instance_name: renamed-database
     wait: yes
+
+# Reboot an instance and wait for it to become available again
+- rds
+    command: reboot
+    instance_name: database
+    wait: yes
+
 '''
 
 import sys
@@ -380,6 +360,13 @@ class RDSConnection:
         except boto.exception.BotoServerError, e:
             raise RDSException(e)
 
+    def reboot_db_instance(self, instance_name, **params):
+        try:
+            result = self.connection.reboot_dbinstance(instance_name)
+            return RDSDBInstance(result)
+        except boto.exception.BotoServerError, e:
+            raise RDSException(e)
+
     def restore_db_instance_from_db_snapshot(self, instance_name, snapshot, instance_type, **params):
         try:
             result = self.connection.restore_dbinstance_from_dbsnapshot(snapshot, instance_name, instance_type, **params)
@@ -460,6 +447,13 @@ class RDS2Connection:
     def modify_db_instance(self, instance_name, **params):
         try:
             result = self.connection.modify_db_instance(instance_name, **params)['ModifyDBInstanceResponse']['ModifyDBInstanceResult']['DBInstance']
+            return RDS2DBInstance(result)
+        except boto.exception.BotoServerError, e:
+            raise RDSException(e)
+
+    def reboot_db_instance(self, instance_name, **params):
+        try:
+            result = self.connection.reboot_db_instance(instance_name, **params)['RebootDBInstanceResponse']['RebootDBInstanceResult']['DBInstance']
             return RDS2DBInstance(result)
         except boto.exception.BotoServerError, e:
             raise RDSException(e)
@@ -616,16 +610,16 @@ def await_resource(conn, resource, status, module):
     while wait_timeout > time.time() and resource.status != status:
         time.sleep(5)
         if wait_timeout <= time.time():
-            module.fail_json(msg="Timeout waiting for resource %s" % resource.id)
+            module.fail_json(msg="Timeout waiting for RDS resource %s" % resource.name)
         if module.params.get('command') == 'snapshot':
             # Temporary until all the rds2 commands have their responses parsed
             if resource.name is None:
-                module.fail_json(msg="Problem with snapshot %s" % resource.snapshot)
+                module.fail_json(msg="There was a problem waiting for RDS snapshot %s" % resource.snapshot)
             resource = conn.get_db_snapshot(resource.name)
         else:
             # Temporary until all the rds2 commands have their responses parsed
             if resource.name is None:
-                module.fail_json(msg="Problem with instance %s" % resource.instance)
+                module.fail_json(msg="There was a problem waiting for RDS instance %s" % resource.instance)
             resource = conn.get_db_instance(resource.name)
             if resource is None:
                 break
@@ -659,7 +653,7 @@ def create_db_instance(module, conn):
                     module.params.get('username'), module.params.get('password'), **params)
             changed = True
         except RDSException, e:
-            module.fail_json(msg="failed to create instance: %s" % e.message)
+            module.fail_json(msg="Failed to create instance: %s" % e.message)
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
@@ -686,7 +680,7 @@ def replicate_db_instance(module, conn):
             result = conn.create_db_instance_read_replica(instance_name, source_instance, **params)
             changed = True
         except RDSException, e:
-            module.fail_json(msg="failed to create replica instance: %s " % e.message)
+            module.fail_json(msg="Failed to create replica instance: %s " % e.message)
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
@@ -715,14 +709,17 @@ def delete_db_instance_or_snapshot(module, conn):
         if instance_name:
             if snapshot:
                 params["skip_final_snapshot"] = False
-                params["final_snapshot_id"] = snapshot
+                if has_rds2:
+                    params["final_db_snapshot_identifier"] = snapshot
+                else:
+                    params["final_snapshot_id"] = snapshot
             else:
                 params["skip_final_snapshot"] = True
             result = conn.delete_db_instance(instance_name, **params)
         else:
             result = conn.delete_db_snapshot(snapshot)
     except RDSException, e:
-        module.fail_json(msg="failed to delete instance: %s" % e.message)
+        module.fail_json(msg="Failed to delete instance: %s" % e.message)
 
     # If we're not waiting for a delete to complete then we're all done
     # so just return
@@ -748,11 +745,11 @@ def facts_db_instance_or_snapshot(module, conn):
     snapshot = module.params.get('snapshot')
 
     if instance_name and snapshot:
-        module.fail_json(msg="facts must be called with either instance_name or snapshot, not both")
+        module.fail_json(msg="Facts must be called with either instance_name or snapshot, not both")
     if instance_name:
         resource = conn.get_db_instance(instance_name)
         if not resource:
-            module.fail_json(msg="DB Instance %s does not exist" % instance_name)
+            module.fail_json(msg="DB instance %s does not exist" % instance_name)
     if snapshot:
         resource = conn.get_db_snapshot(snapshot)
         if not resource:
@@ -844,6 +841,31 @@ def snapshot_db_instance(module, conn):
     module.exit_json(changed=changed, snapshot=resource.get_data())
 
 
+def reboot_db_instance(module, conn):
+    required_vars = ['instance_name']
+    valid_vars = []
+
+    if has_rds2:
+        valid_vars.append('force_failover')
+
+    params = validate_parameters(required_vars, valid_vars, module)
+    instance_name = module.params.get('instance_name')
+    result = conn.get_db_instance(instance_name)
+    changed = False
+    try:
+        result = conn.reboot_db_instance(instance_name, **params)
+        changed = True
+    except RDSException, e:
+        module.fail_json(msg=e.message)
+
+    if module.params.get('wait'):
+        resource = await_resource(conn, result, 'available', module)
+    else:
+        resource = conn.get_db_instance(instance_name)
+
+    module.exit_json(changed=changed, instance=resource.get_data())
+
+
 def restore_db_instance(module, conn):
     required_vars = ['instance_name', 'snapshot']
     valid_vars = ['db_name', 'iops', 'license_model', 'multi_zone',
@@ -915,6 +937,7 @@ def validate_parameters(required_vars, valid_vars, module):
             'instance_type': 'db_instance_class',
             'password': 'master_user_password',
             'new_instance_name': 'new_db_instance_identifier',
+            'force_failover': 'force_failover',
     }
     if has_rds2:
         optional_params.update(optional_params_rds2)
@@ -957,7 +980,7 @@ def validate_parameters(required_vars, valid_vars, module):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'restore'], required=True),
+            command           = dict(choices=['create', 'replicate', 'delete', 'facts', 'modify', 'promote', 'snapshot', 'reboot', 'restore'], required=True),
             instance_name     = dict(required=False),
             source_instance   = dict(required=False),
             db_engine         = dict(choices=['MySQL', 'oracle-se1', 'oracle-se', 'oracle-ee', 'sqlserver-ee', 'sqlserver-se', 'sqlserver-ex', 'sqlserver-web', 'postgres'], required=False),
@@ -989,6 +1012,7 @@ def main():
             tags              = dict(type='dict', required=False),
             publicly_accessible = dict(required=False),
             character_set_name = dict(required=False),
+            force_failover    = dict(type='bool', required=False, default=False)
         )
     )
 
@@ -1007,12 +1031,13 @@ def main():
             'modify': modify_db_instance,
             'promote': promote_db_instance,
             'snapshot': snapshot_db_instance,
+            'reboot': reboot_db_instance,
             'restore': restore_db_instance,
     }
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
     if not region:
-        module.fail_json(msg="region not specified and unable to determine region from EC2_REGION.")
+        module.fail_json(msg="Region not specified. Unable to determine region from EC2_REGION.")
 
     # connect to the rds endpoint
     if has_rds2:

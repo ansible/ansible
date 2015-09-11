@@ -140,12 +140,13 @@ EXAMPLES = '''
 - ec2_vol:
     instance: "{{ item.id }} " 
     volume_size: 5
-    with_items: ec2.instances
+  with_items: ec2.instances
   register: ec2_vol
 
 # Example: Launch an instance and then add a volume if not already attached
 #   * Volume will be created with the given name if not already created.
 #   * Nothing will happen if the volume is already attached.
+#   * Requires Ansible 2.0
 
 - ec2:
     keypair: "{{ keypair }}"
@@ -436,11 +437,11 @@ def main():
 
     # Delaying the checks until after the instance check allows us to get volume ids for existing volumes
     # without needing to pass an unused volume_size
-    if not volume_size and not (id or name):
-        module.fail_json(msg="You must specify an existing volume with id or name or a volume_size")
+    if not volume_size and not (id or name or snapshot):
+        module.fail_json(msg="You must specify volume_size or identify an existing volume by id, name, or snapshot")
 
-    if volume_size and id:
-        module.fail_json(msg="Cannot specify volume_size and id")
+    if volume_size and (id or snapshot):
+        module.fail_json(msg="Cannot specify volume_size together with id or snapshot")
 
     if state == 'absent':
         delete_volume(module, ec2)

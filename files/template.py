@@ -1,5 +1,20 @@
 # this is a virtual module that is entirely implemented server side
 
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 DOCUMENTATION = '''
 ---
 module: template
@@ -24,13 +39,10 @@ options:
     description:
       - Path of a Jinja2 formatted template on the local server. This can be a relative or absolute path.
     required: true
-    default: null
-    aliases: []
   dest:
     description:
       - Location to render the template to on the remote machine.
     required: true
-    default: null
   backup:
     description:
       - Create a backup file including the timestamp information so you can get
@@ -38,22 +50,22 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
-  validate:
+  force:
     description:
-      - The validation command to run before copying into place. 
-      - The path to the file to validate is passed in via '%s' which must be present as in the visudo example below.
-      - validation to run before copying into place. The command is passed 
-        securely so shell features like expansion and pipes won't work.
+      - the default is C(yes), which will replace the remote file when contents
+        are different than the source.  If C(no), the file will only be transferred
+        if the destination does not exist.
     required: false
-    default: ""
-    version_added: "1.2"
+    choices: [ "yes", "no" ]
+    default: "yes"
 notes:
   - "Since Ansible version 0.9, templates are loaded with C(trim_blocks=True)."
-requirements: []
 author:
-    - Ansible Core Team 
+    - Ansible Core Team
     - Michael DeHaan
-extends_documentation_fragment: files
+extends_documentation_fragment:
+    - files
+    - validate
 '''
 
 EXAMPLES = '''

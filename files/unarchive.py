@@ -83,7 +83,7 @@ EXAMPLES = '''
 # Unarchive a file that is already on the remote machine
 - unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=no
 
-# Unarchive a file that needs to be downloaded
+# Unarchive a file that needs to be downloaded (added in 2.0)
 - unarchive: src=https://example.com/example.zip dest=/usr/local/bin copy=no
 '''
 
@@ -298,6 +298,13 @@ def main():
         else:
             module.fail_json(msg="Source '%s' does not exist" % src)
     if not os.access(src, os.R_OK):
+        module.fail_json(msg="Source '%s' not readable" % src)
+
+    # skip working with 0 size archives
+    try:
+        if os.path.getsize(src) == 0:
+            module.fail_json(msg="Invalid archive '%s', the file is 0 bytes" % src)
+    except Exception, e:
         module.fail_json(msg="Source '%s' not readable" % src)
 
     # is dest OK to receive tar file?

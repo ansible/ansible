@@ -21,6 +21,7 @@
 import copy
 import sys
 import datetime
+import glob
 import traceback
 import re
 import shlex
@@ -29,8 +30,8 @@ import os
 DOCUMENTATION = '''
 ---
 module: command
-version_added: historical
 short_description: Executes a command on a remote node
+version_added: historical
 description:
      - The M(command) module takes the command name followed by a list of space-delimited arguments.
      - The given command will be executed on all selected nodes. It will not be
@@ -44,15 +45,14 @@ options:
         See the examples!
     required: true
     default: null
-    aliases: []
   creates:
     description:
-      - a filename, when it already exists, this step will B(not) be run.
+      - a filename or glob pattern, when it already exists, this step will B(not) be run.
     required: no
     default: null
   removes:
     description:
-      - a filename, when it does not exist, this step will B(not) be run.
+      - a filename or glob pattern, when it does not exist, this step will B(not) be run.
     version_added: "0.8"
     required: no
     default: null
@@ -143,12 +143,15 @@ def check_command(commandline):
                   'mount': 'mount', 'rpm': 'yum', 'yum': 'yum', 'apt-get': 'apt-get',
                   'tar': 'unarchive', 'unzip': 'unarchive', 'sed': 'template or lineinfile',
                   'rsync': 'synchronize' }
+    become   = [ 'sudo', 'su', 'pbrun', 'pfexec', 'runas' ]
     warnings = list()
     command = os.path.basename(commandline.split()[0])
     if command in arguments:
         warnings.append("Consider using file module with %s rather than running %s" % (arguments[command], command))
     if command in commands:
         warnings.append("Consider using %s module rather than running %s" % (commands[command], command))
+    if command in become:
+        warnings.append("Consider using 'become', 'become_method', and 'become_user' rather than running %s" % (command,))
     return warnings
 
 
@@ -188,7 +191,7 @@ def main():
         # and the filename already exists.  This allows idempotence
         # of command executions.
         v = os.path.expanduser(creates)
-        if os.path.exists(v):
+        if glob.glob(v):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s exists" % v,
@@ -202,7 +205,7 @@ def main():
     # and the filename does not exist.  This allows idempotence
     # of command executions.
         v = os.path.expanduser(removes)
-        if not os.path.exists(v):
+        if not glob.glob(v):
             module.exit_json(
                 cmd=args,
                 stdout="skipped, since %s does not exist" % v,

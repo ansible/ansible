@@ -1,6 +1,19 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
@@ -336,19 +349,24 @@ def main():
                     rule['from_port'] = None
                     rule['to_port'] = None
 
-                # If rule already exists, don't later delete it
-                ruleId = make_rule_key('in', rule, group_id, ip)
-                if ruleId in groupRules:
-                    del groupRules[ruleId]
-                # Otherwise, add new rule
-                else:
-                    grantGroup = None
-                    if group_id:
-                        grantGroup = groups[group_id]
+                # Convert ip to list we can iterate over
+                if not isinstance(ip, list):
+                    ip = [ip]
 
-                    if not module.check_mode:
-                        group.authorize(rule['proto'], rule['from_port'], rule['to_port'], ip, grantGroup)
-                    changed = True
+                # If rule already exists, don't later delete it
+                for thisip in ip:
+                    ruleId = make_rule_key('in', rule, group_id, thisip)
+                    if ruleId in groupRules:
+                        del groupRules[ruleId]
+                    # Otherwise, add new rule
+                    else:
+                        grantGroup = None
+                        if group_id:
+                            grantGroup = groups[group_id]
+
+                        if not module.check_mode:
+                            group.authorize(rule['proto'], rule['from_port'], rule['to_port'], thisip, grantGroup)
+                        changed = True
 
         # Finally, remove anything left in the groupRules -- these will be defunct rules
         if purge_rules:
@@ -383,25 +401,30 @@ def main():
                     rule['from_port'] = None
                     rule['to_port'] = None
 
-                # If rule already exists, don't later delete it
-                ruleId = make_rule_key('out', rule, group_id, ip)
-                if ruleId in groupRules:
-                    del groupRules[ruleId]
-                # Otherwise, add new rule
-                else:
-                    grantGroup = None
-                    if group_id:
-                        grantGroup = groups[group_id].id
+                # Convert ip to list we can iterate over
+                if not isinstance(ip, list):
+                    ip = [ip]
 
-                    if not module.check_mode:
-                        ec2.authorize_security_group_egress(
-                                group_id=group.id,
-                                ip_protocol=rule['proto'],
-                                from_port=rule['from_port'],
-                                to_port=rule['to_port'],
-                                src_group_id=grantGroup,
-                                cidr_ip=ip)
-                    changed = True
+                # If rule already exists, don't later delete it
+                for thisip in ip:
+                    ruleId = make_rule_key('out', rule, group_id, thisip)
+                    if ruleId in groupRules:
+                        del groupRules[ruleId]
+                    # Otherwise, add new rule
+                    else:
+                        grantGroup = None
+                        if group_id:
+                            grantGroup = groups[group_id].id
+
+                        if not module.check_mode:
+                            ec2.authorize_security_group_egress(
+                                    group_id=group.id,
+                                    ip_protocol=rule['proto'],
+                                    from_port=rule['from_port'],
+                                    to_port=rule['to_port'],
+                                    src_group_id=grantGroup,
+                                    cidr_ip=thisip)
+                        changed = True
         elif vpc_id and not module.check_mode:
             # when using a vpc, but no egress rules are specified,
             # we add in a default allow all out rule, which was the

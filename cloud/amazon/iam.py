@@ -280,12 +280,6 @@ def update_user(module, iam, name, new_name, new_path, key_state, key_count, key
                     module.fail_json(changed=False, msg="Passsword doesn't conform to policy")
                 else:
                     module.fail_json(msg=error_msg)
-    else:
-        try:
-            iam.delete_login_profile(name)
-            changed = True
-        except boto.exception.BotoServerError:
-            pass
 
     if key_state == 'create':
         try:
@@ -509,7 +503,7 @@ def main():
         groups=dict(type='list', default=None, required=False),
         state=dict(
             default=None, required=True, choices=['present', 'absent', 'update']),
-        password=dict(default=None, required=False),
+        password=dict(default=None, required=False, no_log=True),
         update_password=dict(default='always', required=False, choices=['always', 'on_create']),
         access_key_state=dict(default=None, required=False, choices=[
             'active', 'inactive', 'create', 'remove',

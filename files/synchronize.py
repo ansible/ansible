@@ -34,8 +34,8 @@ options:
     required: true
   dest_port:
     description:
-      - Port number for ssh on the destination host. The ansible_ssh_port inventory var takes precedence over this value.
-    default: 22
+      - Port number for ssh on the destination host. Prior to ansible 2.0, the ansible_ssh_port inventory var took precedence over this value.
+    default: Value of ansible_ssh_port for this host, remote_port config setting, or 22 if none of those are set
     version_added: "1.5"
   mode:
     description:
@@ -158,6 +158,12 @@ options:
     default: no
     required: false
     version_added: "2.0"
+  verify_host:
+    description:
+      - Verify destination host key.
+    default: no
+    required: false
+    version_added: "2.0"
 notes:
    - rsync must be installed on both the local and remote machine.
    - Inspect the verbose output to validate the destination user/host/path
@@ -227,6 +233,7 @@ def main():
             delete = dict(default='no', type='bool'),
             private_key = dict(default=None),
             rsync_path = dict(default=None),
+            _local_rsync_path = dict(default='rsync', type='path'),
             archive = dict(default='yes', type='bool'),
             checksum = dict(default='no', type='bool'),
             compress = dict(default='yes', type='bool'),
@@ -244,6 +251,8 @@ def main():
             rsync_opts = dict(type='list'),
             ssh_args = dict(type='str'),
             partial = dict(default='no', type='bool'),
+            verify_host = dict(default='no', type='bool'),
+            mode = dict(default='push', choices=['push', 'pull']),
         ),
         supports_check_mode = True
     )
@@ -254,7 +263,7 @@ def main():
     delete = module.params['delete']
     private_key = module.params['private_key']
     rsync_path = module.params['rsync_path']
-    rsync = module.params.get('local_rsync_path', 'rsync')
+    rsync = module.params.get('_local_rsync_path', 'rsync')
     rsync_timeout = module.params.get('rsync_timeout', 'rsync_timeout')
     archive = module.params['archive']
     checksum = module.params['checksum']
@@ -272,6 +281,7 @@ def main():
     group = module.params['group']
     rsync_opts = module.params['rsync_opts']
     ssh_args = module.params['ssh_args']
+    verify_host = module.params['verify_host']
 
     cmd = '%s --delay-updates -F' % rsync
     if compress:
@@ -324,10 +334,13 @@ def main():
     else:
         private_key = '-i '+ private_key 
 
+    ssh_opts = '-S none'
+
+    if not verify_host:
+      ssh_opts = '%s -o StrictHostKeyChecking=no' % ssh_opts
+
     if ssh_args:
-      ssh_opts = '-S none -o StrictHostKeyChecking=no %s' % ssh_args
-    else:
-      ssh_opts = '-S none -o StrictHostKeyChecking=no'
+      ssh_opts = '%s %s' % (ssh_opts, ssh_args)
 
     if dest_port != 22:
         cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)

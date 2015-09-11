@@ -83,7 +83,6 @@ EXAMPLES = '''
 
 import csv
 import json
-import urllib2
 import urlparse
 
 SUPPORTED_DISTROS = ['ubuntu']
@@ -102,11 +101,12 @@ AWS_REGIONS = ['ap-northeast-1',
 
 def get_url(module, url):
     """ Get url and return response """
-    try:
-        r = urllib2.urlopen(url)
-    except (urllib2.HTTPError, urllib2.URLError), e:
-        code = getattr(e, 'code', -1)
-        module.fail_json(msg="Request failed: %s" % str(e), status_code=code)
+
+    r, info = fetch_url(module, url)
+    if info['status'] != 200:
+        # Backwards compat
+        info['status_code'] = info['status']
+        module.fail_json(**info)
     return r
 
 
@@ -182,7 +182,7 @@ def main():
             choices=['i386', 'amd64']),
         region=dict(required=False, default='us-east-1', choices=AWS_REGIONS),
         virt=dict(required=False, default='paravirtual',
-            choices=['paravirtual', 'hvm'])
+            choices=['paravirtual', 'hvm']),
     )
     module = AnsibleModule(argument_spec=arg_spec)
     distro = module.params['distro']
@@ -196,6 +196,7 @@ def main():
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
 
 if __name__ == '__main__':
     main()

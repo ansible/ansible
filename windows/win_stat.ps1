@@ -17,7 +17,12 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-$params = Parse-Args $args;
+$params = Parse-Args $args $true;
+
+function Date_To_Timestamp($start_date, $end_date)
+{
+    Write-Output (New-TimeSpan -Start $start_date -End $end_date).TotalSeconds
+}
 
 $path = Get-Attr $params "path" $FALSE;
 If ($path -eq $FALSE)
@@ -36,15 +41,22 @@ If (Test-Path $path)
 {
     Set-Attr $result.stat "exists" $TRUE;
     $info = Get-Item $path;
-    If ($info.Directory) # Only files have the .Directory attribute.
+    $epoch_date = Get-Date -Date "01/01/1970"
+    If ($info.PSIsContainer)
+    {
+        Set-Attr $result.stat "isdir" $TRUE;
+    }
+    Else
     {
         Set-Attr $result.stat "isdir" $FALSE;
         Set-Attr $result.stat "size" $info.Length;
     }
-    Else
-    {
-        Set-Attr $result.stat "isdir" $TRUE;
-    }
+    Set-Attr $result.stat "extension" $info.Extension;
+    Set-Attr $result.stat "attributes" $info.Attributes.ToString();
+    Set-Attr $result.stat "owner" $info.GetAccessControl().Owner;
+    Set-Attr $result.stat "creationtime" (Date_To_Timestamp $epoch_date $info.CreationTime);
+    Set-Attr $result.stat "lastaccesstime" (Date_To_Timestamp $epoch_date $info.LastAccessTime);
+    Set-Attr $result.stat "lastwritetime" (Date_To_Timestamp $epoch_date $info.LastWriteTime);
 }
 Else
 {

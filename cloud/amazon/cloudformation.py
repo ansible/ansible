@@ -26,34 +26,28 @@ options:
     description:
       - name of the cloudformation stack
     required: true
-    default: null
-    aliases: []
   disable_rollback:
     description:
       - If a stacks fails to form, rollback will remove the stack
     required: false
     default: "false"
     choices: [ "true", "false" ]
-    aliases: []
   template_parameters:
     description:
       - a list of hashes of all the template variables for the stack
     required: false
     default: {}
-    aliases: []
   state:
     description:
       - If state is "present", stack will be created.  If state is "present" and if stack exists and template has changed, it will be updated.
         If state is "absent", stack will be removed.
     required: true
-    default: null
-    aliases: []
   template:
     description:
       - The local path of the cloudformation template. This parameter is mutually exclusive with 'template_url'. Either one of them is required if "state" parameter is "present"
+        Must give full path to the file, relative to the working directory. If using roles this may look like "roles/cloudformation/files/cloudformation-example.json"
     required: false
     default: null
-    aliases: []
   notification_arns:
     description:
       - The Simple Notification Service (SNS) topic ARNs to publish stack related events.
@@ -65,21 +59,18 @@ options:
       - the path of the cloudformation stack policy
     required: false
     default: null
-    aliases: []
-    version_added: "x.x"
+    version_added: "1.9"
   tags:
     description:
       - Dictionary of tags to associate with stack and it's resources during stack creation. Cannot be updated later.
         Requires at least Boto version 2.6.0.
     required: false
     default: null
-    aliases: []
     version_added: "1.4"
   region:
     description:
       - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
     required: true
-    default: null
     aliases: ['aws_region', 'ec2_region']
     version_added: "1.5"
   template_url:
@@ -88,7 +79,8 @@ options:
     required: false
     version_added: "2.0"
   template_format:
-    description: For local templates, allows specification of json or yaml format
+    description:
+    - For local templates, allows specification of json or yaml format
     default: json
     choices: [ json, yaml ]
     required: false
@@ -107,6 +99,22 @@ EXAMPLES = '''
     region: "us-east-1" 
     disable_rollback: true
     template: "files/cloudformation-example.json"
+    template_parameters:
+      KeyName: "jmartin"
+      DiskType: "ephemeral"
+      InstanceType: "m1.small"
+      ClusterSize: 3
+    tags:
+      Stack: "ansible-cloudformation"
+
+# Basic role example
+- name: launch ansible cloudformation example
+  cloudformation:
+    stack_name: "ansible-cloudformation" 
+    state: "present"
+    region: "us-east-1" 
+    disable_rollback: true
+    template: "roles/cloudformation/files/cloudformation-example.json"
     template_parameters:
       KeyName: "jmartin"
       DiskType: "ephemeral"

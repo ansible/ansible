@@ -1,6 +1,20 @@
 #!/usr/bin/python
 
 # -*- coding: utf-8 -*-
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 # TODO:
 # Ability to set CPU/Memory reservations
@@ -65,13 +79,13 @@ options:
     default: null
   state:
     description:
-      - Indicate desired state of the vm.
+      - Indicate desired state of the vm. 'reconfigured' only applies changes to 'memory_mb' and 'num_cpus' in vm_hardware parameter, and only when hot-plugging is enabled for the guest.
     default: present
     choices: ['present', 'powered_off', 'absent', 'powered_on', 'restarted', 'reconfigured']
   from_template:
     version_added: "1.9"
     description:
-      - Specifies if the VM should be deployed from a template (cannot be ran with state)
+      - Specifies if the VM should be deployed from a template (mutually exclusive with 'state' parameter). No guest customization changes to hardware such as CPU, RAM, NICs or Disks can be applied when launching from template.
     default: no
     choices: ['yes', 'no']
   template_src:
@@ -79,6 +93,12 @@ options:
     description:
       - Name of the source template to deploy from
     default: None
+  snapshot_to_clone:
+    description:
+        - A string that when specified, will create a linked clone copy of the VM. Snapshot must already be taken in vCenter.
+    version_added: "2.0"
+    required: false
+    default: none
   vm_disk:
     description:
       - A key, value list of disks and their sizes and which datastore to keep it in.
@@ -132,6 +152,7 @@ EXAMPLES = '''
 # Returns changed = True and a adds ansible_facts from the new VM
 # State will set the power status of a guest upon creation. Use powered_on to create and boot.
 # Options ['state', 'vm_extra_config', 'vm_disk', 'vm_nic', 'vm_hardware', 'esxi'] are required together
+# Note: vm_floppy support added in 2.0
 
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
@@ -165,6 +186,9 @@ EXAMPLES = '''
       vm_cdrom:
         type: "iso"
         iso_path: "DatastoreName/cd-image.iso"
+      vm_floppy:
+        type: "image"
+        image_path: "DatastoreName/floppy-image.flp"
     esxi:
       datacenter: MyDatacenter
       hostname: esx001.mydomain.local
@@ -202,7 +226,6 @@ EXAMPLES = '''
       hostname: esx001.mydomain.local
 
 # Deploy a guest from a template
-# No reconfiguration of the destination guest is done at this stage, a reconfigure would be needed to adjust memory/cpu etc..
 - vsphere_guest:
     vcenter_hostname: vcenter.mydomain.local
     username: myuser
@@ -355,6 +378,44 @@ def add_cdrom(module, s, config_target, config, devices, default_devs, type="cli
                 " cdrom type can either be iso or client" % (type))
 
         devices.append(cd_spec)
+
+
+def add_floppy(module, s, config_target, config, devices, default_devs, type="image", vm_floppy_image_path=None):
+    # Add a floppy
+    # Make sure the datastore exists.
+    if vm_floppy_image_path:
+        image_location = vm_floppy_image_path.split('/', 1)
+        datastore, ds = find_datastore(
+            module, s, image_location[0], config_target)
+        image_path = image_location[1]
+
+    floppy_spec = config.new_deviceChange()
+    floppy_spec.set_element_operation('add')
+    floppy_ctrl = VI.ns0.VirtualFloppy_Def("floppy_ctrl").pyclass()
+
+    if type == "image":
+        image = VI.ns0.VirtualFloppyImageBackingInfo_Def("image").pyclass()
+        ds_ref = image.new_datastore(ds)
+        ds_ref.set_attribute_type(ds.get_attribute_type())
+        image.set_element_datastore(ds_ref)
+        image.set_element_fileName("%s %s" % (datastore, image_path))
+        floppy_ctrl.set_element_backing(image)
+        floppy_ctrl.set_element_key(3)
+        floppy_spec.set_element_device(floppy_ctrl)
+    elif type == "client":
+        client = VI.ns0.VirtualFloppyRemoteDeviceBackingInfo_Def(
+            "client").pyclass()
+        client.set_element_deviceName("/dev/fd0")
+        floppy_ctrl.set_element_backing(client)
+        floppy_ctrl.set_element_key(3)
+        floppy_spec.set_element_device(floppy_ctrl)
+    else:
+        s.disconnect()
+        module.fail_json(
+            msg="Error adding floppy of type %s to vm spec. "
+            " floppy type can either be image or client" % (type))
+
+    devices.append(floppy_spec)
 
 
 def add_nic(module, s, nfmor, config, devices, nic_type="vmxnet3", network_name="VM Network", network_type="standard"):
@@ -530,7 +591,7 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name):
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
@@ -614,9 +675,14 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
     try:
         if vmTarget:
             changed = False
+        elif snapshot_to_clone is not None:
+            #check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
+            vmTemplate.clone(guest, resourcepool=rpmor, linked=True, snapshot=snapshot_to_clone)
+            changed = True
         else:
             vmTemplate.clone(guest, resourcepool=rpmor)
             changed = True
+
         vsphere_client.disconnect()
         module.exit_json(changed=changed)
     except Exception as e:
@@ -922,6 +988,27 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         # Add a CD-ROM device to the VM.
         add_cdrom(module, vsphere_client, config_target, config, devices,
                   default_devs, cdrom_type, cdrom_iso_path)
+    if 'vm_floppy' in vm_hardware:
+        floppy_image_path = None
+        floppy_type = None
+        try:
+            floppy_type = vm_hardware['vm_floppy']['type']
+        except KeyError:
+            vsphere_client.disconnect()
+            module.fail_json(
+                msg="Error on %s definition. floppy type needs to be"
+                " specified." % vm_hardware['vm_floppy'])
+        if floppy_type == 'image':
+            try:
+                floppy_image_path = vm_hardware['vm_floppy']['image_path']
+            except KeyError:
+                vsphere_client.disconnect()
+                module.fail_json(
+                    msg="Error on %s definition. floppy image_path needs"
+                    " to be specified." % vm_hardware['vm_floppy'])
+        # Add a floppy to the VM.
+        add_floppy(module, vsphere_client, config_target, config, devices,
+                  default_devs, floppy_type, floppy_image_path)
     if vm_nic:
         for nic in sorted(vm_nic.iterkeys()):
             try:
@@ -1218,9 +1305,10 @@ def main():
                     'reconfigured'
                 ],
                 default='present'),
-            vmware_guest_facts=dict(required=False, choices=BOOLEANS),
-            from_template=dict(required=False, choices=BOOLEANS),
+            vmware_guest_facts=dict(required=False, type='bool'),
+            from_template=dict(required=False, type='bool'),
             template_src=dict(required=False, type='str'),
+            snapshot_to_clone=dict(required=False, default=None, type='str'),
             guest=dict(required=True, type='str'),
             vm_disk=dict(required=False, type='dict', default={}),
             vm_nic=dict(required=False, type='dict', default={}),
@@ -1229,7 +1317,7 @@ def main():
             vm_hw_version=dict(required=False, default=None, type='str'),
             resource_pool=dict(required=False, default=None, type='str'),
             cluster=dict(required=False, default=None, type='str'),
-            force=dict(required=False, choices=BOOLEANS, default=False),
+            force=dict(required=False, type='bool', default=False),
             esxi=dict(required=False, type='dict', default={}),
 
 
@@ -1245,8 +1333,7 @@ def main():
                 'vm_hardware',
                 'esxi'
             ],
-            ['resource_pool', 'cluster'],
-            ['from_template', 'resource_pool', 'template_src']
+            ['from_template', 'template_src'],
         ],
     )
 
@@ -1270,6 +1357,8 @@ def main():
     cluster = module.params['cluster']
     template_src = module.params['template_src']
     from_template = module.params['from_template']
+    snapshot_to_clone = module.params['snapshot_to_clone']
+
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
@@ -1349,7 +1438,8 @@ def main():
                 guest=guest,
                 template_src=template_src,
                 module=module,
-                cluster_name=cluster
+                cluster_name=cluster,
+                snapshot_to_clone=snapshot_to_clone
             )
         if state in ['restarted', 'reconfigured']:
             module.fail_json(

@@ -92,7 +92,7 @@ options:
     description:
       - "PostgreSQL role attributes string in the format: CREATEDB,CREATEROLE,SUPERUSER"
     required: false
-    default: null
+    default: ""
     choices: [ "[NO]SUPERUSER","[NO]CREATEROLE", "[NO]CREATEUSER", "[NO]CREATEDB",
                     "[NO]INHERIT", "[NO]LOGIN", "[NO]REPLICATION" ]
   state:
@@ -233,7 +233,7 @@ def user_alter(cursor, module, user, password, role_attr_flags, encrypted, expir
             return False
 
     # Handle passwords.
-    if not no_password_changes and (password is not None or role_attr_flags is not None):
+    if not no_password_changes and (password is not None or role_attr_flags != ''):
         # Select password and all flag-like columns in order to verify changes.
         query_password_data = dict(password=password, expires=expires)
         select = "SELECT * FROM pg_authid where rolname=%(user)s"
@@ -490,10 +490,10 @@ def parse_role_attrs(role_attr_flags):
 
 def normalize_privileges(privs, type_):
     new_privs = set(privs)
-    if 'ALL' in privs:
+    if 'ALL' in new_privs:
         new_privs.update(VALID_PRIVS[type_])
         new_privs.remove('ALL')
-    if 'TEMP' in privs:
+    if 'TEMP' in new_privs:
         new_privs.add('TEMPORARY')
         new_privs.remove('TEMP')
 

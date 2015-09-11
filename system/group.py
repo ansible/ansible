@@ -121,7 +121,7 @@ class Group(object):
         if len(cmd) == 1:
             return (None, '', '')
         if self.module.check_mode:
-	    return (0, '', '')
+            return (0, '', '')
         cmd.append(self.name)
         return self.execute_command(cmd)
 
@@ -233,7 +233,8 @@ class FreeBsdGroup(Group):
     def group_add(self, **kwargs):
         cmd = [self.module.get_bin_path('pw', True), 'groupadd', self.name]
         if self.gid is not None:
-            cmd.append('-g %d' % int(self.gid))
+            cmd.append('-g')
+            cmd.append('%d' % int(self.gid))
         return self.execute_command(cmd)
 
     def group_mod(self, **kwargs):
@@ -241,7 +242,8 @@ class FreeBsdGroup(Group):
         info = self.group_info()
         cmd_len = len(cmd)
         if self.gid is not None and int(self.gid) != info[2]:
-            cmd.append('-g %d' % int(self.gid))
+            cmd.append('-g')
+            cmd.append('%d' % int(self.gid))
         # modify the group if cmd will do anything
         if cmd_len != len(cmd):
             if self.module.check_mode:
@@ -271,7 +273,8 @@ class DarwinGroup(Group):
     def group_add(self, **kwargs):
         cmd = [self.module.get_bin_path('dseditgroup', True)]
         cmd += [ '-o', 'create' ]
-        cmd += [ '-i', self.gid ]
+        if self.gid is not None:
+            cmd += [ '-i', self.gid ]
         cmd += [ '-L', self.name ]
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
@@ -283,12 +286,13 @@ class DarwinGroup(Group):
         (rc, out, err) = self.execute_command(cmd)
         return (rc, out, err)
 
-    def group_mod(self):
+    def group_mod(self, gid=None):
         info = self.group_info()
         if self.gid is not None and int(self.gid) != info[2]:
             cmd = [self.module.get_bin_path('dseditgroup', True)]
             cmd += [ '-o', 'edit' ]
-            cmd += [ '-i', self.gid ]
+            if gid is not None:
+                cmd += [ '-i', gid ]
             cmd += [ '-L', self.name ]
             (rc, out, err) = self.execute_command(cmd)
             return (rc, out, err)

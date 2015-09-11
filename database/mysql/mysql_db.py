@@ -83,7 +83,8 @@ options:
     required: false
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
-     is as easy as apt-get install python-mysqldb. (See M(apt).)
+     is as easy as apt-get install python-mysqldb. (See M(apt).) For CentOS/Fedora, this
+     is as easy as yum install MySQL-python. (See M(yum).)
    - Both I(login_password) and I(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
@@ -326,7 +327,7 @@ def main():
     if state in ['dump','import']:
         if target is None:
             module.fail_json(msg="with state=%s target is required" % (state))
-	if db == 'all':
+        if db == 'all':
             connect_to_db = 'mysql'
             db = 'mysql'
             all_databases = True

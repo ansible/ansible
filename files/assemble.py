@@ -79,8 +79,23 @@ options:
         U(http://docs.python.org/2/library/re.html).
     required: false
     default: null
+  ignore_hidden:
+    description:
+      - A boolean that controls if files that start with a '.' will be included or not.
+    required: false
+    default: false
+    version_added: "2.0"
+  validate:
+    description:
+      - The validation command to run before copying into place.  The path to the file to
+        validate is passed in via '%s' which must be present as in the sshd example below.
+        The command is passed securely so shell features like expansion and pipes won't work.
+    required: false
+    default: null
+    version_added: "2.0"
 author: "Stephen Fromm (@sfromm)"
-extends_documentation_fragment: files
+extends_documentation_fragment:
+    - files
 '''
 
 EXAMPLES = '''
@@ -89,12 +104,15 @@ EXAMPLES = '''
 
 # When a delimiter is specified, it will be inserted in between each fragment
 - assemble: src=/etc/someapp/fragments dest=/etc/someapp/someapp.conf delimiter='### START FRAGMENT ###'
+
+# Copy a new "sshd_config" file into place, after passing validation with sshd
+- assemble: src=/etc/ssh/conf.d/ dest=/etc/ssh/sshd_config validate='/usr/sbin/sshd -t -f %s'
 '''
 
 # ===========================================
 # Support method
 
-def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
+def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None, ignore_hidden=False):
     ''' assemble a file from a directory of fragments '''
     tmpfd, temp_path = tempfile.mkstemp()
     tmp = os.fdopen(tmpfd,'w')
@@ -105,7 +123,7 @@ def assemble_from_fragments(src_path, delimiter=None, compiled_regexp=None):
         if compiled_regexp and not compiled_regexp.search(f):
             continue
         fragment = "%s/%s" % (src_path, f)
-        if not os.path.isfile(fragment):
+        if not os.path.isfile(fragment) or (ignore_hidden and os.path.basename(fragment).startswith('.')):
             continue
         fragment_content = file(fragment).read()
 
@@ -148,6 +166,8 @@ def main():
             backup=dict(default=False, type='bool'),
             remote_src=dict(default=False, type='bool'),
             regexp = dict(required=False),
+            ignore_hidden = dict(default=False, type='bool'),
+            validate = dict(required=False, type='str'),
         ),
         add_file_common_args=True
     )
@@ -162,6 +182,8 @@ def main():
     delimiter = module.params['delimiter']
     regexp    = module.params['regexp']
     compiled_regexp = None
+    ignore_hidden = module.params['ignore_hidden']
+    validate = module.params.get('validate', None)
 
     if not os.path.exists(src):
         module.fail_json(msg="Source (%s) does not exist" % src)
@@ -175,7 +197,7 @@ def main():
         except re.error, e:
             module.fail_json(msg="Invalid Regexp (%s) in \"%s\"" % (e, regexp))
 
-    path = assemble_from_fragments(src, delimiter, compiled_regexp)
+    path = assemble_from_fragments(src, delimiter, compiled_regexp, ignore_hidden)
     path_hash = module.sha1(path)
 
     if os.path.exists(dest):
@@ -184,6 +206,13 @@ def main():
     if path_hash != dest_hash:
         if backup and dest_hash is not None:
             module.backup_local(dest)
+        if validate:
+            if "%s" not in validate:
+                module.fail_json(msg="validate must contain %%s: %s" % validate)
+            (rc, out, err) = module.run_command(validate % path)
+            if rc != 0:
+                module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc, err))
+
         shutil.copy(path, dest)
         changed = True
 

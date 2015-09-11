@@ -21,55 +21,47 @@
 
 $params = Parse-Args $args;
 
-$result = New-Object psobject;
-Set-Attr $result "changed" $false;
+$path = Get-Attr $params "path" -failifempty $true
+$state = Get-Attr $params "state" "present"
+$creates = Get-Attr $params "creates" $false
+$extra_args = Get-Attr $params "extra_args" ""
 $wait = $false
 
-If (-not $params.path.GetType)
+$result = New-Object psobject @{
+    changed = $false
+};
+
+If (($creates -ne $false) -and ($state -ne "absent") -and (Test-Path $creates))
 {
-    Fail-Json $result "missing required arguments: path"
+    Exit-Json $result;
 }
 
-If ($params.wait -eq "true" -Or $params.wait -eq "yes")
+If ($params.wait.ToLower() -eq "true" -Or $params.wait.ToLower() -eq "yes")
 {
   $wait = $true
 }
 
-$extra_args = ""
-If ($params.extra_args.GetType)
-{
-    $extra_args = $params.extra_args;
-}
-
-If ($params.creates.GetType -and $params.state.GetType -and $params.state -ne "absent")
-{
-    If (Test-File $creates)
-    {
-        Exit-Json $result;
-    }
-}
-
 $logfile = [IO.Path]::GetTempFileName();
-If ($params.state.GetType -and $params.state -eq "absent")
+if ($state -eq "absent")
 {
   If ($wait)
   {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/x $params.path /qb /l $logfile $extra_args" -Verb Runas -Wait;
+    Start-Process -FilePath msiexec.exe -ArgumentList "/x $path /qn /l $logfile $extra_args" -Verb Runas -Wait;
   }
   Else
   {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/x $params.path /qb /l $logfile $extra_args" -Verb Runas;
+    Start-Process -FilePath msiexec.exe -ArgumentList "/x $path /qn /l $logfile $extra_args" -Verb Runas;
   }
 }
 Else
 {
   If ($wait)
   {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/i $params.path /qb /l $logfile $extra_args" -Verb Runas -Wait;
+    Start-Process -FilePath msiexec.exe -ArgumentList "/i $path /qn /l $logfile $extra_args" -Verb Runas -Wait;
   }
   Else
   {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/i $params.path /qb /l $logfile $extra_args" -Verb Runas;
+    Start-Process -FilePath msiexec.exe -ArgumentList "/i $path /qn /l $logfile $extra_args" -Verb Runas;
   }
 }
 

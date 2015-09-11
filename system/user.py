@@ -74,6 +74,10 @@ options:
         required: false
         description:
             - Optionally set the user's home directory.
+    skeleton:
+        required: false
+        description:
+            - Optionally set a home skeleton directory. Requires createhome option!
     password:
         required: false
         description:
@@ -253,13 +257,13 @@ class User(object):
         self.group      = module.params['group']
         self.groups     = module.params['groups']
         self.comment    = module.params['comment']
-        self.home       = module.params['home']
         self.shell      = module.params['shell']
         self.password   = module.params['password']
         self.force      = module.params['force']
         self.remove     = module.params['remove']
         self.createhome = module.params['createhome']
         self.move_home  = module.params['move_home']
+        self.skeleton   = module.params['skeleton']
         self.system     = module.params['system']
         self.login_class = module.params['login_class']
         self.append     = module.params['append']
@@ -269,7 +273,11 @@ class User(object):
         self.ssh_comment = module.params['ssh_key_comment']
         self.ssh_passphrase = module.params['ssh_key_passphrase']
         self.update_password = module.params['update_password']
+        self.home    = None
         self.expires = None
+
+        if module.params['home'] is not None:
+            self.home = os.path.expanduser(module.params['home'])
 
         if module.params['expires']:
             try:
@@ -360,6 +368,10 @@ class User(object):
 
         if self.createhome:
             cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
         else:
             cmd.append('-M')
 
@@ -565,11 +577,13 @@ class User(object):
 
     def ssh_key_gen(self):
         info = self.user_info()
-        if not os.path.exists(info[5]):
+        if not os.path.exists(info[5]) and not self.module.check_mode:
             return (1, '', 'User %s home directory does not exist' % self.name)
         ssh_key_file = self.get_ssh_key_path()
         ssh_dir = os.path.dirname(ssh_key_file)
         if not os.path.exists(ssh_dir):
+            if self.module.check_mode:
+                return (0, '', '')
             try:
                 os.mkdir(ssh_dir, 0700)
                 os.chown(ssh_dir, info[2], info[3])
@@ -577,6 +591,8 @@ class User(object):
                 return (1, '', 'Failed to create %s: %s' % (ssh_dir, str(e)))
         if os.path.exists(ssh_key_file):
             return (None, 'Key already exists', '')
+        if self.module.check_mode:
+            return (0, '', '')
         cmd = [self.module.get_bin_path('ssh-keygen', True)]
         cmd.append('-t')
         cmd.append(self.ssh_type)
@@ -635,10 +651,14 @@ class User(object):
 
     def create_homedir(self, path):
         if not os.path.exists(path):
-            # use /etc/skel if possible
-            if os.path.exists('/etc/skel'):
+            if self.skeleton is not None:
+                skeleton = self.skeleton
+            else:
+                skeleton = '/etc/skel'
+
+            if os.path.exists(skeleton):
                 try:
-                    shutil.copytree('/etc/skel', path, symlinks=True)
+                    shutil.copytree(skeleton, path, symlinks=True)
                 except OSError, e:
                     self.module.exit_json(failed=True, msg="%s" % e)
         else:
@@ -725,6 +745,10 @@ class FreeBsdUser(User):
 
         if self.createhome:
             cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
 
         if self.shell is not None:
             cmd.append('-s')
@@ -913,12 +937,16 @@ class OpenBSDUser(User):
             cmd.append('-L')
             cmd.append(self.login_class)
 
-        if self.password is not None:
+        if self.password is not None and self.password != '*':
             cmd.append('-p')
             cmd.append(self.password)
 
         if self.createhome:
             cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
 
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -1007,7 +1035,8 @@ class OpenBSDUser(User):
                 cmd.append('-L')
                 cmd.append(self.login_class)
 
-        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+        if self.update_password == 'always' and self.password is not None \
+           and self.password != '*' and info[1] != self.password:
             cmd.append('-p')
             cmd.append(self.password)
 
@@ -1086,6 +1115,10 @@ class NetBSDUser(User):
 
         if self.createhome:
             cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
 
         cmd.append(self.name)
         return self.execute_command(cmd)
@@ -1238,6 +1271,10 @@ class SunOS(User):
 
         if self.createhome:
             cmd.append('-m')
+
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
 
         cmd.append(self.name)
 
@@ -1747,6 +1784,10 @@ class AIX(User):
         if self.createhome:
             cmd.append('-m')
 
+            if self.skeleton is not None:
+                cmd.append('-k')
+                cmd.append(self.skeleton)
+
         cmd.append(self.name)
         (rc, out, err) = self.execute_command(cmd)
 
@@ -2018,6 +2059,7 @@ def main():
             remove=dict(default='no', type='bool'),
             # following options are specific to useradd
             createhome=dict(default='yes', type='bool'),
+            skeleton=dict(default=None, type='str'),
             system=dict(default='no', type='bool'),
             # following options are specific to usermod
             move_home=dict(default='no', type='bool'),
@@ -2110,6 +2152,7 @@ def main():
 
         # deal with ssh key
         if user.sshkeygen:
+            # generate ssh key (note: this function is check mode aware)
             (rc, out, err) = user.ssh_key_gen()
             if rc is not None and rc != 0:
                 module.fail_json(name=user.name, msg=err, rc=rc)

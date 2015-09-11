@@ -58,6 +58,23 @@ EXAMPLES = '''
 - fail: msg="Whoops! file ownership has changed"
   when: st.stat.pw_name != 'root'
 
+# Determine if a path exists and is a symlink. Note that if the path does
+# not exist, and we test sym.stat.islnk, it will fail with an error. So
+# therefore, we must test whether it is defined.
+# Run this to understand the structure, the skipped ones do not pass the
+# check performed by 'when'
+- stat: path=/path/to/something
+  register: sym
+- debug: msg="islnk isn't defined (path doesn't exist)"
+  when: sym.stat.islnk is not defined
+- debug: msg="islnk is defined (path must exist)"
+  when: sym.stat.islnk is defined
+- debug: msg="Path exists and is a symlink"
+  when: sym.stat.islnk is defined and sym.stat.islnk
+- debug: msg="Path exists and isn't a symlink"
+  when: sym.stat.islnk is defined and sym.stat.islnk == False
+
+
 # Determine if a path exists and is a directory.  Note that we need to test
 # both that p.stat.isdir actually exists, and also that it's set to true.
 - stat: path=/path/to/something

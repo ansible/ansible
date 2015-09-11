@@ -4,6 +4,7 @@
 # (c) 2012, Dane Summers <dsummers@pinedesk.biz>
 # (c) 2013, Mike Grozak  <mike.grozak@gmail.com>
 # (c) 2013, Patrick Callahan <pmc@patrickcallahan.com>
+# (c) 2015, Evan Kaufman <evan@digitalflophouse.com>
 #
 # This file is part of Ansible
 #
@@ -46,7 +47,7 @@ options:
     description:
       - Description of a crontab entry.
     default: null
-    required: true
+    required: false
   user:
     description:
       - The specific user whose crontab should be modified.
@@ -116,10 +117,19 @@ options:
     required: false
     default: null
     choices: [ "reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly" ]
+  disabled:
+    description:
+      - If the job should be disabled (commented out) in the crontab. Only has effect if state=present
+    version_added: "2.0"
+    required: false
+    default: false
 requirements:
   - cron
-author: "Dane Summers (@dsummersl)"
-updates: [ 'Mike Grozak', 'Patrick Callahan' ]
+author:
+    - "Dane Summers (@dsummersl)"
+    - 'Mike Grozak'
+    - 'Patrick Callahan'
+    - 'Evan Kaufman (@EvanK)'
 """
 
 EXAMPLES = '''
@@ -290,17 +300,22 @@ class CronTab(object):
 
         return []
 
-    def get_cron_job(self,minute,hour,day,month,weekday,job,special):
+    def get_cron_job(self,minute,hour,day,month,weekday,job,special,disabled):
+        if disabled:
+            disable_prefix = '#'
+        else:
+            disable_prefix = ''
+
         if special:
             if self.cron_file:
-                return "@%s %s %s" % (special, self.user, job)
+                return "%s@%s %s %s" % (disable_prefix, special, self.user, job)
             else:
-                return "@%s %s" % (special, job)
+                return "%s@%s %s" % (disable_prefix, special, job)
         else:
             if self.cron_file:
-                return "%s %s %s %s %s %s %s" % (minute,hour,day,month,weekday,self.user,job)
+                return "%s%s %s %s %s %s %s %s" % (disable_prefix,minute,hour,day,month,weekday,self.user,job)
             else:
-                return "%s %s %s %s %s %s" % (minute,hour,day,month,weekday,job)
+                return "%s%s %s %s %s %s %s" % (disable_prefix,minute,hour,day,month,weekday,job)
 
         return None
 
@@ -398,7 +413,7 @@ def main():
 
     module = AnsibleModule(
         argument_spec = dict(
-            name=dict(required=True),
+            name=dict(required=False),
             user=dict(required=False),
             job=dict(required=False),
             cron_file=dict(required=False),
@@ -413,7 +428,8 @@ def main():
             special_time=dict(required=False,
                               default=None,
                               choices=["reboot", "yearly", "annually", "monthly", "weekly", "daily", "hourly"],
-                              type='str')
+                              type='str'),
+            disabled=dict(default=False, type='bool')
         ),
         supports_check_mode = False,
     )
@@ -431,6 +447,7 @@ def main():
     weekday      = module.params['weekday']
     reboot       = module.params['reboot']
     special_time = module.params['special_time']
+    disabled     = module.params['disabled']
     do_install   = state == 'present'
 
     changed      = False
@@ -481,7 +498,7 @@ def main():
         changed = crontab.remove_job_file()
         module.exit_json(changed=changed,cron_file=cron_file,state=state)
 
-    job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time)
+    job = crontab.get_cron_job(minute, hour, day, month, weekday, job, special_time, disabled)
     old_job = crontab.find_job(name)
 
     if do_install:

@@ -104,7 +104,11 @@ def write_fstab(lines, dest):
     fs_w.flush()
     fs_w.close()
 
-def set_mount(**kwargs):
+def _escape_fstab(v):
+    """ escape space (040), ampersand (046) and backslash (134) which are invalid in fstab fields """
+    return v.replace('\\', '\\134').replace(' ', '\\040').replace('&', '\\046')
+
+def set_mount(module, **kwargs):
     """ set/change a mount point location in fstab """
 
     # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
@@ -116,11 +120,17 @@ def set_mount(**kwargs):
     )
     args.update(kwargs)
 
+    # save the mount name before space replacement
+    origname =  args['name']
+    # replace any space in mount name with '\040' to make it fstab compatible (man fstab)
+    args['name'] = args['name'].replace(' ', r'\040')
+
     new_line = '%(src)s %(name)s %(fstype)s %(opts)s %(dump)s %(passno)s\n'
 
     to_write = []
     exists = False
     changed = False
+    escaped_args = dict([(k, _escape_fstab(v)) for k, v in args.iteritems()])
     for line in open(args['fstab'], 'r').readlines():
         if not line.strip():
             to_write.append(line)
@@ -137,16 +147,16 @@ def set_mount(**kwargs):
         ld = {}
         ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
 
-        if ld['name'] != args['name']:
+        if ld['name'] != escaped_args['name']:
             to_write.append(line)
             continue
 
         # it exists - now see if what we have is different
         exists = True
         for t in ('src', 'fstype','opts', 'dump', 'passno'):
-            if ld[t] != args[t]:
+            if ld[t] != escaped_args[t]:
                 changed = True
-                ld[t] = args[t]
+                ld[t] = escaped_args[t]
 
         if changed:
             to_write.append(new_line % ld)
@@ -157,13 +167,14 @@ def set_mount(**kwargs):
         to_write.append(new_line % args)
         changed = True
 
-    if changed:
+    if changed and not module.check_mode:
         write_fstab(to_write, args['fstab'])
 
-    return (args['name'], changed)
+    # mount function needs origname
+    return (origname, changed)
 
 
-def unset_mount(**kwargs):
+def unset_mount(module, **kwargs):
     """ remove a mount point from fstab """
 
     # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
@@ -175,8 +186,14 @@ def unset_mount(**kwargs):
     )
     args.update(kwargs)
 
+    # save the mount name before space replacement
+    origname =  args['name']
+    # replace any space in mount name with '\040' to make it fstab compatible (man fstab)
+    args['name'] = args['name'].replace(' ', r'\040')
+
     to_write = []
     changed = False
+    escaped_name = _escape_fstab(args['name'])
     for line in open(args['fstab'], 'r').readlines():
         if not line.strip():
             to_write.append(line)
@@ -193,28 +210,45 @@ def unset_mount(**kwargs):
         ld = {}
         ld['src'], ld['name'], ld['fstype'], ld['opts'], ld['dump'], ld['passno']  = line.split()
 
-        if ld['name'] != args['name']:
+        if ld['name'] != escaped_name:
             to_write.append(line)
             continue
 
         # if we got here we found a match - continue and mark changed
         changed = True
 
-    if changed:
+    if changed and not module.check_mode:
         write_fstab(to_write, args['fstab'])
 
-    return (args['name'], changed)
+    # umount needs origname
+    return (origname, changed)
 
 
 def mount(module, **kwargs):
     """ mount up a path or remount if needed """
+
+    # kwargs: name, src, fstype, opts, dump, passno, state, fstab=/etc/fstab
+    args = dict(
+        opts   = 'default',
+        dump   = '0',
+        passno = '0',
+        fstab  = '/etc/fstab'
+    )
+    args.update(kwargs)
+
     mount_bin = module.get_bin_path('mount')
 
     name = kwargs['name']
+    
+    cmd = [ mount_bin, ]
+    
     if os.path.ismount(name):
-        cmd = [ mount_bin , '-o', 'remount', name ]
-    else:
-        cmd = [ mount_bin, name ]
+        cmd += [ '-o', 'remount', ]
+
+    if get_platform().lower() == 'freebsd':
+        cmd += [ '-F', args['fstab'], ]
+
+    cmd += [ name, ]
 
     rc, out, err = module.run_command(cmd)
     if rc == 0:
@@ -247,7 +281,8 @@ def main():
             src    = dict(required=True),
             fstype = dict(required=True),
             fstab  = dict(default='/etc/fstab')
-        )
+        ),
+        supports_check_mode=True
     )
 
 
@@ -262,8 +297,6 @@ def main():
         args['passno'] = module.params['passno']
     if module.params['opts'] is not None:
         args['opts'] = module.params['opts']
-        if ' ' in args['opts']:
-            module.fail_json(msg="unexpected space in 'opts' parameter")
     if module.params['dump'] is not None:
         args['dump'] = module.params['dump']
     if module.params['fstab'] is not None:
@@ -284,8 +317,8 @@ def main():
     state = module.params['state']
     name  = module.params['name']
     if state == 'absent':
-        name, changed = unset_mount(**args)
-        if changed:
+        name, changed = unset_mount(module, **args)
+        if changed and not module.check_mode:
             if os.path.ismount(name):
                 res,msg  = umount(module, **args)
                 if res:
@@ -301,26 +334,27 @@ def main():
 
     if state == 'unmounted':
         if os.path.ismount(name):
-            res,msg  = umount(module, **args)
-            if res:
-                module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
+            if not module.check_mode:
+                res,msg  = umount(module, **args)
+                if res:
+                    module.fail_json(msg="Error unmounting %s: %s" % (name, msg))
             changed = True
 
         module.exit_json(changed=changed, **args)
 
     if state in ['mounted', 'present']:
         if state == 'mounted':
-            if not os.path.exists(name):
+            if not os.path.exists(name) and not module.check_mode:
                 try:
                     os.makedirs(name)
                 except (OSError, IOError), e:
                     module.fail_json(msg="Error making dir %s: %s" % (name, str(e)))
 
-        name, changed = set_mount(**args)
+        name, changed = set_mount(module, **args)
         if state == 'mounted':
             res = 0
             if os.path.ismount(name):
-                if changed:
+                if changed and not module.check_mode:
                     res,msg = mount(module, **args)
             elif 'bind' in args.get('opts', []):
                 changed = True
@@ -335,7 +369,9 @@ def main():
                     res,msg = mount(module, **args)
             else:
                 changed = True
-                res,msg = mount(module, **args)
+                if not module.check_mode:
+                    res,msg = mount(module, **args)
+
 
             if res:
                 module.fail_json(msg="Error mounting %s: %s" % (name, msg))

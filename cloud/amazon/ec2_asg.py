@@ -43,7 +43,7 @@ options:
   launch_config_name:
     description:
       - Name of the Launch configuration to use for the group. See the ec2_lc module for managing these.
-    required: false
+    required: true
   min_size:
     description:
       - Minimum number of instances in group
@@ -67,7 +67,7 @@ options:
       - Number of instances you'd like to replace at a time.  Used with replace_all_instances.
     required: false
     version_added: "1.8"
-    default: 1  
+    default: 1
   replace_instances:
     description:
       - List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching the current launch configuration.
@@ -109,6 +109,12 @@ options:
     default: EC2
     version_added: "1.7"
     choices: ['EC2', 'ELB']
+  default_cooldown:
+    description:
+      - The number of seconds after a scaling activity completes before another can begin.
+    required: false
+    default: 300 seconds
+    version_added: "2.0"
   wait_timeout:
     description:
       - how long before wait instances to become viable when replaced.  Used in concjunction with instance_ids option.
@@ -120,6 +126,14 @@ options:
     version_added: "1.9"
     default: yes
     required: False
+  termination_policies:
+    description:
+        - An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing capacity.
+        - For 'Default', when used to create a new autoscaling group, the "Default" value is used. When used to change an existent autoscaling group, the current termination policies are mantained
+    required: false
+    default: Default
+    choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
+    version_added: "2.0"
 extends_documentation_fragment: aws
 """
 
@@ -374,6 +388,7 @@ def create_autoscaling_group(connection, module):
     set_tags = module.params.get('tags')
     health_check_period = module.params.get('health_check_period')
     health_check_type = module.params.get('health_check_type')
+    default_cooldown = module.params.get('default_cooldown')
     wait_for_instances = module.params.get('wait_for_instances')
     as_groups = connection.get_all_groups(names=[group_name])
     wait_timeout = module.params.get('wait_timeout')
@@ -413,7 +428,9 @@ def create_autoscaling_group(connection, module):
                  connection=connection,
                  tags=asg_tags,
                  health_check_period=health_check_period,
-                 health_check_type=health_check_type)
+                 health_check_type=health_check_type,
+                 default_cooldown=default_cooldown,
+                 termination_policies=termination_policies)
 
         try:
             connection.create_auto_scaling_group(ag)
@@ -774,7 +791,9 @@ def main():
             tags=dict(type='list', default=[]),
             health_check_period=dict(type='int', default=300),
             health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
-            wait_for_instances=dict(type='bool', default=True)
+            default_cooldown=dict(type='int', default=300),
+            wait_for_instances=dict(type='bool', default=True),
+            termination_policies=dict(type='list', default=None)
         ),
     )
     

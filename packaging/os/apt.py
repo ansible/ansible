@@ -80,8 +80,8 @@ options:
       - 'Note: This does not upgrade a specific package, use state=latest for that.'
     version_added: "1.1"
     required: false
-    default: "yes"
-    choices: [ "yes", "safe", "full", "dist"]
+    default: "no"
+    choices: [ "no", "yes", "safe", "full", "dist"]
   dpkg_options:
     description:
       - Add dpkg options to apt command. Defaults to '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
@@ -179,8 +179,8 @@ APT_ENV_VARS = dict(
 )
 
 DPKG_OPTIONS = 'force-confdef,force-confold'
-APT_GET_ZERO = "0 upgraded, 0 newly installed"
-APTITUDE_ZERO = "0 packages upgraded, 0 newly installed"
+APT_GET_ZERO = "\n0 upgraded, 0 newly installed"
+APTITUDE_ZERO = "\n0 packages upgraded, 0 newly installed"
 APT_LISTS_PATH = "/var/lib/apt/lists"
 APT_UPDATE_SUCCESS_STAMP_PATH = "/var/lib/apt/periodic/update-success-stamp"
 
@@ -230,10 +230,10 @@ def package_status(m, pkgname, version, cache, state):
             try:
                 provided_packages = cache.get_providing_packages(pkgname)
                 if provided_packages:
-		    is_installed = False
+                    is_installed = False
                     # when virtual package providing only one package, look up status of target package 
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
-			package = provided_packages[0]
+                        package = provided_packages[0]
                         installed, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
                         if installed:
                             is_installed = True
@@ -403,19 +403,20 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
     for deb_file in debs.split(','):
         try:
             pkg = apt.debfile.DebPackage(deb_file)
-        except SystemError, e:
-            m.fail_json(msg="System Error: %s" % str(e))
 
-        # Check if it's already installed
-        if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
-            continue
-        # Check if package is installable
-        if not pkg.check() and not force:
-            m.fail_json(msg=pkg._failure_string)
+            # Check if it's already installed
+            if pkg.compare_to_version_in_cache() == pkg.VERSION_SAME:
+                continue
+            # Check if package is installable
+            if not pkg.check() and not force:
+                m.fail_json(msg=pkg._failure_string)
 
-        # add any missing deps to the list of deps we need
-        # to install so they're all done in one shot
-        deps_to_install.extend(pkg.missing_deps)
+            # add any missing deps to the list of deps we need
+            # to install so they're all done in one shot
+            deps_to_install.extend(pkg.missing_deps)
+
+        except Exception, e:
+            m.fail_json(msg="Unable to install package: %s" % str(e))
 
         # and add this deb to the list of packages to install
         pkgs_to_install.append(deb_file)
@@ -548,7 +549,7 @@ def main():
             default_release = dict(default=None, aliases=['default-release']),
             install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
-            upgrade = dict(choices=['yes', 'safe', 'full', 'dist']),
+            upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS)
         ),
         mutually_exclusive = [['package', 'upgrade', 'deb']],
@@ -572,6 +573,10 @@ def main():
     APT_GET_CMD = module.get_bin_path("apt-get")
 
     p = module.params
+
+    if p['upgrade'] == 'no':
+        p['upgrade'] = None
+
     if not APTITUDE_CMD and p.get('upgrade', None) in [ 'full', 'safe', 'yes' ]:
         module.fail_json(msg="Could not find aptitude. Please ensure it is installed.")
 
