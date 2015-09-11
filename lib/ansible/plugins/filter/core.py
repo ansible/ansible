@@ -324,7 +324,7 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
-def get_number_list(length=10, start=0, step=1):
+def range(length=10, start=0, step=1):
     return range(int(start), int(start + (length * step)), int(step))
     
 
@@ -405,6 +405,6 @@ class FilterModule(object):
             'comment': comment,
             
             # create a list of numbers
-            'get_number_list': get_number_list,
+            'range': range,
             
         }
