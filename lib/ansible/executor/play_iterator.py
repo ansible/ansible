@@ -237,7 +237,7 @@ class PlayIterator:
                         if task is None:
                             # check to see if the child state was failed, if so we need to
                             # fail here too so we don't continue iterating tasks
-                            if state.tasks_child_state and state.tasks_child_state.fail_state != self.FAILED_NONE:
+                            if state.tasks_child_state.fail_state != self.FAILED_NONE:
                                 state.fail_state |= self.FAILED_TASKS
                             state.tasks_child_state = None
                             state.cur_regular_task += 1
@@ -263,7 +263,7 @@ class PlayIterator:
                         if task is None:
                             # check to see if the child state was failed, if so we need to
                             # fail here too so we don't continue iterating rescue
-                            if state.tasks_child_state and state.tasks_child_state.fail_state != self.FAILED_NONE:
+                            if state.rescue_child_state.fail_state != self.FAILED_NONE:
                                 state.fail_state |= self.FAILED_RESCUE
                             state.rescue_child_state = None
                             state.cur_rescue_task += 1
@@ -293,7 +293,7 @@ class PlayIterator:
                         if task is None:
                             # check to see if the child state was failed, if so we need to
                             # fail here too so we don't continue iterating always
-                            if state.tasks_child_state and state.tasks_child_state.fail_state != self.FAILED_NONE:
+                            if state.always_child_state.fail_state != self.FAILED_NONE:
                                 state.fail_state |= self.FAILED_ALWAYS
                             state.always_child_state = None
                             state.cur_always_task += 1
