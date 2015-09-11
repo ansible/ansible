@@ -76,7 +76,7 @@ options:
 notes:
   - Not tested on any Debian based system.
 requirements: [ 'firewalld >= 0.2.11' ]
-author: "Adam Miller (@maxamillion)" 
+author: "Adam Miller (@maxamillion)"
 '''
 
 EXAMPLES = '''
@@ -138,7 +138,7 @@ def set_port_disabled_permanent(zone, port, protocol):
 
 ####################
 # source handling
-#    
+#
 def get_source(zone, source):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
@@ -151,11 +151,13 @@ def add_source(zone, source):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
     fw_settings.addSource(source)
+    fw_zone.update(fw_settings)
 
 def remove_source(zone, source):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
     fw_settings.removeSource(source)
+    fw_zone.update(fw_settings)
 
 ####################
 # service handling
@@ -191,7 +193,7 @@ def set_service_disabled_permanent(zone, service):
     fw_settings = fw_zone.getSettings()
     fw_settings.removeService(service)
     fw_zone.update(fw_settings)
-    
+
 
 ####################
 # rich rule handling
