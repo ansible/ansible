@@ -182,8 +182,15 @@ class Inventory(object):
         # process patterns
         if isinstance(pattern, list):
             pattern = ';'.join(pattern)
-        patterns = pattern.replace(";",":").split(":")
+
+        # issue 12296
+        # maybe the pattern is an IPv6 address so let's try it and make use of
+        # the semicolons before turning them into colons
+        patterns = pattern.split(";")
         hosts = self._get_hosts(patterns)
+        if not hosts:
+            patterns = pattern.replace(";",":").split(":")
+            hosts = self._get_hosts(patterns)
 
         # exclude hosts not in a subset, if defined
         if self._subset:
