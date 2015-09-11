@@ -67,8 +67,8 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     )
 
     # AST node types were expanded after 2.6
-    if not sys.version.startswith('2.6'):
-        SAFE_NODES.union(
+    if sys.version_info[:2] >= (2, 7):
+        SAFE_NODES.update(
             set(
                 (ast.Set,)
             )
