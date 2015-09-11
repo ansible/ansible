@@ -111,11 +111,10 @@ def parse_out(string):
 def has_changed(string):
     return "Nothing to install or update" not in string
 
-def composer_install(module, command, options):
+def composer_command(module, command, options=[]):
     php_path      = module.get_bin_path("php", True, ["/usr/local/bin"])
     composer_path = module.get_bin_path("composer", True, ["/usr/local/bin"])
     cmd           = "%s %s %s %s" % (php_path, composer_path, command, " ".join(options))
-
     return module.run_command(cmd)
 
 def main():
@@ -165,7 +164,7 @@ def main():
     if module.check_mode:
         options.append('--dry-run')
 
-    rc, out, err = composer_install(module, command, options)
+    rc, out, err = composer_command(module, command, options)
 
     if rc != 0:
         output = parse_out(err)
