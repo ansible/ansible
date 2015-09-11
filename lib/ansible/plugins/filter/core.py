@@ -324,8 +324,8 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
-def get_number_list(end=10, start=0):
-    return range(int(start), int(end))
+def get_number_list(length=10, start=0, step=1):
+    return range(int(start), int(start + (length * step)), int(step))
     
 
 class FilterModule(object):
