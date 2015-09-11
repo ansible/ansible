@@ -4,10 +4,9 @@
   connection: local
   vars:
     test_var: 'Ī ī Ĭ ĭ Į į İ ı Ĳ ĳ Ĵ ĵ Ķ ķ ĸ Ĺ ĺ Ļ ļ Ľ ľ Ŀ ŀ Ł ł Ń ń Ņ ņ Ň ň ŉ Ŋ ŋ Ō ō Ŏ ŏ Ő ő Œ'
-    num_hosts: 5
     hostnames:
-        - 'host-#ϬϭϮϯϰ'
-        - 'host-ͰͱͲͳʹ͵'
+        - 'host-ϬϭϮϯϰ'
+        - 'host-fóöbär'
         - 'host-ΙΚΛΜΝΞ'
         - 'host-στυφχψ'
         - 'host-ϬϭϮϯϰϱ'
@@ -29,11 +28,11 @@
         - 'ā Ă ă Ą ą Ć ć Ĉ ĉ Ċ ċ Č č Ď ď Đ đ Ē ē Ĕ ĕ Ė ė Ę ę Ě ě Ĝ ĝ Ğ ğ Ġ ġ Ģ ģ Ĥ ĥ Ħ ħ Ĩ ĩ'
 
     - add_host:
-        name: '{{hostnames}}.{{item}}'
+        name: '{{item}}'
         groups: 'ĪīĬĭ'
+        ansible_ssh_host: 127.0.0.1
         ansible_connection: local
-        host_id: '{{item}}'
-      with_sequence: start=1 end={{num_hosts}} format=%d
+      with_items: hostnames
 
     - name: 'A task with unicode extra vars'
       debug: var=extra_var

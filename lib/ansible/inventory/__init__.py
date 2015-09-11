@@ -33,6 +33,7 @@ from ansible.inventory.group import Group
 from ansible.inventory.host import Host
 from ansible.plugins import vars_loader
 from ansible.utils.vars import combine_vars
+from ansible.parsing.utils.addresses import parse_address
 
 try:
     from __main__ import display
@@ -83,27 +84,16 @@ class Inventory(object):
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
 
+        self.parser = None
+
         if host_list is None:
-            self.parser = None
+            pass
         elif isinstance(host_list, list):
-            self.parser = None
             all = Group('all')
             self.groups = [ all ]
-            ipv6_re = re.compile('\[([a-f:A-F0-9]*[%[0-z]+]?)\](?::(\d+))?')
-            for x in host_list:
-                m = ipv6_re.match(x)
-                if m:
-                    all.add_host(Host(m.groups()[0], m.groups()[1]))
-                else:
-                    if ":" in x:
-                        tokens = x.rsplit(":", 1)
-                        # if there is ':' in the address, then this is an ipv6
-                        if ':' in tokens[0]:
-                            all.add_host(Host(x))
-                        else:
-                            all.add_host(Host(tokens[0], tokens[1]))
-                    else:
-                        all.add_host(Host(x))
+            for h in host_list:
+                (host, port) = parse_address(h, allow_ranges=False)
+                all.add_host(Host(host, port))
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
             if self._loader.is_directory(host_list):
