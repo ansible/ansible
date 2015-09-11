@@ -324,6 +324,9 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
+def range(length=10, start=0, step=1):
+    return range(int(start), int(start + (length * step)), int(step))
+    
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -400,4 +403,8 @@ class FilterModule(object):
 
             # comment-style decoration
             'comment': comment,
+            
+            # create a list of numbers
+            'range': range,
+            
         }
