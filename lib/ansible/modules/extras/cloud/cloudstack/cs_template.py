@@ -501,7 +501,7 @@ class AnsibleCloudStackTemplate(AnsibleCloudStack):
                 return templates['template'][0]
             else:
                 for i in templates['template']:
-                    if i['checksum'] == checksum:
+                    if 'checksum' in i and i['checksum'] == checksum:
                         return i
         return None
 
