@@ -324,6 +324,9 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
+def get_number_list(end=10, start=0):
+    return range(int(start), int(end))
+    
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -400,4 +403,8 @@ class FilterModule(object):
 
             # comment-style decoration
             'comment': comment,
+            
+            # create a list of numbers
+            'get_number_list': get_number_list,
+            
         }
