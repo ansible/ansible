@@ -85,9 +85,10 @@ options:
   state:
     description:
       - State of the account.
+      - C(unlocked) is an alias for C(enabled).
     required: false
     default: 'present'
-    choices: [ 'present', 'absent', 'enabled', 'disabled', 'locked' ]
+    choices: [ 'present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked' ]
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -350,7 +351,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             name = dict(required=True),
-            state = dict(choices=['present', 'absent', 'enabled', 'disabled', 'locked' ], default='present'),
+            state = dict(choices=['present', 'absent', 'enabled', 'disabled', 'locked', 'unlocked'], default='present'),
             account_type = dict(choices=['user', 'root_admin', 'domain_admin'], default='user'),
             network_domain = dict(default=None),
             domain = dict(default='ROOT'),
@@ -385,7 +386,7 @@ def main():
         if state in ['absent']:
             account = acs_acc.absent_account()
 
-        elif state in ['enabled']:
+        elif state in ['enabled', 'unlocked']:
             account = acs_acc.enable_account()
 
         elif state in ['disabled']:
