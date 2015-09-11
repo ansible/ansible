@@ -272,6 +272,7 @@ class TaskExecutor:
         if self._task.action == 'debug' and 'var' in self._task.args:
             prev_var = self._task.args.pop('var')
 
+        original_args = self._task.args.copy()
         self._task.post_validate(templar=templar)
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
@@ -286,7 +287,7 @@ class TaskExecutor:
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
         if self._task.action == 'include':
-            include_variables = self._task.args.copy()
+            include_variables = original_args
             include_file = include_variables.get('_raw_params')
             del include_variables['_raw_params']
             return dict(include=include_file, include_variables=include_variables)
