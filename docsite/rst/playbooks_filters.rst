@@ -530,11 +530,11 @@ To escape special characters within a regex, use the "regex_escape" filter::
     
 To create a list of numbers (default: beginning from 0, stepping=1)::
 
-    # create list from 0 with length 4; will return [ 0, 1, 2, 3 ]
-    {{ 4 | get_number_list }}
+    # create a list from 0 with length 4; will return [ 0, 1, 2, 3 ]
+    {{ 4 | range }}
     
     # create list from 100 with length 4, stepping=2; will return [ 100, 102, 104, 106 ]
-    {{ 4 | get_number_list(100, 2) }}
+    {{ 4 | range(100, 2) }}
 
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
