@@ -82,6 +82,9 @@ def main():
     vpc_region = module.params.get('vpc_region')
     comment = module.params.get('comment')
 
+    if zone_in[-1:] != '.':
+        zone_in += "."
+
     private_zone = vpc_id is not None and vpc_region is not None
 
     _, _, aws_connect_kwargs = get_aws_connection_info(module)
