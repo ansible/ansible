@@ -196,12 +196,12 @@ class PluginLoader:
             else:
                 suffixes = ['.py', '']
 
-        try:
-            return self._plugin_path_cache[name]
-        except KeyError:
-            # Cache miss.  Now let's find the the plugin
-            pass
+        potential_names = frozenset('%s%s' % (name, s) for s in suffixes)
+        for full_name in potential_names:
+            if full_name in self._plugin_path_cache:
+                return self._plugin_path_cache[full_name]
 
+        found = None
         for path in [p for p in self._get_paths() if p not in self._searched_paths]:
             if os.path.isdir(path):
                 try:
@@ -212,38 +212,30 @@ class PluginLoader:
                     for suffix in suffixes:
                         if full_path.endswith(suffix):
                             full_name = os.path.basename(full_path)
-                            if suffix:
-                                base_name = full_name[:-len(suffix)]
-                            else:
-                                base_name = full_name
                             break
                     else: # Yes, this is a for-else: http://bit.ly/1ElPkyg
                         continue
 
-                    # Module found, now see if it's already in the cache
-                    if base_name not in self._plugin_path_cache:
-                        self._plugin_path_cache[base_name] = full_path
+                    if full_name not in self._plugin_path_cache:
+                        self._plugin_path_cache[full_name] = full_path
 
             self._searched_paths.add(path)
-            try:
-                return self._plugin_path_cache[name]
-            except KeyError:
-                # Didn't find the plugin in this directory.  Load modules from
-                # the next one
-                pass
+            for full_name in potential_names:
+                if full_name in self._plugin_path_cache:
+                    return self._plugin_path_cache[full_name]
 
         # if nothing is found, try finding alias/deprecated
         if not name.startswith('_'):
-            alias_name = '_' + name
-            # We've already cached all the paths at this point
-            if alias_name in self._plugin_path_cache:
-                if not os.path.islink(self._plugin_path_cache[alias_name]):
-                    display.deprecated('%s is kept for backwards compatibility '
-                              'but usage is discouraged. The module '
-                              'documentation details page may explain '
-                              'more about this rationale.' %
-                              name.lstrip('_'))
-                return self._plugin_path_cache[alias_name]
+            for alias_name in ('_%s' % n for n in potential_names):
+                # We've already cached all the paths at this point
+                if alias_name in self._plugin_path_cache:
+                    if not os.path.islink(self._plugin_path_cache[alias_name]):
+                        display.deprecated('%s is kept for backwards compatibility '
+                                  'but usage is discouraged. The module '
+                                  'documentation details page may explain '
+                                  'more about this rationale.' %
+                                  name.lstrip('_'))
+                    return self._plugin_path_cache[alias_name]
 
         return None
 
