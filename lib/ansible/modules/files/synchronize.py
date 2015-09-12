@@ -22,15 +22,15 @@ module: synchronize
 version_added: "1.4"
 short_description: Uses rsync to make synchronizing file paths in your playbooks quick and easy.
 description:
-    - This is a wrapper around rsync. Of course you could just use the command action to call rsync yourself, but you also have to add a fair number of boilerplate options and host facts. You still may need to call rsync directly via C(command) or C(shell) depending on your use case. The synchronize action is meant to do common things with C(rsync) easily. It does not provide access to the full power of rsync, but does make most invocations easier to follow.
+    - C(synchronize) is a wrapper around the rsync command, meant to make common tasks with rsync easier. It is run and originates on the local host where Ansible is being run. Of course, you could just use the command action to call rsync yourself, but you also have to add a fair number of boilerplate options and host facts. You `still` may need to call rsync directly via C(command) or C(shell) depending on your use case. C(synchronize) does not provide access to the full power of rsync, but does make most invocations easier to follow.
 options:
   src:
     description:
-      - Path on the source machine that will be synchronized to the destination; The path can be absolute or relative.
+      - Path on the source host that will be synchronized to the destination; The path can be absolute or relative.
     required: true
   dest:
     description:
-      - Path on the destination machine that will be synchronized from the source; The path can be absolute or relative.
+      - Path on the destination host that will be synchronized from the source; The path can be absolute or relative.
     required: true
   dest_port:
     description:
@@ -126,7 +126,7 @@ options:
     required: false
   rsync_path:
     description:
-      - Specify the rsync command to run on the remote machine. See C(--rsync-path) on the rsync man page.
+      - Specify the rsync command to run on the remote host. See C(--rsync-path) on the rsync man page.
     required: false
   rsync_timeout:
     description:
@@ -165,12 +165,13 @@ options:
     required: false
     version_added: "2.0"
 notes:
-   - `rsync` must be installed on both the local and remote machine.
+   - rsync must be installed on both the local and remote host.
+   - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host `synchronize is connecting to`.
+   - The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host, or the `become_user` if `become: yes` is active. synchronize will attempt to escalate privileges to the become_user `on the local host`.
+   - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host. If you require permissions `other` than those of the remote_user, you must specify this with a sudo command inside the C(rsync_path) option in the task; for example, `rsync_path="sudo rsync"`.
+   - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
-   - The remote user for the dest path will always be the remote_user, not
-     the sudo_user. 
-   - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - To exclude files and directories from being synchronized, you may add 
      C(.rsync-filter) files to the source directory.
 
@@ -202,7 +203,7 @@ pull mode
 synchronize: mode=pull src=some/relative/path dest=/some/absolute/path
 
 # Synchronization of src on delegate host to dest on the current inventory host.
-# If delegate_to is set to the current inventory host, this can be used to syncronize
+# If delegate_to is set to the current inventory host, this can be used to synchronize
 # two directories on that host. 
 synchronize: >
     src=some/relative/path dest=/some/absolute/path
@@ -212,6 +213,7 @@ synchronize: >
 synchronize: src=some/relative/path dest=/some/absolute/path delete=yes
 
 # Synchronize using an alternate rsync command
+# This specific command is granted sudo privileges on the destination
 synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rsync"
 
 # Example .rsync-filter file in the source directory
