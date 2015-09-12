@@ -50,10 +50,12 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
                 variable_manager=variable_manager,
                 loader=loader
             )
-            # Implicit blocks are created by bare tasks listed in a play withou
+            # Implicit blocks are created by bare tasks listed in a play without
             # an explicit block statement. If we have two implicit blocks in a row,
             # squash them down to a single block to save processing time later.
             if b._implicit and len(block_list) > 0 and block_list[-1]._implicit:
+                for t in b.block:
+                    t._block = block_list[-1]
                 block_list[-1].block.extend(b.block)
             else:
                 block_list.append(b)
