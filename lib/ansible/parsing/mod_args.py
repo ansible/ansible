@@ -148,13 +148,12 @@ class ModuleArgsParser:
         else:
             (action, args) = self._normalize_new_style_args(thing)
 
-        # this can occasionally happen, simplify
-        if args and 'args' in args:
-            tmp_args = args['args']
-            del args['args']
-            if isinstance(tmp_args, string_types):
-                tmp_args = parse_kv(tmp_args)
-            args.update(tmp_args)
+            # this can occasionally happen, simplify
+            if args and 'args' in args:
+                tmp_args = args.pop('args')
+                if isinstance(tmp_args, string_types):
+                    tmp_args = parse_kv(tmp_args)
+                args.update(tmp_args)
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
