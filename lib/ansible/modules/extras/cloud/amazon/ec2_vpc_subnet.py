@@ -163,7 +163,7 @@ def ensure_tags(vpc_conn, resource_id, tags, add_only, dry_run):
         if to_delete and not add_only:
             vpc_conn.delete_tags(resource_id, to_delete, dry_run=dry_run)
 
-        to_add = dict((k, tags[k]) for k in tags if k not in cur_tags)
+        to_add = dict((k, tags[k]) for k in tags if k not in cur_tags or cur_tags[k] != tags[k])
         if to_add:
             vpc_conn.create_tags(resource_id, to_add, dry_run=dry_run)
 
