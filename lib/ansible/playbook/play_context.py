@@ -310,7 +310,7 @@ class PlayContext(Base):
                 if attr_val is not None:
                     setattr(new_info, attr, attr_val)
 
-        # finally, use the MAGIC_VARIABLE_MAPPING dictionary to update this
+        # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
         # connection info object with 'magic' variables from the variable list
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
@@ -327,6 +327,12 @@ class PlayContext(Base):
                setattr(new_info, 'become_pass', new_info.sudo_pass)
             elif new_info.become_method == 'su' and new_info.su_pass:
                setattr(new_info, 'become_pass', new_info.su_pass)
+
+        # finally, in the special instance that the task was specified
+        # as a local action, override the connection in case it was changed
+        # during some other step in the process
+        if task._local_action:
+            setattr(new_info, 'connection', 'local')
 
         return new_info
 
