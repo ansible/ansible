@@ -160,11 +160,11 @@ In group_vars/windows.yml, define the following inventory variables::
     # ansible-vault edit group_vars/windows.yml
 
     ansible_user: Administrator
-    ansible_ssh_pass: SecretPasswordGoesHere
+    ansible_password: SecretPasswordGoesHere
     ansible_port: 5986
     ansible_connection: winrm
 
-Notice that the ssh_port is not actually for SSH, but this is a holdover variable name from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
+Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
 
 If you have installed the ``kerberos`` module and ``ansible_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not ``ansible_user``*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
 
@@ -184,11 +184,7 @@ You'll run this command again later though, to make sure everything is working.
 Since 2.0, the following custom inventory variables are also supported for additional configuration of WinRM connections::
 
 * ``ansible_winrm_scheme``: Specify the connection scheme (``http`` or ``https``) to use for the WinRM connection.  Ansible uses ``https`` by default unless the port is 5985.
-* ``ansible_winrm_host``: May be used as an alias for ``ansible_ssh_host`` and will take precedence if both are defined.
-* ``ansible_winrm_port``: May be used an alias for ``ansible_ssh_port`` and will take precedence if both are defined.
 * ``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint.  Ansible uses ``/wsman`` by default.
-* ``ansible_winrm_user``: May be used an alias for ``ansible_ssh_user`` and will take precedence if both are defined.
-* ``ansible_winrm_pass``: May be used an alias for ``ansible_ssh_pass`` and will take precedence if both are defined.
 * ``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication.  If the username contains ``@``, Ansible will use the part of the username after ``@`` by default.
 * ``ansible_winrm_transport``: Specify one or more transports as a comma-separated list.  By default, Ansible will use ``kerberos,plaintext`` if the ``kerberos`` module is installed and a realm is defined, otherwise ``plaintext``.
 * ``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided.

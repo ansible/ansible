@@ -75,12 +75,12 @@ class Connection(ConnectionBase):
         '''
         host_vars = host.get_vars()
 
-        self._winrm_host = host_vars.get('ansible_winrm_host', self._play_context.remote_addr)
-        self._winrm_port = int(host_vars.get('ansible_winrm_port', self._play_context.port or 5986))
+        self._winrm_host = self._play_context.remote_addr
+        self._winrm_port = int(self._play_context.port or 5986)
         self._winrm_scheme = host_vars.get('ansible_winrm_scheme', 'http' if self._winrm_port == 5985 else 'https')
         self._winrm_path = host_vars.get('ansible_winrm_path', '/wsman')
-        self._winrm_user = host_vars.get('ansible_winrm_user', self._play_context.remote_user)
-        self._winrm_pass = host_vars.get('ansible_winrm_pass', self._play_context.password)
+        self._winrm_user = self._play_context.remote_user
+        self._winrm_pass = self._play_context.password
 
         if '@' in self._winrm_user:
             self._winrm_realm = self._winrm_user.split('@', 1)[1].strip() or None
@@ -112,28 +112,33 @@ class Connection(ConnectionBase):
             (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
         netloc = '%s:%d' % (self._winrm_host, self._winrm_port)
         endpoint = urlparse.urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
-        exc = 'No transport found for WinRM connection'
+        errors = []
         for transport in self._winrm_transport:
+            if transport == 'kerberos' and not HAVE_KERBEROS:
+                errors.append('kerberos: the python kerberos library is not installed')
+                continue
             self._display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
-            protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
             try:
+                protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
                 protocol.send_message('')
                 return protocol
-            except WinRMTransportError as exc:
-                err_msg = str(exc)
+            except Exception as e:
+                err_msg = (str(e) or repr(e)).strip()
                 if re.search(r'Operation\s+?timed\s+?out', err_msg, re.I):
-                    raise AnsibleError("the connection attempt timed out")
+                    raise AnsibleError('the connection attempt timed out')
                 m = re.search(r'Code\s+?(\d{3})', err_msg)
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
-                        raise AnsibleError("the username/password specified for this server was incorrect")
+                        err_msg = 'the username/password specified for this server was incorrect'
                     elif code == 411:
                         return protocol
-                self._display.vvvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self._winrm_host)
-                continue
-        if exc:
-            raise AnsibleError(str(exc))
+                errors.append('%s: %s' % (transport, err_msg))
+                self._display.vvvvv('WINRM CONNECTION ERROR: %s\n%s' % (err_msg, traceback.format_exc()), host=self._winrm_host)
+        if errors:
+            raise AnsibleError(', '.join(errors))
+        else:
+            raise AnsibleError('No transport found for WinRM connection')
 
     def _winrm_exec(self, command, args=(), from_exec=False):
         if from_exec:
