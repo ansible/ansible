@@ -122,6 +122,7 @@ except ImportError:
 class EIPException(Exception):
     pass
 
+
 def associate_ip_and_device(ec2, address, device_id, check_mode, isinstance=True):
     if address_is_associated_with_device(ec2, address, device_id, isinstance):
         return {'changed': False}
@@ -203,8 +204,12 @@ def allocate_address(ec2, domain, reuse_existing_ip_allowed):
         domain_filter = {'domain': domain or 'standard'}
         all_addresses = ec2.get_all_addresses(filters=domain_filter)
 
-        unassociated_addresses = [a for a in all_addresses
-                                  if not a.device_id]
+        if domain == 'vpc':
+            unassociated_addresses = [a for a in all_addresses
+                                      if not a.association_id]
+        else:
+            unassociated_addresses = [a for a in all_addresses
+                                      if not a.instance_id]
         if unassociated_addresses:
             return unassociated_addresses[0]
 
@@ -263,6 +268,9 @@ def ensure_present(ec2, domain, address, device_id,
         # Allocate an IP for instance since no public_ip was provided
         if isinstance:
             instance = find_device(ec2, device_id)
+            if reuse_existing_ip_allowed:
+                if len(instance.vpc_id) > 0 and domain is None:
+                    raise EIPException("You must set 'in_vpc' to true to associate an instance with an existing ip in a vpc")
             # Associate address object (provided or allocated) with instance
             assoc_result = associate_ip_and_device(ec2, address, device_id,
                                                  check_mode)
@@ -322,6 +330,7 @@ def main():
     ec2 = ec2_connect(module)
 
     device_id = module.params.get('device_id')
+    instance_id = module.params.get('instance_id')
     public_ip = module.params.get('public_ip')
     state = module.params.get('state')
     in_vpc = module.params.get('in_vpc')
@@ -329,10 +338,15 @@ def main():
     reuse_existing_ip_allowed = module.params.get('reuse_existing_ip_allowed')
     release_on_disassociation = module.params.get('release_on_disassociation')
 
-    if device_id and device_id.startswith('i-'):
-        is_instance=True
-    elif device_id:
-        is_instance=False
+    if instance_id:
+        warnings = ["instance_id is no longer used, please use device_id going forward"]
+        is_instance = True
+        device_id = instance_id
+    else:
+        if device_id and device_id.startswith('i-'):
+            is_instance = True
+        elif device_id:
+            is_instance = False
 
     try:
         if device_id:
@@ -354,17 +368,19 @@ def main():
 
                 if release_on_disassociation and disassociated['changed']:
                     released = release_address(ec2, address, module.check_mode)
-                    result = { 'changed': True, 'disassociated': disassociated, 'released': released }
+                    result = {'changed': True, 'disassociated': disassociated, 'released': released}
                 else:
-                    result = { 'changed': disassociated['changed'], 'disassociated': disassociated, 'released': { 'changed': False } }
+                    result = {'changed': disassociated['changed'], 'disassociated': disassociated, 'released': {'changed': False}}
             else:
                 address = find_address(ec2, public_ip, None)
                 released = release_address(ec2, address, module.check_mode)
-                result = { 'changed': released['changed'], 'disassociated': { 'changed': False }, 'released': released }
+                result = {'changed': released['changed'], 'disassociated': {'changed': False}, 'released': released}
 
     except (boto.exception.EC2ResponseError, EIPException) as e:
         module.fail_json(msg=str(e))
 
+    if instance_id:
+        result['warnings'] = warnings
     module.exit_json(**result)
 
 # import module snippets
