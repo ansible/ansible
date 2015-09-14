@@ -20,6 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from collections import Iterable
+
+from six import string_types
+
 from ansible.template import Templar
 from ansible.template.safe_eval import safe_eval
 
@@ -28,14 +31,14 @@ __all__ = ['listify_lookup_plugin_terms']
 #FIXME: probably just move this into lookup plugin base class
 def listify_lookup_plugin_terms(terms, templar, loader, fail_on_undefined=False, convert_bare=True):
 
-    if isinstance(terms, basestring):
+    if isinstance(terms, string_types):
         stripped = terms.strip()
         #FIXME: warn/deprecation on bare vars in with_ so we can eventually remove fail on undefined override
         terms = templar.template(terms, convert_bare=convert_bare, fail_on_undefined=fail_on_undefined)
     else:
         terms = templar.template(terms, fail_on_undefined=fail_on_undefined)
 
-    if isinstance(terms, basestring) or not isinstance(terms, Iterable):
+    if isinstance(terms, string_types) or not isinstance(terms, Iterable):
         terms = [ terms ]
 
     return terms
