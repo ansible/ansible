@@ -364,7 +364,7 @@ style. For example the following::
 
     {{ "Plain style (default)" | comment }}
 
-will produce the this output::
+will produce this output::
 
     #
     # Plain style (default)
@@ -448,11 +448,11 @@ To separate the windows drive letter from the rest of a file path (new in versio
 
     {{ path | win_splitdrive }}
 
-To get only the windows drive letter
+To get only the windows drive letter::
 
     {{ path | win_splitdrive | first }} 
     
-To get the rest of the path without the drive letter
+To get the rest of the path without the drive letter::
 
     {{ path | win_splitdrive | last }} 
 
