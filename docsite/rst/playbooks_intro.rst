@@ -158,7 +158,7 @@ documentation.  The ``remote_user`` is just the name of the user account::
 
 .. note::
 
-    The ``remote_user`` parameter was formerly called just ``user``. It was renamed in Ansible 1.4 to make it more distinguishable from the `user` module (used to create users on remote systems).
+    The ``remote_user`` parameter was formerly called just ``user``. It was renamed in Ansible 1.4 to make it more distinguishable from the **user** module (used to create users on remote systems).
 
 Remote users can also be defined per task::
 
@@ -253,7 +253,7 @@ system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won't change things
 unless they have to change things.
 
-The `command` and `shell` modules will typically rerun the same command again,
+The **command** and **shell** modules will typically rerun the same command again,
 which is totally ok if the command is something like
 ``chmod`` or ``setsebool``, etc.  Though there is a ``creates`` flag available which can
 be used to make these modules also idempotent.
@@ -276,7 +276,7 @@ the service module takes ``key=value`` arguments::
      - name: make sure apache is running
        service: name=httpd state=running
 
-The `command` and `shell` modules are the only modules that just take a list
+The **command** and **shell** modules are the only modules that just take a list
 of arguments and don't use the ``key=value`` form.  This makes
 them work as simply as you would expect::
 
@@ -284,7 +284,7 @@ them work as simply as you would expect::
      - name: disable selinux
        command: /sbin/setenforce 0
 
-The command and shell module care about return codes, so if you have a command
+The **command** and **shell** module care about return codes, so if you have a command
 whose successful exit code is not zero, you may wish to do this::
 
    tasks:
