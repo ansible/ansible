@@ -28,7 +28,7 @@ DOCUMENTATION = '''
 module: os_router
 short_description: Create or Delete routers from OpenStack
 extends_documentation_fragment: openstack
-version_added: "1.10"
+version_added: "2.0"
 description:
    - Create or Delete routers from OpenStack. Although Neutron allows
      routers to share the same name, this module enforces name uniqueness
@@ -45,7 +45,7 @@ options:
      required: true
    admin_state_up:
      description:
-        - Desired admin state of the created router.
+        - Desired admin state of the created or existing router.
      required: false
      default: true
 requirements: ["shade"]
@@ -57,6 +57,13 @@ EXAMPLES = '''
     state=present
     name=router1
     admin_state_up=True
+'''
+
+RETURN = '''
+id:
+    description: Router ID
+    returned: On success when I(state) is 'present'.
+    type: string
 '''
 
 
@@ -110,29 +117,28 @@ def main():
         if state == 'present':
             if not router:
                 router = cloud.create_router(name, admin_state_up)
-                module.exit_json(changed=True, result="created",
-                                 id=router['id'])
+                module.exit_json(changed=True, id=router['id'])
             else:
                 if _needs_update(router, admin_state_up):
                     cloud.update_router(router['id'],
                                         admin_state_up=admin_state_up)
-                    module.exit_json(changed=True, result="updated",
-                                     id=router['id'])
+                    module.exit_json(changed=True, id=router['id'])
                 else:
-                    module.exit_json(changed=False, result="success",
-                                     id=router['id'])
+                    module.exit_json(changed=False, id=router['id'])
 
         elif state == 'absent':
             if not router:
-                module.exit_json(changed=False, result="success")
+                module.exit_json(changed=False)
             else:
                 cloud.delete_router(name)
-                module.exit_json(changed=True, result="deleted")
+                module.exit_json(changed=True)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
 
+
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == '__main__':
+    main()
