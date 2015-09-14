@@ -1,10 +1,10 @@
-﻿# Configure a Windows host for remote management with Ansible
+# Configure a Windows host for remote management with Ansible
 # -----------------------------------------------------------
 #
 # This script checks the current WinRM/PSRemoting configuration and makes the
 # necessary changes to allow Ansible to connect, authenticate and execute
 # PowerShell commands.
-# 
+#
 # Set $VerbosePreference = "Continue" before running the script in order to
 # see the output messages.
 #
@@ -17,6 +17,7 @@
 Param (
     [string]$SubjectName = $env:COMPUTERNAME,
     [int]$CertValidityDays = 365,
+    [switch]$SkipNetworkProfileCheck,
     $CreateSelfSignedCert = $true
 )
 
@@ -27,7 +28,7 @@ Function New-LegacySelfSignedCert
         [string]$SubjectName,
         [int]$ValidDays = 365
     )
-    
+
     $name = New-Object -COM "X509Enrollment.CX500DistinguishedName.1"
     $name.Encode("CN=$SubjectName", 0)
 
@@ -97,8 +98,14 @@ ElseIf ((Get-Service "WinRM").Status -ne "Running")
 # WinRM should be running; check that we have a PS session config.
 If (!(Get-PSSessionConfiguration -Verbose:$false) -or (!(Get-ChildItem WSMan:\localhost\Listener)))
 {
-    Write-Verbose "Enabling PS Remoting."
+  if ($SkipNetworkProfileCheck) {
+    Write-Verbose "Enabling PS Remoting without checking Network profile."
+    Enable-PSRemoting -SkipNetworkProfileCheck -Force -ErrorAction Stop
+  }
+  else {
+    Write-Verbose "Enabling PS Remoting"
     Enable-PSRemoting -Force -ErrorAction Stop
+  }
 }
 Else
 {
