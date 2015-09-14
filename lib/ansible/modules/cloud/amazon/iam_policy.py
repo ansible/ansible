@@ -27,54 +27,34 @@ options:
     required: true
     default: null
     choices: [ "user", "group", "role"]
-    aliases: []
   iam_name:
     description:
       - Name of IAM resource you wish to target for policy actions. In other words, the user name, group name or role name.
     required: true
-    aliases: []
   policy_name:
     description:
       - The name label for the policy to create or remove.
-    required: false
-    aliases: []
+    required: true
   policy_document:
     description:
       - The path to the properly json formatted policy file (mutually exclusive with C(policy_json))
     required: false
-    aliases: []
   policy_json:
     description:
       - A properly json formatted policy as string (mutually exclusive with C(policy_document), see https://github.com/ansible/ansible/issues/7005#issuecomment-42894813 on how to use it properly)
     required: false
-    aliases: []
   state:
     description:
       - Whether to create or delete the IAM policy.
     required: true
     default: null
     choices: [ "present", "absent"]
-    aliases: []
   skip_duplicates:
     description:
       - By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with the same rules. You can override this by specifying false which would allow for two policy objects with different names but same rules.
     required: false
     default: "/"
-    aliases: []
-  aws_secret_key:
-    description:
-      - AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_secret_key', 'secret_key' ]
-  aws_access_key:
-    description:
-      - AWS access key. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
-    required: false
-    default: null
-    aliases: [ 'ec2_access_key', 'access_key' ]
 
-requirements: [ "boto" ]
 notes:
   - 'Currently boto does not support the removal of Managed Policies, the module will not work removing/adding managed policies.'
 author: "Jonathan I. Davila (@defionscode)"
