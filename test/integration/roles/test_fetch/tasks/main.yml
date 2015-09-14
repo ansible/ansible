@@ -38,5 +38,34 @@
     that:
       'diff.stdout == ""'
 
- 
+- name: attempt to fetch a non-existent file - do not fail on missing
+  fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched
+  register: fetch_missing_nofail
 
+- name: check fetch missing no fail result
+  assert:
+    that:
+      - "fetch_missing_nofail.msg"
+      - "not fetch_missing_nofail|changed"
+
+- name: attempt to fetch a non-existent file - fail on missing
+  fetch: src={{ output_dir }}/doesnotexist dest={{ output_dir }}/fetched fail_on_missing=yes
+  register: fetch_missing
+  ignore_errors: true
+
+- name: check fetch missing with failure
+  assert:
+    that:
+      - "fetch_missing|failed"
+      - "fetch_missing.msg"
+      - "not fetch_missing|changed"
+
+- name: attempt to fetch a directory - should not fail but return a message
+  fetch: src={{ output_dir }} dest={{ output_dir }}/somedir
+  register: fetch_dir
+
+- name: check fetch directory result
+  assert:
+    that:
+      - "not fetch_dir|changed"
+      - "fetch_dir.msg"

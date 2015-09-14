@@ -62,6 +62,8 @@ class ActionModule(ActionBase):
         if remote_checksum in ('1', '2') or self._play_context.become:
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
             if slurpres.get('failed'):
+                if remote_checksum == '1' and not fail_on_missing:
+                   return dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
                 return slurpres
             else:
                 if slurpres['encoding'] == 'base64':
