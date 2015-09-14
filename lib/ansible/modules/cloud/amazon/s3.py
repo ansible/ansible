@@ -486,7 +486,7 @@ def main():
         # First, we check to see if the bucket exists, we get "bucket" returned.
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is False:
-            module.fail_json(msg="Target bucket cannot be found", failed=True)
+            module.fail_json(msg="Source bucket cannot be found", failed=True)
 
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
         keyrtn = key_check(module, s3, bucket, obj, version=version)
