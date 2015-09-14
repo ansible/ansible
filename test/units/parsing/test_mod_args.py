@@ -112,7 +112,7 @@ class TestModArgsDwim(unittest.TestCase):
         mod, args, connection = m.parse()
         self._debug(mod, args, connection)
         self.assertEqual(mod, 'copy')
-        self.assertEqual(args, dict(src='a', dest='b'))
+        self.assertEqual(args, dict(src='a', dest='b', _local_action=True))
         self.assertIs(connection, 'local')
 
     def test_multiple_actions(self):
