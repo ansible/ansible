@@ -316,7 +316,7 @@ def main():
           json_data.close()
   elif module.params.get('policy_json') != None:
       try:
-        pdoc = json.dumps(json.loads(module.params.get('policy_json')))
+        pdoc = json.dumps(module.params.get('policy_json'))
       except Exception as e:
         module.fail_json(msg=str(e) + '\n' + module.params.get('policy_json'))
   else:
