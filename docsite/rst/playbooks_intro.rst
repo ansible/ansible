@@ -17,7 +17,7 @@ any manual ordered process, even as different steps must bounce back and forth
 between sets of machines in particular orders.  They can launch tasks
 synchronously or asynchronously.
 
-While you might run the main /usr/bin/ansible program for ad-hoc
+While you might run the main ``/usr/bin/ansible`` program for ad-hoc
 tasks, playbooks are more likely to be kept in source control and used
 to push out your configuration or assure the configurations of your
 remote systems are in spec.
@@ -77,7 +77,7 @@ We can also break task items out over multiple lines using the YAML dictionary
 types to supply module arguments. This can be helpful when working with tasks
 that have really long parameters or modules that take many parameters to keep
 them well structured. Below is another version of the above example but using
-YAML dictionaries to supply the modules with their key=value arguments.::
+YAML dictionaries to supply the modules with their ``key=value`` arguments.::
 
     ---
     - hosts: webservers
@@ -148,9 +148,9 @@ Hosts and Users
 For each play in a playbook, you get to choose which machines in your infrastructure
 to target and what remote user to complete the steps (called tasks) as.
 
-The `hosts` line is a list of one or more groups or host patterns,
+The ``hosts`` line is a list of one or more groups or host patterns,
 separated by colons, as described in the :doc:`intro_patterns`
-documentation.  The `remote_user` is just the name of the user account::
+documentation.  The ``remote_user`` is just the name of the user account::
 
     ---
     - hosts: webservers
@@ -158,7 +158,7 @@ documentation.  The `remote_user` is just the name of the user account::
 
 .. note::
 
-    The `remote_user` parameter was formerly called just `user`. It was renamed in Ansible 1.4 to make it more distinguishable from the `user` module (used to create users on remote systems).
+    The ``remote_user`` parameter was formerly called just ``user``. It was renamed in Ansible 1.4 to make it more distinguishable from the **user** module (used to create users on remote systems).
 
 Remote users can also be defined per task::
 
@@ -172,7 +172,7 @@ Remote users can also be defined per task::
 
 .. note::
 
-    The `remote_user` parameter for tasks was added in 1.4.
+    The ``remote_user`` parameter for tasks was added in 1.4.
 
 
 Support for running things as another user is also available (see :doc:`become`)::
@@ -212,21 +212,21 @@ You can also use other privilege escalation methods, like su::
       become: yes
       become_method: su
 
-If you need to specify a password to sudo, run `ansible-playbook` with ``--ask-become-pass`` or
-when using the old sudo syntax ``--ask-sudo-pass`` (`-K`).  If you run a become playbook and the
+If you need to specify a password to sudo, run ``ansible-playbook`` with ``--ask-become-pass`` or
+when using the old sudo syntax ``--ask-sudo-pass`` (``-K``).  If you run a become playbook and the
 playbook seems to hang, it's probably stuck at the privilege escalation prompt.
 Just `Control-C` to kill it and run it again adding the appropriate password.
 
 .. important::
 
-   When using `become_user` to a user other than root, the module
-   arguments are briefly written into a random tempfile in /tmp.
+   When using ``become_user`` to a user other than root, the module
+   arguments are briefly written into a random tempfile in ``/tmp``.
    These are deleted immediately after the command is executed.  This
    only occurs when changing privileges from a user like 'bob' to 'timmy',
    not when going from 'bob' to 'root', or logging in directly as 'bob' or
    'root'.  If it concerns you that this data is briefly readable
    (not writable), avoid transferring unencrypted passwords with
-   `become_user` set.  In other cases, '/tmp' is not used and this does
+   `become_user` set.  In other cases, ``/tmp`` is not used and this does
    not come into play. Ansible also takes care to not log password
    parameters.
 
@@ -253,38 +253,38 @@ system to the desired state.  This makes it very safe to rerun
 the same playbook multiple times.  They won't change things
 unless they have to change things.
 
-The `command` and `shell` modules will typically rerun the same command again,
+The **command** and **shell** modules will typically rerun the same command again,
 which is totally ok if the command is something like
-'chmod' or 'setsebool', etc.  Though there is a 'creates' flag available which can
+``chmod`` or ``setsebool``, etc.  Though there is a ``creates`` flag available which can
 be used to make these modules also idempotent.
 
-Every task should have a `name`, which is included in the output from
+Every task should have a ``name``, which is included in the output from
 running the playbook.   This is output for humans, so it is
 nice to have reasonably good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
 
-Tasks can be declared using the legacy "action: module options" format, but 
-it is recommended that you use the more conventional "module: options" format.
+Tasks can be declared using the legacy ``action: module options`` format, but 
+it is recommended that you use the more conventional ``module: options`` format.
 This recommended format is used throughout the documentation, but you may
 encounter the older format in some playbooks.
 
 Here is what a basic task looks like. As with most modules,
-the service module takes key=value arguments::
+the service module takes ``key=value`` arguments::
 
    tasks:
      - name: make sure apache is running
        service: name=httpd state=running
 
-The `command` and `shell` modules are the only modules that just take a list
-of arguments and don't use the key=value form.  This makes
+The **command** and **shell** modules are the only modules that just take a list
+of arguments and don't use the ``key=value`` form.  This makes
 them work as simply as you would expect::
 
    tasks:
      - name: disable selinux
        command: /sbin/setenforce 0
 
-The command and shell module care about return codes, so if you have a command
+The **command** and **shell** module care about return codes, so if you have a command
 whose successful exit code is not zero, you may wish to do this::
 
    tasks:
@@ -308,7 +308,7 @@ a space and indent any continuation lines::
                 owner=root group=root mode=0644
 
 Variables can be used in action lines.   Suppose you defined
-a variable called 'vhost' in the 'vars' section, you could do this::
+a variable called ``vhost`` in the ``vars`` section, you could do this::
 
    tasks:
      - name: create a virtual host file for {{ vhost }}
@@ -317,7 +317,7 @@ a variable called 'vhost' in the 'vars' section, you could do this::
 Those same variables are usable in templates, which we'll get to later.
 
 Now in a very basic playbook all the tasks will be listed directly in that play, though it will usually
-make more sense to break up tasks using the 'include:' directive.  We'll show that a bit later.
+make more sense to break up tasks using the ``include:`` directive.  We'll show that a bit later.
 
 .. _action_shorthand:
 
@@ -361,7 +361,7 @@ change, but only if the file changes::
         - restart memcached
         - restart apache
 
-The things listed in the 'notify' section of a task are called
+The things listed in the ``notify`` section of a task are called
 handlers.
 
 Handlers are lists of tasks, not really any different from regular
@@ -388,7 +388,7 @@ won't need them for much else.
      `* <https://github.com/ansible/ansible/issues/4943>`_
 
 Roles are described later on.  It's worthwhile to point out that handlers are
-automatically processed between 'pre_tasks', 'roles', 'tasks', and 'post_tasks'
+automatically processed between ``pre_tasks``, ``roles``, ``tasks``, and ``post_tasks``
 sections.  If you ever want to flush all the handler commands immediately though,
 in 1.2 and later, you can::
 
@@ -397,7 +397,7 @@ in 1.2 and later, you can::
        - meta: flush_handlers
        - shell: some other tasks
 
-In the above example any queued up handlers would be processed early when the 'meta'
+In the above example any queued up handlers would be processed early when the ``meta``
 statement was reached.  This is a bit of a niche case but can come in handy from
 time to time.
 
@@ -419,14 +419,14 @@ Ansible-Pull
 Should you want to invert the architecture of Ansible, so that nodes check in to a central location, instead
 of pushing configuration out to them, you can.
 
-Ansible-pull is a small script that will checkout a repo of configuration instructions from git, and then
-run ansible-playbook against that content.
+The ``ansible-pull`` is a small script that will checkout a repo of configuration instructions from git, and then
+run ``ansible-playbook`` against that content.
 
-Assuming you load balance your checkout location, ansible-pull scales essentially infinitely.
+Assuming you load balance your checkout location, ``ansible-pull`` scales essentially infinitely.
 
 Run ``ansible-pull --help`` for details.
 
-There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to configure ansible-pull via a crontab from push mode.
+There's also a `clever playbook <https://github.com/ansible/ansible-examples/blob/master/language_features/ansible_pull.yml>`_ available to configure ``ansible-pull`` via a crontab from push mode.
 
 .. _tips_and_tricks:
 
