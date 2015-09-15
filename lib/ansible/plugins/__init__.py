@@ -317,7 +317,7 @@ callback_loader = PluginLoader(
 
 connection_loader = PluginLoader(
     'Connection',
-    'ansible.plugins.connections',
+    'ansible.plugins.connection',
     C.DEFAULT_CONNECTION_PLUGIN_PATH,
     'connection_plugins',
     aliases={'paramiko': 'paramiko_ssh'},
@@ -376,7 +376,7 @@ fragment_loader = PluginLoader(
 
 strategy_loader = PluginLoader(
     'StrategyModule',
-    'ansible.plugins.strategies',
+    'ansible.plugins.strategy',
     None,
     'strategy_plugins',
     required_base_class='StrategyBase',

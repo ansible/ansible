@@ -42,7 +42,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connection import ConnectionBase
 from ansible.plugins import shell_loader
 from ansible.utils.path import makedirs_safe
 from ansible.utils.unicode import to_bytes, to_unicode
