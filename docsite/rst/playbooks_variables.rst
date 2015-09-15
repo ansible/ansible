@@ -732,7 +732,20 @@ However, let's go ahead and get precedence out of the way!  It exists.  It's a r
 a use for it.
 
 If multiple variables of the same name are defined in different places, they get overwrriten in a certain order.
-The order of precedence is (last one wins):
+
+In 1.x the precedence is:
+
+ * extra vars (``-e`` in the command line) always win
+ * then come connection variables (``ansible_user``, etc)
+ * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
+ * then come the variables defined in inventory
+ * then come the facts discovered about a system
+ * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+
+.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
+
+
+In 2.x we have made the order of precedence more specific (last one wins):
 
   * role defaults [1]_
   * inventory vars [2]_
@@ -760,9 +773,9 @@ The order of precedence is (last one wins):
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's vars: section, the 2nd one wins.
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
-.. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
-Another important thing to consider is that connection spedific variables override config, command line and play specific options and directives.  For example::
+
+Another important thing to consider (for all versions) is that connection spedific variables override config, command line and play specific options and directives.  For example::
 
     ansible_ssh_user will override `-u <user>` and `remote_user: <user>`
 
