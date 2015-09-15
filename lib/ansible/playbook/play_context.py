@@ -37,40 +37,6 @@ from ansible.utils.unicode import to_unicode
 
 __all__ = ['PlayContext']
 
-SU_PROMPT_LOCALIZATIONS = [
-    'Password',
-    '암호',
-    'パスワード',
-    'Adgangskode',
-    'Contraseña',
-    'Contrasenya',
-    'Hasło',
-    'Heslo',
-    'Jelszó',
-    'Lösenord',
-    'Mật khẩu',
-    'Mot de passe',
-    'Parola',
-    'Parool',
-    'Pasahitza',
-    'Passord',
-    'Passwort',
-    'Salasana',
-    'Sandi',
-    'Senha',
-    'Wachtwoord',
-    'ססמה',
-    'Лозинка',
-    'Парола',
-    'Пароль',
-    'गुप्तशब्द',
-    'शब्दकूट',
-    'సంకేతపదము',
-    'හස්පදය',
-    '密码',
-    '密碼',
-]
-
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext
 # object. The dictionary values are tuples, to account for aliases
