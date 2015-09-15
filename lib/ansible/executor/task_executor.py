@@ -367,7 +367,6 @@ class TaskExecutor:
                     return failed_when_result
                 return False
 
-            # FIXME: make sure until is mutually exclusive with changed_when/failed_when
             if self._task.until:
                 cond.when = self._task.until
                 if cond.evaluate_conditional(templar, vars_copy):
