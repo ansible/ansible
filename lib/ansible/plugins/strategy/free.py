@@ -23,7 +23,7 @@ import time
 
 from ansible.errors import *
 from ansible.playbook.included_file import IncludedFile
-from ansible.plugins.strategies import StrategyBase
+from ansible.plugins.strategy import StrategyBase
 
 try:
     from __main__ import display
