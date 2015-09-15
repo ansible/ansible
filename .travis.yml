@@ -14,6 +14,8 @@ addons:
 install:
   - pip install tox PyYAML Jinja2 sphinx
 script:
+# urllib2's defaults are not secure enough for us
+- ./test/code-smell/replace-urlopen.sh .
 - if test x"$TOKENV" != x'py24' ; then  tox ; fi
 - if test x"$TOKENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce).py' lib/ansible/module_utils ; fi
   #- make -C docsite all

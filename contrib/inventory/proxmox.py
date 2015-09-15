@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import urllib
-import urllib2
 try:
     import json
 except ImportError:
@@ -27,6 +26,7 @@ from optparse import OptionParser
 
 from six import iteritems
 
+from ansible.module_utils.urls import open_url
 
 class ProxmoxNodeList(list):
     def get_names(self):
@@ -86,7 +86,7 @@ class ProxmoxAPI(object):
             'password': self.options.password,
         })
 
-        data = json.load(urllib2.urlopen(request_path, request_params))
+        data = json.load(open_url(request_path, data=request_params))
 
         self.credentials = {
             'ticket': data['data']['ticket'],
@@ -94,11 +94,10 @@ class ProxmoxAPI(object):
         }
 
     def get(self, url, data=None):
-        opener = urllib2.build_opener()
-        opener.addheaders.append(('Cookie', 'PVEAuthCookie={}'.format(self.credentials['ticket'])))
-
         request_path = '{}{}'.format(self.options.url, url)
-        request = opener.open(request_path, data)
+
+        headers = {'Cookie': 'PVEAuthCookie={}'.format(self.credentials['ticket'])}
+        request = open_url(request_path, data=data, headers=headers)
 
         response = json.load(request)
         return response['data']

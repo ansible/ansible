@@ -67,7 +67,6 @@ Tested against Ansible 1.8.2 and Collins 1.3.0.
 
 
 import argparse
-import base64
 import ConfigParser
 import logging
 import os
@@ -76,7 +75,6 @@ import sys
 from time import time
 import traceback
 import urllib
-import urllib2
 
 try:
     import json
@@ -85,6 +83,7 @@ except ImportError:
 
 from six import iteritems
 
+from ansible.module_utils.urls import open_url
 
 class CollinsDefaults(object):
     ASSETS_API_ENDPOINT = '%s/api/assets'
@@ -198,10 +197,11 @@ class CollinsInventory(object):
                 (CollinsDefaults.ASSETS_API_ENDPOINT % self.collins_host),
                 urllib.urlencode(query_parameters, doseq=True)
             )
-            request = urllib2.Request(query_url)
-            request.add_header('Authorization', self.basic_auth_header)
             try:
-                response = urllib2.urlopen(request, timeout=self.collins_timeout_secs)
+                response = open_url(query_url,
+                        timeout=self.collins_timeout_secs,
+                        url_username=self.collins_username,
+                        url_password=self.collins_password)
                 json_response = json.loads(response.read())
                 # Adds any assets found to the array of assets.
                 assets += json_response['data']['Data']
@@ -261,8 +261,6 @@ class CollinsInventory(object):
 
         log_path = config.get('collins', 'log_path')
         self.log_location = log_path + '/ansible-collins.log'
-        self.basic_auth_header = "Basic %s" % base64.encodestring(
-            '%s:%s' % (self.collins_username, self.collins_password))[:-1]
 
     def parse_cli_args(self):
         """ Command line argument processing """

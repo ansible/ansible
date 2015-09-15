@@ -17,7 +17,6 @@
 
 import os
 import urllib
-import urllib2
 
 try:
     import prettytable
@@ -26,6 +25,7 @@ except ImportError:
     HAS_PRETTYTABLE = False
 
 from ansible.plugins.callback import CallbackBase
+from ansible.module_utils.urls import open_url
 
 class CallbackModule(CallbackBase):
     """This is an example ansible callback plugin that sends status
@@ -82,7 +82,7 @@ class CallbackModule(CallbackBase):
 
         url = ('%s?auth_token=%s' % (self.msg_uri, self.token))
         try:
-            response = urllib2.urlopen(url, urllib.urlencode(params))
+            response = open_url(url, data=urllib.urlencode(params))
             return response.read()
         except:
             self.display.warning('Could not submit message to hipchat')
