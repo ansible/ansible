@@ -23,6 +23,8 @@ __metaclass__ = type
 import re
 
 from ansible.plugins.action import ActionBase
+from ansible.parsing.utils.addresses import parse_address
+from ansible.errors import AnsibleError, AnsibleParserError
 
 class ActionModule(ActionBase):
     ''' Create inventory hosts and groups in the memory inventory'''
@@ -40,9 +42,11 @@ class ActionModule(ActionBase):
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))
         #vv("creating host via 'add_host': hostname=%s" % new_name)
 
-        new_name, new_port = _parse_ip_host_and_port(new_name)
-        if new_port:
-            self._task.args['ansible_ssh_port'] = new_port
+        name, port = parse_address(new_name, allow_ranges=False)
+        if not name:
+            raise AnsibleError("Invalid inventory hostname: %s" % new_name)
+        if port:
+            self._task.args['ansible_ssh_port'] = port
 
         groups = self._task.args.get('groupname', self._task.args.get('groups', self._task.args.get('group', ''))) 
         # add it to the group if that was specified
@@ -58,28 +62,4 @@ class ActionModule(ActionBase):
             if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
                 host_vars[k] = self._task.args[k] 
 
-        return dict(changed=True, add_host=dict(host_name=new_name, groups=new_groups, host_vars=host_vars))
-
-def _parse_ip_host_and_port(hostname):
-    """
-    Attempt to parse the hostname and port from a hostname, e.g.,
-
-    some-host-name
-    some-host-name:80
-    8.8.8.8
-    8.8.8.8:80
-    2001:db8:0:1
-    [2001:db8:0:1]:80
-    """
-    if hostname.count(':') > 1:
-        match = re.match(
-            '\[(?P<ip>[^\]]+)\](:(?P<port>[0-9]+))?',
-            hostname
-        )
-        if match:
-            return match.group('ip'), match.group('port')
-        else:
-            return hostname, None
-    elif ':' in hostname:
-        return hostname.rsplit(':', 1)
-    return hostname, None
+        return dict(changed=True, add_host=dict(host_name=name, groups=new_groups, host_vars=host_vars))

@@ -324,25 +324,25 @@ Combining hashes/dictionaries
 .. versionadded:: 2.0
 
 The `combine` filter allows hashes to be merged. For example, the
-following would override keys in one hash:
+following would override keys in one hash::
 
     {{ {'a':1, 'b':2}|combine({'b':3}) }}
 
-The resulting hash would be:
+The resulting hash would be::
 
     {'a':1, 'b':3}
 
 The filter also accepts an optional `recursive=True` parameter to not
 only override keys in the first hash, but also recurse into nested
-hashes and merge their keys too:
+hashes and merge their keys too::
 
     {{ {'a':{'foo':1, 'bar':2}, 'b':2}|combine({'a':{'bar':3, 'baz':4}}, recursive=True) }}
 
-This would result in:
+This would result in::
 
     {'a':{'foo':1, 'bar':3, 'baz':4}, 'b':2}
 
-The filter can also take multiple arguments to merge:
+The filter can also take multiple arguments to merge::
 
     {{ a|combine(b, c, d) }}
 
@@ -351,6 +351,73 @@ override those in `b`, and so on.
 
 This behaviour does not depend on the value of the `hash_behaviour`
 setting in `ansible.cfg`.
+
+.. _comment_filter:
+
+Comment Filter
+--------------
+
+.. versionadded:: 2.0
+
+The `comment` filter allows to decorate the text with a chosen comment
+style. For example the following::
+
+    {{ "Plain style (default)" | comment }}
+
+will produce this output::
+
+    #
+    # Plain style (default)
+    #
+
+Similar way can be applied style for C (``//...``), C block
+(``/*...*/``), Erlang (``%...``) and XML (``<!--...-->``)::
+
+    {{ "C style" | comment('c') }}
+    {{ "C block style" | comment('cblock') }}
+    {{ "Erlang style" | comment('erlang') }}
+    {{ "XML style" | comment('xml') }}
+
+It is also possible to fully customize the comment style::
+
+    {{ "Custom style" | comment('plain', prefix='#######\n#', postfix='#\n#######\n   ###\n    #') }}
+
+That will create the following output::
+
+    #######
+    #
+    # Custom style
+    #
+    #######
+       ###
+        #
+
+The filter can also be applied to any Ansible variable. For example to
+make the output of the ``ansible_managed`` variable more readable, we can
+change the definition in the ``ansible.cfg`` file to this::
+
+    [defaults]
+
+    ansible_managed = This file is managed by Ansible.%n
+      template: {file}
+      date: %Y-%m-%d %H:%M:%S
+      user: {uid}
+      host: {host}
+
+and then use the variable with the `comment` filter::
+
+    {{ ansible_managed | comment }}
+
+which will produce this output::
+
+    #
+    # This file is managed by Ansible.
+    #
+    # template: /home/ansible/env/dev/ansible_managed/roles/role1/templates/test.j2
+    # date: 2015-09-10 11:02:58
+    # user: ansible
+    # host: myhost
+    #
 
 .. _other_useful_filters:
 
@@ -381,11 +448,11 @@ To separate the windows drive letter from the rest of a file path (new in versio
 
     {{ path | win_splitdrive }}
 
-To get only the windows drive letter
+To get only the windows drive letter::
 
     {{ path | win_splitdrive | first }} 
     
-To get the rest of the path without the drive letter
+To get the rest of the path without the drive letter::
 
     {{ path | win_splitdrive | last }} 
 

@@ -514,17 +514,18 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to transfer file from {0}:\n{1}\n{2}".format(in_path, stdout, stderr))
 
     def close(self):
-        ''' not applicable since we're executing openssh binaries '''
 
         if self._connected:
 
-            if 'ControlMaster' in self._common_args:
-                cmd = ['ssh','-O','stop']
-                cmd.extend(self._common_args)
-                cmd.append(self._play_context.remote_addr)
+            # TODO: reenable once winrm issues are fixed
+            # temporarily disabled as we are forced to currently close connections after every task because of winrm
+            #if and 'ControlMaster' in self._common_args:
+            #    cmd = ['ssh','-O','stop']
+            #    cmd.extend(self._common_args)
+            #    cmd.append(self._play_context.remote_addr)
 
-                p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                stdout, stderr = p.communicate()
+            #    p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            #    stdout, stderr = p.communicate()
 
             self._connected = False
 

@@ -28,7 +28,7 @@ import time
 from six import iteritems
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
@@ -129,6 +129,13 @@ class TaskExecutor:
             return result
         except AnsibleError as e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
+        finally:
+            try:
+                self._connection.close()
+            except AttributeError:
+                pass
+            except Exception as e:
+                debug("error closing connection: %s" % to_unicode(e))
 
     def _get_loop_items(self):
         '''
@@ -265,6 +272,7 @@ class TaskExecutor:
         if self._task.action == 'debug' and 'var' in self._task.args:
             prev_var = self._task.args.pop('var')
 
+        original_args = self._task.args.copy()
         self._task.post_validate(templar=templar)
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
@@ -279,7 +287,7 @@ class TaskExecutor:
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
         if self._task.action == 'include':
-            include_variables = self._task.args.copy()
+            include_variables = original_args
             include_file = include_variables.get('_raw_params')
             del include_variables['_raw_params']
             return dict(include=include_file, include_variables=include_variables)
@@ -317,7 +325,10 @@ class TaskExecutor:
                 result['attempts'] = attempt + 1
 
             debug("running the handler")
-            result = self._handler.run(task_vars=variables)
+            try:
+                result = self._handler.run(task_vars=variables)
+            except AnsibleConnectionFailure as e:
+                return dict(unreachable=True, msg=str(e))
             debug("handler run complete")
 
             if self._task.async > 0:

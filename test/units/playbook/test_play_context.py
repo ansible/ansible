@@ -92,6 +92,7 @@ class TestPlayContext(unittest.TestCase):
         mock_task.become_user   = 'mocktaskroot'
         mock_task.become_pass   = 'mocktaskpass'
         mock_task.no_log        = False
+        mock_task._local_action = False
 
         all_vars = dict(
             ansible_connection = 'mock_inventory',

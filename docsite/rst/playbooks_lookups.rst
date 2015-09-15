@@ -176,7 +176,7 @@ Here's a simple properties we'll take as an example::
 
 You can retrieve the ``user.name`` field with the following lookup::
 
-    - debug: msg="user.name is {{ lookup('ini', 'user.name type=property file=user.properties') }}"
+    - debug: msg="user.name is {{ lookup('ini', 'user.name type=properties file=user.properties') }}"
 
 The ``ini`` lookup supports several arguments like the csv plugin. The format for passing
 arguments is::

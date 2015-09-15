@@ -29,6 +29,7 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
+from ansible.parsing.utils.addresses import parse_address
 from ansible.utils.unicode import to_unicode, to_bytes
 
 class InventoryParser(object):
@@ -265,30 +266,20 @@ class InventoryParser(object):
         optional port number that applies to all of them.
         '''
 
-        # Is a port number specified?
-        #
-        # This may be a mandatory :NN suffix on any square-bracketed expression
-        # (IPv6 address, IPv4 address, host name, host pattern), or an optional
-        # :NN suffix on an IPv4 address, host name, or pattern. IPv6 addresses
-        # must be in square brackets if a port is specified.
+        # Can the given hostpattern be parsed as a host with an optional port
+        # specification?
 
-        port = None
+        (pattern, port) = parse_address(hostpattern, allow_ranges=True)
+        if not pattern:
+            self._raise_error("Can't parse '%s' as host[:port]" % hostpattern)
 
-        for type in ['bracketed_hostport', 'hostport']:
-            m = self.patterns[type].match(hostpattern)
-            if m:
-                (hostpattern, port) = m.groups()
-                continue
+        # Once we have separated the pattern, we expand it into list of one or
+        # more hostnames, depending on whether it contains any [x:y] ranges.
 
-        # Now we're left with just the pattern, which results in a list of one
-        # or more hostnames, depending on whether it contains any [x:y] ranges.
-        #
-        # FIXME: We could be more strict here about validation.
-
-        if detect_range(hostpattern):
-            hostnames = expand_hostname_range(hostpattern)
+        if detect_range(pattern):
+            hostnames = expand_hostname_range(pattern)
         else:
-            hostnames = [hostpattern]
+            hostnames = [pattern]
 
         return (hostnames, port)
 
@@ -372,31 +363,5 @@ class InventoryParser(object):
                 \s*                         # ignore trailing whitespace
                 (?:\#.*)?                   # and/or a comment till the
                 $                           # end of the line
-            ''', re.X
-        )
-
-        # The following patterns match the various ways in which a port number
-        # may be specified on an IPv6 address, IPv4 address, hostname, or host
-        # pattern. All of the above may be enclosed in square brackets with a
-        # mandatory :NN suffix; or all but the first may be given without any
-        # brackets but with an :NN suffix.
-
-        self.patterns['bracketed_hostport'] = re.compile(
-            r'''^
-                \[(.+)\]                    # [host identifier]
-                :([0-9]+)                   # :port number
-                $
-            ''', re.X
-        )
-
-        self.patterns['hostport'] = re.compile(
-            r'''^
-                ((?:                        # We want to match:
-                    [^:\[\]]                # (a non-range character
-                    |                       # ...or...
-                    \[[^\]]*\]              # a complete bracketed expression)
-                )*)                         # repeated as many times as possible
-                :([0-9]+)                   # followed by a port number
-                $
             ''', re.X
         )

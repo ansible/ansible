@@ -30,7 +30,7 @@ import tempfile
 import time
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.utils.unicode import to_bytes
@@ -142,7 +142,7 @@ class ActionBase:
         if tmp and "tmp" in tmp:
             # tmp has already been created
             return False
-        if not self._connection.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self._play_context.become:
+        if not self._connection.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self._play_context.become_method == 'su':
             # tmp is necessary to store the module source code
             # or we want to keep the files on the target system
             return True
@@ -190,7 +190,7 @@ class ActionBase:
                 output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
             if 'stdout' in result and result['stdout'] != '':
                 output = output + ": %s" % result['stdout']
-            raise AnsibleError(output)
+            raise AnsibleConnectionFailure(output)
 
         # FIXME: do we still need to do this?
         #rc = self._connection._shell.join_path(utils.last_non_blank_line(result['stdout']).strip(), '')

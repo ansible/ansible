@@ -4,264 +4,272 @@ Ansible Changes By Release
 ## 2.0 "Over the Hills and Far Away" - ACTIVE DEVELOPMENT
 
 Major Changes:
- * Introducing the new block/rescue/always directives, allow for making task blocks and introducing exception like semantics
- * New strategy plugins, allow to control the flow of execution of tasks per play, the default will be the same as before
- * Improved error handling, now you get much more detailed parser messages. General exception handling and display has been revamped.
- * Task includes now get evaluated during execution, end behaviour will be the same but it now allows for more dynamic includes and options.
- * First feature of the more dynamic includes is that "with\_<lookup>" loops are now usable with them.
- * callback, connection and lookup plugin APIs have changed, some will require modification to work with new version
- * callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg
- * Many API changes, this will break those currently using it directly, but the new API is much easier to use and test
- * Settings are now more inheritable, what you set at play, block or role will be automatically inhertited by the contained.
-   This allows for new features to automatically be settable at all levels, previously we had to manually code this
- * template code now retains types for bools and numbers instead of turning them into strings.
-   If you need the old behaviour, quote the value and it will get passed around as a string
- * added meta: refresh_inventory to force rereading the inventory in a play
- * vars are now settable at play, block, role and task level
- * template code now retains types for bools, and Numbers instead of turning them into strings
-   If you need the old behaviour, quote the value and it will get passed around as a string. In the
-   case of nulls, the output used to be an empty string.
- * Empty variables and variables set to null in yaml will no longer be converted to empty strings.
-   They will retain the value of `None`.  To go back to the old behaviour, you can override
-   the `null_representation` setting to an empty string in your config file or by setting the
-   `ANSIBLE_NULL_REPRESENTATION` environment variable.
- * backslashes used when specifying parameters in jinja2 expressions in YAML
-   dicts sometimes needed to be escaped twice.  This has been fixed so that
-   escaping once works.  Here's an example of how playbooks need to be modified::
 
-     # Syntax in 1.9.x
-     - debug:
-         msg: "{{ 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') }}"
-     # Syntax in 2.0.x
-     - debug:
-         msg: "{{ 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') }}"
+* The new block/rescue/always directives allow for making task blocks and exception-like semantics
+* New strategy plugins (e.g. `free`) allow control over the flow of task execution per play. The default (`linear`) will be the same as before.
+* Improved error handling, with more detailed parser messages. General exception handling and display has been revamped.
+* Task includes are now evaluated during execution, allowing more dynamic includes and options.
+* "with\_<lookup>" loops can now be used with includes since they are dynamic.
+* Callback, connection and lookup plugin APIs have changed. Some projects will require modification to work with the new versions.
+* Callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg.
+* Many API changes. Those integrating directly with Ansible's API will encounter breaking changes, but the new API is much easier to use and test.
+* Settings are now more inheritable; what you set at play, block or role will be automatically inhertited by the contained. This allows for new features to automatically be settable at all levels, previously we had to manually code this.
+* Template code now retains types for bools and numbers instead of turning them into strings.
+ If you need the old behaviour, quote the value and it will get passed around as a string
+* Added `meta: refresh_inventory` to force rereading the inventory in a play.
+* Vars are now settable at play, block, role and task level.
+* Empty variables and variables set to null in yaml will no longer be converted to empty strings.
+They will retain the value of `None`. To go back to the old behaviour, you can override
+the `null_representation` setting to an empty string in your config file or by setting the
+`ANSIBLE_NULL_REPRESENTATION` environment variable.
+* Backslashes used when specifying parameters in jinja2 expressions in YAML
+dicts sometimes needed to be escaped twice. This has been fixed so that
+escaping once works. Here's an example of how playbooks need to be modified:
 
-     # Output:
-     "msg": "test1 1\\3"
+    ```
+    # Syntax in 1.9.x
+    - debug:
+        msg: "{{ 'test1_junk 1\\\\3' | regex_replace('(.*)_junk (.*)', '\\\\1 \\\\2') }}"
+    # Syntax in 2.0.x
+    - debug:
+        msg: "{{ 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') }}"
+    
+    # Output:
+    "msg": "test1 1\\3"
+    ```
 
- * When a string with a trailing newline was specified in the playbook via yaml
-   dict format, the trailing newline was stripped.  When specified in key=value
-   format the trailing newlines were kept.  In v2, both methods of specifying the
-   string will keep the trailing newlines.  If you relied on the trailing
-   newline being stripped you can change your playbook like this::
+* When a string with a trailing newline was specified in the playbook via yaml
+dict format, the trailing newline was stripped. When specified in key=value
+format the trailing newlines were kept. In v2, both methods of specifying the
+string will keep the trailing newlines. If you relied on the trailing
+newline being stripped you can change your playbook like this:
 
-     # Syntax in 1.9.2
-     vars:
-       message: >
-         Testing
-         some things
-     tasks:
-     - debug:
-         msg: "{{ message }}"
-     # Syntax in 2.0.x
-     vars:
-       old_message: >
-         Testing
-         some things
-       message: "{{ old_messsage[:-1] }}"
-     - debug:
-         msg: "{{ message }}"
-     # Output
-     "msg": "Testing some things"
+    ```
+    # Syntax in 1.9.2
+    vars:
+      message: >
+        Testing
+        some things
+    tasks:
+    - debug:
+        msg: "{{ message }}"
+    
+    # Syntax in 2.0.x
+    vars:
+      old_message: >
+        Testing
+        some things
+      message: "{{ old_messsage[:-1] }}"
+    - debug:
+        msg: "{{ message }}"
+    # Output
+    "msg": "Testing some things"
+    ```
 
 Deprecated Modules (new ones in parens):
-  * ec2_ami_search (ec2_ami_find)
-  * quantum_network (os_network)
-  * glance_image
-  * nova_compute   (os_server)
-  * quantum_floating_ip (os_floating_ip)
+
+* ec2_ami_search (ec2_ami_find)
+* quantum_network (os_network)
+* glance_image
+* nova_compute   (os_server)
+* quantum_floating_ip (os_floating_ip)
 
 New Modules:
-  * amazon: ec2_ami_copy
-  * amazon: ec2_ami_find
-  * amazon: ec2_elb_facts
-  * amazon: ec2_eni
-  * amazon: ec2_eni_facts
-  * amazon: ec2_remote_facts
-  * amazon: ec2_vpc_net
-  * amazon: ec2_vpc_route_table
-  * amazon: ec2_vpc_route_table_facts
-  * amazon: ec2_vpc_subnet
-  * amazon: ec2_win_password
-  * amazon: elasticache_subnet_group
-  * amazon: iam
-  * amazon: iam_policy
-  * amazon: route53_zone
-  * amazon: sts_assume_role
-  * amazon: s3_bucket
-  * amazon: s3_lifecycle
-  * amazon: s3_logging
-  * apk
-  * bundler
-  * centurylink: clc_blueprint_package
-  * centurylink: clc_firewall_policy
-  * centurylink: clc_loadbalancer
-  * centurylink: clc_modify_server
-  * centurylink: clc_publicip
-  * centurylink: clc_server
-  * circonus_annotation
-  * consul
-  * consul_acl
-  * consul_kv
-  * consul_session
-  * cloudtrail
-  * cloudstack: cs_account
-  * cloudstack: cs_affinitygroup
-  * cloudstack: cs_domain
-  * cloudstack: cs_facts
-  * cloudstack: cs_firewall
-  * cloudstack: cs_iso
-  * cloudstack: cs_instance
-  * cloudstack: cs_instancegroup
-  * cloudstack: cs_ip_address
-  * cloudstack: cs_network
-  * cloudstack: cs_portforward
-  * cloudstack: cs_project
-  * cloudstack: cs_sshkeypair
-  * cloudstack: cs_securitygroup
-  * cloudstack: cs_securitygroup_rule
-  * cloudstack: cs_staticnat
-  * cloudstack: cs_template
-  * cloudstack: cs_vmsnapshot
-  * datadog_monitor
-  * dpkg_selections
-  * elasticsearch_plugin
-  * expect
-  * find
-  * hall
-  * libvirt: virt_net
-  * libvirt: virt_pool
-  * maven_artifact
-  * openstack: os_ironic
-  * openstack: os_ironic_node
-  * openstack: os_client_config
-  * openstack: os_floating_ip
-  * openstack: os_image
-  * openstack: os_network
-  * openstack: os_nova_flavor
-  * openstack: os_object
-  * openstack: os_security_group
-  * openstack: os_security_group_rule
-  * openstack: os_server
-  * openstack: os_server_actions
-  * openstack: os_server_facts
-  * openstack: os_server_volume
-  * openstack: os_subnet
-  * openstack: os_volume
-  * osx_defaults
-  * pagerduty_alert
-  * pam_limits
-  * pear
-  * profitbricks: profitbricks
-  * profitbricks: profitbricks_datacenter
-  * profitbricks: profitbricks_nic
-  * profitbricks: profitbricks_snapshot
-  * profitbricks: profitbricks_volume
-  * profitbricks: profitbricks_volume_attachments
-  * proxmox
-  * proxmox_template 
-  * puppet 
-  * pushover
-  * pushbullet
-  * rax: rax_mon_alarm
-  * rax: rax_mon_check
-  * rax: rax_mon_entity
-  * rax: rax_mon_notification
-  * rax: rax_mon_notification_plan
-  * rabbitmq_binding
-  * rabbitmq_exchange
-  * rabbitmq_queue
-  * selinux_permissive
-  * sensu_check
-  * sensu_subscription
-  * seport
-  * slackpkg
-  * solaris_zone
-  * vertica_configuration
-  * vertica_facts
-  * vertica_role
-  * vertica_schema
-  * vertica_user
-  * vmware: vmware_datacenter
-  * vmware: vmware_cluster
-  * vmware: vmware_dns_config
-  * vmware: vmware_dvs_host
-  * vmware: vmware_dvs_portgroup
-  * vmware: vmware_dvswitch
-  * vmware: vmware_host
-  * vmware: vmware_vmkernel_ip_config
-  * vmware: vmware_portgroup
-  * vmware: vmware_vm_facts
-  * vmware: vmware_vmkernel
-  * vmware: vmware_vsan_cluster
-  * vmware: vmware_vswitch
-  * vmware: vca_fw
-  * vmware: vca_nat
-  * vmware: vsphere_copy
-  * webfaction_app
-  * webfaction_db
-  * webfaction_domain
-  * webfaction_mailbox
-  * webfaction_site
-  * win_environment
-  * win_package
-  * win_scheduled_task
-  * win_iis_virtualdirectory
-  * win_iis_webapplication
-  * win_iis_webapppool
-  * win_iis_webbinding
-  * win_iis_website
-  * win_regedit
-  * win_unzip
-  * xenserver_facts
-  * zabbix_host
-  * zabbix_hostmacro
-  * zabbix_screen
-  * znode
+
+* amazon: ec2_ami_copy
+* amazon: ec2_ami_find
+* amazon: ec2_elb_facts
+* amazon: ec2_eni
+* amazon: ec2_eni_facts
+* amazon: ec2_remote_facts
+* amazon: ec2_vpc_net
+* amazon: ec2_vpc_route_table
+* amazon: ec2_vpc_route_table_facts
+* amazon: ec2_vpc_subnet
+* amazon: ec2_win_password
+* amazon: elasticache_subnet_group
+* amazon: iam
+* amazon: iam_policy
+* amazon: route53_zone
+* amazon: sts_assume_role
+* amazon: s3_bucket
+* amazon: s3_lifecycle
+* amazon: s3_logging
+* apk
+* bundler
+* centurylink: clc_blueprint_package
+* centurylink: clc_firewall_policy
+* centurylink: clc_loadbalancer
+* centurylink: clc_modify_server
+* centurylink: clc_publicip
+* centurylink: clc_server
+* circonus_annotation
+* consul
+* consul_acl
+* consul_kv
+* consul_session
+* cloudtrail
+* cloudstack: cs_account
+* cloudstack: cs_affinitygroup
+* cloudstack: cs_domain
+* cloudstack: cs_facts
+* cloudstack: cs_firewall
+* cloudstack: cs_iso
+* cloudstack: cs_instance
+* cloudstack: cs_instancegroup
+* cloudstack: cs_ip_address
+* cloudstack: cs_network
+* cloudstack: cs_portforward
+* cloudstack: cs_project
+* cloudstack: cs_sshkeypair
+* cloudstack: cs_securitygroup
+* cloudstack: cs_securitygroup_rule
+* cloudstack: cs_staticnat
+* cloudstack: cs_template
+* cloudstack: cs_vmsnapshot
+* datadog_monitor
+* dpkg_selections
+* elasticsearch_plugin
+* expect
+* find
+* hall
+* libvirt: virt_net
+* libvirt: virt_pool
+* maven_artifact
+* openstack: os_ironic
+* openstack: os_ironic_node
+* openstack: os_client_config
+* openstack: os_floating_ip
+* openstack: os_image
+* openstack: os_network
+* openstack: os_nova_flavor
+* openstack: os_object
+* openstack: os_security_group
+* openstack: os_security_group_rule
+* openstack: os_server
+* openstack: os_server_actions
+* openstack: os_server_facts
+* openstack: os_server_volume
+* openstack: os_subnet
+* openstack: os_volume
+* openvswitch_db.
+* osx_defaults
+* pagerduty_alert
+* pam_limits
+* pear
+* profitbricks: profitbricks
+* profitbricks: profitbricks_datacenter
+* profitbricks: profitbricks_nic
+* profitbricks: profitbricks_snapshot
+* profitbricks: profitbricks_volume
+* profitbricks: profitbricks_volume_attachments
+* proxmox
+* proxmox_template
+* puppet
+* pushover
+* pushbullet
+* rax: rax_mon_alarm
+* rax: rax_mon_check
+* rax: rax_mon_entity
+* rax: rax_mon_notification
+* rax: rax_mon_notification_plan
+* rabbitmq_binding
+* rabbitmq_exchange
+* rabbitmq_queue
+* selinux_permissive
+* sensu_check
+* sensu_subscription
+* seport
+* slackpkg
+* solaris_zone
+* vertica_configuration
+* vertica_facts
+* vertica_role
+* vertica_schema
+* vertica_user
+* vmware: vmware_datacenter
+* vmware: vmware_cluster
+* vmware: vmware_dns_config
+* vmware: vmware_dvs_host
+* vmware: vmware_dvs_portgroup
+* vmware: vmware_dvswitch
+* vmware: vmware_host
+* vmware: vmware_vmkernel_ip_config
+* vmware: vmware_portgroup
+* vmware: vmware_vm_facts
+* vmware: vmware_vmkernel
+* vmware: vmware_vsan_cluster
+* vmware: vmware_vswitch
+* vmware: vca_fw
+* vmware: vca_nat
+* vmware: vsphere_copy
+* webfaction_app
+* webfaction_db
+* webfaction_domain
+* webfaction_mailbox
+* webfaction_site
+* win_environment
+* win_package
+* win_scheduled_task
+* win_iis_virtualdirectory
+* win_iis_webapplication
+* win_iis_webapppool
+* win_iis_webbinding
+* win_iis_website
+* win_regedit
+* win_unzip
+* xenserver_facts
+* zabbix_host
+* zabbix_hostmacro
+* zabbix_screen
+* znode
 
 New Inventory scripts:
-  * cloudstack
-  * fleetctl
-  * openvz
-  * nagios_ndo
-  * proxmox
-  * serf
+
+* cloudstack
+* fleetctl
+* openvz
+* nagios_ndo
+* proxmox
+* serf
 
 New Lookups:
- * credstash
- * hashi_vault
- * ini
- * shelvefile
+
+* credstash
+* hashi_vault
+* ini
+* shelvefile
 
 New filters:
- * combine
+
+* combine
 
 New Connection Methods:
- *  Added a connection plugin for talking to docker containers on the ansible controller machine without using ssh
+
+* Added a connection plugin for talking to docker containers on the ansible controller machine without using ssh.
 
 Minor changes:
 
- * Many more tests, new API makes things more testable and we took advantage of it
- * big_ip modules now support turning off ssl certificate validation (use only for self signed)
- * Use "pattern1:pattern2" to combine host matching patterns. The undocumented
-   use of semicolons or commas to combine patterns is no longer supported.
- * Use ``hosts: groupname[x:y]`` to select a subset of hosts in a group; the
-   ``[x-y]`` range syntax is no longer supported. Note that ``[0:1]`` matches
-   two hosts, i.e. the range is inclusive of its endpoints.
- * Now when you delegate a action that returns ansible_facts, these facts will now be applied to the delegated host,
-   unlike before which they were applied to the current host.
- * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support
- * synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting
- * play output is now dynamically sized to terminal with a minimal of 80 coluumns (old default)
- * vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron)
- * Support for OpenBSD's 'doas' privilege escalation method.
- * most vault operations can now be done over multilple files
- * ansible-vault encrypt/decrypt read from stdin if no other input file is given,
-   and can write to a given ``--output file`` (including stdout, '-'). This lets
-   you avoid ever writing sensitive plaintext to disk.
- * ansible-vault rekey accepts the --new-vault-password-file option.
- * configuration items defined as paths (local only) will now all support shell style interpolations
- * many fixes and new options added to modules, too many to list here.
+* Many more tests. The new API makes things more testable and we took advantage of it.
+* big_ip modules now support turning off ssl certificate validation (use only for self-signed certificates).
+* Use "pattern1:pattern2" to combine host matching patterns. The undocumented
+use of semicolons or commas to combine patterns is no longer supported.
+* Use ``hosts: groupname[x:y]`` to select a subset of hosts in a group; the
+``[x-y]`` range syntax is no longer supported. Note that ``[0:1]`` matches
+two hosts, i.e. the range is inclusive of its endpoints.
+* Now when you delegate an action that returns ansible_facts, these facts will be applied to the delegated host, unlike before when they were applied to the current host.
+* Consolidated code from modules using urllib2 to normalize features, TLS and SNI support.
+* synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting.
+* Play output is now dynamically sized to terminal with a minimum of 80 coluumns (old default).
+* vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron).
+* Support for OpenBSD's 'doas' privilege escalation method.
+* Most vault operations can now be done over multilple files.
+* ansible-vault encrypt/decrypt read from stdin if no other input file is given,
+and can write to a given ``--output file`` (including stdout, '-'). This lets
+you avoid ever writing sensitive plaintext to disk.
+* ansible-vault rekey accepts the --new-vault-password-file option.
+* Configuration items defined as paths (local only) now all support shell style interpolations.
+* Many fixes and new options added to modules, too many to list here.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 

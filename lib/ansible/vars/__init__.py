@@ -44,18 +44,38 @@ from ansible.vars.unsafe_proxy import UnsafeProxy
 
 CACHED_VARS = dict()
 
+def preprocess_vars(a):
+    '''
+    Ensures that vars contained in the parameter passed in are
+    returned as a list of dictionaries, to ensure for instance
+    that vars loaded from a file conform to an expected state.
+    '''
+
+    if a is None:
+        return None
+    elif not isinstance(a, list):
+        data = [ a ]
+    else:
+        data = a
+
+    for item in data:
+        if not isinstance(item, MutableMapping):
+            raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
+
+    return data
+
 class VariableManager:
 
     def __init__(self):
 
-        self._fact_cache       = FactCache()
-        self._vars_cache       = defaultdict(dict)
-        self._extra_vars       = defaultdict(dict)
-        self._host_vars_files  = defaultdict(dict)
+        self._fact_cache = FactCache()
+        self._nonpersistent_fact_cache = defaultdict(dict)
+        self._vars_cache = defaultdict(dict)
+        self._extra_vars = defaultdict(dict)
+        self._host_vars_files = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
-        self._inventory        = None
-
-        self._omit_token       = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
+        self._inventory = None
+        self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
@@ -157,14 +177,14 @@ class VariableManager:
 
             # then we merge in the special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
-                data = self._preprocess_vars(self._group_vars_files['all'])
+                data = preprocess_vars(self._group_vars_files['all'])
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
             for group in host.get_groups():
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
-                        data = self._preprocess_vars(data)
+                        data = preprocess_vars(data)
                         for item in data:
                             all_vars = combine_vars(all_vars, item)
 
@@ -175,11 +195,11 @@ class VariableManager:
             host_name = host.get_name()
             if host_name in self._host_vars_files:
                 for data in self._host_vars_files[host_name]:
-                    data = self._preprocess_vars(data)
+                    data = preprocess_vars(data)
                     for item in data:
                         all_vars = combine_vars(all_vars, item)
 
-            # finally, the facts cache for this host, if it exists
+            # finally, the facts caches for this host, if it exists
             try:
                 host_facts = self._fact_cache.get(host.name, dict())
                 for k in host_facts.keys():
@@ -210,7 +230,7 @@ class VariableManager:
                     # as soon as we read one from the list. If none are found, we
                     # raise an error, which is silently ignored at this point.
                     for vars_file in vars_file_list:
-                        data = self._preprocess_vars(loader.load_from_file(vars_file))
+                        data = preprocess_vars(loader.load_from_file(vars_file))
                         if data is not None:
                             for item in data:
                                 all_vars = combine_vars(all_vars, item)
@@ -231,6 +251,7 @@ class VariableManager:
 
         if host:
             all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
         all_vars = combine_vars(all_vars, self._extra_vars)
 
@@ -279,7 +300,7 @@ class VariableManager:
 
     def _get_inventory_basename(self, path):
         '''
-        Returns the bsaename minus the extension of the given path, so the
+        Returns the basename minus the extension of the given path, so the
         bare filename can be matched against host/group names later
         '''
 
@@ -376,6 +397,21 @@ class VariableManager:
                 self._fact_cache[host.name].update(facts)
             except KeyError:
                 self._fact_cache[host.name] = facts
+
+    def set_nonpersistent_facts(self, host, facts):
+        '''
+        Sets or updates the given facts for a host in the fact cache.
+        '''
+
+        assert isinstance(facts, dict)
+
+        if host.name not in self._nonpersistent_fact_cache:
+            self._nonpersistent_fact_cache[host.name] = facts
+        else:
+            try:
+                self._nonpersistent_fact_cache[host.name].update(facts)
+            except KeyError:
+                self._nonpersistent_fact_cache[host.name] = facts
 
     def set_host_variable(self, host, varname, value):
         '''

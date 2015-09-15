@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import yaml
+from six import PY3
 
 from ansible.parsing.yaml.objects import AnsibleUnicode
 
@@ -30,8 +31,13 @@ class AnsibleDumper(yaml.SafeDumper):
     '''
     pass
 
+if PY3:
+    represent_unicode = yaml.representer.SafeRepresenter.represent_str
+else:
+    represent_unicode = yaml.representer.SafeRepresenter.represent_unicode
+
 AnsibleDumper.add_representer(
     AnsibleUnicode,
-    yaml.representer.SafeRepresenter.represent_unicode
+    represent_unicode,
 )
 

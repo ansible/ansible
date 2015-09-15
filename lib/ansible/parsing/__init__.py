@@ -125,7 +125,7 @@ class DataLoader():
 
     def is_file(self, path):
         path = self.path_dwim(path)
-        return os.path.isfile(path)
+        return os.path.isfile(path) or path == os.devnull
 
     def is_directory(self, path):
         path = self.path_dwim(path)
