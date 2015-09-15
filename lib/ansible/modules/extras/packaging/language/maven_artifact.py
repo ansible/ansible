@@ -41,46 +41,57 @@ requirements:
     - lxml
 options:
     group_id:
-        description: The Maven groupId coordinate
+        description:
+            - The Maven groupId coordinate
         required: true
     artifact_id:
-        description: The maven artifactId coordinate
+        description:
+            - The maven artifactId coordinate
         required: true
     version:
-        description: The maven version coordinate
+        description:
+            - The maven version coordinate
         required: false
         default: latest
     classifier:
-        description: The maven classifier coordinate
+        description: 
+            - The maven classifier coordinate
         required: false
         default: null
     extension:
-        description: The maven type/extension coordinate
+        description: 
+            - The maven type/extension coordinate
         required: false
         default: jar
     repository_url:
-        description: The URL of the Maven Repository to download from
+        description: 
+            - The URL of the Maven Repository to download from
         required: false
         default: http://repo1.maven.org/maven2
     username:
-        description: The username to authenticate as to the Maven Repository
+        description:
+            - The username to authenticate as to the Maven Repository
         required: false
         default: null
     password:
-        description: The password to authenticate with to the Maven Repository
+        description:
+            - The password to authenticate with to the Maven Repository
         required: false
         default: null
     dest:
-        description: The path where the artifact should be written to
+        description:
+            - The path where the artifact should be written to
         required: true
         default: false
     state:
-        description: The desired state of the artifact
+        description:
+            - The desired state of the artifact
         required: true
         default: present
         choices: [present,absent]
     validate_certs:
-        description: If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
+        description: 
+            - If C(no), SSL certificates will not be validated. This should only be set to C(no) when no other option exists.
         required: false
         default: 'yes'
         choices: ['yes', 'no']
