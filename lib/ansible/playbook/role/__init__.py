@@ -45,7 +45,7 @@ __all__ = ['Role', 'hash_params']
 # FIXME: this should be a utility function, but can't be a member of
 #        the role due to the fact that it would require the use of self
 #        in a static method. This is also used in the base class for
-#        strategies (ansible/plugins/strategies/__init__.py)
+#        strategies (ansible/plugins/strategy/__init__.py)
 def hash_params(params):
     if not isinstance(params, dict):
         return params

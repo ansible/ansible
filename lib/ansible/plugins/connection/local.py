@@ -28,7 +28,7 @@ import fcntl
 import ansible.constants as C
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connection import ConnectionBase
 
 class Connection(ConnectionBase):
     ''' Local based connections '''
