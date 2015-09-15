@@ -26,10 +26,10 @@ import tarfile
 import tempfile
 import yaml
 from shutil import rmtree
-from urllib2 import urlopen
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansilbe.module_utils.urls import open_url
 
 try:
     from __main__ import display
@@ -162,7 +162,7 @@ class GalaxyRole(object):
             display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = urlopen(archive_url)
+                url_file = open_url(archive_url)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:

@@ -21,10 +21,11 @@
 #
 ########################################################################
 import json
-from urllib2 import urlopen, quote as urlquote, HTTPError
+from urllib2 import quote as urlquote, HTTPError
 from urlparse import urlparse
 
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.module_utils.urls import open_url
 
 class GalaxyAPI(object):
     ''' This class is meant to be used as a API client for an Ansible Galaxy server '''
@@ -61,7 +62,7 @@ class GalaxyAPI(object):
         return 'v1'
 
         try:
-            data = json.load(urlopen(api_server))
+            data = json.load(open_url(api_server))
             return data.get("current_version", 'v1')
         except Exception as e:
             # TODO: report error
@@ -85,7 +86,7 @@ class GalaxyAPI(object):
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
         self.galaxy.display.vvvv("- %s" % (url))
         try:
-            data = json.load(urlopen(url))
+            data = json.load(open_url(url))
             if len(data["results"]) != 0:
                 return data["results"][0]
         except:
@@ -102,13 +103,13 @@ class GalaxyAPI(object):
 
         try:
             url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
-            data = json.load(urlopen(url))
+            data = json.load(open_url(url))
             results = data['results']
             done = (data.get('next', None) == None)
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
                 self.galaxy.display.display(url)
-                data = json.load(urlopen(url))
+                data = json.load(open_url(url))
                 results += data['results']
                 done = (data.get('next', None) == None)
             return results
@@ -122,7 +123,7 @@ class GalaxyAPI(object):
 
         try:
             url = '%s/%s/?page_size' % (self.baseurl, what)
-            data = json.load(urlopen(url))
+            data = json.load(open_url(url))
             if "results" in data:
                 results = data['results']
             else:
@@ -133,7 +134,7 @@ class GalaxyAPI(object):
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
                 self.galaxy.display.display(url)
-                data = json.load(urlopen(url))
+                data = json.load(open_url(url))
                 results += data['results']
                 done = (data.get('next', None) == None)
             return results
@@ -165,7 +166,7 @@ class GalaxyAPI(object):
 
         self.galaxy.display.debug("Executing query: %s" % search_url)
         try:
-            data = json.load(urlopen(search_url))
+            data = json.load(open_url(search_url))
         except HTTPError as e:
             raise AnsibleError("Unsuccessful request to server: %s" % str(e))
 
