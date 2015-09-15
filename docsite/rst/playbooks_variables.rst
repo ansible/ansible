@@ -775,7 +775,7 @@ In 2.x we have made the order of precedence more specific (last one wins):
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
 
 
-Another important thing to consider (for all versions) is that connection spedific variables override config, command line and play specific options and directives.  For example::
+Another important thing to consider (for all versions) is that connection specific variables override config, command line and play specific options and directives.  For example::
 
     ansible_ssh_user will override `-u <user>` and `remote_user: <user>`
 
