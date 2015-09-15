@@ -354,20 +354,29 @@ class TaskExecutor:
             # create a conditional object to evaluate task conditions
             cond = Conditional(loader=self._loader)
 
+            def _evaluate_changed_when_result(result):
+                if self._task.changed_when is not None:
+                    cond.when = [ self._task.changed_when ]
+                    result['changed'] = cond.evaluate_conditional(templar, vars_copy)
+
+            def _evaluate_failed_when_result(result):
+                if self._task.failed_when is not None:
+                    cond.when = [ self._task.failed_when ]
+                    failed_when_result = cond.evaluate_conditional(templar, vars_copy)
+                    result['failed_when_result'] = result['failed'] = failed_when_result
+                    return failed_when_result
+                return False
+
             # FIXME: make sure until is mutually exclusive with changed_when/failed_when
             if self._task.until:
                 cond.when = self._task.until
                 if cond.evaluate_conditional(templar, vars_copy):
+                    _evaluate_changed_when_result(result)
+                    _evaluate_failed_when_result(result)
                     break
-            elif (self._task.changed_when or self._task.failed_when) and 'skipped' not in result:
-                if self._task.changed_when:
-                    cond.when = [ self._task.changed_when ]
-                    result['changed'] = cond.evaluate_conditional(templar, vars_copy)
-                if self._task.failed_when:
-                    cond.when = [ self._task.failed_when ]
-                    failed_when_result = cond.evaluate_conditional(templar, vars_copy)
-                    result['failed_when_result'] = result['failed'] = failed_when_result
-                    if failed_when_result:
+            elif (self._task.changed_when is not None or self._task.failed_when is not None) and 'skipped' not in result:
+                    _evaluate_changed_when_result(result)
+                    if _evaluate_failed_when_result(result):
                         break
             elif 'failed' not in result:
                 if result.get('rc', 0) != 0:
@@ -378,6 +387,9 @@ class TaskExecutor:
 
             if attempt < retries - 1:
                 time.sleep(delay)
+            else:
+                _evaluate_changed_when_result(result)
+                _evaluate_failed_when_result(result)
 
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
