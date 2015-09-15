@@ -1,4 +1,4 @@
-#!/bin/env python2.7
+#!/bin/env python
 
 '''
 nsot
