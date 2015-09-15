@@ -25,6 +25,7 @@ import subprocess
 import sys
 import time
 
+from jinja2.runtime import Undefined
 from six import iteritems
 
 from ansible import constants as C
@@ -511,7 +512,16 @@ class TaskExecutor:
         # get the vars for the delegate by its name
         try:
             self._display.debug("Delegating to %s" % self._task.delegate_to)
-            this_info = variables['hostvars'][self._task.delegate_to]
+            if self._task.delegate_to in C.LOCALHOST and self._task.delegate_to not in variables['hostvars']:
+                this_info = dict(ansible_connection="local")
+                for alt_local in C.LOCALHOST:
+                    if alt_local in variables['hostvars']:
+                        this_info = variables['hostvars'][self._task.delegate_to]
+                        if this_info == Undefined:
+                            this_info = dict(ansible_connection="local")
+                        break
+            else:
+                this_info = variables['hostvars'][self._task.delegate_to]
 
             # get the real ssh_address for the delegate and allow ansible_ssh_host to be templated
             self._play_context.remote_addr      = this_info.get('ansible_ssh_host', self._task.delegate_to)
@@ -528,7 +538,7 @@ class TaskExecutor:
         except Exception as e:
             # make sure the inject is empty for non-inventory hosts
             this_info = {}
-            self._display.debug("Delegate due to: %s" % str(e))
+            self._display.debug("Delegate to lookup failed due to: %s" % str(e))
 
         # Last chance to get private_key_file from global variables.
         # this is useful if delegated host is not defined in the inventory

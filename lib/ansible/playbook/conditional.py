@@ -60,8 +60,8 @@ class Conditional:
         # associated with it, so we pull it out now in case we need it for
         # error reporting below
         ds = None
-        if hasattr(self, 'get_ds'):
-            ds = self.get_ds()
+        if hasattr(self, '_ds'):
+            ds = getattr(self, '_ds')
 
         try:
             for conditional in self.when:
