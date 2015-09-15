@@ -70,6 +70,79 @@ Once you've installed the necessary dependencies, the python-kerberos wrapper ca
 
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
 
+Configuring Kerberos
+--------------------
+
+Edit your /etc/krb5.conf (which should be installed as a result of installing packages above) and add the following information for each domain you need to connect to:
+
+In the section that starts with
+
+.. code-block:: bash
+
+   [realms]
+
+add the full domain name and the fully qualified domain names of your primary and secondary Active Directory domain controllers.  It should look something like this:
+
+.. code-block:: bash
+
+   [realms]
+   
+    MY.DOMAIN.COM = {
+     kdc = domain-controller1.my.domain.com
+     kdc = domain-controller2.my.domain.com
+    }
+
+
+and in the [domain_realm] section add a line like the following for each domain you want to access:
+
+.. code-block:: bash
+
+    [domain_realm]
+        .my.domain.com = MY.DOMAIN.COM
+
+You may wish to configure other settings here, such as the default domain.
+
+Testing a kerberos connection
+-----------------------------
+
+If you have installed krb5-workstation (yum) or krb5-user (apt-get) you can use the following command to test that you can be authorised by your domain controller.
+
+.. code-block:: bash
+
+   kinit user@MY.DOMAIN.COM
+
+Note that the domain part has to be fully qualified and must be in upper case.
+
+To see what tickets if any you have acquired, use the command klist
+
+.. code-block:: bash
+
+   klist
+
+
+Troubleshooting kerberos connections
+------------------------------------
+
+If you unable to connect using kerberos, check the following:
+
+Ensure that forward and reverse DNS lookups are working properly on your domain.
+
+To test this, ping the windows host you want to control by name then use the ip address returned with nslookup.  You should get the same name back from DNS when you use nslookup on the ip address.  
+
+If you get different hostnames back than the name you originally pinged, speak to your active directory administrator and get them to check that DNS Scavenging is enabled and that DNS and DHCP are updating each other.
+
+Check your ansible controller's clock is synchronised with your domain controller.  Kerberos is time sensitive and a little clock drift can cause tickets not be granted.
+
+Check you are using the real fully qualified domain name for the domain.  Sometimes domains are commonly known to users by aliases.  To check this run:
+
+
+.. code-block:: bash
+
+   kinit -C user@MY.DOMAIN.COM
+   klist
+
+If the domain name returned by klist is different from the domain name you requested, you are requesting using an alias, and you need to update your krb5.conf so you are using the fully qualified domain name, not its alias.
+
 .. _windows_inventory:
 
 Inventory
