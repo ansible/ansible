@@ -27,7 +27,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.task import Task
 from ansible.plugins import action_loader
-from ansible.plugins.strategies import StrategyBase
+from ansible.plugins.strategy import StrategyBase
 from ansible.template import Templar
 
 try:

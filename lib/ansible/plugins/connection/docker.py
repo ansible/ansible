@@ -31,7 +31,7 @@ from distutils.version import LooseVersion
 import ansible.constants as C
 
 from ansible import errors
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connection import ConnectionBase
 
 BUFSIZE = 65536
 

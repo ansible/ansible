@@ -23,7 +23,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.plugins.strategies import StrategyBase
+from ansible.plugins.strategy import StrategyBase
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
 
