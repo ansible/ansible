@@ -522,7 +522,7 @@ class ElbManager(object):
             for existing_listener in self.elb.listeners:
                 # Since ELB allows only one listener on each incoming port, a
                 # single match on the incoming port is all we're looking for
-                if existing_listener[0] == listener['load_balancer_port']:
+                if existing_listener[0] == int(listener['load_balancer_port']):
                     existing_listener_found = self._api_listener_as_tuple(existing_listener)
                     break
 
