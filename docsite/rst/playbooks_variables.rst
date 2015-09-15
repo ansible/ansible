@@ -731,7 +731,7 @@ it complicated.
 However, let's go ahead and get precedence out of the way!  It exists.  It's a real thing, and you might have
 a use for it.
 
-If multiple variables of the same name are defined in different places, they get overwrriten in a certain order.
+If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
 In 1.x the precedence is:
 
