@@ -1,0 +1,6 @@
+---
+
+msi_url: http://downloads.sourceforge.net/project/sevenzip/7-Zip/9.22/7z922-x64.msi
+msi_download_path: "C:\\Program Files\\7z922-x64.msi"
+msi_install_path: "C:\\Program Files\\7-Zip"
+msi_product_code: "{23170F69-40C1-2702-0922-000001000000}"
