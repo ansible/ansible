@@ -182,6 +182,7 @@ def sensu_check(module, path, name, state='present', backup=False):
     except ImportError:
         import simplejson as json
 
+    stream = None
     try:
         try:
             stream = open(path, 'r')
