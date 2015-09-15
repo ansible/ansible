@@ -352,6 +352,7 @@ class GalaxyCLI(CLI):
             raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
 
         no_deps    = self.get_opt("no_deps", False)
+        force      = self.get_opt('force', False)
         roles_path = self.get_opt("roles_path")
 
         roles_done = []
@@ -389,6 +390,9 @@ class GalaxyCLI(CLI):
             role = roles_left.pop(0)
             role_path = role.path
 
+            if role.install_info is not None and not force:
+                self.display.display('- %s is already installed, skipping.' % role.name)
+                continue
 
             if role_path:
                 self.options.roles_path = role_path
@@ -443,25 +447,20 @@ class GalaxyCLI(CLI):
                     os.unlink(tmp_file)
                 # install dependencies, if we want them
                 if not no_deps and installed:
-                    if not role_data:
-                        role_data = gr.get_metadata(role.get("name"), options)
-                        role_dependencies = role_data['dependencies']
-                    else:
-                        role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
+                    role_dependencies = role.metadata.get('dependencies', [])
                     for dep in role_dependencies:
                         self.display.debug('Installing dep %s' % dep)
-                        if isinstance(dep, basestring):
-                            dep = ansible.utils.role_spec_parse(dep)
-                        else:
-                            dep = ansible.utils.role_yaml_parse(dep)
-                        if not get_role_metadata(dep["name"], options):
-                            if dep not in roles_left:
-                                self.display.display('- adding dependency: %s' % dep["name"])
-                                roles_left.append(dep)
+                        dep_req = RoleRequirement()
+                        __, dep_name, __ = dep_req.parse(dep)
+                        dep_role = GalaxyRole(self.galaxy, name=dep_name)
+                        if dep_role.install_info is None or force:
+                            if dep_role not in roles_left:
+                                self.display.display('- adding dependency: %s' % dep_name)
+                                roles_left.append(GalaxyRole(self.galaxy, name=dep_name))
                             else:
-                                self.display.display('- dependency %s already pending installation.' % dep["name"])
+                                self.display.display('- dependency %s already pending installation.' % dep_name)
                         else:
-                            self.display.display('- dependency %s is already installed, skipping.' % dep["name"])
+                            self.display.display('- dependency %s is already installed, skipping.' % dep_name)
 
             if not tmp_file or not installed:
                 self.display.warning("- %s was NOT installed successfully." % role.name)

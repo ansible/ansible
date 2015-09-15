@@ -22,6 +22,8 @@
 
 import os
 
+from six import string_types
+
 from ansible.errors import AnsibleError
 from ansible.utils.display import Display
 
@@ -40,9 +42,9 @@ class Galaxy(object):
             self.display = display
 
         self.options = options
-        self.roles_path = getattr(self.options, 'roles_path', None)
-        if self.roles_path:
-            self.roles_path = os.path.expanduser(self.roles_path)
+        roles_paths = getattr(self.options, 'roles_path', [])
+        if isinstance(roles_paths, string_types):
+            self.roles_paths = [os.path.expanduser(roles_path) for roles_path in roles_paths.split(os.pathsep)]
 
         self.roles =  {}
 
