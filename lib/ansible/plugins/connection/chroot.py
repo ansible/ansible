@@ -27,7 +27,7 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import is_executable
 from ansible.utils.unicode import to_bytes
 

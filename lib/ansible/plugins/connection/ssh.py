@@ -36,7 +36,7 @@ from hashlib import sha1
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import unfrackpath, makedirs_safe
 
 class Connection(ConnectionBase):
