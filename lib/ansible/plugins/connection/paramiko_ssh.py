@@ -43,7 +43,7 @@ from six import iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
-from ansible.plugins.connections import ConnectionBase
+from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
 
 AUTHENTICITY_MSG="""
