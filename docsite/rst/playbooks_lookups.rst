@@ -100,7 +100,7 @@ The CSV File Lookup
 
 The ``csvfile`` lookup reads the contents of a file in CSV (comma-separated value)
 format. The lookup looks for the row where the first column matches ``keyname``, and
-returns the value in the first column, unless a different column is specified.
+returns the value in the second column, unless a different column is specified.
 
 The example below shows the contents of a CSV file named elements.csv with information about the
 periodic table of elements::
