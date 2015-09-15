@@ -231,6 +231,12 @@ class Base:
             method = getattr(self, '_validate_%s' % name, None)
             if method:
                 method(attribute, name, getattr(self, name))
+            else:
+                # and make sure the attribute is of the type it should be
+                value = getattr(self, name)
+                if value is not None:
+                    if attribute.isa == 'string' and not isinstance(value, string_types):
+                        raise AnsibleParserError("The field '%s' is supposed to be a string type, however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds())
 
     def copy(self):
         '''
