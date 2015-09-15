@@ -113,7 +113,8 @@ def main():
             device      = dict(type='str', default=None),
             push_type   = dict(type='str', default="note", choices=['note', 'link']),
             title       = dict(type='str', required=True),
-            body        = dict(type='str', default=None)
+            body        = dict(type='str', default=None),
+            url         = dict(type='str', default=None),
         ),
         mutually_exclusive = (
             ['channel', 'device'],
@@ -127,6 +128,7 @@ def main():
     push_type   = module.params['push_type']
     title       = module.params['title']
     body        = module.params['body']
+    url         = module.params['url']
 
     if not pushbullet_found:
         module.fail_json(msg="Python 'pushbullet.py' module is required. Install via: $ pip install pushbullet.py")
@@ -170,7 +172,10 @@ def main():
 
     # Send push notification
     try:
-        target.push_note(title, body)
+        if push_type == "link":
+            target.push_link(title, url, body)
+        else:
+            target.push_note(title, body)
         module.exit_json(changed=False, msg="OK")
     except PushError as e:
         module.fail_json(msg="An error occurred, Pushbullet's response: %s" % str(e))
