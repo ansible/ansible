@@ -186,7 +186,7 @@ def sensu_check(module, path, name, state='present', backup=False):
     try:
         try:
             stream = open(path, 'r')
-            config = json.load(stream.read())
+            config = json.load(stream)
         except IOError, e:
             if e.errno is 2:  # File not found, non-fatal
                 if state == 'absent':
