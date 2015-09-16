@@ -47,6 +47,12 @@ options:
             - The port to connect to
         required: false
         default: 27017
+    login_database:
+        version_added: "2.0"
+        description:
+            - The database where login credentials are stored
+        required: false
+        default: null
     replica_set:
         version_added: "1.6"
         description:
@@ -197,6 +203,7 @@ def main():
             login_password=dict(default=None),
             login_host=dict(default='localhost'),
             login_port=dict(default='27017'),
+            login_database=dict(default=None),
             replica_set=dict(default=None),
             database=dict(required=True, aliases=['db']),
             name=dict(required=True, aliases=['user']),
@@ -215,6 +222,8 @@ def main():
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
+    login_database = module.params['login_database']
+    
     replica_set = module.params['replica_set']
     db_name = module.params['database']
     user = module.params['name']
@@ -239,7 +248,7 @@ def main():
             module.fail_json(msg='when supplying login arguments, both login_user and login_password must be provided')
 
         if login_user is not None and login_password is not None:
-            client.admin.authenticate(login_user, login_password)
+            client.admin.authenticate(login_user, login_password, source=login_database)
         elif LooseVersion(PyMongoVersion) >= LooseVersion('3.0'):
             if db_name != "admin":
                 module.fail_json(msg='The localhost login exception only allows the first admin account to be created')
