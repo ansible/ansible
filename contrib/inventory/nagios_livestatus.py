@@ -27,6 +27,8 @@ informations stored in the monitoring core.
 This plugin inventory need livestatus API for python. Please install it
 before using this script (apt/pip/yum/...).
 
+Checkmk livestatus: https://mathias-kettner.de/checkmk_livestatus.html
+Livestatus API: http://www.naemon.org/documentation/usersguide/livestatus.html
 '''
 
 import os
@@ -59,34 +61,42 @@ class NagiosLivestatusInventory(object):
                 fields_to_retrieve = [field.strip() for field in config.get(section, 'fields_to_retrieve').split(',')]
                 fields_to_retrieve = tuple(fields_to_retrieve)
 
-            # If prefix is not set, using livestatus_
-            prefix = "livestatus_"
-            if config.has_option(section, 'prefix'):
-                prefix = config.get(section, 'prefix').strip()
+            # default section values
+            section_values = {
+              'var_prefix' : 'livestatus_',
+              'host_filter': None,
+              'host_field' : 'name',
+              'group_field': 'groups'
+            }
+            for key,value in section_values.iteritems():
+                if config.has_option(section, key):
+                    section_values[key] = config.get(section, key).strip()
 
             # Retrieving livestatus string connection
             livestatus_uri = config.get(section, 'livestatus_uri')
+            backend_definition = None
+
             # Local unix socket
             unix_match = re.match('unix:(.*)', livestatus_uri)
             if unix_match is not None:
-                self.backends.append({
-                  'connection': unix_match.group(1),
-                  'fields':     fields_to_retrieve,
-                  'name':       section,
-                  'prefix':     prefix,
-                })
-                return
+                backend_definition = { 'connection': unix_match.group(1) }
+
             # Remote tcp connection
             tcp_match = re.match('tcp:(.*):([^:]*)', livestatus_uri)
             if tcp_match is not None:
-                self.backends.append({
-                  'connection': (tcp_match.group(1), int(tcp_match.group(2))),
-                  'fields':     fields_to_retrieve,
-                  'name':       section,
-                  'prefix':     prefix,
-                })
-                return
-            raise Exception('livestatus_uri field is invalid (%s). Expected: unix:/path/to/live or tcp:host:port' % livestatus_uri)
+                backend_definition = { 'connection': (tcp_match.group(1), int(tcp_match.group(2))) }
+
+            # No valid livestatus_uri => exiting
+            if backend_definition is None:
+                raise Exception('livestatus_uri field is invalid (%s). Expected: unix:/path/to/live or tcp:host:port' % livestatus_uri)
+
+            # Updating backend_definition with current value
+            backend_definition['name']   = section
+            backend_definition['fields'] = fields_to_retrieve
+            for key, value in section_values.iteritems():
+                backend_definition[key] = value
+
+            self.backends.append(backend_definition)
 
     def parse_options(self):
         parser = argparse.ArgumentParser()
@@ -99,27 +109,36 @@ class NagiosLivestatusInventory(object):
         if group not in self.result:
             self.result[group] = {}
             self.result[group]['hosts'] = []
-        if hostname not in self.result[group]:
+        if hostname not in self.result[group]['hosts']:
             self.result[group]['hosts'].append(hostname)
 
     def query_backend(self, backend, host = None):
         '''Query a livestatus backend'''
-        hosts_request = Socket(backend['connection']).hosts.columns('name', 'groups')
+        hosts_request = Socket(backend['connection']).hosts.columns(backend['host_field'], backend['group_field'])
+
+        if backend['host_filter'] is not None:
+            hosts_request = hosts_request.filter(backend['host_filter'])
+
         if host is not None:
             hosts_request = hosts_request.filter('name = ' + host[0])
+
         hosts_request._columns += backend['fields']
 
         hosts = hosts_request.call()
         for host in hosts:
-            self.add_host(host['name'], 'all')
-            self.add_host(host['name'], backend['name'])
-            for group in host['groups']:
-                self.add_host(host['name'], group)
+            hostname   = host[backend['host_field']]
+            hostgroups = host[backend['group_field']]
+            if not isinstance(hostgroups, list):
+                hostgroups = [ hostgroups ]
+            self.add_host(hostname, 'all')
+            self.add_host(hostname, backend['name'])
+            for group in hostgroups:
+                self.add_host(hostname, group)
             for field in backend['fields']:
-                var_name = backend['prefix'] + field
-                if host['name'] not in self.result['_meta']['hostvars']:
-                    self.result['_meta']['hostvars'][host['name']] = {}
-                self.result['_meta']['hostvars'][host['name']][var_name] = host[field]
+                var_name = backend['var_prefix'] + field
+                if hostname not in self.result['_meta']['hostvars']:
+                    self.result['_meta']['hostvars'][hostname] = {}
+                self.result['_meta']['hostvars'][hostname][var_name] = host[field]
 
     def __init__(self):
 
