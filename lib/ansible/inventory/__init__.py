@@ -122,7 +122,7 @@ class Inventory(object):
         # FIXME: shouldn't be required, since the group/host vars file
         #        management will be done in VariableManager
         # get group vars from group_vars/ files and vars plugins
-        for group in self.groups:
+        for group in self.groups.values():
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
 
         # get host vars from host_vars/ files and vars plugins
