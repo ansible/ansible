@@ -81,7 +81,10 @@ def get_file_parser(hostsfile, groups, loader):
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
 
-    def __init__(self, loader, groups=dict(), filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
+        if groups is None:
+            groups = dict()
+
         self.names = os.listdir(filename)
         self.names.sort()
         self.directory = filename
