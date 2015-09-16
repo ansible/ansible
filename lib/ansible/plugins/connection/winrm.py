@@ -159,18 +159,18 @@ class Connection(ConnectionBase):
         cmd_ext = cmd_parts and self._shell._unquote(cmd_parts[0]).lower()[-4:] or ''
         # Support running .ps1 files (via script/raw).
         if cmd_ext == '.ps1':
-            script = ' '.join(['&'] + cmd_parts)
+            script = '& %s' % cmd
         # Support running .bat/.cmd files; change back to the default system encoding instead of UTF-8.
         elif cmd_ext in ('.bat', '.cmd'):
-            script = ' '.join(['[System.Console]::OutputEncoding = [System.Text.Encoding]::Default;', '&'] + cmd_parts)
+            script = '[System.Console]::OutputEncoding = [System.Text.Encoding]::Default; & %s' % cmd
         # Encode the command if not already encoded; supports running simple PowerShell commands via raw.
         elif '-EncodedCommand' not in cmd_parts:
-            script = ' '.join(cmd_parts)
+            script = cmd
         if script:
             cmd_parts = self._shell._encode_script(script, as_list=True)
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
-            decoded_cmd = to_unicode(base64.b64decode(encoded_cmd))
+            decoded_cmd = to_unicode(base64.b64decode(encoded_cmd).decode('utf-16-le'))
             self._display.vvv("EXEC %s" % decoded_cmd, host=self._play_context.remote_addr)
         else:
             self._display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
