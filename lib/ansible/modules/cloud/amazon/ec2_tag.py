@@ -22,6 +22,12 @@ description:
     - Creates, removes and lists tags from any EC2 resource.  The resource is referenced by its resource id (e.g. an instance being i-XXXXXXX). It is designed to be used with complex args (tags), see the examples.  This module has a dependency on python-boto.
 version_added: "1.3"
 options:
+  region:
+    description:
+      - region in which the resource exists. 
+    required: false
+    default: null
+    aliases: ['aws_region', 'ec2_region']
   resource:
     description:
       - The EC2 resource id. 
@@ -35,12 +41,12 @@ options:
     default: present
     choices: ['present', 'absent', 'list']
     aliases: []
-  region:
+  tags:
     description:
-      - region in which the resource exists. 
-    required: false
+      - a hash/dictionary of tags to add to the resource; '{"key":"value"}' and '{"key":"value","key":"value"}'
+    required: true
     default: null
-    aliases: ['aws_region', 'ec2_region']
+    aliases: []
 
 author: "Lester Wade (@lwade)"
 extends_documentation_fragment: aws
@@ -50,25 +56,57 @@ EXAMPLES = '''
 # Basic example of adding tag(s)
 tasks:
 - name: tag a resource
-  ec2_tag: resource=vol-XXXXXX region=eu-west-1 state=present
-  args:
+  ec2_tag: 
+    region: eu-west-1 
+    resource: vol-XXXXXX 
+    state: present
     tags:
       Name: ubervol
       env: prod
 
-# Playbook example of adding tag(s) to spawned instances
+# Playbook example of adding tags to volumes on an instance
 tasks:
-- name: launch some instances
-  ec2: keypair={{ keypair }} group={{ security_group }} instance_type={{ instance_type }} image={{ image_id }} wait=true region=eu-west-1
+- name: launch an instance
+  ec2: 
+    count_tags:
+      Name: dbserver
+      Env: production
+    exact_count: 1
+    group: "{{ security_group }}" 
+    keypair: ""{{ keypair }}" 
+    image: "{{ image_id }}" 
+    instance_tags:
+      Name: dbserver
+      Env: production
+    instance_type: "{{ instance_type }}" 
+    region: eu-west-1
+    volumes:
+      - device_name: /dev/xvdb
+        device_type: standard
+        volume_size: 10
+        delete_on_termination: true
+    wait: true 
   register: ec2
 
-- name: tag my launched instances
-  ec2_tag: resource={{ item.id }} region=eu-west-1 state=present
-  with_items: ec2.instances
-  args:
-    tags:
-      Name: webserver
-      env: prod
+- name: list the volumes for the instance
+  ec2_vol:
+    instance: "{{ item.id }}"
+    region: eu-west-1
+    state: list
+  with_items: ec2.tagged_instances
+  register: ec2_vol
+
+- name: tag the volumes
+  ec2_tag:
+    region:  eu-west-1
+    resource: "{{ item.id }}"
+    state: present
+    tags: 
+      Name: dbserver
+      Env: production
+  with_subelements: 
+    - ec2_vol.results
+    - volumes
 '''
 
 import sys
