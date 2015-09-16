@@ -261,10 +261,10 @@ class VariableManager:
         all_vars['playbook_dir'] = loader.get_basedir()
 
         if host:
-            all_vars['groups'] = [group.name for group in host.get_groups()]
+            all_vars['group_names'] = [group.name for group in host.get_groups()]
 
             if self._inventory is not None:
-                all_vars['groups']   = self._inventory.groups_list()
+                all_vars['groups']  = self._inventory.groups.keys()
                 if include_hostvars:
                     hostvars = HostVars(vars_manager=self, play=play, inventory=self._inventory, loader=loader)
                     all_vars['hostvars'] = hostvars
