@@ -605,7 +605,7 @@ class Inventory(object):
             #        we do this shouldn't be too much of an issue. Still, this should
             #        be fixed at some point to allow a "first load" to touch all of the
             #        directories, then later runs only touch the new basedir specified
-            for group in self.groups:
+            for group in self.groups.values():
                 #group.vars = combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
                 group.vars = combine_vars(group.vars, self.get_group_vars(group))
             # get host vars from host_vars/ files
