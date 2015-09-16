@@ -160,11 +160,11 @@ class Inventory(object):
                     [^:\[\]]    # (anything other than ':', '[', or ']'
                     |           # ...or...
                     \[[^\]]*\]  # a single complete bracketed expression)
-                )*              # repeated as many times as possible
+                )+              # repeated as many times as possible
             ''', re.X
         )
 
-        return [x for x in term.findall(pattern) if x]
+        return term.findall(pattern)
 
     def get_hosts(self, pattern="all", ignore_limits_and_restrictions=False):
         """ 
