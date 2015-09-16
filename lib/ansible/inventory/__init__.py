@@ -86,11 +86,16 @@ class Inventory(object):
 
         self.parser = None
 
+        # Always create the 'all' group, even if host_list is
+        # empty: in this case we will subsequently an the implicit
+        # 'localhost' to it.
+
+        all = Group('all')
+        self.groups = [ all ]
+
         if host_list is None:
             pass
         elif isinstance(host_list, list):
-            all = Group('all')
-            self.groups = [ all ]
             for h in host_list:
                 (host, port) = parse_address(h, allow_ranges=False)
                 all.add_host(Host(host, port))
