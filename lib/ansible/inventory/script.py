@@ -36,9 +36,10 @@ from ansible.module_utils.basic import json_dict_bytes_to_unicode
 class InventoryScript:
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
-    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=dict(), filename=C.DEFAULT_HOST_LIST):
 
         self._loader = loader
+        self.groups = groups
 
         # Support inventory scripts that are not prefixed with some
         # path information but happen to be in the current working
@@ -57,7 +58,7 @@ class InventoryScript:
         self.data = stdout
         # see comment about _meta below
         self.host_vars_from_top = None
-        self.groups = self._parse(stderr)
+        self._parse(stderr)
 
 
     def _parse(self, err):
@@ -77,11 +78,7 @@ class InventoryScript:
 
         self.raw  = json_dict_bytes_to_unicode(self.raw)
 
-        all       = Group('all')
-        groups    = dict(all=all)
-        group     = None
-
-
+        group = None
         for (group_name, data) in self.raw.items():
 
             # in Ansible 1.3 and later, a "_meta" subelement may contain
@@ -95,10 +92,10 @@ class InventoryScript:
                     self.host_vars_from_top = data['hostvars']
                     continue
 
-            if group_name != all.name:
-                group = groups[group_name] = Group(group_name)
-            else:
-                group = all
+            if group_name not in self.groups:
+                group = self.groups[group_name] = Group(group_name)
+
+            group = self.groups[group_name]
             host = None
 
             if not isinstance(data, dict):
@@ -124,10 +121,7 @@ class InventoryScript:
                         "data for variables:\n %s" % (group_name, data))
 
                 for k, v in iteritems(data['vars']):
-                    if group.name == all.name:
-                        all.set_variable(k, v)
-                    else:
-                        group.set_variable(k, v)
+                    group.set_variable(k, v)
 
         # Separate loop to ensure all groups are defined
         for (group_name, data) in self.raw.items():
@@ -135,14 +129,16 @@ class InventoryScript:
                 continue
             if isinstance(data, dict) and 'children' in data:
                 for child_name in data['children']:
-                    if child_name in groups:
-                        groups[group_name].add_child_group(groups[child_name])
+                    if child_name in self.groups:
+                        self.groups[group_name].add_child_group(self.groups[child_name])
 
-        for group in groups.values():
-            if group.depth == 0 and group.name != 'all':
-                all.add_child_group(group)
+        # Finally, add all top-level groups as children of 'all'.
+        # We exclude ungrouped here because it was already added as a child of
+        # 'all' at the time it was created.
 
-        return groups
+        for group in self.groups.values():
+            if group.depth == 0 and group.name not in ('all', 'ungrouped'):
+                self.groups['all'].add_child_group(group)
 
     def get_host_variables(self, host):
         """ Runs <script> --host <hostname> to determine additional host variables """
