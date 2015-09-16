@@ -19,12 +19,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import base64
+import inspect
 import os
 import re
 import shlex
 import traceback
-
-from six.moves.urllib import parse
+import urlparse
 
 try:
     from winrm import Response
@@ -50,11 +50,6 @@ from ansible.utils.unicode import to_bytes, to_unicode
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
-    transport_schemes = {
-        'http': [('kerberos', 'http'), ('plaintext', 'http'), ('plaintext', 'https')],
-        'https': [('kerberos', 'https'), ('plaintext', 'https')],
-        }
-
     def __init__(self,  *args, **kwargs):
 
         self.has_pipelining   = False
@@ -74,59 +69,82 @@ class Connection(ConnectionBase):
         ''' used to identify this connection object from other classes '''
         return 'winrm'
 
+    def set_host_overrides(self, host):
+        '''
+        Override WinRM-specific options from host variables.
+        '''
+        host_vars = host.get_vars()
+
+        self._winrm_host = self._play_context.remote_addr
+        self._winrm_port = int(self._play_context.port or 5986)
+        self._winrm_scheme = host_vars.get('ansible_winrm_scheme', 'http' if self._winrm_port == 5985 else 'https')
+        self._winrm_path = host_vars.get('ansible_winrm_path', '/wsman')
+        self._winrm_user = self._play_context.remote_user
+        self._winrm_pass = self._play_context.password
+
+        if '@' in self._winrm_user:
+            self._winrm_realm = self._winrm_user.split('@', 1)[1].strip() or None
+        else:
+            self._winrm_realm = None
+        self._winrm_realm = host_vars.get('ansible_winrm_realm', self._winrm_realm) or None
+
+        if HAVE_KERBEROS and ('@' in self._winrm_user or self._winrm_realm):
+            self._winrm_transport = 'kerberos,plaintext'
+        else:
+            self._winrm_transport = 'plaintext'
+        self._winrm_transport = host_vars.get('ansible_winrm_transport', self._winrm_transport)
+        if isinstance(self._winrm_transport, basestring):
+            self._winrm_transport = [x.strip() for x in self._winrm_transport.split(',') if x.strip()]
+
+        self._winrm_kwargs = dict(username=self._winrm_user, password=self._winrm_pass, realm=self._winrm_realm)
+        argspec = inspect.getargspec(Protocol.__init__)
+        for arg in argspec.args:
+            if arg in ('self', 'endpoint', 'transport', 'username', 'password', 'realm'):
+                continue
+            if 'ansible_winrm_%s' % arg in host_vars:
+                self._winrm_kwargs[arg] = host_vars['ansible_winrm_%s' % arg]
+
     def _winrm_connect(self):
         '''
         Establish a WinRM connection over HTTP/HTTPS.
         '''
-        port = self._play_context.port or 5986
         self._display.vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
-            (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
-        netloc = '%s:%d' % (self._play_context.remote_addr, port)
-        exc = None
-        for transport, scheme in self.transport_schemes['http' if port == 5985 else 'https']:
-            if transport == 'kerberos' and (not HAVE_KERBEROS or not '@' in self._play_context.remote_user):
+            (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
+        netloc = '%s:%d' % (self._winrm_host, self._winrm_port)
+        endpoint = urlparse.urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
+        errors = []
+        for transport in self._winrm_transport:
+            if transport == 'kerberos' and not HAVE_KERBEROS:
+                errors.append('kerberos: the python kerberos library is not installed')
                 continue
-
-            if transport == 'kerberos':
-                realm = self._play_context.remote_user.split('@', 1)[1].strip() or None
-            else:
-                realm = None
-
-            endpoint = parse.urlunsplit((scheme, netloc, '/wsman', '', ''))
-
-            self._display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._play_context.remote_addr)
-            protocol = Protocol(
-                endpoint,
-                transport=transport,
-                username=self._play_context.remote_user,
-                password=self._play_context.password,
-                realm=realm
-            )
-
+            self._display.vvvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint), host=self._winrm_host)
             try:
+                protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
                 protocol.send_message('')
                 return protocol
-            except WinRMTransportError as exc:
-                err_msg = str(exc)
+            except Exception as e:
+                err_msg = (str(e) or repr(e)).strip()
                 if re.search(r'Operation\s+?timed\s+?out', err_msg, re.I):
-                    raise AnsibleError("the connection attempt timed out")
+                    raise AnsibleError('the connection attempt timed out')
                 m = re.search(r'Code\s+?(\d{3})', err_msg)
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
-                        raise AnsibleError("the username/password specified for this server was incorrect")
+                        err_msg = 'the username/password specified for this server was incorrect'
                     elif code == 411:
                         return protocol
-                self._display.vvvvv('WINRM CONNECTION ERROR: %s' % err_msg, host=self._play_context.remote_addr)
-                continue
-        if exc:
-            raise AnsibleError(str(exc))
+                errors.append('%s: %s' % (transport, err_msg))
+                self._display.vvvvv('WINRM CONNECTION ERROR: %s\n%s' % (err_msg, traceback.format_exc()), host=self._winrm_host)
+        if errors:
+            raise AnsibleError(', '.join(errors))
+        else:
+            raise AnsibleError('No transport found for WinRM connection')
 
     def _winrm_exec(self, command, args=(), from_exec=False):
         if from_exec:
-            self._display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
+            self._display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
         else:
-            self._display.vvvvvv("WINRM EXEC %r %r" % (command, args), host=self._play_context.remote_addr)
+            self._display.vvvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
         if not self.protocol:
             self.protocol = self._winrm_connect()
         if not self.shell_id:
@@ -136,11 +154,11 @@ class Connection(ConnectionBase):
             command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args))
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
             if from_exec:
-                self._display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._play_context.remote_addr)
+                self._display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
             else:
-                self._display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._play_context.remote_addr)
-            self._display.vvvvvv('WINRM STDOUT %s' % to_unicode(response.std_out), host=self._play_context.remote_addr)
-            self._display.vvvvvv('WINRM STDERR %s' % to_unicode(response.std_err), host=self._play_context.remote_addr)
+                self._display.vvvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
+            self._display.vvvvvv('WINRM STDOUT %s' % to_unicode(response.std_out), host=self._winrm_host)
+            self._display.vvvvvv('WINRM STDERR %s' % to_unicode(response.std_err), host=self._winrm_host)
             return response
         finally:
             if command_id:
@@ -171,9 +189,9 @@ class Connection(ConnectionBase):
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
             decoded_cmd = to_unicode(base64.b64decode(encoded_cmd).decode('utf-16-le'))
-            self._display.vvv("EXEC %s" % decoded_cmd, host=self._play_context.remote_addr)
+            self._display.vvv("EXEC %s" % decoded_cmd, host=self._winrm_host)
         else:
-            self._display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
+            self._display.vvv("EXEC %s" % cmd, host=self._winrm_host)
         try:
             result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], from_exec=True)
         except Exception as e:
@@ -186,7 +204,7 @@ class Connection(ConnectionBase):
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)
         out_path = self._shell._unquote(out_path)
-        self._display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._play_context.remote_addr)
+        self._display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
         with open(in_path) as in_file:
@@ -214,7 +232,7 @@ class Connection(ConnectionBase):
                             out_path = out_path + '.ps1'
                     b64_data = base64.b64encode(out_data)
                     script = script_template % (self._shell._escape(out_path), offset, b64_data, in_size)
-                    self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._play_context.remote_addr)
+                    self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
@@ -227,7 +245,7 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         in_path = self._shell._unquote(in_path)
         out_path = out_path.replace('\\', '/')
-        self._display.vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self._play_context.remote_addr)
+        self._display.vvv('FETCH "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         buffer_size = 2**19 # 0.5MB chunks
         makedirs_safe(os.path.dirname(out_path))
         out_file = None
@@ -256,7 +274,7 @@ class Connection(ConnectionBase):
                             Exit 1;
                         }
                     ''' % dict(buffer_size=buffer_size, path=self._shell._escape(in_path), offset=offset)
-                    self._display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._play_context.remote_addr)
+                    self._display.vvvvv('WINRM FETCH "%s" to "%s" (offset=%d)' % (in_path, out_path, offset), host=self._winrm_host)
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
