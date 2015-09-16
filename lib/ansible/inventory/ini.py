@@ -38,7 +38,7 @@ class InventoryParser(object):
     with their associated hosts and variable settings.
     """
 
-    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=dict(), filename=C.DEFAULT_HOST_LIST):
         self._loader = loader
         self.filename = filename
 
@@ -47,10 +47,7 @@ class InventoryParser(object):
 
         self.hosts = {}
         self.patterns = {}
-        self.groups = dict(
-            all = Group(name='all'),
-            ungrouped = Group(name='ungrouped')
-        )
+        self.groups = groups
 
         # Read in the hosts, groups, and variables defined in the
         # inventory file.
@@ -63,15 +60,6 @@ class InventoryParser(object):
         data = data.split('\n')
 
         self._parse(data)
-
-        # Finally, add all top-level groups (including 'ungrouped') as
-        # children of 'all'.
-
-        for group in self.groups.values():
-            if group.depth == 0 and group.name != 'all':
-                self.groups['all'].add_child_group(group)
-
-        # Note: we could discard self.hosts after this point.
 
     def _raise_error(self, message):
         raise AnsibleError("%s:%d: " % (self.filename, self.lineno) + message)
@@ -185,6 +173,15 @@ class InventoryParser(object):
                 raise AnsibleError("%s:%d: Section [%s:vars] not valid for undefined group: %s" % (self.filename, decl['line'], decl['name'], decl['name']))
             elif decl['state'] == 'children':
                 raise AnsibleError("%s:%d: Section [%s:children] includes undefined group: %s" % (self.filename, decl['line'], decl['parent'], decl['name']))
+
+        # Finally, add all top-level groups as children of 'all'.
+        # We exclude ungrouped here because it was already added as a child of
+        # 'all' at the time it was created.
+
+        for group in self.groups.values():
+            if group.depth == 0 and group.name not in ('all', 'ungrouped'):
+                self.groups['all'].add_child_group(group)
+
 
     def _parse_group_name(self, line):
         '''
