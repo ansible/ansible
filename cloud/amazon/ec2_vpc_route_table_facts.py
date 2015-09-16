@@ -46,17 +46,17 @@ EXAMPLES = '''
 # Gather facts about a particular VPC route table using route table ID
 - ec2_vpc_route_table_facts:
     filters:
-      - route-table-id: rtb-00112233
+      route-table-id: rtb-00112233
 
 # Gather facts about any VPC route table with a tag key Name and value Example
 - ec2_vpc_route_table_facts:
     filters:
-      - "tag:Name": Example
+      "tag:Name": Example
 
 # Gather facts about any VPC route table within VPC with ID vpc-abcdef00
 - ec2_vpc_route_table_facts:
     filters:
-      - vpc-id: vpc-abcdef00
+      vpc-id: vpc-abcdef00
 
 '''
 
