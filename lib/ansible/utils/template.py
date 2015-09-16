@@ -15,12 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import os
 import re
 import codecs
 import jinja2
 from jinja2.runtime import StrictUndefined
 from jinja2.exceptions import TemplateSyntaxError
+from jinja2.utils import missing
 import yaml
 import json
 from ansible import errors
@@ -157,15 +159,22 @@ class _jinja2_vars(object):
     extras is a list of locals to also search for variables.
     '''
 
-    def __init__(self, basedir, vars, globals, fail_on_undefined, *extras):
+    def __init__(self, basedir, vars, globals, fail_on_undefined, locals=None, *extras):
         self.basedir = basedir
         self.vars = vars
         self.globals = globals
         self.fail_on_undefined = fail_on_undefined
         self.extras = extras
+        self.locals = dict()
+        if isinstance(locals, dict):
+            for key, val in locals.iteritems():
+                if key[:2] == 'l_' and val is not missing:
+                    self.locals[key[2:]] = val
 
     def __contains__(self, k):
         if k in self.vars:
+            return True
+        if k in self.locals:
             return True
         for i in self.extras:
             if k in i:
@@ -177,6 +186,8 @@ class _jinja2_vars(object):
     def __getitem__(self, varname):
         from ansible.runner import HostVars
         if varname not in self.vars:
+            if varname in self.locals:
+                return self.locals[varname]
             for i in self.extras:
                 if varname in i:
                     return i[varname]
@@ -200,7 +211,7 @@ class _jinja2_vars(object):
         '''
         if locals is None:
             return self
-        return _jinja2_vars(self.basedir, self.vars, self.globals, self.fail_on_undefined, locals, *self.extras)
+        return _jinja2_vars(self.basedir, self.vars, self.globals, self.fail_on_undefined, locals=locals, *self.extras)
 
 class J2Template(jinja2.environment.Template):
     '''
