@@ -269,7 +269,7 @@ def main():
       iam_name=dict(default=None, required=False),
       policy_name=dict(default=None, required=True),
       policy_document=dict(default=None, required=False),
-      policy_json=dict(type='str', default=None, required=False),
+      policy_json=dict(default=None, required=False),
       skip_duplicates=dict(type='bool', default=True, required=False)
   ))
 
