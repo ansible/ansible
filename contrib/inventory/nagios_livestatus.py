@@ -158,18 +158,18 @@ class NagiosLivestatusInventory(object):
             self.json_indent = 2
 
         if len(self.backends) == 0:
-            print "Error: Livestatus configuration is missing. See nagios_livestatus.ini."
+            print("Error: Livestatus configuration is missing. See nagios_livestatus.ini.")
             exit(1)
 
         for backend in self.backends:
             self.query_backend(backend, self.options.host)
 
         if self.options.host:
-            print json.dumps(self.result['_meta']['hostvars'][self.options.host[0]], indent = self.json_indent)
+            print(json.dumps(self.result['_meta']['hostvars'][self.options.host[0]], indent = self.json_indent))
         elif self.options.list:
-            print json.dumps(self.result, indent = self.json_indent)
+            print(json.dumps(self.result, indent = self.json_indent))
         else:
-            print "usage: --list or --host HOSTNAME [--pretty]"
+            print("usage: --list or --host HOSTNAME [--pretty]")
             exit(1)
 
 NagiosLivestatusInventory()
