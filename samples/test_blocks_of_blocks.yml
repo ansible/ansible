@@ -11,3 +11,4 @@
       - fail:
       rescue:
       - debug: msg="rescuing from the fail"
+      when: not skip_me|default(False)
