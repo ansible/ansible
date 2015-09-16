@@ -144,7 +144,7 @@ class Block(Base, Become, Conditional, Taggable):
     #        use_handlers=self._use_handlers,
     #    )
 
-    def copy(self, exclude_parent=False):
+    def copy(self, exclude_parent=False, exclude_tasks=False):
         def _dupe_task_list(task_list, new_block):
             new_task_list = []
             for task in task_list:
@@ -162,13 +162,14 @@ class Block(Base, Become, Conditional, Taggable):
         new_me._use_handlers = self._use_handlers
         new_me._dep_chain    = self._dep_chain[:]
 
-        new_me.block  = _dupe_task_list(self.block or [], new_me)
-        new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
-        new_me.always = _dupe_task_list(self.always or [], new_me)
+        if not exclude_tasks:
+            new_me.block  = _dupe_task_list(self.block or [], new_me)
+            new_me.rescue = _dupe_task_list(self.rescue or [], new_me)
+            new_me.always = _dupe_task_list(self.always or [], new_me)
 
         new_me._parent_block = None
         if self._parent_block and not exclude_parent:
-            new_me._parent_block = self._parent_block.copy()
+            new_me._parent_block = self._parent_block.copy(exclude_tasks=exclude_tasks)
 
         new_me._role = None
         if self._role:
@@ -197,6 +198,8 @@ class Block(Base, Become, Conditional, Taggable):
             data['role'] = self._role.serialize()
         if self._task_include is not None:
             data['task_include'] = self._task_include.serialize()
+        if self._parent_block is not None:
+            data['parent_block'] = self._parent_block.copy(exclude_tasks=True).serialize()
 
         return data
 
@@ -229,6 +232,12 @@ class Block(Base, Become, Conditional, Taggable):
             ti = Task()
             ti.deserialize(ti_data)
             self._task_include = ti
+
+        pb_data = data.get('parent_block')
+        if pb_data:
+            pb = Block()
+            pb.deserialize(pb_data)
+            self._parent_block = pb
 
     def evaluate_conditional(self, templar, all_vars):
         if len(self._dep_chain):
