@@ -60,16 +60,14 @@ class Inventory(object):
         self._vars_per_host  = {}
         self._vars_per_group = {}
         self._hosts_cache    = {}
-        self._groups_list    = {}
         self._pattern_cache  = {}
         self._vars_plugins   = []
-        self._groups_cache   = {}
 
         # to be set by calling set_playbook_basedir by playbook code
         self._playbook_basedir = None
 
         # the inventory object holds a list of groups
-        self.groups = []
+        self.groups = {}
 
         # a list of host(names) to contain current inquiries to
         self._restriction = None
@@ -111,9 +109,7 @@ class Inventory(object):
                 self.parser = get_file_parser(host_list, self.groups, self._loader)
                 vars_loader.add_directory(self.basedir(), with_subdir=True)
 
-            if self.parser:
-                self.groups = self.parser.groups.values()
-            else:
+            if not self.parser:
                 # should never happen, but JIC
                 raise AnsibleError("Unable to parse %s as an inventory source" % host_list)
 
@@ -122,7 +118,7 @@ class Inventory(object):
         # FIXME: shouldn't be required, since the group/host vars file
         #        management will be done in VariableManager
         # get group vars from group_vars/ files and vars plugins
-        for group in self.groups:
+        for group in self.groups.values():
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
 
         # get host vars from host_vars/ files and vars plugins
@@ -372,7 +368,7 @@ class Inventory(object):
                 results.append(host)
 
         groups = self.get_groups()
-        for group in groups:
+        for group in groups.values():
             if pattern == 'all':
                 for host in group.get_hosts():
                     __append_host_to_results(host)
@@ -408,19 +404,6 @@ class Inventory(object):
         else:
             return []
 
-    def groups_list(self):
-        if not self._groups_list:
-            groups = {}
-            for g in self.groups:
-                groups[g.name] = [h.name for h in g.get_hosts()]
-                ancestors = g.get_ancestors()
-                for a in ancestors:
-                    if a.name not in groups:
-                        groups[a.name] = [h.name for h in a.get_hosts()]
-            self._groups_list = groups
-            self._groups_cache = {}
-        return self._groups_list
-
     def get_groups(self):
         return self.groups
 
@@ -439,7 +422,7 @@ class Inventory(object):
                     return host
             return self._create_implicit_localhost(hostname)
         matching_host = None
-        for group in self.groups:
+        for group in self.groups.values():
             for host in group.get_hosts():
                 if hostname == host.name:
                     matching_host = host
@@ -447,11 +430,7 @@ class Inventory(object):
         return matching_host
 
     def get_group(self, groupname):
-        if not self._groups_cache:
-            for group in self.groups:
-                self._groups_cache[group.name] = group
-
-        return self._groups_cache.get(groupname)
+        return self.groups[groupname]
 
     def get_group_variables(self, groupname, update_cached=False, vault_password=None):
         if groupname not in self._vars_per_group or update_cached:
@@ -522,10 +501,8 @@ class Inventory(object):
         return vars
 
     def add_group(self, group):
-        if group.name not in self.groups_list():
-            self.groups.append(group)
-            self._groups_list = None  # invalidate internal cache 
-            self._groups_cache = {}
+        if group.name not in self.groups:
+            self.groups[group.name] = group
         else:
             raise AnsibleError("group already in inventory: %s" % group.name)
 
@@ -539,7 +516,7 @@ class Inventory(object):
         return result
 
     def list_groups(self):
-        return sorted([ g.name for g in self.groups ], key=lambda x: x)
+        return sorted(self.groups.keys(), key=lambda x: x)
 
     def restrict_to_hosts(self, restriction):
         """ 
@@ -703,8 +680,6 @@ class Inventory(object):
         self._hosts_cache    = {}
         self._vars_per_host  = {}
         self._vars_per_group = {}
-        self._groups_list    = {}
-        self._groups_cache   = {}
-        self.groups = []
+        self.groups          = {}
 
         self.parse_inventory(self.host_list)
