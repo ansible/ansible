@@ -185,7 +185,7 @@ class Connection(ConnectionBase):
         elif '-EncodedCommand' not in cmd_parts:
             script = cmd
         if script:
-            cmd_parts = self._shell._encode_script(script, as_list=True)
+            cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
         if '-EncodedCommand' in cmd_parts:
             encoded_cmd = cmd_parts[cmd_parts.index('-EncodedCommand') + 1]
             decoded_cmd = to_unicode(base64.b64decode(encoded_cmd).decode('utf-16-le'))
