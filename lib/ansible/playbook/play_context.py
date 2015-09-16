@@ -241,6 +241,8 @@ class PlayContext(Base):
             self.start_at_task = to_unicode(options.start_at_task)
         if hasattr(options, 'diff') and options.diff:
             self.diff = boolean(options.diff)
+        if hasattr(options, 'timeout') and options.timeout:
+            self.timeout = int(options.timeout)
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the
