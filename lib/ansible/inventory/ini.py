@@ -38,7 +38,10 @@ class InventoryParser(object):
     with their associated hosts and variable settings.
     """
 
-    def __init__(self, loader, groups=dict(), filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
+        if groups is None:
+            groups = dict()
+
         self._loader = loader
         self.filename = filename
 

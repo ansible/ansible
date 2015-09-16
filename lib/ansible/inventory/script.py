@@ -36,7 +36,9 @@ from ansible.module_utils.basic import json_dict_bytes_to_unicode
 class InventoryScript:
     ''' Host inventory parser for ansible using external inventory scripts. '''
 
-    def __init__(self, loader, groups=dict(), filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
+        if groups is None:
+            groups = dict()
 
         self._loader = loader
         self.groups = groups
