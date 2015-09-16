@@ -92,3 +92,12 @@
   assert:
     that:
       - "raw_result.stdout_lines[0] == 'wwe=raw'"
+
+- name: run a raw command with unicode chars and quoted args (from https://github.com/ansible/ansible-modules-core/issues/1929)
+  raw: Write-Host --% icacls D:\somedir\ /grant "! ЗАО. Руководство":F
+  register: raw_result2
+
+- name: make sure raw passes command as-is and doesn't split/rejoin args
+  assert:
+    that:
+      - "raw_result2.stdout_lines[0] == '--% icacls D:\\\\somedir\\\\ /grant \"! ЗАО. Руководство\":F'"

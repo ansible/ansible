@@ -171,3 +171,13 @@
       - "not test_cmd_result.stderr"
       - "not test_cmd_result|failed"
       - "test_cmd_result|changed"
+
+- name: run test script that takes a boolean parameter
+  script: test_script_bool.ps1 $true
+  register: test_script_bool_result
+
+- name: check that the script ran and the parameter was treated as a boolean
+  assert:
+    that:
+      - "test_script_bool_result.stdout_lines[0] == 'System.Boolean'"
+      - "test_script_bool_result.stdout_lines[1] == 'True'"
