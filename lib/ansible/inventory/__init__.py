@@ -176,12 +176,14 @@ class Inventory(object):
         # Enumerate all hosts matching the given pattern (which may be
         # either a list of patterns or a string like 'pat1:pat2').
         if isinstance(pattern, list):
-            pattern = ':'.join(pattern)
+            patterns = pattern
+        else:
+            if ';' in pattern or ',' in pattern:
+                display.deprecated("Use ':' instead of ',' or ';' to separate "
+                                   "host patterns", version=2.0, removed=True)
+            patterns = self._split_pattern(pattern)
 
-        if ';' in pattern or ',' in pattern:
-            display.deprecated("Use ':' instead of ',' or ';' to separate host patterns", version=2.0, removed=True)
 
-        patterns = self._split_pattern(pattern)
         hosts = self._evaluate_patterns(patterns)
 
         # mainly useful for hostvars[host] access
