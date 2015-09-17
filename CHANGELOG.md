@@ -14,6 +14,8 @@ Other Notable Changes:
 * Fixes a bug where yum state=latest would error if there were no updates to install.
 * Fixes a bug in lineinfile relating to escape sequences.
 * Fixes a bug where vars_prompt was not keeping passwords private by default.
+* Fix ansible-galaxy and the hipchat callback plugin to check that the host it
+  is contacting matches its TLS Certificate.
 
 ## 1.9.3 "Dancing In the Street" - Sep 3, 2015
 

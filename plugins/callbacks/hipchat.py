@@ -17,9 +17,9 @@
 
 import os
 import urllib
-import urllib2
 
 from ansible import utils
+from ansible.module_utils.urls import open_url
 
 try:
     import prettytable
@@ -77,7 +77,7 @@ class CallbackModule(object):
 
         url = ('%s?auth_token=%s' % (self.msg_uri, self.token))
         try:
-            response = urllib2.urlopen(url, urllib.urlencode(params))
+            response = open_url(url, data=urllib.urlencode(params))
             return response.read()
         except:
             utils.warning('Could not submit message to hipchat')

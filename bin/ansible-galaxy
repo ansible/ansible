@@ -31,7 +31,6 @@ import sys
 import tarfile
 import tempfile
 import urllib
-import urllib2
 import yaml
 
 from collections import defaultdict
@@ -42,6 +41,7 @@ from optparse import OptionParser
 import ansible.constants as C
 import ansible.utils
 from ansible.errors import AnsibleError
+from ansible.module_utils.urls import open_url
 
 default_meta_template = """---
 galaxy_info:
@@ -253,7 +253,7 @@ def api_get_config(api_server):
 
     try:
         url = 'https://%s/api/' % api_server
-        data = json.load(urllib2.urlopen(url))
+        data = json.load(open_url(url))
         if not data.get("current_version",None):
             return None
         else:
@@ -261,7 +261,7 @@ def api_get_config(api_server):
     except:
         return None
 
-def api_lookup_role_by_name(api_server, role_name, notify=True):
+def api_lookup_role_by_name(api_server, role_name, parser, notify=True):
     """
     Uses the Galaxy API to do a lookup on the role owner/name.
     """
@@ -281,7 +281,7 @@ def api_lookup_role_by_name(api_server, role_name, notify=True):
 
     url = 'https://%s/api/v1/roles/?owner__username=%s&name=%s' % (api_server,user_name,role_name)
     try:
-        data = json.load(urllib2.urlopen(url))
+        data = json.load(open_url(url))
         if len(data["results"]) == 0:
             return None
         else:
@@ -298,13 +298,13 @@ def api_fetch_role_related(api_server, related, role_id):
 
     try:
         url = 'https://%s/api/v1/roles/%d/%s/?page_size=50' % (api_server, int(role_id), related)
-        data = json.load(urllib2.urlopen(url))
+        data = json.load(open_url(url))
         results = data['results']
         done = (data.get('next', None) == None)
         while not done:
             url = 'https://%s%s' % (api_server, data['next'])
             print url
-            data = json.load(urllib2.urlopen(url))
+            data = json.load(open_url(url))
             results += data['results']
             done = (data.get('next', None) == None)
         return results
@@ -318,7 +318,7 @@ def api_get_list(api_server, what):
 
     try:
         url = 'https://%s/api/v1/%s/?page_size' % (api_server, what)
-        data = json.load(urllib2.urlopen(url))
+        data = json.load(open_url(url))
         if "results" in data:
             results = data['results']
         else:
@@ -329,7 +329,7 @@ def api_get_list(api_server, what):
         while not done:
             url = 'https://%s%s' % (api_server, data['next'])
             print url
-            data = json.load(urllib2.urlopen(url))
+            data = json.load(open_url(url))
             results += data['results']
             done = (data.get('next', None) == None)
         return results
@@ -484,7 +484,7 @@ def fetch_role(role_name, target, role_data, options):
     print "- downloading role from %s" % archive_url
 
     try:
-        url_file = urllib2.urlopen(archive_url)
+        url_file = open_url(archive_url)
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         data = url_file.read()
         while data:
@@ -703,7 +703,7 @@ def execute_info(args, options, parser):
                 del install_info['version']
             role_info.update(install_info)
 
-        remote_data = api_lookup_role_by_name(api_server, role, False)
+        remote_data = api_lookup_role_by_name(api_server, role, parser, False)
         if remote_data:
             role_info.update(remote_data)
 
@@ -804,7 +804,7 @@ def execute_install(args, options, parser):
                     print "- the API server (%s) is not responding, please try again later." % api_server
                     sys.exit(1)
 
-                role_data = api_lookup_role_by_name(api_server, role_src)
+                role_data = api_lookup_role_by_name(api_server, role_src, parser)
                 if not role_data:
                     print "- sorry, %s was not found on %s." % (role_src, api_server)
                     exit_without_ignore(options)
