@@ -43,6 +43,7 @@ class TestParseAddress(unittest.TestCase):
         '192.0.2.[3:10]:23': ['192.0.2.[3:10]', 23],
         'abcd:ef98::7654:[1:9]': ['abcd:ef98::7654:[1:9]', None],
         '[abcd:ef98::7654:[6:32]]:2222': ['abcd:ef98::7654:[6:32]', 2222],
+        '[abcd:ef98::7654:[9ab3:fcb7]]:2222': ['abcd:ef98::7654:[9ab3:fcb7]', 2222],
         u'fóöb[a:c]r.éxàmplê.com:632': [u'fóöb[a:c]r.éxàmplê.com', 632],
         '[a:b]foo.com': ['[a:b]foo.com', None],
         'foo[a:b].com': ['foo[a:b].com', None],
