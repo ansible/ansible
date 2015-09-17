@@ -275,7 +275,7 @@ class ActionBase:
                 return data2.split()[0]
         except IndexError:
             self._display.warning("Calculating checksum failed unusually, please report this to " + \
-                "the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n") % (cmd, data)
+                "the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n" % (cmd, data))
             # this will signal that it changed and allow things to keep going
             return "INVALIDCHECKSUM"
 
