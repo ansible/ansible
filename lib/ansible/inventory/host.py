@@ -46,8 +46,7 @@ class Host:
         return dict(
             name=self.name,
             vars=self.vars.copy(),
-            ipv4_address=self.ipv4_address,
-            ipv6_address=self.ipv6_address,
+            address=self.address,
             gathered_facts=self._gathered_facts,
             groups=groups,
         )
@@ -55,10 +54,9 @@ class Host:
     def deserialize(self, data):
         self.__init__()
 
-        self.name         = data.get('name')
-        self.vars         = data.get('vars', dict())
-        self.ipv4_address = data.get('ipv4_address', '')
-        self.ipv6_address = data.get('ipv6_address', '')
+        self.name    = data.get('name')
+        self.vars    = data.get('vars', dict())
+        self.address = data.get('address', '')
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -72,11 +70,10 @@ class Host:
         self.vars = {}
         self.groups = []
 
-        self.ipv4_address = name
-        self.ipv6_address = name
+        self.address = name
 
         if port:
-            self.set_variable('ansible_ssh_port', int(port))
+            self.set_variable('ansible_port', int(port))
 
         self._gathered_facts = False
 
