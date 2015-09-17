@@ -20,12 +20,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import queue
+
 import multiprocessing
 import os
 import signal
 import sys
 import time
 import traceback
+
+from jinja2.exceptions import TemplateNotFound
 
 # TODO: not needed if we use the cryptography library with its default RNG
 # engine
@@ -127,8 +130,6 @@ class WorkerProcess(multiprocessing.Process):
 
             except queue.Empty:
                 pass
-            except (IOError, EOFError, KeyboardInterrupt):
-                break
             except AnsibleConnectionFailure:
                 try:
                     if task:
@@ -138,15 +139,18 @@ class WorkerProcess(multiprocessing.Process):
                     # FIXME: most likely an abort, catch those kinds of errors specifically
                     break
             except Exception as e:
-                debug("WORKER EXCEPTION: %s" % e)
-                debug("WORKER EXCEPTION: %s" % traceback.format_exc())
-                try:
-                    if task:
-                        task_result = TaskResult(host, task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
-                        self._rslt_q.put(task_result, block=False)
-                except:
-                    # FIXME: most likely an abort, catch those kinds of errors specifically
+                if isinstance(e, (IOError, EOFError, KeyboardInterrupt)) and not isinstance(e, TemplateNotFound):
                     break
+                else:
+                    try:
+                        if task:
+                            task_result = TaskResult(host, task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
+                            self._rslt_q.put(task_result, block=False)
+                    except:
+                        debug("WORKER EXCEPTION: %s" % e)
+                        debug("WORKER EXCEPTION: %s" % traceback.format_exc())
+                        # FIXME: most likely an abort, catch those kinds of errors specifically
+                        break
 
         debug("WORKER PROCESS EXITING")
 
