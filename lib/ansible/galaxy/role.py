@@ -29,7 +29,7 @@ from shutil import rmtree
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansilbe.module_utils.urls import open_url
+from ansible.module_utils.urls import open_url
 
 try:
     from __main__ import display
