@@ -44,6 +44,14 @@ class TestInventory(unittest.TestCase):
         ' a : b ': ['a', 'b'],
         'foo:bar:baz[1:2]': ['foo', 'bar', 'baz[1:2]'],
     }
+    pattern_lists = [
+        [['a'], ['a']],
+        [['a', 'b'], ['a', 'b']],
+        [['a, b'], ['a', 'b']],
+        [['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9,foo'],
+         ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9','foo']]
+    ]
+
 
     def setUp(self):
         v = VariableManager()
@@ -55,4 +63,7 @@ class TestInventory(unittest.TestCase):
 
         for p in self.patterns:
             r = self.patterns[p]
+            self.assertEqual(r, self.i._split_pattern(p))
+
+        for p, r in self.pattern_lists:
             self.assertEqual(r, self.i._split_pattern(p))
