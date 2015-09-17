@@ -24,8 +24,10 @@ import os
 import re
 import shlex
 import traceback
-import urlparse
 
+from six.moves.urllib.parse import urlunsplit
+
+from ansible.errors import AnsibleError
 try:
     from winrm import Response
     from winrm.exceptions import WinRMTransportError
@@ -41,7 +43,7 @@ except ImportError:
     pass
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
+from ansible.errors import AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins import shell_loader
 from ansible.utils.path import makedirs_safe
@@ -111,7 +113,7 @@ class Connection(ConnectionBase):
         self._display.vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
             (self._winrm_user, self._winrm_port, self._winrm_host), host=self._winrm_host)
         netloc = '%s:%d' % (self._winrm_host, self._winrm_port)
-        endpoint = urlparse.urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
+        endpoint = urlunsplit((self._winrm_scheme, netloc, self._winrm_path, '', ''))
         errors = []
         for transport in self._winrm_transport:
             if transport == 'kerberos' and not HAVE_KERBEROS:
