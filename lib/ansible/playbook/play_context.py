@@ -25,7 +25,7 @@ import pipes
 import random
 import re
 
-from six import iteritems
+from six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -250,7 +250,7 @@ class PlayContext(Base):
         if hasattr(options, 'tags'):
             if isinstance(options.tags, list):
                 self.only_tags.update(options.tags)
-            elif isinstance(options.tags, basestring):
+            elif isinstance(options.tags, string_types):
                 self.only_tags.update(options.tags.split(','))
 
         if len(self.only_tags) == 0:
@@ -259,7 +259,7 @@ class PlayContext(Base):
         if hasattr(options, 'skip_tags'):
             if isinstance(options.skip_tags, list):
                 self.skip_tags.update(options.skip_tags)
-            elif isinstance(options.skip_tags, basestring):
+            elif isinstance(options.skip_tags, string_types):
                 self.skip_tags.update(options.skip_tags.split(','))
 
     def set_task_and_variable_override(self, task, variables):
