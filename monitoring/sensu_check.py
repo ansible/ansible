@@ -36,7 +36,8 @@ options:
       - This is the key that is used to determine whether a check exists
     required: true
   state:
-    description: Whether the check should be present or not
+    description:
+      - Whether the check should be present or not
     choices: [ 'present', 'absent' ]
     required: false
     default: present
@@ -102,7 +103,8 @@ options:
     required: false
     default: []
   metric:
-    description: Whether the check is a metric
+    description:
+      - Whether the check is a metric
     choices: [ 'yes', 'no' ]
     required: false
     default: no
@@ -169,7 +171,7 @@ EXAMPLES = '''
 # Note that the check will still show up in the sensu dashboard,
 # to remove it completely you need to issue a DELETE request to the sensu api.
 - name: check disk
-  sensu_check: name=check_disk_capacity
+  sensu_check: name=check_disk_capacity state=absent
 '''
 
 
