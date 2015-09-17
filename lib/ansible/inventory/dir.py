@@ -109,7 +109,7 @@ class InventoryDirectory(object):
             if os.path.isdir(fullpath):
                 parser = InventoryDirectory(loader=loader, filename=fullpath)
             else:
-                parser = get_file_parser(fullpath, loader)
+                parser = get_file_parser(fullpath, groups, loader)
                 if parser is None:
                     #FIXME: needs to use display
                     import warnings
