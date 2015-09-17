@@ -104,7 +104,7 @@ EXAMPLES = '''
     severity: High
     description: An error has been found. Please check the attached error log for details.
     attachment: /path/to/error.log
-    attachment_description: Error log
+    attachment_description: Error log file
     tags:
       - Error
       - Needs manual check
