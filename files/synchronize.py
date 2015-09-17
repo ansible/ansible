@@ -167,7 +167,7 @@ options:
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host `synchronize is connecting to`.
-   - The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host, or the `become_user` if `become: yes` is active. synchronize will attempt to escalate privileges to the become_user `on the local host`.
+   - "The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host, or the `become_user` if `become: yes` is active. synchronize will attempt to escalate privileges to the become_user `on the local host`."
    - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host. If you require permissions `other` than those of the remote_user, you must specify this with a sudo command inside the C(rsync_path) option in the task; for example, `rsync_path="sudo rsync"`.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path
