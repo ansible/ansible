@@ -544,6 +544,27 @@ Additional paths can be provided separated by colon characters, in the same way 
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
 
+.. _retry_files_enabled:
+
+retry_files_enabled
+===================
+
+This controls whether a failed Ansible playbook should create a .retry file. The default setting is True::
+
+    retry_files_enabled = False
+
+.. _retry_files_save_path:
+
+retry_files_save_path
+=====================
+
+The retry files save path is where Ansible will save .retry files when a playbook fails and retry_files_enabled is True (the default).
+The default location is ~/ and can be changed to any writeable path::
+
+    retry_files_save_path = ~/.ansible-retry
+
+The directory will be created if it does not already exist.
+
 .. _sudo_exe:
 
 sudo_exe
