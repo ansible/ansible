@@ -25,6 +25,7 @@ short_description: add remove nat rules in a gateway  in a vca
 description:
   - Adds or removes nat rules from a gateway in a vca environment
 version_added: "2.0"
+author: Peter Sprygada (@privateip)
 options:
     username:
       description:
@@ -93,8 +94,6 @@ options:
         - A list of rules to be added to the gateway, Please see examples on valid entries
       required: True
       default: false
-
-
 '''
 
 EXAMPLES = '''
@@ -130,252 +129,144 @@ EXAMPLES = '''
 
 '''
 
-import time, json, xmltodict
+import time
+import json
+import xmltodict
 
-HAS_PYVCLOUD = False
-try:
-    from pyvcloud.vcloudair import VCA
-    HAS_PYVCLOUD = True
-except ImportError:
-        pass
-
-SERVICE_MAP           = {'vca': 'ondemand', 'vchs': 'subscription', 'vcd': 'vcd'}
-LOGIN_HOST            = {}
-LOGIN_HOST['vca']     = 'vca.vmware.com'
-LOGIN_HOST['vchs']    = 'vchs.vmware.com'
-VALID_RULE_KEYS       = ['rule_type', 'original_ip', 'original_port', 'translated_ip', 'translated_port', 'protocol']
-
-def serialize_instances(instance_list):
-    instances = []
-    for i in instance_list:
-        instances.append(dict(apiUrl=i['apiUrl'], instance_id=i['id']))
-    return instances
-
-def vca_login(module=None):
-    service_type    = module.params.get('service_type')
-    username        = module.params.get('username')
-    password        = module.params.get('password')
-    instance        = module.params.get('instance_id')
-    org             = module.params.get('org')
-    service         = module.params.get('service_id')
-    vdc_name        = module.params.get('vdc_name')
-    version         = module.params.get('api_version')
-    verify          = module.params.get('verify_certs')
-    if not vdc_name:
-        if service_type == 'vchs':
-            vdc_name = module.params.get('service_id')
-    if not org:
-        if service_type == 'vchs':
-            if vdc_name:
-                org = vdc_name
-            else:
-                org = service
-    if service_type == 'vcd':
-        host = module.params.get('host')
-    else:
-        host = LOGIN_HOST[service_type]
-
-    if not username:
-        if 'VCA_USER' in os.environ:
-            username = os.environ['VCA_USER']
-    if not password:
-        if 'VCA_PASS' in os.environ:
-            password = os.environ['VCA_PASS']
-    if not username or not password:
-        module.fail_json(msg = "Either the username or password is not set, please check")
-
-    if service_type == 'vchs':
-        version = '5.6'
-    if service_type == 'vcd':
-        if not version:
-            version == '5.6'
+VALID_RULE_KEYS = ['rule_type', 'original_ip', 'original_port',
+                   'translated_ip', 'translated_port', 'protocol']
 
 
-    vca = VCA(host=host, username=username, service_type=SERVICE_MAP[service_type], version=version, verify=verify)
-
-    if service_type == 'vca':
-        if not vca.login(password=password):
-            module.fail_json(msg = "Login Failed: Please check username or password", error=vca.response.content)
-        if not vca.login_to_instance(password=password, instance=instance, token=None, org_url=None):
-            s_json = serialize_instances(vca.instances)
-            module.fail_json(msg = "Login to Instance failed: Seems like instance_id provided is wrong .. Please check",\
-                                    valid_instances=s_json)
-        if not vca.login_to_instance(instance=instance, password=None, token=vca.vcloud_session.token,
-                                     org_url=vca.vcloud_session.org_url):
-            module.fail_json(msg = "Error logging into org for the instance", error=vca.response.content)
-        return vca
-
-    if service_type == 'vchs':
-        if not vca.login(password=password):
-            module.fail_json(msg = "Login Failed: Please check username or password", error=vca.response.content)
-        if not vca.login(token=vca.token):
-            module.fail_json(msg = "Failed to get the token", error=vca.response.content)
-        if not vca.login_to_org(service, org):
-            module.fail_json(msg = "Failed to login to org, Please check the orgname", error=vca.response.content)
-        return vca
-
-    if service_type == 'vcd':
-        if not vca.login(password=password, org=org):
-            module.fail_json(msg = "Login Failed: Please check username or password or host parameters")
-        if not vca.login(password=password, org=org):
-            module.fail_json(msg = "Failed to get the token", error=vca.response.content)
-        if not vca.login(token=vca.token, org=org, org_url=vca.vcloud_session.org_url):
-            module.fail_json(msg = "Failed to login to org", error=vca.response.content)
-        return vca
-
-def validate_nat_rules(module=None, nat_rules=None):
+def validate_nat_rules(nat_rules):
     for rule in nat_rules:
         if not isinstance(rule, dict):
-            module.fail_json(msg="nat rules must be a list of dictionaries, Please check", valid_keys=VALID_RULE_KEYS)
+            raise VcaError("nat rules must be a list of dictionaries, "
+                           "Please check", valid_keys=VALID_RULE_KEYS)
+
         for k in rule.keys():
             if k not in VALID_RULE_KEYS:
-                module.fail_json(msg="%s is not a valid key in nat rules, Please check above.." %k, valid_keys=VALID_RULE_KEYS)
-        rule['original_port']   = rule.get('original_port', 'any')
-        rule['original_ip']     = rule.get('original_ip', 'any')
-        rule['translated_ip']   = rule.get('translated_ip', 'any')
-        rule['translated_port'] = rule.get('translated_port', 'any')
-        rule['protocol']        = rule.get('protocol', 'any')
-        rule['rule_type']        = rule.get('rule_type', 'DNAT')
+                raise VcaError("%s is not a valid key in nat rules, please "
+                               "check above.." % k, valid_keys=VALID_RULE_KEYS)
+
+        rule['original_port'] = str(rule.get('original_port', 'any')).lower()
+        rule['original_ip'] = rule.get('original_ip', 'any').lower()
+        rule['translated_ip'] = rule.get('translated_ip', 'any').lower()
+        rule['translated_port'] = str(rule.get('translated_port', 'any')).lower()
+        rule['protocol'] = rule.get('protocol', 'any').lower()
+        rule['rule_type'] = rule.get('rule_type', 'DNAT').lower()
+
     return nat_rules
 
 
-def nat_rules_to_dict(natRules):
+def nat_rules_to_dict(nat_rules):
     result = []
-    for natRule in natRules:
-        ruleId = natRule.get_Id()
-        enable = natRule.get_IsEnabled()
-        ruleType = natRule.get_RuleType()
-        gatewayNatRule = natRule.get_GatewayNatRule()
-        originalIp = gatewayNatRule.get_OriginalIp()
-        originalPort = gatewayNatRule.get_OriginalPort()
-        translatedIp = gatewayNatRule.get_TranslatedIp()
-        translatedPort = gatewayNatRule.get_TranslatedPort()
-        protocol = gatewayNatRule.get_Protocol()
-        interface = gatewayNatRule.get_Interface().get_name()
-        result.append(dict(rule_type=ruleType, original_ip=originalIp, original_port="any" if not originalPort else originalPort, translated_ip=translatedIp, translated_port="any" if not translatedPort else translatedPort,
-                      protocol="any" if not protocol else protocol))
+    for rule in nat_rules:
+        gw_rule = rule.get_GatewayNatRule()
+        result.append(
+            dict(
+                rule_type=rule.get_RuleType().lower(),
+                original_ip=gw_rule.get_OriginalIp().lower(),
+                original_port=(gw_rule.get_OriginalPort().lower() or 'any'),
+                translated_ip=gw_rule.get_TranslatedIp().lower(),
+                translated_port=(gw_rule.get_TranslatedPort().lower() or 'any'),
+                protocol=(gw_rule.get_Protocol().lower() or 'any')
+            )
+        )
     return result
 
+def rule_to_string(rule):
+    strings = list()
+    for key, value in rule.items():
+        strings.append('%s=%s' % (key, value))
+    return ', '.join(string)
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            username            = dict(default=None),
-            password            = dict(default=None),
-            org                 = dict(default=None),
-            service_id          = dict(default=None),
-            instance_id         = dict(default=None),
-            host                = dict(default=None),
-            api_version         = dict(default='5.7'),
-            service_type        = dict(default='vca', choices=['vchs', 'vca', 'vcd']),
-            state               = dict(default='present', choices = ['present', 'absent']),
-            vdc_name            = dict(default=None),
-            gateway_name        = dict(default='gateway'),
-            nat_rules           = dict(required=True, default=None, type='list'),
-            purge_rules         = dict(default=False),
+    argument_spec = vca_argument_spec()
+    argument_spec.update(
+        dict(
+            nat_rules = dict(type='list', default=[]),
+            gateway_name = dict(default='gateway'),
+            purge_rules = dict(default=False, type='bool'),
+            state = dict(default='present', choices=['present', 'absent'])
         )
     )
 
+    module = AnsibleModule(argument_spec, supports_check_mode=True)
 
-    vdc_name        = module.params.get('vdc_name')
-    org             = module.params.get('org')
-    service         = module.params.get('service_id')
-    state           = module.params.get('state')
-    service_type    = module.params.get('service_type')
-    host            = module.params.get('host')
-    instance_id     = module.params.get('instance_id')
-    nat_rules       = module.params.get('nat_rules')
-    gateway_name    = module.params.get('gateway_name')
-    purge_rules     = module.params.get('purge_rules')
-    verify_certs    = dict(default=True, type='bool'),
+    vdc_name = module.params.get('vdc_name')
+    state = module.params['state']
+    nat_rules = module.params['nat_rules']
+    gateway_name = module.params['gateway_name']
+    purge_rules = module.params['purge_rules']
 
-    if not HAS_PYVCLOUD:
-        module.fail_json(msg="python module pyvcloud is needed for this module")
-    if service_type == 'vca':
-        if not instance_id:
-            module.fail_json(msg="When service type is vca the instance_id parameter is mandatory")
-        if not vdc_name:
-            module.fail_json(msg="When service type is vca the vdc_name parameter is mandatory")
-
-    if service_type == 'vchs':
-        if not service:
-            module.fail_json(msg="When service type vchs the service_id parameter is mandatory")
-        if not org:
-            org = service
-        if not vdc_name:
-            vdc_name = service
-    if service_type == 'vcd':
-        if not host:
-            module.fail_json(msg="When service type is vcd host parameter is mandatory")
+    if not purge_rules and not nat_rules:
+        module.fail_json('Must define purge_rules or nat_rules')
 
     vca = vca_login(module)
-    vdc = vca.get_vdc(vdc_name)
-    if not vdc:
-        module.fail_json(msg = "Error getting the vdc, Please check the vdc name")
 
-    mod_rules = validate_nat_rules(module, nat_rules)
     gateway = vca.get_gateway(vdc_name, gateway_name)
     if not gateway:
-        module.fail_json(msg="Not able to find the gateway %s, please check the gateway_name param" %gateway_name)
-    rules = gateway.get_nat_rules()
-    cur_rules = nat_rules_to_dict(rules)
-    delete_cur_rule = []
-    delete_rules = []
-    for rule in cur_rules:
-        match = False
-        for idx, val in enumerate(mod_rules):
-            match = False
-            if cmp(rule, val) == 0:
-                delete_cur_rule.append(val)
-                mod_rules.pop(idx)
-                match = True
-        if not match:
-            delete_rules.append(rule)
-    if state == 'absent':
-        if purge_rules:
-            if not gateway.del_all_nat_rules():
-                module.fail_json(msg="Error deleting all rules")
-            module.exit_json(changed=True, msg="Removed all rules")
-        if len(delete_cur_rule) < 1:
-            module.exit_json(changed=False, msg="No rules to be removed", rules=cur_rules)
-        else:
-            for i in delete_cur_rule:
-                gateway.del_nat_rule(i['rule_type'], i['original_ip'],\
-                                    i['original_port'], i['translated_ip'], i['translated_port'], i['protocol'])
-                task = gateway.save_services_configuration()
-                if not task:
-                    module.fail_json(msg="Unable to delete Rule, please check above error", error=gateway.response.content)
-                if not vca.block_until_completed(task):
-                    module.fail_json(msg="Failure in waiting for removing network rule", error=gateway.response.content)
-            module.exit_json(changed=True, msg="The rules have been deleted", rules=delete_cur_rule)
-    changed = False
-    if len(mod_rules) < 1:
-        if not purge_rules:
-            module.exit_json(changed=False, msg="all rules are available", rules=cur_rules)
-    for i in mod_rules:
-        gateway.add_nat_rule(i['rule_type'], i['original_ip'], i['original_port'],\
-                             i['translated_ip'], i['translated_port'], i['protocol'])
-        task = gateway.save_services_configuration()
-        if not task:
-            module.fail_json(msg="Unable to add rule, please check above error", rules=mod_rules, error=gateway.response.content)
-        if not vca.block_until_completed(task):
-            module.fail_json(msg="Failure in waiting for adding network rule", error=gateway.response.content)
-    if purge_rules:
-        if len(delete_rules) < 1 and len(mod_rules) < 1:
-            module.exit_json(changed=False, rules=cur_rules)
-        for i in delete_rules:
-            gateway.del_nat_rule(i['rule_type'], i['original_ip'],\
-                                    i['original_port'], i['translated_ip'], i['translated_port'], i['protocol'])
-            task = gateway.save_services_configuration()
-            if not task:
-                module.fail_json(msg="Unable to delete Rule, please check above error", error=gateway.response.content)
-            if not vca.block_until_completed(task):
-                module.fail_json(msg="Failure in waiting for removing network rule", error=gateway.response.content)
+        module.fail_json(msg="Not able to find the gateway %s, please check "
+                             "the gateway_name param" % gateway_name)
 
-    module.exit_json(changed=True, rules_added=mod_rules)
+    try:
+        desired_rules = validate_nat_rules(nat_rules)
+    except VcaError, e:
+        module.fail_json(msg=e.message)
+
+    rules = gateway.get_nat_rules()
+
+    result = dict(changed=False, rules_purged=0)
+
+    deletions = 0
+    additions = 0
+
+    if purge_rules is True and len(rules) > 0:
+        result['rules_purged'] = len(rules)
+        deletions = result['rules_purged']
+        rules = list()
+        if not module.check_mode:
+            gateway.del_all_nat_rules()
+            task = gateway.save_services_configuration()
+            vca.block_until_completed(task)
+            rules = gateway.get_nat_rules()
+        result['changed'] = True
+
+    current_rules = nat_rules_to_dict(rules)
+
+    result['current_rules'] = current_rules
+    result['desired_rules'] = desired_rules
+
+    for rule in desired_rules:
+        if rule not in current_rules:
+            additions += 1
+            if not module.check_mode:
+                gateway.add_nat_rule(**rule)
+            result['changed'] = True
+    result['rules_added'] = additions
+
+    result['delete_rule'] = list()
+    result['delete_rule_rc'] = list()
+    for rule in current_rules:
+        if rule not in desired_rules:
+            deletions += 1
+            if not module.check_mode:
+                result['delete_rule'].append(rule)
+                rc = gateway.del_nat_rule(**rule)
+                result['delete_rule_rc'].append(rc)
+            result['changed'] = True
+    result['rules_deleted'] = deletions
+
+    if not module.check_mode and (additions > 0 or deletions > 0):
+        task = gateway.save_services_configuration()
+        vca.block_until_completed(task)
+
+    module.exit_json(**result)
 
 
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.vca import *
+
 if __name__ == '__main__':
-        main()
+    main()
