@@ -460,7 +460,7 @@ class TaskExecutor:
         # FIXME: calculation of connection params/auth stuff should be done here
 
         if not self._play_context.remote_addr:
-            self._play_context.remote_addr = self._host.ipv4_address
+            self._play_context.remote_addr = self._host.address
 
         if self._task.delegate_to is not None:
             self._compute_delegate(variables)
