@@ -85,6 +85,13 @@ class TestInventory(unittest.TestCase):
         hosts_all = inventory.get_hosts('all')
         self.assertEqual(sorted(hosts), sorted(hosts_all))
 
+    def test_get_hosts_with_ipv6(self):
+        # issue 12296
+        inventory = Inventory('FE80:EF45::12:1,')
+        hosts = inventory.get_hosts('FE80:EF45::12:1')
+        hosts_all = inventory.get_hosts('all')
+        self.assertEqual(sorted(hosts), sorted(hosts_all))
+
     def test_no_src(self):
         inventory = Inventory('127.0.0.1,')
         self.assertEqual(inventory.src(), None)
