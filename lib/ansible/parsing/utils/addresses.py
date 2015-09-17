@@ -31,6 +31,13 @@ numeric_range = r'''
     \]
 '''
 
+hexadecimal_range = r'''
+    \[
+        (?:[0-9a-f]+:[0-9a-f]+)         # hexadecimal begin:end
+        (?::[0-9]+)?                    # numeric :step (optional)
+    \]
+'''
+
 alphanumeric_range = r'''
     \[
         (?:
@@ -50,7 +57,7 @@ ipv6_component = r'''
         [0-9a-f]{{1,4}}|                # 0..ffff
         {range}                         # or a numeric range
     )
-'''.format(range=numeric_range)
+'''.format(range=hexadecimal_range)
 
 ipv4_component = r'''
     (?:
