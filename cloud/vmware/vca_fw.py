@@ -25,6 +25,7 @@ short_description: add remove firewall rules in a gateway  in a vca
 description:
   - Adds or removes firewall rules from a gateway in a vca environment
 version_added: "2.0"
+author: Peter Sprygada (@privateip)
 options:
     username:
       description:
@@ -61,7 +62,7 @@ options:
         - The type of service we are authenticating against
       required: false
       default: vca
-      choices: [ "vca", "vchs", "vcd" ] 
+      choices: [ "vca", "vchs", "vcd" ]
     state:
       description:
         - if the object should be added or removed
@@ -102,9 +103,9 @@ EXAMPLES = '''
        instance_id: 'b15ff1e5-1024-4f55-889f-ea0209726282'
        vdc_name: 'benz_ansible'
        state: 'absent'
-       fw_rules: 
+       fw_rules:
          - description: "ben testing"
-           source_ip: "Any" 
+           source_ip: "Any"
            dest_ip: 192.168.2.11
          - description: "ben testing 2"
            source_ip: 192.168.2.100
@@ -118,235 +119,184 @@ EXAMPLES = '''
 
 '''
 
-
-
-import time, json, xmltodict
-HAS_PYVCLOUD = False
 try:
-    from pyvcloud.vcloudair import VCA
-    from pyvcloud.schema.vcd.v1_5.schemas.vcloud.networkType import ProtocolsType 
-    HAS_PYVCLOUD = True
+    from pyvcloud.schema.vcd.v1_5.schemas.vcloud.networkType import FirewallRuleType
+    from pyvcloud.schema.vcd.v1_5.schemas.vcloud.networkType import ProtocolsType
 except ImportError:
+    # normally set a flag here but it will be caught when testing for
+    # the existence of pyvcloud (see module_utils/vca.py).  This just
+    # protects against generating an exception at runtime
     pass
 
-SERVICE_MAP        = {'vca': 'ondemand', 'vchs': 'subscription', 'vcd': 'vcd'}
-LOGIN_HOST         = {}
-LOGIN_HOST['vca']  = 'vca.vmware.com'
-LOGIN_HOST['vchs'] = 'vchs.vmware.com'
-VALID_RULE_KEYS    = ['policy', 'is_enable', 'enable_logging', 'description', 'dest_ip', 'dest_port', 'source_ip', 'source_port', 'protocol']
+VALID_PROTO = ['Tcp', 'Udp', 'Icmp', 'Other', 'Any']
+VALID_RULE_KEYS = ['policy', 'is_enable', 'enable_logging', 'description',
+                   'dest_ip', 'dest_port', 'source_ip', 'source_port',
+                   'protocol']
 
-def vca_login(module=None):
-    service_type    = module.params.get('service_type')
-    username        = module.params.get('username')
-    password        = module.params.get('password')
-    instance        = module.params.get('instance_id')
-    org             = module.params.get('org')
-    service         = module.params.get('service_id')
-    vdc_name        = module.params.get('vdc_name')
-    version         = module.params.get('api_version')
-    verify          = module.params.get('verify_certs')
-    if not vdc_name:
-        if service_type == 'vchs':
-            vdc_name = module.params.get('service_id')
-    if not org:
-        if service_type == 'vchs':
-            if vdc_name:
-                org = vdc_name
-            else:
-                org = service
-    if service_type == 'vcd':
-        host = module.params.get('host')
-    else:
-        host = LOGIN_HOST[service_type]
+def protocol_to_tuple(protocol):
+    return (protocol.get_Tcp(),
+            protocol.get_Udp(),
+            protocol.get_Icmp(),
+            protocol.get_Other(),
+            protocol.get_Any())
 
-    if not username:
-        if 'VCA_USER' in os.environ:
-            username = os.environ['VCA_USER']
-    if not password:
-        if 'VCA_PASS' in os.environ:
-            password = os.environ['VCA_PASS']
-    if not username or not password:
-        module.fail_json(msg = "Either the username or password is not set, please check")
+def protocol_to_string(protocol):
+    protocol = protocol_to_tuple(protocol)
+    if protocol[0] is True:
+        return 'Tcp'
+    elif protocol[1] is True:
+        return 'Udp'
+    elif protocol[2] is True:
+        return 'Icmp'
+    elif protocol[3] is True:
+        return 'Other'
+    elif protocol[4] is True:
+        return 'Any'
 
-    if service_type == 'vchs':
-        version = '5.6'
-    if service_type == 'vcd':
-        if not version:
-            version == '5.6'
+def protocol_to_type(protocol):
+    try:
+        protocols = ProtocolsType()
+        setattr(protocols, protocol, True)
+        return protocols
+    except AttributeError:
+        raise VcaError("The value in protocol is not valid")
 
-
-    vca = VCA(host=host, username=username, service_type=SERVICE_MAP[service_type], version=version, verify=verify)
-
-    if service_type == 'vca':
-        if not vca.login(password=password):
-            module.fail_json(msg = "Login Failed: Please check username or password", error=vca.response.content)
-        if not vca.login_to_instance(password=password, instance=instance, token=None, org_url=None):
-            s_json = serialize_instances(vca.instances)
-            module.fail_json(msg = "Login to Instance failed: Seems like instance_id provided is wrong .. Please check",\
-                                    valid_instances=s_json)
-        if not vca.login_to_instance(instance=instance, password=None, token=vca.vcloud_session.token,
-                                     org_url=vca.vcloud_session.org_url):
-            module.fail_json(msg = "Error logging into org for the instance", error=vca.response.content)
-        return vca
-
-    if service_type == 'vchs':
-        if not vca.login(password=password):
-            module.fail_json(msg = "Login Failed: Please check username or password", error=vca.response.content)
-        if not vca.login(token=vca.token):
-            module.fail_json(msg = "Failed to get the token", error=vca.response.content)
-        if not vca.login_to_org(service, org):
-            module.fail_json(msg = "Failed to login to org, Please check the orgname", error=vca.response.content)
-        return vca
-
-    if service_type == 'vcd':
-        if not vca.login(password=password, org=org):
-            module.fail_json(msg = "Login Failed: Please check username or password or host parameters")
-        if not vca.login(password=password, org=org):
-            module.fail_json(msg = "Failed to get the token", error=vca.response.content)
-        if not vca.login(token=vca.token, org=org, org_url=vca.vcloud_session.org_url):
-            module.fail_json(msg = "Failed to login to org", error=vca.response.content)
-        return vca
-  
-def validate_fw_rules(module=None, fw_rules=None):
-    VALID_PROTO = ['Tcp', 'Udp', 'Icmp', 'Any']
+def validate_fw_rules(fw_rules):
     for rule in fw_rules:
-        if not isinstance(rule, dict):
-            module.fail_json(msg="Firewall rules must be a list of dictionaries, Please check", valid_keys=VALID_RULE_KEYS)
         for k in rule.keys():
             if k not in VALID_RULE_KEYS:
-                module.fail_json(msg="%s is not a valid key in fw rules, Please check above.." %k, valid_keys=VALID_RULE_KEYS)
-        rule['dest_port']       = rule.get('dest_port', 'Any')
-        rule['dest_ip']         = rule.get('dest_ip', 'Any')
-        rule['source_port']     = rule.get('source_port', 'Any')
-        rule['source_ip']       = rule.get('source_ip', 'Any')
-        rule['protocol']        = rule.get('protocol', 'Any')
-        rule['policy']          = rule.get('policy', 'allow')
-        rule['is_enable']       = rule.get('is_enable', 'true')
-        rule['enable_logging']  = rule.get('enable_logging', 'false')
-        rule['description']     = rule.get('description', 'rule added by Ansible')
-        if not rule['protocol'] in VALID_PROTO:
-            module.fail_json(msg="the value in protocol is not valid, valid values are as above", valid_proto=VALID_PROTO)
+                raise VcaError("%s is not a valid key in fw rules, please "
+                               "check above.." % k, valid_keys=VALID_RULE_KEYS)
+
+        rule['dest_port'] = str(rule.get('dest_port', 'Any')).lower()
+        rule['dest_ip'] = rule.get('dest_ip', 'Any').lower()
+        rule['source_port'] = str(rule.get('source_port', 'Any')).lower()
+        rule['source_ip'] = rule.get('source_ip', 'Any').lower()
+        rule['protocol'] = rule.get('protocol', 'Any').lower()
+        rule['policy'] = rule.get('policy', 'allow').lower()
+        rule['is_enable'] = rule.get('is_enable', True)
+        rule['enable_logging'] = rule.get('enable_logging', False)
+        rule['description'] = rule.get('description', 'rule added by Ansible')
+
     return fw_rules
 
-def create_protocol_list(protocol):
-    plist = []
-    plist.append(protocol.get_Tcp())
-    plist.append(protocol.get_Any())
-    plist.append(protocol.get_Tcp())
-    plist.append(protocol.get_Udp())
-    plist.append(protocol.get_Icmp())
-    plist.append(protocol.get_Other())
-    return plist
+def fw_rules_to_dict(rules):
+    fw_rules = list()
+    for rule in rules:
+        fw_rules.append(
+            dict(
+                dest_port=rule.get_DestinationPortRange().lower(),
+                dest_ip=rule.get_DestinationIp().lower().lower(),
+                source_port=rule.get_SourcePortRange().lower(),
+                source_ip=rule.get_SourceIp().lower(),
+                protocol=protocol_to_string(rule.get_Protocols()).lower(),
+                policy=rule.get_Policy().lower(),
+                is_enable=rule.get_IsEnabled(),
+                enable_logging=rule.get_EnableLogging(),
+                description=rule.get_Description()
+            )
+        )
+    return fw_rules
 
+def create_fw_rule(is_enable, description, policy, protocol, dest_port,
+                   dest_ip, source_port, source_ip, enable_logging):
 
-def create_protocols_type(protocol):
-    all_protocols = {"Tcp": None, "Udp": None, "Icmp": None, "Any": None}
-    all_protocols[protocol] = True
-    return ProtocolsType(**all_protocols)
+    return FirewallRuleType(IsEnabled=is_enable,
+                            Description=description,
+                            Policy=policy,
+                            Protocols=protocol_to_type(protocol),
+                            DestinationPortRange=dest_port,
+                            DestinationIp=dest_ip,
+                            SourcePortRange=source_port,
+                            SourceIp=source_ip,
+                            EnableLogging=enable_logging)
 
 def main():
-    module = AnsibleModule(
-        argument_spec=dict(
-            username            = dict(default=None),
-            password            = dict(default=None),
-            org                 = dict(default=None),
-            service_id          = dict(default=None),
-            instance_id         = dict(default=None),
-            host                = dict(default=None),
-            api_version         = dict(default='5.7'),
-            service_type        = dict(default='vca', choices=['vchs', 'vca', 'vcd']),
-            state               = dict(default='present', choices = ['present', 'absent']),
-            vdc_name            = dict(default=None),
-            gateway_name        = dict(default='gateway'),
-            fw_rules            = dict(required=True, default=None, type='list'),
+    argument_spec = vca_argument_spec()
+    argument_spec.update(
+        dict(
+            fw_rules = dict(required=True, type='list'),
+            gateway_name = dict(default='gateway'),
+            state = dict(default='present', choices=['present', 'absent'])
         )
     )
 
+    module = AnsibleModule(argument_spec, supports_check_mode=True)
 
-    vdc_name        = module.params.get('vdc_name')
-    org             = module.params.get('org')
-    service         = module.params.get('service_id')
-    state           = module.params.get('state')
-    service_type    = module.params.get('service_type')
-    host            = module.params.get('host')
-    instance_id     = module.params.get('instance_id')
-    fw_rules        = module.params.get('fw_rules')
-    gateway_name    = module.params.get('gateway_name')
-    verify_certs    = dict(default=True, type='bool'),
+    fw_rules = module.params.get('fw_rules')
+    gateway_name = module.params.get('gateway_name')
+    vdc_name = module.params['vdc_name']
 
-    if not HAS_PYVCLOUD:
-        module.fail_json(msg="python module pyvcloud is needed for this module")
-    if service_type == 'vca':
-        if not instance_id:
-            module.fail_json(msg="When service type is vca the instance_id parameter is mandatory")
-        if not vdc_name:
-            module.fail_json(msg="When service type is vca the vdc_name parameter is mandatory")
-
-    if service_type == 'vchs':
-        if not service:
-            module.fail_json(msg="When service type vchs the service_id parameter is mandatory")
-        if not org:
-            org = service
-        if not vdc_name:
-            vdc_name = service
-    if service_type == 'vcd':
-        if not host:
-            module.fail_json(msg="When service type is vcd host parameter is mandatory")
-    
     vca = vca_login(module)
-    vdc = vca.get_vdc(vdc_name)
-    if not vdc:
-        module.fail_json(msg = "Error getting the vdc, Please check the vdc name")
 
-    mod_rules = validate_fw_rules(module, fw_rules)
     gateway = vca.get_gateway(vdc_name, gateway_name)
     if not gateway:
-        module.fail_json(msg="Not able to find the gateway %s, please check the gateway_name param" %gateway_name)
+        module.fail_json(msg="Not able to find the gateway %s, please check "
+                             "the gateway_name param" % gateway_name)
+
+    fwservice = gateway._getFirewallService()
+
     rules = gateway.get_fw_rules()
-    existing_rules = []
-    del_rules = []
-    for rule in rules:
-        current_trait = (create_protocol_list(rule.get_Protocols()),
-                             rule.get_DestinationPortRange(),
-                             rule.get_DestinationIp(),
-                             rule.get_SourcePortRange(),
-                             rule.get_SourceIp())
-        for idx, val  in enumerate(mod_rules):
-            trait  = (create_protocol_list(create_protocols_type(val['protocol'])),
-                        val['dest_port'], val['dest_ip'], val['source_port'], val['source_ip'])
-            if current_trait == trait:
-                del_rules.append(mod_rules[idx])
-                mod_rules.pop(idx)
-        existing_rules.append(current_trait)
+    current_rules = fw_rules_to_dict(rules)
 
-    if state == 'absent':
-        if len(del_rules) < 1:
-            module.exit_json(changed=False, msg="Nothing to delete", delete_rules=mod_rules)
-        else:
-            for i in del_rules:
-                gateway.delete_fw_rule(i['protocol'], i['dest_port'], i['dest_ip'], i['source_port'], i['source_ip'])
-            task = gateway.save_services_configuration()
-            if not task:
-                module.fail_json(msg="Unable to Delete  Rule, please check above error", error=gateway.response.content)
-            if not vca.block_until_completed(task):
-                module.fail_json(msg="Error while waiting to remove  Rule, please check above error", error=gateway.response.content)
-            module.exit_json(changed=True, msg="Rules Deleted", deleted_rules=del_rules)
+    try:
+        desired_rules = validate_fw_rules(fw_rules)
+    except VcaError, e:
+        module.fail_json(e.message)
 
-    if len(mod_rules) < 1:
-        module.exit_json(changed=False, rules=existing_rules)
-    if len(mod_rules) >= 1:
-        for i in mod_rules:
-            gateway.add_fw_rule(i['is_enable'], i['description'], i['policy'], i['protocol'], i['dest_port'], i['dest_ip'],
-                                        i['source_port'], i['source_ip'], i['enable_logging'])
-            task = gateway.save_services_configuration()
-            if not task:
-                module.fail_json(msg="Unable to Add Rule, please check above error", error=gateway.response.content)
-            if not vca.block_until_completed(task):
-                module.fail_json(msg="Failure in waiting for adding firewall  rule", error=gateway.response.content)
-    module.exit_json(changed=True, rules=mod_rules)
+    result = dict(changed=False)
+    result['current_rules'] = current_rules
+    result['desired_rules'] = desired_rules
 
-    
+    updates = list()
+    additions = list()
+    deletions = list()
+
+    for (index, rule) in enumerate(desired_rules):
+        try:
+            if rule != current_rules[index]:
+                updates.append((index, rule))
+        except IndexError:
+            additions.append(rule)
+
+    eol = len(current_rules) > len(desired_rules)
+    if eol > 0:
+        for rule in current_rules[eos:]:
+            deletions.append(rule)
+
+    for rule in additions:
+        if not module.check_mode:
+            rule['protocol'] = rule['protocol'].capitalize()
+            gateway.add_fw_rule(**rule)
+        result['changed'] = True
+
+    for index, rule in updates:
+        if not module.check_mode:
+            rule = create_fw_rule(**rule)
+            fwservice.replace_FirewallRule_at(index, rule)
+        result['changed'] = True
+
+    keys = ['protocol', 'dest_port', 'dest_ip', 'source_port', 'source_ip']
+    for rule in deletions:
+        if not module.check_mode:
+            kwargs = dict([(k, v) for k, v in rule.items() if k in keys])
+            kwargs['protocol'] = protocol_to_string(kwargs['protocol'])
+            gateway.delete_fw_rule(**kwargs)
+        result['changed'] = True
+
+    if not module.check_mode and result['changed'] == True:
+        task = gateway.save_services_configuration()
+        if task:
+            vca.block_until_completed(task)
+
+    result['rules_updated'] = count=len(updates)
+    result['rules_added'] = count=len(additions)
+    result['rules_deleted'] = count=len(deletions)
+
+    return module.exit_json(**result)
+
 # import module snippets
 from ansible.module_utils.basic import *
+from ansible.module_utils.vca import *
 if __name__ == '__main__':
         main()
