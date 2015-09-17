@@ -800,7 +800,7 @@ def main():
             health_check_type=dict(default='EC2', choices=['EC2', 'ELB']),
             default_cooldown=dict(type='int', default=300),
             wait_for_instances=dict(type='bool', default=True),
-            termination_policies=dict(type='list', default=None)
+            termination_policies=dict(type='list', default='Default')
         ),
     )
     
