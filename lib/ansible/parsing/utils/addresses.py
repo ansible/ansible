@@ -122,7 +122,7 @@ patterns = {
         r'''^
             (?:{0}:){{7}}{0}|           # uncompressed: 1:2:3:4:5:6:7:8
             (?:{0}:){{1,6}}:|           # compressed variants, which are all
-            (?:{0}:)(?:{0}){{1,6}}|     # a::b for various lengths of a,b
+            (?:{0}:)(?::{0}){{1,6}}|    # a::b for various lengths of a,b
             (?:{0}:){{2}}(?::{0}){{1,5}}|
             (?:{0}:){{3}}(?::{0}){{1,4}}|
             (?:{0}:){{4}}(?::{0}){{1,3}}|
