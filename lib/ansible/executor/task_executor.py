@@ -35,7 +35,7 @@ from ansible.playbook.task import Task
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
-from ansible.utils.vars import json_variable_cleaner
+from ansible.vars.unsafe_proxy import UnsafeProxy
 
 from ansible.utils.debug import debug
 
@@ -124,10 +124,21 @@ class TaskExecutor:
             if 'changed' not in res:
                 res['changed'] = False
 
+            def _clean_res(res):
+                if isinstance(res, dict):
+                    for k in res.keys():
+                        res[k] = _clean_res(res[k])
+                elif isinstance(res, list):
+                    for idx,item in enumerate(res):
+                        res[idx] = _clean_res(item)
+                elif isinstance(res, UnsafeProxy):
+                    return res._obj
+                return res
+
             debug("dumping result to json")
-            result = json.dumps(res, default=json_variable_cleaner)
+            res = _clean_res(res)
             debug("done dumping result, returning")
-            return result
+            return res
         except AnsibleError as e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
         finally:
