@@ -567,9 +567,6 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
-            if ';' in subset_pattern or ',' in subset_pattern:
-                display.deprecated("Use ':' instead of ',' or ';' to separate host patterns", version=2.0, removed=True)
-
             subset_patterns = self._split_pattern(subset_pattern)
             results = []
             # allow Unix style @filename data
