@@ -47,10 +47,13 @@ class ActionModule(ActionBase):
     def _process_origin(self, host, path, user):
 
         if host not in C.LOCALHOST:
+            userPart = ''
             if user:
-                return '%s@[%s]:%s' % (user, host, path)
+                userPart = '%s@' % (user, )
+            if ":" in host:
+                return '[%s%s]:%s' % (userPart, host, path)
             else:
-                return '[%s]:%s' % (host, path)
+                return '%s%s:%s' % (userPart, host, path)
 
         if ':' not in path and not path.startswith('/'):
             path = self._get_absolute_path(path=path)
@@ -59,10 +62,13 @@ class ActionModule(ActionBase):
     def _process_remote(self, host, path, user):
         transport = self._play_context.connection
         if host not in C.LOCALHOST or transport != "local":
+            userPart = ''
             if user:
-                return '%s@[%s]:%s' % (user, host, path)
+                userPart = '%s@' % (user, )
+            if ":" in host:
+                return '[%s%s]:%s' % (userPart, host, path)
             else:
-                return '[%s]:%s' % (host, path)
+                return '%s%s:%s' % (userPart, host, path)
 
         if ':' not in path and not path.startswith('/'):
             path = self._get_absolute_path(path=path)
