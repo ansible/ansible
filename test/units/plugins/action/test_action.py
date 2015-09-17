@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 
+from ansible import constants as C
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import Mock
 from ansible.playbook.play_context import PlayContext
@@ -43,3 +44,14 @@ class TestActionBase(unittest.TestCase):
         play_context.remote_user = 'apo'
         action_base._low_level_execute_command('ECHO', '/tmp', sudoable=True)
         play_context.make_become_cmd.assert_called_once_with('ECHO', executable=None)
+
+        play_context.make_become_cmd.reset_mock()
+
+        become_allow_same_user = C.BECOME_ALLOW_SAME_USER
+        C.BECOME_ALLOW_SAME_USER = True
+        try:
+            play_context.remote_user = 'root'
+            action_base._low_level_execute_command('ECHO SAME', '/tmp', sudoable=True)
+            play_context.make_become_cmd.assert_called_once_with('ECHO SAME', executable=None)
+        finally:
+            C.BECOME_ALLOW_SAME_USER = become_allow_same_user

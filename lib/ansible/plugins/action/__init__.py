@@ -453,7 +453,9 @@ class ActionBase:
             self._display.debug("no command, exiting _low_level_execute_command()")
             return dict(stdout='', stderr='')
 
-        if sudoable and self._play_context.become and self._play_context.become_user != self._play_context.remote_user:
+        allow_same_user = C.BECOME_ALLOW_SAME_USER
+        same_user = self._play_context.become_user == self._play_context.remote_user
+        if sudoable and self._play_context.become and (allow_same_user or not same_user):
             self._display.debug("using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
