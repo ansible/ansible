@@ -40,6 +40,7 @@ options:
   ipv4_range:
     description:
       - the IPv4 address range in CIDR notation for the network
+        this parameter is not mandatory when you specified existing network in name parameter, but when you create new network, this parameter is mandatory
     required: false
     aliases: ['cidr']
   fwname:
