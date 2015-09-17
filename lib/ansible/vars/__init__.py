@@ -264,7 +264,10 @@ class VariableManager:
             all_vars['group_names'] = [group.name for group in host.get_groups()]
 
             if self._inventory is not None:
-                all_vars['groups']  = self._inventory.groups.keys()
+                all_vars['groups']  = dict()
+                for (group_name, group) in self._inventory.groups.iteritems():
+                    all_vars['groups'][group_name] = [h.name for h in group.get_hosts()]
+
                 if include_hostvars:
                     hostvars = HostVars(vars_manager=self, play=play, inventory=self._inventory, loader=loader)
                     all_vars['hostvars'] = hostvars
