@@ -212,7 +212,7 @@ def main():
         # user wants to create a new network that doesn't yet exist
         if name and not network:
             if not ipv4_range:
-                module.fail_json(msg="Missing required 'ipv4_range' parameter",
+                module.fail_json(msg="Network '" + name + "' is not found. To create network, 'ipv4_range' parameter is required",
                     changed=False)
 
             try:
