@@ -255,8 +255,8 @@ class InventoryParser(object):
         for h in hosts:
             for k in variables:
                 h.set_variable(k, variables[k])
-                if k == 'ansible_ssh_host':
-                    h.ipv4_address = variables[k]
+                if k in ['ansible_host', 'ansible_ssh_host']:
+                    h.address = variables[k]
 
         return hosts
 

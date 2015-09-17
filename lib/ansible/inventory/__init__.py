@@ -390,7 +390,7 @@ class Inventory(object):
         new_host = Host(pattern)
         new_host.set_variable("ansible_python_interpreter", sys.executable)
         new_host.set_variable("ansible_connection", "local")
-        new_host.ipv4_address = '127.0.0.1'
+        new_host.address = '127.0.0.1'
         self.get_group("ungrouped").add_host(new_host)
         return new_host
 
