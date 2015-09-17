@@ -24,6 +24,7 @@ import os
 import sys
 import re
 import stat
+import itertools
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -185,9 +186,7 @@ class Inventory(object):
         """
 
         if isinstance(pattern, list):
-            pattern = ','.join(pattern)
-
-        patterns = []
+            return list(itertools.chain(*map(self._split_pattern, pattern)))
 
         if ';' in pattern:
             display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0, removed=True)
