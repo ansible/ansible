@@ -148,7 +148,7 @@ options:
     required: false
     default: null
 requirements: [ ]
-author: Anders Ingemann
+author: "Anders Ingemann (@andsens)"
 '''
 
 EXAMPLES = '''
