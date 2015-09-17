@@ -25,7 +25,7 @@ $path = Get-Attr $params "path" -failifempty $true
 $state = Get-Attr $params "state" "present"
 $creates = Get-Attr $params "creates" $false
 $extra_args = Get-Attr $params "extra_args" ""
-$wait = $false
+$wait = Get-Attr $params "wait" $false | ConvertTo-Bool
 
 $result = New-Object psobject @{
     changed = $false
@@ -36,32 +36,27 @@ If (($creates -ne $false) -and ($state -ne "absent") -and (Test-Path $creates))
     Exit-Json $result;
 }
 
-If ($params.wait.ToLower() -eq "true" -Or $params.wait.ToLower() -eq "yes")
-{
-  $wait = $true
-}
-
 $logfile = [IO.Path]::GetTempFileName();
 if ($state -eq "absent")
 {
   If ($wait)
   {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/x $path /qn /l $logfile $extra_args" -Verb Runas -Wait;
+    Start-Process -FilePath msiexec.exe -ArgumentList "/x `"$path`" /qn /l $logfile $extra_args" -Verb Runas -Wait;
   }
   Else
   {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/x $path /qn /l $logfile $extra_args" -Verb Runas;
+    Start-Process -FilePath msiexec.exe -ArgumentList "/x `"$path`" /qn /l $logfile $extra_args" -Verb Runas;
   }
 }
 Else
 {
   If ($wait)
   {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/i $path /qn /l $logfile $extra_args" -Verb Runas -Wait;
+    Start-Process -FilePath msiexec.exe -ArgumentList "/i `"$path`" /qn /l $logfile $extra_args" -Verb Runas -Wait;
   }
   Else
   {
-    Start-Process -FilePath msiexec.exe -ArgumentList "/i $path /qn /l $logfile $extra_args" -Verb Runas;
+    Start-Process -FilePath msiexec.exe -ArgumentList "/i `"$path`" /qn /l $logfile $extra_args" -Verb Runas;
   }
 }
 
