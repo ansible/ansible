@@ -149,37 +149,12 @@ class Inventory(object):
                 results.append(item)
         return results
 
-    def _split_pattern(self, pattern):
-        """
-        takes e.g. "webservers[0:5]:dbservers:others"
-        and returns ["webservers[0:5]", "dbservers", "others"]
-        """
-
-        term = re.compile(
-            r'''(?:             # We want to match something comprising:
-                    [^:\[\]]    # (anything other than ':', '[', or ']'
-                    |           # ...or...
-                    \[[^\]]*\]  # a single complete bracketed expression)
-                )*              # repeated as many times as possible
-            ''', re.X
-        )
-
-        return [x for x in term.findall(pattern) if x]
-
     def get_hosts(self, pattern="all", ignore_limits_and_restrictions=False):
         """ 
         Takes a pattern or list of patterns and returns a list of matching
         inventory host names, taking into account any active restrictions
         or applied subsets
         """
-
-        # Enumerate all hosts matching the given pattern (which may be
-        # either a list of patterns or a string like 'pat1:pat2').
-        if isinstance(pattern, list):
-            pattern = ':'.join(pattern)
-
-        if ';' in pattern or ',' in pattern:
-            display.deprecated("Use ':' instead of ',' or ';' to separate host patterns", version=2.0, removed=True)
 
         patterns = self._split_pattern(pattern)
         hosts = self._evaluate_patterns(patterns)
@@ -196,6 +171,59 @@ class Inventory(object):
                 hosts = [ h for h in hosts if h in self._restriction ]
 
         return hosts
+
+    def _split_pattern(self, pattern):
+        """
+        Takes a string containing host patterns separated by commas (or a list
+        thereof) and returns a list of single patterns (which may not contain
+        commas). Whitespace is ignored.
+
+        Also accepts ':' as a separator for backwards compatibility, but it is
+        not recommended due to the conflict with IPv6 addresses and host ranges.
+
+        Example: 'a,b[1], c[2:3] , d' -> ['a', 'b[1]', 'c[2:3]', 'd']
+        """
+
+        if isinstance(pattern, list):
+            pattern = ','.join(pattern)
+
+        patterns = []
+
+        if ';' in pattern:
+            display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0, removed=True)
+
+        # If it's got commas in it, we'll treat it as a straightforward
+        # comma-separated list of patterns.
+
+        elif ',' in pattern:
+            patterns = re.split('\s*,\s*', pattern)
+
+        # If it doesn't, it could still be a single pattern. This accounts for
+        # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
+
+        else:
+            (base, port) = parse_address(pattern, allow_ranges=True)
+            if base:
+                patterns = [pattern]
+
+            # The only other case we accept is a ':'-separated list of patterns.
+            # This mishandles IPv6 addresses, and is retained only for backwards
+            # compatibility.
+
+            else:
+                patterns = re.findall(
+                    r'''(?:             # We want to match something comprising:
+                            [^\s:\[\]]  # (anything other than whitespace or ':[]'
+                            |           # ...or...
+                            \[[^\]]*\]  # a single complete bracketed expression)
+                        )+              # occurring once or more
+                    ''', pattern, re.X
+                )
+
+                if len(patterns) > 1:
+                    display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0)
+
+        return [p.strip() for p in patterns]
 
     def _evaluate_patterns(self, patterns):
         """
@@ -249,7 +277,7 @@ class Inventory(object):
         The pattern may be:
 
             1. A regex starting with ~, e.g. '~[abc]*'
-            2. A shell glob pattern with ?/*/[chars]/[!chars], e.g. 'foo'
+            2. A shell glob pattern with ?/*/[chars]/[!chars], e.g. 'foo*'
             3. An ordinary word that matches itself only, e.g. 'foo'
 
         The pattern is matched using the following rules:
