@@ -40,11 +40,12 @@ class LookupModule(LookupBase):
                 with open(lookupfile, 'r') as f:
                     template_data = f.read()
 
-                    self._templar.environment.searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
+                    searchpath = [self._loader._basedir, os.path.dirname(lookupfile)]
                     if 'role_path' in variables:
-                        self._templar.environment.searchpath.insert(1, C.DEFAULT_ROLES_PATH)
-                        self._templar.environment.searchpath.insert(1, variables['role_path'])
+                        searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                        searchpath.insert(1, variables['role_path'])
 
+                    self._templar.environment.loader.searchpath = searchpath
                     res = self._templar.template(template_data, preserve_trailing_newlines=True)
                     ret.append(res)
             else:
