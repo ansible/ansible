@@ -34,7 +34,7 @@ author: "Balazs Pocze (@banyek)"
 options:
     mode:
         description:
-            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave (START SLAVE), stopslave (STOP SLAVE)
+            - module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave (START SLAVE), stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
         required: False
         choices:
             - getslave
@@ -42,6 +42,8 @@ options:
             - changemaster
             - stopslave
             - startslave
+            - resetslave
+            - resetslaveall
         default: getslave
     login_user:
         description:
@@ -163,6 +165,24 @@ def stop_slave(cursor):
     except:
         stopped = False
     return stopped
+
+
+def reset_slave(cursor):
+    try:
+        cursor.execute("RESET SLAVE")
+        reset = True
+    except:
+        reset = False
+    return reset
+
+
+def reset_slave_all(cursor):
+    try:
+        cursor.execute("RESET SLAVE ALL")
+        reset = True
+    except:
+        reset = False
+    return reset
 
 
 def start_slave(cursor):
@@ -400,6 +420,18 @@ def main():
             module.exit_json(msg="Slave stopped", changed=True)
         else:
             module.exit_json(msg="Slave already stopped", changed=False)
+    elif mode in "resetslave":
+        reset = reset_slave(cursor)
+        if reset is True:
+            module.exit_json(msg="Slave reset", changed=True)
+        else:
+            module.exit_json(msg="Slave already reset", changed=False)
+    elif mode in "resetslaveall":
+        reset = reset_slave_all(cursor)
+        if reset is True:
+            module.exit_json(msg="Slave reset", changed=True)
+        else:
+            module.exit_json(msg="Slave already reset", changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *
