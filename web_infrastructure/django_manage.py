@@ -114,7 +114,7 @@ EXAMPLES = """
 # Run the SmokeTest test case from the main app. Useful for testing deploys.
 - django_manage: command=test app_path={{ django_dir }} apps=main.SmokeTest
 
-# Create an initial superuser. 
+# Create an initial superuser.
 - django_manage: command="createsuperuser --noinput --username=admin --email=admin@example.com" app_path={{ django_dir }}
 """
 
@@ -178,7 +178,7 @@ def main():
         test=('failfast', 'testrunner', 'liveserver', 'apps', ),
         validate=(),
         migrate=('apps', 'skip', 'merge', 'database',),
-        collectstatic=('link', ),
+        collectstatic=('clear', 'link', ),
         )
 
     command_required_param_map = dict(
@@ -196,11 +196,11 @@ def main():
         )
 
     # These params are allowed for certain commands only
-    specific_params = ('apps', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
+    specific_params = ('apps', 'clear', 'database', 'failfast', 'fixtures', 'liveserver', 'testrunner')
 
     # These params are automatically added to the command if present
     general_params = ('settings', 'pythonpath', 'database',)
-    specific_boolean_params = ('failfast', 'skip', 'merge', 'link')
+    specific_boolean_params = ('clear', 'failfast', 'skip', 'merge', 'link')
     end_of_command_params = ('apps', 'cache_table', 'fixtures')
 
     module = AnsibleModule(
@@ -213,6 +213,7 @@ def main():
 
             apps        = dict(default=None, required=False),
             cache_table = dict(default=None, required=False),
+            clear       = dict(default=None, required=False, type='bool'),
             database    = dict(default=None, required=False),
             failfast    = dict(default='no', required=False, type='bool', aliases=['fail_fast']),
             fixtures    = dict(default=None, required=False),
