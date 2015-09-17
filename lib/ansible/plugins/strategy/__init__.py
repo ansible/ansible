@@ -356,10 +356,10 @@ class StrategyBase:
             new_group.add_host(new_host)
 
             # add this host to the group cache
-            if self._inventory._groups_list is not None:
-                if group_name in self._inventory._groups_list:
-                    if new_host.name not in self._inventory._groups_list[group_name]:
-                        self._inventory._groups_list[group_name].append(new_host.name)
+            if self._inventory.groups is not None:
+                if group_name in self._inventory.groups:
+                    if new_host not in self._inventory.get_group(group_name).hosts:
+                        self._inventory.get_group(group_name).hosts.append(new_host.name)
 
         # clear pattern caching completely since it's unpredictable what
         # patterns may have referenced the group
