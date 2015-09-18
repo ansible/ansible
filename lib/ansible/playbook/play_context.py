@@ -24,8 +24,10 @@ __metaclass__ = type
 import pipes
 import random
 import re
+import string
 
 from six import iteritems, string_types
+from six.moves import range
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -324,7 +326,7 @@ class PlayContext(Base):
         if self.become:
 
             becomecmd   = None
-            randbits    = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+            randbits    = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
             success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
 
