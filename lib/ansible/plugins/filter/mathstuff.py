@@ -127,6 +127,68 @@ def human_readable(size, isbits=False, unit=None):
 
     return '%.2f %s' % (float(size)/ limit, suffix)
 
+def to_bytes(x, si=False):
+    ''' convert x to bytes, will parse prefix strings for mb, MB, Mb, etc
+        :param: :x - str in the form "2 MB", "2MB", "2GB", etc
+        :param: :si - modify multi_factor to use SI values (1000)
+    '''
+
+
+    if (isinstance(x, str) or isinstance(x, unicode) and x):
+
+        if len(x) < 2:
+            raise errors.AnsibleFilterError('to_bytes() too short to be a valid format: %s' % x)
+
+        value = ''
+        unit = ''
+        seen_value = False
+        seen_unit = False
+        multi_factor = 1000 if si else 1024
+        skip_chars = (' ', )
+
+        for char in x.lower():
+            if char >= '0' and char <= '9':
+                value += char
+                seen_value = True
+                if seen_unit:
+                    raise errors.AnsibleFilterError('to_bytes() invalid format, got more values after unit declared %s' % x)
+            elif char >= 'a' and char <= 'z':
+                # value is a string, verify we have a number before unit
+                if not seen_value:
+                    raise errors.AnsibleFilterError('to_bytes() must take a string in the form "64 kB", "128MB", got %s' % x)
+                unit += char
+                seen_unit = True
+            elif char in skip_chars:
+                continue
+            else:
+                raise errors.AnsibleFilterError('to_bytes() unrecognized input: %s' % char)
+
+        value = int(value)
+
+        basebytes = ('b', )
+        kilobytes = ('k', 'kb', 'kib', )
+        megabytes = ('m', 'mb', 'mib', )
+        gigabytes = ('g', 'gb', 'gib', )
+        terabytes = ('t', 'tb', 'tib', )
+        petabytes = ('p', 'pb', 'pib', )
+
+        if unit in basebytes:
+            return value
+        elif unit in kilobytes:
+            return value * multi_factor
+        elif unit in megabytes:
+            return value * math.pow(multi_factor, 2)
+        elif unit in gigabytes:
+            return value * math.pow(multi_factor, 3)
+        elif unit in terabytes:
+            return value * math.pow(multi_factor, 4)
+        elif unit in petabytes:
+            return value * math.pow(multi_factor, 5)
+        else:
+            raise errors.AnsibleFilterError('to_bytes() unrecognized unit: %s' % unit)
+    else:
+        raise errors.AnsibleFilterError('to_bytes() must take a str or unicode, got %s' % type(x))
+
 class FilterModule(object):
     ''' Ansible math jinja2 filters '''
 
@@ -151,5 +213,6 @@ class FilterModule(object):
 
             # computer theory
             'human_readable' : human_readable,
+            'to_bytes': to_bytes,
 
         }

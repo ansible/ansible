@@ -257,6 +257,13 @@ Square root, or the 5th::
     {{ myvar | root }}
     {{ myvar | root(5) }}
 
+Convert memory units to number of bytes, standard by default, or SI with an optional arg
+
+    {{ '64kb' | to_bytes }} => 65536
+    {{ '8 GB' | to_bytes }} => 8589934592.0
+    {{ '64kb' | to_bytes(True) }} => 64000
+    {{ '8 GB' | to_bytes(True) }} => 8000000000.0
+
 Note that jinja2 already provides some like abs() and round().
 
 .. _ipaddr_filter:
