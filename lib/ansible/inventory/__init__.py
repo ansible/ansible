@@ -342,9 +342,9 @@ class Inventory(object):
             r'''^
                 (.+)                    # A pattern expression ending with...
                 \[(?:                   # A [subscript] expression comprising:
-                    (-?[0-9]+)          # A single positive or negative number
-                    |                   # Or a numeric range
-                    ([0-9]+)([:-])([0-9]+)
+                    (-?[0-9]+)|         # A single positive or negative number
+                    ([0-9]+)([:-])      # Or an x:y or x: range.
+                    ([0-9]*)
                 )\]
                 $
             ''', re.X
@@ -357,6 +357,8 @@ class Inventory(object):
             if idx:
                 subscript = (int(idx), None)
             else:
+                if not end:
+                    end = -1
                 subscript = (int(start), int(end))
                 if sep == '-':
                     display.deprecated("Use [x:y] inclusive subscripts instead of [x-y]", version=2.0, removed=True)
@@ -375,6 +377,8 @@ class Inventory(object):
         (start, end) = subscript
 
         if end:
+            if end == -1:
+                end = len(hosts)-1
             return hosts[start:end+1]
         else:
             return [ hosts[start] ]

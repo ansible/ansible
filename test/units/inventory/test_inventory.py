@@ -66,6 +66,9 @@ class TestInventory(unittest.TestCase):
         'a[2:3]': [('a', (2, 3)), ['c', 'd']],
         'a[-1]': [('a', (-1, None)), ['Z']],
         'a[-2]': [('a', (-2, None)), ['Y']],
+        'a[48:]': [('a', (48, -1)), ['W', 'X', 'Y', 'Z']],
+        'a[49:]': [('a', (49, -1)), ['X', 'Y', 'Z']],
+        'a[1:]': [('a', (1, -1)), list(string.ascii_letters[1:])],
     }
 
     def setUp(self):
