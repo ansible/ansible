@@ -245,7 +245,7 @@ def check_packages(module, pacman_path, packages, state):
         module.exit_json(changed=True, msg="%s package(s) would be %s" % (
             len(would_be_changed), state))
     else:
-        module.exit_json(change=False, msg="package(s) already %s" % state)
+        module.exit_json(changed=False, msg="package(s) already %s" % state)
 
 
 def main():
