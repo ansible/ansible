@@ -175,6 +175,9 @@ Here are some examples::
 
          - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
+         # shelvefile lookup retrieves a string value corresponding to a key inside a Python shelve file
+         - debug: msg="{{ lookup('shelvefile', 'file=path_to_some_shelve_file.db key=key_to_retrieve') }}
+
          # The following lookups were added in 1.9
          - debug: msg="{{item}}"
            with_url:
