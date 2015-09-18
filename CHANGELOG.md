@@ -130,6 +130,7 @@ New Modules:
 * cloudstack: cs_securitygroup_rule
 * cloudstack: cs_staticnat
 * cloudstack: cs_template
+* cloudstack: cs_user
 * cloudstack: cs_vmsnapshot
 * datadog_monitor
 * dpkg_selections
