@@ -75,7 +75,7 @@ You can select a host or subset of hosts from a group by their position. For exa
     webbing
     weber
 
-You can refer to hosts within the group by adding a subscript to the group name:
+You can refer to hosts within the group by adding a subscript to the group name::
 
     webservers[0]       # == cobweb
     webservers[-1]      # == weber
