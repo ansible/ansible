@@ -464,14 +464,17 @@ class StrategyBase:
             #        but this may take some work in the iterator and gets tricky when
             #        we consider the ability of meta tasks to flush handlers
             for handler in handler_block.block:
-                should_run = handler.get_name() in self._notified_handlers and len(self._notified_handlers[handler.get_name()])
+                handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler)
+                templar = Templar(loader=self._loader, variables=handler_vars)
+                handler_name = templar.template(handler.get_name())
+                should_run = handler_name in self._notified_handlers and len(self._notified_handlers[handler_name])
                 if should_run:
-                    result = self._do_handler_run(handler, iterator=iterator, play_context=play_context)
+                    result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
                     if not result:
                         break
         return result
 
-    def _do_handler_run(self, handler, iterator, play_context, notified_hosts=None):
+    def _do_handler_run(self, handler, handler_name, iterator, play_context, notified_hosts=None):
 
         # FIXME: need to use iterator.get_failed_hosts() instead?
         #if not len(self.get_hosts_remaining(iterator._play)):
@@ -481,7 +484,7 @@ class StrategyBase:
         self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
 
         if notified_hosts is None:
-            notified_hosts = self._notified_handlers[handler.get_name()]
+            notified_hosts = self._notified_handlers[handler_name]
 
         host_results = []
         for host in notified_hosts:
@@ -530,7 +533,7 @@ class StrategyBase:
                     continue
 
         # wipe the notification list
-        self._notified_handlers[handler.get_name()] = []
+        self._notified_handlers[handler_name] = []
         self._display.debug("done running handlers, result is: %s" % result)
         return result
 
