@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import string
+
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock
 
@@ -44,6 +46,7 @@ class TestInventory(unittest.TestCase):
         ' a : b ': ['a', 'b'],
         'foo:bar:baz[1:2]': ['foo', 'bar', 'baz[1:2]'],
     }
+
     pattern_lists = [
         [['a'], ['a']],
         [['a', 'b'], ['a', 'b']],
@@ -52,6 +55,21 @@ class TestInventory(unittest.TestCase):
          ['9a01:7f8:191:7701::9', '9a01:7f8:191:7701::9','foo']]
     ]
 
+    # pattern_string: [ ('base_pattern', (a,b)), ['x','y','z'] ]
+    # a,b are the bounds of the subscript; x..z are the results of the subscript
+    # when applied to string.ascii_letters.
+
+    subscripts = {
+        'a': [('a',None), list(string.ascii_letters)],
+        'a[0]': [('a', (0, None)), ['a']],
+        'a[1]': [('a', (1, None)), ['b']],
+        'a[2:3]': [('a', (2, 3)), ['c', 'd']],
+        'a[-1]': [('a', (-1, None)), ['Z']],
+        'a[-2]': [('a', (-2, None)), ['Y']],
+        'a[48:]': [('a', (48, -1)), ['W', 'X', 'Y', 'Z']],
+        'a[49:]': [('a', (49, -1)), ['X', 'Y', 'Z']],
+        'a[1:]': [('a', (1, -1)), list(string.ascii_letters[1:])],
+    }
 
     def setUp(self):
         v = VariableManager()
@@ -67,3 +85,16 @@ class TestInventory(unittest.TestCase):
 
         for p, r in self.pattern_lists:
             self.assertEqual(r, self.i._split_pattern(p))
+
+    def test_ranges(self):
+
+        for s in self.subscripts:
+            r = self.subscripts[s]
+            self.assertEqual(r[0], self.i._split_subscript(s))
+            self.assertEqual(
+                r[1],
+                self.i._apply_subscript(
+                    list(string.ascii_letters),
+                    r[0][1]
+                )
+            )
