@@ -25,7 +25,13 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import os, boto3
+import os
+
+try:
+    import boto3
+    HAS_BOTO3 = True
+except:
+    HAS_BOTO3 = False
 
 try:
     from distutils.version import LooseVersion
@@ -74,7 +80,7 @@ def boto_supports_profile_name():
     return hasattr(boto.ec2.EC2Connection, 'profile_name')
 
 
-def get_aws_connection_info(module, boto3=False):
+def get_aws_connection_info(module):
 
     # Check module args for credentials, then check environment vars
     # access_key
@@ -135,7 +141,7 @@ def get_aws_connection_info(module, boto3=False):
             # in case security_token came in as empty string
             security_token = None
 
-    if boto3:
+    if HAS_BOTO3:
         boto_params = dict(aws_access_key_id=access_key,
                            aws_secret_access_key=secret_key,
                            aws_session_token=security_token)
