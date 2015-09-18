@@ -474,7 +474,18 @@ class TaskExecutor:
             self._play_context.remote_addr = self._host.address
 
         if self._task.delegate_to is not None:
-            self._compute_delegate(variables)
+            # since we're delegating, we don't want to use interpreter values
+            # which would have been set for the original target host
+            for i in variables.keys():
+                if i.startswith('ansible_') and i.endswith('_interpreter'):
+                    del variables[i]
+            # now replace the interpreter values with those that may have come
+            # from the delegated-to host
+            delegated_vars = variables.get('ansible_delegated_vars', dict())
+            if isinstance(delegated_vars, dict):
+                for i in delegated_vars:
+                    if i.startswith("ansible_") and i.endswith("_interpreter"):
+                        variables[i] = delegated_vars[i]
 
         conn_type = self._play_context.connection
         if conn_type == 'smart':
@@ -528,75 +539,4 @@ class TaskExecutor:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
         return handler
-
-    def _compute_delegate(self, variables):
-
-        # get the vars for the delegate by its name
-        try:
-            self._display.debug("Delegating to %s" % self._task.delegate_to)
-            if self._task.delegate_to in C.LOCALHOST and self._task.delegate_to not in variables['hostvars']:
-                this_info = dict(ansible_connection="local")
-                for alt_local in C.LOCALHOST:
-                    if alt_local in variables['hostvars']:
-                        this_info = variables['hostvars'][self._task.delegate_to]
-                        if this_info == Undefined:
-                            this_info = dict(ansible_connection="local")
-                        break
-            else:
-                this_info = variables['hostvars'][self._task.delegate_to]
-
-        except Exception as e:
-            # make sure the inject is empty for non-inventory hosts
-            this_info = {}
-            self._display.debug("Delegate to lookup failed due to: %s" % str(e))
-
-        conn = this_info.get('ansible_connection')
-        if conn:
-            self._play_context.connection = conn
-            if conn in ('smart', 'paramiko'):
-                # smart and paramiko connections will be using some kind of ssh,
-                # so use 'ssh' for the string to check connection variables
-                conn_test = 'ssh'
-            else:
-                conn_test = conn
-        else:
-            # default to ssh for the connection variable test, as
-            # that's the historical default
-            conn_test = 'ssh'
-
-        # get the real ssh_address for the delegate and allow ansible_ssh_host to be templated
-        self._play_context.remote_addr      = this_info.get('ansible_%s_host' % conn_test, this_info.get('ansible_host', self._task.delegate_to))
-        self._play_context.remote_user      = this_info.get('ansible_%s_user' % conn_test, this_info.get('ansible_user', self._play_context.remote_user))
-        self._play_context.port             = this_info.get('ansible_%s_port' % conn_test, this_info.get('ansible_port', self._play_context.port))
-        self._play_context.password         = this_info.get('ansible_%s_pass' % conn_test, this_info.get('ansible_pass', self._play_context.password))
-        self._play_context.private_key_file = this_info.get('ansible_%s_private_key_file' % conn_test, self._play_context.private_key_file)
-
-        # because of the switch from su/sudo -> become, the become pass for the
-        # delegated-to host may be in one of several fields, so try each until
-        # (maybe) one is found.
-        for become_pass in ('ansible_become_password', 'ansible_become_pass', 'ansible_sudo_password', 'ansible_sudo_pass'):
-            if become_pass in this_info:
-                self._play_context.become_pass = this_info[become_pass]
-                break
-
-        # Last chance to get private_key_file from global variables.
-        # this is useful if delegated host is not defined in the inventory
-        if self._play_context.private_key_file is None:
-            self._play_context.private_key_file = this_info.get('ansible_ssh_private_key_file', None)
-
-        if self._play_context.private_key_file is None:
-            key = this_info.get('private_key_file', None)
-            if key:
-                self._play_context.private_key_file = os.path.expanduser(key)
-
-        # since we're delegating, we don't want to use interpreter values
-        # which would have been set for the original target host
-        for i in variables.keys():
-            if i.startswith('ansible_') and i.endswith('_interpreter'):
-                del variables[i]
-        # now replace the interpreter values with those that may have come
-        # from the delegated-to host
-        for i in this_info:
-            if i.startswith("ansible_") and i.endswith("_interpreter"):
-                variables[i] = this_info[i]
 

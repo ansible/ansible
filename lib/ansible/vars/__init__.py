@@ -34,6 +34,7 @@ except ImportError:
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError
+from ansible.inventory.host import Host
 from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
@@ -127,7 +128,7 @@ class VariableManager:
         return data
 
 
-    def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, use_cache=True):
+    def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -276,6 +277,38 @@ class VariableManager:
             if task._role:
                 all_vars['role_path'] = task._role._role_path
 
+            # if we have a task and we're delegating to another host, figure out the
+            # variables for that host now so we don't have to rely on hostvars later
+            if task.delegate_to is not None and include_delegate_to:
+                # we unfortunately need to template the delegate_to field here,
+                # as we're fetching vars before post_validate has been called on
+                # the task that has been passed in
+                templar = Templar(loader=loader, variables=all_vars)
+                delegated_host_name = templar.template(task.delegate_to)
+
+                # now try to find the delegated-to host in inventory, or failing that,
+                # create a new host on the fly so we can fetch variables for it
+                delegated_host = None
+                if self._inventory is not None:
+                    delegated_host = self._inventory.get_host(delegated_host_name)
+                    # try looking it up based on the address field, and finally
+                    # fall back to creating a host on the fly to use for the var lookup
+                    if delegated_host is None:
+                        for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+                            # check if the address matches, or if both the delegated_to host
+                            # and the current host are in the list of localhost aliases
+                            if h.address == delegated_host_name or h.name in C.LOCALHOST and delegated_host_name in C.LOCALHOST:
+                                delegated_host = h
+                                break
+                        else:
+                            delegated_host = Host(name=delegated_host_name)
+                else:
+                    delegated_host = Host(name=delegated_host_name)
+
+                # now we go fetch the vars for the delegated-to host and save them in our
+                # master dictionary of variables to be used later in the TaskExecutor/PlayContext
+                all_vars['ansible_delegated_vars'] = self.get_vars(loader=loader, play=play, host=delegated_host, task=task, include_delegate_to=False, include_hostvars=False)
+
         if self._inventory is not None:
             all_vars['inventory_dir'] = self._inventory.basedir()
             if play:
@@ -287,10 +320,8 @@ class VariableManager:
                 all_vars['play_hosts'] = host_list
                 all_vars['ansible_play_hosts'] = host_list
 
-
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         all_vars['omit'] = self._omit_token
-
         all_vars['ansible_version'] = CLI.version_info(gitinfo=False)
 
         if 'hostvars' in all_vars and host:
