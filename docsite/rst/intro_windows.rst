@@ -28,6 +28,10 @@ On a Linux control machine::
 
    pip install https://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
 
+On arch-linux:
+   
+   Please make sure to target the python installation ansible is using. pip will target python3, use pip2.7 instead. 
+
 Active Directory Support
 ++++++++++++++++++++++++
 
