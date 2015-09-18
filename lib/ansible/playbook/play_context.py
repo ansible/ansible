@@ -279,10 +279,16 @@ class PlayContext(Base):
                     setattr(new_info, attr, attr_val)
 
         # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
-        # connection info object with 'magic' variables from the variable list
+        # connection info object with 'magic' variables from the variable list.
+        # If the value 'ansible_delegated_vars' is in the variables, it means
+        # we have a delegated-to host, so we check there first before looking
+        # at the variables in general
+        delegated_vars = variables.get('ansible_delegated_vars', dict())
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
-                if variable_name in variables:
+                if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
+                    setattr(new_info, attr, delegated_vars[variable_name])
+                elif variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
 
         # make sure we get port defaults if needed
@@ -295,6 +301,7 @@ class PlayContext(Base):
                setattr(new_info, 'become_pass', new_info.sudo_pass)
             elif new_info.become_method == 'su' and new_info.su_pass:
                setattr(new_info, 'become_pass', new_info.su_pass)
+
 
         # finally, in the special instance that the task was specified
         # as a local action, override the connection in case it was changed
