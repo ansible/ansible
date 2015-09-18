@@ -35,12 +35,41 @@ via the command `sl config setup`.
 import SoftLayer
 import re
 import argparse
+import itertools
+
 try:
     import json
 except:
     import simplejson as json
 
 class SoftLayerInventory(object):
+    common_items = [
+        'id',
+        'globalIdentifier',
+        'hostname',
+        'domain',
+        'fullyQualifiedDomainName',
+        'primaryBackendIpAddress',
+        'primaryIpAddress',
+        'datacenter',
+        'tagReferences.tag.name',
+        ]
+
+    vs_items = [
+        'lastKnownPowerState.name',
+        'powerState',
+        'maxCpu',
+        'maxMemory',
+        'activeTransaction.transactionStatus[friendlyName,name]',
+        'status',
+        ]
+
+    hw_items = [
+        'hardwareStatusId',
+        'processorPhysicalCoreAmount',
+        'memoryCapacity',
+        ]
+
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
 
@@ -92,6 +121,9 @@ class SoftLayerInventory(object):
     def process_instance(self, instance, instance_type="virtual"):
         '''Populate the inventory dictionary with any instance information'''
 
+        dest = None
+        privateInstance = False
+
         # only want active instances
         if 'status' in instance and instance['status']['name'] != 'Active':
             return
@@ -106,43 +138,54 @@ class SoftLayerInventory(object):
 
         # if there's no IP address, we can't reach it
         if 'primaryIpAddress' not in instance:
-            return
-
-        dest = instance['primaryIpAddress']
+            #instance['privateInstance'] = True
+            privateInstance = True
+            dest = instance['primaryBackendIpAddress']
+        else:
+            dest = instance['primaryIpAddress']
 
         self.inventory["_meta"]["hostvars"][dest] = instance
 
-        # Inventory: group by memory
-        if 'maxMemory' in instance:
-            self.push(self.inventory, self.to_safe('memory_' + str(instance['maxMemory'])), dest)
-        elif 'memoryCapacity' in instance:
-            self.push(self.inventory, self.to_safe('memory_' + str(instance['memoryCapacity'])), dest)
+        if (not privateInstance):
+            # Inventory: group by memory
+            if 'maxMemory' in instance:
+                self.push(self.inventory, self.to_safe('memory_' + str(instance['maxMemory'])), dest)
+            elif 'memoryCapacity' in instance:
+                self.push(self.inventory, self.to_safe('memory_' + str(instance['memoryCapacity'])), dest)
 
-        # Inventory: group by cpu count
-        if 'maxCpu' in instance:
-            self.push(self.inventory, self.to_safe('cpu_' + str(instance['maxCpu'])), dest)
-        elif 'processorPhysicalCoreAmount' in instance:
-            self.push(self.inventory, self.to_safe('cpu_' + str(instance['processorPhysicalCoreAmount'])), dest)
+            # Inventory: group by cpu count
+            if 'maxCpu' in instance:
+                self.push(self.inventory, self.to_safe('cpu_' + str(instance['maxCpu'])), dest)
+            elif 'processorPhysicalCoreAmount' in instance:
+                self.push(self.inventory, self.to_safe('cpu_' + str(instance['processorPhysicalCoreAmount'])), dest)
 
-        # Inventory: group by datacenter
-        self.push(self.inventory, self.to_safe('datacenter_' + instance['datacenter']['name']), dest)
+            # Inventory: group by datacenter
+            self.push(self.inventory, self.to_safe('datacenter_' + instance['datacenter']['name']), dest)
 
-        # Inventory: group by hostname
-        self.push(self.inventory, self.to_safe(instance['hostname']), dest)
+            # Inventory: group by hostname
+            self.push(self.inventory, self.to_safe(instance['hostname']), dest)
 
-        # Inventory: group by FQDN
-        self.push(self.inventory, self.to_safe(instance['fullyQualifiedDomainName']), dest)
+            # Inventory: group by FQDN
+            self.push(self.inventory, self.to_safe(instance['fullyQualifiedDomainName']), dest)
 
-        # Inventory: group by domain
-        self.push(self.inventory, self.to_safe(instance['domain']), dest)
+            # Inventory: group by domain
+            self.push(self.inventory, self.to_safe(instance['domain']), dest)
 
-        # Inventory: group by type (hardware/virtual)
-        self.push(self.inventory, instance_type, dest)
+            # Inventory: group by type (hardware/virtual)
+            self.push(self.inventory, instance_type, dest)
+
+        # Inventory: group by tag
+        for tag in instance['tagReferences']:
+            if (privateInstance):
+                self.push(self.inventory, 'private_' + tag['tag']['name'], dest)
+            else:
+                self.push(self.inventory, tag['tag']['name'], dest)
 
     def get_virtual_servers(self):
         '''Get all the CCI instances'''
         vs = SoftLayer.VSManager(self.client)
-        instances = vs.list_instances()
+        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items,self.vs_items))
+        instances = vs.list_instances(mask=mask)
 
         for instance in instances:
             self.process_instance(instance)
@@ -150,7 +193,8 @@ class SoftLayerInventory(object):
     def get_physical_servers(self):
         '''Get all the hardware instances'''
         hw = SoftLayer.HardwareManager(self.client)
-        instances = hw.list_hardware()
+        mask = "mask[%s]" % ','.join(itertools.chain(self.common_items,self.hw_items))
+        instances = hw.list_hardware(mask=mask)
 
         for instance in instances:
             self.process_instance(instance, 'hardware')
@@ -158,6 +202,6 @@ class SoftLayerInventory(object):
     def get_all_servers(self):
         self.client = SoftLayer.Client()
         self.get_virtual_servers()
-        self.get_physical_servers()
+        #self.get_physical_servers()
 
 SoftLayerInventory()
