@@ -55,9 +55,10 @@ Blocks also introduce the ability to handle errors in a way similar to exception
        - debug: msg="this always executes"
 
 
-The tasks in the ``block`` section will execute normally.  If there is an error, the ``rescue`` section will be executed;
-here place whatever you need to do to recover from the previous error. The ``always`` section runs no matter what previous
-error did or did not occur in the ``block`` and ``rescue`` sections.
+Tasks in the ``block`` section will execute normally.  If an error
+occurs whilst running the ``block`` section, the ``rescue`` section will
+be executed.  The ``always`` section runs regardless of any errors in
+the ``block`` and ``rescue`` sections.
 
 
 
