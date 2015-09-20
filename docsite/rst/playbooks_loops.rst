@@ -181,7 +181,7 @@ It might happen like so::
 Given the mysql hosts and privs subkey lists, you can also iterate over a list in a nested subkey::
 
     - name: Setup MySQL users
-      mysql_user: name={{ item.0.user }} password={{ item.0.mysql.password }} host={{ item.1 }} priv={{ item.0.mysql.privs | join('/') }}
+      mysql_user: name={{ item.0.name }} password={{ item.0.mysql.password }} host={{ item.1 }} priv={{ item.0.mysql.privs | join('/') }}
       with_subelements:
         - users
         - mysql.hosts
