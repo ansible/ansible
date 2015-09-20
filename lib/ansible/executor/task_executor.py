@@ -263,11 +263,10 @@ class TaskExecutor:
 
         # fields set from the play/task may be based on variables, so we have to
         # do the same kind of post validation step on it here before we use it.
-        self._play_context.post_validate(templar=templar)
-
-        # now that the play context is finalized, we can add 'magic'
-        # variables to the variable dictionary
+        # We also add "magic" variables back into the variables dict to make sure
+        # a certain subset of variables exist.
         self._play_context.update_vars(variables)
+        self._play_context.post_validate(templar=templar)
 
         # Evaluate the conditional (if any) for this task, which we do before running
         # the final task post-validation. We do this before the post validation due to
