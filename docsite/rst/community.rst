@@ -150,11 +150,8 @@ to modify a pull request later.
 When submitting patches, be sure to run the unit tests first “make tests” and always use, these are the same basic
 tests that will automatically run on Travis when creating the PR. There are more in depth tests in the tests/integration
 directory, classified as destructive and non_destructive, run these if they pertain to your modification. They are setup
-with tags so you can run subsets, some of the tests requrie cloud credentials and will only run if they are provided.
+with tags so you can run subsets, some of the tests require cloud credentials and will only run if they are provided.
 When adding new features of fixing bugs it would be nice to add new tests to avoid regressions.
-
-Use  “git rebase” vs “git merge” (aliasing git pull to git pull --rebase is a great idea) to avoid merge commits in
-your submissions.  There are also integration tests that can be run in the "test/integration" directory.
 
 In order to keep the history clean and better audit incoming code, we will require resubmission of pull requests that
 contain merge commits.  Use "git pull --rebase" vs "git pull" and "git rebase" vs "git merge". Also be sure to use topic
