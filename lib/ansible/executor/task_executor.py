@@ -35,7 +35,7 @@ from ansible.playbook.task import Task
 from ansible.template import Templar
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
-from ansible.utils.vars import json_variable_cleaner
+from ansible.vars.unsafe_proxy import UnsafeProxy
 
 from ansible.utils.debug import debug
 
@@ -124,10 +124,21 @@ class TaskExecutor:
             if 'changed' not in res:
                 res['changed'] = False
 
+            def _clean_res(res):
+                if isinstance(res, dict):
+                    for k in res.keys():
+                        res[k] = _clean_res(res[k])
+                elif isinstance(res, list):
+                    for idx,item in enumerate(res):
+                        res[idx] = _clean_res(item)
+                elif isinstance(res, UnsafeProxy):
+                    return res._obj
+                return res
+
             debug("dumping result to json")
-            result = json.dumps(res, default=json_variable_cleaner)
+            res = _clean_res(res)
             debug("done dumping result, returning")
-            return result
+            return res
         except AnsibleError as e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
         finally:
@@ -252,11 +263,10 @@ class TaskExecutor:
 
         # fields set from the play/task may be based on variables, so we have to
         # do the same kind of post validation step on it here before we use it.
-        self._play_context.post_validate(templar=templar)
-
-        # now that the play context is finalized, we can add 'magic'
-        # variables to the variable dictionary
+        # We also add "magic" variables back into the variables dict to make sure
+        # a certain subset of variables exist.
         self._play_context.update_vars(variables)
+        self._play_context.post_validate(templar=templar)
 
         # Evaluate the conditional (if any) for this task, which we do before running
         # the final task post-validation. We do this before the post validation due to
@@ -460,10 +470,21 @@ class TaskExecutor:
         # FIXME: calculation of connection params/auth stuff should be done here
 
         if not self._play_context.remote_addr:
-            self._play_context.remote_addr = self._host.ipv4_address
+            self._play_context.remote_addr = self._host.address
 
         if self._task.delegate_to is not None:
-            self._compute_delegate(variables)
+            # since we're delegating, we don't want to use interpreter values
+            # which would have been set for the original target host
+            for i in variables.keys():
+                if i.startswith('ansible_') and i.endswith('_interpreter'):
+                    del variables[i]
+            # now replace the interpreter values with those that may have come
+            # from the delegated-to host
+            delegated_vars = variables.get('ansible_delegated_vars', dict())
+            if isinstance(delegated_vars, dict):
+                for i in delegated_vars:
+                    if i.startswith("ansible_") and i.endswith("_interpreter"):
+                        variables[i] = delegated_vars[i]
 
         conn_type = self._play_context.connection
         if conn_type == 'smart':
@@ -517,51 +538,4 @@ class TaskExecutor:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
         return handler
-
-    def _compute_delegate(self, variables):
-
-        # get the vars for the delegate by its name
-        try:
-            self._display.debug("Delegating to %s" % self._task.delegate_to)
-            if self._task.delegate_to in C.LOCALHOST and self._task.delegate_to not in variables['hostvars']:
-                this_info = dict(ansible_connection="local")
-                for alt_local in C.LOCALHOST:
-                    if alt_local in variables['hostvars']:
-                        this_info = variables['hostvars'][self._task.delegate_to]
-                        if this_info == Undefined:
-                            this_info = dict(ansible_connection="local")
-                        break
-            else:
-                this_info = variables['hostvars'][self._task.delegate_to]
-
-            # get the real ssh_address for the delegate and allow ansible_ssh_host to be templated
-            self._play_context.remote_addr      = this_info.get('ansible_ssh_host', self._task.delegate_to)
-            self._play_context.remote_user      = this_info.get('ansible_remote_user', self._task.remote_user)
-            self._play_context.port             = this_info.get('ansible_ssh_port', self._play_context.port)
-            self._play_context.password         = this_info.get('ansible_ssh_pass', self._play_context.password)
-            self._play_context.private_key_file = this_info.get('ansible_ssh_private_key_file', self._play_context.private_key_file)
-            self._play_context.become_pass      = this_info.get('ansible_sudo_pass', self._play_context.become_pass)
-
-            conn = this_info.get('ansible_connection', self._task.connection)
-            if conn:
-                self._play_context.connection   = conn
-
-        except Exception as e:
-            # make sure the inject is empty for non-inventory hosts
-            this_info = {}
-            self._display.debug("Delegate to lookup failed due to: %s" % str(e))
-
-        # Last chance to get private_key_file from global variables.
-        # this is useful if delegated host is not defined in the inventory
-        if self._play_context.private_key_file is None:
-            self._play_context.private_key_file = this_info.get('ansible_ssh_private_key_file', None)
-
-        if self._play_context.private_key_file is None:
-            key = this_info.get('private_key_file', None)
-            if key:
-                self._play_context.private_key_file = os.path.expanduser(key)
-
-        for i in this_info:
-            if i.startswith("ansible_") and i.endswith("_interpreter"):
-                variables[i] = this_info[i]
 

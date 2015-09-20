@@ -544,6 +544,27 @@ Additional paths can be provided separated by colon characters, in the same way 
 Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
 that were searched.
 
+.. _retry_files_enabled:
+
+retry_files_enabled
+===================
+
+This controls whether a failed Ansible playbook should create a .retry file. The default setting is True::
+
+    retry_files_enabled = False
+
+.. _retry_files_save_path:
+
+retry_files_save_path
+=====================
+
+The retry files save path is where Ansible will save .retry files when a playbook fails and retry_files_enabled is True (the default).
+The default location is ~/ and can be changed to any writeable path::
+
+    retry_files_save_path = ~/.ansible-retry
+
+The directory will be created if it does not already exist.
+
 .. _sudo_exe:
 
 sudo_exe
@@ -677,6 +698,18 @@ become_ask_pass
 Ask for privilege escalation password, the default is False::
 
     become_ask_pass=True
+
+.. _become_allow_same_user:
+
+become_allow_same_user
+======================
+
+Most of the time, using *sudo* to run a command as the same user who is running
+*sudo* itself is unnecessary overhead, so Ansible does not allow it. However,
+depending on the *sudo* configuration, it may be necessary to run a command as
+the same user through *sudo*, such as to switch SELinux contexts. For this
+reason, you can set ``become_allow_same_user`` to ``True`` and disable this
+optimization.
 
 .. _paramiko_settings:
 

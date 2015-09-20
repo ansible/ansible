@@ -275,7 +275,7 @@ class ActionBase:
                 return data2.split()[0]
         except IndexError:
             self._display.warning("Calculating checksum failed unusually, please report this to " + \
-                "the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n") % (cmd, data)
+                "the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n" % (cmd, data))
             # this will signal that it changed and allow things to keep going
             return "INVALIDCHECKSUM"
 
@@ -453,7 +453,9 @@ class ActionBase:
             self._display.debug("no command, exiting _low_level_execute_command()")
             return dict(stdout='', stderr='')
 
-        if sudoable and self._play_context.become:
+        allow_same_user = C.BECOME_ALLOW_SAME_USER
+        same_user = self._play_context.become_user == self._play_context.remote_user
+        if sudoable and self._play_context.become and (allow_same_user or not same_user):
             self._display.debug("using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 

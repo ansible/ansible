@@ -55,7 +55,7 @@ class ActionModule(ActionBase):
         async_limit = self._task.async
         async_jid   = str(random.randint(0, 999999999999))
 
-        async_cmd = " ".join([str(x) for x in [async_module_path, async_jid, async_limit, remote_module_path, argsfile]])
+        async_cmd = " ".join([str(x) for x in [env_string, async_module_path, async_jid, async_limit, remote_module_path, argsfile]])
         result = self._low_level_execute_command(cmd=async_cmd, tmp=None)
 
         # clean up after

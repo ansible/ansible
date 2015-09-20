@@ -24,8 +24,10 @@ __metaclass__ = type
 import pipes
 import random
 import re
+import string
 
-from six import iteritems
+from six import iteritems, string_types
+from six.moves import range
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -241,6 +243,8 @@ class PlayContext(Base):
             self.start_at_task = to_unicode(options.start_at_task)
         if hasattr(options, 'diff') and options.diff:
             self.diff = boolean(options.diff)
+        if hasattr(options, 'timeout') and options.timeout:
+            self.timeout = int(options.timeout)
 
         # get the tag info from options, converting a comma-separated list
         # of values into a proper list if need be. We check to see if the
@@ -248,7 +252,7 @@ class PlayContext(Base):
         if hasattr(options, 'tags'):
             if isinstance(options.tags, list):
                 self.only_tags.update(options.tags)
-            elif isinstance(options.tags, basestring):
+            elif isinstance(options.tags, string_types):
                 self.only_tags.update(options.tags.split(','))
 
         if len(self.only_tags) == 0:
@@ -257,7 +261,7 @@ class PlayContext(Base):
         if hasattr(options, 'skip_tags'):
             if isinstance(options.skip_tags, list):
                 self.skip_tags.update(options.skip_tags)
-            elif isinstance(options.skip_tags, basestring):
+            elif isinstance(options.skip_tags, string_types):
                 self.skip_tags.update(options.skip_tags.split(','))
 
     def set_task_and_variable_override(self, task, variables):
@@ -277,10 +281,16 @@ class PlayContext(Base):
                     setattr(new_info, attr, attr_val)
 
         # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
-        # connection info object with 'magic' variables from the variable list
+        # connection info object with 'magic' variables from the variable list.
+        # If the value 'ansible_delegated_vars' is in the variables, it means
+        # we have a delegated-to host, so we check there first before looking
+        # at the variables in general
+        delegated_vars = variables.get('ansible_delegated_vars', dict())
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
-                if variable_name in variables:
+                if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
+                    setattr(new_info, attr, delegated_vars[variable_name])
+                elif variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
 
         # make sure we get port defaults if needed
@@ -293,6 +303,7 @@ class PlayContext(Base):
                setattr(new_info, 'become_pass', new_info.sudo_pass)
             elif new_info.become_method == 'su' and new_info.su_pass:
                setattr(new_info, 'become_pass', new_info.su_pass)
+
 
         # finally, in the special instance that the task was specified
         # as a local action, override the connection in case it was changed
@@ -315,7 +326,7 @@ class PlayContext(Base):
         if self.become:
 
             becomecmd   = None
-            randbits    = ''.join(chr(random.randint(ord('a'), ord('z'))) for x in xrange(32))
+            randbits    = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
             success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
 

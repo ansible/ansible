@@ -2355,7 +2355,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
         return interface['v4'], interface['v6']
 
     # AIX 'ifconfig -a' does not have three words in the interface line
-    def get_interfaces_info(self, ifconfig_path, ifconfig_options):
+    def get_interfaces_info(self, ifconfig_path, ifconfig_options='-a'):
         interfaces = {}
         current_if = {}
         ips = dict(
