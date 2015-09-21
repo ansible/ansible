@@ -64,9 +64,14 @@ except ImportError:
 
 def get_vpc_info(vpc):
 
+    try:
+        classic_link = vpc.classic_link_enabled
+    except AttributeError:
+        classic_link = False
+      
     vpc_info = { 'id': vpc.id,
                  'instance_tenancy': vpc.instance_tenancy,
-                 'classic_link_enabled': vpc.classic_link_enabled,
+                 'classic_link_enabled': classic_link,
                  'dhcp_options_id': vpc.dhcp_options_id,
                  'state': vpc.state,
                  'is_default': vpc.is_default,
