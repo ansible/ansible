@@ -53,7 +53,7 @@ options:
     required: true
   tags:
     description:
-      - "A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }. Tags in this list are used to uniquely identify route tables within a VPC when the route_table_id is not supplied."
+      - "A dictionary of resource tags of the form: { tag1: value1, tag2: value2 }. Tags are used to uniquely identify route tables within a VPC when the route_table_id is not supplied."
     required: false
     default: null
     aliases: [ "resource_tags" ]
@@ -89,7 +89,7 @@ EXAMPLES = '''
     vpc_id: vpc-1245678
     region: us-west-1
     tags:
-      - Name: Internal
+      Name: Internal
     subnets:
       - "{{ application_subnet.subnet_id }}"
       - 'Database Subnet'
