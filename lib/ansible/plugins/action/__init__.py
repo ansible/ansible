@@ -19,15 +19,16 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six.moves import StringIO
 import base64
 import json
 import os
 import random
 import stat
-import sys
 import tempfile
 import time
+
+from six import string_types
+from six.moves import StringIO
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
@@ -463,12 +464,12 @@ class ActionBase:
         rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, in_data=in_data, sudoable=sudoable)
         self._display.debug("command execution done")
 
-        if not isinstance(stdout, basestring):
+        if not isinstance(stdout, string_types):
             out = ''.join(stdout.readlines())
         else:
             out = stdout
 
-        if not isinstance(stderr, basestring):
+        if not isinstance(stderr, string_types):
             err = ''.join(stderr.readlines())
         else:
             err = stderr
