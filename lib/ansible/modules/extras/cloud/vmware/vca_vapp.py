@@ -21,20 +21,82 @@
 DOCUMENTATION = '''
 ---
 module: vca_vapp
-short_description: create, terminate, start or stop a vm in vca
+short_description: Manages vCloud Air vApp instances.
 description:
-  - Creates or terminates vca vms.
+  - This module will actively managed vCloud Air vApp instances.  Instances
+    can be created and deleted as well as both deployed and undeployed.
 version_added: "2.0"
 author: Peter Sprygada (@privateip)
 options:
+  vapp_name:
+    description:
+      - The name of the vCloud Air vApp instance
+    required: yes
+  vdc_name:
+    description:
+      - The name of the virtual data center (VDC) that contains the vAPP
+    required: yes
+  template_name:
+    description:
+      - The name of the vApp template to use to create the vApp instance.  If
+        the I(state) is not `absent` then the I(template_name) value must be
+        provided.  The I(template_name) must be previously uploaded to the
+        catalog specified by I(catalog_name)
+    required: no
+    default: None
+  network_name:
+    description:
+      - The name of the network that should be attached to the virtual machine
+        in the vApp.  The virtual network specified must already be created in
+        the vCloud Air VDC.  If the I(state) is not 'absent' then the
+        I(network_name) argument must be provided.
+    required: no
+    default: None
+  network_mode:
+    description:
+      - Configures the mode of the network connection.
+    required: no
+    default: pool
+    choices: ['pool', 'dhcp', 'static']
+  vm_name:
+    description:
+      - The name of the virtual machine instance in the vApp to manage.
+    required: no
+    default: None
+  vm_cpus:
+    description:
+      - The number of vCPUs to configure for the VM in the vApp.   If the
+        I(vm_name) argument is provided, then this becomes a per VM setting
+        otherwise it is applied to all VMs in the vApp.
+    required: no
+    default: None
+  vm_memory:
+    description:
+      - The amount of memory in MB to allocate to VMs in the vApp.  If the
+        I(vm_name) argument is provided, then this becomes a per VM setting
+        otherise it is applied to all VMs in the vApp.
+    required: no
+    default: None
+  operation:
+    description:
+      - Specifies an operation to be performed on the vApp.
+    required: no
+    default: noop
+    choices: ['noop', 'poweron', 'poweroff', 'suspend', 'shutdown', 'reboot', 'reset']
+  state:
+    description:
+      - Configures the state of the vApp.
+    required: no
+    default: present
+    choices: ['present', 'absent', 'deployed', 'undeployed']
     username:
       description:
-        - The vca username or email address, if not set the environment variable VCA_USER is checked for the username.
+        - The vCloud Air username to use during authentication
       required: false
       default: None
     password:
       description:
-        - The vca password, if not set the environment variable VCA_PASS is checked for the password
+        - The vCloud Air password to use during authentication
       required: false
       default: None
     org:
@@ -46,6 +108,11 @@ options:
       description:
         - The service id in a vchs environment to be used for creating the vapp
       required: false
+      default: None
+    instance_id:
+      description:
+        - The vCloud Air instance ID
+      required: no
       default: None
     host:
       description:
@@ -63,176 +130,54 @@ options:
       required: false
       default: vca
       choices: [ "vca", "vchs", "vcd" ]
-    state:
-      description:
-        - if the object should be added or removed
-      required: false
-      default: present
-      choices: [ "present", "absent" ]
-    catalog_name:
-      description:
-        - The catalog from which the vm template is used.
-      required: false
-      default: "Public Catalog"
-    script:
-      description:
-        - The path to script that gets injected to vm during creation.
-      required: false
-      default: "Public Catalog"
-    template_name:
-      description:
-        - The template name from which the vm should be created.
-      required: True
-    network_name:
-      description:
-        - The network name to which the vm should be attached.
-      required: false
-      default: 'None'
-    network_mode:
-      description:
-        - The network mode in which the ip should be allocated.
-      required: false
-      default: pool
-      choices: [ "pool", "dhcp", 'static' ]
-    instance_id::
-      description:
-        - The instance id of the region in vca flavour where the vm should be created
-      required: false
-      default: None
     vdc_name:
       description:
         - The name of the vdc where the vm should be created.
-      required: false
-      default: None
-    vm_name:
-      description:
-        - The name of the vm to be created, the vapp is named the same as the vapp name
-      required: false
-      default: 'default_ansible_vm1'
-    vm_cpus:
-      description:
-        - The number if cpus to be added to the vm
-      required: false
-      default: None
-    vm_memory:
-      description:
-        - The amount of memory to be added to vm in megabytes
       required: false
       default: None
 '''
 
 EXAMPLES = '''
 
-#Create a vm in an vca environment. The username password is not set as they are set in environment
-
-- hosts: localhost
-  connection: local
-  tasks:
-   - vca_vapp:
-       operation: poweroff
-       instance_id: 'b15ff1e5-1024-4f55-889f-ea0209726282'
-       vdc_name: 'benz_ansible'
-       vm_name: benz
-       vm_cpus: 2
-       vm_memory: 1024
-       network_mode: pool
-       template_name: "CentOS63-32BIT"
-       admin_password: "Password!123"
-       network_name: "default-routed-network"
-
-#Create a vm in a vchs environment.
-
-- hosts: localhost
-  connection: local
-  tasks:
-   - vca_app:
-       operation: poweron
-       service_id: '9-69'
-       vdc_name: 'Marketing'
-       service_type: 'vchs'
-       vm_name: benz
-       vm_cpus: 1
-       script: "/tmp/configure_vm.sh"
-       catalog_name: "Marketing-Catalog"
-       template_name: "Marketing-Ubuntu-1204x64"
-       vm_memory: 512
-       network_name: "M49-default-isolated"
-
-#create a vm in a vdc environment
-
-- hosts: localhost
-  connection: local
-  tasks:
-   - vca_vapp:
-       operation: poweron
-       org: IT20
-       host: "mycloud.vmware.net"
-       api_version: "5.5"
-       service_type: vcd
-       vdc_name: 'IT20 Data Center (Beta)'
-       vm_name: benz
-       vm_cpus: 1
-       catalog_name: "OS Templates"
-       template_name: "CentOS 6.5 64Bit CLI"
-       network_mode: pool
+- name: Creates a new vApp in a VCA instance
+  vca_vapp:
+    vapp_name: tower
+    state=present
+    template_name='Ubuntu Server 12.04 LTS (amd64 20150127)'
+    vdc_name=VDC1
+    instance_id=<your instance id here>
+    username=<your username here>
+    password=<your password here>
 
 '''
 
-try:
-    from pyvcloud.vcloudair import VCA
-    HAS_PYVCLOUD = True
-except ImportError:
-    HAS_PYVCLOUD = False
+DEFAULT_VAPP_OPERATION = 'noop'
 
-VAPP_STATE_MAP = {
-    'poweron': 'Powered on',
-    'poweroff': 'Powered off',
-    'reboot': None,
-    'reset': None,
-    'shutdown': 'Powered off',
-    'suspend': 'Suspended',
-    'absent': None
+VAPP_STATUS = {
+    'Powered off': 'poweroff',
+    'Powered on': 'poweron',
+    'Suspended': 'suspend'
 }
 
-def modify_vapp(vapp, module):
-    vm_name = module.params['vm_name']
-    vm_cpus = module.params['vm_cpus']
-    vm_memory = module.params['vm_memory']
+VAPP_STATES = ['present', 'absent', 'deployed', 'undeployed']
+VAPP_OPERATIONS = ['poweron', 'poweroff', 'suspend', 'shutdown',
+                   'reboot', 'reset', 'noop']
 
-    changed = False
 
+def get_instance(module):
+    vapp_name = module.params['vapp_name']
+    inst = dict(vapp_name=vapp_name, state='absent')
     try:
-        vm = vapp.get_vms_details()[0]
-    except IndexError:
-        raise VcaError('No VM provisioned for vapp')
+        vapp = module.get_vapp(vapp_name)
+        if vapp:
+            status = module.vca.get_status(vapp.me.get_status())
+            inst['status'] = VAPP_STATUS.get(status, 'unknown')
+            inst['state'] = 'deployed' if vapp.me.deployed else 'undeployed'
+        return inst
+    except VcaError:
+        return inst
 
-    if vm['status'] != 'Powered off':
-        raise VcaError('vApp must be powered off to modify')
-
-    if vm_cpus != vm['cpus'] and vm_cpus is not None:
-        if not module.check_mode:
-            task = vapp.modify_vm_cpu(vm_name, vm_cpus)
-        changed = True
-
-    if vm_memory != vm['memory_mb'] and vm_memory is not None:
-        if not module.check_mode:
-            task = vca.modify_vm_memory(vm_name, vm_memory)
-        changed = True
-
-    return changed
-
-
-def set_vapp_state(vapp, state):
-    vm = vapp.get_vms_details()[0]
-    try:
-        if vm['status'] != VAPP_STATE_MAP[state]:
-            func = getattr(vm, state)
-            func()
-    except KeyError:
-        raise VcaError('unknown vapp state', state=str(state), vm=str(vm))
-
-
-def create_vapp(vca, module):
+def create(module):
     vdc_name = module.params['vdc_name']
     vapp_name = module.params['vapp_name']
     template_name = module.params['template_name']
@@ -242,85 +187,105 @@ def create_vapp(vca, module):
     vm_name = module.params['vm_name']
     vm_cpus = module.params['vm_cpus']
     vm_memory = module.params['vm_memory']
-    deploy = module.params['deploy']
+    deploy = module.params['state'] == 'deploy'
+    poweron = module.params['operation'] == 'poweron'
 
-    task = vca.create_vapp(vdc_name, vapp_name, template_name, catalog_name,
-                           network_name, network_mode, vm_name, vm_cpus,
-                           vm_memory, deploy, False)
+    task = module.vca.create_vapp(vdc_name, vapp_name, template_name,
+                                  catalog_name, network_name, network_mode,
+                                  vm_name, vm_cpus, vm_memory, deploy, poweron)
 
-    vca.block_until_completed(task)
+    module.vca.block_until_completed(task)
 
-    return vca.get_vapp(vca.get_vdc(vdc_name), vapp_name)
-
-def remove_vapp(vca, module):
+def delete(module):
     vdc_name = module.params['vdc_name']
     vapp_name = module.params['vapp_name']
-    if not vca.delete_vapp(vdc_name, vapp_name):
-        raise VcaError('unable to delete %s from %s' % (vapp_name, vdc_name))
+    module.vca.delete_vapp(vdc_name, vapp_name)
+
+def do_operation(module):
+    vapp_name = module.params['vapp_name']
+    operation = module.params['operation']
+
+    vm_name = module.params.get('vm_name')
+    vm = None
+    if vm_name:
+        vm = module.get_vm(vapp_name, vm_name)
+
+    if operation == 'poweron':
+        operation = 'powerOn'
+    elif operation == 'poweroff':
+        operation = 'powerOff'
+
+    cmd = 'power:%s' % operation
+    module.get_vapp(vapp_name).execute(cmd, 'post', targetVM=vm)
+
+def set_state(module):
+    state = module.params['state']
+    vapp = module.get_vapp(module.params['vapp_name'])
+    if state == 'deployed':
+        action = module.params['operation'] == 'poweron'
+        if not vapp.deploy(action):
+            module.fail('unable to deploy vapp')
+    elif state == 'undeployed':
+        action = module.params['operation']
+        if action == 'poweroff':
+            action = 'powerOff'
+        elif action != 'suspend':
+            action = None
+        if not vapp.undeploy(action):
+            module.fail('unable to undeploy vapp')
 
 
 def main():
-    argument_spec = vca_argument_spec()
-    argument_spec.update(
-        dict(
-            vdc_name=dict(requred=True),
-            vapp_name=dict(required=True),
-            template_name=dict(required=True),
-            catalog_name=dict(default='Public Catalog'),
-            network_name=dict(),
-            network_mode=dict(default='pool', choices=['dhcp', 'static', 'pool']),
-            vm_name=dict(),
-            vm_memory=dict(),
-            vm_cpus=dict(),
-            deploy=dict(default=False),
-            state=dict(default='poweron', choices=VAPP_STATE_MAP.keys())
-        )
+
+    argument_spec = dict(
+        vapp_name=dict(required=True),
+        vdc_name=dict(required=True),
+        template_name=dict(),
+        catalog_name=dict(default='Public Catalog'),
+        network_name=dict(),
+        network_mode=dict(default='pool', choices=['dhcp', 'static', 'pool']),
+        vm_name=dict(),
+        vm_cpus=dict(),
+        vm_memory=dict(),
+        operation=dict(default=DEFAULT_VAPP_OPERATION, choices=VAPP_OPERATIONS),
+        state=dict(default='present', choices=VAPP_STATES)
     )
 
-    module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
+    module = VcaAnsibleModule(argument_spec=argument_spec,
+                              supports_check_mode=True)
 
-    vdc_name = module.params['vdc_name']
-    vapp_name = module.params['vapp_name']
     state = module.params['state']
+    operation = module.params['operation']
 
-    if not HAS_PYVCLOUD:
-        module.fail_json(msg="python module pyvcloud is needed for this module")
-
-    vca = vca_login(module)
-
-    vdc = vca.get_vdc(vdc_name)
-    if not vdc:
-        module.fail_json(msg="Error getting the vdc, Please check the vdc name")
+    instance = get_instance(module)
 
     result = dict(changed=False)
 
-    vapp = vca.get_vapp(vdc, vapp_name)
+    if instance and state == 'absent':
+        if not module.check_mode:
+            delete(module)
+        result['changed'] = True
 
-    try:
-        if not vapp and state != 'absent':
+    elif state != 'absent':
+        if instance['state'] == 'absent':
             if not module.check_mode:
-                vapp = create_vapp(vca, module)
-                set_vapp_state(vapp, state)
+                create(module)
             result['changed'] = True
-        elif vapp and state == 'absent':
-            if not module.check_mode:
-                remove_vapp(vca, module)
-            result['changed'] = True
-        elif vapp:
-            if not module.check_mode:
-                changed = modify_vapp(vapp, module)
-                set_vapp_state(vapp, state)
-            result['changed'] = True
-    except VcaError, e:
-        module.fail_json(msg=e.message, **e.kwargs)
-    except Exception, e:
-        module.fail_json(msg=e.message)
 
-    module.exit_json(**result)
+        elif instance['state'] != state and state != 'present':
+            if not module.check_mode:
+                set_state(module)
+            result['changed'] = True
+
+        if operation != instance.get('status') and operation != 'noop':
+            if not module.check_mode:
+                do_operation(module)
+            result['changed'] = True
+
+    return module.exit(**result)
 
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.vca import *
-
 if __name__ == '__main__':
     main()
