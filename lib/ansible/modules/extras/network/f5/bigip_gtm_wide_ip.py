@@ -70,7 +70,7 @@ EXAMPLES = '''
       user=admin
       password=mysecret
       lb_method=round_robin
-      wide_ip=my_wide_ip
+      wide_ip=my-wide-ip.example.com
 '''
 
 try:
