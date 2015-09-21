@@ -21,6 +21,7 @@ short_description: list or describe clusters or their instances in ecs
 description:
     - Lists or describes clusters or cluster instances in ecs.
 version_added: "2.0"
+author: Mark Chance(@Java1Guy)
 options:
     details:
         description:
