@@ -21,6 +21,7 @@ short_description: list or describe services in ecs
 description:
     - Lists or describes services in ecs.
 version_added: "2.0"
+author: Mark Chance (@java1guy)
 options:
     details:
         description:
