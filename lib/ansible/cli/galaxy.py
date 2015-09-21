@@ -85,9 +85,9 @@ class GalaxyCLI(CLI):
         elif self.action == "search":
             self.parser.add_option('-P', '--platforms', dest='platforms',
                 help='list of OS platforms to filter by')
-            self.parser.add_option('-T', '--tags', dest='tags',
-                help='list of tags to filter by')
-            self.parser.set_usage("usage: %prog search [<search_term>] [-T <tag1,tag2>] [-P platform]")
+            self.parser.add_option('-T', '--galaxy-tags', dest='tags',
+                help='list of galaxy tags to filter by')
+            self.parser.set_usage("usage: %prog search [<search_term>] [-T <galaxy_tag1,galaxy_tag2>] [-P platform]")
 
         # options that apply to more than one action
         if self.action != "init":
@@ -248,8 +248,8 @@ class GalaxyCLI(CLI):
             if dir == "meta":
                 # create a skeleton meta/main.yml with a valid galaxy_info
                 # datastructure in place, plus with all of the available
-                # tags/platforms included (but commented out) and the
-                # dependencies section
+                # platforms included (but commented out), the galaxy_tags
+                # list, and the dependencies section
                 platforms = []
                 if not offline and self.api:
                     platforms = self.api.get_list("platforms") or []
