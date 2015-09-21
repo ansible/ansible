@@ -85,9 +85,9 @@ class GalaxyCLI(CLI):
         elif self.action == "search":
             self.parser.add_option('-P', '--platforms', dest='platforms',
                 help='list of OS platforms to filter by')
-            self.parser.add_option('-C', '--categories', dest='categories',
-                help='list of categories to filter by')
-            self.parser.set_usage("usage: %prog search [<search_term>] [-C <category1,category2>] [-P platform]")
+            self.parser.add_option('-T', '--tags', dest='tags',
+                help='list of tags to filter by')
+            self.parser.set_usage("usage: %prog search [<search_term>] [-T <tag1,tag2>] [-P platform]")
 
         # options that apply to more than one action
         if self.action != "init":
@@ -99,6 +99,8 @@ class GalaxyCLI(CLI):
         if self.action in ("info","init","install","search"):
             self.parser.add_option('-s', '--server', dest='api_server', default="https://galaxy.ansible.com",
                 help='The API server destination')
+            self.parser.add_option('-c', '--ignore-certs', action='store_false', dest='validate_certs', default=True,
+                help='Ignore SSL certificate validation errors.')
 
         if self.action in ("init","install"):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False,
@@ -251,9 +253,6 @@ class GalaxyCLI(CLI):
                 platforms = []
                 if not offline and self.api:
                     platforms = self.api.get_list("platforms") or []
-                categories = []
-                if not offline and self.api:
-                    categories = self.api.get_list("categories") or []
 
                 # group the list of platforms from the api based
                 # on their names, with the release field being
@@ -270,7 +269,6 @@ class GalaxyCLI(CLI):
                     issue_tracker_url = 'http://example.com/issue/tracker',
                     min_ansible_version = '1.2',
                     platforms = platform_groups,
-                    categories = categories,
                 )
                 rendered_meta = Environment().from_string(self.galaxy.default_meta).render(inject)
                 f = open(main_yml_path, 'w')
@@ -543,7 +541,7 @@ class GalaxyCLI(CLI):
         elif len(self.args) == 1:
             search = self.args.pop()
 
-        response = self.api.search_roles(search, self.options.platforms, self.options.categories)
+        response = self.api.search_roles(search, self.options.platforms, self.options.tags)
 
         if 'count' in response:
             self.galaxy.display.display("Found %d roles matching your search:\n" % response['count'])

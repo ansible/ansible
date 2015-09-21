@@ -62,7 +62,7 @@ class GalaxyAPI(object):
         return 'v1'
 
         try:
-            data = json.load(open_url(api_server))
+            data = json.load(open_url(api_server, validate_certs=self.galaxy.options.validate_certs))
             return data.get("current_version", 'v1')
         except Exception as e:
             # TODO: report error
@@ -86,7 +86,7 @@ class GalaxyAPI(object):
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
         self.galaxy.display.vvvv("- %s" % (url))
         try:
-            data = json.load(open_url(url))
+            data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
             if len(data["results"]) != 0:
                 return data["results"][0]
         except:
@@ -103,13 +103,13 @@ class GalaxyAPI(object):
 
         try:
             url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
-            data = json.load(open_url(url))
+            data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
             results = data['results']
             done = (data.get('next', None) == None)
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
                 self.galaxy.display.display(url)
-                data = json.load(open_url(url))
+                data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
                 results += data['results']
                 done = (data.get('next', None) == None)
             return results
@@ -123,7 +123,7 @@ class GalaxyAPI(object):
 
         try:
             url = '%s/%s/?page_size' % (self.baseurl, what)
-            data = json.load(open_url(url))
+            data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
             if "results" in data:
                 results = data['results']
             else:
@@ -134,27 +134,27 @@ class GalaxyAPI(object):
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
                 self.galaxy.display.display(url)
-                data = json.load(open_url(url))
+                data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
                 results += data['results']
                 done = (data.get('next', None) == None)
             return results
         except Exception as error:
             raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
 
-    def search_roles(self, search, platforms=None, categories=None):
+    def search_roles(self, search, platforms=None, tags=None):
 
         search_url = self.baseurl + '/roles/?page=1'
 
         if search:
             search_url += '&search=' + urlquote(search)
 
-        if categories is None:
-            categories = []
-        elif isinstance(categories, basestring):
-            categories = categories.split(',')
+        if tags is None:
+            tags = []
+        elif isinstance(tags, basestring):
+            tags = tags.split(',')
 
-        for cat in categories:
-            search_url += '&chain__categories__name=' + urlquote(cat)
+        for tag in tags:
+            search_url += '&chain__tags__name=' + urlquote(tag)
 
         if platforms is None:
             platforms = []
@@ -166,7 +166,7 @@ class GalaxyAPI(object):
 
         self.galaxy.display.debug("Executing query: %s" % search_url)
         try:
-            data = json.load(open_url(search_url))
+            data = json.load(open_url(search_url, validate_certs=self.galaxy.options.validate_certs))
         except HTTPError as e:
             raise AnsibleError("Unsuccessful request to server: %s" % str(e))
 
