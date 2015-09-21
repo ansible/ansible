@@ -62,6 +62,7 @@ options:
       - Specify non-default parameter group names to be associated with cache cluster
     required: false
     default: None
+    version_added: "2.0"
   cache_subnet_group:
     description:
       - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
