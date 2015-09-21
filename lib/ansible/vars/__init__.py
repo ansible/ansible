@@ -45,6 +45,13 @@ from ansible.vars.unsafe_proxy import UnsafeProxy
 
 CACHED_VARS = dict()
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 def preprocess_vars(a):
     '''
     Ensures that vars contained in the parameter passed in are
@@ -239,7 +246,13 @@ class VariableManager:
                     else:
                         raise AnsibleError("vars file %s was not found" % vars_file_item)
                 except (UndefinedError, AnsibleUndefinedVariable):
-                    continue
+                    if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
+                        raise
+                    else:
+                        # we do not have a full context here, and the missing variable could be
+                        # because of that, so just show a warning and continue
+                        display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
+                        continue
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
