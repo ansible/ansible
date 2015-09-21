@@ -26,6 +26,7 @@ notes:
 dependecies:
     - An IAM role must have been created
 version_added: "2.0"
+author: Mark Chance (@java1guy)
 options:
 '''
 
