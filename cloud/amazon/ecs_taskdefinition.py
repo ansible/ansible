@@ -21,6 +21,7 @@ short_description: register a task definition in ecs
 description:
     - Creates or terminates task definitions
 version_added: "2.0"
+author: Mark Chance(@Java1Guy)
 requirements: [ json, boto, botocore, boto3 ]
 options:
     state:

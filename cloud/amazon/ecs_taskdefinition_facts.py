@@ -21,6 +21,7 @@ short_description: return facts about task definitions in ecs
 description:
     - Describes or lists task definitions.
 version_added: 2.0
+author: Mark Chance(@Java1Guy)
 requirements: [ json, os, boto, botocore, boto3 ]
 options:
     details:
