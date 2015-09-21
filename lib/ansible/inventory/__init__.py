@@ -461,10 +461,7 @@ class Inventory(object):
         return matching_host
 
     def get_group(self, groupname):
-        if groupname in self.groups:
-            return self.groups[groupname]
-        else:
-            return None
+        return self.groups.get(groupname)
 
     def get_group_variables(self, groupname, update_cached=False, vault_password=None):
         if groupname not in self._vars_per_group or update_cached:
