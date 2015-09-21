@@ -21,6 +21,7 @@ short_description: return facts about tasks in ecs
 description:
     - Describes or lists tasks.
 version_added: 2.0
+author: Mark Chance(@Java1Guy)
 options:
     details:
         description:
