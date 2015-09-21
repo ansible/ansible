@@ -33,7 +33,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.inventory.host import Host
 from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
@@ -238,7 +238,7 @@ class VariableManager:
                             break
                     else:
                         raise AnsibleError("vars file %s was not found" % vars_file_item)
-                except UndefinedError:
+                except (UndefinedError, AnsibleUndefinedVariable):
                     continue
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
