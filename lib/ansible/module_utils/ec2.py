@@ -80,7 +80,7 @@ def boto_supports_profile_name():
     return hasattr(boto.ec2.EC2Connection, 'profile_name')
 
 
-def get_aws_connection_info(module):
+def get_aws_connection_info(module, boto3=False):
 
     # Check module args for credentials, then check environment vars
     # access_key
@@ -141,7 +141,7 @@ def get_aws_connection_info(module):
             # in case security_token came in as empty string
             security_token = None
 
-    if HAS_BOTO3:
+    if HAS_BOTO3 and boto3:
         boto_params = dict(aws_access_key_id=access_key,
                            aws_secret_access_key=secret_key,
                            aws_session_token=security_token)
