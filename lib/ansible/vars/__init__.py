@@ -315,8 +315,16 @@ class VariableManager:
                                 break
                         else:
                             delegated_host = Host(name=delegated_host_name)
+                            delegated_host.vars.update(dict(
+                                ansible_host=delegated_host_name,
+                                ansible_connection = C.DEFAULT_TRANSPORT,
+                            ))
                 else:
                     delegated_host = Host(name=delegated_host_name)
+                    delegated_host.vars.update(dict(
+                        ansible_host=delegated_host_name,
+                        ansible_connection = C.DEFAULT_TRANSPORT,
+                    ))
 
                 # now we go fetch the vars for the delegated-to host and save them in our
                 # master dictionary of variables to be used later in the TaskExecutor/PlayContext
