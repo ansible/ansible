@@ -75,6 +75,8 @@ class AnsibleCloudStack(object):
 
         # Init returns dict for use in subclasses
         self.returns = {}
+        # these values will be casted to int
+        self.returns_to_int = {}
 
         self.module = module
         self._connect()
@@ -407,6 +409,11 @@ class AnsibleCloudStack(object):
             for search_key, return_key in returns.iteritems():
                 if search_key in resource:
                     self.result[return_key] = resource[search_key]
+
+            # Bad bad API does not always return int when it should.
+            for search_key, return_key in self.returns_to_int.iteritems():
+                if search_key in resource:
+                    self.result[return_key] = int(resource[search_key])
 
             # Special handling for tags
             if 'tags' in resource:
