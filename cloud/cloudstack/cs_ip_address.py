@@ -224,26 +224,21 @@ class AnsibleCloudStackIPAddress(AnsibleCloudStack):
 
 
 def main():
+    argument_spec = cs_argument_spec()
+    argument_spec.update(dict(
+        ip_address = dict(required=False),
+        state = dict(choices=['present', 'absent'], default='present'),
+        zone = dict(default=None),
+        domain = dict(default=None),
+        account = dict(default=None),
+        network = dict(default=None),
+        project = dict(default=None),
+        poll_async = dict(choices=BOOLEANS, default=True),
+    ))
+
     module = AnsibleModule(
-        argument_spec = dict(
-            ip_address = dict(required=False),
-            state = dict(choices=['present', 'absent'], default='present'),
-            zone = dict(default=None),
-            domain = dict(default=None),
-            account = dict(default=None),
-            network = dict(default=None),
-            project = dict(default=None),
-            poll_async = dict(choices=BOOLEANS, default=True),
-            api_key = dict(default=None),
-            api_secret = dict(default=None, no_log=True),
-            api_url = dict(default=None),
-            api_http_method = dict(choices=['get', 'post'], default='get'),
-            api_timeout = dict(type='int', default=10),
-            api_region = dict(default='cloudstack'),
-        ),
-        required_together = (
-            ['api_key', 'api_secret', 'api_url'],
-        ),
+        argument_spec=argument_spec,
+        required_together=cs_required_together(),
         supports_check_mode=True
     )
 
