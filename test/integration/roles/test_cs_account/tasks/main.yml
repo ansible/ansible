@@ -224,3 +224,117 @@
     that:
     - acc|success
     - not acc|changed
+
+- name: test create user disabled account
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    username: "{{ cs_resource_prefix }}_username"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    network_domain: "{{ cs_resource_prefix }}.local"
+    state: disabled
+  register: acc
+- name: verify results of create disabled account
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.account_type == "user"
+    - acc.state == "disabled"
+    - acc.domain == "ROOT"
+
+- name: test remove disabled user account
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: acc
+- name: verify results of remove disabled user account
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.account_type == "user"
+    - acc.state == "disabled"
+    - acc.domain == "ROOT"
+
+- name: test create user locked account
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    username: "{{ cs_resource_prefix }}_username"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    network_domain: "{{ cs_resource_prefix }}.local"
+    state: locked
+  register: acc
+- name: verify results of create locked account
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.account_type == "user"
+    - acc.state == "locked"
+    - acc.domain == "ROOT"
+
+- name: test remove locked user account
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: acc
+- name: verify results of remove locked user account
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.account_type == "user"
+    - acc.state == "locked"
+    - acc.domain == "ROOT"
+
+- name: test create user unlocked/enabled account
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    username: "{{ cs_resource_prefix }}_username"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    network_domain: "{{ cs_resource_prefix }}.local"
+    state: unlocked
+  register: acc
+- name: verify results of create unlocked/enabled account
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.account_type == "user"
+    - acc.state == "enabled"
+    - acc.domain == "ROOT"
+
+- name: test remove unlocked/enabled user account
+  cs_account:
+    name: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: acc
+- name: verify results of remove unlocked/enabled user account
+  assert:
+    that:
+    - acc|success
+    - acc|changed
+    - acc.name == "{{ cs_resource_prefix }}_user"
+    - acc.network_domain == "{{ cs_resource_prefix }}.local"
+    - acc.account_type == "user"
+    - acc.state == "enabled"
+    - acc.domain == "ROOT"
