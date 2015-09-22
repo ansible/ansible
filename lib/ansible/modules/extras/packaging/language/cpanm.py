@@ -64,6 +64,12 @@ options:
     required: false
     default: false
     version_added: "2.0"
+  use_sudo:
+    description:
+     - Use sudo flag for cpanm
+    required: false
+    default: false
+    version_added: "2.0"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
 author: "Franck Cuny (@franckcuny)"
@@ -87,6 +93,9 @@ EXAMPLES = '''
 
 # install Dancer perl package from a specific mirror
 - cpanm: name=Dancer mirror=http://cpan.cpantesters.org/
+
+# install Dancer perl package using --sudo flag
+- cpanm: name=Dancer use_sudo=yes
 '''
 
 def _is_package_installed(module, name, locallib, cpanm):
@@ -124,6 +133,9 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only,
     if installdeps is True:
         cmd = "{cmd} --installdeps".format(cmd=cmd)
 
+    if use_sudo is True:
+        cmd = "{cmd} --sudo".format(cmd=cmd)
+
     return cmd
 
 
@@ -136,6 +148,7 @@ def main():
         mirror=dict(default=None, required=False),
         mirror_only=dict(default=False, type='bool'),
         installdeps=dict(default=False, type='bool'),
+        use_sudo=dict(default=False, type='bool'),
     )
 
     module = AnsibleModule(
@@ -151,6 +164,7 @@ def main():
     mirror      = module.params['mirror']
     mirror_only = module.params['mirror_only']
     installdeps = module.params['installdeps']
+    use_sudo = module.params['use_sudo']
 
     changed   = False
 
