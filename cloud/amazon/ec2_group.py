@@ -116,6 +116,10 @@ EXAMPLES = '''
         from_port: 10051
         to_port: 10051
         group_id: sg-12345678
+      - proto: icmp
+        from_port: 8 # icmp type, -1 = any type
+        to_port:  -1 # icmp subtype, -1 = any subtype
+        cidr_ip: 10.0.0.0/8
       - proto: all
         # the containing group name may be specified here
         group_name: example
