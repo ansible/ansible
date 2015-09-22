@@ -7,7 +7,7 @@ short_description: Manage Red Hat Network registration and subscriptions using t
 description:
     - Manage registration and subscription to the Red Hat Network entitlement platform.
 version_added: "1.2"
-author: "James Laska (@jlaska)"
+author: "Barnaby Court (@barnabycourt)"
 notes:
     - In order to register a system, subscription-manager requires either a username and password, or an activationkey.
 requirements:
