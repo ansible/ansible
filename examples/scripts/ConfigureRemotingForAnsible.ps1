@@ -7,6 +7,10 @@
 #
 # Set $VerbosePreference = "Continue" before running the script in order to
 # see the output messages.
+# Set $SkipNetworkProfileCheck to skip the network profile check.  Without
+# specifying this the script will only run if the device's interfaces are in
+# DOMAIN or PRIVATE zones.  Provide this switch if you want to enable winrm on
+# a device with an interface in PUBLIC zone.
 #
 # Written by Trond Hindenes <trond@hindenes.com>
 # Updated by Chris Church <cchurch@ansible.com>
