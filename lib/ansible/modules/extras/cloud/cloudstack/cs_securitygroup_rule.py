@@ -370,31 +370,29 @@ class AnsibleCloudStackSecurityGroupRule(AnsibleCloudStack):
 
 
 def main():
+    argument_spec = cs_argument_spec()
+    argument_spec.update(dict(
+        security_group = dict(required=True),
+        type = dict(choices=['ingress', 'egress'], default='ingress'),
+        cidr = dict(default='0.0.0.0/0'),
+        user_security_group = dict(default=None),
+        protocol = dict(choices=['tcp', 'udp', 'icmp', 'ah', 'esp', 'gre'], default='tcp'),
+        icmp_type = dict(type='int', default=None),
+        icmp_code = dict(type='int', default=None),
+        start_port = dict(type='int', default=None, aliases=['port']),
+        end_port = dict(type='int', default=None),
+        state = dict(choices=['present', 'absent'], default='present'),
+        project = dict(default=None),
+        poll_async = dict(choices=BOOLEANS, default=True),
+    ))
+    required_together = cs_required_together()
+    required_together.extend([
+        ['icmp_type', 'icmp_code'],
+    ])
+
     module = AnsibleModule(
-        argument_spec = dict(
-            security_group = dict(required=True),
-            type = dict(choices=['ingress', 'egress'], default='ingress'),
-            cidr = dict(default='0.0.0.0/0'),
-            user_security_group = dict(default=None),
-            protocol = dict(choices=['tcp', 'udp', 'icmp', 'ah', 'esp', 'gre'], default='tcp'),
-            icmp_type = dict(type='int', default=None),
-            icmp_code = dict(type='int', default=None),
-            start_port = dict(type='int', default=None, aliases=['port']),
-            end_port = dict(type='int', default=None),
-            state = dict(choices=['present', 'absent'], default='present'),
-            project = dict(default=None),
-            poll_async = dict(choices=BOOLEANS, default=True),
-            api_key = dict(default=None),
-            api_secret = dict(default=None, no_log=True),
-            api_url = dict(default=None),
-            api_http_method = dict(choices=['get', 'post'], default='get'),
-            api_timeout = dict(type='int', default=10),
-            api_region = dict(default='cloudstack'),
-        ),
-        required_together = (
-            ['icmp_type', 'icmp_code'],
-            ['api_key', 'api_secret', 'api_url'],
-        ),
+        argument_spec=argument_spec,
+        required_together=required_together,
         mutually_exclusive = (
             ['icmp_type', 'start_port'],
             ['icmp_type', 'end_port'],
