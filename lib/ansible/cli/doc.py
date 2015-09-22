@@ -255,10 +255,10 @@ class DocCLI(CLI):
 
             text.append("%s %s" % (opt_leadin, o))
 
-            if isinstance(doc['description'], list):
-                desc = " ".join(doc['description'])
+            if isinstance(opt['description'], list):
+                desc = " ".join(opt['description'])
             else:
-                desc = doc['description']
+                desc = opt['description']
 
             if 'choices' in opt:
                 choices = ", ".join(str(i) for i in opt['choices'])
