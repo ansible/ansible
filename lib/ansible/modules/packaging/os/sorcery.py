@@ -133,12 +133,13 @@ import re
 import shutil
 
 
+# auto-filled at module init
 SORCERY = {
-    'sorcery': "/usr/sbin/sorcery",
-    'scribe': "/usr/sbin/scribe",
-    'cast': "/usr/sbin/cast",
-    'dispel': "/usr/sbin/dispel",
-    'gaze': "/usr/sbin/gaze"
+    'sorcery': None,
+    'scribe': None,
+    'cast': None,
+    'dispel': None,
+    'gaze': None
 }
 
 SORCERY_VERSION_FILE = "/etc/sorcery/version"
@@ -550,9 +551,8 @@ def main():
     if os.geteuid() != 0:
         module.fail_json(msg="sudo/become is required for this operation")
 
-    for c, p in SORCERY.iteritems():
-        if not os.path.exists(p):
-            module.fail_json(msg="cannot find %s executable at %s" % (c, p))
+    for c in SORCERY:
+        SORCERY[c] = module.get_bin_path(c, True)
 
     params = module.params
 
