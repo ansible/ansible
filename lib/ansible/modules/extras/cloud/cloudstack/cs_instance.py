@@ -402,7 +402,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             'isoname':              'iso',
             'templatename':         'template',
             'keypair':              'ssh_key',
-            'securitygroup':        'security_group',
         }
         self.instance = None
         self.template = None
