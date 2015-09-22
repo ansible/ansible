@@ -34,6 +34,18 @@ try:
 except ImportError:
     has_lib_cs = False
 
+def cs_argument_spec():
+    return dict(
+        api_key = dict(default=None),
+        api_secret = dict(default=None, no_log=True),
+        api_url = dict(default=None),
+        api_http_method = dict(choices=['get', 'post'], default='get'),
+        api_timeout = dict(type='int', default=10),
+        api_region = dict(default='cloudstack'),
+    )
+
+def cs_required_together():
+    return [['api_key', 'api_secret', 'api_url']]
 
 class AnsibleCloudStack(object):
 
