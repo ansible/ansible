@@ -32,7 +32,6 @@ options:
       - Action to take.
       - servicegroup options were added in 2.0.
     required: true
-    default: null
     choices: [ "downtime", "enable_alerts", "disable_alerts", "silence", "unsilence",
                "silence_nagios", "unsilence_nagios", "command", "servicegroup_service_downtime",
                "servicegroup_host_downtime" ]
@@ -71,7 +70,6 @@ options:
         B(Required) option when using the C(downtime), C(enable_alerts), and C(disable_alerts) actions.
     aliases: [ "service" ]
     required: true
-    default: null
   servicegroup:
     version_added: "2.0"
     description:
@@ -83,10 +81,8 @@ options:
         should not include the submitted time header or the line-feed
         B(Required) option when using the C(command) action.
     required: true
-    default: null
 
 author: "Tim Bielawa (@tbielawa)"
-requirements: [ "Nagios" ]
 '''
 
 EXAMPLES = '''
