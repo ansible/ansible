@@ -105,6 +105,8 @@ class ActionModule(ActionBase):
                 for file in files:
                     full_path = os.path.join(base_path, file)
                     rel_path = full_path[sz:]
+                    if rel_path.startswith('/'):
+                        rel_path = rel_path[1:]
                     source_files.append((full_path, rel_path))
 
             # If it's recursive copy, destination is always a dir,
