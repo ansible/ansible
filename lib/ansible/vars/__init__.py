@@ -299,6 +299,13 @@ class VariableManager:
                 templar = Templar(loader=loader, variables=all_vars)
                 delegated_host_name = templar.template(task.delegate_to)
 
+                # a dictionary of variables to use if we have to create a new host below
+                new_delegated_host_vars = dict(
+                    ansible_host=delegated_host_name,
+                    ansible_user=C.DEFAULT_REMOTE_USER,
+                    ansible_connection=C.DEFAULT_TRANSPORT,
+                )
+
                 # now try to find the delegated-to host in inventory, or failing that,
                 # create a new host on the fly so we can fetch variables for it
                 delegated_host = None
@@ -315,16 +322,10 @@ class VariableManager:
                                 break
                         else:
                             delegated_host = Host(name=delegated_host_name)
-                            delegated_host.vars.update(dict(
-                                ansible_host=delegated_host_name,
-                                ansible_connection = C.DEFAULT_TRANSPORT,
-                            ))
+                            delegated_host.vars.update(new_delegated_host_vars)
                 else:
                     delegated_host = Host(name=delegated_host_name)
-                    delegated_host.vars.update(dict(
-                        ansible_host=delegated_host_name,
-                        ansible_connection = C.DEFAULT_TRANSPORT,
-                    ))
+                    delegated_host.vars.update(new_delegated_host_vars)
 
                 # now we go fetch the vars for the delegated-to host and save them in our
                 # master dictionary of variables to be used later in the TaskExecutor/PlayContext
