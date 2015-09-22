@@ -204,10 +204,11 @@ synchronize: mode=pull src=some/relative/path dest=/some/absolute/path
 
 # Synchronization of src on delegate host to dest on the current inventory host.
 # If delegate_to is set to the current inventory host, this can be used to synchronize
-# two directories on that host. 
-synchronize: >
-    src=some/relative/path dest=/some/absolute/path
-    delegate_to: delegate.host
+# two directories on that host.
+synchronize:
+    src: some/relative/path
+    dest: /some/absolute/path
+delegate_to: delegate.host
 
 # Synchronize and delete files in dest on the remote host that are not found in src of localhost.
 synchronize: src=some/relative/path dest=/some/absolute/path delete=yes
@@ -222,7 +223,12 @@ synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rs
 + /var/conf # include /var/conf even though it was previously excluded
 
 # Synchronize passing in extra rsync options
-synchronize: src=/tmp/helloworld dest=/var/www/helloword rsync_opts=--no-motd,--exclude=.git 
+synchronize:
+    src: /tmp/helloworld
+    dest: /var/www/helloword
+    rsync_opts:
+      - "--no-motd"
+      - "--exclude=.git"
 '''
 
 
