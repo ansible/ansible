@@ -818,51 +818,50 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return self.result
 
 def main():
+    argument_spec = cs_argument_spec()
+    argument_spec.update(dict(
+        name = dict(required=True),
+        display_name = dict(default=None),
+        group = dict(default=None),
+        state = dict(choices=['present', 'deployed', 'started', 'stopped', 'restarted', 'absent', 'destroyed', 'expunged'], default='present'),
+        service_offering = dict(default=None),
+        cpu = dict(default=None, type='int'),
+        cpu_speed = dict(default=None, type='int'),
+        memory = dict(default=None, type='int'),
+        template = dict(default=None),
+        iso = dict(default=None),
+        networks = dict(type='list', aliases=[ 'network' ], default=None),
+        ip_to_networks = dict(type='list', aliases=['ip_to_network'], default=None),
+        ip_address = dict(defaul=None),
+        ip6_address = dict(defaul=None),
+        disk_offering = dict(default=None),
+        disk_size = dict(type='int', default=None),
+        root_disk_size = dict(type='int', default=None),
+        keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
+        hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator'], default=None),
+        security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
+        affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
+        domain = dict(default=None),
+        account = dict(default=None),
+        project = dict(default=None),
+        user_data = dict(default=None),
+        zone = dict(default=None),
+        ssh_key = dict(default=None),
+        force = dict(choices=BOOLEANS, default=False),
+        tags = dict(type='list', aliases=[ 'tag' ], default=None),
+        poll_async = dict(choices=BOOLEANS, default=True),
+    ))
+
+    required_together = cs_required_together()
+    required_together.extend([
+        ['cpu', 'cpu_speed', 'memory'],
+    ])
+
     module = AnsibleModule(
-        argument_spec = dict(
-            name = dict(required=True),
-            display_name = dict(default=None),
-            group = dict(default=None),
-            state = dict(choices=['present', 'deployed', 'started', 'stopped', 'restarted', 'absent', 'destroyed', 'expunged'], default='present'),
-            service_offering = dict(default=None),
-            cpu = dict(default=None, type='int'),
-            cpu_speed = dict(default=None, type='int'),
-            memory = dict(default=None, type='int'),
-            template = dict(default=None),
-            iso = dict(default=None),
-            networks = dict(type='list', aliases=[ 'network' ], default=None),
-            ip_to_networks = dict(type='list', aliases=['ip_to_network'], default=None),
-            ip_address = dict(defaul=None),
-            ip6_address = dict(defaul=None),
-            disk_offering = dict(default=None),
-            disk_size = dict(type='int', default=None),
-            root_disk_size = dict(type='int', default=None),
-            keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
-            hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator'], default=None),
-            security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
-            affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
-            domain = dict(default=None),
-            account = dict(default=None),
-            project = dict(default=None),
-            user_data = dict(default=None),
-            zone = dict(default=None),
-            ssh_key = dict(default=None),
-            force = dict(choices=BOOLEANS, default=False),
-            tags = dict(type='list', aliases=[ 'tag' ], default=None),
-            poll_async = dict(choices=BOOLEANS, default=True),
-            api_key = dict(default=None),
-            api_secret = dict(default=None, no_log=True),
-            api_url = dict(default=None),
-            api_http_method = dict(choices=['get', 'post'], default='get'),
-            api_timeout = dict(type='int', default=10),
-            api_region = dict(default='cloudstack'),
-        ),
+        argument_spec=argument_spec,
+        required_together=required_together,
         mutually_exclusive = (
             ['template', 'iso'],
-        ),
-        required_together = (
-            ['api_key', 'api_secret', 'api_url'],
-            ['cpu', 'cpu_speed', 'memory'],
         ),
         supports_check_mode=True
     )
