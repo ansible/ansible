@@ -48,10 +48,10 @@ options:
     state:
         description:
             - Whether to cast, dispel or rebuild a package
-            - 'cast' is an equivalent of 'present', not 'latest'
-            - 'latest' always triggers 'update_cache=yes'
-            - 'rebuild' implies cast of all specified spells, not only those
-              existed before
+            - state 'cast' is an equivalent of 'present', not 'latest'
+            - state 'latest' always triggers 'update_cache=yes'
+            - state 'rebuild' implies cast of all specified spells, not only
+              those existed before
         required: false
         choices: ["present", "latest", "absent", "cast", "dispelled", "rebuild"]
         default: "present"
