@@ -61,10 +61,16 @@ class CallbackModule(CallbackBase):
             msg = 'included: %s for %s' % (result._task.args.get('_raw_params'), result._host.name)
             color = 'cyan'
         elif result._result.get('changed', False):
-            msg = "changed: [%s]" % result._host.get_name()
+            if result._task.delegate_to is not None:
+                msg = "changed: [%s => %s]" % (result._host.get_name(), result._task.delegate_to)
+            else:
+                msg = "changed: [%s]" % result._host.get_name()
             color = 'yellow'
         else:
-            msg = "ok: [%s]" % result._host.get_name()
+            if result._task.delegate_to is not None:
+                msg = "ok: [%s => %s]" % (result._host.get_name(), result._task.delegate_to)
+            else:
+                msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
 
         if result._task.loop and 'results' in result._result:
