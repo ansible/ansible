@@ -26,6 +26,17 @@ The most obvious is downloading roles from the Ansible Galaxy website::
 
    ansible-galaxy install username.rolename
 
+.. _roles_path:
+
+roles_path
+===============
+
+You can specify a particular directory where you want the downloaded roles to be placed::
+
+   ansible-galaxy install username.role -p ~/Code/ansible_roles/
+   
+This can be useful if you have a master folder that contains ansible galaxy roles shared across several projects. The default is the roles_path configured in your ansible.cfg file (/etc/ansible/roles if not configured).
+
 Building out Role Scaffolding
 -----------------------------
 
