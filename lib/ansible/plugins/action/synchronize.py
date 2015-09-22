@@ -101,7 +101,7 @@ class ActionModule(ActionBase):
             remote_transport = True
 
         try:
-            delegate_to = self._play_context.delegate_to
+            delegate_to = self._task.delegate_to
         except (AttributeError, KeyError):
             delegate_to = None
 
@@ -115,7 +115,7 @@ class ActionModule(ActionBase):
         # ansible's delegate_to mechanism to determine which host rsync is
         # running on so localhost could be a non-controller machine if
         # delegate_to is used)
-        src_host = '127.0.0.1'
+        src_host  = '127.0.0.1'
         dest_host = task_vars.get('ansible_ssh_host') or task_vars.get('inventory_hostname')
 
         dest_is_local = dest_host in C.LOCALHOST
@@ -183,10 +183,11 @@ class ActionModule(ActionBase):
             user = None
             if boolean(self._task.args.get('set_remote_user', 'yes')):
                 if use_delegate:
-                    if 'hostvars' in task_vars and delegate_to in task_vars['hostvars']:
-                        user = task_vars['hostvars'][delegate_to].get('ansible_ssh_user', None)
+                    user = task_vars.get('ansible_delegated_vars', dict()).get('ansible_ssh_user', None)
+                    if not user:
+                        user = C.DEFAULT_REMOTE_USER
 
-                if not use_delegate or not user:
+                else:
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
             # use the mode to define src and dest's url
