@@ -51,6 +51,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    port             = ('ansible_ssh_port', 'ansible_port'),
    password         = ('ansible_ssh_pass', 'ansible_password'),
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
+   pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
    shell            = ('ansible_shell_type',),
    become           = ('ansible_become',),
    become_method    = ('ansible_become_method',),
@@ -133,6 +134,7 @@ class PlayContext(Base):
     _shell            = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
     _connection_lockfd= FieldAttribute(isa='int')
+    _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
 
     # privilege escalation fields
     _become           = FieldAttribute(isa='bool')
@@ -427,7 +429,7 @@ class PlayContext(Base):
         '''
 
         #FIXME: remove password? possibly add become/sudo settings
-        for special_var in  ['ansible_connection', 'ansible_ssh_host', 'ansible_ssh_pass', 'ansible_ssh_port', 'ansible_ssh_user', 'ansible_ssh_private_key_file']:
+        for special_var in  ['ansible_connection', 'ansible_ssh_host', 'ansible_ssh_pass', 'ansible_ssh_port', 'ansible_ssh_user', 'ansible_ssh_private_key_file', 'ansible_ssh_pipelining']:
             if special_var not in variables:
                 for prop, varnames in MAGIC_VARIABLE_MAPPING.items():
                     if special_var in varnames:
