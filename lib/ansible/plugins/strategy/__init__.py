@@ -24,8 +24,10 @@ from six import iteritems, text_type
 
 import time
 
+from jinja2.exceptions import UndefinedError
+
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -466,7 +468,14 @@ class StrategyBase:
             for handler in handler_block.block:
                 handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler)
                 templar = Templar(loader=self._loader, variables=handler_vars)
-                handler_name = templar.template(handler.get_name())
+                try:
+                    handler_name = templar.template(handler.get_name())
+                except (UndefinedError, AnsibleUndefinedVariable):
+                    # We skip this handler due to the fact that it may be using
+                    # a variable in the name that was conditionally included via
+                    # set_fact or some other method, and we don't want to error
+                    # out unnecessarily
+                    continue
                 should_run = handler_name in self._notified_handlers and len(self._notified_handlers[handler_name])
                 if should_run:
                     result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
