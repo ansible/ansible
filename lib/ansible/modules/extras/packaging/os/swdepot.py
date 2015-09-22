@@ -147,7 +147,7 @@ def main():
 
         if not rc:
             changed = True
-            msg = "Packaged installed"
+            msg = "Package installed"
 
         else:
             module.fail_json(name=name, msg=output, rc=rc)
