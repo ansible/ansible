@@ -237,7 +237,7 @@ def _mark_package_install(module, base, pkg_spec):
     try:
         base.install(pkg_spec)
     except exceptions.MarkingError:
-        module.fail(msg="No package {} available.".format(pkg_spec))
+        module.fail_json(msg="No package {} available.".format(pkg_spec))
 
 
 def ensure(module, base, state, names):
