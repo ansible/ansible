@@ -25,7 +25,7 @@ import os
 import stat
 
 from yaml import load, YAMLError
-from six import text_type
+from six import text_type, string_types
 
 from ansible.errors import AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
@@ -154,7 +154,7 @@ class DataLoader():
         Reads the file contents from the given file name, and will decrypt them
         if they are found to be vault-encrypted.
         '''
-        if not file_name or not isinstance(file_name, basestring):
+        if not file_name or not isinstance(file_name, string_types):
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
         if not self.path_exists(file_name) or not self.is_file(file_name):
