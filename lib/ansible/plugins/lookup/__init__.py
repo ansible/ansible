@@ -58,7 +58,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
         results = []
         for x in a:
             for y in b:
-                results.append(self._flatten([x,y]))
+                results.append(LookupBase._flatten([x,y]))
         return results
 
     @staticmethod
