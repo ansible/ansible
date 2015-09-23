@@ -22,6 +22,7 @@ import os
 import shlex
 import yaml
 import copy
+import codecs
 import optparse
 import operator
 from ansible import errors
@@ -229,7 +230,7 @@ def write_tree_file(tree, hostname, buf):
     # TODO: might be nice to append playbook runs per host in a similar way
     # in which case, we'd want append mode.
     path = os.path.join(tree, hostname)
-    fd = open(path, "w+")
+    fd = codecs.open(path, "w+", "utf-8")
     fd.write(buf)
     fd.close()
 
