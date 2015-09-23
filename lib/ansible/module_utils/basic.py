@@ -66,7 +66,12 @@ import grp
 import pwd
 import platform
 import errno
-from itertools import imap, repeat
+from itertools import repeat
+
+try:
+    from itertools import imap      # Python 2
+except ImportError:
+    imap = map                      # Python 3
 
 try:
     import json
