@@ -517,7 +517,7 @@ class TaskExecutor:
 
         if self._task.action in self._shared_loader_obj.action_loader:
             if self._task.async != 0:
-                raise AnsibleError("async mode is not supported with the %s module" % module_name)
+                raise AnsibleError("async mode is not supported with the %s module" % self._task.action)
             handler_name = self._task.action
         elif self._task.async == 0:
             handler_name = 'normal'
