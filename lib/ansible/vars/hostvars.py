@@ -38,13 +38,7 @@ class HostVars(collections.Mapping):
         self._lookup = {}
         self._loader = loader
 
-        # temporarily remove the inventory filter restriction
-        # so we can compile the variables for all of the hosts
-        # in inventory
-        restriction = inventory._restriction
-        inventory.remove_restriction()
         hosts = inventory.get_hosts(ignore_limits_and_restrictions=True)
-        inventory.restrict_to_hosts(restriction)
 
         # check to see if localhost is in the hosts list, as we
         # may have it referenced via hostvars but if created implicitly
