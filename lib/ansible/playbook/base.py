@@ -159,6 +159,9 @@ class Base:
 
         assert ds is not None
 
+        # cache the datastructure internally
+        setattr(self, '_ds', ds)
+
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
         self._variable_manager = variable_manager
@@ -191,9 +194,6 @@ class Base:
 
         # run early, non-critical validation
         self.validate()
-
-        # cache the datastructure internally
-        setattr(self, '_ds', ds)
 
         # return the constructed object
         return self

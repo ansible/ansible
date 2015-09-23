@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -96,53 +97,49 @@ class Block(Base, Become, Conditional, Taggable):
         return super(Block, self).preprocess_data(ds)
 
     def _load_block(self, attr, ds):
-        return load_list_of_tasks(
-            ds,
-            play=self._play,
-            block=self,
-            role=self._role,
-            task_include=self._task_include,
-            variable_manager=self._variable_manager,
-            loader=self._loader,
-            use_handlers=self._use_handlers,
-        )
+        try:
+            return load_list_of_tasks(
+                ds,
+                play=self._play,
+                block=self,
+                role=self._role,
+                task_include=self._task_include,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+                use_handlers=self._use_handlers,
+            )
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_rescue(self, attr, ds):
-        return load_list_of_tasks(
-            ds,
-            play=self._play,
-            block=self,
-            role=self._role,
-            task_include=self._task_include,
-            variable_manager=self._variable_manager,
-            loader=self._loader,
-            use_handlers=self._use_handlers,
-        )
+        try:
+            return load_list_of_tasks(
+                ds,
+                play=self._play,
+                block=self,
+                role=self._role,
+                task_include=self._task_include,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+                use_handlers=self._use_handlers,
+            )
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_always(self, attr, ds):
-        return load_list_of_tasks(
-            ds, 
-            play=self._play,
-            block=self, 
-            role=self._role, 
-            task_include=self._task_include,
-            variable_manager=self._variable_manager, 
-            loader=self._loader, 
-            use_handlers=self._use_handlers,
-        )
-
-    # not currently used
-    #def _load_otherwise(self, attr, ds):
-    #    return load_list_of_tasks(
-    #        ds, 
-    #        play=self._play,
-    #        block=self, 
-    #        role=self._role, 
-    #        task_include=self._task_include,
-    #        variable_manager=self._variable_manager, 
-    #        loader=self._loader, 
-    #        use_handlers=self._use_handlers,
-    #    )
+        try:
+            return load_list_of_tasks(
+                ds, 
+                play=self._play,
+                block=self, 
+                role=self._role, 
+                task_include=self._task_include,
+                variable_manager=self._variable_manager, 
+                loader=self._loader, 
+                use_handlers=self._use_handlers,
+            )
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
         def _dupe_task_list(task_list, new_block):
