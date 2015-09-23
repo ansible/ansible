@@ -436,6 +436,13 @@ class Connection(ConnectionBase):
         for fd in rpipes:
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
+        # If we can send initial data without waiting for anything, we do so
+        # before we call select.
+
+        if states[state] == 'ready_to_send' and in_data:
+            self._send_initial_data(stdin, in_data)
+            state += 1
+
         while True:
             rfd, wfd, efd = select.select(rpipes, [], rpipes, timeout)
 
@@ -518,18 +525,11 @@ class Connection(ConnectionBase):
 
             # Once we're sure that the privilege escalation prompt, if any, has
             # been dealt with, we can send any initial data and start waiting
-            # for output. (Note that we have to close the process's stdin here,
-            # otherwise, for example, "sftp -b -" will just hang forever waiting
-            # for more commands.)
+            # for output.
 
             if states[state] == 'ready_to_send':
                 if in_data:
-                    self._display.debug('Sending initial data (%d bytes)' % len(in_data))
-                    try:
-                        stdin.write(in_data)
-                        stdin.close()
-                    except (OSError, IOError):
-                        raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+                    self._send_initial_data(stdin, in_data)
                 state += 1
 
             # Now we just wait for the process to exit. Output is already being
@@ -566,6 +566,21 @@ class Connection(ConnectionBase):
             raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
         return (p.returncode, stdout, stderr)
+
+    def _send_initial_data(self, fh, in_data):
+        '''
+        Writes initial data to the stdin filehandle of the subprocess and closes
+        it. (The handle must be closed; otherwise, for example, "sftp -b -" will
+        just hang forever waiting for more commands.)
+        '''
+
+        self._display.debug('Sending initial data (%d bytes)' % len(in_data))
+
+        try:
+            fh.write(in_data)
+            fh.close()
+        except (OSError, IOError):
+            raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
 
     # This is a separate method because we need to do the same thing for stdout
     # and stderr.
