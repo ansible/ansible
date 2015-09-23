@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-$ErrorActionPreference = "Stop"
 
 # WANT_JSON
 # POWERSHELL_COMMON
@@ -25,72 +24,21 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If ($params.name)
+$package = Get-Attr -obj $params -name name -failifempty $true -emptyattributefailmessage "missing required argument: name"
+$force = Get-Attr -obj $params -name force -default "false" | ConvertTo-Bool
+$upgrade = Get-Attr -obj $params -name upgrade -default "false" | ConvertTo-Bool
+$version = Get-Attr -obj $params -name version -default $null
+
+$source = Get-Attr -obj $params -name source -default $null
+if ($source) {$source = $source.Tolower()}
+
+$showlog = Get-Attr -obj $params -name showlog -default "false" | ConvertTo-Bool
+$state = Get-Attr -obj $params -name state -default "present"
+if ("present","absent" -notcontains $state)
 {
-    $package = $params.name
-}
-Else
-{
-    Fail-Json $result "missing required argument: name"
+    Fail-Json $result "state is $state; must be present or absent"
 }
 
-If ($params.force)
-{
-    $force = $params.force | ConvertTo-Bool
-}
-Else
-{
-    $force = $false
-}
-
-If ($params.upgrade)
-{
-    $upgrade = $params.upgrade | ConvertTo-Bool
-}
-Else
-{
-    $upgrade = $false
-}
-
-If ($params.version)
-{
-    $version = $params.version
-}
-Else
-{
-    $version = $null
-}
-
-If ($params.source)
-{
-    $source = $params.source.ToString().ToLower()
-}
-Else
-{
-    $source = $null
-}
-
-If ($params.showlog)
-{
-    $showlog = $params.showlog | ConvertTo-Bool
-}
-Else
-{
-    $showlog = $null
-}
-
-If ($params.state)
-{
-    $state = $params.state.ToString().ToLower()
-    If (($state -ne "present") -and ($state -ne "absent"))
-    {
-        Fail-Json $result "state is $state; must be present or absent"
-    }
-}
-Else
-{
-    $state = "present"
-}
 
 Function Chocolatey-Install-Upgrade
 {
