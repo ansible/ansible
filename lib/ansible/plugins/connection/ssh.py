@@ -444,7 +444,11 @@ class Connection(ConnectionBase):
             state += 1
 
         while True:
-            rfd, wfd, efd = select.select(rpipes, [], rpipes, 0.1)
+            poll_timeout = 0.1
+            if state <= states.index('awaiting_escalation'):
+                poll_timeout = timeout
+
+            rfd, wfd, efd = select.select(rpipes, [], rpipes, poll_timeout)
 
             # We pay attention to timeouts only while negotiating a prompt.
 
