@@ -465,14 +465,14 @@ class Connection(ConnectionBase):
                 if chunk == '':
                     rpipes.remove(p.stdout)
                 tmp_stdout += chunk
-                #self._display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
+                self._display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
 
             if p.stderr in rfd:
                 chunk = p.stderr.read()
                 if chunk == '':
                     rpipes.remove(p.stderr)
                 tmp_stderr += chunk
-                #self._display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
+                self._display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
 
             # We examine the output line-by-line until we have negotiated any
             # privilege escalation prompt and subsequent success/error message.
@@ -578,13 +578,15 @@ class Connection(ConnectionBase):
         just hang forever waiting for more commands.)
         '''
 
-        self._display.debug('Sending initial data (%d bytes)' % len(in_data))
+        self._display.debug('Sending initial data')
 
         try:
             fh.write(in_data)
             fh.close()
         except (OSError, IOError):
             raise AnsibleConnectionFailure('SSH Error: data could not be sent to the remote host. Make sure this host can be reached over ssh')
+
+        self._display.debug('Sent initial data (%d bytes)' % len(in_data))
 
     # This is a separate method because we need to do the same thing for stdout
     # and stderr.
