@@ -44,7 +44,7 @@ class LookupBase(with_metaclass(ABCMeta, object)):
             return self._loader.get_basedir()
 
     @staticmethod
-    def _flatten(self, terms):
+    def _flatten(terms):
         ret = []
         for term in terms:
             if isinstance(term, (list, tuple)):
