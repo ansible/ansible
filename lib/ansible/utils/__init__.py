@@ -229,9 +229,9 @@ def write_tree_file(tree, hostname, buf):
     # TODO: might be nice to append playbook runs per host in a similar way
     # in which case, we'd want append mode.
     path = os.path.join(tree, hostname)
-    fd = open(path, "w+")
-    fd.write(buf)
-    fd.close()
+    buf = to_bytes(buf)
+    with open(path, 'wb+') as fd:
+        fd.write(buf)
 
 def is_failed(result):
     ''' is a given JSON result a failed result? '''
