@@ -146,7 +146,8 @@ In addition to storing variables directly in the INI file, host
 and group variables can be stored in individual files relative to the
 inventory file.  
 
-These variable files are in YAML format.  See :doc:`YAMLSyntax` if you are new to YAML.
+These variable files are in YAML format. Valid file extensions include '.yml', '.yaml', '.json',
+or no file extension. See :doc:`YAMLSyntax` if you are new to YAML.
 
 Assuming the inventory file path is::
 
@@ -155,7 +156,7 @@ Assuming the inventory file path is::
 If the host is named 'foosball', and in groups 'raleigh' and 'webservers', variables
 in YAML files at the following locations will be made available to the host::
 
-    /etc/ansible/group_vars/raleigh
+    /etc/ansible/group_vars/raleigh # can optionally end in '.yml', '.yaml', or '.json'
     /etc/ansible/group_vars/webservers
     /etc/ansible/host_vars/foosball
 
