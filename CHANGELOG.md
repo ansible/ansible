@@ -216,6 +216,7 @@ New Modules:
 * webfaction_mailbox
 * webfaction_site
 * win_environment
+* win_firewall_rule
 * win_package
 * win_scheduled_task
 * win_iis_virtualdirectory
