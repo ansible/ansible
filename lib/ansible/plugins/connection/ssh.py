@@ -460,14 +460,14 @@ class Connection(ConnectionBase):
             # Read whatever output is available on stdout and stderr, and stop
             # listening to the pipe if it's been closed.
 
-            elif p.stdout in rfd:
+            if p.stdout in rfd:
                 chunk = p.stdout.read()
                 if chunk == '':
                     rpipes.remove(p.stdout)
                 tmp_stdout += chunk
                 #self._display.debug("stdout chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
 
-            elif p.stderr in rfd:
+            if p.stderr in rfd:
                 chunk = p.stderr.read()
                 if chunk == '':
                     rpipes.remove(p.stderr)
