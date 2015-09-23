@@ -26,6 +26,8 @@ import re
 import stat
 import itertools
 
+from six import string_types
+
 from ansible import constants as C
 from ansible.errors import AnsibleError
 
@@ -78,7 +80,7 @@ class Inventory(object):
 
     def parse_inventory(self, host_list):
 
-        if isinstance(host_list, basestring):
+        if isinstance(host_list, string_types):
             if "," in host_list:
                 host_list = host_list.split(",")
                 host_list = [ h for h in host_list if h and h.strip() ]
@@ -589,7 +591,7 @@ class Inventory(object):
 
     def is_file(self):
         """ did inventory come from a file? """
-        if not isinstance(self.host_list, basestring):
+        if not isinstance(self.host_list, string_types):
             return False
         return self._loader.path_exists(self.host_list)
 
