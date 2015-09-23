@@ -202,6 +202,6 @@ class SoftLayerInventory(object):
     def get_all_servers(self):
         self.client = SoftLayer.Client()
         self.get_virtual_servers()
-        #self.get_physical_servers()
+        self.get_physical_servers()
 
 SoftLayerInventory()
