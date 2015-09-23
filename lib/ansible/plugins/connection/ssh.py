@@ -444,7 +444,7 @@ class Connection(ConnectionBase):
             state += 1
 
         while True:
-            rfd, wfd, efd = select.select(rpipes, [], rpipes, timeout)
+            rfd, wfd, efd = select.select(rpipes, [], rpipes, 0.1)
 
             # We pay attention to timeouts only while negotiating a prompt.
 
