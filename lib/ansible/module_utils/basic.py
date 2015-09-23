@@ -200,6 +200,11 @@ FILE_COMMON_ARGUMENTS=dict(
 
 PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 
+# Can't use 07777 on Python 3, can't use 0o7777 on Python 2.4
+PERM_BITS = int('07777', 8)      # file mode permission bits
+EXEC_PERM_BITS = int('00111', 8) # execute permission bits
+DEFAULT_PERM = int('0666', 8)    # default file permission bits
+
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
     return platform.system()
@@ -764,7 +769,7 @@ class AnsibleModule(object):
             elif user == 'o': mask = stat.S_IRWXO | stat.S_ISVTX
             
             # mask out u, g, or o permissions from current_mode and apply new permissions   
-            inverse_mask = mask ^ 07777
+            inverse_mask = mask ^ PERM_BITS
             new_mode = (current_mode & inverse_mask) | mode_to_apply
         elif operator == '+':
             new_mode = current_mode | mode_to_apply
@@ -776,7 +781,7 @@ class AnsibleModule(object):
         prev_mode = stat.S_IMODE(path_stat.st_mode)
         
         is_directory = stat.S_ISDIR(path_stat.st_mode)
-        has_x_permissions = (prev_mode & 00111) > 0
+        has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
         apply_X_permission = is_directory or has_x_permissions
 
         # Permission bits constants documented at:
@@ -1450,7 +1455,7 @@ class AnsibleModule(object):
         if os.path.exists(dest):
             try:
                 dest_stat = os.stat(dest)
-                os.chmod(src, dest_stat.st_mode & 07777)
+                os.chmod(src, dest_stat.st_mode & PERM_BITS)
                 os.chown(src, dest_stat.st_uid, dest_stat.st_gid)
             except OSError:
                 e = get_exception()
@@ -1524,7 +1529,7 @@ class AnsibleModule(object):
             # based on the current value of umask
             umask = os.umask(0)
             os.umask(umask)
-            os.chmod(dest, 0666 & ~umask)
+            os.chmod(dest, DEFAULT_PERM & ~umask)
             if switched_user:
                 os.chown(dest, os.getuid(), os.getgid())
 
