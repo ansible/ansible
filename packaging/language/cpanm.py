@@ -66,7 +66,7 @@ options:
     version_added: "2.0"
   use_sudo:
     description:
-     - Use sudo flag for cpanm
+     -  Use this if you want to install modules to the system perl include path.
     required: false
     default: false
     version_added: "2.0"
@@ -94,7 +94,7 @@ EXAMPLES = '''
 # install Dancer perl package from a specific mirror
 - cpanm: name=Dancer mirror=http://cpan.cpantesters.org/
 
-# install Dancer perl package using --sudo flag
+# install Dancer perl package into the system root path
 - cpanm: name=Dancer use_sudo=yes
 '''
 
