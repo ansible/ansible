@@ -142,11 +142,8 @@ SORCERY = {
     'gaze': None
 }
 
-SORCERY_VERSION_FILE = "/etc/sorcery/version"
-SORCERY_LOG = "/var/log/sorcery"
-SORCERY_STATE = "/var/state/sorcery"
-
-CODEX = "/var/lib/sorcery/codex"
+SORCERY_LOG_DIR = "/var/log/sorcery"
+SORCERY_STATE_DIR = "/var/state/sorcery"
 
 
 def exec_command(command, module):
@@ -163,20 +160,20 @@ def exec_command(command, module):
     return module.run_command("%s %s" % (prompt_env, command))
 
 
-def codex_cksum(module):
-    """ Get SHA1 hashes for grimoire versions. """
+def get_sorcery_ver(module):
+    """ Get Sorcery version. """
 
-    checksums = {}
+    cmd_sorcery = "%s --version" % SORCERY['sorcery']
 
-    for grimoire in os.listdir(CODEX):
-        grimoire_version_path = os.path.join(CODEX, grimoire, "VERSION")
+    rc, stdout, stderr = exec_command(cmd_sorcery, module)
 
-        checksums[grimoire] = module.sha1(grimoire_version_path)
+    if rc != 0 or not stdout:
+        module.fail_json(msg="unable to get Sorcery version")
 
-    return checksums
+    return stdout.strip()
 
 
-def codex_fresh(module):
+def codex_fresh(codex, module):
     """ Check if grimoire collection is fresh enough. """
 
     if not module.params['cache_valid_time']:
@@ -184,9 +181,9 @@ def codex_fresh(module):
 
     timedelta = datetime.timedelta(seconds=module.params['cache_valid_time'])
 
-    # we have to make sure listing doesn't include files (i.e. archives)
-    for grimoire in os.listdir(CODEX):
-        lastupdate_path = os.path.join(SORCERY_STATE, grimoire + ".lastupdate")
+    for grimoire in codex:
+        lastupdate_path = os.path.join(SORCERY_STATE_DIR,
+                                       grimoire + ".lastupdate")
 
         try:
             mtime = os.stat(lastupdate_path).st_mtime
@@ -202,6 +199,33 @@ def codex_fresh(module):
     return True
 
 
+def codex_list(module):
+    """ List valid grimoire collection. """
+
+    codex = {}
+
+    cmd_scribe = "%s index" % SORCERY['scribe']
+
+    rc, stdout, stderr = exec_command(cmd_scribe, module)
+
+    if rc != 0:
+        module.fail_json("unable to list grimoire collection, fix your Codex")
+
+    rex = re.compile("^\s*\[\d+\] : (?P<grim>[\w\-\+\.]+) : [\w\-\+\./]+(?: : (?P<ver>[\w\-\+\.]+))?\s*$")
+
+    # drop 4-line header and empty trailing line
+    for line in stdout.splitlines()[4:-1]:
+        match = rex.match(line)
+
+        if match:
+            codex[match.group('grim')] = match.group('ver')
+
+    if not codex:
+        module.fail_json(msg="no grimoires to operate on; add at least one")
+
+    return codex
+
+
 def update_sorcery(module):
     """ Update sorcery scripts.
 
@@ -210,26 +234,22 @@ def update_sorcery(module):
 
     """
 
-    checksum_before = None
-    checksum_after = None
     changed = False
 
     if module.check_mode:
         if not module.params['name'] and not module.params['update_cache']:
             module.exit_json(changed=True, msg="would have updated Sorcery")
     else:
-        cmd_sorcery = "%s update" % SORCERY['sorcery']
+        sorcery_ver = get_sorcery_ver(module)
 
-        cksum_before = module.sha1(SORCERY_VERSION_FILE)
+        cmd_sorcery = "%s update" % SORCERY['sorcery']
 
         rc, stdout, stderr = exec_command(cmd_sorcery, module)
 
         if rc != 0:
             module.fail_json(msg="unable to update Sorcery: " + stdout)
 
-        cksum_after = module.sha1(SORCERY_VERSION_FILE)
-
-        if cksum_before != cksum_after:
+        if sorcery_ver != get_sorcery_ver(module):
             changed = True
 
         if not module.params['name'] and not module.params['update_cache']:
@@ -247,10 +267,10 @@ def update_codex(module):
 
     params = module.params
 
-    cksums_before = {}
-    cksums_after = {}
     changed = False
-    fresh = codex_fresh(module)
+
+    codex = codex_list(module)
+    fresh = codex_fresh(codex, module)
 
     if module.check_mode:
         if not params['name']:
@@ -262,16 +282,12 @@ def update_codex(module):
         # SILENT is required as a workaround for query() in libgpg
         cmd_scribe = "SILENT=1 %s update" % SORCERY['scribe']
 
-        cksums_before = codex_cksum(module)
-
         rc, stdout, stderr = exec_command(cmd_scribe, module)
 
         if rc != 0:
             module.fail_json(msg="unable to update Codex: " + stdout)
 
-        cksums_after = codex_cksum(module)
-
-        if cksums_before != cksums_after:
+        if codex != codex_list(module):
             changed = True
 
         if not params['name']:
@@ -279,30 +295,35 @@ def update_codex(module):
                              msg="successfully updated Codex")
 
 
-def manage_depends(module):
+def match_depends(module):
     """ Check for matching dependencies.
 
     This inspects spell's dependencies with the desired states and returns
-    'True' if a recast is needed to match them.
+    'False' if a recast is needed to match them. It also adds required lines
+    to the system-wide depends file for proper recast procedure.
 
     """
 
     params = module.params
+    spell = params['name']
+
+    depends = {}
+
+    depends_ok = True
+
+    if len(spell.split(',')) > 1 or not params['depends']:
+        return depends_ok
 
     if module.check_mode:
-        sorcery_depends_orig = os.path.join(SORCERY_STATE, "depends")
-        sorcery_depends = os.path.join(SORCERY_STATE, "depends.check")
+        sorcery_depends_orig = os.path.join(SORCERY_STATE_DIR, "depends")
+        sorcery_depends = os.path.join(SORCERY_STATE_DIR, "depends.check")
 
         try:
             shutil.copy2(sorcery_depends_orig, sorcery_depends)
         except IOError:
             module.fail_json(msg="failed to copy depends.check file")
     else:
-        sorcery_depends = os.path.join(SORCERY_STATE, "depends")
-
-    spell = params['name']
-    depends = {}
-    needs_recast = False
+        sorcery_depends = os.path.join(SORCERY_STATE_DIR, "depends")
 
     rex = re.compile(r"^(?P<status>\+?|\-){1}(?P<depend>[a-z0-9]+[a-z0-9_\-\+\.]*(\([A-Z0-9_\-\+\.]+\))*)$")
 
@@ -319,7 +340,7 @@ def manage_depends(module):
         depends[match.group('depend')] = status
 
     # drop providers spec
-    depends_list = [s.split('(')[0] for s in depends.keys()]
+    depends_list = [s.split('(')[0] for s in depends]
 
     cmd_gaze = "%s -q version %s" % (SORCERY['gaze'], ' '.join(depends_list))
 
@@ -339,11 +360,7 @@ def manage_depends(module):
                     # when local status is 'off' and dependency is provider, use
                     # only provider value
                     d_offset = d.find('(')
-
-                    if d_offset != -1:
-                        d_p = re.escape(d[d_offset:])
-                    else:
-                        d_p = ''
+                    d_p = '' if d_offset == -1 else re.escape(d[d_offset:])
 
                     # .escape() is needed mostly for the spells like 'libsigc++'
                     rex = re.compile("%s:(?:%s|%s):(?P<lstatus>on|off):optional:" %
@@ -351,11 +368,20 @@ def manage_depends(module):
 
                     match = rex.match(line)
 
+                    # we matched the line "spell:dependency:on|off:optional:"
                     if match:
+                        # if we also matched the local status, mark dependency
+                        # as empty and put it back into depends file
                         if match.group('lstatus') == depends[d]:
                             depends[d] = None
 
+                            print line,
+
+                        # status is not that we need, so keep this dependency in
+                        # the list for further reverse switching;
+                        # stop and process the next line in both cases
                         break
+                    # it is not that dependency we are looking for
                     else:
                         print line,
             else:
@@ -365,7 +391,7 @@ def manage_depends(module):
     finally:
         fi.close()
 
-    depends_new = [v for v in depends.keys() if depends[v]]
+    depends_new = [v for v in depends if depends[v]]
 
     if depends_new:
         try:
@@ -375,7 +401,7 @@ def manage_depends(module):
         except IOError:
             module.fail_json(msg="I/O error on the depends file")
 
-        needs_recast = True
+        depends_ok = False
 
     if module.check_mode:
         try:
@@ -383,7 +409,7 @@ def manage_depends(module):
         except IOError:
             module.fail_json(msg="failed to clean up depends.backup file")
 
-    return needs_recast
+    return depends_ok
 
 
 def manage_spells(module):
@@ -396,12 +422,11 @@ def manage_spells(module):
     """
 
     params = module.params
-    sorcery_queue = os.path.join(SORCERY_LOG, "queue/install")
+
+    sorcery_queue = os.path.join(SORCERY_LOG_DIR, "queue/install")
 
     if params['name'] == '*':
         if params['state'] == 'latest':
-            changed = False
-
             # back up original queue
             try:
                 os.rename(sorcery_queue, sorcery_queue + ".backup")
@@ -436,12 +461,9 @@ def manage_spells(module):
                 if rc != 0:
                     module.fail_json(msg="failed to update the system")
 
-                changed = True
-
-            if changed:
-                module.exit_json(changed=changed, msg="successfully updated the system")
+                module.exit_json(changed=True, msg="successfully updated the system")
             else:
-                module.exit_json(changed=changed, msg="the system is already up to date")
+                module.exit_json(changed=False, msg="the system is already up to date")
         elif params['state'] == 'rebuild':
             if module.check_mode:
                 module.exit_json(changed=True, msg="would have rebuilt the system")
@@ -469,8 +491,8 @@ def manage_spells(module):
                 module.fail_json(msg="failed to locate spell(s) in the list (%s)" % \
                                  ', '.join(spells))
 
-            tocast = []
-            todispel = []
+            cast_queue = []
+            dispel_queue = []
 
             rex = re.compile(r"[^|]+\|[^|]+\|(?P<spell>[^|]+)\|(?P<grim_ver>[^|]+)\|(?P<inst_ver>[^$]+)")
 
@@ -481,31 +503,44 @@ def manage_spells(module):
                 cast = False
 
                 if params['state'] == 'present':
+                    # spell is not installed..
                     if match.group('inst_ver') == '-':
-                        if len(spells) > 1 or manage_depends(module):
+                        # ..so set up depends reqs for it
+                        match_depends(module)
+
+                        cast = True
+                    # spell is installed..
+                    else:
+                        # ..but does not conform depends reqs
+                        if not match_depends(module):
                             cast = True
-                    elif len(spells) == 1 and manage_depends(module):
-                        cast = True
                 elif params['state'] == 'latest':
+                    # grimoire and installed versions do not match..
                     if match.group('grim_ver') != match.group('inst_ver'):
+                        # ..so check for depends reqs first and set them up
+                        match_depends(module)
+
                         cast = True
-                    elif len(spells) == 1 and manage_depends(module):
-                        cast = True
+                    # grimoire and installed versions match..
+                    else:
+                        # ..but the spell does not conform depends reqs
+                        if not match_depends(module):
+                            cast = True
                 elif params['state'] == 'rebuild':
                     cast = True
+                # 'absent'
                 else:
-                    # 'absent'
                     if match.group('inst_ver') != '-':
-                        todispel.append(match.group('spell'))
+                        dispel_queue.append(match.group('spell'))
 
                 if cast:
-                    tocast.append(match.group('spell'))
+                    cast_queue.append(match.group('spell'))
 
-            if tocast:
+            if cast_queue:
                 if module.check_mode:
                     module.exit_json(changed=True, msg="would have cast spell(s)")
 
-                cmd_cast = "%s -c %s" % (SORCERY['cast'], ' '.join(tocast))
+                cmd_cast = "%s -c %s" % (SORCERY['cast'], ' '.join(cast_queue))
 
                 rc, stdout, stderr = exec_command(cmd_cast, module)
 
@@ -516,11 +551,11 @@ def manage_spells(module):
             elif params['state'] != 'absent':
                 module.exit_json(changed=False, msg="spell(s) are already cast")
 
-            if todispel:
+            if dispel_queue:
                 if module.check_mode:
                     module.exit_json(changed=True, msg="would have dispelled spell(s)")
 
-                cmd_dispel = "%s %s" % (SORCERY['dispel'], ' '.join(todispel))
+                cmd_dispel = "%s %s" % (SORCERY['dispel'], ' '.join(dispel_queue))
 
                 rc, stdout, stderr = exec_command(cmd_dispel, module)
 
