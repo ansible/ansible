@@ -99,9 +99,12 @@ options:
       - You can specify a different logging driver for the container than for the daemon.
         "json-file" Default logging driver for Docker. Writes JSON messages to file.
         docker logs command is available only for this logging driver.
-        "none" disables any logging for the container. docker logs won't be available with this driver.
+        "none" disables any logging for the container.
         "syslog" Syslog logging driver for Docker. Writes log messages to syslog.
         docker logs command is not available for this logging driver.
+        "journald" Journald logging driver for Docker. Writes log messages to "journald".
+        "gelf" Graylog Extended Log Format (GELF) logging driver for Docker. Writes log messages to a GELF endpoint likeGraylog or Logstash.
+        "fluentd" Fluentd logging driver for Docker. Writes log messages to "fluentd" (forward input).
         If not defined explicitly, the Docker daemon's default ("json-file") will apply.
         Requires docker >= 1.6.0.
     required: false
@@ -110,6 +113,9 @@ options:
       - json-file
       - none
       - syslog
+      - journald
+      - gelf
+      - fluentd
     version_added: "2.0"
   log_opt:
     description:
@@ -1680,7 +1686,7 @@ def main():
             net             = dict(default=None),
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
-            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog']),
+            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog', 'journald', 'gelf', 'fluentd']),
             log_opt         = dict(default=None, type='dict'),
             cpu_set         = dict(default=None),
             cap_add         = dict(default=None, type='list'),
