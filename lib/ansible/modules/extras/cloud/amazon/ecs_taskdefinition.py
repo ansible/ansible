@@ -27,27 +27,31 @@ options:
         description:
             - State whether the task definition should exist or be deleted
         required: true
-        choices=['present', 'absent']
-
+        choices: ['present', 'absent']
     arn:
         description:
             - The arn of the task description to delete
         required: false
-
     family:
-        =dict(required=False, type='str' ),
-
+        description:
+            - A Name that would be given to the task definition
+        required: false
     revision:
+        description:
+            - A revision number for the task definition
         required: False
         type: int
-
     containers:
+        description:
+            - A list of containers definitions 
         required: False
         type: list of dicts with container definitions
-
     volumes:
+        description:
+            - A list of names of volumes to be attached
         required: False
         type: list of name
+
 '''
 
 EXAMPLES = '''
