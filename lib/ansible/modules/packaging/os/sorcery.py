@@ -25,7 +25,7 @@ module: sorcery
 short_description: Package manager for Source Mage GNU/Linux
 description:
     - Manages "spells" on Source Mage GNU/Linux using I(sorcery) toolchain
-author: Vlad Glagolev
+author: "Vlad Glagolev (@vaygr)"
 version_added: "2.0"
 notes:
     - When all three components are selected, the update goes by the sequence --
@@ -39,8 +39,8 @@ options:
         description:
             - Name of the spell
             - multiple names can be given, separated by commas
-            - special value '*' in conjunction with states 'latest' or 'rebuild'
-              will update or rebuild the whole system respectively
+            - special value '*' in conjunction with states C(latest) or
+              C(rebuild) will update or rebuild the whole system respectively
         required: false
         aliases: ["spell"]
         default: null
@@ -48,9 +48,9 @@ options:
     state:
         description:
             - Whether to cast, dispel or rebuild a package
-            - state 'cast' is an equivalent of 'present', not 'latest'
-            - state 'latest' always triggers 'update_cache=yes'
-            - state 'rebuild' implies cast of all specified spells, not only
+            - state C(cast) is an equivalent of C(present), not C(latest)
+            - state C(latest) always triggers C(update_cache=yes)
+            - state C(rebuild) implies cast of all specified spells, not only
               those existed before
         required: false
         choices: ["present", "latest", "absent", "cast", "dispelled", "rebuild"]
@@ -61,7 +61,7 @@ options:
             - Comma-separated list of _optional_ dependencies to build a spell
               (or make sure it is built) with; use +/- in front of dependency
               to turn it on/off ('+' is optional though)
-            - this option is ignored if 'name' parameter is equal to '*' or
+            - this option is ignored if C(name) parameter is equal to '*' or
               contains more than one spell
             - providers must be supplied in the form recognized by Sorcery, i.e.
               'openssl(SSL)'
@@ -87,7 +87,7 @@ options:
         description:
             - Time in seconds to invalidate grimoire collection on update
             - especially useful for SCM and rsync grimoires
-            - makes sense only in pair with 'update_cache'
+            - makes sense only in pair with C(update_cache)
         required: false
         default: null
 '''
@@ -261,7 +261,7 @@ def update_codex(module):
     """ Update grimoire collections.
 
     This runs 'scribe update'. Check mode always returns a positive change
-    value.
+    value when 'cache_valid_time' is used.
 
     """
 
@@ -488,7 +488,7 @@ def manage_spells(module):
 
             # fail if any of spells cannot be found
             if rc != 0:
-                module.fail_json(msg="failed to locate spell(s) in the list (%s)" % \
+                module.fail_json(msg="failed to locate spell(s) in the list (%s)" %
                                  ', '.join(spells))
 
             cast_queue = []
