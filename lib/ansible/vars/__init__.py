@@ -33,7 +33,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
 from ansible.parsing import DataLoader
 from ansible.plugins.cache import FactCache
@@ -268,12 +268,14 @@ class VariableManager:
                             if data is not None:
                                 for item in data:
                                     all_vars = combine_vars(all_vars, item)
-                                break
-                        except AnsibleParserError as e:
+                            break
+                        except AnsibleFileNotFound as e:
                             # we continue on loader failures
                             continue
+                        except AnsibleParserError as e:
+                            raise
                     else:
-                        raise AnsibleError("vars file %s was not found" % vars_file_item)
+                        raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
                 except (UndefinedError, AnsibleUndefinedVariable):
                     if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
                         raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)

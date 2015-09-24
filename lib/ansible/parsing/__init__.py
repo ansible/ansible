@@ -27,7 +27,7 @@ import stat
 from yaml import load, YAMLError
 from six import text_type, string_types
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.splitter import unquote
@@ -158,7 +158,7 @@ class DataLoader():
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
         if not self.path_exists(file_name) or not self.is_file(file_name):
-            raise AnsibleParserError("the file_name '%s' does not exist, or is not readable" % file_name)
+            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_name)
 
         show_content = True
         try:
@@ -267,7 +267,7 @@ class DataLoader():
 
         this_path = os.path.realpath(os.path.expanduser(vault_password_file))
         if not os.path.exists(this_path):
-            raise AnsibleError("The vault password file %s was not found" % this_path)
+            raise AnsibleFileNotFound("The vault password file %s was not found" % this_path)
 
         if self.is_executable(this_path):
             try:
