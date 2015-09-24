@@ -72,7 +72,8 @@ options:
   device_mapping:
     version_added: "1.9"
     description:
-      - An optional list of devices with custom configurations (same block-device-mapping parameters)
+      - An optional list of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
+      - Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean), snapshot_id, iops (for io1 volume_type)
     required: false
     default: null
   delete_snapshot:
@@ -137,6 +138,21 @@ EXAMPLES = '''
           size: YYY
           delete_on_termination: false
           volume_type: gp2
+  register: instance
+
+# AMI Creation, excluding a volume attached at /dev/sdb
+- ec2_ami
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    instance_id: i-xxxxxx
+    name: newtest
+    device_mapping:
+        - device_name: /dev/sda1
+          size: XXX
+          delete_on_termination: true
+          volume_type: gp2
+        - device_name: /dev/sdb
+          no_device: yes
   register: instance
 
 # Deregister/Delete AMI
