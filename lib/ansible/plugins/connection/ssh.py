@@ -444,11 +444,7 @@ class Connection(ConnectionBase):
             state += 1
 
         while True:
-            poll_timeout = 0.1
-            if state <= states.index('awaiting_escalation'):
-                poll_timeout = timeout
-
-            rfd, wfd, efd = select.select(rpipes, [], rpipes, poll_timeout)
+            rfd, wfd, efd = select.select(rpipes, [], [], timeout)
 
             # We pay attention to timeouts only while negotiating a prompt.
 
@@ -536,23 +532,32 @@ class Connection(ConnectionBase):
                     self._send_initial_data(stdin, in_data)
                 state += 1
 
-            # Now we just wait for the process to exit. Output is already being
-            # accumulated above, so we don't need to do anything special here.
+            # Now we're awaiting_exit: has the child process exited? If it has,
+            # and we've read all available output from it, we're done.
 
-            status = p.poll()
-            # only break out if no pipes are left to read or
-            # the pipes are completely read and
-            # the process is terminated
-            if (not rpipes or not rfd) and status is not None:
-                break
-            # No pipes are left to read but process is not yet terminated
-            # Only then it is safe to wait for the process to be finished
-            # NOTE: Actually p.poll() is always None here if rpipes is empty
-            elif not rpipes and status == None:
+            if p.poll() is not None:
+                if not rpipes or not rfd:
+                    break
+
+                # When ssh has ControlMaster (+ControlPath/Persist) enabled, the
+                # first connection goes into the background and we never see EOF
+                # on stderr. If we see EOF on stdout and the process has exited,
+                # we're done. Just to be extra sure that we aren't missing any
+                # output on stderr, we call select again with a small timeout.
+
+                if not p.stdout in rpipes:
+                    timeout = 0.001
+                    continue
+
+            # If the process has not yet exited, but we've already read EOF from
+            # its stdout and stderr (and thus removed both from rpipes), we can
+            # just wait for it to exit.
+
+            elif not rpipes:
                 p.wait()
-                # The process is terminated. Since no pipes to read from are
-                # left, there is no need to call select() again.
                 break
+
+            # Otherwise there may still be outstanding data to read.
 
         # close stdin after process is terminated and stdout/stderr are read
         # completely (see also issue #848)
