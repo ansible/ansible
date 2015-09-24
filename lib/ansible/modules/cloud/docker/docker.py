@@ -345,6 +345,12 @@ options:
     required: false
     default: null
     version_added: "1.9.4"
+  stop_timeout:
+    description:
+      - How many seconds to wait for the container to stop before killing it.
+    required: false
+    default: 10
+    version_added: "2.0"
 author:
     - "Cove Schneider (@cove)"
     - "Joshua Conner (@joshuaconner)"
@@ -630,6 +636,7 @@ class DockerManager(object):
             'cap_drop': ((0, 5, 0), '1.14'),
             'read_only': ((1, 0, 0), '1.17'),
             'labels': ((1, 2, 0), '1.18'),
+            'stop_timeout': ((0, 5, 0), '1.0'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -1559,7 +1566,7 @@ class DockerManager(object):
 
     def stop_containers(self, containers):
         for i in containers:
-            self.client.stop(i['Id'])
+            self.client.stop(i['Id'], self.module.params.get('stop_timeout'))
             self.increment_counter('stopped')
 
         return [self.client.wait(i['Id']) for i in containers]
@@ -1762,6 +1769,7 @@ def main():
             cap_drop        = dict(default=None, type='list'),
             read_only       = dict(default=None, type='bool'),
             labels          = dict(default={}, type='dict'),
+            stop_timeout    = dict(default=10, type='int'),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
