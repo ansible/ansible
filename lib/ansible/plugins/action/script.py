@@ -78,13 +78,13 @@ class ActionModule(ActionBase):
             sudoable = False
         else:
             chmod_mode = '+rx'
-        self._remote_chmod(tmp, chmod_mode, tmp_src, sudoable=sudoable)
+        self._remote_chmod(chmod_mode, tmp_src, sudoable=sudoable)
 
         # add preparation steps to one ssh roundtrip executing the script
         env_string = self._compute_environment_string()
         script_cmd = ' '.join([env_string, tmp_src, args])
 
-        result = self._low_level_execute_command(cmd=script_cmd, tmp=None, sudoable=True)
+        result = self._low_level_execute_command(cmd=script_cmd, sudoable=True)
 
         # clean up after
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:

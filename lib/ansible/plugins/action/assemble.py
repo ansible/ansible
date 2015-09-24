@@ -106,21 +106,21 @@ class ActionModule(ActionBase):
         path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
 
         path_checksum = checksum_s(path)
-        dest = self._remote_expand_user(dest, tmp)
-        remote_checksum = self._remote_checksum(tmp, dest, all_vars=task_vars)
+        dest = self._remote_expand_user(dest)
+        remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
 
         diff = {}
         if path_checksum != remote_checksum:
             resultant = file(path).read()
 
             if self._play_context.diff:
-                diff = self._get_diff_data(tmp, dest, path, task_vars)
+                diff = self._get_diff_data(dest, path, task_vars)
 
             xfered = self._transfer_data('src', resultant)
 
             # fix file permissions when the copy is done as a different user
             if self._play_context.become and self._play_context.become_user != 'root':
-                self._remote_chmod('a+r', xfered, tmp)
+                self._remote_chmod('a+r', xfered)
 
             # run the copy module
 

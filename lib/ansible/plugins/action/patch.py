@@ -52,7 +52,7 @@ class ActionModule(ActionBase):
 
         if self._play_context.become and self._play_context.become_user != 'root':
             if not self._play_context.check_mode:
-                self._remote_chmod('a+r', tmp_src, tmp)
+                self._remote_chmod('a+r', tmp_src)
 
         new_module_args = self._task.args.copy()
         new_module_args.update(

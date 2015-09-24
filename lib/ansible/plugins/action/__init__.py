@@ -177,7 +177,7 @@ class ActionBase:
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         self._display.debug("executing _low_level_execute_command to create the tmp path")
-        result = self._low_level_execute_command(cmd, None, sudoable=False)
+        result = self._low_level_execute_command(cmd, sudoable=False)
         self._display.debug("done with creation of tmp path")
 
         # error handling on this seems a little aggressive?
@@ -218,7 +218,7 @@ class ActionBase:
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
             self._display.debug("calling _low_level_execute_command to remove the tmp path")
-            self._low_level_execute_command(cmd, None, sudoable=False)
+            self._low_level_execute_command(cmd, sudoable=False)
             self._display.debug("done removing the tmp path")
 
     def _transfer_data(self, remote_path, data):
@@ -248,18 +248,18 @@ class ActionBase:
 
         return remote_path
 
-    def _remote_chmod(self, tmp, mode, path, sudoable=False):
+    def _remote_chmod(self, mode, path, sudoable=False):
         '''
         Issue a remote chmod command
         '''
 
         cmd = self._connection._shell.chmod(mode, path)
         self._display.debug("calling _low_level_execute_command to chmod the remote path")
-        res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable)
         self._display.debug("done with chmod call")
         return res
 
-    def _remote_checksum(self, tmp, path, all_vars):
+    def _remote_checksum(self, path, all_vars):
         '''
         Takes a remote checksum and returns 1 if no file
         '''
@@ -268,7 +268,7 @@ class ActionBase:
 
         cmd = self._connection._shell.checksum(path, python_interp)
         self._display.debug("calling _low_level_execute_command to get the remote checksum")
-        data = self._low_level_execute_command(cmd, tmp, sudoable=True)
+        data = self._low_level_execute_command(cmd, sudoable=True)
         self._display.debug("done getting the remote checksum")
         # FIXME: implement this function?
         #data2 = utils.last_non_blank_line(data['stdout'])
@@ -286,7 +286,7 @@ class ActionBase:
             # this will signal that it changed and allow things to keep going
             return "INVALIDCHECKSUM"
 
-    def _remote_expand_user(self, path, tmp):
+    def _remote_expand_user(self, path):
         ''' takes a remote path and performs tilde expansion on the remote host '''
         if not path.startswith('~'): # FIXME: Windows paths may start with "~ instead of just ~
             return path
@@ -300,7 +300,7 @@ class ActionBase:
 
         cmd = self._connection._shell.expand_user(expand_path)
         self._display.debug("calling _low_level_execute_command to expand the remote user path")
-        data = self._low_level_execute_command(cmd, tmp, sudoable=False)
+        data = self._low_level_execute_command(cmd, sudoable=False)
         self._display.debug("done expanding the remote user path")
         #initial_fragment = utils.last_non_blank_line(data['stdout'])
         initial_fragment = data['stdout'].strip().splitlines()[-1]
@@ -377,7 +377,7 @@ class ActionBase:
 
         if tmp and "tmp" in tmp and self._play_context.become and self._play_context.become_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
-            self._remote_chmod(tmp, 'a+r', remote_module_path)
+            self._remote_chmod('a+r', remote_module_path)
 
         cmd = ""
         in_data = None
@@ -407,7 +407,7 @@ class ActionBase:
             sudoable = False
 
         self._display.debug("calling _low_level_execute_command() for command %s" % cmd)
-        res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
         self._display.debug("_low_level_execute_command returned ok")
 
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
@@ -415,7 +415,7 @@ class ActionBase:
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
                 cmd2 = self._connection._shell.remove(tmp, recurse=True)
-                self._low_level_execute_command(cmd2, tmp, sudoable=False)
+                self._low_level_execute_command(cmd2, sudoable=False)
 
         try:
             data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', '')))
@@ -444,7 +444,7 @@ class ActionBase:
         self._display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _low_level_execute_command(self, cmd, tmp, sudoable=True, in_data=None, executable=None):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=None):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -467,7 +467,7 @@ class ActionBase:
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         self._display.debug("executing the command %s through the connection" % cmd)
-        rc, stdout, stderr = self._connection.exec_command(cmd, tmp, in_data=in_data, sudoable=sudoable)
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
         self._display.debug("command execution done")
 
         if not isinstance(stdout, string_types):
@@ -510,7 +510,7 @@ class ActionBase:
 
         return None
 
-    def _get_diff_data(self, tmp, destination, source, task_vars, source_file=True):
+    def _get_diff_data(self, destination, source, task_vars, source_file=True):
 
         diff = {}
         self._display.debug("Going to peek to see if file has changed permissions")

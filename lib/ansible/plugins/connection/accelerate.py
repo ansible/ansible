@@ -236,7 +236,7 @@ class Connection(ConnectionBase):
         else:
             return response.get('rc') == 0
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the remote host '''
 
         if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
@@ -256,7 +256,6 @@ class Connection(ConnectionBase):
         data = dict(
             mode='command',
             cmd=cmd,
-            tmp_path=tmp_path,
             executable=executable,
         )
         data = utils.jsonify(data)

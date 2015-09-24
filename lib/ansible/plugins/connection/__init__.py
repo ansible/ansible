@@ -122,8 +122,17 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     @ensure_connect
     @abstractmethod
-    def exec_command(self, cmd, tmp_path, in_data=None, executable=None, sudoable=True):
-        """Run a command on the remote host
+    def exec_command(self, cmd, in_data=None, sudoable=True):
+        """Run a command on the remote host.
+
+        :arg cmd: byte string containing the command
+        :kwarg in_data: If set, this data is passed to the command's stdin.
+            This is used to implement pipelining.  Currently not all
+            connection plugins implement pipelining.
+        :kwarg sudoable: Tell the connection plugin if we're executing
+            a command via a privilege escalation mechanism.  This may affect
+            how the connection plugin returns data.  Note that not all
+            connections can handle privilege escalation.
 
         :returns: a tuple of (return code, stdout, stderr)  The return code is
             an int while stdout and stderr are both byte strings.

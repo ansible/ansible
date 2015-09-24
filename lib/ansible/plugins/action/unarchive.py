@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
             if stat and stat.get('exists', False):
                 return dict(skipped=True, msg=("skipped, since %s exists" % creates))
 
-        dest = self._remote_expand_user(dest, tmp) # CCTODO: Fix path for Windows hosts.
+        dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
         source = os.path.expanduser(source)
 
         if copy:
@@ -66,7 +66,7 @@ class ActionModule(ActionBase):
                 else:
                     source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
-        remote_checksum = self._remote_checksum(tmp, dest, all_vars=task_vars)
+        remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
         if remote_checksum != '3':
             return dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
         elif remote_checksum == '4':
@@ -83,7 +83,7 @@ class ActionModule(ActionBase):
         if copy:
             if self._play_context.become and self._play_context.become_user != 'root':
                 if not self._play_context.check_mode:
-                    self._remote_chmod(tmp, 'a+r', tmp_src)
+                    self._remote_chmod('a+r', tmp_src)
 
             # Build temporary module_args.
             new_module_args = self._task.args.copy()

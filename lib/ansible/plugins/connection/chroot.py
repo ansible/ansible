@@ -83,7 +83,7 @@ class Connection(ConnectionBase):
             local_cmd += cmd
         return local_cmd
 
-    def _buffered_exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None, stdin=subprocess.PIPE):
+    def _buffered_exec_command(self, cmd, become_user=None, sudoable=False, executable='/bin/sh', in_data=None, stdin=subprocess.PIPE):
         ''' run a command on the chroot.  This is only needed for implementing
         put_file() get_file() so that we don't have to read the whole file
         into memory.
@@ -110,10 +110,10 @@ class Connection(ConnectionBase):
 
         return p
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the chroot '''
 
-        p = self._buffered_exec_command(cmd, tmp_path, become_user, sudoable, executable, in_data)
+        p = self._buffered_exec_command(cmd, become_user, sudoable, executable, in_data)
 
         stdout, stderr = p.communicate()
         return (p.returncode, stdout, stderr)
@@ -126,7 +126,7 @@ class Connection(ConnectionBase):
         try:
             with open(in_path, 'rb') as in_file:
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, self.BUFSIZE), None, stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, self.BUFSIZE), stdin=in_file)
                 except OSError:
                     raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:
@@ -145,7 +145,7 @@ class Connection(ConnectionBase):
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
 
         try:
-            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, self.BUFSIZE), None)
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, self.BUFSIZE))
         except OSError:
             raise AnsibleError("chroot connection requires dd command in the chroot")
 
