@@ -542,11 +542,13 @@ class Connection(ConnectionBase):
                 # When ssh has ControlMaster (+ControlPath/Persist) enabled, the
                 # first connection goes into the background and we never see EOF
                 # on stderr. If we see EOF on stdout and the process has exited,
-                # we're done. Just to be extra sure that we aren't missing any
-                # output on stderr, we call select again with a small timeout.
+                # we're probably done. We call select again with a zero timeout,
+                # just to make certain we don't miss anything that may have been
+                # written to stderr between the time we called select() and when
+                # we learned that the process had finished.
 
                 if not p.stdout in rpipes:
-                    timeout = 0.001
+                    timeout = 0
                     continue
 
             # If the process has not yet exited, but we've already read EOF from
