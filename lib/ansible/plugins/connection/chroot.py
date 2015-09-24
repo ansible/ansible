@@ -116,7 +116,7 @@ class Connection(ConnectionBase):
         p = self._buffered_exec_command(cmd, tmp_path, become_user, sudoable, executable, in_data)
 
         stdout, stderr = p.communicate()
-        return (p.returncode, '', stdout, stderr)
+        return (p.returncode, stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to chroot '''

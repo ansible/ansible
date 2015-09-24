@@ -32,7 +32,7 @@ class TestActionBase(unittest.TestCase):
     def test_sudo_only_if_user_differs(self):
         play_context = PlayContext()
         action_base = ActionBase(None, None, play_context, None, None, None)
-        action_base._connection = Mock(exec_command=Mock(return_value=(0, '', '', '')))
+        action_base._connection = Mock(exec_command=Mock(return_value=(0, '', '')))
 
         play_context.become = True
         play_context.become_user = play_context.remote_user = 'root'

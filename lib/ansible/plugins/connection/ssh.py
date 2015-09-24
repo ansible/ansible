@@ -304,7 +304,7 @@ class Connection(ConnectionBase):
 
         (returncode, stdout, stderr) = self._run(cmd, in_data, sudoable=sudoable)
 
-        return (returncode, '', stdout, stderr)
+        return (returncode, stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''

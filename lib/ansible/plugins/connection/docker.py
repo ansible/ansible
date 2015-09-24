@@ -111,7 +111,7 @@ class Connection(ConnectionBase):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         stdout, stderr = p.communicate()
-        return (p.returncode, '', stdout, stderr)
+        return (p.returncode, stdout, stderr)
 
     # Docker doesn't have native support for copying files into running
     # containers, so we use docker exec to implement this

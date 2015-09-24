@@ -256,7 +256,7 @@ class Connection(ConnectionBase):
         stdout = ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
 
-        return (chan.recv_exit_status(), '', no_prompt_out + stdout, no_prompt_out + stderr)
+        return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''

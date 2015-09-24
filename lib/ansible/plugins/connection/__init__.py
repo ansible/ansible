@@ -123,7 +123,11 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     @ensure_connect
     @abstractmethod
     def exec_command(self, cmd, tmp_path, in_data=None, executable=None, sudoable=True):
-        """Run a command on the remote host"""
+        """Run a command on the remote host
+
+        :returns: a tuple of (return code, stdout, stderr)  The return code is
+            an int while stdout and stderr are both byte strings.
+        """
         pass
 
     @ensure_connect
