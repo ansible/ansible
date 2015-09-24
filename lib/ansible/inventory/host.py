@@ -38,6 +38,9 @@ class Host:
     def __eq__(self, other):
         return self.name == other.name
 
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def serialize(self):
         groups = []
         for group in self.groups:
