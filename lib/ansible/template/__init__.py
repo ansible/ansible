@@ -22,7 +22,7 @@ __metaclass__ = type
 import ast
 import re
 
-from six import string_types
+from six import string_types, text_type, binary_type
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
@@ -217,10 +217,10 @@ class Templar:
         # Don't template unsafe variables, instead drop them back down to
         # their constituent type.
         if hasattr(variable, '__UNSAFE__'):
-            if isinstance(variable, unicode):
-                return unicode(variable)
-            elif isinstance(variable, str):
-                return str(variable)
+            if isinstance(variable, text_type):
+                return text_type(variable)
+            elif isinstance(variable, binary_type):
+                return bytes(variable)
             else:
                 return variable
 
