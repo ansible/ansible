@@ -174,7 +174,6 @@ class Connection(ConnectionBase):
                 key_filename=key_filename,
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
-                compress=True,
                 port=port,
             )
         except Exception as e:
