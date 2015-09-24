@@ -43,7 +43,8 @@ from ansible.utils.vars import combine_vars
 from ansible.vars.hostvars import HostVars
 from ansible.vars.unsafe_proxy import UnsafeProxy
 
-CACHED_VARS = dict()
+VARIABLE_CACHE = dict()
+HOSTVARS_CACHE = dict()
 
 try:
     from __main__ import display
@@ -84,6 +85,28 @@ class VariableManager:
         self._group_vars_files = defaultdict(dict)
         self._inventory = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
+
+    def __getstate__(self):
+        data = dict(
+            fact_cache = self._fact_cache.copy(),
+            np_fact_cache = self._nonpersistent_fact_cache.copy(),
+            vars_cache = self._vars_cache.copy(),
+            extra_vars = self._extra_vars.copy(),
+            host_vars_files = self._host_vars_files.copy(),
+            group_vars_files = self._group_vars_files.copy(),
+            omit_token = self._omit_token,
+        )
+        return data
+
+    def __setstate__(self, data):
+        self._fact_cache = data.get('fact_cache', defaultdict(dict))
+        self._nonpersistent_fact_cache = data.get('np_fact_cache', defaultdict(dict))
+        self._vars_cache = data.get('vars_cache', defaultdict(dict))
+        self._extra_vars = data.get('extra_vars', dict())
+        self._host_vars_files = data.get('host_vars_files', defaultdict(dict))
+        self._group_vars_files = data.get('group_vars_files', defaultdict(dict))
+        self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
+        self._inventory = None
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
@@ -157,9 +180,9 @@ class VariableManager:
 
         debug("in VariableManager get_vars()")
         cache_entry = self._get_cache_entry(play=play, host=host, task=task)
-        if cache_entry in CACHED_VARS and use_cache:
+        if cache_entry in VARIABLE_CACHE and use_cache:
             debug("vars are cached, returning them now")
-            return CACHED_VARS[cache_entry]
+            return VARIABLE_CACHE[cache_entry]
 
         all_vars = defaultdict(dict)
 
@@ -289,7 +312,12 @@ class VariableManager:
                     all_vars['groups'][group_name] = [h.name for h in group.get_hosts()]
 
                 if include_hostvars:
-                    hostvars = HostVars(vars_manager=self, play=play, inventory=self._inventory, loader=loader)
+                    hostvars_cache_entry = self._get_cache_entry(play=play)
+                    if hostvars_cache_entry in HOSTVARS_CACHE:
+                        hostvars = HOSTVARS_CACHE[hostvars_cache_entry]
+                    else:
+                        hostvars = HostVars(play=play, inventory=self._inventory, loader=loader, variable_manager=self)
+                        HOSTVARS_CACHE[hostvars_cache_entry] = hostvars
                     all_vars['hostvars'] = hostvars
 
         if task:
@@ -355,7 +383,7 @@ class VariableManager:
         if 'hostvars' in all_vars and host:
             all_vars['vars'] = all_vars['hostvars'][host.get_name()]
 
-        #CACHED_VARS[cache_entry] = all_vars
+        #VARIABLE_CACHE[cache_entry] = all_vars
 
         debug("done with get_vars()")
         return all_vars
