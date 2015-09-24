@@ -65,7 +65,7 @@ class Connection(object):
         # totally ignores privlege escalation
         vvv("EXEC %s" % (cmd), host=self.host)
         p = self.client.command.run(cmd)[self.host]
-        return (p[0], '', p[1], p[2])
+        return (p[0], p[1], p[2])
 
     def _normalize_path(self, path, prefix):
         if not path.startswith(os.path.sep):

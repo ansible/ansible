@@ -202,7 +202,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to exec cmd %s" % cmd)
         result.std_out = to_unicode(result.std_out)
         result.std_err = to_unicode(result.std_err)
-        return (result.status_code, '', result.std_out, result.std_err)
+        return (result.status_code, result.std_out, result.std_err)
 
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)

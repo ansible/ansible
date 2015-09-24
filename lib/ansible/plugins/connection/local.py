@@ -98,7 +98,7 @@ class Connection(ConnectionBase):
         self._display.debug("done communicating")
 
         self._display.debug("done with local.exec_command()")
-        return (p.returncode, '', stdout, stderr)
+        return (p.returncode, stdout, stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to local '''

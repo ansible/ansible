@@ -88,7 +88,7 @@ class Connection(object):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         stdout, stderr = p.communicate()
-        return (p.returncode, '', stdout, stderr)
+        return (p.returncode, stdout, stderr)
 
     def _normalize_path(self, path, prefix):
         if not path.startswith(os.path.sep):
