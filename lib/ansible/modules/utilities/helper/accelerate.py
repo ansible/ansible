@@ -472,8 +472,6 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     def command(self, data):
         if 'cmd' not in data:
             return dict(failed=True, msg='internal error: cmd is required')
-        if 'tmp_path' not in data:
-            return dict(failed=True, msg='internal error: tmp_path is required')
 
         vvvv("executing: %s" % data['cmd'])
 
