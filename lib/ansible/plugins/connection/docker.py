@@ -88,9 +88,9 @@ class Connection(ConnectionBase):
 
         return self
 
-    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=False):
+    def exec_command(self, cmd, in_data=None, sudoable=False):
         """ Run a command on the local host """
-        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         # Don't currently support su
         if in_data:

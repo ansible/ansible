@@ -69,7 +69,7 @@ class Connection(object):
             local_cmd = '%s -q -c lxc:/// lxc-enter-namespace %s -- %s' % (self.cmd, self.lxc, cmd)
         return local_cmd
 
-    def exec_command(self, cmd, tmp_path, become_user, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, become_user, sudoable=False, executable='/bin/sh', in_data=None):
         ''' run a command on the chroot '''
 
         if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:

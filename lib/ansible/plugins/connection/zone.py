@@ -110,7 +110,7 @@ class Connection(object):
             local_cmd += cmd
         return local_cmd
 
-    def _buffered_exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None, stdin=subprocess.PIPE):
+    def _buffered_exec_command(self, cmd, become_user=None, sudoable=False, executable=None, in_data=None, stdin=subprocess.PIPE):
         ''' run a command on the zone.  This is only needed for implementing
         put_file() get_file() so that we don't have to read the whole file
         into memory.
@@ -136,14 +136,14 @@ class Connection(object):
 
         return p
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None):
+    def exec_command(self, cmd, become_user=None, sudoable=False, executable=None, in_data=None):
         ''' run a command on the zone '''
 
         ### TODO: Why all the precautions not to specify /bin/sh? (vs jail.py)
         if executable == '/bin/sh':
           executable = None
 
-        p = self._buffered_exec_command(cmd, tmp_path, become_user, sudoable, executable, in_data)
+        p = self._buffered_exec_command(cmd, become_user, sudoable, executable, in_data)
 
         stdout, stderr = p.communicate()
         return (p.returncode, stdout, stderr)

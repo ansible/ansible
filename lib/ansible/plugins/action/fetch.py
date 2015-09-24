@@ -52,10 +52,10 @@ class ActionModule(ActionBase):
             return dict(failed=True, msg="src and dest are required")
 
         source = self._connection._shell.join_path(source)
-        source = self._remote_expand_user(source, tmp)
+        source = self._remote_expand_user(source)
 
         # calculate checksum for the remote file
-        remote_checksum = self._remote_checksum(tmp, source, all_vars=task_vars)
+        remote_checksum = self._remote_checksum(source, all_vars=task_vars)
 
         # use slurp if sudo and permissions are lacking
         remote_data = None

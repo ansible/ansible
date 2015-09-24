@@ -43,12 +43,12 @@ class ActionModule(ActionBase):
         # configure, upload, and chmod the target module
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=self._task.args, task_vars=task_vars)
         self._transfer_data(remote_module_path, module_data)
-        self._remote_chmod(tmp, 'a+rx', remote_module_path)
+        self._remote_chmod('a+rx', remote_module_path)
 
         # configure, upload, and chmod the async_wrapper module
         (async_module_style, shebang, async_module_data) = self._configure_module(module_name='async_wrapper', module_args=dict(), task_vars=task_vars)
         self._transfer_data(async_module_path, async_module_data)
-        self._remote_chmod(tmp, 'a+rx', async_module_path)
+        self._remote_chmod('a+rx', async_module_path)
 
         argsfile = self._transfer_data(self._connection._shell.join_path(tmp, 'arguments'), json.dumps(self._task.args))
 
@@ -56,7 +56,7 @@ class ActionModule(ActionBase):
         async_jid   = str(random.randint(0, 999999999999))
 
         async_cmd = " ".join([str(x) for x in [env_string, async_module_path, async_jid, async_limit, remote_module_path, argsfile]])
-        result = self._low_level_execute_command(cmd=async_cmd, tmp=None)
+        result = self._low_level_execute_command(cmd=async_cmd)
 
         # clean up after
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:

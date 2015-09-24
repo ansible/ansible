@@ -285,10 +285,10 @@ class Connection(ConnectionBase):
 
         return return_tuple
 
-    def _exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
+    def _exec_command(self, cmd, in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
-        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         self._display.vvv("ESTABLISH SSH CONNECTION FOR USER: {0}".format(self._play_context.remote_user), host=self._play_context.remote_addr)
 
