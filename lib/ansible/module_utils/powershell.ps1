@@ -102,8 +102,10 @@ Function Fail-Json($obj, $message = $null)
 # This is a convenience to make getting Members from an object easier and
 # slightly more pythonic
 # Example: $attr = Get-Attr $response "code" -default "1"
+#Get-attr also supports Parameter validation to save you from coding that manually:
+#Example: Get-attr -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 #Note that if you use the failifempty option, you do need to specify resultobject as well.
-Function Get-Attr($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage)
+Function Get-Attr($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage)
 {
     # Check if the provided Member $name exists in $obj and return it or the default. 
     Try
@@ -112,7 +114,28 @@ Function Get-Attr($obj, $name, $default = $null, $resultobj, $failifempty=$false
         {
             throw
         }
-        $obj.$name
+
+        if ($ValidateSet)
+        {
+            if ($ValidateSet -contains ($obj.$name))
+            {
+                $obj.$name    
+            }
+            Else
+            {
+                if ($ValidateSetErrorMessage -eq $null)
+                {
+                    #Auto-generated error should be sufficient in most use cases
+                    $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
+                }
+                Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
+            }
+        }
+        Else
+        {
+            $obj.$name
+        }
+        
     }
     Catch
     {
@@ -130,6 +153,7 @@ Function Get-Attr($obj, $name, $default = $null, $resultobj, $failifempty=$false
         }
     }
 }
+
 
 # Helper filter/pipeline function to convert a value to boolean following current
 # Ansible practices
