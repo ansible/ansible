@@ -33,3 +33,6 @@ class TestHost(unittest.TestCase):
         # __ne__ is a separate method
         self.assertFalse(self.hostA != Host('a'))
 
+    def test_hashability(self):
+        # equality implies the hash values are the same
+        self.assertEqual(hash(self.hostA), hash(Host('a')))
