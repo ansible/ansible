@@ -216,7 +216,7 @@ class Service(object):
 
 def service_shared_arg_spec():
 
-    return argument_spec = dict(
+    return dict(
             name = dict(required=True),
             state = dict(choices=['running', 'started', 'stopped', 'restarted', 'reloaded']),
             enabled = dict(type='bool'),
