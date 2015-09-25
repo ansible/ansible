@@ -50,6 +50,8 @@
 # http://code.activestate.com/recipes/496741-object-proxying/
 # Author: Tomer Filiba
 
+__all__ = ['UnsafeProxy', 'wrap_var']
+
 class UnsafeProxy(object):
     __slots__ = ["_obj", "__weakref__"]
     def __init__(self, obj):
@@ -148,4 +150,26 @@ class UnsafeProxy(object):
             cache[obj.__class__] = theclass = cls._create_class_proxy(obj.__class__)
         ins = object.__new__(theclass)
         return ins
+
+def _wrap_dict(v):
+    for k in v.keys():
+        if v[k] is not None and not isinstance(v[k], UnsafeProxy):
+            v[k] = _wrap_var(v[k])
+    return v
+
+def _wrap_list(v):
+    for idx, item in enumerate(v):
+        if item is not None and not isinstance(item, UnsafeProxy):
+            v[idx] = _wrap_var(item)
+    return v
+
+def wrap_var(v):
+    if isinstance(v, dict):
+        v = _wrap_dict(v)
+    elif isinstance(v, list):
+        v = _wrap_list(v)
+    else:
+        if v is not None and not isinstance(v, UnsafeProxy):
+            v = UnsafeProxy(v)
+    return v
 
