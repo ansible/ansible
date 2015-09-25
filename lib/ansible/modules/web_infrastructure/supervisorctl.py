@@ -122,7 +122,7 @@ def main():
 
     if supervisorctl_path:
         supervisorctl_path = os.path.expanduser(supervisorctl_path)
-        if os.path.exists(supervisorctl_path) and module.is_executable(supervisorctl_path):
+        if os.path.exists(supervisorctl_path) and is_executable(supervisorctl_path):
             supervisorctl_args = [supervisorctl_path]
         else:
             module.fail_json(
@@ -239,5 +239,6 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-
-main()
+# is_executable from basic
+if __name__ == '__main__':
+    main()
