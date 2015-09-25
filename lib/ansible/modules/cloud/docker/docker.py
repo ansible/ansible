@@ -331,6 +331,13 @@ options:
     default: false
     aliases: []
     version_added: "2.0"
+  labels:
+    description:
+      - Set container labels. Requires docker >= 1.6 and docker-py >= 1.2.0.
+    requered: false
+    default: null
+    version_added: "1.9.4"
+
 author:
     - "Cove Schneider (@cove)"
     - "Joshua Conner (@joshuaconner)"
@@ -610,6 +617,7 @@ class DockerManager(object):
             'cap_add': ((0, 5, 0), '1.14'),
             'cap_drop': ((0, 5, 0), '1.14'),
             'read_only': ((1, 0, 0), '1.17'),
+            'labels': ((1, 2, 0), '1.18'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -1136,6 +1144,22 @@ class DockerManager(object):
                 differing.append(container)
                 continue
 
+            # LABELS
+
+            expected_labels = {}
+            for name, value in self.module.params.get('labels').iteritems():
+                expected_labels[name] = str(value)
+
+            actual_labels = {}
+            for container_label in container['Config']['Labels'] or []:
+                name, value = container_label.split('=', 1)
+                actual_labels[name] = value
+
+            if actual_labels != expected_labels:
+                self.reload_reasons.append('labels {0} => {1}'.format(actual_labels, expected_labels))
+                differing.append(container)
+                continue
+
             # HOSTNAME
 
             expected_hostname = self.module.params.get('hostname')
@@ -1432,6 +1456,7 @@ class DockerManager(object):
                   'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
                   'environment':  self.env,
+                  'labels':       self.module.params.get('labels'),
                   'hostname':     self.module.params.get('hostname'),
                   'domainname':   self.module.params.get('domainname'),
                   'detach':       self.module.params.get('detach'),
@@ -1700,6 +1725,7 @@ def main():
             cap_add         = dict(default=None, type='list'),
             cap_drop        = dict(default=None, type='list'),
             read_only       = dict(default=None, type='bool'),
+            labels          = dict(default={}, type='dict'),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
