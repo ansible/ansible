@@ -33,6 +33,7 @@ from ansible.parsing.vault import VaultLib
 from ansible.parsing.splitter import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
+from ansible.module_utils.basic import is_executable
 from ansible.utils.path import unfrackpath
 from ansible.utils.unicode import to_unicode
 
@@ -138,7 +139,7 @@ class DataLoader():
     def is_executable(self, path):
         '''is the given path executable?'''
         path = self.path_dwim(path)
-        return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+        return is_executable(path)
 
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''

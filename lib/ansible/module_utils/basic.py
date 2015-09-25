@@ -168,21 +168,6 @@ except ImportError:
         return _convert(node_or_string)
 
 
-def get_exception():
-    """Get the current exception.
-
-    This code needs to work on Python 2.4 through 3.x, so we cannot use
-    "except Exception, e:" (SyntaxError on Python 3.x) nor
-    "except Exception as e:" (SyntaxError on Python 2.4-2.5).
-    Instead we must use ::
-
-        except Exception:
-            e = get_exception()
-
-    """
-    return sys.exc_info()[1]
-
-
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
     mode = dict(),
@@ -209,6 +194,22 @@ PASSWD_ARG_RE = re.compile(r'^[-]{0,2}pass[-]?(word|wd)?')
 PERM_BITS = int('07777', 8)      # file mode permission bits
 EXEC_PERM_BITS = int('00111', 8) # execute permission bits
 DEFAULT_PERM = int('0666', 8)    # default file permission bits
+
+
+def get_exception():
+    """Get the current exception.
+
+    This code needs to work on Python 2.4 through 3.x, so we cannot use
+    "except Exception, e:" (SyntaxError on Python 3.x) nor
+    "except Exception as e:" (SyntaxError on Python 2.4-2.5).
+    Instead we must use ::
+
+        except Exception:
+            e = get_exception()
+
+    """
+    return sys.exc_info()[1]
+
 
 def get_platform():
     ''' what's the platform?  example: Linux is a platform. '''
@@ -368,8 +369,14 @@ def heuristic_log_sanitize(data):
     return ''.join(output)
 
 
-class AnsibleModule(object):
+def is_executable(path):
+    '''is the given path executable?'''
+    return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
+            or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
+            or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
+
+class AnsibleModule(object):
     def __init__(self, argument_spec, bypass_checks=False, no_log=False,
         check_invalid_arguments=True, mutually_exclusive=None, required_together=None,
         required_one_of=None, add_file_common_args=False, supports_check_mode=False,
@@ -1307,7 +1314,7 @@ class AnsibleModule(object):
                 paths.append(p)
         for d in paths:
             path = os.path.join(d, arg)
-            if os.path.exists(path) and self.is_executable(path):
+            if os.path.exists(path) and is_executable(path):
                 bin_path = path
                 break
         if required and bin_path is None:
@@ -1370,12 +1377,6 @@ class AnsibleModule(object):
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
         sys.exit(1)
-
-    def is_executable(self, path):
-        '''is the given path executable?'''
-        return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE]
-                or stat.S_IXGRP & os.stat(path)[stat.ST_MODE]
-                or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
@@ -1740,6 +1741,14 @@ class AnsibleModule(object):
             if size >= limit:
                 break
         return '%.2f %s' % (float(size)/ limit, suffix)
+
+    #
+    # Backwards compat
+    #
+
+    # In 2.0, moved from inside the module to the toplevel
+    is_executable = is_executable
+
 
 def get_module_path():
     return os.path.dirname(os.path.realpath(__file__))
