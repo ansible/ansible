@@ -25,12 +25,12 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: os_network
-short_description: Creates/Removes networks from OpenStack
+short_description: Creates/removes networks from OpenStack
 extends_documentation_fragment: openstack
 version_added: "2.0"
 author: "Monty Taylor (@emonty)"
 description:
-   - Add or Remove network from OpenStack.
+   - Add or remove network from OpenStack.
 options:
    name:
      description:
@@ -46,6 +46,11 @@ options:
         - Whether the state should be marked as up or down.
      required: false
      default: true
+   external:
+     description:
+        - Whether this network is externally accessible.
+     required: false
+     default: false
    state:
      description:
         - Indicate desired state of the resource.
@@ -56,9 +61,60 @@ requirements: ["shade"]
 '''
 
 EXAMPLES = '''
+# Create an externally accessible network named 'ext_network'.
 - os_network:
-    name=t1network
-    state=present
+    cloud: mycloud
+    state: present
+    name: ext_network
+    external: true
+'''
+
+RETURN = '''
+network:
+    description: Dictionary describing the network.
+    returned: On success when I(state) is 'present'.
+    type: dictionary
+    contains:
+        id:
+            description: Network ID.
+            type: string
+            sample: "4bb4f9a5-3bd2-4562-bf6a-d17a6341bb56"
+        name:
+            description: Network name.
+            type: string
+            sample: "ext_network"
+        shared:
+            description: Indicates whether this network is shared across all tenants.
+            type: bool
+            sample: false
+        status:
+            description: Network status.
+            type: string
+            sample: "ACTIVE"
+        mtu:
+            description: The MTU of a network resource.
+            type: integer
+            sample: 0
+        admin_state_up:
+            description: The administrative state of the network.
+            type: bool
+            sample: true
+        port_security_enabled:
+            description: The port security status
+            type: bool
+            sample: true
+        router:external:
+            description: Indicates whether this network is externally accessible.
+            type: bool
+            sample: true
+        tenant_id:
+            description: The tenant ID.
+            type: string
+            sample: "06820f94b9f54b119636be2728d216fc"
+        subnets:
+            description: The associated subnets.
+            type: list
+            sample: []
 '''
 
 
@@ -67,6 +123,7 @@ def main():
         name=dict(required=True),
         shared=dict(default=False, type='bool'),
         admin_state_up=dict(default=True, type='bool'),
+        external=dict(default=False, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
     )
 
@@ -80,6 +137,7 @@ def main():
     name = module.params['name']
     shared = module.params['shared']
     admin_state_up = module.params['admin_state_up']
+    external = module.params['external']
 
     try:
         cloud = shade.openstack_cloud(**module.params)
@@ -87,7 +145,7 @@ def main():
 
         if state == 'present':
             if not net:
-                net = cloud.create_network(name, shared, admin_state_up)
+                net = cloud.create_network(name, shared, admin_state_up, external)
             module.exit_json(changed=False, network=net, id=net['id'])
 
         elif state == 'absent':
@@ -104,4 +162,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
+if __name__ == "__main__":
+    main()
