@@ -19,7 +19,7 @@ DOCUMENTATION = '''
 module: ecs_service
 short_description: create, terminate, start or stop a service in ecs
 description:
-    - Creates or terminates ec2 instances.
+    - Creates or terminates ecs services.
 notes:
     - the service role specified must be assumable (i.e. have a trust relationship
     for the ecs service, ecs.amazonaws.com)
@@ -28,10 +28,60 @@ dependecies:
 version_added: "2.0"
 author: Mark Chance (@java1guy)
 options:
+    state:
+        description:
+          - The desired state of the service
+        required: true
+        choices: ["present", "absent", "deleting"]
+    name:
+        description:
+          - The name of the service
+        required: true
+    cluster:
+        description:
+          - The name of the cluster in which the service exists
+        required: false
+    task_definition:
+        description:
+          - The task definition the service will run
+        required: false
+    load_balancers:
+        description:
+          - The list of ELBs defined for this service
+        required: false
+
+    desired_count:
+        description:
+          - The count of how many instances of the service
+        required: false
+    client_token:
+        description:
+          - 
+        required: false
+    role:
+        description:
+          - 
+        required: false
+    delay:
+        description:
+          - The time to wait before checking that the service is available
+        required: false
+        default: 10
+    repeat:
+        description:
+          - The number of times to check that the service is available
+        required: false
+        default: 10
 '''
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
+  ecs_service:
+    state: present
+    name: console-test-service
+    cluster: "{{ new_cluster }}"
+    task_definition: "{{ new_cluster }}-task:{{task_revision}}"
+    desired_count: 0
 
 # Basic provisioning example
 - ecs_service:
@@ -45,26 +95,6 @@ EXAMPLES = '''
     cluster: string
 '''
 RETURN = '''
-cache_updated:
-    description: if the cache was updated or not
-    returned: success, in some cases
-    type: boolean
-    sample: True
-cache_update_time:
-    description: time of the last cache update (0 if unknown)
-    returned: success, in some cases
-    type: datetime
-    sample: 1425828348000
-stdout:
-    description: output from apt
-    returned: success, when needed
-    type: string
-    sample: "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following extra packages will be installed:\n  apache2-bin ..."
-stderr:
-    description: error output from apt
-    returned: success, when needed
-    type: string
-    sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
 '''
 try:
     import json
