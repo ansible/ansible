@@ -24,6 +24,7 @@ import os
 from collections import defaultdict
 from collections import MutableMapping
 
+from six import iteritems
 from jinja2.exceptions import UndefinedError
 
 try:
@@ -312,7 +313,7 @@ class VariableManager:
 
             if self._inventory is not None:
                 all_vars['groups']  = dict()
-                for (group_name, group) in self._inventory.groups.iteritems():
+                for (group_name, group) in iteritems(self._inventory.groups):
                     all_vars['groups'][group_name] = [h.name for h in group.get_hosts()]
 
                 if include_hostvars:
