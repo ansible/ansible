@@ -112,14 +112,9 @@ class WorkerProcess(multiprocessing.Process):
                 # the task handles updating parent/child objects as needed.
                 task.set_loader(self._loader)
 
-                # apply the given task's information to the connection info,
-                # which may override some fields already set by the play or
-                # the options specified on the command line
-                new_play_context = play_context.set_task_and_variable_override(task=task, variables=job_vars)
-
                 # execute the task and build a TaskResult from the result
                 debug("running TaskExecutor() for %s/%s" % (host, task))
-                executor_result = TaskExecutor(host, task, job_vars, new_play_context, self._new_stdin, self._loader, shared_loader_obj).run()
+                executor_result = TaskExecutor(host, task, job_vars, play_context, self._new_stdin, self._loader, shared_loader_obj).run()
                 debug("done running TaskExecutor() for %s/%s" % (host, task))
                 task_result = TaskResult(host, task, executor_result)
 

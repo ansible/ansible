@@ -99,8 +99,10 @@ class TestPlayContext(unittest.TestCase):
             ansible_ssh_port = 4321,
         )
 
+        mock_templar = MagicMock()
+
         play_context = PlayContext(play=mock_play, options=options)
-        play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars)
+        play_context = play_context.set_task_and_variable_override(task=mock_task, variables=all_vars, templar=mock_templar)
         self.assertEqual(play_context.connection, 'mock_inventory')
         self.assertEqual(play_context.remote_user, 'mocktask')
         self.assertEqual(play_context.port, 4321)
