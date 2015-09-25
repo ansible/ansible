@@ -426,7 +426,7 @@ Other Useful Filters
 
 To add quotes for shell usage::
 
-    - shell: echo={{ string_value | quote }} 
+    - shell: echo {{ string_value | quote }} 
 
 To use one value on true and another on false (new in version 1.9)::
 
