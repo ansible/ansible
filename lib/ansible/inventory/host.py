@@ -36,6 +36,8 @@ class Host:
         return self.deserialize(data)
 
     def __eq__(self, other):
+        if not isinstance(other, Host):
+            return False
         return self.name == other.name
 
     def __ne__(self, other):
