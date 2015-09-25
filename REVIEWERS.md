@@ -1,160 +1,57 @@
-New module reviewers
+Ansible Extras Reviewers
 ====================
-The following list represents all current Github module reviewers.  It's currently comprised of all Ansible module authors, past and present.
+The Ansible Extras Modules are written and maintained by the Ansible community, and are included in Extras through a community-driven approval process. 
 
-Two +1 votes by any of these module reviewers on a new module pull request will result in the inclusion of that module into Ansible Extras.
-
-Active
-======
--  Adam Garside [@fabulops](https://www.github.com/fabulops) 
--  Adam Keech [@smadam813](https://www.github.com/smadam813) 
--  Adam Miller [@maxamillion](https://www.github.com/maxamillion) 
--  Alex Coomans [@drcapulet](https://www.github.com/drcapulet) 
--  Alexander Bulimov [@abulimov](https://www.github.com/abulimov) 
--  Alexander Saltanov [@sashka](https://www.github.com/sashka) 
--  Alexander Winkler [@dermute](https://www.github.com/dermute) 
--  Andrew de Quincey [@adq](https://www.github.com/adq) 
--  André Paramés [@andreparames](https://www.github.com/andreparames) 
--  Andy Hill [@andyhky](https://www.github.com/andyhky) 
--  Artūras `arturaz` Šlajus [@arturaz](https://www.github.com/arturaz) 
--  Augustus Kling [@AugustusKling](https://www.github.com/AugustusKling) 
--  BOURDEL Paul [@pb8226](https://www.github.com/pb8226) 
--  Balazs Pocze [@banyek](https://www.github.com/banyek) 
--  Ben Whaley [@bwhaley](https://www.github.com/bwhaley) 
--  Benno Joy [@bennojoy](https://www.github.com/bennojoy) 
--  Bernhard Weitzhofer [@b6d](https://www.github.com/b6d) 
--  Boyd Adamson [@brontitall](https://www.github.com/brontitall) 
--  Brad Olson [@bradobro](https://www.github.com/bradobro) 
--  Brian Coca [@bcoca](https://www.github.com/bcoca) 
--  Brice Burgess [@briceburg](https://www.github.com/briceburg) 
--  Bruce Pennypacker [@bpennypacker](https://www.github.com/bpennypacker) 
--  Carson Gee [@carsongee](https://www.github.com/carsongee) 
--  Chris Church [@cchurch](https://www.github.com/cchurch) 
--  Chris Hoffman [@chrishoffman](https://www.github.com/chrishoffman) 
--  Chris Long [@alcamie101](https://www.github.com/alcamie101) 
--  Chris Schmidt [@chrisisbeef](https://www.github.com/chrisisbeef) 
--  Christian Berendt [@berendt](https://www.github.com/berendt) 
--  Christopher H. Laco [@claco](https://www.github.com/claco) 
--  Cristian van Ee [@DJMuggs](https://www.github.com/DJMuggs) 
--  Dag Wieers [@dagwieers](https://www.github.com/dagwieers) 
--  Dane Summers [@dsummersl](https://www.github.com/dsummersl) 
--  Daniel Jaouen [@danieljaouen](https://www.github.com/danieljaouen) 
--  Daniel Schep [@dschep](https://www.github.com/dschep) 
--  Dariusz Owczarek [@dareko](https://www.github.com/dareko) 
--  Darryl Stoflet [@dstoflet](https://www.github.com/dstoflet) 
--  David CHANIAL [@davixx](https://www.github.com/davixx) 
--  David Stygstra [@stygstra](https://www.github.com/) 
--  Derek Carter [@goozbach](https://www.github.com/stygstra) 
--  Dimitrios Tydeas Mengidis [@dmtrs](https://www.github.com/dmtrs)  
--  Doug Luce [@dougluce](https://www.github.com/dougluce) 
--  Dylan Martin [@pileofrogs](https://www.github.com/pileofrogs) 
--  Elliott Foster [@elliotttf](https://www.github.com/elliotttf) 
--  Eric Johnson [@erjohnso](https://www.github.com/erjohnso) 
--  Evan Duffield [@scicoin-project](https://www.github.com/scicoin-project) 
--  Evan Kaufman [@EvanK](https://www.github.com/EvanK) 
--  Evgenii Terechkov [@evgkrsk](https://www.github.com/evgkrsk) 
--  Franck Cuny [@franckcuny](https://www.github.com/franckcuny) 
--  Gareth Rushgrove [@garethr](https://www.github.com/garethr) 
--  Hagai Kariti [@hkariti](https://www.github.com/hkariti) 
--  Hector Acosta [@hacosta](https://www.github.com/hacosta) 
--  Hiroaki Nakamura [@hnakamur](https://www.github.com/hnakamur) 
--  Ivan Vanderbyl [@ivanvanderbyl](https://www.github.com/ivanvanderbyl) 
--  Jakub Jirutka [@jirutka](https://www.github.com/jirutka) 
--  James Cammarata [@jimi-c](https://www.github.com/jimi-c) 
--  James Laska [@jlaska](https://www.github.com/jlaska) 
--  James S. Martin [@jsmartin](https://www.github.com/jsmartin) 
--  Jan-Piet Mens [@jpmens](https://www.github.com/jpmens) 
--  Jayson Vantuyl [@jvantuyl](https://www.github.com/jvantuyl) 
--  Jens Depuydt [@jensdepuydt](https://www.github.com/jensdepuydt) 
--  Jeroen Hoekx [@jhoekx](https://www.github.com/jhoekx) 
--  Jesse Keating [@j2sol](https://www.github.com/j2sol) 
--  Jim Dalton [@jsdalton](https://www.github.com/jsdalton) 
--  Jim Richardson [@weaselkeeper](https://www.github.com/weaselkeeper) 
--  Jimmy Tang [@jcftang](https://www.github.com/jcftang) 
--  Johan Wiren [@johanwiren](https://www.github.com/johanwiren) 
--  John Dewey [@retr0h](https://www.github.com/retr0h) 
--  John Jarvis [@jarv](https://www.github.com/jarv) 
--  John Whitbeck [@jwhitbeck](https://www.github.com/jwhitbeck) 
--  Jon Hawkesworth [@jhawkesworth](https://www.github.com/jhawkesworth) 
--  Jonas Pfenniger [@zimbatm](https://www.github.com/zimbatm) 
--  Jonathan I. Davila [@defionscode](https://www.github.com/defionscode) 
--  Joseph Callen [@jcpowermac](https://www.github.com/jcpowermac) 
--  Kevin Carter [@cloudnull](https://www.github.com/cloudnull) 
--  Lester Wade [@lwade](https://www.github.com/lwade) 
--  Lorin Hochstein [@lorin](https://www.github.com/lorin) 
--  Manuel Sousa [@manuel-sousa](https://www.github.com/manuel-sousa) 
--  Mark Theunissen [@marktheunissen](https://www.github.com/marktheunissen) 
--  Matt Coddington [@mcodd](https://www.github.com/mcodd) 
--  Matt Hite [@mhite](https://www.github.com/mhite) 
--  Matt Makai [@makaimc](https://www.github.com/makaimc) 
--  Matt Martz [@sivel](https://www.github.com/sivel) 
--  Matt Wright [@mattupstate](https://www.github.com/mattupstate) 
--  Matthew Vernon [@mcv21](https://www.github.com/mcv21) 
--  Matthew Williams [@mgwilliams](https://www.github.com/mgwilliams) 
--  Matthias Vogelgesang [@matze](https://www.github.com/matze) 
--  Max Riveiro [@kavu](https://www.github.com/kavu) 
--  Michael Gregson [@mgregson](https://www.github.com/mgregson) 
--  Michael J. Schultz [@mjschultz](https://www.github.com/mjschultz) 
--  Michael Schuett [@michaeljs1990](https://www.github.com/michaeljs1990) 
--  Michael Warkentin [@mwarkentin](https://www.github.com/mwarkentin) 
--  Mischa Peters [@mischapeters](https://www.github.com/mischapeters) 
--  Monty Taylor [@emonty](https://www.github.com/emonty) 
--  Nandor Sivok [@dominis](https://www.github.com/dominis) 
--  Nate Coraor [@natefoo](https://www.github.com/natefoo) 
--  Nate Kingsley [@nate-kingsley](https://www.github.com/nate-kingsley) 
--  Nick Harring [@NickatEpic](https://www.github.com/NickatEpic) 
--  Patrick Callahan [@dirtyharrycallahan](https://www.github.com/dirtyharrycallahan) 
--  Patrick Ogenstad [@ogenstad](https://www.github.com/ogenstad) 
--  Patrick Pelletier [@skinp](https://www.github.com/skinp) 
--  Patrik Lundin [@eest](https://www.github.com/eest) 
--  Paul Durivage [@angstwad](https://www.github.com/angstwad) 
--  Pavel Antonov [@softzilla](https://www.github.com/softzilla) 
--  Pepe Barbe [@elventear](https://www.github.com/elventear) 
--  Peter Mounce [@petemounce](https://www.github.com/petemounce) 
--  Peter Oliver [@mavit](https://www.github.com/mavit) 
--  Peter Sprygada [@privateip](https://www.github.com/privateip) 
--  Peter Tan [@tanpeter](https://www.github.com/tanpeter) 
--  Philippe Makowski [@pmakowski](https://www.github.com/pmakowski) 
--  Phillip Gentry, CX Inc [@pcgentry](https://www.github.com/pcgentry) 
--  Quentin Stafford-Fraser [@quentinsf](https://www.github.com/quentinsf) 
--  Ramon de la Fuente [@ramondelafuente](https://www.github.com/ramondelafuente) 
--  Raul Melo [@melodous](https://www.github.com/melodous)  
--  Ravi Bhure [@ravibhure](https://www.github.com/ravibhure) 
--  René Moser [@resmo](https://www.github.com/resmo) 
--  Richard Hoop [@rhoop](https://www.github.com/rhoop) 
--  Richard Isaacson [@risaacson](https://www.github.com/risaacson)  
--  Rick Mendes [@rickmendes](https://www.github.com/rickmendes) 
--  Romeo Theriault [@romeotheriault](https://www.github.com/romeotheriault) 
--  Scott Anderson [@tastychutney](https://www.github.com/tastychutney) 
--  Sebastian Kornehl [@skornehl](https://www.github.com/skornehl) 
--  Serge van Ginderachter [@srvg](https://www.github.com/srvg) 
--  Sergei Antipov [@UnderGreen](https://www.github.com/UnderGreen) 
--  Seth Edwards [@sedward](https://www.github.com/sedward)  
--  Silviu Dicu [@silviud](https://www.github.com/silviud) 
--  Simon JAILLET [@jails](https://www.github.com/jails) 
--  Stephen Fromm [@sfromm](https://www.github.com/sfromm) 
--  Steve [@groks](https://www.github.com/groks) 
--  Steve Gargan [@sgargan](https://www.github.com/sgargan) 
--  Steve Smith [@tarka](https://www.github.com/tarka) 
--  Takashi Someda [@tksmd](https://www.github.com/tksmd) 
--  Taneli Leppä [@rosmo](https://www.github.com/rosmo) 
--  Tim Bielawa [@tbielawa](https://www.github.com/tbielawa) 
--  Tim Mahoney [@timmahoney](https://www.github.com/timmahoney) 
--  Timothy Appnel [@tima](https://www.github.com/tima) 
--  Tom Bamford [@tombamford](https://www.github.com/tombamford) 
--  Trond Hindenes [@trondhindenes](https://www.github.com/trondhindenes) 
--  Vincent Van der Kussen [@vincentvdk](https://www.github.com/vincentvdk) 
--  Vincent Viallet [@zbal](https://www.github.com/zbal) 
--  WAKAYAMA Shirou [@shirou](https://www.github.com/shirou) 
--  Will Thames [@willthames](https://www.github.com/willthames) 
--  Willy Barro [@willybarro](https://www.github.com/willybarro) 
--  Xabier Larrakoetxea [@slok](https://www.github.com/slok) 
--  Yeukhon Wong [@yeukhon](https://www.github.com/yeukhon) 
--  Zacharie Eakin [@zeekin](https://www.github.com/zeekin) 
--  berenddeboer [@berenddeboer](https://www.github.com/berenddeboer) 
--  bleader [@bleader](https://www.github.com/bleader)  
--  curtis [@ccollicutt](https://www.github.com/ccollicutt) 
-
-Retired
+Expectations
 =======
-None yet :)
+
+1. New modules will be tested in good faith by users who care about them. 
+2. New modules will adhere to the module guidelines, located here: http://docs.ansible.com/ansible/developing_modules.html#module-checklist
+3. The submitter of the module is willing and able to maintain the module over time.
+
+New Modules
+=======
+
+New modules are subject to review by anyone in the Ansible community. For inclusion of a new module into Ansible Extras, a pull request must receive at least one approval from a fellow community member on each of the following criteria:
+
+* One "worksforme" approval from someone who has thoroughly tested the module, including all parameters and switches.
+* One "passes_guidelines" approval from someone who has vetted the code according to the module guidelines.
+
+Either of these approvals can be given, in a comment, by anybody (except the submitter).
+
+Any module that has both of these, and no "needs_revision" votes (which can also be given by anybody) will be approved for inclusion.
+
+The core team will continue to be the point of escalation for any issues that may arise (duplicate modules, disagreements over guidelines, etc.)
+
+Existing Modules
+=======
+
+PRs made against existing modules in Extras are subject to review by the module author or current maintainer. 
+
+Unmaintained Modules
+=======
+
+If modules in Extras go unmaintained, we will seek new maintainers, and if we don't find new
+maintainers, we will ultimately deprecate them.
+
+Subject Matter Experts
+=======
+
+Subject matter experts are groups of acknowledged community members who have expertise and experience in particular modules. Pull requests for existing or new modules are sometimes referred to these wider groups during triage, for expedience or escalation. 
+
+Openstack: @emonty @shrews @dguerri @juliakreger @j2sol @rcarrillocruz
+
+Windows: @trondhindenes @petemounce @elventear @smadam813 @jhawkesworth @angstwad @sivel @chrishoffman @cchurch
+
+AWS: @jsmartin @scicoin-project @tombamford @garethr @lorin @jarv @jsdalton @silviud @adq @zbal @zeekin @willthames @lwade @carsongee @defionscode
+@tastychutney @bpennypacker @loia
+
+Docker: @cove @joshuaconner @softzilla @smashwilson
+
+Red Hat Network: @barnabycourt @vritant @flossware
+
+PR Process
+=======
+
+A full view of the pull request process for Extras can be seen here: 
+![here](http://gregdek.org/extras_PR_process_2015_09.png)
