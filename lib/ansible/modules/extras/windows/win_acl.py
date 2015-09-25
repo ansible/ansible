@@ -99,19 +99,19 @@ options:
       - NoPropagateInherit
       - InheritOnly
     default: "None"
-author: Phil Schwartz, Trond Hindenes
+author: Phil Schwartz (@schwartzmx), Trond Hindenes (@trondhindenes)
 '''
 
 EXAMPLES = '''
 # Restrict write,execute access to User Fed-Phil
-$ ansible -i hosts -m win_acl -a "user=Fed-Phil src=C:\Important\Executable.exe type=deny rights='ExecuteFile,Write'" all
+$ ansible -i hosts -m win_acl -a "user=Fed-Phil path=C:\Important\Executable.exe type=deny rights='ExecuteFile,Write'" all
 
 # Playbook example
 # Add access rule to allow IIS_IUSRS FullControl to MySite
 ---
 - name: Add IIS_IUSRS allow rights
   win_acl:
-    src: 'C:\inetpub\wwwroot\MySite'
+    path: 'C:\inetpub\wwwroot\MySite'
     user: 'IIS_IUSRS'
     rights: 'FullControl'
     type: 'allow'
@@ -121,7 +121,7 @@ $ ansible -i hosts -m win_acl -a "user=Fed-Phil src=C:\Important\Executable.exe 
 
 # Remove previously added rule for IIS_IUSRS
 - name: Remove FullControl AccessRule for IIS_IUSRS
-    src: 'C:\inetpub\wwwroot\MySite'
+    path: 'C:\inetpub\wwwroot\MySite'
     user: 'IIS_IUSRS'
     rights: 'FullControl'
     type: 'allow'
@@ -131,7 +131,7 @@ $ ansible -i hosts -m win_acl -a "user=Fed-Phil src=C:\Important\Executable.exe 
 
 # Deny Intern
 - name: Deny Deny
-    src: 'C:\Administrator\Documents'
+    path: 'C:\Administrator\Documents'
     user: 'Intern'
     rights: 'Read,Write,Modify,FullControl,Delete'
     type: 'deny'
