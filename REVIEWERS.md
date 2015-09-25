@@ -2,8 +2,6 @@ Ansible Extras Reviewers
 ====================
 The Ansible Extras Modules are written and maintained by the Ansible community, and are included in Extras through a community-driven approval process. 
 
-A full view of the pull request process for Extras can be seen here: http://gregdek.org/extras_PR_process_2015_09.png
-
 Expectations
 =======
 
@@ -51,3 +49,9 @@ AWS: @jsmartin @scicoin-project @tombamford @garethr @lorin @jarv @jsdalton @sil
 Docker: @cove @joshuaconner @softzilla @smashwilson
 
 Red Hat Network: @barnabycourt @vritant @flossware
+
+PR Process
+=======
+
+A full view of the pull request process for Extras can be seen here: 
+![here](http://gregdek.org/extras_PR_process_2015_09.png)
