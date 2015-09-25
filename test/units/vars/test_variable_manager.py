@@ -171,6 +171,7 @@ class TestVariableManager(unittest.TestCase):
 
         mock_task = MagicMock()
         mock_task._role = None
+        mock_task.loop = None
         mock_task.get_vars.return_value = dict(foo="bar")
 
         v = VariableManager()

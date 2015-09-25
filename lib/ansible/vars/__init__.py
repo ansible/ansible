@@ -36,9 +36,11 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
 from ansible.parsing import DataLoader
+from ansible.plugins import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.debug import debug
+from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.vars.hostvars import HostVars
 from ansible.vars.unsafe_proxy import UnsafeProxy
@@ -333,39 +335,78 @@ class VariableManager:
                 # as we're fetching vars before post_validate has been called on
                 # the task that has been passed in
                 templar = Templar(loader=loader, variables=all_vars)
-                delegated_host_name = templar.template(task.delegate_to)
 
-                # a dictionary of variables to use if we have to create a new host below
-                new_delegated_host_vars = dict(
-                    ansible_host=delegated_host_name,
-                    ansible_user=C.DEFAULT_REMOTE_USER,
-                    ansible_connection=C.DEFAULT_TRANSPORT,
-                )
-
-                # now try to find the delegated-to host in inventory, or failing that,
-                # create a new host on the fly so we can fetch variables for it
-                delegated_host = None
-                if self._inventory is not None:
-                    delegated_host = self._inventory.get_host(delegated_host_name)
-                    # try looking it up based on the address field, and finally
-                    # fall back to creating a host on the fly to use for the var lookup
-                    if delegated_host is None:
-                        for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
-                            # check if the address matches, or if both the delegated_to host
-                            # and the current host are in the list of localhost aliases
-                            if h.address == delegated_host_name or h.name in C.LOCALHOST and delegated_host_name in C.LOCALHOST:
-                                delegated_host = h
-                                break
-                        else:
-                            delegated_host = Host(name=delegated_host_name)
-                            delegated_host.vars.update(new_delegated_host_vars)
+                items = []
+                if task.loop is not None:
+                    if task.loop in lookup_loader:
+                        #TODO: remove convert_bare true and deprecate this in with_ 
+                        try:
+                            loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=True)
+                        except AnsibleUndefinedVariable as e:
+                            if 'has no attribute' in str(e):
+                                loop_terms = []
+                                self._display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
+                            else:
+                                raise
+                        items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=all_vars)
+                    else:
+                        raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % task.loop)
                 else:
-                    delegated_host = Host(name=delegated_host_name)
-                    delegated_host.vars.update(new_delegated_host_vars)
+                    items = [None]
 
-                # now we go fetch the vars for the delegated-to host and save them in our
-                # master dictionary of variables to be used later in the TaskExecutor/PlayContext
-                all_vars['ansible_delegated_vars'] = self.get_vars(loader=loader, play=play, host=delegated_host, task=task, include_delegate_to=False, include_hostvars=False)
+                vars_copy = all_vars.copy()
+                delegated_host_vars = dict()
+                for item in items:
+                    # update the variables with the item value for templating, in case we need it
+                    if item is not None:
+                        vars_copy['item'] = item
+
+                    templar.set_available_variables(vars_copy)
+                    delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
+                    if delegated_host_name in delegated_host_vars:
+                        # no need to repeat ourselves, as the delegate_to value
+                        # does not appear to be tied to the loop item variable
+                        continue
+
+                    # a dictionary of variables to use if we have to create a new host below
+                    new_delegated_host_vars = dict(
+                        ansible_host=delegated_host_name,
+                        ansible_user=C.DEFAULT_REMOTE_USER,
+                        ansible_connection=C.DEFAULT_TRANSPORT,
+                    )
+
+                    # now try to find the delegated-to host in inventory, or failing that,
+                    # create a new host on the fly so we can fetch variables for it
+                    delegated_host = None
+                    if self._inventory is not None:
+                        delegated_host = self._inventory.get_host(delegated_host_name)
+                        # try looking it up based on the address field, and finally
+                        # fall back to creating a host on the fly to use for the var lookup
+                        if delegated_host is None:
+                            for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+                                # check if the address matches, or if both the delegated_to host
+                                # and the current host are in the list of localhost aliases
+                                if h.address == delegated_host_name or h.name in C.LOCALHOST and delegated_host_name in C.LOCALHOST:
+                                    delegated_host = h
+                                    break
+                            else:
+                                delegated_host = Host(name=delegated_host_name)
+                                delegated_host.vars.update(new_delegated_host_vars)
+                    else:
+                        delegated_host = Host(name=delegated_host_name)
+                        delegated_host.vars.update(new_delegated_host_vars)
+
+                    # now we go fetch the vars for the delegated-to host and save them in our
+                    # master dictionary of variables to be used later in the TaskExecutor/PlayContext
+                    delegated_host_vars[delegated_host_name] = self.get_vars(
+                        loader=loader,
+                        play=play,
+                        host=delegated_host,
+                        task=task,
+                        include_delegate_to=False,
+                        include_hostvars=False,
+                    )
+                all_vars['ansible_delegated_vars'] = delegated_host_vars
 
         if self._inventory is not None:
             all_vars['inventory_dir'] = self._inventory.basedir()

@@ -261,6 +261,11 @@ class TaskExecutor:
 
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
 
+        # apply the given task's information to the connection info,
+        # which may override some fields already set by the play or
+        # the options specified on the command line
+        self._play_context = self._play_context.set_task_and_variable_override(task=self._task, variables=variables, templar=templar)
+
         # fields set from the play/task may be based on variables, so we have to
         # do the same kind of post validation step on it here before we use it.
         # We also add "magic" variables back into the variables dict to make sure

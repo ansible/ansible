@@ -267,7 +267,7 @@ class PlayContext(Base):
             elif isinstance(options.skip_tags, string_types):
                 self.skip_tags.update(options.skip_tags.split(','))
 
-    def set_task_and_variable_override(self, task, variables):
+    def set_task_and_variable_override(self, task, variables, templar):
         '''
         Sets attributes from the task if they are set, which will override
         those from the play.
@@ -288,7 +288,15 @@ class PlayContext(Base):
         # If the value 'ansible_delegated_vars' is in the variables, it means
         # we have a delegated-to host, so we check there first before looking
         # at the variables in general
-        delegated_vars = variables.get('ansible_delegated_vars', dict())
+        if task.delegate_to is not None:
+            # In the case of a loop, the delegated_to host may have been
+            # templated based on the loop variable, so we try and locate
+            # the host name in the delegated variable dictionary here
+            delegated_host_name = templar.template(task.delegate_to)
+            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
+        else:
+            delegated_vars = dict()
+
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
                 if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
