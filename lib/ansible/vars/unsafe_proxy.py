@@ -154,13 +154,13 @@ class UnsafeProxy(object):
 def _wrap_dict(v):
     for k in v.keys():
         if v[k] is not None and not isinstance(v[k], UnsafeProxy):
-            v[k] = _wrap_var(v[k])
+            v[k] = wrap_var(v[k])
     return v
 
 def _wrap_list(v):
     for idx, item in enumerate(v):
         if item is not None and not isinstance(item, UnsafeProxy):
-            v[idx] = _wrap_var(item)
+            v[idx] = wrap_var(item)
     return v
 
 def wrap_var(v):
