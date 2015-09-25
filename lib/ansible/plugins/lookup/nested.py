@@ -27,7 +27,7 @@ class LookupModule(LookupBase):
 
     def _lookup_variables(self, terms, variables):
         foo = variables.copy()
-        foo.pop('vars')
+        foo.pop('vars', None)
         results = []
         for x in terms:
             try:
