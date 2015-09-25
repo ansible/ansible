@@ -156,6 +156,7 @@ EXAMPLES = '''
 '''
 
 import json
+import os
 import time
 import yaml
 
@@ -279,7 +280,7 @@ def main():
             module.fail_json('Module parameter "template" or "template_url" is required if "state" is "present"')
 
     if module.params['template'] is not None:
-        template_body = open(module.params['template'], 'r').read()
+        template_body = open(os.path.expanduser(module.params['template']), 'r').read()
     else:
         template_body = None
 
