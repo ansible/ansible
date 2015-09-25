@@ -62,12 +62,12 @@ def load_config_file():
 
     p = ConfigParser.ConfigParser()
 
-    path0 = os.getenv("ANSIBLE_CONFIG", None)
-    if path0 is not None:
-        path0 = os.path.expanduser(path0)
-    path1 = os.getcwd() + "/ansible.cfg"
-    path2 = os.path.expanduser("~/.ansible.cfg")
-    path3 = "/etc/ansible/ansible.cfg"
+    path0 = "/etc/ansible/ansible.cfg"
+    path1 = os.path.expanduser("~/.ansible.cfg")
+    path2 = os.getcwd() + "/ansible.cfg"
+    path3 = os.getenv("ANSIBLE_CONFIG", None)
+    if path3 is not None:
+        path3 = os.path.expanduser(path0)
 
     for path in [path0, path1, path2, path3]:
         if path is not None and os.path.exists(path):
@@ -76,8 +76,7 @@ def load_config_file():
             except ConfigParser.Error as e:
                 print "Error reading config file: \n%s" % e
                 sys.exit(1)
-            return p
-    return None
+    return p
 
 def shell_expand_path(path):
     ''' shell_expand_path is needed as os.path.expanduser does not work
