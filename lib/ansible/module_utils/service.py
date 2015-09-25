@@ -191,8 +191,8 @@ class Service(object):
                 'name': self.module.name,
                 'state': self.status(),
                 'enabled': self.enabled,
-                'changed' = self.changed,
-                'msg' = msg,
+                'changed': self.changed,
+                'msg': msg,
                }
 
     def run(self):
