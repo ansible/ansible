@@ -219,7 +219,7 @@ class Zone(object):
 
         node = open('%s/root/etc/nodename' % self.path, 'w')
         node.write(self.name)
-        node.close
+        node.close()
 
         id = open('%s/root/etc/.sysIDtool.state' % self.path, 'w')
         id.write('1       # System previously configured?\n')
