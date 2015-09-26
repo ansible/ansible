@@ -233,7 +233,7 @@ class GalaxyCLI(CLI):
         readme_path = os.path.join(role_path, "README.md")
         f = open(readme_path, "wb")
         f.write(self.galaxy.default_readme)
-        f.close
+        f.close()
 
         for dir in GalaxyRole.ROLE_DIRS:
             dir_path = os.path.join(init_path, role_name, dir)
