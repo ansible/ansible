@@ -153,7 +153,7 @@ class PullCLI(CLI):
         # Nap?
         if self.options.sleep:
             self.display.display("Sleeping for %d seconds..." % self.options.sleep)
-            time.sleep(self.options.sleep);
+            time.sleep(self.options.sleep)
 
         # RUN the Checkout command
         rc, out, err = run_cmd(cmd, live=True)
