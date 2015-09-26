@@ -105,7 +105,10 @@ class Base:
         if hasattr(self, method):
             return getattr(self, method)()
 
-        return self._attributes[prop_name]
+        value = self._attributes[prop_name]
+        if value is None and hasattr(self, '_get_parent_attribute'):
+            value = self._get_parent_attribute(prop_name)
+        return value
 
     @staticmethod
     def _generic_s(prop_name, self, value):

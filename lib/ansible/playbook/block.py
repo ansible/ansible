@@ -271,45 +271,50 @@ class Block(Base, Become, Conditional, Taggable):
         Generic logic to get the attribute or parent attribute for a block value.
         '''
 
-        value = self._attributes[attr]
-        if self._parent_block and (value is None or extend):
-            parent_value = getattr(self._parent_block, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
-        if self._task_include and (value is None or extend):
-            parent_value = getattr(self._task_include, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
-        if self._role and (value is None or extend):
-            parent_value = getattr(self._role, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
+        value = None
+        try:
+            value = self._attributes[attr]
 
-            if len(self._dep_chain) and (not value or extend):
-                reverse_dep_chain = self._dep_chain[:]
-                reverse_dep_chain.reverse()
-                for dep in reverse_dep_chain:
-                    dep_value = getattr(dep, attr)
-                    if extend:
-                        value = self._extend_value(value, dep_value)
-                    else:
-                        value = dep_value
+            if self._parent_block and (value is None or extend):
+                parent_value = getattr(self._parent_block, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+            if self._task_include and (value is None or extend):
+                parent_value = getattr(self._task_include, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+            if self._role and (value is None or extend):
+                parent_value = getattr(self._role, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
 
-                    if value is not None and not extend:
-                        break
+                if len(self._dep_chain) and (not value or extend):
+                    reverse_dep_chain = self._dep_chain[:]
+                    reverse_dep_chain.reverse()
+                    for dep in reverse_dep_chain:
+                        dep_value = getattr(dep, attr)
+                        if extend:
+                            value = self._extend_value(value, dep_value)
+                        else:
+                            value = dep_value
 
-        if self._play and (value is None or extend):
-            parent_value = getattr(self._play, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
+                        if value is not None and not extend:
+                            break
+
+            if self._play and (value is None or extend):
+                parent_value = getattr(self._play, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+        except KeyError:
+            pass
 
         return value
 
