@@ -352,8 +352,7 @@ class InventoryParser(object):
         # FIXME: What are the real restrictions on group names, or rather, what
         # should they be? At the moment, they must be non-empty sequences of non
         # whitespace characters excluding ':' and ']', but we should define more
-        # precise rules in order to support better diagnostics. The same applies
-        # to hostnames. It seems sensible for them both to follow DNS rules.
+        # precise rules in order to support better diagnostics.
 
         self.patterns['groupname'] = re.compile(
             r'''^

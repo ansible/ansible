@@ -356,11 +356,13 @@ class PlayContext(Base):
                     ''
 
             if self.become_method == 'sudo':
-                # Rather than detect if sudo wants a password this time, -k makes sudo always ask for
-                # a password if one is required. Passing a quoted compound command to sudo (or sudo -s)
-                # directly doesn't work, so we shellquote it with pipes.quote() and pass the quoted
-                # string to the user's shell.  We loop reading output until we see the randomly-generated
-                # sudo prompt set with the -p option.
+                # If we have a password, we run sudo with a randomly-generated
+                # prompt set using -p. Otherwise we run it with -n, which makes
+                # it fail if it would have prompted for a password.
+                #
+                # Passing a quoted compound command to sudo (or sudo -s)
+                # directly doesn't work, so we shellquote it with pipes.quote()
+                # and pass the quoted string to the user's shell.
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
