@@ -1089,8 +1089,10 @@ class LinuxHardware(Hardware):
             self.facts['devices'][diskname] = d
 
     def get_uptime_facts(self):
-        uptime_seconds_string = get_file_content('/proc/uptime').split(' ')[0]
-        self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
+        uptime_file_content = get_file_content('/proc/uptime')
+        if uptime_file_content:
+            uptime_seconds_string = uptime_file_content.split(' ')[0]
+            self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
 
     def get_lvm_facts(self):
         """ Get LVM Facts if running as root and lvm utils are available """
