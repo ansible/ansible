@@ -65,7 +65,7 @@ class Service(object):
 
         # alias running to started
         if self.module.params['state'] == 'running':
-            self.module.params['state'] == 'started'
+            self.module.params['state'] = 'started'
 
 
     # ===========================================
