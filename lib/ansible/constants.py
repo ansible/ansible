@@ -156,7 +156,7 @@ DEFAULT_INVENTORY_IGNORE  = get_config(p, DEFAULTS, 'inventory_ignore_extensions
 
 # disclosure
 DEFAULT_NO_LOG           = get_config(p, DEFAULTS, 'no_log', 'ANSIBLE_NO_LOG', False, boolean=True)
-DEFAULT_MANAGED_SYSLOG   = get_config(p, DEFAULTS, 'managed_syslog', 'ANSIBLE_MANAGED_SYSLOG', True, boolean=True)
+DEFAULT_NO_TARGET_SYSLOG   = get_config(p, DEFAULTS, 'no_target_syslog', 'ANSIBLE_NO_TARGET_SYSLOG', True, boolean=True)
 
 # selinux
 DEFAULT_SELINUX_SPECIAL_FS = get_config(p, 'selinux', 'special_context_filesystems', None, 'fuse, nfs, vboxsf, ramfs', islist=True)
