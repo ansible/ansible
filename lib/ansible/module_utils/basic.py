@@ -393,6 +393,7 @@ class AnsibleModule(object):
         self.check_mode = False
         self.no_log = no_log
         self.cleanup_files = []
+        self.debug = False
 
         self.aliases = {}
 
@@ -407,16 +408,14 @@ class AnsibleModule(object):
 
         self.params = self._load_params()
 
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
 
+        # append to legal_inputs and then possibly check against them
         self.aliases = self._handle_aliases()
 
-        if check_invalid_arguments:
-            self._check_invalid_arguments()
-        self._check_for_check_mode()
-        self._check_for_no_log()
+        self._check_arguments(check_invalid_arguments)
 
-        # check exclusive early 
+        # check exclusive early
         if not bypass_checks:
             self._check_mutually_exclusive(mutually_exclusive)
 
@@ -952,28 +951,24 @@ class AnsibleModule(object):
                 aliases_results[alias] = k
                 if alias in self.params:
                     self.params[k] = self.params[alias]
-        
+
         return aliases_results
 
-    def _check_for_check_mode(self):
+    def _check_arguments(self, check_invalid_arguments):
         for (k,v) in self.params.iteritems():
+
             if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
                     self.exit_json(skipped=True, msg="remote module does not support check mode")
                 self.check_mode = True
-                break
 
-    def _check_for_no_log(self):
-        for (k,v) in self.params.iteritems():
-            if k == '_ansible_no_log':
+            elif k == '_ansible_no_log':
                 self.no_log = self.boolean(v)
 
-    def _check_invalid_arguments(self):
-        for (k,v) in self.params.iteritems():
-            # these should be in legal inputs already
-            #if k in ('_ansible_check_mode', '_ansible_no_log'):
-            #    continue
-            if k not in self._legal_inputs:
+            elif k == '_ansible_debug':
+                self.debug = self.boolean(v)
+
+            elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
     def _count_terms(self, check):
@@ -1215,6 +1210,36 @@ class AnsibleModule(object):
             params = dict()
         return params
 
+    def _log_to_syslog(self, msg):
+        module = 'ansible-%s' % os.path.basename(__file__)
+        syslog.openlog(str(module), 0, syslog.LOG_USER)
+        syslog.syslog(syslog.LOG_INFO, msg)
+
+    def log(self, msg, log_args=None):
+
+        if not self.no_log:
+
+            if log_args is None:
+                log_args = dict()
+
+            module = 'ansible-%s' % os.path.basename(__file__)
+
+            # 6655 - allow for accented characters
+            if isinstance(msg, unicode):
+                # We should never get here as msg should be type str, not unicode
+                msg = msg.encode('utf-8')
+
+            if (has_journal):
+                journal_args = [("MODULE", os.path.basename(__file__))]
+                for arg in log_args:
+                    journal_args.append((arg.upper(), str(log_args[arg])))
+                try:
+                    journal.send("%s %s" % (module, msg), **dict(journal_args))
+                except IOError:
+                    # fall back to syslog since logging to journal failed
+                    self._log_to_syslog(msg)
+            else:
+                self._log_to_syslog(msg)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
@@ -1240,7 +1265,6 @@ class AnsibleModule(object):
                     param_val = param_val.encode('utf-8')
                 log_args[param] = heuristic_log_sanitize(param_val)
 
-        module = 'ansible-%s' % os.path.basename(__file__)
         msg = []
         for arg in log_args:
             arg_val = log_args[arg]
@@ -1254,24 +1278,9 @@ class AnsibleModule(object):
         else:
             msg = 'Invoked'
 
-        # 6655 - allow for accented characters
-        if isinstance(msg, unicode):
-            # We should never get here as msg should be type str, not unicode
-            msg = msg.encode('utf-8')
+        self.log(msg, log_args=log_args)
 
-        if (has_journal):
-            journal_args = [("MODULE", os.path.basename(__file__))]
-            for arg in log_args:
-                journal_args.append((arg.upper(), str(log_args[arg])))
-            try:
-                journal.send("%s %s" % (module, msg), **dict(journal_args))
-            except IOError:
-                # fall back to syslog since logging to journal failed
-                syslog.openlog(str(module), 0, syslog.LOG_USER)
-                syslog.syslog(syslog.LOG_INFO, msg) #1
-        else:
-            syslog.openlog(str(module), 0, syslog.LOG_USER)
-            syslog.syslog(syslog.LOG_INFO, msg) #2
+
 
     def _set_cwd(self):
         try:
@@ -1656,6 +1665,14 @@ class AnsibleModule(object):
                 self.fail_json(rc=e.errno, msg="Could not open %s, %s" % (cwd, str(e)))
 
         try:
+
+            if self.debug:
+                if isinstance(args, list):
+                    running = ' '.join(args)
+                else:
+                    running = args
+                self.log('Executing: ' + running)
+
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that
