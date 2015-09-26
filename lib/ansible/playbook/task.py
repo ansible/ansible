@@ -363,19 +363,25 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
-        value = self._attributes[attr]
-        if self._block and (value is None or extend):
-            parent_value = getattr(self._block, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
-        if self._task_include and (value is None or extend):
-            parent_value = getattr(self._task_include, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
+        value = None
+        try:
+            value = self._attributes[attr]
+
+            if self._block and (value is None or extend):
+                parent_value = getattr(self._block, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+            if self._task_include and (value is None or extend):
+                parent_value = getattr(self._task_include, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+        except KeyError:
+            pass
+
         return value
 
     def _get_attr_environment(self):
