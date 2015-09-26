@@ -270,8 +270,6 @@ class ActionBase:
         self._display.debug("calling _low_level_execute_command to get the remote checksum")
         data = self._low_level_execute_command(cmd, sudoable=True)
         self._display.debug("done getting the remote checksum")
-        # FIXME: implement this function?
-        #data2 = utils.last_non_blank_line(data['stdout'])
         try:
             data2 = data['stdout'].strip().splitlines()[-1]
             if data2 == '':
