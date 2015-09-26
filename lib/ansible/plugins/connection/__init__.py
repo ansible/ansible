@@ -133,9 +133,52 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             a command via a privilege escalation mechanism.  This may affect
             how the connection plugin returns data.  Note that not all
             connections can handle privilege escalation.
-
         :returns: a tuple of (return code, stdout, stderr)  The return code is
             an int while stdout and stderr are both byte strings.
+
+        When a command is executed, it goes through multiple commands to get
+        there.  It looks approximately like this::
+
+            HardCodedShell ConnectionCommand UsersLoginShell DEFAULT_EXECUTABLE BecomeCommand DEFAULT_EXECUTABLE Command
+        :HardCodedShell: Is optional.  It is run locally to invoke the
+            ``Connection Command``.  In most instances, the
+            ``ConnectionCommand`` can be invoked directly instead.  The ssh
+            connection plugin which can have values that need expanding
+            locally specified via ssh_args is the sole known exception to
+            this.  Shell metacharacters in the command itself should be
+            processed on the remote machine, not on the local machine so no
+            shell is needed on the local machine.  (Example, ``/bin/sh``)
+        :ConnectionCommand: This is the command that connects us to the remote
+            machine to run the rest of the command.  ``ansible_ssh_user``,
+            ``ansible_ssh_host`` and so forth are fed to this piece of the
+            command to connect to the correct host (Examples ``ssh``,
+            ``chroot``)
+        :UsersLoginShell: This is the shell that the ``ansible_ssh_user`` has
+            configured as their login shell.  In traditional UNIX parlance,
+            this is the last field of a user's ``/etc/passwd`` entry   We do not
+            specifically try to run the ``UsersLoginShell`` when we connect.
+            Instead it is implicit in the actions that the
+            ``ConnectionCommand`` takes when it connects to a remote machine.
+            ``ansible_shell_type`` may be set to inform ansible of differences
+            in how the ``UsersLoginShell`` handles things like quoting if a
+            shell has different semantics than the Bourne shell.
+        :DEFAULT_EXECUTABLE: This is the shell accessible via
+            ``ansible.constants.DEFAULT_EXECUTABLE``.  We explicitly invoke
+            this shell so that we have predictable quoting rules at this
+            point.  The ``DEFAULT_EXECUTABLE`` is only settable by the user
+            because some sudo setups may only allow invoking a specific Bourne
+            shell.  (For instance, ``/bin/bash`` may be allowed but
+            ``/bin/sh``, our default, may not).  We invoke this twice, once
+            after the ``ConnectionCommand`` and once after the
+            ``BecomeCommand``.  After the ConnectionCommand, this is run by
+            the ``UsersLoginShell``.  After the ``BecomeCommand`` we specify
+            that the ``DEFAULT_EXECUTABLE`` is being invoked directly.
+        :BecomeComand: Is the command that performs privilege escalation.
+            Setting this up is performed by the action plugin prior to running
+            ``exec_command``. So we just get passed :param:`cmd` which has the
+            BecomeCommand already added.  (Examples: sudo, su)
+        :Command: Is the command we're actualy trying to run remotely.
+            (Examples: mkdir -p $HOME/.ansible, python $HOME/.ansible/tmp-script-file)
         """
         pass
 
