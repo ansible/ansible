@@ -268,7 +268,7 @@ class StrategyBase:
 
                     if result[0] == 'set_host_var':
                         var_name  = result[4]
-                        var_value = wrap_var(result[5])
+                        var_value = result[5]
 
                         self._variable_manager.set_host_variable(target_host, var_name, var_value)
                     elif result[0] == 'set_host_facts':
