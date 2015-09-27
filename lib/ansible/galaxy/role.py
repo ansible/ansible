@@ -301,6 +301,20 @@ class GalaxyRole(object):
             display.display("  in directory %s" % tempdir)
             return False
 
+        if scm == 'git' and role_version:
+            checkout_cmd = [scm, 'checkout', role_version]
+            with open('/dev/null', 'w') as devnull:
+                try:
+                    display.display("- executing: %s" % " ".join(checkout_cmd))
+                    popen = subprocess.Popen(checkout_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+                except:
+                    raise AnsibleError("error executing: %s" % " ".join(checkout_cmd))
+                    rc = popen.wait()
+                    if rc != 0:
+                        display.display("- command %s failed" % ' '.join(clone_cmd))
+                        display.display("  in directory %s" % tempdir)
+                        return False
+
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
         if scm == 'hg':
             archive_cmd = ['hg', 'archive', '--prefix', "%s/" % role_name]
@@ -308,11 +322,7 @@ class GalaxyRole(object):
                 archive_cmd.extend(['-r', role_version])
             archive_cmd.append(temp_file.name)
         if scm == 'git':
-            archive_cmd = ['git', 'archive', '--prefix=%s/' % role_name, '--output=%s' % temp_file.name]
-            if role_version:
-                archive_cmd.append(role_version)
-            else:
-                archive_cmd.append('HEAD')
+            archive_cmd = ['git', 'archive', '--prefix=%s/' % role_name, '--output=%s' % temp_file.name, 'HEAD']
 
         with open('/dev/null', 'w') as devnull:
             display.display("- executing: %s" % " ".join(archive_cmd))
