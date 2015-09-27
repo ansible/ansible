@@ -128,7 +128,7 @@ class Connection(ConnectionBase):
 
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
-        else:
+        elif binary == 'ssh':
             self._command += ['-q']
 
         # Next, we add ansible_ssh_args from the inventory if it's set, or
