@@ -135,6 +135,8 @@ Ansible also uses the following Python modules that need to be installed::
 
     $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
 
+If you have issues with the "pycrypto" package install on Mac OSX, then you may need to try "CC=clang sudo -E pip install pycrypto".
+
 Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
 which point at Ansible's own modules (not the same kind of modules, alas).
 
