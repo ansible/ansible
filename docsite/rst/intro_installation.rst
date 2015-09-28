@@ -312,6 +312,8 @@ If you are installing on OS X Mavericks, you may encounter some noise from your 
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
 
+If you have issues with the "pycrypto" package install on Mac OSX, which is included as a dependency for PyYAML, then you may need to try "CC=clang sudo -E pip install pycrypto".
+
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 
 .. _tagged_releases:
