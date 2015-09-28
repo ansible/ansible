@@ -2,6 +2,8 @@
 - name: test add tags to instance
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    service_offering: "{{ test_cs_instance_offering_1 }}"
     tags:
      - { key: "{{ cs_resource_prefix }}-tag1", value: "{{ cs_resource_prefix }}-value1" }
      - { key: "{{ cs_resource_prefix }}-tag2", value: "{{ cs_resource_prefix }}-value2" }
@@ -12,11 +14,10 @@
     - instance|success
     - instance|changed
     - instance.tags|length == 2
-    - instance.tags[0]['key'] == "{{ cs_resource_prefix }}-tag1"
-    - instance.tags[1]['key'] == "{{ cs_resource_prefix }}-tag2"
-    - instance.tags[0]['value'] == "{{ cs_resource_prefix }}-value1"
-    - instance.tags[1]['value'] == "{{ cs_resource_prefix }}-value2"
-
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
 
 - name: test tags to instance idempotence
   cs_instance:
@@ -31,10 +32,10 @@
     - instance|success
     - not instance|changed
     - instance.tags|length == 2
-    - instance.tags[0]['key'] == "{{ cs_resource_prefix }}-tag1"
-    - instance.tags[1]['key'] == "{{ cs_resource_prefix }}-tag2"
-    - instance.tags[0]['value'] == "{{ cs_resource_prefix }}-value1"
-    - instance.tags[1]['value'] == "{{ cs_resource_prefix }}-value2"
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag1' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value1' ]"
 
 - name: test change tags of instance
   cs_instance:
@@ -47,12 +48,12 @@
   assert:
     that:
     - instance|success
-    - not instance|changed
+    - instance|changed
     - instance.tags|length == 2
-    - instance.tags[0]['key'] == "{{ cs_resource_prefix }}-tag1"
-    - instance.tags[1]['key'] == "{{ cs_resource_prefix }}-tag3"
-    - instance.tags[0]['value'] == "{{ cs_resource_prefix }}-value1"
-    - instance.tags[1]['value'] == "{{ cs_resource_prefix }}-value3"
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value3' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value3' ]"
 
 - name: test not touch tags of instance if no param tags
   cs_instance:
@@ -64,10 +65,10 @@
     - instance|success
     - not instance|changed
     - instance.tags|length == 2
-    - instance.tags[0]['key'] == "{{ cs_resource_prefix }}-tag1"
-    - instance.tags[1]['key'] == "{{ cs_resource_prefix }}-tag3"
-    - instance.tags[0]['value'] == "{{ cs_resource_prefix }}-value1"
-    - instance.tags[1]['value'] == "{{ cs_resource_prefix }}-value3"
+    - "instance.tags[0]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
+    - "instance.tags[1]['key'] in [ '{{ cs_resource_prefix }}-tag2', '{{ cs_resource_prefix }}-tag3' ]"
+    - "instance.tags[0]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value3' ]"
+    - "instance.tags[1]['value'] in [ '{{ cs_resource_prefix }}-value2', '{{ cs_resource_prefix }}-value3' ]"
 
 - name: test remove tags
   cs_instance:
@@ -78,5 +79,5 @@
   assert:
     that:
     - instance|success
-    - not instance|changed
+    - instance|changed
     - instance.tags|length == 0

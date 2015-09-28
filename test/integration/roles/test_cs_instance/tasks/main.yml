@@ -1,6 +1,6 @@
 ---
 - include: setup.yml
 - include: present.yml
-#- include: tags.yml
+- include: tags.yml
 - include: absent.yml
 - include: cleanup.yml
