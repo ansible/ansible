@@ -274,10 +274,10 @@ def update_codex(module):
 
     if module.check_mode:
         if not params['name']:
-            if fresh:
-                module.exit_json(changed=False, msg="Codex is already fresh")
-            else:
-                module.exit_json(changed=True, msg="would have updated Codex")
+            if not fresh:
+                changed = True
+
+            module.exit_json(changed=changed, msg="would have updated Codex")
     elif not fresh or params['name'] and params['state'] == 'latest':
         # SILENT is required as a workaround for query() in libgpg
         cmd_scribe = "SILENT=1 %s update" % SORCERY['scribe']
