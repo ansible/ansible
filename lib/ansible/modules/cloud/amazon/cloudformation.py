@@ -156,7 +156,6 @@ EXAMPLES = '''
 '''
 
 import json
-import os
 import time
 import yaml
 
@@ -252,7 +251,7 @@ def main():
             stack_name=dict(required=True),
             template_parameters=dict(required=False, type='dict', default={}),
             state=dict(default='present', choices=['present', 'absent']),
-            template=dict(default=None, required=False),
+            template=dict(default=None, required=False, type='path'),
             notification_arns=dict(default=None, required=False),
             stack_policy=dict(default=None, required=False),
             disable_rollback=dict(default=False, type='bool'),
@@ -280,7 +279,7 @@ def main():
             module.fail_json('Module parameter "template" or "template_url" is required if "state" is "present"')
 
     if module.params['template'] is not None:
-        template_body = open(os.path.expanduser(module.params['template']), 'r').read()
+        template_body = open(module.params['template'], 'r').read()
     else:
         template_body = None
 
