@@ -94,7 +94,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         if self._play_context.become_method in self.become_methods:
             return True
 
-        raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % become_methods)
+        raise AnsibleError("Internal Error: this connection module does not support running commands via %s" % self._play_context.become_method)
 
     def set_host_overrides(self, host):
         '''
