@@ -92,21 +92,7 @@ class Connection(ConnectionBase):
         # write the password to sshpass.
 
         if self._play_context.password:
-            global SSHPASS_AVAILABLE
-
-            # We test once if sshpass is available, and remember the result. It
-            # would be nice to use distutils.spawn.find_executable for this, but
-            # distutils isn't always available; shutils.which() is Python3-only.
-
-            if SSHPASS_AVAILABLE is None:
-                try:
-                    p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    p.communicate()
-                    SSHPASS_AVAILABLE = True
-                except OSError:
-                    SSHPASS_AVAILABLE = False
-
-            if not SSHPASS_AVAILABLE:
+            if not self._sshpass_available():
                 raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
 
             self.sshpass_pipe = os.pipe()
@@ -204,36 +190,27 @@ class Connection(ConnectionBase):
             args = self._split_args(self.ssh_extra_args)
             self.add_args("inventory added ansible_ssh_extra_args", args)
 
-        # If ssh_args or ssh_extra_args set ControlPersist but not a
-        # ControlPath, add one ourselves.
+        # Check if ControlPersist is enabled (either by default, or using
+        # ssh_args or ssh_extra_args) and add a ControlPath if one hasn't
+        # already been set.
 
-        cp_in_use = False
-        cp_path_set = False
-        for arg in self._command:
-            if "ControlPersist" in arg:
-                cp_in_use = True
-            if "ControlPath" in arg:
-                cp_path_set = True
+        controlpersist, controlpath = self._persistence_controls(self._command)
 
-        if cp_in_use and not cp_path_set:
-            self._cp_dir = unfrackpath('$HOME/.ansible/cp')
-
-            args = ("-o", "ControlPath={0}".format(
-                C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=self._cp_dir))
-            )
-            self.add_args("found only ControlPersist; added ControlPath", args)
-
-            # The directory must exist and be writable.
-            makedirs_safe(self._cp_dir, 0o700)
-            if not os.access(self._cp_dir, os.W_OK):
-                raise AnsibleError("Cannot write to ControlPath %s" % self._cp_dir)
-
-        # If the configuration dictates that we use a persistent connection,
-        # then we remember that for later. (We could be more thorough about
-        # detecting this, though.)
-
-        if cp_in_use:
+        if controlpersist:
             self._persistent = True
+
+            if not controlpath:
+                cpdir = unfrackpath('$HOME/.ansible/cp')
+
+                # The directory must exist and be writable.
+                makedirs_safe(cpdir, 0o700)
+                if not os.access(cpdir, os.W_OK):
+                    raise AnsibleError("Cannot write to ControlPath %s" % cpdir)
+
+                args = ("-o", "ControlPath={0}".format(
+                    C.ANSIBLE_SSH_CONTROL_PATH % dict(directory=cpdir))
+                )
+                self.add_args("found only ControlPersist; added ControlPath", args)
 
         ## Finally, we add any caller-supplied extras.
 
@@ -645,6 +622,42 @@ class Connection(ConnectionBase):
         return ''.join(output), remainder
 
     # Utility functions
+
+    def _sshpass_available(self):
+        global SSHPASS_AVAILABLE
+
+        # We test once if sshpass is available, and remember the result. It
+        # would be nice to use distutils.spawn.find_executable for this, but
+        # distutils isn't always available; shutils.which() is Python3-only.
+
+        if SSHPASS_AVAILABLE is None:
+            try:
+                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p.communicate()
+                SSHPASS_AVAILABLE = True
+            except OSError:
+                SSHPASS_AVAILABLE = False
+
+        return SSHPASS_AVAILABLE
+
+    def _persistence_controls(self, command):
+        '''
+        Takes a command array and scans it for ControlPersist and ControlPath
+        settings and returns two booleans indicating whether either was found.
+        This could be smarter, e.g. returning false if ControlPersist is 'no',
+        but for now we do it simple way.
+        '''
+
+        controlpersist = False
+        controlpath = False
+
+        for arg in command:
+            if 'controlpersist' in arg.lower():
+                controlpersist = True
+            elif 'controlpath' in arg.lower():
+                controlpath = True
+
+        return controlpersist, controlpath
 
     def _terminate_process(self, p):
         try:
