@@ -18,6 +18,8 @@ DOCUMENTATION = '''
 ---
 module: ecs_service_facts
 short_description: list or describe services in ecs
+notes:
+    - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
 description:
     - Lists or describes services in ecs.
 version_added: "2.0"
@@ -34,51 +36,44 @@ options:
             - The cluster ARNS in which to list the services.
         required: false
         default: 'default'
+    service:
+        description:
+            - The service to get details for (required if details is true)
+        required: false
 '''
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Basic listing example
-- ecs_task:
-    cluster=test-cluster
-    task_list=123456789012345678901234567890123456
+- ecs_service_facts:
+    cluster: test-cluster
+    service: console-test-service
+    details: "true"
 
-# Basic example of deregistering task
-- ecs_task:
-    state: absent
-    family: console-test-tdn
-    revision: 1
+# Basic listing example
+- ecs_service_facts:
+    cluster: test-cluster
 '''
 RETURN = '''
-cache_updated:
-    description: if the cache was updated or not
-    returned: success, in some cases
-    type: boolean
-    sample: True
-cache_update_time:
-    description: time of the last cache update (0 if unknown)
-    returned: success, in some cases
-    type: datetime
-    sample: 1425828348000
-stdout:
-    description: output from apt
-    returned: success, when needed
-    type: string
-    sample: "Reading package lists...\nBuilding dependency tree...\nReading state information...\nThe following extra packages will be installed:\n  apache2-bin ..."
-stderr:
-    description: error output from apt
-    returned: success, when needed
-    type: string
-    sample: "AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ..."
+services: When details is false, returns an array of service ARNs, else an array of these fields
+    clusterArn: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
+    desiredCount: The desired number of instantiations of the task definition to keep running on the service.
+    loadBalancers: A list of load balancer objects
+        loadBalancerName: the name
+        containerName: The name of the container to associate with the load balancer.
+        containerPort: The port on the container to associate with the load balancer.
+    pendingCount: The number of tasks in the cluster that are in the PENDING state.
+    runningCount: The number of tasks in the cluster that are in the RUNNING state.
+    serviceArn: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
+    serviceName: A user-generated string used to identify the service
+    status: The valid values are ACTIVE, DRAINING, or INACTIVE.
+    taskDefinition: The ARN of a task definition to use for tasks in the service.
 '''
 try:
     import json, os
     import boto
     import botocore
-    # import module snippets
-    from ansible.module_utils.basic import *
-    from ansible.module_utils.ec2 import *
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -171,6 +166,7 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
+from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
