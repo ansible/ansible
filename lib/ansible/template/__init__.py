@@ -19,13 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import StringIO
 import ast
 import contextlib
 import os
 import re
 
-from six import string_types, text_type, binary_type
+from six import string_types, text_type, binary_type, StringIO
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
@@ -214,7 +213,7 @@ class Templar:
         if not isinstance(orig_data, string_types):
             return orig_data
 
-        with contextlib.closing(StringIO.StringIO(orig_data)) as data:
+        with contextlib.closing(StringIO(orig_data)) as data:
             # these variables keep track of opening block locations, as we only
             # want to replace matched pairs of print/block tags
             print_openings = []
