@@ -32,12 +32,18 @@ from ansible.module_utils.basic import is_executable
 from ansible.utils.unicode import to_bytes
 
 
+BUFSIZE = 65536
+
+
 class Connection(ConnectionBase):
     ''' Local chroot based connections '''
 
-    BUFSIZE = 65536
     has_pipelining = True
     transport = 'chroot'
+    # su currently has an undiagnosed issue with calculating the file
+    # checksums (so copy, for instance, doesn't work right)
+    # Have to look into that before re-enabling this
+    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
 
@@ -61,12 +67,10 @@ class Connection(ConnectionBase):
         if not self.chroot_cmd:
             raise AnsibleError("chroot command not found in PATH")
 
-    def _connect(self, port=None):
+    def _connect(self):
         ''' connect to the chroot; nothing to do here '''
-
+        super(Connection, self)._connect()
         self._display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
-
-        return self
 
     def _generate_cmd(self, cmd, executable):
         # subprocess takes byte strings
@@ -111,7 +115,7 @@ class Connection(ConnectionBase):
         try:
             with open(in_path, 'rb') as in_file:
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, self.BUFSIZE), stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
                 except OSError:
                     raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:
@@ -131,16 +135,16 @@ class Connection(ConnectionBase):
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
 
         try:
-            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, self.BUFSIZE))
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
         except OSError:
             raise AnsibleError("chroot connection requires dd command in the chroot")
 
         with open(out_path, 'wb+') as out_file:
             try:
-                chunk = p.stdout.read(self.BUFSIZE)
+                chunk = p.stdout.read(BUFSIZE)
                 while chunk:
                     out_file.write(chunk)
-                    chunk = p.stdout.read(self.BUFSIZE)
+                    chunk = p.stdout.read(BUFSIZE)
             except:
                 traceback.print_exc()
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
