@@ -92,21 +92,7 @@ class Connection(ConnectionBase):
         # write the password to sshpass.
 
         if self._play_context.password:
-            global SSHPASS_AVAILABLE
-
-            # We test once if sshpass is available, and remember the result. It
-            # would be nice to use distutils.spawn.find_executable for this, but
-            # distutils isn't always available; shutils.which() is Python3-only.
-
-            if SSHPASS_AVAILABLE is None:
-                try:
-                    p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    p.communicate()
-                    SSHPASS_AVAILABLE = True
-                except OSError:
-                    SSHPASS_AVAILABLE = False
-
-            if not SSHPASS_AVAILABLE:
+            if not self._sshpass_available():
                 raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
 
             self.sshpass_pipe = os.pipe()
@@ -645,6 +631,23 @@ class Connection(ConnectionBase):
         return ''.join(output), remainder
 
     # Utility functions
+
+    def _sshpass_available(self):
+        global SSHPASS_AVAILABLE
+
+        # We test once if sshpass is available, and remember the result. It
+        # would be nice to use distutils.spawn.find_executable for this, but
+        # distutils isn't always available; shutils.which() is Python3-only.
+
+        if SSHPASS_AVAILABLE is None:
+            try:
+                p = subprocess.Popen(["sshpass"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p.communicate()
+                SSHPASS_AVAILABLE = True
+            except OSError:
+                SSHPASS_AVAILABLE = False
+
+        return SSHPASS_AVAILABLE
 
     def _terminate_process(self, p):
         try:
