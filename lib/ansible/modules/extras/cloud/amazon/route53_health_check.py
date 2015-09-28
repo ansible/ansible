@@ -53,10 +53,9 @@ options:
         health checks. The path can be any value for which your endpoint will
         return an HTTP status code of 2xx or 3xx when the endpoint is healthy,
         for example the file /docs/route53-health-check.html.
-
-        * Required for all checks except TCP.
-        * The path must begin with a /
-        * Maximum 255 characters.
+      - Required for all checks except TCP.
+      - The path must begin with a /
+      - Maximum 255 characters.
     required: false
     default: null
   fqdn:
