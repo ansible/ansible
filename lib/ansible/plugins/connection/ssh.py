@@ -129,6 +129,7 @@ class Connection(ConnectionBase):
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
         elif binary == 'ssh':
+            # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
             self._command += ['-q']
 
         # Next, we add ansible_ssh_args from the inventory if it's set, or
