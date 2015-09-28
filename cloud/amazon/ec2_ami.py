@@ -73,7 +73,7 @@ options:
     version_added: "2.0"
     description:
       - An optional list of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
-      - Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean), snapshot_id, iops (for io1 volume_type)
+      - "Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean), snapshot_id, iops (for io1 volume_type)"
     required: false
     default: null
   delete_snapshot:
