@@ -251,12 +251,13 @@ def check_packages(module, pacman_path, packages, state):
 def main():
     module = AnsibleModule(
         argument_spec    = dict(
-            name         = dict(aliases=['pkg']),
+            name         = dict(aliases=['pkg', 'package'], type='list'),
             state        = dict(default='present', choices=['present', 'installed', "latest", 'absent', 'removed']),
             recurse      = dict(default=False, type='bool'),
             force        = dict(default=False, type='bool'),
             upgrade      = dict(default=False, type='bool'),
-            update_cache = dict(default=False, aliases=['update-cache'], type='bool')),
+            update_cache = dict(default=False, aliases=['update-cache'], type='bool')
+        ),
         required_one_of = [['name', 'update_cache', 'upgrade']],
         supports_check_mode = True)
 
@@ -285,7 +286,7 @@ def main():
         upgrade(module, pacman_path)
 
     if p['name']:
-        pkgs = p['name'].split(',')
+        pkgs = p['name']
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
