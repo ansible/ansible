@@ -293,7 +293,7 @@ class GalaxyRole(object):
             try:
                 display.display("- executing: %s" % " ".join(clone_cmd))
                 popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
-            except:
+            except IOError, OSError:
                 raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
             rc = popen.wait()
         if rc != 0:
@@ -307,13 +307,13 @@ class GalaxyRole(object):
                 try:
                     display.display("- executing: %s" % " ".join(checkout_cmd))
                     popen = subprocess.Popen(checkout_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
-                except:
+                except IOError, OSError:
                     raise AnsibleError("error executing: %s" % " ".join(checkout_cmd))
-                    rc = popen.wait()
-                    if rc != 0:
-                        display.display("- command %s failed" % ' '.join(clone_cmd))
-                        display.display("  in directory %s" % tempdir)
-                        return False
+                rc = popen.wait()
+            if rc != 0:
+                display.display("- command %s failed" % ' '.join(checkout_cmd))
+                display.display("  in directory %s" % tempdir)
+                return False
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
         if scm == 'hg':

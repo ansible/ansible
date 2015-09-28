@@ -36,8 +36,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.role import GalaxyRole
-from ansible.playbook.role.requirement import RoleRequirement
-from ansible.playbook.role.requirement import role_spec_parse
+from ansible.playbook.role.requirement import RoleRequirement, role_spec_parse
 
 class GalaxyCLI(CLI):
 
