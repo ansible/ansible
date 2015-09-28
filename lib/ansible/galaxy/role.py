@@ -306,7 +306,7 @@ class GalaxyRole(object):
             with open('/dev/null', 'w') as devnull:
                 try:
                     display.display("- executing: %s" % " ".join(checkout_cmd))
-                    popen = subprocess.Popen(checkout_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+                    popen = subprocess.Popen(checkout_cmd, cwd=os.path.join(tempdir, role_name), stdout=devnull, stderr=devnull)
                 except IOError, OSError:
                     raise AnsibleError("error executing: %s" % " ".join(checkout_cmd))
                 rc = popen.wait()
