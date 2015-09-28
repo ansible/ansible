@@ -89,6 +89,12 @@ options:
       - Designates whether TLS/SSL should be used when connecting to the IRC server
     default: False
     version_added: "1.8"
+  part:
+    description:
+      - Designates whether user should part from channel after sending message or not.
+        Useful for when using a faux bot and not wanting join/parts between messages.
+    default: True
+    version_added: "2.0"
 
 # informational: requirements for nodes
 requirements: [ socket ]
@@ -128,7 +134,7 @@ from time import sleep
 
 
 def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=[], key=None, topic=None,
-             nick="ansible", color='none', passwd=False, timeout=30, use_ssl=False):
+             nick="ansible", color='none', passwd=False, timeout=30, use_ssl=False, part=True):
     '''send message to IRC'''
 
     colornumbers = {
@@ -194,9 +200,10 @@ def send_msg(msg, server='localhost', port='6667', channel=None, nick_to=[], key
     if channel:
         irc.send('PRIVMSG %s :%s\r\n' % (channel, message))
     sleep(1)
-    irc.send('PART %s\r\n' % channel)
-    irc.send('QUIT\r\n')
-    sleep(1)
+    if part:
+        irc.send('PART %s\r\n' % channel)
+        irc.send('QUIT\r\n')
+        sleep(1)
     irc.close()
 
 # ===========================================
@@ -219,6 +226,7 @@ def main():
             topic=dict(),
             passwd=dict(),
             timeout=dict(type='int', default=30),
+            part=dict(type='bool', default=True),
             use_ssl=dict(type='bool', default=False)
         ),
         supports_check_mode=True,
@@ -239,9 +247,10 @@ def main():
     passwd = module.params["passwd"]
     timeout = module.params["timeout"]
     use_ssl = module.params["use_ssl"]
+    part = module.params["part"]
 
     try:
-        send_msg(msg, server, port, channel, nick_to, key, topic, nick, color, passwd, timeout, use_ssl)
+        send_msg(msg, server, port, channel, nick_to, key, topic, nick, color, passwd, timeout, use_ssl, part)
     except Exception, e:
         module.fail_json(msg="unable to send to IRC: %s" % e)
 
