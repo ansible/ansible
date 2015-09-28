@@ -217,6 +217,9 @@ SSH connection::
     ansible_ssh_extra_args
       Additional arguments for ssh. Useful to configure a ``ProxyCommand`` for a certain host (or group).
       This is used in addition to any ``ssh_args`` configured in ``ansible.cfg`` or the inventory.
+    ansible_ssh_pipelining
+      Determines whether or not to use SSH pipelining. This can override the
+      ``pipelining`` setting in ``ansible.cfg``.
 
 Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details)::
 
