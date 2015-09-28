@@ -2373,7 +2373,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
             if line:
                 words = line.split()
 
-		# only this condition differs from GenericBsdIfconfigNetwork
+                # only this condition differs from GenericBsdIfconfigNetwork
                 if re.match('^\w*\d*:', line):
                     current_if = self.parse_interface_line(words)
                     interfaces[ current_if['device'] ] = current_if
