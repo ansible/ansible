@@ -19,12 +19,12 @@ DOCUMENTATION = '''
 module: ecs_service
 short_description: create, terminate, start or stop a service in ecs
 description:
-    - Creates or terminates ecs services.
+  - Creates or terminates ecs services.
 notes:
-    - the service role specified must be assumable (i.e. have a trust relationship
-    for the ecs service, ecs.amazonaws.com)
-dependecies:
-    - An IAM role must have been created
+  - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
+  - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
+dependencies:
+  - An IAM role must have been created
 version_added: "2.0"
 author: Mark Chance (@java1guy)
 options:
@@ -56,11 +56,11 @@ options:
         required: false
     client_token:
         description:
-          - 
+          - Unique, case-sensitive identifier you provide to ensure the idempotency of the request. Up to 32 ASCII characters are allowed.
         required: false
     role:
         description:
-          - 
+          - The name or full Amazon Resource Name (ARN) of the IAM role that allows your Amazon ECS container agent to make calls to your load balancer on your behalf. This parameter is only required if you are using a load balancer with your service.
         required: false
     delay:
         description:
@@ -76,25 +76,42 @@ options:
 
 EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
-  ecs_service:
+- ecs_service:
     state: present
     name: console-test-service
-    cluster: "{{ new_cluster }}"
-    task_definition: "{{ new_cluster }}-task:{{task_revision}}"
+    cluster: new_cluster
+    task_definition: new_cluster-task:1"
     desired_count: 0
 
 # Basic provisioning example
 - ecs_service:
     name: default
     state: present
-    cluster: string
+    cluster: new_cluster
+
 # Simple example to delete
-- ecs_cluster:
+- ecs_service:
     name: default
     state: absent
-    cluster: string
+    cluster: new_cluster
 '''
 RETURN = '''
+# Create service
+service: On create service, it returns the new values; on delete service, it returns the values for the service being deleted.
+    clusterArn: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
+    desiredCount: The desired number of instantiations of the task definition to keep running on the service.
+    loadBalancers: A list of load balancer objects
+        loadBalancerName: the name
+        containerName: The name of the container to associate with the load balancer.
+        containerPort: The port on the container to associate with the load balancer.
+    pendingCount: The number of tasks in the cluster that are in the PENDING state.
+    runningCount: The number of tasks in the cluster that are in the RUNNING state.
+    serviceArn: The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
+    serviceName: A user-generated string used to identify the service
+    status: The valid values are ACTIVE, DRAINING, or INACTIVE.
+    taskDefinition: The ARN of a task definition to use for tasks in the service.
+# Delete service
+ansible_facts: When deleting a service, the values described above for the service prior to its deletion are returned.
 '''
 try:
     import json
