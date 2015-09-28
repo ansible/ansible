@@ -65,9 +65,9 @@ class GalaxyRole(object):
                 if os.path.exists(role_path):
                     self.path = role_path
                     break
-            else:
-                # use the first path by default
-                self.path = os.path.join(galaxy.roles_paths[0], self.name)
+                else:
+                    # use the first path by default
+                    self.path = os.path.join(galaxy.roles_paths[0], self.name)
 
     def __eq__(self, other):
         return self.name == other.name

@@ -418,7 +418,7 @@ class GalaxyCLI(CLI):
                 if role.scm:
                     # create tar file from scm url
                     tmp_file = GalaxyRole.scm_archive_role(role.scm, role.src, role.version, role.name)
-                if role.src:
+                elif role.src:
                     if '://' not in role.src:
                         role_data = self.api.lookup_role_by_name(role.src)
                         if not role_data:
@@ -448,6 +448,10 @@ class GalaxyCLI(CLI):
                         # download the role. if --no-deps was specified, we stop here,
                         # otherwise we recursively grab roles and all of their deps.
                         tmp_file = role.fetch(role_data)
+                    else:
+                        # just download a URL - version will probably be in the URL
+                        role_data={"dummy": True} # must not be empty for role.fetch()
+                        tmp_file = role.fetch(role_data)
 
             if tmp_file:
                 installed = role.install(tmp_file)
@@ -461,11 +465,11 @@ class GalaxyCLI(CLI):
                         self.display.debug('Installing dep %s' % dep)
                         dep_req = RoleRequirement()
                         __, dep_name, __ = dep_req.parse(dep)
-                        dep_role = GalaxyRole(self.galaxy, name=dep_name)
+                        dep_role = self.create_role_from_spec(dep_name)
                         if dep_role.install_info is None or force:
                             if dep_role not in roles_left:
                                 self.display.display('- adding dependency: %s' % dep_name)
-                                roles_left.append(GalaxyRole(self.galaxy, name=dep_name))
+                                roles_left.append(self.create_role_from_spec(dep_name))
                             else:
                                 self.display.display('- dependency %s already pending installation.' % dep_name)
                         else:
