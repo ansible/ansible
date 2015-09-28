@@ -241,13 +241,10 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg="Boto is required for this module")
 
-    ec2_url, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
+    region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     try:
-        iam = boto.iam.connection.IAMConnection(
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key,
-        )
+        iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
 
