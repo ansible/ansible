@@ -150,11 +150,6 @@ class LookupModule(LookupBase):
                     with open(path, 'w') as f:
                         os.chmod(path, 0o600)
                         f.write(content + '\n')
-                # crypt not requested, remove salt if present
-                elif (params['encrypt'] is None and salt):
-                    with open(path, 'w') as f:
-                        os.chmod(path, 0o600)
-                        f.write(password + '\n')
 
             if params['encrypt']:
                 password = do_encrypt(password, params['encrypt'], salt=salt)
