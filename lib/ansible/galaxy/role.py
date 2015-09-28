@@ -293,7 +293,7 @@ class GalaxyRole(object):
             try:
                 display.display("- executing: %s" % " ".join(clone_cmd))
                 popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
-            except IOError, OSError:
+            except (IOError, OSError):
                 raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
             rc = popen.wait()
         if rc != 0:
@@ -307,7 +307,7 @@ class GalaxyRole(object):
                 try:
                     display.display("- executing: %s" % " ".join(checkout_cmd))
                     popen = subprocess.Popen(checkout_cmd, cwd=os.path.join(tempdir, role_name), stdout=devnull, stderr=devnull)
-                except IOError, OSError:
+                except (IOError, OSError):
                     raise AnsibleError("error executing: %s" % " ".join(checkout_cmd))
                 rc = popen.wait()
             if rc != 0:
