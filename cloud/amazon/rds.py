@@ -917,6 +917,7 @@ def validate_parameters(required_vars, valid_vars, module):
             'subnet': 'db_subnet_group_name',
             'license_model': 'license_model',
             'option_group': 'option_group_name',
+            'size': 'allocated_storage',
             'iops': 'iops',
             'new_instance_name': 'new_instance_id',
             'apply_immediately': 'apply_immediately',
