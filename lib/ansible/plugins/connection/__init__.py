@@ -118,7 +118,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
         # Check if PE is supported
         if self._play_context.become:
-            self.__become_method_supported()
+            self._become_method_supported()
 
     @ensure_connect
     @abstractmethod
