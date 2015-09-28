@@ -91,9 +91,8 @@ EXAMPLES = '''
 RETURN = '''
 task:
     description: details about the tast that was started
-    type: array of dict
-    sample: [ clusterArn, containerInstanceArn, containers[], desiredStatus, lastStatus
-    overrides, startedBy, taskArn, taskDefinitionArn ]
+    type: complex
+    sample: "TODO: include sample"
 '''
 try:
     import json
