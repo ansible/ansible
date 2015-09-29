@@ -445,6 +445,7 @@ class ElastiCacheManager(object):
 
     def _refresh_data(self, cache_cluster_data=None):
         """Refresh data about this cache cluster"""
+
         if cache_cluster_data is None:
             try:
                 response = self.conn.describe_cache_clusters(cache_cluster_id=self.name,
@@ -542,9 +543,10 @@ def main():
     elasticache_manager = ElastiCacheManager(module, name, engine,
                                              cache_engine_version, node_type,
                                              num_nodes, cache_port,
+                                             parameter_group,
                                              cache_subnet_group,
                                              cache_security_groups,
-                                             security_group_ids, parameter_group, zone, wait,
+                                             security_group_ids, zone, wait,
                                              hard_modify, region, **aws_connect_kwargs)
 
     if state == 'present':
