@@ -46,6 +46,12 @@ class Connection(ConnectionBase):
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
+        # Note: docker supports running as non-root in some configurations.
+        # (For instance, setting the UNIX socket file to be readable and
+        # writable by a specific UNIX group and then putting users into that
+        # group).  But if the user is getting a permission denied error it
+        # probably means that docker on their system is only configured to be
+        # connected to by root and they are not running as root.
         if 'docker_command' in kwargs:
             self.docker_cmd = kwargs['docker_command']
         else:
