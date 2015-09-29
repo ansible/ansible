@@ -23,19 +23,25 @@
 
 import os
 import subprocess
-import time
 import re
 
 from distutils.version import LooseVersion
 
 import ansible.constants as C
 
-from ansible import errors
+from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 
 BUFSIZE = 65536
 
 class Connection(ConnectionBase):
+
+    has_pipelining = True
+    transport = 'docker'
+    # su currently has an undiagnosed issue with calculating the file
+    # checksums (so copy, for instance, doesn't work right)
+    # Have to look into that before re-enabling this
+    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -48,13 +54,16 @@ class Connection(ConnectionBase):
         self.can_copy_bothways = False
 
         docker_version = self._get_docker_version()
+        if LooseVersion(docker_version) < LooseVersion('1.3'):
+            raise AnsibleError('docker connection type requires docker 1.3 or higher')
         if LooseVersion(docker_version) >= LooseVersion('1.8.0'):
             self.can_copy_bothways = True
 
-    def _get_docker_version(self):
+    @staticmethod
+    def _sanitize_version(version):
+        return re.sub('[^0-9a-zA-Z\.]', '', version)
 
-        def sanitize_version(version):
-            return re.sub('[^0-9a-zA-Z\.]', '', version)
+    def _get_docker_version(self):
 
         cmd = [self.docker_cmd, 'version']
 
@@ -62,7 +71,7 @@ class Connection(ConnectionBase):
 
         for line in cmd_output.split('\n'):
             if line.startswith('Server version:'): # old docker versions
-                return sanitize_version(line.split()[2])
+                return self._sanitize_version(line.split()[2])
 
         # no result yet, must be newer Docker version
         new_docker_cmd = [
@@ -72,58 +81,46 @@ class Connection(ConnectionBase):
 
         cmd_output = subprocess.check_output(new_docker_cmd)
 
-        return sanitize_version(cmd_output)
-
-    @property
-    def transport(self):
-        return 'docker'
+        return self._sanitize_version(cmd_output)
 
     def _connect(self, port=None):
         """ Connect to the container. Nothing to do """
+        super(Connection, self)._connect()
         if not self._connected:
             self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(
                 self._play_context.remote_user, host=self._play_context.remote_addr)
             )
             self._connected = True
 
-        return self
-
     def exec_command(self, cmd, in_data=None, sudoable=False):
         """ Run a command on the local host """
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        # Don't currently support su
-        if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not "
-                                      "support optimized module pipelining")
-
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
-        if executable:
-            local_cmd = [self.docker_cmd, "exec", self._play_context.remote_addr, executable,
-                         '-c', cmd]
-        else:
-            local_cmd = '%s exec "%s" %s' % (self.docker_cmd, self._play_context.remote_addr, cmd)
+        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+        # -i is needed to keep stdin open which allows pipelining to work
+        local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
         self._display.vvv("EXEC %s" % (local_cmd), host=self._play_context.remote_addr)
         p = subprocess.Popen(local_cmd,
-                             shell=isinstance(local_cmd, basestring),
+                             shell=False,
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        stdout, stderr = p.communicate()
+        stdout, stderr = p.communicate(in_data)
         return (p.returncode, stdout, stderr)
 
-    # Docker doesn't have native support for copying files into running
-    # containers, so we use docker exec to implement this
     def put_file(self, in_path, out_path):
         """ Transfer a file from local to container """
-        if not os.path.exists(in_path):
-            raise errors.AnsibleFileNotFound(
-                "file or module does not exist: %s" % in_path)
+        super(Connection, self).put_file(in_path, out_path)
 
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
-        if self.can_copy_bothways: # only docker >= 1.8.1 can do this natively
+        if not os.path.exists(in_path):
+            raise AnsibleFileNotFound(
+                "file or module does not exist: %s" % in_path)
+
+        if self.can_copy_bothways:
+            # only docker >= 1.8.1 can do this natively
             args = [
                 self.docker_cmd,
                 "cp",
@@ -132,24 +129,36 @@ class Connection(ConnectionBase):
             ]
             subprocess.check_call(args)
         else:
-            args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, "bash", "-c",
-                    "dd of=%s bs=%s" % (format(out_path), BUFSIZE)]
+            # Older docker doesn't have native support for copying files into
+            # running containers, so we use docker exec to implement this
+            executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+            args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, executable, "-c",
+                    "dd of={0} bs={1}".format(out_path, BUFSIZE)]
+            with open(in_path, 'rb') as in_file:
+                try:
+                    p = subprocess.Popen(args, stdin=in_file,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                except OSError:
+                    raise AnsibleError("docker connection requires dd command in the chroot")
+                stdout, stderr = p.communicate()
 
-            p = subprocess.Popen(args, stdin=open(in_path),
-                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            p.communicate()
+                if p.returncode != 0:
+                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
 
     def fetch_file(self, in_path, out_path):
         """ Fetch a file from container to local. """
+        super(Connection, self).fetch_file(in_path, out_path)
+
+        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+
         # out_path is the final file path, but docker takes a directory, not a
         # file path
         out_dir = os.path.dirname(out_path)
 
         args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
 
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
 
         # Rename if needed
