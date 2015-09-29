@@ -48,7 +48,7 @@ class IncludedFile:
 
         for res in results:
             if res._host.name in tqm._failed_hosts:
-                raise AnsibleError("host is failed, not including files")
+                continue
 
             if res._task.action == 'include':
                 if res._task.loop:

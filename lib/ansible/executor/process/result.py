@@ -142,9 +142,6 @@ class ResultProcess(multiprocessing.Process):
                                 # So, per the docs, we reassign the list so the proxy picks up and
                                 # notifies all other threads
                                 for notify in result_item['_ansible_notify']:
-                                    if result._task._role:
-                                        role_name = result._task._role.get_name()
-                                        notify = "%s : %s" % (role_name, notify)
                                     self._send_result(('notify_handler', result, notify))
                             # now remove the notify field from the results, as its no longer needed
                             result_item.pop('_ansible_notify')

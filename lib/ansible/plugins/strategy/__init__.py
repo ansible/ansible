@@ -237,6 +237,7 @@ class StrategyBase:
 
                     if task_result._host not in self._notified_handlers[handler_name]:
                         self._notified_handlers[handler_name].append(task_result._host)
+                        self._display.vv("NOTIFIED HANDLER %s" % (handler_name,))
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
@@ -447,15 +448,21 @@ class StrategyBase:
                 handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler)
                 templar = Templar(loader=self._loader, variables=handler_vars)
                 try:
-                    handler_name = templar.template(handler.get_name())
+                    # first we check with the full result of get_name(), which may
+                    # include the role name (if the handler is from a role). If that
+                    # is not found, we resort to the simple name field, which doesn't
+                    # have anything extra added to it.
+                    handler_name = templar.template(handler.name)
+                    if handler_name not in self._notified_handlers:
+                        handler_name = templar.template(handler.get_name())
                 except (UndefinedError, AnsibleUndefinedVariable):
                     # We skip this handler due to the fact that it may be using
                     # a variable in the name that was conditionally included via
                     # set_fact or some other method, and we don't want to error
                     # out unnecessarily
                     continue
-                should_run = handler_name in self._notified_handlers and len(self._notified_handlers[handler_name])
-                if should_run:
+
+                if handler_name in self._notified_handlers and len(self._notified_handlers[handler_name]):
                     result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
                     if not result:
                         break
