@@ -414,9 +414,9 @@ def privileges_unpack(priv):
     if '*.*' not in output:
         output['*.*'] = ['USAGE']
 
-    # if we are only specifying something like REQUIRESSL in *.* we still need
-    # to add USAGE as a privilege to avoid syntax errors
-    if priv.find('REQUIRESSL') != -1 and 'USAGE' not in output['*.*']:
+    # if we are only specifying something like REQUIRESSL and/or GRANT (=WITH GRANT OPTION) in *.*
+    # we still need to add USAGE as a privilege to avoid syntax errors
+    if 'REQUIRESSL' in priv and not set(output['*.*']).difference(set('GRANT', 'REQUIRESSL')):
         output['*.*'].append('USAGE')
 
     return output
@@ -442,10 +442,10 @@ def privileges_grant(cursor, user,host,db_table,priv):
     priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
     query = ["GRANT %s ON %s" % (priv_string, mysql_quote_identifier(db_table, 'table'))]
     query.append("TO %s@%s")
-    if 'GRANT' in priv:
-        query.append("WITH GRANT OPTION")
     if 'REQUIRESSL' in priv:
         query.append("REQUIRE SSL")
+    if 'GRANT' in priv:
+        query.append("WITH GRANT OPTION")
     query = ' '.join(query)
     cursor.execute(query, (user, host))
 
