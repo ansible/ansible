@@ -358,6 +358,8 @@ def match_depends(module):
     try:
         for line in fi:
             if rex_spell.match(line):
+                match = None
+
                 for d in depends:
                     # when local status is 'off' and dependency is provider, use
                     # only provider value
@@ -383,9 +385,9 @@ def match_depends(module):
                         # the list for further reverse switching;
                         # stop and process the next line in both cases
                         break
-                    # it is not that dependency we are looking for
-                    else:
-                        print line,
+
+                if not match:
+                    print line,
             else:
                 print line,
     except IOError:
