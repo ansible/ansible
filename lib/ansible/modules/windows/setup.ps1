@@ -80,6 +80,7 @@ $winrm_https_listener_parent_path = Get-ChildItem -Path WSMan:\localhost\Listene
 $winrm_https_listener_path = $null
 $https_listener = $null
 $winrm_cert_thumbprint = $null
+$uppercase_cert_thumbprint = $null
 
 if ($winrm_https_listener_parent_path ) {
     $winrm_https_listener_path = $winrm_https_listener_parent_path.PSParentPath.Substring($winrm_https_listener_parent_path.PSParentPath.LastIndexOf("\"))
