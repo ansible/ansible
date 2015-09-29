@@ -418,7 +418,7 @@ class Facts(object):
                                             release = re.search("^PRETTY_NAME=[^(]+ \(?([^)]+?)\)", line)
                                             if release:
                                                 self.facts['distribution_release'] = release.groups()[0]
-                                        elif 'enterprise' in data.lower():
+                                        elif 'enterprise' in data.lower() and 'VERSION_ID' in line:
                                              release = re.search('^VERSION_ID="?[0-9]+\.?([0-9]*)"?', line) # SLES doesn't got funny release names
                                              if release:
                                                  release = release.group(1)
