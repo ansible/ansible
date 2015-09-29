@@ -63,7 +63,7 @@ options:
               to turn it on/off ('+' is optional though)
             - this option is ignored if C(name) parameter is equal to '*' or
               contains more than one spell
-            - providers must be supplied in the form recognized by Sorcery, i.e.
+            - providers must be supplied in the form recognized by Sorcery, e.g.
               'openssl(SSL)'
         required: false
         default: null
