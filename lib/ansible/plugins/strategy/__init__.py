@@ -180,7 +180,11 @@ class StrategyBase:
                     if result[0] == 'host_task_failed' or task_result.is_failed():
                         if not task.ignore_errors:
                             self._display.debug("marking %s as failed" % host.name)
-                            iterator.mark_host_failed(host)
+                            if task.run_once:
+                                # if we're using run_once, we have to fail every host here
+                                [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
+                            else:
+                                iterator.mark_host_failed(host)
                             self._tqm._failed_hosts[host.name] = True
                             self._tqm._stats.increment('failures', host.name)
                         else:
