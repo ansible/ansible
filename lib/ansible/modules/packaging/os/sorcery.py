@@ -343,8 +343,10 @@ def match_depends(module):
             module.fail_json(msg="wrong depends line for spell '%s'" % spell)
 
         # normalize status
-        status = 'on' if not match.group('status') or match.group('status') \
-                 == '+' else 'off'
+        if not match.group('status') or match.group('status') == '+':
+            status = 'on'
+        else:
+            status = 'off'
 
         depends[match.group('depend')] = status
 
