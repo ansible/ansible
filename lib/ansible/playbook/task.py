@@ -118,7 +118,7 @@ class Task(Base, Conditional, Taggable, Become):
     def _merge_kv(self, ds):
         if ds is None:
             return ""
-        elif isinstance(ds, basestring):
+        elif isinstance(ds, string_types):
             return ds
         elif isinstance(ds, dict):
             buf = ""
