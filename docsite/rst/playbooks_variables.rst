@@ -532,6 +532,8 @@ To configure fact caching using jsonfile, enable it in ``ansible.cfg`` as follow
 ``fact_caching_connection`` is a local filesystem path to a writeable
 directory (ansible will attempt to create the directory if one does not exist).
 
+``fact_caching_timeout`` is the number of seconds to cache the recorded facts.
+
 .. _registered_variables:
 
 Registered Variables
