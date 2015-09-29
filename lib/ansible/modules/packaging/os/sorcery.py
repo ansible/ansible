@@ -365,46 +365,47 @@ def match_depends(module):
     fi = fileinput.input(sorcery_depends, inplace=True)
 
     try:
-        for line in fi:
-            if rex_spell.match(line):
-                match = None
+        try:
+            for line in fi:
+                if rex_spell.match(line):
+                    match = None
 
-                for d in depends:
-                    # when local status is 'off' and dependency is provider, use
-                    # only provider value
-                    d_offset = d.find('(')
+                    for d in depends:
+                        # when local status is 'off' and dependency is provider,
+                        # use only provider value
+                        d_offset = d.find('(')
 
-                    if d_offset == -1:
-                        d_p = ''
-                    else:
-                        d_p = re.escape(d[d_offset:])
+                        if d_offset == -1:
+                            d_p = ''
+                        else:
+                            d_p = re.escape(d[d_offset:])
 
-                    # .escape() is needed mostly for the spells like 'libsigc++'
-                    rex = re.compile("%s:(?:%s|%s):(?P<lstatus>on|off):optional:" %
-                                     (re.escape(spell), re.escape(d), d_p))
+                        # .escape() is needed mostly for the spells like 'libsigc++'
+                        rex = re.compile("%s:(?:%s|%s):(?P<lstatus>on|off):optional:" %
+                                         (re.escape(spell), re.escape(d), d_p))
 
-                    match = rex.match(line)
+                        match = rex.match(line)
 
-                    # we matched the line "spell:dependency:on|off:optional:"
-                    if match:
-                        # if we also matched the local status, mark dependency
-                        # as empty and put it back into depends file
-                        if match.group('lstatus') == depends[d]:
-                            depends[d] = None
+                        # we matched the line "spell:dependency:on|off:optional:"
+                        if match:
+                            # if we also matched the local status, mark dependency
+                            # as empty and put it back into depends file
+                            if match.group('lstatus') == depends[d]:
+                                depends[d] = None
 
-                            print line,
+                                print line,
 
-                        # status is not that we need, so keep this dependency in
-                        # the list for further reverse switching;
-                        # stop and process the next line in both cases
-                        break
+                            # status is not that we need, so keep this dependency
+                            # in the list for further reverse switching;
+                            # stop and process the next line in both cases
+                            break
 
-                if not match:
+                    if not match:
+                        print line,
+                else:
                     print line,
-            else:
-                print line,
-    except IOError:
-        module.fail_json(msg="I/O error on the depends file")
+        except IOError:
+            module.fail_json(msg="I/O error on the depends file")
     finally:
         fi.close()
 
