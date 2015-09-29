@@ -311,7 +311,7 @@ def match_depends(module):
 
     depends_ok = True
 
-    if len(spell.split(',')) > 1 or not params['depends']:
+    if len(spell) > 1 or not params['depends']:
         return depends_ok
 
     if module.check_mode:
@@ -480,7 +480,7 @@ def manage_spells(module):
             module.fail_json(msg="unsupported operation on '*' name value")
     else:
         if params['state'] in ('present', 'latest', 'rebuild', 'absent'):
-            spells = [s for s in module.params['name'].split(',')]
+            spells = [s for s in module.params['name']]
             # extract versions from the 'gaze' command
             cmd_gaze = "%s -q version %s" % (SORCERY['gaze'], ' '.join(spells))
 
@@ -570,7 +570,7 @@ def manage_spells(module):
 def main():
     module = AnsibleModule(
         argument_spec = dict(
-            name = dict(default=None, aliases=['spell']),
+            name = dict(default=None, aliases=['spell'], type='list'),
             state = dict(default='present', choices=['present', 'latest',
                          'absent', 'cast', 'dispelled', 'rebuild']),
             depends = dict(default=None),
