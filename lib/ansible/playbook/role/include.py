@@ -38,6 +38,8 @@ class RoleInclude(RoleDefinition):
     FIXME: docstring
     """
 
+    _delegate_to          = FieldAttribute(isa='string')
+
     def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
         super(RoleInclude, self).__init__(play=play, role_basedir=role_basedir, variable_manager=variable_manager, loader=loader)
 
