@@ -305,14 +305,16 @@ def match_depends(module):
     """
 
     params = module.params
-    spell = params['name']
+    spells = params['name']
 
     depends = {}
 
     depends_ok = True
 
-    if len(spell) > 1 or not params['depends']:
+    if len(spells) > 1 or not params['depends']:
         return depends_ok
+
+    spell = spells[0]
 
     if module.check_mode:
         sorcery_depends_orig = os.path.join(SORCERY_STATE_DIR, "depends")
@@ -480,7 +482,7 @@ def manage_spells(module):
             module.fail_json(msg="unsupported operation on '*' name value")
     else:
         if params['state'] in ('present', 'latest', 'rebuild', 'absent'):
-            spells = [s for s in module.params['name']]
+            spells = module.params['name']
             # extract versions from the 'gaze' command
             cmd_gaze = "%s -q version %s" % (SORCERY['gaze'], ' '.join(spells))
 
