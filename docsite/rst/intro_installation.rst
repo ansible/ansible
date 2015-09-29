@@ -135,6 +135,8 @@ Ansible also uses the following Python modules that need to be installed::
 
     $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
 
+.. note::
+
 If you have issues with the "pycrypto" package install on Mac OSX, which is included as a dependency for paramiko, then you may need to try "CC=clang sudo -E pip install pycrypto".
 
 Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
@@ -311,6 +313,8 @@ Then install Ansible with::
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
+
+.. note::
 
 If you have issues with the "pycrypto" package install on Mac OSX, which is included as a dependency for paramiko, then you may need to try "CC=clang sudo -E pip install pycrypto".
 
