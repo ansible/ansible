@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import distutils.spawn
 import os
-import shlex
 import subprocess
 import traceback
 
@@ -29,7 +28,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils.basic import is_executable
-from ansible.utils.unicode import to_bytes
 
 
 BUFSIZE = 65536
