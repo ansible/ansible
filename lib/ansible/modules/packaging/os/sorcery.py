@@ -109,6 +109,13 @@ EXAMPLES = '''
 # Make sure spell 'foo' with libressl (providing SSL) dependency is installed
 - sorcery: spell=foo depends=libressl(SSL) state=present
 
+# Playbook: make sure spells with/without required dependencies (if any) are installed
+- sorcery: name={{ item.spell }} depends={{ item.depends | default(None) }} state=present
+  with_items:
+    - { spell: 'vifm', depends: '+file,-gtk+2' }
+    - { spell: 'fwknop', depends: 'gpgme' }
+    - { spell: 'pv,tnftp,tor' }
+
 # Install the latest version of spell 'foo' using regular glossary
 - sorcery: name=foo state=latest
 
