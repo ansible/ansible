@@ -80,6 +80,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
             temp_vars.update(new_obj.vars)
             entry.vars = temp_vars
             entry.tags = list(set(entry.tags).union(new_obj.tags))
+            if entry._included_path is None:
+                entry._included_path = os.path.dirname(file_name)
 
         return pb
 
