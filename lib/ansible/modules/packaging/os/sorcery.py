@@ -444,10 +444,11 @@ def manage_spells(module):
     """
 
     params = module.params
+    spells = params['name']
 
     sorcery_queue = os.path.join(SORCERY_LOG_DIR, "queue/install")
 
-    if params['name'] == '*':
+    if spells == '*':
         if params['state'] == 'latest':
             # back up original queue
             try:
@@ -502,7 +503,6 @@ def manage_spells(module):
             module.fail_json(msg="unsupported operation on '*' name value")
     else:
         if params['state'] in ('present', 'latest', 'rebuild', 'absent'):
-            spells = module.params['name']
             # extract versions from the 'gaze' command
             cmd_gaze = "%s -q version %s" % (SORCERY['gaze'], ' '.join(spells))
 
