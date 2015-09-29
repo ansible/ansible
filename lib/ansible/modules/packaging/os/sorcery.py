@@ -373,7 +373,11 @@ def match_depends(module):
                     # when local status is 'off' and dependency is provider, use
                     # only provider value
                     d_offset = d.find('(')
-                    d_p = '' if d_offset == -1 else re.escape(d[d_offset:])
+
+                    if d_offset == -1:
+                        d_p = ''
+                    else:
+                        d_p = re.escape(d[d_offset:])
 
                     # .escape() is needed mostly for the spells like 'libsigc++'
                     rex = re.compile("%s:(?:%s|%s):(?P<lstatus>on|off):optional:" %
