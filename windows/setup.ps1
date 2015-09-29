@@ -79,7 +79,7 @@ Set-Attr $result.ansible_facts "ansible_powershell_version" $psversion
 $winrm_https_listener_parent_path = Get-ChildItem -Path WSMan:\localhost\Listener -Recurse | Where-Object {$_.PSChildName -eq "Transport" -and $_.Value -eq "HTTPS"} | select PSParentPath
 $winrm_https_listener_path = $null
 $https_listener = $null
-
+$winrm_cert_thumbprint = $null
 
 if ($winrm_https_listener_parent_path ) {
     $winrm_https_listener_path = $winrm_https_listener_parent_path.PSParentPath.Substring($winrm_https_listener_parent_path.PSParentPath.LastIndexOf("\"))
