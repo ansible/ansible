@@ -83,6 +83,9 @@ class PlaybookExecutor:
                 self._display.vv('%d plays in %s' % (len(plays), playbook_path))
 
                 for play in plays:
+                    if play._included_path is not None:
+                        self._loader.set_basedir(play._included_path)
+
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 

@@ -95,6 +95,7 @@ class Play(Base, Taggable, Become):
     def __init__(self):
         super(Play, self).__init__()
 
+        self._included_path = None
         self.ROLE_CACHE = {}
 
     def __repr__(self):
@@ -321,12 +322,14 @@ class Play(Base, Taggable, Become):
         for role in self.get_roles():
             roles.append(role.serialize())
         data['roles'] = roles
+        data['included_path'] = self._included_path
 
         return data
 
     def deserialize(self, data):
         super(Play, self).deserialize(data)
 
+        self._included_path = data.get('included_path', None)
         if 'roles' in data:
             role_data = data.get('roles', [])
             roles = []
@@ -341,5 +344,6 @@ class Play(Base, Taggable, Become):
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
+        new_me._included_path = self._included_path
         return new_me
 
