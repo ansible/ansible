@@ -160,7 +160,10 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
                 role_search_paths.append(self._role_basedir)
 
             # now iterate through the possible paths and return the first one we find
+            all_vars = self._variable_manager.get_vars(loader=self._loader, play=self._play)
+            templar = Templar(loader=self._loader, variables=all_vars)
             for path in role_search_paths:
+                path = templar.template(path)
                 role_path = unfrackpath(os.path.join(path, role_name))
                 if self._loader.path_exists(role_path):
                     return (role_name, role_path)

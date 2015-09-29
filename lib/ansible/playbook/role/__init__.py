@@ -168,7 +168,7 @@ class Role(Base, Become, Conditional, Taggable):
         # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')
         if metadata:
-            self._metadata = RoleMetadata.load(metadata, owner=self, loader=self._loader)
+            self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
             self._dependencies = self._load_dependencies()
         else:
             self._metadata = RoleMetadata()
