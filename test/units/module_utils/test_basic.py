@@ -536,8 +536,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
             argument_spec = dict(),
         )
 
-        self.assertEqual(am._to_filesystem_str(u'foo'), 'foo')
-        self.assertEqual(am._to_filesystem_str(u'föö'), 'f\xc3\xb6\xc3\xb6')
+        self.assertEqual(am._to_filesystem_str(u'foo'), b'foo')
+        self.assertEqual(am._to_filesystem_str(u'föö'), b'f\xc3\xb6\xc3\xb6')
         
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
