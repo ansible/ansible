@@ -2582,6 +2582,17 @@ class LinuxVirtual(Virtual):
 
     # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
+        if os.path.exists('/proc/1/cgroup'):
+            for line in get_file_lines('/proc/1/cgroup'):
+                if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
+                    self.facts['virtualization_type'] = 'docker'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
+                if re.search('/lxc/', line):
+                    self.facts['virtualization_type'] = 'lxc'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
+
         if os.path.exists("/proc/xen"):
             self.facts['virtualization_type'] = 'xen'
             self.facts['virtualization_role'] = 'guest'
@@ -2606,17 +2617,6 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_type'] = systemd_container
             self.facts['virtualization_role'] = 'guest'
             return
-
-        if os.path.exists('/proc/1/cgroup'):
-            for line in get_file_lines('/proc/1/cgroup'):
-                if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
-                    self.facts['virtualization_type'] = 'docker'
-                    self.facts['virtualization_role'] = 'guest'
-                    return
-                if re.search('/lxc/', line):
-                    self.facts['virtualization_type'] = 'lxc'
-                    self.facts['virtualization_role'] = 'guest'
-                    return
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
 
