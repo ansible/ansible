@@ -39,6 +39,13 @@ from ansible.utils.unicode import to_unicode
 
 __all__ = ['PlayContext']
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext
 # object. The dictionary values are tuples, to account for aliases
@@ -296,6 +303,16 @@ class PlayContext(Base):
             # the host name in the delegated variable dictionary here
             delegated_host_name = templar.template(task.delegate_to)
             delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
+            # make sure this delegated_to host has something set for its remote
+            # address, otherwise we default to connecting to it by name. This
+            # may happen when users put an IP entry into their inventory, or if
+            # they rely on DNS for a non-inventory hostname
+            for address_var in MAGIC_VARIABLE_MAPPING.get('remote_addr'):
+                if address_var in delegated_vars:
+                    break
+            else:
+                display.warning("no remote address found for delegated host %s, using its name by default" % delegated_host_name)
+                delegated_vars['ansible_host'] = delegated_host_name
         else:
             delegated_vars = dict()
 
