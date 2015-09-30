@@ -496,8 +496,11 @@ def ensure_route_table_present(connection, module):
         
     # If no route table returned then create new route table
     if route_table is None:
+        if module.check_mode:
+            module.exit_json(changed=True)
+
         try:
-            route_table = connection.create_route_table(vpc_id, check_mode)
+            route_table = connection.create_route_table(vpc_id)
             changed = True
         except EC2ResponseError, e:
             module.fail_json(msg=e.message)
