@@ -131,13 +131,9 @@ If you don't have pip installed in your version of Python, install pip::
 
     $ sudo easy_install pip
 
-Ansible also uses the following Python modules that need to be installed::
+Ansible also uses the following Python modules that need to be installed [1]_::
 
     $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
-
-.. note::
-
-If you have issues with the "pycrypto" package install on Mac OSX, which is included as a dependency for paramiko, then you may need to try "CC=clang sudo -E pip install pycrypto".
 
 Note when updating ansible, be sure to not only update the source tree, but also the "submodules" in git
 which point at Ansible's own modules (not the same kind of modules, alas).
@@ -306,17 +302,13 @@ your version of Python, you can get pip by::
 
    $ sudo easy_install pip
 
-Then install Ansible with::
+Then install Ansible with [1]_::
 
    $ sudo pip install ansible
 
 If you are installing on OS X Mavericks, you may encounter some noise from your compiler.  A workaround is to do the following::
 
    $ sudo CFLAGS=-Qunused-arguments CPPFLAGS=-Qunused-arguments pip install ansible
-
-.. note::
-
-If you have issues with the "pycrypto" package install on Mac OSX, which is included as a dependency for paramiko, then you may need to try "CC=clang sudo -E pip install pycrypto".
 
 Readers that use virtualenv can also install Ansible under virtualenv, though we'd recommend to not worry about it and just install Ansible globally.  Do not use easy_install to install ansible directly.
 
@@ -340,3 +332,4 @@ These releases are also tagged in the `git repository <https://github.com/ansibl
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 
+.. [1] If you have issues with the "pycrypto" package install on Mac OSX, which is included as a dependency for paramiko, then you may need to try "CC=clang sudo -E pip install pycrypto".
