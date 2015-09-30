@@ -602,7 +602,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
+                m.assert_called_with(b'/path/to/file', 'foo_u:foo_r:foo_t:s0')
                 m.reset_mock()
                 am.check_mode = True
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
@@ -619,7 +619,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
             
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
+                m.assert_called_with(b'/path/to/file', 'sp_u:sp_r:sp_t:s0')
 
         delattr(basic, 'selinux')
 
