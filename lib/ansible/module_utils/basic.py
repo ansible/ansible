@@ -323,7 +323,7 @@ def json_dict_bytes_to_unicode(d, encoding='utf-8'):
         and dict container types (the containers that the json module returns)
     '''
 
-    if isinstance(d, str):
+    if isinstance(d, bytes):
         return unicode(d, encoding)
     elif isinstance(d, dict):
         return dict(imap(json_dict_bytes_to_unicode, iteritems(d), repeat(encoding)))
