@@ -407,6 +407,7 @@ class VariableManager:
                         include_delegate_to=False,
                         include_hostvars=False,
                     )
+
                 all_vars['ansible_delegated_vars'] = delegated_host_vars
 
         if self._inventory is not None:
