@@ -26,6 +26,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.inventory import Inventory
+from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible.vars import VariableManager
 
 from units.mock.loader import DictDataLoader
@@ -71,6 +72,16 @@ class TestInventory(unittest.TestCase):
         'a[1:]': [('a', (1, -1)), list(string.ascii_letters[1:])],
     }
 
+    ranges_to_expand = {
+        'a[1:2]': ['a1', 'a2'],
+        'a[1:10:2]': ['a1', 'a3', 'a5', 'a7', 'a9'],
+        'a[a:b]': ['aa', 'ab'],
+        'a[a:i:3]': ['aa', 'ad', 'ag'],
+        'a[a:b][c:d]': ['aac', 'aad', 'abc', 'abd'],
+        'a[0:1][2:3]': ['a02', 'a03', 'a12', 'a13'],
+        'a[a:b][2:3]': ['aa2', 'aa3', 'ab2', 'ab3'],
+    }
+
     def setUp(self):
         v = VariableManager()
         fake_loader = DictDataLoader({})
@@ -98,3 +109,9 @@ class TestInventory(unittest.TestCase):
                     r[0][1]
                 )
             )
+
+    def test_expand_hostname_range(self):
+
+        for e in self.ranges_to_expand:
+            r = self.ranges_to_expand[e]
+            self.assertEqual(r, expand_hostname_range(e))
