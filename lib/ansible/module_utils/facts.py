@@ -2593,17 +2593,6 @@ class LinuxVirtual(Virtual):
                     self.facts['virtualization_role'] = 'guest'
                     return
 
-        if os.path.exists("/proc/xen"):
-            self.facts['virtualization_type'] = 'xen'
-            self.facts['virtualization_role'] = 'guest'
-            try:
-                for line in get_file_lines('/proc/xen/capabilities'):
-                    if "control_d" in line:
-                        self.facts['virtualization_role'] = 'host'
-            except IOError:
-                pass
-            return
-
         if os.path.exists('/proc/vz'):
             self.facts['virtualization_type'] = 'openvz'
             if os.path.exists('/proc/bc'):
@@ -2616,6 +2605,17 @@ class LinuxVirtual(Virtual):
         if systemd_container:
             self.facts['virtualization_type'] = systemd_container
             self.facts['virtualization_role'] = 'guest'
+            return
+
+        if os.path.exists("/proc/xen"):
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+            try:
+                for line in get_file_lines('/proc/xen/capabilities'):
+                    if "control_d" in line:
+                        self.facts['virtualization_role'] = 'host'
+            except IOError:
+                pass
             return
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
