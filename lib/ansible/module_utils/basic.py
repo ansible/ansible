@@ -74,6 +74,22 @@ except ImportError:
     imap = map                      # Python 3
 
 try:
+    basestring
+except NameError:
+    basestring = str                # Python 3
+
+try:
+    unicode
+except NameError:
+    unicode = str                   # Python 3
+
+try:
+    bytes
+except NameError:
+    bytes = str                     # Python 2
+
+
+try:
     import json
     # Detect the python-json library which is incompatible
     # Look for simplejson if that's the case
