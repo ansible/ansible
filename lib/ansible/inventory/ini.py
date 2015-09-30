@@ -38,15 +38,12 @@ class InventoryParser(object):
     with their associated hosts and variable settings.
     """
 
-    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
-        if groups is None:
-            groups = dict()
-
+    def __init__(self, loader, groups, filename=C.DEFAULT_HOST_LIST):
         self._loader = loader
         self.filename = filename
 
-        # Start with an empty host list and the default 'all' and
-        # 'ungrouped' groups.
+        # Start with an empty host list and whatever groups we're passed in
+        # (which should include the default 'all' and 'ungrouped' groups).
 
         self.hosts = {}
         self.patterns = {}
