@@ -216,15 +216,15 @@ class VaultLib:
 
         return b_data
 
-    def decrypt_with_metadata(self, data):
+    def decrypt(self, data):
         """
         Takes the contents of a vault file (i.e. header and ciphertext) and
         returns the cipher name and version along with the plaintext.
 
         :arg data: vault file contents. Since vault encrypted data is an ascii
             text format this can be either a byte str or unicode string.
-        :returns: A tuple of cipher name as byte str, cipher version as byte
-            str, and plaintext as a byte str
+        :returns: A tuple of vault version as byte str, cipher name as byte
+            str, cipher version as byte str, and plaintext as a byte str
         """
         if self.b_password is None:
             raise AnsibleError("A vault password must be specified to decrypt data")
@@ -240,21 +240,7 @@ class VaultLib:
         if b_plaintext is None:
             raise AnsibleError("Decryption failed")
 
-        return b_cipher_name, b_cipher_version, b_plaintext
-
-    def decrypt(self, data):
-        """
-        Takes the contents of a vault file (i.e. header and ciphertext) and
-        returns the plaintext.
-
-        :arg data: vault file contents. Since vault encrypted data is an ascii
-            text format this can be either a byte str or unicode string.
-        :returns: plaintext as a byte str
-        """
-
-        _, _, b_plaintext = self.decrypt_with_metadata(data)
-
-        return b_plaintext
+        return b_vault_version, b_cipher_name, b_cipher_version, b_plaintext
 
 class VaultEditor:
 
@@ -303,7 +289,7 @@ class VaultEditor:
         check_prereqs()
 
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+        plaintext = self.vault.decrypt(ciphertext)[-1]
         self.write_data(plaintext, output_file or filename)
 
     def create_file(self, filename):
@@ -323,7 +309,7 @@ class VaultEditor:
         check_prereqs()
 
         b_ciphertext = self.read_data(filename)
-        b_cipher_name, b_cipher_version, b_plaintext = self.vault.decrypt_with_metadata(b_ciphertext)
+        b_vault_version, b_cipher_name, b_cipher_version, b_plaintext = self.vault.decrypt(b_ciphertext)
 
         if b_cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
@@ -336,7 +322,7 @@ class VaultEditor:
         check_prereqs()
 
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+        plaintext = self.vault.decrypt(ciphertext)[-1]
 
         return plaintext
 
@@ -345,7 +331,7 @@ class VaultEditor:
         check_prereqs()
 
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+        plaintext = self.vault.decrypt(ciphertext)[-1]
 
         new_vault = VaultLib(new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
@@ -421,7 +407,7 @@ class VaultFile(object):
         if self.is_encrypted():
             tmpdata = self.filehandle.read()
             this_vault = VaultLib(self.password)
-            dec_data = this_vault.decrypt(tmpdata)
+            dec_data = this_vault.decrypt(tmpdata)[-1]
             if dec_data is None:
                 raise AnsibleError("Decryption failed")
             else:
