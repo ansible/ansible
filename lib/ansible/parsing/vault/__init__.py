@@ -300,20 +300,14 @@ class VaultEditor:
         else:
             self._edit_file_helper(filename, existing_data=plaintext, force_save=False)
 
-    def view_file(self, filename):
+    def plaintext(self, filename):
 
         check_prereqs()
 
-        # FIXME: Why write this to a temporary file at all? It would be safer
-        # to feed it to the PAGER on stdin.
-        _, tmp_path = tempfile.mkstemp()
         ciphertext = self.read_data(filename)
         plaintext = self.vault.decrypt(ciphertext)
-        self.write_data(plaintext, tmp_path)
 
-        # drop the user into pager on the tmp file
-        call(self._pager_shell_command(tmp_path))
-        os.remove(tmp_path)
+        return plaintext
 
     def rekey_file(self, filename, new_password):
 
@@ -360,13 +354,6 @@ class VaultEditor:
         editor.append(filename)
 
         return editor
-
-    def _pager_shell_command(self, filename):
-        PAGER = os.environ.get('PAGER','less')
-        pager = shlex.split(PAGER)
-        pager.append(filename)
-
-        return pager
 
 class VaultFile(object):
 
