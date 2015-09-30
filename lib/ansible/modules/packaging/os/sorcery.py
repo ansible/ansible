@@ -360,14 +360,12 @@ def match_depends(module):
     if rc != 0:
         module.fail_json(msg="wrong dependencies for spell '%s'" % spell)
 
-    rex_spell = re.compile("^%s:" % spell)
-
     fi = fileinput.input(sorcery_depends, inplace=True)
 
     try:
         try:
             for line in fi:
-                if rex_spell.match(line):
+                if line.startswith(spell + ':'):
                     match = None
 
                     for d in depends:
