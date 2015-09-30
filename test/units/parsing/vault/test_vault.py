@@ -92,29 +92,44 @@ class TestVaultLib(unittest.TestCase):
 
     def test_parse_vault_header(self):
         v = VaultLib('ansible')
-        data = b"$ANSIBLE_VAULT;9.9;TEST\nansible"
+        data = b"$ANSIBLE_VAULT;0.9;TEST\nansible"
         (vault_version, cipher_name, cipher_version, rdata) = v._parse_vault_header(data)
         lines = rdata.split(b'\n')
-        assert lines[0] == b"ansible"
-        assert cipher_name == u'TEST', "cipher name was not set"
-        assert vault_version == u"9.9"
-        assert cipher_version == vault_version
+        self.assertEqual(lines[0], b"ansible")
+        self.assertEqual(cipher_name, b'TEST', msg="cipher name was not set")
+        self.assertEqual(vault_version, b"0.9")
+        self.assertEqual(cipher_version, vault_version)
 
         data = b"$ANSIBLE_VAULT;1.1;TEST\nansible"
         (vault_version, cipher_name, cipher_version, rdata) = v._parse_vault_header(data)
         lines = rdata.split(b'\n')
-        assert lines[0] == b"ansible"
-        assert cipher_name == u'TEST', "cipher name was not set"
-        assert vault_version == u"1.1"
-        assert cipher_version == vault_version
+        self.assertEqual(lines[0], b"ansible")
+        self.assertEqual(cipher_name, b'TEST', msg="cipher name was not set")
+        self.assertEqual(vault_version, b"1.1")
+        self.assertEqual(cipher_version, vault_version)
 
         data = b"$ANSIBLE_VAULT;1.2;TEST;3.2\nansible"
         (vault_version, cipher_name, cipher_version, rdata) = v._parse_vault_header(data)
         lines = rdata.split(b'\n')
-        assert lines[0] == b"ansible"
-        assert cipher_name == u'TEST', "cipher name was not set"
-        assert vault_version == u"1.2"
-        assert cipher_version == u'3.2'
+        self.assertEqual(lines[0], b"ansible")
+        self.assertEqual(cipher_name, b'TEST', msg="cipher name was not set")
+        self.assertEqual(vault_version, b"1.2")
+        self.assertEqual(cipher_version, b'3.2')
+
+        data = b"$ANSIBLE_VAULT;9.9;TEST;8.9\nansible"
+        (vault_version, cipher_name, cipher_version, rdata) = v._parse_vault_header(data)
+        lines = rdata.split(b'\n')
+        self.assertEqual(lines[0], b"ansible")
+        self.assertEqual(cipher_name, b'TEST', msg="cipher name was not set")
+        self.assertEqual(vault_version, b"9.9")
+        self.assertEqual(cipher_version, b"8.9")
+
+
+        data = b"$ANSIBLE_VAULT;1.1;TEST;3.2\nansible"
+        self.assertRaisesRegexp(errors.AnsibleError, r"Malformed vault header.*3 fields.*vault 1\.1", v._parse_vault_header, data)
+
+        data = b"$ANSIBLE_VAULT;1.2;TEST\nansible"
+        self.assertRaisesRegexp(errors.AnsibleError, r"Malformed vault header.*4 fields.*vault 1\.2", v._parse_vault_header, data)
 
     def test_encrypt_decrypt_aes(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:

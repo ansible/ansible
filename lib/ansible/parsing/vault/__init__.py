@@ -48,7 +48,7 @@ except ImportError:
         def byte2int(bs):
             return ord(bs[0])
 
-from ansible.utils.unicode import to_unicode, to_bytes
+from ansible.utils.unicode import to_bytes
 
 
 try:
@@ -93,10 +93,11 @@ HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the one installed on your platform. You may fix this with OS-specific commands such as: yum install python-devel; rpm -e --nodeps python-crypto; pip install pycrypto"
 
 b_HEADER = b'$ANSIBLE_VAULT'
-CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
-CIPHER_WRITE_WHITELIST=frozenset((u'AES256',))
-DEFAULT_WRITE_CIPHER=u'AES256'
-
+CIPHER_WHITELIST = frozenset((b'AES', b'AES256'))
+CIPHER_WRITE_WHITELIST=frozenset((b'AES256',))
+DEFAULT_WRITE_CIPHER=b'AES256'
+# See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
+# (used in VaultFile header) to a cipher class
 
 def check_prereqs():
 
@@ -124,30 +125,26 @@ class VaultLib:
         """
         Takes a cipher name and returns a Vault cipher class.
         """
-
-        cipher_class_name = u'Vault{0}'.format(cipher_name)
-        if cipher_class_name in globals():
-            Cipher = globals()[cipher_class_name]
-        else:
-            raise AnsibleError(u"{0} cipher could not be found".format(cipher_name))
+        try:
+            Cipher = CIPHER_MAPPING[cipher_name]
+        except KeyError:
+            raise AnsibleError(b"{0} cipher could not be found".format(cipher_name))
 
         return Cipher
 
-    def _add_vault_header(self, cipher_name, cipher_version, b_ciphertext):
+    def _add_vault_header(self, b_cipher_name, b_cipher_version, b_ciphertext):
         """
         Takes a cipher name and version and ciphertext (formatted output from a
         cipher class) and returns a byte string containing the vault header and
         the unmodified ciphertext.
 
-        :arg cipher_name: cipher name as a unicode string
-        :arg version: cipher version as a unicode string
+        :arg b_cipher_name: cipher name as a byte string
+        :arg b_version: cipher version as a byte string
         :arg b_data: the formatted ciphertext as a byte string
         :returns: a byte string that can be dumped into a file.
         """
 
         b_vault_version = b'1.2'
-        b_cipher_name = to_bytes(cipher_name, errors='strict', encoding='utf-8')
-        b_cipher_version = to_bytes(cipher_version, errors='strict', encoding='utf-8')
         b_data = b'%s;%s;%s;%s\n%s' % \
             (b_HEADER, b_vault_version, b_cipher_name, b_cipher_version, b_ciphertext)
 
@@ -160,9 +157,9 @@ class VaultLib:
 
         :arg data: vault file contents. Since vault encrypted data is an ascii
             text format this can be either a byte str or unicode string.
-        :returns: vault version as unicode, cipher name as unicode, cipher
-            version as unicode, and ciphertext as a byte str. If any of the
-            above is None, the header is not valid.
+        :returns: a tuple of vault version as byte str, cipher name as byte
+            str, cipher version as byte str, and ciphertext as a byte str.
+        :raises AnsibleError: in case the header is invalid
         """
 
         b_data = to_bytes(data, errors='strict', encoding='utf-8')
@@ -170,23 +167,29 @@ class VaultLib:
         lines = b_data.split(b'\n', 1)
         header = lines[0].strip().split(b';')
 
-        vault_version = None
-        cipher_name = None
-        cipher_version = None
+        b_vault_version = None
+        b_cipher_name = None
+        b_cipher_version = None
         b_data = None
 
         if len(header) >= 3 and header[0] == b_HEADER:
-            vault_version = to_unicode(header[1].strip())
-            cipher_name = to_unicode(header[2].strip())
-            if vault_version == u'1.2' and len(header) == 4:
-                cipher_version = to_unicode(header[3].strip())
+            b_vault_version = header[1].strip()
+            b_cipher_name = header[2].strip()
+            if b_vault_version.split(b'.') >= [b'1', b'2']:
+                if len(header) != 4:
+                    raise AnsibleError("Malformed vault header.  Expected 4 fields for vault 1.2")
+                b_cipher_version = header[3].strip()
             elif len(header) == 3:
-                cipher_version = vault_version
+                b_cipher_version = b_vault_version
+            else:
+                raise AnsibleError("Malformed vault header.  Expected 3 fields for vault 1.1 and below")
+        else:
+            raise AnsibleError("Input is not an encrypted vault file")
 
         if len(lines) > 1:
             b_data = lines[1]
 
-        return (vault_version, cipher_name, cipher_version, b_data)
+        return (b_vault_version, b_cipher_name, b_cipher_version, b_data)
 
     def encrypt(self, data, cipher_name=None):
         """
@@ -198,17 +201,18 @@ class VaultLib:
         :returns: a utf-8 encoded byte str of encrypted data.
         """
         b_plaintext = to_bytes(data, errors='strict', encoding='utf-8')
+        b_cipher_name = to_bytes(cipher_name, errors='strict', encoding='ascii', nonstring='passthru')
 
         if self.is_encrypted(b_plaintext):
             raise AnsibleError("input is already encrypted")
 
-        if not cipher_name or cipher_name not in CIPHER_WRITE_WHITELIST:
-            cipher_name = DEFAULT_WRITE_CIPHER
+        if not b_cipher_name or b_cipher_name not in CIPHER_WRITE_WHITELIST:
+            b_cipher_name = DEFAULT_WRITE_CIPHER
 
-        cipher = self._cipher(cipher_name)()
+        cipher = self._cipher(b_cipher_name)()
 
         b_ciphertext = cipher.encrypt(b_plaintext, self.b_password)
-        b_data = self._add_vault_header(cipher_name, cipher.version, b_ciphertext)
+        b_data = self._add_vault_header(b_cipher_name, cipher.version, b_ciphertext)
 
         return b_data
 
@@ -219,27 +223,24 @@ class VaultLib:
 
         :arg data: vault file contents. Since vault encrypted data is an ascii
             text format this can be either a byte str or unicode string.
-        :returns: cipher name and cipher version as unicode, plaintext as
-            a byte str
+        :returns: A tuple of cipher name as byte str, cipher version as byte
+            str, and plaintext as a byte str
         """
         if self.b_password is None:
             raise AnsibleError("A vault password must be specified to decrypt data")
 
-        _, cipher_name, cipher_version, b_ciphertext = self._parse_vault_header(data)
+        b_vault_version, b_cipher_name, b_cipher_version, b_ciphertext = self._parse_vault_header(data)
 
-        if not cipher_name:
-            raise AnsibleError("input is not encrypted")
+        if not b_cipher_name in CIPHER_WHITELIST:
+            raise AnsibleError("Vault file encrypted with unrecognised cipher: {0}".format(b_cipher_name))
 
-        if not cipher_name in CIPHER_WHITELIST:
-            raise AnsibleError("Vault file encrypted with unrecognised cipher: {0}".format(cipher_name))
+        cipher = self._cipher(b_cipher_name)()
 
-        cipher = self._cipher(cipher_name)()
-
-        b_plaintext = cipher.decrypt(b_ciphertext, self.b_password, version=cipher_version)
+        b_plaintext = cipher.decrypt(b_ciphertext, self.b_password, version=b_cipher_version)
         if b_plaintext is None:
             raise AnsibleError("Decryption failed")
 
-        return cipher_name, cipher_version, b_plaintext
+        return b_cipher_name, b_cipher_version, b_plaintext
 
     def decrypt(self, data):
         """
@@ -321,14 +322,14 @@ class VaultEditor:
 
         check_prereqs()
 
-        ciphertext = self.read_data(filename)
-        cipher_name, cipher_version, plaintext = self.vault.decrypt_with_metadata(ciphertext)
+        b_ciphertext = self.read_data(filename)
+        b_cipher_name, b_cipher_version, b_plaintext = self.vault.decrypt_with_metadata(b_ciphertext)
 
-        if cipher_name not in CIPHER_WRITE_WHITELIST:
+        if b_cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
-            self._edit_file_helper(filename, existing_data=plaintext, force_save=True)
+            self._edit_file_helper(filename, existing_data=b_plaintext, force_save=True)
         else:
-            self._edit_file_helper(filename, existing_data=plaintext, force_save=False)
+            self._edit_file_helper(filename, existing_data=b_plaintext, force_save=False)
 
     def plaintext(self, filename):
 
@@ -445,7 +446,7 @@ class VaultAES:
     def __init__(self):
         if not HAS_AES:
             raise AnsibleError(CRYPTO_UPGRADE)
-        self.version = u'1.1'
+        self.version = b'1.1'
 
     def aes_derive_key_and_iv(self, password, salt, key_length, iv_length):
 
@@ -534,7 +535,7 @@ class VaultAES256:
 
         check_prereqs()
 
-        self.version = u'1.2'
+        self.version = b'1.2'
 
     def create_key(self, password, salt, keylength, ivlength):
         hash_function = SHA256
@@ -623,7 +624,7 @@ class VaultAES256:
 
         message = message.replace(b'\n', '')
 
-        if version == u'1.1':
+        if version == b'1.1':
             message = unhexlify(message)
             salt, mac, ciphertext = message.split(b'\n', 2)
             salt = unhexlify(salt)
@@ -649,7 +650,7 @@ class VaultAES256:
         plaintext = cipher.decrypt(ciphertext)
 
         # We used spurious padding in v1.1, which we must remove.
-        if version == u'1.1':
+        if version == b'1.1':
             try:
                 padding_length = ord(plaintext[-1])
             except TypeError:
@@ -679,3 +680,7 @@ class VaultAES256:
                 result |= ord(x) ^ ord(y)
         return result == 0
 
+CIPHER_MAPPING = {
+        b'AES': VaultAES,
+        b'AES256': VaultAES256,
+    }
