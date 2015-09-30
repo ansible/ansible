@@ -69,31 +69,41 @@ import errno
 from itertools import repeat
 
 try:
-    from itertools import imap      # Python 2
+    # Python 2
+    from itertools import imap
 except ImportError:
-    imap = map                      # Python 3
+    # Python 3
+    imap = map
 
 try:
+    # Python 2
     basestring
 except NameError:
-    basestring = str                # Python 3
+    # Python 3
+    basestring = str
 
 try:
+    # Python 2
     unicode
 except NameError:
-    unicode = str                   # Python 3
+    # Python 3
+    unicode = str
 
 try:
+    # Python 2.6+
     bytes
 except NameError:
-    bytes = str                     # Python 2
+    # Python 2.4
+    bytes = str
 
 try:
     dict.iteritems
 except AttributeError:
-    def iteritems(d):               # Python 3
+    # Python 3
+    def iteritems(d):
         return d.items()
 else:
+    # Python 2
     def iteritems(d):               # Python 2
         return d.iteritems()
 
