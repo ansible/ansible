@@ -20,10 +20,9 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-import __builtin__
 import errno
 
-from nose.tools import timed
+from six.moves import builtins
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock
@@ -37,16 +36,16 @@ class TestModuleUtilsBasic(unittest.TestCase):
         pass
 
     def test_module_utils_basic_imports(self):
-        realimport = __builtin__.__import__
+        realimport = builtins.__import__
 
         def _mock_import(name, *args, **kwargs):
             if name == 'json':
                 raise ImportError()
             realimport(name, *args, **kwargs)
 
-        with patch.object(__builtin__, '__import__', _mock_import, create=True) as m:
+        with patch.object(builtins, '__import__', _mock_import, create=True) as m:
             m('ansible.module_utils.basic')
-            __builtin__.__import__('ansible.module_utils.basic')
+            builtins.__import__('ansible.module_utils.basic')
 
     def test_module_utils_basic_get_platform(self):
         with patch('platform.system', return_value='foo'):
@@ -510,7 +509,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         m = mock_open()
         m.side_effect = OSError
 
-        with patch('__builtin__.open', m, create=True):
+        with patch.object(builtins, 'open', m, create=True):
             self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (False, None))
 
         mount_data = [
@@ -524,7 +523,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         m = mock_open(read_data=''.join(mount_data))
         m.return_value.readlines.return_value = mount_data
 
-        with patch('__builtin__.open', m, create=True):
+        with patch.object(builtins, 'open', m, create=True):
             self.assertEqual(am.is_special_selinux_path('/some/random/path'), (False, None))
             self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
             self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
