@@ -138,7 +138,7 @@ class VaultCLI(CLI):
     def execute_view(self):
 
         for f in self.args:
-            self.editor.view_file(f)
+            self.pager(self.editor.plaintext(f))
 
     def execute_rekey(self):
         for f in self.args:
