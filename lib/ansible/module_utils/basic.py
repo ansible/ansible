@@ -69,9 +69,44 @@ import errno
 from itertools import repeat
 
 try:
-    from itertools import imap      # Python 2
+    # Python 2
+    from itertools import imap
 except ImportError:
-    imap = map                      # Python 3
+    # Python 3
+    imap = map
+
+try:
+    # Python 2
+    basestring
+except NameError:
+    # Python 3
+    basestring = str
+
+try:
+    # Python 2
+    unicode
+except NameError:
+    # Python 3
+    unicode = str
+
+try:
+    # Python 2.6+
+    bytes
+except NameError:
+    # Python 2.4
+    bytes = str
+
+try:
+    dict.iteritems
+except AttributeError:
+    # Python 3
+    def iteritems(d):
+        return d.items()
+else:
+    # Python 2
+    def iteritems(d):               # Python 2
+        return d.iteritems()
+
 
 try:
     import json
@@ -283,7 +318,7 @@ def json_dict_unicode_to_bytes(d, encoding='utf-8'):
     if isinstance(d, unicode):
         return d.encode(encoding)
     elif isinstance(d, dict):
-        return dict(imap(json_dict_unicode_to_bytes, d.iteritems(), repeat(encoding)))
+        return dict(imap(json_dict_unicode_to_bytes, iteritems(d), repeat(encoding)))
     elif isinstance(d, list):
         return list(imap(json_dict_unicode_to_bytes, d, repeat(encoding)))
     elif isinstance(d, tuple):
@@ -298,10 +333,10 @@ def json_dict_bytes_to_unicode(d, encoding='utf-8'):
         and dict container types (the containers that the json module returns)
     '''
 
-    if isinstance(d, str):
+    if isinstance(d, bytes):
         return unicode(d, encoding)
     elif isinstance(d, dict):
-        return dict(imap(json_dict_bytes_to_unicode, d.iteritems(), repeat(encoding)))
+        return dict(imap(json_dict_bytes_to_unicode, iteritems(d), repeat(encoding)))
     elif isinstance(d, list):
         return list(imap(json_dict_bytes_to_unicode, d, repeat(encoding)))
     elif isinstance(d, tuple):
@@ -398,7 +433,7 @@ class AnsibleModule(object):
         self.aliases = {}
 
         if add_file_common_args:
-            for k, v in FILE_COMMON_ARGUMENTS.iteritems():
+            for k, v in FILE_COMMON_ARGUMENTS.items():
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
@@ -934,7 +969,7 @@ class AnsibleModule(object):
 
     def _handle_aliases(self):
         aliases_results = {} #alias:canon
-        for (k,v) in self.argument_spec.iteritems():
+        for (k,v) in self.argument_spec.items():
             self._legal_inputs.append(k)
             aliases = v.get('aliases', None)
             default = v.get('default', None)
@@ -955,7 +990,7 @@ class AnsibleModule(object):
         return aliases_results
 
     def _check_arguments(self, check_invalid_arguments):
-        for (k,v) in self.params.iteritems():
+        for (k,v) in self.params.items():
 
             if k == '_ansible_check_mode' and v:
                 if not self.supports_check_mode:
@@ -1007,7 +1042,7 @@ class AnsibleModule(object):
     def _check_required_arguments(self):
         ''' ensure all required arguments are present '''
         missing = []
-        for (k,v) in self.argument_spec.iteritems():
+        for (k,v) in self.argument_spec.items():
             required = v.get('required', False)
             if required and k not in self.params:
                 missing.append(k)
@@ -1030,7 +1065,7 @@ class AnsibleModule(object):
 
     def _check_argument_values(self):
         ''' ensure all arguments have the requested values, and there are no stray arguments '''
-        for (k,v) in self.argument_spec.iteritems():
+        for (k,v) in self.argument_spec.items():
             choices = v.get('choices',None)
             if choices is None:
                 continue
@@ -1173,7 +1208,7 @@ class AnsibleModule(object):
 
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
-        for (k, v) in self.argument_spec.iteritems():
+        for (k, v) in self.argument_spec.items():
             wanted = v.get('type', None)
             if wanted is None:
                 continue
@@ -1192,7 +1227,7 @@ class AnsibleModule(object):
                 self.fail_json(msg="argument %s is of type %s and we were unable to convert to %s" % (k, type(value), wanted))
 
     def _set_defaults(self, pre=True):
-        for (k,v) in self.argument_spec.iteritems():
+        for (k,v) in self.argument_spec.items():
             default = v.get('default', None)
             if pre == True:
                 # this prevents setting defaults on required items

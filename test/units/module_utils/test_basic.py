@@ -20,10 +20,9 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-import __builtin__
 import errno
 
-from nose.tools import timed
+from six.moves import builtins
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock
@@ -37,16 +36,16 @@ class TestModuleUtilsBasic(unittest.TestCase):
         pass
 
     def test_module_utils_basic_imports(self):
-        realimport = __builtin__.__import__
+        realimport = builtins.__import__
 
         def _mock_import(name, *args, **kwargs):
             if name == 'json':
                 raise ImportError()
             realimport(name, *args, **kwargs)
 
-        with patch.object(__builtin__, '__import__', _mock_import, create=True) as m:
+        with patch.object(builtins, '__import__', _mock_import, create=True) as m:
             m('ansible.module_utils.basic')
-            __builtin__.__import__('ansible.module_utils.basic')
+            builtins.__import__('ansible.module_utils.basic')
 
     def test_module_utils_basic_get_platform(self):
         with patch('platform.system', return_value='foo'):
@@ -510,7 +509,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         m = mock_open()
         m.side_effect = OSError
 
-        with patch('__builtin__.open', m, create=True):
+        with patch.object(builtins, 'open', m, create=True):
             self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (False, None))
 
         mount_data = [
@@ -524,7 +523,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         m = mock_open(read_data=''.join(mount_data))
         m.return_value.readlines.return_value = mount_data
 
-        with patch('__builtin__.open', m, create=True):
+        with patch.object(builtins, 'open', m, create=True):
             self.assertEqual(am.is_special_selinux_path('/some/random/path'), (False, None))
             self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
             self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
@@ -537,8 +536,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
             argument_spec = dict(),
         )
 
-        self.assertEqual(am._to_filesystem_str(u'foo'), 'foo')
-        self.assertEqual(am._to_filesystem_str(u'föö'), 'f\xc3\xb6\xc3\xb6')
+        self.assertEqual(am._to_filesystem_str(u'foo'), b'foo')
+        self.assertEqual(am._to_filesystem_str(u'föö'), b'f\xc3\xb6\xc3\xb6')
         
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
@@ -603,7 +602,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
+                m.assert_called_with(b'/path/to/file', 'foo_u:foo_r:foo_t:s0')
                 m.reset_mock()
                 am.check_mode = True
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
@@ -620,7 +619,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
             
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
+                m.assert_called_with(b'/path/to/file', 'sp_u:sp_r:sp_t:s0')
 
         delattr(basic, 'selinux')
 
