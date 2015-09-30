@@ -185,7 +185,7 @@ class Connection(object):
             # windows command length), divide by 2.67 (UTF16LE base64 command
             # encoding), then by 1.35 again (data base64 encoding).
             buffer_size = int(((8190 - len(cmd)) / 2.67) / 1.35)
-            for offset in xrange(0, in_size, buffer_size):
+            for offset in xrange(0, in_size or 1, buffer_size):
                 try:
                     out_data = in_file.read(buffer_size)
                     if offset == 0:
