@@ -110,12 +110,15 @@ class TestPlay(unittest.TestCase):
             """,
         })
 
+        mock_var_manager = MagicMock()
+        mock_var_manager.get_vars.return_value = dict()
+
         p = Play.load(dict(
             name="test play",
             hosts=['foo'],
             gather_facts=False,
             roles=['foo'],
-        ), loader=fake_loader)
+        ), loader=fake_loader, variable_manager=mock_var_manager)
 
         blocks = p.compile()
 
