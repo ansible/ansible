@@ -215,9 +215,6 @@ class PlayContext(Base):
         if play.become_user:
             self.become_user = play.become_user
 
-        # non connection related
-        self.no_log      = play.no_log
-
         if play.force_handlers is not None:
             self.force_handlers = play.force_handlers
 
@@ -243,8 +240,6 @@ class PlayContext(Base):
         # general flags (should we move out?)
         if options.verbosity:
             self.verbosity  = options.verbosity
-        #if options.no_log:
-        #    self.no_log     = boolean(options.no_log)
         if options.check:
             self.check_mode = boolean(options.check)
         if hasattr(options, 'force_handlers') and options.force_handlers:
@@ -340,6 +335,10 @@ class PlayContext(Base):
         # during some other step in the process
         if task._local_action:
             setattr(new_info, 'connection', 'local')
+
+        # set no_log to default if it was not previouslly set
+        if new_info.no_log is None:
+            new_info.no_log = C.DEFAULT_NO_LOG
 
         return new_info
 

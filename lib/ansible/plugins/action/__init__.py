@@ -349,8 +349,12 @@ class ActionBase:
             module_args['_ansible_check_mode'] = True
 
         # set no log in the module arguments, if required
-        if self._play_context.no_log:
+        if self._play_context.no_log or not C.DEFAULT_NO_TARGET_SYSLOG:
             module_args['_ansible_no_log'] = True
+
+        # set debug in the module arguments, if required
+        if C.DEFAULT_DEBUG:
+            module_args['_ansible_debug'] = True
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang:
