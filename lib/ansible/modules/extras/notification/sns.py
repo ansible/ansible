@@ -107,9 +107,9 @@ try:
     import boto
     import boto.ec2
     import boto.sns
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 
 def arn_topic_lookup(connection, short_topic):
@@ -139,6 +139,9 @@ def main():
     )
 
     module = AnsibleModule(argument_spec=argument_spec)
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     msg = module.params['msg']
     subject = module.params['subject']
