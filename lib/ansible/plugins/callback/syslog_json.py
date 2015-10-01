@@ -55,7 +55,7 @@ class CallbackModule(CallbackBase):
         self.logger.error('%s ansible-command: task execution FAILED; host: %s; message: %s' % (self.hostname,host,self._dump_results(res)))
 
     def playbook_on_import_for_host(self, host, imported_file):
-        self.logger.info('%s ansible-command: playbook IMPORTED; host: %s; message: %s' % (self.hostname,host,self._dump_results(res)))
+        self.logger.info('%s ansible-command: playbook IMPORTED; host: %s; message: imported file %s' % (self.hostname,host,imported_file))
 
     def playbook_on_not_import_for_host(self, host, missing_file):
-        self.logger.info('%s ansible-command: playbook NOT IMPORTED; host: %s; message: %s' % (self.hostname,host,self._dump_results(res)))
+        self.logger.info('%s ansible-command: playbook NOT IMPORTED; host: %s; message: missing file %s' % (self.hostname,host,missing_file))
