@@ -35,8 +35,8 @@ from ansible.utils import module_docs
 class DocCLI(CLI):
     """ Vault command line class """
 
-    BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm')
-    IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION"]
+    BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
+    IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "test-docs.sh"]
 
     def __init__(self, args, display=None):
 
