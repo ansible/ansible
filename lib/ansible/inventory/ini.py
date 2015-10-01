@@ -288,8 +288,7 @@ class InventoryParser(object):
 
         # Note that we decide whether or not to create a Host based solely on
         # the (non-)existence of its hostname in self.hosts. This means that one
-        # cannot add both "foo:22" and "foo:23" to the inventory. This behaviour
-        # is preserved for now, but this may be an easy FIXME.
+        # cannot add both "foo:22" and "foo:23" to the inventory.
 
         for hn in hostnames:
             if hn not in self.hosts:
