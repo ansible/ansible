@@ -724,7 +724,7 @@ Variable Precedence: Where Should I Put A Variable?
 A lot of folks may ask about how variables override another.  Ultimately it's Ansible's philosophy that it's better
 you know where to put a variable, and then you have to think about it a lot less.  
 
-Avoid defining the variable "x" in 47 places and then ask the question "which x gets used".  
+Avoid defining the variable "x" in 47 places and then ask the question "which x gets used".
 Why?  Because that's not Ansible's Zen philosophy of doing things.
 
 There is only one Empire State Building. One Mona Lisa, etc.  Figure out where to define a variable, and don't make
@@ -733,19 +733,77 @@ it complicated.
 However, let's go ahead and get precedence out of the way!  It exists.  It's a real thing, and you might have
 a use for it.
 
-If multiple variables of the same name are defined in different places, they win in a certain order, which is::
+If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-    * extra vars (``-e`` in the command line) always win
-    * then comes connection variables defined in inventory (``ansible_user``, etc)
-    * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
-    * then comes the rest of the variables defined in inventory
-    * then comes facts discovered about a system
-    * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+In 1.x the precedence is:
+
+ * extra vars (``-e`` in the command line) always win
+ * then come connection variables (``ansible_user``, etc)
+ * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
+ * then come the variables defined in inventory
+ * then come the facts discovered about a system
+ * then "role defaults", which are the most "defaulty" and lose in priority to everything.
 
 .. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
-That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of 
-control you might want over values.
+
+In 2.x we have made the order of precedence more specific (last one wins):
+
+  * role defaults [1]_
+  * inventory vars [2]_
+  * inventory group_vars
+  * inventory host_vars
+  * playbook group_vars
+  * playbook host_vars
+  * host facts
+  * registered vars
+  * set_facts
+  * play vars
+  * play vars_prompt
+  * play vars_files
+  * role and include vars
+  * block vars (only for tasks in block)
+  * task vars (only for the task)
+  * extra vars
+
+.. rubric:: Footnotes
+
+.. [1] Tasks in each role will see their own role's defaults tasks outside of roles will the last role's defaults
+.. [2] Variables defined in inventory file or provided by dynamic inventory
+
+.. note:: Within a any section, redefining a var will overwrite the previous instance.
+          If multiple groups have the same variable, the last one loaded wins.
+          If you define a variable twice in a play's vars: section, the 2nd one wins.
+.. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.
+
+
+Another important thing to consider (for all versions) is that connection specific variables override config, command line and play specific options and directives.  For example::
+
+    ansible_ssh_user will override `-u <user>` and `remote_user: <user>`
+
+This is done so host specific settings can override the general settings. These variables are normally defined per host or group in inventory,
+but they behave like other variables, so if you really want to override the remote user globally even over inventory you can use extra vars::
+
+    ansible... -e "ansible_ssh_user=<user>"
+
+
+.. _variable_scopes:
+
+Variable Scopes
+```````````````
+
+Ansible has 3 main scopes:
+
+ * Global: this is set by config, environment variables and the command line
+ * Play: each play and contained structures, vars entries, include_vars, role defaults and vars.
+ * Host: variables directly associated to a host, like inventory, facts or registered task outputs
+
+.. _variable_examples:
+
+Variable Examples
+`````````````````
+
+That seems a little theoretical.  Let's show some examples and where you would choose to put what based on the kind of control you might want over values.
 
 First off, group variables are super powerful.
 
@@ -762,7 +820,7 @@ Regional information might be defined in a ``group_vars/region`` variable.  If t
 
     ---
     # file: /etc/ansible/group_vars/boston
-    ntp_server: boston-time.example.com 
+    ntp_server: boston-time.example.com
 
 If for some crazy reason we wanted to tell just a specific host to use a specific NTP server, it would then override the group variable!::
 
