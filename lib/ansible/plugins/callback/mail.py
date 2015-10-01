@@ -40,6 +40,7 @@ def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, 
     b_sender = to_bytes(sender)
     b_to = to_bytes(to)
     b_cc = to_bytes(cc)
+    b_bcc = to_bytes(bcc)
     b_subject = to_bytes(subject)
     b_body = to_bytes(body)
 
