@@ -379,7 +379,6 @@ tenant_ip: "192.168.200.21/23"
 '''
 # import ansible.module_utils.basic
 import os
-import syslog
 import sys
 import dbus
 from gi.repository import NetworkManager, NMClient
@@ -466,14 +465,8 @@ class Nmcli(object):
         self.flags=module.params['flags']
         self.ingress=module.params['ingress']
         self.egress=module.params['egress']
-        # select whether we dump additional debug info through syslog
-        self.syslogging=True
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None):
-        if self.syslogging:
-            syslog.openlog('ansible-%s' % os.path.basename(__file__))
-            syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
-
         return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
     def merge_secrets(self, proxy, config, setting_name):

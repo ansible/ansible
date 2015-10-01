@@ -20,7 +20,6 @@
 
 import re
 import shlex
-import syslog
 
 DOCUMENTATION = '''
 ---
@@ -64,13 +63,8 @@ EXAMPLES = '''
 - openbsd_pkg: name=* state=latest
 '''
 
-# Control if we write debug information to syslog.
-debug = False
-
 # Function used for executing commands.
 def execute_command(cmd, module):
-    if debug:
-        syslog.syslog("execute_command(): cmd = %s" % cmd)
     # Break command line into arguments.
     # This makes run_command() use shell=False which we need to not cause shell
     # expansion of special characters like '*'.
@@ -91,12 +85,10 @@ def get_current_name(name, pkg_spec, module):
     else:
         pattern = "^%s-" % pkg_spec['stem']
 
-    if debug:
-        syslog.syslog("get_current_name(): pattern = %s" % pattern)
+    module.debug("get_current_name(): pattern = %s" % pattern)
 
     for line in stdout.splitlines():
-        if debug:
-            syslog.syslog("get_current_name: line = %s" % line)
+        module.debug("get_current_name: line = %s" % line)
         match = re.search(pattern, line)
         if match:
             current_name = line.split()[0]
@@ -144,14 +136,12 @@ def package_present(name, installed_state, pkg_spec, module):
         # supplied the tool will exit 0 in both cases:
         if pkg_spec['version']:
             # Depend on the return code.
-            if debug:
-                syslog.syslog("package_present(): depending on return code")
+            module.debug("package_present(): depending on return code")
             if rc:
                 changed=False
         else:
             # Depend on stderr instead.
-            if debug:
-                syslog.syslog("package_present(): depending on stderr")
+            module.debug("package_present(): depending on stderr")
             if stderr:
                 # There is a corner case where having an empty directory in
                 # installpath prior to the right location will result in a
@@ -161,18 +151,15 @@ def package_present(name, installed_state, pkg_spec, module):
                 match = re.search("\W%s-[^:]+: ok\W" % name, stdout)
                 if match:
                     # It turns out we were able to install the package.
-                    if debug:
-                        syslog.syslog("package_present(): we were able to install package")
+                    module.debug("package_present(): we were able to install package")
                     pass
                 else:
                     # We really did fail, fake the return code.
-                    if debug:
-                        syslog.syslog("package_present(): we really did fail")
+                    module.debug("package_present(): we really did fail")
                     rc = 1
                     changed=False
             else:
-                if debug:
-                    syslog.syslog("package_present(): stderr was not set")
+                module.debug("package_present(): stderr was not set")
 
         if rc == 0:
             if module.check_mode:
@@ -202,8 +189,7 @@ def package_latest(name, installed_state, pkg_spec, module):
         # Fetch name of currently installed package.
         pre_upgrade_name = get_current_name(name, pkg_spec, module)
 
-        if debug:
-            syslog.syslog("package_latest(): pre_upgrade_name = %s" % pre_upgrade_name)
+        module.debug("package_latest(): pre_upgrade_name = %s" % pre_upgrade_name)
 
         # Attempt to upgrade the package.
         (rc, stdout, stderr) = execute_command("%s %s" % (upgrade_cmd, name), module)
@@ -237,8 +223,7 @@ def package_latest(name, installed_state, pkg_spec, module):
 
     else:
         # If package was not installed at all just make it present.
-        if debug:
-            syslog.syslog("package_latest(): package is not installed, calling package_present()")
+        module.debug("package_latest(): package is not installed, calling package_present()")
         return package_present(name, installed_state, pkg_spec, module)
 
 # Function used to make sure a package is not installed.

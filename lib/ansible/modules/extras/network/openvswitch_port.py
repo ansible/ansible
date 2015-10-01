@@ -22,8 +22,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import syslog
-
 DOCUMENTATION = '''
 ---
 module: openvswitch_port
@@ -99,7 +97,7 @@ def truncate_before(value, srch):
         return value
 
 
-def _set_to_get(set_cmd):
+def _set_to_get(set_cmd, module):
     """ Convert set command to get command and set value.
     return tuple (get command, set value)
     """
@@ -109,7 +107,7 @@ def _set_to_get(set_cmd):
     set_cmd = truncate_before(set_cmd, " option:")
     get_cmd = set_cmd.split(" ")
     (key, value) = get_cmd[-1].split("=")
-    syslog.syslog(syslog.LOG_NOTICE, "get commands %s " % key)
+    module.log("get commands %s " % key)
     return (["--", "get"] + get_cmd[:-1] + [key], value)
 
 
@@ -128,7 +126,6 @@ class OVSPort(object):
         '''Run ovs-vsctl command'''
 
         cmd = ['ovs-vsctl', '-t', str(self.timeout)] + command
-        syslog.syslog(syslog.LOG_NOTICE, " ".join(cmd))
         return self.module.run_command(cmd, check_rc=check_rc)
 
     def exists(self):
@@ -143,11 +140,11 @@ class OVSPort(object):
 
     def set(self, set_opt):
         """ Set attributes on a port. """
-        syslog.syslog(syslog.LOG_NOTICE, "set called %s" % set_opt)
+        self.module("set called %s" % set_opt)
         if (not set_opt):
             return False
 
-        (get_cmd, set_value) = _set_to_get(set_opt)
+        (get_cmd, set_value) = _set_to_get(set_opt, self.module)
         (rtc, out, err) = self._vsctl(get_cmd, False)
         if rtc != 0:
             ##
