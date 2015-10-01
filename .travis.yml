@@ -10,7 +10,7 @@ addons:
       - python2.4
       - python2.6
 script:
-  - python2.4 -m compileall -fq -x 'cloud/|monitoring/zabbix.*\.py|/dnf\.py|/layman\.py|/maven_artifact\.py|clustering/consul.*\.py|notification/pushbullet\.py' .
+  - python2.4 -m compileall -fq -x 'cloud/|monitoring/zabbix.*\.py|/dnf\.py|/layman\.py|/maven_artifact\.py|clustering/(consul.*|znode)\.py|notification/pushbullet\.py' .
   - python2.6 -m compileall -fq .
   - python2.7 -m compileall -fq .
   #- ./test-docs.sh extras
