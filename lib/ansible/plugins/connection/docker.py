@@ -3,6 +3,7 @@
 # Connection plugin for configuring docker containers
 # (c) 2014, Lorin Hochstein
 # (c) 2015, Leendert Brouwer
+# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # Maintainer: Leendert Brouwer (https://github.com/objectified)
 #
@@ -20,7 +21,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
+import distutils.spawn
 import os
 import subprocess
 import re
@@ -36,8 +40,8 @@ BUFSIZE = 65536
 
 class Connection(ConnectionBase):
 
-    has_pipelining = True
     transport = 'docker'
+    has_pipelining = True
     # su currently has an undiagnosed issue with calculating the file
     # checksums (so copy, for instance, doesn't work right)
     # Have to look into that before re-enabling this
@@ -52,10 +56,13 @@ class Connection(ConnectionBase):
         # group).  But if the user is getting a permission denied error it
         # probably means that docker on their system is only configured to be
         # connected to by root and they are not running as root.
+
         if 'docker_command' in kwargs:
             self.docker_cmd = kwargs['docker_command']
         else:
-            self.docker_cmd = 'docker'
+            self.docker_cmd = distutils.spawn.find_executable('docker')
+            if not self.docker_cmd:
+                raise AnsibleError("docker command not found in PATH")
 
         self.can_copy_bothways = False
 
@@ -93,7 +100,7 @@ class Connection(ConnectionBase):
         """ Connect to the container. Nothing to do """
         super(Connection, self)._connect()
         if not self._connected:
-            self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(
+            self._display.vvv("ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
                 self._play_context.remote_user, host=self._play_context.remote_addr)
             )
             self._connected = True
@@ -107,6 +114,8 @@ class Connection(ConnectionBase):
         local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
         self._display.vvv("EXEC %s" % (local_cmd), host=self._play_context.remote_addr)
+        # FIXME: cwd= needs to be set to the basedir of the playbook, which
+        #        should come from loader, but is not in the connection plugins
         p = subprocess.Popen(local_cmd,
                              shell=False,
                              stdin=subprocess.PIPE,
@@ -127,13 +136,11 @@ class Connection(ConnectionBase):
 
         if self.can_copy_bothways:
             # only docker >= 1.8.1 can do this natively
-            args = [
-                self.docker_cmd,
-                "cp",
-                "%s" % in_path,
-                "%s:%s" % (self._play_context.remote_addr, out_path)
-            ]
-            subprocess.check_call(args)
+            args = [ self.docker_cmd, "cp", in_path, "%s:%s" % (self._play_context.remote_addr, out_path) ]
+            p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
         else:
             # Older docker doesn't have native support for copying files into
             # running containers, so we use docker exec to implement this
@@ -145,7 +152,7 @@ class Connection(ConnectionBase):
                     p = subprocess.Popen(args, stdin=in_file,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except OSError:
-                    raise AnsibleError("docker connection requires dd command in the chroot")
+                    raise AnsibleError("docker connection with docker < 1.8.1 requires dd command in the chroot")
                 stdout, stderr = p.communicate()
 
                 if p.returncode != 0:
@@ -174,4 +181,5 @@ class Connection(ConnectionBase):
 
     def close(self):
         """ Terminate the connection. Nothing to do for Docker"""
+        super(Connection, self).close()
         self._connected = False
