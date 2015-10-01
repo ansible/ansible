@@ -140,6 +140,11 @@ def main(args):
                       help='adds the hostkey for the repo url if not already added')
     parser.add_option('--key-file', dest='key_file',
                       help="Pass '-i <key_file>' to the SSH arguments used by git.")
+    parser.add_option('--git-force', dest='gitforce', default=False, action='store_true',
+                      help='modified files in the working git repository will be discarded')
+    parser.add_option('--track-submodules', dest='tracksubmodules', default=False, action='store_true',
+                      help='submodules will track the latest commit on their master branch (or other branch specified in .gitmodules).'
+                      ' This is equivalent to specifying the --remote flag to git submodule update')
     options, args = parser.parse_args(args)
 
     hostname = socket.getfqdn()
@@ -181,6 +186,12 @@ def main(args):
 
         if options.key_file:
             repo_opts += ' key_file=%s' % options.key_file
+
+        if options.gitforce:
+            repo_opts += ' force=yes'
+
+        if options.tracksubmodules:
+            repo_opts += ' track_submodules=yes'
 
     path = utils.plugins.module_finder.find_plugin(options.module_name)
     if path is None:
