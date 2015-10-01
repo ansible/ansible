@@ -698,7 +698,8 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
             msg="Could not clone selected machine: %s" % e
         )
 
-
+# example from https://github.com/kalazzerx/pysphere/blob/master/examples/pysphere_create_disk_and_add_to_vm.py
+# was used.
 def update_disks(vsphere_client, vm, module, vm_disk, changes):
     request = VI.ReconfigVM_TaskRequestMsg()
     changed = False
