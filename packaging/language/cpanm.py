@@ -64,12 +64,14 @@ options:
     required: false
     default: false
     version_added: "2.0"
-  use_sudo:
+  system_lib:
     description:
-     -  Use this if you want to install modules to the system perl include path.
+     -  Use this if you want to install modules to the system perl include path. You must be root or have "passwordless" sudo for this to work.
+     -  This uses the cpanm commandline option '--sudo', which has nothing to do with ansible privilege escalation.
     required: false
     default: false
     version_added: "2.0"
+    aliases: ['use_sudo']
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
 author: "Franck Cuny (@franckcuny)"
@@ -95,7 +97,7 @@ EXAMPLES = '''
 - cpanm: name=Dancer mirror=http://cpan.cpantesters.org/
 
 # install Dancer perl package into the system root path
-- cpanm: name=Dancer use_sudo=yes
+- cpanm: name=Dancer system_lib=yes
 '''
 
 def _is_package_installed(module, name, locallib, cpanm):
@@ -148,7 +150,7 @@ def main():
         mirror=dict(default=None, required=False),
         mirror_only=dict(default=False, type='bool'),
         installdeps=dict(default=False, type='bool'),
-        use_sudo=dict(default=False, type='bool'),
+        system_lib=dict(default=False, type='bool', aliases=['use_sudo']),
     )
 
     module = AnsibleModule(
@@ -164,7 +166,7 @@ def main():
     mirror      = module.params['mirror']
     mirror_only = module.params['mirror_only']
     installdeps = module.params['installdeps']
-    use_sudo = module.params['use_sudo']
+    use_sudo    = module.params['system_lib']
 
     changed   = False
 
