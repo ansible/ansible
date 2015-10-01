@@ -12,3 +12,4 @@ redis
 python-memcached
 python-systemd
 pycrypto
+netaddr

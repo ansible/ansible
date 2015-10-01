@@ -11,3 +11,4 @@ unittest2
 redis
 python3-memcached
 python-systemd
+netaddr
