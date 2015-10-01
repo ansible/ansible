@@ -159,9 +159,6 @@ class Service(object):
         self.rcconf_value   = None
         self.svc_change     = False
 
-        # select whether we dump additional debug info through syslog
-        self.syslogging = False
-
     # ===========================================
     # Platform specific methods (must be replaced by subclass).
 
@@ -181,9 +178,6 @@ class Service(object):
     # Generic methods that should be used on all platforms.
 
     def execute_command(self, cmd, daemonize=False):
-        if self.syslogging:
-            syslog.openlog('ansible-%s' % os.path.basename(__file__))
-            syslog.syslog(syslog.LOG_NOTICE, 'Command %s, daemonize %r' % (cmd, daemonize))
 
         # Most things don't need to be daemonized
         if not daemonize:
@@ -1433,11 +1427,9 @@ def main():
 
     service = Service(module)
 
-    if service.syslogging:
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        syslog.syslog(syslog.LOG_NOTICE, 'Service instantiated - platform %s' % service.platform)
-        if service.distribution:
-            syslog.syslog(syslog.LOG_NOTICE, 'Service instantiated - distribution %s' % service.distribution)
+    module.debug('Service instantiated - platform %s' % service.platform)
+    if service.distribution:
+        module.debug('Service instantiated - distribution %s' % service.distribution)
 
     rc = 0
     out = ''
