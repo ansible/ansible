@@ -74,14 +74,6 @@ options:
         description:
         - Additional arguments provided on the command line
         aliases: [ 'args' ]
-    must_exist:
-        required: false
-        default: true
-        version_added: "1.9"
-        description:
-        - Avoid a module failure if the named service does not exist. Useful
-          for opportunistically starting/stopping/restarting a list of
-          potential services.
 '''
 
 EXAMPLES = '''
@@ -106,8 +98,6 @@ EXAMPLES = '''
 # Example action to restart network service for interface eth0
 - service: name=network state=restarted args=eth0
 
-# Example action to restart nova-compute if it exists
-- service: name=nova-compute state=restarted must_exist=no
 '''
 
 import platform
@@ -481,11 +471,8 @@ class LinuxService(Service):
                 self.enable_cmd = location['chkconfig']
 
         if self.enable_cmd is None:
-            if self.module.params['must_exist']:
-                self.module.fail_json(msg="no service or tool found for: %s" % self.name)
-            else:
-                # exiting without change on non-existent service
-                self.module.exit_json(changed=False, exists=False)
+            # exiting without change on non-existent service
+            self.module.exit_json(changed=False, exists=False)
 
         # If no service control tool selected yet, try to see if 'service' is available
         if self.svc_cmd is None and location.get('service', False):
@@ -493,11 +480,7 @@ class LinuxService(Service):
 
         # couldn't find anything yet
         if self.svc_cmd is None and not self.svc_initscript:
-            if self.module.params['must_exist']:
-                self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
-            else:
-                # exiting without change on non-existent service
-                self.module.exit_json(changed=False, exists=False)
+            self.module.exit_json(changed=False, exists=False)
 
         if location.get('initctl', False):
             self.svc_initctl = location['initctl']
@@ -1442,7 +1425,6 @@ def main():
             enabled = dict(type='bool'),
             runlevel = dict(required=False, default='default'),
             arguments = dict(aliases=['args'], default=''),
-            must_exist = dict(type='bool', default=True),
         ),
         supports_check_mode=True
     )
@@ -1527,4 +1509,5 @@ def main():
     module.exit_json(**result)
 
 from ansible.module_utils.basic import *
+
 main()
