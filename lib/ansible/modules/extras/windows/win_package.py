@@ -44,9 +44,9 @@ options:
   product_id:
     description:
       - product id of the installed package (used for checking if already installed)
-    required: false
+    required: true
     default: null
-    aliases: []
+    aliases: [productid]
   arguments:
     description:
       - Any arguments the installer needs
@@ -79,7 +79,7 @@ EXAMPLES = '''
     win_package:
       name="Microsoft Visual C thingy"
       path="http://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe"
-      ProductId="{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}"
+      Product_Id="{CF2BEA3C-26EA-32F8-AA9B-331F7E34BA97}"
       Arguments="/install /passive /norestart"
 
 
