@@ -133,7 +133,15 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
                     if ($ValidateSetErrorMessage -eq $null)
                     {
                         #Auto-generated error should be sufficient in most use cases
-                        $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
+                        if ($originalname -eq $name)
+                        {
+                            $ValidateSetErrorMessage = "Argument $originalname needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
+                        }
+                        Else
+                        {
+                            $ValidateSetErrorMessage = "Argument $originalname (you were using the alias $name) needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
+                        }
+                        
                     }
                     Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
                 }
