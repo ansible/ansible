@@ -428,7 +428,7 @@ class AnsibleModule(object):
         self.check_mode = False
         self.no_log = no_log
         self.cleanup_files = []
-        self.debug = False
+        self._debug = False
 
         self.aliases = {}
 
@@ -1001,7 +1001,7 @@ class AnsibleModule(object):
                 self.no_log = self.boolean(v)
 
             elif k == '_ansible_debug':
-                self.debug = self.boolean(v)
+                self._debug = self.boolean(v)
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -1249,6 +1249,10 @@ class AnsibleModule(object):
         module = 'ansible-%s' % os.path.basename(__file__)
         syslog.openlog(str(module), 0, syslog.LOG_USER)
         syslog.syslog(syslog.LOG_INFO, msg)
+
+    def debug(self, msg):
+        if self._debug:
+            self.log(msg)
 
     def log(self, msg, log_args=None):
 
@@ -1680,7 +1684,7 @@ class AnsibleModule(object):
             close_fds=close_fds,
             stdin=st_in,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE 
+            stderr=subprocess.PIPE
         )
 
         if path_prefix:
@@ -1701,7 +1705,7 @@ class AnsibleModule(object):
 
         try:
 
-            if self.debug:
+            if self._debug:
                 if isinstance(args, list):
                     running = ' '.join(args)
                 else:
