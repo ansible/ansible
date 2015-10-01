@@ -212,7 +212,6 @@ EXAMPLES = '''
 import os
 import pwd
 import grp
-import syslog
 import platform
 import socket
 import time
@@ -290,15 +289,8 @@ class User(object):
         else:
             self.ssh_file = os.path.join('.ssh', 'id_%s' % self.ssh_type)
 
-        # select whether we dump additional debug info through syslog
-        self.syslogging = False
-
 
     def execute_command(self, cmd, use_unsafe_shell=False, data=None):
-        if self.syslogging:
-            syslog.openlog('ansible-%s' % os.path.basename(__file__))
-            syslog.syslog(syslog.LOG_NOTICE, 'Command %s' % '|'.join(cmd))
-
         return self.module.run_command(cmd, use_unsafe_shell=use_unsafe_shell, data=data)
 
     def remove_user_userdel(self):
@@ -2079,11 +2071,9 @@ def main():
 
     user = User(module)
 
-    if user.syslogging:
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        syslog.syslog(syslog.LOG_NOTICE, 'User instantiated - platform %s' % user.platform)
-        if user.distribution:
-            syslog.syslog(syslog.LOG_NOTICE, 'User instantiated - distribution %s' % user.distribution)
+    module.debug('User instantiated - platform %s' % user.platform)
+    if user.distribution:
+        module.debug('User instantiated - distribution %s' % user.distribution)
 
     rc = None
     out = ''
