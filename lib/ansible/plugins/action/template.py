@@ -20,6 +20,7 @@ __metaclass__ = type
 import base64
 import datetime
 import os
+import pwd
 import time
 
 from ansible import constants as C
