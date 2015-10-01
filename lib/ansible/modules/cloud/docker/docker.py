@@ -1389,8 +1389,8 @@ class DockerManager(object):
         """
 
         command = self.module.params.get('command')
-        if command:
-            command = command.strip()
+        if command is not None:
+            command = shlex.split(command)
         name = self.module.params.get('name')
         if name and not name.startswith('/'):
             name = '/' + name
@@ -1417,13 +1417,10 @@ class DockerManager(object):
                 details = _docker_id_quirk(details)
 
                 running_image = normalize_image(details['Config']['Image'])
-                running_command = container['Command'].strip()
 
                 image_matches = running_image in repo_tags
 
-                # if a container has an entrypoint, `command` will actually equal
-                # '{} {}'.format(entrypoint, command)
-                command_matches = (not command or running_command.endswith(command))
+                command_matches = command == details['Config']['Cmd']
 
                 matches = image_matches and command_matches
 
