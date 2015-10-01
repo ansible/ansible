@@ -46,6 +46,14 @@ options:
     default: missing
     choices: [ "missing", "always" ]
     version_added: "1.9"
+  entrypoint:
+    description:
+      - Corresponds to ``--entrypoint`` option of ``docker run`` command and
+        ``ENTRYPOINT`` directive of Dockerfile.
+        Used to match and launch containers.
+    default: null
+    required: false
+    version_added: "2.0"
   command:
     description:
       - Command used to match and launch containers.
@@ -1087,6 +1095,21 @@ class DockerManager(object):
                 differing.append(container)
                 continue
 
+            # ENTRYPOINT
+
+            expected_entrypoint = self.module.params.get('entrypoint')
+            if expected_entrypoint:
+                expected_entrypoint = shlex.split(expected_entrypoint)
+                actual_entrypoint = container["Config"]["Entrypoint"]
+
+                if actual_entrypoint != expected_entrypoint:
+                    self.reload_reasons.append(
+                        'entrypoint ({0} => {1})'
+                        .format(actual_entrypoint, expected_entrypoint)
+                    )
+                    differing.append(container)
+                    continue
+
             # COMMAND
 
             expected_command = self.module.params.get('command')
@@ -1388,6 +1411,9 @@ class DockerManager(object):
         Return any matching containers that are already present.
         """
 
+        entrypoint = self.module.params.get('entrypoint')
+        if entrypoint is not None:
+            entrypoint = shlex.split(entrypoint)
         command = self.module.params.get('command')
         if command is not None:
             command = shlex.split(command)
@@ -1421,8 +1447,12 @@ class DockerManager(object):
                 image_matches = running_image in repo_tags
 
                 command_matches = command == details['Config']['Cmd']
+                entrypoint_matches = (
+                    entrypoint == details['Config']['Entrypoint']
+                )
 
-                matches = image_matches and command_matches
+                matches = (image_matches and command_matches and
+                           entrypoint_matches)
 
             if matches:
                 if not details:
@@ -1487,6 +1517,7 @@ class DockerManager(object):
         api_version = self.client.version()['ApiVersion']
 
         params = {'image':        self.module.params.get('image'),
+                  'entrypoint':   self.module.params.get('entrypoint'),
                   'command':      self.module.params.get('command'),
                   'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
@@ -1718,6 +1749,7 @@ def main():
             count           = dict(default=1),
             image           = dict(required=True),
             pull            = dict(required=False, default='missing', choices=['missing', 'always']),
+            entrypoint      = dict(required=False, default=None, type='str'),
             command         = dict(required=False, default=None),
             expose          = dict(required=False, default=None, type='list'),
             ports           = dict(required=False, default=None, type='list'),
