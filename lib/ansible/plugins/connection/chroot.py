@@ -36,15 +36,14 @@ BUFSIZE = 65536
 class Connection(ConnectionBase):
     ''' Local chroot based connections '''
 
-    has_pipelining = True
     transport = 'chroot'
+    has_pipelining = True
     # su currently has an undiagnosed issue with calculating the file
     # checksums (so copy, for instance, doesn't work right)
     # Have to look into that before re-enabling this
     become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
-
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.chroot = self._play_context.remote_addr
@@ -68,15 +67,11 @@ class Connection(ConnectionBase):
     def _connect(self):
         ''' connect to the chroot; nothing to do here '''
         super(Connection, self)._connect()
-        self._display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
+        if not self._connected:
+            self._display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
+            self._connected = True
 
-    def _generate_cmd(self, cmd, executable):
-        # subprocess takes byte strings
-        local_cmd = [self.chroot_cmd, self.chroot, executable, '-c']
-        local_cmd.append(cmd)
-        return local_cmd
-
-    def _buffered_exec_command(self, cmd, in_data=None, sudoable=False, stdin=subprocess.PIPE):
+    def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
         ''' run a command on the chroot.  This is only needed for implementing
         put_file() get_file() so that we don't have to read the whole file
         into memory.
@@ -85,7 +80,7 @@ class Connection(ConnectionBase):
         return the process's exit code immediately.
         '''
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-        local_cmd = self._generate_cmd(cmd, executable)
+        local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
         self._display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
         # FIXME: cwd= needs to be set to the basedir of the playbook, which
@@ -99,7 +94,7 @@ class Connection(ConnectionBase):
         ''' run a command on the chroot '''
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        p = self._buffered_exec_command(cmd, in_data, sudoable)
+        p = self._buffered_exec_command(cmd)
 
         stdout, stderr = p.communicate(in_data)
         return (p.returncode, stdout, stderr)
@@ -152,4 +147,5 @@ class Connection(ConnectionBase):
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
-        pass
+        super(Connection, self).close()
+        self._connected = False
