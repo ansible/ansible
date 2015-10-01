@@ -447,7 +447,7 @@ def main():
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(022)
     crontab = CronTab(module, user, cron_file)
-]
+
     module.debug('cron instantiated - name: "%s"' % name)
 
     # --- user input validation ---
