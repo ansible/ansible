@@ -120,7 +120,7 @@ class CLI(object):
             if ask_vault_pass and confirm_vault:
                 vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
                 if vault_pass != vault_pass2:
-                    raise errors.AnsibleError("Passwords do not match")
+                    raise AnsibleError("Passwords do not match")
 
             if ask_new_vault_pass:
                 new_vault_pass = getpass.getpass(prompt="New Vault password: ")
@@ -128,7 +128,7 @@ class CLI(object):
             if ask_new_vault_pass and confirm_new:
                 new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
                 if new_vault_pass != new_vault_pass2:
-                    raise errors.AnsibleError("Passwords do not match")
+                    raise AnsibleError("Passwords do not match")
         except EOFError:
             pass
 
@@ -355,7 +355,7 @@ class CLI(object):
         ''' return full ansible version info '''
         if gitinfo:
             # expensive call, user with care
-            ansible_version_string = version('')
+            ansible_version_string = CLI.version('')
         else:
             ansible_version_string = __version__
         ansible_version = ansible_version_string.split()[0]
