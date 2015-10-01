@@ -167,9 +167,7 @@ class OVSBridge(object):
 
                 current_fail_mode = self.get_fail_mode()
                 if self.fail_mode and (self.fail_mode != current_fail_mode):
-                    syslog.syslog(syslog.LOG_NOTICE,
-                                  "changing fail mode %s to %s" %
-                                  (current_fail_mode, self.fail_mode))
+                    self.module.log( "changing fail mode %s to %s" % (current_fail_mode, self.fail_mode))
                     self.set_fail_mode()
                     changed = True
 
