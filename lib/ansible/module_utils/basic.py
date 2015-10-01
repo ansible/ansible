@@ -1260,9 +1260,16 @@ class AnsibleModule(object):
             module = 'ansible-%s' % os.path.basename(__file__)
 
             # 6655 - allow for accented characters
-            if isinstance(msg, unicode):
-                # We should never get here as msg should be type str, not unicode
-                msg = msg.encode('utf-8')
+            # On Python 2 we need to pass byte strings to syslog/journal.
+            # On Python 3 we need to pass Unicode strings to syslog/journal.
+            if not isinstance(msg, str):
+                if isinstance(msg, unicode):
+                    # We should never get here as msg should be type str, not unicode
+                    # Note: this branch can only happen on Python 2, because on
+                    # Python 3 we've aliased 'unicode' to 'str'.
+                    msg = msg.encode('utf-8')
+                else:
+                    raise TypeError("msg should be a string (got %s)" % repr(msg))
 
             if (has_journal):
                 journal_args = [("MODULE", os.path.basename(__file__))]
