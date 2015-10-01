@@ -25,6 +25,7 @@ DOCUMENTATION = '''
 ---
 module: win_package
 version_added: "1.7"
+author: Trond Hindenes
 short_description: Installs/Uninstalls a installable package, either from local file system or url
 description:
      - Installs or uninstalls a package
