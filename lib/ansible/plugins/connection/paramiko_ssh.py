@@ -236,7 +236,7 @@ class Connection(ConnectionBase):
                     self._display.debug("chunk is: %s" % chunk)
                     if not chunk:
                         if 'unknown user' in become_output:
-                            raise AnsibleError( 'user %s does not exist' % become_user)
+                            raise AnsibleError( 'user %s does not exist' % self._play_context.become_user)
                         else:
                             break
                             #raise AnsibleError('ssh connection closed waiting for password prompt')
