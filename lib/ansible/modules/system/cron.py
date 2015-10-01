@@ -175,9 +175,6 @@ class CronTab(object):
         self.lines     = None
         self.ansible   = "#Ansible: "
 
-        # select whether we dump additional debug info through syslog
-        self.syslogging = False
-
         if cron_file:
             self.cron_file = '/etc/cron.d/%s' % cron_file
         else:
@@ -214,10 +211,6 @@ class CronTab(object):
                                  not re.match( r'# \(.*version.*\)', l)):
                     self.lines.append(l)
                 count += 1
-
-    def log_message(self, message):
-        if self.syslogging:
-            syslog.syslog(syslog.LOG_NOTICE, 'ansible: "%s"' % message)
 
     def is_empty(self):
         if len(self.lines) == 0:
@@ -454,10 +447,8 @@ def main():
     # Ensure all files generated are only writable by the owning user.  Primarily relevant for the cron_file option.
     os.umask(022)
     crontab = CronTab(module, user, cron_file)
-
-    if crontab.syslogging:
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        syslog.syslog(syslog.LOG_NOTICE, 'cron instantiated - name: "%s"' % name)
+]
+    module.debug('cron instantiated - name: "%s"' % name)
 
     # --- user input validation ---
 
@@ -491,6 +482,7 @@ def main():
     if backup:
         (backuph, backup_file) = tempfile.mkstemp(prefix='crontab')
         crontab.write(backup_file)
+
 
     if crontab.cron_file and not name and not do_install:
         changed = crontab.remove_job_file()

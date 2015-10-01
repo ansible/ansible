@@ -26,7 +26,6 @@ import traceback
 import os
 import yum
 import rpm
-import syslog
 import platform
 import tempfile
 import shutil
@@ -168,10 +167,6 @@ EXAMPLES = '''
 BUFSIZE = 65536
 
 def_qf = "%{name}-%{version}-%{release}.%{arch}"
-
-def log(msg):
-    syslog.openlog('ansible-yum', 0, syslog.LOG_USER)
-    syslog.syslog(syslog.LOG_NOTICE, msg)
 
 def yum_base(conf_file=None):
 
