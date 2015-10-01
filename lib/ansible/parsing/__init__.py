@@ -23,11 +23,12 @@ import copy
 import json
 import os
 import stat
+import subprocess
 
 from yaml import load, YAMLError
 from six import text_type, string_types
 
-from ansible.errors import AnsibleFileNotFound, AnsibleParserError
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.splitter import unquote
