@@ -25,7 +25,7 @@ short_description: "Manages F5 BIG-IP LTM virtual servers"
 description:
     - "Manages F5 BIG-IP LTM virtual servers via iControl SOAP API"
 version_added: "2.0"
-author: Etienne Carriere
+author: Etienne Carriere (@Etienne-Carriere)
 notes:
     - "Requires BIG-IP software version >= 11"
     - "F5 developed module 'bigsuds' required (see http://devcentral.f5.com)"
@@ -85,7 +85,7 @@ options:
         aliases: ['vs']
     destination:
         description:
-            - "Destination IP of the virtual server (only host is currently supported) . Required when state=present and vs does not exist. Error when state=absent."
+            - "Destination IP of the virtual server (only host is currently supported) . Required when state=present and vs does not exist."
         required: true
         default: null
         choices: []
@@ -93,24 +93,18 @@ options:
     port:
         description:
             - "Port of the virtual server . Required when state=present and vs does not exist"
-        required: true
-        default: null
-        choices: []
-        aliases: []
+        required: false
+        default: None
     all_profiles:
         description:
             - "List of all Profiles (HTTP,ClientSSL,ServerSSL,etc) that must be used by the virtual server"
         required: false
-        default: null
-        choices: []
-        aliases: []
+        default: None
     pool:
         description:
             - "Default pool for the virtual server"
         required: false
-        default: null
-        choices: []
-        aliases: []
+        default: None
     snat:
         description:
             - "Source network address policy"
@@ -125,8 +119,7 @@ options:
         description:
             - "Virtual server description."
         required: false
-        default: null
-        choices: []
+        default: None
 '''
 
 EXAMPLES = '''
@@ -145,7 +138,7 @@ EXAMPLES = '''
         state: present
         partition: MyPartition
         name: myvirtualserver
-        destination: "{{ ansible_default_ipv4["address"] }}"
+        destination: "{{ ansible_default_ipv4['address'] }}"
         port: 443
         pool: "{{ mypool }}"
         snat: Automap
@@ -218,7 +211,7 @@ def vs_create(api,name,destination,port,pool):
             profiles = _profiles)
         created = True
         return created
-    except bigsudsOperationFailed, e :
+    except bigsuds.OperationFailed, e:
         if "already exists" not in str(e):
             raise Exception('Error on creating Virtual Server : %s' % e)
 
@@ -259,7 +252,7 @@ def set_snat(api,name,snat):
     try:
         current_state=get_snat_type(api,name)
         if snat is None:
-            return update
+            return updated
         if snat == 'None' and current_state != 'SRC_TRANS_NONE':
             api.LocalLB.VirtualServer.set_source_address_translation_none(virtual_servers = [name])
             updated = True
@@ -292,16 +285,28 @@ def set_pool(api,name,pool):
 def get_destination(api,name):
     return api.LocalLB.VirtualServer.get_destination_v2(virtual_servers = [name])[0]
 
-def set_destination(api,name,destination,port):
+def set_destination(api,name,destination):
     updated=False
     try:
         current_destination = get_destination(api,name)
-        if (destination is not None and port is not None) and (destination != current_destination['address'] or port != current_destination['port']):
-            api.LocalLB.VirtualServer.set_destination_v2(virtual_servers = [name],destinations=[{'address': destination, 'port':port}])
+        if destination is not None  and destination != current_destination['address']:
+            api.LocalLB.VirtualServer.set_destination_v2(virtual_servers = [name],destinations=[{'address': destination, 'port': current_destination['port']}])
             updated=True
         return updated
     except bigsuds.OperationFailed, e:
         raise Exception('Error on setting destination : %s'% e )
+
+
+def set_port(api,name,port):
+    updated=False
+    try:
+        current_destination = get_destination(api,name)
+        if port is not None  and port != current_destination['port']:
+            api.LocalLB.VirtualServer.set_destination_v2(virtual_servers = [name],destinations=[{'address': current_destination['address'], 'port': port}])
+            updated=True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting port : %s'% e )
 
 
 
@@ -428,7 +433,8 @@ def main():
                     # Have a transaction for all the changes
                     try:
                         api.System.Session.start_transaction()
-                        result['changed']|=set_destination(api,name,fq_name(partition,destination),port)
+                        result['changed']|=set_destination(api,name,fq_name(partition,destination))
+                        result['changed']|=set_port(api,name,port)
                         result['changed']|=set_pool(api,name,pool)
                         result['changed']|=set_description(api,name,description)
                         result['changed']|=set_snat(api,name,snat)
@@ -458,5 +464,7 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.f5 import *
-main()
+
+if __name__ == '__main__':
+    main()
 
