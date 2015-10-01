@@ -105,40 +105,73 @@ Function Fail-Json($obj, $message = $null)
 #Get-AnsibleParam also supports Parameter validation to save you from coding that manually:
 #Example: Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
 #Note that if you use the failifempty option, you do need to specify resultobject as well.
-Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage)
+Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempty=$false, $emptyattributefailmessage, $ValidateSet, $ValidateSetErrorMessage, [string[]]$aliases, [Parameter(DontShow)]$OriginalName)
 {
-    # Check if the provided Member $name exists in $obj and return it or the default. 
-    Try
+    if (!$originalname)
     {
-        If (-not $obj.$name.GetType)
+        $originalname = $name
+    }
+    # Check if the provided Member $name exists in $obj and return it or the default. 
+    #Try
+    #{
+        $ParamExists = $false
+        If ($obj | get-member | where {$_.MemberTYpe -eq "NoteProperty"} | where {$_.Name -eq $name} | select -ExpandProperty Name)
         {
-            throw
+            $ParamExists = $true            
         }
-
-        if ($ValidateSet)
+        
+        if ($ParamExists -eq $true)
         {
-            if ($ValidateSet -contains ($obj.$name))
+            if ($ValidateSet)
             {
-                $obj.$name    
+                if ($ValidateSet -contains ($obj.$name))
+                {
+                    $obj.$name    
+                }
+                Else
+                {
+                    if ($ValidateSetErrorMessage -eq $null)
+                    {
+                        #Auto-generated error should be sufficient in most use cases
+                        $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
+                    }
+                    Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
+                }
             }
             Else
             {
-                if ($ValidateSetErrorMessage -eq $null)
-                {
-                    #Auto-generated error should be sufficient in most use cases
-                    $ValidateSetErrorMessage = "Argument $name needs to be one of $($ValidateSet -join ",") but was $($obj.$name)."
-                }
-                Fail-Json -obj $resultobj -message $ValidateSetErrorMessage
+                $obj.$name
             }
+        
         }
         Else
         {
-            $obj.$name
+        #if name failed, try each of the aliases in turn
+        if ($aliases)
+        {
+                $AliasParams = $psboundparameters
+                #Try the first alias
+                $AliasParams.Name = $aliases[0]
+                $AliasParams.Aliases = $aliases | where {$_ -ne $aliases[0]}
+                $aliasparams.Remove("originalname") | out-null
+                $aliasresult = Get-ansibleParam @AliasParams -originalname $originalname
+                if ($aliasresult)
+                {
+                    return $aliasresult
+                }
+                else
+                {
+                    #at this point we've iterated thru all aliases. We've either failed or got value, so we shouldnt be here.
+                    
+                }
+
         }
-        
-    }
-    Catch
-    {
+        else
+        {
+            #if we're here, we didnt get anything from that property. Up to failifempty to decide action
+        }
+
+
         If ($failifempty -eq $false)
         {
             $default
@@ -147,15 +180,16 @@ Function Get-AnsibleParam($obj, $name, $default = $null, $resultobj, $failifempt
         {
             If (!$emptyattributefailmessage)
             {
-                $emptyattributefailmessage = "Missing required argument: $name"
+                $emptyattributefailmessage = "Missing required argument: $originalname"
             }
             Fail-Json -obj $resultobj -message $emptyattributefailmessage
         }
     }
 }
 
+
 #Alias Get-attr-->Get-AnsibleParam for backwards compat.
-New-Alias -Name Get-attr -Value Get-AnsibleParam
+New-Alias -Name Get-attr -Value Get-AnsibleParam -Force
 
 # Helper filter/pipeline function to convert a value to boolean following current
 # Ansible practices
