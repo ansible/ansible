@@ -22,12 +22,13 @@ __metaclass__ = type
 import base64
 import json
 import os
+import pipes
 import random
 import stat
 import tempfile
 import time
 
-from six import string_types
+from six import string_types, iteritems
 from six.moves import StringIO
 
 from ansible import constants as C
@@ -362,17 +363,26 @@ class ActionBase:
 
         # a remote tmp path may be necessary and not already created
         remote_module_path = None
+        args_file_path = None
         if not tmp and self._late_needs_tmp_path(tmp, module_style):
             tmp = self._make_tmp_path()
 
         if tmp:
             remote_module_path = self._connection._shell.join_path(tmp, module_name)
+            if module_style == 'old':
+                # we'll also need a temp file to hold our module arguments
+                args_file_path = self._connection._shell.join_path(tmp, 'args')
 
-        # FIXME: async stuff here?
-        #if (module_style != 'new' or async_jid is not None or not self._connection._has_pipelining or not self._play_context.pipelining or C.DEFAULT_KEEP_REMOTE_FILES):
-        if remote_module_path:
+        if remote_module_path or module_style != 'new':
             self._display.debug("transferring module to remote")
             self._transfer_data(remote_module_path, module_data)
+            if module_style == 'old':
+                # we need to dump the module args to a k=v string in a file on
+                # the remote system, which can be read and parsed by the module
+                args_data = ""
+                for k,v in iteritems(module_args):
+                    args_data += '%s="%s" ' % (k, pipes.quote(v))
+                self._transfer_data(args_file_path, args_data)
             self._display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
@@ -384,9 +394,6 @@ class ActionBase:
         cmd = ""
         in_data = None
 
-        # FIXME: all of the old-module style and async stuff has been removed from here, and
-        #        might need to be re-added (unless we decide to drop support for old-style modules
-        #        at this point and rework things to support non-python modules specifically)
         if self._connection.has_pipelining and self._play_context.pipelining and not C.DEFAULT_KEEP_REMOTE_FILES:
             in_data = module_data
         else:
@@ -399,7 +406,7 @@ class ActionBase:
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 rm_tmp = tmp
 
-        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, rm_tmp)
+        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp)
         cmd = cmd.strip()
 
         sudoable = True

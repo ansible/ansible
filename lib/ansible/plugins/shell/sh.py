@@ -134,12 +134,14 @@ class ShellModule(object):
         cmd = "%s; %s || (echo \'0  \'%s)" % (test, cmd, shell_escaped_path)
         return cmd
 
-    def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # don't quote the cmd if it's an empty string, because this will
         # break pipelining mode
         if cmd.strip() != '':
             cmd = pipes.quote(cmd)
         cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
+        if arg_path is not None:
+            cmd_parts.append(arg_path)
         new_cmd = " ".join(cmd_parts)
         if rm_tmp:
             new_cmd = '%s; rm -rf "%s" %s' % (new_cmd, rm_tmp, self._SHELL_REDIRECT_ALLNULL)
