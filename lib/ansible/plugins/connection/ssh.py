@@ -204,8 +204,9 @@ class Connection(ConnectionBase):
         # (i.e. inventory or task settings or overrides on the command line).
 
         for opt in ['ssh_common_args', binary + '_extra_args']:
-            if getattr(self._play_context, opt):
-                args = self._split_args(getattr(self._play_context, opt))
+            attr = getattr(self._play_context, opt, None)
+            if attr is not None:
+                args = self._split_args(attr)
                 self._add_args("PlayContext set %s" % opt, args)
 
         # Check if ControlPersist is enabled and add a ControlPath if one hasn't
