@@ -47,15 +47,6 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
-        self.ssh_extra_args = ''
-        self.ssh_args = ''
-
-    def set_host_overrides(self, host):
-        v = host.get_vars()
-        if 'ansible_ssh_extra_args' in v:
-            self.ssh_extra_args = v['ansible_ssh_extra_args']
-        if 'ansible_ssh_args' in v:
-            self.ssh_args = v['ansible_ssh_args']
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -151,8 +142,7 @@ class Connection(ConnectionBase):
         if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
             self._command += ['-b', '-']
 
-        elif binary == 'ssh':
-            self._command += ['-C']
+        self._command += ['-C']
 
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
@@ -160,22 +150,11 @@ class Connection(ConnectionBase):
             # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
             self._command += ['-q']
 
-        # Next, we add ansible_ssh_args from the inventory if it's set, or
-        # [ssh_connection]ssh_args from ansible.cfg, or the default Control*
-        # settings.
+        # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
-        if self.ssh_args:
-            args = self._split_args(self.ssh_args)
-            self._add_args("inventory set ansible_ssh_args", args)
-        elif C.ANSIBLE_SSH_ARGS:
-            args = self._split_args(C.ANSIBLE_SSH_ARGS)
+        if self._play_context.ssh_args:
+            args = self._split_args(self._play_context.ssh_args)
             self._add_args("ansible.cfg set ssh_args", args)
-        else:
-            args = (
-                "-o", "ControlMaster=auto",
-                "-o", "ControlPersist=60s"
-            )
-            self._add_args("default arguments", args)
 
         # Now we add various arguments controlled by configuration file settings
         # (e.g. host_key_checking) or inventory variables (ansible_ssh_port) or
@@ -189,7 +168,7 @@ class Connection(ConnectionBase):
 
         if self._play_context.port is not None:
             self._add_args(
-                "ANSIBLE_REMOTE_PORT/remote_port/ansible_ssh_port set",
+                "ANSIBLE_REMOTE_PORT/remote_port/ansible_port set",
                 ("-o", "Port={0}".format(self._play_context.port))
             )
 
@@ -212,7 +191,7 @@ class Connection(ConnectionBase):
         user = self._play_context.remote_user
         if user and user != pwd.getpwuid(os.geteuid())[0]:
             self._add_args(
-                "ANSIBLE_REMOTE_USER/remote_user/ansible_ssh_user/user/-u set",
+                "ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set",
                 ("-o", "User={0}".format(self._play_context.remote_user))
             )
 
@@ -221,19 +200,16 @@ class Connection(ConnectionBase):
             ("-o", "ConnectTimeout={0}".format(self._play_context.timeout))
         )
 
-        # If any extra SSH arguments are specified in the inventory for
-        # this host, or specified as an override on the command line,
-        # add them in.
+        # Add in any common or binary-specific arguments from the PlayContext
+        # (i.e. inventory or task settings or overrides on the command line).
 
-        if self._play_context.ssh_extra_args:
-            args = self._split_args(self._play_context.ssh_extra_args)
-            self._add_args("command-line added --ssh-extra-args", args)
-        elif self.ssh_extra_args:
-            args = self._split_args(self.ssh_extra_args)
-            self._add_args("inventory added ansible_ssh_extra_args", args)
+        for opt in ['ssh_common_args', binary + '_extra_args']:
+            attr = getattr(self._play_context, opt, None)
+            if attr is not None:
+                args = self._split_args(attr)
+                self._add_args("PlayContext set %s" % opt, args)
 
-        # Check if ControlPersist is enabled (either by default, or using
-        # ssh_args or ssh_extra_args) and add a ControlPath if one hasn't
+        # Check if ControlPersist is enabled and add a ControlPath if one hasn't
         # already been set.
 
         controlpersist, controlpath = self._persistence_controls(self._command)

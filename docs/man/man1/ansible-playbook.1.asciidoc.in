@@ -151,10 +151,23 @@ run operations with su as this user (default=root)
 
 Run operations with sudo (nopasswd) (deprecated, use become)
 
-*--ssh-extra-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
+*--ssh-common-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
 
-Add the specified arguments to any ssh command-line. Useful to set a
-ProxyCommand to use a jump host, but any arguments may be specified.
+Add the specified arguments to any sftp/scp/ssh command-line. Useful to
+set a ProxyCommand to use a jump host, but any arguments that are
+accepted by all three programs may be specified.
+
+*--sftp-extra-args=*''-f ...''::
+
+Add the specified arguments to any sftp command-line.
+
+*--scp-extra-args=*''-l ...''::
+
+Add the specified arguments to any scp command-line.
+
+*--ssh-extra-args=*''-R ...''::
+
+Add the specified arguments to any ssh command-line.
 
 *-U*, 'SUDO_USER', *--sudo-user=*'SUDO_USER'::
 

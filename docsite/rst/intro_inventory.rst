@@ -212,11 +212,16 @@ SSH connection::
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
-    ansible_ssh_args
-      This setting overrides any ``ssh_args`` configured in ``ansible.cfg``.
+    ansible_ssh_common_args
+      This setting is always appended to the default command line for
+      sftp, scp, and ssh. Useful to configure a ``ProxyCommand`` for a
+      certain host (or group).
+    ansible_sftp_extra_args
+      This setting is always appended to the default sftp command line.
+    ansible_scp_extra_args
+      This setting is always appended to the default scp command line.
     ansible_ssh_extra_args
-      Additional arguments for ssh. Useful to configure a ``ProxyCommand`` for a certain host (or group).
-      This is used in addition to any ``ssh_args`` configured in ``ansible.cfg`` or the inventory.
+      This setting is always appended to the default ssh command line.
     ansible_ssh_pipelining
       Determines whether or not to use SSH pipelining. This can override the
       ``pipelining`` setting in ``ansible.cfg``.
