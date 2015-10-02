@@ -28,12 +28,13 @@ except ImportError:
 
 DOCUMENTATION = '''
 ---
-module: quantum_router_gateway
+module: quantum_router
 version_added: "1.2"
 author: "Benno Joy (@bennojoy)"
-short_description: set/unset a gateway interface for the router with the specified external network
+deprecated: Deprecated in 2.0. Use os_router instead
+short_description: Create or Remove router from openstack
 description:
-   - Creates/Removes a gateway interface from the router, used to associate a external network with a router to route external traffic.
+   - Create or Delete routers from OpenStack
 options:
    login_username:
      description:
@@ -52,7 +53,7 @@ options:
      default: 'yes'
    auth_url:
      description:
-        - The keystone URL for authentication
+        - The keystone url for authentication
      required: false
      default: 'http://127.0.0.1:35357/v2.0/'
    region_name:
@@ -65,16 +66,21 @@ options:
         - Indicate desired state of the resource
      choices: ['present', 'absent']
      default: present
-   router_name:
+   name:
      description:
-        - Name of the router to which the gateway should be attached.
+        - Name to be give to the router
      required: true
      default: None
-   network_name:
+   tenant_name:
      description:
-        - Name of the external network which should be attached to the router.
-     required: true
+        - Name of the tenant for which the router has to be created, if none router would be created for the login tenant.
+     required: false
      default: None
+   admin_state_up:
+     description:
+        - desired admin state of the created router .
+     required: false
+     default: true
 requirements:
     - "python >= 2.6"
     - "python-neutronclient or python-quantumclient"
@@ -82,13 +88,17 @@ requirements:
 '''
 
 EXAMPLES = '''
-# Attach an external network with a router to allow flow of external traffic
-- quantum_router_gateway: state=present login_username=admin login_password=admin
-                          login_tenant_name=admin router_name=external_router
-                          network_name=external_network
+# Creates a router for tenant admin
+- quantum_router: state=present
+                login_username=admin
+                login_password=admin
+                login_tenant_name=admin
+                name=router1"
 '''
 
 _os_keystone = None
+_os_tenant_id = None
+
 def _get_ksclient(module, kwargs):
     try:
         kclient = ksclient.Client(username=kwargs.get('login_username'),
@@ -123,96 +133,83 @@ def _get_neutron_client(module, kwargs):
         module.fail_json(msg = "Error in connecting to neutron: %s " % e.message)
     return neutron
 
+def _set_tenant_id(module):
+    global _os_tenant_id
+    if not module.params['tenant_name']:
+        login_tenant_name = module.params['login_tenant_name']
+    else:
+        login_tenant_name = module.params['tenant_name']
+
+    for tenant in _os_keystone.tenants.list():
+        if tenant.name == login_tenant_name:
+            _os_tenant_id = tenant.id
+            break
+    if not _os_tenant_id:
+            module.fail_json(msg = "The tenant id cannot be found, please check the parameters")
+
+
 def _get_router_id(module, neutron):
     kwargs = {
-            'name': module.params['router_name'],
+            'name': module.params['name'],
+            'tenant_id': _os_tenant_id,
     }
     try:
         routers = neutron.list_routers(**kwargs)
     except Exception, e:
         module.fail_json(msg = "Error in getting the router list: %s " % e.message)
     if not routers['routers']:
-            return None
+        return None
     return routers['routers'][0]['id']
 
-def _get_net_id(neutron, module):
-    kwargs = {
-        'name':            module.params['network_name'],
-        'router:external': True
+def _create_router(module, neutron):
+    router = {
+            'name': module.params['name'],
+            'tenant_id': _os_tenant_id,
+            'admin_state_up': module.params['admin_state_up'],
     }
     try:
-        networks = neutron.list_networks(**kwargs)
+        new_router = neutron.create_router(dict(router=router))
     except Exception, e:
-        module.fail_json("Error in listing neutron networks: %s" % e.message)
-    if not networks['networks']:
-        return None
-    return networks['networks'][0]['id']
+        module.fail_json( msg = "Error in creating router: %s" % e.message)
+    return new_router['router']['id']
 
-def _get_port_id(neutron, module, router_id, network_id):
-    kwargs = {
-        'device_id': router_id,
-        'network_id': network_id,
-    }
+def _delete_router(module, neutron, router_id):
     try:
-        ports = neutron.list_ports(**kwargs)
-    except Exception, e:
-        module.fail_json( msg = "Error in listing ports: %s" % e.message)
-    if not ports['ports']:
-        return None
-    return ports['ports'][0]['id']
-
-def _add_gateway_router(neutron, module, router_id, network_id):
-    kwargs = {
-        'network_id': network_id
-    }
-    try:
-        neutron.add_gateway_router(router_id, kwargs)
-    except Exception, e:
-        module.fail_json(msg = "Error in adding gateway to router: %s" % e.message)
-    return True
-
-def  _remove_gateway_router(neutron, module, router_id):
-    try:
-        neutron.remove_gateway_router(router_id)
-    except Exception, e:
-        module.fail_json(msg = "Error in removing gateway to router: %s" % e.message)
+        neutron.delete_router(router_id)
+    except:
+        module.fail_json("Error in deleting the router")
     return True
 
 def main():
-
     argument_spec = openstack_argument_spec()
     argument_spec.update(dict(
-            router_name        = dict(required=True),
-            network_name       = dict(required=True),
-            state              = dict(default='present', choices=['absent', 'present']),
+        name                            = dict(required=True),
+        tenant_name                     = dict(default=None),
+        state                           = dict(default='present', choices=['absent', 'present']),
+        admin_state_up                  = dict(type='bool', default=True),
     ))
     module = AnsibleModule(argument_spec=argument_spec)
     if not HAVE_DEPS:
         module.fail_json(msg='python-keystoneclient and either python-neutronclient or python-quantumclient are required')
 
     neutron = _get_neutron_client(module, module.params)
-    router_id = _get_router_id(module, neutron)
-
-    if not router_id:
-        module.fail_json(msg="failed to get the router id, please check the router name")
-
-    network_id = _get_net_id(neutron, module)
-    if not network_id:
-        module.fail_json(msg="failed to get the network id, please check the network name and make sure it is external")
+    _set_tenant_id(module)
 
     if module.params['state'] == 'present':
-        port_id = _get_port_id(neutron, module, router_id, network_id)
-        if not port_id:
-            _add_gateway_router(neutron, module, router_id, network_id)
-            module.exit_json(changed=True, result="created")
-        module.exit_json(changed=False, result="success")
+        router_id = _get_router_id(module, neutron)
+        if not router_id:
+            router_id = _create_router(module, neutron)
+            module.exit_json(changed=True, result="Created", id=router_id)
+        else:
+            module.exit_json(changed=False, result="success" , id=router_id)
 
-    if module.params['state'] == 'absent':
-        port_id = _get_port_id(neutron, module, router_id, network_id)
-        if not port_id:
-            module.exit_json(changed=False, result="Success")
-        _remove_gateway_router(neutron, module, router_id)
-        module.exit_json(changed=True, result="Deleted")
+    else:
+        router_id = _get_router_id(module, neutron)
+        if not router_id:
+            module.exit_json(changed=False, result="success")
+        else:
+            _delete_router(module, neutron, router_id)
+            module.exit_json(changed=True, result="deleted")
 
 # this is magic, see lib/ansible/module.params['common.py
 from ansible.module_utils.basic import *
