@@ -150,18 +150,11 @@ class Connection(ConnectionBase):
             # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
             self._command += ['-q']
 
-        # Next, we add [ssh_connection]ssh_args from ansible.cfg, or the default
-        # Control* settings.
+        # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
         if self._play_context.ssh_args:
             args = self._split_args(self._play_context.ssh_args)
             self._add_args("ansible.cfg set ssh_args", args)
-        else:
-            args = (
-                "-o", "ControlMaster=auto",
-                "-o", "ControlPersist=60s"
-            )
-            self._add_args("default arguments", args)
 
         # Now we add various arguments controlled by configuration file settings
         # (e.g. host_key_checking) or inventory variables (ansible_ssh_port) or
