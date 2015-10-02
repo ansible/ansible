@@ -22,7 +22,13 @@ __metaclass__ = type
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
-#from ansible.utils.display import deprecated
+
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 class Become:
 
@@ -66,26 +72,24 @@ class Become:
             if 'sudo' in ds:
                 ds['become'] = ds['sudo']
                 del ds['sudo']
-            else:
-                ds['become'] = True
+
             if 'sudo_user' in ds:
                 ds['become_user'] = ds['sudo_user']
                 del ds['sudo_user']
 
-            #deprecated("Instead of sudo/sudo_user, use become/become_user and set become_method to 'sudo' (default)")
+            display.deprecated("Instead of sudo/sudo_user, use become/become_user and make sure become_method is 'sudo' (default)")
 
         elif 'su' in ds or 'su_user' in ds:
             ds['become_method'] = 'su'
             if 'su' in ds:
                 ds['become'] = ds['su']
                 del ds['su']
-            else:
-                ds['become'] = True
+
             if 'su_user' in ds:
                 ds['become_user'] = ds['su_user']
                 del ds['su_user']
 
-            #deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
+            display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
 
         # if we are becoming someone else, but some fields are unset,
         # make sure they're initialized to the default config values
