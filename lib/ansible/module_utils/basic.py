@@ -1264,7 +1264,6 @@ class AnsibleModule(object):
             # On Python 3 we need to pass Unicode strings to syslog/journal.
             if not isinstance(msg, str):
                 if isinstance(msg, unicode):
-                    # We should never get here as msg should be type str, not unicode
                     # Note: this branch can only happen on Python 2, because on
                     # Python 3 we've aliased 'unicode' to 'str'.
                     msg = msg.encode('utf-8')
