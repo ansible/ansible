@@ -33,6 +33,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils.vars import combine_vars
 
 SSHPASS_AVAILABLE = None
 
@@ -47,15 +48,21 @@ class Connection(ConnectionBase):
         super(Connection, self).__init__(*args, **kwargs)
 
         self.host = self._play_context.remote_addr
-        self.ssh_extra_args = ''
-        self.ssh_args = ''
+        for v in ['ssh_common_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
+            setattr(self, v, '')
 
     def set_host_overrides(self, host):
-        v = host.get_vars()
-        if 'ansible_ssh_extra_args' in v:
-            self.ssh_extra_args = v['ansible_ssh_extra_args']
-        if 'ansible_ssh_args' in v:
-            self.ssh_args = v['ansible_ssh_args']
+        # FIXME: The following can only use the variables set directly against
+        # the host ("hostname var=...") or the group ("[group:vars] ...") in the
+        # inventory file, but NOT those read from group_vars/host_vars files or
+        # any other source. That's clearly wrong, but we don't have access to a
+        # VariableManager here, so I don't know how to get at those settings.
+
+        vars = combine_vars(host.get_group_vars(), host.get_vars())
+        for v in ['ssh_common_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
+            name = 'ansible_%s' % v
+            if name in vars:
+                setattr(self, v, vars[name])
 
     # The connection is created by running ssh/scp/sftp from the exec_command,
     # put_file, and fetch_file methods, so we don't need to do any connection
@@ -151,8 +158,7 @@ class Connection(ConnectionBase):
         if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
             self._command += ['-b', '-']
 
-        elif binary == 'ssh':
-            self._command += ['-C']
+        self._command += ['-C']
 
         if self._play_context.verbosity > 3:
             self._command += ['-vvv']
@@ -160,14 +166,10 @@ class Connection(ConnectionBase):
             # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
             self._command += ['-q']
 
-        # Next, we add ansible_ssh_args from the inventory if it's set, or
-        # [ssh_connection]ssh_args from ansible.cfg, or the default Control*
-        # settings.
+        # Next, we add [ssh_connection]ssh_args from ansible.cfg, or the default
+        # Control* settings.
 
-        if self.ssh_args:
-            args = self._split_args(self.ssh_args)
-            self._add_args("inventory set ansible_ssh_args", args)
-        elif C.ANSIBLE_SSH_ARGS:
+        if C.ANSIBLE_SSH_ARGS:
             args = self._split_args(C.ANSIBLE_SSH_ARGS)
             self._add_args("ansible.cfg set ssh_args", args)
         else:
@@ -189,7 +191,7 @@ class Connection(ConnectionBase):
 
         if self._play_context.port is not None:
             self._add_args(
-                "ANSIBLE_REMOTE_PORT/remote_port/ansible_ssh_port set",
+                "ANSIBLE_REMOTE_PORT/remote_port/ansible_port set",
                 ("-o", "Port={0}".format(self._play_context.port))
             )
 
@@ -212,7 +214,7 @@ class Connection(ConnectionBase):
         user = self._play_context.remote_user
         if user and user != pwd.getpwuid(os.geteuid())[0]:
             self._add_args(
-                "ANSIBLE_REMOTE_USER/remote_user/ansible_ssh_user/user/-u set",
+                "ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set",
                 ("-o", "User={0}".format(self._play_context.remote_user))
             )
 
@@ -221,16 +223,17 @@ class Connection(ConnectionBase):
             ("-o", "ConnectTimeout={0}".format(self._play_context.timeout))
         )
 
-        # If any extra SSH arguments are specified in the inventory for
-        # this host, or specified as an override on the command line,
-        # add them in.
+        # If the inventory specifies either common or binary-specific arguments
+        # applicable to this host, or they are specified as an override on the
+        # command line, add them in now.
 
-        if self._play_context.ssh_extra_args:
-            args = self._split_args(self._play_context.ssh_extra_args)
-            self._add_args("command-line added --ssh-extra-args", args)
-        elif self.ssh_extra_args:
-            args = self._split_args(self.ssh_extra_args)
-            self._add_args("inventory added ansible_ssh_extra_args", args)
+        for opt in ['ssh_common_args', binary + '_extra_args']:
+            if getattr(self._play_context, opt):
+                args = self._split_args(getattr(self._play_context, opt))
+                self._add_args("command-line added --%s" % opt.replace('_', '-'), args)
+            elif getattr(self, opt):
+                args = self._split_args(getattr(self, opt))
+                self._add_args("inventory added ansible_%s" % opt, args)
 
         # Check if ControlPersist is enabled (either by default, or using
         # ssh_args or ssh_extra_args) and add a ControlPath if one hasn't

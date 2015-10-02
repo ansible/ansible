@@ -140,6 +140,9 @@ class PlayContext(Base):
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
+    _ssh_common_args  = FieldAttribute(isa='string')
+    _sftp_extra_args  = FieldAttribute(isa='string')
+    _scp_extra_args   = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
     _connection_lockfd= FieldAttribute(isa='int')
     _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
@@ -240,6 +243,9 @@ class PlayContext(Base):
 
         self.remote_user = options.remote_user
         self.private_key_file = options.private_key_file
+        self.ssh_common_args = options.ssh_common_args
+        self.sftp_extra_args = options.sftp_extra_args
+        self.scp_extra_args = options.scp_extra_args
         self.ssh_extra_args = options.ssh_extra_args
 
         # privilege escalation
