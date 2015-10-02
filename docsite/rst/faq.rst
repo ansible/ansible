@@ -60,31 +60,21 @@ for new users.
 How do I configure a jump host to access servers that I have no direct access to?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-With Ansible version 2, it's possible to set `ansible_ssh_extra_args` as
-an inventory variable. Any arguments specified this way are added to the
-ssh command line when connecting to the relevant host(s), so it's a good
-way to set a `ProxyCommand`. Consider the following inventory group:
+Prior to Ansible version 2.0, it was necessary to configure a suitable `ProxyCommand` for individual hosts in `~/.ssh/config`, or globally for all hosts by setting `ssh_args` in `ansible.cfg`.
+
+With Ansible 2.0 and above, the reserved variable `ansible_ssh_extra_args` can be set as an inventory variable. Arguments specified in this way are appended to the ssh command line when connecting to the relevant host(s), so it's a good way to set a per-group `ProxyCommand`. Consider the following inventory group::
 
     [gatewayed]
     foo ansible_host=192.0.2.1
     bar ansible_host=192.0.2.2
 
-You can create `group_vars/gatewayed.yml` with the following contents:
+If you are using OpenSSH 5.4 or later to connect to hosts, you can create `group_vars/gatewayed.yml` with the following contents::
 
     ansible_ssh_extra_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
 
-Ansible will then add these arguments when trying to connect to any host
-in the group `gatewayed`. (These arguments are added to any `ssh_args`
-that may be configured, so it isn't necessary to repeat the default
-`ControlPath` settings in `ansible_ssh_extra_args`.)
+The Ansible ssh command for hosts in the `gatewayed` group is assembled from the ssh variables in `ansible.cfg` and the contents of the `ansible_ssh_extra_args` inventory variable, so it is not necessary to repeat arguments in both places.
 
-Note that `ssh -W` is available only with OpenSSH 5.4 or later. With
-older versions, it's necessary to execute `nc %h:%p` or some equivalent
-command on the bastion host.
-
-With earlier versions of Ansible, it was necessary to configure a
-suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
-or globally by setting `ssh_args` in `ansible.cfg`.
+If you are using a version of OpenSSH older than 5.4, it will be necessary to execute `nc %h:%p` or some equivalent command on the jump host.
 
 .. _ec2_cloud_performance:
 
