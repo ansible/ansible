@@ -37,7 +37,7 @@ escaping once works. Here's an example of how playbooks need to be modified:
     # Syntax in 2.0.x
     - debug:
         msg: "{{ 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') }}"
-    
+
     # Output:
     "msg": "test1 1\\3"
     ```
@@ -57,7 +57,7 @@ newline being stripped you can change your playbook like this:
     tasks:
     - debug:
         msg: "{{ message }}"
-    
+
     # Syntax in 2.0.x
     vars:
       old_message: >
@@ -77,6 +77,9 @@ Deprecated Modules (new ones in parens):
 * glance_image
 * nova_compute   (os_server)
 * quantum_floating_ip (os_floating_ip)
+* quantum_router (os_router)
+* quantum_router_gateway (os_router)
+* quantum_router_interface (os_router)
 
 New Modules:
 
@@ -150,6 +153,7 @@ New Modules:
 * openstack: os_network
 * openstack: os_nova_flavor
 * openstack: os_object
+* openstack: os_router
 * openstack: os_security_group
 * openstack: os_security_group_rule
 * openstack: os_server
@@ -375,8 +379,10 @@ Other Notable Changes:
 * New lookup plugins:
   * dig: does dns resolution and returns IPs.
   * url: allows pulling data from a url.
+
 * New callback plugins:
   * syslog_json: allows logging play output to a syslog network server using json format
+
 * Many new enhancements to the amazon web service modules:
   * ec2 now applies all specified security groups when creating a new instance.  Previously it was only applying one
   * ec2_vol gained the ability to specify the EBS volume type
