@@ -56,6 +56,7 @@ MAGIC_VARIABLE_MAPPING = dict(
    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
    remote_user      = ('ansible_ssh_user', 'ansible_user'),
    port             = ('ansible_ssh_port', 'ansible_port'),
+   accelerate_port  = ('ansible_accelerate_port',),
    password         = ('ansible_ssh_pass', 'ansible_password'),
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
    pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
@@ -142,6 +143,9 @@ class PlayContext(Base):
     _ssh_extra_args   = FieldAttribute(isa='string')
     _connection_lockfd= FieldAttribute(isa='int')
     _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
+    _accelerate       = FieldAttribute(isa='bool', default=False)
+    _accelerate_ipv6  = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _accelerate_port  = FieldAttribute(isa='int', default=C.ACCELERATE_PORT, always_post_validate=True)
 
     # privilege escalation fields
     _become           = FieldAttribute(isa='bool')
@@ -198,6 +202,12 @@ class PlayContext(Base):
         Configures this connection information instance with data from
         the play class.
         '''
+
+        # special handling for accelerated mode, as it is set in a separate
+        # play option from the connection parameter
+        self.accelerate = play.accelerate
+        self.accelerate_ipv6 = play.accelerate_ipv6
+        self.accelerate_port = play.accelerate_port
 
         if play.connection:
             self.connection = play.connection

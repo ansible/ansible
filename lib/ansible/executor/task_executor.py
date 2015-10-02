@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import base64
 import json
 import pipes
 import subprocess
@@ -33,6 +34,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
+from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
 from ansible.vars.unsafe_proxy import UnsafeProxy
@@ -309,7 +311,7 @@ class TaskExecutor:
             return dict(include=include_file, include_variables=include_variables)
 
         # get the connection and the handler for this execution
-        self._connection = self._get_connection(variables)
+        self._connection = self._get_connection(variables=variables, templar=templar)
         self._connection.set_host_overrides(host=self._host)
 
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
@@ -466,7 +468,7 @@ class TaskExecutor:
         else:
             return async_result
 
-    def _get_connection(self, variables):
+    def _get_connection(self, variables, templar):
         '''
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
@@ -512,6 +514,38 @@ class TaskExecutor:
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
         if not connection:
             raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
+
+        if self._play_context.accelerate:
+            # launch the accelerated daemon here
+            ssh_connection = connection
+            handler = self._shared_loader_obj.action_loader.get(
+                'normal',
+                task=self._task,
+                connection=ssh_connection,
+                play_context=self._play_context,
+                loader=self._loader,
+                templar=templar,
+                shared_loader_obj=self._shared_loader_obj,
+            )
+
+            key = key_for_hostname(self._play_context.remote_addr)
+            accelerate_args = dict(
+                password=base64.b64encode(key.__str__()),
+                port=self._play_context.accelerate_port,
+                minutes=C.ACCELERATE_DAEMON_TIMEOUT,
+                ipv6=self._play_context.accelerate_ipv6,
+                debug=self._play_context.verbosity,
+            )
+
+            connection = self._shared_loader_obj.connection_loader.get('accelerate', self._play_context, self._new_stdin)
+            if not connection:
+                raise AnsibleError("the connection plugin '%s' was not found" % conn_type)
+
+            try:
+                connection._connect()
+            except AnsibleConnectionFailure:
+                res = handler._execute_module(module_name='accelerate', module_args=accelerate_args, task_vars=variables, delete_remote_tmp=False)
+                connection._connect()
 
         return connection
 
