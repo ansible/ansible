@@ -28,14 +28,14 @@ import stat
 import tempfile
 import time
 
-from six import string_types, iteritems
+from six import binary_type, text_type, iteritems
 from six.moves import StringIO
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
     from __main__ import display
@@ -479,13 +479,23 @@ class ActionBase:
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
         self._display.debug("command execution done")
 
-        if not isinstance(stdout, string_types):
-            out = ''.join(stdout.readlines())
+        # stdout and stderr may be either a file-like or a bytes object.
+        # Convert either one to a text type
+        # Note: when we address non-utf-8 data we'll have to figure out
+        # a better strategy than errors='strict'.  Perhaps pass the
+        # errors argument into this method so that the caller can decide or
+        # even make the caller convert to text type so they can choose.
+        if isinstance(stdout, binary_type):
+            out = to_unicode(stdout, errors='strict')
+        elif not isinstance(stdout, text_type):
+            out = to_unicode(b''.join(stdout.readlines()), errors='strict')
         else:
             out = stdout
 
-        if not isinstance(stderr, string_types):
-            err = ''.join(stderr.readlines())
+        if isinstance(stderr, binary_type):
+            err = to_unicode(stderr, errors='strict')
+        elif not isinstance(stderr, text_type):
+            err = to_unicode(b''.join(stderr.readlines()), errors='strict')
         else:
             err = stderr
 
