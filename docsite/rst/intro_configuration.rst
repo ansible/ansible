@@ -524,26 +524,6 @@ always default to the current user if this is not defined::
 
     remote_user = root
 
-.. _roles_path:
-
-roles_path
-==========
-
-.. versionadded: '1.4'
-
-The roles path indicate additional directories beyond the 'roles/' subdirectory of a playbook project to search to find Ansible
-roles.  For instance, if there was a source control repository of common roles and a different repository of playbooks, you might
-choose to establish a convention to checkout roles in /opt/mysite/roles like so::
-
-    roles_path = /opt/mysite/roles
-
-Additional paths can be provided separated by colon characters, in the same way as other pathstrings::
-
-    roles_path = /opt/mysite/roles:/opt/othersite/roles
-
-Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
-that were searched.
-
 .. _retry_files_enabled:
 
 retry_files_enabled
@@ -564,6 +544,26 @@ The default location is ~/ and can be changed to any writeable path::
     retry_files_save_path = ~/.ansible-retry
 
 The directory will be created if it does not already exist.
+
+.. _roles_path:
+
+roles_path
+==========
+
+.. versionadded: '1.4'
+
+The roles path indicate additional directories beyond the 'roles/' subdirectory of a playbook project to search to find Ansible
+roles.  For instance, if there was a source control repository of common roles and a different repository of playbooks, you might
+choose to establish a convention to checkout roles in /opt/mysite/roles like so::
+
+    roles_path = /opt/mysite/roles
+
+Additional paths can be provided separated by colon characters, in the same way as other pathstrings::
+
+    roles_path = /opt/mysite/roles:/opt/othersite/roles
+
+Roles will be first searched for in the playbook directory.  Should a role not be found, it will indicate all the possible paths
+that were searched.
 
 .. _sudo_exe:
 
