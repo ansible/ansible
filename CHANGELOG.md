@@ -22,7 +22,12 @@ Major Changes:
 They will retain the value of `None`. To go back to the old behaviour, you can override
 the `null_representation` setting to an empty string in your config file or by setting the
 `ANSIBLE_NULL_REPRESENTATION` environment variable.
-* Use "pattern1,pattern2" to combine host matching patterns. The use of
+* The `ansible_ssh_common_args` inventory variable now provides a
+  convenient way to configure a per-group or per-host ssh ProxyCommand
+  or set any other ssh options. Also, `ansible_ssh_extra_args` can be
+  used to set options that are accepted only by ssh (not sftp or scp,
+  which have their own analogous settings).
+* Use `pattern1,pattern2` to combine host matching patterns. The use of
   ':' as a separator is deprecated (accepted with a warning) because it
   conflicts with IPv6 addresses. The undocumented use of ';' as a
   separator is no longer supported.
