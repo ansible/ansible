@@ -101,6 +101,20 @@ You can test the script by itself to make sure your config is correct::
 
 After a few moments, you should see your entire EC2 inventory across all regions in JSON.
 
+If you use boto profiles to manage multiple AWS accounts, you can pass ``--profile PROFILE`` name to the ``ec2.py`` script. An example profile might be::
+
+    [profile dev]
+    aws_access_key_id = <dev access key>
+    aws_secret_access_key = <dev secret key>
+
+    [profile prod]
+    aws_access_key_id = <prod access key>
+    aws_secret_access_key = <prod secret key>
+
+You can then run ``ec2.py --profile prod`` to get the inventory for the prod account, or run playbooks with: ``ansible-playbook -i 'ec2.py --profile prod' myplaybook.yml``.
+
+Alternatively, use the ``AWS_PROFILE`` variable - e.g. ``AWS_PROFILE=prod ansible-playbook -i ec2.py myplaybook.yml``
+
 Since each region requires its own API call, if you are only using a small set of regions, feel free to edit ``ec2.ini`` and list only the regions you are interested in. There are other config options in ``ec2.ini`` including cache control, and destination variables.
 
 At their heart, inventory files are simply a mapping from some name to a destination address. The default ``ec2.ini`` settings are configured for running Ansible from outside EC2 (from your laptop for example) -- and this is not the most efficient way to manage EC2.

@@ -29,13 +29,12 @@ from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
-from ansible.utils.path import is_executable
 from ansible.inventory.ini import InventoryParser as InventoryINIParser
 from ansible.inventory.script import InventoryScript
 
 __all__ = ['get_file_parser']
 
-def get_file_parser(hostsfile, loader):
+def get_file_parser(hostsfile, groups, loader):
     # check to see if the specified file starts with a
     # shebang (#!/), so if an error is raised by the parser
     # class we can show a more apropos error
@@ -54,9 +53,9 @@ def get_file_parser(hostsfile, loader):
     except:
         pass
 
-    if is_executable(hostsfile):
+    if loader.is_executable(hostsfile):
         try:
-            parser = InventoryScript(loader=loader, filename=hostsfile)
+            parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile)
             processed = True
         except Exception as e:
             myerr.append("The file %s is marked as executable, but failed to execute correctly. " % hostsfile + \
@@ -65,10 +64,10 @@ def get_file_parser(hostsfile, loader):
 
     if not processed:
         try:
-            parser = InventoryINIParser(filename=hostsfile)
+            parser = InventoryINIParser(loader=loader, groups=groups, filename=hostsfile)
             processed = True
         except Exception as e:
-            if shebang_present and not is_executable(hostsfile):
+            if shebang_present and not loader.is_executable(hostsfile):
                 myerr.append("The file %s looks like it should be an executable inventory script, but is not marked executable. " % hostsfile + \
                               "Perhaps you want to correct this with `chmod +x %s`?" % hostsfile)
             else:
@@ -82,13 +81,16 @@ def get_file_parser(hostsfile, loader):
 class InventoryDirectory(object):
     ''' Host inventory parser for ansible using a directory of inventories. '''
 
-    def __init__(self, loader, filename=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
+        if groups is None:
+            groups = dict()
+
         self.names = os.listdir(filename)
         self.names.sort()
         self.directory = filename
         self.parsers = []
         self.hosts = {}
-        self.groups = {}
+        self.groups = groups
 
         self._loader = loader
 
@@ -105,9 +107,9 @@ class InventoryDirectory(object):
                 continue
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
-                parser = InventoryDirectory(loader=loader, filename=fullpath)
+                parser = InventoryDirectory(loader=loader, groups=groups, filename=fullpath)
             else:
-                parser = get_file_parser(fullpath, loader)
+                parser = get_file_parser(fullpath, self.groups, loader)
                 if parser is None:
                     #FIXME: needs to use display
                     import warnings

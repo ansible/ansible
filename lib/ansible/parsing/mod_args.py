@@ -148,13 +148,12 @@ class ModuleArgsParser:
         else:
             (action, args) = self._normalize_new_style_args(thing)
 
-        # this can occasionally happen, simplify
-        if args and 'args' in args:
-            tmp_args = args['args']
-            del args['args']
-            if isinstance(tmp_args, string_types):
-                tmp_args = parse_kv(tmp_args)
-            args.update(tmp_args)
+            # this can occasionally happen, simplify
+            if args and 'args' in args:
+                tmp_args = args.pop('args')
+                if isinstance(tmp_args, string_types):
+                    tmp_args = parse_kv(tmp_args)
+                args.update(tmp_args)
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
@@ -254,15 +253,15 @@ class ModuleArgsParser:
             action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
         # local_action
+        local_action = False
         if 'local_action' in self._task_ds:
             # local_action is similar but also implies a connection='local'
             if action is not None:
                 raise AnsibleParserError("action and local_action are mutually exclusive", obj=self._task_ds)
             thing = self._task_ds.get('local_action', '')
             connection = 'local'
+            local_action = True
             action, args = self._normalize_parameters(thing, additional_args=additional_args)
-
-        # module: <stuff> is the more new-style invocation
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
@@ -276,7 +275,14 @@ class ModuleArgsParser:
 
         # if we didn't see any module in the task at all, it's not a task really
         if action is None:
-            raise AnsibleParserError("no action detected in task", obj=self._task_ds)
+            if 'ping' not in module_loader:
+                raise AnsibleParserError("The requested action was not found in configured module paths. "
+                        "Additionally, core modules are missing. If this is a checkout, "
+                        "run 'git submodule update --init --recursive' to correct this problem.",
+                        obj=self._task_ds)
+
+            else:
+                raise AnsibleParserError("no action detected in task", obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
@@ -287,5 +293,9 @@ class ModuleArgsParser:
 
         # shell modules require special handling
         (action, args) = self._handle_shell_weirdness(action, args)
+
+        # now add the local action flag to the args, if it was set
+        if local_action:
+            args['_local_action'] = local_action
 
         return (action, args, connection)

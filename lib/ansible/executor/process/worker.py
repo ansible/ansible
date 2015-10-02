@@ -20,12 +20,15 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import queue
+
 import multiprocessing
 import os
 import signal
 import sys
 import time
 import traceback
+
+from jinja2.exceptions import TemplateNotFound
 
 # TODO: not needed if we use the cryptography library with its default RNG
 # engine
@@ -109,14 +112,9 @@ class WorkerProcess(multiprocessing.Process):
                 # the task handles updating parent/child objects as needed.
                 task.set_loader(self._loader)
 
-                # apply the given task's information to the connection info,
-                # which may override some fields already set by the play or
-                # the options specified on the command line
-                new_play_context = play_context.set_task_and_variable_override(task=task, variables=job_vars)
-
                 # execute the task and build a TaskResult from the result
                 debug("running TaskExecutor() for %s/%s" % (host, task))
-                executor_result = TaskExecutor(host, task, job_vars, new_play_context, self._new_stdin, self._loader, shared_loader_obj).run()
+                executor_result = TaskExecutor(host, task, job_vars, play_context, self._new_stdin, self._loader, shared_loader_obj).run()
                 debug("done running TaskExecutor() for %s/%s" % (host, task))
                 task_result = TaskResult(host, task, executor_result)
 
@@ -127,8 +125,6 @@ class WorkerProcess(multiprocessing.Process):
 
             except queue.Empty:
                 pass
-            except (IOError, EOFError, KeyboardInterrupt):
-                break
             except AnsibleConnectionFailure:
                 try:
                     if task:
@@ -138,15 +134,18 @@ class WorkerProcess(multiprocessing.Process):
                     # FIXME: most likely an abort, catch those kinds of errors specifically
                     break
             except Exception as e:
-                debug("WORKER EXCEPTION: %s" % e)
-                debug("WORKER EXCEPTION: %s" % traceback.format_exc())
-                try:
-                    if task:
-                        task_result = TaskResult(host, task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
-                        self._rslt_q.put(task_result, block=False)
-                except:
-                    # FIXME: most likely an abort, catch those kinds of errors specifically
+                if isinstance(e, (IOError, EOFError, KeyboardInterrupt)) and not isinstance(e, TemplateNotFound):
                     break
+                else:
+                    try:
+                        if task:
+                            task_result = TaskResult(host, task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
+                            self._rslt_q.put(task_result, block=False)
+                    except:
+                        debug("WORKER EXCEPTION: %s" % e)
+                        debug("WORKER EXCEPTION: %s" % traceback.format_exc())
+                        # FIXME: most likely an abort, catch those kinds of errors specifically
+                        break
 
         debug("WORKER PROCESS EXITING")
 

@@ -33,12 +33,13 @@ from ansible.errors import AnsibleError
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.utils.unicode import to_bytes
 
-REPLACER         = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
-REPLACER_ARGS    = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
-REPLACER_COMPLEX = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
-REPLACER_WINDOWS = "# POWERSHELL_COMMON"
-REPLACER_WINARGS = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
-REPLACER_VERSION = "\"<<ANSIBLE_VERSION>>\""
+REPLACER          = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"
+REPLACER_ARGS     = "\"<<INCLUDE_ANSIBLE_MODULE_ARGS>>\""
+REPLACER_COMPLEX  = "\"<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>\""
+REPLACER_WINDOWS  = "# POWERSHELL_COMMON"
+REPLACER_WINARGS  = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
+REPLACER_JSONARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
+REPLACER_VERSION  = "\"<<ANSIBLE_VERSION>>\""
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
@@ -67,6 +68,8 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
     if REPLACER in module_data:
         module_style = 'new'
     elif REPLACER_WINDOWS in module_data:
+        module_style = 'new'
+    elif REPLACER_JSONARGS in module_data:
         module_style = 'new'
     elif 'from ansible.module_utils.' in module_data:
         module_style = 'new'
@@ -153,48 +156,49 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
     #   minifier output)
     # * Only split into lines and recombine into strings once
     # * Cache the modified module?  If only the args are different and we do
-    #   that as the last step we could cache sll the work up to that point.
+    #   that as the last step we could cache all the work up to that point.
 
     with open(module_path) as f:
 
         # read in the module source
         module_data = f.read()
 
-        (module_data, module_style) = _find_snippet_imports(module_data, module_path, strip_comments)
+    (module_data, module_style) = _find_snippet_imports(module_data, module_path, strip_comments)
 
-        module_args_json = json.dumps(module_args)
-        encoded_args = repr(module_args_json.encode('utf-8'))
+    module_args_json = json.dumps(module_args).encode('utf-8')
+    python_repred_args = repr(module_args_json)
 
-        # these strings should be part of the 'basic' snippet which is required to be included
-        module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
-        module_data = module_data.replace(REPLACER_COMPLEX, encoded_args)
-        module_data = module_data.replace(REPLACER_WINARGS, module_args_json.encode('utf-8'))
+    # these strings should be part of the 'basic' snippet which is required to be included
+    module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
+    module_data = module_data.replace(REPLACER_COMPLEX, python_repred_args)
+    module_data = module_data.replace(REPLACER_WINARGS, module_args_json)
+    module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
 
-        if module_style == 'new':
-            facility = C.DEFAULT_SYSLOG_FACILITY
-            if 'ansible_syslog_facility' in task_vars:
-                facility = task_vars['ansible_syslog_facility']
-            module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
+    if module_style == 'new':
+        facility = C.DEFAULT_SYSLOG_FACILITY
+        if 'ansible_syslog_facility' in task_vars:
+            facility = task_vars['ansible_syslog_facility']
+        module_data = module_data.replace('syslog.LOG_USER', "syslog.%s" % facility)
 
-        lines = module_data.split(b"\n", 1)
-        shebang = None
-        if lines[0].startswith(b"#!"):
-            shebang = lines[0].strip()
-            args = shlex.split(str(shebang[2:]))
-            interpreter = args[0]
-            interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
+    lines = module_data.split(b"\n", 1)
+    shebang = None
+    if lines[0].startswith(b"#!"):
+        shebang = lines[0].strip()
+        args = shlex.split(str(shebang[2:]))
+        interpreter = args[0]
+        interpreter_config = 'ansible_%s_interpreter' % os.path.basename(interpreter)
 
-            if interpreter_config in task_vars:
-                interpreter = to_bytes(task_vars[interpreter_config], errors='strict')
-                lines[0] = shebang = b"#!{0} {1}".format(interpreter, b" ".join(args[1:]))
+        if interpreter_config in task_vars:
+            interpreter = to_bytes(task_vars[interpreter_config], errors='strict')
+            lines[0] = shebang = b"#!{0} {1}".format(interpreter, b" ".join(args[1:]))
 
-            if interpreter.startswith('python'):
-                lines.insert(1, ENCODING_STRING)
-        else:
-            # No shebang, assume a binary module?
-            pass
+        if os.path.basename(interpreter).startswith('python'):
+            lines.insert(1, ENCODING_STRING)
+    else:
+        # No shebang, assume a binary module?
+        pass
 
-        module_data = b"\n".join(lines)
+    module_data = b"\n".join(lines)
 
-        return (module_data, module_style, shebang)
+    return (module_data, module_style, shebang)
 

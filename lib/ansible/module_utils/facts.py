@@ -258,7 +258,7 @@ class Facts(object):
             OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
             XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', Slackware = 'Slackware', SLES = 'Suse',
             SLED = 'Suse', openSUSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
-            Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
+            Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
             FreeBSD = 'FreeBSD', HPUX = 'HP-UX'
@@ -622,6 +622,8 @@ class Facts(object):
         self.facts['date_time']['year'] = now.strftime('%Y')
         self.facts['date_time']['month'] = now.strftime('%m')
         self.facts['date_time']['weekday'] = now.strftime('%A')
+        self.facts['date_time']['weekday_number'] = now.strftime('%w')
+        self.facts['date_time']['weeknumber'] = now.strftime('%W')
         self.facts['date_time']['day'] = now.strftime('%d')
         self.facts['date_time']['hour'] = now.strftime('%H')
         self.facts['date_time']['minute'] = now.strftime('%M')
@@ -1087,8 +1089,10 @@ class LinuxHardware(Hardware):
             self.facts['devices'][diskname] = d
 
     def get_uptime_facts(self):
-        uptime_seconds_string = get_file_content('/proc/uptime').split(' ')[0]
-        self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
+        uptime_file_content = get_file_content('/proc/uptime')
+        if uptime_file_content:
+            uptime_seconds_string = uptime_file_content.split(' ')[0]
+            self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
 
     def get_lvm_facts(self):
         """ Get LVM Facts if running as root and lvm utils are available """
@@ -2355,7 +2359,7 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
         return interface['v4'], interface['v6']
 
     # AIX 'ifconfig -a' does not have three words in the interface line
-    def get_interfaces_info(self, ifconfig_path, ifconfig_options):
+    def get_interfaces_info(self, ifconfig_path, ifconfig_options='-a'):
         interfaces = {}
         current_if = {}
         ips = dict(
@@ -2578,16 +2582,16 @@ class LinuxVirtual(Virtual):
 
     # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
-        if os.path.exists("/proc/xen"):
-            self.facts['virtualization_type'] = 'xen'
-            self.facts['virtualization_role'] = 'guest'
-            try:
-                for line in get_file_lines('/proc/xen/capabilities'):
-                    if "control_d" in line:
-                        self.facts['virtualization_role'] = 'host'
-            except IOError:
-                pass
-            return
+        if os.path.exists('/proc/1/cgroup'):
+            for line in get_file_lines('/proc/1/cgroup'):
+                if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
+                    self.facts['virtualization_type'] = 'docker'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
+                if re.search('/lxc/', line):
+                    self.facts['virtualization_type'] = 'lxc'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
 
         if os.path.exists('/proc/vz'):
             self.facts['virtualization_type'] = 'openvz'
@@ -2603,16 +2607,16 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
-        if os.path.exists('/proc/1/cgroup'):
-            for line in get_file_lines('/proc/1/cgroup'):
-                if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
-                    self.facts['virtualization_type'] = 'docker'
-                    self.facts['virtualization_role'] = 'guest'
-                    return
-                if re.search('/lxc/', line):
-                    self.facts['virtualization_type'] = 'lxc'
-                    self.facts['virtualization_role'] = 'guest'
-                    return
+        if os.path.exists("/proc/xen"):
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+            try:
+                for line in get_file_lines('/proc/xen/capabilities'):
+                    if "control_d" in line:
+                        self.facts['virtualization_role'] = 'host'
+            except IOError:
+                pass
+            return
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
 

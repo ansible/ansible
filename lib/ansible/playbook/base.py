@@ -27,7 +27,7 @@ from functools import partial
 from inspect import getmembers
 from io import FileIO
 
-from six import iteritems, string_types
+from six import iteritems, string_types, text_type
 
 from jinja2.exceptions import UndefinedError
 
@@ -53,6 +53,12 @@ class Base:
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list')
     _no_log              = FieldAttribute(isa='bool')
+
+    # param names which have been deprecated/removed
+    DEPRECATED_ATTRIBUTES = [
+        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
+        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
+    ]
 
     def __init__(self):
 
@@ -99,7 +105,10 @@ class Base:
         if hasattr(self, method):
             return getattr(self, method)()
 
-        return self._attributes[prop_name]
+        value = self._attributes[prop_name]
+        if value is None and hasattr(self, '_get_parent_attribute'):
+            value = self._get_parent_attribute(prop_name)
+        return value
 
     @staticmethod
     def _generic_s(prop_name, self, value):
@@ -153,6 +162,9 @@ class Base:
 
         assert ds is not None
 
+        # cache the datastructure internally
+        setattr(self, '_ds', ds)
+
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
         self._variable_manager = variable_manager
@@ -185,9 +197,6 @@ class Base:
 
         # run early, non-critical validation
         self.validate()
-
-        # cache the datastructure internally
-        setattr(self, '_ds', ds)
 
         # return the constructed object
         return self
@@ -225,6 +234,12 @@ class Base:
             method = getattr(self, '_validate_%s' % name, None)
             if method:
                 method(attribute, name, getattr(self, name))
+            else:
+                # and make sure the attribute is of the type it should be
+                value = getattr(self, name)
+                if value is not None:
+                    if attribute.isa == 'string' and isinstance(value, (list, dict)):
+                        raise AnsibleParserError("The field '%s' is supposed to be a string type, however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds())
 
     def copy(self):
         '''
@@ -291,7 +306,7 @@ class Base:
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = unicode(value)
+                        value = text_type(value)
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':

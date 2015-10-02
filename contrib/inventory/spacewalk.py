@@ -49,6 +49,8 @@ from optparse import OptionParser
 import subprocess
 import ConfigParser
 
+from six import iteritems
+
 try:
     import json
 except:
@@ -193,10 +195,10 @@ if options.list:
         sys.exit(2)
 
     if options.human:
-        for group, systems in groups.iteritems():
+        for group, systems in iteritems(groups):
             print('[%s]\n%s\n' % (group, '\n'.join(systems)))
     else:
-        final = dict( [ (k, list(s)) for k, s in groups.iteritems() ] )
+        final = dict( [ (k, list(s)) for k, s in iteritems(groups) ] )
         final["_meta"] = meta
         print(json.dumps( final ))
         #print(json.dumps(groups))
@@ -221,7 +223,7 @@ elif options.host:
     
     if options.human:
         print('Host: %s' % options.host)
-        for k, v in host_details.iteritems():
+        for k, v in iteritems(host_details):
             print('  %s: %s' % (k, '\n    '.join(v.split(';'))))
     else:
         print( json.dumps( dict( ( key, ( value.split(';') if ';' in value else value) ) for key, value in host_details.items() ) ) )

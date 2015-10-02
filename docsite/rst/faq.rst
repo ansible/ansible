@@ -24,8 +24,8 @@ Setting inventory variables in the inventory file is the easiest way.
 For instance, suppose these hosts have different usernames and ports::
 
     [webservers]
-    asdf.example.com  ansible_ssh_port=5000   ansible_ssh_user=alice
-    jkl.example.com   ansible_ssh_port=5001   ansible_ssh_user=bob
+    asdf.example.com  ansible_port=5000   ansible_user=alice
+    jkl.example.com   ansible_port=5001   ansible_user=bob
 
 You can also dictate the connection type to be used, if you want::
 
@@ -54,6 +54,37 @@ consider managing from a Fedora or openSUSE client even though you are managing 
 
 We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
 for new users.
+
+.. _use_ssh_jump_hosts:
+
+How do I configure a jump host to access servers that I have no direct access to?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+With Ansible version 2, it's possible to set `ansible_ssh_extra_args` as
+an inventory variable. Any arguments specified this way are added to the
+ssh command line when connecting to the relevant host(s), so it's a good
+way to set a `ProxyCommand`. Consider the following inventory group:
+
+    [gatewayed]
+    foo ansible_host=192.0.2.1
+    bar ansible_host=192.0.2.2
+
+You can create `group_vars/gatewayed.yml` with the following contents:
+
+    ansible_ssh_extra_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
+
+Ansible will then add these arguments when trying to connect to any host
+in the group `gatewayed`. (These arguments are added to any `ssh_args`
+that may be configured, so it isn't necessary to repeat the default
+`ControlPath` settings in `ansible_ssh_extra_args`.)
+
+Note that `ssh -W` is available only with OpenSSH 5.4 or later. With
+older versions, it's necessary to execute `nc %h:%p` or some equivalent
+command on the bastion host.
+
+With earlier versions of Ansible, it was necessary to configure a
+suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
+or globally by setting `ssh_args` in `ansible.cfg`.
 
 .. _ec2_cloud_performance:
 

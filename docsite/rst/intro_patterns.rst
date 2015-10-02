@@ -27,7 +27,7 @@ The following patterns are equivalent and target all hosts in the inventory::
 It is also possible to address a specific host or set of hosts by name::
 
     one.example.com
-    one.example.com:two.example.com
+    one.example.com, two.example.com
     192.168.1.50
     192.168.1.*
 
@@ -35,20 +35,20 @@ The following patterns address one or more groups.  Groups separated by a colon 
 This means the host may be in either one group or the other::
 
     webservers
-    webservers:dbservers
+    webservers,dbservers
 
 You can exclude groups as well, for instance, all machines must be in the group webservers but not in the group phoenix::
 
-    webservers:!phoenix
+    webservers,!phoenix
 
 You can also specify the intersection of two groups.  This would mean the hosts must be in the group webservers and
 the host must also be in the group staging::
 
-    webservers:&staging
+    webservers,&staging
 
 You can do combinations::
 
-    webservers:dbservers:&staging:!phoenix
+    webservers,dbservers,&staging,!phoenix
 
 The above configuration means "all machines in the groups 'webservers' and 'dbservers' are to be managed if they are in
 the group 'staging' also, but the machines are not to be managed if they are in the group 'phoenix' ... whew!
@@ -56,7 +56,7 @@ the group 'staging' also, but the machines are not to be managed if they are in 
 You can also use variables if you want to pass some group specifiers via the "-e" argument to ansible-playbook, but this
 is uncommonly used::
 
-    webservers:!{{excluded}}:&{{required}}
+    webservers,!{{excluded}},&{{required}}
 
 You also don't have to manage by strictly defined groups.  Individual host names, IPs and groups, can also be referenced using
 wildcards::
@@ -66,7 +66,7 @@ wildcards::
 
 It's also ok to mix wildcard patterns and groups at the same time::
 
-    one*.com:dbservers
+    one*.com,dbservers
 
 You can select a host or subset of hosts from a group by their position. For example, given the following group::
 
@@ -75,12 +75,13 @@ You can select a host or subset of hosts from a group by their position. For exa
     webbing
     weber
 
-You can refer to hosts within the group by adding a subscript to the group name:
+You can refer to hosts within the group by adding a subscript to the group name::
 
     webservers[0]       # == cobweb
     webservers[-1]      # == weber
-    webservers[0:1]     # == webservers[0]:webservers[1]
-                        # == cobweb:webbing
+    webservers[0:1]     # == webservers[0],webservers[1]
+                        # == cobweb,webbing
+    webservers[1:]      # == webbing,weber
 
 Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
 

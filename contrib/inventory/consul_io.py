@@ -141,6 +141,7 @@ except ImportError as e:
   http://python-consul.readthedocs.org/en/latest/#installation'""")
   sys.exit(1)
 
+from six import iteritems
 
 
 class ConsulInventory(object):
@@ -187,7 +188,7 @@ class ConsulInventory(object):
     an 'available' or 'unavailable' grouping. The suffix for each group can be
     controlled from the config'''
     if self.config.has_config('availability'):
-      for service_name, service in node['Services'].iteritems():
+      for service_name, service in iteritems(node['Services']):
         for node in self.consul_api.health.service(service_name)[1]:
             for check in node['Checks']:
                 if check['ServiceName'] == service_name:

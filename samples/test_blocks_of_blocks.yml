@@ -5,9 +5,13 @@
     - block:
       - block:
         - block:
-          - debug: msg="are we there yet?"
+          - debug: msg="are we there yet {{foo}}?"
         always:
         - debug: msg="a random always block"
       - fail:
       rescue:
       - debug: msg="rescuing from the fail"
+      when: not skip_me|default(False)
+    - debug: msg="i am the last task"
+    vars:
+      foo: bar

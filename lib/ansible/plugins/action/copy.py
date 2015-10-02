@@ -105,6 +105,8 @@ class ActionModule(ActionBase):
                 for file in files:
                     full_path = os.path.join(base_path, file)
                     rel_path = full_path[sz:]
+                    if rel_path.startswith('/'):
+                        rel_path = rel_path[1:]
                     source_files.append((full_path, rel_path))
 
             # If it's recursive copy, destination is always a dir,
@@ -130,7 +132,7 @@ class ActionModule(ActionBase):
                 tmp = self._make_tmp_path()
 
         # expand any user home dir specifier
-        dest = self._remote_expand_user(dest, tmp)
+        dest = self._remote_expand_user(dest)
 
         diffs = []
         for source_full, source_rel in source_files:
@@ -151,7 +153,7 @@ class ActionModule(ActionBase):
                 dest_file = self._connection._shell.join_path(dest)
 
             # Attempt to get the remote checksum
-            remote_checksum = self._remote_checksum(tmp, dest_file, all_vars=task_vars)
+            remote_checksum = self._remote_checksum(dest_file, all_vars=task_vars)
 
             if remote_checksum == '3':
                 # The remote_checksum was executed on a directory.
@@ -162,7 +164,7 @@ class ActionModule(ActionBase):
                 else:
                     # Append the relative source location to the destination and retry remote_checksum
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    remote_checksum = self._remote_checksum(tmp, dest_file, all_vars=task_vars)
+                    remote_checksum = self._remote_checksum(dest_file, all_vars=task_vars)
 
             if remote_checksum != '1' and not force:
                 # remote_file does not exist so continue to next iteration.
@@ -179,7 +181,7 @@ class ActionModule(ActionBase):
                         tmp = self._make_tmp_path()
 
                 if self._play_context.diff and not raw:
-                    diffs.append(self._get_diff_data(tmp, dest_file, source_full, task_vars))
+                    diffs.append(self._get_diff_data(dest_file, source_full, task_vars))
 
                 if self._play_context.check_mode:
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
@@ -200,7 +202,7 @@ class ActionModule(ActionBase):
 
                 # fix file permissions when the copy is done as a different user
                 if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', tmp_src, tmp)
+                    self._remote_chmod('a+r', tmp_src)
 
                 if raw:
                     # Continue to next iteration if raw is defined.

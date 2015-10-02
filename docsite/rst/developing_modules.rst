@@ -67,7 +67,7 @@ Testing Modules
 
 There's a useful test script in the source checkout for ansible::
 
-    git clone git@github.com:ansible/ansible.git --recursive
+    git clone git://github.com/ansible/ansible.git --recursive
     source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
 
@@ -191,7 +191,7 @@ a lot shorter than this::
 
 Let's test that module::
 
-    ansible/hacking/test-module -m ./time -a time=\"March 14 12:23\"
+    ansible/hacking/test-module -m ./time -a "time=\"March 14 12:23\""
 
 This should return something like::
 
@@ -508,7 +508,8 @@ Windows modules checklist
 `````````````````````````
 * Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of windows
 * modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
-* look at ansible/lib/ansible/module_utils/powershell.ps1 for commmon code, avoid duplication
+* look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
+* Ansible uses strictmode so be sure to test with that enabled
 * start with::
 
     #!powershell
@@ -518,18 +519,21 @@ then::
 then::
     # WANT_JSON
     # POWERSHELL_COMMON
+    
+then, to parse all arguments into a variable modules generally use::
+    $params = Parse-Args $args
 
 * Arguments:
     * Try and use state present and state absent like other modules
-    * You need to check that all your mandatory args are present::
-
-        If ($params.state) {
-            $state = $params.state.ToString().ToLower()
-            If (($state -ne 'started') -and ($state -ne 'stopped') -and ($state -ne 'restarted')) {
-                Fail-Json $result "state is '$state'; must be 'started', 'stopped', or 'restarted'"
-            }
-        }
-
+    * You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function. 
+    * Required arguments::
+        $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
+    * Required arguments with name validation::
+        $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
+    * Optional arguments with name validation::
+        $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
+    * the If "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message 
+      using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
     * Look at existing modules for more examples of argument checking.
 
 * Results
@@ -550,7 +554,6 @@ then::
     * If all is not well use Fail-Json to exit.
 
 * Have you tested for powershell 3.0 and 4.0 compliance?
-
 
 Deprecating and making module aliases
 ``````````````````````````````````````

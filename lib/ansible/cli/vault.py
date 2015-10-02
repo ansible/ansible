@@ -22,6 +22,7 @@ import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.parsing import DataLoader
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
 from ansible.utils.display import Display
@@ -82,16 +83,17 @@ class VaultCLI(CLI):
     def run(self):
 
         super(VaultCLI, self).run()
+        loader = DataLoader()
 
         if self.options.vault_password_file:
             # read vault_pass from a file
-            self.vault_pass = CLI.read_vault_password_file(self.options.vault_password_file)
+            self.vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader)
         else:
             self.vault_pass, _= self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
 
         if self.options.new_vault_password_file:
             # for rekey only
-            self.new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file)
+            self.new_vault_pass = CLI.read_vault_password_file(self.options.new_vault_password_file, loader)
 
         if not self.vault_pass:
             raise AnsibleOptionsError("A password is required to use Ansible's Vault")
@@ -136,7 +138,7 @@ class VaultCLI(CLI):
     def execute_view(self):
 
         for f in self.args:
-            self.editor.view_file(f)
+            self.pager(self.editor.plaintext(f))
 
     def execute_rekey(self):
         for f in self.args:

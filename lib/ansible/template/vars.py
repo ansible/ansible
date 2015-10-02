@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from six import iteritems
 from jinja2.utils import missing
 
 __all__ = ['AnsibleJ2Vars']
@@ -46,7 +47,7 @@ class AnsibleJ2Vars:
         self._extras  = extras
         self._locals  = dict()
         if isinstance(locals, dict):
-            for key, val in locals.iteritems():
+            for key, val in iteritems(locals):
                 if key[:2] == 'l_' and val is not missing:
                     self._locals[key[2:]] = val
 

@@ -45,13 +45,13 @@ __all__ = ['Role', 'hash_params']
 # FIXME: this should be a utility function, but can't be a member of
 #        the role due to the fact that it would require the use of self
 #        in a static method. This is also used in the base class for
-#        strategies (ansible/plugins/strategies/__init__.py)
+#        strategies (ansible/plugins/strategy/__init__.py)
 def hash_params(params):
     if not isinstance(params, dict):
         return params
     else:
         s = set()
-        for k,v in params.iteritems():
+        for k,v in iteritems(params):
             if isinstance(v, dict):
                 s.update((k, hash_params(v)))
             elif isinstance(v, list):
@@ -64,6 +64,8 @@ def hash_params(params):
         return frozenset(s)
 
 class Role(Base, Become, Conditional, Taggable):
+
+    _delegate_to = FieldAttribute(isa='string')
 
     def __init__(self, play=None):
         self._role_name        = None
@@ -105,7 +107,7 @@ class Role(Base, Become, Conditional, Taggable):
                 params['tags'] = role_include.tags
             hashed_params = hash_params(params)
             if role_include.role in play.ROLE_CACHE:
-                for (entry, role_obj) in play.ROLE_CACHE[role_include.role].iteritems():
+                for (entry, role_obj) in iteritems(play.ROLE_CACHE[role_include.role]):
                     if hashed_params == entry:
                         if parent_role:
                             role_obj.add_parent(parent_role)
@@ -168,7 +170,7 @@ class Role(Base, Become, Conditional, Taggable):
         # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')
         if metadata:
-            self._metadata = RoleMetadata.load(metadata, owner=self, loader=self._loader)
+            self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
             self._dependencies = self._load_dependencies()
         else:
             self._metadata = RoleMetadata()
@@ -254,22 +256,24 @@ class Role(Base, Become, Conditional, Taggable):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=[]):
+    def get_inherited_vars(self, dep_chain=[], include_params=True):
         inherited_vars = dict()
 
         for parent in dep_chain:
             inherited_vars = combine_vars(inherited_vars, parent._role_vars)
-            inherited_vars = combine_vars(inherited_vars, parent._role_params)
+            if include_params:
+                inherited_vars = combine_vars(inherited_vars, parent._role_params)
         return inherited_vars
 
-    def get_vars(self, dep_chain=[]):
-        all_vars = self.get_inherited_vars(dep_chain)
+    def get_vars(self, dep_chain=[], include_params=True):
+        all_vars = self.get_inherited_vars(dep_chain, include_params=include_params)
 
         for dep in self.get_all_dependencies():
-            all_vars = combine_vars(all_vars, dep.get_vars())
+            all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
 
         all_vars = combine_vars(all_vars, self._role_vars)
-        all_vars = combine_vars(all_vars, self._role_params)
+        if include_params:
+            all_vars = combine_vars(all_vars, self._role_params)
 
         return all_vars
 

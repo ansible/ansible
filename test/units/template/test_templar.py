@@ -25,7 +25,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible import constants as C
 from ansible.errors import *
 from ansible.plugins import filter_loader, lookup_loader, module_loader
-from ansible.plugins.strategies import SharedPluginLoaderObj
+from ansible.plugins.strategy import SharedPluginLoaderObj
 from ansible.template import Templar
 
 from units.mock.loader import DictDataLoader
@@ -33,12 +33,6 @@ from units.mock.loader import DictDataLoader
 class TestTemplar(unittest.TestCase):
 
     def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_templar_simple(self):
         fake_loader = DictDataLoader({
           "/path/to/my_file.txt": "foo\n",
         })
@@ -54,12 +48,19 @@ class TestTemplar(unittest.TestCase):
             var_list=[1],
             recursive="{{recursive}}",
         )
-        templar = Templar(loader=fake_loader, variables=variables)
+        self.templar = Templar(loader=fake_loader, variables=variables)
 
+    def tearDown(self):
+        pass
+
+    def test_templar_simple(self):
+
+        templar = self.templar
         # test some basic templating
         self.assertEqual(templar.template("{{foo}}"), "bar")
-        self.assertEqual(templar.template("{{foo}}\n"), "bar")
+        self.assertEqual(templar.template("{{foo}}\n"), "bar\n")
         self.assertEqual(templar.template("{{foo}}\n", preserve_trailing_newlines=True), "bar\n")
+        self.assertEqual(templar.template("{{foo}}\n", preserve_trailing_newlines=False), "bar")
         self.assertEqual(templar.template("foo", convert_bare=True), "bar")
         self.assertEqual(templar.template("{{bam}}"), "bar")
         self.assertEqual(templar.template("{{num}}"), 1)
@@ -87,6 +88,20 @@ class TestTemplar(unittest.TestCase):
         self.assertEqual(templar.template("{{foo}}"), "bam")
         # variables must be a dict() for set_available_variables()
         self.assertRaises(AssertionError, templar.set_available_variables, "foo=bam")
+
+    def test_templar_escape_backslashes(self):
+        # Rule of thumb: If escape backslashes is True you should end up with
+        # the same number of backslashes as when you started.
+        self.assertEqual(self.templar.template("\t{{foo}}", escape_backslashes=True), "\tbar")
+        self.assertEqual(self.templar.template("\t{{foo}}", escape_backslashes=False), "\tbar")
+        self.assertEqual(self.templar.template("\\{{foo}}", escape_backslashes=True), "\\bar")
+        self.assertEqual(self.templar.template("\\{{foo}}", escape_backslashes=False), "\\bar")
+        self.assertEqual(self.templar.template("\\{{foo + '\t' }}", escape_backslashes=True), "\\bar\t")
+        self.assertEqual(self.templar.template("\\{{foo + '\t' }}", escape_backslashes=False), "\\bar\t")
+        self.assertEqual(self.templar.template("\\{{foo + '\\t' }}", escape_backslashes=True), "\\bar\\t")
+        self.assertEqual(self.templar.template("\\{{foo + '\\t' }}", escape_backslashes=False), "\\bar\t")
+        self.assertEqual(self.templar.template("\\{{foo + '\\\\t' }}", escape_backslashes=True), "\\bar\\\\t")
+        self.assertEqual(self.templar.template("\\{{foo + '\\\\t' }}", escape_backslashes=False), "\\bar\\t")
 
     def test_template_jinja2_extensions(self):
         fake_loader = DictDataLoader({})

@@ -34,7 +34,6 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.utils.unicode import to_bytes
 from ansible.utils.display import Display
-from ansible.utils.path import is_executable
 
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
@@ -121,7 +120,7 @@ class CLI(object):
             if ask_vault_pass and confirm_vault:
                 vault_pass2 = getpass.getpass(prompt="Confirm Vault password: ")
                 if vault_pass != vault_pass2:
-                    raise errors.AnsibleError("Passwords do not match")
+                    raise AnsibleError("Passwords do not match")
 
             if ask_new_vault_pass:
                 new_vault_pass = getpass.getpass(prompt="New Vault password: ")
@@ -129,7 +128,7 @@ class CLI(object):
             if ask_new_vault_pass and confirm_new:
                 new_vault_pass2 = getpass.getpass(prompt="Confirm New Vault password: ")
                 if new_vault_pass != new_vault_pass2:
-                    raise errors.AnsibleError("Passwords do not match")
+                    raise AnsibleError("Passwords do not match")
         except EOFError:
             pass
 
@@ -315,6 +314,8 @@ class CLI(object):
                 help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
             parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
                 help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+            parser.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
+                help="specify extra arguments to pass to ssh (e.g. ProxyCommand)")
 
         if async_opts:
             parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',
@@ -354,7 +355,7 @@ class CLI(object):
         ''' return full ansible version info '''
         if gitinfo:
             # expensive call, user with care
-            ansible_version_string = version('')
+            ansible_version_string = CLI.version('')
         else:
             ansible_version_string = __version__
         ansible_version = ansible_version_string.split()[0]
@@ -477,7 +478,7 @@ class CLI(object):
         return t
 
     @staticmethod
-    def read_vault_password_file(vault_password_file):
+    def read_vault_password_file(vault_password_file, loader):
         """
         Read a vault password from a file or if executable, execute the script and
         retrieve password from STDOUT
@@ -487,7 +488,7 @@ class CLI(object):
         if not os.path.exists(this_path):
             raise AnsibleError("The vault password file %s was not found" % this_path)
 
-        if is_executable(this_path):
+        if loader.is_executable(this_path):
             try:
                 # STDERR not captured to make it easier for users to prompt for input in their scripts
                 p = subprocess.Popen(this_path, stdout=subprocess.PIPE)

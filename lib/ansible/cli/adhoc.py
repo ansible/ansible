@@ -18,7 +18,7 @@
 ########################################################
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
@@ -95,13 +95,16 @@ class AdHocCLI(CLI):
         (sshpass, becomepass) = self.ask_passwords()
         passwords = { 'conn_pass': sshpass, 'become_pass': becomepass }
 
+        loader = DataLoader()
+
         if self.options.vault_password_file:
             # read vault_pass from a file
-            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file)
+            vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader=loader)
+            loader.set_vault_password(vault_pass)
         elif self.options.ask_vault_pass:
             vault_pass = self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)[0]
+            loader.set_vault_password(vault_pass)
 
-        loader = DataLoader(vault_password=vault_pass)
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
 
@@ -109,8 +112,16 @@ class AdHocCLI(CLI):
         variable_manager.set_inventory(inventory)
 
         hosts = inventory.list_hosts(pattern)
+        no_hosts = False
         if len(hosts) == 0:
             self.display.warning("provided hosts list is empty, only localhost is available")
+            no_hosts = True
+
+        if self.options.subset:
+            inventory.subset(self.options.subset)
+            if len(inventory.list_hosts(pattern)) == 0 and not no_hosts:
+                # Invalid limit
+                raise AnsibleError("Specified --limit does not match any hosts")
 
         if self.options.listhosts:
             self.display.display('  hosts (%d):' % len(hosts))

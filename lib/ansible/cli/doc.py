@@ -24,6 +24,8 @@ import termios
 import traceback
 import textwrap
 
+from six import iteritems
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.plugins import module_loader
@@ -33,8 +35,8 @@ from ansible.utils import module_docs
 class DocCLI(CLI):
     """ Vault command line class """
 
-    BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm')
-    IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION"]
+    BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
+    IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "test-docs.sh"]
 
     def __init__(self, args, display=None):
 
@@ -92,7 +94,7 @@ class DocCLI(CLI):
                     continue
 
                 try:
-                    doc, plainexamples, returndocs = module_docs.get_docstring(filename)
+                    doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
                     self.display.vvv(traceback.print_exc())
                     self.display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
@@ -101,7 +103,7 @@ class DocCLI(CLI):
                 if doc is not None:
 
                     all_keys = []
-                    for (k,v) in doc['options'].iteritems():
+                    for (k,v) in iteritems(doc['options']):
                         all_keys.append(k)
                     all_keys = sorted(all_keys)
                     doc['option_keys'] = all_keys
@@ -253,10 +255,10 @@ class DocCLI(CLI):
 
             text.append("%s %s" % (opt_leadin, o))
 
-            if isinstance(doc['description'], list):
-                desc = " ".join(doc['description'])
+            if isinstance(opt['description'], list):
+                desc = " ".join(opt['description'])
             else:
-                desc = doc['description']
+                desc = opt['description']
 
             if 'choices' in opt:
                 choices = ", ".join(str(i) for i in opt['choices'])

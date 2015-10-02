@@ -25,7 +25,7 @@ fi
 # The below is an alternative to readlink -fn which doesn't exist on OS X
 # Source: http://stackoverflow.com/a/1678636
 FULL_PATH=$(python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
-export ANSIBLE_HOME=$(dirname "$FULL_PATH")
+export ANSIBLE_HOME="$(dirname "$FULL_PATH")"
 
 PREFIX_PYTHONPATH="$ANSIBLE_HOME/lib"
 PREFIX_PATH="$ANSIBLE_HOME/bin"
@@ -57,8 +57,10 @@ fi
 	cd "$ANSIBLE_HOME"
 	if [ "$verbosity" = silent ] ; then
 	    gen_egg_info > /dev/null 2>&1
+            find . -type f -name "*.pyc" -delete > /dev/null 2>&1
 	else
 	    gen_egg_info
+            find . -type f -name "*.pyc" -delete
 	fi
 	cd "$current_dir"
 )

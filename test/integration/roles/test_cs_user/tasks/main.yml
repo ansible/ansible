@@ -1,0 +1,396 @@
+---
+- name: setup
+  cs_user: username={{ cs_resource_prefix }}_user state=absent
+  register: user
+- name: verify setup
+  assert:
+    that:
+    - user|success
+
+- name: test fail if missing username
+  action: cs_user
+  register: user
+  ignore_errors: true
+- name: verify results of fail if missing params
+  assert:
+    that:
+    - user|failed
+    - 'user.msg == "missing required arguments: username"'
+
+- name: test fail if missing params if state=present
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+  register: user
+  ignore_errors: true
+- name: verify results of fail if missing params if state=present
+  assert:
+    that:
+    - user|failed
+    - 'user.msg == "missing required arguments: account,email,password,first_name,last_name"'
+
+- name: test create user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    account: "admin"
+  register: user
+- name: verify results of create user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.first_name == "{{ cs_resource_prefix }}_first_name"
+    - user.last_name == "{{ cs_resource_prefix }}_last_name"
+    - user.email == "{{ cs_resource_prefix }}@example.com"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test create user idempotence
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    account: "admin"
+  register: user
+- name: verify results of create user idempotence
+  assert:
+    that:
+    - user|success
+    - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.first_name == "{{ cs_resource_prefix }}_first_name"
+    - user.last_name == "{{ cs_resource_prefix }}_last_name"
+    - user.email == "{{ cs_resource_prefix }}@example.com"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test update user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name1"
+    first_name: "{{ cs_resource_prefix }}_first_name1"
+    email: "{{ cs_resource_prefix }}@example.com1"
+    account: "admin"
+  register: user
+- name: verify results of update user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.first_name == "{{ cs_resource_prefix }}_first_name1"
+    - user.last_name == "{{ cs_resource_prefix }}_last_name1"
+    - user.email == "{{ cs_resource_prefix }}@example.com1"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test update user idempotence
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name1"
+    first_name: "{{ cs_resource_prefix }}_first_name1"
+    email: "{{ cs_resource_prefix }}@example.com1"
+    account: "admin"
+  register: user
+- name: verify results of update user idempotence
+  assert:
+    that:
+    - user|success
+    - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.first_name == "{{ cs_resource_prefix }}_first_name1"
+    - user.last_name == "{{ cs_resource_prefix }}_last_name1"
+    - user.email == "{{ cs_resource_prefix }}@example.com1"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test lock user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: locked
+  register: user
+- name: verify results of lock user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "locked"
+    - user.domain == "ROOT"
+
+- name: test lock user idempotence
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: locked
+  register: user
+- name: verify results of lock user idempotence
+  assert:
+    that:
+    - user|success
+    - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "locked"
+    - user.domain == "ROOT"
+
+- name: test disable user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: disabled
+  register: user
+- name: verify results of disable user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "disabled"
+    - user.domain == "ROOT"
+
+- name: test disable user idempotence
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: disabled
+  register: user
+- name: verify results of disable user idempotence
+  assert:
+    that:
+    - user|success
+    - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "disabled"
+    - user.domain == "ROOT"
+
+- name: test lock disabled user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: locked
+  register: user
+- name: verify results of lock disabled user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "locked"
+    - user.domain == "ROOT"
+
+- name: test lock disabled user idempotence
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: locked
+  register: user
+- name: verify results of lock disabled user idempotence
+  assert:
+    that:
+    - user|success
+    - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "locked"
+    - user.domain == "ROOT"
+
+- name: test enable user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: enabled
+  register: user
+- name: verify results of enable user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test enable user idempotence using unlocked
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: unlocked
+  register: user
+- name: verify results of enable user idempotence
+  assert:
+    that:
+    - user|success
+    - not user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test remove user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: user
+- name: verify results of remove user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test remove user idempotence
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: user
+- name: verify results of remove user idempotence
+  assert:
+    that:
+    - user|success
+    - not user|changed
+
+- name: test create locked user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    account: "admin"
+    state: locked
+  register: user
+- name: verify results of create locked user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.first_name == "{{ cs_resource_prefix }}_first_name"
+    - user.last_name == "{{ cs_resource_prefix }}_last_name"
+    - user.email == "{{ cs_resource_prefix }}@example.com"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "locked"
+    - user.domain == "ROOT"
+
+- name: test remove locked user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: user
+- name: verify results of remove locked user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "locked"
+    - user.domain == "ROOT"
+
+- name: test create disabled user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    account: "admin"
+    state: disabled
+  register: user
+- name: verify results of create disabled user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.first_name == "{{ cs_resource_prefix }}_first_name"
+    - user.last_name == "{{ cs_resource_prefix }}_last_name"
+    - user.email == "{{ cs_resource_prefix }}@example.com"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "disabled"
+    - user.domain == "ROOT"
+
+- name: test remove disabled user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: user
+- name: verify results of remove disabled user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "disabled"
+    - user.domain == "ROOT"
+
+- name: test create enabled user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    password: "{{ cs_resource_prefix }}_password"
+    last_name: "{{ cs_resource_prefix }}_last_name"
+    first_name: "{{ cs_resource_prefix }}_first_name"
+    email: "{{ cs_resource_prefix }}@example.com"
+    account: "admin"
+    state: enabled
+  register: user
+- name: verify results of create enabled user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.first_name == "{{ cs_resource_prefix }}_first_name"
+    - user.last_name == "{{ cs_resource_prefix }}_last_name"
+    - user.email == "{{ cs_resource_prefix }}@example.com"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"
+
+- name: test remove enabled user
+  cs_user:
+    username: "{{ cs_resource_prefix }}_user"
+    state: absent
+  register: user
+- name: verify results of remove enabled user
+  assert:
+    that:
+    - user|success
+    - user|changed
+    - user.username == "{{ cs_resource_prefix }}_user"
+    - user.account_type == "root_admin"
+    - user.account == "admin"
+    - user.state == "enabled"
+    - user.domain == "ROOT"

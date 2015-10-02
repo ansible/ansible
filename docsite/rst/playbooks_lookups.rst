@@ -100,7 +100,7 @@ The CSV File Lookup
 
 The ``csvfile`` lookup reads the contents of a file in CSV (comma-separated value)
 format. The lookup looks for the row where the first column matches ``keyname``, and
-returns the value in the first column, unless a different column is specified.
+returns the value in the second column, unless a different column is specified.
 
 The example below shows the contents of a CSV file named elements.csv with information about the
 periodic table of elements::
@@ -176,7 +176,7 @@ Here's a simple properties we'll take as an example::
 
 You can retrieve the ``user.name`` field with the following lookup::
 
-    - debug: msg="user.name is {{ lookup('ini', 'user.name type=property file=user.properties') }}"
+    - debug: msg="user.name is {{ lookup('ini', 'user.name type=properties file=user.properties') }}"
 
 The ``ini`` lookup supports several arguments like the csv plugin. The format for passing
 arguments is::

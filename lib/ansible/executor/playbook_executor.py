@@ -50,6 +50,7 @@ class PlaybookExecutor:
         self._display          = display
         self._options          = options
         self.passwords         = passwords
+        self._unreachable_hosts = dict()
 
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
             self._tqm = None
@@ -82,19 +83,18 @@ class PlaybookExecutor:
                 self._display.vv('%d plays in %s' % (len(plays), playbook_path))
 
                 for play in plays:
+                    if play._included_path is not None:
+                        self._loader.set_basedir(play._included_path)
+
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
                     if play.vars_prompt:
                         for var in play.vars_prompt:
-                            if 'name' not in var:
-                                raise AnsibleError("'vars_prompt' item is missing 'name:'", obj=play._ds)
-
                             vname     = var['name']
                             prompt    = var.get("prompt", vname)
                             default   = var.get("default", None)
                             private   = var.get("private", True)
-
                             confirm   = var.get("confirm", False)
                             encrypt   = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
@@ -121,6 +121,7 @@ class PlaybookExecutor:
                     else:
                         # make sure the tqm has callbacks loaded
                         self._tqm.load_callbacks()
+                        self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
                         # we are actually running plays
                         for batch in self._get_serialized_batches(new_play):
@@ -148,10 +149,12 @@ class PlaybookExecutor:
                                 break
 
                             # clear the failed hosts dictionaires in the TQM for the next batch
+                            self._unreachable_hosts.update(self._tqm._unreachable_hosts)
                             self._tqm.clear_failed_hosts()
 
-                        # if the last result wasn't zero, break out of the serial batch loop
-                        if result != 0:
+                        # if the last result wasn't zero or 3 (some hosts were unreachable),
+                        # break out of the serial batch loop
+                        if result not in (0, 3):
                             break
 
                     i = i + 1 # per play

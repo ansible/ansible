@@ -23,6 +23,7 @@ import time
 import json
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins.cache.base import BaseCacheModule
 
 try:

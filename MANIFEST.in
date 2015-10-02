@@ -14,7 +14,7 @@ include Makefile
 include VERSION
 include MANIFEST.in
 include contrib/README.md
-include contrib/inventory *
+recursive-include contrib/inventory *
 exclude lib/ansible/modules/core/.git*
 exclude lib/ansible/modules/extras/.git*
 prune lib/ansible/modules/core/.git

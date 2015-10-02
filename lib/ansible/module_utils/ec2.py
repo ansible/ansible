@@ -25,6 +25,13 @@
 # INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
+
+try:
+    import boto3
+    HAS_BOTO3 = True
+except:
+    HAS_BOTO3 = False
 
 try:
     from distutils.version import LooseVersion
@@ -37,14 +44,15 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
     if conn_type not in ['both', 'resource', 'client']:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
 
-    resource = boto3.session.Session().resource(resource, region_name=region, endpoint_url=endpoint, **params)
-    client = resource.meta.client
-
     if conn_type == 'resource':
+        resource = boto3.session.Session().resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return resource
     elif conn_type == 'client':
+        client = boto3.session.Session().client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client
     else:
+        resource = boto3.session.Session().resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        client = boto3.session.Session().client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
 def aws_common_argument_spec():
@@ -133,7 +141,7 @@ def get_aws_connection_info(module, boto3=False):
             # in case security_token came in as empty string
             security_token = None
 
-    if boto3:
+    if HAS_BOTO3 and boto3:
         boto_params = dict(aws_access_key_id=access_key,
                            aws_secret_access_key=secret_key,
                            aws_session_token=security_token)

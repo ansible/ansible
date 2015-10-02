@@ -24,6 +24,8 @@ import ansible.constants as C
 import time
 import random
 
+from six import text_type
+
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 class ShellModule(object):
@@ -40,7 +42,7 @@ class ShellModule(object):
             LC_MESSAGES = C.DEFAULT_MODULE_LANG,
         )
         env.update(kwargs)
-        return ' '.join(['%s=%s' % (k, pipes.quote(unicode(v))) for k,v in env.items()])
+        return ' '.join(['%s=%s' % (k, pipes.quote(text_type(v))) for k,v in env.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)

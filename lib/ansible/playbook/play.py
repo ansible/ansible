@@ -31,9 +31,17 @@ from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 from ansible.playbook.task import Task
+from ansible.vars import preprocess_vars
 
 
 __all__ = ['Play']
+
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 class Play(Base, Taggable, Become):
@@ -87,6 +95,7 @@ class Play(Base, Taggable, Become):
     def __init__(self):
         super(Play, self).__init__()
 
+        self._included_path = None
         self.ROLE_CACHE = {}
 
     def __repr__(self):
@@ -120,9 +129,6 @@ class Play(Base, Taggable, Become):
             ds['remote_user'] = ds['user']
             del ds['user']
 
-        if 'vars_prompt' in ds and not isinstance(ds['vars_prompt'], list):
-            ds['vars_prompt'] = [ ds['vars_prompt'] ]
-
         return super(Play, self).preprocess_data(ds)
 
     def _load_hosts(self, attr, ds):
@@ -152,28 +158,40 @@ class Play(Base, Taggable, Become):
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_pre_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_post_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_handlers(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_roles(self, attr, ds):
         '''
@@ -184,15 +202,38 @@ class Play(Base, Taggable, Become):
         if ds is None:
             ds = []
 
-        role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds)
 
         roles = []
         for ri in role_includes:
             roles.append(Role.load(ri, play=self))
         return roles
 
-    # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
+    def _load_vars_prompt(self, attr, ds):
+        new_ds = preprocess_vars(ds)
+        vars_prompts = []
+        for prompt_data in new_ds:
+            if 'name' not in prompt_data:
+                self._display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
+                for vname, prompt in prompt_data.iteritems():
+                    vars_prompts.append(dict(
+                        name      = vname,
+                        prompt    = prompt,
+                        default   = None,
+                        private   = None,
+                        confirm   = None,
+                        encrypt   = None,
+                        salt_size = None,
+                        salt      = None,
+                    ))
+            else:
+                vars_prompts.append(prompt_data)
+        return vars_prompts
 
+    # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
     def _compile_roles(self):
         '''
         Handles the role compilation step, returning a flat list of tasks
@@ -281,12 +322,14 @@ class Play(Base, Taggable, Become):
         for role in self.get_roles():
             roles.append(role.serialize())
         data['roles'] = roles
+        data['included_path'] = self._included_path
 
         return data
 
     def deserialize(self, data):
         super(Play, self).deserialize(data)
 
+        self._included_path = data.get('included_path', None)
         if 'roles' in data:
             role_data = data.get('roles', [])
             roles = []
@@ -301,5 +344,6 @@ class Play(Base, Taggable, Become):
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
+        new_me._included_path = self._included_path
         return new_me
 

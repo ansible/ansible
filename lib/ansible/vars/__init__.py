@@ -24,6 +24,7 @@ import os
 from collections import defaultdict
 from collections import MutableMapping
 
+from six import iteritems
 from jinja2.exceptions import UndefinedError
 
 try:
@@ -33,27 +34,82 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import *
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
+from ansible.inventory.host import Host
 from ansible.parsing import DataLoader
+from ansible.plugins import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
 from ansible.utils.debug import debug
+from ansible.utils.listify import listify_lookup_plugin_terms
+from ansible.utils.vars import combine_vars
 from ansible.vars.hostvars import HostVars
+from ansible.vars.unsafe_proxy import UnsafeProxy
 
-CACHED_VARS = dict()
+VARIABLE_CACHE = dict()
+HOSTVARS_CACHE = dict()
+
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+def preprocess_vars(a):
+    '''
+    Ensures that vars contained in the parameter passed in are
+    returned as a list of dictionaries, to ensure for instance
+    that vars loaded from a file conform to an expected state.
+    '''
+
+    if a is None:
+        return None
+    elif not isinstance(a, list):
+        data = [ a ]
+    else:
+        data = a
+
+    for item in data:
+        if not isinstance(item, MutableMapping):
+            raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
+
+    return data
 
 class VariableManager:
 
     def __init__(self):
 
-        self._fact_cache       = FactCache()
-        self._vars_cache       = defaultdict(dict)
-        self._extra_vars       = defaultdict(dict)
-        self._host_vars_files  = defaultdict(dict)
+        self._fact_cache = FactCache()
+        self._nonpersistent_fact_cache = defaultdict(dict)
+        self._vars_cache = defaultdict(dict)
+        self._extra_vars = defaultdict(dict)
+        self._host_vars_files = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
-        self._inventory        = None
+        self._inventory = None
+        self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
 
-        self._omit_token       = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
+    def __getstate__(self):
+        data = dict(
+            fact_cache = self._fact_cache.copy(),
+            np_fact_cache = self._nonpersistent_fact_cache.copy(),
+            vars_cache = self._vars_cache.copy(),
+            extra_vars = self._extra_vars.copy(),
+            host_vars_files = self._host_vars_files.copy(),
+            group_vars_files = self._group_vars_files.copy(),
+            omit_token = self._omit_token,
+        )
+        return data
+
+    def __setstate__(self, data):
+        self._fact_cache = data.get('fact_cache', defaultdict(dict))
+        self._nonpersistent_fact_cache = data.get('np_fact_cache', defaultdict(dict))
+        self._vars_cache = data.get('vars_cache', defaultdict(dict))
+        self._extra_vars = data.get('extra_vars', dict())
+        self._host_vars_files = data.get('host_vars_files', defaultdict(dict))
+        self._group_vars_files = data.get('group_vars_files', defaultdict(dict))
+        self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
+        self._inventory = None
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
@@ -104,52 +160,8 @@ class VariableManager:
 
         return data
 
-    def _validate_both_dicts(self, a, b):
-        '''
-        Validates that both arguments are dictionaries, or an error is raised.
-        '''
-        if not (isinstance(a, MutableMapping) and isinstance(b, MutableMapping)):
-            raise AnsibleError("failed to combine variables, expected dicts but got a '%s' and a '%s'" % (type(a).__name__, type(b).__name__))
 
-    def _combine_vars(self, a, b):
-        '''
-        Combines dictionaries of variables, based on the hash behavior
-        '''
-
-        self._validate_both_dicts(a, b)
-
-        if C.DEFAULT_HASH_BEHAVIOUR == "merge":
-            return self._merge_dicts(a, b)
-        else:
-            result = a.copy()
-            result.update(b)
-            return result
-
-    def _merge_dicts(self, a, b):
-        '''
-        Recursively merges dict b into a, so that keys
-        from b take precedence over keys from a.
-        '''
-
-        result = dict()
-
-        self._validate_both_dicts(a, b)
-
-        for dicts in a, b:
-            # next, iterate over b keys and values
-            for k, v in dicts.iteritems():
-                # if there's already such key in a
-                # and that key contains dict
-                if k in result and isinstance(result[k], dict):
-                    # merge those dicts recursively
-                    result[k] = self._merge_dicts(a[k], v)
-                else:
-                    # otherwise, just copy a value from b to a
-                    result[k] = v
-
-        return result
-
-    def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, use_cache=True):
+    def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
         for the play, host, and task (which could possibly result in different
@@ -161,19 +173,19 @@ class VariableManager:
         - host_vars_files[host] (if there is a host context)
         - host->get_vars (if there is a host context)
         - fact_cache[host] (if there is a host context)
-        - vars_cache[host] (if there is a host context)
         - play vars (if there is a play context)
         - play vars_files (if there's no host context, ignore
           file names that cannot be templated)
         - task->get_vars (if there is a task context)
+        - vars_cache[host] (if there is a host context)
         - extra vars
         '''
 
         debug("in VariableManager get_vars()")
         cache_entry = self._get_cache_entry(play=play, host=host, task=task)
-        if cache_entry in CACHED_VARS and use_cache:
+        if cache_entry in VARIABLE_CACHE and use_cache:
             debug("vars are cached, returning them now")
-            return CACHED_VARS[cache_entry]
+            return VARIABLE_CACHE[cache_entry]
 
         all_vars = defaultdict(dict)
 
@@ -181,91 +193,115 @@ class VariableManager:
             # first we compile any vars specified in defaults/main.yml
             # for all roles within the specified play
             for role in play.get_roles():
-                all_vars = self._combine_vars(all_vars, role.get_default_vars())
+                all_vars = combine_vars(all_vars, role.get_default_vars())
 
             # if we have a task in this context, and that task has a role, make
             # sure it sees its defaults above any other roles, as we previously
             # (v1) made sure each task had a copy of its roles default vars
             if task and task._role is not None:
-                all_vars = self._combine_vars(all_vars, task._role.get_default_vars())
+                all_vars = combine_vars(all_vars, task._role.get_default_vars())
 
         if host:
             # next, if a host is specified, we load any vars from group_vars
             # files and then any vars from host_vars files which may apply to
             # this host or the groups it belongs to
 
-            # we merge in the special 'all' group_vars first, if they exist
+            # we merge in vars from groups specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_group_vars())
+
+            # then we merge in the special 'all' group_vars first, if they exist
             if 'all' in self._group_vars_files:
-                data = self._preprocess_vars(self._group_vars_files['all'])
+                data = preprocess_vars(self._group_vars_files['all'])
                 for item in data:
-                    all_vars = self._combine_vars(all_vars, item)
+                    all_vars = combine_vars(all_vars, item)
 
             for group in host.get_groups():
-                all_vars = self._combine_vars(all_vars, group.get_vars())
                 if group.name in self._group_vars_files and group.name != 'all':
-                    data = self._preprocess_vars(self._group_vars_files[group.name])
-                    for item in data:
-                        all_vars = self._combine_vars(all_vars, item)
+                    for data in self._group_vars_files[group.name]:
+                        data = preprocess_vars(data)
+                        for item in data:
+                            all_vars = combine_vars(all_vars, item)
 
+            # then we merge in vars from the host specified in the inventory (INI or script)
+            all_vars = combine_vars(all_vars, host.get_vars())
+
+            # then we merge in the host_vars/<hostname> file, if it exists
             host_name = host.get_name()
             if host_name in self._host_vars_files:
-                data = self._preprocess_vars(self._host_vars_files[host_name])
-                for item in data:
-                    all_vars = self._combine_vars(all_vars, self._host_vars_files[host_name])
+                for data in self._host_vars_files[host_name]:
+                    data = preprocess_vars(data)
+                    for item in data:
+                        all_vars = combine_vars(all_vars, item)
 
-            # then we merge in vars specified for this host
-            all_vars = self._combine_vars(all_vars, host.get_vars())
-
-            # next comes the facts cache and the vars cache, respectively
+            # finally, the facts caches for this host, if it exists
             try:
-                all_vars = self._combine_vars(all_vars, self._fact_cache.get(host.name, dict()))
+                host_facts = self._fact_cache.get(host.name, dict())
+                for k in host_facts.keys():
+                    if host_facts[k] is not None and not isinstance(host_facts[k], UnsafeProxy):
+                        host_facts[k] = UnsafeProxy(host_facts[k])
+                all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
 
         if play:
-            all_vars = self._combine_vars(all_vars, play.get_vars())
+            all_vars = combine_vars(all_vars, play.get_vars())
 
             for vars_file_item in play.get_vars_files():
+                # create a set of temporary vars here, which incorporate the
+                # extra vars so we can properly template the vars_files entries
+                temp_vars = combine_vars(all_vars, self._extra_vars)
+                templar = Templar(loader=loader, variables=temp_vars)
+
+                # we assume each item in the list is itself a list, as we
+                # support "conditional includes" for vars_files, which mimics
+                # the with_first_found mechanism.
+                #vars_file_list = templar.template(vars_file_item)
+                vars_file_list = vars_file_item
+                if not isinstance(vars_file_list, list):
+                     vars_file_list = [ vars_file_list ]
+
+                # now we iterate through the (potential) files, and break out
+                # as soon as we read one from the list. If none are found, we
+                # raise an error, which is silently ignored at this point.
                 try:
-                    # create a set of temporary vars here, which incorporate the
-                    # extra vars so we can properly template the vars_files entries
-                    temp_vars = self._combine_vars(all_vars, self._extra_vars)
-                    templar = Templar(loader=loader, variables=temp_vars)
-
-                    # we assume each item in the list is itself a list, as we
-                    # support "conditional includes" for vars_files, which mimics
-                    # the with_first_found mechanism.
-                    vars_file_list = templar.template(vars_file_item)
-                    if not isinstance(vars_file_list, list):
-                         vars_file_list = [ vars_file_list ]
-
-                    # now we iterate through the (potential) files, and break out
-                    # as soon as we read one from the list. If none are found, we
-                    # raise an error, which is silently ignored at this point.
                     for vars_file in vars_file_list:
-                        data = self._preprocess_vars(loader.load_from_file(vars_file))
-                        if data is not None:
-                            for item in data:
-                                all_vars = self._combine_vars(all_vars, item)
+                        vars_file = templar.template(vars_file)
+                        try:
+                            data = preprocess_vars(loader.load_from_file(vars_file))
+                            if data is not None:
+                                for item in data:
+                                    all_vars = combine_vars(all_vars, item)
                             break
+                        except AnsibleFileNotFound as e:
+                            # we continue on loader failures
+                            continue
+                        except AnsibleParserError as e:
+                            raise
                     else:
-                        raise AnsibleError("vars file %s was not found" % vars_file_item)
-                except UndefinedError as e:
-                    continue
+                        raise AnsibleFileNotFound("vars file %s was not found" % vars_file_item)
+                except (UndefinedError, AnsibleUndefinedVariable):
+                    if host is not None and self._fact_cache.get(host.name, dict()).get('module_setup') and task is not None:
+                        raise AnsibleUndefinedVariable("an undefined variable was found when attempting to template the vars_files item '%s'" % vars_file_item, obj=vars_file_item)
+                    else:
+                        # we do not have a full context here, and the missing variable could be
+                        # because of that, so just show a warning and continue
+                        display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
+                        continue
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
-                    all_vars = self._combine_vars(all_vars, role.get_vars())
+                    all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
         if task:
             if task._role:
-                all_vars = self._combine_vars(all_vars, task._role.get_vars())
-            all_vars = self._combine_vars(all_vars, task.get_vars())
+                all_vars = combine_vars(all_vars, task._role.get_vars())
+            all_vars = combine_vars(all_vars, task.get_vars())
 
         if host:
-            all_vars = self._combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
+            all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
-        all_vars = self._combine_vars(all_vars, self._extra_vars)
+        all_vars = combine_vars(all_vars, self._extra_vars)
 
         # FIXME: make sure all special vars are here
         # Finally, we create special vars
@@ -273,17 +309,106 @@ class VariableManager:
         all_vars['playbook_dir'] = loader.get_basedir()
 
         if host:
-            all_vars['groups'] = [group.name for group in host.get_groups()]
+            all_vars['group_names'] = [group.name for group in host.get_groups()]
 
             if self._inventory is not None:
-                all_vars['groups']   = self._inventory.groups_list()
+                all_vars['groups']  = dict()
+                for (group_name, group) in iteritems(self._inventory.groups):
+                    all_vars['groups'][group_name] = [h.name for h in group.get_hosts()]
+
                 if include_hostvars:
-                    hostvars = HostVars(vars_manager=self, play=play, inventory=self._inventory, loader=loader)
+                    hostvars_cache_entry = self._get_cache_entry(play=play)
+                    if hostvars_cache_entry in HOSTVARS_CACHE:
+                        hostvars = HOSTVARS_CACHE[hostvars_cache_entry]
+                    else:
+                        hostvars = HostVars(play=play, inventory=self._inventory, loader=loader, variable_manager=self)
+                        HOSTVARS_CACHE[hostvars_cache_entry] = hostvars
                     all_vars['hostvars'] = hostvars
 
         if task:
             if task._role:
                 all_vars['role_path'] = task._role._role_path
+
+            # if we have a task and we're delegating to another host, figure out the
+            # variables for that host now so we don't have to rely on hostvars later
+            if task.delegate_to is not None and include_delegate_to:
+                # we unfortunately need to template the delegate_to field here,
+                # as we're fetching vars before post_validate has been called on
+                # the task that has been passed in
+                templar = Templar(loader=loader, variables=all_vars)
+
+                items = []
+                if task.loop is not None:
+                    if task.loop in lookup_loader:
+                        #TODO: remove convert_bare true and deprecate this in with_ 
+                        try:
+                            loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=True)
+                        except AnsibleUndefinedVariable as e:
+                            if 'has no attribute' in str(e):
+                                loop_terms = []
+                                self._display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
+                            else:
+                                raise
+                        items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=all_vars)
+                    else:
+                        raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % task.loop)
+                else:
+                    items = [None]
+
+                vars_copy = all_vars.copy()
+                delegated_host_vars = dict()
+                for item in items:
+                    # update the variables with the item value for templating, in case we need it
+                    if item is not None:
+                        vars_copy['item'] = item
+
+                    templar.set_available_variables(vars_copy)
+                    delegated_host_name = templar.template(task.delegate_to, fail_on_undefined=False)
+                    if delegated_host_name in delegated_host_vars:
+                        # no need to repeat ourselves, as the delegate_to value
+                        # does not appear to be tied to the loop item variable
+                        continue
+
+                    # a dictionary of variables to use if we have to create a new host below
+                    new_delegated_host_vars = dict(
+                        ansible_host=delegated_host_name,
+                        ansible_user=C.DEFAULT_REMOTE_USER,
+                        ansible_connection=C.DEFAULT_TRANSPORT,
+                    )
+
+                    # now try to find the delegated-to host in inventory, or failing that,
+                    # create a new host on the fly so we can fetch variables for it
+                    delegated_host = None
+                    if self._inventory is not None:
+                        delegated_host = self._inventory.get_host(delegated_host_name)
+                        # try looking it up based on the address field, and finally
+                        # fall back to creating a host on the fly to use for the var lookup
+                        if delegated_host is None:
+                            for h in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
+                                # check if the address matches, or if both the delegated_to host
+                                # and the current host are in the list of localhost aliases
+                                if h.address == delegated_host_name or h.name in C.LOCALHOST and delegated_host_name in C.LOCALHOST:
+                                    delegated_host = h
+                                    break
+                            else:
+                                delegated_host = Host(name=delegated_host_name)
+                                delegated_host.vars.update(new_delegated_host_vars)
+                    else:
+                        delegated_host = Host(name=delegated_host_name)
+                        delegated_host.vars.update(new_delegated_host_vars)
+
+                    # now we go fetch the vars for the delegated-to host and save them in our
+                    # master dictionary of variables to be used later in the TaskExecutor/PlayContext
+                    delegated_host_vars[delegated_host_name] = self.get_vars(
+                        loader=loader,
+                        play=play,
+                        host=delegated_host,
+                        task=task,
+                        include_delegate_to=False,
+                        include_hostvars=False,
+                    )
+
+                all_vars['ansible_delegated_vars'] = delegated_host_vars
 
         if self._inventory is not None:
             all_vars['inventory_dir'] = self._inventory.basedir()
@@ -296,23 +421,21 @@ class VariableManager:
                 all_vars['play_hosts'] = host_list
                 all_vars['ansible_play_hosts'] = host_list
 
-
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         all_vars['omit'] = self._omit_token
-
         all_vars['ansible_version'] = CLI.version_info(gitinfo=False)
 
         if 'hostvars' in all_vars and host:
             all_vars['vars'] = all_vars['hostvars'][host.get_name()]
 
-        #CACHED_VARS[cache_entry] = all_vars
+        #VARIABLE_CACHE[cache_entry] = all_vars
 
         debug("done with get_vars()")
         return all_vars
 
     def _get_inventory_basename(self, path):
         '''
-        Returns the bsaename minus the extension of the given path, so the
+        Returns the basename minus the extension of the given path, so the
         bare filename can be matched against host/group names later
         '''
 
@@ -345,14 +468,14 @@ class VariableManager:
             for p in paths:
                 _found, results = self._load_inventory_file(path=p, loader=loader)
                 if results is not None:
-                    data = self._combine_vars(data, results)
+                    data = combine_vars(data, results)
 
         else:
             file_name, ext = os.path.splitext(path)
             data = None
-            if not ext:
-                for ext in C.YAML_FILENAME_EXTENSIONS:
-                    new_path = path + ext
+            if not ext or ext not in C.YAML_FILENAME_EXTENSIONS:
+                for test_ext in C.YAML_FILENAME_EXTENSIONS:
+                    new_path = path + test_ext
                     if loader.path_exists(new_path):
                         data = loader.load_from_file(new_path)
                         break
@@ -372,7 +495,9 @@ class VariableManager:
 
         (name, data) = self._load_inventory_file(path, loader)
         if data:
-            self._host_vars_files[name] = data
+            if name not in self._host_vars_files:
+                self._host_vars_files[name] = []
+            self._host_vars_files[name].append(data)
             return data
         else:
             return dict()
@@ -386,7 +511,9 @@ class VariableManager:
 
         (name, data) = self._load_inventory_file(path, loader)
         if data:
-            self._group_vars_files[name] = data
+            if name not in self._group_vars_files:
+                self._group_vars_files[name] = []
+            self._group_vars_files[name].append(data)
             return data
         else:
             return dict()
@@ -405,6 +532,21 @@ class VariableManager:
                 self._fact_cache[host.name].update(facts)
             except KeyError:
                 self._fact_cache[host.name] = facts
+
+    def set_nonpersistent_facts(self, host, facts):
+        '''
+        Sets or updates the given facts for a host in the fact cache.
+        '''
+
+        assert isinstance(facts, dict)
+
+        if host.name not in self._nonpersistent_fact_cache:
+            self._nonpersistent_fact_cache[host.name] = facts
+        else:
+            try:
+                self._nonpersistent_fact_cache[host.name].update(facts)
+            except KeyError:
+                self._nonpersistent_fact_cache[host.name] = facts
 
     def set_host_variable(self, host, varname, value):
         '''

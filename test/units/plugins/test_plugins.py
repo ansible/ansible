@@ -26,7 +26,7 @@ from ansible.compat.tests import BUILTINS
 
 from ansible.compat.tests.mock import mock_open, patch, MagicMock
 
-from ansible.plugins import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, _basedirs, push_basedir, PluginLoader
+from ansible.plugins import MODULE_CACHE, PATH_CACHE, PLUGIN_PATH_CACHE, PluginLoader
 
 class TestErrors(unittest.TestCase):
 

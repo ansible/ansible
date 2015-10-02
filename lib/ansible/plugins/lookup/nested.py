@@ -26,8 +26,6 @@ from ansible.utils.listify import listify_lookup_plugin_terms
 class LookupModule(LookupBase):
 
     def _lookup_variables(self, terms, variables):
-        foo = variables.copy()
-        foo.pop('vars')
         results = []
         for x in terms:
             try:

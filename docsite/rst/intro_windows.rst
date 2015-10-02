@@ -62,13 +62,86 @@ Installing python-kerberos dependencies
 Installing python-kerberos
 --------------------------
 
-Once you've installed the necessary dependencies, the python-kerberos wrapper can be installed via pip::
+Once you've installed the necessary dependencies, the python-kerberos wrapper can be installed via pip:
 
 .. code-block:: bash
 
    pip install kerberos
-   
+
 Kerberos is installed and configured by default on OS X and many Linux distributions. If your control machine has not already done this for you, you will need to.
+
+Configuring Kerberos
+--------------------
+
+Edit your /etc/krb5.conf (which should be installed as a result of installing packages above) and add the following information for each domain you need to connect to:
+
+In the section that starts with
+
+.. code-block:: bash
+
+   [realms]
+
+add the full domain name and the fully qualified domain names of your primary and secondary Active Directory domain controllers.  It should look something like this:
+
+.. code-block:: bash
+
+   [realms]
+   
+    MY.DOMAIN.COM = {
+     kdc = domain-controller1.my.domain.com
+     kdc = domain-controller2.my.domain.com
+    }
+
+
+and in the [domain_realm] section add a line like the following for each domain you want to access:
+
+.. code-block:: bash
+
+    [domain_realm]
+        .my.domain.com = MY.DOMAIN.COM
+
+You may wish to configure other settings here, such as the default domain.
+
+Testing a kerberos connection
+-----------------------------
+
+If you have installed krb5-workstation (yum) or krb5-user (apt-get) you can use the following command to test that you can be authorised by your domain controller.
+
+.. code-block:: bash
+
+   kinit user@MY.DOMAIN.COM
+
+Note that the domain part has to be fully qualified and must be in upper case.
+
+To see what tickets if any you have acquired, use the command klist
+
+.. code-block:: bash
+
+   klist
+
+
+Troubleshooting kerberos connections
+------------------------------------
+
+If you unable to connect using kerberos, check the following:
+
+Ensure that forward and reverse DNS lookups are working properly on your domain.
+
+To test this, ping the windows host you want to control by name then use the ip address returned with nslookup.  You should get the same name back from DNS when you use nslookup on the ip address.  
+
+If you get different hostnames back than the name you originally pinged, speak to your active directory administrator and get them to check that DNS Scavenging is enabled and that DNS and DHCP are updating each other.
+
+Check your ansible controller's clock is synchronised with your domain controller.  Kerberos is time sensitive and a little clock drift can cause tickets not be granted.
+
+Check you are using the real fully qualified domain name for the domain.  Sometimes domains are commonly known to users by aliases.  To check this run:
+
+
+.. code-block:: bash
+
+   kinit -C user@MY.DOMAIN.COM
+   klist
+
+If the domain name returned by klist is different from the domain name you requested, you are requesting using an alias, and you need to update your krb5.conf so you are using the fully qualified domain name, not its alias.
 
 .. _windows_inventory:
 
@@ -86,14 +159,14 @@ In group_vars/windows.yml, define the following inventory variables::
     # it is suggested that these be encrypted with ansible-vault:
     # ansible-vault edit group_vars/windows.yml
 
-    ansible_ssh_user: Administrator
-    ansible_ssh_pass: SecretPasswordGoesHere
-    ansible_ssh_port: 5986
+    ansible_user: Administrator
+    ansible_password: SecretPasswordGoesHere
+    ansible_port: 5986
     ansible_connection: winrm
 
-Notice that the ssh_port is not actually for SSH, but this is a holdover variable name from how Ansible is mostly an SSH-oriented system.  Again, Windows management will not happen over SSH.
+Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
 
-If you have installed the ``kerberos`` module and ``ansible_ssh_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not ``ansible_ssh_user``*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
+If you have installed the ``kerberos`` module and ``ansible_user`` contains ``@`` (e.g. ``username@realm``), Ansible will first attempt Kerberos authentication. *This method uses the principal you are authenticated to Kerberos with on the control machine and not ``ansible_user``*. If that fails, either because you are not signed into Kerberos on the control machine or because the corresponding domain account on the remote host is not available, then Ansible will fall back to "plain" username/password authentication.
 
 When using your playbook, don't forget to specify --ask-vault-pass to provide the password to unlock the file.
 
@@ -107,6 +180,14 @@ section about how to enable PowerShell remoting - and if necessary - how to upgr
 a version that is 3 or higher.
 
 You'll run this command again later though, to make sure everything is working.
+
+Since 2.0, the following custom inventory variables are also supported for additional configuration of WinRM connections::
+
+* ``ansible_winrm_scheme``: Specify the connection scheme (``http`` or ``https``) to use for the WinRM connection.  Ansible uses ``https`` by default unless the port is 5985.
+* ``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint.  Ansible uses ``/wsman`` by default.
+* ``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication.  If the username contains ``@``, Ansible will use the part of the username after ``@`` by default.
+* ``ansible_winrm_transport``: Specify one or more transports as a comma-separated list.  By default, Ansible will use ``kerberos,plaintext`` if the ``kerberos`` module is installed and a realm is defined, otherwise ``plaintext``.
+* ``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided.
 
 .. _windows_system_prep:
 

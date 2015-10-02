@@ -21,6 +21,8 @@ __metaclass__ = type
 
 import fnmatch
 
+from six import iteritems
+
 from ansible import constants as C
 
 from ansible.errors import *
@@ -107,7 +109,7 @@ class PlayIterator:
     FAILED_RESCUE      = 4
     FAILED_ALWAYS      = 8
 
-    def __init__(self, inventory, play, play_context, all_vars):
+    def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
 
         self._blocks = []
@@ -119,14 +121,22 @@ class PlayIterator:
         self._host_states = {}
         for host in inventory.get_hosts(self._play.hosts):
              self._host_states[host.name] = HostState(blocks=self._blocks)
+             # if the host's name is in the variable manager's fact cache, then set
+             # its _gathered_facts flag to true for smart gathering tests later
+             if host.name in variable_manager._fact_cache:
+                 host._gathered_facts = True
              # if we're looking to start at a specific task, iterate through
              # the tasks for this host until we find the specified task
-             if play_context.start_at_task is not None:
+             if play_context.start_at_task is not None and not start_at_done:
                  while True:
                      (s, task) = self.get_next_task_for_host(host, peek=True)
                      if s.run_state == self.ITERATING_COMPLETE:
                          break
                      if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task):
+                         # we have our match, so clear the start_at_task field on the
+                         # play context to flag that we've started at a task (and future
+                         # plays won't try to advance)
+                         play_context.start_at_task = None
                          break
                      else:
                          self.get_next_task_for_host(host)
@@ -229,6 +239,10 @@ class PlayIterator:
                             state.tasks_child_state.cur_role = state.cur_role
                         (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, peek=peek)
                         if task is None:
+                            # check to see if the child state was failed, if so we need to
+                            # fail here too so we don't continue iterating tasks
+                            if state.tasks_child_state.fail_state != self.FAILED_NONE:
+                                state.fail_state |= self.FAILED_TASKS
                             state.tasks_child_state = None
                             state.cur_regular_task += 1
                             continue
@@ -251,6 +265,10 @@ class PlayIterator:
                             state.rescue_child_state.cur_role = state.cur_role
                         (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, peek=peek)
                         if task is None:
+                            # check to see if the child state was failed, if so we need to
+                            # fail here too so we don't continue iterating rescue
+                            if state.rescue_child_state.fail_state != self.FAILED_NONE:
+                                state.fail_state |= self.FAILED_RESCUE
                             state.rescue_child_state = None
                             state.cur_rescue_task += 1
                             continue
@@ -277,6 +295,10 @@ class PlayIterator:
                             state.always_child_state.cur_role = state.cur_role
                         (state.always_child_state, task) = self._get_next_task_from_state(state.always_child_state, peek=peek)
                         if task is None:
+                            # check to see if the child state was failed, if so we need to
+                            # fail here too so we don't continue iterating always
+                            if state.always_child_state.fail_state != self.FAILED_NONE:
+                                state.fail_state |= self.FAILED_ALWAYS
                             state.always_child_state = None
                             state.cur_always_task += 1
                             continue
@@ -322,7 +344,7 @@ class PlayIterator:
         self._host_states[host.name] = s
 
     def get_failed_hosts(self):
-        return dict((host, True) for (host, state) in self._host_states.iteritems() if state.run_state == self.ITERATING_COMPLETE and state.fail_state != self.FAILED_NONE)
+        return dict((host, True) for (host, state) in iteritems(self._host_states) if state.run_state == self.ITERATING_COMPLETE and state.fail_state != self.FAILED_NONE)
 
     def get_original_task(self, host, task):
         '''
@@ -354,9 +376,10 @@ class PlayIterator:
                 if res:
                     return res
             for child_state in (state.tasks_child_state, state.rescue_child_state, state.always_child_state):
-                res = _search_state(child_state, task)
-                if res:
-                    return res
+                if child_state is not None:
+                    res = _search_state(child_state, task)
+                    if res:
+                        return res
             return None
 
         s = self.get_host_state(host)

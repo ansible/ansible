@@ -21,6 +21,8 @@ __metaclass__ = type
 
 import os
 
+from six import iteritems
+
 from ansible.errors import AnsibleParserError
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
@@ -78,6 +80,8 @@ class PlaybookInclude(Base, Conditional, Taggable):
             temp_vars.update(new_obj.vars)
             entry.vars = temp_vars
             entry.tags = list(set(entry.tags).union(new_obj.tags))
+            if entry._included_path is None:
+                entry._included_path = os.path.dirname(file_name)
 
         return pb
 
@@ -95,7 +99,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if isinstance(ds, AnsibleBaseYAMLObject):
             new_ds.ansible_pos = ds.ansible_pos
 
-        for (k,v) in ds.iteritems():
+        for (k,v) in iteritems(ds):
             if k == 'include':
                 self._preprocess_include(ds, new_ds, k, v)
             else:

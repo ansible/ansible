@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import string_types
+from six import iteritems, string_types
 
 from ansible.errors import AnsibleError
 
@@ -95,6 +95,10 @@ class Task(Base, Conditional, Taggable, Become):
         self._role         = role
         self._task_include = task_include
 
+        # special flag for local_action: tasks, to make sure their
+        # connection type of local isn't overridden incorrectly
+        self._local_action = False
+
         super(Task, self).__init__()
 
     def get_name(self):
@@ -114,11 +118,11 @@ class Task(Base, Conditional, Taggable, Become):
     def _merge_kv(self, ds):
         if ds is None:
             return ""
-        elif isinstance(ds, basestring):
+        elif isinstance(ds, string_types):
             return ds
         elif isinstance(ds, dict):
             buf = ""
-            for (k,v) in ds.iteritems():
+            for (k,v) in iteritems(ds):
                 if k.startswith('_'):
                     continue
                 buf = buf + "%s=%s " % (k,v)
@@ -129,6 +133,16 @@ class Task(Base, Conditional, Taggable, Become):
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = Task(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
+
+    def load_data(self, ds, variable_manager=None, loader=None):
+        '''
+        We override load_data for tasks so that we can pull special flags
+        out of the task args and set them internaly only so the user never
+        sees them.
+        '''
+        t = super(Task, self).load_data(ds=ds, variable_manager=variable_manager, loader=loader)
+        t._local_action = t.args.pop('_local_action', False)
+        return t
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
@@ -180,7 +194,7 @@ class Task(Base, Conditional, Taggable, Become):
         else:
             new_ds['vars'] = dict()
 
-        for (k,v) in ds.iteritems():
+        for (k,v) in iteritems(ds):
             if k in ('action', 'local_action', 'args', 'connection') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were
                 # determined by the ModuleArgsParser() above
@@ -192,7 +206,7 @@ class Task(Base, Conditional, Taggable, Become):
                 # top level of the task, so we move those into the 'vars' dictionary
                 # here, and show a deprecation message as we will remove this at
                 # some point in the future.
-                if action == 'include' and k not in self._get_base_attributes():
+                if action == 'include' and k not in self._get_base_attributes() and k not in self.DEPRECATED_ATTRIBUTES:
                     self._display.deprecated("Specifying include variables at the top-level of the task is deprecated. Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\nfor currently supported syntax regarding included files and variables")
                     new_ds['vars'][k] = v
                 else:
@@ -260,6 +274,7 @@ class Task(Base, Conditional, Taggable, Become):
 
     def copy(self, exclude_block=False):
         new_me = super(Task, self).copy()
+        new_me._local_action = self._local_action
 
         new_me._block = None
         if self._block and not exclude_block:
@@ -277,6 +292,7 @@ class Task(Base, Conditional, Taggable, Become):
 
     def serialize(self):
         data = super(Task, self).serialize()
+        data['_local_action'] = self._local_action
 
         if self._block:
             data['block'] = self._block.serialize()
@@ -295,6 +311,7 @@ class Task(Base, Conditional, Taggable, Become):
         #from ansible.playbook.task_include import TaskInclude
 
         block_data = data.get('block')
+        self._local_action = data.get('_local_action', False)
 
         if block_data:
             b = Block()
@@ -346,19 +363,25 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
-        value = self._attributes[attr]
-        if self._block and (value is None or extend):
-            parent_value = getattr(self._block, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
-        if self._task_include and (value is None or extend):
-            parent_value = getattr(self._task_include, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
+        value = None
+        try:
+            value = self._attributes[attr]
+
+            if self._block and (value is None or extend):
+                parent_value = getattr(self._block, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+            if self._task_include and (value is None or extend):
+                parent_value = getattr(self._task_include, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+        except KeyError:
+            pass
+
         return value
 
     def _get_attr_environment(self):

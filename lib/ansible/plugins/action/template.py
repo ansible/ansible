@@ -20,6 +20,7 @@ __metaclass__ = type
 import base64
 import datetime
 import os
+import pwd
 import time
 
 from ansible import constants as C
@@ -31,8 +32,8 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def get_checksum(self, tmp, dest, all_vars, try_directory=False, source=None):
-        remote_checksum = self._remote_checksum(tmp, dest, all_vars=all_vars)
+    def get_checksum(self, dest, all_vars, try_directory=False, source=None):
+        remote_checksum = self._remote_checksum(dest, all_vars=all_vars)
 
         if remote_checksum in ('0', '2', '3', '4'):
             # Note: 1 means the file is not present which is fine; template
@@ -40,7 +41,7 @@ class ActionModule(ActionBase):
             if try_directory and remote_checksum == '3' and source:
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
-                remote_checksum = self.get_checksum(tmp, dest, all_vars=all_vars, try_directory=False)
+                remote_checksum = self.get_checksum(dest, all_vars=all_vars, try_directory=False)
                 if remote_checksum not in ('0', '2', '3', '4'):
                     return remote_checksum
 
@@ -74,7 +75,7 @@ class ActionModule(ActionBase):
                 source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', source)
 
         # Expand any user home dir specification
-        dest = self._remote_expand_user(dest, tmp)
+        dest = self._remote_expand_user(dest)
 
         directory_prepended = False
         if dest.endswith(os.sep):
@@ -111,20 +112,24 @@ class ActionModule(ActionBase):
                 time.localtime(os.path.getmtime(source))
             )
 
-            self._templar.environment.searchpath = [self._loader._basedir, os.path.dirname(source)]
+            # Create a new searchpath list to assign to the templar environment's file
+            # loader, so that it knows about the other paths to find template files
+            searchpath = [self._loader._basedir, os.path.dirname(source)]
             if self._task._role is not None:
-                self._templar.environment.searchpath.insert(1, C.DEFAULT_ROLES_PATH)
-                self._templar.environment.searchpath.insert(1, self._task._role._role_path)
+                searchpath.insert(1, C.DEFAULT_ROLES_PATH)
+                searchpath.insert(1, self._task._role._role_path)
+
+            self._templar.environment.loader.searchpath = searchpath
 
             old_vars = self._templar._available_variables
             self._templar.set_available_variables(temp_vars)
-            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, convert_data=False)
+            resultant = self._templar.template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, convert_data=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
             return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
 
         local_checksum = checksum_s(resultant)
-        remote_checksum = self.get_checksum(tmp, dest, task_vars, not directory_prepended, source=source)
+        remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source)
         if isinstance(remote_checksum, dict):
             # Error from remote_checksum is a dict.  Valid return is a str
             return remote_checksum
@@ -137,14 +142,14 @@ class ActionModule(ActionBase):
 
             # if showing diffs, we need to get the remote value
             if self._play_context.diff:
-                diff = self._get_diff_data(tmp, dest, resultant, task_vars, source_file=False)
+                diff = self._get_diff_data(dest, resultant, task_vars, source_file=False)
 
             if not self._play_context.check_mode: # do actual work thorugh copy
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
                 if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', xfered, tmp)
+                    self._remote_chmod('a+r', xfered)
 
                 # run the copy module
                 new_module_args.update(

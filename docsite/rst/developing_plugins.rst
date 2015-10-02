@@ -19,9 +19,9 @@ in playbooks and with /usr/bin/ansible to decide how you want to talk to remote 
 are covered in the :doc:`intro_getting_started` section.  Should you want to extend Ansible to support other transports (SNMP? Message bus?
 Carrier Pigeon?) it's as simple as copying the format of one of the existing modules and dropping it into the connection plugins
 directory.   The value of 'smart' for a connection allows selection of paramiko or openssh based on system capabilities, and chooses
-'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 an later.  Previous versions did not support 'smart'.
+'ssh' if OpenSSH supports ControlPersist, in Ansible 1.2.1 and later.  Previous versions did not support 'smart'.
 
-More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/plugins/connections <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connections>`_ and figure things out pretty easily.
+More documentation on writing connection plugins is pending, though you can jump into `lib/ansible/plugins/connection <https://github.com/ansible/ansible/tree/devel/lib/ansible/plugins/connection>`_ and figure things out pretty easily.
 
 .. _developing_lookup_plugins:
 

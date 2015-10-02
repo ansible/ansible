@@ -37,6 +37,7 @@ import re
 from time import time
 import ConfigParser
 
+from six import iteritems, string_types
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 import libcloud.security as sec
@@ -259,16 +260,16 @@ class LibcloudInventory(object):
             key = self.to_safe('ec2_' + key)
 
             # Handle complex types
-            if type(value) in [int, bool]:
+            if isinstance(value, (int, bool)):
                 instance_vars[key] = value
-            elif type(value) in [str, unicode]:
+            elif isinstance(value, string_types):
                 instance_vars[key] = value.strip()
-            elif type(value) == type(None):
+            elif value is None:
                 instance_vars[key] = ''
             elif key == 'ec2_region':
                 instance_vars[key] = value.name
             elif key == 'ec2_tags':
-                for k, v in value.iteritems():
+                for k, v in iteritems(value):
                     key = self.to_safe('ec2_tag_' + k)
                     instance_vars[key] = v
             elif key == 'ec2_groups':
