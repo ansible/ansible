@@ -167,6 +167,7 @@ class DigitalOceanInventory(object):
         # Define defaults
         self.cache_path = '.'
         self.cache_max_age = 0
+        self.use_private_network = False
 
         # Read settings, environment variables, and CLI arguments
         self.read_settings()
@@ -256,6 +257,9 @@ or environment variables (DO_API_TOKEN)''')
         if config.has_option('digital_ocean', 'cache_max_age'):
             self.cache_max_age = config.getint('digital_ocean', 'cache_max_age')
 
+        # Private IP Address
+        if config.has_option('digital_ocean', 'use_private_network'):
+            self.use_private_network = config.get('digital_ocean', 'use_private_network')
 
     def read_environment(self):
         ''' Reads the settings from environment variables '''
@@ -345,8 +349,8 @@ or environment variables (DO_API_TOKEN)''')
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            #when using private_networking, the API reports the private one in "ip_address", which is useless. We need the public one for Ansible to work
-            if 'private_networking' in droplet['features']:
+            #when using private_networking, the API reports the private one in "ip_address".
+            if 'private_networking' in droplet['features'] and not self.use_private_network:
                 for net in droplet['networks']['v4']:
                     if net['type']=='public':
                         dest=net['ip_address']
