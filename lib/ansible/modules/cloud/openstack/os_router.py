@@ -26,6 +26,7 @@ module: os_router
 short_description: Create or delete routers from OpenStack
 extends_documentation_fragment: openstack
 version_added: "2.0"
+author: "David Shrewsbury (@Shrews)"
 description:
    - Create or Delete routers from OpenStack. Although Neutron allows
      routers to share the same name, this module enforces name uniqueness
