@@ -327,6 +327,7 @@ class StrategyBase:
         # Set/update the vars for this host
         # FIXME: probably should have a set vars method for the host?
         new_vars = host_info.get('host_vars', dict())
+        new_host.vars = self._inventory.get_host_vars(new_host)
         new_host.vars.update(new_vars)
 
         new_groups = host_info.get('groups', [])
@@ -379,6 +380,7 @@ class StrategyBase:
                 # create the new group and add it to inventory
                 new_group = Group(name=group_name)
                 self._inventory.add_group(new_group)
+                new_group.vars = self._inventory.get_group_vars(new_group)
 
                 # and add the group to the proper hierarchy
                 allgroup = self._inventory.get_group('all')
