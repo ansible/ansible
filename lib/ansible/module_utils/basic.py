@@ -1262,23 +1262,41 @@ class AnsibleModule(object):
                 log_args = dict()
 
             module = 'ansible-%s' % os.path.basename(__file__)
+            if isinstance(module, bytes):
+                module = module.decode('utf-8', 'replace')
 
             # 6655 - allow for accented characters
-            if isinstance(msg, unicode):
-                # We should never get here as msg should be type str, not unicode
-                msg = msg.encode('utf-8')
+            if not isinstance(msg, (bytes, unicode)):
+                raise TypeError("msg should be a string (got %s)" % type(msg))
 
-            if (has_journal):
+            # We want journal to always take text type
+            # syslog takes bytes on py2, text type on py3
+            if sys.version_info >= (3,):
+                if isinstance(msg, bytes):
+                    journal_msg = msg.decode('utf-8', 'replace')
+                    syslog_msg = journal_msg
+                else:
+                    # TODO: surrogateescape is a danger here
+                    journal_msg = syslog_msg = msg
+            else:
+                if isinstance(msg, bytes):
+                    journal_msg = msg.decode('utf-8', 'replace')
+                    syslog_msg = msg
+                else:
+                     journal_msg = msg
+                     syslog_msg = msg.encode('utf-8', 'replace')
+
+            if has_journal:
                 journal_args = [("MODULE", os.path.basename(__file__))]
                 for arg in log_args:
                     journal_args.append((arg.upper(), str(log_args[arg])))
                 try:
-                    journal.send("%s %s" % (module, msg), **dict(journal_args))
+                    journal.send(u"%s %s" % (module, journal_msg), **dict(journal_args))
                 except IOError:
                     # fall back to syslog since logging to journal failed
-                    self._log_to_syslog(msg)
+                    self._log_to_syslog(syslog_msg)
             else:
-                self._log_to_syslog(msg)
+                self._log_to_syslog(syslog_msg)
 
     def _log_invocation(self):
         ''' log that ansible ran the module '''
