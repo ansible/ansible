@@ -16,10 +16,11 @@
       failed_when: true
       ignore_errors: true
 
-    - name: failed item args should be logged in the absence of no_log
+    - name: item args should be logged in the absence of no_log
       shell: echo {{ item }}
-      with_items: [ "LOG_ME_ITEM_FAILED" ]
-      failed_when: true
+      with_items: [ "LOG_ME_ITEM", "LOG_ME_SKIPPED", "LOG_ME_ITEM_FAILED" ]
+      when: item != "LOG_ME_SKIPPED"
+      failed_when: item == "LOG_ME_ITEM_FAILED"
       ignore_errors: true
 
     - name: args should not be logged when task-level no_log set
@@ -49,11 +50,13 @@
       no_log: true
       when: false
 
-    - name: skipped item args should be suppressed with no_log
+    - name: items args should be suppressed with no_log in every state
       shell: echo {{ item }}
       no_log: true
-      with_items: [ "DO_NOT_LOG_ITEM_SKIPPED", "DO_NOT_LOG_ITEM_SKIPPED_2" ]
-      when: item == False
+      with_items: [ "DO_NOT_LOG_ITEM", "DO_NOT_LOG_ITEM_SKIPPED", "DO_NOT_LOG_ITEM_FAILED" ]
+      when: item != "DO_NOT_LOG_ITEM_SKIPPED"
+      failed_when: item == "DO_NOT_LOG_ITEM_FAILED"
+      ignore_errors: yes
 
     - name: async task args should suppressed with no_log
       async: 10

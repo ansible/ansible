@@ -277,7 +277,7 @@ class TaskExecutor:
         # variable not being present which would otherwise cause validation to fail
         if not self._task.evaluate_conditional(templar, variables):
             self._display.debug("when evaulation failed, skipping this task")
-            return dict(changed=False, skipped=True, skip_reason='Conditional check failed')
+            return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
 
         # Now we do final validation on the task, which sets all fields to their final values.
         # In the case of debug tasks, we save any 'var' params and restore them after validating

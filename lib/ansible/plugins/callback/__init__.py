@@ -108,15 +108,14 @@ class CallbackBase:
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
 
     def _get_item(self, result):
-        if '_ansible_no_log' in result:
+        if '_ansible_no_log' in result and result['_ansible_no_log']:
             item = "(censored due to no_log)"
         else:
-            item = getattr(result, 'item', "(censored due to no_log)")
+            item = result['item']
 
         return item
 
     def _process_items(self, result):
-
         for res in result._result['results']:
             newres = deepcopy(result)
             res['item'] = self._get_item(res)
