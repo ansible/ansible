@@ -677,7 +677,7 @@ class Inventory(object):
 
             # this can happen from particular API usages, particularly if not run
             # from /usr/bin/ansible-playbook
-            if basedir is None:
+            if basedir in ('', None):
                 basedir = './'
 
             scan_pass = scan_pass + 1
