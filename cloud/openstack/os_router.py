@@ -110,7 +110,7 @@ RETURN = '''
 router:
     description: Dictionary describing the router.
     returned: On success when I(state) is 'present'
-    type dictionary
+    type: dictionary
     contains:
         id:
             description: Router ID.
@@ -142,6 +142,7 @@ router:
                            "ip_address": "10.6.6.99",
                            "subnet_id": "4272cb52-a456-4c20-8f3c-c26024ecfa81"
                          }
+                       ]
                     }
         routes:
             description: The extra routes configuration for L3 router.
