@@ -60,23 +60,23 @@ for new users.
 How do I configure a jump host to access servers that I have no direct access to?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-With Ansible version 2, it's possible to set `ansible_ssh_extra_args` as
-an inventory variable. Any arguments specified this way are added to the
-ssh command line when connecting to the relevant host(s), so it's a good
-way to set a `ProxyCommand`. Consider the following inventory group:
+With Ansible 2, you can set a `ProxyCommand` in the
+`ansible_ssh_common_args` inventory variable. Any arguments specified in
+this variable are added to the sftp/scp/ssh command line when connecting
+to the relevant host(s). Consider the following inventory group::
 
     [gatewayed]
     foo ansible_host=192.0.2.1
     bar ansible_host=192.0.2.2
 
-You can create `group_vars/gatewayed.yml` with the following contents:
+You can create `group_vars/gatewayed.yml` with the following contents::
 
-    ansible_ssh_extra_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
+    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
 
-Ansible will then add these arguments when trying to connect to any host
-in the group `gatewayed`. (These arguments are added to any `ssh_args`
-that may be configured, so it isn't necessary to repeat the default
-`ControlPath` settings in `ansible_ssh_extra_args`.)
+Ansible will append these arguments to the command line when trying to
+connect to any hosts in the group `gatewayed`. (These arguments are used
+in addition to any `ssh_args` from `ansible.cfg`, so you do not need to
+repeat global `ControlPersist` settings in `ansible_ssh_common_args`.)
 
 Note that `ssh -W` is available only with OpenSSH 5.4 or later. With
 older versions, it's necessary to execute `nc %h:%p` or some equivalent
