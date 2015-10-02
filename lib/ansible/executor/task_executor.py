@@ -21,12 +21,10 @@ __metaclass__ = type
 
 import base64
 import json
-import pipes
 import subprocess
 import sys
 import time
 
-from jinja2.runtime import Undefined
 from six import iteritems
 
 from ansible import constants as C
@@ -38,8 +36,6 @@ from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
 from ansible.vars.unsafe_proxy import UnsafeProxy
-
-from ansible.utils.debug import debug
 
 __all__ = ['TaskExecutor']
 
@@ -78,7 +74,7 @@ class TaskExecutor:
         task requires looping and either runs the task with 
         '''
 
-        debug("in run()")
+        self._display.debug("in run()")
 
         try:
             # lookup plugins need to know if this task is executing from
@@ -118,9 +114,9 @@ class TaskExecutor:
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
-                debug("calling self._execute()")
+                self._display.debug("calling self._execute()")
                 res = self._execute()
-                debug("_execute() done")
+                self._display.debug("_execute() done")
 
             # make sure changed is set in the result, if it's not present
             if 'changed' not in res:
@@ -137,9 +133,9 @@ class TaskExecutor:
                     return res._obj
                 return res
 
-            debug("dumping result to json")
+            self._display.debug("dumping result to json")
             res = _clean_res(res)
-            debug("done dumping result, returning")
+            self._display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
@@ -149,7 +145,7 @@ class TaskExecutor:
             except AttributeError:
                 pass
             except Exception as e:
-                debug("error closing connection: %s" % to_unicode(e))
+                self._display.debug("error closing connection: %s" % to_unicode(e))
 
     def _get_loop_items(self):
         '''
@@ -280,7 +276,7 @@ class TaskExecutor:
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
         if not self._task.evaluate_conditional(templar, variables):
-            debug("when evaulation failed, skipping this task")
+            self._display.debug("when evaulation failed, skipping this task")
             return dict(changed=False, skipped=True, skip_reason='Conditional check failed')
 
         # Now we do final validation on the task, which sets all fields to their final values.
@@ -334,20 +330,20 @@ class TaskExecutor:
         # with the registered variable value later on when testing conditions
         vars_copy = variables.copy()
 
-        debug("starting attempt loop")
+        self._display.debug("starting attempt loop")
         result = None
         for attempt in range(retries):
             if attempt > 0:
-                # FIXME: this should use the callback/message passing mechanism
-                print("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result))
+                # FIXME: this should use the self._display.callback/message passing mechanism
+                self._display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color="red")
                 result['attempts'] = attempt + 1
 
-            debug("running the handler")
+            self._display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=str(e))
-            debug("handler run complete")
+            self._display.debug("handler run complete")
 
             if self._task.async > 0:
                 # the async_wrapper module returns dumped JSON via its stdout
@@ -410,7 +406,7 @@ class TaskExecutor:
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
         if self._task.register:
-            variables[self._task.register] = result 
+            variables[self._task.register] = result
 
         if 'ansible_facts' in result:
             variables.update(result['ansible_facts'])
@@ -421,8 +417,11 @@ class TaskExecutor:
         if self._task.notify is not None:
             result['_ansible_notify'] = self._task.notify
 
+        # preserve no_log setting
+        result["_ansible_no_log"] = self._play_context.no_log
+
         # and return
-        debug("attempt loop complete, returning result")
+        self._display.debug("attempt loop complete, returning result")
         return result
 
     def _poll_async_result(self, result, templar):
