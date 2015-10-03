@@ -101,7 +101,7 @@ EXAMPLES = '''
     issue_type: Bug
     priority: High
     status: New
-    severity: High
+    severity: Important
     description: An error has been found. Please check the attached error log for details.
     attachment: /path/to/error.log
     attachment_description: Error log file
