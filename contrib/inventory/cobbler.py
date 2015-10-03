@@ -30,9 +30,15 @@ See http://ansible.github.com/api.html for more info
 Tested with Cobbler 2.0.11.
 
 Changelog:
+    - 2015-06-21 dmccue: Modified to support run-once _meta retrieval, results in
+         higher performance at ansible startup.  Groups are determined by owner rather than
+         default mgmt_classes.  DNS name determined from hostname. cobbler values are written
+         to a 'cobbler' fact namespace
+
     - 2013-09-01 pgehres: Refactored implementation to make use of caching and to
         limit the number of connections to external cobbler server for performance.
         Added use of cobbler.ini file to configure settings. Tested with Cobbler 2.4.0
+
 """
 
 # (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
@@ -54,7 +60,6 @@ Changelog:
 
 ######################################################################
 
-
 import argparse
 import ConfigParser
 import os
@@ -67,14 +72,19 @@ try:
 except ImportError:
     import simplejson as json
 
+from six import iteritems
+
 # NOTE -- this file assumes Ansible is being accessed FROM the cobbler
 # server, so it does not attempt to login with a username and password.
 # this will be addressed in a future version of this script.
+
+orderby_keyname = 'owners'  # alternatively 'mgmt_classes'
 
 
 class CobblerInventory(object):
 
     def __init__(self):
+
         """ Main execution path """
         self.conn = None
 
@@ -98,16 +108,14 @@ class CobblerInventory(object):
 
         # Data to print
         if self.args.host:
-            data_to_print = self.get_host_info()
+            data_to_print += self.get_host_info()
+        else:
+            self.inventory['_meta'] = { 'hostvars': {} }
+            for hostname in self.cache:
+                self.inventory['_meta']['hostvars'][hostname] = {'cobbler': self.cache[hostname] }
+            data_to_print += self.json_format_dict(self.inventory, True)
 
-        elif self.args.list:
-            # Display list of instances for inventory
-            data_to_print = self.json_format_dict(self.inventory, True)
-
-        else:  # default action with no options
-            data_to_print = self.json_format_dict(self.inventory, True)
-
-        print data_to_print
+        print(data_to_print)
 
     def _connect(self):
         if not self.conn:
@@ -160,21 +168,23 @@ class CobblerInventory(object):
 
         for host in data:
             # Get the FQDN for the host and add it to the right groups
-            dns_name = None
+            dns_name = host['hostname'] #None
             ksmeta = None
             interfaces = host['interfaces']
-            for (iname, ivalue) in interfaces.iteritems():
-                if ivalue['management']:
-                    this_dns_name = ivalue.get('dns_name', None)
-                    if this_dns_name is not None and this_dns_name is not "":
-                        dns_name = this_dns_name
+            # hostname is often empty for non-static IP hosts
+            if dns_name == '':
+                for (iname, ivalue) in iteritems(interfaces):
+                    if ivalue['management'] or not ivalue['static']:
+                        this_dns_name = ivalue.get('dns_name', None)
+                        if this_dns_name is not None and this_dns_name is not "":
+                            dns_name = this_dns_name
 
-            if dns_name is None:
+            if dns_name == '':
                 continue
 
             status = host['status']
             profile = host['profile']
-            classes = host['mgmt_classes']
+            classes = host[orderby_keyname]
 
             if status not in self.inventory:
                 self.inventory[status] = []
@@ -193,9 +203,9 @@ class CobblerInventory(object):
 
             # The old way was ksmeta only -- provide backwards compatibility
 
-            self.cache[dns_name] = dict()
+            self.cache[dns_name] = host
             if "ks_meta" in host:
-                for key, value in host["ks_meta"].iteritems():
+                for key, value in iteritems(host["ks_meta"]):
                     self.cache[dns_name][key] = value
 
         self.write_to_cache(self.cache, self.cache_path_cache)
@@ -242,7 +252,6 @@ class CobblerInventory(object):
 
     def write_to_cache(self, data, filename):
         """ Writes data in JSON format to a file """
-
         json_data = self.json_format_dict(data, True)
         cache = open(filename, 'w')
         cache.write(json_data)

@@ -19,6 +19,8 @@
 import os
 import smtplib
 import json
+
+from ansible.utils.unicode import to_bytes
 from ansible.plugins.callback import CallbackBase
 
 def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, body=None, smtphost=None):
@@ -35,21 +37,28 @@ def mail(subject='Ansible error mail', sender=None, to=None, cc=None, bcc=None, 
 
     smtp = smtplib.SMTP(smtphost)
 
-    content = 'From: %s\n' % sender
-    content += 'To: %s\n' % to
-    if cc:
-        content += 'Cc: %s\n' % cc
-    content += 'Subject: %s\n\n' % subject
-    content += body
+    b_sender = to_bytes(sender)
+    b_to = to_bytes(to)
+    b_cc = to_bytes(cc)
+    b_bcc = to_bytes(bcc)
+    b_subject = to_bytes(subject)
+    b_body = to_bytes(body)
 
-    addresses = to.split(',')
+    b_content = b'From: %s\n' % b_sender
+    b_content += b'To: %s\n' % b_to
     if cc:
-        addresses += cc.split(',')
-    if bcc:
-        addresses += bcc.split(',')
+        b_content += b'Cc: %s\n' % b_cc
+    b_content += b'Subject: %s\n\n' % b_subject
+    b_content += b_body
 
-    for address in addresses:
-        smtp.sendmail(sender, address, content)
+    b_addresses = b_to.split(b',')
+    if b_cc:
+        b_addresses += b_cc.split(b',')
+    if b_bcc:
+        b_addresses += b_bcc.split(b',')
+
+    for b_address in b_addresses:
+        smtp.sendmail(b_sender, b_address, b_content)
 
     smtp.quit()
 

@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import fcntl
 import textwrap
 import os
 import random
@@ -27,6 +28,8 @@ import sys
 import time
 import logging
 import getpass
+from struct import unpack, pack
+from termios import TIOCGWINSZ
 from multiprocessing import Lock
 
 from ansible import constants as C
@@ -42,8 +45,8 @@ debug_lock = Lock()
 #TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
-    if (os.path.exists(path) and not os.access(path, os.W_OK)) and not os.access(os.path.dirname(path), os.W_OK):
-        self._display.warning("log file at %s is not writeable, aborting\n" % path)
+    if (os.path.exists(path) and not os.access(path, os.W_OK)) or not os.access(os.path.dirname(path), os.W_OK):
+        print("[WARNING]: log file at %s is not writeable, aborting\n" % path, file=sys.stderr)
 
     logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
     mypid = str(os.getpid())
@@ -57,6 +60,7 @@ class Display:
 
     def __init__(self, verbosity=0):
 
+        self.columns = None
         self.verbosity = verbosity
 
         # list of all deprecation messages to prevent duplicate display
@@ -68,6 +72,7 @@ class Display:
         self.noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
         self.set_cowsay_info()
 
+        self._set_column_width()
 
     def set_cowsay_info(self):
 
@@ -161,16 +166,16 @@ class Display:
         else:
             raise AnsibleError("[DEPRECATED]: %s.  Please update your playbooks." % msg)
 
-        wrapped = textwrap.wrap(new_msg, 79)
+        wrapped = textwrap.wrap(new_msg, self.columns, replace_whitespace=False, drop_whitespace=False)
         new_msg = "\n".join(wrapped) + "\n"
 
         if new_msg not in self._deprecations:
-            self.display(new_msg, color='purple', stderr=True)
+            self.display(new_msg.strip(), color='purple', stderr=True)
             self._deprecations[new_msg] = 1
 
     def warning(self, msg):
         new_msg = "\n[WARNING]: %s" % msg
-        wrapped = textwrap.wrap(new_msg, 79)
+        wrapped = textwrap.wrap(new_msg, self.columns)
         new_msg = "\n".join(wrapped) + "\n"
         if new_msg not in self._warns:
             self.display(new_msg, color='bright purple', stderr=True)
@@ -194,7 +199,7 @@ class Display:
 
         #FIXME: make this dynamic on tty size (look and ansible-doc)
         msg = msg.strip()
-        star_len = (80 - len(msg))
+        star_len = (79 - len(msg))
         if star_len < 0:
             star_len = 3
         stars = "*" * star_len
@@ -217,7 +222,7 @@ class Display:
     def error(self, msg, wrap_text=True):
         if wrap_text:
             new_msg = "\n[ERROR]: %s" % msg
-            wrapped = textwrap.wrap(new_msg, 79)
+            wrapped = textwrap.wrap(new_msg, self.columns)
             new_msg = "\n".join(wrapped) + "\n"
         else:
             new_msg = msg
@@ -239,3 +244,11 @@ class Display:
             msg = to_bytes(msg)
 
         return msg
+
+    def _set_column_width(self):
+        if os.isatty(0):
+            tty_size = unpack('HHHH', fcntl.ioctl(0, TIOCGWINSZ, pack('HHHH', 0, 0, 0, 0)))[1]
+        else:
+            tty_size = 0
+        self.columns = max(79, tty_size)
+

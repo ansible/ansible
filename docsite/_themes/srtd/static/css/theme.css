@@ -4714,3 +4714,42 @@ span[id*='MathJax-Span'] {
     color: #fff;
     font-size: 20px;
 }
+
+.wy-menu-vertical a {
+    padding: 0;
+}
+
+.wy-menu-vertical a.reference.internal {
+    padding: 0.4045em 1.618em;
+}
+
+
+.DocSiteBanner {
+    width: 100%;
+    display: flex;
+    display: -webkit-flex;
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    justify-content: space-between;
+    -webkit-justify-content: space-between;
+    background-color: #ff5850;
+    margin-bottom: 25px;
+}
+
+.DocSiteBanner-imgWrapper {
+    max-width: 100%;
+}
+
+@media screen and (max-width: 1403px) {
+    .DocSiteBanner {
+        width: 100%;
+        display: flex;
+        display: -webkit-flex;
+        flex-wrap: wrap;
+        -webkit-flex-wrap: wrap;
+        justify-content: center;
+        -webkit-justify-content: center;
+        background-color: #fff;
+        margin-bottom: 25px;
+    }
+}

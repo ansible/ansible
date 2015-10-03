@@ -67,7 +67,7 @@ Testing Modules
 
 There's a useful test script in the source checkout for ansible::
 
-    git clone git@github.com:ansible/ansible.git --recursive
+    git clone git://github.com/ansible/ansible.git --recursive
     source ansible/hacking/env-setup
     chmod +x ansible/hacking/test-module
 
@@ -191,7 +191,7 @@ a lot shorter than this::
 
 Let's test that module::
 
-    ansible/hacking/test-module -m ./time -a time=\"March 14 12:23\"
+    ansible/hacking/test-module -m ./time -a "time=\"March 14 12:23\""
 
 This should return something like::
 
@@ -381,8 +381,8 @@ Include it in your module file like this::
     # ... snip ...
     '''
 
-The ``description``, and ``notes`` fields 
-support formatting with some special macros.  
+The ``description``, and ``notes`` fields
+support formatting with some special macros.
 
 These formatting functions are ``U()``, ``M()``, ``I()``, and ``C()``
 for URL, module, italic, and constant-width respectively. It is suggested
@@ -425,11 +425,12 @@ built and appear in the 'docsite/' directory.
 Module Paths
 ````````````
 
-If you are having trouble getting your module "found" by ansible, be sure it is in the ANSIBLE_LIBRARY_PATH.
+If you are having trouble getting your module "found" by ansible, be
+sure it is in the ``ANSIBLE_LIBRARY`` environment variable.
 
 If you have a fork of one of the ansible module projects, do something like this::
 
-    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras 
+    ANSIBLE_LIBRARY=~/ansible-modules-core:~/ansible-modules-extras
 
 And this will make the items in your fork be loaded ahead of what ships with Ansible.  Just be sure
 to make sure you're not reporting bugs on versions from your fork!
@@ -456,11 +457,11 @@ Module checklist
 * The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
 * Documentation: Make sure it exists
     * `required` should always be present, be it true or false
-    * If `required` is false you need to document `default`, even if its 'null'
+    * If `required` is false you need to document `default`, even if the default is 'None' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code. 
     * `default` is not needed for `required: true`
     * Remove unnecessary doc like `aliases: []` or `choices: []`
     * The version is not a float number and value the current development version
-    * The verify that arguments in doc and module spec dict are identical
+    * Verify  that arguments in doc and module spec dict are identical
     * For password / secret arguments no_log=True should be set
     * Requirements should  be documented, using the `requirements=[]` field
     * Author should be set, name and github id at least
@@ -500,15 +501,15 @@ Module checklist
   serializable.  A common pitfall is to try returning an object via
   exit_json().  Instead, convert the fields you need from the object into the
   fields of a dictionary and return the dictionary.
-* Do not use urllib2 to handle urls.  urllib2 does not natively verify TLS
-  certificates and so is insecure for https.  Instead, use either fetch_url or
-  open_url from ansible.module_utils.urls.
+* When fetching URLs, please use either fetch_url or open_url from ansible.module_utils.urls 
+  rather than urllib2; urllib2 does not natively verify TLS certificates and so is insecure for https. 
 
 Windows modules checklist
 `````````````````````````
 * Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of windows
 * modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
-* look at ansible/lib/ansible/module_utils/powershell.ps1 for commmon code, avoid duplication
+* look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
+* Ansible uses strictmode so be sure to test with that enabled
 * start with::
 
     #!powershell
@@ -518,18 +519,21 @@ then::
 then::
     # WANT_JSON
     # POWERSHELL_COMMON
+    
+then, to parse all arguments into a variable modules generally use::
+    $params = Parse-Args $args
 
 * Arguments:
     * Try and use state present and state absent like other modules
-    * You need to check that all your mandatory args are present::
-
-        If ($params.state) {
-            $state = $params.state.ToString().ToLower()
-            If (($state -ne 'started') -and ($state -ne 'stopped') -and ($state -ne 'restarted')) {
-                Fail-Json $result "state is '$state'; must be 'started', 'stopped', or 'restarted'"
-            }
-        }
-
+    * You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function. 
+    * Required arguments::
+        $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
+    * Required arguments with name validation::
+        $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
+    * Optional arguments with name validation::
+        $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
+    * the If "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message 
+      using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
     * Look at existing modules for more examples of argument checking.
 
 * Results
@@ -551,11 +555,10 @@ then::
 
 * Have you tested for powershell 3.0 and 4.0 compliance?
 
-
 Deprecating and making module aliases
 ``````````````````````````````````````
 
-Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to 
+Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i.e. old_cloud.py to
 _old_cloud.py, This will keep the module available but hide it from the primary docs and listing.
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
@@ -584,5 +587,3 @@ This example allows the stat module to be called with fileinfo, making the follo
        Development mailing list
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
-
-

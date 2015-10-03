@@ -81,7 +81,7 @@ class TestVaultEditor(unittest.TestCase):
         pass
 
     def test_methods_exist(self):
-        v = VaultEditor(None, None, None)
+        v = VaultEditor(None)
         slots = ['create_file',
                  'decrypt_file',
                  'edit_file',
@@ -103,8 +103,8 @@ class TestVaultEditor(unittest.TestCase):
         tmp_file = tempfile.NamedTemporaryFile()
         os.unlink(tmp_file.name)
 
-        ve = VaultEditor(None, "ansible", tmp_file.name)
-        ve.create_file()
+        ve = VaultEditor("ansible")
+        ve.create_file(tmp_file.name)
 
         self.assertTrue(os.path.exists(tmp_file.name))
 
@@ -120,12 +120,12 @@ class TestVaultEditor(unittest.TestCase):
         with v10_file as f:
             f.write(to_bytes(v10_data))
 
-        ve = VaultEditor(None, "ansible", v10_file.name)
+        ve = VaultEditor("ansible")
 
         # make sure the password functions for the cipher
         error_hit = False
         try:
-            ve.decrypt_file()
+            ve.decrypt_file(v10_file.name)
         except errors.AnsibleError as e:
             error_hit = True
 
@@ -148,12 +148,12 @@ class TestVaultEditor(unittest.TestCase):
         with v11_file as f:
             f.write(to_bytes(v11_data))
 
-        ve = VaultEditor(None, "ansible", v11_file.name)
+        ve = VaultEditor("ansible")
 
         # make sure the password functions for the cipher
         error_hit = False
         try:
-            ve.decrypt_file()
+            ve.decrypt_file(v11_file.name)
         except errors.AnsibleError as e:
             error_hit = True
 
@@ -180,12 +180,12 @@ class TestVaultEditor(unittest.TestCase):
         with v10_file as f:
             f.write(to_bytes(v10_data))
 
-        ve = VaultEditor(None, "ansible", v10_file.name)
+        ve = VaultEditor("ansible")
 
         # make sure the password functions for the cipher
         error_hit = False
         try:
-            ve.rekey_file('ansible2')
+            ve.rekey_file(v10_file.name, 'ansible2')
         except errors.AnsibleError as e:
             error_hit = True
 

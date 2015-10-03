@@ -19,8 +19,6 @@ __metaclass__ = type
 
 import os
 
-from types import NoneType
-
 from ansible.errors import AnsibleError
 from ansible.parsing import DataLoader
 from ansible.plugins.action import ActionBase
@@ -36,7 +34,7 @@ class ActionModule(ActionBase):
         if self._task._role:
             source = self._loader.path_dwim_relative(self._task._role._role_path, 'vars', source)
         else:
-            source = self._loader.path_dwim(source)
+            source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'vars', source)
 
         if os.path.exists(source):
             (data, show_content) = self._loader._get_file_contents(source)

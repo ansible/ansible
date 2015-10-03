@@ -55,6 +55,7 @@ When run against a specific host, this script returns the following variables:
  - do_id
  - do_image - object
  - do_ip_address
+ - do_private_ip_address
  - do_kernel - object
  - do_locked
  - de_memory
@@ -144,8 +145,8 @@ except ImportError:
 
 try:
     from dopy.manager import DoError, DoManager
-except ImportError, e:
-    print "failed=True msg='`dopy` library required for this script'"
+except ImportError as e:
+    print("failed=True msg='`dopy` library required for this script'")
     sys.exit(1)
 
 
@@ -174,14 +175,14 @@ class DigitalOceanInventory(object):
 
         # Verify credentials were set
         if not hasattr(self, 'api_token'):
-            print '''Could not find values for DigitalOcean api_token.
+            print('''Could not find values for DigitalOcean api_token.
 They must be specified via either ini file, command line argument (--api-token),
-or environment variables (DO_API_TOKEN)'''
+or environment variables (DO_API_TOKEN)''')
             sys.exit(-1)
 
         # env command, show DigitalOcean credentials
         if self.args.env:
-            print "DO_API_TOKEN=%s" % self.api_token
+            print("DO_API_TOKEN=%s" % self.api_token)
             sys.exit(0)
 
         # Manage cache
@@ -192,7 +193,7 @@ or environment variables (DO_API_TOKEN)'''
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
-                    print '''Cache is empty and --force-cache was specified'''
+                    print('''Cache is empty and --force-cache was specified''')
                     sys.exit(-1)
 
         self.manager = DoManager(None, self.api_token, api_version=2)
@@ -230,9 +231,9 @@ or environment variables (DO_API_TOKEN)'''
             self.write_to_cache()
 
         if self.args.pretty:
-            print json.dumps(json_data, sort_keys=True, indent=2)
+            print(json.dumps(json_data, sort_keys=True, indent=2))
         else:
-            print json.dumps(json_data)
+            print(json.dumps(json_data))
         # That's all she wrote...
 
 
@@ -344,7 +345,15 @@ or environment variables (DO_API_TOKEN)'''
 
         # add all droplets by id and name
         for droplet in self.data['droplets']:
-            dest = droplet['ip_address']
+            #when using private_networking, the API reports the private one in "ip_address", which is useless. We need the public one for Ansible to work
+            if 'private_networking' in droplet['features']:
+                for net in droplet['networks']['v4']:
+                    if net['type']=='public':
+                        dest=net['ip_address']
+                    else:
+                        continue
+            else:
+                dest = droplet['ip_address']
 
             self.inventory[droplet['id']] = [dest]
             self.push(self.inventory, droplet['name'], dest)

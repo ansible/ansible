@@ -21,14 +21,18 @@ __metaclass__ = type
 
 import os
 
+from six import iteritems
+
+from ansible.errors import AnsibleParserError
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
+from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
-from ansible.errors import AnsibleParserError
+from ansible.template import Templar
 
-class PlaybookInclude(Base, Taggable):
+class PlaybookInclude(Base, Conditional, Taggable):
 
     _name      = FieldAttribute(isa='string')
     _include   = FieldAttribute(isa='string')
@@ -52,6 +56,14 @@ class PlaybookInclude(Base, Taggable):
         # playbook objects
         new_obj = super(PlaybookInclude, self).load_data(ds, variable_manager, loader)
 
+        all_vars = dict()
+        if variable_manager:
+            all_vars = variable_manager.get_vars(loader=loader)
+
+        templar = Templar(loader=loader, variables=all_vars)
+        if not new_obj.evaluate_conditional(templar=templar, all_vars=all_vars):
+            return None
+
         # then we use the object to load a Playbook
         pb = Playbook(loader=loader)
 
@@ -64,8 +76,12 @@ class PlaybookInclude(Base, Taggable):
         # finally, update each loaded playbook entry with any variables specified
         # on the included playbook and/or any tags which may have been set
         for entry in pb._entries:
-            entry.vars.update(new_obj.vars)
+            temp_vars = entry.vars.copy()
+            temp_vars.update(new_obj.vars)
+            entry.vars = temp_vars
             entry.tags = list(set(entry.tags).union(new_obj.tags))
+            if entry._included_path is None:
+                entry._included_path = os.path.dirname(file_name)
 
         return pb
 
@@ -83,7 +99,7 @@ class PlaybookInclude(Base, Taggable):
         if isinstance(ds, AnsibleBaseYAMLObject):
             new_ds.ansible_pos = ds.ansible_pos
 
-        for (k,v) in ds.iteritems():
+        for (k,v) in iteritems(ds):
             if k == 'include':
                 self._preprocess_include(ds, new_ds, k, v)
             else:

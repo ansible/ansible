@@ -28,7 +28,6 @@ from ansible import constants as C
 from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
-from ansible.plugins import module_loader
 from ansible.template import Templar
 
 from ansible.utils.color import colorize, hostcolor
@@ -51,12 +50,7 @@ class PlaybookExecutor:
         self._display          = display
         self._options          = options
         self.passwords         = passwords
-
-        # make sure the module path (if specified) is parsed and
-        # added to the module_loader object
-        if options.module_path is not None:
-            for path in options.module_path.split(os.pathsep):
-                module_loader.add_directory(path)
+        self._unreachable_hosts = dict()
 
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
             self._tqm = None
@@ -89,19 +83,18 @@ class PlaybookExecutor:
                 self._display.vv('%d plays in %s' % (len(plays), playbook_path))
 
                 for play in plays:
+                    if play._included_path is not None:
+                        self._loader.set_basedir(play._included_path)
+
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
                     if play.vars_prompt:
                         for var in play.vars_prompt:
-                            if 'name' not in var:
-                                raise AnsibleError("'vars_prompt' item is missing 'name:'", obj=play._ds)
-
                             vname     = var['name']
                             prompt    = var.get("prompt", vname)
                             default   = var.get("default", None)
                             private   = var.get("private", True)
-
                             confirm   = var.get("confirm", False)
                             encrypt   = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
@@ -128,6 +121,7 @@ class PlaybookExecutor:
                     else:
                         # make sure the tqm has callbacks loaded
                         self._tqm.load_callbacks()
+                        self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
                         # we are actually running plays
                         for batch in self._get_serialized_batches(new_play):
@@ -135,16 +129,32 @@ class PlaybookExecutor:
                                 self._tqm.send_callback('v2_playbook_on_play_start', new_play)
                                 self._tqm.send_callback('v2_playbook_on_no_hosts_matched')
                                 break
+
                             # restrict the inventory to the hosts in the serialized batch
                             self._inventory.restrict_to_hosts(batch)
                             # and run it...
                             result = self._tqm.run(play=play)
-                            # if the last result wasn't zero, break out of the serial batch loop
-                            if result != 0:
+
+                            # check the number of failures here, to see if they're above the maximum
+                            # failure percentage allowed, or if any errors are fatal. If either of those
+                            # conditions are met, we break out, otherwise we only break out if the entire
+                            # batch failed
+                            failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts)
+                            if new_play.any_errors_fatal and failed_hosts_count > 0:
+                                break
+                            elif new_play.max_fail_percentage is not None and \
+                               int((new_play.max_fail_percentage)/100.0 * len(batch)) > int((len(batch) - failed_hosts_count) / len(batch) * 100.0):
+                                break
+                            elif len(batch) == failed_hosts_count:
                                 break
 
-                        # if the last result wasn't zero, break out of the play loop
-                        if result != 0:
+                            # clear the failed hosts dictionaires in the TQM for the next batch
+                            self._unreachable_hosts.update(self._tqm._unreachable_hosts)
+                            self._tqm.clear_failed_hosts()
+
+                        # if the last result wasn't zero or 3 (some hosts were unreachable),
+                        # break out of the serial batch loop
+                        if result not in (0, 3):
                             break
 
                     i = i + 1 # per play
@@ -238,34 +248,38 @@ class PlaybookExecutor:
 
     def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
-        if prompt and default is not None:
-            msg = "%s [%s]: " % (prompt, default)
-        elif prompt:
-            msg = "%s: " % prompt
-        else:
-            msg = 'input for %s: ' % varname
-
-        def do_prompt(prompt, private):
-            if sys.stdout.encoding:
-                msg = prompt.encode(sys.stdout.encoding)
+        if sys.__stdin__.isatty():
+            if prompt and default is not None:
+                msg = "%s [%s]: " % (prompt, default)
+            elif prompt:
+                msg = "%s: " % prompt
             else:
-                # when piping the output, or at other times when stdout
-                # may not be the standard file descriptor, the stdout
-                # encoding may not be set, so default to something sane
-                msg = prompt.encode(locale.getpreferredencoding())
-            if private:
-                return getpass.getpass(msg)
-            return raw_input(msg)
+                msg = 'input for %s: ' % varname
 
-        if confirm:
-            while True:
+            def do_prompt(prompt, private):
+                if sys.stdout.encoding:
+                    msg = prompt.encode(sys.stdout.encoding)
+                else:
+                    # when piping the output, or at other times when stdout
+                    # may not be the standard file descriptor, the stdout
+                    # encoding may not be set, so default to something sane
+                    msg = prompt.encode(locale.getpreferredencoding())
+                if private:
+                    return getpass.getpass(msg)
+                return raw_input(msg)
+
+            if confirm:
+                while True:
+                    result = do_prompt(msg, private)
+                    second = do_prompt("confirm " + msg, private)
+                    if result == second:
+                        break
+                    self._display.display("***** VALUES ENTERED DO NOT MATCH ****")
+            else:
                 result = do_prompt(msg, private)
-                second = do_prompt("confirm " + msg, private)
-                if result == second:
-                    break
-                self._display.display("***** VALUES ENTERED DO NOT MATCH ****")
         else:
-            result = do_prompt(msg, private)
+            result = None
+            self._display.warning("Not prompting as we are not in interactive mode")
 
         # if result is false and default is not None
         if not result and default is not None:

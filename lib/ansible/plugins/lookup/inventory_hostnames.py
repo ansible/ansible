@@ -25,6 +25,7 @@ from ansible.plugins.lookup import LookupBase
 class LookupModule(LookupBase):
 
     def run(self, terms, inject=None, **kwargs):
+        ### FIXME: Is this needed now that listify is run on all lookup plugin terms?
         if not isinstance(terms, list):
             raise AnsibleError("with_inventory_hostnames expects a list")
 

@@ -23,6 +23,7 @@ import time
 import json
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins.cache.base import BaseCacheModule
 
 try:
@@ -75,7 +76,7 @@ class CacheModule(BaseCacheModule):
     def _expire_keys(self):
         if self._timeout > 0:
             expiry_age = time.time() - self._timeout
-        self._cache.zremrangebyscore(self._keys_set, 0, expiry_age)
+            self._cache.zremrangebyscore(self._keys_set, 0, expiry_age)
 
     def keys(self):
         self._expire_keys()

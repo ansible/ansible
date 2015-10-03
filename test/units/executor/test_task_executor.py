@@ -25,7 +25,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.executor.task_executor import TaskExecutor
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import action_loader
+from ansible.plugins import action_loader, lookup_loader
 
 from units.mock.loader import DictDataLoader
 
@@ -107,6 +107,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_play_context = MagicMock()
 
         mock_shared_loader = MagicMock()
+        mock_shared_loader.lookup_loader = lookup_loader
 
         new_stdin = None
         job_vars = dict()
@@ -219,6 +220,11 @@ class TestTaskExecutor(unittest.TestCase):
         mock_task.changed_when = None
         mock_task.failed_when = None
         mock_task.post_validate.return_value = None
+        # mock_task.async cannot be left unset, because on Python 3 MagicMock()
+        # > 0 raises a TypeError   There are two reasons for using the value 1
+        # here: on Python 2 comparing MagicMock() > 0 returns True, and the
+        # other reason is that if I specify 0 here, the test fails. ;)
+        mock_task.async = 1
 
         mock_play_context = MagicMock()
         mock_play_context.post_validate.return_value = None
@@ -281,7 +287,9 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_action = MagicMock()
 
-        shared_loader = None
+        shared_loader = MagicMock()
+        shared_loader.action_loader = action_loader
+
         new_stdin = None
         job_vars = dict(omit="XXXXXXXXXXXXXXXXXXX")
 

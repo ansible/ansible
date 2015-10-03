@@ -51,11 +51,12 @@ import shade
 class OpenStackInventory(object):
 
     def __init__(self, private=False, refresh=False):
+        config_files = os_client_config.config.CONFIG_FILES
+        config_files.append('/etc/ansible/openstack.yml')
         self.openstack_config = os_client_config.config.OpenStackConfig(
-            os_client_config.config.CONFIG_FILES.append(
-                '/etc/ansible/openstack.yml'),
-            private)
+            config_files)
         self.clouds = shade.openstack_clouds(self.openstack_config)
+        self.private = private
         self.refresh = refresh
 
         self.cache_max_age = self.openstack_config.get_cache_max_age()
@@ -92,6 +93,7 @@ class OpenStackInventory(object):
         hostvars = collections.defaultdict(dict)
 
         for cloud in self.clouds:
+            cloud.private = cloud.private or self.private
 
             # Cycle on servers
             for server in cloud.list_servers():
@@ -152,7 +154,7 @@ def main():
         elif args.host:
             inventory.get_host(args.host)
     except shade.OpenStackCloudException as e:
-        print(e.message)
+        sys.stderr.write('%s\n' % e.message)
         sys.exit(1)
     sys.exit(0)
 

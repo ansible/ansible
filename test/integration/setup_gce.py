@@ -38,5 +38,5 @@ if __name__ == '__main__':
       gce.create_volume_snapshot(base_volume, name=prefix+'-snapshot')
       gce.create_volume(
           size=10, name=prefix+'-extra', location='us-central1-a')
-    except KeyboardInterrupt, e:
-        print "\nExiting on user command."
+    except KeyboardInterrupt as e:
+        print("\nExiting on user command.")

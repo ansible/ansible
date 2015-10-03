@@ -29,16 +29,22 @@ class LookupModule(LookupBase):
     [1, 2, 3], [a, b] -> [1, a], [1, b], [2, a], [2, b], [3, a], [3, b]
     """
 
-    def __lookup_variabless(self, terms, variables):
+    def _lookup_variables(self, terms):
+        """
+        Turn this:
+            terms == ["1,2,3", "a,b"]
+        into this:
+            terms == [[1,2,3], [a, b]]
+        """
         results = []
         for x in terms:
-            intermediate = listify_lookup_plugin_terms(x, variables, loader=self._loader)
+            intermediate = listify_lookup_plugin_terms(x, templar=self._templar, loader=self._loader)
             results.append(intermediate)
         return results
 
     def run(self, terms, variables=None, **kwargs):
 
-        terms = self.__lookup_variabless(terms, variables)
+        terms = self._lookup_variables(terms)
 
         my_list = terms[:]
         if len(my_list) == 0:

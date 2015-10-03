@@ -72,39 +72,53 @@ class CallbackBase:
             for warning in res['warnings']:
                 self._display.warning(warning)
 
-    def _get_diff(self, diff):
-        try:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
-                ret = []
-                if 'dst_binary' in diff:
-                    ret.append("diff skipped: destination file appears to be binary\n")
-                if 'src_binary' in diff:
-                    ret.append("diff skipped: source file appears to be binary\n")
-                if 'dst_larger' in diff:
-                    ret.append("diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
-                if 'src_larger' in diff:
-                    ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
-                if 'before' in diff and 'after' in diff:
-                    if 'before_header' in diff:
-                        before_header = "before: %s" % diff['before_header']
-                    else:
-                        before_header = 'before'
-                    if 'after_header' in diff:
-                        after_header = "after: %s" % diff['after_header']
-                    else:
-                        after_header = 'after'
-                    differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
-                    for line in list(differ):
-                        ret.append(line)
-                return u"".join(ret)
-        except UnicodeDecodeError:
-            return ">> the files are different, but the diff library cannot compare unicode strings"
+    def _get_diff(self, difflist):
+
+        if not isinstance(difflist, list):
+            difflist = [difflist]
+
+        ret = []
+        for diff in difflist:
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    ret = []
+                    if 'dst_binary' in diff:
+                        ret.append("diff skipped: destination file appears to be binary\n")
+                    if 'src_binary' in diff:
+                        ret.append("diff skipped: source file appears to be binary\n")
+                    if 'dst_larger' in diff:
+                        ret.append("diff skipped: destination file size is greater than %d\n" % diff['dst_larger'])
+                    if 'src_larger' in diff:
+                        ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
+                    if 'before' in diff and 'after' in diff:
+                        if 'before_header' in diff:
+                            before_header = "before: %s" % diff['before_header']
+                        else:
+                            before_header = 'before'
+                        if 'after_header' in diff:
+                            after_header = "after: %s" % diff['after_header']
+                        else:
+                            after_header = 'after'
+                        differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
+                        ret.extend(list(differ))
+                        ret.append('\n')
+                    return u"".join(ret)
+            except UnicodeDecodeError:
+                ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
+
+    def _get_item(self, result):
+        if '_ansible_no_log' in result and result['_ansible_no_log']:
+            item = "(censored due to no_log)"
+        else:
+            item = result['item']
+
+        return item
 
     def _process_items(self, result):
-
         for res in result._result['results']:
             newres = deepcopy(result)
+            res['item'] = self._get_item(res)
             newres._result = res
             if 'failed' in res and res['failed']:
                 self.v2_playbook_item_on_failed(newres)
@@ -194,10 +208,9 @@ class CallbackBase:
         self.runner_on_ok(host, result._result)
 
     def v2_runner_on_skipped(self, result):
-        host = result._host.get_name()
-        #FIXME, get item to pass through
-        item = None
-        self.runner_on_skipped(host, item)
+        if C.DISPLAY_SKIPPED_HOSTS:
+            host = result._host.get_name()
+            self.runner_on_skipped(host, self._get_item(getattr(result._result,'results',{})))
 
     def v2_runner_on_unreachable(self, result):
         host = result._host.get_name()

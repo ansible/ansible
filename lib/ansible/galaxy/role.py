@@ -26,10 +26,16 @@ import tarfile
 import tempfile
 import yaml
 from shutil import rmtree
-from urllib2 import urlopen
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
+from ansible.module_utils.urls import open_url
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 class GalaxyRole(object):
 
@@ -39,68 +45,32 @@ class GalaxyRole(object):
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
 
 
-    def __init__(self, galaxy, name, src=None, version=None, scm=None):
+    def __init__(self, galaxy, name, src=None, version=None, scm=None, role_path=None):
 
         self._metadata = None
         self._install_info = None
 
         self.options = galaxy.options
-        self.display = galaxy.display
 
         self.name = name
         self.version = version
         self.src = src or name
         self.scm = scm
 
-        self.path = (os.path.join(galaxy.roles_path, self.name))
-
-    def fetch_from_scm_archive(self):
-
-        # this can be configured to prevent unwanted SCMS but cannot add new ones unless the code is also updated
-        if scm not in self.scms:
-            self.display.display("The %s scm is not currently supported" % scm)
-            return False
-
-        tempdir = tempfile.mkdtemp()
-        clone_cmd = [scm, 'clone', role_url, self.name]
-        with open('/dev/null', 'w') as devnull:
-            try:
-                self.display.display("- executing: %s" % " ".join(clone_cmd))
-                popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
-            except:
-                raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
-            rc = popen.wait()
-        if rc != 0:
-            self.display.display("- command %s failed" % ' '.join(clone_cmd))
-            self.display.display("  in directory %s" % tempdir)
-            return False
-
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
-        if scm == 'hg':
-            archive_cmd = ['hg', 'archive', '--prefix', "%s/" % self.name]
-            if role_version:
-                archive_cmd.extend(['-r', role_version])
-            archive_cmd.append(temp_file.name)
-        if scm == 'git':
-            archive_cmd = ['git', 'archive', '--prefix=%s/' % self.name, '--output=%s' % temp_file.name]
-            if role_version:
-                archive_cmd.append(role_version)
+        if role_path is not None:
+            self.path = role_path
+        else:
+            for path in galaxy.roles_paths:
+                role_path = os.path.join(path, self.name)
+                if os.path.exists(role_path):
+                    self.path = role_path
+                    break
             else:
-                archive_cmd.append('HEAD')
+                # use the first path by default
+                self.path = os.path.join(galaxy.roles_paths[0], self.name)
 
-        with open('/dev/null', 'w') as devnull:
-            self.display.display("- executing: %s" % " ".join(archive_cmd))
-            popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, self.name),
-                                     stderr=devnull, stdout=devnull)
-            rc = popen.wait()
-        if rc != 0:
-            self.display.display("- command %s failed" % ' '.join(archive_cmd))
-            self.display.display("  in directory %s" % tempdir)
-            return False
-
-        rmtree(tempdir, ignore_errors=True)
-
-        return temp_file.name
+    def __eq__(self, other):
+        return self.name == other.name
 
     @property
     def metadata(self):
@@ -114,7 +84,7 @@ class GalaxyRole(object):
                     f = open(meta_path, 'r')
                     self._metadata = yaml.safe_load(f)
                 except:
-                    self.display.vvvvv("Unable to load metadata for %s" % self.name)
+                    display.vvvvv("Unable to load metadata for %s" % self.name)
                     return False
                 finally:
                     f.close()
@@ -135,7 +105,7 @@ class GalaxyRole(object):
                     f = open(info_path, 'r')
                     self._install_info = yaml.safe_load(f)
                 except:
-                    self.display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
+                    display.vvvvv("Unable to load Galaxy install info for %s" % self.name)
                     return False
                 finally:
                     f.close()
@@ -189,10 +159,10 @@ class GalaxyRole(object):
                 archive_url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (role_data["github_user"], role_data["github_repo"], self.version)
             else:
                 archive_url = self.src
-            self.display.display("- downloading role from %s" % archive_url)
+            display.display("- downloading role from %s" % archive_url)
 
             try:
-                url_file = urlopen(archive_url)
+                url_file = open_url(archive_url)
                 temp_file = tempfile.NamedTemporaryFile(delete=False)
                 data = url_file.read()
                 while data:
@@ -203,7 +173,7 @@ class GalaxyRole(object):
             except:
                 # TODO: better urllib2 error handling for error
                 #       messages that are more exact
-                self.display.error("failed to download the file.")
+                display.error("failed to download the file.")
 
         return False
 
@@ -212,7 +182,7 @@ class GalaxyRole(object):
         # to the specified (or default) roles directory
 
         if not tarfile.is_tarfile(role_filename):
-            self.display.error("the file downloaded was not a tar.gz")
+            display.error("the file downloaded was not a tar.gz")
             return False
         else:
             if role_filename.endswith('.gz'):
@@ -228,32 +198,32 @@ class GalaxyRole(object):
                     meta_file = member
                     break
             if not meta_file:
-                self.display.error("this role does not appear to have a meta/main.yml file.")
+                display.error("this role does not appear to have a meta/main.yml file.")
                 return False
             else:
                 try:
                     self._metadata = yaml.safe_load(role_tar_file.extractfile(meta_file))
                 except:
-                    self.display.error("this role does not appear to have a valid meta/main.yml file.")
+                    display.error("this role does not appear to have a valid meta/main.yml file.")
                     return False
 
             # we strip off the top-level directory for all of the files contained within
             # the tar file here, since the default is 'github_repo-target', and change it
             # to the specified role's name
-            self.display.display("- extracting %s to %s" % (self.name, self.path))
+            display.display("- extracting %s to %s" % (self.name, self.path))
             try:
                 if os.path.exists(self.path):
                     if not os.path.isdir(self.path):
-                        self.display.error("the specified roles path exists and is not a directory.")
+                        display.error("the specified roles path exists and is not a directory.")
                         return False
                     elif not getattr(self.options, "force", False):
-                        self.display.error("the specified role %s appears to already exist. Use --force to replace it." % self.name)
+                        display.error("the specified role %s appears to already exist. Use --force to replace it." % self.name)
                         return False
                     else:
                         # using --force, remove the old path
                         if not self.remove():
-                            self.display.error("%s doesn't appear to contain a role." % self.path)
-                            self.display.error("  please remove this directory manually if you really want to put the role here.")
+                            display.error("%s doesn't appear to contain a role." % self.path)
+                            display.error("  please remove this directory manually if you really want to put the role here.")
                             return False
                 else:
                     os.makedirs(self.path)
@@ -275,11 +245,11 @@ class GalaxyRole(object):
                 # write out the install info file for later use
                 self._write_galaxy_install_info()
             except OSError as e:
-                self.display.error("Could not update files in %s: %s" % (self.path, str(e)))
+                display.error("Could not update files in %s: %s" % (self.path, str(e)))
                 return False
 
             # return the parsed yaml metadata
-            self.display.display("- %s was installed successfully" % self.name)
+            display.display("- %s was installed successfully" % self.name)
             return True
 
     @property
@@ -311,4 +281,50 @@ class GalaxyRole(object):
         if ',' in trailing_path:
             trailing_path = trailing_path.split(',')[0]
         return trailing_path
+
+    @staticmethod
+    def scm_archive_role(scm, role_url, role_version, role_name):
+        if scm not in ['hg', 'git']:
+            display.display("- scm %s is not currently supported" % scm)
+            return False
+        tempdir = tempfile.mkdtemp()
+        clone_cmd = [scm, 'clone', role_url, role_name]
+        with open('/dev/null', 'w') as devnull:
+            try:
+                display.display("- executing: %s" % " ".join(clone_cmd))
+                popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+            except:
+                raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
+            rc = popen.wait()
+        if rc != 0:
+            display.display("- command %s failed" % ' '.join(clone_cmd))
+            display.display("  in directory %s" % tempdir)
+            return False
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
+        if scm == 'hg':
+            archive_cmd = ['hg', 'archive', '--prefix', "%s/" % role_name]
+            if role_version:
+                archive_cmd.extend(['-r', role_version])
+            archive_cmd.append(temp_file.name)
+        if scm == 'git':
+            archive_cmd = ['git', 'archive', '--prefix=%s/' % role_name, '--output=%s' % temp_file.name]
+            if role_version:
+                archive_cmd.append(role_version)
+            else:
+                archive_cmd.append('HEAD')
+
+        with open('/dev/null', 'w') as devnull:
+            display.display("- executing: %s" % " ".join(archive_cmd))
+            popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, role_name),
+                                     stderr=devnull, stdout=devnull)
+            rc = popen.wait()
+        if rc != 0:
+            display.display("- command %s failed" % ' '.join(archive_cmd))
+            display.display("  in directory %s" % tempdir)
+            return False
+
+        rmtree(tempdir, ignore_errors=True)
+
+        return temp_file.name
 

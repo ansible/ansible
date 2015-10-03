@@ -8,7 +8,7 @@ Here are some commonly-asked questions and their answers.
 How can I set the PATH or any other environment variable for a task or entire playbook?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Setting environment variables can be done with the `environment` keyword. It can be used at task or playbook level::
+Setting environment variables can be done with the `environment` keyword. It can be used at task or play level::
 
     environment:
       PATH: "{{ ansible_env.PATH }}:/thingy/bin"
@@ -24,8 +24,8 @@ Setting inventory variables in the inventory file is the easiest way.
 For instance, suppose these hosts have different usernames and ports::
 
     [webservers]
-    asdf.example.com  ansible_ssh_port=5000   ansible_ssh_user=alice
-    jkl.example.com   ansible_ssh_port=5001   ansible_ssh_user=bob
+    asdf.example.com  ansible_port=5000   ansible_user=alice
+    jkl.example.com   ansible_port=5001   ansible_user=bob
 
 You can also dictate the connection type to be used, if you want::
 
@@ -54,6 +54,37 @@ consider managing from a Fedora or openSUSE client even though you are managing 
 
 We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
 for new users.
+
+.. _use_ssh_jump_hosts:
+
+How do I configure a jump host to access servers that I have no direct access to?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+With Ansible 2, you can set a `ProxyCommand` in the
+`ansible_ssh_common_args` inventory variable. Any arguments specified in
+this variable are added to the sftp/scp/ssh command line when connecting
+to the relevant host(s). Consider the following inventory group::
+
+    [gatewayed]
+    foo ansible_host=192.0.2.1
+    bar ansible_host=192.0.2.2
+
+You can create `group_vars/gatewayed.yml` with the following contents::
+
+    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
+
+Ansible will append these arguments to the command line when trying to
+connect to any hosts in the group `gatewayed`. (These arguments are used
+in addition to any `ssh_args` from `ansible.cfg`, so you do not need to
+repeat global `ControlPersist` settings in `ansible_ssh_common_args`.)
+
+Note that `ssh -W` is available only with OpenSSH 5.4 or later. With
+older versions, it's necessary to execute `nc %h:%p` or some equivalent
+command on the bastion host.
+
+With earlier versions of Ansible, it was necessary to configure a
+suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
+or globally by setting `ssh_args` in `ansible.cfg`.
 
 .. _ec2_cloud_performance:
 
@@ -235,7 +266,9 @@ Once the library is ready, SHA512 password values can then be generated as follo
 Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  See `our Guru offering <http://www.ansible.com/ansible-guru>`_ for online support, and support is also included with :doc:`tower`. You can also read our `service page <http://www.ansible.com/ansible-services>`_ and email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <http://www.ansible.com/services>`_ for information on our services and training offerings. Support is also included with :doc:`tower`. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+
+We also offer free web-based training classes on a regular basis. See our `webinar page <http://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
 
 .. _web_interface:
 

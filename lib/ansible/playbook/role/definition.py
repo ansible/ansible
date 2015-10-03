@@ -31,6 +31,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.taggable import Taggable
+from ansible.template import Templar
 from ansible.utils.path import unfrackpath
 
 
@@ -41,7 +42,11 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
     _role = FieldAttribute(isa='string')
 
-    def __init__(self, role_basedir=None):
+    def __init__(self, play=None, role_basedir=None, variable_manager=None, loader=None):
+        self._play             = play
+        self._variable_manager = variable_manager
+        self._loader           = loader
+
         self._role_path    = None
         self._role_basedir = role_basedir
         self._role_params  = dict()
@@ -112,6 +117,14 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         if not role_name or not isinstance(role_name, string_types):
             raise AnsibleError('role definitions must contain a role name', obj=ds)
 
+        # if we have the required datastructures, and if the role_name
+        # contains a variable, try and template it now
+        if self._variable_manager:
+            all_vars = self._variable_manager.get_vars(loader=self._loader, play=self._play)
+            templar = Templar(loader=self._loader, variables=all_vars)
+            if templar._contains_vars(role_name):
+                role_name = templar.template(role_name)
+
         return role_name
 
     def _load_role_path(self, role_name):
@@ -146,8 +159,18 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
             if self._role_basedir:
                 role_search_paths.append(self._role_basedir)
 
+            # create a templar class to template the dependency names, in
+            # case they contain variables
+            if self._variable_manager is not None:
+                all_vars = self._variable_manager.get_vars(loader=self._loader, play=self._play)
+            else:
+                all_vars = dict()
+
+            templar = Templar(loader=self._loader, variables=all_vars)
+
             # now iterate through the possible paths and return the first one we find
             for path in role_search_paths:
+                path = templar.template(path)
                 role_path = unfrackpath(os.path.join(path, role_name))
                 if self._loader.path_exists(role_path):
                     return (role_name, role_path)
@@ -165,10 +188,11 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         role_def = dict()
         role_params = dict()
+        base_attribute_names = frozenset(self._get_base_attributes().keys())
         for (key, value) in iteritems(ds):
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)
-            if key not in [attr_name for (attr_name, attr_value) in self._get_base_attributes().iteritems()]:
+            if key not in base_attribute_names:
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value
             else:

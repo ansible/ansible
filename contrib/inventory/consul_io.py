@@ -136,11 +136,12 @@ except ImportError:
 
 try:
   import consul
-except ImportError, e:
-  print """failed=True msg='python-consul required for this module. see
-  http://python-consul.readthedocs.org/en/latest/#installation'"""
+except ImportError as e:
+  print("""failed=True msg='python-consul required for this module. see
+  http://python-consul.readthedocs.org/en/latest/#installation'""")
   sys.exit(1)
 
+from six import iteritems
 
 
 class ConsulInventory(object):
@@ -171,7 +172,7 @@ class ConsulInventory(object):
       self.load_all_data_consul()
 
     self.combine_all_results()
-    print json.dumps(self.inventory, sort_keys=True, indent=2)
+    print(json.dumps(self.inventory, sort_keys=True, indent=2))
 
   def load_all_data_consul(self):
     ''' cycle through each of the datacenters in the consul catalog and process
@@ -187,7 +188,7 @@ class ConsulInventory(object):
     an 'available' or 'unavailable' grouping. The suffix for each group can be
     controlled from the config'''
     if self.config.has_config('availability'):
-      for service_name, service in node['Services'].iteritems():
+      for service_name, service in iteritems(node['Services']):
         for node in self.consul_api.health.service(service_name)[1]:
             for check in node['Checks']:
                 if check['ServiceName'] == service_name:

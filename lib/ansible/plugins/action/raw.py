@@ -31,7 +31,7 @@ class ActionModule(ActionBase):
             return dict(skipped=True)
 
         executable = self._task.args.get('executable')
-        result = self._low_level_execute_command(self._task.args.get('_raw_params'), tmp=tmp, executable=executable)
+        result = self._low_level_execute_command(self._task.args.get('_raw_params'), executable=executable)
 
         # for some modules (script, raw), the sudo success key
         # may leak into the stdout due to the way the sudo/su

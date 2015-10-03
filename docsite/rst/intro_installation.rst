@@ -49,15 +49,22 @@ Control Machine Requirements
 Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
 This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
-  
+
+.. note::
+
+    As of 2.0 ansible uses a few more file handles to manage it's forks, OS X has a very low setting so if you want to use 15 or more forks
+    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 2048``. Or just any time you see a "Too many open files" error.
+
+
 .. _managed_node_requirements:
 
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you only need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
+On the managed nodes, you need a way to communicate, normally ssh. By default this uses sftp, if not available you can switch to scp in ansible.cfg.
+Also you need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
 
-* ``python-simplejson`` 
+* ``python-simplejson``
 
 .. note::
 
@@ -105,7 +112,7 @@ open source projects.
 
 .. note::
   
-   If you are intending to use Tower as the Control Machine, do not use a source install. Please use apt/yum/pip for a stable version
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (eg. apt/yum) or pip to install a stable version.
 
 
 To install from source.
@@ -124,7 +131,7 @@ If you don't have pip installed in your version of Python, install pip::
 
     $ sudo easy_install pip
 
-Ansible also uses the following Python modules that need to be installed::
+Ansible also uses the following Python modules that need to be installed [1]_::
 
     $ sudo pip install paramiko PyYAML Jinja2 httplib2 six
 
@@ -185,7 +192,7 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
     $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
     $ make rpm
-    $ sudo rpm -Uvh ./rpmbuild/ansible-*.noarch.rpm
+    $ sudo rpm -Uvh ./rpm-build/ansible-*.noarch.rpm
 
 .. _from_apt:
 
@@ -295,7 +302,7 @@ your version of Python, you can get pip by::
 
    $ sudo easy_install pip
 
-Then install Ansible with::
+Then install Ansible with [1]_::
 
    $ sudo pip install ansible
 
@@ -325,3 +332,4 @@ These releases are also tagged in the `git repository <https://github.com/ansibl
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel
 
+.. [1] If you have issues with the "pycrypto" package install on Mac OSX, which is included as a dependency for paramiko, then you may need to try "CC=clang sudo -E pip install pycrypto".

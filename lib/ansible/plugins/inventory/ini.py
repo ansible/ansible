@@ -23,9 +23,12 @@ __metaclass__ = type
 
 import os
 
+from ansible import constants as C
 from . import InventoryParser
 
 class InventoryIniParser(InventoryAggregateParser):
+
+    CONDITION="is_file(%s)"
 
     def __init__(self, inven_directory):
         directory = inven_directory
@@ -35,7 +38,7 @@ class InventoryIniParser(InventoryAggregateParser):
         # Clean up the list of filenames
         for filename in names:
             # Skip files that end with certain extensions or characters
-            if any(filename.endswith(ext) for ext in ("~", ".orig", ".bak", ".ini", ".retry", ".pyc", ".pyo")):
+            if any(filename.endswith(ext) for ext in C.DEFAULT_INVENTORY_IGNORE):
                 continue
             # Skip hidden files
             if filename.startswith('.') and not filename.startswith('.{0}'.format(os.path.sep)):
@@ -50,11 +53,3 @@ class InventoryIniParser(InventoryAggregateParser):
 
     def parse(self):
         return super(InventoryDirectoryParser, self).parse()
-
-    def _before_comment(self, msg):
-        ''' what's the part of a string before a comment? '''
-        msg = msg.replace("\#","**NOT_A_COMMENT**")
-        msg = msg.split("#")[0]
-        msg = msg.replace("**NOT_A_COMMENT**","#")
-        return msg
-

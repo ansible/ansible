@@ -46,7 +46,7 @@ class LookupModule(LookupBase):
 
             if isinstance(term, basestring):
                 # convert a variable to a list
-                term2 = listify_lookup_plugin_terms(term, variables, loader=self._loader)
+                term2 = listify_lookup_plugin_terms(term, templar=self._templar, loader=self._loader)
                 # but avoid converting a plain string to a list of one string
                 if term2 != [ term ]:
                     term = term2
@@ -63,6 +63,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
+        ### FIXME: Is this needed now that listify is run on all lookup plugin terms?
         if not isinstance(terms, list):
             raise AnsibleError("with_flattened expects a list")
 

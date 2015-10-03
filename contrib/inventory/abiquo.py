@@ -45,26 +45,24 @@ import os
 import sys
 import time
 import ConfigParser
-import urllib2
-import base64
 
 try:
     import json
 except ImportError:
     import simplejson as json
 
+from ansible.module_utils.urls import open_url
+
 def api_get(link, config):
     try:
         if link == None:
-            request = urllib2.Request(config.get('api','uri')+config.get('api','login_path'))
-            request.add_header("Accept",config.get('api','login_type'))
+            url = config.get('api','uri') + config.get('api','login_path')
+            headers = {"Accept": config.get('api','login_type')}
         else:
-            request = urllib2.Request(link['href']+'?limit=0')
-            request.add_header("Accept",link['type'])
-        # Auth
-        base64string = base64.encodestring('%s:%s' % (config.get('auth','apiuser'),config.get('auth','apipass'))).replace('\n', '')
-        request.add_header("Authorization", "Basic %s" % base64string)
-        result = urllib2.urlopen(request)
+            url = link['href'] + '?limit=0'
+            headers = {"Accept": link['type']}
+        result = open_url(url, headers=headers, url_username=config.get('auth','apiuser').replace('\n', ''),
+                url_password=config.get('auth','apipass').replace('\n', ''))
         return json.loads(result.read())
     except:
         return None
@@ -76,7 +74,7 @@ def save_cache(data, config):
         cache = open('/'.join([dpath,'inventory']), 'w')
         cache.write(json.dumps(data))
         cache.close()
-    except IOError, e:
+    except IOError as e:
         pass # not really sure what to do here
 
 
@@ -88,7 +86,7 @@ def get_cache(cache_item, config):
         cache = open('/'.join([dpath,'inventory']), 'r')
         inv = cache.read()
         cache.close()
-    except IOError, e:
+    except IOError as e:
         pass # not really sure what to do here
 
     return inv
@@ -172,7 +170,7 @@ def generate_inv_from_api(enterprise_entity,config):
                         else:
                             vm_metadata = metadata['metadata']['metadata']
                         inventory['_meta']['hostvars'][vm_nic] = vm_metadata
-                    except Exception, e:
+                    except Exception as e:
                         pass
 
                 inventory[vm_vapp]['children'].append(vmcollection['name'])
@@ -183,7 +181,7 @@ def generate_inv_from_api(enterprise_entity,config):
                 inventory[vmcollection['name']].append(vm_nic)
 
         return inventory
-    except Exception, e:
+    except Exception as e:
         # Return empty hosts output
         return { 'all': {'hosts': []}, '_meta': { 'hostvars': {} } }
 
@@ -214,7 +212,7 @@ if __name__ == '__main__':
     try:
         login = api_get(None,config)
         enterprise = next(link for link in (login['links']) if (link['rel']=='enterprise'))
-    except Exception, e:
+    except Exception as e:
         enterprise = None
 
     if cache_available(config):

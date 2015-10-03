@@ -56,7 +56,11 @@ class TestPlayIterator(unittest.TestCase):
             """,
         })
 
-        p = Playbook.load('test_play.yml', loader=fake_loader)
+        mock_var_manager = MagicMock()
+        mock_var_manager._fact_cache = dict()
+        mock_var_manager.get_vars.return_value = dict()
+
+        p = Playbook.load('test_play.yml', loader=fake_loader, variable_manager=mock_var_manager)
 
         hosts = []
         for i in range(0, 10):
@@ -74,6 +78,7 @@ class TestPlayIterator(unittest.TestCase):
             inventory=inventory,
             play=p._entries[0],
             play_context=play_context,
+            variable_manager=mock_var_manager,
             all_vars=dict(),
         )
 

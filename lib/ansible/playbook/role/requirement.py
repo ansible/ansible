@@ -54,26 +54,26 @@ class RoleRequirement(RoleDefinition):
 
         assert type(ds) == dict or isinstance(ds, string_types)
 
-        role_name    = ''
+        role_name    = None
         role_params  = dict()
         new_ds       = dict()
 
         if isinstance(ds, string_types):
             role_name = ds
         else:
-            ds = self._preprocess_role_spec(ds)
-            (new_ds, role_params) = self._split_role_params(ds)
+            (new_ds, role_params) = self._split_role_params(self._preprocess_role_spec(ds))
 
             # pull the role name out of the ds
-            role_name = new_ds.get('role_name')
-            del ds['role_name']
+            role_name = new_ds.pop('role_name', new_ds.pop('role', None))
 
+        if role_name is None:
+            raise AnsibleError("Role requirement did not contain a role name!", obj=ds)
         return (new_ds, role_name, role_params)
 
     def _preprocess_role_spec(self, ds):
         if 'role' in ds:
             # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-            role_info = self._role_spec_parse(ds['role'])
+            role_info = role_spec_parse(ds['role'])
             if isinstance(role_info, dict):
                 # Warning: Slight change in behaviour here.  name may be being
                 # overloaded.  Previously, name was only a parameter to the role.
@@ -96,7 +96,7 @@ class RoleRequirement(RoleDefinition):
                 ds["role"] = ds["name"]
                 del ds["name"]
             else:
-                ds["role"] = self._repo_url_to_role_name(ds["src"])
+                ds["role"] = repo_url_to_role_name(ds["src"])
 
             # set some values to a default value, if none were specified
             ds.setdefault('version', '')
@@ -104,63 +104,102 @@ class RoleRequirement(RoleDefinition):
 
         return ds
 
-    def _repo_url_to_role_name(self, repo_url):
-        # gets the role name out of a repo like
-        # http://git.example.com/repos/repo.git" => "repo"
+def repo_url_to_role_name(repo_url):
+    # gets the role name out of a repo like
+    # http://git.example.com/repos/repo.git" => "repo"
 
-        if '://' not in repo_url and '@' not in repo_url:
-            return repo_url
-        trailing_path = repo_url.split('/')[-1]
-        if trailing_path.endswith('.git'):
-            trailing_path = trailing_path[:-4]
-        if trailing_path.endswith('.tar.gz'):
-            trailing_path = trailing_path[:-7]
-        if ',' in trailing_path:
-            trailing_path = trailing_path.split(',')[0]
-        return trailing_path
+    if '://' not in repo_url and '@' not in repo_url:
+        return repo_url
+    trailing_path = repo_url.split('/')[-1]
+    if trailing_path.endswith('.git'):
+        trailing_path = trailing_path[:-4]
+    if trailing_path.endswith('.tar.gz'):
+        trailing_path = trailing_path[:-7]
+    if ',' in trailing_path:
+        trailing_path = trailing_path.split(',')[0]
+    return trailing_path
 
-    def _role_spec_parse(self, role_spec):
-        # takes a repo and a version like
-        # git+http://git.example.com/repos/repo.git,v1.0
-        # and returns a list of properties such as:
-        # {
-        #   'scm': 'git',
-        #   'src': 'http://git.example.com/repos/repo.git',
-        #   'version': 'v1.0',
-        #   'name': 'repo'
-        # }
+def role_spec_parse(role_spec):
+    # takes a repo and a version like
+    # git+http://git.example.com/repos/repo.git,v1.0
+    # and returns a list of properties such as:
+    # {
+    #   'scm': 'git',
+    #   'src': 'http://git.example.com/repos/repo.git',
+    #   'version': 'v1.0',
+    #   'name': 'repo'
+    # }
 
-        default_role_versions = dict(git='master', hg='tip')
+    default_role_versions = dict(git='master', hg='tip')
 
-        role_spec = role_spec.strip()
-        role_version = ''
-        if role_spec == "" or role_spec.startswith("#"):
-            return (None, None, None, None)
+    role_spec = role_spec.strip()
+    role_version = ''
+    if role_spec == "" or role_spec.startswith("#"):
+        return (None, None, None, None)
 
-        tokens = [s.strip() for s in role_spec.split(',')]
+    tokens = [s.strip() for s in role_spec.split(',')]
 
-        # assume https://github.com URLs are git+https:// URLs and not
-        # tarballs unless they end in '.zip'
-        if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
-            tokens[0] = 'git+' + tokens[0]
+    # assume https://github.com URLs are git+https:// URLs and not
+    # tarballs unless they end in '.zip'
+    if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
+        tokens[0] = 'git+' + tokens[0]
 
-        if '+' in tokens[0]:
-            (scm, role_url) = tokens[0].split('+')
+    if '+' in tokens[0]:
+        (scm, role_url) = tokens[0].split('+')
+    else:
+        scm = None
+        role_url = tokens[0]
+
+    if len(tokens) >= 2:
+        role_version = tokens[1]
+
+    if len(tokens) == 3:
+        role_name = tokens[2]
+    else:
+        role_name = repo_url_to_role_name(tokens[0])
+
+    if scm and not role_version:
+        role_version = default_role_versions.get(scm, '')
+
+    return dict(scm=scm, src=role_url, version=role_version, role_name=role_name)
+
+# FIXME: all of these methods need to be cleaned up/reorganized below this
+def get_opt(options, k, defval=""):
+    """
+    Returns an option from an Optparse values instance.
+    """
+    try:
+        data = getattr(options, k)
+    except:
+        return defval
+    if k == "roles_path":
+        if os.pathsep in data:
+            data = data.split(os.pathsep)[0]
+    return data
+
+def get_role_path(role_name, options):
+    """
+    Returns the role path based on the roles_path option
+    and the role name.
+    """
+    roles_path = get_opt(options,'roles_path')
+    roles_path = os.path.join(roles_path, role_name)
+    roles_path = os.path.expanduser(roles_path)
+    return roles_path
+
+def get_role_metadata(role_name, options):
+    """
+    Returns the metadata as YAML, if the file 'meta/main.yml'
+    exists in the specified role_path
+    """
+    role_path = os.path.join(get_role_path(role_name, options), 'meta/main.yml')
+    try:
+        if os.path.isfile(role_path):
+            f = open(role_path, 'r')
+            meta_data = yaml.safe_load(f)
+            f.close()
+            return meta_data
         else:
-            scm = None
-            role_url = tokens[0]
-
-        if len(tokens) >= 2:
-            role_version = tokens[1]
-
-        if len(tokens) == 3:
-            role_name = tokens[2]
-        else:
-            role_name = self._repo_url_to_role_name(tokens[0])
-
-        if scm and not role_version:
-            role_version = default_role_versions.get(scm, '')
-
-        return dict(scm=scm, src=role_url, version=role_version, role_name=role_name)
-
-
+            return None
+    except:
+        return None    

@@ -23,6 +23,7 @@ import multiprocessing
 import os
 import socket
 import sys
+import tempfile
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -31,7 +32,7 @@ from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
 from ansible.playbook.play_context import PlayContext
-from ansible.plugins import callback_loader, strategy_loader
+from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 
 __all__ = ['TaskQueueManager']
@@ -61,6 +62,13 @@ class TaskQueueManager:
 
         self._callbacks_loaded = False
         self._callback_plugins = []
+        self._start_at_done    = False
+
+        # make sure the module path (if specified) is parsed and
+        # added to the module_loader object
+        if options.module_path is not None:
+            for path in options.module_path.split(os.pathsep):
+                module_loader.add_directory(path)
 
         # a special flag to help us exit cleanly
         self._terminated = False
@@ -79,6 +87,10 @@ class TaskQueueManager:
             fileno = sys.stdin.fileno()
         except ValueError:
             fileno = None
+
+        # A temporary file (opened pre-fork) used by connection
+        # plugins for inter-process locking.
+        self._connection_lockfile = tempfile.TemporaryFile()
 
         self._workers = []
         for i in range(self._options.forks):
@@ -170,7 +182,7 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        play_context = PlayContext(new_play, self._options, self.passwords)
+        play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
         for callback_plugin in self._callback_plugins:
             if hasattr(callback_plugin, 'set_play_context'):
                 callback_plugin.set_play_context(play_context)
@@ -186,7 +198,20 @@ class TaskQueueManager:
             raise AnsibleError("Invalid play strategy specified: %s" % new_play.strategy, obj=play._ds)
 
         # build the iterator
-        iterator = PlayIterator(inventory=self._inventory, play=new_play, play_context=play_context, all_vars=all_vars)
+        iterator = PlayIterator(
+            inventory=self._inventory,
+            play=new_play,
+            play_context=play_context,
+            variable_manager=self._variable_manager,
+            all_vars=all_vars,
+            start_at_done = self._start_at_done,
+        )
+
+        # during initialization, the PlayContext will clear the start_at_task
+        # field to signal that a matching task was found, so check that here
+        # and remember it so we don't try to skip tasks on future plays
+        if getattr(self._options, 'start_at_task', None) is not None and play_context.start_at_task is None:
+            self._start_at_done = True
 
         # and run the play using the strategy
         return strategy.run(iterator, play_context)
@@ -203,6 +228,9 @@ class TaskQueueManager:
             rslt_q.close()
             main_q.close()
             worker_prc.terminate()
+
+    def clear_failed_hosts(self):
+        self._failed_hosts = dict()
 
     def get_inventory(self):
         return self._inventory

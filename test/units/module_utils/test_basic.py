@@ -20,10 +20,9 @@
 from __future__ import (absolute_import, division)
 __metaclass__ = type
 
-import __builtin__
 import errno
 
-from nose.tools import timed
+from six.moves import builtins
 
 from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, MagicMock, mock_open, Mock
@@ -37,16 +36,16 @@ class TestModuleUtilsBasic(unittest.TestCase):
         pass
 
     def test_module_utils_basic_imports(self):
-        realimport = __builtin__.__import__
+        realimport = builtins.__import__
 
         def _mock_import(name, *args, **kwargs):
             if name == 'json':
                 raise ImportError()
             realimport(name, *args, **kwargs)
 
-        with patch.object(__builtin__, '__import__', _mock_import, create=True) as m:
+        with patch.object(builtins, '__import__', _mock_import, create=True) as m:
             m('ansible.module_utils.basic')
-            __builtin__.__import__('ansible.module_utils.basic')
+            builtins.__import__('ansible.module_utils.basic')
 
     def test_module_utils_basic_get_platform(self):
         with patch('platform.system', return_value='foo'):
@@ -314,7 +313,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         base_params = dict(
             path = '/path/to/file',
-            mode = 0600,
+            mode = 0o600,
             owner = 'root',
             group = 'root',
             seuser = '_default',
@@ -510,7 +509,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         m = mock_open()
         m.side_effect = OSError
 
-        with patch('__builtin__.open', m, create=True):
+        with patch.object(builtins, 'open', m, create=True):
             self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (False, None))
 
         mount_data = [
@@ -524,7 +523,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         m = mock_open(read_data=''.join(mount_data))
         m.return_value.readlines.return_value = mount_data
 
-        with patch('__builtin__.open', m, create=True):
+        with patch.object(builtins, 'open', m, create=True):
             self.assertEqual(am.is_special_selinux_path('/some/random/path'), (False, None))
             self.assertEqual(am.is_special_selinux_path('/some/path/that/should/be/nfs'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
             self.assertEqual(am.is_special_selinux_path('/weird/random/fstype/path'), (True, ['foo_u', 'foo_r', 'foo_t', 's0']))
@@ -537,8 +536,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
             argument_spec = dict(),
         )
 
-        self.assertEqual(am._to_filesystem_str(u'foo'), 'foo')
-        self.assertEqual(am._to_filesystem_str(u'föö'), 'f\xc3\xb6\xc3\xb6')
+        self.assertEqual(am._to_filesystem_str(u'foo'), b'foo')
+        self.assertEqual(am._to_filesystem_str(u'föö'), b'f\xc3\xb6\xc3\xb6')
         
     def test_module_utils_basic_ansible_module_user_and_group(self):
         from ansible.module_utils import basic
@@ -603,7 +602,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with patch.dict('sys.modules', {'selinux': basic.selinux}):
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with('/path/to/file', 'foo_u:foo_r:foo_t:s0')
+                m.assert_called_with(b'/path/to/file', 'foo_u:foo_r:foo_t:s0')
                 m.reset_mock()
                 am.check_mode = True
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
@@ -620,7 +619,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
             
             with patch('selinux.lsetfilecon', return_value=0) as m:
                 self.assertEqual(am.set_context_if_different('/path/to/file', ['foo_u', 'foo_r', 'foo_t', 's0'], False), True)
-                m.assert_called_with('/path/to/file', 'sp_u:sp_r:sp_t:s0')
+                m.assert_called_with(b'/path/to/file', 'sp_u:sp_r:sp_t:s0')
 
         delattr(basic, 'selinux')
 
@@ -711,9 +710,9 @@ class TestModuleUtilsBasic(unittest.TestCase):
         )
 
         mock_stat1 = MagicMock()
-        mock_stat1.st_mode = 0444
+        mock_stat1.st_mode = 0o444
         mock_stat2 = MagicMock()
-        mock_stat2.st_mode = 0660
+        mock_stat2.st_mode = 0o660
 
         with patch('os.lstat', side_effect=[mock_stat1]):
             self.assertEqual(am.set_mode_if_different('/path/to/file', None, True), True)
@@ -723,13 +722,13 @@ class TestModuleUtilsBasic(unittest.TestCase):
         with patch('os.lstat') as m:
             with patch('os.lchmod', return_value=None, create=True) as m_os:
                 m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 0660, False), True)
-                m_os.assert_called_with('/path/to/file', 0660)
+                self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
+                m_os.assert_called_with('/path/to/file', 0o660)
 
                 m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
-                am._symbolic_mode_to_octal = MagicMock(return_value=0660)
+                am._symbolic_mode_to_octal = MagicMock(return_value=0o660)
                 self.assertEqual(am.set_mode_if_different('/path/to/file', 'o+w,g+w,a-r', False), True)
-                m_os.assert_called_with('/path/to/file', 0660)
+                m_os.assert_called_with('/path/to/file', 0o660)
 
                 m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
                 am._symbolic_mode_to_octal = MagicMock(side_effect=Exception)
@@ -737,7 +736,7 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
                 m.side_effect = [mock_stat1, mock_stat2, mock_stat2]
                 am.check_mode = True
-                self.assertEqual(am.set_mode_if_different('/path/to/file', 0660, False), True)
+                self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
                 am.check_mode = False
 
         # FIXME: this isn't working yet
@@ -746,11 +745,11 @@ class TestModuleUtilsBasic(unittest.TestCase):
         #        del m_os.lchmod
         #        with patch('os.path.islink', return_value=False):
         #            with patch('os.chmod', return_value=None) as m_chmod:
-        #                self.assertEqual(am.set_mode_if_different('/path/to/file/no_lchmod', 0660, False), True)
-        #                m_chmod.assert_called_with('/path/to/file', 0660)
+        #                self.assertEqual(am.set_mode_if_different('/path/to/file/no_lchmod', 0o660, False), True)
+        #                m_chmod.assert_called_with('/path/to/file', 0o660)
         #        with patch('os.path.islink', return_value=True):
         #            with patch('os.chmod', return_value=None) as m_chmod:
         #                with patch('os.stat', return_value=mock_stat2):
-        #                    self.assertEqual(am.set_mode_if_different('/path/to/file', 0660, False), True)
-        #                    m_chmod.assert_called_with('/path/to/file', 0660)
+        #                    self.assertEqual(am.set_mode_if_different('/path/to/file', 0o660, False), True)
+        #                    m_chmod.assert_called_with('/path/to/file', 0o660)
 

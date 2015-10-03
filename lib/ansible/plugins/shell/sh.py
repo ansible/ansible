@@ -24,12 +24,15 @@ import ansible.constants as C
 import time
 import random
 
+from six import text_type
+
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 class ShellModule(object):
 
     # How to end lines in a python script one-liner
     _SHELL_EMBEDDED_PY_EOL = '\n'
+    _SHELL_REDIRECT_ALLNULL = '> /dev/null 2>&1'
 
     def env_prefix(self, **kwargs):
         '''Build command prefix with environment variables.'''
@@ -39,7 +42,7 @@ class ShellModule(object):
             LC_MESSAGES = C.DEFAULT_MODULE_LANG,
         )
         env.update(kwargs)
-        return ' '.join(['%s=%s' % (k, pipes.quote(unicode(v))) for k,v in env.items()])
+        return ' '.join(['%s=%s' % (k, pipes.quote(text_type(v))) for k,v in env.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -53,10 +56,10 @@ class ShellModule(object):
 
     def remove(self, path, recurse=False):
         path = pipes.quote(path)
+        cmd = 'rm -f '
         if recurse:
-            return "rm -rf %s >/dev/null 2>&1" % path
-        else:
-            return "rm -f %s >/dev/null 2>&1" % path
+            cmd += '-r '
+        return cmd + "%s %s" % (path, self._SHELL_REDIRECT_ALLNULL)
 
     def mkdtemp(self, basefile=None, system=False, mode=None):
         if not basefile:
@@ -65,9 +68,14 @@ class ShellModule(object):
         if system and (basetmp.startswith('$HOME') or basetmp.startswith('~/')):
             basetmp = self.join_path('/tmp', basefile)
         cmd = 'mkdir -p "%s"' % basetmp
-        if mode:
-            cmd += ' && chmod %s "%s"' % (mode, basetmp)
         cmd += ' && echo "%s"' % basetmp
+
+        # change the umask in a subshell to achieve the desired mode
+        # also for directories created with `mkdir -p`
+        if mode:
+            tmp_umask = 0o777 & ~mode
+            cmd = '(umask %o && %s)' % (tmp_umask, cmd)
+
         return cmd
 
     def expand_user(self, user_home_path):
@@ -126,13 +134,15 @@ class ShellModule(object):
         cmd = "%s; %s || (echo \'0  \'%s)" % (test, cmd, shell_escaped_path)
         return cmd
 
-    def build_module_command(self, env_string, shebang, cmd, rm_tmp=None):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # don't quote the cmd if it's an empty string, because this will
         # break pipelining mode
         if cmd.strip() != '':
             cmd = pipes.quote(cmd)
         cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
+        if arg_path is not None:
+            cmd_parts.append(arg_path)
         new_cmd = " ".join(cmd_parts)
         if rm_tmp:
-            new_cmd = '%s; rm -rf "%s" >/dev/null 2>&1' % (new_cmd, rm_tmp)
+            new_cmd = '%s; rm -rf "%s" %s' % (new_cmd, rm_tmp, self._SHELL_REDIRECT_ALLNULL)
         return new_cmd

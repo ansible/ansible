@@ -20,7 +20,11 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
+
 from ansible.plugins.action import ActionBase
+from ansible.parsing.utils.addresses import parse_address
+from ansible.errors import AnsibleError, AnsibleParserError
 
 class ActionModule(ActionBase):
     ''' Create inventory hosts and groups in the memory inventory'''
@@ -38,9 +42,11 @@ class ActionModule(ActionBase):
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))
         #vv("creating host via 'add_host': hostname=%s" % new_name)
 
-        if ":" in new_name:
-            new_name, new_port = new_name.split(":")
-            self._task.args['ansible_ssh_port'] = new_port
+        name, port = parse_address(new_name, allow_ranges=False)
+        if not name:
+            raise AnsibleError("Invalid inventory hostname: %s" % new_name)
+        if port:
+            self._task.args['ansible_ssh_port'] = port
 
         groups = self._task.args.get('groupname', self._task.args.get('groups', self._task.args.get('group', ''))) 
         # add it to the group if that was specified
@@ -56,6 +62,4 @@ class ActionModule(ActionBase):
             if not k in [ 'name', 'hostname', 'groupname', 'groups' ]:
                 host_vars[k] = self._task.args[k] 
 
-        return dict(changed=True, add_host=dict(host_name=new_name, groups=new_groups, host_vars=host_vars))
-
-
+        return dict(changed=True, add_host=dict(host_name=name, groups=new_groups, host_vars=host_vars))

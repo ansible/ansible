@@ -19,17 +19,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import copy
 import json
 import os
+import stat
+import subprocess
 
 from yaml import load, YAMLError
+from six import text_type, string_types
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.splitter import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
+from ansible.module_utils.basic import is_executable
 from ansible.utils.path import unfrackpath
 from ansible.utils.unicode import to_unicode
 
@@ -54,11 +59,15 @@ class DataLoader():
         ds = dl.load_from_file('/path/to/file')
     '''
 
-    def __init__(self, vault_password=None):
+    def __init__(self):
         self._basedir = '.'
-        self._vault_password = vault_password
         self._FILE_CACHE = dict()
 
+        # initialize the vault stuff with an empty password
+        self.set_vault_password(None)
+
+    def set_vault_password(self, vault_password):
+        self._vault_password = vault_password
         self._vault = VaultLib(password=vault_password)
 
     def load(self, data, file_name='<string>', show_content=True):
@@ -79,7 +88,7 @@ class DataLoader():
                 # they are unable to cope with our subclass.
                 # Unwrap and re-wrap the unicode so we can keep track of line
                 # numbers
-                new_data = unicode(data)
+                new_data = text_type(data)
             else:
                 new_data = data
             try:
@@ -100,28 +109,38 @@ class DataLoader():
         # if the file has already been read in and cached, we'll
         # return those results to avoid more file/vault operations
         if file_name in self._FILE_CACHE:
-            return self._FILE_CACHE[file_name]
+            parsed_data = self._FILE_CACHE[file_name]
+        else:
+            # read the file contents and load the data structure from them
+            (file_data, show_content) = self._get_file_contents(file_name)
+            parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
 
-        # read the file contents and load the data structure from them
-        (file_data, show_content) = self._get_file_contents(file_name)
-        parsed_data = self.load(data=file_data, file_name=file_name, show_content=show_content)
+            # cache the file contents for next time
+            self._FILE_CACHE[file_name] = parsed_data
 
-        # cache the file contents for next time
-        self._FILE_CACHE[file_name] = parsed_data
-
-        return parsed_data
+        # return a deep copy here, so the cache is not affected
+        return copy.deepcopy(parsed_data)
 
     def path_exists(self, path):
+        path = self.path_dwim(path)
         return os.path.exists(path)
 
     def is_file(self, path):
-        return os.path.isfile(path)
+        path = self.path_dwim(path)
+        return os.path.isfile(path) or path == os.devnull
 
     def is_directory(self, path):
+        path = self.path_dwim(path)
         return os.path.isdir(path)
 
     def list_directory(self, path):
+        path = self.path_dwim(path)
         return os.listdir(path)
+
+    def is_executable(self, path):
+        '''is the given path executable?'''
+        path = self.path_dwim(path)
+        return is_executable(path)
 
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
@@ -137,20 +156,23 @@ class DataLoader():
         Reads the file contents from the given file name, and will decrypt them
         if they are found to be vault-encrypted.
         '''
-        if not file_name or not isinstance(file_name, basestring):
+        if not file_name or not isinstance(file_name, string_types):
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
         if not self.path_exists(file_name) or not self.is_file(file_name):
-            raise AnsibleParserError("the file_name '%s' does not exist, or is not readable" % file_name)
+            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_name)
 
         show_content = True
         try:
-            with open(file_name, 'r') as f:
+            with open(file_name, 'rb') as f:
                 data = f.read()
                 if self._vault.is_encrypted(data):
                     data = self._vault.decrypt(data)
                     show_content = False
+
+            data = to_unicode(data, errors='strict')
             return (data, show_content)
+
         except (IOError, OSError) as e:
             raise AnsibleParserError("an error occurred while trying to read the file '%s': %s" % (file_name, str(e)))
 
@@ -228,6 +250,7 @@ class DataLoader():
 
             # try to create absolute path for loader basedir + templates/files/vars + filename
             search.append(self.path_dwim(os.path.join(dirname,source)))
+            search.append(self.path_dwim(os.path.join(basedir, source)))
 
             # try to create absolute path for loader basedir + filename
             search.append(self.path_dwim(source))
@@ -237,4 +260,30 @@ class DataLoader():
                 break
 
         return candidate
+
+    def read_vault_password_file(self, vault_password_file):
+        """
+        Read a vault password from a file or if executable, execute the script and
+        retrieve password from STDOUT
+        """
+
+        this_path = os.path.realpath(os.path.expanduser(vault_password_file))
+        if not os.path.exists(this_path):
+            raise AnsibleFileNotFound("The vault password file %s was not found" % this_path)
+
+        if self.is_executable(this_path):
+            try:
+                # STDERR not captured to make it easier for users to prompt for input in their scripts
+                p = subprocess.Popen(this_path, stdout=subprocess.PIPE)
+            except OSError as e:
+                raise AnsibleError("Problem running vault password script %s (%s). If this is not a script, remove the executable bit from the file." % (' '.join(this_path), e))
+            stdout, stderr = p.communicate()
+            self.set_vault_password(stdout.strip('\r\n'))
+        else:
+            try:
+                f = open(this_path, "rb")
+                self.set_vault_password(f.read().strip())
+                f.close()
+            except (OSError, IOError) as e:
+                raise AnsibleError("Could not read vault password file %s: %s" % (this_path, e))
 

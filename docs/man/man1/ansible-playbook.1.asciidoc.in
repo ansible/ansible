@@ -51,7 +51,7 @@ Run operations with become (nopasswd implied)
 *--become-method=BECOME_METHOD*::
 
 Privilege escalation method to use (default=sudo),
-valid choices: [ sudo | su | pbrun | pfexec | runas ]
+valid choices: [ sudo | su | pbrun | pfexec | runas | doas ]
 
 *--become-user=BECOME_USER*::
 
@@ -150,6 +150,24 @@ run operations with su as this user (default=root)
 *-s*, *--sudo*::
 
 Run operations with sudo (nopasswd) (deprecated, use become)
+
+*--ssh-common-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
+
+Add the specified arguments to any sftp/scp/ssh command-line. Useful to
+set a ProxyCommand to use a jump host, but any arguments that are
+accepted by all three programs may be specified.
+
+*--sftp-extra-args=*''-f ...''::
+
+Add the specified arguments to any sftp command-line.
+
+*--scp-extra-args=*''-l ...''::
+
+Add the specified arguments to any scp command-line.
+
+*--ssh-extra-args=*''-R ...''::
+
+Add the specified arguments to any ssh command-line.
 
 *-U*, 'SUDO_USER', *--sudo-user=*'SUDO_USER'::
 

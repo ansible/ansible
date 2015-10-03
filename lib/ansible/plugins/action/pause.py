@@ -18,13 +18,21 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import datetime
+import signal
 import sys
+import termios
 import time
+import tty
 
-from termios import tcflush, TCIFLUSH
-
+from os import isatty
 from ansible.errors import *
 from ansible.plugins.action import ActionBase
+
+class AnsibleTimeoutExceeded(Exception):
+    pass
+
+def timeout_handler(signum, frame):
+    raise AnsibleTimeoutExceeded
 
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
@@ -48,14 +56,10 @@ class ActionModule(ActionBase):
             delta   = None,
         )
 
-        # FIXME: not sure if we can get this info directly like this anymore?
-        #hosts = ', '.join(self.runner.host_set)
-
         # Is 'args' empty, then this is the default prompted pause
         if self._task.args is None or len(self._task.args.keys()) == 0:
             pause_type = 'prompt'
-            #prompt = "[%s]\nPress enter to continue:\n" % hosts
-            prompt = "[%s]\nPress enter to continue:\n" % self._task.get_name().strip()
+            prompt = "[%s]\nPress enter to continue:" % self._task.get_name().strip()
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         elif 'minutes' in self._task.args or 'seconds' in self._task.args:
@@ -76,51 +80,76 @@ class ActionModule(ActionBase):
         # Is 'prompt' a key in 'args'?
         elif 'prompt' in self._task.args:
             pause_type = 'prompt'
-            #prompt = "[%s]\n%s:\n" % (hosts, self._task.args['prompt'])
-            prompt = "[%s]\n%s:\n" % (self._task.get_name().strip(), self._task.args['prompt'])
+            prompt = "[%s]\n%s:" % (self._task.get_name().strip(), self._task.args['prompt'])
 
-        # I have no idea what you're trying to do. But it's so wrong.
         else:
+            # I have no idea what you're trying to do. But it's so wrong.
             return dict(failed=True, msg="invalid pause type given. must be one of: %s" % ", ".join(self.PAUSE_TYPES))
-
-        #vv("created 'pause' ActionModule: pause_type=%s, duration_unit=%s, calculated_seconds=%s, prompt=%s" % \
-        #        (self.pause_type, self.duration_unit, self.seconds, self.prompt))
 
         ########################################################################
         # Begin the hard work!
 
         start = time.time()
         result['start'] = str(datetime.datetime.now())
-
-
-        # FIXME: this is all very broken right now, as prompting from the worker side
-        #        is not really going to be supported, and actions marked as BYPASS_HOST_LOOP
-        #        probably should not be run through the executor engine at all. Also, ctrl+c
-        #        is now captured on the parent thread, so it can't be caught here via the
-        #        KeyboardInterrupt exception.
+        result['user_input'] = ''
 
         try:
-            if not pause_type == 'prompt':
-                print("(^C-c = continue early, ^C-a = abort)")
-                #print("[%s]\nPausing for %s seconds" % (hosts, seconds))
-                print("[%s]\nPausing for %s seconds" % (self._task.get_name().strip(), seconds))
-                time.sleep(seconds)
+            if seconds is not None:
+                # setup the alarm handler
+                signal.signal(signal.SIGALRM, timeout_handler)
+                signal.alarm(seconds)
+                # show the prompt
+                self._display.display("Pausing for %d seconds" % seconds)
+                self._display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
             else:
-                # Clear out any unflushed buffered input which would
-                # otherwise be consumed by raw_input() prematurely.
-                #tcflush(sys.stdin, TCIFLUSH)
-                result['user_input'] = raw_input(prompt.encode(sys.stdout.encoding))
-        except KeyboardInterrupt:
+                self._display.display(prompt)
+
+            # save the attributes on the existing (duped) stdin so
+            # that we can restore them later after we set raw mode
+            fd = self._connection._new_stdin.fileno()
+            if isatty(fd):
+                old_settings = termios.tcgetattr(fd)
+                tty.setraw(fd)
+
+                # flush the buffer to make sure no previous key presses
+                # are read in below
+                termios.tcflush(self._connection._new_stdin, termios.TCIFLUSH)
+
             while True:
-                print('\nAction? (a)bort/(c)ontinue: ')
-                c = getch()
-                if c == 'c':
-                    # continue playbook evaluation
-                    break
-                elif c == 'a':
-                    # abort further playbook evaluation
-                    raise ae('user requested abort!')
+                try:
+                    key_pressed = self._connection._new_stdin.read(1)
+                    if key_pressed == '\x03':
+                        raise KeyboardInterrupt
+
+                    if not seconds:
+                        if not isatty(fd):
+                            self._display.warning("Not waiting from prompt as stdin is not interactive")
+                            break
+                        # read key presses and act accordingly
+                        if key_pressed == '\r':
+                            break
+                        else:
+                            result['user_input'] += key_pressed
+
+                except KeyboardInterrupt:
+                    if seconds is not None:
+                        signal.alarm(0)
+                    self._display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                    if self._c_or_a():
+                        break
+                    else:
+                        raise AnsibleError('user requested abort!')
+
+        except AnsibleTimeoutExceeded:
+            # this is the exception we expect when the alarm signal
+            # fires, so we simply ignore it to move into the cleanup
+            pass
         finally:
+            # cleanup and save some information
+            # restore the old settings for the duped stdin fd
+            if isatty(fd):
+                termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+
             duration = time.time() - start
             result['stop'] = str(datetime.datetime.now())
             result['delta'] = int(duration)
@@ -129,8 +158,14 @@ class ActionModule(ActionBase):
                 duration = round(duration / 60.0, 2)
             else:
                 duration = round(duration, 2)
-
             result['stdout'] = "Paused for %s %s" % (duration, duration_unit)
 
         return result
 
+    def _c_or_a(self):
+        while True:
+            key_pressed = self._connection._new_stdin.read(1)
+            if key_pressed.lower() == 'a':
+                return False
+            elif key_pressed.lower() == 'c':
+                return True

@@ -215,7 +215,7 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
         return obj
     elif nonstring == 'simplerepr':
         try:
-            simple = binary_type(obj)
+            simple = str(obj)
         except UnicodeError:
             try:
                 simple = obj.__str__()

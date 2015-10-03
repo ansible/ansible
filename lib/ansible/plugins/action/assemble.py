@@ -96,8 +96,7 @@ class ActionModule(ActionBase):
         elif self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
-            # the source is local, so expand it here
-            src = self._loader.path_dwim(os.path.expanduser(src))
+            src = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', src)
 
         _re = None
         if regexp is not None:
@@ -107,25 +106,21 @@ class ActionModule(ActionBase):
         path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
 
         path_checksum = checksum_s(path)
-        dest = self._remote_expand_user(dest, tmp)
-        remote_checksum = self._remote_checksum(tmp, dest)
+        dest = self._remote_expand_user(dest)
+        remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
 
+        diff = {}
         if path_checksum != remote_checksum:
             resultant = file(path).read()
-            # FIXME: diff needs to be moved somewhere else
-            #if self.runner.diff:
-            #    dest_result = self._execute_module(module_name='slurp', module_args=dict(path=dest), task_vars=task_vars, tmp=tmp, persist_files=True)
-            #    if 'content' in dest_result:
-            #        dest_contents = dest_result['content']
-            #        if dest_result['encoding'] == 'base64':
-            #            dest_contents = base64.b64decode(dest_contents)
-            #        else:
-            #            raise Exception("unknown encoding, failed: %s" % dest_result)
+
+            if self._play_context.diff:
+                diff = self._get_diff_data(dest, path, task_vars)
+
             xfered = self._transfer_data('src', resultant)
 
             # fix file permissions when the copy is done as a different user
             if self._play_context.become and self._play_context.become_user != 'root':
-                self._remote_chmod('a+r', xfered, tmp)
+                self._remote_chmod('a+r', xfered)
 
             # run the copy module
 
@@ -139,8 +134,8 @@ class ActionModule(ActionBase):
             )
 
             res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
-            # FIXME: diff stuff
-            #res.diff = dict(after=resultant)
+            if diff:
+                res['diff'] = diff
             return res
         else:
             new_module_args = self._task.args.copy()

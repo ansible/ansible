@@ -17,22 +17,27 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors import AnsibleError
+from jinja2.exceptions import UndefinedError
+
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
 class LookupModule(LookupBase):
 
-    def __lookup_variabless(self, terms, variables):
+    def _lookup_variables(self, terms, variables):
         results = []
         for x in terms:
-            intermediate = listify_lookup_plugin_terms(x, variables, loader=self._loader)
+            try:
+                intermediate = listify_lookup_plugin_terms(x, templar=self._templar, loader=self._loader, fail_on_undefined=True)
+            except UndefinedError as e:
+                raise AnsibleUndefinedVariable("One of the nested variables was undefined. The error was: %s" % e)
             results.append(intermediate)
         return results
 
     def run(self, terms, variables=None, **kwargs):
 
-        terms = self.__lookup_variabless(terms, variables)
+        terms = self._lookup_variables(terms, variables)
 
         my_list = terms[:]
         my_list.reverse()

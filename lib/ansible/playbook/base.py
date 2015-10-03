@@ -20,13 +20,14 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import itertools
+import operator
 import uuid
 
 from functools import partial
 from inspect import getmembers
 from io import FileIO
 
-from six import iteritems, string_types
+from six import iteritems, string_types, text_type
 
 from jinja2.exceptions import UndefinedError
 
@@ -35,9 +36,8 @@ from ansible.parsing import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
-
 from ansible.utils.debug import debug
-
+from ansible.utils.vars import combine_vars, isidentifier
 from ansible.template import template
 
 class Base:
@@ -47,9 +47,18 @@ class Base:
     _port                = FieldAttribute(isa='int')
     _remote_user         = FieldAttribute(isa='string')
 
+    # variables
+    _vars                = FieldAttribute(isa='dict', default=dict(), priority=100)
+
     # flags and misc. settings
-    _environment         = FieldAttribute(isa='list', default=[])
-    _no_log              = FieldAttribute(isa='bool', default=False)
+    _environment         = FieldAttribute(isa='list')
+    _no_log              = FieldAttribute(isa='bool')
+
+    # param names which have been deprecated/removed
+    DEPRECATED_ATTRIBUTES = [
+        'sudo', 'sudo_user', 'sudo_pass', 'sudo_exe', 'sudo_flags',
+        'su', 'su_user', 'su_pass', 'su_exe', 'su_flags',
+    ]
 
     def __init__(self):
 
@@ -63,6 +72,13 @@ class Base:
 
         # and initialize the base attributes
         self._initialize_base_attributes()
+
+        try:
+            from __main__ import display
+            self._display = display
+        except ImportError:
+            from ansible.utils.display import Display
+            self._display = Display()
 
     # The following three functions are used to programatically define data
     # descriptors (aka properties) for the Attributes of all of the playbook
@@ -86,10 +102,13 @@ class Base:
     @staticmethod
     def _generic_g(prop_name, self):
         method = "_get_attr_%s" % prop_name
-        if method in dir(self):
+        if hasattr(self, method):
             return getattr(self, method)()
 
-        return self._attributes[prop_name]
+        value = self._attributes[prop_name]
+        if value is None and hasattr(self, '_get_parent_attribute'):
+            value = self._get_parent_attribute(prop_name)
+        return value
 
     @staticmethod
     def _generic_s(prop_name, self, value):
@@ -143,6 +162,9 @@ class Base:
 
         assert ds is not None
 
+        # cache the datastructure internally
+        setattr(self, '_ds', ds)
+
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
         self._variable_manager = variable_manager
@@ -153,24 +175,18 @@ class Base:
         else:
             self._loader = DataLoader()
 
-        # FIXME: is this required anymore? This doesn't seem to do anything
-        #        helpful, and was added in very early stages of the base class
-        #        development.
-        #if isinstance(ds, string_types) or isinstance(ds, FileIO):
-        #    ds = self._loader.load(ds)
-
         # call the preprocess_data() function to massage the data into
         # something we can more easily parse, and then call the validation
         # function on it to ensure there are no incorrect key values
         ds = self.preprocess_data(ds)
         self._validate_attributes(ds)
 
-        # Walk all attributes in the class.
-        #
+        # Walk all attributes in the class. We sort them based on their priority
+        # so that certain fields can be loaded before others, if they are dependent.
         # FIXME: we currently don't do anything with private attributes but
         #        may later decide to filter them out of 'ds' here.
-
-        for name in self._get_base_attributes():
+        base_attributes = self._get_base_attributes()
+        for name, attr in sorted(base_attributes.items(), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined
             if name in ds:
                 method = getattr(self, '_load_%s' % name, None)
@@ -181,9 +197,6 @@ class Base:
 
         # run early, non-critical validation
         self.validate()
-
-        # cache the datastructure internally
-        setattr(self, '_ds', ds)
 
         # return the constructed object
         return self
@@ -221,6 +234,12 @@ class Base:
             method = getattr(self, '_validate_%s' % name, None)
             if method:
                 method(attribute, name, getattr(self, name))
+            else:
+                # and make sure the attribute is of the type it should be
+                value = getattr(self, name)
+                if value is not None:
+                    if attribute.isa == 'string' and isinstance(value, (list, dict)):
+                        raise AnsibleParserError("The field '%s' is supposed to be a string type, however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds())
 
     def copy(self):
         '''
@@ -262,6 +281,11 @@ class Base:
                     continue
                 else:
                     raise AnsibleParserError("the field '%s' is required but was not set" % name)
+            elif not attribute.always_post_validate and self.__class__.__name__ not in ('Task', 'Handler', 'PlayContext'):
+                # Intermediate objects like Play() won't have their fields validated by
+                # default, as their values are often inherited by other objects and validated
+                # later, so we don't want them to fail out early
+                continue
 
             try:
                 # Run the post-validator if present. These methods are responsible for
@@ -282,25 +306,44 @@ class Base:
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = unicode(value)
+                        value = text_type(value)
                     elif attribute.isa == 'int':
                         value = int(value)
+                    elif attribute.isa == 'float':
+                        value = float(value)
                     elif attribute.isa == 'bool':
                         value = boolean(value)
+                    elif attribute.isa == 'percent':
+                        # special value, which may be an integer or float
+                        # with an optional '%' at the end
+                        if isinstance(value, string_types) and '%' in value:
+                            value = value.replace('%', '')
+                        value = float(value)
                     elif attribute.isa == 'list':
-                        if not isinstance(value, list):
+                        if value is None:
+                            value = []
+                        elif not isinstance(value, list):
                             value = [ value ]
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
                                     raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                                elif attribute.required and attribute.listof == string_types:
+                                    if item is None or item.strip() == "":
+                                        raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
                     elif attribute.isa == 'set':
-                        if not isinstance(value, (list, set)):
-                            value = [ value ]
-                        if not isinstance(value, set):
-                            value = set(value)
-                    elif attribute.isa == 'dict' and not isinstance(value, dict):
-                        raise TypeError("%s is not a dictionary" % value)
+                        if value is None:
+                            value = set()
+                        else:
+                            if not isinstance(value, (list, set)):
+                                value = [ value ]
+                            if not isinstance(value, set):
+                                value = set(value)
+                    elif attribute.isa == 'dict':
+                        if value is None:
+                            value = dict()
+                        elif not isinstance(value, dict):
+                            raise TypeError("%s is not a dictionary" % value)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
@@ -348,6 +391,39 @@ class Base:
 
         # restore the UUID field
         setattr(self, '_uuid', data.get('uuid'))
+
+    def _load_vars(self, attr, ds):
+        '''
+        Vars in a play can be specified either as a dictionary directly, or
+        as a list of dictionaries. If the later, this method will turn the
+        list into a single dictionary.
+        '''
+
+        def _validate_variable_keys(ds):
+            for key in ds:
+                if not isidentifier(key):
+                    raise TypeError("%s is not a valid variable name" % key)
+
+        try:
+            if isinstance(ds, dict):
+                _validate_variable_keys(ds)
+                return ds
+            elif isinstance(ds, list):
+                all_vars = dict()
+                for item in ds:
+                    if not isinstance(item, dict):
+                        raise ValueError
+                    _validate_variable_keys(item)
+                    all_vars = combine_vars(all_vars, item)
+                return all_vars
+            elif ds is None:
+                return {}
+            else:
+                raise ValueError
+        except ValueError:
+            raise AnsibleParserError("Vars in a %s must be specified as a dictionary, or a list of dictionaries" % self.__class__.__name__, obj=ds)
+        except TypeError as e:
+            raise AnsibleParserError("Invalid variable name in vars specified for %s: %s" % (self.__class__.__name__, e), obj=ds)
 
     def _extend_value(self, value, new_value):
         '''

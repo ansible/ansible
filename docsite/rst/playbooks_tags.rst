@@ -60,7 +60,9 @@ Example::
             - tag1
 
 There are another 3 special keywords for tags, 'tagged', 'untagged' and 'all', which run only tagged, only untagged
-and all tasks respectively. By default ansible runs as if '--tags all' had been specified.
+and all tasks respectively.
+
+By default ansible runs as if '--tags all' had been specified.
 
 
 .. seealso::

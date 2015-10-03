@@ -73,16 +73,14 @@
       - "fetch_flat_stat.stat.isreg"
       - "fetch_flat_stat.stat.md5 == fetch_flat.md5sum"
 
-- name: fetch a small file to flat directory (without trailing slash)
-  fetch: src="C:/Windows/win.ini" dest="{{ output_dir }}" flat=yes
-  register: fetch_flat_dir
-  ignore_errors: true
+#- name: fetch a small file to flat directory (without trailing slash)
+#  fetch: src="C:/Windows/win.ini" dest="{{ output_dir }}" flat=yes
+#  register: fetch_flat_dir
 
-- name: check fetch flat to directory result
-  assert:
-    that:
-      - "fetch_flat_dir|failed"
-      - "fetch_flat_dir.msg"
+#- name: check fetch flat to directory result
+#  assert:
+#    that:
+#      - "not fetch_flat_dir|changed"
 
 - name: fetch a large binary file
   fetch: src="C:/Windows/explorer.exe" dest={{ output_dir }}
@@ -114,7 +112,7 @@
       - "not fetch_large_again.changed"
 
 - name: fetch a small file using backslashes in src path
-  fetch: src="C:\Windows\system.ini" dest={{ output_dir }}
+  fetch: src="C:\\Windows\\system.ini" dest={{ output_dir }}
   register: fetch_small_bs
 
 - name: check fetch small result with backslashes
@@ -157,7 +155,7 @@
       - "not fetch_missing|changed"
 
 - name: attempt to fetch a directory
-  fetch: src="C:\Windows" dest={{ output_dir }}
+  fetch: src="C:\\Windows" dest={{ output_dir }}
   register: fetch_dir
   ignore_errors: true
 

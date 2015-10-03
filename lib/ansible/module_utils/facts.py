@@ -97,6 +97,7 @@ class Facts(object):
     # For the most part, we assume that platform.dist() will tell the truth.
     # This is the fallback to handle unknowns or exceptions
     OSDIST_LIST = ( ('/etc/oracle-release', 'OracleLinux'),
+                    ('/etc/slackware-version', 'Slackware'),
                     ('/etc/redhat-release', 'RedHat'),
                     ('/etc/vmware-release', 'VMwareESX'),
                     ('/etc/openwrt_release', 'OpenWrt'),
@@ -186,15 +187,20 @@ class Facts(object):
         if self.facts['system'] == 'Linux':
             self.get_distribution_facts()
         elif self.facts['system'] == 'AIX':
-            try:
-                rc, out, err = module.run_command("/usr/sbin/bootinfo -p")
+            # Attempt to use getconf to figure out architecture
+            # fall back to bootinfo if needed
+            if module.get_bin_path('getconf'):
+                rc, out, err = module.run_command([module.get_bin_path('getconf'),
+                                                   'MACHINE_ARCHITECTURE'])
                 data = out.split('\n')
                 self.facts['architecture'] = data[0]
-            except:
-                self.facts['architecture'] = 'Not Available'
+            else:
+                rc, out, err = module.run_command([module.get_bin_path('bootinfo'),
+                                                   '-p'])
+                data = out.split('\n')
+                self.facts['architecture'] = data[0]
         elif self.facts['system'] == 'OpenBSD':
             self.facts['architecture'] = platform.uname()[5]
-
 
     def get_local_facts(self):
 
@@ -250,9 +256,9 @@ class Facts(object):
             RedHat = 'RedHat', Fedora = 'RedHat', CentOS = 'RedHat', Scientific = 'RedHat',
             SLC = 'RedHat', Ascendos = 'RedHat', CloudLinux = 'RedHat', PSBM = 'RedHat',
             OracleLinux = 'RedHat', OVS = 'RedHat', OEL = 'RedHat', Amazon = 'RedHat',
-            XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', SLES = 'Suse',
+            XenServer = 'RedHat', Ubuntu = 'Debian', Debian = 'Debian', Raspbian = 'Debian', Slackware = 'Slackware', SLES = 'Suse',
             SLED = 'Suse', openSUSE = 'Suse', SuSE = 'Suse', Gentoo = 'Gentoo', Funtoo = 'Gentoo',
-            Archlinux = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
+            Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
             FreeBSD = 'FreeBSD', HPUX = 'HP-UX'
@@ -309,6 +315,21 @@ class Facts(object):
                             # Once we determine the value is one of these distros
                             # we trust the values are always correct
                             break
+                        elif name == 'Archlinux':
+                            data = get_file_content(path)
+                            if 'Arch Linux' in data:
+                                self.facts['distribution'] = name
+                            else:
+                                self.facts['distribution'] = data.split()[0]
+                            break  
+                        elif name == 'Slackware':
+                            data = get_file_content(path)
+                            if 'Slackware' in data:
+                                self.facts['distribution'] = name
+                                version = re.findall('\w+[.]\w+', data)
+                                if version:
+                                    self.facts['distribution_version'] = version[0]
+                            break      
                         elif name == 'OracleLinux':
                             data = get_file_content(path)
                             if 'Oracle Linux' in data:
@@ -601,6 +622,8 @@ class Facts(object):
         self.facts['date_time']['year'] = now.strftime('%Y')
         self.facts['date_time']['month'] = now.strftime('%m')
         self.facts['date_time']['weekday'] = now.strftime('%A')
+        self.facts['date_time']['weekday_number'] = now.strftime('%w')
+        self.facts['date_time']['weeknumber'] = now.strftime('%W')
         self.facts['date_time']['day'] = now.strftime('%d')
         self.facts['date_time']['hour'] = now.strftime('%H')
         self.facts['date_time']['minute'] = now.strftime('%M')
@@ -724,6 +747,7 @@ class LinuxHardware(Hardware):
         self.get_dmi_facts()
         self.get_device_facts()
         self.get_uptime_facts()
+        self.get_lvm_facts()
         try:
             self.get_mount_facts()
         except TimeoutError:
@@ -1048,7 +1072,8 @@ class LinuxHardware(Hardware):
                 pciid = m.group(1)
                 did = re.escape(pciid)
                 m = re.search("^" + did + "\s(.*)$", pcidata, re.MULTILINE)
-                d['host'] = m.group(1)
+                if m:
+                    d['host'] = m.group(1)
 
             d['holders'] = []
             if os.path.isdir(sysdir + "/holders"):
@@ -1064,8 +1089,41 @@ class LinuxHardware(Hardware):
             self.facts['devices'][diskname] = d
 
     def get_uptime_facts(self):
-        uptime_seconds_string = get_file_content('/proc/uptime').split(' ')[0]
-        self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
+        uptime_file_content = get_file_content('/proc/uptime')
+        if uptime_file_content:
+            uptime_seconds_string = uptime_file_content.split(' ')[0]
+            self.facts['uptime_seconds'] = int(float(uptime_seconds_string))
+
+    def get_lvm_facts(self):
+        """ Get LVM Facts if running as root and lvm utils are available """
+
+        if os.getuid() == 0 and module.get_bin_path('vgs'):
+            lvm_util_options = '--noheadings --nosuffix --units g'
+
+            vgs_path = module.get_bin_path('vgs')
+            #vgs fields: VG #PV #LV #SN Attr VSize VFree
+            vgs={}
+            if vgs_path:
+                rc, vg_lines, err = module.run_command( '%s %s' % (vgs_path, lvm_util_options))
+                for vg_line in vg_lines.splitlines():
+                    items = vg_line.split()
+                    vgs[items[0]] = {'size_g':items[-2],
+                                     'free_g':items[-1],
+                                     'num_lvs': items[2],
+                                     'num_pvs': items[1]}
+
+            lvs_path = module.get_bin_path('lvs')
+            #lvs fields:
+            #LV VG Attr LSize Pool Origin Data% Move Log Copy% Convert
+            lvs = {}
+            if lvs_path:
+                rc, lv_lines, err = module.run_command( '%s %s' % (lvs_path, lvm_util_options))
+                for lv_line in lv_lines.splitlines():
+                    items = lv_line.split()
+                    lvs[items[0]] = {'size_g': items[3], 'vg': items[1]}
+
+            self.facts['lvm'] = {'lvs': lvs, 'vgs': vgs}
+
 
 class SunOSHardware(Hardware):
     """
@@ -1876,9 +1934,12 @@ class LinuxNetwork(Network):
                     if not line:
                         continue
                     words = line.split()
+                    broadcast = ''
                     if words[0] == 'inet':
                         if '/' in words[1]:
                             address, netmask_length = words[1].split('/')
+                            if len(words) > 3:
+                                broadcast = words[3]
                         else:
                             # pointopoint interfaces do not have a prefix
                             address = words[1]
@@ -1892,6 +1953,7 @@ class LinuxNetwork(Network):
                             interfaces[iface] = {}
                         if not secondary and "ipv4" not in interfaces[iface]:
                             interfaces[iface]['ipv4'] = {'address': address,
+                                                         'broadcast': broadcast,
                                                          'netmask': netmask,
                                                          'network': network}
                         else:
@@ -1899,6 +1961,7 @@ class LinuxNetwork(Network):
                                 interfaces[iface]["ipv4_secondaries"] = []
                             interfaces[iface]["ipv4_secondaries"].append({
                                 'address': address,
+                                'broadcast': broadcast,
                                 'netmask': netmask,
                                 'network': network,
                             })
@@ -1909,12 +1972,14 @@ class LinuxNetwork(Network):
                                 interfaces[device]["ipv4_secondaries"] = []
                             interfaces[device]["ipv4_secondaries"].append({
                                 'address': address,
+                                'broadcast': broadcast,
                                 'netmask': netmask,
                                 'network': network,
                             })
 
                         # If this is the default address, update default_ipv4
                         if 'address' in default_ipv4 and default_ipv4['address'] == address:
+                            default_ipv4['broadcast'] = broadcast 
                             default_ipv4['netmask'] = netmask
                             default_ipv4['network'] = network
                             default_ipv4['macaddress'] = macaddress
@@ -2273,8 +2338,28 @@ class AIXNetwork(GenericBsdIfconfigNetwork, Network):
     """
     platform = 'AIX'
 
+    def get_default_interfaces(self, route_path):
+        netstat_path = module.get_bin_path('netstat')
+
+        rc, out, err = module.run_command([netstat_path, '-nr'])
+
+        interface = dict(v4 = {}, v6 = {})
+
+        lines = out.split('\n')
+        for line in lines:
+            words = line.split()
+            if len(words) > 1 and words[0] == 'default':
+                if '.' in words[1]:
+                    interface['v4']['gateway'] = words[1]
+                    interface['v4']['interface'] = words[5]
+                elif ':' in words[1]:
+                    interface['v6']['gateway'] = words[1]
+                    interface['v6']['interface'] = words[5]
+
+        return interface['v4'], interface['v6']
+
     # AIX 'ifconfig -a' does not have three words in the interface line
-    def get_interfaces_info(self, ifconfig_path, ifconfig_options):
+    def get_interfaces_info(self, ifconfig_path, ifconfig_options='-a'):
         interfaces = {}
         current_if = {}
         ips = dict(
@@ -2497,16 +2582,16 @@ class LinuxVirtual(Virtual):
 
     # For more information, check: http://people.redhat.com/~rjones/virt-what/
     def get_virtual_facts(self):
-        if os.path.exists("/proc/xen"):
-            self.facts['virtualization_type'] = 'xen'
-            self.facts['virtualization_role'] = 'guest'
-            try:
-                for line in get_file_lines('/proc/xen/capabilities'):
-                    if "control_d" in line:
-                        self.facts['virtualization_role'] = 'host'
-            except IOError:
-                pass
-            return
+        if os.path.exists('/proc/1/cgroup'):
+            for line in get_file_lines('/proc/1/cgroup'):
+                if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
+                    self.facts['virtualization_type'] = 'docker'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
+                if re.search('/lxc/', line):
+                    self.facts['virtualization_type'] = 'lxc'
+                    self.facts['virtualization_role'] = 'guest'
+                    return
 
         if os.path.exists('/proc/vz'):
             self.facts['virtualization_type'] = 'openvz'
@@ -2522,16 +2607,16 @@ class LinuxVirtual(Virtual):
             self.facts['virtualization_role'] = 'guest'
             return
 
-        if os.path.exists('/proc/1/cgroup'):
-            for line in get_file_lines('/proc/1/cgroup'):
-                if re.search(r'/docker(/|-[0-9a-f]+\.scope)', line):
-                    self.facts['virtualization_type'] = 'docker'
-                    self.facts['virtualization_role'] = 'guest'
-                    return
-                if re.search('/lxc/', line):
-                    self.facts['virtualization_type'] = 'lxc'
-                    self.facts['virtualization_role'] = 'guest'
-                    return
+        if os.path.exists("/proc/xen"):
+            self.facts['virtualization_type'] = 'xen'
+            self.facts['virtualization_role'] = 'guest'
+            try:
+                for line in get_file_lines('/proc/xen/capabilities'):
+                    if "control_d" in line:
+                        self.facts['virtualization_role'] = 'host'
+            except IOError:
+                pass
+            return
 
         product_name = get_file_content('/sys/devices/virtual/dmi/id/product_name')
 

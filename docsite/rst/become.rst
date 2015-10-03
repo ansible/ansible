@@ -23,7 +23,7 @@ become_user
     equivalent to adding 'sudo_user:' or 'su_user:' to a play or task, set to user with desired privileges
 
 become_method
-    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'
+    at play or task level overrides the default method set in ansible.cfg, set to 'sudo'/'su'/'pbrun'/'pfexec'/'doas'
 
 
 New ansible\_ variables
@@ -54,7 +54,7 @@ New command line options
 
 --become-method=BECOME_METHOD
     privilege escalation method to use (default=sudo),
-    valid choices: [ sudo | su | pbrun | pfexec ]
+    valid choices: [ sudo | su | pbrun | pfexec | doas ]
 
 --become-user=BECOME_USER
     run operations as this user (default=root)
@@ -76,7 +76,7 @@ new ones.
 
 .. note:: Methods cannot be chained, you cannot use 'sudo /bin/su -' to become a user, you need to have privileges to run the command as that user in sudo or be able to su directly to it (the same for pbrun, pfexec or other supported methods).
 
-.. note:: Privilege escalation permissions have to be general, Ansible does not always use a specific command to do something but runs modules (code) from a temporary file name which changes every time. So if you have '/sbin/sevice' or '/bin/chmod' as the allowed commands this will fail with ansible.
+.. note:: Privilege escalation permissions have to be general, Ansible does not always use a specific command to do something but runs modules (code) from a temporary file name which changes every time. So if you have '/sbin/service' or '/bin/chmod' as the allowed commands this will fail with ansible.
 
 .. seealso::
 

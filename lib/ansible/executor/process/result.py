@@ -20,6 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from six.moves import queue
+from six import iteritems, text_type
+
 import multiprocessing
 import os
 import signal
@@ -27,6 +29,8 @@ import sys
 import time
 import traceback
 
+# TODO: not needed if we use the cryptography library with its default RNG
+# engine
 HAS_ATFORK=True
 try:
     from Crypto.Random import atfork
@@ -58,7 +62,7 @@ class ResultProcess(multiprocessing.Process):
         super(ResultProcess, self).__init__()
 
     def _send_result(self, result):
-        debug(u"sending result: %s" % ([unicode(x) for x in result],))
+        debug(u"sending result: %s" % ([text_type(x) for x in result],))
         self._final_q.put(result, block=False)
         debug("done sending result")
 
@@ -74,7 +78,7 @@ class ResultProcess(multiprocessing.Process):
             try:
                 if not rslt_q.empty():
                     debug("worker %d has data to read" % self._cur_worker)
-                    result = rslt_q.get(block=False)
+                    result = rslt_q.get()
                     debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
             except queue.Empty:
@@ -102,7 +106,7 @@ class ResultProcess(multiprocessing.Process):
             try:
                 result = self._read_worker_result()
                 if result is None:
-                    time.sleep(0.1)
+                    time.sleep(0.01)
                     continue
 
                 # if this task is registering a result, do it now
@@ -138,9 +142,6 @@ class ResultProcess(multiprocessing.Process):
                                 # So, per the docs, we reassign the list so the proxy picks up and
                                 # notifies all other threads
                                 for notify in result_item['_ansible_notify']:
-                                    if result._task._role:
-                                        role_name = result._task._role.get_name()
-                                        notify = "%s : %s" % (role_name, notify)
                                     self._send_result(('notify_handler', result, notify))
                             # now remove the notify field from the results, as its no longer needed
                             result_item.pop('_ansible_notify')
@@ -154,8 +155,8 @@ class ResultProcess(multiprocessing.Process):
                         elif 'ansible_facts' in result_item:
                             # if this task is registering facts, do that now
                             item = result_item.get('item', None)
-                            if result._task.action in ('set_fact', 'include_vars'):
-                                for (key, value) in result_item['ansible_facts'].iteritems():
+                            if result._task.action == 'include_vars':
+                                for (key, value) in iteritems(result_item['ansible_facts']):
                                     self._send_result(('set_host_var', result._host, result._task, item, key, value))
                             else:
                                 self._send_result(('set_host_facts', result._host, result._task, item, result_item['ansible_facts']))

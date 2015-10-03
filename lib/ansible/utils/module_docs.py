@@ -26,6 +26,12 @@ import traceback
 from collections import MutableMapping, MutableSet, MutableSequence
 from ansible.plugins import fragment_loader
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 # modules that are ok that they do not have documentation strings
 BLACKLIST_MODULES = [
    'async_wrapper', 'accelerate', 'async_status'
@@ -56,7 +62,8 @@ def get_docstring(filename, verbose=False):
                     try:
                         theid = t.id
                     except AttributeError as e:
-                        continue #TODO: should log these to figure out why this happens
+                        # skip errors can happen when trying to use the normal code
+                        continue
 
                     if 'DOCUMENTATION' in theid:
                         doc = yaml.safe_load(child.value.s)
@@ -110,9 +117,8 @@ def get_docstring(filename, verbose=False):
                     elif 'RETURN' in theid:
                         returndocs = child.value.s[1:]
     except:
-        traceback.print_exc() # temp
+        display.error("unable to parse %s" % filename)
         if verbose == True:
-            traceback.print_exc()
-            print "unable to parse %s" % filename
+            raise
     return doc, plainexamples, returndocs
 

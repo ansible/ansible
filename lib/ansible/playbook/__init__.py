@@ -26,7 +26,13 @@ from ansible.parsing import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.play import Play
 from ansible.playbook.playbook_include import PlaybookInclude
-from ansible.plugins import push_basedir
+from ansible.plugins import get_all_plugin_loaders
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 
 __all__ = ['Playbook']
@@ -57,8 +63,12 @@ class Playbook:
         # set the loaders basedir
         self._loader.set_basedir(self._basedir)
 
-        # also add the basedir to the list of module directories
-        push_basedir(self._basedir)
+        # dynamically load any plugins from the playbook directory
+        for name, obj in get_all_plugin_loaders():
+            if obj.subdir:
+                plugin_path = os.path.join(self._basedir, obj.subdir)
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(plugin_path)
 
         ds = self._loader.load_from_file(os.path.basename(file_name))
         if not isinstance(ds, list):
@@ -73,7 +83,10 @@ class Playbook:
 
             if 'include' in entry:
                 pb = PlaybookInclude.load(entry, basedir=self._basedir, variable_manager=variable_manager, loader=self._loader)
-                self._entries.extend(pb._entries)
+                if pb is not None:
+                    self._entries.extend(pb._entries)
+                else:
+                    display.display("skipping playbook include '%s' due to conditional test failure" % entry.get('include', entry), color='cyan')
             else:
                 entry_obj = Play.load(entry, variable_manager=variable_manager, loader=self._loader)
                 self._entries.append(entry_obj)

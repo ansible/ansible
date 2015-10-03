@@ -105,6 +105,24 @@ Purge the checkout after the playbook is run.
 
 Sleep for random interval (between 0 and SLEEP number of seconds) before starting.  This is a useful way ot disperse git requests.
 
+*--ssh-common-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
+
+Add the specified arguments to any sftp/scp/ssh command-line. Useful to
+set a ProxyCommand to use a jump host, but any arguments that are
+accepted by all three programs may be specified.
+
+*--sftp-extra-args=*''-f ...''::
+
+Add the specified arguments to any sftp command-line.
+
+*--scp-extra-args=*''-l ...''::
+
+Add the specified arguments to any scp command-line.
+
+*--ssh-extra-args=*''-R ...''::
+
+Add the specified arguments to any ssh command-line.
+
 *-t* 'TAGS', *--tags=*'TAGS'::
 
 Only run plays and tasks tagged with these values.

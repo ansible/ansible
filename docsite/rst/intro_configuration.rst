@@ -43,7 +43,7 @@ Environmental configuration
 ```````````````````````````
 
 Ansible also allows configuration of settings via environment variables.  If these environment variables are set, they will
-override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in 'constants.py' in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but are equally valid.
+override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_ in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but are equally valid.
 
 .. _config_values_by_section:
 
@@ -114,6 +114,15 @@ sudoing.  The default behavior is also no::
     ask_sudo_pass=True
 
 Users on platforms where sudo passwords are enabled should consider changing this setting.
+
+.. _ask_vault_pass:
+
+ask_vault_pass
+==============
+
+This controls whether an Ansible playbook should prompt for the vault password by default.  The default behavior is no::
+
+    ask_vault_pass=True
 
 .. _bin_ansible_callbacks:
 
@@ -325,6 +334,11 @@ official examples repos do not use this setting::
 
 The valid values are either 'replace' (the default) or 'merge'.
 
+.. versionadded: '2.0'
+
+If you want to merge hashes without changing the global settings, use
+the `combine` filter described in :doc:`playbooks_filters`.
+
 .. _hostfile:
 
 hostfile
@@ -510,6 +524,27 @@ always default to the current user if this is not defined::
 
     remote_user = root
 
+.. _retry_files_enabled:
+
+retry_files_enabled
+===================
+
+This controls whether a failed Ansible playbook should create a .retry file. The default setting is True::
+
+    retry_files_enabled = False
+
+.. _retry_files_save_path:
+
+retry_files_save_path
+=====================
+
+The retry files save path is where Ansible will save .retry files when a playbook fails and retry_files_enabled is True (the default).
+The default location is ~/ and can be changed to any writeable path::
+
+    retry_files_save_path = ~/.ansible-retry
+
+The directory will be created if it does not already exist.
+
 .. _roles_path:
 
 roles_path
@@ -642,7 +677,7 @@ The equivalent of adding sudo: or su: to a play or task, set to true/yes to acti
 become_method
 =============
 
-Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``::
+Set the privilege escalation method. The default is ``sudo``, other options are ``su``, ``pbrun``, ``pfexec``, ``doas``::
 
     become_method=su
 
@@ -663,6 +698,18 @@ become_ask_pass
 Ask for privilege escalation password, the default is False::
 
     become_ask_pass=True
+
+.. _become_allow_same_user:
+
+become_allow_same_user
+======================
+
+Most of the time, using *sudo* to run a command as the same user who is running
+*sudo* itself is unnecessary overhead, so Ansible does not allow it. However,
+depending on the *sudo* configuration, it may be necessary to run a command as
+the same user through *sudo*, such as to switch SELinux contexts. For this
+reason, you can set ``become_allow_same_user`` to ``True`` and disable this
+optimization.
 
 .. _paramiko_settings:
 

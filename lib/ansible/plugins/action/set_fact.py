@@ -14,12 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
+
+from six import iteritems
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
+from ansible.utils.vars import isidentifier
+
 
 class ActionModule(ActionBase):
 
@@ -28,8 +33,12 @@ class ActionModule(ActionBase):
     def run(self, tmp=None, task_vars=dict()):
         facts = dict()
         if self._task.args:
-            for (k, v) in self._task.args.iteritems():
+            for (k, v) in iteritems(self._task.args):
                 k = self._templar.template(k)
+
+                if not isidentifier(k):
+                    return dict(failed=True, msg="The variable name '%s' is not valid. Variables must start with a letter or underscore character, and contain only letters, numbers and underscores." % k)
+
                 if isinstance(v, basestring) and v.lower() in ('true', 'false', 'yes', 'no'):
                     v = boolean(v)
                 facts[k] = v

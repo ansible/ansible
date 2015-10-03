@@ -19,30 +19,75 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
+import sys
+
 from jinja2 import Undefined as j2undefined
 
+from ansible import constants as C
+from ansible.inventory.host import Host
 from ansible.template import Templar
 
 __all__ = ['HostVars']
 
-class HostVars(dict):
+# Note -- this is a Mapping, not a MutableMapping
+class HostVars(collections.Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, vars_manager, play, inventory, loader):
-        self._vars_manager = vars_manager
-        self._play         = play
-        self._inventory    = inventory
-        self._loader       = loader
-        self._lookup       = {}
+    def __init__(self, play, inventory, variable_manager, loader):
+        self._lookup = dict()
+        self._loader = loader
+        self._play = play
+        self._variable_manager = variable_manager
+
+        hosts = inventory.get_hosts(ignore_limits_and_restrictions=True)
+
+        # check to see if localhost is in the hosts list, as we
+        # may have it referenced via hostvars but if created implicitly
+        # it doesn't sow up in the hosts list
+        has_localhost = False
+        for host in hosts:
+            if host.name in C.LOCALHOST:
+                has_localhost = True
+                break
+
+        if not has_localhost:
+            new_host =  Host(name='localhost')
+            new_host.set_variable("ansible_python_interpreter", sys.executable)
+            new_host.set_variable("ansible_connection", "local")
+            new_host.address = '127.0.0.1'
+            hosts.append(new_host)
+
+        for host in hosts:
+            self._lookup[host.name] = host
 
     def __getitem__(self, host_name):
-        
-        if host_name not in self._lookup:
-            host = self._inventory.get_host(host_name)
-            if not host:
-                return j2undefined
-            result = self._vars_manager.get_vars(loader=self._loader, play=self._play, host=host)
-            templar = Templar(variables=result, loader=self._loader)
-            self._lookup[host_name] = templar.template(result, fail_on_undefined=False)
-        return self._lookup[host_name]
 
+        if host_name not in self._lookup:
+            return j2undefined
+
+        host = self._lookup.get(host_name)
+        data = self._variable_manager.get_vars(loader=self._loader, host=host, play=self._play, include_hostvars=False)
+        templar = Templar(variables=data, loader=self._loader)
+        return templar.template(data, fail_on_undefined=False)
+
+    def __contains__(self, host_name):
+        item = self.get(host_name)
+        if item and item is not j2undefined:
+            return True
+        return False
+
+    def __iter__(self):
+        raise NotImplementedError('HostVars does not support iteration as hosts are discovered on an as needed basis.')
+
+    def __len__(self):
+        raise NotImplementedError('HostVars does not support len.  hosts entries are discovered dynamically as needed')
+
+    def __getstate__(self):
+        return dict(loader=self._loader, lookup=self._lookup, play=self._play, var_manager=self._variable_manager)
+
+    def __setstate__(self, data):
+        self._play = data.get('play')
+        self._loader = data.get('loader')
+        self._lookup = data.get('lookup')
+        self._variable_manager = data.get('var_manager')

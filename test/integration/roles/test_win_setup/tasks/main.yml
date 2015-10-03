@@ -20,7 +20,7 @@
   action: setup
   register: setup_result
 
-- name: check setup result
+- name: check windows setup result
   assert: 
     that:
       - "not setup_result|failed"
@@ -38,6 +38,8 @@
       - "setup_result.ansible_facts.ansible_interfaces[0]"
       - "setup_result.ansible_facts.ansible_interfaces[0].interface_name"
       - "setup_result.ansible_facts.ansible_interfaces[0].interface_index"
+      - "setup_result.ansible_facts.ansible_architecture"
+      - "setup_result.ansible_facts.ansible_os_name"
       - "setup_result.ansible_facts.ansible_powershell_version"
 
 - name: check setup result only when using https

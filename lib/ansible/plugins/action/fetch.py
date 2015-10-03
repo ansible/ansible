@@ -52,16 +52,20 @@ class ActionModule(ActionBase):
             return dict(failed=True, msg="src and dest are required")
 
         source = self._connection._shell.join_path(source)
-        source = self._remote_expand_user(source, tmp)
+        source = self._remote_expand_user(source)
 
         # calculate checksum for the remote file
-        remote_checksum = self._remote_checksum(tmp, source)
+        remote_checksum = self._remote_checksum(source, all_vars=task_vars)
 
         # use slurp if sudo and permissions are lacking
         remote_data = None
         if remote_checksum in ('1', '2') or self._play_context.become:
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
-            if slurpres.get('rc') == 0:
+            if slurpres.get('failed'):
+                if remote_checksum == '1' and not fail_on_missing:
+                   return dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
+                return slurpres
+            else:
                 if slurpres['encoding'] == 'base64':
                     remote_data = base64.b64decode(slurpres['content'])
                 if remote_data is not None:
@@ -72,12 +76,10 @@ class ActionModule(ActionBase):
                 remote_source = slurpres.get('source')
                 if remote_source and remote_source != source:
                     source = remote_source
-            else:
-                # FIXME: should raise an error here? the old code did nothing
-                pass
 
         # calculate the destination name
         if os.path.sep not in self._connection._shell.join_path('a', ''):
+            source = self._connection._shell._unquote(source)
             source_local = source.replace('\\', '/')
         else:
             source_local = source

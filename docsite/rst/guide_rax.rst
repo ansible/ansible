@@ -129,7 +129,7 @@ The rax module returns data about the nodes it creates, like IP addresses, hostn
       local_action:
           module: add_host 
           hostname: "{{ item.name }}"
-          ansible_ssh_host: "{{ item.rax_accessipv4 }}"
+          ansible_host: "{{ item.rax_accessipv4 }}"
           ansible_ssh_pass: "{{ item.rax_adminpass }}"
           groups: raxhosts
       with_items: rax.success
@@ -198,7 +198,7 @@ following information, which will be utilized for inventory and variables.
         "_meta": {
             "hostvars": {
                 "test": {
-                    "ansible_ssh_host": "1.1.1.1",
+                    "ansible_host": "1.1.1.1",
                     "rax_accessipv4": "1.1.1.1",
                     "rax_accessipv6": "2607:f0d0:1002:51::4",
                     "rax_addresses": {
@@ -310,7 +310,7 @@ This can be achieved with the ``rax_facts`` module and an inventory file similar
             region: "{{ rax_region }}"
         - name: Map some facts
           set_fact:
-            ansible_ssh_host: "{{ rax_accessipv4 }}"
+            ansible_host: "{{ rax_accessipv4 }}"
 
 While you don't need to know how it works, it may be interesting to know what kind of variables are returned.
 
@@ -516,9 +516,9 @@ Build a complete webserver environment with servers, custom networks and load ba
           local_action:
             module: add_host
             hostname: "{{ item.name }}"
-            ansible_ssh_host: "{{ item.rax_accessipv4 }}"
+            ansible_host: "{{ item.rax_accessipv4 }}"
             ansible_ssh_pass: "{{ item.rax_adminpass }}"
-            ansible_ssh_user: root
+            ansible_user: root
             groups: web
           with_items: rax.success
           when: rax.action == 'create'
@@ -601,9 +601,9 @@ Using a Control Machine
           local_action:
             module: add_host
             hostname: "{{ item.name }}"
-            ansible_ssh_host: "{{ item.rax_accessipv4 }}"
+            ansible_host: "{{ item.rax_accessipv4 }}"
             ansible_ssh_pass: "{{ item.rax_adminpass }}"
-            ansible_ssh_user: root
+            ansible_user: root
             rax_id: "{{ item.rax_id }}"
             groups: web,new_web
           with_items: rax.success

@@ -29,7 +29,6 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
 from ansible.utils.unicode import to_bytes
-from ansible.parsing.vault import VaultLib
 
 class ActionModule(ActionBase):
 
@@ -42,6 +41,7 @@ class ActionModule(ActionBase):
         raw     = boolean(self._task.args.get('raw', 'no'))
         force   = boolean(self._task.args.get('force', 'yes'))
         faf     = self._task.first_available_file
+        remote_src = boolean(self._task.args.get('remote_src', False))
 
         if (source is None and content is None and faf is None) or dest is None:
             return dict(failed=True, msg="src (or content) and dest are required")
@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
         # Check if the source ends with a "/"
         source_trailing_slash = False
         if source:
-            source_trailing_slash = source.endswith(os.sep)
+            source_trailing_slash = self._connection._shell.path_has_trailing_slash(source)
 
         # Define content_tempfile in case we set it after finding content populated.
         content_tempfile = None
@@ -77,11 +77,17 @@ class ActionModule(ActionBase):
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None))
             if source is None:
                 return  dict(failed=True, msg="could not find src in first_available_file list")
+
+        elif remote_src:
+            new_module_args = self._task.args.copy()
+            del new_module_args['remote_src']
+            return self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=False)
+
         else:
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
             else:
-                source = self._loader.path_dwim(source)
+                source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
         # A list of source file tuples (full_path, relative_path) which will try to copy to the destination
         source_files = []
@@ -90,7 +96,7 @@ class ActionModule(ActionBase):
         if os.path.isdir(source):
             # Get the amount of spaces to remove to get the relative path.
             if source_trailing_slash:
-                sz = len(source) + 1
+                sz = len(source)
             else:
                 sz = len(source.rsplit('/', 1)[0]) + 1
 
@@ -99,6 +105,8 @@ class ActionModule(ActionBase):
                 for file in files:
                     full_path = os.path.join(base_path, file)
                     rel_path = full_path[sz:]
+                    if rel_path.startswith('/'):
+                        rel_path = rel_path[1:]
                     source_files.append((full_path, rel_path))
 
             # If it's recursive copy, destination is always a dir,
@@ -109,7 +117,6 @@ class ActionModule(ActionBase):
             source_files.append((source, os.path.basename(source)))
 
         changed = False
-        diffs = []
         module_result = {"changed": False}
 
         # A register for if we executed a module.
@@ -125,8 +132,9 @@ class ActionModule(ActionBase):
                 tmp = self._make_tmp_path()
 
         # expand any user home dir specifier
-        dest = self._remote_expand_user(dest, tmp)
+        dest = self._remote_expand_user(dest)
 
+        diffs = []
         for source_full, source_rel in source_files:
 
             # Generate a hash of the local file.
@@ -145,7 +153,7 @@ class ActionModule(ActionBase):
                 dest_file = self._connection._shell.join_path(dest)
 
             # Attempt to get the remote checksum
-            remote_checksum = self._remote_checksum(tmp, dest_file)
+            remote_checksum = self._remote_checksum(dest_file, all_vars=task_vars)
 
             if remote_checksum == '3':
                 # The remote_checksum was executed on a directory.
@@ -156,7 +164,7 @@ class ActionModule(ActionBase):
                 else:
                     # Append the relative source location to the destination and retry remote_checksum
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    remote_checksum = self._remote_checksum(tmp, dest_file)
+                    remote_checksum = self._remote_checksum(dest_file, all_vars=task_vars)
 
             if remote_checksum != '1' and not force:
                 # remote_file does not exist so continue to next iteration.
@@ -173,7 +181,7 @@ class ActionModule(ActionBase):
                         tmp = self._make_tmp_path()
 
                 if self._play_context.diff and not raw:
-                    diffs.append(self._get_diff_data(tmp, dest_file, source_full, task_vars))
+                    diffs.append(self._get_diff_data(dest_file, source_full, task_vars))
 
                 if self._play_context.check_mode:
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
@@ -182,7 +190,7 @@ class ActionModule(ActionBase):
                     continue
 
                 # Define a remote directory that we will copy the file to.
-                tmp_src = tmp + 'source'
+                tmp_src = self._connection._shell.join_path(tmp, 'source')
 
                 if not raw:
                     self._connection.put_file(source_full, tmp_src)
@@ -194,7 +202,7 @@ class ActionModule(ActionBase):
 
                 # fix file permissions when the copy is done as a different user
                 if self._play_context.become and self._play_context.become_user != 'root':
-                    self._remote_chmod('a+r', tmp_src, tmp)
+                    self._remote_chmod('a+r', tmp_src)
 
                 if raw:
                     # Continue to next iteration if raw is defined.
@@ -256,14 +264,13 @@ class ActionModule(ActionBase):
         if (not C.DEFAULT_KEEP_REMOTE_FILES and not delete_remote_tmp) or (not C.DEFAULT_KEEP_REMOTE_FILES and delete_remote_tmp and not module_executed):
             self._remove_tmp_path(tmp)
 
-        # TODO: Support detailed status/diff for multiple files
         if module_executed and len(source_files) == 1:
             result = module_return
         else:
             result = dict(dest=dest, src=source, changed=changed)
 
-        if len(diffs) == 1:
-            result['diff']=diffs[0]
+        if diffs:
+            result['diff'] = diffs
 
         return result
 

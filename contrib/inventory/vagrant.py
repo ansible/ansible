@@ -113,13 +113,13 @@ if options.list:
     for host in ssh_config:
         meta['hostvars'][host] = ssh_config[host]
 
-    print json.dumps({_group: list(ssh_config.keys()), '_meta': meta})
+    print(json.dumps({_group: list(ssh_config.keys()), '_meta': meta}))
     sys.exit(0)
 
 # Get out the host details
 # ------------------------------
 elif options.host:
-    print json.dumps(get_a_ssh_config(options.host))
+    print(json.dumps(get_a_ssh_config(options.host)))
     sys.exit(0)
 
 # Print out help

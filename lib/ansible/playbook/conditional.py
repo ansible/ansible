@@ -20,6 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from jinja2.exceptions import UndefinedError
+from six import text_type
 
 from ansible.errors import *
 from ansible.playbook.attribute import FieldAttribute
@@ -59,16 +60,14 @@ class Conditional:
         # associated with it, so we pull it out now in case we need it for
         # error reporting below
         ds = None
-        if hasattr(self, 'get_ds'):
-            ds = self.get_ds()
+        if hasattr(self, '_ds'):
+            ds = getattr(self, '_ds')
 
         try:
             for conditional in self.when:
                 if not self._check_conditional(conditional, templar, all_vars):
                     return False
-        except UndefinedError, e:
-            raise AnsibleError("The conditional check '%s' failed due to an undefined variable. The error was: %s" % (conditional, e), obj=ds)
-        except Exception, e:
+        except Exception as e:
             raise AnsibleError("The conditional check '%s' failed. The error was: %s" % (conditional, e), obj=ds)
 
         return True
@@ -84,7 +83,7 @@ class Conditional:
         if conditional is None or conditional == '':
             return True
 
-        if conditional in all_vars and '-' not in unicode(all_vars[conditional]):
+        if conditional in all_vars and '-' not in text_type(all_vars[conditional]):
             conditional = all_vars[conditional]
 
         # make sure the templar is using the variables specifed to this method
@@ -96,7 +95,7 @@ class Conditional:
 
         # a Jinja2 evaluation that results in something Python can eval!
         presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-        conditional = templar.template(presented)
+        conditional = templar.template(presented, fail_on_undefined=False)
 
         val = conditional.strip()
         if val == presented:
