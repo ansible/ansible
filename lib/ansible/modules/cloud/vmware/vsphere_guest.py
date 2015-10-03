@@ -170,6 +170,7 @@ EXAMPLES = '''
       vcpu.hotadd: yes
       mem.hotadd:  yes
       notes: This is a test VM
+      folder: MyFolder
     vm_disk:
       disk1:
         size_gb: 10
@@ -238,6 +239,8 @@ EXAMPLES = '''
     template_src: centosTemplate
     cluster: MainCluster
     resource_pool: "/Resources"
+    vm_extra_config:
+      folder: MyFolder
 
 # Task to gather facts from a vSphere cluster only if the system is a VMWare guest
 
@@ -594,7 +597,7 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone, power_on_after_clone):
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone, power_on_after_clone, vm_extra_config):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
@@ -685,6 +688,10 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
                 #check if snapshot_to_clone is specified, Create a Linked Clone instead of a full clone.
                 cloneArgs["linked"] = True
                 cloneArgs["snapshot"] = snapshot_to_clone
+
+            if vm_extra_config.get("folder") is not None:
+                # if a folder is specified, clone the VM into it
+                cloneArgs["folder"] = vm_extra_config.get("folder")
 
             vmTemplate.clone(guest, **cloneArgs)
             changed = True
@@ -1521,7 +1528,8 @@ def main():
                 module=module,
                 cluster_name=cluster,
                 snapshot_to_clone=snapshot_to_clone,
-                power_on_after_clone=power_on_after_clone
+                power_on_after_clone=power_on_after_clone,
+                vm_extra_config=vm_extra_config
             )
 
         if state in ['restarted', 'reconfigured']:
