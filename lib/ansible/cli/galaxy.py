@@ -87,7 +87,7 @@ class GalaxyCLI(CLI):
                 help='list of OS platforms to filter by')
             self.parser.add_option('--galaxy-tags', dest='tags',
                 help='list of galaxy tags to filter by')
-            self.parser.set_usage("usage: %prog search [<search_term>] [-T <galaxy_tag1,galaxy_tag2>] [-P platform]")
+            self.parser.set_usage("usage: %prog search [<search_term>] [--galaxy-tags <galaxy_tag1,galaxy_tag2>] [--platforms platform]")
 
         # options that apply to more than one action
         if self.action != "init":
