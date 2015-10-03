@@ -249,21 +249,28 @@ AZURE_ROLE_SIZES = ['ExtraSmall',
                     'Standard_G4',
                     'Standard_G5']
 
+from distutils.version import LooseVersion
+
 try:
     import azure as windows_azure
 
-    from azure.common import AzureException, AzureMissingResourceHttpError
+    if hasattr(windows_azure, '__version__') and LooseVersion(windows_azure.__version__) <= "0.11.1":
+      from azure import WindowsAzureError as AzureException
+      from azure import WindowsAzureMissingResourceError as AzureMissingException
+    else:
+      from azure.common import AzureException as AzureException
+      from azure.common import AzureMissingResourceHttpError as AzureMissingException
+
     from azure.servicemanagement import (ServiceManagementService, OSVirtualHardDisk, SSH, PublicKeys,
                                          PublicKey, LinuxConfigurationSet, ConfigurationSetInputEndpoints,
                                          ConfigurationSetInputEndpoint, Listener, WindowsConfigurationSet)
+
     HAS_AZURE = True
 except ImportError:
     HAS_AZURE = False
 
-from distutils.version import LooseVersion
 from types import MethodType
 import json
-
 
 def _wait_for_completion(azure, promise, wait_timeout, msg):
     if not promise: return
@@ -353,7 +360,7 @@ def create_virtual_machine(module, azure):
     try:
         # check to see if a vm with this name exists; if so, do nothing
         azure.get_role(name, name, name)
-    except AzureMissingResourceHttpError:
+    except AzureMissingException:
         # vm does not exist; create it
         
         if os_type == 'linux':
@@ -453,7 +460,7 @@ def terminate_virtual_machine(module, azure):
     disk_names = []
     try:
         deployment = azure.get_deployment_by_name(service_name=name, deployment_name=name)
-    except AzureMissingResourceHttpError, e:
+    except AzureMissingException, e:
         pass  # no such deployment or service
     except AzureException, e:
         module.fail_json(msg="failed to find the deployment, error was: %s" % str(e))
@@ -545,7 +552,12 @@ def main():
     subscription_id, management_cert_path = get_azure_creds(module)
 
     wait_timeout_redirects = int(module.params.get('wait_timeout_redirects'))
-    azure = ServiceManagementService(subscription_id, management_cert_path)
+
+    if hasattr(windows_azure, '__version__') and LooseVersion(windows_azure.__version__) <= "0.8.0":
+        # wrapper for handling redirects which the sdk <= 0.8.0 is not following
+        azure = Wrapper(ServiceManagementService(subscription_id, management_cert_path), wait_timeout_redirects)
+    else:
+        azure = ServiceManagementService(subscription_id, management_cert_path)
 
     cloud_service_raw = None
     if module.params.get('state') == 'absent':
