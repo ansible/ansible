@@ -19,11 +19,14 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems, string_types
+from six import string_types
 
 import os
+import shutil
+import subprocess
+import tempfile
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.playbook.role.definition import RoleDefinition
 
 __all__ = ['RoleRequirement']
@@ -73,7 +76,7 @@ class RoleRequirement(RoleDefinition):
     def _preprocess_role_spec(self, ds):
         if 'role' in ds:
             # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-            role_info = role_spec_parse(ds['role'])
+            role_info = RoleRequirement.role_spec_parse(ds['role'])
             if isinstance(role_info, dict):
                 # Warning: Slight change in behaviour here.  name may be being
                 # overloaded.  Previously, name was only a parameter to the role.
@@ -96,7 +99,7 @@ class RoleRequirement(RoleDefinition):
                 ds["role"] = ds["name"]
                 del ds["name"]
             else:
-                ds["role"] = repo_url_to_role_name(ds["src"])
+                ds["role"] = RoleRequirement.repo_url_to_role_name(ds["src"])
 
             # set some values to a default value, if none were specified
             ds.setdefault('version', '')
@@ -104,102 +107,137 @@ class RoleRequirement(RoleDefinition):
 
         return ds
 
-def repo_url_to_role_name(repo_url):
-    # gets the role name out of a repo like
-    # http://git.example.com/repos/repo.git" => "repo"
+    @staticmethod
+    def repo_url_to_role_name(repo_url):
+        # gets the role name out of a repo like
+        # http://git.example.com/repos/repo.git" => "repo"
 
-    if '://' not in repo_url and '@' not in repo_url:
-        return repo_url
-    trailing_path = repo_url.split('/')[-1]
-    if trailing_path.endswith('.git'):
-        trailing_path = trailing_path[:-4]
-    if trailing_path.endswith('.tar.gz'):
-        trailing_path = trailing_path[:-7]
-    if ',' in trailing_path:
-        trailing_path = trailing_path.split(',')[0]
-    return trailing_path
+        if '://' not in repo_url and '@' not in repo_url:
+            return repo_url
+        trailing_path = repo_url.split('/')[-1]
+        if trailing_path.endswith('.git'):
+            trailing_path = trailing_path[:-4]
+        if trailing_path.endswith('.tar.gz'):
+            trailing_path = trailing_path[:-7]
+        if ',' in trailing_path:
+            trailing_path = trailing_path.split(',')[0]
+        return trailing_path
 
-def role_spec_parse(role_spec):
-    # takes a repo and a version like
-    # git+http://git.example.com/repos/repo.git,v1.0
-    # and returns a list of properties such as:
-    # {
-    #   'scm': 'git',
-    #   'src': 'http://git.example.com/repos/repo.git',
-    #   'version': 'v1.0',
-    #   'name': 'repo'
-    # }
+    @staticmethod
+    def role_spec_parse(role_spec):
+        # takes a repo and a version like
+        # git+http://git.example.com/repos/repo.git,v1.0
+        # and returns a list of properties such as:
+        # {
+        #   'scm': 'git',
+        #   'src': 'http://git.example.com/repos/repo.git',
+        #   'version': 'v1.0',
+        #   'name': 'repo'
+        # }
 
-    default_role_versions = dict(git='master', hg='tip')
+        default_role_versions = dict(git='master', hg='tip')
 
-    role_spec = role_spec.strip()
-    role_version = ''
-    if role_spec == "" or role_spec.startswith("#"):
-        return (None, None, None, None)
+        role_spec = role_spec.strip()
+        role_version = ''
+        if role_spec == "" or role_spec.startswith("#"):
+            return (None, None, None, None)
 
-    tokens = [s.strip() for s in role_spec.split(',')]
+        tokens = [s.strip() for s in role_spec.split(',')]
 
-    # assume https://github.com URLs are git+https:// URLs and not
-    # tarballs unless they end in '.zip'
-    if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
-        tokens[0] = 'git+' + tokens[0]
+        # assume https://github.com URLs are git+https:// URLs and not
+        # tarballs unless they end in '.zip'
+        if 'github.com/' in tokens[0] and not tokens[0].startswith("git+") and not tokens[0].endswith('.tar.gz'):
+            tokens[0] = 'git+' + tokens[0]
 
-    if '+' in tokens[0]:
-        (scm, role_url) = tokens[0].split('+')
-    else:
-        scm = None
-        role_url = tokens[0]
-
-    if len(tokens) >= 2:
-        role_version = tokens[1]
-
-    if len(tokens) == 3:
-        role_name = tokens[2]
-    else:
-        role_name = repo_url_to_role_name(tokens[0])
-
-    if scm and not role_version:
-        role_version = default_role_versions.get(scm, '')
-
-    return dict(scm=scm, src=role_url, version=role_version, role_name=role_name)
-
-# FIXME: all of these methods need to be cleaned up/reorganized below this
-def get_opt(options, k, defval=""):
-    """
-    Returns an option from an Optparse values instance.
-    """
-    try:
-        data = getattr(options, k)
-    except:
-        return defval
-    if k == "roles_path":
-        if os.pathsep in data:
-            data = data.split(os.pathsep)[0]
-    return data
-
-def get_role_path(role_name, options):
-    """
-    Returns the role path based on the roles_path option
-    and the role name.
-    """
-    roles_path = get_opt(options,'roles_path')
-    roles_path = os.path.join(roles_path, role_name)
-    roles_path = os.path.expanduser(roles_path)
-    return roles_path
-
-def get_role_metadata(role_name, options):
-    """
-    Returns the metadata as YAML, if the file 'meta/main.yml'
-    exists in the specified role_path
-    """
-    role_path = os.path.join(get_role_path(role_name, options), 'meta/main.yml')
-    try:
-        if os.path.isfile(role_path):
-            f = open(role_path, 'r')
-            meta_data = yaml.safe_load(f)
-            f.close()
-            return meta_data
+        if '+' in tokens[0]:
+            (scm, role_url) = tokens[0].split('+')
         else:
-            return None
-    except:
-        return None    
+            scm = None
+            role_url = tokens[0]
+
+        if len(tokens) >= 2:
+            role_version = tokens[1]
+
+        if len(tokens) == 3:
+            role_name = tokens[2]
+        else:
+            role_name = RoleRequirement.repo_url_to_role_name(tokens[0])
+
+        if scm and not role_version:
+            role_version = default_role_versions.get(scm, '')
+
+        return dict(scm=scm, src=role_url, version=role_version, name=role_name)
+
+    @staticmethod
+    def role_yaml_parse(role):
+
+        if 'role' in role:
+            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
+            role_info = RoleRequirement.role_spec_parse(role['role'])
+            if isinstance(role_info, dict):
+                # Warning: Slight change in behaviour here.  name may be being
+                # overloaded.  Previously, name was only a parameter to the role.
+                # Now it is both a parameter to the role and the name that
+                # ansible-galaxy will install under on the local system.
+                if 'name' in role and 'name' in role_info:
+                    del role_info['name']
+                role.update(role_info)
+        else:
+            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+            if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
+                role["src"] = "git+" + role["src"]
+
+            if '+' in role["src"]:
+                (scm, src) = role["src"].split('+')
+                role["scm"] = scm
+                role["src"] = src
+
+            if 'name' not in role:
+                role["name"] = RoleRequirement.repo_url_to_role_name(role["src"])
+
+            if 'version' not in role:
+                role['version'] = ''
+
+            if 'scm' not in role:
+                role['scm'] = None
+
+        return role
+
+    @staticmethod
+    def scm_archive_role(src, scm='git', name=None, version='HEAD'):
+        if scm not in ['hg', 'git']:
+            raise AnsibleError("- scm %s is not currently supported" % scm)
+        tempdir = tempfile.mkdtemp()
+        clone_cmd = [scm, 'clone', src, name]
+        with open('/dev/null', 'w') as devnull:
+            try:
+                popen = subprocess.Popen(clone_cmd, cwd=tempdir, stdout=devnull, stderr=devnull)
+            except:
+                raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
+            rc = popen.wait()
+        if rc != 0:
+            raise AnsibleError ("- command %s failed in directory %s" % (' '.join(clone_cmd), tempdir))
+
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
+        if scm == 'hg':
+            archive_cmd = ['hg', 'archive', '--prefix', "%s/" % name]
+            if version:
+                archive_cmd.extend(['-r', version])
+            archive_cmd.append(temp_file.name)
+        if scm == 'git':
+            archive_cmd = ['git', 'archive', '--prefix=%s/' % name, '--output=%s' % temp_file.name]
+            if version:
+                archive_cmd.append(version)
+            else:
+                archive_cmd.append('HEAD')
+
+        with open('/dev/null', 'w') as devnull:
+            popen = subprocess.Popen(archive_cmd, cwd=os.path.join(tempdir, name),
+                                     stderr=devnull, stdout=devnull)
+            rc = popen.wait()
+        if rc != 0:
+            raise AnsibleError("- command %s failed in directory %s" % (' '.join(archive_cmd), tempdir))
+
+        shutil.rmtree(tempdir, ignore_errors=True)
+        return temp_file.name
+

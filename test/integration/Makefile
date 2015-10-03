@@ -172,7 +172,7 @@ test_galaxy: test_galaxy_spec test_galaxy_yaml
 
 test_galaxy_spec:
 	mytmpdir=$(MYTMPDIR) ; \
-	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles ; \
+	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles -vvvv ; \
     cp galaxy_playbook.yml $$mytmpdir ; \
     ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
     RC=$$? ; \
@@ -181,7 +181,7 @@ test_galaxy_spec:
 
 test_galaxy_yaml:
 	mytmpdir=$(MYTMPDIR) ; \
-	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles ; \
+	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles -vvvv; \
     cp galaxy_playbook.yml $$mytmpdir ; \
     ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
     RC=$$? ; \
