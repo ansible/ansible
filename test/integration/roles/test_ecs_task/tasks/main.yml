@@ -72,23 +72,14 @@
 #  - reboot it
 #  - wait for it to join the cluster 
 
-- name: Get some facts about vpcs
-  ec2_vpc_facts:
-  register: vpc_facts
-
-- name: Find default vpc id
-  # set_fact: default_vpc_id="{{ item.VpcId }}"
-  set_fact: default_vpc_id="{% for i in vpc_facts.vpcs if i.IsDefault %}{{ i.VpcId }}{%endfor%}"
-
-- name: Show output vpc id
-  debug: var=default_vpc_id
-  when: debug is defined and debug
-
 - name: Get some facts about vpc subnets
-  ec2_vpc_facts:
-    vpc_id: "{{ default_vpc_id }}"
-    options: "subnets"
+  ec2_vpc_subnet_facts: ~
   register: vpc_subnets
+
+- name: Find a public subnet id
+  set_fact: vpc_subnet_id="{{ item.id }}"
+  when: "{{ item.map_public_ip_on_launch }}"
+  with_items: vpc_subnets.subnets
 
 # This is the ami id for the ecs-optimized image in us-west-2
 - name: Launch/restart instance
@@ -98,7 +89,7 @@
     wait: yes
     group: ecs_hosts
     count: 1
-    vpc_subnet_id: "{{ vpc_subnets.subnets[0].SubnetId }}"
+    vpc_subnet_id: "{{ vpc_subnet_id }}"
     user_data: "#!/bin/bash\necho ECS_CLUSTER={{ new_cluster }} >> /etc/ecs/ecs.config"
     assign_public_ip: yes
     instance_tags:
