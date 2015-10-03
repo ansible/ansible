@@ -390,7 +390,7 @@ def main():
     group = Group(module)
 
     module.debug('Group instantiated - platform %s' % group.platform)
-    if user.distribution:
+    if group.distribution:
         module.debug('Group instantiated - distribution %s' % group.distribution)
 
     rc = None
