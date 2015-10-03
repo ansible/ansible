@@ -36,10 +36,10 @@ class LookupModule(LookupBase):
             self._display.vvvv("url lookup connecting to %s" % term)
             try:
                 response = open_url(term, validate_certs=validate_certs)
-            except urllib2.URLError as e:
-                raise AnsibleError("Failed lookup url for %s : %s" % (term, str(e)))
             except urllib2.HTTPError as e:
                 raise AnsibleError("Received HTTP error for %s : %s" % (term, str(e)))
+            except urllib2.URLError as e:
+                raise AnsibleError("Failed lookup url for %s : %s" % (term, str(e)))
             except SSLValidationError as e:
                 raise AnsibleError("Error validating the server's certificate for %s: %s" % (term, str(e)))
             except ConnectionError as e:
