@@ -7,10 +7,6 @@
     - name: args should be logged in the absence of no_log
       shell: echo "LOG_ME_TASK_SUCCEEDED"
 
-    - name: item args/results should be logged in the absence of no_log
-      shell: echo {{ item }}
-      with_items: [ "LOG_ME_ITEM_SUCCEEDED" ]
-
     - name: failed args should be logged in the absence of no_log
       shell: echo "LOG_ME_TASK_FAILED"
       failed_when: true
@@ -27,21 +23,9 @@
       shell: echo "DO_NOT_LOG_TASK_SUCCEEDED"
       no_log: true
 
-    - name: item args should be suppressed with no_log
-      shell: echo {{ item }}
-      no_log: true
-      with_items: [ "DO_NOT_LOG_ITEM_SUCCEEDED" ]
-
     - name: failed args should not be logged when task-level no_log set
       shell: echo "DO_NOT_LOG_TASK_FAILED"
       no_log: true
-      failed_when: true
-      ignore_errors: true
-
-    - name: failed item args should be suppressed with no_log
-      shell: echo {{ item }}
-      no_log: true
-      with_items: [ "DO_NOT_LOG_ITEM_FAILED" ]
       failed_when: true
       ignore_errors: true
 
