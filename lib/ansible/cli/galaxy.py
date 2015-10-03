@@ -83,9 +83,9 @@ class GalaxyCLI(CLI):
         elif self.action == "list":
             self.parser.set_usage("usage: %prog list [role_name]")
         elif self.action == "search":
-            self.parser.add_option('-P', '--platforms', dest='platforms',
+            self.parser.add_option('--platforms', dest='platforms',
                 help='list of OS platforms to filter by')
-            self.parser.add_option('-T', '--galaxy-tags', dest='tags',
+            self.parser.add_option('--galaxy-tags', dest='tags',
                 help='list of galaxy tags to filter by')
             self.parser.set_usage("usage: %prog search [<search_term>] [-T <galaxy_tag1,galaxy_tag2>] [-P platform]")
 
