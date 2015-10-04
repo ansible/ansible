@@ -119,8 +119,8 @@ options:
     version_added: "2.0"
   log_opt:
     description:
-      - Additional options to pass to the logging driver selected above. See Docker log-driver
-        documentation for more information (https://docs.docker.com/reference/logging/overview/).
+      - Additional options to pass to the logging driver selected above. See Docker `log-driver 
+        <https://docs.docker.com/reference/logging/overview/>` documentation for more information.
         Requires docker >=1.7.0.
     required: false
     default: null
