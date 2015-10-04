@@ -102,7 +102,7 @@ def main():
             domain            = dict(required=True, type='str'),
             limit_type        = dict(required=True, type='str', choices=pam_types),
             limit_item        = dict(required=True, type='str', choices=pam_items),
-            value             = dict(required=True, type='int'),
+            value             = dict(required=True, type='str'),
             use_max           = dict(default=False, type='bool'),
             use_min           = dict(default=False, type='bool'),
             backup            = dict(default=False, type='bool'),
@@ -126,6 +126,12 @@ def main():
             module.fail_json(msg="%s is not writable. Use sudo" % (limits_conf) )
     else:
         module.fail_json(msg="%s is not visible (check presence, access rights, use sudo)" % (limits_conf) )
+
+    if use_max and use_min:
+        module.fail_json(msg="Cannot use use_min and use_max at the same time." )
+
+    if not (value in ['unlimited', 'infinity', '-1'] or value.isdigit()):
+        module.fail_json(msg="Argument 'value' can be one of 'unlimited', 'infinity', '-1' or positive number. Refer to manual pages for more details.")
 
     # Backup
     if backup:
@@ -160,7 +166,10 @@ def main():
         line_domain     = line_fields[0]
         line_type       = line_fields[1]
         line_item       = line_fields[2]
-        actual_value    = int(line_fields[3])
+        actual_value    = line_fields[3]
+
+        if not (actual_value in ['unlimited', 'infinity', '-1'] or actual_value.isdigit()):
+            module.fail_json(msg="Invalid configuration of '%s'. Current value of %s is unsupported." % (limits_conf, line_item))
 
         # Found the line
         if line_domain == domain and line_type == limit_type and line_item == limit_item:
@@ -170,11 +179,24 @@ def main():
                 nf.write(line)
                 continue
 
+            actual_value_unlimited = actual_value in ['unlimited', 'infinity', '-1']
+            value_unlimited = value in ['unlimited', 'infinity', '-1']
+
             if use_max:
-                new_value = max(value, actual_value)
+                if value.isdigit() and actual_value.isdigit():
+                    new_value = max(int(value), int(actual_value))
+                elif actual_value_unlimited:
+                    new_value = actual_value
+                else:
+                    new_value = value
 
             if use_min:
-                new_value = min(value,actual_value)
+                if value.isdigit() and actual_value.isdigit():
+                    new_value = min(int(value), int(actual_value))
+                elif value_unlimited:
+                    new_value = actual_value
+                else:
+                    new_value = value
 
             # Change line only if value has changed
             if new_value != actual_value:
