@@ -26,19 +26,20 @@ __metaclass__ = type
 
 import distutils.spawn
 import os
+import os.path
 import subprocess
 import re
 
 from distutils.version import LooseVersion
 
 import ansible.constants as C
-
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 
 BUFSIZE = 65536
 
 class Connection(ConnectionBase):
+    ''' Local docker based connections '''
 
     transport = 'docker'
     has_pipelining = True
@@ -53,9 +54,11 @@ class Connection(ConnectionBase):
         # Note: docker supports running as non-root in some configurations.
         # (For instance, setting the UNIX socket file to be readable and
         # writable by a specific UNIX group and then putting users into that
-        # group).  But if the user is getting a permission denied error it
-        # probably means that docker on their system is only configured to be
-        # connected to by root and they are not running as root.
+        # group).  Therefore we don't check that the user is root when using
+        # this connection.  But if the user is getting a permission denied
+        # error it probably means that docker on their system is only
+        # configured to be connected to by root and they are not running as
+        # root.
 
         if 'docker_command' in kwargs:
             self.docker_cmd = kwargs['docker_command']
@@ -79,7 +82,6 @@ class Connection(ConnectionBase):
     def _get_docker_version(self):
 
         cmd = [self.docker_cmd, 'version']
-
         cmd_output = subprocess.check_output(cmd)
 
         for line in cmd_output.split('\n'):
@@ -106,7 +108,7 @@ class Connection(ConnectionBase):
             self._connected = True
 
     def exec_command(self, cmd, in_data=None, sudoable=False):
-        """ Run a command on the local host """
+        """ Run a command on the docker host """
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
@@ -114,22 +116,32 @@ class Connection(ConnectionBase):
         local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
         self._display.vvv("EXEC %s" % (local_cmd), host=self._play_context.remote_addr)
-        # FIXME: cwd= needs to be set to the basedir of the playbook, which
-        #        should come from loader, but is not in the connection plugins
-        p = subprocess.Popen(local_cmd,
-                             shell=False,
-                             stdin=subprocess.PIPE,
+        p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         stdout, stderr = p.communicate(in_data)
         return (p.returncode, stdout, stderr)
 
-    def put_file(self, in_path, out_path):
-        """ Transfer a file from local to container """
-        super(Connection, self).put_file(in_path, out_path)
+    def _prefix_login_path(self, remote_path):
+        ''' Make sure that we put files into a standard path
 
+            If a path is relative, then we need to choose where to put it.
+            ssh chooses $HOME but we aren't guaranteed that a home dir will
+            exist in any given chroot.  So for now we're choosing "/" instead.
+            This also happens to be the former default.
+
+            Can revisit using $HOME instead if it's a problem
+        '''
+        if not remote_path.startswith(os.path.sep):
+            remote_path = os.path.join(os.path.sep, remote_path)
+        return os.path.normpath(remote_path)
+
+    def put_file(self, in_path, out_path):
+        """ Transfer a file from local to docker container """
+        super(Connection, self).put_file(in_path, out_path)
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
+        out_path = self._prefix_login_path(out_path)
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound(
                 "file or module does not exist: %s" % in_path)
@@ -161,9 +173,9 @@ class Connection(ConnectionBase):
     def fetch_file(self, in_path, out_path):
         """ Fetch a file from container to local. """
         super(Connection, self).fetch_file(in_path, out_path)
-
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
+        in_path = self._prefix_login_path(in_path)
         # out_path is the final file path, but docker takes a directory, not a
         # file path
         out_dir = os.path.dirname(out_path)
