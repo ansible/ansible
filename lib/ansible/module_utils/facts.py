@@ -333,7 +333,7 @@ class Facts(object):
                                 self.facts['distribution'] = name
                             else:
                                 self.facts['distribution'] = data.split()[0]
-                            break  
+                            break
                         elif name == 'Slackware':
                             data = get_file_content(path)
                             if 'Slackware' in data:
@@ -341,7 +341,7 @@ class Facts(object):
                                 version = re.findall('\w+[.]\w+', data)
                                 if version:
                                     self.facts['distribution_version'] = version[0]
-                            break      
+                            break
                         elif name == 'OracleLinux':
                             data = get_file_content(path)
                             if 'Oracle Linux' in data:
@@ -1075,7 +1075,7 @@ class LinuxHardware(Hardware):
             sysfs_no_links = 0
             try:
                 path = os.readlink(os.path.join("/sys/block/", block))
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EINVAL:
                     path = block
                     sysfs_no_links = 1
@@ -2050,7 +2050,7 @@ class LinuxNetwork(Network):
 
                         # If this is the default address, update default_ipv4
                         if 'address' in default_ipv4 and default_ipv4['address'] == address:
-                            default_ipv4['broadcast'] = broadcast 
+                            default_ipv4['broadcast'] = broadcast
                             default_ipv4['netmask'] = netmask
                             default_ipv4['network'] = network
                             default_ipv4['macaddress'] = macaddress

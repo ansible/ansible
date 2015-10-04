@@ -209,13 +209,13 @@ def ec2_connect(module):
     if region:
         try:
             ec2 = connect_to_aws(boto.ec2, region, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     elif ec2_url:
         try:
             ec2 = boto.connect_ec2_endpoint(ec2_url, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, StandardError) as e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="Either region or ec2_url must be specified")
