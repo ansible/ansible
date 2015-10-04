@@ -24,6 +24,7 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
+import pipes
 import subprocess
 import traceback
 
@@ -157,7 +158,7 @@ class Connection(ConnectionBase):
         super(Connection, self).put_file(in_path, out_path)
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.zone)
 
-        out_path = self._prefix_login_path(out_path)
+        out_path = pipes.quote(self._prefix_login_path(out_path))
         try:
             with open(in_path, 'rb') as in_file:
                 try:
@@ -179,7 +180,7 @@ class Connection(ConnectionBase):
         super(Connection, self).fetch_file(in_path, out_path)
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.zone)
 
-        in_path = self._prefix_login_path(in_path)
+        in_path = pipes.quote(self._prefix_login_path(in_path))
         try:
             p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
         except OSError:

@@ -27,6 +27,7 @@ __metaclass__ = type
 import distutils.spawn
 import os
 import os.path
+import pipes
 import subprocess
 import re
 
@@ -154,6 +155,7 @@ class Connection(ConnectionBase):
             if p.returncode != 0:
                 raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
         else:
+            out_path = pipes.quote(out_path)
             # Older docker doesn't have native support for copying files into
             # running containers, so we use docker exec to implement this
             executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
