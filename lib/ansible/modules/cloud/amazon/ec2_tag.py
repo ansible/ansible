@@ -73,7 +73,7 @@ tasks:
       Env: production
     exact_count: 1
     group: "{{ security_group }}" 
-    keypair: ""{{ keypair }}" 
+    keypair: "{{ keypair }}" 
     image: "{{ image_id }}" 
     instance_tags:
       Name: dbserver
