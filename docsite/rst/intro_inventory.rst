@@ -48,7 +48,7 @@ To make things explicit, it is suggested that you set them if things are not run
 
 Suppose you have just static IPs and want to set up some aliases that live in your host file, or you are connecting through tunnels.  You can also describe hosts like this::
 
-    jumper ansible_port=5555 ansible_host=192.168.1.50
+    jumper ansible_port=5555 ansible_ssh_host=192.168.1.50
 
 In the above example, trying to ansible against the host alias "jumper" (which may not even be a real hostname) will contact 192.168.1.50 on port 5555.  Note that this is using a feature of the inventory file to define some special variables.  Generally speaking this is not the best
 way to define variables that describe your system policy, but we'll share suggestions on doing this later.  We're just getting started.
@@ -202,7 +202,7 @@ Host connection::
 
 SSH connection::
 
-    ansible_host
+    ansible_ssh_host
       The name of the host to connect to, if different from the alias you wish to give to it.
     ansible_port
       The ssh port number, if not 22
