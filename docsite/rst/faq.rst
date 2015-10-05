@@ -157,6 +157,7 @@ Ansible by default gathers "facts" about the machines under management, and thes
 This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe the output to a pager.
 
 .. _browse_inventory_vars:
+
 How do I see all the inventory vars defined for my host?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
