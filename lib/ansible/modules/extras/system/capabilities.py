@@ -180,7 +180,6 @@ def main():
 
     CapabilitiesModule(module)
 
-    sys.exit(0)
 
 # import module snippets
 from ansible.module_utils.basic import *
