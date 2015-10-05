@@ -207,14 +207,13 @@ action: ovirt >
 
 
 '''
-import sys
 
 try:
     from ovirtsdk.api import API
     from ovirtsdk.xml import params
+    HAS_OVIRTSDK = True
 except ImportError:
-    print "failed=True msg='ovirtsdk required for this module'"
-    sys.exit(1)
+    HAS_OVIRTSDK = False
 
 # ------------------------------------------------------------------- #
 # create connection with API
@@ -224,8 +223,7 @@ def conn(url, user, password):
     try:
         value = api.test()
     except:
-        print "error connecting to the oVirt API"
-        sys.exit(1)
+        raise Exception("error connecting to the oVirt API")
     return api
 
 # ------------------------------------------------------------------- #
@@ -253,17 +251,16 @@ def create_vm(conn, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork,
     try:
         conn.vms.add(vmparams)
     except:
-        print "Error creating VM with specified parameters"
-        sys.exit(1)
+        raise Exception("Error creating VM with specified parameters")
     vm = conn.vms.get(name=vmname)
     try:
         vm.disks.add(vmdisk)
     except:
-        print "Error attaching disk"
+        raise Exception("Error attaching disk")
     try:
         vm.nics.add(nic_net1)
     except:
-        print "Error adding nic"
+        raise Exception("Error adding nic")
 
 
 # create an instance from a template
@@ -272,8 +269,7 @@ def create_vm_template(conn, vmname, image, zone):
     try:
         conn.vms.add(vmparams)
     except:
-        print 'error adding template %s' % image
-        sys.exit(1)
+        raise Exception('error adding template %s' % image)
 
 
 # start instance
@@ -356,6 +352,9 @@ def main():
         )
     )
 
+    if not HAS_OVIRTSDK:
+        module.fail_json(msg='ovirtsdk required for this module')
+
     state         = module.params['state']
     user          = module.params['user']
     url           = module.params['url']
@@ -377,16 +376,25 @@ def main():
     sdomain       = module.params['sdomain']            # storage domain to store disk on
     region        = module.params['region']             # oVirt Datacenter
     #initialize connection
-    c = conn(url+"/api", user, password)
+    try:
+        c = conn(url+"/api", user, password)
+    except Exception, e:
+        module.fail_json(msg='%s' % e)
 
     if state == 'present':
         if get_vm(c, vmname) == "empty":
             if resource_type == 'template':
-                create_vm_template(c, vmname, image, zone)
+                try:
+                    create_vm_template(c, vmname, image, zone)
+                except Exception, e:
+                    module.fail_json(msg='%s' % e)
                 module.exit_json(changed=True, msg="deployed VM %s from template %s"  % (vmname,image))
             elif resource_type == 'new':
                 # FIXME: refactor, use keyword args.
-                create_vm(c, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int)
+                try:
+                    create_vm(c, vmtype, vmname, zone, vmdisk_size, vmcpus, vmnic, vmnetwork, vmmem, vmdisk_alloc, sdomain, vmcores, vmos, vmdisk_int)
+                except Exception, e:
+                    module.fail_json(msg='%s' % e)
                 module.exit_json(changed=True, msg="deployed VM %s from scratch"  % vmname)
             else:
                 module.exit_json(changed=False, msg="You did not specify a resource type")
