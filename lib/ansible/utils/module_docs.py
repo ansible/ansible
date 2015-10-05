@@ -63,6 +63,7 @@ def get_docstring(filename, verbose=False):
                         theid = t.id
                     except AttributeError as e:
                         # skip errors can happen when trying to use the normal code
+                        display.warning("Failed to assign id for %t on %s, skipping" % (t, filename))
                         continue
 
                     if 'DOCUMENTATION' in theid:
@@ -119,6 +120,7 @@ def get_docstring(filename, verbose=False):
     except:
         display.error("unable to parse %s" % filename)
         if verbose == True:
+            display.display("unable to parse %s" % filename)
             raise
     return doc, plainexamples, returndocs
 
