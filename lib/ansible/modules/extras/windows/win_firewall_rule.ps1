@@ -24,7 +24,7 @@ function getFirewallRule ($fwsettings) {
     try {
             
         #$output = Get-NetFirewallRule -name $($fwsettings.name);
-        $rawoutput=@(netsh advfirewall firewall show rule name=$($fwsettings.Name))
+        $rawoutput=@(netsh advfirewall firewall show rule name="$($fwsettings.Name)")
         if (!($rawoutput -eq 'No rules match the specified criteria.')){
             $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
                     $FirstRun = $true;
@@ -123,8 +123,9 @@ function createFireWallRule ($fwsettings) {
         $execString+=" ";
         $execString+=$key;
         $execString+="=";
+        $execString+='"';
         $execString+=$fwsetting.value;
-        #$execString+="'";
+        $execString+='"';
     };
     try {
         #$msg+=@($execString);
@@ -152,7 +153,7 @@ function createFireWallRule ($fwsettings) {
 function removeFireWallRule ($fwsettings) {
     $msg=@()
     try {
-        $rawoutput=@(netsh advfirewall firewall delete rule name=$($fwsettings.name))
+        $rawoutput=@(netsh advfirewall firewall delete rule name="$($fwsettings.name)")
         $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
                 $FirstRun = $true;
                 $HashProps = @{};
