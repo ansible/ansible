@@ -350,11 +350,21 @@ class PlayContext(Base):
             elif new_info.become_method == 'su' and new_info.su_pass:
                setattr(new_info, 'become_pass', new_info.su_pass)
 
-
-        # finally, in the special instance that the task was specified
-        # as a local action, override the connection in case it was changed
-        # during some other step in the process
-        if task._local_action:
+        # special overrides for the connection setting
+        if len(delegated_vars) > 0:
+            # in the event that we were using local before make sure to reset the
+            # connection type to the default transport for the delegated-to host,
+            # if not otherwise specified
+            for connection_type in MAGIC_VARIABLE_MAPPING.get('connection'):
+                if connection_type in delegated_vars:
+                    break
+            else:
+                if getattr(new_info, 'connection', None) == 'local' and new_info.remote_addr not in C.LOCALHOST:
+                    setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
+        elif task._local_action:
+            # otherwise, in the special instance that the task was specified
+            # as a local action, override the connection in case it was changed
+            # during some other step in the process
             setattr(new_info, 'connection', 'local')
 
         # set no_log to default if it was not previouslly set
