@@ -373,12 +373,28 @@ class PythonPackageValidator(Validator):
             self.errors.append('Ansible module subdirectories must contain an '
                                '__init__.py')
 
+def re_compile(value):
+    """
+    Argparse expects things to raise TypeError, re.compile raises an re.error
+    exception
+
+    This function is a shorthand to convert the re.error exception to a
+    TypeError
+    """
+
+    try:
+        return re.compile(value)
+    except re.error as e:
+        raise TypeError(e)
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('modules', help='Path to module or module directory')
     parser.add_argument('-w', '--warnings', help='Show warnings',
                         action='store_true')
+    parser.add_argument('--exclude', help='Regex exclusion pattern',
+                        type=re_compile)
     args = parser.parse_args()
 
     args.modules = os.path.abspath(args.modules.rstrip('/'))
@@ -387,7 +403,10 @@ def main():
 
     # Allow testing against a single file
     if os.path.isfile(args.modules):
-        mv = ModuleValidator(os.path.abspath(args.modules), root=args.modules)
+        path = os.path.abspath(args.modules)
+        if args.exclude and args.exclude.search(path):
+            sys.exit(0)
+        mv = ModuleValidator(path, root=args.modules)
         mv.validate()
         exit.append(mv.report(args.warnings))
         sys.exit(sum(exit))
@@ -400,6 +419,8 @@ def main():
             if root == args.modules and dirname in BLACKLIST_DIRS:
                 continue
             path = os.path.join(root, dirname)
+            if args.exclude and args.exclude.search(path):
+                continue
             pv = PythonPackageValidator(os.path.abspath(path),
                                         root=args.modules)
             pv.validate()
@@ -407,6 +428,8 @@ def main():
 
         for filename in files:
             path = os.path.join(root, filename)
+            if args.exclude and args.exclude.search(path):
+                continue
             mv = ModuleValidator(os.path.abspath(path), root=args.modules)
             mv.validate()
             exit.append(mv.report(args.warnings))
