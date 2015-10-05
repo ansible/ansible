@@ -285,7 +285,6 @@ def main():
                 msg.attach(part)
             except Exception, e:
                 module.fail_json(rc=1, msg="Failed to send mail: can't attach file %s: %s" % (file, e))
-                sys.exit()
 
     composed = msg.as_string()
 
