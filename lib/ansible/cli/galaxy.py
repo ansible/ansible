@@ -36,7 +36,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
 from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.role import GalaxyRole
-from ansible.playbook.role.requirement import RoleRequirement
+from ansible.playbook.role.requirement import RoleRequirement, role_spec_parse
 
 class GalaxyCLI(CLI):
 
@@ -408,7 +408,7 @@ class GalaxyCLI(CLI):
                 if role.scm:
                     # create tar file from scm url
                     tmp_file = GalaxyRole.scm_archive_role(role.scm, role.src, role.version, role.name)
-                if role.src:
+                elif role.src:
                     if '://' not in role.src:
                         role_data = self.api.lookup_role_by_name(role.src)
                         if not role_data:
@@ -448,17 +448,15 @@ class GalaxyCLI(CLI):
                     role_dependencies = role.metadata.get('dependencies', [])
                     for dep in role_dependencies:
                         self.display.debug('Installing dep %s' % dep)
-                        dep_req = RoleRequirement()
-                        __, dep_name, __ = dep_req.parse(dep)
-                        dep_role = GalaxyRole(self.galaxy, name=dep_name)
+                        dep_role = GalaxyRole(self.galaxy, **self.parse_requirements_files(dep))
                         if dep_role.install_info is None or force:
                             if dep_role not in roles_left:
-                                self.display.display('- adding dependency: %s' % dep_name)
-                                roles_left.append(GalaxyRole(self.galaxy, name=dep_name))
+                                self.display.display('- adding dependency: %s' % dep_role.name)
+                                roles_left.append(dep_role)
                             else:
-                                self.display.display('- dependency %s already pending installation.' % dep_name)
+                                self.display.display('- dependency %s already pending installation.' % dep_role.name)
                         else:
-                            self.display.display('- dependency %s is already installed, skipping.' % dep_name)
+                            self.display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not tmp_file or not installed:
                 self.display.warning("- %s was NOT installed successfully." % role.name)
