@@ -9,8 +9,12 @@ addons:
     packages:
       - python2.4
       - python2.6
+install:
+  - pip install git+https://github.com/ansible/ansible.git@devel#egg=ansible
+  - pip install git+https://github.com/sivel/ansible-testing.git#egg=ansible_testing
 script:
   - python2.4 -m compileall -fq -x 'cloud/|monitoring/zabbix.*\.py|/dnf\.py|/layman\.py|/maven_artifact\.py|clustering/(consul.*|znode)\.py|notification/pushbullet\.py' .
   - python2.6 -m compileall -fq .
   - python2.7 -m compileall -fq .
+  - ansible-validate-modules --exclude 'cloud/amazon/route53_zone\.py|network/snmp_facts\.py|notification/sns\.py|windows/win_iis_virtualdirectory\.py' .
   #- ./test-docs.sh extras
