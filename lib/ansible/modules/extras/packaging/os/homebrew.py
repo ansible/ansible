@@ -765,7 +765,11 @@ class Homebrew(object):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            name=dict(aliases=["pkg", "package"], required=False, type='list'),
+            name=dict(
+                aliases=["pkg", "package", "formula"],
+                required=False,
+                type='list',
+            ),
             path=dict(required=False),
             state=dict(
                 default="present",
