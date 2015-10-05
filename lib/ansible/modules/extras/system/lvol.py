@@ -21,8 +21,8 @@
 DOCUMENTATION = '''
 ---
 author:
-    - "Jeroen Hoekx (@jhoekx)" 
-    - "Alexander Bulimov (@abulimov)" 
+    - "Jeroen Hoekx (@jhoekx)"
+    - "Alexander Bulimov (@abulimov)"
 module: lvol
 short_description: Configure LVM logical volumes
 description:
@@ -42,7 +42,8 @@ options:
     - The size of the logical volume, according to lvcreate(8) --size, by
       default in megabytes or optionally with one of [bBsSkKmMgGtTpPeE] units; or
       according to lvcreate(8) --extents as a percentage of [VG|PVS|FREE];
-      resizing is not supported with percentages.
+      resizing is not supported with percentages. Float values must begin
+      with a digit.
   state:
     choices: [ "present", "absent" ]
     default: present
@@ -95,6 +96,7 @@ decimal_point = re.compile(r"(\.|,)")
 def mkversion(major, minor, patch):
     return (1000 * 1000 * int(major)) + (1000 * int(minor)) + int(patch)
 
+
 def parse_lvs(data):
     lvs = []
     for line in data.splitlines():
@@ -122,7 +124,7 @@ def main():
         argument_spec=dict(
             vg=dict(required=True),
             lv=dict(required=True),
-            size=dict(),
+            size=dict(type='str'),
             opts=dict(type='str'),
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
@@ -167,23 +169,19 @@ def main():
             size_opt = 'l'
             size_unit = ''
 
+        if not '%' in size:
         # LVCREATE(8) -L --size option unit
-        elif size[-1].isalpha():
             if size[-1].lower() in 'bskmgtpe':
-                size_unit = size[-1].lower()
-                if size[0:-1].isdigit():
-                    size = int(size[0:-1])
-                else:
-                    module.fail_json(msg="Bad size specification for unit %s" % size_unit)
-                size_opt = 'L'
-            else:
-                module.fail_json(msg="Size unit should be one of [bBsSkKmMgGtTpPeE]")
-        # when no unit, megabytes by default
-        elif size.isdigit():
-            size = int(size)
-        else:
-            module.fail_json(msg="Bad size specification")
+               size_unit = size[-1].lower()
+               size = size[0:-1]
 
+            try:
+               float(size)
+               if not size[0].isdigit(): raise ValueError()
+            except ValueError:
+               module.fail_json(msg="Bad size specification of '%s'" % size)
+
+    # when no unit, megabytes by default
     if size_opt == 'l':
         unit = 'm'
     else:
