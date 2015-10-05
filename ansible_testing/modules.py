@@ -72,7 +72,7 @@ class Validator(object):
         if warnings:
             for warning in self.warnings:
                 print('WARNING: %s' % warning)
-                ret.append(1)
+                # ret.append(1)  # Don't incrememt exit status for warnings
 
         if self.errors or (warnings and self.warnings):
             print()
