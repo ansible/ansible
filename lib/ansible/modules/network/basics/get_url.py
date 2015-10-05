@@ -78,7 +78,7 @@ options:
     default: null
   checksum:
     description:
-      - If a checksum is passed to this parameter, the digest of the
+      - 'If a checksum is passed to this parameter, the digest of the
         destination file will be calculated after it is downloaded to ensure
         its integrity and verify that the transfer completed successfully.
         Format: <algorithm>:<checksum>, e.g.: checksum="sha256:shagoeshere"
@@ -88,7 +88,7 @@ options:
         Additionaly, if a checksum is passed to this parameter, and the file exist under
         the C(dest) location, the destination_checksum would be calculated, and if
         checksum equals destination_checksum, the file download would be skipped
-        (unless C(force) is true). 
+        (unless C(force) is true). '
     version_added: "2.0"
     required: false
     default: null
