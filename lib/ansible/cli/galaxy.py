@@ -29,8 +29,6 @@ from distutils.version import LooseVersion
 from jinja2 import Environment
 
 import ansible.constants as C
-import ansible.utils
-import ansible.galaxy
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
@@ -126,19 +124,6 @@ class GalaxyCLI(CLI):
 
         self.execute()
 
-    def get_opt(self, k, defval=""):
-        """
-        Returns an option from an Optparse values instance.
-        """
-        try:
-            data = getattr(self.options, k)
-        except:
-            return defval
-        if k == "roles_path":
-            if os.pathsep in data:
-                data = data.split(os.pathsep)[0]
-        return data
-
     def exit_without_ignore(self, rc=1):
         """
         Exits with the specified return code unless the
@@ -146,40 +131,6 @@ class GalaxyCLI(CLI):
         """
         if not self.get_opt("ignore_errors", False):
             raise AnsibleError('- you can use --ignore-errors to skip failed roles and finish processing the list.')
-
-    def parse_requirements_files(self, role):
-        if 'role' in role:
-            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-            role_info = role_spec_parse(role['role'])
-            if isinstance(role_info, dict):
-                # Warning: Slight change in behaviour here.  name may be being
-                # overloaded.  Previously, name was only a parameter to the role.
-                # Now it is both a parameter to the role and the name that
-                # ansible-galaxy will install under on the local system.
-                if 'name' in role and 'name' in role_info:
-                    del role_info['name']
-                role.update(role_info)
-        else:
-            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
-            if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
-                role["src"] = "git+" + role["src"]
-
-            if '+' in role["src"]:
-                (scm, src) = role["src"].split('+')
-                role["scm"] = scm
-                role["src"] = src
-
-            if 'name' not in role:
-                role["name"] = GalaxyRole.url_to_spec(role["src"])
-
-            if 'version' not in role:
-                role['version'] = ''
-
-            if 'scm' not in role:
-                role['scm'] = None
-
-        return role
-
 
     def _display_role_info(self, role_info):
 
@@ -298,9 +249,8 @@ class GalaxyCLI(CLI):
         data = ''
         for role in self.args:
 
-            role_info = {}
+            role_info = {'role_path': roles_path}
             gr = GalaxyRole(self.galaxy, role)
-            #self.galaxy.add_role(gr)
 
             install_info = gr.install_info
             if install_info:
@@ -351,118 +301,73 @@ class GalaxyCLI(CLI):
 
         no_deps    = self.get_opt("no_deps", False)
         force      = self.get_opt('force', False)
-        roles_path = self.get_opt("roles_path")
 
-        roles_done = []
         roles_left = []
         if role_file:
-            self.display.debug('Getting roles from %s' % role_file)
             try:
-                self.display.debug('Processing role file: %s' % role_file)
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-                    try:
-                        rolesparsed = map(self.parse_requirements_files, yaml.safe_load(f))
-                    except Exception as e:
-                       raise AnsibleError("%s does not seem like a valid yaml file: %s" % (role_file, str(e)))
-                    roles_left = [GalaxyRole(self.galaxy, **r) for r in rolesparsed]
+                    for role in yaml.safe_load(f.read()):
+                        self.display.debug('found role %s in yaml file' % str(role))
+                        if 'name' not in role:
+                            if 'src' in role:
+                                role['name'] = RoleRequirement.repo_url_to_role_name(role['src'])
+                            else:
+                                raise AnsibleError("Must specify name or src for role")
+                        roles_left.append(GalaxyRole(self.galaxy, **role))
                 else:
+                    self.display.deprecated("going forward only the yaml format will be supported")
                     # roles listed in a file, one per line
-                    self.display.deprecated("Non yaml files for role requirements")
-                    for rname in f.readlines():
-                        if rname.startswith("#") or rname.strip() == '':
-                            continue
-                        roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
+                    for rline in f.readlines():
+                        self.display.debug('found role %s in text file' % str(rline))
+                        roles_left.append(GalaxyRole(self.galaxy, **RoleRequirement.role_spec_parse(rline)))
                 f.close()
-            except (IOError,OSError) as e:
-                raise AnsibleError("Unable to read requirements file (%s): %s" % (role_file, str(e)))
+            except (IOError, OSError) as e:
+                self.display.error('Unable to open %s: %s' % (role_file, str(e)))
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
             for rname in self.args:
                 roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
 
-        while len(roles_left) > 0:
+        for role in roles_left:
+            self.display.debug('Installing role %s ' % role.name)
             # query the galaxy API for the role data
             role_data = None
             role = roles_left.pop(0)
-            role_path = role.path
 
             if role.install_info is not None and not force:
                 self.display.display('- %s is already installed, skipping.' % role.name)
                 continue
 
-            if role_path:
-                self.options.roles_path = role_path
-            else:
-                self.options.roles_path = roles_path
+            try:
+                installed = role.install()
+            except AnsibleError as e:
+                self.display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
+                self.exit_without_ignore()
+                continue
 
-            self.display.debug('Installing role %s from %s' % (role.name, self.options.roles_path))
-
-            tmp_file = None
-            installed = False
-            if role.src and os.path.isfile(role.src):
-                # installing a local tar.gz
-                tmp_file = role.src
-            else:
-                if role.scm:
-                    # create tar file from scm url
-                    tmp_file = GalaxyRole.scm_archive_role(role.scm, role.src, role.version, role.name)
-                if role.src:
-                    if '://' not in role.src:
-                        role_data = self.api.lookup_role_by_name(role.src)
-                        if not role_data:
-                            self.display.warning("- sorry, %s was not found on %s." % (role.src, self.options.api_server))
-                            self.exit_without_ignore()
-                            continue
-
-                        role_versions = self.api.fetch_role_related('versions', role_data['id'])
-                        if not role.version:
-                            # convert the version names to LooseVersion objects
-                            # and sort them to get the latest version. If there
-                            # are no versions in the list, we'll grab the head
-                            # of the master branch
-                            if len(role_versions) > 0:
-                                loose_versions = [LooseVersion(a.get('name',None)) for a in role_versions]
-                                loose_versions.sort()
-                                role.version = str(loose_versions[-1])
-                            else:
-                                role.version = 'master'
-                        elif role.version != 'master':
-                            if role_versions and role.version not in [a.get('name', None) for a in role_versions]:
-                                self.display.warning('role is %s' % role)
-                                self.display.warning("- the specified version (%s) was not found in the list of available versions (%s)." % (role.version, role_versions))
-                                self.exit_without_ignore()
-                                continue
-
-                    # download the role. if --no-deps was specified, we stop here,
-                    # otherwise we recursively grab roles and all of their deps.
-                    tmp_file = role.fetch(role_data)
-            if tmp_file:
-                installed = role.install(tmp_file)
-                # we're done with the temp file, clean it up
-                if tmp_file != role.src:
-                    os.unlink(tmp_file)
-                # install dependencies, if we want them
-                if not no_deps and installed:
-                    role_dependencies = role.metadata.get('dependencies', [])
-                    for dep in role_dependencies:
-                        self.display.debug('Installing dep %s' % dep)
-                        dep_req = RoleRequirement()
-                        __, dep_name, __ = dep_req.parse(dep)
-                        dep_role = GalaxyRole(self.galaxy, name=dep_name)
-                        if dep_role.install_info is None or force:
-                            if dep_role not in roles_left:
-                                self.display.display('- adding dependency: %s' % dep_name)
-                                roles_left.append(GalaxyRole(self.galaxy, name=dep_name))
-                            else:
-                                self.display.display('- dependency %s already pending installation.' % dep_name)
+            # install dependencies, if we want them
+            if not no_deps and installed:
+                role_dependencies = role.metadata.get('dependencies', [])
+                for dep in role_dependencies:
+                    self.display.debug('Installing dep %s' % dep)
+                    dep_req = RoleRequirement()
+                    __, dep_name, __ = dep_req.parse(dep)
+                    dep_role = GalaxyRole(self.galaxy, name=dep_name)
+                    if dep_role.install_info is None or force:
+                        if dep_role not in roles_left:
+                            self.display.display('- adding dependency: %s' % dep_name)
+                            roles_left.append(GalaxyRole(self.galaxy, name=dep_name))
                         else:
-                            self.display.display('- dependency %s is already installed, skipping.' % dep_name)
+                            self.display.display('- dependency %s already pending installation.' % dep_name)
+                    else:
+                        self.display.display('- dependency %s is already installed, skipping.' % dep_name)
 
-            if not tmp_file or not installed:
+            if not installed:
                 self.display.warning("- %s was NOT installed successfully." % role.name)
                 self.exit_without_ignore()
+
         return 0
 
     def execute_remove(self):
