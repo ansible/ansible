@@ -21,7 +21,7 @@ except ImportError:
 
 
 BLACKLIST_DIRS = frozenset(('.git',))
-INDENT_REGEX = re.compile(r'(^[ \t]*)', flags=re.M)
+INDENT_REGEX = re.compile(r'(^[ \t]*)')
 
 
 class Validator(object):
@@ -170,11 +170,13 @@ class ModuleValidator(Validator):
             self.errors.append('GPLv3 license header not found')
 
     def _check_for_tabs(self):
-        indent = INDENT_REGEX.findall(self.text)
-        for i in indent:
-            if '\t' in i:
-                self.errors.append('indentation contains tabs')
-                break
+        for line_no, line in enumerate(self.text.splitlines()):
+            indent = INDENT_REGEX.search(line)
+            for i in indent.groups():
+                if '\t' in i:
+                    index = line.index(i)
+                    self.errors.append('indentation contains tabs. line %d '
+                                       'column %d' % (line_no, index))
 
     def _find_json_import(self):
         for child in self.ast.body:
