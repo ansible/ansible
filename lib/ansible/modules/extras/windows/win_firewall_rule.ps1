@@ -246,13 +246,7 @@ foreach ($arg in $args){
 };
 
 $winprofile=Get-Attr $params "profile" "current";
-if (($winprofile -ne 'current') -or ($winprofile -ne 'domain') -or ($winprofile -ne 'standard') -or ($winprofile -ne 'all') ) {
-    $misArg+="Profile";
-    $msg+=@("for the Profile parameter only the values 'current', 'domain', 'standard' or 'all' are allowed");
-} else {
-
-    $fwsettings.Add("profile", $winprofile)
-}
+$fwsettings.Add("profile", $winprofile)
 
 if ($($($misArg|measure).count) -gt 0){
     $result=New-Object psobject @{
