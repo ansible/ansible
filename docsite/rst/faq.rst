@@ -154,7 +154,15 @@ Ansible by default gathers "facts" about the machines under management, and thes
 
     ansible -m setup hostname
 
-This will print out a dictionary of all of the facts that are available for that particular host.
+This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe the output to a pager.
+
+.. _browse_inventory_vars:
+How do I see all the inventory vars defined for my host?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+You can see the resulting vars you define in inventory running the following command::
+
+    ansible -m debug -a "var=hostvars['hostname']" localhost
 
 .. _host_loops:
 
@@ -208,10 +216,10 @@ Anyway, here's the trick::
     {{ hostvars[groups['webservers'][0]]['ansible_eth0']['ipv4']['address'] }}
 
 Notice how we're pulling out the hostname of the first machine of the webservers group.  If you are doing this in a template, you
-could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact:
+could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact::
 
     - set_fact: headnode={{ groups[['webservers'][0]] }}
- 
+
     - debug: msg={{ hostvars[headnode].ansible_eth0.ipv4.address }}
 
 Notice how we interchanged the bracket syntax for dots -- that can be done anywhere.
@@ -221,7 +229,7 @@ Notice how we interchanged the bracket syntax for dots -- that can be done anywh
 How do I copy files recursively onto a target host?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The "copy" module has a recursive parameter, though if you want to do something more efficient for a large number of files, take a look at the "synchronize" module instead, which wraps rsync.  See the module index for info on both of these modules.  
+The "copy" module has a recursive parameter, though if you want to do something more efficient for a large number of files, take a look at the "synchronize" module instead, which wraps rsync.  See the module index for info on both of these modules.
 
 .. _shell_env:
 
@@ -309,6 +317,7 @@ The no_log attribute can also apply to an entire play::
 
 Though this will make the play somewhat difficult to debug.  It's recommended that this
 be applied to single tasks only, once a playbook is completed.   
+
 
 I don't see my question here
 ++++++++++++++++++++++++++++
