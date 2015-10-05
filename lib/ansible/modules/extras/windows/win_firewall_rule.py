@@ -90,10 +90,10 @@ options:
         default: null
         required: false
     profile:
-        describtion:
+        description:
             - the profile this rule applies to
-        default: current
-        choices: ['current', 'domain', 'standard', 'all']
+        default: null
+        required: false
     force:
         description:
             - Enforces the change if a rule with different values exists
