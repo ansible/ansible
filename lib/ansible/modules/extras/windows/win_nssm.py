@@ -29,7 +29,7 @@ short_description: NSSM - the Non-Sucking Service Manager
 description:
     - nssm is a service helper which doesn't suck. See https://nssm.cc/ for more information.
 requirements:
-  - "nssm >= 2.24.0 # (install via win_chocolatey) win_chocolatey: name=nssm"
+    - "nssm >= 2.24.0 # (install via win_chocolatey) win_chocolatey: name=nssm"
 options:
   name:
     description:
@@ -52,7 +52,7 @@ options:
       - The application binary to run as a service
       - "Specify this whenever the service may need to be installed (state: present, started, stopped, restarted)"
       - "Note that the application name must look like the following, if the directory includes spaces:"
-      - "nssm install service \\"c:\\Program Files\\app.exe\\" \\"\\"\\"C:\\Path with spaces\\"\\"\\""
+      - 'nssm install service "c:\\Program Files\\app.exe\\" "C:\\Path with spaces\\"'
       - "See commit 0b386fc1984ab74ee59b7bed14b7e8f57212c22b in the nssm.git project for more info (https://git.nssm.cc/?p=nssm.git;a=commit;h=0b386fc1984ab74ee59b7bed14b7e8f57212c22b)"
     required: false
     default: null
@@ -77,53 +77,53 @@ author:
 '''
 
 EXAMPLES = '''
-  # Install and start the foo service
-  win_nssm:
+# Install and start the foo service
+- win_nssm:
     name: foo
-    application: C:\windows\foo.exe
+    application: C:\windowsk\\foo.exe
 
-  # Install and start the foo service with a key-value pair argument
-  # This will yield the following command: C:\windows\foo.exe bar "true"
-  win_nssm:
+# Install and start the foo service with a key-value pair argument
+# This will yield the following command: C:\windows\\foo.exe bar "true"
+- win_nssm:
     name: foo
-    application: C:\windows\foo.exe
+    application: C:\windows\\foo.exe
     app_parameters:
         bar: true
 
-  # Install and start the foo service with a key-value pair argument, where the argument needs to start with a dash
-  # This will yield the following command: C:\windows\foo.exe -bar "true"
-  win_nssm:
+# Install and start the foo service with a key-value pair argument, where the argument needs to start with a dash
+# This will yield the following command: C:\windows\\foo.exe -bar "true"
+- win_nssm:
     name: foo
-    application: C:\windows\foo.exe
+    application: C:\windows\\foo.exe
     app_parameters:
         "-bar": true
 
-  # Install and start the foo service with a single parameter
-  # This will yield the following command: C:\windows\foo.exe bar
-  win_nssm:
+# Install and start the foo service with a single parameter
+# This will yield the following command: C:\windows\\foo.exe bar
+- win_nssm:
     name: foo
-    application: C:\windows\foo.exe
+    application: C:\windows\\foo.exe
     app_parameters:
         _: bar
 
-  # Install and start the foo service with a mix of single params, and key value pairs
-  # This will yield the following command: C:\windows\foo.exe bar -file output.bat
-  win_nssm:
+# Install and start the foo service with a mix of single params, and key value pairs
+# This will yield the following command: C:\windows\\foo.exe bar -file output.bat
+- win_nssm:
     name: foo
-    application: C:\windows\foo.exe
+    application: C:\windows\\foo.exe
     app_parameters:
         _: bar
         "-file": "output.bat"
 
-  # Install and start the foo service, redirecting stdout and stderr to the same file
-  win_nssm:
+# Install and start the foo service, redirecting stdout and stderr to the same file
+- win_nssm:
     name: foo
-    application: C:\windows\foo.exe
-    stdout_file: C:\windows\foo.log
-    stderr_file: C:\windows\foo.log
+    application: C:\windows\\foo.exe
+    stdout_file: C:\windows\\foo.log
+    stderr_file: C:\windows\\foo.log
 
-  # Remove the foo service
-  win_nssm:
+# Remove the foo service
+- win_nssm:
     name: foo
     state: absent
 '''
