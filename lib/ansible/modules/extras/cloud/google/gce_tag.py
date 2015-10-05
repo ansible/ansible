@@ -219,7 +219,6 @@ def main():
         changed, tags_changed = remove_tags(gce, module, instance_name, tags)
 
     module.exit_json(changed=changed, instance_name=instance_name, tags=tags_changed, zone=zone)
-    sys.exit(0)
 
 # import module snippets
 from ansible.module_utils.basic import *

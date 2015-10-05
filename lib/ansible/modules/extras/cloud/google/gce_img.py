@@ -201,7 +201,6 @@ def main():
     changed = delete_image(gce, name, module)
 
   module.exit_json(changed=changed, name=name)
-  sys.exit(0)
 
 # import module snippets
 from ansible.module_utils.basic import *
