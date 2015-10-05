@@ -37,6 +37,11 @@ options:
             - name of package to install/remove
         required: false
         default: None
+    path:
+        description:
+            - ':' separated list of paths to search for 'brew' executable. Since A package (I(formula) in homebrew parlance) location is prefixed relative to the actual path of I(brew) command, providing an alternative I(brew) path enables managing different set of packages in an alternative location in the system.
+        required: false
+        default: '/usr/local/bin'
     state:
         description:
             - state of the package
@@ -303,7 +308,7 @@ class Homebrew(object):
             return package
     # /class properties -------------------------------------------- }}}
 
-    def __init__(self, module, path=None, packages=None, state=None,
+    def __init__(self, module, path, packages=None, state=None,
                  update_homebrew=False, upgrade_all=False,
                  install_options=None):
         if not install_options:
@@ -329,12 +334,7 @@ class Homebrew(object):
             setattr(self, key, val)
 
     def _prep(self):
-        self._prep_path()
         self._prep_brew_path()
-
-    def _prep_path(self):
-        if not self.path:
-            self.path = ['/usr/local/bin']
 
     def _prep_brew_path(self):
         if not self.module:
@@ -770,7 +770,10 @@ def main():
                 required=False,
                 type='list',
             ),
-            path=dict(required=False),
+            path=dict(
+                default="/usr/local/bin",
+                required=False,
+            ),
             state=dict(
                 default="present",
                 choices=[
@@ -808,8 +811,6 @@ def main():
     path = p['path']
     if path:
         path = path.split(':')
-    else:
-        path = ['/usr/local/bin']
 
     state = p['state']
     if state in ('present', 'installed'):
