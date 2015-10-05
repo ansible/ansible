@@ -78,6 +78,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         for entry in pb._entries:
             temp_vars = entry.vars.copy()
             temp_vars.update(new_obj.vars)
+            param_tags = temp_vars.pop('tags', None)
+            if param_tags is not None:
+                entry.tags.extend(param_tags.split(','))
             entry.vars = temp_vars
             entry.tags = list(set(entry.tags).union(new_obj.tags))
             if entry._included_path is None:
