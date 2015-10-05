@@ -93,7 +93,7 @@ notes: []
 # informational: requirements for nodes
 requirements:
   - "python >= 2.6"
-  - dnf
+  - python-dnf
 author:
   - '"Igor Gnatenko (@ignatenkobrain)" <i.gnatenko.brain@gmail.com>'
   - '"Cristian van Ee (@DJMuggs)" <cristian at cvee.org>'
