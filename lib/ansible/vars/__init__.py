@@ -427,6 +427,8 @@ class VariableManager:
 
         if 'hostvars' in all_vars and host:
             all_vars['vars'] = all_vars['hostvars'][host.get_name()]
+            all_vars['hostvars'] = dict(
+                [(host.get_name(), UnsafeProxy(all_vars['hostvars'][host.get_name()]))])
 
         #VARIABLE_CACHE[cache_entry] = all_vars
 
