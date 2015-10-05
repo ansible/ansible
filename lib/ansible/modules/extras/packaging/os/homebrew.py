@@ -69,10 +69,22 @@ options:
 notes:  []
 '''
 EXAMPLES = '''
+# Install formula foo with 'brew' in default path (C(/usr/local/bin))
 - homebrew: name=foo state=present
+
+# Install formula foo with 'brew' in alternate path C(/my/other/location/bin)
+- homebrew: name=foo path=/my/other/location/bin state=present
+
+# Update homebrew first and install formula foo with 'brew' in default path
 - homebrew: name=foo state=present update_homebrew=yes
+
+# Update homebrew first and upgrade formula foo to latest available with 'brew' in default path
 - homebrew: name=foo state=latest update_homebrew=yes
+
+# Update homebrew and upgrade all packages
 - homebrew: update_homebrew=yes upgrade_all=yes
+
+# Miscellaneous other examples
 - homebrew: name=foo state=head
 - homebrew: name=foo state=linked
 - homebrew: name=foo state=absent
