@@ -33,6 +33,7 @@ import tempfile
 import shlex
 import select
 import json
+import subprocess
 
 # The distutils module is not shipped with SUNWPython on Solaris.
 # It's in the SUNWPython-devel package which also contains development files

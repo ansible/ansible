@@ -28,6 +28,8 @@
 #
 
 import pprint
+import os
+from libcloud.compute.providers import get_driver
 
 USER_AGENT_PRODUCT="Ansible-gce"
 USER_AGENT_VERSION="v1"
