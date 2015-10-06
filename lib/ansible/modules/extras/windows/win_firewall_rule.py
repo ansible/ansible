@@ -19,7 +19,7 @@
 
 DOCUMENTATION = '''
 ---
-module: win_fw
+module: win_firewall_rule
 version_added: "2.0"
 author: Timothy Vandenbrande
 short_description: Windows firewall automation
@@ -99,13 +99,13 @@ options:
             - Enforces the change if a rule with different values exists
         default: false
         required: false
-    
+
 
 '''
 
 EXAMPLES = '''
-# create smtp firewall rule
-  action: win_fw
+- name: Firewall rule to allow smtp on TCP port 25
+  action: win_firewall_rule
   args:
       name: smtp
       state: present
