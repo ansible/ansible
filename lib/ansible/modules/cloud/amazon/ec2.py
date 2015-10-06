@@ -244,6 +244,13 @@ options:
     required: false
     default: null
     aliases: ['network_interface']
+  spot_launch_group:
+    version_added: "2.0"
+    description:
+      - Launch group for spot request, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/how-spot-instances-work.html#spot-launch-group)
+    required: false
+    default: null
+    aliases: []
 
 author:
     - "Tim Gerla (@tgerla)"
@@ -355,6 +362,7 @@ EXAMPLES = '''
     wait: yes
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
+    spot_launch_group: report_generators
 
 # Examples using pre-existing network interfaces
 - ec2:
@@ -857,6 +865,7 @@ def create_instances(module, ec2, vpc, override_count=None):
     source_dest_check = module.boolean(module.params.get('source_dest_check'))
     termination_protection = module.boolean(module.params.get('termination_protection'))
     network_interfaces = module.params.get('network_interfaces')
+    spot_launch_group = module.params.get('spot_launch_group')
 
     # group_id and group_name are exclusive of each other
     if group_id and group_name:
@@ -1038,6 +1047,9 @@ def create_instances(module, ec2, vpc, override_count=None):
                 elif placement_group :
                         module.fail_json(
                             msg="placement_group parameter requires Boto version 2.3.0 or higher.")
+
+                if spot_launch_group and isinstance(spot_launch_group, basestring):
+                    params['launch_group'] = spot_launch_group
 
                 params.update(dict(
                     count = count_remaining,
@@ -1307,6 +1319,7 @@ def main():
             instance_type = dict(aliases=['type']),
             spot_price = dict(),
             spot_type = dict(default='one-time', choices=["one-time", "persistent"]),
+            spot_launch_group = dict(),
             image = dict(),
             kernel = dict(),
             count = dict(type='int', default='1'),
