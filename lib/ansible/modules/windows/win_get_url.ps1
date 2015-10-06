@@ -30,7 +30,7 @@ If ($params.url) {
     $url = $params.url
 }
 Else {
-    Fail-Json $result "mising required argument: url"
+    Fail-Json $result "missing required argument: url"
 }
 
 If ($params.dest) {
