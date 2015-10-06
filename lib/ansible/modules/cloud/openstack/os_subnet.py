@@ -112,23 +112,23 @@ requirements:
 EXAMPLES = '''
 # Create a new (or update an existing) subnet on the specified network
 - os_subnet:
-    state=present
-    network_name=network1
-    name=net1subnet
-    cidr=192.168.0.0/24
+    state: present
+    network_name: network1
+    name: net1subnet
+    cidr: 192.168.0.0/24
     dns_nameservers:
        - 8.8.8.7
        - 8.8.8.8
     host_routes:
        - destination: 0.0.0.0/0
-         nexthop: 123.456.78.9
+         nexthop: 12.34.56.78
        - destination: 192.168.0.0/24
          nexthop: 192.168.0.1
 
 # Delete a subnet
 - os_subnet:
-    state=absent
-    name=net1subnet
+    state: absent
+    name: net1subnet
 
 # Create an ipv6 stateless subnet
 - os_subnet:
