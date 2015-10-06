@@ -1225,6 +1225,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
     wait_timeout = int(module.params.get('wait_timeout'))
     changed = False
     instance_dict_array = []
+    source_dest_check = module.params.get('source_dest_check')
+    termination_protection = module.params.get('termination_protection')
 
     if not isinstance(instance_ids, list) or len(instance_ids) < 1:
         # Fail unless the user defined instance tags
