@@ -106,9 +106,13 @@ class SoftLayerInventory(object):
 
         # if there's no IP address, we can't reach it
         if 'primaryIpAddress' not in instance:
-            return
+            if 'primaryBackendIpAddress' not in instance:
+                return
 
-        dest = instance['primaryIpAddress']
+        if 'primaryIpAddress' in instance:
+            dest = instance['primaryIpAddress']
+        else:
+            dest = instance['primaryBackendIpAddress']
 
         self.inventory["_meta"]["hostvars"][dest] = instance
 
