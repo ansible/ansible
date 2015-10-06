@@ -167,6 +167,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
                 all_vars = dict()
 
             templar = Templar(loader=self._loader, variables=all_vars)
+            role_name = templar.template(role_name)
 
             # now iterate through the possible paths and return the first one we find
             for path in role_search_paths:
