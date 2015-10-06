@@ -35,6 +35,7 @@ class VaultCLI(CLI):
     def __init__(self, args, display=None):
 
         self.vault_pass = None
+        self.new_vault_pass = None
         super(VaultCLI, self).__init__(args, display)
 
     def parse(self):
