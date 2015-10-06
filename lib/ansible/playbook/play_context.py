@@ -27,7 +27,6 @@ import re
 import string
 
 from six import iteritems, string_types
-from six.moves import range
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
