@@ -135,7 +135,7 @@ class GalaxyCLI(CLI):
     def _display_role_info(self, role_info):
 
         text = "\nRole: %s \n" % role_info['name']
-        text += "\tdescription: %s \n" % role_info['description']
+        text += "\tdescription: %s \n" % role_info.get('description', '')
 
         for k in sorted(role_info.keys()):
 
@@ -249,7 +249,7 @@ class GalaxyCLI(CLI):
         data = ''
         for role in self.args:
 
-            role_info = {'role_path': roles_path}
+            role_info = {'path': roles_path}
             gr = GalaxyRole(self.galaxy, role)
 
             install_info = gr.install_info
@@ -270,7 +270,7 @@ class GalaxyCLI(CLI):
                 role_info.update(gr.metadata)
 
             req = RoleRequirement()
-            __, __, role_spec= req.parse({'role': role})
+            role_spec= req.role_yaml_parse({'role': role})
             if role_spec:
                 role_info.update(role_spec)
 
@@ -308,19 +308,17 @@ class GalaxyCLI(CLI):
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
                     for role in yaml.safe_load(f.read()):
+                        role = RoleRequirement.role_yaml_parse(role)
                         self.display.debug('found role %s in yaml file' % str(role))
-                        if 'name' not in role:
-                            if 'src' in role:
-                                role['name'] = RoleRequirement.repo_url_to_role_name(role['src'])
-                            else:
-                                raise AnsibleError("Must specify name or src for role")
+                        if 'name' not in role and 'scm' not in role:
+                            raise AnsibleError("Must specify name or src for role")
                         roles_left.append(GalaxyRole(self.galaxy, **role))
                 else:
                     self.display.deprecated("going forward only the yaml format will be supported")
                     # roles listed in a file, one per line
                     for rline in f.readlines():
                         self.display.debug('found role %s in text file' % str(rline))
-                        roles_left.append(GalaxyRole(self.galaxy, **RoleRequirement.role_spec_parse(rline)))
+                        roles_left.append(GalaxyRole(self.galaxy, **RoleRequirement.role_yaml_parse(rline)))
                 f.close()
             except (IOError, OSError) as e:
                 self.display.error('Unable to open %s: %s' % (role_file, str(e)))
@@ -334,7 +332,6 @@ class GalaxyCLI(CLI):
             self.display.debug('Installing role %s ' % role.name)
             # query the galaxy API for the role data
             role_data = None
-            role = roles_left.pop(0)
 
             if role.install_info is not None and not force:
                 self.display.display('- %s is already installed, skipping.' % role.name)
@@ -353,16 +350,20 @@ class GalaxyCLI(CLI):
                 for dep in role_dependencies:
                     self.display.debug('Installing dep %s' % dep)
                     dep_req = RoleRequirement()
-                    __, dep_name, __ = dep_req.parse(dep)
-                    dep_role = GalaxyRole(self.galaxy, name=dep_name)
+                    dep_info = dep_req.role_yaml_parse(dep)
+                    dep_role = GalaxyRole(self.galaxy, **dep_info)
+                    if '.' not in dep_role.name and '.' not in dep_role.src and dep_role.scm is None:
+                        # we know we can skip this, as it's not going to
+                        # be found on galaxy.ansible.com
+                        continue
                     if dep_role.install_info is None or force:
                         if dep_role not in roles_left:
-                            self.display.display('- adding dependency: %s' % dep_name)
-                            roles_left.append(GalaxyRole(self.galaxy, name=dep_name))
+                            self.display.display('- adding dependency: %s' % dep_role.name)
+                            roles_left.append(dep_role)
                         else:
-                            self.display.display('- dependency %s already pending installation.' % dep_name)
+                            self.display.display('- dependency %s already pending installation.' % dep_role.name)
                     else:
-                        self.display.display('- dependency %s is already installed, skipping.' % dep_name)
+                        self.display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
                 self.display.warning("- %s was NOT installed successfully." % role.name)
@@ -429,7 +430,7 @@ class GalaxyCLI(CLI):
             for path_file in path_files:
                 gr = GalaxyRole(self.galaxy, path_file)
                 if gr.metadata:
-                    install_info = gr.metadata
+                    install_info = gr.install_info
                     version = None
                     if install_info:
                         version = install_info.get("version", None)

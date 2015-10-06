@@ -32,6 +32,14 @@ from ansible.playbook.role.definition import RoleDefinition
 __all__ = ['RoleRequirement']
 
 
+VALID_SPEC_KEYS = [
+    'name',
+    'role',
+    'scm',
+    'src',
+    'version',
+]
+
 class RoleRequirement(RoleDefinition):
 
     """
@@ -40,72 +48,6 @@ class RoleRequirement(RoleDefinition):
 
     def __init__(self):
         pass
-
-    def _get_valid_spec_keys(self):
-        return (
-            'name',
-            'role',
-            'scm',
-            'src',
-            'version',
-        )
-
-    def parse(self, ds):
-        '''
-        FIXME: docstring
-        '''
-
-        assert type(ds) == dict or isinstance(ds, string_types)
-
-        role_name    = None
-        role_params  = dict()
-        new_ds       = dict()
-
-        if isinstance(ds, string_types):
-            role_name = ds
-        else:
-            (new_ds, role_params) = self._split_role_params(self._preprocess_role_spec(ds))
-
-            # pull the role name out of the ds
-            role_name = new_ds.pop('role_name', new_ds.pop('role', None))
-
-        if role_name is None:
-            raise AnsibleError("Role requirement did not contain a role name!", obj=ds)
-        return (new_ds, role_name, role_params)
-
-    def _preprocess_role_spec(self, ds):
-        if 'role' in ds:
-            # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-            role_info = RoleRequirement.role_spec_parse(ds['role'])
-            if isinstance(role_info, dict):
-                # Warning: Slight change in behaviour here.  name may be being
-                # overloaded.  Previously, name was only a parameter to the role.
-                # Now it is both a parameter to the role and the name that
-                # ansible-galaxy will install under on the local system.
-                if 'name' in ds and 'name' in role_info:
-                    del role_info['name']
-                ds.update(role_info)
-        else:
-            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
-            if 'github.com' in ds["src"] and 'http' in ds["src"] and '+' not in ds["src"] and not ds["src"].endswith('.tar.gz'):
-                ds["src"] = "git+" + ds["src"]
-
-            if '+' in ds["src"]:
-                (scm, src) = ds["src"].split('+')
-                ds["scm"] = scm
-                ds["src"] = src
-
-            if 'name' in ds:
-                ds["role"] = ds["name"]
-                del ds["name"]
-            else:
-                ds["role"] = RoleRequirement.repo_url_to_role_name(ds["src"])
-
-            # set some values to a default value, if none were specified
-            ds.setdefault('version', '')
-            ds.setdefault('scm', None)
-
-        return ds
 
     @staticmethod
     def repo_url_to_role_name(repo_url):
@@ -173,16 +115,11 @@ class RoleRequirement(RoleDefinition):
 
         if 'role' in role:
             # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
-            role_info = RoleRequirement.role_spec_parse(role['role'])
-            if isinstance(role_info, dict):
-                # Warning: Slight change in behaviour here.  name may be being
-                # overloaded.  Previously, name was only a parameter to the role.
-                # Now it is both a parameter to the role and the name that
-                # ansible-galaxy will install under on the local system.
-                if 'name' in role and 'name' in role_info:
-                    del role_info['name']
-                role.update(role_info)
+            role = RoleRequirement.role_spec_parse(role['role'])
+            #if 'name' in role:
+            #    del role['name']
         else:
+            role = role.copy()
             # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
             if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
                 role["src"] = "git+" + role["src"]
@@ -200,6 +137,10 @@ class RoleRequirement(RoleDefinition):
 
             if 'scm' not in role:
                 role['scm'] = None
+
+        for key in role.keys():
+            if key not in VALID_SPEC_KEYS:
+                role.pop(key)
 
         return role
 

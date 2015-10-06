@@ -46,7 +46,7 @@ class GalaxyRole(object):
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
 
 
-    def __init__(self, galaxy, name, src=None, version=None, scm=None, role_path=None):
+    def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
 
         self._metadata = None
         self._install_info = None
@@ -59,8 +59,10 @@ class GalaxyRole(object):
         self.src = src or name
         self.scm = scm
 
-        if role_path is not None:
-            self.path = role_path
+        if path is not None:
+            if self.name not in path:
+                path = os.path.join(path, self.name)
+            self.path = path
         else:
             for path in galaxy.roles_paths:
                 role_path = os.path.join(path, self.name)
@@ -222,7 +224,7 @@ class GalaxyRole(object):
 
         if tmp_file:
 
-            display.display("installing from %s" % tmp_file)
+            display.debug("installing from %s" % tmp_file)
 
             if not tarfile.is_tarfile(tmp_file):
                 raise AnsibleError("the file downloaded was not a tar.gz")
