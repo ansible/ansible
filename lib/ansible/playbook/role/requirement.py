@@ -113,11 +113,31 @@ class RoleRequirement(RoleDefinition):
     @staticmethod
     def role_yaml_parse(role):
 
+        if isinstance(role, string_types):
+            name = None
+            scm = None
+            src = None
+            version = None
+            if ',' in role:
+                if role.count(',') == 1:
+                    (src, version) = role.strip().split(',', 1)
+                elif role.count(',') == 2:
+                    (src, version, name) = role.strip().split(',', 2)
+                else:
+                    raise AnsibleError("Invalid role line (%s). Proper format is 'role_name[,version[,name]]'" % role)
+            else:
+                src = role
+
+            if name is None:
+                name = RoleRequirement.repo_url_to_role_name(src)
+            if '+' in src:
+                (scm, src) = src.split('+', 1)
+
+            return dict(name=name, src=src, scm=scm, version=version)
+
         if 'role' in role:
             # Old style: {role: "galaxy.role,version,name", other_vars: "here" }
             role = RoleRequirement.role_spec_parse(role['role'])
-            #if 'name' in role:
-            #    del role['name']
         else:
             role = role.copy()
             # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
@@ -157,7 +177,7 @@ class RoleRequirement(RoleDefinition):
                 raise AnsibleError("error executing: %s" % " ".join(clone_cmd))
             rc = popen.wait()
         if rc != 0:
-            raise AnsibleError ("- command %s failed in directory %s" % (' '.join(clone_cmd), tempdir))
+            raise AnsibleError ("- command %s failed in directory %s (rc=%s)" % (' '.join(clone_cmd), tempdir, rc))
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.tar')
         if scm == 'hg':
@@ -177,7 +197,7 @@ class RoleRequirement(RoleDefinition):
                                      stderr=devnull, stdout=devnull)
             rc = popen.wait()
         if rc != 0:
-            raise AnsibleError("- command %s failed in directory %s" % (' '.join(archive_cmd), tempdir))
+            raise AnsibleError("- command %s failed in directory %s (rc=%s)" % (' '.join(archive_cmd), tempdir, rc))
 
         shutil.rmtree(tempdir, ignore_errors=True)
         return temp_file.name
