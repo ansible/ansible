@@ -22,7 +22,7 @@
 
 function getFirewallRule ($fwsettings) {
     try {
-            
+
         #$output = Get-NetFirewallRule -name $($fwsettings.name);
         $rawoutput=@(netsh advfirewall firewall show rule name="$($fwsettings.Name)")
         if (!($rawoutput -eq 'No rules match the specified criteria.')){
@@ -76,6 +76,8 @@ function getFirewallRule ($fwsettings) {
                         } elseif ((($fwsetting.Key -eq 'Name') -or ($fwsetting.Key -eq 'DisplayName')) -and ($output."Rule Name" -eq $fwsettings.$($fwsetting.Key))) {
                             $donothing=$false
                         } elseif (($fwsetting.Key -eq 'Profile') -and ($output."Profiles" -eq $fwsettings.$($fwsetting.Key))) {
+                            $donothing=$false
+                        } elseif (($fwsetting.Key -eq 'Enable') -and ($output."Enabled" -eq $fwsettings.$($fwsetting.Key))) {
                             $donothing=$false
                         } else {
                             $diff=$true;
@@ -196,6 +198,7 @@ $fwsettings=@{}
 # Variabelise the arguments
 $params=Parse-Args $args;
 
+$enable=Get-Attr $params "enable" $null;
 $state=Get-Attr $params "state" "present";
 $name=Get-Attr $params "name" "";
 $direction=Get-Attr $params "direction" "";
@@ -203,6 +206,17 @@ $force=Get-Attr $params "force" $false;
 $action=Get-Attr $params "action" "";
 
 # Check the arguments
+if ($enable -ne $null) {
+    if ($enable -eq $true) {
+        $fwsettings.Add("Enable", "yes");
+    } elseif ($enable -eq $false) {
+        $fwsettings.Add("Enable", "no");
+    } else {
+        $misArg+="enable";
+        $msg+=@("for the enable parameter only yes and no is allowed");
+    };
+};
+
 if (($state -ne "present") -And ($state -ne "absent")){
     $misArg+="state";
     $msg+=@("for the state parameter only present and absent is allowed");
@@ -294,7 +308,7 @@ switch ($state.ToLower()){
                 };
                 Exit-Json $result;
             }
-        } elseif ($capture.identical -eq $false) { 
+        } elseif ($capture.identical -eq $false) {
             if ($force -eq $true) {
                 $capture=removeFirewallRule($fwsettings);
                 $msg+=$capture.msg;

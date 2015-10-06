@@ -25,7 +25,13 @@ author: Timothy Vandenbrande
 short_description: Windows firewall automation
 description:
     - allows you to create/remove/update firewall rules
-options: 
+options:
+    enable:
+        description:
+            - is this firewall rule enabled or disabled
+        default: null
+        required: false
+        choices: ['yes', 'no']
     state:
         description:
             - create/remove/update or powermanage your VM
@@ -108,6 +114,7 @@ EXAMPLES = '''
   action: win_firewall_rule
   args:
       name: smtp
+      enabled: yes
       state: present
       localport: 25
       action: allow
