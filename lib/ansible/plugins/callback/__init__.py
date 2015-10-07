@@ -127,8 +127,6 @@ class CallbackBase:
             else:
                 self.v2_playbook_item_on_ok(newres)
 
-        del result._result['results']
-
     def set_play_context(self, play_context):
         pass
 
