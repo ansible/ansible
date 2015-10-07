@@ -10,9 +10,11 @@ import sys
 import argparse
 
 from fnmatch import fnmatch
+from utils import find_globals
 
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
+from ansible.module_utils import basic as module_utils_basic
 
 try:
     from cStringIO import StringIO
@@ -22,6 +24,7 @@ except ImportError:
 
 BLACKLIST_DIRS = frozenset(('.git',))
 INDENT_REGEX = re.compile(r'(^[ \t]*)')
+BASIC_RESERVED = frozenset((r for r in dir(module_utils_basic) if r[0] != '_'))
 
 
 class Validator(object):
@@ -288,6 +291,14 @@ class ModuleValidator(Validator):
         if not os.path.isfile(py_path):
             self.errors.append('Missing python documentation file')
 
+    def _find_redeclarations(self):
+        g = set()
+        find_globals(g, self.ast.body)
+        redeclared = BASIC_RESERVED.intersection(g)
+        if redeclared:
+            self.warnings.append('Redeclared basic.py variable or '
+                                 'function: %s' % ', '.join(redeclared))
+
     def validate(self):
         super(ModuleValidator, self).validate()
 
@@ -320,7 +331,7 @@ class ModuleValidator(Validator):
             doc, examples, ret = get_docstring(self.path)
             trace = sys.stdout.getvalue()
             sys.stdout = sys_stdout
-            sys.stderr = sys.stderr
+            sys.stderr = sys_stderr
             if trace:
                 self.traces.append(trace)
             if not bool(doc):
@@ -337,6 +348,7 @@ class ModuleValidator(Validator):
             self._find_module_utils(main)
             self._find_has_import()
             self._check_for_tabs()
+            self._find_redeclarations()
 
         if self._powershell_module():
             self._find_ps_replacers()
@@ -372,6 +384,7 @@ class PythonPackageValidator(Validator):
         if not os.path.exists(init_file):
             self.errors.append('Ansible module subdirectories must contain an '
                                '__init__.py')
+
 
 def re_compile(value):
     """
