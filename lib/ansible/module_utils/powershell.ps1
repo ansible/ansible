@@ -26,7 +26,8 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-Set-StrictMode -Version Latest
+#Temporarily removed strictmode as it breaks a lot of modules
+#Set-StrictMode -Version Latest
 
 # Ansible v2 will insert the module arguments below as a string containing
 # JSON; assign them to an environment variable and redefine $args so existing
