@@ -358,7 +358,9 @@ class PlayContext(Base):
                 if connection_type in delegated_vars:
                     break
             else:
-                if getattr(new_info, 'connection', None) == 'local' and new_info.remote_addr not in C.LOCALHOST:
+                if new_info.remote_addr in C.LOCALHOST:
+                    setattr(new_info, 'connection', 'local')
+                elif getattr(new_info, 'connection', None) == 'local' and new_info.remote_addr not in C.LOCALHOST:
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
         elif task._local_action:
             # otherwise, in the special instance that the task was specified
