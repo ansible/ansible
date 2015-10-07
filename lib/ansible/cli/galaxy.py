@@ -318,7 +318,7 @@ class GalaxyCLI(CLI):
                     # roles listed in a file, one per line
                     for rline in f.readlines():
                         self.display.debug('found role %s in text file' % str(rline))
-                        role = RoleRequirement.role_yaml_parse(rline)
+                        role = RoleRequirement.role_yaml_parse(rline.strip())
                         roles_left.append(GalaxyRole(self.galaxy, **role))
                 f.close()
             except (IOError, OSError) as e:
