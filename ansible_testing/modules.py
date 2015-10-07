@@ -68,7 +68,8 @@ class Validator(object):
         ret = []
 
         for trace in self.traces:
-            print(trace.replace(self._root, '').lstrip('/'))
+            #print(trace.replace(self._root, '').lstrip('/'))
+            print(trace)
         for error in self.errors:
             print('ERROR: %s' % error)
             ret.append(1)
@@ -106,10 +107,9 @@ class ModuleValidator(Validator):
         'setup.ps1'
     ))
 
-    def __init__(self, path, root=None):
+    def __init__(self, path):
         super(ModuleValidator, self).__init__()
 
-        self._root = root
         self.path = path
         self.basename = os.path.basename(self.path)
         self.name, _ = os.path.splitext(self.basename)
@@ -128,9 +128,7 @@ class ModuleValidator(Validator):
 
     @property
     def object_path(self):
-        if self._root:
-            return self.path.replace(self._root, '').lstrip('/')
-        return self.object_name
+        return self.path
 
     def _python_module(self):
         if self.path.endswith('.py'):
@@ -360,10 +358,9 @@ class ModuleValidator(Validator):
 
 
 class PythonPackageValidator(Validator):
-    def __init__(self, path, root=None):
+    def __init__(self, path):
         super(PythonPackageValidator, self).__init__()
 
-        self._root = root
         self.path = path
         self.basename = os.path.basename(path)
 
@@ -373,9 +370,7 @@ class PythonPackageValidator(Validator):
 
     @property
     def object_path(self):
-        if self._root:
-            return self.path.replace(self._root, '').lstrip('/')
-        return self.object_name
+        return self.path
 
     def validate(self):
         super(PythonPackageValidator, self).validate()
@@ -410,16 +405,16 @@ def main():
                         type=re_compile)
     args = parser.parse_args()
 
-    args.modules = os.path.abspath(args.modules.rstrip('/'))
+    args.modules = args.modules.rstrip('/')
 
     exit = []
 
     # Allow testing against a single file
     if os.path.isfile(args.modules):
-        path = os.path.abspath(args.modules)
+        path = args.modules
         if args.exclude and args.exclude.search(path):
             sys.exit(0)
-        mv = ModuleValidator(path, root=args.modules)
+        mv = ModuleValidator(path)
         mv.validate()
         exit.append(mv.report(args.warnings))
         sys.exit(sum(exit))
@@ -434,8 +429,7 @@ def main():
             path = os.path.join(root, dirname)
             if args.exclude and args.exclude.search(path):
                 continue
-            pv = PythonPackageValidator(os.path.abspath(path),
-                                        root=args.modules)
+            pv = PythonPackageValidator(path)
             pv.validate()
             exit.append(pv.report(args.warnings))
 
@@ -443,7 +437,7 @@ def main():
             path = os.path.join(root, filename)
             if args.exclude and args.exclude.search(path):
                 continue
-            mv = ModuleValidator(os.path.abspath(path), root=args.modules)
+            mv = ModuleValidator(path)
             mv.validate()
             exit.append(mv.report(args.warnings))
 
