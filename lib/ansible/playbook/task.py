@@ -101,6 +101,12 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).__init__()
 
+    def get_path(self):
+       ''' return the absolute path of the task with its line number '''
+
+       if hasattr(self, '_ds'):
+           return "%s:%s" % (self._ds._data_source, self._ds._line_number)
+
     def get_name(self):
        ''' return the name of the task '''
 
