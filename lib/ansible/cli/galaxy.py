@@ -347,7 +347,7 @@ class GalaxyCLI(CLI):
 
             # install dependencies, if we want them
             if not no_deps and installed:
-                role_dependencies = role.metadata.get('dependencies', [])
+                role_dependencies = role.metadata.get('dependencies') or []
                 for dep in role_dependencies:
                     self.display.debug('Installing dep %s' % dep)
                     dep_req = RoleRequirement()
