@@ -239,7 +239,7 @@ def main():
             virtualenv_python=dict(default=None, required=False, type='str'),
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
-            chdir=dict(default=None, required=False),
+            chdir=dict(default=None, required=False, type='path'),
             executable=dict(default=None, required=False),
         ),
         required_one_of=[['name', 'requirements']],
@@ -285,10 +285,7 @@ def main():
                 cmd += ' -p%s' % virtualenv_python
 
             cmd = "%s %s" % (cmd, env)
-            this_dir = tempfile.gettempdir()
-            if chdir:
-                this_dir = os.path.join(this_dir, chdir)
-            rc, out_venv, err_venv = module.run_command(cmd, cwd=this_dir)
+            rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
             out += out_venv
             err += err_venv
             if rc != 0:
@@ -328,9 +325,6 @@ def main():
     elif requirements:
         cmd += ' -r %s' % requirements
 
-    this_dir = tempfile.gettempdir()
-    if chdir:
-        this_dir = os.path.join(this_dir, chdir)
 
     if module.check_mode:
         if extra_args or requirements or state == 'latest' or not name:
@@ -340,7 +334,8 @@ def main():
             module.exit_json(changed=True)
 
         freeze_cmd = '%s freeze' % pip
-        rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=this_dir)
+
+        rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=chdir)
 
         if rc != 0:
             module.exit_json(changed=True)
@@ -353,7 +348,7 @@ def main():
         changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
         module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
-    rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=this_dir)
+    rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
     out += out_pip
     err += err_pip
     if rc == 1 and state == 'absent' and \
