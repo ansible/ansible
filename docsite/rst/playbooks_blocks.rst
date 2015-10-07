@@ -36,7 +36,6 @@ privilege escalation for all the enclosed tasks.
 Error Handling
 ``````````````
 
-About Blocks
 Blocks also introduce the ability to handle errors in a way similar to exceptions in most programming languages.
 
 .. code-block:: YAML
