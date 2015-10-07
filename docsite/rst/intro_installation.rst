@@ -1,50 +1,67 @@
 Installation
 ============
 
+.. index::
+   pair: installation; introduction
+
 .. contents:: Topics
 
 .. _getting_ansible:
 
-Getting Ansible
-```````````````
+Ansible GitHub Project
+````````````````````````
 
-You may also wish to follow the `GitHub project <https://github.com/ansible/ansible>`_ if
-you have a GitHub account.  This is also where we keep the issue tracker for sharing
-bugs and feature ideas.
+.. index::
+   single: GitHub
+   single: issue tracker
+   single: bug reporting
+   single: feature ideas
+
+If you have a GitHub account, it may interest you to follow the `Ansible GitHub project <https://github.com/ansible/ansible>`_. This is also where the issue tracker for sharing bugs and feature ideas is kept.
 
 .. _what_will_be_installed:
 
 Basics / What Will Be Installed
-```````````````````````````````
+`````````````````````````````````
+
+.. index::
+   pair: installation; what is installed
 
 Ansible by default manages machines over the SSH protocol.
 
-Once Ansible is installed, it will not add a database, and there will be no daemons to start or keep running.  You only need to install it on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there's no real question about how to upgrade Ansible when moving to a new version.
+Once Ansible is installed, it will not add a database, and there will be no daemons to start or keep running.  You only need to install Ansible on one machine (which could easily be a laptop) and it can manage an entire fleet of remote machines from that central point.  When Ansible manages remote machines, it does not leave software installed or running on them, so there is no question about how to upgrade Ansible when moving to a new version.
 
 .. _what_version:
+
+.. index::
+  single: versioning
+  pair: Ansible; selecting a version
+  pair: Ansible; release cycles
 
 What Version To Pick?
 `````````````````````
 
-Because it runs so easily from source and does not require any installation of software on remote
-machines, many users will actually track the development version.  
+Because Ansible runs so easily from source and does not require any installation of software on remote machines, many users choose to track the development version.  
 
-Ansible's release cycles are usually about two months long.  Due to this
-short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
-backports on the stable branch.  Major bugs will still have maintenance releases when needed, though
-these are infrequent.
+Ansible's release cycles are usually about two months long.  Due to this short release cycle, minor bugs are generally fixed in the next release versus maintaining backports on the stable branch.  Major bugs will still have maintenance releases when needed, although these are infrequent.
 
-If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using the OS package manager.
+If you want to run the latest released version of Ansible, and you are running |rhel| (TM), CentOS, Fedora, Debian, or Ubuntu, it is recommended that you use the OS package manager.
 
-For other installation options, we recommend installing via "pip", which is the Python package manager, though other options are also available.
+For other installation options, it is recommended that you install via the ``pip`` command, which is the Python package manager, though other options are also available.
 
-If you wish to track the development release to use and test the latest features, we will share
-information about running from source.  It's not necessary to install the program to run from source.
+To track the development release to use and test the latest features, we will share information about running from source.  Note, however, that it is not necessary to install Ansible to run from source.
+.. FIXME  we will share *what info, where?* about running from source..? 
 
 .. _control_machine_requirements:
 
 Control Machine Requirements
 ````````````````````````````
+
+.. index:: 
+  single: control machine requirements
+  single: too many open files
+  single: ulimit, raising
+  single: fork management
 
 Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
@@ -52,8 +69,8 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 
 .. note::
 
-    As of 2.0 ansible uses a few more file handles to manage it's forks, OS X has a very low setting so if you want to use 15 or more forks
-    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 2048``. Or just any time you see a "Too many open files" error.
+    As of version 2.0, Ansible uses a few more file handles to manage its forks. OS X has a very low fork setting--to use 15 or more forks
+    you must raise the *ulimit*, such as ``sudo launchctl limit maxfiles 1024 2048``. This is good troubleshooting advice to try any time you see a "Too many open files" type of error message.
 
 
 .. _managed_node_requirements:
@@ -61,24 +78,28 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 Managed Node Requirements
 `````````````````````````
 
-On the managed nodes, you need a way to communicate, normally ssh. By default this uses sftp, if not available you can switch to scp in ansible.cfg.
-Also you need Python 2.4 or later, but if you are running less than Python 2.5 on the remotes, you will also need:
+.. index::
+  single: managed node requirements
+  single: SFTP
+  single: SCP
+  single: python requirements
+  single: bootstrapping 
 
-* ``python-simplejson``
+On the managed nodes, you need a way to communicate, which is normally ``ssh``. By default this uses ``sftp``,  but you can switch to ``scp`` in the ``ansible.cfg`` file if it is needed. Also, you must have Python 2.4 or later installed. Please note that if you are running a version earlier than Python 2.5 on the remotes, you must also install ``python-simplejson``.
+
+.. tip::
+
+   Ansible's ``raw`` module (for executing commands in a quick and dirty
+   way) and the script module don't have these requirements.  Technically, you can use
+   Ansible to install python-simplejson using the ``raw`` module, which
+   then allows you to use everything else.  (That's jumping ahead,
+   though, and may be best left to more experienced users.)
 
 .. note::
 
-   Ansible's "raw" module (for executing commands in a quick and dirty
-   way) and the script module don't even need that.  So technically, you can use
-   Ansible to install python-simplejson using the raw module, which
-   then allows you to use everything else.  (That's jumping ahead
-   though.)
-
-.. note::
-
-   If you have SELinux enabled on remote nodes, you will also want to install
-   libselinux-python on them before using any copy/file/template related functions in
-   Ansible. You can of course still use the yum module in Ansible to install this package on
+   If you have SELinux enabled on remote nodes, you should also install
+   ``libselinux-python`` on them before using any copy/file/template related functions in
+   Ansible. Use the ``yum`` module in Ansible to install this package on
    remote systems that do not have it.
 
 .. note::
@@ -86,33 +107,35 @@ Also you need Python 2.4 or later, but if you are running less than Python 2.5 o
    Python 3 is a slightly different language than Python 2 and most Python programs (including
    Ansible) are not switching over yet.  However, some Linux distributions (Gentoo, Arch) may not have a 
    Python 2.X interpreter installed by default.  On those systems, you should install one, and set
-   the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
-   like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
+   the ``ansible_python_interpreter`` variable in the inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
+   like |rhel|, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
    Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
-   using the 'raw' module will be able to do it remotely.
+   you can use the ``raw`` module to do this remotely.
 
 .. _installing_the_control_machine:
 
 Installing the Control Machine
-``````````````````````````````
+````````````````````````````````
+
+.. index:: 
+  pair: installation; control machine
+  pair: installation; source 
+  pair: installation; Tower as the control machine
+  pair: installation; python modules
+  pair: installation; pip
 
 .. _from_source:
 
 Running From Source
 +++++++++++++++++++
 
-Ansible is trivially easy to run from a checkout, root permissions are not required
-to use it and there is no software to actually install for Ansible itself.  No daemons
-or database setup are required.  Because of this, many users in our community use the
-development version of Ansible all of the time, so they can take advantage of new features
-when they are implemented, and also easily contribute to the project. Because there is
-nothing to install, following the development version is significantly easier than most
-open source projects.
+Ansible is trivially easy to run from a checkout--root permissions are not required to use it and there is no software to actually install for Ansible itself.  No daemons or database setups are required.  Many users in our community use the development version of Ansible all of the time, so they can take advantage of new features when they are implemented, as well as easily contribute to the project. Because there is
+nothing to install, following the development version is significantly easier with Ansible than it is with most other open source projects.
 
 .. note::
   
-   If you are intending to use Tower as the Control Machine, do not use a source install. Please use OS package manager (eg. apt/yum) or pip to install a stable version.
+   If you are intending to use Tower as the Control Machine, do not use a source install. Please use an OS package manager (eg. apt/yum) or the ``pip`` command to install a stable version.
 
 
 To install from source.
@@ -199,9 +222,13 @@ You can also build an RPM yourself.  From the root of a checkout or tarball, use
 Latest Releases Via Apt (Ubuntu)
 ++++++++++++++++++++++++++++++++
 
+.. index::
+  pair: installation; Ubuntu/Debian
+  pair: installation; PPA
+
 Ubuntu builds are available `in a PPA here <https://launchpad.net/~ansible/+archive/ansible>`_.
 
-To configure the PPA on your machine and install ansible run these commands:
+To configure the PPA on your machine and install Ansible, run the following commands:
 
 .. code-block:: bash
 
@@ -218,18 +245,23 @@ Debian/Ubuntu packages can also be built from the source checkout, run:
 
     $ make deb
 
-You may also wish to run from source to get the latest, which is covered above.
+You may also wish to run from source to get the latest, which is covered in :ref:`from_source`.
 
 .. _from_pkg:
 
 Latest Releases Via Portage (Gentoo)
 ++++++++++++++++++++++++++++++++++++
 
+.. index::
+  pair: installation; latest releases
+  pair: installation; Portage (Gentoo)
+  single: Portage (Gentoo)
+
 .. code-block:: bash
 
     $ emerge -av app-admin/ansible
 
-To install the newest version, you may need to unmask the ansible package prior to emerging:
+To install the newest version, you may need to unmask the Ansible package prior to emerging:
 
 .. code-block:: bash
 
@@ -240,14 +272,20 @@ To install the newest version, you may need to unmask the ansible package prior 
    If you have Python 3 as a default Python slot on your Gentoo nodes (default setting), then you
    must set ``ansible_python_interpreter = /usr/bin/python2`` in your group or inventory variables.
 
+
 Latest Releases Via pkg (FreeBSD)
 +++++++++++++++++++++++++++++++++
+
+.. index::
+  pair: installation; latest releases
+  pair: installation; pkg (FreeBSD)
+  pair: releases; pkg (FreeBSD)
 
 .. code-block:: bash
 
     $ sudo pkg install ansible
 
-You may also wish to install from ports, run:
+To install from ports, run:
 
 .. code-block:: bash
 
@@ -255,19 +293,29 @@ You may also wish to install from ports, run:
 
 .. _on_macos:
 
-Latest Releases on Mac OSX
+Latest Releases on Mac OS X
 ++++++++++++++++++++++++++++++++++++++
 
-The preferred way to install ansible on a Mac is via pip.
+.. index::
+  pair: installation; latest releases
+  pair: installation; Mac OS X
+  pair: releases; Mac OS X
 
-The instructions can be found in `Latest Releases Via Pip`_ section.
+The preferred way to install Ansible on a Mac is via ``pip``.
+
+The instructions can be found in the `Latest Releases Via Pip`_ section.
 
 .. _from_pkgutil:
 
 Latest Releases Via OpenCSW (Solaris)
 +++++++++++++++++++++++++++++++++++++
 
-Ansible is available for Solaris as `SysV package from OpenCSW <https://www.opencsw.org/packages/ansible/>`_.
+.. index::
+  pair: installation; latest releases
+  pair: installation; OpenCSW (Solaris)
+  pair: releases; OpenCSW (Solaris)
+
+Ansible is available for Solaris as an SysV package from OpenCSW. Refer to the `OpenCSW documention <https://www.opencsw.org/packages/ansible/>`_ for more information.
 
 .. code-block:: bash
 
@@ -279,13 +327,20 @@ Ansible is available for Solaris as `SysV package from OpenCSW <https://www.open
 Latest Releases Via Pacman (Arch Linux)
 +++++++++++++++++++++++++++++++++++++++
 
-Ansible is available in the Community repository::
+.. index::
+   pair: installation; latest releases
+   pair: installation; Pacman (Arch Linux)
+   pair: releases; Pacman (Arch Linux)
+
+Ansible is available in the Community repository:
+
+::
 
     $ pacman -S ansible
 
 The AUR has a PKGBUILD for pulling directly from Github called `ansible-git <https://aur.archlinux.org/packages/ansible-git>`_.
 
-Also see the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
+You should also review the `Ansible <https://wiki.archlinux.org/index.php/Ansible>`_ page on the ArchWiki.
 
 .. note::
 

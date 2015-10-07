@@ -1,17 +1,23 @@
+
+.. _playbooks:
+
 Playbooks
 `````````
 
-Playbooks are Ansible's configuration, deployment, and orchestration language.  They can describe a policy you want your remote systems to enforce, or a set of steps in a general IT process.
+.. index::
+   pair: playbooks; about
 
-If Ansible modules are the tools in your workshop, playbooks are your design plans.
 
-At a basic level, playbooks can be used to manage configurations of and deployments to remote machines.  At a more advanced level, they can sequence multi-tier rollouts involving rolling updates, and can delegate actions to other hosts, interacting with monitoring servers and load balancers along the way.  
+Playbooks are Ansible's configuration, deployment, and orchestration language.  They can describe a policy you want your remote systems to enforce or a set of steps in a general IT process.
 
-While there's a lot of information here, there's no need to learn everything at once.  You can start small and pick up more features
+Consider it this way--if Ansible modules are the tools in your workshop, then playbooks are your design plans.
+
+At a basic level, playbooks can be used to manage configurations of and deployments to remote machines.  At a more advanced level, they can sequence multi-tier rollouts involving rolling updates and can delegate actions to other hosts, interacting with monitoring servers and load balancers along the way.  
+
+While there is a lot of information here, there is no need to learn everything at once.  You can start small and pick up more features
 over time as you need them.  
 
-Playbooks are designed to be human-readable and are developed in a basic text language.  There are multiple
-ways to organize playbooks and the files they include, and we'll offer up some suggestions on that and making the most out of Ansible.
+Playbooks are designed to be human-readable and are developed in a basic text language.  There are multiple ways to organize playbooks and the files they include. The |ad| offers some suggestions around playbook organization and making the most out of Ansible.
 
 It is recommended to look at `Example Playbooks <https://github.com/ansible/ansible-examples>`_ while reading along with the playbook documentation.  These illustrate best practices as well as how to put many of the various concepts together.
 

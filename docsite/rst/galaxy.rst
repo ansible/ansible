@@ -6,7 +6,7 @@ Ansible Galaxy
 .. contents:: Topics
 
 The Website
-```````````
+````````````
 
 The website `Ansible Galaxy <https://galaxy.ansible.com>`_, is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
@@ -26,7 +26,7 @@ The most obvious is downloading roles from the Ansible Galaxy website::
 
    ansible-galaxy install username.rolename
 
-.. _roles_path:
+.. _galaxy_roles_path:
 
 roles_path
 ===============

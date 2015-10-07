@@ -565,7 +565,7 @@ in Ansible.  Effectively registered variables are just like facts.
 .. _accessing_complex_variable_data:
 
 Accessing Complex Variable Data
-```````````````````````````````
+````````````````````````````````
 
 We already talked about facts a little higher up in the documentation.
 
@@ -640,7 +640,7 @@ And finally, ``role_path`` will return the current role's pathname (since 1.8). 
 .. _variable_file_separation_details:
 
 Variable File Separation
-````````````````````````
+`````````````````````````
 
 It's a great idea to keep your playbooks under source control, but
 you may wish to make the playbook source public while keeping certain

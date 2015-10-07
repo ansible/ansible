@@ -1,126 +1,167 @@
-Configuration file
-++++++++++++++++++
+Introduction to the Configuration File
+++++++++++++++++++++++++++++++++++++++++
 
 .. contents:: Topics
 
 .. highlight:: bash
 
-Certain settings in Ansible are adjustable via a configuration file.  The stock configuration should be sufficient
-for most users, but there may be reasons you would want to change them.
+.. index::
+    pair: introduction ; configuration file
 
-Changes can be made and used in a configuration file which will be processed in the following order::
+Certain settings in Ansible are adjustable via a configuration file.  While the stock configuration should be sufficient
+for most users, there may be reasons you need to make changes to these settings.
+
+Changes can be made and used in a configuration file which will be processed in the following order:
+
+::
 
     * ANSIBLE_CONFIG (an environment variable)
     * ansible.cfg (in the current directory)
     * .ansible.cfg (in the home directory)
     * /etc/ansible/ansible.cfg
 
-Prior to 1.5 the order was::
+Prior to Ansible version 1.5, the order was:
+
+::
 
     * ansible.cfg (in the current directory)
     * ANSIBLE_CONFIG (an environment variable)
     * .ansible.cfg (in the home directory)
     * /etc/ansible/ansible.cfg
 
-Ansible will process the above list and use the first file found. Settings in files are not merged.
+Ansible processes the above list and uses the first file found. Settings in files are not merged.
 
 .. _getting_the_latest_configuration:
 
 Getting the latest configuration
 ````````````````````````````````
 
-If installing ansible from a package manager, the latest ansible.cfg should be present in /etc/ansible, possibly
-as a ".rpmnew" file (or other) as appropriate in the case of updates.
+.. index::
+    pair: configuration file; latest version
 
-If you have installed from pip or from source, however, you may want to create this file in order to override
-default settings in Ansible.
+If installing Ansible from a package manager, the latest version of ``ansible.cfg`` should be present in ``/etc/ansible``, possibly
+as a ".rpmnew" file (or other) as is appropriate in the case of updates.
 
-You may wish to consult the `ansible.cfg in source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>`_ for all of the possible latest values.
+If you have installed from ``pip`` or from source, however, you may want to create this file in order to override the default settings in Ansible.
+
+You should consult the ``ansible.cfg`` in `source control <https://raw.github.com/ansible/ansible/devel/examples/ansible.cfg>`_ for all of the possible latest values.
 
 .. _environmental_configuration:
 
 Environmental configuration
-```````````````````````````
+````````````````````````````
 
-Ansible also allows configuration of settings via environment variables.  If these environment variables are set, they will
-override any setting loaded from the configuration file.  These variables are for brevity not defined here, but look in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_ in the source tree if you want to use these.  They are mostly considered to be a legacy system as compared to the config file, but are equally valid.
+.. index::
+    pair: configuration file; environmental configuration
+
+
+Ansible also allows for the configuration of settings via environment variables.  If these environment variables are set, they will override any settings loaded from the configuration file.  These variables are, for brevity's sake, not defined here, but you can look in `constants.py <https://github.com/ansible/ansible/blob/devel/lib/ansible/constants.py>`_ within the source tree to use these.  They are mostly considered to be a legacy system as compared to the configuration file, but are equally valid.
 
 .. _config_values_by_section:
 
 Explanation of values by section
 ````````````````````````````````
 
-The configuration file is broken up into sections.  Most options are in the "general" section but some sections of the file
-are specific to certain connection types.
+.. index::
+    pair: configuration file; options
+
+The configuration file is broken up into sections.  Most options appear under the "general" section, but some sections of the file are specific to certain connection types.
 
 .. _general_defaults:
 
 General defaults
 ----------------
+.. index::
+    pair: configuration file; general defaults
 
-In the [defaults] section of ansible.cfg, the following settings are tunable:
+In the [defaults] section of ``ansible.cfg``, the following settings are tunable:
 
 .. _action_plugins:
 
 action_plugins
 ==============
+.. index::
+    pair; general defaults; action_plugins
 
-Actions are pieces of code in ansible that enable things like module execution, templating, and so forth.
+Actions are pieces of code in Ansible that enable things like module execution, templating, and so forth.
 
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
-different locations::
+different locations:
+
+::
 
    action_plugins = ~/.ansible/plugins/action_plugins/:/usr/share/ansible_plugins/action_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details.
+Most users will not need to use this feature.  Refer to :doc:`developing_plugins` for more information.
 
 .. _ansible_managed:
 
 ansible_managed
 ===============
 
-Ansible-managed is a string that can be inserted into files written by Ansible's config templating system, if you use
-a string like::
+.. index::
+    pair; general defaults; ansible_managed
+
+The ``ansible-managed`` string can be inserted into files written by Ansible's configuration templating system, if you use
+a string like the following:
+
+::
 
    {{ ansible_managed }}
 
-The default configuration shows who modified a file and when::
+The default configuration shows who modified a file and when:
+
+::
 
     ansible_managed = Ansible managed: {file} modified on %Y-%m-%d %H:%M:%S by {uid} on {host}
 
 This is useful to tell users that a file has been placed by Ansible and manual changes are likely to be overwritten.
 
-Note that if using this feature, and there is a date in the string, the template will be reported changed each time as the date is updated.
+Note that if using this feature and there is a date in the string, the template is reported as being changed each time as the date is updated.
 
 .. _ask_pass:
 
 ask_pass
 ========
+.. index::
+    pair; general defaults; ask_pass
 
-This controls whether an Ansible playbook should prompt for a password by default.  The default behavior is no::
+This controls whether an Ansible playbook should prompt for a password by default.  The default behavior is "no":
+
+::
 
     ask_pass=True
 
-If using SSH keys for authentication, it's probably not needed to change this setting.
+If using SSH keys for authentication, it is probably not necessary to change this setting.
 
 .. _ask_sudo_pass:
 
 ask_sudo_pass
 =============
 
-Similar to ask_pass, this controls whether an Ansible playbook should prompt for a sudo password by default when
-sudoing.  The default behavior is also no::
+.. index::
+    pair; general defaults; ask_sudo_pass
+
+Similar to ``ask_pass``, this controls whether an Ansible playbook should prompt for a ``sudo`` password by default when using
+``sudo``.  The default behavior is also "no":
+
+::
 
     ask_sudo_pass=True
 
-Users on platforms where sudo passwords are enabled should consider changing this setting.
+Users on platforms where ``sudo`` passwords are enabled should consider changing this setting.
 
 .. _ask_vault_pass:
 
 ask_vault_pass
 ==============
 
-This controls whether an Ansible playbook should prompt for the vault password by default.  The default behavior is no::
+.. index::
+    pair; general defaults; ask_vault_pass
+
+This controls whether an Ansible playbook should prompt for the vault password by default.  The default behavior is "no":
+
+::
 
     ask_vault_pass=True
 
@@ -129,22 +170,29 @@ This controls whether an Ansible playbook should prompt for the vault password b
 bin_ansible_callbacks
 =====================
 
+.. index::
+    pair; general defaults; bin_ansible_callbacks
+
 .. versionadded:: 1.8
 
-Controls whether callback plugins are loaded when running /usr/bin/ansible.  This may be used to log activity from
-the command line, send notifications, and so on.  Callback plugins are always loaded for /usr/bin/ansible-playbook
-if present and cannot be disabled::
+Controls whether callback plugins are loaded when running ``/usr/bin/ansible``.  This may be used to log activity from
+the command line, send notifications, and so on.  Callback plugins are always loaded for ``/usr/bin/ansible-playbook``
+if present and cannot be disabled:
+
+::
 
     bin_ansible_callbacks=False
 
-Prior to 1.8, callbacks were never loaded for /usr/bin/ansible.
+Prior to 1.8, callbacks were never loaded for ``/usr/bin/ansible``.
 
 .. _callback_plugins:
 
 callback_plugins
 ================
+.. index::
+    pair: general defaults; callback_plugins
 
-Callbacks are pieces of code in ansible that get called on specific events, permitting to trigger notifications.
+Callbacks are pieces of code in Ansible that get called on specific events, permitting to trigger notifications.
 
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
 different locations::
@@ -158,41 +206,49 @@ Most users will not need to use this feature.  See :doc:`developing_plugins` for
 stdout_callback
 ===============
 
+.. index::
+    pair: general defaults; stdout_callback
+
 .. versionadded:: 2.0
 
-This setting allows you to override the default stdout callback for ansible-playbook.
+This setting allows you to override the default ``stdout`` callback for ansible-playbook.
 
 .. _callback_whitelist:
 
 callback_whitelist
 ==================
 
+.. index::
+    pair: general defaults; callback_whitelist
+
 .. versionadded:: 2.0
 
-Now ansible ships with all included callback plugins ready to use but they are disabled by default,
-this setting lets you enable a list of additional callbacks, this cannot change or override the
-default stdout callback, use :ref:`stdout_callback` for that.
+Beginning with version 2.0, Ansible ships with all included callback plugins ready to use, but they are disabled by default. While this setting lets you enable a list of additional callbacks, it cannot change or override the default ``stdout`` callback (use :ref:`stdout_callback` for that).
 
 
 .. _command_warnings:
 
+.. index::
+    pair: general defaults; command_warnings
+
 command_warnings
 ================
 
+.. index::
+    pair: general defaults; command_warnings
+
 .. versionadded:: 1.8
 
-By default since Ansible 1.8, Ansible will warn when usage of the shell and
-command module appear to be simplified by using a default Ansible module
-instead.  This can include reminders to use the 'git' module instead of
-shell commands to execute 'git'.  Using modules when possible over arbitrary
-shell commands can lead to more reliable and consistent playbook runs, and
-also easier to maintain playbooks::
+By default since version 1.8, Ansible warns when usage of the ``shell`` and ``command`` module appear to be simplified by using a default Ansible module instead.  This can include reminders to use the ``git`` module instead of shell commands to execute ``git``.  Using modules when possible over arbitrary shell commands can lead to more reliable and consistent playbook runs, and also makes it easier to maintain playbooks:
+
+::
 
     command_warnings = False
 
-These warnings can be silenced by adjusting the following
-setting or adding warn=yes or warn=no to the end of the command line
-parameter string, like so::
+These warnings can be silenced by adjusting the following setting or adding "warn=yes" or "warn=no" to the end of the command line
+parameter string, such as:
+
+::
 
 
     - name: usage of git that could be replaced with the git module
@@ -202,35 +258,49 @@ parameter string, like so::
 
 connection_plugins
 ==================
+.. index::
+    pair: general defaults; connection_plugins
 
-Connections plugin permit to extend the channel used by ansible to transport commands and files.
+The connections plugin permits the extension of the channel used by Ansible to transport commands and files.
 
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
-different locations::
+different locations:
+
+::
 
     connection_plugins = ~/.ansible/plugins/connection_plugins/:/usr/share/ansible_plugins/connection_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  Refer to :doc:`developing_plugins` for more information.
 
 .. _deprecation_warnings:
 
 deprecation_warnings
 ====================
 
+.. index::
+    pair: general defaults; deprecation_warnings
+
 .. versionadded:: 1.3
 
-Allows disabling of deprecating warnings in ansible-playbook output::
+Allows for the disabling of deprecating warnings in ansible-playbook output:
 
-    deprecation_warnings = True
+::
 
-Deprecation warnings indicate usage of legacy features that are slated for removal in a future release of Ansible.
+    deprecation_warnings=True
+
+Deprecation warnings indicate the usage of legacy features that are slated for removal in a future release of Ansible.
 
 .. _display_skipped_hosts:
 
 display_skipped_hosts
 =====================
 
-If set to `False`, ansible will not display any status for a task that is skipped. The default behavior is to display skipped tasks::
+.. index::
+    pair: general defaults; display_skipped_hosts
+
+If set to "False", Ansible will not display any status for a task that is skipped. The default behavior is to display skipped tasks:
+
+::
 
     display_skipped_hosts=True
 
@@ -240,42 +310,59 @@ Note that Ansible will always show the task header for any task, regardless of w
 
 error_on_undefined_vars
 =======================
+.. index::
+    pair: general defaults; error_on_undefined_vars
 
-On by default since Ansible 1.3, this causes ansible to fail steps that reference variable names that are likely
-typoed::
+On by default since Ansible 1.3, this causes Ansible to fail steps that reference variable names that are likely
+mistyped:
+
+::
 
     error_on_undefined_vars=True
 
-If set to False, any '{{ template_expression }}' that contains undefined variables will be rendered in a template
-or ansible action line exactly as written.
+If set to "False", any ``{{ template_expression }}`` that contains undefined variables is rendered in a template or Ansible action line exactly as written.
 
 .. _executable:
 
 executable
 ==========
+.. index::
+    pair: general defaults; executable
 
-This indicates the command to use to spawn a shell under a sudo environment.  Users may need to change this to /bin/bash in rare instances when sudo is constrained, but in most cases it may be left as is::
+This indicates the command to use to spawn a shell under a ``sudo`` environment.  Users may need to change this to ``/bin/bash`` in rare instances when ``sudo`` is constrained, but in most cases it may be left as is:
+
+::
 
     executable = /bin/bash
 
 .. _filter_plugins:
 
+.. index::
+    pair: general defaults; filter_plugins
+
 filter_plugins
 ==============
 
+.. index::
+    pair: general defaults; filter_plugins
+
 Filters are specific functions that can be used to extend the template system.
 
-This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
-different locations::
+This is developer-centric feature allows low-level extensions around Ansible to be loaded from different locations:
+
+::
 
     filter_plugins = ~/.ansible/plugins/filter_plugins/:/usr/share/ansible_plugins/filter_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  Refer to :doc:`developing_plugins` for more information.
 
 .. _force_color:
 
 force_color
 ===========
+
+.. index::
+    pair: general defaults; force_color
 
 This options forces color mode even when running without a TTY::
 
@@ -285,6 +372,9 @@ This options forces color mode even when running without a TTY::
 
 force_handlers
 ==============
+
+.. index::
+    pair: general defaults; force_handlers
 
 .. versionadded:: 1.9.1
 
@@ -300,6 +390,9 @@ This can also be set per play or on the command line. See :ref:`handlers_and_fai
 forks
 =====
 
+.. index::
+    pair: general defaults; forks
+
 This is the default number of parallel processes to spawn when communicating with remote hosts.  Since Ansible 1.3,
 the fork number is automatically limited to the number of possible hosts, so this is really a limit of how much
 network and CPU load you think you can handle.  Many users may set this to 50, some set it to 500 or more.  If you
@@ -313,46 +406,56 @@ is very very conservative::
 gathering
 =========
 
-New in 1.6, the 'gathering' setting controls the default policy of facts gathering (variables discovered about remote systems).
+.. index::
+    pair: general defaults; gathering
 
-The value 'implicit' is the default, which means that the fact cache will be ignored and facts will be gathered per play unless 'gather_facts: False' is set.
-The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
-The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.
-This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the fact cache.
+Beginning with Ansible version 1.6, the ``gathering`` setting controls the default policy of facts gathering (variables discovered about remote systems).
+
+The value ``implicit`` is the default, which means that the fact cache will be ignored and facts will be gathered per play unless ``gather_facts: False`` is set. The value ``explicit`` is the inverse; facts will not be gathered unless directly requested in the play. The value ``smart`` means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run. This option can be useful for those wishing to save fact gathering time, as both ``smart`` and ``explicit`` use the fact cache.
+
 
 hash_behaviour
 ==============
 
-Ansible by default will override variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
-of higher precedence wins, it will replace the other value.
+.. index::
+    pair: general defaults; hash_behaviour
 
-Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged.  This setting is called 'merge'. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or
-arrays.  We generally recommend not using this setting unless you think you have an absolute need for it, and playbooks in the
-official examples repos do not use this setting::
+Ansible, by default, overrides variables in specific precedence orders, as described in :doc:`playbooks_variables`.  When a variable
+of higher precedence wins, it replaces the other value.
+
+Some users prefer that variables that are hashes (aka 'dictionaries' in Python terms) are merged.  This setting is called ``merge``. This is not the default behavior and it does not affect variables whose values are scalars (integers, strings) or arrays. Note that it is generally recommended to avoid using this setting, unless you know you have an absolute need for it, and that playbooks in the official examples repositories do not use this setting:
+
+::
 
     hash_behaviour=replace
 
-The valid values are either 'replace' (the default) or 'merge'.
+The valid values are either ``replace`` (the default) or ``merge``.
 
 .. versionadded: '2.0'
 
-If you want to merge hashes without changing the global settings, use
-the `combine` filter described in :doc:`playbooks_filters`.
+To merge hashes without changing the global settings, use the ``combine`` filter described in the :doc:`playbooks_filters` section of the |ad|.
 
 .. _hostfile:
 
 hostfile
 ========
 
-This is a deprecated setting since 1.9, please look at :ref:`inventory_file` for the new setting.
+.. index::
+    pair: general defaults; hostfile
+
+This setting was deprecated in Ansible version 1.9. Refer to :ref:`inventory_file` for the new setting.
 
 .. _host_key_checking:
 
 host_key_checking
 =================
 
-As described in :doc:`intro_getting_started`, host key checking is on by default in Ansible 1.3 and later.  If you understand the
-implications and wish to disable it, you may do so here by setting the value to False::
+.. index::
+    pair: general defaults; host_key_checking
+
+As described in the :doc:`intro_getting_started` section, host key checking is on by default starting with Ansible 1.3 and later.  If you understand the implications and wish to disable it, you may do so here by setting the value to ``False``:
+
+::
 
     host_key_checking=True
 
@@ -361,78 +464,109 @@ implications and wish to disable it, you may do so here by setting the value to 
 inventory
 =========
 
-This is the default location of the inventory file, script, or directory that Ansible will use to determine what hosts it has available
-to talk to::
+.. index::
+    pair: general defaults; inventory
+
+This is the default location of the inventory file, script, or directory that Ansible uses to determine any hosts with which it can communicate:
+
+::
 
     inventory = /etc/ansible/hosts
 
-It used to be called hostfile in Ansible before 1.9
+It used to be called ``hostfile`` in Ansible prior to version 1.9.
 
 .. _jinja2_extensions:
 
 jinja2_extensions
 =================
 
-This is a developer-specific feature that allows enabling additional Jinja2 extensions::
+.. index::
+    pair: general defaults; jinja2_extensions
+
+This is a developer-specific feature that allows enabling additional Jinja2 extensions:
+
+::
 
     jinja2_extensions = jinja2.ext.do,jinja2.ext.i18n
 
-If you do not know what these do, you probably don't need to change this setting :)
+Unless you specifically know what these extensions do and how to work with them, it is recommended that you do not change any of these settings.
 
 .. _library:
 
 library
 =======
 
-This is the default location Ansible looks to find modules::
+.. index::
+    pair: general defaults; library
+
+This is the default location Ansible looks to find modules:
+
+::
 
      library = /usr/share/ansible
 
-Ansible knows how to look in multiple locations if you feed it a colon separated path, and it also will look for modules in the
-"./library" directory alongside a playbook.
+Ansible looks in multiple locations if you feed it a colon separated path; it also looks for modules in the ``./library`` directory alongside a playbook.
 
 .. _log_path:
 
 log_path
 ========
 
-If present and configured in ansible.cfg, Ansible will log information about executions at the designated location.  Be sure
-the user running Ansible has permissions on the logfile::
+.. index::
+    pair: general defaults; log_path
+
+If present and configured in ``ansible.cfg``, Ansible logs information about executions at the designated location.  Be sure
+the user running Ansible has permissions on the logfile:
+
+::
 
     log_path=/var/log/ansible.log
 
-This behavior is not on by default.  Note that ansible will, without this setting, record module arguments called to the
+This behavior is not on by default.  Note that Ansible, without this setting, records module arguments called to the
 syslog of managed machines.  Password arguments are excluded.
 
-For Enterprise users seeking more detailed logging history, you may be interested in :doc:`tower`.
+For Enterprise users seeking more detailed logging history, be sure to check out :doc:`tower`.
 
 .. _lookup_plugins:
 
 lookup_plugins
 ==============
 
+.. index::
+    pair: general defaults; lookup_plugins
+
 This is a developer-centric feature that allows low-level extensions around Ansible to be loaded from
-different locations::
+different locations:
+
+::
 
     lookup_plugins = ~/.ansible/plugins/lookup_plugins/:/usr/share/ansible_plugins/lookup_plugins
 
-Most users will not need to use this feature.  See :doc:`developing_plugins` for more details
+Most users will not need to use this feature.  Refer to :doc:`developing_plugins` for more information.
 
 .. _module_lang:
 
 module_lang
 ===========
 
-This is to set the default language to communicate between the module and the system. By default, the value is 'C'.
+.. index::
+    pair: general defaults; module_lang
+
+This is to set the default language to communicate between the module and the system. By default, the value is ``C``.
 
 .. _module_name:
 
 module_name
 ===========
 
-This is the default module name (-m) value for /usr/bin/ansible.  The default is the 'command' module.
-Remember the command module doesn't support shell variables, pipes, or quotes, so you might wish to change
-it to 'shell'::
+.. index::
+    pair: general defaults; module_name
+
+This is the default module name (``-m``) value for ``/usr/bin/ansible``.  The default is the ``command`` module.
+Remember the command module does not support shell variables, pipes, or quotes, so you may prefer to change
+it to ``shell``:
+
+::
 
     module_name = command
 
@@ -441,8 +575,12 @@ it to 'shell'::
 nocolor
 =======
 
-By default ansible will try to colorize output to give a better indication of failure and status information.
-If you dislike this behavior you can turn it off by setting 'nocolor' to 1::
+.. index::
+    pair: general defaults; nocolor
+
+By default, Ansible tries to colorize output to give a better indication of failure and status information. If you dislike this behavior, you can turn it off by setting ``nocolor`` to "1":
+
+::
 
     nocolor=0
 
@@ -451,9 +589,15 @@ If you dislike this behavior you can turn it off by setting 'nocolor' to 1::
 nocows
 ======
 
-By default ansible will take advantage of cowsay if installed to make /usr/bin/ansible-playbook runs more exciting.
-Why?  We believe systems management should be a happy experience.  If you do not like the cows, you can disable them
-by setting 'nocows' to 1::
+.. index::
+    pair: general defaults; nocows
+    pair: general defaults; cowsay
+
+By default, Ansible takes advantage of ``cowsay`` if installed to make ``/usr/bin/ansible-playbook`` runs more exciting.
+Why?  Ansible believes that systems management should be a happy experience.  If you do not like the cows, you can disable them
+by setting ``nocows`` to "1":
+
+::
 
     nocows=0
 
@@ -462,17 +606,25 @@ by setting 'nocows' to 1::
 pattern
 =======
 
-This is the default group of hosts to talk to in a playbook if no "hosts:" stanza is supplied.  The default is to talk
-to all hosts.  You may wish to change this to protect yourself from surprises::
+.. index::
+    pair: general defaults; pattern
+
+This is the default group of hosts to talk to in a playbook if the no ``hosts:`` stanza is supplied.  The default is to talk
+to all hosts.  You may wish to change this to protect yourself from surprises:
+
+::
 
     hosts=*
 
-Note that /usr/bin/ansible always requires a host pattern and does not use this setting, only /usr/bin/ansible-playbook.
+Note that ``/usr/bin/ansible`` always requires a host pattern and does not use this setting, and only ``/usr/bin/ansible-playbook`` uses this setting.
 
 .. _poll_interval:
 
 poll_interval
 =============
+
+.. index::
+    pair: general defaults; poll_interval
 
 For asynchronous tasks in Ansible (covered in :doc:`playbooks_async`), this is how often to check back on the status of those
 tasks when an explicit poll interval is not supplied.  The default is a reasonably moderate 15 seconds which is a tradeoff
@@ -485,8 +637,13 @@ between checking in frequently and providing a quick turnaround when something m
 private_key_file
 ================
 
+.. index::
+    pair: general defaults; private_key_file
+
 If you are using a pem file to authenticate with machines rather than SSH agent or passwords, you can set the default
-value here to avoid re-specifying ``--private-key`` with every invocation::
+value here to avoid re-specifying ``--private-key`` with every invocation:
+
+::
 
     private_key_file=/path/to/file.pem
 
@@ -495,8 +652,13 @@ value here to avoid re-specifying ``--private-key`` with every invocation::
 remote_port
 ===========
 
-This sets the default SSH port on all of your systems, for systems that didn't specify an alternative value in inventory.
-The default is the standard 22::
+.. index::
+    pair: general defaults; remote_port
+
+For systems that didn't specify an alternative value in inventory, ``remote_port`` sets the default SSH port on all of your systems.
+The default is the standard 22:
+
+::
 
     remote_port = 22
 
@@ -505,22 +667,30 @@ The default is the standard 22::
 remote_tmp
 ==========
 
+.. index::
+    pair: general defaults; remote_tmp
+
 Ansible works by transferring modules to your remote machines, running them, and then cleaning up after itself.  In some
-cases, you may not wish to use the default location and would like to change the path.  You can do so by altering this
-setting::
+cases, you may not wish to use the default location and would like to change the path.  You can do so by altering the ``remote_tmp``
+setting:
+
+::
 
     remote_tmp = $HOME/.ansible/tmp
 
-The default is to use a subdirectory of the user's home directory.  Ansible will then choose a random directory name
-inside this location.
+The default is to use a subdirectory of the user's home directory.  Ansible then chooses a random directory name inside of this location.
 
 .. _remote_user:
 
 remote_user
 ===========
 
-This is the default username ansible will connect as for /usr/bin/ansible-playbook.  Note that /usr/bin/ansible will
-always default to the current user if this is not defined::
+.. index::
+    pair: general defaults; remote_user
+
+This is the default username Ansible connects as for ``/usr/bin/ansible-playbook``.  Note that ``/usr/bin/ansible`` always defaults to the current user if this is not defined:
+
+::
 
     remote_user = root
 
@@ -549,6 +719,9 @@ The directory will be created if it does not already exist.
 
 roles_path
 ==========
+
+.. index::
+    pair: general defaults; roles_path
 
 .. versionadded: '1.4'
 

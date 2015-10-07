@@ -1,7 +1,10 @@
 Introduction
 ============
 
-Before we dive into the really fun parts -- playbooks, configuration management, deployment, and orchestration, we'll learn how to get Ansible installed and cover some basic concepts.  We'll also go over how to execute ad-hoc commands in parallel across your nodes using /usr/bin/ansible.  Additionally, we'll see what sort of modules are available in Ansible's core (though you can also write your own, which is also covered later).
+.. index::
+   single: introduction
+
+Before diving into the really fun parts--playbooks, configuration management, deployment, and orchestration--you must first learn how to get Ansible installed and review some basic concepts.  It is also important to review how to execute ad-hoc commands in parallel across your nodes using ``/usr/bin/ansible``.  Additionally, you should also review the various types of modules available in Ansible (for those looking to write their own modules, refer to the :doc:`Developing Modules <developing_modules>` section of the |ad|).
 
 .. toctree::
    :maxdepth: 1

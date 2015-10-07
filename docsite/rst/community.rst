@@ -1,3 +1,5 @@
+.. _community_contributing:
+
 Community Information & Contributing
 ````````````````````````````````````
 
