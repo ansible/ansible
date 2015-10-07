@@ -189,7 +189,7 @@ or environment variables (DO_API_TOKEN)''')
         self.cache_filename = self.cache_path + "/ansible-digital_ocean.cache"
         self.cache_refreshed = False
 
-        if self.is_cache_valid:
+        if self.is_cache_valid():
             self.load_from_cache()
             if len(self.data) == 0:
                 if self.args.force_cache:
@@ -311,7 +311,7 @@ or environment variables (DO_API_TOKEN)''')
 
     def load_from_digital_ocean(self, resource=None):
         '''Get JSON from DigitalOcean API'''
-        if self.args.force_cache:
+        if self.args.force_cache and os.path.isfile(self.cache_filename):
             return
         # We always get fresh droplets
         if self.is_cache_valid() and not (resource=='droplets' or resource is None):
