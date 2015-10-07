@@ -259,6 +259,7 @@ def main():
         module.fail_json(msg='version is incompatible with state=latest')
 
     if chdir is None:
+        # this is done to avoid permissions issues with privilege escalation and virtualenvs
         chdir =  tempfile.gettempdir()
 
     err = ''
