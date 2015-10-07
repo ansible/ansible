@@ -257,7 +257,6 @@ def main():
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
             state=dict(default='present', choices=['present', 'absent']),
-            region=dict(aliases=['aws_region', 'ec2_region']),
            )
     )
 
@@ -269,10 +268,14 @@ def main():
     state = module.params.get('state')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    try:
-        connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, StandardError), e:
-        module.fail_json(msg=str(e))
+    
+    if region:
+        try:
+            connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+            module.fail_json(msg=str(e))
+    else:
+        module.fail_json(msg="region must be specified")
 
     if state == 'present':
         create_metric_alarm(connection, module)
