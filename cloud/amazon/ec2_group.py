@@ -45,12 +45,6 @@ options:
       - List of firewall outbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
     required: false
     version_added: "1.6"
-  region:
-    description:
-      - the EC2 region to use
-    required: false
-    default: null
-    aliases: []
   state:
     version_added: "1.4"
     description:
@@ -74,7 +68,9 @@ options:
     default: 'true'
     aliases: []
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 
 notes:
   - If a rule declares a group_name and that group doesn't exist, it will be

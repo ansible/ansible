@@ -53,7 +53,9 @@ options:
     description:
       - The minimum period of time between which autoscaling actions can take place
     required: false
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = '''

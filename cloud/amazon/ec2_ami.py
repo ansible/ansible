@@ -47,12 +47,6 @@ options:
       - create or deregister/delete image
     required: false
     default: 'present'
-  region:
-    description:
-      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    default: null
-    aliases: [ 'aws_region', 'ec2_region' ]
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the AMI.
@@ -89,7 +83,9 @@ options:
     version_added: "2.0"
 
 author: "Evan Duffield (@scicoin-project) <eduffield@iacquire.com>"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 # Thank you to iAcquire for sponsoring development of this module.
