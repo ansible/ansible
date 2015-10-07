@@ -264,7 +264,7 @@ def main():
             login_host=dict(default="localhost"),
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
-            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave"]),
+            mode=dict(default="getslave", choices=["getmaster", "getslave", "changemaster", "stopslave", "startslave", "resetslave", "resetslaveall"]),
             master_auto_position=dict(default=False, type='bool'),
             master_host=dict(default=None),
             master_user=dict(default=None),
