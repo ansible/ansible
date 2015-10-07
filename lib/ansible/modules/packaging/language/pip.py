@@ -258,6 +258,9 @@ def main():
     if state == 'latest' and version is not None:
         module.fail_json(msg='version is incompatible with state=latest')
 
+    if chdir is None:
+        chdir =  tempfile.gettempdir()
+
     err = ''
     out = ''
 
