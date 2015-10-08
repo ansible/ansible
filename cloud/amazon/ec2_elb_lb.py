@@ -102,6 +102,12 @@ options:
     required: false
     aliases: []
     version_added: "1.8"
+  idle_timeout:
+    description:
+      - ELB connections from clients and to servers are timed out after this amount of time
+    required: false
+    aliases: []
+    version_added: "2.0"
   cross_az_load_balancing:
     description:
       - Distribute load across all configured Availability Zones
@@ -232,13 +238,14 @@ EXAMPLES = """
         load_balancer_port: 80
         instance_port: 80
 
-# Create an ELB with connection draining and cross availability
+# Create an ELB with connection draining, increased idle timeout and cross availability
 # zone load balancing
 - local_action:
     module: ec2_elb_lb
     name: "New ELB"
     state: present
     connection_draining_timeout: 60
+    idle_timeout: 300
     cross_az_load_balancing: "yes"
     region: us-east-1
     zones:
@@ -305,7 +312,7 @@ class ElbManager(object):
                  zones=None, purge_zones=None, security_group_ids=None,
                  health_check=None, subnets=None, purge_subnets=None,
                  scheme="internet-facing", connection_draining_timeout=None,
-                 cross_az_load_balancing=None,
+                 idle_timeout=None, cross_az_load_balancing=None,
                  stickiness=None, region=None, **aws_connect_params):
 
         self.module = module
@@ -320,6 +327,7 @@ class ElbManager(object):
         self.purge_subnets = purge_subnets
         self.scheme = scheme
         self.connection_draining_timeout = connection_draining_timeout
+        self.idle_timeout = idle_timeout
         self.cross_az_load_balancing = cross_az_load_balancing
         self.stickiness = stickiness
 
@@ -347,6 +355,8 @@ class ElbManager(object):
         # set them to avoid errors
         if self._check_attribute_support('connection_draining'):
             self._set_connection_draining_timeout()
+        if self._check_attribute_support('connecting_settings'):
+            self._set_idle_timeout()
         if self._check_attribute_support('cross_zone_load_balancing'):
             self._set_cross_az_load_balancing()
         # add sitcky options
@@ -441,6 +451,9 @@ class ElbManager(object):
 
             if self._check_attribute_support('connection_draining'):
                 info['connection_draining_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout
+
+            if self._check_attribute_support('connecting_settings'):
+                info['idle_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectingSettings').idle_timeout
 
             if self._check_attribute_support('cross_zone_load_balancing'):
                 is_cross_az_lb_enabled = self.elb_conn.get_lb_attribute(self.name, 'CrossZoneLoadBalancing')
@@ -705,6 +718,12 @@ class ElbManager(object):
             attributes.connection_draining.enabled = False
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
 
+    def _set_idle_timeout(self):
+        attributes = self.elb.get_attributes()
+        if self.idle_timeout is not None:
+            attributes.connecting_settings.idle_timeout = self.idle_timeout
+            self.elb_conn.modify_lb_attribute(self.name, 'ConnectingSettings', attributes.connecting_settings)
+
     def _policy_name(self, policy_type):
         return __file__.split('/')[-1].replace('_', '-')  + '-' + policy_type
 
@@ -829,6 +848,7 @@ def main():
             purge_subnets={'default': False, 'required': False, 'type': 'bool'},
             scheme={'default': 'internet-facing', 'required': False},
             connection_draining_timeout={'default': None, 'required': False},
+            idle_timeout={'default': None, 'required': False},
             cross_az_load_balancing={'default': None, 'required': False},
             stickiness={'default': None, 'required': False, 'type': 'dict'}
         )
@@ -859,6 +879,7 @@ def main():
     purge_subnets = module.params['purge_subnets']
     scheme = module.params['scheme']
     connection_draining_timeout = module.params['connection_draining_timeout']
+    idle_timeout = module.params['idle_timeout']
     cross_az_load_balancing = module.params['cross_az_load_balancing']
     stickiness = module.params['stickiness']
 
@@ -886,8 +907,8 @@ def main():
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
                          subnets, purge_subnets, scheme,
-                         connection_draining_timeout, cross_az_load_balancing,
-                         stickiness,
+                         connection_draining_timeout, idle_timeout,
+                         cross_az_load_balancing, stickiness,
                          region=region, **aws_connect_params)
 
     # check for unsupported attributes for this version of boto
@@ -896,6 +917,9 @@ def main():
 
     if connection_draining_timeout and not elb_man._check_attribute_support('connection_draining'):
         module.fail_json(msg="You must install boto >= 2.28.0 to use the connection_draining_timeout attribute")
+
+    if idle_timeout and not elb_man._check_attribute_support('connecting_settings'):
+        module.fail_json(msg="You must install boto >= 2.33.0 to use the idle_timeout attribute")
 
     if state == 'present':
         elb_man.ensure_ok()
