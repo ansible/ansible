@@ -247,9 +247,9 @@ class Display:
 
     def error(self, msg, wrap_text=True):
         if wrap_text:
-            new_msg = "\n[ERROR]: %s" % msg
+            new_msg = u"\n[ERROR]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = "\n".join(wrapped) + "\n"
+            new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = msg
         if new_msg not in self._errors:
