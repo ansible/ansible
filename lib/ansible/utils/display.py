@@ -269,7 +269,7 @@ class Display:
     def _output_encoding(stderr=False):
         if stderr:
             return sys.stderr.encoding or 'utf-8'
-        return sys.stout.encoding or 'utf-8'
+        return sys.stdout.encoding or 'utf-8'
 
     def _set_column_width(self):
         if os.isatty(0):
