@@ -25,11 +25,10 @@ DOCUMENTATION = '''
 ---
 module: win_environment
 version_added: "2.0"
-short_description: Modifies environment variables on windows guests
+short_description: Modifies environment variables on windows hosts.
 description:
-    - Uses .net Environment to set or remove environment variables.
-    - Can set at User, Machine or Process level.
-    - Note that usual rules apply, so existing environments will not change until new processes are started.
+    - Uses .net Environment to set or remove environment variables and can set at User, Machine or Process level.  
+    - User level environment variables will be set, but not available until the user has logged off and on again.
 options:
   state:
     description:
@@ -62,6 +61,13 @@ options:
       - process
       - user
 author: "Jon Hawkesworth (@jhawkesworth)"
+notes: 
+   - This module does not broadcast change events.  
+     This means that the minority of windows applications which can have 
+     their environment changed without restarting will not be notified and 
+     therefore will need restarting to pick up new environment settings.  
+     User level environment variables will require the user to log out 
+     and in again before they become available.
 '''
 
 EXAMPLES = '''
