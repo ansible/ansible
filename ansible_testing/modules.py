@@ -8,6 +8,7 @@ import abc
 import ast
 import sys
 import argparse
+import traceback
 
 from fnmatch import fnmatch
 from utils import find_globals
@@ -16,10 +17,8 @@ from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
 from ansible.module_utils import basic as module_utils_basic
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+# We only use StringIO, since we cannot setattr on cStringIO
+from StringIO import StringIO
 
 
 BLACKLIST_DIRS = frozenset(('.git',))
@@ -68,7 +67,6 @@ class Validator(object):
         ret = []
 
         for trace in self.traces:
-            #print(trace.replace(self._root, '').lstrip('/'))
             print(trace)
         for error in self.errors:
             print('ERROR: %s' % error)
@@ -326,10 +324,17 @@ class ModuleValidator(Validator):
             sys_stdout = sys.stdout
             sys_stderr = sys.stderr
             sys.stdout = sys.stderr = StringIO()
-            doc, examples, ret = get_docstring(self.path)
-            trace = sys.stdout.getvalue()
-            sys.stdout = sys_stdout
-            sys.stderr = sys_stderr
+            setattr(sys.stdout, 'encoding', sys_stdout.encoding)
+            setattr(sys.stderr, 'encoding', sys_stderr.encoding)
+            try:
+                doc, examples, ret = get_docstring(self.path, verbose=True)
+                trace = None
+            except:
+                doc, examples, ret = get_docstring(self.path)
+                trace = traceback.format_exc()
+            finally:
+                sys.stdout = sys_stdout
+                sys.stderr = sys_stderr
             if trace:
                 self.traces.append(trace)
             if not bool(doc):
