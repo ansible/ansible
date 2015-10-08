@@ -67,6 +67,7 @@ options:
   cron_file:
     description:
       - If specified, uses this file in cron.d instead of an individual user's crontab.
+        To use the C(cron_file) parameter you must specify the C(user) as well.
     required: false
     default: null
   backup:
