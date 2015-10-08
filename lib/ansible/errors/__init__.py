@@ -22,6 +22,7 @@ __metaclass__ = type
 import os
 
 from ansible.errors.yaml_strings import *
+from ansible.utils.unicode import to_unicode, to_bytes
 
 class AnsibleError(Exception):
     '''
@@ -48,7 +49,7 @@ class AnsibleError(Exception):
         if obj and isinstance(obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error:
-                self.message = 'ERROR! %s\n\n%s' % (message, extended_error)
+                self.message = 'ERROR! %s\n\n%s' % (message, to_bytes(extended_error))
         else:
             self.message = 'ERROR! %s' % message
 
@@ -96,6 +97,8 @@ class AnsibleError(Exception):
             error_message += YAML_POSITION_DETAILS % (src_file, line_number, col_number)
             if src_file not in ('<string>', '<unicode>') and self._show_content:
                 (target_line, prev_line) = self._get_error_lines_from_file(src_file, line_number - 1)
+                target_line = to_unicode(target_line)
+                prev_line = to_unicode(prev_line)
                 if target_line:
                     stripped_line = target_line.replace(" ","")
                     arrow_line    = (" " * (col_number-1)) + "^ here"
