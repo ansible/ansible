@@ -175,7 +175,7 @@ class ModuleValidator(Validator):
                 if '\t' in i:
                     index = line.index(i)
                     self.errors.append('indentation contains tabs. line %d '
-                                       'column %d' % (line_no, index))
+                                       'column %d' % (line_no + 1, index))
 
     def _find_json_import(self):
         for child in self.ast.body:
