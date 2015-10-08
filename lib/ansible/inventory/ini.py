@@ -20,7 +20,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-import shlex
 import re
 
 from ansible import constants as C
@@ -30,7 +29,8 @@ from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
 from ansible.inventory.expand_hosts import expand_hostname_range
 from ansible.parsing.utils.addresses import parse_address
-from ansible.utils.unicode import to_unicode, to_bytes
+from ansible.utils.shlex import shlex_split
+from ansible.utils.unicode import to_unicode
 
 class InventoryParser(object):
     """
@@ -38,15 +38,12 @@ class InventoryParser(object):
     with their associated hosts and variable settings.
     """
 
-    def __init__(self, loader, groups=None, filename=C.DEFAULT_HOST_LIST):
-        if groups is None:
-            groups = dict()
-
+    def __init__(self, loader, groups, filename=C.DEFAULT_HOST_LIST):
         self._loader = loader
         self.filename = filename
 
-        # Start with an empty host list and the default 'all' and
-        # 'ungrouped' groups.
+        # Start with an empty host list and whatever groups we're passed in
+        # (which should include the default 'all' and 'ungrouped' groups).
 
         self.hosts = {}
         self.patterns = {}
@@ -231,13 +228,11 @@ class InventoryParser(object):
         # beta:2345 user=admin      # we'll tell shlex
         # gamma sudo=True user=root # to ignore comments
 
-        line = to_bytes(line)
         try:
-            tokens = shlex.split(line, comments=True)
+            tokens = shlex_split(line, comments=True)
         except ValueError as e:
             self._raise_error("Error parsing host definition '%s': %s" % (varstring, e))
 
-        tokens = [ to_unicode(t) for t in tokens]
         (hostnames, port) = self._expand_hostpattern(tokens[0])
         hosts = self._Hosts(hostnames, port)
 
@@ -293,8 +288,7 @@ class InventoryParser(object):
 
         # Note that we decide whether or not to create a Host based solely on
         # the (non-)existence of its hostname in self.hosts. This means that one
-        # cannot add both "foo:22" and "foo:23" to the inventory. This behaviour
-        # is preserved for now, but this may be an easy FIXME.
+        # cannot add both "foo:22" and "foo:23" to the inventory.
 
         for hn in hostnames:
             if hn not in self.hosts:
@@ -354,8 +348,7 @@ class InventoryParser(object):
         # FIXME: What are the real restrictions on group names, or rather, what
         # should they be? At the moment, they must be non-empty sequences of non
         # whitespace characters excluding ':' and ']', but we should define more
-        # precise rules in order to support better diagnostics. The same applies
-        # to hostnames. It seems sensible for them both to follow DNS rules.
+        # precise rules in order to support better diagnostics.
 
         self.patterns['groupname'] = re.compile(
             r'''^

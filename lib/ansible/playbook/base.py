@@ -105,7 +105,10 @@ class Base:
         if hasattr(self, method):
             return getattr(self, method)()
 
-        return self._attributes[prop_name]
+        value = self._attributes[prop_name]
+        if value is None and hasattr(self, '_get_parent_attribute'):
+            value = self._get_parent_attribute(prop_name)
+        return value
 
     @staticmethod
     def _generic_s(prop_name, self, value):
@@ -159,6 +162,9 @@ class Base:
 
         assert ds is not None
 
+        # cache the datastructure internally
+        setattr(self, '_ds', ds)
+
         # the variable manager class is used to manage and merge variables
         # down to a single dictionary for reference in templating, etc.
         self._variable_manager = variable_manager
@@ -191,9 +197,6 @@ class Base:
 
         # run early, non-critical validation
         self.validate()
-
-        # cache the datastructure internally
-        setattr(self, '_ds', ds)
 
         # return the constructed object
         return self

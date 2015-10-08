@@ -203,6 +203,7 @@ default      empty string   return value if the key is not in the ini file
 
 The Credstash Lookup
 ````````````````````
+.. versionadded:: 2.0
 
 Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/LuminalOSS/credstash
 
@@ -233,7 +234,9 @@ You can specify regions or tables to fetch secrets from::
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
 
+If you're not using 2.0 yet, you can do something similar with the credstash tool and the pipe lookup (see below)::
 
+    debug: msg="Poor man's credstash lookup! {{ lookup('pipe', 'credstash -r us-west-1 get my-other-password') }}"
 
 .. _more_lookups:
 

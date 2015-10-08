@@ -109,7 +109,7 @@ class PlayIterator:
     FAILED_RESCUE      = 4
     FAILED_ALWAYS      = 8
 
-    def __init__(self, inventory, play, play_context, variable_manager, all_vars):
+    def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
 
         self._blocks = []
@@ -127,12 +127,16 @@ class PlayIterator:
                  host._gathered_facts = True
              # if we're looking to start at a specific task, iterate through
              # the tasks for this host until we find the specified task
-             if play_context.start_at_task is not None:
+             if play_context.start_at_task is not None and not start_at_done:
                  while True:
                      (s, task) = self.get_next_task_for_host(host, peek=True)
                      if s.run_state == self.ITERATING_COMPLETE:
                          break
                      if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task):
+                         # we have our match, so clear the start_at_task field on the
+                         # play context to flag that we've started at a task (and future
+                         # plays won't try to advance)
+                         play_context.start_at_task = None
                          break
                      else:
                          self.get_next_task_for_host(host)

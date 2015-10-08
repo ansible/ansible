@@ -20,9 +20,11 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
+import contextlib
+import os
 import re
 
-from six import string_types
+from six import string_types, text_type, binary_type, StringIO
 from jinja2 import Environment
 from jinja2.loaders import FileSystemLoader
 from jinja2.exceptions import TemplateSyntaxError, UndefinedError
@@ -48,6 +50,7 @@ __all__ = ['Templar']
 NON_TEMPLATED_TYPES = ( bool, Number )
 
 JINJA2_OVERRIDE = '#jinja2:'
+
 
 def _escape_backslashes(data, jinja_env):
     """Double backslashes within jinja2 expressions
@@ -108,6 +111,7 @@ def _count_newlines_from_end(in_str):
         # Uncommon cases: zero length string and string containing only newlines
         return i
 
+
 class Templar:
     '''
     The main class for templating, with the main entry-point of template().
@@ -147,6 +151,12 @@ class Templar:
         self.environment.template_class = AnsibleJ2Template
 
         self.SINGLE_VAR = re.compile(r"^%s\s*(\w*)\s*%s$" % (self.environment.variable_start_string, self.environment.variable_end_string))
+
+        self.block_start    = self.environment.block_start_string
+        self.block_end      = self.environment.block_end_string
+        self.variable_start = self.environment.variable_start_string
+        self.variable_end   = self.environment.variable_end_string
+        self._clean_regex   = re.compile(r'(?:%s[%s%s]|[%s%s]%s)' % (self.variable_start[0], self.variable_start[1], self.block_start[1], self.block_end[0], self.variable_end[0], self.variable_end[1]))
 
     def _get_filters(self):
         '''
@@ -197,6 +207,47 @@ class Templar:
 
         return jinja_exts
 
+    def _clean_data(self, orig_data):
+        ''' remove jinja2 template tags from a string '''
+
+        if not isinstance(orig_data, string_types):
+            return orig_data
+
+        with contextlib.closing(StringIO(orig_data)) as data:
+            # these variables keep track of opening block locations, as we only
+            # want to replace matched pairs of print/block tags
+            print_openings = []
+            block_openings = []
+            for mo in self._clean_regex.finditer(orig_data):
+                token = mo.group(0)
+                token_start = mo.start(0)
+
+                if token[0] == self.variable_start[0]:
+                    if token == self.block_start:
+                        block_openings.append(token_start)
+                    elif token == self.variable_start:
+                        print_openings.append(token_start)
+
+                elif token[1] == self.variable_end[1]:
+                    prev_idx = None
+                    if token == '%}' and block_openings:
+                        prev_idx = block_openings.pop()
+                    elif token == '}}' and print_openings:
+                        prev_idx = print_openings.pop()
+
+                    if prev_idx is not None:
+                        # replace the opening
+                        data.seek(prev_idx, os.SEEK_SET)
+                        data.write('{#')
+                        # replace the closing
+                        data.seek(token_start, os.SEEK_SET)
+                        data.write('#}')
+
+                else:
+                    raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
+
+            return data.getvalue()
+
     def set_available_variables(self, variables):
         '''
         Sets the list of template variables this Templar instance will use
@@ -217,12 +268,12 @@ class Templar:
         # Don't template unsafe variables, instead drop them back down to
         # their constituent type.
         if hasattr(variable, '__UNSAFE__'):
-            if isinstance(variable, unicode):
-                return unicode(variable)
-            elif isinstance(variable, str):
-                return str(variable)
+            if isinstance(variable, text_type):
+                return self._clean_data(text_type(variable))
+            elif isinstance(variable, binary_type):
+                return self._clean_data(bytes(variable))
             else:
-                return variable
+                return self._clean_data(variable._obj)
 
         try:
             if convert_bare:
@@ -258,6 +309,7 @@ class Templar:
                                 # FIXME: if the safe_eval raised an error, should we do something with it?
                                 pass
 
+                #return self._clean_data(result)
                 return result
 
             elif isinstance(variable, (list, tuple)):

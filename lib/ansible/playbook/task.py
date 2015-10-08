@@ -101,6 +101,12 @@ class Task(Base, Conditional, Taggable, Become):
 
         super(Task, self).__init__()
 
+    def get_path(self):
+       ''' return the absolute path of the task with its line number '''
+
+       if hasattr(self, '_ds'):
+           return "%s:%s" % (self._ds._data_source, self._ds._line_number)
+
     def get_name(self):
        ''' return the name of the task '''
 
@@ -118,7 +124,7 @@ class Task(Base, Conditional, Taggable, Become):
     def _merge_kv(self, ds):
         if ds is None:
             return ""
-        elif isinstance(ds, basestring):
+        elif isinstance(ds, string_types):
             return ds
         elif isinstance(ds, dict):
             buf = ""
@@ -363,19 +369,25 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Generic logic to get the attribute or parent attribute for a task value.
         '''
-        value = self._attributes[attr]
-        if self._block and (value is None or extend):
-            parent_value = getattr(self._block, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
-        if self._task_include and (value is None or extend):
-            parent_value = getattr(self._task_include, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
+        value = None
+        try:
+            value = self._attributes[attr]
+
+            if self._block and (value is None or extend):
+                parent_value = getattr(self._block, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+            if self._task_include and (value is None or extend):
+                parent_value = getattr(self._task_include, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+        except KeyError:
+            pass
+
         return value
 
     def _get_attr_environment(self):

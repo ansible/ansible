@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
@@ -32,6 +33,7 @@ class Block(Base, Become, Conditional, Taggable):
     _block  = FieldAttribute(isa='list', default=[])
     _rescue = FieldAttribute(isa='list', default=[])
     _always = FieldAttribute(isa='list', default=[])
+    _delegate_to = FieldAttribute(isa='list')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -96,53 +98,49 @@ class Block(Base, Become, Conditional, Taggable):
         return super(Block, self).preprocess_data(ds)
 
     def _load_block(self, attr, ds):
-        return load_list_of_tasks(
-            ds,
-            play=self._play,
-            block=self,
-            role=self._role,
-            task_include=self._task_include,
-            variable_manager=self._variable_manager,
-            loader=self._loader,
-            use_handlers=self._use_handlers,
-        )
+        try:
+            return load_list_of_tasks(
+                ds,
+                play=self._play,
+                block=self,
+                role=self._role,
+                task_include=self._task_include,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+                use_handlers=self._use_handlers,
+            )
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_rescue(self, attr, ds):
-        return load_list_of_tasks(
-            ds,
-            play=self._play,
-            block=self,
-            role=self._role,
-            task_include=self._task_include,
-            variable_manager=self._variable_manager,
-            loader=self._loader,
-            use_handlers=self._use_handlers,
-        )
+        try:
+            return load_list_of_tasks(
+                ds,
+                play=self._play,
+                block=self,
+                role=self._role,
+                task_include=self._task_include,
+                variable_manager=self._variable_manager,
+                loader=self._loader,
+                use_handlers=self._use_handlers,
+            )
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_always(self, attr, ds):
-        return load_list_of_tasks(
-            ds, 
-            play=self._play,
-            block=self, 
-            role=self._role, 
-            task_include=self._task_include,
-            variable_manager=self._variable_manager, 
-            loader=self._loader, 
-            use_handlers=self._use_handlers,
-        )
-
-    # not currently used
-    #def _load_otherwise(self, attr, ds):
-    #    return load_list_of_tasks(
-    #        ds, 
-    #        play=self._play,
-    #        block=self, 
-    #        role=self._role, 
-    #        task_include=self._task_include,
-    #        variable_manager=self._variable_manager, 
-    #        loader=self._loader, 
-    #        use_handlers=self._use_handlers,
-    #    )
+        try:
+            return load_list_of_tasks(
+                ds, 
+                play=self._play,
+                block=self, 
+                role=self._role, 
+                task_include=self._task_include,
+                variable_manager=self._variable_manager, 
+                loader=self._loader, 
+                use_handlers=self._use_handlers,
+            )
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def copy(self, exclude_parent=False, exclude_tasks=False):
         def _dupe_task_list(task_list, new_block):
@@ -273,45 +271,50 @@ class Block(Base, Become, Conditional, Taggable):
         Generic logic to get the attribute or parent attribute for a block value.
         '''
 
-        value = self._attributes[attr]
-        if self._parent_block and (value is None or extend):
-            parent_value = getattr(self._parent_block, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
-        if self._task_include and (value is None or extend):
-            parent_value = getattr(self._task_include, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
-        if self._role and (value is None or extend):
-            parent_value = getattr(self._role, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
+        value = None
+        try:
+            value = self._attributes[attr]
 
-            if len(self._dep_chain) and (not value or extend):
-                reverse_dep_chain = self._dep_chain[:]
-                reverse_dep_chain.reverse()
-                for dep in reverse_dep_chain:
-                    dep_value = getattr(dep, attr)
-                    if extend:
-                        value = self._extend_value(value, dep_value)
-                    else:
-                        value = dep_value
+            if self._parent_block and (value is None or extend):
+                parent_value = getattr(self._parent_block, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+            if self._task_include and (value is None or extend):
+                parent_value = getattr(self._task_include, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+            if self._role and (value is None or extend):
+                parent_value = getattr(self._role, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
 
-                    if value is not None and not extend:
-                        break
+                if len(self._dep_chain) and (not value or extend):
+                    reverse_dep_chain = self._dep_chain[:]
+                    reverse_dep_chain.reverse()
+                    for dep in reverse_dep_chain:
+                        dep_value = getattr(dep, attr)
+                        if extend:
+                            value = self._extend_value(value, dep_value)
+                        else:
+                            value = dep_value
 
-        if self._play and (value is None or extend):
-            parent_value = getattr(self._play, attr)
-            if extend:
-                value = self._extend_value(value, parent_value)
-            else:
-                value = parent_value
+                        if value is not None and not extend:
+                            break
+
+            if self._play and (value is None or extend):
+                parent_value = getattr(self._play, attr)
+                if extend:
+                    value = self._extend_value(value, parent_value)
+                else:
+                    value = parent_value
+        except KeyError:
+            pass
 
         return value
 

@@ -95,6 +95,7 @@ class Play(Base, Taggable, Become):
     def __init__(self):
         super(Play, self).__init__()
 
+        self._included_path = None
         self.ROLE_CACHE = {}
 
     def __repr__(self):
@@ -157,28 +158,40 @@ class Play(Base, Taggable, Become):
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_pre_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_post_tasks(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed tasks/blocks.
         Bare tasks outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            return load_list_of_blocks(ds=ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_handlers(self, attr, ds):
         '''
         Loads a list of blocks from a list which may be mixed handlers/blocks.
         Bare handlers outside of a block are given an implicit block.
         '''
-        return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            return load_list_of_blocks(ds=ds, play=self, use_handlers=True, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed block was encountered.", obj=self._ds)
 
     def _load_roles(self, attr, ds):
         '''
@@ -189,7 +202,10 @@ class Play(Base, Taggable, Become):
         if ds is None:
             ds = []
 
-        role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        try:
+            role_includes = load_list_of_roles(ds, play=self, variable_manager=self._variable_manager, loader=self._loader)
+        except AssertionError:
+            raise AnsibleParserError("A malformed role declaration was encountered.", obj=self._ds)
 
         roles = []
         for ri in role_includes:
@@ -306,12 +322,14 @@ class Play(Base, Taggable, Become):
         for role in self.get_roles():
             roles.append(role.serialize())
         data['roles'] = roles
+        data['included_path'] = self._included_path
 
         return data
 
     def deserialize(self, data):
         super(Play, self).deserialize(data)
 
+        self._included_path = data.get('included_path', None)
         if 'roles' in data:
             role_data = data.get('roles', [])
             roles = []
@@ -326,5 +344,6 @@ class Play(Base, Taggable, Become):
     def copy(self):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
+        new_me._included_path = self._included_path
         return new_me
 

@@ -21,26 +21,32 @@ __metaclass__ = type
 
 import distutils.spawn
 import os
-import shlex
+import os.path
+import pipes
 import subprocess
 import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
-from ansible.utils.path import is_executable
-from ansible.utils.unicode import to_bytes
+from ansible.module_utils.basic import is_executable
+
+
+BUFSIZE = 65536
 
 
 class Connection(ConnectionBase):
     ''' Local chroot based connections '''
 
-    BUFSIZE = 65536
-    has_pipelining = False
+    transport = 'chroot'
+    has_pipelining = True
+    # su currently has an undiagnosed issue with calculating the file
+    # checksums (so copy, for instance, doesn't work right)
+    # Have to look into that before re-enabling this
+    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
 
-    def __init__(self, *args, **kwargs):
-
-        super(Connection, self).__init__(*args, **kwargs)
+    def __init__(self, play_context, new_stdin, *args, **kwargs):
+        super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
 
         self.chroot = self._play_context.remote_addr
 
@@ -60,30 +66,14 @@ class Connection(ConnectionBase):
         if not self.chroot_cmd:
             raise AnsibleError("chroot command not found in PATH")
 
-    @property
-    def transport(self):
-        ''' used to identify this connection object '''
-        return 'chroot'
-
-    def _connect(self, port=None):
+    def _connect(self):
         ''' connect to the chroot; nothing to do here '''
+        super(Connection, self)._connect()
+        if not self._connected:
+            self._display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
+            self._connected = True
 
-        self._display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
-
-        return self
-
-    def _generate_cmd(self, executable, cmd):
-        if executable:
-            local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
-        else:
-            # Prev to python2.7.3, shlex couldn't handle unicode type strings
-            cmd = to_bytes(cmd)
-            cmd = shlex.split(cmd)
-            local_cmd = [self.chroot_cmd, self.chroot]
-            local_cmd += cmd
-        return local_cmd
-
-    def _buffered_exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None, stdin=subprocess.PIPE):
+    def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
         ''' run a command on the chroot.  This is only needed for implementing
         put_file() get_file() so that we don't have to read the whole file
         into memory.
@@ -91,42 +81,48 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-
-        if sudoable and self._play_context.become and self._play_context.become_method not in self.become_methods_supported:
-            raise AnsibleError("Internal Error: this module does not support running commands via %s" % self._play_context.become_method)
-
-        if in_data:
-            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
-
-        # We enter zone as root so we ignore privilege escalation (probably need to fix in case we have to become a specific used [ex: postgres admin])?
-        local_cmd = self._generate_cmd(executable, cmd)
+        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+        local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
         self._display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
-        # FIXME: cwd= needs to be set to the basedir of the playbook, which
-        #        should come from loader, but is not in the connection plugins
-        p = subprocess.Popen(local_cmd, shell=False,
-                             stdin=stdin,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable='/bin/sh', in_data=None):
+    def exec_command(self, cmd, in_data=None, sudoable=False):
         ''' run a command on the chroot '''
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        p = self._buffered_exec_command(cmd, tmp_path, become_user, sudoable, executable, in_data)
+        p = self._buffered_exec_command(cmd)
 
-        stdout, stderr = p.communicate()
-        return (p.returncode, '', stdout, stderr)
+        stdout, stderr = p.communicate(in_data)
+        return (p.returncode, stdout, stderr)
+
+    def _prefix_login_path(self, remote_path):
+        ''' Make sure that we put files into a standard path
+
+            If a path is relative, then we need to choose where to put it.
+            ssh chooses $HOME but we aren't guaranteed that a home dir will
+            exist in any given chroot.  So for now we're choosing "/" instead.
+            This also happens to be the former default.
+
+            Can revisit using $HOME instead if it's a problem
+        '''
+        if not remote_path.startswith(os.path.sep):
+            remote_path = os.path.join(os.path.sep, remote_path)
+        return os.path.normpath(remote_path)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to chroot '''
-
+        super(Connection, self).put_file(in_path, out_path)
         self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
 
+        out_path = pipes.quote(self._prefix_login_path(out_path))
         try:
             with open(in_path, 'rb') as in_file:
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, self.BUFSIZE), None, stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
                 except OSError:
                     raise AnsibleError("chroot connection requires dd command in the chroot")
                 try:
@@ -141,20 +137,21 @@ class Connection(ConnectionBase):
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from chroot to local '''
-
+        super(Connection, self).fetch_file(in_path, out_path)
         self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
 
+        in_path = pipes.quote(self._prefix_login_path(in_path))
         try:
-            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, self.BUFSIZE), None)
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
         except OSError:
             raise AnsibleError("chroot connection requires dd command in the chroot")
 
         with open(out_path, 'wb+') as out_file:
             try:
-                chunk = p.stdout.read(self.BUFSIZE)
+                chunk = p.stdout.read(BUFSIZE)
                 while chunk:
                     out_file.write(chunk)
-                    chunk = p.stdout.read(self.BUFSIZE)
+                    chunk = p.stdout.read(BUFSIZE)
             except:
                 traceback.print_exc()
                 raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
@@ -164,4 +161,5 @@ class Connection(ConnectionBase):
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
-        pass
+        super(Connection, self).close()
+        self._connected = False

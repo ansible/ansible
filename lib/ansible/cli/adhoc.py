@@ -18,7 +18,7 @@
 ########################################################
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.errors import AnsibleOptionsError
+from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
@@ -112,8 +112,16 @@ class AdHocCLI(CLI):
         variable_manager.set_inventory(inventory)
 
         hosts = inventory.list_hosts(pattern)
+        no_hosts = False
         if len(hosts) == 0:
             self.display.warning("provided hosts list is empty, only localhost is available")
+            no_hosts = True
+
+        if self.options.subset:
+            inventory.subset(self.options.subset)
+            if len(inventory.list_hosts(pattern)) == 0 and not no_hosts:
+                # Invalid limit
+                raise AnsibleError("Specified --limit does not match any hosts")
 
         if self.options.listhosts:
             self.display.display('  hosts (%d):' % len(hosts))

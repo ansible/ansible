@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 
+from ansible.errors import AnsibleError
 from ansible.template import Templar
 
 class IncludedFile:
@@ -46,8 +47,8 @@ class IncludedFile:
         included_files = []
 
         for res in results:
-            if res._host in tqm._failed_hosts:
-                raise AnsibleError("host is failed, not including files")
+            if res._host.name in tqm._failed_hosts:
+                continue
 
             if res._task.action == 'include':
                 if res._task.loop:

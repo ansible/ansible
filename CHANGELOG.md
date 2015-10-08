@@ -22,7 +22,12 @@ Major Changes:
 They will retain the value of `None`. To go back to the old behaviour, you can override
 the `null_representation` setting to an empty string in your config file or by setting the
 `ANSIBLE_NULL_REPRESENTATION` environment variable.
-* Use "pattern1,pattern2" to combine host matching patterns. The use of
+* The `ansible_ssh_common_args` inventory variable now provides a
+  convenient way to configure a per-group or per-host ssh ProxyCommand
+  or set any other ssh options. Also, `ansible_ssh_extra_args` can be
+  used to set options that are accepted only by ssh (not sftp or scp,
+  which have their own analogous settings).
+* Use `pattern1,pattern2` to combine host matching patterns. The use of
   ':' as a separator is deprecated (accepted with a warning) because it
   conflicts with IPv6 addresses. The undocumented use of ';' as a
   separator is no longer supported.
@@ -37,7 +42,7 @@ escaping once works. Here's an example of how playbooks need to be modified:
     # Syntax in 2.0.x
     - debug:
         msg: "{{ 'test1_junk 1\\3' | regex_replace('(.*)_junk (.*)', '\\1 \\2') }}"
-    
+
     # Output:
     "msg": "test1 1\\3"
     ```
@@ -57,7 +62,7 @@ newline being stripped you can change your playbook like this:
     tasks:
     - debug:
         msg: "{{ message }}"
-    
+
     # Syntax in 2.0.x
     vars:
       old_message: >
@@ -77,6 +82,9 @@ Deprecated Modules (new ones in parens):
 * glance_image
 * nova_compute   (os_server)
 * quantum_floating_ip (os_floating_ip)
+* quantum_router (os_router)
+* quantum_router_gateway (os_router)
+* quantum_router_interface (os_router)
 
 New Modules:
 
@@ -95,11 +103,13 @@ New Modules:
 * amazon: iam
 * amazon: iam_policy
 * amazon: route53_zone
+* amazon: route53_health_check
 * amazon: sts_assume_role
 * amazon: s3_bucket
 * amazon: s3_lifecycle
 * amazon: s3_logging
 * apk
+* bigip_gtm_wide_ip
 * bundler
 * centurylink: clc_blueprint_package
 * centurylink: clc_firewall_policy
@@ -146,9 +156,12 @@ New Modules:
 * openstack: os_client_config
 * openstack: os_floating_ip
 * openstack: os_image
+* openstack: os_image_facts
 * openstack: os_network
+* openstack: os_network_facts
 * openstack: os_nova_flavor
 * openstack: os_object
+* openstack: os_router
 * openstack: os_security_group
 * openstack: os_security_group_rule
 * openstack: os_server
@@ -215,6 +228,7 @@ New Modules:
 * webfaction_mailbox
 * webfaction_site
 * win_environment
+* win_firewall_rule
 * win_package
 * win_scheduled_task
 * win_iis_virtualdirectory
@@ -274,6 +288,7 @@ you avoid ever writing sensitive plaintext to disk.
 * ansible-vault rekey accepts the --new-vault-password-file option.
 * Configuration items defined as paths (local only) now all support shell style interpolations.
 * Many fixes and new options added to modules, too many to list here.
+* Now you can see task file and line number when using verbosity of 3 or above.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
@@ -373,8 +388,10 @@ Other Notable Changes:
 * New lookup plugins:
   * dig: does dns resolution and returns IPs.
   * url: allows pulling data from a url.
+
 * New callback plugins:
   * syslog_json: allows logging play output to a syslog network server using json format
+
 * Many new enhancements to the amazon web service modules:
   * ec2 now applies all specified security groups when creating a new instance.  Previously it was only applying one
   * ec2_vol gained the ability to specify the EBS volume type

@@ -146,7 +146,8 @@ In addition to storing variables directly in the INI file, host
 and group variables can be stored in individual files relative to the
 inventory file.  
 
-These variable files are in YAML format.  See :doc:`YAMLSyntax` if you are new to YAML.
+These variable files are in YAML format. Valid file extensions include '.yml', '.yaml', '.json',
+or no file extension. See :doc:`YAMLSyntax` if you are new to YAML.
 
 Assuming the inventory file path is::
 
@@ -155,7 +156,7 @@ Assuming the inventory file path is::
 If the host is named 'foosball', and in groups 'raleigh' and 'webservers', variables
 in YAML files at the following locations will be made available to the host::
 
-    /etc/ansible/group_vars/raleigh
+    /etc/ansible/group_vars/raleigh # can optionally end in '.yml', '.yaml', or '.json'
     /etc/ansible/group_vars/webservers
     /etc/ansible/host_vars/foosball
 
@@ -211,11 +212,19 @@ SSH connection::
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
     ansible_ssh_private_key_file
       Private key file used by ssh.  Useful if using multiple keys and you don't want to use SSH agent.
-    ansible_ssh_args
-      This setting overrides any ``ssh_args`` configured in ``ansible.cfg``.
+    ansible_ssh_common_args
+      This setting is always appended to the default command line for
+      sftp, scp, and ssh. Useful to configure a ``ProxyCommand`` for a
+      certain host (or group).
+    ansible_sftp_extra_args
+      This setting is always appended to the default sftp command line.
+    ansible_scp_extra_args
+      This setting is always appended to the default scp command line.
     ansible_ssh_extra_args
-      Additional arguments for ssh. Useful to configure a ``ProxyCommand`` for a certain host (or group).
-      This is used in addition to any ``ssh_args`` configured in ``ansible.cfg`` or the inventory.
+      This setting is always appended to the default ssh command line.
+    ansible_ssh_pipelining
+      Determines whether or not to use SSH pipelining. This can override the
+      ``pipelining`` setting in ``ansible.cfg``.
 
 Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for further details)::
 

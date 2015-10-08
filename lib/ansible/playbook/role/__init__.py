@@ -21,19 +21,14 @@ __metaclass__ = type
 
 from six import iteritems, string_types
 
-import inspect
 import os
 
-from hashlib import sha1
-
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.parsing import DataLoader
 from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.helpers import load_list_of_blocks
-from ansible.playbook.role.include import RoleInclude
 from ansible.playbook.role.metadata import RoleMetadata
 from ansible.playbook.taggable import Taggable
 from ansible.plugins import get_all_plugin_loaders
@@ -64,6 +59,8 @@ def hash_params(params):
         return frozenset(s)
 
 class Role(Base, Become, Conditional, Taggable):
+
+    _delegate_to = FieldAttribute(isa='string')
 
     def __init__(self, play=None):
         self._role_name        = None
@@ -168,7 +165,7 @@ class Role(Base, Become, Conditional, Taggable):
         # load the role's other files, if they exist
         metadata = self._load_role_yaml('meta')
         if metadata:
-            self._metadata = RoleMetadata.load(metadata, owner=self, loader=self._loader)
+            self._metadata = RoleMetadata.load(metadata, owner=self, variable_manager=self._variable_manager, loader=self._loader)
             self._dependencies = self._load_dependencies()
         else:
             self._metadata = RoleMetadata()
@@ -254,22 +251,24 @@ class Role(Base, Become, Conditional, Taggable):
         default_vars = combine_vars(default_vars, self._default_vars)
         return default_vars
 
-    def get_inherited_vars(self, dep_chain=[]):
+    def get_inherited_vars(self, dep_chain=[], include_params=True):
         inherited_vars = dict()
 
         for parent in dep_chain:
             inherited_vars = combine_vars(inherited_vars, parent._role_vars)
-            inherited_vars = combine_vars(inherited_vars, parent._role_params)
+            if include_params:
+                inherited_vars = combine_vars(inherited_vars, parent._role_params)
         return inherited_vars
 
-    def get_vars(self, dep_chain=[]):
-        all_vars = self.get_inherited_vars(dep_chain)
+    def get_vars(self, dep_chain=[], include_params=True):
+        all_vars = self.get_inherited_vars(dep_chain, include_params=include_params)
 
         for dep in self.get_all_dependencies():
-            all_vars = combine_vars(all_vars, dep.get_vars())
+            all_vars = combine_vars(all_vars, dep.get_vars(include_params=include_params))
 
         all_vars = combine_vars(all_vars, self._role_vars)
-        all_vars = combine_vars(all_vars, self._role_params)
+        if include_params:
+            all_vars = combine_vars(all_vars, self._role_params)
 
         return all_vars
 

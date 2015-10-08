@@ -24,8 +24,10 @@ from six import iteritems, text_type
 
 import time
 
+from jinja2.exceptions import UndefinedError
+
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -35,7 +37,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.role import hash_params
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader
 from ansible.template import Templar
-from ansible.vars.unsafe_proxy import UnsafeProxy
+from ansible.vars.unsafe_proxy import wrap_var
 
 try:
     from __main__ import display
@@ -178,7 +180,11 @@ class StrategyBase:
                     if result[0] == 'host_task_failed' or task_result.is_failed():
                         if not task.ignore_errors:
                             self._display.debug("marking %s as failed" % host.name)
-                            iterator.mark_host_failed(host)
+                            if task.run_once:
+                                # if we're using run_once, we have to fail every host here
+                                [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
+                            else:
+                                iterator.mark_host_failed(host)
                             self._tqm._failed_hosts[host.name] = True
                             self._tqm._stats.increment('failures', host.name)
                         else:
@@ -235,6 +241,7 @@ class StrategyBase:
 
                     if task_result._host not in self._notified_handlers[handler_name]:
                         self._notified_handlers[handler_name].append(task_result._host)
+                        self._display.vv("NOTIFIED HANDLER %s" % (handler_name,))
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
@@ -242,31 +249,8 @@ class StrategyBase:
                     # the variable goes in the fact_cache
                     host      = result[1]
                     var_name  = result[2]
-                    var_value = result[3]
+                    var_value = wrap_var(result[3])
 
-                    def _wrap_var(v):
-                        if isinstance(v, dict):
-                            v = _wrap_dict(v)
-                        elif isinstance(v, list):
-                            v = _wrap_list(v)
-                        else:
-                            if v is not None and not isinstance(v, UnsafeProxy):
-                                v = UnsafeProxy(v)
-                        return v
-
-                    def _wrap_dict(v):
-                        for k in v.keys():
-                            if v[k] is not None and not isinstance(v[k], UnsafeProxy):
-                                v[k] = _wrap_var(v[k])
-                        return v
-
-                    def _wrap_list(v):
-                        for idx, item in enumerate(v):
-                            if item is not None and not isinstance(item, UnsafeProxy):
-                                v[idx] = _wrap_var(item)
-                        return v
-
-                    var_value = _wrap_var(var_value)
                     self._variable_manager.set_nonpersistent_facts(host, {var_name: var_value})
 
                 elif result[0] in ('set_host_var', 'set_host_facts'):
@@ -290,6 +274,7 @@ class StrategyBase:
                     if result[0] == 'set_host_var':
                         var_name  = result[4]
                         var_value = result[5]
+
                         self._variable_manager.set_host_variable(target_host, var_name, var_value)
                     elif result[0] == 'set_host_facts':
                         facts = result[4]
@@ -342,6 +327,7 @@ class StrategyBase:
         # Set/update the vars for this host
         # FIXME: probably should have a set vars method for the host?
         new_vars = host_info.get('host_vars', dict())
+        new_host.vars = self._inventory.get_host_vars(new_host)
         new_host.vars.update(new_vars)
 
         new_groups = host_info.get('groups', [])
@@ -356,10 +342,10 @@ class StrategyBase:
             new_group.add_host(new_host)
 
             # add this host to the group cache
-            if self._inventory._groups_list is not None:
-                if group_name in self._inventory._groups_list:
-                    if new_host.name not in self._inventory._groups_list[group_name]:
-                        self._inventory._groups_list[group_name].append(new_host.name)
+            if self._inventory.groups is not None:
+                if group_name in self._inventory.groups:
+                    if new_host not in self._inventory.get_group(group_name).hosts:
+                        self._inventory.get_group(group_name).hosts.append(new_host.name)
 
         # clear pattern caching completely since it's unpredictable what
         # patterns may have referenced the group
@@ -394,6 +380,7 @@ class StrategyBase:
                 # create the new group and add it to inventory
                 new_group = Group(name=group_name)
                 self._inventory.add_group(new_group)
+                new_group.vars = self._inventory.get_group_vars(new_group)
 
                 # and add the group to the proper hierarchy
                 allgroup = self._inventory.get_group('all')
@@ -466,9 +453,22 @@ class StrategyBase:
             for handler in handler_block.block:
                 handler_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=handler)
                 templar = Templar(loader=self._loader, variables=handler_vars)
-                handler_name = templar.template(handler.get_name())
-                should_run = handler_name in self._notified_handlers and len(self._notified_handlers[handler_name])
-                if should_run:
+                try:
+                    # first we check with the full result of get_name(), which may
+                    # include the role name (if the handler is from a role). If that
+                    # is not found, we resort to the simple name field, which doesn't
+                    # have anything extra added to it.
+                    handler_name = templar.template(handler.name)
+                    if handler_name not in self._notified_handlers:
+                        handler_name = templar.template(handler.get_name())
+                except (UndefinedError, AnsibleUndefinedVariable):
+                    # We skip this handler due to the fact that it may be using
+                    # a variable in the name that was conditionally included via
+                    # set_fact or some other method, and we don't want to error
+                    # out unnecessarily
+                    continue
+
+                if handler_name in self._notified_handlers and len(self._notified_handlers[handler_name]):
                     result = self._do_handler_run(handler, handler_name, iterator=iterator, play_context=play_context)
                     if not result:
                         break

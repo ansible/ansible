@@ -35,6 +35,7 @@ class VaultCLI(CLI):
     def __init__(self, args, display=None):
 
         self.vault_pass = None
+        self.new_vault_pass = None
         super(VaultCLI, self).__init__(args, display)
 
     def parse(self):
@@ -138,7 +139,7 @@ class VaultCLI(CLI):
     def execute_view(self):
 
         for f in self.args:
-            self.editor.view_file(f)
+            self.pager(self.editor.plaintext(f))
 
     def execute_rekey(self):
         for f in self.args:

@@ -107,7 +107,7 @@ class InventoryDirectory(object):
                 continue
             fullpath = os.path.join(self.directory, i)
             if os.path.isdir(fullpath):
-                parser = InventoryDirectory(loader=loader, filename=fullpath)
+                parser = InventoryDirectory(loader=loader, groups=groups, filename=fullpath)
             else:
                 parser = get_file_parser(fullpath, self.groups, loader)
                 if parser is None:

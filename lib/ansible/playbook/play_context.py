@@ -27,7 +27,6 @@ import re
 import string
 
 from six import iteritems, string_types
-from six.moves import range
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -39,6 +38,13 @@ from ansible.utils.unicode import to_unicode
 
 __all__ = ['PlayContext']
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 # the magic variable mapping dictionary below is used to translate
 # host/inventory variables to fields in the PlayContext
 # object. The dictionary values are tuples, to account for aliases
@@ -49,8 +55,10 @@ MAGIC_VARIABLE_MAPPING = dict(
    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
    remote_user      = ('ansible_ssh_user', 'ansible_user'),
    port             = ('ansible_ssh_port', 'ansible_port'),
+   accelerate_port  = ('ansible_accelerate_port',),
    password         = ('ansible_ssh_pass', 'ansible_password'),
    private_key_file = ('ansible_ssh_private_key_file', 'ansible_private_key_file'),
+   pipelining       = ('ansible_ssh_pipelining', 'ansible_pipelining'),
    shell            = ('ansible_shell_type',),
    become           = ('ansible_become',),
    become_method    = ('ansible_become_method',),
@@ -58,6 +66,10 @@ MAGIC_VARIABLE_MAPPING = dict(
    become_pass      = ('ansible_become_password','ansible_become_pass'),
    become_exe       = ('ansible_become_exe',),
    become_flags     = ('ansible_become_flags',),
+   ssh_common_args  = ('ansible_ssh_common_args',),
+   sftp_extra_args  = ('ansible_sftp_extra_args',),
+   scp_extra_args   = ('ansible_scp_extra_args',),
+   ssh_extra_args   = ('ansible_ssh_extra_args',),
    sudo             = ('ansible_sudo',),
    sudo_user        = ('ansible_sudo_user',),
    sudo_pass        = ('ansible_sudo_password', 'ansible_sudo_pass'),
@@ -131,8 +143,16 @@ class PlayContext(Base):
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
+    _ssh_args         = FieldAttribute(isa='string', default=C.ANSIBLE_SSH_ARGS)
+    _ssh_common_args  = FieldAttribute(isa='string')
+    _sftp_extra_args  = FieldAttribute(isa='string')
+    _scp_extra_args   = FieldAttribute(isa='string')
     _ssh_extra_args   = FieldAttribute(isa='string')
     _connection_lockfd= FieldAttribute(isa='int')
+    _pipelining       = FieldAttribute(isa='bool', default=C.ANSIBLE_SSH_PIPELINING)
+    _accelerate       = FieldAttribute(isa='bool', default=False)
+    _accelerate_ipv6  = FieldAttribute(isa='bool', default=False, always_post_validate=True)
+    _accelerate_port  = FieldAttribute(isa='int', default=C.ACCELERATE_PORT, always_post_validate=True)
 
     # privilege escalation fields
     _become           = FieldAttribute(isa='bool')
@@ -171,6 +191,9 @@ class PlayContext(Base):
         self.password    = passwords.get('conn_pass','')
         self.become_pass = passwords.get('become_pass','')
 
+        self.prompt      = ''
+        self.success_key = ''
+
         # a file descriptor to be used during locking operations
         self.connection_lockfd = connection_lockfd
 
@@ -186,6 +209,12 @@ class PlayContext(Base):
         Configures this connection information instance with data from
         the play class.
         '''
+
+        # special handling for accelerated mode, as it is set in a separate
+        # play option from the connection parameter
+        self.accelerate = play.accelerate
+        self.accelerate_ipv6 = play.accelerate_ipv6
+        self.accelerate_port = play.accelerate_port
 
         if play.connection:
             self.connection = play.connection
@@ -203,9 +232,6 @@ class PlayContext(Base):
         if play.become_user:
             self.become_user = play.become_user
 
-        # non connection related
-        self.no_log      = play.no_log
-
         if play.force_handlers is not None:
             self.force_handlers = play.force_handlers
 
@@ -221,6 +247,9 @@ class PlayContext(Base):
 
         self.remote_user = options.remote_user
         self.private_key_file = options.private_key_file
+        self.ssh_common_args = options.ssh_common_args
+        self.sftp_extra_args = options.sftp_extra_args
+        self.scp_extra_args = options.scp_extra_args
         self.ssh_extra_args = options.ssh_extra_args
 
         # privilege escalation
@@ -231,8 +260,6 @@ class PlayContext(Base):
         # general flags (should we move out?)
         if options.verbosity:
             self.verbosity  = options.verbosity
-        #if options.no_log:
-        #    self.no_log     = boolean(options.no_log)
         if options.check:
             self.check_mode = boolean(options.check)
         if hasattr(options, 'force_handlers') and options.force_handlers:
@@ -264,7 +291,7 @@ class PlayContext(Base):
             elif isinstance(options.skip_tags, string_types):
                 self.skip_tags.update(options.skip_tags.split(','))
 
-    def set_task_and_variable_override(self, task, variables):
+    def set_task_and_variable_override(self, task, variables, templar):
         '''
         Sets attributes from the task if they are set, which will override
         those from the play.
@@ -285,7 +312,25 @@ class PlayContext(Base):
         # If the value 'ansible_delegated_vars' is in the variables, it means
         # we have a delegated-to host, so we check there first before looking
         # at the variables in general
-        delegated_vars = variables.get('ansible_delegated_vars', dict())
+        if task.delegate_to is not None:
+            # In the case of a loop, the delegated_to host may have been
+            # templated based on the loop variable, so we try and locate
+            # the host name in the delegated variable dictionary here
+            delegated_host_name = templar.template(task.delegate_to)
+            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
+            # make sure this delegated_to host has something set for its remote
+            # address, otherwise we default to connecting to it by name. This
+            # may happen when users put an IP entry into their inventory, or if
+            # they rely on DNS for a non-inventory hostname
+            for address_var in MAGIC_VARIABLE_MAPPING.get('remote_addr'):
+                if address_var in delegated_vars:
+                    break
+            else:
+                display.warning("no remote address found for delegated host %s, using its name by default" % delegated_host_name)
+                delegated_vars['ansible_host'] = delegated_host_name
+        else:
+            delegated_vars = dict()
+
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
                 if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
@@ -304,12 +349,28 @@ class PlayContext(Base):
             elif new_info.become_method == 'su' and new_info.su_pass:
                setattr(new_info, 'become_pass', new_info.su_pass)
 
-
-        # finally, in the special instance that the task was specified
-        # as a local action, override the connection in case it was changed
-        # during some other step in the process
-        if task._local_action:
+        # special overrides for the connection setting
+        if len(delegated_vars) > 0:
+            # in the event that we were using local before make sure to reset the
+            # connection type to the default transport for the delegated-to host,
+            # if not otherwise specified
+            for connection_type in MAGIC_VARIABLE_MAPPING.get('connection'):
+                if connection_type in delegated_vars:
+                    break
+            else:
+                if new_info.remote_addr in C.LOCALHOST:
+                    setattr(new_info, 'connection', 'local')
+                elif getattr(new_info, 'connection', None) == 'local' and new_info.remote_addr not in C.LOCALHOST:
+                    setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
+        elif task._local_action:
+            # otherwise, in the special instance that the task was specified
+            # as a local action, override the connection in case it was changed
+            # during some other step in the process
             setattr(new_info, 'connection', 'local')
+
+        # set no_log to default if it was not previouslly set
+        if new_info.no_log is None:
+            new_info.no_log = C.DEFAULT_NO_LOG
 
         return new_info
 
@@ -345,11 +406,13 @@ class PlayContext(Base):
                     ''
 
             if self.become_method == 'sudo':
-                # Rather than detect if sudo wants a password this time, -k makes sudo always ask for
-                # a password if one is required. Passing a quoted compound command to sudo (or sudo -s)
-                # directly doesn't work, so we shellquote it with pipes.quote() and pass the quoted
-                # string to the user's shell.  We loop reading output until we see the randomly-generated
-                # sudo prompt set with the -p option.
+                # If we have a password, we run sudo with a randomly-generated
+                # prompt set using -p. Otherwise we run it with -n, which makes
+                # it fail if it would have prompted for a password.
+                #
+                # Passing a quoted compound command to sudo (or sudo -s)
+                # directly doesn't work, so we shellquote it with pipes.quote()
+                # and pass the quoted string to the user's shell.
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
@@ -414,7 +477,7 @@ class PlayContext(Base):
         '''
 
         #FIXME: remove password? possibly add become/sudo settings
-        for special_var in  ['ansible_connection', 'ansible_ssh_host', 'ansible_ssh_pass', 'ansible_ssh_port', 'ansible_ssh_user', 'ansible_ssh_private_key_file']:
+        for special_var in  ['ansible_connection', 'ansible_ssh_host', 'ansible_ssh_pass', 'ansible_ssh_port', 'ansible_ssh_user', 'ansible_ssh_private_key_file', 'ansible_ssh_pipelining']:
             if special_var not in variables:
                 for prop, varnames in MAGIC_VARIABLE_MAPPING.items():
                     if special_var in varnames:

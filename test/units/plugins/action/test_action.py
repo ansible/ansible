@@ -32,17 +32,17 @@ class TestActionBase(unittest.TestCase):
     def test_sudo_only_if_user_differs(self):
         play_context = PlayContext()
         action_base = ActionBase(None, None, play_context, None, None, None)
-        action_base._connection = Mock(exec_command=Mock(return_value=(0, '', '', '')))
+        action_base._connection = Mock(exec_command=Mock(return_value=(0, '', '')))
 
         play_context.become = True
         play_context.become_user = play_context.remote_user = 'root'
         play_context.make_become_cmd = Mock(return_value='CMD')
 
-        action_base._low_level_execute_command('ECHO', '/tmp', sudoable=True)
+        action_base._low_level_execute_command('ECHO', sudoable=True)
         play_context.make_become_cmd.assert_not_called()
 
         play_context.remote_user = 'apo'
-        action_base._low_level_execute_command('ECHO', '/tmp', sudoable=True)
+        action_base._low_level_execute_command('ECHO', sudoable=True)
         play_context.make_become_cmd.assert_called_once_with('ECHO', executable=None)
 
         play_context.make_become_cmd.reset_mock()
@@ -51,7 +51,7 @@ class TestActionBase(unittest.TestCase):
         C.BECOME_ALLOW_SAME_USER = True
         try:
             play_context.remote_user = 'root'
-            action_base._low_level_execute_command('ECHO SAME', '/tmp', sudoable=True)
+            action_base._low_level_execute_command('ECHO SAME', sudoable=True)
             play_context.make_become_cmd.assert_called_once_with('ECHO SAME', executable=None)
         finally:
             C.BECOME_ALLOW_SAME_USER = become_allow_same_user

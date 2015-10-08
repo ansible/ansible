@@ -21,7 +21,7 @@ VAULT_PASSWORD_FILE = vault-password
 
 CONSUL_RUNNING := $(shell python consul_running.py)
 
-all: parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths
+all: parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5
@@ -172,7 +172,7 @@ test_galaxy: test_galaxy_spec test_galaxy_yaml
 
 test_galaxy_spec:
 	mytmpdir=$(MYTMPDIR) ; \
-	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles ; \
+	ansible-galaxy install -r galaxy_rolesfile -p $$mytmpdir/roles -vvvv ; \
     cp galaxy_playbook.yml $$mytmpdir ; \
     ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
     RC=$$? ; \
@@ -181,7 +181,7 @@ test_galaxy_spec:
 
 test_galaxy_yaml:
 	mytmpdir=$(MYTMPDIR) ; \
-	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles ; \
+	ansible-galaxy install -r galaxy_roles.yml -p $$mytmpdir/roles -vvvv; \
     cp galaxy_playbook.yml $$mytmpdir ; \
     ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook.yml -v $(TEST_FLAGS) ; \
     RC=$$? ; \
@@ -190,3 +190,8 @@ test_galaxy_yaml:
 
 test_lookup_paths:
 	ansible-playbook lookup_paths/play.yml -i $(INVENTORY) -v $(TEST_FLAGS)
+
+no_log:
+	# This test expects 7 loggable vars and 0 non loggable ones, if either mismatches it fails, run the ansible-playbook command to debug
+	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -vvvvv | awk -e 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "6/0" ]
+

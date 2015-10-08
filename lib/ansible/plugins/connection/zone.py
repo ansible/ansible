@@ -22,34 +22,60 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import distutils.spawn
-import traceback
 import os
-import shlex
+import os.path
+import pipes
 import subprocess
-from ansible import errors
-from ansible.utils.unicode import to_bytes
-from ansible.callbacks import vvv
-import ansible.constants as C
+import traceback
+
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.plugins.connection import ConnectionBase
+
 
 BUFSIZE = 65536
 
-class Connection(object):
+
+class Connection(ConnectionBase):
     ''' Local zone based connections '''
 
-    def _search_executable(self, executable):
+    transport = 'zone'
+    # Pipelining may work.  Someone needs to test by setting this to True and
+    # having pipelining=True in their ansible.cfg
+    has_pipelining = False
+    # Some become_methods may work in v2 (sudo works for other chroot-based
+    # plugins while su seems to be failing).  If some work, check chroot.py to
+    # see how to disable just some methods.
+    become_methods = frozenset()
+
+    def __init__(self, play_context, new_stdin, *args, **kwargs):
+        super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
+
+        self.zone = self._play_context.remote_addr
+
+        if os.geteuid() != 0:
+            raise AnsibleError("zone connection requires running as root")
+
+        self.zoneadm_cmd = self._search_executable('zoneadm')
+        self.zlogin_cmd = self._search_executable('zlogin')
+
+        if not self.zone in self.list_zones():
+            raise AnsibleError("incorrect zone name %s" % self.zone)
+
+    @staticmethod
+    def _search_executable(executable):
         cmd = distutils.spawn.find_executable(executable)
         if not cmd:
-            raise errors.AnsibleError("%s command not found in PATH") % executable
+            raise AnsibleError("%s command not found in PATH") % executable
         return cmd
 
     def list_zones(self):
-        pipe = subprocess.Popen([self.zoneadm_cmd, 'list', '-ip'],
-                             cwd=self.runner.basedir,
+        process = subprocess.Popen([self.zoneadm_cmd, 'list', '-ip'],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         zones = []
-        for l in pipe.stdout.readlines():
+        for l in process.stdout.readlines():
           # 1:work:running:/zones/work:3126dc59-9a07-4829-cde9-a816e4c5040e:native:shared
           s = l.split(':')
           if s[1] != 'global':
@@ -60,57 +86,22 @@ class Connection(object):
     def get_zone_path(self):
         #solaris10vm# zoneadm -z cswbuild list -p         
         #-:cswbuild:installed:/zones/cswbuild:479f3c4b-d0c6-e97b-cd04-fd58f2c0238e:native:shared
-        pipe = subprocess.Popen([self.zoneadm_cmd, '-z', self.zone, 'list', '-p'],
-                             cwd=self.runner.basedir,
+        process = subprocess.Popen([self.zoneadm_cmd, '-z', self.zone, 'list', '-p'],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         #stdout, stderr = p.communicate()
-        path = pipe.stdout.readlines()[0].split(':')[3]
+        path = process.stdout.readlines()[0].split(':')[3]
         return path + '/root'
-        
-    def __init__(self, runner, host, port, *args, **kwargs):
-        self.zone = host
-        self.runner = runner
-        self.host = host
-        self.has_pipelining = False
-        self.become_methods_supported=C.BECOME_METHODS
 
-        if os.geteuid() != 0:
-            raise errors.AnsibleError("zone connection requires running as root")
-
-        self.zoneadm_cmd = self._search_executable('zoneadm')
-        self.zlogin_cmd = self._search_executable('zlogin')
-        
-        if not self.zone in self.list_zones():
-            raise errors.AnsibleError("incorrect zone name %s" % self.zone)
-
-
-        self.host = host
-        # port is unused, since this is local
-        self.port = port
-
-    def connect(self, port=None):
+    def _connect(self):
         ''' connect to the zone; nothing to do here '''
+        super(Connection, self)._connect()
+        if not self._connected:
+            self._display.vvv("THIS IS A LOCAL ZONE DIR", host=self.zone)
+            self._connected = True
 
-        vvv("THIS IS A LOCAL ZONE DIR", host=self.zone)
-
-        return self
-
-    # a modifier
-    def _generate_cmd(self, executable, cmd):
-        if executable:
-            ### TODO: Why was "-c" removed from here? (vs jail.py)
-            local_cmd = [self.zlogin_cmd, self.zone, executable, cmd]
-        else:
-            # Prev to python2.7.3, shlex couldn't handle unicode type strings
-            cmd = to_bytes(cmd)
-            cmd = shlex.split(cmd)
-            local_cmd = [self.zlogin_cmd, self.zone]
-            local_cmd += cmd
-        return local_cmd
-
-    def _buffered_exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None, stdin=subprocess.PIPE):
+    def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
         ''' run a command on the zone.  This is only needed for implementing
         put_file() get_file() so that we don't have to read the whole file
         into memory.
@@ -118,68 +109,82 @@ class Connection(object):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
+        # FIXME: previous code took pains not to invoke /bin/sh and left out
+        # -c.  Not sure why as cmd could contain shell metachars (like
+        # cmd = "mkdir -p $HOME/pathname && echo $HOME/pathname") which
+        # probably wouldn't work without a shell.  Get someone to test that
+        # this connection plugin works and then we can remove this note 
+        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+        local_cmd = [self.zlogin_cmd, self.zone, executable, '-c', cmd]
 
-        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
-
-        if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
-
-        # We enter zone as root so we ignore privilege escalation (probably need to fix in case we have to become a specific used [ex: postgres admin])?
-        local_cmd = self._generate_cmd(executable, cmd)
-
-        vvv("EXEC %s" % (local_cmd), host=self.zone)
-        p = subprocess.Popen(local_cmd, shell=False,
-                             cwd=self.runner.basedir,
-                             stdin=stdin,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        self._display.vvv("EXEC %s" % (local_cmd), host=self.zone)
+        p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p
 
-    def exec_command(self, cmd, tmp_path, become_user=None, sudoable=False, executable=None, in_data=None):
+    def exec_command(self, cmd, in_data=None, sudoable=False):
         ''' run a command on the zone '''
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        ### TODO: Why all the precautions not to specify /bin/sh? (vs jail.py)
-        if executable == '/bin/sh':
-          executable = None
+        # TODO: Check whether we can send the command to stdin via
+        # p.communicate(in_data)
+        # If we can, then we can change this plugin to has_pipelining=True and
+        # remove the error if in_data is given.
+        if in_data:
+            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
-        p = self._buffered_exec_command(cmd, tmp_path, become_user, sudoable, executable, in_data)
+        p = self._buffered_exec_command(cmd)
 
-        stdout, stderr = p.communicate()
-        return (p.returncode, '', stdout, stderr)
+        stdout, stderr = p.communicate(in_data)
+        return (p.returncode, stdout, stderr)
+
+    def _prefix_login_path(self, remote_path):
+        ''' Make sure that we put files into a standard path
+
+            If a path is relative, then we need to choose where to put it.
+            ssh chooses $HOME but we aren't guaranteed that a home dir will
+            exist in any given chroot.  So for now we're choosing "/" instead.
+            This also happens to be the former default.
+
+            Can revisit using $HOME instead if it's a problem
+        '''
+        if not remote_path.startswith(os.path.sep):
+            remote_path = os.path.join(os.path.sep, remote_path)
+        return os.path.normpath(remote_path)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to zone '''
+        super(Connection, self).put_file(in_path, out_path)
+        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.zone)
 
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.zone)
-
+        out_path = pipes.quote(self._prefix_login_path(out_path))
         try:
             with open(in_path, 'rb') as in_file:
                 try:
-                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), None, stdin=in_file)
+                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
                 except OSError:
-                    raise errors.AnsibleError("jail connection requires dd command in the jail")
+                    raise AnsibleError("jail connection requires dd command in the jail")
                 try:
                     stdout, stderr = p.communicate()
                 except:
                     traceback.print_exc()
-                    raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                    raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
                 if p.returncode != 0:
-                    raise errors.AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
         except IOError:
-            raise errors.AnsibleError("file or module does not exist at: %s" % in_path)
+            raise AnsibleError("file or module does not exist at: %s" % in_path)
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from zone to local '''
+        super(Connection, self).fetch_file(in_path, out_path)
+        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.zone)
 
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.zone)
-
-
+        in_path = pipes.quote(self._prefix_login_path(in_path))
         try:
-            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE), None)
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
         except OSError:
-            raise errors.AnsibleError("zone connection requires dd command in the zone")
-
+            raise AnsibleError("zone connection requires dd command in the zone")
 
         with open(out_path, 'wb+') as out_file:
             try:
@@ -189,11 +194,12 @@ class Connection(object):
                     chunk = p.stdout.read(BUFSIZE)
             except:
                 traceback.print_exc()
-                raise errors.AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
             stdout, stderr = p.communicate()
             if p.returncode != 0:
-                raise errors.AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
-        pass
+        super(Connection, self).close()
+        self._connected = False

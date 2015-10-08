@@ -22,6 +22,8 @@ __metaclass__ = type
 import re
 import codecs
 
+from ansible.errors import AnsibleError
+
 # Decode escapes adapted from rspeer's answer here:
 # http://stackoverflow.com/questions/4020539/process-escape-sequences-in-a-string-in-python
 _HEXCHAR = '[a-fA-F0-9]'
@@ -57,7 +59,7 @@ def parse_kv(args, check_raw=False):
             vargs = split_args(args)
         except ValueError as ve:
             if 'no closing quotation' in str(ve).lower():
-                raise errors.AnsibleError("error parsing argument string, try quoting the entire line.")
+                raise AnsibleError("error parsing argument string, try quoting the entire line.")
             else:
                 raise
 

@@ -1,6 +1,7 @@
 # Based on local.py (c) 2012, Michael DeHaan <michael.dehaan@gmail.com>
 # Based on chroot.py (c) 2013, Maykel Moya <mmoya@speedyrails.com>
 # (c) 2013, Michael Scherer <misc@zarb.org>
+# (c) 2015, Toshio Kuratomi <tkuratomi@ansible.com>
 #
 # This file is part of Ansible
 #
@@ -21,111 +22,143 @@ __metaclass__ = type
 
 import distutils.spawn
 import os
+import os.path
+import pipes
 import subprocess
-from ansible import errors
-from ansible.callbacks import vvv
-import ansible.constants as C
 
-class Connection(object):
+from ansible import constants as C
+from ansible.errors import AnsibleError
+from ansible.plugins.connection import ConnectionBase
+
+
+BUFSIZE = 65536
+
+
+class Connection(ConnectionBase):
     ''' Local lxc based connections '''
+
+    transport = 'libvirt_lxc'
+    has_pipelining = True
+    # su currently has an undiagnosed issue with calculating the file
+    # checksums (so copy, for instance, doesn't work right)
+    # Have to look into that before re-enabling this
+    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
+
+    def __init__(self, play_context, new_stdin, *args, **kwargs):
+        super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
+        self.lxc = self._play_context.remote_addr
+
+        self.virsh = self._search_executable('virsh')
+
+        self._check_domain(self.lxc)
 
     def _search_executable(self, executable):
         cmd = distutils.spawn.find_executable(executable)
         if not cmd:
-            raise errors.AnsibleError("%s command not found in PATH") % executable
+            raise AnsibleError("%s command not found in PATH") % executable
         return cmd
 
     def _check_domain(self, domain):
-        p = subprocess.Popen([self.cmd, '-q', '-c', 'lxc:///', 'dominfo', domain],
+        p = subprocess.Popen([self.virsh, '-q', '-c', 'lxc:///', 'dominfo', domain],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
         if p.returncode:
-            raise errors.AnsibleError("%s is not a lxc defined in libvirt" % domain)
+            raise AnsibleError("%s is not a lxc defined in libvirt" % domain)
 
-    def __init__(self, runner, host, port, *args, **kwargs):
-        self.lxc = host
-
-        self.cmd = self._search_executable('virsh')
-
-        self._check_domain(host)
-
-        self.runner = runner
-        self.host = host
-        # port is unused, since this is local
-        self.port = port
-        self.become_methods_supported=C.BECOME_METHODS
-
-    def connect(self, port=None):
+    def _connect(self):
         ''' connect to the lxc; nothing to do here '''
+        super(Connection, self)._connect()
+        if not self._connected:
+            self._display.vvv("THIS IS A LOCAL LXC DIR", host=self.lxc)
+            self._connected = True
 
-        vvv("THIS IS A LOCAL LXC DIR", host=self.lxc)
+    def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
+        ''' run a command on the chroot.  This is only needed for implementing
+        put_file() get_file() so that we don't have to read the whole file
+        into memory.
 
-        return self
+        compared to exec_command() it looses some niceties like being able to
+        return the process's exit code immediately.
+        '''
+        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+        local_cmd = [self.virsh, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', executable , '-c', cmd]
 
-    def _generate_cmd(self, executable, cmd):
-        if executable:
-            local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', executable , '-c', cmd]
-        else:
-            local_cmd = '%s -q -c lxc:/// lxc-enter-namespace %s -- %s' % (self.cmd, self.lxc, cmd)
-        return local_cmd
+        self._display.vvv("EXEC %s" % (local_cmd), host=self.lxc)
+        p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    def exec_command(self, cmd, tmp_path, become_user, sudoable=False, executable='/bin/sh', in_data=None):
+        return p
+
+    def exec_command(self, cmd, in_data=None, sudoable=False):
         ''' run a command on the chroot '''
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
+        p = self._buffered_exec_command(cmd)
 
-        if in_data:
-            raise errors.AnsibleError("Internal Error: this module does not support optimized module pipelining")
+        stdout, stderr = p.communicate(in_data)
+        return (p.returncode, stdout, stderr)
 
-        # We ignore privilege escalation!
-        local_cmd = self._generate_cmd(executable, cmd)
+    def _prefix_login_path(self, remote_path):
+        ''' Make sure that we put files into a standard path
 
-        vvv("EXEC %s" % (local_cmd), host=self.lxc)
-        p = subprocess.Popen(local_cmd, shell=isinstance(local_cmd, basestring),
-                             cwd=self.runner.basedir,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            If a path is relative, then we need to choose where to put it.
+            ssh chooses $HOME but we aren't guaranteed that a home dir will
+            exist in any given chroot.  So for now we're choosing "/" instead.
+            This also happens to be the former default.
 
-        stdout, stderr = p.communicate()
-        return (p.returncode, '', stdout, stderr)
-
-    def _normalize_path(self, path, prefix):
-        if not path.startswith(os.path.sep):
-            path = os.path.join(os.path.sep, path)
-        normpath = os.path.normpath(path)
-        return os.path.join(prefix, normpath[1:])
+            Can revisit using $HOME instead if it's a problem
+        '''
+        if not remote_path.startswith(os.path.sep):
+            remote_path = os.path.join(os.path.sep, remote_path)
+        return os.path.normpath(remote_path)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to lxc '''
+        super(Connection, self).put_file(in_path, out_path)
+        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.lxc)
 
-        out_path = self._normalize_path(out_path, '/')
-        vvv("PUT %s TO %s" % (in_path, out_path), host=self.lxc)
-        
-        local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', '/bin/tee', out_path]
-        vvv("EXEC %s" % (local_cmd), host=self.lxc)
+        out_path = pipes.quote(self._prefix_login_path(out_path))
+        try:
+            with open(in_path, 'rb') as in_file:
+                try:
+                    p = self._buffered_exec_command('dd of=%s bs=%s' % (out_path, BUFSIZE), stdin=in_file)
+                except OSError:
+                    raise AnsibleError("chroot connection requires dd command in the chroot")
+                try:
+                    stdout, stderr = p.communicate()
+                except:
+                    traceback.print_exc()
+                    raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+                if p.returncode != 0:
+                    raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
+        except IOError:
+            raise AnsibleError("file or module does not exist at: %s" % in_path)
 
-        p = subprocess.Popen(local_cmd, cwd=self.runner.basedir,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
-        stdout, stderr = p.communicate(open(in_path,'rb').read())
- 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from lxc to local '''
+        super(Connection, self).fetch_file(in_path, out_path)
+        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.lxc)
 
-        in_path = self._normalize_path(in_path, '/')
-        vvv("FETCH %s TO %s" % (in_path, out_path), host=self.lxc)
+        in_path = pipes.quote(self._prefix_login_path(in_path))
+        try:
+            p = self._buffered_exec_command('dd if=%s bs=%s' % (in_path, BUFSIZE))
+        except OSError:
+            raise AnsibleError("chroot connection requires dd command in the chroot")
 
-        local_cmd = [self.cmd, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', '/bin/cat', in_path]
-        vvv("EXEC %s" % (local_cmd), host=self.lxc)
-
-        p = subprocess.Popen(local_cmd, cwd=self.runner.basedir,
-                             stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        open(out_path,'wb').write(stdout)
-
+        with open(out_path, 'wb+') as out_file:
+            try:
+                chunk = p.stdout.read(BUFSIZE)
+                while chunk:
+                    out_file.write(chunk)
+                    chunk = p.stdout.read(BUFSIZE)
+            except:
+                traceback.print_exc()
+                raise AnsibleError("failed to transfer file %s to %s" % (in_path, out_path))
+            stdout, stderr = p.communicate()
+            if p.returncode != 0:
+                raise AnsibleError("failed to transfer file %s to %s:\n%s\n%s" % (in_path, out_path, stdout, stderr))
 
     def close(self):
         ''' terminate the connection; nothing to do here '''
-        pass
+        super(Connection, self).close()
+        self._connected = False

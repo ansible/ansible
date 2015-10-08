@@ -22,6 +22,7 @@ import os
 
 from ansible.plugins.callback import CallbackBase
 from ansible.utils.path import makedirs_safe
+from ansible.utils.unicode import to_bytes
 from ansible.constants import TREE_DIR
 
 
@@ -44,12 +45,12 @@ class CallbackModule(CallbackBase):
     def write_tree_file(self, hostname, buf):
         ''' write something into treedir/hostname '''
 
+        buf = to_bytes(buf)
         try:
             makedirs_safe(self.tree)
             path = os.path.join(self.tree, hostname)
-            fd = open(path, "w+")
-            fd.write(buf)
-            fd.close()
+            with open(path, 'wb+') as fd:
+                fd.write(buf)
         except (OSError, IOError) as e:
             self._display.warnings("Unable to write to %s's file: %s" % (hostname, str(e)))
 

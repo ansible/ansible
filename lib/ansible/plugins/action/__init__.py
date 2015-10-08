@@ -19,21 +19,22 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six.moves import StringIO
 import base64
 import json
 import os
+import pipes
 import random
 import stat
-import sys
 import tempfile
 import time
+
+from six import binary_type, text_type, iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
 from ansible.executor.module_common import modify_module
 from ansible.parsing.utils.jsonify import jsonify
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
     from __main__ import display
@@ -68,30 +69,36 @@ class ActionBase:
         '''
 
         # Search module path(s) for named module.
-        module_suffixes = getattr(self._connection, 'default_suffixes', None)
+        for mod_type in self._connection.module_implementation_preferences:
+            # Check to determine if PowerShell modules are supported, and apply
+            # some fixes (hacks) to module name + args.
+            if mod_type == '.ps1':
+                # win_stat, win_file, and win_copy are not just like their
+                # python counterparts but they are compatible enough for our
+                # internal usage
+                if module_name in ('stat', 'file', 'copy') and self._task.action != module_name:
+                    module_name = 'win_%s' % module_name
 
-        # Check to determine if PowerShell modules are supported, and apply
-        # some fixes (hacks) to module name + args.
-        if module_suffixes and '.ps1' in module_suffixes:
-            # Use Windows versions of stat/file/copy modules when called from
-            # within other action plugins.
-            if module_name in ('stat', 'file', 'copy') and self._task.action != module_name:
-                module_name = 'win_%s' % module_name
-            # Remove extra quotes surrounding path parameters before sending to module.
-            if module_name in ('win_stat', 'win_file', 'win_copy', 'slurp') and module_args and hasattr(self._connection._shell, '_unquote'):
-                for key in ('src', 'dest', 'path'):
-                    if key in module_args:
-                        module_args[key] = self._connection._shell._unquote(module_args[key])
+                # Remove extra quotes surrounding path parameters before sending to module.
+                if module_name in ('win_stat', 'win_file', 'win_copy', 'slurp') and module_args and hasattr(self._connection._shell, '_unquote'):
+                    for key in ('src', 'dest', 'path'):
+                        if key in module_args:
+                            module_args[key] = self._connection._shell._unquote(module_args[key])
 
-        module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, module_suffixes)
-        if module_path is None:
+            module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type)
+            if module_path:
+                break
+        else: # This is a for-else: http://bit.ly/1ElPkyg
+            # FIXME: Why is it necessary to look for the windows version?
+            # Shouldn't all modules be installed?
+            #
             # Use Windows version of ping module to check module paths when
             # using a connection that supports .ps1 suffixes.
-            if module_suffixes and '.ps1' in module_suffixes:
+            if '.ps1' in self._connection.module_implementation_preferences:
                 ping_module = 'win_ping'
             else:
                 ping_module = 'ping'
-            module_path2 = self._shared_loader_obj.module_loader.find_plugin(ping_module, module_suffixes)
+            module_path2 = self._shared_loader_obj.module_loader.find_plugin(ping_module, self._connection.module_implementation_preferences)
             if module_path2 is not None:
                 raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
             else:
@@ -142,7 +149,7 @@ class ActionBase:
         if tmp and "tmp" in tmp:
             # tmp has already been created
             return False
-        if not self._connection.has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES or self._play_context.become_method == 'su':
+        if not self._connection.has_pipelining or not self._play_context.pipelining or C.DEFAULT_KEEP_REMOTE_FILES or self._play_context.become_method == 'su':
             # tmp is necessary to store the module source code
             # or we want to keep the files on the target system
             return True
@@ -170,7 +177,7 @@ class ActionBase:
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
         self._display.debug("executing _low_level_execute_command to create the tmp path")
-        result = self._low_level_execute_command(cmd, None, sudoable=False)
+        result = self._low_level_execute_command(cmd, sudoable=False)
         self._display.debug("done with creation of tmp path")
 
         # error handling on this seems a little aggressive?
@@ -180,21 +187,21 @@ class ActionBase:
             elif result['rc'] == 255 and self._connection.transport in ('ssh',):
 
                 if self._play_context.verbosity > 3:
-                    output = 'SSH encountered an unknown error. The output was:\n%s' % (result['stdout']+result['stderr'])
+                    output = u'SSH encountered an unknown error. The output was:\n%s%s' % (result['stdout'], result['stderr'])
                 else:
-                    output = 'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
+                    output = u'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
 
-            elif 'No space left on device' in result['stderr']:
+            elif u'No space left on device' in result['stderr']:
                 output = result['stderr']
             else:
                 output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
-            if 'stdout' in result and result['stdout'] != '':
-                output = output + ": %s" % result['stdout']
+            if 'stdout' in result and result['stdout'] != u'':
+                output = output + u": %s" % result['stdout']
             raise AnsibleConnectionFailure(output)
 
         # FIXME: do we still need to do this?
         #rc = self._connection._shell.join_path(utils.last_non_blank_line(result['stdout']).strip(), '')
-        rc = self._connection._shell.join_path(result['stdout'].strip(), '').splitlines()[-1]
+        rc = self._connection._shell.join_path(result['stdout'].strip(), u'').splitlines()[-1]
 
         # Catch failure conditions, files should never be
         # written to locations in /.
@@ -211,7 +218,7 @@ class ActionBase:
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
             self._display.debug("calling _low_level_execute_command to remove the tmp path")
-            self._low_level_execute_command(cmd, None, sudoable=False)
+            self._low_level_execute_command(cmd, sudoable=False)
             self._display.debug("done removing the tmp path")
 
     def _transfer_data(self, remote_path, data):
@@ -241,18 +248,18 @@ class ActionBase:
 
         return remote_path
 
-    def _remote_chmod(self, tmp, mode, path, sudoable=False):
+    def _remote_chmod(self, mode, path, sudoable=False):
         '''
         Issue a remote chmod command
         '''
 
         cmd = self._connection._shell.chmod(mode, path)
         self._display.debug("calling _low_level_execute_command to chmod the remote path")
-        res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable)
         self._display.debug("done with chmod call")
         return res
 
-    def _remote_checksum(self, tmp, path, all_vars):
+    def _remote_checksum(self, path, all_vars):
         '''
         Takes a remote checksum and returns 1 if no file
         '''
@@ -261,25 +268,23 @@ class ActionBase:
 
         cmd = self._connection._shell.checksum(path, python_interp)
         self._display.debug("calling _low_level_execute_command to get the remote checksum")
-        data = self._low_level_execute_command(cmd, tmp, sudoable=True)
+        data = self._low_level_execute_command(cmd, sudoable=True)
         self._display.debug("done getting the remote checksum")
-        # FIXME: implement this function?
-        #data2 = utils.last_non_blank_line(data['stdout'])
         try:
             data2 = data['stdout'].strip().splitlines()[-1]
-            if data2 == '':
+            if data2 == u'':
                 # this may happen if the connection to the remote server
                 # failed, so just return "INVALIDCHECKSUM" to avoid errors
                 return "INVALIDCHECKSUM"
             else:
                 return data2.split()[0]
         except IndexError:
-            self._display.warning("Calculating checksum failed unusually, please report this to " + \
-                "the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n" % (cmd, data))
+            self._display.warning(u"Calculating checksum failed unusually, please report this to "
+                u"the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n" % (to_unicode(cmd), data))
             # this will signal that it changed and allow things to keep going
             return "INVALIDCHECKSUM"
 
-    def _remote_expand_user(self, path, tmp):
+    def _remote_expand_user(self, path):
         ''' takes a remote path and performs tilde expansion on the remote host '''
         if not path.startswith('~'): # FIXME: Windows paths may start with "~ instead of just ~
             return path
@@ -293,7 +298,7 @@ class ActionBase:
 
         cmd = self._connection._shell.expand_user(expand_path)
         self._display.debug("calling _low_level_execute_command to expand the remote user path")
-        data = self._low_level_execute_command(cmd, tmp, sudoable=False)
+        data = self._low_level_execute_command(cmd, sudoable=False)
         self._display.debug("done expanding the remote user path")
         #initial_fragment = utils.last_non_blank_line(data['stdout'])
         initial_fragment = data['stdout'].strip().splitlines()[-1]
@@ -316,14 +321,13 @@ class ActionBase:
         need to filter anything which starts not with '{', '[', ', '=' or is an empty line.
         filter only leading lines since multiline JSON is valid.
         '''
+        idx = 0
+        for line in data.splitlines(True):
+            if line.startswith((u'{', u'[')):
+                break
+            idx = idx + len(line)
 
-        filtered_lines = StringIO()
-        stop_filtering = False
-        for line in data.splitlines():
-            if stop_filtering or line.startswith('{') or line.startswith('['):
-                stop_filtering = True
-                filtered_lines.write(line + '\n')
-        return filtered_lines.getvalue()
+        return data[idx:]
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=dict(), persist_files=False, delete_remote_tmp=True):
         '''
@@ -344,8 +348,12 @@ class ActionBase:
             module_args['_ansible_check_mode'] = True
 
         # set no log in the module arguments, if required
-        if self._play_context.no_log:
+        if self._play_context.no_log or not C.DEFAULT_NO_TARGET_SYSLOG:
             module_args['_ansible_no_log'] = True
+
+        # set debug in the module arguments, if required
+        if C.DEFAULT_DEBUG:
+            module_args['_ansible_debug'] = True
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang:
@@ -353,32 +361,38 @@ class ActionBase:
 
         # a remote tmp path may be necessary and not already created
         remote_module_path = None
+        args_file_path = None
         if not tmp and self._late_needs_tmp_path(tmp, module_style):
             tmp = self._make_tmp_path()
 
         if tmp:
             remote_module_path = self._connection._shell.join_path(tmp, module_name)
+            if module_style == 'old':
+                # we'll also need a temp file to hold our module arguments
+                args_file_path = self._connection._shell.join_path(tmp, 'args')
 
-        # FIXME: async stuff here?
-        #if (module_style != 'new' or async_jid is not None or not self._connection._has_pipelining or not C.ANSIBLE_SSH_PIPELINING or C.DEFAULT_KEEP_REMOTE_FILES):
-        if remote_module_path:
+        if remote_module_path or module_style != 'new':
             self._display.debug("transferring module to remote")
             self._transfer_data(remote_module_path, module_data)
+            if module_style == 'old':
+                # we need to dump the module args to a k=v string in a file on
+                # the remote system, which can be read and parsed by the module
+                args_data = ""
+                for k,v in iteritems(module_args):
+                    args_data += '%s="%s" ' % (k, pipes.quote(v))
+                self._transfer_data(args_file_path, args_data)
             self._display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
 
         if tmp and "tmp" in tmp and self._play_context.become and self._play_context.become_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
-            self._remote_chmod(tmp, 'a+r', remote_module_path)
+            self._remote_chmod('a+r', remote_module_path)
 
         cmd = ""
         in_data = None
 
-        # FIXME: all of the old-module style and async stuff has been removed from here, and
-        #        might need to be re-added (unless we decide to drop support for old-style modules
-        #        at this point and rework things to support non-python modules specifically)
-        if self._connection.has_pipelining and C.ANSIBLE_SSH_PIPELINING and not C.DEFAULT_KEEP_REMOTE_FILES:
+        if self._connection.has_pipelining and self._play_context.pipelining and not C.DEFAULT_KEEP_REMOTE_FILES:
             in_data = module_data
         else:
             if remote_module_path:
@@ -390,7 +404,7 @@ class ActionBase:
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 rm_tmp = tmp
 
-        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, rm_tmp)
+        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp)
         cmd = cmd.strip()
 
         sudoable = True
@@ -400,7 +414,7 @@ class ActionBase:
             sudoable = False
 
         self._display.debug("calling _low_level_execute_command() for command %s" % cmd)
-        res = self._low_level_execute_command(cmd, tmp, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
         self._display.debug("_low_level_execute_command returned ok")
 
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
@@ -408,24 +422,24 @@ class ActionBase:
             # not sudoing to root, so maybe can't delete files as that other user
             # have to clean up temp files as original user in a second step
                 cmd2 = self._connection._shell.remove(tmp, recurse=True)
-                self._low_level_execute_command(cmd2, tmp, sudoable=False)
+                self._low_level_execute_command(cmd2, sudoable=False)
 
         try:
-            data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', '')))
+            data = json.loads(self._filter_leading_non_json_lines(res.get('stdout', u'')))
         except ValueError:
             # not valid json, lets try to capture error
             data = dict(failed=True, parsed=False)
-            if 'stderr' in res and res['stderr'].startswith('Traceback'):
+            if 'stderr' in res and res['stderr'].startswith(u'Traceback'):
                 data['exception'] = res['stderr']
             else:
-                data['msg'] = res.get('stdout', '')
+                data['msg'] = res.get('stdout', u'')
                 if 'stderr' in res:
                     data['msg'] += res['stderr']
 
         # pre-split stdout into lines, if stdout is in the data and there
         # isn't already a stdout_lines value there
         if 'stdout' in data and 'stdout_lines' not in data:
-            data['stdout_lines'] = data.get('stdout', '').splitlines()
+            data['stdout_lines'] = data.get('stdout', u'').splitlines()
 
         # store the module invocation details back into the result
         if self._task.async != 0:
@@ -437,11 +451,20 @@ class ActionBase:
         self._display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _low_level_execute_command(self, cmd, tmp, sudoable=True, in_data=None, executable=None):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None,
+            executable=None, encoding_errors='replace'):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
         run the module code or python directly when pipelining.
+
+        :kwarg encoding_errors: If the value returned by the command isn't
+            utf-8 then we have to figure out how to transform it to unicode.
+            If the value is just going to be displayed to the user (or
+            discarded) then the default of 'replace' is fine.  If the data is
+            used as a key or is going to be written back out to a file
+            verbatim, then this won't work.  May have to use some sort of
+            replacement strategy (python3 could use surrogateescape)
         '''
 
         if executable is not None:
@@ -460,16 +483,22 @@ class ActionBase:
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         self._display.debug("executing the command %s through the connection" % cmd)
-        rc, stdin, stdout, stderr = self._connection.exec_command(cmd, tmp, in_data=in_data, sudoable=sudoable)
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
         self._display.debug("command execution done")
 
-        if not isinstance(stdout, basestring):
-            out = ''.join(stdout.readlines())
+        # stdout and stderr may be either a file-like or a bytes object.
+        # Convert either one to a text type
+        if isinstance(stdout, binary_type):
+            out = to_unicode(stdout, errors=encoding_errors)
+        elif not isinstance(stdout, text_type):
+            out = to_unicode(b''.join(stdout.readlines()), errors=encoding_errors)
         else:
             out = stdout
 
-        if not isinstance(stderr, basestring):
-            err = ''.join(stderr.readlines())
+        if isinstance(stderr, binary_type):
+            err = to_unicode(stderr, errors=encoding_errors)
+        elif not isinstance(stderr, text_type):
+            err = to_unicode(b''.join(stderr.readlines()), errors=encoding_errors)
         else:
             err = stderr
 
@@ -503,7 +532,7 @@ class ActionBase:
 
         return None
 
-    def _get_diff_data(self, tmp, destination, source, task_vars, source_file=True):
+    def _get_diff_data(self, destination, source, task_vars, source_file=True):
 
         diff = {}
         self._display.debug("Going to peek to see if file has changed permissions")

@@ -81,7 +81,7 @@ class MyAddPolicy(object):
 
         if C.HOST_KEY_CHECKING:
 
-            self.connection.lock_connection()
+            self.connection.connection_lock()
 
             old_stdin = sys.stdin
             sys.stdin = self._new_stdin
@@ -95,7 +95,7 @@ class MyAddPolicy(object):
             inp = raw_input(AUTHENTICITY_MSG % (hostname, ktype, fingerprint))
             sys.stdin = old_stdin
 
-            self.connection.unlock_connection()
+            self.connection.connection_unlock()
 
             if inp not in ['yes','y','']:
                 raise AnsibleError("host connection rejected by user")
@@ -174,7 +174,6 @@ class Connection(ConnectionBase):
                 key_filename=key_filename,
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
-                compress=True,
                 port=port,
             )
         except Exception as e:
@@ -190,10 +189,10 @@ class Connection(ConnectionBase):
 
         return ssh
 
-    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
+    def exec_command(self, cmd, in_data=None, sudoable=True):
         ''' run a command on the remote host '''
 
-        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
@@ -237,7 +236,7 @@ class Connection(ConnectionBase):
                     self._display.debug("chunk is: %s" % chunk)
                     if not chunk:
                         if 'unknown user' in become_output:
-                            raise AnsibleError( 'user %s does not exist' % become_user)
+                            raise AnsibleError( 'user %s does not exist' % self._play_context.become_user)
                         else:
                             break
                             #raise AnsibleError('ssh connection closed waiting for password prompt')
@@ -256,7 +255,7 @@ class Connection(ConnectionBase):
         stdout = ''.join(chan.makefile('rb', bufsize))
         stderr = ''.join(chan.makefile_stderr('rb', bufsize))
 
-        return (chan.recv_exit_status(), '', no_prompt_out + stdout, no_prompt_out + stderr)
+        return (chan.recv_exit_status(), no_prompt_out + stdout, no_prompt_out + stderr)
 
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to remote '''

@@ -52,10 +52,11 @@ from ansible.utils.unicode import to_bytes, to_unicode
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
+    module_implementation_preferences = ('.ps1', '')
+
     def __init__(self,  *args, **kwargs):
 
         self.has_pipelining   = False
-        self.default_suffixes = ['.ps1', '']
         self.protocol         = None
         self.shell_id         = None
         self.delegate         = None
@@ -171,8 +172,8 @@ class Connection(ConnectionBase):
             self.protocol = self._winrm_connect()
         return self
 
-    def exec_command(self, cmd, tmp_path, in_data=None, sudoable=True):
-        super(Connection, self).exec_command(cmd, tmp_path, in_data=in_data, sudoable=sudoable)
+    def exec_command(self, cmd, in_data=None, sudoable=True):
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
         cmd_parts = map(to_unicode, cmd_parts)
         script = None
@@ -201,7 +202,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("failed to exec cmd %s" % cmd)
         result.std_out = to_unicode(result.std_out)
         result.std_err = to_unicode(result.std_err)
-        return (result.status_code, '', result.std_out, result.std_err)
+        return (result.status_code, result.std_out, result.std_err)
 
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)

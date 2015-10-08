@@ -23,16 +23,18 @@ import copy
 import json
 import os
 import stat
+import subprocess
 
 from yaml import load, YAMLError
-from six import text_type
+from six import text_type, string_types
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR
 from ansible.parsing.vault import VaultLib
 from ansible.parsing.splitter import unquote
 from ansible.parsing.yaml.loader import AnsibleLoader
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleUnicode
+from ansible.module_utils.basic import is_executable
 from ansible.utils.path import unfrackpath
 from ansible.utils.unicode import to_unicode
 
@@ -138,7 +140,7 @@ class DataLoader():
     def is_executable(self, path):
         '''is the given path executable?'''
         path = self.path_dwim(path)
-        return (stat.S_IXUSR & os.stat(path)[stat.ST_MODE] or stat.S_IXGRP & os.stat(path)[stat.ST_MODE] or stat.S_IXOTH & os.stat(path)[stat.ST_MODE])
+        return is_executable(path)
 
     def _safe_load(self, stream, file_name=None):
         ''' Implements yaml.safe_load(), except using our custom loader class. '''
@@ -154,11 +156,11 @@ class DataLoader():
         Reads the file contents from the given file name, and will decrypt them
         if they are found to be vault-encrypted.
         '''
-        if not file_name or not isinstance(file_name, basestring):
+        if not file_name or not isinstance(file_name, string_types):
             raise AnsibleParserError("Invalid filename: '%s'" % str(file_name))
 
         if not self.path_exists(file_name) or not self.is_file(file_name):
-            raise AnsibleParserError("the file_name '%s' does not exist, or is not readable" % file_name)
+            raise AnsibleFileNotFound("the file_name '%s' does not exist, or is not readable" % file_name)
 
         show_content = True
         try:
@@ -267,7 +269,7 @@ class DataLoader():
 
         this_path = os.path.realpath(os.path.expanduser(vault_password_file))
         if not os.path.exists(this_path):
-            raise AnsibleError("The vault password file %s was not found" % this_path)
+            raise AnsibleFileNotFound("The vault password file %s was not found" % this_path)
 
         if self.is_executable(this_path):
             try:

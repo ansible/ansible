@@ -41,7 +41,7 @@ RELEASE := $(shell cat VERSION | cut -f2 -d' ')
 ifneq ($(shell which git),)
 GIT_DATE := $(shell git log -n 1 --format="%ai")
 GIT_HASH := $(shell git log -n 1 --format="%h")
-GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.]//g')
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD | sed 's/[-_.\/]//g')
 GITINFO = .$(GIT_HASH).$(GIT_BRANCH)
 else
 GITINFO = ''
