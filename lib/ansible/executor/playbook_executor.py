@@ -186,21 +186,21 @@ class PlaybookExecutor:
         for h in hosts:
             t = self._tqm._stats.summarize(h)
 
-            self._display.display("%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s" % (
                 hostcolor(h, t),
-                colorize('ok', t['ok'], 'green'),
-                colorize('changed', t['changed'], 'yellow'),
-                colorize('unreachable', t['unreachable'], 'red'),
-                colorize('failed', t['failures'], 'red')),
+                colorize(u'ok', t['ok'], 'green'),
+                colorize(u'changed', t['changed'], 'yellow'),
+                colorize(u'unreachable', t['unreachable'], 'red'),
+                colorize(u'failed', t['failures'], 'red')),
                 screen_only=True
             )
 
-            self._display.display("%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s" % (
                 hostcolor(h, t, False),
-                colorize('ok', t['ok'], None),
-                colorize('changed', t['changed'], None),
-                colorize('unreachable', t['unreachable'], None),
-                colorize('failed', t['failures'], None)),
+                colorize(u'ok', t['ok'], None),
+                colorize(u'changed', t['changed'], None),
+                colorize(u'unreachable', t['unreachable'], None),
+                colorize(u'failed', t['failures'], None)),
                 log_only=True
             )
 
