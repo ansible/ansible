@@ -236,12 +236,13 @@ class Display:
 
     def _safe_output(self, msg, stderr=False):
 
+        encoding='utf-8'
         if not stderr and sys.stdout.encoding:
-            msg = to_bytes(msg, sys.stdout.encoding)
+            encoding = sys.stdout.encoding
         elif stderr and sys.stderr.encoding:
-            msg = to_bytes(msg, sys.stderr.encoding)
-        else:
-            msg = to_bytes(msg)
+            encoding = sys.stderr.encoding
+
+        msg = to_bytes(msg, encoding)
 
         return msg
 
