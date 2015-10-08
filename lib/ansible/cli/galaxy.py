@@ -167,8 +167,8 @@ class GalaxyCLI(CLI):
         force      = self.get_opt('force', False)
         offline    = self.get_opt('offline', False)
 
-        role_name = self.args.pop(0).strip()
-        if role_name == "":
+        role_name = self.args.pop(0).strip() if self.args else None
+        if not role_name:
             raise AnsibleOptionsError("- no role name specified for init")
         role_path = os.path.join(init_path, role_name)
         if os.path.exists(role_path):
@@ -347,7 +347,7 @@ class GalaxyCLI(CLI):
 
             # install dependencies, if we want them
             if not no_deps and installed:
-                role_dependencies = role.metadata.get('dependencies', [])
+                role_dependencies = role.metadata.get('dependencies') or []
                 for dep in role_dependencies:
                     self.display.debug('Installing dep %s' % dep)
                     dep_req = RoleRequirement()
