@@ -117,9 +117,6 @@ EXAMPLES = '''
 
 import sys
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
-
 try:
     import boto.ec2.cloudwatch
     from boto.ec2.cloudwatch import CloudWatchConnection, MetricAlarm
@@ -186,7 +183,7 @@ def create_metric_alarm(connection, module):
         comparisons = {'<=' : 'LessThanOrEqualToThreshold', '<' : 'LessThanThreshold', '>=' : 'GreaterThanOrEqualToThreshold', '>' : 'GreaterThanThreshold'}
         alarm.comparison = comparisons[comparison]
 
-        dim1 = module.params.get('dimensions', {})
+        dim1 = module.params.get('dimensions')
         dim2 = alarm.dimensions
 
         for keys in dim1:
@@ -257,7 +254,7 @@ def main():
             unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes', 'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second', 'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second', 'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
             evaluation_periods=dict(type='int'),
             description=dict(type='str'),
-            dimensions=dict(type='dict'),
+            dimensions=dict(type='dict', default={}),
             alarm_actions=dict(type='list'),
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
@@ -283,5 +280,9 @@ def main():
         create_metric_alarm(connection, module)
     elif state == 'absent':
         delete_metric_alarm(connection, module)
+
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 main()
