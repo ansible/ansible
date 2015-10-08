@@ -109,6 +109,7 @@ New Modules:
 * amazon: s3_lifecycle
 * amazon: s3_logging
 * apk
+* bigip_gtm_wide_ip
 * bundler
 * centurylink: clc_blueprint_package
 * centurylink: clc_firewall_policy
