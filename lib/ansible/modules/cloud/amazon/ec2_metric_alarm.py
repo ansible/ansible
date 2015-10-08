@@ -115,9 +115,6 @@ EXAMPLES = '''
 
 import sys
 
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
-
 try:
     import boto.ec2.cloudwatch
     from boto.ec2.cloudwatch import CloudWatchConnection, MetricAlarm
@@ -281,5 +278,9 @@ def main():
         create_metric_alarm(connection, module)
     elif state == 'absent':
         delete_metric_alarm(connection, module)
+
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 main()
