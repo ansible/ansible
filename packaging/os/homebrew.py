@@ -121,6 +121,7 @@ class Homebrew(object):
         /                   # slash (for taps)
         \+                  # plusses
         -                   # dashes
+        :                   # colons (for URLs)
     '''
 
     INVALID_PATH_REGEX        = _create_regex_group(VALID_PATH_CHARS)
@@ -396,18 +397,17 @@ class Homebrew(object):
 
         return False
 
-    def _outdated_packages(self):
-        rc, out, err = self.module.run_command([
-            self.brew_path,
-            'outdated',
-        ])
-        return [line.split(' ')[0].strip() for line in out.split('\n') if line]
-
     def _current_package_is_outdated(self):
         if not self.valid_package(self.current_package):
             return False
 
-        return self.current_package in self._outdated_packages()
+        rc, out, err = self.module.run_command([
+            self.brew_path,
+            'outdated',
+            self.current_package,
+        ])
+
+        return rc != 0
 
     def _current_package_is_installed_from_head(self):
         if not Homebrew.valid_package(self.current_package):
