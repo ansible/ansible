@@ -24,7 +24,7 @@ module: slack
 short_description: Send Slack notifications
 description:
     - The M(slack) module sends notifications to U(http://slack.com) via the Incoming WebHook integration
-version_added: 1.6
+version_added: "1.6"
 author: "Ramon de la Fuente (@ramondelafuente)"
 options:
   domain:
@@ -33,6 +33,7 @@ options:
         C(future500.slack.com)) In 1.8 and beyond, this is deprecated and may
         be ignored.  See token documentation for information.
     required: false
+    default: None
   token:
     description:
       - Slack integration token.  This authenticates you to the slack service.
@@ -48,15 +49,17 @@ options:
     description:
       - Message to send.
     required: false
+    default: None
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
     required: false
+    default: None
   username:
     description:
       - This is the sender of the message.
     required: false
-    default: ansible
+    default: "Ansible"
   icon_url:
     description:
       - Url for the message sender's icon (default C(http://www.ansible.com/favicon.ico))
@@ -66,6 +69,7 @@ options:
       - Emoji for the message sender. See Slack documentation for options.
         (if I(icon_emoji) is set, I(icon_url) will not be used)
     required: false
+    default: None
   link_names:
     description:
       - Automatically create links for channels and usernames in I(msg).
@@ -78,6 +82,7 @@ options:
     description:
       - Setting for the message parser at Slack
     required: false
+    default: None
     choices:
       - 'full'
       - 'none'
@@ -91,7 +96,7 @@ options:
       - 'yes'
       - 'no'
   color:
-    version_added: 2.0
+    version_added: "2.0"
     description:
       - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
     required: false
@@ -105,6 +110,7 @@ options:
     description:
       - Define a list of attachments. This list mirrors the Slack JSON API. For more information, see https://api.slack.com/docs/attachments
     required: false
+    default: None
 """
 
 EXAMPLES = """
@@ -243,4 +249,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+
+if __name__ == '__main__':
+    main()
