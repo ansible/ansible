@@ -509,7 +509,7 @@ Windows modules checklist
 * Favour native powershell and .net ways of doing things over calls to COM libraries or calls to native executables which may or may not be present in all versions of windows
 * modules are in powershell (.ps1 files) but the docs reside in same name python file (.py)
 * look at ansible/lib/ansible/module_utils/powershell.ps1 for common code, avoid duplication
-* Ansible uses strictmode so be sure to test with that enabled
+* Ansible uses strictmode version 2.0 so be sure to test with that enabled
 * start with::
 
     #!powershell

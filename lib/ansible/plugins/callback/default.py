@@ -110,6 +110,10 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_on_task_start(self, task, is_conditional):
         self._display.banner("TASK [%s]" % task.get_name().strip())
+        if self._display.verbosity > 3:
+            path = task.get_path()
+            if path:
+                self._display.display("task path: %s" % path, color='dark gray')
 
     def v2_playbook_on_cleanup_task_start(self, task):
         self._display.banner("CLEANUP TASK [%s]" % task.get_name().strip())

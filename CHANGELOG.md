@@ -109,6 +109,7 @@ New Modules:
 * amazon: s3_lifecycle
 * amazon: s3_logging
 * apk
+* bigip_gtm_wide_ip
 * bundler
 * centurylink: clc_blueprint_package
 * centurylink: clc_firewall_policy
@@ -155,7 +156,9 @@ New Modules:
 * openstack: os_client_config
 * openstack: os_floating_ip
 * openstack: os_image
+* openstack: os_image_facts
 * openstack: os_network
+* openstack: os_network_facts
 * openstack: os_nova_flavor
 * openstack: os_object
 * openstack: os_router
@@ -285,6 +288,7 @@ you avoid ever writing sensitive plaintext to disk.
 * ansible-vault rekey accepts the --new-vault-password-file option.
 * Configuration items defined as paths (local only) now all support shell style interpolations.
 * Many fixes and new options added to modules, too many to list here.
+* Now you can see task file and line number when using verbosity of 3 or above.
 
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
