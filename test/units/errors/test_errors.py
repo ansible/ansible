@@ -31,6 +31,7 @@ class TestErrors(unittest.TestCase):
 
     def setUp(self):
         self.message = 'This is the error message'
+        self.unicode_message = 'This is an error with \xf0\x9f\x98\xa8 in it'
 
         self.obj = AnsibleBaseYAMLObject()
 
@@ -41,6 +42,11 @@ class TestErrors(unittest.TestCase):
         e = AnsibleError(self.message)
         self.assertEqual(e.message, 'ERROR! ' + self.message)
         self.assertEqual(e.__repr__(), 'ERROR! ' + self.message)
+
+    def test_basic_unicode_error(self):
+        e = AnsibleError(self.unicode_message)
+        self.assertEqual(e.message, 'ERROR! ' + self.unicode_message)
+        self.assertEqual(e.__repr__(), 'ERROR! ' + self.unicode_message)
 
     @patch.object(AnsibleError, '_get_error_lines_from_file')
     def test_error_with_object(self, mock_method):
@@ -65,4 +71,13 @@ class TestErrors(unittest.TestCase):
             self.obj.ansible_pos = ('foo.yml', 2, 1)
             e = AnsibleError(self.message, self.obj)
             self.assertEqual(e.message, "ERROR! This is the error message\n\nThe error appears to have been in 'foo.yml': line 2, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\n(specified line no longer in file, maybe it changed?)")
+
+        m = mock_open()
+        m.return_value.readlines.return_value = ['this line has unicode \xf0\x9f\x98\xa8 in it!\n']
+
+        with patch('{0}.open'.format(BUILTINS), m):
+            # this line will be found in the file
+            self.obj.ansible_pos = ('foo.yml', 1, 1)
+            e = AnsibleError(self.unicode_message, self.obj)
+            self.assertEqual(e.message, "ERROR! This is an error with \xf0\x9f\x98\xa8 in it\n\nThe error appears to have been in 'foo.yml': line 1, column 1, but may\nbe elsewhere in the file depending on the exact syntax problem.\n\nThe offending line appears to be:\n\n\nthis line has unicode \xf0\x9f\x98\xa8 in it!\n^ here\n")
 
