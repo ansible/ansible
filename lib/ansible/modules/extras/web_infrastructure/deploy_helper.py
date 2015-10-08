@@ -1,10 +1,29 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# (c) 2014, Jasper N. Brouwer <jasper@nerdsweide.nl>
+# (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 DOCUMENTATION = '''
 ---
 module: deploy_helper
-version_added: "1.8"
-author: Ramon de la Fuente, Jasper N. Brouwer
+version_added: "2.0"
+author: "Ramon de la Fuente (@ramondelafuente)"
 short_description: Manages some of the steps common in deploying projects.
 description:
   - The Deploy Helper manages some of the steps common in deploying software.
@@ -23,14 +42,14 @@ description:
 
 options:
   path:
-    required: true
+    required: True
     aliases: ['dest']
     description:
       - the root path of the project. Alias I(dest).
         Returned in the C(deploy_helper.project_path) fact.
 
   state:
-    required: false
+    required: False
     choices: [ present, finalize, absent, clean, query ]
     default: present
     description:
@@ -43,21 +62,22 @@ options:
         C(absent) will remove the project folder (synonymous to the M(file) module with C(state=absent))
 
   release:
-    required: false
+    required: False
+    default: None
     description:
       - the release version that is being deployed. Defaults to a timestamp format %Y%m%d%H%M%S (i.e. '20141119223359').
         This parameter is optional during C(state=present), but needs to be set explicitly for C(state=finalize).
         You can use the generated fact C(release={{ deploy_helper.new_release }}).
 
   releases_path:
-    required: false
+    required: False
     default: releases
     description:
       - the name of the folder that will hold the releases. This can be relative to C(path) or absolute.
         Returned in the C(deploy_helper.releases_path) fact.
 
   shared_path:
-    required: false
+    required: False
     default: shared
     description:
       - the name of the folder that will hold the shared resources. This can be relative to C(path) or absolute.
@@ -65,14 +85,14 @@ options:
         Returned in the C(deploy_helper.shared_path) fact.
 
   current_path:
-    required: false
+    required: False
     default: current
     description:
       - the name of the symlink that is created when the deploy is finalized. Used in C(finalize) and C(clean).
         Returned in the C(deploy_helper.current_path) fact.
 
   unfinished_filename:
-    required: false
+    required: False
     default: DEPLOY_UNFINISHED
     description:
       - the name of the file that indicates a deploy has not finished. All folders in the releases_path that
@@ -80,13 +100,13 @@ options:
         automatically deleted from the I(new_release_path) during C(state=finalize).
 
   clean:
-    required: false
+    required: False
     default: True
     description:
       - Whether to run the clean procedure in case of C(state=finalize).
 
   keep_releases:
-    required: false
+    required: False
     default: 5
     description:
       - the number of old releases to keep when cleaning. Used in C(finalize) and C(clean). Any unfinished builds
@@ -352,7 +372,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             path                = dict(aliases=['dest'], required=True, type='str'),
-            release             = dict(required=False, type='str', default=''),
+            release             = dict(required=False, type='str', default=None),
             releases_path       = dict(required=False, type='str', default='releases'),
             shared_path         = dict(required=False, type='str', default='shared'),
             current_path        = dict(required=False, type='str', default='current'),
@@ -418,4 +438,5 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 
-main()
+if __name__ == '__main__':
+    main()
