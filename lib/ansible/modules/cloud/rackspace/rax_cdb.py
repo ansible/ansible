@@ -42,10 +42,12 @@ options:
     description:
       - type of instance (i.e. MySQL, MariaDB, Percona)
     default: MySQL
+    version_added: "2.0"
   cdb_version:
     description:
       - version of database (MySQL supports 5.1 and 5.6, MariaDB supports 10, Percona supports 5.6)
     choices: ['5.1', '5.6', '10']
+    version_added: "2.0"
   state:
     description:
       - Indicate desired state of the resource
