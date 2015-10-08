@@ -421,9 +421,11 @@ class Inventory(object):
 
     def _create_implicit_localhost(self, pattern):
         new_host = Host(pattern)
-        new_host.set_variable("ansible_python_interpreter", sys.executable)
+        new_host.address = "127.0.0.1"
+        new_host.vars = self.get_host_vars(new_host)
         new_host.set_variable("ansible_connection", "local")
-        new_host.address = '127.0.0.1'
+        if "ansible_python_interpreter" not in new_host.vars:
+            new_host.set_variable("ansible_python_interpreter", sys.executable)
         self.get_group("ungrouped").add_host(new_host)
         return new_host
 
