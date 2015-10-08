@@ -117,15 +117,13 @@ EXAMPLES = """
 - name: Send notification message via Slack
   local_action:
     module: slack
-    domain: future500.slack.com
-    token: thetokengeneratedbyslack
+    token: thetoken/generatedby/slack
     msg: "{{ inventory_hostname }} completed"
 
 - name: Send notification message via Slack all options
   local_action:
     module: slack
-    domain: future500.slack.com
-    token: thetokengeneratedbyslack
+    token: thetoken/generatedby/slack
     msg: "{{ inventory_hostname }} completed"
     channel: "#ansible"
     username: "Ansible on {{ inventory_hostname }}"
@@ -135,8 +133,7 @@ EXAMPLES = """
 
 - name: insert a color bar in front of the message for visibility purposes and use the default webhook icon and name configured in Slack
   slack:
-    domain: future500.slack.com
-    token: thetokengeneratedbyslack
+    token: thetoken/generatedby/slack
     msg: "{{ inventory_hostname }} is alive!"
     color: good
     username: ""
@@ -144,8 +141,7 @@ EXAMPLES = """
 
 - name: Use the attachments API
   slack:
-    domain: future500.slack.com
-    token: thetokengeneratedbyslack
+    token: thetoken/generatedby/slack
     attachments:
       - text: "Display my system load on host A and B"
         color: "#ff00dd"
@@ -157,6 +153,14 @@ EXAMPLES = """
           - title: "System B"
             value: "load average: 5,16, 4,64, 2,43"
             short: "true"
+
+- name: Send notification message via Slack (deprecated API using domian)
+  local_action:
+    module: slack
+    domain: future500.slack.com
+    token: thetokengeneratedbyslack
+    msg: "{{ inventory_hostname }} completed"
+
 """
 
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
