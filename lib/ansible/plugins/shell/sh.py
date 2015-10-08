@@ -67,8 +67,8 @@ class ShellModule(object):
         basetmp = self.join_path(C.DEFAULT_REMOTE_TMP, basefile)
         if system and (basetmp.startswith('$HOME') or basetmp.startswith('~/')):
             basetmp = self.join_path('/tmp', basefile)
-        cmd = 'mkdir -p "%s"' % basetmp
-        cmd += ' && echo "%s"' % basetmp
+        cmd = 'mkdir -p "$(echo %s)"' % basetmp
+        cmd += ' && echo "$(echo %s)"' % basetmp
 
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
