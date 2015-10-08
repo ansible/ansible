@@ -12,6 +12,7 @@ Other Notable Changes:
 ## 1.9.4 "Dancing In the Street" - TBD
 
 * Fixes a bug where yum state=latest would error if there were no updates to install.
+* Fixes a bug where yum state=latest did not work with wildcard package names.
 * Fixes a bug in lineinfile relating to escape sequences.
 * Fixes a bug where vars_prompt was not keeping passwords private by default.
 * Fix ansible-galaxy and the hipchat callback plugin to check that the host it
