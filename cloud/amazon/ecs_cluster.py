@@ -44,6 +44,8 @@ options:
         description:
             - The number of times to wait for the cluster to have an instance
         required: false
+extends_documentation_fragment:
+    - ec2
 '''
 
 EXAMPLES = '''

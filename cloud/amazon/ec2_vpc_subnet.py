@@ -49,8 +49,9 @@ options:
       - "VPC ID of the VPC in which to create the subnet."
     required: false
     default: null
-    
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -230,14 +231,14 @@ def main():
             vpc_id = dict(default=None, required=True)
         )
     )
-    
+
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-    
+
     if not HAS_BOTO:
         module.fail_json(msg='boto is required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
+
     if region:
         try:
             connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
@@ -269,4 +270,4 @@ from ansible.module_utils.ec2 import *  # noqa
 
 if __name__ == '__main__':
     main()
-    
+

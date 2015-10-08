@@ -38,11 +38,6 @@ options:
       - The JSON policy as a string.
     required: false
     default: null
-  region:
-    description:
-      - "AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the aws_region and ec2_region settings in the Boto config file.  If none of those are set the region defaults to the S3 Location: US Standard."
-    required: false
-    default: null
   s3_url:
     description:
       - S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
@@ -71,8 +66,9 @@ options:
     required: false
     default: no
     choices: [ 'yes', 'no' ]
-
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

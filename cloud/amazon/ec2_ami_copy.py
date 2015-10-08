@@ -26,11 +26,6 @@ options:
     description:
       - the source region that AMI should be copied from
     required: true
-  region:
-    description:
-      - the destination region that AMI should be copied to
-    required: true
-    aliases: ['aws_region', 'ec2_region', 'dest_region']
   source_image_id:
     description:
       - the id of the image in source region that should be copied
@@ -63,7 +58,9 @@ options:
     default: null
 
 author: Amir Moulavi <amir.moulavi@gmail.com>
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

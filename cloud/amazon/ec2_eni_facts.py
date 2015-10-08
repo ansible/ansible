@@ -27,7 +27,9 @@ options:
       - The ID of the ENI. Pass this option to gather facts about a particular ENI, otherwise, all ENIs are returned.
     required: false
     default: null
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -53,14 +55,14 @@ except ImportError:
 
 
 def get_error_message(xml_string):
-    
+
     root = ET.fromstring(xml_string)
-    for message in root.findall('.//Message'):            
+    for message in root.findall('.//Message'):
         return message.text
-    
-    
+
+
 def get_eni_info(interface):
-    
+
     interface_info = {'id': interface.id,
                       'subnet_id': interface.subnet_id,
                       'vpc_id': interface.vpc_id,
@@ -72,7 +74,7 @@ def get_eni_info(interface):
                       'source_dest_check': interface.source_dest_check,
                       'groups': dict((group.id, group.name) for group in interface.groups),
                       }
-    
+
     if interface.attachment is not None:
         interface_info['attachment'] = {'attachment_id': interface.attachment.id,
                                         'instance_id': interface.attachment.instance_id,
@@ -81,23 +83,23 @@ def get_eni_info(interface):
                                         'attach_time': interface.attachment.attach_time,
                                         'delete_on_termination': interface.attachment.delete_on_termination,
                                         }
-    
+
     return interface_info
-    
+
 
 def list_eni(connection, module):
-    
+
     eni_id = module.params.get("eni_id")
     interface_dict_array = []
-    
+
     try:
         all_eni = connection.get_all_network_interfaces(eni_id)
     except BotoServerError as e:
         module.fail_json(msg=get_error_message(e.args[2]))
-    
+
     for interface in all_eni:
         interface_dict_array.append(get_eni_info(interface))
-        
+
     module.exit_json(interfaces=interface_dict_array)
 
 
@@ -108,14 +110,14 @@ def main():
             eni_id = dict(default=None)
         )
     )
-    
+
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
-    
+
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
+
     if region:
         try:
             connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
@@ -125,11 +127,8 @@ def main():
         module.fail_json(msg="region must be specified")
 
     list_eni(connection, module)
-        
+
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
-
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
 
 main()
