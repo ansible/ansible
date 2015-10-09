@@ -5,12 +5,14 @@ env:
   - TOXENV=py26
   - TOXENV=py27
   - TOXENV=py34
+  - TOXENV=py35
 addons:
   apt:
     sources:
       - deadsnakes
     packages:
       - python2.4
+      - python3.5-dev
 install:
   - pip install tox PyYAML Jinja2 sphinx
 script:
