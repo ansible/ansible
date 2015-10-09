@@ -124,6 +124,8 @@ def get_aws_connection_info(module, boto3=False):
     if not region:
         if 'AWS_REGION' in os.environ:
             region = os.environ['AWS_REGION']
+        elif 'AWS_DEFAULT_REGION' in os.environ:
+            region = os.environ['AWS_DEFAULT_REGION']
         elif 'EC2_REGION' in os.environ:
             region = os.environ['EC2_REGION']
         else:
