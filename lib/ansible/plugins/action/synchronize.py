@@ -44,17 +44,17 @@ class ActionModule(ActionBase):
 
         return path
 
+    def _host_is_ipv6_address(self, host):
+        return ':' in host
+
     def _format_rsync_rsh_target(self, host, path, user):
         ''' formats rsync rsh target, escaping ipv6 addresses if needed '''
-
-        def _needs_ipv6_brackets(host):
-            return ':' in host
 
         user_prefix = ''
         if user:
             user_prefix = '%s@' % (user, )
 
-        if _needs_ipv6_brackets(host):
+        if self._host_is_ipv6_address(host):
             return '[%s%s]:%s' % (user_prefix, host, path)
         else:
             return '%s%s:%s' % (user_prefix, host, path)
