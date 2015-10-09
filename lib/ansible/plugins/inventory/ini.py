@@ -47,9 +47,9 @@ class InventoryIniParser(InventoryAggregateParser):
             if filename in ("host_vars", "group_vars", "vars_plugins"):
                 continue
             fullpath = os.path.join(directory, filename)
-            new_names.append(fullpath)
+            filtered_names.append(fullpath)
 
-        super(InventoryDirectoryParser, self).__init__(new_names)
+        super(InventoryDirectoryParser, self).__init__(filtered_names)
 
     def parse(self):
         return super(InventoryDirectoryParser, self).parse()

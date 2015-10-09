@@ -76,7 +76,7 @@ class VcaAnsibleModule(AnsibleModule):
         gateway_name = self.params['gateway_name']
         _gateway = self.vca.get_gateway(vdc_name, gateway_name)
         if not _gateway:
-            raise VcaError('vca instance has no gateway named %s' % name)
+            raise VcaError('vca instance has no gateway named %s' % gateway_name)
         self._gateway = _gateway
         return _gateway
 
@@ -84,9 +84,10 @@ class VcaAnsibleModule(AnsibleModule):
     def vdc(self):
         if self._vdc is not None:
             return self._vdc
-        _vdc = self.vca.get_vdc(self.params['vdc_name'])
+        vdc_name = self.params['vdc_name']
+        _vdc = self.vca.get_vdc(vdc_name)
         if not _vdc:
-            raise VcaError('vca instance has no vdc named %s' % name)
+            raise VcaError('vca instance has no vdc named %s' % vdc_name)
         self._vdc = _vdc
         return _vdc
 
