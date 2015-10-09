@@ -719,7 +719,7 @@ or in a file as above.
 .. _variable_precedence:
 
 Variable Precedence: Where Should I Put A Variable?
-```````````````````````````````````````````````````
+````````````````````````````````````````````````````
 
 A lot of folks may ask about how variables override another.  Ultimately it's Ansible's philosophy that it's better
 you know where to put a variable, and then you have to think about it a lot less.  
@@ -734,6 +734,10 @@ However, let's go ahead and get precedence out of the way!  It exists.  It's a r
 a use for it.
 
 If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
+
+.. note::
+
+   Ansible 2.0 moved away from using ``ansible_ssh_*`` variables to accepting ``ansible_*`` variables. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``), such as ``ansible_ssh_user`` instead of ``ansible_user``, which appears in the following content. These shorter variables are ignored, without warning, in older versions of Ansible. 
 
 In 1.x the precedence is:
 

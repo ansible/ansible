@@ -154,6 +154,10 @@ Ansible's windows support relies on a few standard variables to indicate the use
     winserver1.example.com
     winserver2.example.com
 
+.. note::
+
+  Ansible 2.0 moved away from using ``ansible_ssh_*`` variables to accepting ``ansible_*`` variables. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``), such as ``ansible_ssh_user`` instead of ``ansible_user`` and ``ansible_ssh_port`` instead of ``ansible_port``, which appear in the following content. These shorter variables are ignored, without warning, in older versions of Ansible. 
+
 In group_vars/windows.yml, define the following inventory variables::
 
     # it is suggested that these be encrypted with ansible-vault:
