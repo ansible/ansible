@@ -105,6 +105,10 @@ inventory file may look something like this:
 
     machine ansible_host=127.0.0.1 ansible_port=2222
 
+.. note::
+
+  Ansible 2.0 moved away from using ``ansible_ssh_*`` variables to accepting ``ansible_*`` variables. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``), such as ``ansible_ssh_host`` instead of ``ansible_host`` and ``ansible_ssh_port`` instead of ``ansible_port``, which appear in the above content. These shorter variables are ignored, without warning, in older versions of Ansible. 
+
 If you want to run Ansible manually, you will want to make sure to pass
 ``ansible`` or ``ansible-playbook`` commands the correct arguments for the
 username (usually ``vagrant``) and the SSH key (since Vagrant 1.7.0, this will be something like
