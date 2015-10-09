@@ -28,6 +28,7 @@
 #
 
 import pprint
+import os
 
 USER_AGENT_PRODUCT="Ansible-gce"
 USER_AGENT_VERSION="v1"
