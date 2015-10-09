@@ -546,7 +546,7 @@ class VariableManager:
             self._fact_cache[host.name] = facts
         else:
             try:
-                self._fact_cache[host.name].update(facts)
+                self._fact_cache.update(host.name, facts)
             except KeyError:
                 self._fact_cache[host.name] = facts
 
