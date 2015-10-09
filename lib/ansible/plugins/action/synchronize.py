@@ -44,13 +44,25 @@ class ActionModule(ActionBase):
 
         return path
 
+    def _host_is_ipv6_address(self, host):
+        return ':' in host
+
+    def _format_rsync_rsh_target(self, host, path, user):
+        ''' formats rsync rsh target, escaping ipv6 addresses if needed '''
+
+        user_prefix = ''
+        if user:
+            user_prefix = '%s@' % (user, )
+
+        if self._host_is_ipv6_address(host):
+            return '[%s%s]:%s' % (user_prefix, host, path)
+        else:
+            return '%s%s:%s' % (user_prefix, host, path)
+
     def _process_origin(self, host, path, user):
 
         if host not in C.LOCALHOST:
-            if user:
-                return '%s@[%s]:%s' % (user, host, path)
-            else:
-                return '[%s]:%s' % (host, path)
+            return self._format_rsync_rsh_target(host, path, user)
 
         if ':' not in path and not path.startswith('/'):
             path = self._get_absolute_path(path=path)
@@ -59,10 +71,7 @@ class ActionModule(ActionBase):
     def _process_remote(self, host, path, user):
         transport = self._play_context.connection
         if host not in C.LOCALHOST or transport != "local":
-            if user:
-                return '%s@[%s]:%s' % (user, host, path)
-            else:
-                return '[%s]:%s' % (host, path)
+            return self._format_rsync_rsh_target(host, path, user)
 
         if ':' not in path and not path.startswith('/'):
             path = self._get_absolute_path(path=path)
