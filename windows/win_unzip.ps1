@@ -26,14 +26,14 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-If ($params.creates) {
+If (Get-Member -InputObject $params -Name creates) {
     If (Test-Path $params.creates) {
         Exit-Json $result "The 'creates' file or directory already exists."
     }
 
 }
 
-If ($params.src) {
+If (Get-Member -InputObject $params -Name src) {
     $src = $params.src.toString()
 
     If (-Not (Test-Path -path $src)){
@@ -62,24 +62,26 @@ Else {
     Fail-Json $result "missing required argument: dest"
 }
 
-If ($params.recurse) {
+If (Get-Member -InputObject $params -Name recurse) {
    $recurse = ConvertTo-Bool ($params.recurse)
 }
 Else {
     $recurse = $false
 }
 
-If ($params.rm) { 
-    $rm = ConvertTo-Bool ($params.rm) 
-} 
-Else { 
-    $rm = $false 
+If (Get-Member -InputObject $params -Name rm) {
+    $rm = ConvertTo-Bool ($params.rm)
+}
+Else {
+    $rm = $false
 }
 
 If ($ext -eq ".zip" -And $recurse -eq $false) {
     Try {
         $shell = New-Object -ComObject Shell.Application
-        $shell.NameSpace($dest).copyhere(($shell.NameSpace($src)).items(), 20)
+        $zipPkg = $shell.NameSpace($src)
+        $destPath = $shell.NameSpace($dest)
+        $destPath.CopyHere($zipPkg.Items())
         $result.changed = $true
     }
     Catch {
