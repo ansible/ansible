@@ -82,33 +82,35 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-This module registers network details in facts named: openstack_networks.  If a
-network name/id and or filter does not result in a network found, an empty
-list is set in openstack_networks.
-id:
-    description: Unique UUID.
-    returned: success
-    type: string
-name:
-    description: Name given to the network.
-    returned: success
-    type: string
-status:
-    description: Network status.
-    returned: success
-    type: string
-subnets:
-    description: Subnet(s) included in this network.
-    returned: success
-    type: list of strings
-tenant_id:
-    description: Tenant id associated with this network.
-    returned: success
-    type: string
-shared:
-    description: Network shared flag.
-    returned: success
-    type: boolean
+openstack_networks:
+    description: has all the openstack facts about the networks
+    returned: always, but can be null
+    type: complex
+    contains:
+        id:
+            description: Unique UUID.
+            returned: success
+            type: string
+        name:
+            description: Name given to the network.
+            returned: success
+            type: string
+        status:
+            description: Network status.
+            returned: success
+            type: string
+        subnets:
+            description: Subnet(s) included in this network.
+            returned: success
+            type: list of strings
+        tenant_id:
+            description: Tenant id associated with this network.
+            returned: success
+            type: string
+        shared:
+            description: Network shared flag.
+            returned: success
+            type: boolean
 '''
 
 def main():
