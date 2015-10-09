@@ -752,7 +752,7 @@ function Set-TargetResource
             if($Ensure -eq "Present")
             {
                 # check if Msi package contains the ProductName and Code specified
-
+                <#
                 $pName,$pCode = Get-MsiProductEntry -Path $Path
 
                 if (
@@ -762,6 +762,7 @@ function Set-TargetResource
                 {
                     Throw-InvalidNameOrIdException ($LocalizedData.InvalidNameOrId -f $Name,$identifyingNumber,$pName,$pCode)
                 }
+                #>
 
                 $startInfo.Arguments = '/i "{0}"' -f $Path
             }
