@@ -254,7 +254,6 @@ class ModuleArgsParser:
             action, args = self._normalize_parameters(thing, additional_args=additional_args)
 
         # local_action
-        local_action = False
         if 'local_action' in self._task_ds:
             # local_action is similar but also implies a delegate_to
             if action is not None:
@@ -262,6 +261,8 @@ class ModuleArgsParser:
             thing = self._task_ds.get('local_action', '')
             delegate_to = 'localhost'
             action, args = self._normalize_parameters(thing, additional_args=additional_args)
+
+        # module: <stuff> is the more new-style invocation
 
         # walk the input dictionary to see we recognize a module name
         for (item, value) in iteritems(self._task_ds):
