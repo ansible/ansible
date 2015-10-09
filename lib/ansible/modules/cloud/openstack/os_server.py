@@ -113,7 +113,8 @@ options:
    meta:
      description:
         - A list of key value pairs that should be provided as a metadata to
-          the new instance.
+          the new instance or a string containing a list of key-value pairs.
+          Eg:  meta: "key1=value1,key2=value2"
      required: false
      default: None
    wait:
@@ -263,6 +264,25 @@ EXAMPLES = '''
        timeout: 200
        flavor: 4
        nics: "net-id=4cb08b20-62fe-11e5-9d70-feff819cdc9f,net-id=542f0430-62fe-11e5-9d70-feff819cdc9f..."
+
+# Creates a new instance and attaches to a network and passes metadata to
+# the instance
+- os_server:
+       state: present
+       auth:
+         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         username: admin
+         password: admin
+         project_name: admin
+       name: vm1
+       image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+       key_name: ansible_key
+       timeout: 200
+       flavor: 4
+       nics:
+         - net-id: 34605f38-e52a-25d2-b6ec-754a13ffb723
+         - net-name: another_network
+       meta: "hostname=test1,group=uge_master"
 '''
 
 
@@ -334,6 +354,13 @@ def _create_server(module, cloud):
             module.fail_json(msg="Could not find any matching flavor") 
 
     nics = _network_args(module, cloud)
+
+    if type(module.params['meta']) is str:
+        metas = {}
+        for kv_str in module.params['meta'].split(","):
+            k, v = kv_str.split("=")
+            metas[k] = v
+        module.params['meta'] = metas
 
     bootkwargs = dict(
         name=module.params['name'],
