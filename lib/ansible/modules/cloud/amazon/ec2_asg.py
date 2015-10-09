@@ -257,9 +257,10 @@ def get_properties(autoscaling_group):
     properties['viable_instances'] = 0
     properties['terminating_instances'] = 0
 
+    instance_facts = {}
+
     if autoscaling_group.instances:
         properties['instances'] = [i.instance_id for i in autoscaling_group.instances]
-        instance_facts = {}
         for i in autoscaling_group.instances:
             instance_facts[i.instance_id] = {'health_status': i.health_status,
                                             'lifecycle_state': i.lifecycle_state,
@@ -276,7 +277,7 @@ def get_properties(autoscaling_group):
                 properties['terminating_instances'] += 1
             if i.lifecycle_state == 'Pending':
                 properties['pending_instances'] += 1
-        properties['instance_facts'] = instance_facts
+    properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.load_balancers
 
     if getattr(autoscaling_group, "tags", None):
