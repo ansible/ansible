@@ -126,15 +126,20 @@ class ActionModule(ActionBase):
             if inv_port is not None:
                 self._task.args['dest_port'] = inv_port
 
+        # SWITCH SRC AND DEST HOST PER MODE
+        mode = self._task.args.get('mode', 'push')
+        if mode == 'pull':
+            (dest_host, src_host) = (src_host, dest_host)
+
         # Set use_delegate if we are going to run rsync on a delegated host
         # instead of localhost
         use_delegate = False
-        if dest_host == delegate_to:
+        if (mode == 'pull' and src_host == delegate_to) or dest_host == delegate_to:
             # edge case: explicit delegate and dest_host are the same
             # so we run rsync on the remote machine targetting its localhost
             # (itself)
-            dest_host = '127.0.0.1'
-            use_delegate = True
+            dest_host = src_host = '127.0.0.1'
+            use_delegate = False
         elif delegate_to is not None and remote_transport:
             # If we're delegating to a remote host then we need to use the
             # delegate_to settings
@@ -159,10 +164,6 @@ class ActionModule(ActionBase):
             # need to correctly format the paths for rsync (like
             # user@host:path/to/tree
             between_multiple_hosts = True
-
-        # SWITCH SRC AND DEST HOST PER MODE
-        if self._task.args.get('mode', 'push') == 'pull':
-            (dest_host, src_host) = (src_host, dest_host)
 
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
         src = self._task.args.get('src', None)
