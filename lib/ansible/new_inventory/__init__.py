@@ -21,10 +21,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import re
+import sys
 from ansible import constants as C
 from ansible.inventory.group import Group
 from .host import Host
 from ansible.plugins.inventory.aggregate import InventoryAggregateParser
+from ansible import errors
 
 class Inventory:
     '''
@@ -98,7 +101,7 @@ class Inventory:
         '''
 
         for group in self._groups:
-            if group.name == group_name:
+            if group.name == groupname:
                 return group
 
         return None
