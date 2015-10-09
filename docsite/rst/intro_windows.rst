@@ -156,7 +156,7 @@ Ansible's windows support relies on a few standard variables to indicate the use
 
 .. note::
 
-  Ansible 2.0 moved away from using ``ansible_ssh_*`` variables to accepting ``ansible_*`` variables. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``), such as ``ansible_ssh_user`` instead of ``ansible_user`` and ``ansible_ssh_port`` instead of ``ansible_port``, which appear in the following content. These shorter variables are ignored, without warning, in older versions of Ansible. 
+  Ansible 2.0 has depricated the “ssh” from ``ansible_ssh_user``, ``ansible_ssh_host``, and ``ansible_ssh_port`` to become ``ansible_user``, ``ansible_host``, and ``ansible_port``. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``). These shorter variables are ignored, without warning, in older versions of Ansible.  
 
 In group_vars/windows.yml, define the following inventory variables::
 
