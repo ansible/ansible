@@ -496,13 +496,13 @@ def ensure_route_table_present(connection, module):
         
     # If no route table returned then create new route table
     if route_table is None:
-        if module.check_mode:
-            module.exit_json(changed=True)
-
         try:
-            route_table = connection.create_route_table(vpc_id)
+            route_table = connection.create_route_table(vpc_id, module.check_mode)
             changed = True
-        except EC2ResponseError, e:
+        except EC2ResponseError as e:
+            if e.error_code == 'DryRunOperation':
+                module.exit_json(changed=True)
+
             module.fail_json(msg=e.message)
         
     if routes is not None:
