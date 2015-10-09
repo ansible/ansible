@@ -69,7 +69,11 @@ You can also select the connection type and user on a per host basis::
 
 .. note::
 
+<<<<<<< HEAD
   Ansible 2.0 has depricated the “ssh” from ``ansible_ssh_user``, ``ansible_ssh_host``, and ``ansible_ssh_port`` to become ``ansible_user``, ``ansible_host``, and ``ansible_port``. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``). These shorter variables are ignored, without warning, in older versions of Ansible. 
+=======
+  Ansible 2.0 has depricated the “ssh” from ``ansible_ssh_user``, ``ansible_ssh_host``, and ``ansible_ssh_port`` to become ``ansible_user``, ``ansible_host``, and ``ansible_port``. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``). These shorter variables are ignored, without warning, in older versions of Ansible.  
+>>>>>>> 9d27412... note modified a bit, then reviewed/approved by jmartin
 
 You can also select the connection type and user on a per host basis:
 
