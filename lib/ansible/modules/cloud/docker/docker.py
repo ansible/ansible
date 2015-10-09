@@ -1109,7 +1109,7 @@ class DockerManager(object):
                 self.module.fail_json(msg=str(e))
 
             #For v1.19 API and above use HostConfig, otherwise use Config
-            if api_version >= 1.19:
+            if docker.utils.compare_version('1.19', api_version) >= 0:
                 actual_mem = container['HostConfig']['Memory']
             else:
                 actual_mem = container['Config']['Memory']
@@ -1483,7 +1483,7 @@ class DockerManager(object):
             params['host_config'] = self.create_host_config()
 
         #For v1.19 API and above use HostConfig, otherwise use Config
-        if api_version < 1.19:
+        if docker.utils.compare_version('1.19', api_version) < 0:
             params['mem_limit'] = mem_limit
         else:
             params['host_config']['Memory'] = mem_limit
