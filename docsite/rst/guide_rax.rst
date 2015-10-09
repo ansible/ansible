@@ -123,6 +123,10 @@ Here's what it would look like in a playbook, assuming the parameters were defin
 
 The rax module returns data about the nodes it creates, like IP addresses, hostnames, and login passwords.  By registering the return value of the step, it is possible used this data to dynamically add the resulting hosts to inventory (temporarily, in memory). This facilitates performing configuration actions on the hosts in a follow-on task.  In the following example, the servers that were successfully created using the above task are dynamically added to a group called "raxhosts", with each nodes hostname, IP address, and root password being added to the inventory.
 
+.. note::
+
+  Ansible 2.0 moved away from using ``ansible_ssh_*`` variables to accepting ``ansible_*`` variables. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``), such as ``ansible_ssh_user`` instead of ``ansible_user`` and ``ansible_ssh_host`` instead of ``ansible_host``, which appear in the following content. These shorter variables are ignored, without warning, in older versions of Ansible. 
+
 .. code-block:: yaml
 
     - name: Add the instances we created (by public IP) to the group 'raxhosts'
