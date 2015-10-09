@@ -86,8 +86,8 @@ options:
         - A list of networks to which the instance's interface should
           be attached. Networks may be referenced by net-id/net-name/port-id
           or port-name.
-          Also this accepts a string containing a list of net-id/port-id.
-          Eg: nics: "net-id=uuid-1,net-id=uuid-2"
+        - 'Also this accepts a string containing a list of net-id/port-id.
+          Eg: nics: "net-id=uuid-1,net-id=uuid-2"'
      required: false
      default: None
    public_ip:

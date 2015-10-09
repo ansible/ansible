@@ -22,7 +22,6 @@ except ImportError:
     HAS_SHADE = False
 
 DOCUMENTATION = '''
----
 module: os_image_facts
 short_description: Retrieve facts about an image within OpenStack.
 version_added: "2.0"
@@ -55,77 +54,79 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-This module registers image details in facts named: openstack_image.  When
-image is not found, openstack_image will be null.
-
-id:
-    description: Unique UUID.
-    returned: success
-    type: string
-name:
-    description: Name given to the image.
-    returned: success
-    type: string
-status:
-    description: Image status.
-    returned: success
-    type: string
-created_at:
-    description: Image created at timestamp.
-    returned: success
-    type: string
-deleted:
-    description: Image deleted flag.
-    returned: success
-    type: boolean
-container_format:
-    description: Container format of the image.
-    returned: success
-    type: string
-min_ram:
-    description: Min amount of RAM required for this image.
-    returned: success
-    type: int
-disk_format:
-    description: Disk format of the image.
-    returned: success
-    type: string
-updated_at:
-    description: Image updated at timestamp.
-    returned: success
-    type: string
-properties:
-    description: Additional properties associated with the image.
-    returned: success
-    type: dict
-min_disk:
-    description: Min amount of disk space required for this image.
-    returned: success
-    type: int
-protected:
-    description: Image protected flag.
-    returned: success
-    type: boolean
-checksum:
-    description: Checksum for the image.
-    returned: success
-    type: string
-owner:
-    description: Owner for the image.
-    returned: success
-    type: string
-is_public:
-    description: Is plubic flag of the image.
-    returned: success
-    type: boolean
-deleted_at:
-    description: Image deleted at timestamp.
-    returned: success
-    type: string
-size:
-    description: Size of the image.
-    returned: success
-    type: int
+openstack_image:
+    description: has all the openstack facts about the image
+    returned: always, but can be null
+    type: complex
+    contains:
+        id:
+            description: Unique UUID.
+            returned: success
+            type: string
+        name:
+            description: Name given to the image.
+            returned: success
+            type: string
+        status:
+            description: Image status.
+            returned: success
+            type: string
+        created_at:
+            description: Image created at timestamp.
+            returned: success
+            type: string
+        deleted:
+            description: Image deleted flag.
+            returned: success
+            type: boolean
+        container_format:
+            description: Container format of the image.
+            returned: success
+            type: string
+        min_ram:
+            description: Min amount of RAM required for this image.
+            returned: success
+            type: int
+        disk_format:
+            description: Disk format of the image.
+            returned: success
+            type: string
+        updated_at:
+            description: Image updated at timestamp.
+            returned: success
+            type: string
+        properties:
+            description: Additional properties associated with the image.
+            returned: success
+            type: dict
+        min_disk:
+            description: Min amount of disk space required for this image.
+            returned: success
+            type: int
+        protected:
+            description: Image protected flag.
+            returned: success
+            type: boolean
+        checksum:
+            description: Checksum for the image.
+            returned: success
+            type: string
+        owner:
+            description: Owner for the image.
+            returned: success
+            type: string
+        is_public:
+            description: Is plubic flag of the image.
+            returned: success
+            type: boolean
+        deleted_at:
+            description: Image deleted at timestamp.
+            returned: success
+            type: string
+        size:
+            description: Size of the image.
+            returned: success
+            type: int
 '''
 
 
