@@ -150,7 +150,7 @@ options:
   external_ip:
     version_added: "1.9"
     description:
-      - type of external ip, ephemeral by default
+      - type of external ip, ephemeral by default; alternatively, a list of fixed gce ip names can be given (if there is not enough specified ip, 'ephemeral' will be used)
     required: false
     default: "ephemeral"
     aliases: []
@@ -205,8 +205,10 @@ EXAMPLES = '''
   tasks:
     - name: Launch instances
       local_action: gce instance_names={{names}} machine_type={{machine_type}}
-                    image={{image}} zone={{zone}} service_account_email={{ service_account_email }}
-                    credentials_file={{ credentials_file }} project_id={{ project_id }}
+                    image={{image}} zone={{zone}}
+                    service_account_email={{ service_account_email }}
+                    credentials_file={{ credentials_file }}
+                    project_id={{ project_id }}
       register: gce
     - name: Wait for SSH to come up
       local_action: wait_for host={{item.public_ip}} port=22 delay=10
@@ -345,7 +347,14 @@ def create_instances(module, gce, instance_names):
     service_account_email = module.params.get('service_account_email')
 
     if external_ip == "none":
-        external_ip = None
+        instance_external_ip = None
+    elif not isinstance(external_ip, basestring):
+        try:
+            instance_external_ip = gce.ex_get_address(external_ip.pop(0) if len(external_ip) != 0 else 'ephemeral')
+        except GoogleBaseError, e:
+            module.fail_json(msg='Unexpected error attempting to get a static ip %s, error: %s' % (external_ip, e.value))
+    else:
+        instance_external_ip = external_ip
 
     new_instances = []
     changed = False
@@ -423,7 +432,7 @@ def create_instances(module, gce, instance_names):
                 name, lc_machine_type, lc_image, location=lc_zone,
                 ex_network=network, ex_tags=tags, ex_metadata=metadata,
                 ex_boot_disk=pd, ex_can_ip_forward=ip_forward,
-                external_ip=external_ip, ex_disk_auto_delete=disk_auto_delete,
+                external_ip=instance_external_ip, ex_disk_auto_delete=disk_auto_delete,
                 ex_service_accounts=ex_sa_perms
             )
             changed = True
@@ -518,8 +527,7 @@ def main():
             credentials_file = dict(),
             project_id = dict(),
             ip_forward = dict(type='bool', default=False),
-            external_ip = dict(choices=['ephemeral', 'none'],
-                    default='ephemeral'),
+            external_ip=dict(default='ephemeral'),
             disk_auto_delete = dict(type='bool', default=True),
         )
     )
