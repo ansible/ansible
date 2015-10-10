@@ -450,11 +450,11 @@ To separate the windows drive letter from the rest of a file path (new in versio
 
 To get only the windows drive letter::
 
-    {{ path | win_splitdrive | first }} 
-    
+    {{ path | win_splitdrive | first }}
+
 To get the rest of the path without the drive letter::
 
-    {{ path | win_splitdrive | last }} 
+    {{ path | win_splitdrive | last }}
 
 To get the directory from a path::
 
