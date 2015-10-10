@@ -290,6 +290,40 @@ you avoid ever writing sensitive plaintext to disk.
 * Many fixes and new options added to modules, too many to list here.
 * Now you can see task file and line number when using verbosity of 3 or above.
 
+## 1.9.4 "Dancing In the Street" - Oct 9, 2015
+
+* Fixes a bug where yum state=latest would error if there were no updates to install.
+* Fixes a bug where yum state=latest did not work with wildcard package names.
+* Fixes a bug in lineinfile relating to escape sequences.
+* Fixes a bug where vars_prompt was not keeping passwords private by default.
+* Fix ansible-galaxy and the hipchat callback plugin to check that the host it
+  is contacting matches its TLS Certificate.
+
+## 1.9.3 "Dancing In the Street" - Sep 3, 2015
+
+* Fixes a bug related to keyczar messing up encodings internally, resulting in decrypted
+  messages coming out as empty strings.
+* AES Keys generated for use in accelerated mode are now 256-bit by default instead of 128.
+* Fix url fetching for SNI with python-2.7.9 or greater.  SNI does not work
+  with python < 2.7.9.  The best workaround is probably to use the command
+  module with curl or wget.
+* Fix url fetching to allow tls-1.1 and tls-1.2 if the system's openssl library
+  supports those protocols
+* Fix ec2_ami_search module to check TLS Certificates
+* Fix the following extras modules to check TLS Certificates:
+  * campfire
+  * layman
+  * librarto_annotate
+  * twilio
+  * typetalk
+* Fix docker module's parsing of docker-py version for dev checkouts
+* Fix docker module to work with docker server api 1.19
+* Change yum module's state=latest feature to update all packages specified in
+  a single transaction.  This is the same type of fix as was made for yum's
+  state=installed in 1.9.2 and both solves the same problems and with the same caveats.
+* Fixed a bug where stdout from a module might be blank when there were were non-printable
+  ASCII characters contained within it
+
 ## 1.9.2 "Dancing In the Street" - Jun 26, 2015
 
 * Security fixes to check that hostnames match certificates with https urls (CVE-2015-3908)
