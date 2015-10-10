@@ -16,7 +16,7 @@
 
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['stableinterface'],
-                    'supported_by': 'core'}
+                    'supported_by': 'curated'}
 
 
 DOCUMENTATION = '''
@@ -66,7 +66,7 @@ options:
     description:
       - An instance with a tenancy of "dedicated" runs on single-tenant hardware and can only be launched into a VPC.
         Note that to use dedicated tenancy you MUST specify a vpc_subnet_id as well. Dedicated tenancy is not available for EC2 "micro" instances.
-    default: default
+    required: false
     choices: [ "default", "dedicated" ]
   spot_price:
     version_added: "1.5"
@@ -92,7 +92,7 @@ options:
   wait:
     description:
       - wait for the instance to reach its desired state before returning.  Does not wait for SSH, see 'wait_for_connection' example for details.
-    type: bool
+    required: false
     default: 'no'
   wait_timeout:
     description:
@@ -111,7 +111,7 @@ options:
     version_added: "1.1"
     description:
       - enable detailed monitoring (CloudWatch) for instance
-    type: bool
+    required: false
     default: 'no'
   user_data:
     version_added: "0.9"
@@ -133,7 +133,7 @@ options:
     version_added: "1.5"
     description:
       - when provisioning within vpc, assign a public IP address. Boto library must be 2.13.0+
-    type: bool
+    required: false
   private_ip:
     version_added: "1.2"
     description:
@@ -151,13 +151,13 @@ options:
     version_added: "1.6"
     description:
       - Enable or Disable the Source/Destination checks (for NAT instances and Virtual Routers)
-    type: bool
+    required: false
     default: 'yes'
   termination_protection:
     version_added: "2.0"
     description:
       - Enable or Disable the Termination Protection
-    type: bool
+    required: false
     default: 'no'
   instance_initiated_shutdown_behavior:
     version_added: "2.2"
@@ -185,18 +185,37 @@ options:
     version_added: "1.6"
     description:
       - whether instance is using optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
-    default: 'no'
+    default: 'false'
   exact_count:
     version_added: "1.5"
     description:
       - An integer value which indicates how many instances that match the 'count_tag' parameter should be running.
         Instances are either created or terminated based on this value.
+    required: false
+    default: null
+    aliases: []
+  min_count:
+    version_added: "2.6"
+    description:
+      - An integer value which indicates the minimum number of instances that match the 'count_tag' parameter should be running.
+        Instances are created if less then this number are running.
+    required: false
+    default: null
+  max_count:
+    version_added: "2.6"
+    description:
+      - An integer value which indicates how many instances that match the 'count_tag' parameter should be running. Instances are destroyed based on this value.
+    required: false
+    default: null
   count_tag:
     version_added: "1.5"
     description:
       - Used with 'exact_count' to determine how many nodes based on a specific tag criteria should be running.
         This can be expressed in multiple ways and is shown in the EXAMPLES section.  For instance, one can request 25 servers
         that are tagged with "class=webserver". The specified tag must already exist or be passed in as the 'instance_tags' option.
+    required: false
+    default: null
+    aliases: []
   network_interfaces:
     version_added: "2.0"
     description:
@@ -538,8 +557,8 @@ EXAMPLES = '''
 
 '''
 
-import time
 import traceback
+import time
 from ast import literal_eval
 from distutils.version import LooseVersion
 
@@ -875,7 +894,12 @@ def await_spot_requests(module, ec2, spot_requests, count):
 
 def enforce_count(module, ec2, vpc):
 
-    exact_count = module.params.get('exact_count')
+    min_count = module.params.get('min_count')
+    max_count = module.params.get('max_count')
+
+    if module.params.get('exact_count') is not None:
+        max_count = min_count = module.params.get('exact_count')
+
     count_tag = module.params.get('count_tag')
     zone = module.params.get('zone')
 
@@ -886,12 +910,19 @@ def enforce_count(module, ec2, vpc):
 
     reservations, instances = find_running_instances_by_count_tag(module, ec2, vpc, count_tag, zone)
 
+    # If no min then min is 0
+    if min_count is None:
+        min_count = 0
+    # if no max then max should be whatever we have right now
+    if max_count is None:
+        max_count = len(instances)
+
     changed = None
     checkmode = False
     instance_dict_array = []
     changed_instance_ids = None
 
-    if len(instances) == exact_count:
+    if min_count <= len(instances) <= max_count:
         changed = False
     elif len(instances) < exact_count:
         changed = True
@@ -1596,6 +1627,8 @@ def main():
             state=dict(default='present', choices=['present', 'absent', 'running', 'restarted', 'stopped']),
             instance_initiated_shutdown_behavior=dict(default=None, choices=['stop', 'terminate']),
             exact_count=dict(type='int', default=None),
+            min_count=dict(type='int', default=None),
+            max_count=dict(type='int', default=None),
             count_tag=dict(),
             volumes=dict(type='list'),
             ebs_optimized=dict(type='bool', default=False),
@@ -1608,6 +1641,8 @@ def main():
         argument_spec=argument_spec,
         mutually_exclusive=[
             ['group_name', 'group_id'],
+            ['exact_count', 'min_count'],
+            ['exact_count', 'max_count'],
             ['exact_count', 'count'],
             ['exact_count', 'state'],
             ['exact_count', 'instance_ids'],
@@ -1668,7 +1703,8 @@ def main():
         if not module.params.get('image'):
             module.fail_json(msg='image parameter is required for new instance')
 
-        if module.params.get('exact_count') is None:
+        if module.params.get('exact_count') is None and \
+            module.params.get('min_count') is None and module.params.get('max_count') is None:
             (instance_dict_array, new_instance_ids, changed) = create_instances(module, ec2, vpc)
         else:
             (tagged_instances, instance_dict_array, new_instance_ids, changed) = enforce_count(module, ec2, vpc)
