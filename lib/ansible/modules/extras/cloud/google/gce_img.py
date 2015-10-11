@@ -59,6 +59,12 @@ options:
     required: false
     default: "us-central1-a"
     aliases: []
+  timeout:
+    description:
+      - timeout for the operation
+    required: false
+    default: 180
+    aliases: []
   service_account_email:
     description:
       - service account email
@@ -130,6 +136,7 @@ def create_image(gce, name, module):
   source = module.params.get('source')
   zone = module.params.get('zone')
   desc = module.params.get('description')
+  timeout = module.params.get('timeout')
 
   if not source:
     module.fail_json(msg='Must supply a source', changed=False)
@@ -149,13 +156,17 @@ def create_image(gce, name, module):
     except GoogleBaseError, e:
       module.fail_json(msg=str(e), changed=False)
 
+  old_timeout = gce.connection.timeout
   try:
+    gce.connection.timeout = timeout
     gce.ex_create_image(name, volume, desc, False)
     return True
   except ResourceExistsError:
     return False
   except GoogleBaseError, e:
     module.fail_json(msg=str(e), changed=False)
+  finally:
+    gce.connection.timeout = old_timeout
 
 
 def delete_image(gce, name, module):
@@ -180,6 +191,7 @@ def main():
           service_account_email=dict(),
           pem_file=dict(),
           project_id=dict(),
+          timeout=dict(type='int', default=180)
       )
   )
 
