@@ -102,11 +102,17 @@ Examples
 {% endif %}
 
 
-{% if returndocs -%}
 Return Values
 -------------
 
-Common return values are documented here :doc:`common_return_values`, the following are the fields unique to this module:
+Common return values are documented here :doc:`common_return_values`.
+
+{% if returndocs is not mapping -%}
+There is no documentation on fields unique to this module.
+{% elif not returndocs -%}
+There are no fields unique to this module.
+{% else -%}
+The following are the fields unique to this module:
 
 .. raw:: html
 
