@@ -356,6 +356,7 @@ class VariableManager:
 
         if self._inventory is not None:
             variables['inventory_dir'] = self._inventory.basedir()
+            variables['inventory_file'] = self._inventory.src()
             if play:
                 # add the list of hosts in the play, as adjusted for limit/filters
                 # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_hosts,
