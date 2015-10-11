@@ -1223,6 +1223,8 @@ def startstop_instances(module, ec2, instance_ids, state, instance_tags):
 
     wait = module.params.get('wait')
     wait_timeout = int(module.params.get('wait_timeout'))
+    source_dest_check = module.params.get('source_dest_check')
+    termination_protection = module.params.get('termination_protection')
     changed = False
     instance_dict_array = []
     source_dest_check = module.params.get('source_dest_check')
