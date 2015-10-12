@@ -41,10 +41,9 @@ options:
         - The org to login to for creating vapp, mostly set when the service_type is vdc.
       required: false
       default: None
-    service_id:
-      version_added: "2.0"
+    instance_id:
       description:
-        - The service id in a vchs environment to be used for creating the vapp
+        - The instance id in a vchs environment to be used for creating the vapp
       required: false
       default: None
     host:
@@ -250,7 +249,7 @@ def main():
     try:
         desired_rules = validate_fw_rules(fw_rules)
     except VcaError, e:
-        module.fail_json(e.message)
+        module.fail_json(msg=e.message)
 
     result = dict(changed=False)
     result['current_rules'] = current_rules

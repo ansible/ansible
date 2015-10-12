@@ -42,9 +42,9 @@ options:
         - The org to login to for creating vapp, mostly set when the service_type is vdc.
       required: false
       default: None
-    service_id:
+    instance_id:
       description:
-        - The service id in a vchs environment to be used for creating the vapp
+        - The instance id in a vchs environment to be used for creating the vapp
       required: false
       default: None
     host:
@@ -200,7 +200,7 @@ def main():
     purge_rules = module.params['purge_rules']
 
     if not purge_rules and not nat_rules:
-        module.fail_json('Must define purge_rules or nat_rules')
+        module.fail_json(msg='Must define purge_rules or nat_rules')
 
     vca = vca_login(module)
 
