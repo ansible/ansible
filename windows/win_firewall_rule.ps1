@@ -22,9 +22,9 @@
 
 function getFirewallRule ($fwsettings) {
     try {
-            
+
         #$output = Get-NetFirewallRule -name $($fwsettings.name);
-        $rawoutput=@(netsh advfirewall firewall show rule name=$($fwsettings.Name))
+        $rawoutput=@(netsh advfirewall firewall show rule name="$($fwsettings.Name)")
         if (!($rawoutput -eq 'No rules match the specified criteria.')){
             $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
                     $FirstRun = $true;
@@ -75,6 +75,10 @@ function getFirewallRule ($fwsettings) {
                             $donothing=$false
                         } elseif ((($fwsetting.Key -eq 'Name') -or ($fwsetting.Key -eq 'DisplayName')) -and ($output."Rule Name" -eq $fwsettings.$($fwsetting.Key))) {
                             $donothing=$false
+                        } elseif (($fwsetting.Key -eq 'Profile') -and ($output."Profiles" -eq $fwsettings.$($fwsetting.Key))) {
+                            $donothing=$false
+                        } elseif (($fwsetting.Key -eq 'Enable') -and ($output."Enabled" -eq $fwsettings.$($fwsetting.Key))) {
+                            $donothing=$false
                         } else {
                             $diff=$true;
                             $difference+=@($fwsettings.$($fwsetting.Key));
@@ -123,8 +127,9 @@ function createFireWallRule ($fwsettings) {
         $execString+=" ";
         $execString+=$key;
         $execString+="=";
+        $execString+='"';
         $execString+=$fwsetting.value;
-        #$execString+="'";
+        $execString+='"';
     };
     try {
         #$msg+=@($execString);
@@ -152,7 +157,7 @@ function createFireWallRule ($fwsettings) {
 function removeFireWallRule ($fwsettings) {
     $msg=@()
     try {
-        $rawoutput=@(netsh advfirewall firewall delete rule name=$($fwsettings.name))
+        $rawoutput=@(netsh advfirewall firewall delete rule name="$($fwsettings.name)")
         $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
                 $FirstRun = $true;
                 $HashProps = @{};
@@ -193,6 +198,7 @@ $fwsettings=@{}
 # Variabelise the arguments
 $params=Parse-Args $args;
 
+$enable=Get-Attr $params "enable" $null;
 $state=Get-Attr $params "state" "present";
 $name=Get-Attr $params "name" "";
 $direction=Get-Attr $params "direction" "";
@@ -200,6 +206,17 @@ $force=Get-Attr $params "force" $false;
 $action=Get-Attr $params "action" "";
 
 # Check the arguments
+if ($enable -ne $null) {
+    if ($enable -eq $true) {
+        $fwsettings.Add("Enable", "yes");
+    } elseif ($enable -eq $false) {
+        $fwsettings.Add("Enable", "no");
+    } else {
+        $misArg+="enable";
+        $msg+=@("for the enable parameter only yes and no is allowed");
+    };
+};
+
 if (($state -ne "present") -And ($state -ne "absent")){
     $misArg+="state";
     $msg+=@("for the state parameter only present and absent is allowed");
@@ -243,13 +260,7 @@ foreach ($arg in $args){
 };
 
 $winprofile=Get-Attr $params "profile" "current";
-if (($winprofile -ne 'current') -or ($winprofile -ne 'domain') -or ($winprofile -ne 'standard') -or ($winprofile -ne 'all') ) {
-    $misArg+="Profile";
-    $msg+=@("for the Profile parameter only the values 'current', 'domain', 'standard' or 'all' are allowed");
-} else {
-
-    $fwsettings.Add("profile", $winprofile)
-}
+$fwsettings.Add("profile", $winprofile)
 
 if ($($($misArg|measure).count) -gt 0){
     $result=New-Object psobject @{
@@ -297,7 +308,7 @@ switch ($state.ToLower()){
                 };
                 Exit-Json $result;
             }
-        } elseif ($capture.identical -eq $false) { 
+        } elseif ($capture.identical -eq $false) {
             if ($force -eq $true) {
                 $capture=removeFirewallRule($fwsettings);
                 $msg+=$capture.msg;
