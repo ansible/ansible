@@ -31,7 +31,7 @@ except ImportError:
 
 class BaseCacheModule(with_metaclass(ABCMeta, object)):
 
-    display = display
+    _display = display
 
     @abstractmethod
     def get(self, key):

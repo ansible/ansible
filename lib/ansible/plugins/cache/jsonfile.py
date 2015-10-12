@@ -68,9 +68,10 @@ class CacheModule(BaseCacheModule):
                 value = json.load(f)
                 self._cache[key] = value
                 return value
-            except ValueError:
-                self._display.warning("error while trying to write to %s : %s" % (cachefile, str(e)))
-                raise KeyError
+            except ValueError as e:
+                self._display.warning("error while trying to read %s : %s. Most likely a corrupt file, so erasing and failing." % (cachefile, str(e)))
+                self.delete(key)
+                raise AnsibleError("The JSON cache file %s was corrupt, or did not otherwise contain valid JSON data. It has been removed, so you can re-run your command now.")
         finally:
             f.close()
 
@@ -134,7 +135,10 @@ class CacheModule(BaseCacheModule):
                 pass
 
     def delete(self, key):
-        del self._cache[key]
+        try:
+            del self._cache[key]
+        except KeyError:
+            pass
         try:
             os.remove("%s/%s" % (self._cache_dir, key))
         except (OSError,IOError) as e:
