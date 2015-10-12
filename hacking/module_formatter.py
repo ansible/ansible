@@ -308,7 +308,11 @@ def process_module(module, options, env, template, outputname, module_map, alias
     doc['ansible_version']  = options.ansible_version
     doc['plainexamples']    = examples  #plain text
     if returndocs:
-        doc['returndocs']       = yaml.safe_load(returndocs)
+        try:
+            doc['returndocs']       = yaml.safe_load(returndocs)
+        except:
+            print("could not load yaml: %s" % returndocs)
+            raise
     else:
         doc['returndocs']       = None
 
