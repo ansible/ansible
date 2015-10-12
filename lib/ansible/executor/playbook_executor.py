@@ -227,7 +227,10 @@ class PlaybookExecutor:
             serial_pct = int(play.serial.replace("%",""))
             serial = int((serial_pct/100.0) * len(all_hosts))
         else:
-            serial = int(play.serial)
+            if play.serial is None: 
+                serial = -1
+            else:
+                serial = int(play.serial)
 
         # if the serial count was not specified or is invalid, default to
         # a list of all hosts, otherwise split the list of hosts into chunks
