@@ -196,26 +196,26 @@ VCHS_REQ_ARGS = ['service_id']
 
 def _validate_module(module):
     if not HAS_PYVCLOUD:
-        module.fail_json("python module pyvcloud is needed for this module")
+        module.fail_json(msg="python module pyvcloud is needed for this module")
 
     service_type = module.params.get('service_type', DEFAULT_SERVICE_TYPE)
 
     if service_type == 'vca':
         for arg in VCA_REQ_ARGS:
             if module.params.get(arg) is None:
-                module.fail_json("argument %s is mandatory when service type "
+                module.fail_json(msg="argument %s is mandatory when service type "
                                  "is vca" % arg)
 
     if service_type == 'vchs':
         for arg in VCHS_REQ_ARGS:
             if module.params.get(arg) is None:
-                module.fail_json("argument %s is mandatory when service type "
+                module.fail_json(msg="argument %s is mandatory when service type "
                                  "is vchs" % arg)
 
     if service_type == 'vcd':
         for arg in VCD_REQ_ARGS:
             if module.params.get(arg) is None:
-                module.fail_json("argument %s is mandatory when service type "
+                module.fail_json(msg="argument %s is mandatory when service type "
                                  "is vcd" % arg)
 
 
