@@ -20,6 +20,7 @@ __metaclass__ = type
 from collections import MutableMapping
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins import cache_loader
 
 try:
