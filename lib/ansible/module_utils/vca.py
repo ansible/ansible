@@ -91,6 +91,20 @@ class VcaAnsibleModule(AnsibleModule):
         self._vdc = _vdc
         return _vdc
 
+    def get_vapp(self, vapp_name):
+        vapp = self.vca.get_vapp(self.vdc, vapp_name)
+        if not vapp:
+            raise VcaError('vca instance has no vapp named %s' % vapp_name)
+        return vapp
+
+    def get_vm(self, vapp_name, vm_name):
+        vapp = self.get_vapp(vapp_name)
+        vms = [vm for vm in children.get_Vm() if vm.name == vm_name]
+        try:
+            return vms[0]
+        except IndexError:
+            raise VcaError('vapp has no vm named %s' % vm_name)
+
     def create_instance(self):
         service_type = self.params.get('service_type', DEFAULT_SERVICE_TYPE)
         host = self.params.get('host', LOGIN_HOST.get('service_type'))
