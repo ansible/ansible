@@ -133,19 +133,19 @@ options:
 EXAMPLES = '''
   - name: register nginx service with the local consul agent
     consul:
-      name: nginx
+      service_name: nginx
       service_port: 80
 
   - name: register nginx service with curl check
     consul:
-      name: nginx
+      service_name: nginx
       service_port: 80
       script: "curl http://localhost"
       interval: 60s
 
   - name: register nginx with some service tags
     consul:
-      name: nginx
+      service_name: nginx
       service_port: 80
       tags:
         - prod
@@ -153,7 +153,7 @@ EXAMPLES = '''
 
   - name: remove nginx service
     consul:
-      name: nginx
+      service_name: nginx
       state: absent
 
   - name: create a node level check to test disk usage
