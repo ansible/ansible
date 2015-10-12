@@ -65,6 +65,9 @@ Set-Attr $result.ansible_facts "ansible_distribution" $osversion.VersionString
 Set-Attr $result.ansible_facts "ansible_distribution_version" $osversion.Version.ToString()
 
 $date = New-Object psobject
+Set-Attr $date "date" (Get-Date -format d)
+Set-Attr $date "year" (Get-Date -format yyyy)
+Set-Attr $date "month" (Get-Date -format MM)
 Set-Attr $date "day" (Get-Date -format dd)
 Set-Attr $date "hour" (Get-Date -format HH)
 Set-Attr $date "iso8601" (Get-Date -format s)
