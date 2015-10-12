@@ -300,7 +300,7 @@ class Base:
                 # if this evaluated to the omit value, set the value back to
                 # the default specified in the FieldAttribute and move on
                 if omit_value is not None and value == omit_value:
-                    value = attribute.default
+                    setattr(self, name, attribute.default)
                     continue
 
                 # and make sure the attribute is of the type it should be
