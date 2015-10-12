@@ -26,6 +26,7 @@ import random
 import subprocess
 import sys
 import time
+import locale
 import logging
 import getpass
 from struct import unpack, pack
@@ -267,9 +268,13 @@ class Display:
 
     @staticmethod
     def _output_encoding(stderr=False):
-        if stderr:
-            return sys.stderr.encoding or 'utf-8'
-        return sys.stdout.encoding or 'utf-8'
+        encoding = locale.getpreferredencoding()
+        # https://bugs.python.org/issue6202
+        # Python2 hardcodes an obsolete value on Mac.  Use MacOSX defaults
+        # instead.
+        if encoding in ('mac-roman',):
+            encoding = 'utf-8'
+        return encoding
 
     def _set_column_width(self):
         if os.isatty(0):
