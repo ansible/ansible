@@ -44,7 +44,7 @@ from ansible.utils.debug import debug
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.vars.hostvars import HostVars
-from ansible.vars.unsafe_proxy import UnsafeProxy
+from ansible.vars.unsafe_proxy import wrap_var
 
 VARIABLE_CACHE = dict()
 HOSTVARS_CACHE = dict()
@@ -243,10 +243,7 @@ class VariableManager:
 
             # finally, the facts caches for this host, if it exists
             try:
-                host_facts = self._fact_cache.get(host.name, dict())
-                for k in host_facts.keys():
-                    if host_facts[k] is not None and not isinstance(host_facts[k], UnsafeProxy):
-                        host_facts[k] = UnsafeProxy(host_facts[k])
+                host_facts = wrap_var(self._fact_cache.get(host.name, dict()))
                 all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
