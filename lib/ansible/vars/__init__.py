@@ -258,7 +258,7 @@ class VariableManager:
                 # create a set of temporary vars here, which incorporate the extra
                 # and magic vars so we can properly template the vars_files entries
                 temp_vars = combine_vars(all_vars, self._extra_vars)
-                temp_vars = combine_vars(all_vars, magic_variables)
+                temp_vars = combine_vars(temp_vars, magic_variables)
                 templar = Templar(loader=loader, variables=temp_vars)
 
                 # we assume each item in the list is itself a list, as we
