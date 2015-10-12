@@ -3,7 +3,6 @@ language: python
 matrix:
   include:
     - env: TOKENV=py24 INTEGRATION=no
-      python: 2.4
     - env: TOXENV=py26 INTEGRATION=yes
       python: 2.6
     - env: TOXENV=py27 INTEGRATION=yes
