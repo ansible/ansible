@@ -10,7 +10,8 @@ description:
 version_added: "X.Y"
 author: "Your AWESOME name, @awesome-github-id"
 notes:
-    - Other things consumers of your module should know
+    - Other things consumers of your module should know 
+    - Additional setting requirements
 requirements:
     - list of required things
     - like the factor package
