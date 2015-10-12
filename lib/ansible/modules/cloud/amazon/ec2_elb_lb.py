@@ -113,7 +113,6 @@ options:
     description:
       - ELB connections from clients and to servers are timed out after this amount of time
     required: false
-    aliases: []
     version_added: "2.0"
   cross_az_load_balancing:
     description:
