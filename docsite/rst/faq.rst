@@ -3,9 +3,6 @@ Frequently Asked Questions
 
 Here are some commonly-asked questions and their answers.
 
-.. note::
-
-  Ansible 2.0 has deprecated the “ssh” from ``ansible_ssh_user``, ``ansible_ssh_host``, and ``ansible_ssh_port`` to become ``ansible_user``, ``ansible_host``, and ``ansible_port``. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``). These shorter variables are ignored, without warning, in older versions of Ansible. 
 
 .. _set_environment:
 
@@ -24,6 +21,8 @@ How do I handle different machines needing different user accounts or ports to l
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Setting inventory variables in the inventory file is the easiest way.
+
+.. include:: ansible_ssh_changes_note.rst
 
 For instance, suppose these hosts have different usernames and ports::
 
