@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+# (c) 2015, Stefan Berggren <nsg@nsg.cc>
 # (c) 2014, Ramon de la Fuente <ramon@delafuente.nl>
 #
 # This file is part of Ansible
@@ -23,7 +24,7 @@ module: slack
 short_description: Send Slack notifications
 description:
     - The M(slack) module sends notifications to U(http://slack.com) via the Incoming WebHook integration
-version_added: 1.6
+version_added: "1.6"
 author: "Ramon de la Fuente (@ramondelafuente)"
 options:
   domain:
@@ -32,6 +33,7 @@ options:
         C(future500.slack.com)) In 1.8 and beyond, this is deprecated and may
         be ignored.  See token documentation for information.
     required: false
+    default: None
   token:
     description:
       - Slack integration token.  This authenticates you to the slack service.
@@ -46,16 +48,18 @@ options:
   msg:
     description:
       - Message to send.
-    required: true
+    required: false
+    default: None
   channel:
     description:
       - Channel to send the message to. If absent, the message goes to the channel selected for the I(token).
     required: false
+    default: None
   username:
     description:
       - This is the sender of the message.
     required: false
-    default: ansible
+    default: "Ansible"
   icon_url:
     description:
       - Url for the message sender's icon (default C(http://www.ansible.com/favicon.ico))
@@ -65,6 +69,7 @@ options:
       - Emoji for the message sender. See Slack documentation for options.
         (if I(icon_emoji) is set, I(icon_url) will not be used)
     required: false
+    default: None
   link_names:
     description:
       - Automatically create links for channels and usernames in I(msg).
@@ -77,6 +82,7 @@ options:
     description:
       - Setting for the message parser at Slack
     required: false
+    default: None
     choices:
       - 'full'
       - 'none'
@@ -90,7 +96,7 @@ options:
       - 'yes'
       - 'no'
   color:
-    version_added: 2.0
+    version_added: "2.0"
     description:
       - Allow text to use default colors - use the default of 'normal' to not send a custom color bar at the start of the message
     required: false
@@ -100,21 +106,24 @@ options:
       - 'good'
       - 'warning'
       - 'danger'
+  attachments:
+    description:
+      - Define a list of attachments. This list mirrors the Slack JSON API. For more information, see https://api.slack.com/docs/attachments
+    required: false
+    default: None
 """
 
 EXAMPLES = """
 - name: Send notification message via Slack
   local_action:
     module: slack
-    domain: future500.slack.com
-    token: thetokengeneratedbyslack
+    token: thetoken/generatedby/slack
     msg: "{{ inventory_hostname }} completed"
 
 - name: Send notification message via Slack all options
   local_action:
     module: slack
-    domain: future500.slack.com
-    token: thetokengeneratedbyslack
+    token: thetoken/generatedby/slack
     msg: "{{ inventory_hostname }} completed"
     channel: "#ansible"
     username: "Ansible on {{ inventory_hostname }}"
@@ -124,21 +133,44 @@ EXAMPLES = """
 
 - name: insert a color bar in front of the message for visibility purposes and use the default webhook icon and name configured in Slack
   slack:
-    domain: future500.slack.com
-    token: thetokengeneratedbyslack
+    token: thetoken/generatedby/slack
     msg: "{{ inventory_hostname }} is alive!"
     color: good
     username: ""
     icon_url: ""
+
+- name: Use the attachments API
+  slack:
+    token: thetoken/generatedby/slack
+    attachments:
+      - text: "Display my system load on host A and B"
+        color: "#ff00dd"
+        title: "System load"
+        fields:
+          - title: "System A"
+            value: "load average: 0,74, 0,66, 0,63"
+            short: "true"
+          - title: "System B"
+            value: "load average: 5,16, 4,64, 2,43"
+            short: "true"
+
+- name: Send notification message via Slack (deprecated API using domian)
+  local_action:
+    module: slack
+    domain: future500.slack.com
+    token: thetokengeneratedbyslack
+    msg: "{{ inventory_hostname }} completed"
+
 """
 
 OLD_SLACK_INCOMING_WEBHOOK = 'https://%s/services/hooks/incoming-webhook?token=%s'
 SLACK_INCOMING_WEBHOOK = 'https://hooks.slack.com/services/%s'
 
-def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color):
-    if color == 'normal':
+def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments):
+    payload = {}
+    if color == "normal" and text is not None:
         payload = dict(text=text)
-    else:
+    elif text is not None:
         payload = dict(attachments=[dict(text=text, color=color)])
     if channel is not None:
         if (channel[0] == '#') or (channel[0] == '@'):
@@ -155,6 +187,16 @@ def build_payload_for_slack(module, text, channel, username, icon_url, icon_emoj
         payload['link_names'] = link_names
     if parse is not None:
         payload['parse'] = parse
+
+    if attachments is not None:
+        if 'attachments' not in payload:
+            payload['attachments'] = []
+
+    if attachments is not None:
+        for attachment in attachments:
+            if 'fallback' not in attachment:
+                attachment['fallback'] = attachment['text']
+            payload['attachments'].append(attachment)
 
     payload="payload=" + module.jsonify(payload)
     return payload
@@ -178,7 +220,7 @@ def main():
         argument_spec = dict(
             domain      = dict(type='str', required=False, default=None),
             token       = dict(type='str', required=True, no_log=True),
-            msg         = dict(type='str', required=True),
+            msg         = dict(type='str', required=False, default=None),
             channel     = dict(type='str', default=None),
             username    = dict(type='str', default='Ansible'),
             icon_url    = dict(type='str', default='http://www.ansible.com/favicon.ico'),
@@ -186,7 +228,8 @@ def main():
             link_names  = dict(type='int', default=1, choices=[0,1]),
             parse       = dict(type='str', default=None, choices=['none', 'full']),
             validate_certs = dict(default='yes', type='bool'),
-            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger'])
+            color       = dict(type='str', default='normal', choices=['normal', 'good', 'warning', 'danger']),
+            attachments = dict(type='list', required=False, default=None)
         )
     )
 
@@ -200,8 +243,9 @@ def main():
     link_names = module.params['link_names']
     parse = module.params['parse']
     color = module.params['color']
+    attachments = module.params['attachments']
 
-    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color)
+    payload = build_payload_for_slack(module, text, channel, username, icon_url, icon_emoji, link_names, parse, color, attachments)
     do_notify_slack(module, domain, token, payload)
 
     module.exit_json(msg="OK")
@@ -209,4 +253,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
-main()
+
+if __name__ == '__main__':
+    main()
