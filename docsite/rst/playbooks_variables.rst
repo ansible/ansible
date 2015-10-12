@@ -735,9 +735,7 @@ a use for it.
 
 If multiple variables of the same name are defined in different places, they get overwritten in a certain order.
 
-.. note::
-
-Ansible 2.0 has deprecated the “ssh” from ``ansible_ssh_user``, ``ansible_ssh_host``, and ``ansible_ssh_port`` to become ``ansible_user``, ``ansible_host``, and ``ansible_port``. If you are using a version of Ansible prior to 2.0,  you should continue using the older style variables (``ansible_ssh_*``). These shorter variables are ignored, without warning, in older versions of Ansible. 
+.. include:: ansible_ssh_changes_note.rst
 
 In 1.x the precedence is:
 
