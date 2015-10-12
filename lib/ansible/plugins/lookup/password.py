@@ -135,20 +135,19 @@ class LookupModule(LookupBase):
             else:
                 content = open(path).read().rstrip()
 
+                password = content
+                salt = None
                 if params['encrypt'] is not None:
                     try:
                         sep = content.rindex(' ')
                     except ValueError:
-                        password = content
-                        salt = None
+                        # No salt
+                        pass
                     else:
                         salt_field = content[sep + 1:]
                         if salt_field.startswith('salt='):
                             password = content[:sep]
                             salt = salt_field[len('salt='):]
-                        else:
-                            password = content
-                            salt = None
 
                     # crypt requested, add salt if missing
                     if not salt:
