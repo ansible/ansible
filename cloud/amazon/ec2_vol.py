@@ -405,7 +405,8 @@ def main():
                 'attachment_set': {
                     'attach_time': attachment.attach_time,
                     'device': attachment.device,
-                    'status': attachment.status
+                    'status': attachment.status,
+                    'deleteOnTermination': attachment.deleteOnTermination
                 }
             })
 
