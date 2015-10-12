@@ -145,7 +145,7 @@ class LookupModule(LookupBase):
                         salt_field = content[sep + 1:]
                         if salt_field.startswith('salt='):
                             password = content[:sep]
-                            salt = salt_field[len('salt=':]
+                            salt = salt_field[len('salt='):]
                         else:
                             password = content
                             salt = None
