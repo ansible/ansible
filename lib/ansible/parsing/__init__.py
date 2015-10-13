@@ -217,7 +217,13 @@ class DataLoader():
             return os.path.abspath(os.path.join(self._basedir, given))
 
     def path_dwim_relative(self, path, dirname, source):
-        ''' find one file in a role/playbook dirs with/without dirname subdir '''
+        '''
+        find one file in either a role or playbook dir with or without
+        explicitly named dirname subdirs
+
+        Used in action plugins and lookups to find supplemental files that
+        could be in either place.
+        '''
 
         search = []
         isrole = False
