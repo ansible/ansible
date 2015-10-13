@@ -241,7 +241,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             paths         = dict(required=True, aliases=['name','path'], type='list'),
-            patterns      = dict(default=['*'], type='list', aliases['pattern']),
+            patterns      = dict(default=['*'], type='list', aliases=['pattern']),
             contains      = dict(default=None, type='str'),
             file_type     = dict(default="file", choices=['file', 'directory'], type='str'),
             age           = dict(default=None, type='str'),
