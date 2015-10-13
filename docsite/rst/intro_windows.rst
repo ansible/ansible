@@ -154,6 +154,8 @@ Ansible's windows support relies on a few standard variables to indicate the use
     winserver1.example.com
     winserver2.example.com
 
+.. include:: ansible_ssh_changes_note.rst
+
 In group_vars/windows.yml, define the following inventory variables::
 
     # it is suggested that these be encrypted with ansible-vault:

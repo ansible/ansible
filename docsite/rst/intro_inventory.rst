@@ -64,7 +64,12 @@ For numeric patterns, leading zeros can be included or removed, as desired. Rang
     [databases]
     db-[a:f].example.com
 
-You can also select the connection type and user on a per host basis::
+
+.. include:: ansible_ssh_changes_note.rst
+
+You can also select the connection type and user on a per host basis:
+
+::
 
    [targets]
 

@@ -105,6 +105,8 @@ inventory file may look something like this:
 
     machine ansible_host=127.0.0.1 ansible_port=2222
 
+.. include:: ansible_ssh_changes_note.rst
+
 If you want to run Ansible manually, you will want to make sure to pass
 ``ansible`` or ``ansible-playbook`` commands the correct arguments for the
 username (usually ``vagrant``) and the SSH key (since Vagrant 1.7.0, this will be something like
