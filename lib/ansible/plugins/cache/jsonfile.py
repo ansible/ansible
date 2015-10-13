@@ -71,7 +71,7 @@ class CacheModule(BaseCacheModule):
             except ValueError as e:
                 self._display.warning("error while trying to read %s : %s. Most likely a corrupt file, so erasing and failing." % (cachefile, str(e)))
                 self.delete(key)
-                raise AnsibleError("The JSON cache file %s was corrupt, or did not otherwise contain valid JSON data. It has been removed, so you can re-run your command now.")
+                raise AnsibleError("The JSON cache file %s was corrupt, or did not otherwise contain valid JSON data. It has been removed, so you can re-run your command now." % cachefile)
         finally:
             f.close()
 
