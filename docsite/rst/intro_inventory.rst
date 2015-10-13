@@ -205,6 +205,9 @@ Host connection::
     ansible_connection
       Connection type to the host. Candidates are local, smart, ssh or paramiko.  The default is smart.
 
+
+.. include:: ansible_ssh_changes_note.rst
+
 SSH connection::
 
     ansible_host
