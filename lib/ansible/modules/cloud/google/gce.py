@@ -371,7 +371,6 @@ def create_instances(module, gce, instance_names):
     new_instances = []
     changed = False
 
-    lc_image = gce.ex_get_image(image)
     lc_disks = []
     disk_modes = []
     for i, disk in enumerate(disks or []):
@@ -413,6 +412,7 @@ def create_instances(module, gce, instance_names):
     else:
         metadata = md
 
+    lc_image = LazyDiskImage(module, gce, image, lc_disks)
     ex_sa_perms = []
     bad_perms = []
     if service_account_permissions:
@@ -425,7 +425,7 @@ def create_instances(module, gce, instance_names):
         ex_sa_perms[0]['scopes'] = service_account_permissions
 
     # These variables all have default values but check just in case
-    if not lc_image or not lc_network or not lc_machine_type or not lc_zone:
+    if not lc_network or not lc_machine_type or not lc_zone:
         module.fail_json(msg='Missing required create instance variable',
                          changed=False)
 
@@ -435,21 +435,21 @@ def create_instances(module, gce, instance_names):
             pd = lc_disks[0]
         elif persistent_boot_disk:
             try:
-                pd = gce.create_volume(None, "%s" % name, image=lc_image)
-            except ResourceExistsError:
                 pd = gce.ex_get_volume("%s" % name, lc_zone)
+            except ResourceNotFoundError:
+                pd = gce.create_volume(None, "%s" % name, image=lc_image())
         inst = None
         try:
+            inst = gce.ex_get_node(name, lc_zone)
+        except ResourceNotFoundError:
             inst = gce.create_node(
-                name, lc_machine_type, lc_image, location=lc_zone,
+                name, lc_machine_type, lc_image(), location=lc_zone,
                 ex_network=network, ex_tags=tags, ex_metadata=metadata,
                 ex_boot_disk=pd, ex_can_ip_forward=ip_forward,
                 external_ip=instance_external_ip, ex_disk_auto_delete=disk_auto_delete,
                 ex_service_accounts=ex_sa_perms
             )
             changed = True
-        except ResourceExistsError:
-            inst = gce.ex_get_node(name, lc_zone)
         except GoogleBaseError as e:
             module.fail_json(msg='Unexpected error attempting to create ' +
                              'instance %s, error: %s' % (name, e.value))
@@ -602,6 +602,30 @@ def main():
 
     json_output['changed'] = changed
     module.exit_json(**json_output)
+
+
+class LazyDiskImage:
+    """
+    Object for lazy instantiation of disk image
+    gce.ex_get_image is a very expensive call, so we want to avoid calling it as much as possible.
+    """
+    def __init__(self, module, gce, name, has_pd):
+        self.image = None
+        self.was_called = False
+        self.gce = gce
+        self.name = name
+        self.has_pd = has_pd
+        self.module = module
+
+    def __call__(self):
+        if not self.was_called:
+            self.was_called = True
+            if not self.has_pd:
+                self.image = self.gce.ex_get_image(self.name)
+                if not self.image:
+                    self.module.fail_json(msg='image or disks missing for create instance', changed=False)
+        return self.image
+
 
 # import module snippets
 from ansible.module_utils.basic import *
