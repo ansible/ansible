@@ -52,7 +52,6 @@
 
 __all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'wrap_var']
 
-import __builtin__
 
 class AnsibleUnsafe(object):
     __UNSAFE__ = True
