@@ -104,7 +104,7 @@ class Inventory(object):
                 all.add_host(Host(host, port))
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
-            if self._loader.is_directory(host_list):
+            if self.is_directory(host_list):
                 # Ensure basedir is inside the directory
                 host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(loader=self._loader, groups=self.groups, filename=host_list)
@@ -592,23 +592,36 @@ class Inventory(object):
         self._restriction = None
 
     def is_file(self):
-        """ did inventory come from a file? """
+        """
+        Did inventory come from a file? We don't use the equivalent loader
+        methods in inventory, due to the fact that the loader does an implict
+        DWIM on the path, which may be incorrect for inventory paths relative
+        to the playbook basedir.
+        """
         if not isinstance(self.host_list, string_types):
             return False
-        return self._loader.path_exists(self.host_list)
+        return os.path.isfile(self.host_list) or self.host_list == os.devnull
+
+    def is_directory(self, path):
+        """
+        Is the inventory host list a directory? Same caveat for here as with
+        the is_file() method above.
+        """
+        if not isinstance(self.host_list, string_types):
+            return False
+        return os.path.isdir(path)
 
     def basedir(self):
         """ if inventory came from a file, what's the directory? """
         dname = self.host_list
         if not self.is_file():
             dname = None
-        elif self._loader.is_directory(self.host_list):
+        elif self.is_directory(self.host_list):
             dname = self.host_list
         else:
             dname = os.path.dirname(self.host_list)
             if dname is None or dname == '' or dname == '.':
-                cwd = os.getcwd()
-                dname = cwd
+                dname = os.getcwd()
         if dname:
             dname = os.path.abspath(dname)
         return dname
