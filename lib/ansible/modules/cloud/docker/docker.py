@@ -1067,7 +1067,7 @@ class DockerManager(object):
                     continue
 
             # EXPOSED PORTS
-            expected_exposed_ports = set((image['ContainerConfig']['ExposedPorts'] or {}).keys())
+            expected_exposed_ports = set((image['ContainerConfig'].get('ExposedPorts') or {}).keys())
             for p in (self.exposed_ports or []):
                 expected_exposed_ports.add("/".join(p))
 
