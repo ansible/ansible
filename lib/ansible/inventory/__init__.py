@@ -191,7 +191,7 @@ class Inventory(object):
             return list(itertools.chain(*map(self._split_pattern, pattern)))
 
         if ';' in pattern:
-            display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0, removed=True)
+            display.deprecated("Use ',' instead of ';' to separate host patterns")
 
         # If it's got commas in it, we'll treat it as a straightforward
         # comma-separated list of patterns.
@@ -222,7 +222,7 @@ class Inventory(object):
                 )
 
                 if len(patterns) > 1:
-                    display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0)
+                    display.deprecated("Use ',' instead of ':' to separate host patterns")
 
         return [p.strip() for p in patterns]
 
