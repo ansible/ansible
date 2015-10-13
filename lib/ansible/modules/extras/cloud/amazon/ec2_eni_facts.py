@@ -22,12 +22,15 @@ description:
 version_added: "2.0"
 author: "Rob White (@wimnat)"
 options:
-  eni_id:
+  filters:
     description:
-      - The ID of the ENI. Pass this option to gather facts about a particular ENI, otherwise, all ENIs are returned.
+      - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkInterfaces.html) for possible filters.
     required: false
     default: null
-extends_documentation_fragment: aws
+
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -38,11 +41,10 @@ EXAMPLES = '''
 
 # Gather facts about a particular ENI
 - ec2_eni_facts:
-    eni_id: eni-xxxxxxx
+    filters:
+      network-interface-id: eni-xxxxxxx
 
 '''
-
-import xml.etree.ElementTree as ET
 
 try:
     import boto.ec2
@@ -88,10 +90,12 @@ def get_eni_info(interface):
 def list_eni(connection, module):
     
     eni_id = module.params.get("eni_id")
+
+    filters = module.params.get("filters")
     interface_dict_array = []
     
     try:
-        all_eni = connection.get_all_network_interfaces(eni_id)
+        all_eni = connection.get_all_network_interfaces(filters=filters)
     except BotoServerError as e:
         module.fail_json(msg=get_error_message(e.args[2]))
     
@@ -105,7 +109,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(
         dict(
-            eni_id = dict(default=None)
+            filters = dict(default=None, type='dict')
         )
     )
     
@@ -129,7 +133,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-# this is magic, see lib/ansible/module_common.py
-#<<INCLUDE_ANSIBLE_MODULE_COMMON>>
-
-main()
+if __name__ == '__main__':
+    main()
