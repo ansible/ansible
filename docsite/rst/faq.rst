@@ -3,6 +3,7 @@ Frequently Asked Questions
 
 Here are some commonly-asked questions and their answers.
 
+
 .. _set_environment:
 
 How can I set the PATH or any other environment variable for a task or entire playbook?
@@ -20,6 +21,8 @@ How do I handle different machines needing different user accounts or ports to l
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Setting inventory variables in the inventory file is the easiest way.
+
+.. include:: ansible_ssh_changes_note.rst
 
 For instance, suppose these hosts have different usernames and ports::
 
