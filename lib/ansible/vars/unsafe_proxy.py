@@ -52,25 +52,45 @@
 
 __all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'wrap_var']
 
-import __builtin__
 
 class AnsibleUnsafe(object):
     __UNSAFE__ = True
 
-class AnsibleUnsafeStr(str, AnsibleUnsafe):
-    pass
+try:
+    unicode
+except NameError:
+    # Python 3
+    class AnsibleUnsafeBytes(bytes, AnsibleUnsafe):
+        pass
 
-class AnsibleUnsafeUnicode(unicode, AnsibleUnsafe):
-    pass
+    class AnsibleUnsafeStr(str, AnsibleUnsafe):
+        pass
 
-class UnsafeProxy(object):
-    def __new__(cls, obj, *args, **kwargs):
-        if obj.__class__ == unicode:
-            return AnsibleUnsafeUnicode(obj)
-        elif obj.__class__ == str:
-            return AnsibleUnsafeStr(obj)
-        else:
-            return obj
+    class UnsafeProxy(object):
+        def __new__(cls, obj, *args, **kwargs):
+            if obj.__class__ == str:
+                return AnsibleUnsafeStr(obj)
+            elif obj.__class__ == bytes:
+                return AnsibleUnsafeBytes(obj)
+            else:
+                return obj
+else:
+    # Python 2
+    class AnsibleUnsafeStr(str, AnsibleUnsafe):
+        pass
+
+    class AnsibleUnsafeUnicode(unicode, AnsibleUnsafe):
+        pass
+
+    class UnsafeProxy(object):
+        def __new__(cls, obj, *args, **kwargs):
+            if obj.__class__ == unicode:
+                return AnsibleUnsafeUnicode(obj)
+            elif obj.__class__ == str:
+                return AnsibleUnsafeStr(obj)
+            else:
+                return obj
+
 
 def _wrap_dict(v):
     for k in v.keys():
@@ -78,11 +98,13 @@ def _wrap_dict(v):
             v[k] = wrap_var(v[k])
     return v
 
+
 def _wrap_list(v):
     for idx, item in enumerate(v):
         if item is not None:
             v[idx] = wrap_var(item)
     return v
+
 
 def wrap_var(v):
     if isinstance(v, dict):
