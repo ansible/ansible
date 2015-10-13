@@ -24,6 +24,8 @@ import locale
 import signal
 import sys
 
+from six import string_types
+
 from ansible import constants as C
 from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -223,7 +225,7 @@ class PlaybookExecutor:
 
         # check to see if the serial number was specified as a percentage,
         # and convert it to an integer value based on the number of hosts
-        if isinstance(play.serial, basestring) and play.serial.endswith('%'):
+        if isinstance(play.serial, string_types) and play.serial.endswith('%'):
             serial_pct = int(play.serial.replace("%",""))
             serial = int((serial_pct/100.0) * len(all_hosts))
         else:
