@@ -112,7 +112,7 @@ class DefineOid(object):
         self.sysContact  = dp + "1.3.6.1.2.1.1.4.0"
         self.sysName     = dp + "1.3.6.1.2.1.1.5.0"
         self.sysLocation = dp + "1.3.6.1.2.1.1.6.0"
-        
+
         # From IF-MIB
         self.ifIndex       = dp + "1.3.6.1.2.1.2.2.1.1"
         self.ifDescr       = dp + "1.3.6.1.2.1.2.2.1.2"
@@ -127,10 +127,10 @@ class DefineOid(object):
         self.ipAdEntAddr    = dp + "1.3.6.1.2.1.4.20.1.1"
         self.ipAdEntIfIndex = dp + "1.3.6.1.2.1.4.20.1.2"
         self.ipAdEntNetMask = dp + "1.3.6.1.2.1.4.20.1.3"
-        
+
 
 def decode_hex(hexstring):
- 
+
     if len(hexstring) < 3:
         return hexstring
     if hexstring[:2] == "0x":
@@ -200,7 +200,7 @@ def main():
     if m_args['version'] == "v2" or m_args['version'] == "v2c":
         if m_args['community'] == False:
             module.fail_json(msg='Community not set when using snmp version 2')
-            
+
     if m_args['version'] == "v3":
         if m_args['username'] == None:
             module.fail_json(msg='Username not set when using snmp version 3')
@@ -208,7 +208,7 @@ def main():
         if m_args['level'] == "authPriv" and m_args['privacy'] == None:
             module.fail_json(msg='Privacy algorithm not set when using authPriv')
 
-            
+
         if m_args['integrity'] == "sha":
             integrity_proto = cmdgen.usmHMACSHAAuthProtocol
         elif m_args['integrity'] == "md5":
@@ -218,7 +218,7 @@ def main():
             privacy_proto = cmdgen.usmAesCfb128Protocol
         elif m_args['privacy'] == "des":
             privacy_proto = cmdgen.usmDESPrivProtocol
-    
+
     # Use SNMP Version 2
     if m_args['version'] == "v2" or m_args['version'] == "v2c":
         snmp_auth = cmdgen.CommunityData(m_args['community'])
@@ -237,18 +237,19 @@ def main():
     v = DefineOid(dotprefix=False)
 
     Tree = lambda: defaultdict(Tree)
-                               
+
     results = Tree()
-            
+
     errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(
         snmp_auth,
         cmdgen.UdpTransportTarget((m_args['host'], 161)),
         cmdgen.MibVariable(p.sysDescr,),
-        cmdgen.MibVariable(p.sysObjectId,), 
+        cmdgen.MibVariable(p.sysObjectId,),
         cmdgen.MibVariable(p.sysUpTime,),
-        cmdgen.MibVariable(p.sysContact,), 
+        cmdgen.MibVariable(p.sysContact,),
         cmdgen.MibVariable(p.sysName,),
         cmdgen.MibVariable(p.sysLocation,),
+        lookupMib=False
     )
 
 
@@ -273,7 +274,7 @@ def main():
 
     errorIndication, errorStatus, errorIndex, varTable = cmdGen.nextCmd(
         snmp_auth,
-        cmdgen.UdpTransportTarget((m_args['host'], 161)), 
+        cmdgen.UdpTransportTarget((m_args['host'], 161)),
         cmdgen.MibVariable(p.ifIndex,),
         cmdgen.MibVariable(p.ifDescr,),
         cmdgen.MibVariable(p.ifMtu,),
@@ -281,20 +282,21 @@ def main():
         cmdgen.MibVariable(p.ifPhysAddress,),
         cmdgen.MibVariable(p.ifAdminStatus,),
         cmdgen.MibVariable(p.ifOperStatus,),
-        cmdgen.MibVariable(p.ipAdEntAddr,), 
-        cmdgen.MibVariable(p.ipAdEntIfIndex,), 
-        cmdgen.MibVariable(p.ipAdEntNetMask,), 
+        cmdgen.MibVariable(p.ipAdEntAddr,),
+        cmdgen.MibVariable(p.ipAdEntIfIndex,),
+        cmdgen.MibVariable(p.ipAdEntNetMask,),
 
         cmdgen.MibVariable(p.ifAlias,),
+        lookupMib=False
     )
- 
+
 
     if errorIndication:
         module.fail_json(msg=str(errorIndication))
 
     interface_indexes = []
-    
-    all_ipv4_addresses = []     
+
+    all_ipv4_addresses = []
     ipv4_networks = Tree()
 
     for varBinds in varTable:
@@ -358,9 +360,8 @@ def main():
         results['ansible_interfaces'][int(interface)]['ipv4'] = interface_to_ipv4[interface]
 
     results['ansible_all_ipv4_addresses'] = all_ipv4_addresses
- 
+
     module.exit_json(ansible_facts=results)
-    
+
 
 main()
-
