@@ -27,14 +27,10 @@ options:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value. See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcs.html) for possible filters.
     required: false
     default: null
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used. See U(http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region)
-    required: false
-    default: null
-    aliases: [ 'aws_region', 'ec2_region' ]
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -46,12 +42,12 @@ EXAMPLES = '''
 # Gather facts about a particular VPC using VPC ID
 - ec2_vpc_net_facts:
     filters:
-      - vpc-id: vpc-00112233
+      vpc-id: vpc-00112233
 
 # Gather facts about any VPC with a tag key Name and value Example
 - ec2_vpc_net_facts:
     filters:
-      - "tag:Name": Example
+      "tag:Name": Example
 
 '''
 
