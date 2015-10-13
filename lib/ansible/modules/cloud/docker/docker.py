@@ -1071,7 +1071,7 @@ class DockerManager(object):
             for p in (self.exposed_ports or []):
                 expected_exposed_ports.add("/".join(p))
 
-            actually_exposed_ports = set((container["Config"]["ExposedPorts"] or {}).keys())
+            actually_exposed_ports = set((container["Config"].get("ExposedPorts") or {}).keys())
 
             if actually_exposed_ports != expected_exposed_ports:
                 self.reload_reasons.append('exposed_ports ({0} => {1})'.format(actually_exposed_ports, expected_exposed_ports))
