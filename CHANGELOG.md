@@ -74,6 +74,7 @@ newline being stripped you can change your playbook like this:
     # Output
     "msg": "Testing some things"
     ```
+* Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
 
 Deprecated Modules (new ones in parens):
 
