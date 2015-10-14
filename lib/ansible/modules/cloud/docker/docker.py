@@ -1397,6 +1397,11 @@ class DockerManager(object):
             changes = list(self.client.pull(image, tag=tag, stream=True, **extra_params))
             try:
                 last = changes[-1]
+                # seems Docker 1.8 puts an empty dict at the end of the
+                # stream; catch that and get the previous instead
+                # https://github.com/ansible/ansible-modules-core/issues/2043
+                if last.strip() == '{}':
+                    last = changes[-2]
             except IndexError:
                 last = '{}'
             status = json.loads(last).get('status', '')
