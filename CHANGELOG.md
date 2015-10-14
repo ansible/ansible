@@ -9,7 +9,11 @@ New Modules:
 
 Other Notable Changes:
 
-## 1.9.4 "Dancing In the Street" - TBD
+## 1.9.5 "Dancing In the Street" - TBD
+
+* Compatibility fix with docker 1.8.
+
+## 1.9.4 "Dancing In the Street" - Oct 10, 2015
 
 * Fixes a bug where yum state=latest would error if there were no updates to install.
 * Fixes a bug where yum state=latest did not work with wildcard package names.
