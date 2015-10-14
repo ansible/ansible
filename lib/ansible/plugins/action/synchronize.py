@@ -125,7 +125,10 @@ class ActionModule(ActionBase):
         # running on so localhost could be a non-controller machine if
         # delegate_to is used)
         src_host  = '127.0.0.1'
-        dest_host = task_vars.get('ansible_ssh_host') or task_vars.get('inventory_hostname')
+        if delegate_to:
+            dest_host = task_vars.get('inventory_hostname')
+        else:
+            dest_host = task_vars.get('ansible_ssh_host') or task_vars.get('inventory_hostname')
 
         dest_is_local = dest_host in C.LOCALHOST
 
@@ -200,14 +203,11 @@ class ActionModule(ActionBase):
                     user = task_vars.get('ansible_ssh_user') or self._play_context.remote_user
 
             # use the mode to define src and dest's url
-            if self._task.args.get('mode', 'push') == 'pull':
-                # src is a remote path: <user>@<host>, dest is a local path
-                src = self._process_remote(src_host, src, user)
-                dest = self._process_origin(dest_host, dest, user)
-            else:
-                # src is a local path, dest is a remote path: <user>@<host>
-                src = self._process_origin(src_host, src, user)
-                dest = self._process_remote(dest_host, dest, user)
+            set_mode = lambda host, var: \
+                          self._process_origin(host, var, user) if host == '127.0.0.1' \
+                     else self._process_remote(host, var, user)
+            src = set_mode(src_host, src)
+            dest = set_mode(dest_host, dest)
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
