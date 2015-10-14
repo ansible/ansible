@@ -21,6 +21,7 @@ from __future__ import (absolute_import, division)
 __metaclass__ = type
 
 import errno
+import sys
 
 from six.moves import builtins
 
@@ -220,7 +221,8 @@ class TestModuleUtilsBasic(unittest.TestCase):
         from ansible.module_utils.basic import get_module_path
         with patch('os.path.realpath', return_value='/path/to/foo/'):
             self.assertEqual(get_module_path(), '/path/to/foo')
- 
+
+    @unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
     def test_module_utils_basic_ansible_module_creation(self):
         from ansible.module_utils import basic
 
