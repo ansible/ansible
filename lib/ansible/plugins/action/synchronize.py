@@ -173,6 +173,10 @@ class ActionModule(ActionBase):
         if self._task.args.get('mode', 'push') == 'pull':
             (dest_host, src_host) = (src_host, dest_host)
 
+        # MUNGE SSH_PASSWD INFO
+        if self._task.args.get('login_password', None):
+            self._task.args['login_password'] = task_vars.get('ansible_ssh_pass') or self._play_context.password
+
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
         src = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
