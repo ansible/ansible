@@ -302,6 +302,11 @@ class PluginLoader:
 
     __contains__ = has_plugin
 
+    def _load_module_source(self, name, path):
+        with open(path, 'r') as module_file:
+            module = imp.load_source(name, path, module_file)
+        return module
+
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
@@ -312,7 +317,7 @@ class PluginLoader:
             return None
 
         if path not in self._module_cache:
-            self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
+            self._module_cache[path] = self._load_module_source('.'.join([self.package, name]), path)
 
         if kwargs.get('class_only', False):
             obj = getattr(self._module_cache[path], self.class_name)
@@ -330,12 +335,12 @@ class PluginLoader:
             matches = glob.glob(os.path.join(i, "*.py"))
             matches.sort()
             for path in matches:
-                name, ext = os.path.splitext(os.path.basename(path))
-                if name.startswith("_"):
+                name, _ = os.path.splitext(path)
+                if '__init__' in name:
                     continue
 
                 if path not in self._module_cache:
-                    self._module_cache[path] = imp.load_source('.'.join([self.package, name]), path)
+                    self._module_cache[path] = self._load_module_source(name, path)
 
                 if kwargs.get('class_only', False):
                     obj = getattr(self._module_cache[path], self.class_name)
