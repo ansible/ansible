@@ -29,7 +29,7 @@ options:
   name:
     description:
       - Name of the encrypted block device as it appears in the C(/etc/crypttab) file, or
-        optionaly prefixed with C(/dev/mapper), as it appears in the filesystem. I(/dev/mapper)
+        optionaly prefixed with C(/dev/mapper/), as it appears in the filesystem. I(/dev/mapper/)
         will be stripped from I(name).
     required: true
     default: null
@@ -96,12 +96,15 @@ def main():
         supports_check_mode = True
     )
 
-    name           = module.params['name'].lstrip('/dev/mapper')
     backing_device = module.params['backing_device']
     password       = module.params['password']
     opts           = module.params['opts']
     state          = module.params['state']
     path           = module.params['path']
+    name           = module.params['name']
+    if name.startswith('/dev/mapper/'):
+        name = name[len('/dev/mapper/'):]
+
 
     if state != 'absent' and backing_device is None and password is None and opts is None:
         module.fail_json(msg="expected one or more of 'backing_device', 'password' or 'opts'",
