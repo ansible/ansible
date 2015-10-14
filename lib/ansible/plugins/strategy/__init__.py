@@ -35,7 +35,7 @@ from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.role import hash_params
-from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader
+from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.vars.unsafe_proxy import wrap_var
 
@@ -59,6 +59,7 @@ class SharedPluginLoaderObj:
         self.action_loader = action_loader
         self.connection_loader = connection_loader
         self.filter_loader = filter_loader
+        self.test_loader   = test_loader
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
 

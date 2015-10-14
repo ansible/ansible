@@ -130,9 +130,11 @@ class Templar:
 
         if shared_loader_obj:
             self._filter_loader = getattr(shared_loader_obj, 'filter_loader')
+            self._test_loader   = getattr(shared_loader_obj, 'test_loader')
             self._lookup_loader = getattr(shared_loader_obj, 'lookup_loader')
         else:
             self._filter_loader = filter_loader
+            self._test_loader   = test_loader
             self._lookup_loader = lookup_loader
 
         # flags to determine whether certain failures during templating
@@ -183,7 +185,7 @@ class Templar:
         if self._tests is not None:
             return self._tests.copy()
 
-        plugins = [x for x in test_loader.all()]
+        plugins = [x for x in self._test_loader.all()]
 
         self._tests = dict()
         for fp in plugins:
