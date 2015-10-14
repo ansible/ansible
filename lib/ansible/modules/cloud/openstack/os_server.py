@@ -86,8 +86,8 @@ options:
         - A list of networks to which the instance's interface should
           be attached. Networks may be referenced by net-id/net-name/port-id
           or port-name.
-        - 'Also this accepts a string containing a list of net-id/port-id.
-          Eg: nics: "net-id=uuid-1,net-id=uuid-2"'
+        - 'Also this accepts a string containing a list of (net/port)-(id/name)
+          Eg: nics: "net-id=uuid-1,port-name=myport"'
      required: false
      default: None
    auto_ip:
@@ -288,35 +288,37 @@ def _exit_hostvars(module, cloud, server, changed=True):
         changed=changed, server=server, id=server.id, openstack=hostvars)
 
 
+def _parse_nics(nics):
+    for net in nics:
+        if type(net) == str:
+            for nic in net.split(','):
+                yield dict((nic.split('='),))
+        else:
+            yield net
+
 def _network_args(module, cloud):
     args = []
     nics = module.params['nics']
-    if type(nics) == str :
-        for kv_str in nics.split(","):
-            nic = {}
-            k, v = kv_str.split("=")
-            nic[k] = v
-            args.append(nic)
-    else:
-        for net in module.params['nics']:
-            if net.get('net-id'):
-                args.append(net)
-            elif net.get('net-name'):
-                by_name = cloud.get_network(net['net-name'])
-                if not by_name:
-                    module.fail_json(
-                        msg='Could not find network by net-name: %s' %
-                        net['net-name'])
-                args.append({'net-id': by_name['id']})
-            elif net.get('port-id'):
-                args.append(net)
-            elif net.get('port-name'):
-                by_name = cloud.get_port(net['port-name'])
-                if not by_name:
-                    module.fail_json(
-                        msg='Could not find port by port-name: %s' %
-                        net['port-name'])
-                args.append({'port-id': by_name['id']})
+
+    for net in _parse_nics(nics):
+        if net.get('net-id'):
+            args.append(net)
+        elif net.get('net-name'):
+            by_name = cloud.get_network(net['net-name'])
+            if not by_name:
+                module.fail_json(
+                    msg='Could not find network by net-name: %s' %
+                    net['net-name'])
+            args.append({'net-id': by_name['id']})
+        elif net.get('port-id'):
+            args.append(net)
+        elif net.get('port-name'):
+            by_name = cloud.get_port(net['port-name'])
+            if not by_name:
+                module.fail_json(
+                    msg='Could not find port by port-name: %s' %
+                    net['port-name'])
+            args.append({'port-id': by_name['id']})
     return args
 
 
