@@ -54,7 +54,6 @@ import pipes
 import shlex
 import subprocess
 import sys
-import syslog
 import types
 import time
 import select
@@ -67,6 +66,12 @@ import pwd
 import platform
 import errno
 from itertools import repeat
+
+try:
+    import syslog
+    HAS_SYSLOG=True
+except ImportError:
+    HAS_SYSLOG=False
 
 try:
     # Python 2
@@ -1246,9 +1251,10 @@ class AnsibleModule(object):
         return params
 
     def _log_to_syslog(self, msg):
-        module = 'ansible-%s' % os.path.basename(__file__)
-        syslog.openlog(str(module), 0, syslog.LOG_USER)
-        syslog.syslog(syslog.LOG_INFO, msg)
+        if HAS_SYSLOG:
+            module = 'ansible-%s' % os.path.basename(__file__)
+            syslog.openlog(str(module), 0, syslog.LOG_USER)
+            syslog.syslog(syslog.LOG_INFO, msg)
 
     def debug(self, msg):
         if self._debug:
