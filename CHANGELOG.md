@@ -12,6 +12,7 @@ Other Notable Changes:
 ## 1.9.5 "Dancing In the Street" - TBD
 
 * Compatibility fix with docker 1.8.
+* Fix a bug with the crypttab module omitting certain characters from the name of the device
 
 ## 1.9.4 "Dancing In the Street" - Oct 10, 2015
 
