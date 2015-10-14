@@ -330,8 +330,16 @@ class VariableManager:
         variables['playbook_dir'] = loader.get_basedir()
 
         if host:
-            variables['group_names'] = [group.name for group in host.get_groups()]
-
+            groups = host.get_groups()
+            variables['group_names'] = [group.name for group in groups]
+            
+            variables['group_names_by_level'] = dict()
+            for group in sorted(groups, key=groups.depth):
+                if group.depth in variables['group_names_by_level'].keys():
+                    variables['group_names_by_level'][group.depth].append(group.name)
+                else:
+                    variables['group_names_by_level'][group.depth] = [group.name]
+                
             if self._inventory is not None:
                 variables['groups']  = dict()
                 for (group_name, group) in iteritems(self._inventory.groups):
