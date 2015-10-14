@@ -4753,3 +4753,7 @@ span[id*='MathJax-Span'] {
         margin-bottom: 25px;
     }
 }
+
+#page-content {
+    overflow-x: scroll;
+}
