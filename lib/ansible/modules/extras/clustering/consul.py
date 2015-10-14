@@ -130,6 +130,7 @@ options:
             Interval must also be provided with this option.
         required: false
         default: None
+        version_added: "2.0"
     timeout:
         description:
           - A custom HTTP check timeout. The consul default is 10 seconds.
@@ -137,6 +138,7 @@ options:
             signify the units of seconds or minutes, e.g. 15s or 1m.
         required: false
         default: None
+        version_added: "2.0"
     token:
         description:
           - the token key indentifying an ACL rule set. May be required to register services.
@@ -231,8 +233,7 @@ def remove(module):
     service_id = module.params.get('service_id') or module.params.get('service_name')
     check_id = module.params.get('check_id') or module.params.get('check_name')
     if not (service_id or check_id):
-        module.fail_json(msg='services and checks are removed by id or name.'\
-                            ' please supply a service id/name or a check id/name')
+        module.fail_json(msg='services and checks are removed by id or name. please supply a service id/name or a check id/name')
     if service_id:
         remove_service(module, service_id)
     else:
@@ -245,8 +246,7 @@ def add_check(module, check):
     Without this we can't compare to the supplied check and so we must assume
     a change. '''
     if not check.name:
-        module.fail_json(msg='a check name is required for a node level check,'\
-                                ' one not attached to a service')
+        module.fail_json(msg='a check name is required for a node level check, one not attached to a service')
 
     consul_api = get_consul_api(module)
     check.register(consul_api)
@@ -327,8 +327,7 @@ def parse_check(module):
 
     if len(filter(None, [module.params.get('script'), module.params.get('ttl'), module.params.get('http')])) > 1:
         module.fail_json(
-            msg='check are either script, http or ttl driven, supplying more'\
-                ' than one does not make sense')
+            msg='check are either script, http or ttl driven, supplying more than one does not make sense')
 
     if module.params.get('check_id') or module.params.get('script') or module.params.get('ttl') or module.params.get('http'):
 
@@ -357,10 +356,7 @@ def parse_service(module):
         )
     elif module.params.get('service_name') and not module.params.get('service_port'):
 
-        module.fail_json(
-            msg="service_name supplied but no service_port, a port is required"\
-                " to configure a service. Did you configure the 'port' "\
-                "argument meaning 'service_port'?")
+        module.fail_json( msg="service_name supplied but no service_port, a port is required to configure a service. Did you configure the 'port' argument meaning 'service_port'?")
 
 
 class ConsulService():
@@ -456,7 +452,7 @@ class ConsulCheck():
                 raise Exception('http check must specify interval')
 
             self.check = consul.Check.http(http, self.interval, self.timeout)
-        
+
 
     def validate_duration(self, name, duration):
         if duration:
@@ -505,8 +501,7 @@ class ConsulCheck():
 
 def test_dependencies(module):
     if not python_consul_installed:
-        module.fail_json(msg="python-consul required for this module. "\
-              "see http://python-consul.readthedocs.org/en/latest/#installation")
+        module.fail_json(msg="python-consul required for this module. see http://python-consul.readthedocs.org/en/latest/#installation")
 
 def main():
     module = AnsibleModule(
@@ -532,9 +527,9 @@ def main():
         ),
         supports_check_mode=False,
     )
-    
+
     test_dependencies(module)
-        
+
     try:
         register_with_consul(module)
     except ConnectionError, e:
