@@ -134,11 +134,11 @@ Host Inventory
 ``````````````
 
 Once your nodes are spun up, you'll probably want to talk to them again.  With a cloud setup, it's best to not maintain a static list of cloud hostnames
-in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script.
+in text files.  Rather, the best way to handle this is to use the ec2 dynamic inventory script. See :ref:`intro_dynamic_inventory`. 
 
 This will also dynamically select nodes that were even created outside of Ansible, and allow Ansible to manage them.
 
-See the doc:`aws_example` for how to use this, then flip back over to this chapter.
+See :ref:`intro_dynamic_inventory` for how to use this, then flip back over to this chapter.
 
 .. _aws_tags_and_groups:
 
