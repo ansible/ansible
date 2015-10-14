@@ -71,18 +71,15 @@ If (Test-Path $path)
     }
     Else
     {
-        # Only files have the .Directory attribute.
-        If ( $state -eq "directory" -and $fileinfo.Directory )
+        If ( $state -eq "directory" -and -not $fileinfo.PsIsContainer )
         {
             Fail-Json (New-Object psobject) "path is not a directory"
         }
 
-        # Only files have the .Directory attribute.
-        If ( $state -eq "file" -and -not $fileinfo.Directory )
+        If ( $state -eq "file" -and $fileinfo.PsIsContainer )
         {
             Fail-Json (New-Object psobject) "path is not a file"
         }
-
     }
 }
 Else
