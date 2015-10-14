@@ -31,6 +31,7 @@ options:
   propagating_vgw_ids:
     description:
       - "Enable route propagation from virtual gateways specified by ID."
+    default: None
     required: false
   route_table_id:
     description:
@@ -322,15 +323,24 @@ def ensure_routes(vpc_conn, route_table, route_specs, propagating_vgw_ids,
     changed = routes_to_delete or route_specs_to_create
     if changed:
         for route_spec in route_specs_to_create:
-            vpc_conn.create_route(route_table.id,
-                                  dry_run=check_mode,
-                                  **route_spec)
+            try:
+                vpc_conn.create_route(route_table.id,
+                                      dry_run=check_mode,
+                                      **route_spec)
+            except EC2ResponseError as e:
+                if e.error_code == 'DryRunOperation':
+                    pass
 
         for route in routes_to_delete:
-            vpc_conn.delete_route(route_table.id,
-                                  route.destination_cidr_block,
-                                  dry_run=check_mode)
-    return {'changed': changed}
+            try:
+                vpc_conn.delete_route(route_table.id,
+                                      route.destination_cidr_block,
+                                      dry_run=check_mode)
+            except EC2ResponseError as e:
+                if e.error_code == 'DryRunOperation':
+                    pass
+
+    return {'changed': bool(changed)}
 
 
 def ensure_subnet_association(vpc_conn, vpc_id, route_table_id, subnet_id,
@@ -405,7 +415,6 @@ def ensure_route_table_absent(connection, module):
     route_table_id = module.params.get('route_table_id')
     tags = module.params.get('tags')
     vpc_id = module.params.get('vpc_id')
-    check_mode = module.params.get('check_mode')
 
     if lookup == 'tag':
         if tags is not None:
@@ -427,9 +436,12 @@ def ensure_route_table_absent(connection, module):
         return {'changed': False}
 
     try:
-        connection.delete_route_table(route_table.id, dry_run=check_mode)
+        connection.delete_route_table(route_table.id, dry_run=module.check_mode)
     except EC2ResponseError as e:
-        module.fail_json(msg=e.message)
+        if e.error_code == 'DryRunOperation':
+            pass
+        else:
+            module.fail_json(msg=e.message)
 
     return {'changed': True}
 
@@ -464,12 +476,11 @@ def create_route_spec(connection, routes, vpc_id):
 def ensure_route_table_present(connection, module):
 
     lookup = module.params.get('lookup')
-    propagating_vgw_ids = module.params.get('propagating_vgw_ids', [])
+    propagating_vgw_ids = module.params.get('propagating_vgw_ids')
     route_table_id = module.params.get('route_table_id')
     subnets = module.params.get('subnets')
     tags = module.params.get('tags')
     vpc_id = module.params.get('vpc_id')
-    check_mode = module.params.get('check_mode')
     try:
         routes = create_route_spec(connection, module.params.get('routes'), vpc_id)
     except AnsibleIgwSearchException as e:
@@ -507,7 +518,7 @@ def ensure_route_table_present(connection, module):
 
     if routes is not None:
         try:
-            result = ensure_routes(connection, route_table, routes, propagating_vgw_ids, check_mode)
+            result = ensure_routes(connection, route_table, routes, propagating_vgw_ids, module.check_mode)
             changed = changed or result['changed']
         except EC2ResponseError as e:
             module.fail_json(msg=e.message)
@@ -515,12 +526,12 @@ def ensure_route_table_present(connection, module):
     if propagating_vgw_ids is not None:
         result = ensure_propagation(connection, route_table,
                                     propagating_vgw_ids,
-                                    check_mode=check_mode)
+                                    check_mode=module.check_mode)
         changed = changed or result['changed']
 
     if not tags_valid and tags is not None:
         result = ensure_tags(connection, route_table.id, tags,
-                             add_only=True, check_mode=check_mode)
+                             add_only=True, check_mode=module.check_mode)
         changed = changed or result['changed']
 
     if subnets:
@@ -534,7 +545,7 @@ def ensure_route_table_present(connection, module):
             )
 
         try:
-            result = ensure_subnet_associations(connection, vpc_id, route_table, associated_subnets, check_mode)
+            result = ensure_subnet_associations(connection, vpc_id, route_table, associated_subnets, module.check_mode)
             changed = changed or result['changed']
         except EC2ResponseError as e:
             raise AnsibleRouteTableException(
