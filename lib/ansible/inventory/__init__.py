@@ -614,10 +614,10 @@ class Inventory(object):
     def basedir(self):
         """ if inventory came from a file, what's the directory? """
         dname = self.host_list
-        if not self.is_file():
-            dname = None
-        elif self.is_directory(self.host_list):
+        if self.is_directory(self.host_list):
             dname = self.host_list
+        elif not self.is_file():
+            dname = None
         else:
             dname = os.path.dirname(self.host_list)
             if dname is None or dname == '' or dname == '.':
