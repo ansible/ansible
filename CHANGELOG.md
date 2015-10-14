@@ -228,6 +228,7 @@ New Modules:
 * webfaction_domain
 * webfaction_mailbox
 * webfaction_site
+* win_acl
 * win_environment
 * win_firewall_rule
 * win_package
