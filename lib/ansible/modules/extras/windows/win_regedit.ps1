@@ -25,58 +25,15 @@ $params = Parse-Args $args;
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
-If ($params.key)
-{
-    $registryKey = $params.key
-}
-Else
-{
-    Fail-Json $result "missing required argument: key"
-}
+$registryKey = Get-Attr -obj $params -name "key" -failifempty $true
+$registryValue = Get-Attr -obj $params -name "value" -default $null
+$state = Get-Attr -obj $params -name "state" -validateSet "present","absent" -default "present"
+$registryData = Get-Attr -obj $params -name "data" -default $null
+$registryDataType = Get-Attr -obj $params -name "datatype" -validateSet "binary","dword","expandstring","multistring","string","qword" -default "string"
 
-If ($params.value)
-{
-    $registryValue = $params.value
-}
-Else
-{
-    $registryValue = $null
-}
-
-If ($params.state)
-{
-    $state = $params.state.ToString().ToLower()
-    If (($state -ne "present") -and ($state -ne "absent"))
-    {
-        Fail-Json $result "state is $state; must be present or absent"
-    }
-}
-Else
-{
-    $state = "present"
-}
-
-If ($params.data)
-{
-    $registryData = $params.data
-}
-ElseIf ($state -eq "present" -and $registryValue -ne $null)
+If ($state -eq "present" -and $registryData -eq $null -and $registryValue -ne $null)
 {
     Fail-Json $result "missing required argument: data"
-}
-
-If ($params.datatype)
-{
-    $registryDataType = $params.datatype.ToString().ToLower()
-    $validRegistryDataTypes = "binary", "dword", "expandstring", "multistring", "string", "qword"
-    If ($validRegistryDataTypes -notcontains $registryDataType)
-    {
-        Fail-Json $result "type is $registryDataType; must be binary, dword, expandstring, multistring, string, or qword"
-    }
-}
-Else
-{
-    $registryDataType = "string"
 }
 
 Function Test-RegistryValueData {
@@ -115,7 +72,7 @@ if($state -eq "present") {
                 }
             }
             # Changes Only Data
-            elseif ((Get-ItemProperty -Path $registryKey | Select-Object -ExpandProperty $registryValue) -ne $registryData) 
+            elseif ((Get-ItemProperty -Path $registryKey | Select-Object -ExpandProperty $registryValue) -ne $registryData)
             {
                 Try {
                     Set-ItemProperty -Path $registryKey -Name $registryValue -Value $registryData
@@ -142,7 +99,7 @@ if($state -eq "present") {
     }
     elseif(-not (Test-Path $registryKey))
     {
-        Try 
+        Try
         {
             $newRegistryKey = New-Item $registryKey -Force
             $result.changed = $true
