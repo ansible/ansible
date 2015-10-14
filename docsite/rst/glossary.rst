@@ -148,28 +148,6 @@ the inventory file, in YAML format.  This provides a convenient place to assign 
 them in the inventory file.  The Host Vars file can also be used to define complex data structures that can't be represented in the
 inventory file.
 
-Lazy Evaluation
-+++++++++++++++
-
-In general, Ansible evaluates any variables in playbook content at the last possible second, which means that if you define a data structure
-that data structure itself can define variable values within it, and everything "just works" as you would expect.  This also means variable
-strings can include other variables inside of those strings.
-
-Lookup Plugin
-+++++++++++++
-
-A lookup plugin is a way to get data into Ansible from the outside world.  These are how such things as "with_items", a basic looping plugin, are implemented,
-but there are also lookup plugins like "with_file" which loads data from a file, and even ones for querying environment variables,
-DNS text records, or key value stores.  Lookup plugins can also be accessed in templates, e.g., ``{{ lookup('file','/path/to/file') }}``.
-
-Multi-Tier
-++++++++++
-
-The concept that IT systems are not managed one system at a time, but by interactions between multiple systems, and groups of systems, in
-well defined orders.  For instance, a web server may need to be updated before a database server, and pieces on the web server may need
-to be updated after *THAT* database server, and various load balancers and monitoring servers may need to be contacted.  Ansible models
-entire IT topologies and workflows rather than looking at configuration from a "one system at a time" perspective.
-
 Idempotency
 +++++++++++
 
@@ -211,6 +189,13 @@ JSON
 
 Ansible uses JSON for return data from remote modules.  This allows modules to be written in any language, not just Python.
 
+Lazy Evaluation
++++++++++++++++
+
+In general, Ansible evaluates any variables in playbook content at the last possible second, which means that if you define a data structure
+that data structure itself can define variable values within it, and everything "just works" as you would expect.  This also means variable
+strings can include other variables inside of those strings.
+
 Library
 +++++++
 
@@ -222,18 +207,25 @@ Limit Groups
 By passing ``--limit somegroup`` to ansible or ansible-playbook, the commands can be limited to a subset of hosts.  For instance, 
 this can be used to run a playbook that normally targets an entire set of servers to one particular server.
 
-Local Connection
-++++++++++++++++
-
-By using "connection: local" in a playbook, or passing "-c local" to /usr/bin/ansible, this indicates that we are managing the local
-host and not a remote machine.
-
 Local Action
 ++++++++++++
 
 A local_action directive in a playbook targeting remote machines means that the given step will actually occur on the local
 machine, but that the variable '{{ ansible_hostname }}' can be passed in to reference the remote hostname being referred to in
 that step.  This can be used to trigger, for example, an rsync operation.
+
+Local Connection
+++++++++++++++++
+
+By using "connection: local" in a playbook, or passing "-c local" to /usr/bin/ansible, this indicates that we are managing the local
+host and not a remote machine.
+
+Lookup Plugin
++++++++++++++
+
+A lookup plugin is a way to get data into Ansible from the outside world.  These are how such things as "with_items", a basic looping plugin, are implemented,
+but there are also lookup plugins like "with_file" which loads data from a file, and even ones for querying environment variables,
+DNS text records, or key value stores.  Lookup plugins can also be accessed in templates, e.g., ``{{ lookup('file','/path/to/file') }}``.
 
 Loops
 +++++
@@ -251,6 +243,14 @@ Modules are the units of work that Ansible ships out to remote machines.   Modul
 language, including Perl, Bash, or Ruby -- but can leverage some useful communal library code if written in Python.  Modules just
 have to return JSON or simple key=value pairs.  Once modules are executed on remote machines, they are removed, so no long running
 daemons are used.  Ansible refers to the collection of available modules as a 'library'.
+
+Multi-Tier
+++++++++++
+
+The concept that IT systems are not managed one system at a time, but by interactions between multiple systems, and groups of systems, in
+well defined orders.  For instance, a web server may need to be updated before a database server, and pieces on the web server may need
+to be updated after *THAT* database server, and various load balancers and monitoring servers may need to be contacted.  Ansible models
+entire IT topologies and workflows rather than looking at configuration from a "one system at a time" perspective.
 
 Notify
 ++++++
