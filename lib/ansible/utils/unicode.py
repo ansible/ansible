@@ -251,3 +251,10 @@ def to_bytes(obj, encoding='utf-8', errors='replace', nonstring=None):
 # ensure that a filter will return unicode values.
 def unicode_wrap(func, *args, **kwargs):
     return to_unicode(func(*args, **kwargs), nonstring='passthru')
+
+
+# Alias for converting to native strings.
+if PY3:
+    to_str = to_unicode
+else:
+    to_str = to_bytes

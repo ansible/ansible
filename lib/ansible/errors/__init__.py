@@ -20,15 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.errors.yaml_strings import *
-from ansible.utils.unicode import to_unicode, to_bytes
-
-
-if str is bytes:
-    # Python 2
-    to_str = to_bytes
-else:
-    # Python 3
-    to_str = to_unicode
+from ansible.utils.unicode import to_unicode, to_str
 
 
 class AnsibleError(Exception):
