@@ -55,15 +55,11 @@ Function UserSearch
  
     if ($IsLocalAccount -eq $true)
     {
-        $localaccount = get-wmiobject -class "Win32_UserAccount" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $AccountName}
+        # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
+        $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $AccountName}
         if ($localaccount)
         {
-            return $localaccount.Caption
-        }
-        $LocalGroup = get-wmiobject -class "Win32_Group" -namespace "root\CIMV2" -filter "LocalAccount = True"| where {$_.Caption -eq $AccountName}
-        if ($LocalGroup)
-        {
-            return $LocalGroup.Caption
+            return $localaccount.SID
         }
     }
     ElseIf (($IsDomainAccount -eq $true) -and ($IsUpn -eq $false))
@@ -75,7 +71,13 @@ Function UserSearch
  
         if ($result)
         {
-            return $accountname
+            $user = $result.GetDirectoryEntry()
+
+            # get binary SID from AD account
+            $binarySID = $user.ObjectSid.Value
+
+            # convert to string SID
+            return (New-Object System.Security.Principal.SecurityIdentifier($binarySID,0)).Value
         }
     }
  
@@ -100,10 +102,10 @@ Else {
 }
  
 If ($params.user) {
-    $user = UserSearch -AccountName ($Params.User)
+    $sid = UserSearch -AccountName ($Params.User)
  
     # Test that the user/group is resolvable on the local machine
-    if (!$user)
+    if (!$sid)
     {
           Fail-Json $result "$($Params.User) is not a valid user or group on the host machine or domain"
     }    
@@ -174,14 +176,15 @@ Try {
         $objType =[System.Security.AccessControl.AccessControlType]::Deny
     }
  
-    $objUser = New-Object System.Security.Principal.NTAccount($user)
+    $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
     $objACE = New-Object System.Security.AccessControl.FileSystemAccessRule ($objUser, $colRights, $InheritanceFlag, $PropagationFlag, $objType)
     $objACL = Get-ACL $path
  
     # Check if the ACE exists already in the objects ACL list
     $match = $false
     ForEach($rule in $objACL.Access){
-        If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($rule.IdentityReference -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) { 
+        $ruleIdentity = $rule.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier])
+        If (($rule.FileSystemRights -eq $objACE.FileSystemRights) -And ($rule.AccessControlType -eq $objACE.AccessControlType) -And ($ruleIdentity -eq $objACE.IdentityReference) -And ($rule.IsInherited -eq $objACE.IsInherited) -And ($rule.InheritanceFlags -eq $objACE.InheritanceFlags) -And ($rule.PropagationFlags -eq $objACE.PropagationFlags)) { 
             $match = $true
             Break
         } 
@@ -219,7 +222,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $path for $user"
+    Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $path for $($Params.User)"
 }
  
 Exit-Json $result
