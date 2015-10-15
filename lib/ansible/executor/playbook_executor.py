@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import getpass
 import locale
+import os
 import signal
 import sys
 
