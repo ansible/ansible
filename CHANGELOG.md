@@ -171,6 +171,7 @@ New Modules:
 * openstack: os_server_facts
 * openstack: os_server_volume
 * openstack: os_subnet
+* openstack: os_subnet_facts
 * openstack: os_user_group
 * openstack: os_volume
 * openvswitch_db.
