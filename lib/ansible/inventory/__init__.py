@@ -159,7 +159,7 @@ class Inventory(object):
         or applied subsets
         """
 
-        patterns = self._split_pattern(pattern)
+        patterns = Inventory.split_host_pattern(pattern)
         hosts = self._evaluate_patterns(patterns)
 
         # mainly useful for hostvars[host] access
@@ -175,7 +175,8 @@ class Inventory(object):
 
         return hosts
 
-    def _split_pattern(self, pattern):
+    @classmethod
+    def split_host_pattern(cls, pattern):
         """
         Takes a string containing host patterns separated by commas (or a list
         thereof) and returns a list of single patterns (which may not contain
@@ -188,7 +189,7 @@ class Inventory(object):
         """
 
         if isinstance(pattern, list):
-            return list(itertools.chain(*map(self._split_pattern, pattern)))
+            return list(itertools.chain(*map(cls.split_host_pattern, pattern)))
 
         if ';' in pattern:
             display.deprecated("Use ',' instead of ';' to separate host patterns")
@@ -226,11 +227,8 @@ class Inventory(object):
 
         return [p.strip() for p in patterns]
 
-    def _evaluate_patterns(self, patterns):
-        """
-        Takes a list of patterns and returns a list of matching host names,
-        taking into account any negative and intersection patterns.
-        """
+    @classmethod
+    def order_patterns(cls, patterns):
 
         # Host specifiers should be sorted to ensure consistent behavior
         pattern_regular = []
@@ -251,8 +249,15 @@ class Inventory(object):
 
         # when applying the host selectors, run those without the "&" or "!"
         # first, then the &s, then the !s.
-        patterns = pattern_regular + pattern_intersection + pattern_exclude
+        return pattern_regular + pattern_intersection + pattern_exclude
 
+    def _evaluate_patterns(self, patterns):
+        """
+        Takes a list of patterns and returns a list of matching host names,
+        taking into account any negative and intersection patterns.
+        """
+
+        patterns = Inventory.order_patterns(patterns)
         hosts = []
 
         for p in patterns:
@@ -575,7 +580,7 @@ class Inventory(object):
         if subset_pattern is None:
             self._subset = None
         else:
-            subset_patterns = self._split_pattern(subset_pattern)
+            subset_patterns = Inventory.split_host_pattern(subset_pattern)
             results = []
             # allow Unix style @filename data
             for x in subset_patterns:
