@@ -76,8 +76,14 @@ class Display:
         self._errors       = {}
 
         self.cowsay = None
-        self.noncow = os.getenv("ANSIBLE_COW_SELECTION",None)
+        self.noncow = C.ANSIBLE_COW_SELECTION
+
         self.set_cowsay_info()
+
+        if self.cowsay:
+            cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (out, err) = cmd.communicate()
+            self.cows_available = list(set(C.ANSIBLE_COW_WHITELIST).intersection(out.split()))
 
         self._set_column_width()
 
@@ -94,13 +100,6 @@ class Display:
             elif os.path.exists("/opt/local/bin/cowsay"):
                 # MacPorts path for cowsay
                 self.cowsay = "/opt/local/bin/cowsay"
-
-            if self.cowsay and self.noncow == 'random':
-                cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                (out, err) = cmd.communicate()
-                cows = out.split()
-                cows.append(False)
-                self.noncow = random.choice(cows)
 
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         """ Display a message to the user
@@ -239,8 +238,11 @@ class Display:
                 msg = msg[:-1]
         runcmd = [self.cowsay,"-W", "60"]
         if self.noncow:
+            thecow = self.noncow
+            if thecow == 'random':
+                thecow = random.choice(self.cows_available)
             runcmd.append('-f')
-            runcmd.append(self.noncow)
+            runcmd.append(thecow)
         runcmd.append(msg)
         cmd = subprocess.Popen(runcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out, err) = cmd.communicate()
