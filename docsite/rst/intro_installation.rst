@@ -93,7 +93,7 @@ Also you need Python 2.4 or later, but if you are running less than Python 2.5 o
 
    If you need to bootstrap these remote systems by installing Python 2.X,
    using the 'raw' module will be able to do it remotely. For example,
-   ``ansible myhost --sudo -m raw -a "yum install python2 python-simplejson"``
+   ``ansible myhost --sudo -m raw -a "yum install -y python2 python-simplejson"``
    would install Python 2.X and the simplejson module needed to run ansible and its modules.
 
 .. _installing_the_control_machine:
