@@ -171,9 +171,10 @@ class Subversion(object):
         '''True if revisioned files have been added or modified. Unrevisioned files are ignored.'''
         lines = self._exec(["status", "--quiet", "--ignore-externals",  self.dest])
         # The --quiet option will return only modified files.
-
+        # Match only revisioned files, i.e. ignore status '?'.
+        regex = re.compile(r'^[^?X]')
         # Has local mods if more than 0 modifed revisioned files.
-        return len(filter(len, lines)) > 0
+        return len(filter(regex.match, lines)) > 0
 
     def needs_update(self):
         curr, url = self.get_revision()
