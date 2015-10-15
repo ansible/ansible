@@ -115,6 +115,12 @@ active_user   = pwd.getpwuid(os.geteuid())[0]
 # group variables -- really anything we can load
 YAML_FILENAME_EXTENSIONS = [ "", ".yml", ".yaml", ".json" ]
 
+# the default whitelist for cow stencils
+DEFAULT_COW_WHITELIST = ['bud-frogs', 'bunny', 'cheese', 'daemon', 'default', 'dragon', 'elephant-in-snake', 'elephant',
+                         'eyes', 'hellokitty', 'kitty', 'luke-koala', 'meow', 'milk', 'moofasa', 'moose', 'ren', 'sheep',
+                         'small', 'stegosaurus', 'stimpy', 'supermilker', 'three-eyes', 'turkey', 'turtle', 'tux', 'udder',
+                         'vader-koala', 'vader', 'www',]
+
 # sections in config file
 DEFAULTS='defaults'
 
@@ -210,6 +216,8 @@ CACHE_PLUGIN_TIMEOUT           = get_config(p, DEFAULTS, 'fact_caching_timeout',
 ANSIBLE_FORCE_COLOR            = get_config(p, DEFAULTS, 'force_color', 'ANSIBLE_FORCE_COLOR', None, boolean=True)
 ANSIBLE_NOCOLOR                = get_config(p, DEFAULTS, 'nocolor', 'ANSIBLE_NOCOLOR', None, boolean=True)
 ANSIBLE_NOCOWS                 = get_config(p, DEFAULTS, 'nocows', 'ANSIBLE_NOCOWS', None, boolean=True)
+ANSIBLE_COW_SELECTION          = get_config(p, DEFAULTS, 'cow_selection', 'ANSIBLE_COW_SELECTION', 'default')
+ANSIBLE_COW_WHITELIST          = get_config(p, DEFAULTS, 'cow_whitelist', 'ANSIBLE_COW_WHITELIST', DEFAULT_COW_WHITELIST, islist=True)
 DISPLAY_SKIPPED_HOSTS          = get_config(p, DEFAULTS, 'display_skipped_hosts', 'DISPLAY_SKIPPED_HOSTS', True, boolean=True)
 DEFAULT_UNDEFINED_VAR_BEHAVIOR = get_config(p, DEFAULTS, 'error_on_undefined_vars', 'ANSIBLE_ERROR_ON_UNDEFINED_VARS', True, boolean=True)
 HOST_KEY_CHECKING              = get_config(p, DEFAULTS, 'host_key_checking',  'ANSIBLE_HOST_KEY_CHECKING',    True, boolean=True)
