@@ -89,8 +89,12 @@ Also you need Python 2.4 or later, but if you are running less than Python 2.5 o
    the 'ansible_python_interpreter' variable in inventory (see :doc:`intro_inventory`) to point at your 2.X Python.  Distributions
    like Red Hat Enterprise Linux, CentOS, Fedora, and Ubuntu all have a 2.X interpreter installed
    by default and this does not apply to those distributions.  This is also true of nearly all
-   Unix systems.  If you need to bootstrap these remote systems by installing Python 2.X, 
-   using the 'raw' module will be able to do it remotely.
+   Unix systems.
+
+   If you need to bootstrap these remote systems by installing Python 2.X,
+   using the 'raw' module will be able to do it remotely. For example,
+   ``ansible myhost --sudo -m raw -a "yum install python2 python-simplejson"``
+   would install Python 2.X and the simplejson module needed to run ansible and its modules.
 
 .. _installing_the_control_machine:
 
