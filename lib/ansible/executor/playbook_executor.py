@@ -21,13 +21,13 @@ __metaclass__ = type
 
 import getpass
 import locale
+import os
 import signal
 import sys
 
 from six import string_types
 
 from ansible import constants as C
-from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
