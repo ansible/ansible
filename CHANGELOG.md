@@ -149,6 +149,7 @@ New Modules:
 * expect
 * find
 * hall
+* iptables
 * libvirt: virt_net
 * libvirt: virt_pool
 * maven_artifact
