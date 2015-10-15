@@ -330,7 +330,7 @@ class VariableManager:
         variables['playbook_dir'] = loader.get_basedir()
 
         if host:
-            variables['group_names'] = [group.name for group in host.get_groups()]
+            variables['group_names'] = [group.name for group in host.get_groups() if group.name != 'all']
 
             if self._inventory is not None:
                 variables['groups']  = dict()
