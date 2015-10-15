@@ -125,7 +125,9 @@ class ActionModule(ActionBase):
         # running on so localhost could be a non-controller machine if
         # delegate_to is used)
         src_host  = '127.0.0.1'
-        dest_host = task_vars.get('ansible_ssh_host') or task_vars.get('inventory_hostname')
+        inventory_hostname = task_vars.get('inventory_hostname')
+        dest_host_inventory_vars = task_vars['hostvars'].get(inventory_hostname)
+        dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
 
         dest_is_local = dest_host in C.LOCALHOST
 
