@@ -34,6 +34,8 @@ requirements: []
 version_added: "2.0"
 author: Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
 description: Iptables is used to set up, maintain, and inspect the tables of IP packet filter rules in the Linux kernel. This module does not handle the saving and/or loading of rules, but rather only manipulates the current rules that are present in memory. This is the same as the behaviour of the "iptables" and "ip6tables" command which this module uses internally.
+notes:
+  - This module just deals with individual rules. If you need advanced chaining of rules the recommended way is to template the iptables restore file.
 options:
   table:
     description: This option specifies the packet matching table which the command should operate on. If the kernel is configured with automatic module loading, an attempt will be made to load the appropriate module for that table if it is not already there.
