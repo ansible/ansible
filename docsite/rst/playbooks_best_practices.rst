@@ -421,6 +421,18 @@ Use version control.  Keep your playbooks and inventory file in git
 to them.  This way you have an audit trail describing when and why you
 changed the rules that are automating your infrastructure.
 
+.. _best_practices_for_variables_and_vaults:
+
+Variables and Vaults
+++++++++++++++++++++++++++++++++++++++++
+
+For general maintenance, it is often easier to use ``grep``, or similar tools, to find variables in your Ansible setup. Since vaults obscure these variables, it is best to work with a layer of indirection. When running a playbook, Ansible finds the variables in the unencrypted file and all sensitive variables come from the encrypted file.
+
+A best practice approach for this is to start with a ``group_vars/`` subdirectory named after the group. Inside of this subdirectory, create two files named ``vars`` and ``vault``. Inside of the ``vars`` file, define all of the variables needed, including any sensitive ones. Next, copy all of the sensitive variables over to the ``vault`` file and prefix these variables with ``vault_``. You should adjust the variables in the ``vars`` file to point to the matching ``vault_`` variables and ensure that the ``vault`` file is vault encrypted.
+
+This best practice has no limit on the amount of variable and vault files or their names.
+
+
 .. seealso::
 
    :doc:`YAMLSyntax`
