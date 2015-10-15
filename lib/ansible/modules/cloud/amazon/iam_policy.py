@@ -181,6 +181,14 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
     current_policies = [cp for cp in iam.list_role_policies(name).
                                         list_role_policies_result.
                                         policy_names]
+  except boto.exception.BotoServerError as e:
+    if e.error_code == "NoSuchEntity":
+      # Role doesn't exist so it's safe to assume the policy doesn't either
+      module.exit_json(changed=False)
+    else:
+      module.fail_json(e.message)
+      
+  try:    
     for pol in current_policies:
       if urllib.unquote(iam.get_role_policy(name, pol).
                         get_role_policy_result.policy_document) == pdoc:
