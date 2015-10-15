@@ -19,10 +19,17 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 from ansible.errors.yaml_strings import *
 from ansible.utils.unicode import to_unicode, to_bytes
+
+
+if str is bytes:
+    # Python 2
+    to_str = to_bytes
+else:
+    # Python 3
+    to_str = to_unicode
+
 
 class AnsibleError(Exception):
     '''
@@ -49,7 +56,7 @@ class AnsibleError(Exception):
         if obj and isinstance(obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error:
-                self.message = 'ERROR! %s\n\n%s' % (message, to_bytes(extended_error))
+                self.message = 'ERROR! %s\n\n%s' % (message, to_str(extended_error))
         else:
             self.message = 'ERROR! %s' % message
 
