@@ -29,6 +29,7 @@ options:
   state:
     description:
       - Create or destroy the ELB
+    choices: ["present", "absent"]
     required: true
   name:
     description:
