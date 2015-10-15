@@ -205,6 +205,7 @@ New Modules:
 * seport
 * slackpkg
 * solaris_zone
+* taiga_issue
 * vertica_configuration
 * vertica_facts
 * vertica_role
