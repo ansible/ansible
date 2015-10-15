@@ -85,7 +85,7 @@ pre_tasks:
     local_action:
       module: ec2_elb
       instance_id: "{{ ansible_ec2_instance_id }}"
-      state: 'absent'
+      state: absent
 roles:
   - myrole
 post_tasks:
@@ -94,7 +94,7 @@ post_tasks:
       module: ec2_elb
       instance_id: "{{ ansible_ec2_instance_id }}"
       ec2_elbs: "{{ item }}"
-      state: 'present'
+      state: present
     with_items: ec2_elbs
 """
 
