@@ -21,11 +21,11 @@ __metaclass__ = type
 
 import fnmatch
 
-from six import iteritems
+from ansible.compat.six import iteritems
 
 from ansible import constants as C
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.playbook.block import Block
 from ansible.playbook.task import Task
 

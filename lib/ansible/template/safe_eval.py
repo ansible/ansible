@@ -20,8 +20,8 @@ __metaclass__ = type
 import ast
 import sys
 
-from six import string_types
-from six.moves import builtins
+from ansible.compat.six import string_types
+from ansible.compat.six.moves import builtins
 
 from ansible import constants as C
 from ansible.plugins import filter_loader, test_loader

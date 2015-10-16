@@ -28,7 +28,7 @@ import stat
 import tempfile
 import time
 
-from six import binary_type, text_type, iteritems
+from ansible.compat.six import binary_type, text_type, iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure

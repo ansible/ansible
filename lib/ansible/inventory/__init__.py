@@ -26,7 +26,7 @@ import re
 import stat
 import itertools
 
-from six import string_types
+from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError

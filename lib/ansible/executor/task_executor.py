@@ -25,7 +25,7 @@ import subprocess
 import sys
 import time
 
-from six import iteritems
+from ansible.compat.six import iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure

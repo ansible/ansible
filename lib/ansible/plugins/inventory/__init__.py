@@ -23,7 +23,7 @@ __metaclass__ = type
 
 from abc import ABCMeta, abstractmethod
 
-from six import with_metaclass
+from ansible.compat.six import with_metaclass
 
 class InventoryParser(with_metaclass(ABCMeta, object)):
     '''Abstract Base Class for retrieving inventory information

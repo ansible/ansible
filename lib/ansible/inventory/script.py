@@ -24,7 +24,7 @@ import subprocess
 import sys
 from collections import Mapping
 
-from six import iteritems
+from ansible.compat.six import iteritems
 
 from ansible import constants as C
 from ansible.errors import *

@@ -27,7 +27,7 @@ import os
 from abc import ABCMeta, abstractmethod, abstractproperty
 
 from functools import wraps
-from six import with_metaclass
+from ansible.compat.six import with_metaclass
 
 from ansible import constants as C
 from ansible.errors import AnsibleError

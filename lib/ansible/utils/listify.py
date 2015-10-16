@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from collections import Iterable
 
-from six import string_types
+from ansible.compat.six import string_types
 
 from ansible.template import Templar
 from ansible.template.safe_eval import safe_eval

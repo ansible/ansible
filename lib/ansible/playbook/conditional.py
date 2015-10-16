@@ -20,9 +20,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from jinja2.exceptions import UndefinedError
-from six import text_type
 
-from ansible.errors import *
+from ansible.compat.six import text_type
+from ansible.errors import AnsibleError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 
