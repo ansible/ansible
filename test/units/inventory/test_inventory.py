@@ -92,10 +92,10 @@ class TestInventory(unittest.TestCase):
 
         for p in self.patterns:
             r = self.patterns[p]
-            self.assertEqual(r, self.i._split_pattern(p))
+            self.assertEqual(r, self.i.split_host_pattern(p))
 
         for p, r in self.pattern_lists:
-            self.assertEqual(r, self.i._split_pattern(p))
+            self.assertEqual(r, self.i.split_host_pattern(p))
 
     def test_ranges(self):
 
