@@ -21,11 +21,10 @@ __metaclass__ = type
 
 import os
 import pwd
-import sys
 from string import ascii_letters, digits
 
-from six import string_types
-from six.moves import configparser
+from ansible.compat.six import string_types
+from ansible.compat.six.moves import configparser
 
 from ansible.parsing.splitter import unquote
 from ansible.errors import AnsibleOptionsError

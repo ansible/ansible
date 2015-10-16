@@ -24,7 +24,7 @@ import difflib
 import warnings
 from copy import deepcopy
 
-from six import string_types
+from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.utils.unicode import to_unicode

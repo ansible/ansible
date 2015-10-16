@@ -19,8 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six.moves import queue as Queue
-from six import iteritems, text_type
+from ansible.compat.six.moves import queue as Queue
+from ansible.compat.six import iteritems, text_type
 
 import time
 

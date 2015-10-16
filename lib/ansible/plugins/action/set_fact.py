@@ -18,7 +18,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems
+from ansible.compat.six import iteritems
 
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase

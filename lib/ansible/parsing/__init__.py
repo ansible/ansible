@@ -26,7 +26,7 @@ import stat
 import subprocess
 
 from yaml import load, YAMLError
-from six import text_type, string_types
+from ansible.compat.six import text_type, string_types
 
 from ansible.errors import AnsibleFileNotFound, AnsibleParserError, AnsibleError
 from ansible.errors.yaml_strings import YAML_SYNTAX_ERROR

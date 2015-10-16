@@ -28,26 +28,10 @@ from ansible.errors import AnsibleError
 from hashlib import sha256
 from binascii import hexlify
 from binascii import unhexlify
-from six import PY3
 
 # Note: Only used for loading obsolete VaultAES files.  All files are written
 # using the newer VaultAES256 which does not require md5
 from hashlib import md5
-
-
-try:
-    from six import byte2int
-except ImportError:
-    # bytes2int added in six-1.4.0
-    if PY3:
-        import operator
-        byte2int = operator.itemgetter(0)
-    else:
-        def byte2int(bs):
-            return ord(bs[0])
-
-from ansible.utils.unicode import to_unicode, to_bytes
-
 
 try:
     from Crypto.Hash import SHA256, HMAC
@@ -85,6 +69,9 @@ try:
     HAS_PBKDF2HMAC = True
 except ImportError:
     pass
+
+from ansible.compat.six import PY3, byte2int
+from ansible.utils.unicode import to_unicode, to_bytes
 
 HAS_ANY_PBKDF2HMAC = HAS_PBKDF2 or HAS_PBKDF2HMAC
 

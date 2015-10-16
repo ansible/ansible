@@ -22,7 +22,7 @@
 
 import os
 
-from six import string_types
+from ansible.compat.six import string_types
 
 from ansible.errors import AnsibleError
 from ansible.utils.display import Display

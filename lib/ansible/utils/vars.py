@@ -23,7 +23,7 @@ import ast
 from json import JSONEncoder
 from collections import MutableMapping
 
-from six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types
 
 from ansible import constants as C
 from ansible.errors import AnsibleError

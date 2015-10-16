@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import string_types, text_type, binary_type, PY3
+from ansible.compat.six import string_types, text_type, binary_type, PY3
 
 # to_bytes and to_unicode were written by Toshio Kuratomi for the
 # python-kitchen library https://pypi.python.org/pypi/kitchen

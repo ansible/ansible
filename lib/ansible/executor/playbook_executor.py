@@ -25,7 +25,7 @@ import os
 import signal
 import sys
 
-from six import string_types
+from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -33,7 +33,6 @@ from ansible.playbook import Playbook
 from ansible.template import Templar
 
 from ansible.utils.color import colorize, hostcolor
-from ansible.utils.debug import debug
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.unicode import to_unicode
 
