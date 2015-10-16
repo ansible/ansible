@@ -21,5 +21,5 @@
   mysql_user: name={{user_name}} password={{user_password}} state=present
   register: result
 
-- name: assert output message mysql user was created {{state}}
+- name: assert output message mysql user was created
   assert: { that: "result.changed == true" }
