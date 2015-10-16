@@ -115,10 +115,10 @@ class TestVaultLib(unittest.TestCase):
             raise SkipTest
         v = VaultLib('ansible')
         v.cipher_name = 'AES256'
-        enc_data = v.encrypt("foobar")
+        enc_data = v.encrypt(b"foobar")
         dec_data = v.decrypt(enc_data)
-        assert enc_data != "foobar", "encryption failed"
-        assert dec_data == "foobar", "decryption failed"
+        assert enc_data != b"foobar", "encryption failed"
+        assert dec_data == b"foobar", "decryption failed"
 
     def test_encrypt_encrypted(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
