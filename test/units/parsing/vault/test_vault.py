@@ -106,9 +106,9 @@ class TestVaultLib(unittest.TestCase):
         v.cipher_name = u'AES'
         # AES encryption code has been removed, so this is old output for
         # AES-encrypted 'foobar' with password 'ansible'.
-        enc_data = '$ANSIBLE_VAULT;1.1;AES\n53616c7465645f5fc107ce1ef4d7b455e038a13b053225776458052f8f8f332d554809d3f150bfa3\nfe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e\n786a5a15efeb787e1958cbdd480d076c\n'
+        enc_data = b'$ANSIBLE_VAULT;1.1;AES\n53616c7465645f5fc107ce1ef4d7b455e038a13b053225776458052f8f8f332d554809d3f150bfa3\nfe3db930508b65e0ff5947e4386b79af8ab094017629590ef6ba486814cf70f8e4ab0ed0c7d2587e\n786a5a15efeb787e1958cbdd480d076c\n'
         dec_data = v.decrypt(enc_data)
-        assert dec_data == "foobar", "decryption failed"
+        assert dec_data == b"foobar", "decryption failed"
 
     def test_encrypt_decrypt_aes256(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
