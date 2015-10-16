@@ -23,9 +23,9 @@
 
 - include: assert_user.yml user_name={{user_name_2}} priv='SELECT'
   when: current_append_privs ==  "yes"
-  
+ 
 - name: create user with current privileges (expect changed=true)
-  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:'{{current_privilege}}' append_privs={{current_append_privs}} state=present
+  mysql_user: name={{ user_name_2 }} password={{ user_password_2 }} priv=*.*:{{current_privilege}} append_privs={{current_append_privs}} state=present
   register: result
 
 - name: assert output message for current privileges 
