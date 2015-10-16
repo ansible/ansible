@@ -24,6 +24,7 @@ import shutil
 import subprocess
 import select
 import fcntl
+import getpass
 
 import ansible.constants as C
 
@@ -40,6 +41,11 @@ class Connection(ConnectionBase):
 
     def _connect(self, port=None):
         ''' connect to the local host; nothing to do here '''
+
+        # Because we haven't made any remote connection we're running as
+        # the local user, rather than as whatever is configured in
+        # remote_user.
+        self._play_context.remote_user = getpass.getuser()
 
         if not self._connected:
             self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user, host=self._play_context.remote_addr))
