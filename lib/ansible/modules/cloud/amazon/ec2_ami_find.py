@@ -165,11 +165,31 @@ EXAMPLES = '''
 
 try:
     import boto.ec2
+    from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
     HAS_BOTO=True
 except ImportError:
     HAS_BOTO=False
 
 import json
+
+def get_block_device_mapping(image):
+    """
+    Retrieves block device mapping from AMI
+    """
+
+    bdm_dict = dict()
+    bdm = getattr(image,'block_device_mapping')
+    for device_name in bdm.keys():
+        bdm_dict[device_name] = {
+            'size': bdm[device_name].size,
+            'snapshot_id': bdm[device_name].snapshot_id,
+            'volume_type': bdm[device_name].volume_type,
+            'encrypted': bdm[device_name].encrypted,
+            'delete_on_termination': bdm[device_name].delete_on_termination
+        }
+
+    return bdm_dict
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -255,8 +275,12 @@ def main():
         data = {
             'ami_id': image.id,
             'architecture': image.architecture,
+            'block_device_mapping': get_block_device_mapping(image),
+            'creationDate': image.creationDate,
             'description': image.description,
+            'hypervisor': image.hypervisor,
             'is_public': image.is_public,
+            'location': image.location,
             'name': image.name,
             'owner_id': image.owner_id,
             'platform': image.platform,
