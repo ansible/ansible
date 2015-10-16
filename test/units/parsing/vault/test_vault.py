@@ -78,17 +78,17 @@ class TestVaultLib(unittest.TestCase):
     def test_format_output(self):
         v = VaultLib('ansible')
         v.cipher_name = "TEST"
-        sensitive_data = "ansible"
+        sensitive_data = b"ansible"
         data = v._format_output(sensitive_data)
         lines = data.split(b'\n')
         assert len(lines) > 1, "failed to properly add header"
-        header = to_unicode(lines[0])
-        assert header.endswith(';TEST'), "header does end with cipher name"
-        header_parts = header.split(';')
+        header = to_bytes(lines[0])
+        assert header.endswith(b';TEST'), "header does end with cipher name"
+        header_parts = header.split(b';')
         assert len(header_parts) == 3, "header has the wrong number of parts"
-        assert header_parts[0] == '$ANSIBLE_VAULT', "header does not start with $ANSIBLE_VAULT"
+        assert header_parts[0] == b'$ANSIBLE_VAULT', "header does not start with $ANSIBLE_VAULT"
         assert header_parts[1] == v.b_version, "header version is incorrect"
-        assert header_parts[2] == 'TEST', "header does end with cipher name"
+        assert header_parts[2] == b'TEST', "header does end with cipher name"
 
     def test_split_header(self):
         v = VaultLib('ansible')
