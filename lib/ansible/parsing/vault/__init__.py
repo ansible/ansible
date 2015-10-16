@@ -194,10 +194,12 @@ class VaultLib:
         if not self.cipher_name:
             raise AnsibleError("the cipher must be set before adding a header")
 
-        tmpdata = [b'%s\n' % b_data[i:i+80] for i in range(0, len(b_data), 80)]
-        tmpdata.insert(0, b'%s;%s;%s\n' % (b_HEADER, self.b_version,
-            to_bytes(self.cipher_name, errors='strict', encoding='utf-8')))
-        tmpdata = b''.join(tmpdata)
+        header = b';'.join([b_HEADER, self.b_version,
+            to_bytes(self.cipher_name, errors='strict', encoding='utf-8')])
+        tmpdata = [header]
+        tmpdata += [b_data[i:i+80] for i in range(0, len(b_data), 80)]
+        tmpdata += [b'']
+        tmpdata = b'\n'.join(tmpdata)
 
         return tmpdata
 
@@ -422,7 +424,7 @@ class VaultAES:
 
         d = d_i = b''
         while len(d) < key_length + iv_length:
-            text = b"%s%s%s" % (d_i, password, salt)
+            text = b''.join([d_i, password, salt])
             d_i = to_bytes(md5(text).digest(), errors='strict')
             d += d_i
 
@@ -568,7 +570,7 @@ class VaultAES256:
 
         # COMBINE SALT, DIGEST AND DATA
         hmac = HMAC.new(key2, cryptedData, SHA256)
-        message = b'%s\n%s\n%s' % (hexlify(salt), to_bytes(hmac.hexdigest()), hexlify(cryptedData))
+        message = b'\n'.join([hexlify(salt), to_bytes(hmac.hexdigest()), hexlify(cryptedData)])
         message = hexlify(message)
         return message
 
