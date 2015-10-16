@@ -112,12 +112,16 @@ New Modules:
 * apk
 * bigip_gtm_wide_ip
 * bundler
+* centurylink: clc_aa_policy
+* centurylink: clc_alert_policy
 * centurylink: clc_blueprint_package
 * centurylink: clc_firewall_policy
+* centurylink: clc_group
 * centurylink: clc_loadbalancer
 * centurylink: clc_modify_server
 * centurylink: clc_publicip
 * centurylink: clc_server
+* centurylink: clc_server_snapshot
 * circonus_annotation
 * consul
 * consul_acl
