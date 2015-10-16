@@ -59,21 +59,20 @@ def tasktime():
 
 class CallbackModule(CallbackBase):
     """
-    This callback module provides per-task timing, ongoing playbook elapsed time 
+    This callback module provides per-task timing, ongoing playbook elapsed time
     and ordered list of top 20 longest running tasks at end.
     """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
     CALLBACK_NAME = 'profile_tasks'
- 
+
     def __init__(self, display):
         self.stats = {}
         self.current = None
 
         super(CallbackModule, self).__init__(display)
 
-
-    def playbook_on_task_start(self, name, is_conditional):
+    def _record_task(self, name):
         """
         Logs the start of each task
         """
@@ -83,6 +82,12 @@ class CallbackModule(CallbackBase):
         # Record the start time of the current task
         self.current = name
         self.stats[self.current] = time.time()
+
+    def playbook_on_task_start(self, name, is_conditional):
+        self._record_task(name)
+
+    def v2_playbook_on_handler_task_start(self, task):
+        self._record_task('HANDLER: ' + task.name)
 
     def playbook_on_setup(self):
         self._display.display(tasktime())
