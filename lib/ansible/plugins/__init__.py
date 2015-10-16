@@ -26,6 +26,8 @@ import inspect
 import os
 import os.path
 import sys
+import warnings
+
 from collections import defaultdict
 
 from ansible import constants as C
@@ -340,7 +342,9 @@ class PluginLoader:
                     continue
 
                 if path not in self._module_cache:
-                    self._module_cache[path] = self._load_module_source(name, path)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        self._module_cache[path] = self._load_module_source(name, path)
 
                 if kwargs.get('class_only', False):
                     obj = getattr(self._module_cache[path], self.class_name)
