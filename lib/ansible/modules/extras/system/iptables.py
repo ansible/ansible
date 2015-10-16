@@ -33,12 +33,23 @@ short_description: Modify the systems iptables
 requirements: []
 version_added: "2.0"
 author: Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
-description: Iptables is used to set up, maintain, and inspect the tables of IP packet filter rules in the Linux kernel. This module does not handle the saving and/or loading of rules, but rather only manipulates the current rules that are present in memory. This is the same as the behaviour of the "iptables" and "ip6tables" command which this module uses internally.
+description:
+  - Iptables is used to set up, maintain, and inspect the tables of IP packet
+    filter rules in the Linux kernel. This module does not handle the saving
+    and/or loading of rules, but rather only manipulates the current rules
+    that are present in memory. This is the same as the behaviour of the
+    "iptables" and "ip6tables" command which this module uses internally.
 notes:
-  - This module just deals with individual rules. If you need advanced chaining of rules the recommended way is to template the iptables restore file.
+  - This module just deals with individual rules. If you need advanced
+    chaining of rules the recommended way is to template the iptables restore
+    file.
 options:
   table:
-    description: This option specifies the packet matching table which the command should operate on. If the kernel is configured with automatic module loading, an attempt will be made to load the appropriate module for that table if it is not already there.
+    description:
+      - This option specifies the packet matching table which the command
+        should operate on. If the kernel is configured with automatic module
+        loading, an attempt will be made to load the appropriate module for
+        that table if it is not already there.
     required: false
     default: filter
     choices: [ "filter", "nat", "mangle", "raw", "security" ]
@@ -53,46 +64,140 @@ options:
     default: ipv4
     choices: [ "ipv4", "ipv6" ]
   chain:
-    description: Chain to operate on. This option can either be the name of a user defined chain or any of the builtin chains: "INPUT", "FORWARD", "OUTPUT", "PREROUTING", "POSTROUTING", "SECMARK", "CONNSECMARK"
+    description:
+      - "Chain to operate on. This option can either be the name of a user
+        defined chain or any of the builtin chains: 'INPUT', 'FORWARD',
+        'OUTPUT', 'PREROUTING', 'POSTROUTING', 'SECMARK', 'CONNSECMARK'"
     required: true
   protocol:
-    description: The protocol of the rule or of the packet to check. The specified protocol can be one of tcp, udp, udplite, icmp, esp, ah, sctp or the special keyword "all", or it can be a numeric value, representing one of these protocols or a different one. A protocol name from /etc/protocols is also allowed. A "!" argument before the protocol inverts the test. The number zero is equivalent to all. "all" will match with all protocols and is taken as default when this option is omitted.
+    description:
+      - The protocol of the rule or of the packet to check. The specified
+        protocol can be one of tcp, udp, udplite, icmp, esp, ah, sctp or the
+        special keyword "all", or it can be a numeric value, representing one
+        of these protocols or a different one. A protocol name from
+        /etc/protocols is also allowed. A "!" argument before the protocol
+        inverts the test.  The number zero is equivalent to all. "all" will
+        match with all protocols and is taken as default when this option is
+        omitted.
     required: false
   source:
-    description: Source specification. Address can be either a network name, a hostname, a network IP address (with /mask), or a plain IP address. Hostnames will be resolved once only, before the rule is submitted to the kernel. Please note that specifying any name to be resolved with a remote query such as DNS is a really bad idea. The mask can be either a network mask or a plain number, specifying the number of 1's at the left side of the network mask. Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument before the address specification inverts the sense of the address.Source specification. Address can be either a network name, a hostname, a network IP address (with /mask), or a plain IP address. Hostnames will be resolved once only, before the rule is submitted to the kernel. Please note that specifying any name to be resolved with a remote query such as DNS is a really bad idea. The mask can be either a network mask or a plain number, specifying the number of 1's at the left side of the network mask. Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument before the address specification inverts the sense of the address.
+    description:
+      - Source specification. Address can be either a network name,
+        a hostname, a network IP address (with /mask), or a plain IP address.
+        Hostnames will be resolved once only, before the rule is submitted to
+        the kernel. Please note that specifying any name to be resolved with
+        a remote query such as DNS is a really bad idea. The mask can be
+        either a network mask or a plain number, specifying the number of 1's
+        at the left side of the network mask. Thus, a mask of 24 is equivalent
+        to 255.255.255.0. A "!" argument before the address specification
+        inverts the sense of the address.Source specification. Address can be
+        either a network name, a hostname, a network IP address (with /mask),
+        or a plain IP address.  Hostnames will be resolved once only, before
+        the rule is submitted to the kernel. Please note that specifying any
+        name to be resolved with a remote query such as DNS is a really bad
+        idea. The mask can be either a network mask or a plain number,
+        specifying the number of 1's at the left side of the network mask.
+        Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument
+        before the address specification inverts the sense of the address.
     required: false
   destination:
-    description: Destination specification. Address can be either a network name, a hostname, a network IP address (with /mask), or a plain IP address. Hostnames will be resolved once only, before the rule is submitted to the kernel. Please note that specifying any name to be resolved with a remote query such as DNS is a really bad idea. The mask can be either a network mask or a plain number, specifying the number of 1's at the left side of the network mask. Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument before the address specification inverts the sense of the address.Source specification. Address can be either a network name, a hostname, a network IP address (with /mask), or a plain IP address. Hostnames will be resolved once only, before the rule is submitted to the kernel. Please note that specifying any name to be resolved with a remote query such as DNS is a really bad idea. The mask can be either a network mask or a plain number, specifying the number of 1's at the left side of the network mask. Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument before the address specification inverts the sense of the address.
+    description:
+      - Destination specification. Address can be either a network name,
+        a hostname, a network IP address (with /mask), or a plain IP address.
+        Hostnames will be resolved once only, before the rule is submitted to
+        the kernel. Please note that specifying any name to be resolved with
+        a remote query such as DNS is a really bad idea. The mask can be
+        either a network mask or a plain number, specifying the number of 1's
+        at the left side of the network mask. Thus, a mask of 24 is equivalent
+        to 255.255.255.0. A "!" argument before the address specification
+        inverts the sense of the address.Source specification. Address can be
+        either a network name, a hostname, a network IP address (with /mask),
+        or a plain IP address. Hostnames will be resolved once only, before
+        the rule is submitted to the kernel. Please note that specifying any
+        name to be resolved with a remote query such as DNS is a really bad
+        idea. The mask can be either a network mask or a plain number,
+        specifying the number of 1's at the left side of the network mask.
+        Thus, a mask of 24 is equivalent to 255.255.255.0. A "!" argument
+        before the address specification inverts the sense of the address.
     required: false
   match:
-    description: Specifies a match to use, that is, an extension module that tests for a specific property. The set of matches make up the condition under which a target is invoked. Matches are evaluated first to last if specified as an array and work in short-circuit fashion, i.e. if one extension yields false, evaluation will stop.
+    description:
+      - Specifies a match to use, that is, an extension module that tests for
+        a specific property. The set of matches make up the condition under
+        which a target is invoked. Matches are evaluated first to last if
+        specified as an array and work in short-circuit fashion, i.e. if one
+        extension yields false, evaluation will stop.
     required: false
   jump:
-    description: This specifies the target of the rule; i.e., what to do if the packet matches it. The target can be a user-defined chain (other than the one this rule is in), one of the special builtin targets which decide the fate of the packet immediately, or an extension (see EXTENSIONS below). If this option is omitted in a rule (and the goto paramater is not used), then matching the rule will have no effect on the packet's fate, but the counters on the rule will be incremented.
+    description:
+      - This specifies the target of the rule; i.e., what to do if the packet
+        matches it. The target can be a user-defined chain (other than the one
+        this rule is in), one of the special builtin targets which decide the
+        fate of the packet immediately, or an extension (see EXTENSIONS
+        below).  If this option is omitted in a rule (and the goto paramater
+        is not used), then matching the rule will have no effect on the
+        packet's fate, but the counters on the rule will be incremented.
     required: false
   goto:
-    description: This specifies that the processing should continue in a user specified chain. Unlike the jump argument return will not continue processing in this chain but instead in the chain that called us via jump.
+    description:
+      - This specifies that the processing should continue in a user specified
+        chain. Unlike the jump argument return will not continue processing in
+        this chain but instead in the chain that called us via jump.
     required: false
   in_interface:
-    description: Name of an interface via which a packet was received (only for packets entering the INPUT, FORWARD and PREROUTING chains). When the "!" argument is used before the interface name, the sense is inverted. If the interface name ends in a "+", then any interface which begins with this name will match. If this option is omitted, any interface name will match.
+    description:
+      - Name of an interface via which a packet was received (only for packets
+        entering the INPUT, FORWARD and PREROUTING chains). When the "!"
+        argument is used before the interface name, the sense is inverted. If
+        the interface name ends in a "+", then any interface which begins with
+        this name will match. If this option is omitted, any interface name
+        will match.
     required: false
   out_interface:
-    description: Name of an interface via which a packet is going to be sent (for packets entering the FORWARD, OUTPUT and POSTROUTING chains). When the "!" argument is used before the interface name, the sense is inverted. If the interface name ends in a "+", then any interface which begins with this name will match. If this option is omitted, any interface name will match.
+    description:
+      - Name of an interface via which a packet is going to be sent (for
+        packets entering the FORWARD, OUTPUT and POSTROUTING chains). When the
+        "!" argument is used before the interface name, the sense is inverted.
+        If the interface name ends in a "+", then any interface which begins
+        with this name will match. If this option is omitted, any interface
+        name will match.
     required: false
   fragment:
-    description: This means that the rule only refers to second and further fragments of fragmented packets. Since there is no way to tell the source or destination ports of such a packet (or ICMP type), such a packet will not match any rules which specify them. When the "!" argument precedes fragment argument, the rule will only match head fragments, or unfragmented packets.
+    description:
+      - This means that the rule only refers to second and further fragments
+        of fragmented packets. Since there is no way to tell the source or
+        destination ports of such a packet (or ICMP type), such a packet will
+        not match any rules which specify them. When the "!" argument precedes
+        fragment argument, the rule will only match head fragments, or
+        unfragmented packets.
     required: false
   set_counters:
-    description: This enables the administrator to initialize the packet and byte counters of a rule (during INSERT, APPEND, REPLACE operations).
+    description:
+      - This enables the administrator to initialize the packet and byte
+        counters of a rule (during INSERT, APPEND, REPLACE operations).
     required: false
   source_port:
-    description: Source port or port range specification. This can either be a service name or a port number. An inclusive range can also be specified, using the format first:last. If the first port is omitted, "0" is assumed; if the last is omitted, "65535" is assumed. If the first port is greater than the second one they will be swapped.
+    description:
+      - "Source port or port range specification. This can either be a service
+        name or a port number. An inclusive range can also be specified, using
+        the format first:last. If the first port is omitted, '0' is assumed;
+        if the last is omitted, '65535' is assumed. If the first port is
+        greater than the second one they will be swapped."
     required: false
   destination_port:
-    description: Destination port or port range specification. This can either be a service name or a port number. An inclusive range can also be specified, using the format first:last. If the first port is omitted, "0" is assumed; if the last is omitted, "65535" is assumed. If the first port is greater than the second one they will be swapped.
+    description:
+      - "Destination port or port range specification. This can either be
+        a service name or a port number. An inclusive range can also be
+        specified, using the format first:last. If the first port is omitted,
+        '0' is assumed; if the last is omitted, '65535' is assumed. If the
+        first port is greater than the second one they will be swapped."
     required: false
   to_ports:
-    description: This specifies a destination port or range of ports to use: without this, the destination port is never altered. This is only valid if the rule also specifies one of the following protocols: tcp, udp, dccp or sctp.
+    description:
+      - "This specifies a destination port or range of ports to use: without
+        this, the destination port is never altered. This is only valid if the
+        rule also specifies one of the following protocols: tcp, udp, dccp or
+        sctp."
     required: false
 '''
 
