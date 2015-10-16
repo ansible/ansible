@@ -97,7 +97,7 @@ class TestVaultLib(unittest.TestCase):
         lines = rdata.split(b'\n')
         assert lines[0] == b"ansible"
         assert v.cipher_name == 'TEST', "cipher name was not set"
-        assert v.b_version == "9.9"
+        assert v.b_version == b"9.9"
 
     def test_encrypt_decrypt_aes(self):
         if not HAS_AES or not HAS_COUNTER or not HAS_PBKDF2:
