@@ -80,6 +80,8 @@ CRYPTO_UPGRADE = "ansible-vault requires a newer version of pycrypto than the on
 b_HEADER = b'$ANSIBLE_VAULT'
 CIPHER_WHITELIST = frozenset((u'AES', u'AES256'))
 CIPHER_WRITE_WHITELIST=frozenset((u'AES256',))
+# See also CIPHER_MAPPING at the bottom of the file which maps cipher strings
+# (used in VaultFile header) to a cipher class
 
 
 def check_prereqs():
@@ -123,12 +125,11 @@ class VaultLib:
         if not self.cipher_name or self.cipher_name not in CIPHER_WRITE_WHITELIST:
             self.cipher_name = u"AES256"
 
-        cipher_class_name = u'Vault{0}'.format(self.cipher_name)
-        if cipher_class_name in globals():
-            Cipher = globals()[cipher_class_name]
-            this_cipher = Cipher()
-        else:
+        try:
+            Cipher = CIPHER_MAPPING[self.cipher_name]
+        except KeyError:
             raise AnsibleError(u"{0} cipher could not be found".format(self.cipher_name))
+        this_cipher = Cipher()
 
         # encrypt data
         b_enc_data = this_cipher.encrypt(b_data, self.b_password)
@@ -613,3 +614,10 @@ class VaultAES256:
                 result |= ord(x) ^ ord(y)
         return result == 0
 
+
+# Keys could be made bytes later if the code that gets the data is more
+# naturally byte-oriented
+CIPHER_MAPPING = {
+        u'AES': VaultAES,
+        u'AES256': VaultAES256,
+    }
