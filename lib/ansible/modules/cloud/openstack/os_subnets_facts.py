@@ -79,49 +79,51 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-This module registers subnet details in facts named openstack_subnets.  If a
-subnet name/id and or filter does not result in a subnet found, an empty list
-is set in openstack_subnets.
-id:
-    description: Unique UUID.
-    returned: success
-    type: string
-name:
-    description: Name given to the subnet.
-    returned: success
-    type: string
-network_id:
-    description: Network ID this subnet belongs in.
-    returned: success
-    type: string
-cidr:
-    description: Subnet's CIDR.
-    returned: success
-    type: string
-gateway_ip:
-    description: Subnet's gateway ip.
-    returned: success
-    type: string
-enable_dhcp:
-    description: DHCP enable flag for this subnet.
-    returned: success
-    type: bool
-ip_version:
-    description: IP version for this subnet.
-    returned: success
-    type: int
-tenant_id:
-    description: Tenant id associated with this subnet.
-    returned: success
-    type: string
-dns_nameservers:
-    description: DNS name servers for this subnet.
-    returned: success
-    type: list of strings
-allocation_pools:
-    description: Allocation pools associated with this subnet.
-    returned: success
-    type: list of dicts
+openstack_subnets:
+    description: has all the openstack facts about the subnets
+    returned: always, but can be null
+    type: complex
+    contains:
+        id:
+            description: Unique UUID.
+            returned: success
+            type: string
+        name:
+            description: Name given to the subnet.
+            returned: success
+            type: string
+        network_id:
+            description: Network ID this subnet belongs in.
+            returned: success
+            type: string
+        cidr:
+            description: Subnet's CIDR.
+            returned: success
+            type: string
+        gateway_ip:
+            description: Subnet's gateway ip.
+            returned: success
+            type: string
+        enable_dhcp:
+            description: DHCP enable flag for this subnet.
+            returned: success
+            type: bool
+        ip_version:
+            description: IP version for this subnet.
+            returned: success
+            type: int
+        tenant_id:
+            description: Tenant id associated with this subnet.
+            returned: success
+            type: string
+        dns_nameservers:
+            description: DNS name servers for this subnet.
+            returned: success
+            type: list of strings
+        allocation_pools:
+            description: Allocation pools associated with this subnet.
+            returned: success
+            type: list of dicts
 '''
 
 def main():
