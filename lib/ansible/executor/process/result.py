@@ -19,13 +19,10 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six.moves import queue
-from six import iteritems, text_type
+from ansible.compat.six.moves import queue
+from ansible.compat.six import iteritems, text_type
 
 import multiprocessing
-import os
-import signal
-import sys
 import time
 import traceback
 
@@ -36,9 +33,6 @@ try:
     from Crypto.Random import atfork
 except ImportError:
     HAS_ATFORK=False
-
-from ansible.playbook.handler import Handler
-from ansible.playbook.task import Task
 
 from ansible.utils.debug import debug
 

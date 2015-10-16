@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import os
 
-from six import iteritems, string_types
+from ansible.compat.six import iteritems, string_types
 
 from ansible.errors import AnsibleParserError
 from ansible.playbook.attribute import Attribute, FieldAttribute

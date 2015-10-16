@@ -18,7 +18,7 @@
 from __future__ import absolute_import
 
 import shlex
-from six import PY3
+from ansible.compat.six import PY3
 
 from ansible.utils.unicode import to_bytes, to_unicode
 

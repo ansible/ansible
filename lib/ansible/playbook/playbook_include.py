@@ -21,8 +21,7 @@ __metaclass__ = type
 
 import os
 
-from six import iteritems
-
+from ansible.compat.six import iteritems
 from ansible.errors import AnsibleParserError
 from ansible.parsing.splitter import split_args, parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping

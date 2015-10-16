@@ -19,7 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from six import iteritems, text_type
+from ansible.compat.six import iteritems, text_type
 
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator

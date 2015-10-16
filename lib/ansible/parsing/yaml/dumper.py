@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import yaml
-from six import PY3
+from ansible.compat.six import PY3
 
 from ansible.parsing.yaml.objects import AnsibleUnicode
 
