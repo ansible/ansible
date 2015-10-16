@@ -81,9 +81,13 @@ class Display:
         self.set_cowsay_info()
 
         if self.cowsay:
-            cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (out, err) = cmd.communicate()
-            self.cows_available = list(set(C.ANSIBLE_COW_WHITELIST).intersection(out.split()))
+            try:
+                cmd = subprocess.Popen([self.cowsay, "-l"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (out, err) = cmd.communicate()
+                self.cows_available = list(set(C.ANSIBLE_COW_WHITELIST).intersection(out.split()))
+            except:
+                # could not execute cowsay for some reason
+                self.cowsay = False
 
         self._set_column_width()
 
