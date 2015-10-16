@@ -570,7 +570,7 @@ class VaultAES256:
 
         # COMBINE SALT, DIGEST AND DATA
         hmac = HMAC.new(key2, cryptedData, SHA256)
-        message = b''.join([hexlify(salt), b'\n', to_bytes(hmac.hexdigest()), b'\n', hexlify(cryptedData)])
+        message = b'\n'.join([hexlify(salt), to_bytes(hmac.hexdigest()), hexlify(cryptedData)])
         message = hexlify(message)
         return message
 
