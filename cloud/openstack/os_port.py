@@ -33,7 +33,7 @@ description:
    - Add, Update or Remove ports from an OpenStack cloud.  A state=present,
      will ensure the port is created or updated if required.
 options:
-    network:
+   network:
      description:
         - Network ID or name this port belongs to.
      required: true
@@ -72,22 +72,22 @@ options:
      default: False
    allowed_address_pairs:
      description:
-        - Allowed address pairs list.  Allowed address pairs are supported with
+        - "Allowed address pairs list.  Allowed address pairs are supported with
           dictionary structure.
           e.g.  allowed_address_pairs:
                   - ip_address: 10.1.0.12
                     mac_address: ab:cd:ef:12:34:56
-                  - ip_address: ...
+                  - ip_address: ..."
      required: false
      default: None
    extra_dhcp_opt:
      description:
-        - Extra dhcp options to be assigned to this port.  Extra options are
+        - "Extra dhcp options to be assigned to this port.  Extra options are
           supported with dictionary structure.
           e.g.  extra_dhcp_opt:
                   - opt_name: opt name1
                     opt_value: value1
-                  - opt_name: ...
+                  - opt_name: ..."
      required: false
      default: None
    device_owner:

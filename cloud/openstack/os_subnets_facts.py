@@ -79,7 +79,7 @@ EXAMPLES = '''
 '''
 
 RETURN = '''
-This module registers subnet details in facts named: openstack_subnets.  If a
+This module registers subnet details in facts named openstack_subnets.  If a
 subnet name/id and or filter does not result in a subnet found, an empty list
 is set in openstack_subnets.
 id:
