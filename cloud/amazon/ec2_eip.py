@@ -40,12 +40,6 @@ options:
     required: false
     choices: ['present', 'absent']
     default: present
-  region:
-    description:
-      - the EC2 region to use
-    required: false
-    default: null
-    aliases: [ ec2_region ]
   in_vpc:
     description:
       - allocate an EIP inside a VPC or not
@@ -64,7 +58,9 @@ options:
     required: false
     default: false
     version_added: "2.0"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 author: "Lorin Hochstein (@lorin) <lorin@nimbisservices.com>"
 author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:

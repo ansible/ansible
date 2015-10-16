@@ -45,12 +45,6 @@ options:
       - List of firewall outbound rules to enforce in this group (see example). If none are supplied, a default all-out rule is assumed. If an empty list is supplied, no outbound rules will be enabled.
     required: false
     version_added: "1.6"
-  region:
-    description:
-      - the EC2 region to use
-    required: false
-    default: null
-    aliases: []
   state:
     version_added: "1.4"
     description:
@@ -74,7 +68,9 @@ options:
     default: 'true'
     aliases: []
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 
 notes:
   - If a rule declares a group_name and that group doesn't exist, it will be
@@ -116,6 +112,10 @@ EXAMPLES = '''
         from_port: 10051
         to_port: 10051
         group_id: sg-12345678
+      - proto: icmp
+        from_port: 8 # icmp type, -1 = any type
+        to_port:  -1 # icmp subtype, -1 = any subtype
+        cidr_ip: 10.0.0.0/8
       - proto: all
         # the containing group name may be specified here
         group_name: example

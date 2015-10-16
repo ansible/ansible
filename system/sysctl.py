@@ -123,6 +123,8 @@ class SysctlModule(object):
 
     def process(self):
 
+        self.platform = get_platform().lower()
+
         # Whitespace is bad
         self.args['name'] = self.args['name'].strip()
         self.args['value'] = self._parse_value(self.args['value'])
@@ -206,7 +208,11 @@ class SysctlModule(object):
 
     # Use the sysctl command to find the current value 
     def get_token_curr_value(self, token):
-        thiscmd = "%s -e -n %s" % (self.sysctl_cmd, token)
+        if self.platform == 'openbsd':
+            # openbsd doesn't support -e, just drop it
+            thiscmd = "%s -n %s" % (self.sysctl_cmd, token)
+        else:
+            thiscmd = "%s -e -n %s" % (self.sysctl_cmd, token)
         rc,out,err = self.module.run_command(thiscmd)    
         if rc != 0:
             return None
@@ -217,7 +223,11 @@ class SysctlModule(object):
     def set_token_value(self, token, value):
         if len(value.split()) > 0:
             value = '"' + value + '"'
-        thiscmd = "%s -w %s=%s" % (self.sysctl_cmd, token, value)
+        if self.platform == 'openbsd':
+            # openbsd doesn't accept -w, but since it's not needed, just drop it
+            thiscmd = "%s %s=%s" % (self.sysctl_cmd, token, value)
+        else:
+            thiscmd = "%s -w %s=%s" % (self.sysctl_cmd, token, value)
         rc,out,err = self.module.run_command(thiscmd)
         if rc != 0:
             self.module.fail_json(msg='setting %s failed: %s' % (token, out + err))
@@ -227,9 +237,20 @@ class SysctlModule(object):
     # Run sysctl -p
     def reload_sysctl(self):
         # do it
-        if get_platform().lower() == 'freebsd':
+        if self.platform == 'freebsd':
             # freebsd doesn't support -p, so reload the sysctl service
             rc,out,err = self.module.run_command('/etc/rc.d/sysctl reload')
+        elif self.platform == 'openbsd':
+            # openbsd doesn't support -p and doesn't have a sysctl service,
+            # so we have to set every value with its own sysctl call
+            for k, v in self.file_values.items():
+                rc = 0
+                if k != self.args['name']:
+                    rc = self.set_token_value(k, v)
+                    if rc != 0:
+                        break
+            if rc == 0 and self.args['state'] == "present":
+                rc = self.set_token_value(self.args['name'], self.args['value'])
         else:
             # system supports reloading via the -p flag to sysctl, so we'll use that
             sysctl_args = [self.sysctl_cmd, '-p', self.sysctl_file]

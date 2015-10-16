@@ -84,7 +84,11 @@ options:
         Format: <algorithm>:<checksum>, e.g.: checksum="sha256:D98291AC[...]B6DC7B97"
         If you worry about portability, only the sha1 algorithm is available 
         on all platforms and python versions.  The third party hashlib 
-        library can be installed for access to additional algorithms.'
+        library can be installed for access to additional algorithms.
+        Additionaly, if a checksum is passed to this parameter, and the file exist under
+        the C(dest) location, the destination_checksum would be calculated, and if
+        checksum equals destination_checksum, the file download would be skipped
+        (unless C(force) is true). '
     version_added: "2.0"
     required: false
     default: null

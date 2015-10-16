@@ -89,7 +89,9 @@ options:
         description:
           - A list of the names of action(s) to take when the alarm is in the 'ok' status
         required: false
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = '''
@@ -114,9 +116,6 @@ EXAMPLES = '''
 '''
 
 import sys
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ec2 import *
 
 try:
     import boto.ec2.cloudwatch
@@ -184,7 +183,7 @@ def create_metric_alarm(connection, module):
         comparisons = {'<=' : 'LessThanOrEqualToThreshold', '<' : 'LessThanThreshold', '>=' : 'GreaterThanOrEqualToThreshold', '>' : 'GreaterThanThreshold'}
         alarm.comparison = comparisons[comparison]
 
-        dim1 = module.params.get('dimensions', {})
+        dim1 = module.params.get('dimensions')
         dim2 = alarm.dimensions
 
         for keys in dim1:
@@ -255,12 +254,11 @@ def main():
             unit=dict(type='str', choices=['Seconds', 'Microseconds', 'Milliseconds', 'Bytes', 'Kilobytes', 'Megabytes', 'Gigabytes', 'Terabytes', 'Bits', 'Kilobits', 'Megabits', 'Gigabits', 'Terabits', 'Percent', 'Count', 'Bytes/Second', 'Kilobytes/Second', 'Megabytes/Second', 'Gigabytes/Second', 'Terabytes/Second', 'Bits/Second', 'Kilobits/Second', 'Megabits/Second', 'Gigabits/Second', 'Terabits/Second', 'Count/Second', 'None']),
             evaluation_periods=dict(type='int'),
             description=dict(type='str'),
-            dimensions=dict(type='dict'),
+            dimensions=dict(type='dict', default={}),
             alarm_actions=dict(type='list'),
             insufficient_data_actions=dict(type='list'),
             ok_actions=dict(type='list'),
             state=dict(default='present', choices=['present', 'absent']),
-            region=dict(aliases=['aws_region', 'ec2_region']),
            )
     )
 
@@ -272,14 +270,22 @@ def main():
     state = module.params.get('state')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    try:
-        connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, StandardError), e:
-        module.fail_json(msg=str(e))
+    
+    if region:
+        try:
+            connection = connect_to_aws(boto.ec2.cloudwatch, region, **aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+            module.fail_json(msg=str(e))
+    else:
+        module.fail_json(msg="region must be specified")
 
     if state == 'present':
         create_metric_alarm(connection, module)
     elif state == 'absent':
         delete_metric_alarm(connection, module)
+
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.ec2 import *
 
 main()

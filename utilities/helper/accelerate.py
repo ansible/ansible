@@ -272,6 +272,7 @@ class LocalSocketThread(Thread):
                 pass
 
     def terminate(self):
+        super(LocalSocketThread, self).terminate()
         self.terminated = True
         self.s.shutdown(socket.SHUT_RDWR)
         self.s.close()
@@ -311,7 +312,6 @@ class ThreadedTCPServer(SocketServer.ThreadingTCPServer):
         SocketServer.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass)
 
     def shutdown(self):
-        self.local_thread.terminate()
         self.running = False
         SocketServer.ThreadingTCPServer.shutdown(self)
 
@@ -472,8 +472,6 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
     def command(self, data):
         if 'cmd' not in data:
             return dict(failed=True, msg='internal error: cmd is required')
-        if 'tmp_path' not in data:
-            return dict(failed=True, msg='internal error: tmp_path is required')
 
         vvvv("executing: %s" % data['cmd'])
 
@@ -601,15 +599,14 @@ def daemonize(module, password, port, timeout, minutes, use_ipv6, pid_file):
                         server.shutdown()
                     else:
                         # reschedule the check
-                        vvvv("daemon idle for %d seconds (timeout=%d)" % (total_seconds,minutes*60))
-                        signal.alarm(30)
+                        signal.alarm(1)
                 except:
                     pass
             finally:
                 server.last_event_lock.release()
 
         signal.signal(signal.SIGALRM, timer_handler)
-        signal.alarm(30)
+        signal.alarm(1)
 
         tries = 5
         while tries > 0:

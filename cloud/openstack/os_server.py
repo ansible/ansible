@@ -82,7 +82,10 @@ options:
    nics:
      description:
         - A list of networks to which the instance's interface should
-          be attached. Networks may be referenced by net-id or net-name.
+          be attached. Networks may be referenced by net-id/net-name/port-id
+          or port-name.
+        - 'Also this accepts a string containing a list of net-id/port-id.
+          Eg: nics: "net-id=uuid-1,net-id=uuid-2"'
      required: false
      default: None
    public_ip:
@@ -108,7 +111,8 @@ options:
    meta:
      description:
         - A list of key value pairs that should be provided as a metadata to
-          the new instance.
+          the new instance or a string containing a list of key-value pairs.
+          Eg:  meta: "key1=value1,key2=value2"
      required: false
      default: None
    wait:
@@ -241,6 +245,44 @@ EXAMPLES = '''
       image: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)
       flavor_ram: 4096
       flavor_include: Performance
+
+# Creates a new instance and attaches to multiple network
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance with a string
+    os_server:
+      name: vm1
+      auth:
+         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         username: admin
+         password: admin
+         project_name: admin
+       name: vm1
+       image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+       key_name: ansible_key
+       timeout: 200
+       flavor: 4
+       nics: "net-id=4cb08b20-62fe-11e5-9d70-feff819cdc9f,net-id=542f0430-62fe-11e5-9d70-feff819cdc9f..."
+
+# Creates a new instance and attaches to a network and passes metadata to
+# the instance
+- os_server:
+       state: present
+       auth:
+         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         username: admin
+         password: admin
+         project_name: admin
+       name: vm1
+       image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+       key_name: ansible_key
+       timeout: 200
+       flavor: 4
+       nics:
+         - net-id: 34605f38-e52a-25d2-b6ec-754a13ffb723
+         - net-name: another_network
+       meta: "hostname=test1,group=uge_master"
 '''
 
 
@@ -252,25 +294,33 @@ def _exit_hostvars(module, cloud, server, changed=True):
 
 def _network_args(module, cloud):
     args = []
-    for net in module.params['nics']:
-        if net.get('net-id'):
-            args.append(net)
-        elif net.get('net-name'):
-            by_name = cloud.get_network(net['net-name'])
-            if not by_name:
-                module.fail_json(
-                    msg='Could not find network by net-name: %s' %
-                    net['net-name'])
-            args.append({'net-id': by_name['id']})
-        elif net.get('port-id'):
-            args.append(net)
-        elif net.get('port-name'):
-            by_name = cloud.get_port(net['port-name'])
-            if not by_name:
-                module.fail_json(
-                    msg='Could not find port by port-name: %s' %
-                    net['port-name'])
-            args.append({'port-id': by_name['id']})
+    nics = module.params['nics']
+    if type(nics) == str :
+        for kv_str in nics.split(","):
+            nic = {}
+            k, v = kv_str.split("=")
+            nic[k] = v
+            args.append(nic)
+    else:
+        for net in module.params['nics']:
+            if net.get('net-id'):
+                args.append(net)
+            elif net.get('net-name'):
+                by_name = cloud.get_network(net['net-name'])
+                if not by_name:
+                    module.fail_json(
+                        msg='Could not find network by net-name: %s' %
+                        net['net-name'])
+                args.append({'net-id': by_name['id']})
+            elif net.get('port-id'):
+                args.append(net)
+            elif net.get('port-name'):
+                by_name = cloud.get_port(net['port-name'])
+                if not by_name:
+                    module.fail_json(
+                        msg='Could not find port by port-name: %s' %
+                        net['port-name'])
+                args.append({'port-id': by_name['id']})
     return args
 
 
@@ -304,6 +354,13 @@ def _create_server(module, cloud):
             module.fail_json(msg="Could not find any matching flavor") 
 
     nics = _network_args(module, cloud)
+
+    if type(module.params['meta']) is str:
+        metas = {}
+        for kv_str in module.params['meta'].split(","):
+            k, v = kv_str.split("=")
+            metas[k] = v
+        module.params['meta'] = metas
 
     bootkwargs = dict(
         name=module.params['name'],

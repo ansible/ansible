@@ -29,6 +29,7 @@ options:
   state:
     description:
       - Create or destroy the ELB
+    choices: ["present", "absent"]
     required: true
   name:
     description:
@@ -74,11 +75,6 @@ options:
       - An associative array of access logs configuration settings (see example)
     require: false
     default: None
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    aliases: ['aws_region', 'ec2_region']
   subnets:
     description:
       - A list of VPC subnets to use when creating ELB. Zones should be empty if using this.
@@ -126,7 +122,9 @@ options:
     required: false
     version_added: "2.0"
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = """

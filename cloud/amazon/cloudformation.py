@@ -241,7 +241,7 @@ def main():
             stack_name=dict(required=True),
             template_parameters=dict(required=False, type='dict', default={}),
             state=dict(default='present', choices=['present', 'absent']),
-            template=dict(default=None, required=False),
+            template=dict(default=None, required=False, type='path'),
             notification_arns=dict(default=None, required=False),
             stack_policy=dict(default=None, required=False),
             disable_rollback=dict(default=False, type='bool'),
@@ -368,6 +368,16 @@ def main():
         for output in stack.outputs:
             stack_outputs[output.key] = output.value
         result['stack_outputs'] = stack_outputs
+        stack_resources = [] 
+        for res in cfn.list_stack_resources(stack_name):
+            stack_resources.append({
+                "last_updated_time": res.last_updated_time,
+                "logical_resource_id": res.logical_resource_id,
+                "physical_resource_id": res.physical_resource_id,
+                "status": res.resource_status,
+                "status_reason": res.resource_status_reason,
+                "resource_type": res.resource_type })
+        result['stack_resources'] = stack_resources
 
     # absent state is different because of the way delete_stack works.
     # problem is it it doesn't give an error if stack isn't found

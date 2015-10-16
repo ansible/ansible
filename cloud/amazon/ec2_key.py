@@ -31,12 +31,6 @@ options:
     description:
       - Public key material.
     required: false
-  region:
-    description:
-      - the EC2 region to use
-    required: false
-    default: null
-    aliases: []
   state:
     description:
       - create or delete keypair
@@ -58,7 +52,9 @@ options:
     aliases: []
     version_added: "1.6"
 
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+ - aws
+ - ec2
 author: "Vincent Viallet (@zbal)"
 '''
 

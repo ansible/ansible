@@ -74,12 +74,6 @@ options:
     required: false
     default: null
     aliases: []
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    default: null
-    aliases: ['aws_region', 'ec2_region']
   zone:
     description:
       - zone in which to create the volume, if unset uses the zone the instance is in (if set) 
@@ -108,7 +102,9 @@ options:
     choices: ['absent', 'present', 'list']
     version_added: "1.6"
 author: "Lester Wade (@lwade)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -409,7 +405,8 @@ def main():
                 'attachment_set': {
                     'attach_time': attachment.attach_time,
                     'device': attachment.device,
-                    'status': attachment.status
+                    'status': attachment.status,
+                    'deleteOnTermination': attachment.deleteOnTermination
                 }
             })
 
