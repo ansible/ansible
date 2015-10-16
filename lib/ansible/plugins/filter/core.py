@@ -38,7 +38,7 @@ import uuid
 import yaml
 from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
-from six import iteritems
+from ansible.compat.six import iteritems
 
 from ansible import errors
 from ansible.parsing.yaml.dumper import AnsibleDumper

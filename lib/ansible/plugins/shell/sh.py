@@ -24,7 +24,7 @@ import ansible.constants as C
 import time
 import random
 
-from six import text_type
+from ansible.compat.six import text_type
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 

@@ -24,9 +24,8 @@ import termios
 import traceback
 import textwrap
 
-from six import iteritems
+from ansible.compat.six import iteritems
 
-from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.plugins import module_loader
 from ansible.cli import CLI

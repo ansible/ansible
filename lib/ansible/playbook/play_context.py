@@ -26,8 +26,7 @@ import random
 import re
 import string
 
-from six import iteritems, string_types
-
+from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.attribute import Attribute, FieldAttribute

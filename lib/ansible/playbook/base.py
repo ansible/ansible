@@ -27,7 +27,7 @@ from functools import partial
 from inspect import getmembers
 from io import FileIO
 
-from six import iteritems, string_types, text_type
+from ansible.compat.six import iteritems, string_types, text_type
 
 from jinja2.exceptions import UndefinedError
 

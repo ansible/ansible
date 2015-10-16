@@ -24,7 +24,7 @@ import os
 from collections import defaultdict
 from collections import MutableMapping
 
-from six import iteritems
+from ansible.compat.six import iteritems
 from jinja2.exceptions import UndefinedError
 
 try:

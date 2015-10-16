@@ -20,8 +20,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import itertools
-from six import string_types
 
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar

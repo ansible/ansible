@@ -21,7 +21,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 # from python and deps
-from six.moves import StringIO
+from ansible.compat.six.moves import StringIO
 import json
 import os
 import shlex
@@ -30,7 +30,6 @@ import shlex
 from ansible import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError
-from ansible.parsing.utils.jsonify import jsonify
 from ansible.utils.unicode import to_bytes
 
 REPLACER          = "#<<INCLUDE_ANSIBLE_MODULE_COMMON>>"

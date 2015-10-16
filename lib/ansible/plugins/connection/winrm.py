@@ -25,7 +25,7 @@ import re
 import shlex
 import traceback
 
-from six.moves.urllib.parse import urlunsplit
+from ansible.compat.six.moves.urllib.parse import urlunsplit
 
 from ansible.errors import AnsibleError
 try:

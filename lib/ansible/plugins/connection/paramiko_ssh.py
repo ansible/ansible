@@ -39,7 +39,7 @@ import sys
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
 
-from six import iteritems
+from ansible.compat.six import iteritems
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
