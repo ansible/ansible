@@ -764,6 +764,8 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         distribution = get_distribution()
         if distribution.lower() == 'redhat':
             module.fail_json(msg='%s. You can also install python-ssl from EPEL' % str(e))
+        else:
+            module.fail_json(msg='%s' % str(e))
     except (ConnectionError, ValueError), e:
         module.fail_json(msg=str(e))
     except urllib2.HTTPError, e:
