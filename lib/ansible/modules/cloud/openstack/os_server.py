@@ -112,9 +112,9 @@ options:
      default: None
    meta:
      description:
-        - A list of key value pairs that should be provided as a metadata to
+        - 'A list of key value pairs that should be provided as a metadata to
           the new instance or a string containing a list of key-value pairs.
-          Eg:  meta: "key1=value1,key2=value2"
+          Eg:  meta: "key1=value1,key2=value2"'
      required: false
      default: None
    wait:
