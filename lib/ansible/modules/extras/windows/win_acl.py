@@ -89,7 +89,7 @@ options:
       - ContainerInherit
       - ObjectInherit
       - None
-    default: For Leaf File: None; For Directory: ContainerInherit, ObjectInherit;
+    default: For Leaf File, None; For Directory, ContainerInherit, ObjectInherit;
   propagation:
     description:
       - Propagation flag on the ACL rules.  For more information on the choices see MSDN PropagationFlags Enumeration.
