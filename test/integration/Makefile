@@ -6,7 +6,7 @@ ifndef CLOUD_RESOURCE_PREFIX
 CLOUD_RESOURCE_PREFIX := $(shell python -c "import string,random; print 'ansible-testing-' + ''.join(random.choice(string.ascii_letters + string.digits) for _ in xrange(8));")
 endif
 
-CREDENTIALS_FILE = credentials.yml
+CREDENTIALS_FILE ?= credentials.yml
 # If credentials.yml exists, use it
 ifneq ("$(wildcard $(CREDENTIALS_FILE))","")
 CREDENTIALS_ARG = -e @$(CREDENTIALS_FILE)
