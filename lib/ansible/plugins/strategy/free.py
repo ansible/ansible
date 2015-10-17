@@ -104,10 +104,6 @@ class StrategyModule(StrategyBase):
                                 self._display.debug("'%s' skipped because role has already run" % task)
                                 continue
 
-                        if not task.evaluate_tags(play_context.only_tags, play_context.skip_tags, task_vars) and task.action != 'setup':
-                            self._display.debug("'%s' failed tag evaluation" % task)
-                            continue
-
                         if task.action == 'meta':
                             # meta tasks store their args in the _raw_params field of args,
                             # since they do not use k=v pairs, so get that
