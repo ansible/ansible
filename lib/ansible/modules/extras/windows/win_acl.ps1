@@ -84,84 +84,36 @@ Function UserSearch
 }
  
 $params = Parse-Args $args;
- 
-$result = New-Object psobject @{
-    win_acl = New-Object psobject
-    changed = $false
+
+$result = New-Object PSObject;
+Set-Attr $result "changed" $false;
+
+$path = Get-Attr $params "path" -failifempty $true
+$user = Get-Attr $params "user" -failifempty $true
+$rights = Get-Attr $params "rights" -failifempty $true
+
+$type = Get-Attr $params "type" -validateSet "allow","deny" -resultobj $result
+$state = Get-Attr $params "state" "present" -validateSet "present","absent" -resultobj $result
+
+$inherit = Get-Attr $params "inherit" ""
+$propagation = Get-Attr $params "propagation" "None" -validateSet "None","NoPropagateInherit","InheritOnly" -resultobj $result
+
+If (-Not (Test-Path -Path $path)) {
+    Fail-Json $result "$path file or directory does not exist on the host"
 }
- 
-If ($params.path) {
-    $path = $params.path.toString()
- 
-    If (-Not (Test-Path -Path $path)) {
-        Fail-Json $result "$path file or directory does not exist on the host"
-    }
+
+# Test that the user/group is resolvable on the local machine
+$sid = UserSearch -AccountName ($user)
+if (!$sid)
+{
+    Fail-Json $result "$user is not a valid user or group on the host machine or domain"
 }
-Else {
-    Fail-Json $result "missing required argument: path"
+
+If (Test-Path -Path $path -PathType Leaf) {
+    $inherit = "None"
 }
- 
-If ($params.user) {
-    $sid = UserSearch -AccountName ($Params.User)
- 
-    # Test that the user/group is resolvable on the local machine
-    if (!$sid)
-    {
-          Fail-Json $result "$($Params.User) is not a valid user or group on the host machine or domain"
-    }    
-}
-Else {
-    Fail-Json $result "missing required argument: user.  specify the user or group to apply permission changes."
-}
- 
-If ($params.type -eq "allow") {
-    $type = $true
-}
-ElseIf ($params.type -eq "deny") {
-    $type = $false
-}
-Else {
-    Fail-Json $result "missing required argument: type. specify whether to allow or deny the specified rights."
-}
- 
-If ($params.inherit) {
-    # If it's a file then no flags can be set or an exception will be thrown
-    If (Test-Path -Path $path -PathType Leaf) {
-        $inherit = "None"
-    }
-    Else {
-        $inherit = $params.inherit.toString()
-    }
-}
-Else {
-    # If it's a file then no flags can be set or an exception will be thrown
-    If (Test-Path -Path $path -PathType Leaf) {
-        $inherit = "None"
-    }
-    Else {
-        $inherit = "ContainerInherit, ObjectInherit"
-    }
-}
- 
-If ($params.propagation) {
-    $propagation = $params.propagation.toString()
-}
-Else {
-    $propagation = "None"
-}
- 
-If ($params.rights) {
-    $rights = $params.rights.toString()
-}
-Else {
-    Fail-Json $result "missing required argument: rights"
-}
- 
-If ($params.state -eq "absent") {
-    $state = "remove"
-}
-Else {
-    $state = "add"
+ElseIf ($inherit -eq "") {
+    $inherit = "ContainerInherit, ObjectInherit"
 }
  
 Try {
@@ -169,7 +121,7 @@ Try {
     $InheritanceFlag = [System.Security.AccessControl.InheritanceFlags]$inherit
     $PropagationFlag = [System.Security.AccessControl.PropagationFlags]$propagation
  
-    If ($type) {
+    If ($type -eq "allow") {
         $objType =[System.Security.AccessControl.AccessControlType]::Allow
     }
     Else {
@@ -189,22 +141,22 @@ Try {
             Break
         } 
     }
- 
-    If ($state -eq "add" -And $match -eq $false) {
+
+    If ($state -eq "present" -And $match -eq $false) {
         Try {
             $objACL.AddAccessRule($objACE)
             Set-ACL $path $objACL
-            $result.changed = $true
+            Set-Attr $result "changed" $true;
         }
         Catch {
             Fail-Json $result "an exception occured when adding the specified rule"
         }
     }
-    ElseIf ($state -eq "remove" -And $match -eq $true) {
+    ElseIf ($state -eq "absent" -And $match -eq $true) {
         Try {
             $objACL.RemoveAccessRule($objACE)
             Set-ACL $path $objACL
-            $result.changed = $true
+            Set-Attr $result "changed" $true;
         }
         Catch {
             Fail-Json $result "an exception occured when removing the specified rule"
@@ -222,7 +174,7 @@ Try {
     }
 }
 Catch {
-    Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $path for $($Params.User)"
+    Fail-Json $result "an error occured when attempting to $state $rights permission(s) on $path for $user"
 }
  
 Exit-Json $result
