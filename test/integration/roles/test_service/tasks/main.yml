@@ -11,9 +11,9 @@
     - "install_result.mode == '0755'"
 
 - include: 'sysv_setup.yml'
-  when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux']
+  when: ansible_distribution in ['Fedora', 'RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('6', '>=') and ansible_distribution_version|version_compare('7', '<'))
 - include: 'systemd_setup.yml'
-  when: ansible_distribution == 'Fedora'
+  when: ansible_distribution in ['Fedora', 'RedHat', 'CentOS', 'ScientificLinux'] and (ansible_distribution_version|version_compare('7', '>=') and ansible_distribution_version|version_compare('8', '<'))
 - include: 'upstart_setup.yml'
   when: ansible_distribution == 'Ubuntu'
 
