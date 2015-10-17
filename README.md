@@ -42,7 +42,7 @@ Get Involved
 Branch Info
 ===========
 
-   * Releases are named after Led Zeppelin songs.
+   * Releases are named after Led Zeppelin songs. (Releases prior to 2.0 were named after Van Halen songs.)
    * The devel branch corresponds to the release actively under development.
    * As of 1.8, modules are kept in different repos, you'll want to follow [core](https://github.com/ansible/ansible-modules-core) and [extras](https://github.com/ansible/ansible-modules-extras)
    * Various release-X.Y branches exist for previous releases.
