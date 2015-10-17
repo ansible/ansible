@@ -24,7 +24,7 @@ description:
 options:
   command:
     description:
-      - Specifies the action to take.
+      - Specifies the action to take. The 'reboot' option is available starting at version 2.0
     required: true
     choices: [ 'create', 'replicate', 'delete', 'facts', 'modify' , 'promote', 'snapshot', 'reboot', 'restore' ]
   instance_name:
