@@ -86,6 +86,8 @@ class PlaybookExecutor:
                 for play in plays:
                     if play._included_path is not None:
                         self._loader.set_basedir(play._included_path)
+                    else:
+                        self._loader.set_basedir(pb._basedir)
 
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
