@@ -53,29 +53,26 @@ class CacheModule(BaseCacheModule):
 
     def get(self, key):
 
+        if self.has_expired(key) or key == "":
+           raise KeyError
+
         if key in self._cache:
             return self._cache.get(key)
 
-        if self.has_expired(key):
-           raise KeyError
-
         cachefile = "%s/%s" % (self._cache_dir, key)
         try:
-            f = codecs.open(cachefile, 'r', encoding='utf-8')
+            with codecs.open(cachefile, 'r', encoding='utf-8') as f:
+                try:
+                    value = json.load(f)
+                    self._cache[key] = value
+                    return value
+                except ValueError as e:
+                    self._display.warning("error while trying to read %s : %s. Most likely a corrupt file, so erasing and failing." % (cachefile, to_bytes(e)))
+                    self.delete(key)
+                    raise AnsibleError("The JSON cache file %s was corrupt, or did not otherwise contain valid JSON data. It has been removed, so you can re-run your command now." % cachefile)
         except (OSError,IOError) as e:
             self._display.warning("error while trying to read %s : %s" % (cachefile, to_bytes(e)))
-            pass
-        else:
-            try:
-                value = json.load(f)
-                self._cache[key] = value
-                return value
-            except ValueError as e:
-                self._display.warning("error while trying to read %s : %s. Most likely a corrupt file, so erasing and failing." % (cachefile, to_bytes(e)))
-                self.delete(key)
-                raise AnsibleError("The JSON cache file %s was corrupt, or did not otherwise contain valid JSON data. It has been removed, so you can re-run your command now." % cachefile)
-        finally:
-            f.close()
+            raise KeyError
 
     def set(self, key, value):
 
