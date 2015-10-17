@@ -23,8 +23,8 @@
   assert: { that: "output.changed == {{changed}}" }
 
 - set_fact:
-     key_name: "{{output.msg[0][0]}}"
-     key_value: "{{output.msg[0][1]}}"
+     key_name: "{{var_name}}"
+     key_value: "{{output.msg[0][0]}}"
 
 - name: run mysql command to show variable 
   command: mysql "-e show variables like '{{var_name}}';"
