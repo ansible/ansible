@@ -1,30 +1,37 @@
-sudo: false
+sudo: required
+services:
+  - docker
 language: python
-matrix:
-  include:
-    - env: TOXENV=py24 INTEGRATION=no
-    - env: TOXENV=py26 INTEGRATION=yes
-      python: 2.6
-    - env: TOXENV=py27 INTEGRATION=yes
-      python: 2.7
-    - env: TOXENV=py34 INTEGRATION=no
-      python: 3.4
-    - env: TOXENV=py35 INTEGRATION=no
-      python: 3.5
-addons:
-  apt:
-    sources:
-      - deadsnakes
-    packages:
-      - python2.4
+env:
+  global:
+    - DOCKER_ROOT=test/integration/docker/
+  matrix:
+    - DOCKER_FILE=Dockerfile.ubuntu-12.04 DOCKER_NAME=test_ubuntu_12.04
+    #- TOKENV=py24
+    #- TOXENV=py26
+    #- TOXENV=py27
+    #- TOXENV=py34
+#addons:
+#  apt:
+#    sources:
+#      - deadsnakes
+#    packages:
+#      - python2.4
+before_install:
+  - docker pull ubuntu:12.04
 install:
   - pip install tox PyYAML Jinja2 sphinx
 script:
-# urllib2's defaults are not secure enough for us
-- ./test/code-smell/replace-urlopen.sh .
-- if test x"$TOXENV" != x'py24' ; then tox ; fi
-- if test x"$TOXENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce).py' lib/ansible/module_utils ; fi
+#- if test x"$TOKENV" != x'py24' ; then  tox ; fi
+#- if test x"$TOKENV" = x'py24' ; then python2.4 -V && python2.4 -m compileall -fq -x 'module_utils/(a10|rax|openstack|ec2|gce).py' lib/ansible/module_utils ; fi
   #- make -C docsite all
-- if test x"$INTEGRATION" = x'yes' ; then source ./hacking/env-setup && cd test/integration/ && make test_var_precedence ; fi
+- cd $DOCKER_ROOT && cp $DOCKER_FILE Dockerfile && docker build -t ansible/$DOCKER_NAME .
+- |
+  if [ -n $DOCKER_FILE ]; then 
+      cd $TRAVIS_BUILD_DIR
+      docker run --privileged=true --name ansible_test -i -t -v $PWD:/ansible ansible/$DOCKER_NAME:latest & 
+      docker exec -i -t $DOCKER_NAME:latest /ansible/test/integration/docker/init.sh
+      docker stop $DOCKER_NAME
+  fi
 after_success:
   - coveralls

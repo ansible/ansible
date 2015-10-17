@@ -1,0 +1,18 @@
+FROM ubuntu-upstart:12.04
+
+RUN apt-get update
+RUN apt-get install -y software-properties-common python-software-properties
+RUN add-apt-repository ppa:fkrull/deadsnakes
+RUN apt-get clean all && apt-get -y update
+#RUN apt-get -y install python2.4 python2.6 python2.7 python3.4
+RUN apt-get -y install python2.4
+RUN apt-get -y install python-httplib2 python-keyczar python-paramiko python-setuptools openssl make python-pip sudo rsync subversion git openssh-server supervisor mercurial rubygems
+RUN pip install tox PyYAML Jinja2 sphinx
+
+# Ansible tests rely on .deb cache hanging around
+RUN rm /etc/apt/apt.conf.d/docker-clean
+
+# Clean up APT when done.
+#RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+CMD ["/sbin/init"]

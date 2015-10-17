@@ -1,0 +1,20 @@
+FROM centos:6
+ENV container docker
+
+# Update all base packages to keep them fresh, downgrading libselinux to remove
+# centosplus repository dependency
+RUN yum -y downgrade libselinux libselinux-utils; yum -y update; yum clean all
+
+# Install initscripts, but turn off all services by default
+RUN yum -y install initscripts; yum clean all; rm /etc/rc.d/rc*.d/*
+
+# Disable ttys
+RUN mv /etc/init/serial.conf /etc/init/serial.conf.disabled; \
+mv /etc/init/tty.conf /etc/init/tty.conf.disabled; \
+mv /etc/init/start-ttys.conf /etc/init/start-ttys.conf.disabled
+
+RUN yum -y install epel-release
+RUN yum -y install python-devel python-httplib2 python-keyczar python-paramiko python-setuptools openssl make python-pip sudo rsync subversion git openssh-server supervisor mercurial rubygems unzip
+RUN pip install tox PyYAML Jinja2 sphinx
+
+CMD ["/sbin/init"]
