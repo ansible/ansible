@@ -67,7 +67,6 @@
 - name: verify yum module outputs
   assert:
     that:
-        - "'invocation' in yum_result"
         - "'changed' in yum_result"
         - "'msg' in yum_result"
         - "'rc' in yum_result"
