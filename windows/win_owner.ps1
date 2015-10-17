@@ -48,8 +48,7 @@ Function UserSearch
         $accountname = $env:COMPUTERNAME + "\" + $AccountName
         $IsLocalAccount = $true
     }
- 
- 
+
     if ($IsLocalAccount -eq $true)
     {
         # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed. on Win32_Account groups will be listed too
@@ -59,13 +58,19 @@ Function UserSearch
             return $localaccount.SID
         }
     }
-    ElseIf (($IsDomainAccount -eq $true) -and ($IsUpn -eq $false))
+    ElseIf ($IsDomainAccount -eq $true)
     {
         #Search by samaccountname
         $Searcher = [adsisearcher]""
-        $Searcher.Filter = "sAMAccountName=$($accountname.split("\")[1])"
-        $result = $Searcher.FindOne()
- 
+
+        If ($IsUpn -eq $false) {
+            $Searcher.Filter = "sAMAccountName=$($accountname.split("\")[1])"
+        }
+        Else {
+            $Searcher.Filter = "userPrincipalName=$($accountname)"
+        }
+
+        $result = $Searcher.FindOne() 
         if ($result)
         {
             $user = $result.GetDirectoryEntry()
@@ -77,7 +82,6 @@ Function UserSearch
             return (New-Object System.Security.Principal.SecurityIdentifier($binarySID,0)).Value
         }
     }
- 
 }
  
 $params = Parse-Args $args;
