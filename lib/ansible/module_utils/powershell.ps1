@@ -225,3 +225,73 @@ Function Get-FileChecksum($path)
     }
     return $hash
 }
+
+# Helper function to get account SID from multiple sources for various usage
+# Example: $sid = GetAccountSID "user"
+# Example: $sid = GetAccountSID "domain\user"
+# Example: $sid = GetAccountSID "user@domain.com"
+#          $objUser = New-Object System.Security.Principal.SecurityIdentifier($sid)
+#          $fullUsername = $objUser.Translate([System.Security.Principal.NTAccount]).Value
+Function GetAccountSID
+{
+    Param ([string]$AccountName)
+
+    #Check if there's a realm specified
+    if ($AccountName.Split("\").count -gt 1)
+    {
+        if ($AccountName.Split("\")[0] -eq $env:COMPUTERNAME)
+        {
+            $IsLocalAccount = $true
+        }
+        Else
+        {
+            $IsDomainAccount = $true
+            $IsUpn = $false
+        } 
+    }
+    Elseif ($AccountName -contains "@")
+    {
+        $IsDomainAccount = $true
+        $IsUpn = $true
+    }
+    Else
+    {
+        #Default to local user account
+        $accountname = $env:COMPUTERNAME + "\" + $AccountName
+        $IsLocalAccount = $true
+    }
+
+    if ($IsLocalAccount -eq $true)
+    {
+        # do not use Win32_UserAccount, because e.g. SYSTEM (BUILTIN\SYSTEM or COMPUUTERNAME\SYSTEM) will not be listed
+        $localaccount = get-wmiobject -class "Win32_Account" -namespace "root\CIMV2" -filter "(LocalAccount = True)" | where {$_.Caption -eq $AccountName}
+        if ($localaccount)
+        {
+            return $localaccount.SID
+        }
+    }
+    ElseIf ($IsDomainAccount -eq $true)
+    {
+        #Search by samaccountname
+        $Searcher = [adsisearcher]""
+
+        If ($IsUpn -eq $false) {
+            $Searcher.Filter = "sAMAccountName=$($accountname.split("\")[1])"
+        }
+        Else {
+            $Searcher.Filter = "userPrincipalName=$($accountname)"
+        }
+
+        $result = $Searcher.FindOne() 
+        if ($result)
+        {
+            $user = $result.GetDirectoryEntry()
+
+            # get binary SID from AD account
+            $binarySID = $user.ObjectSid.Value
+
+            # convert to string SID
+            return (New-Object System.Security.Principal.SecurityIdentifier($binarySID,0)).Value
+        }
+    }
+}
