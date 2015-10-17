@@ -284,20 +284,13 @@ class CLI(with_metaclass(ABCMeta, object)):
         setattr(parser.values, option.dest, os.path.expanduser(value))
 
     @staticmethod
-    def unfrack_path(option, opt, value, parser):
-        setattr(parser.values, option.dest, unfrackpath(value))
+    def unfrack_paths(option, opt, value, parser):
+        if isinstance(value, string_types):
+            setattr(parser.values, option.dest, [unfrackpath(x) for x in value.split(os.sep)])
 
     @staticmethod
-    def expand_paths(option, opt, value, parser):
-        """optparse action callback to convert a PATH style string arg to a list of path strings.
-
-        For ex, cli arg of '-p /blip/foo:/foo/bar' would be split on the
-        default os.pathsep and the option value would be set to
-        the list ['/blip/foo', '/foo/bar']. Each path string in the list
-        will also have '~/' values expand via os.path.expanduser()."""
-        path_entries = value.split(os.pathsep)
-        expanded_path_entries = [os.path.expanduser(path_entry) for path_entry in path_entries]
-        setattr(parser.values, option.dest, expanded_path_entries)
+    def unfrack_path(option, opt, value, parser):
+        setattr(parser.values, option.dest, unfrackpath(value))
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
