@@ -325,7 +325,7 @@ class PlayContext(Base):
                 if address_var in delegated_vars:
                     break
             else:
-                display.warning("no remote address found for delegated host %s, using its name by default" % delegated_host_name)
+                display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
                 delegated_vars['ansible_host'] = delegated_host_name
         else:
             delegated_vars = dict()
