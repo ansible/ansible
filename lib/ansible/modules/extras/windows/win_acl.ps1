@@ -2,6 +2,8 @@
 # This file is part of Ansible
 #
 # Copyright 2015, Phil Schwartz <schwartzmx@gmail.com>
+# Copyright 2015, Trond Hindenes
+# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
