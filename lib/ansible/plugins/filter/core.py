@@ -45,6 +45,7 @@ from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
 from ansible.utils.unicode import unicode_wrap, to_unicode
 from ansible.utils.vars import merge_hash
+from ansible.vars.hostvars import HostVars
 
 try:
     import passlib.hash
@@ -54,6 +55,17 @@ except:
 
 
 UUID_NAMESPACE_ANSIBLE = uuid.UUID('361E6D51-FAEC-444A-9079-341386DA8E2E')
+
+class AnsibleJSONEncoder(json.JSONEncoder):
+    '''
+    Simple encoder class to deal with JSON encoding of internal
+    types like HostVars
+    '''
+    def default(self, o):
+        if isinstance(o, HostVars):
+            return dict(o)
+        else:
+            return o
 
 def to_yaml(a, *args, **kw):
     '''Make verbose, human readable yaml'''
@@ -67,7 +79,7 @@ def to_nice_yaml(a, *args, **kw):
 
 def to_json(a, *args, **kw):
     ''' Convert the value to JSON '''
-    return json.dumps(a, *args, **kw)
+    return json.dumps(a, cls=AnsibleJSONEncoder, *args, **kw)
 
 def to_nice_json(a, *args, **kw):
     '''Make verbose, human readable JSON'''
@@ -87,7 +99,7 @@ def to_nice_json(a, *args, **kw):
                     return simplejson.dumps(a, indent=4, sort_keys=True, *args, **kw)
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)
-    return json.dumps(a, indent=4, sort_keys=True, *args, **kw)
+    return json.dumps(a, indent=4, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
 
 def bool(a):
     ''' return a bool for the arg '''
