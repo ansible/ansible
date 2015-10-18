@@ -24,7 +24,6 @@ import json
 import os.path
 import ntpath
 import types
-import pipes
 import glob
 import re
 import crypt
@@ -39,6 +38,7 @@ import yaml
 from jinja2.filters import environmentfilter
 from distutils.version import LooseVersion, StrictVersion
 from ansible.compat.six import iteritems
+from ansible.compat.six.moves import shlex_quote
 
 from ansible import errors
 from ansible.parsing.yaml.dumper import AnsibleDumper
@@ -114,7 +114,7 @@ def bool(a):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return pipes.quote(a)
+    return shlex_quote(a)
 
 def fileglob(pathname):
     ''' return list of matched files for glob '''

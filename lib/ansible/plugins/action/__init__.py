@@ -22,13 +22,13 @@ __metaclass__ = type
 import base64
 import json
 import os
-import pipes
 import random
 import stat
 import tempfile
 import time
 
 from ansible.compat.six import binary_type, text_type, iteritems
+from ansible.compat.six.moves import shlex_quote
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
@@ -379,7 +379,7 @@ class ActionBase:
                 # the remote system, which can be read and parsed by the module
                 args_data = ""
                 for k,v in iteritems(module_args):
-                    args_data += '%s="%s" ' % (k, pipes.quote(v))
+                    args_data += '%s="%s" ' % (k, shlex_quote(v))
                 self._transfer_data(args_file_path, args_data)
             self._display.debug("done transferring module to remote")
 
