@@ -78,10 +78,11 @@ class HostVars(collections.Mapping):
         return False
 
     def __iter__(self):
-        raise NotImplementedError('HostVars does not support iteration as hosts are discovered on an as needed basis.')
+        for host in self._lookup:
+            yield host
 
     def __len__(self):
-        raise NotImplementedError('HostVars does not support len.  hosts entries are discovered dynamically as needed')
+        return len(self._lookup)
 
     def __getstate__(self):
         return dict(loader=self._loader, lookup=self._lookup, play=self._play, var_manager=self._variable_manager)
