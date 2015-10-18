@@ -25,7 +25,6 @@ import itertools
 import json
 import os.path
 import ntpath
-import pipes
 import glob
 import re
 import crypt
@@ -48,6 +47,7 @@ except:
 from ansible import errors
 from ansible.compat.six import iteritems, string_types
 from ansible.compat.six.moves import reduce
+from ansible.compat.six.moves import shlex_quote
 from ansible.module_utils._text import to_text
 from ansible.parsing.yaml.dumper import AnsibleDumper
 from ansible.utils.hashing import md5s, checksum_s
@@ -123,7 +123,7 @@ def to_datetime(string, format="%Y-%d-%m %H:%M:%S"):
 
 def quote(a):
     ''' return its argument quoted for shell usage '''
-    return pipes.quote(a)
+    return shlex_quote(a)
 
 def fileglob(pathname):
     ''' return list of matched regular files for glob '''
