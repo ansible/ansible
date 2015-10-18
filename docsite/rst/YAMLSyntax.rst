@@ -100,6 +100,14 @@ with a "{", YAML will think it is a dictionary, so you must quote it, like so::
 
     foo: "{{ variable }}"
 
+For multiline items, you must start with a ``|`` character::
+
+    multiline_foo: |
+        line 1
+        line 2
+        line 3
+        
+Without the ``|``, new lines will be replaced with spaces.
 
 .. seealso::
 
