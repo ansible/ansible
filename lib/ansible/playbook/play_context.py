@@ -427,6 +427,7 @@ class PlayContext(Base):
 
             elif self.become_method == 'pbrun':
 
+                # NOTE: this is 'assword' on purpose as diff versions does not capitalize it the same way.
                 prompt='assword:'
                 becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
