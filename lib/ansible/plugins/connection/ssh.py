@@ -304,10 +304,11 @@ class Connection(ConnectionBase):
         # have removed from the output), we retain it to be processed with the
         # next chunk.
 
-        remainder = ''
         if output and not output[-1].endswith('\n'):
             remainder = output[-1]
             output = output[:-1]
+        else:
+            remainder = ''
 
         return ''.join(output), remainder
 
