@@ -23,7 +23,7 @@
 
 DOCUMENTATION = '''
 ---
-module: win_service_configure
+module: win_owner
 version_added: "2.0"
 short_description: Set owner
 description:
@@ -33,12 +33,10 @@ options:
     description:
       - Path to be used for changing owner
     required: true
-    default: null
   user:
     description:
       - Name to be used for changing owner
     required: true
-    default: null
   recurse:
     description:
       - Indicates if the owner should be changed recursively
@@ -47,7 +45,7 @@ options:
       - no
       - yes
     default: no
-author: Hans-Joachim Kliemeck
+author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 
 EXAMPLES = '''
