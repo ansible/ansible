@@ -13,7 +13,7 @@ Major Changes:
 * Callback, connection and lookup plugin APIs have changed. Some projects will require modification to work with the new versions.
 * Callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg.
 * Many API changes. Those integrating directly with Ansible's API will encounter breaking changes, but the new API is much easier to use and test.
-* Settings are now more inheritable; what you set at play, block or role will be automatically inhertited by the contained. This allows for new features to automatically be settable at all levels, previously we had to manually code this.
+* Settings are now more inheritable; what you set at play, block or role will be automatically inherited by the contained. This allows for new features to automatically be settable at all levels, previously we had to manually code this.
 * Template code now retains types for bools and numbers instead of turning them into strings.
  If you need the old behaviour, quote the value and it will get passed around as a string
 * Added `meta: refresh_inventory` to force rereading the inventory in a play.
