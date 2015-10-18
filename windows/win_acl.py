@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Phil Schwartz <schwartzmx@gmail.com>
+# Copyright 2015, Phil Schwartz <schwartzmx@gmail.com>
+# Copyright 2015, Trond Hindenes
+# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 #
 # This file is part of Ansible
 #
@@ -40,7 +42,7 @@ options:
     default: none
   state:
     description:
-      - Specify whether to add (present) or remove (absent) the specified access rule
+      - Specify whether to add C(present) or remove C(absent) the specified access rule
     required: no
     choices:
       - present
@@ -99,7 +101,7 @@ options:
       - NoPropagateInherit
       - InheritOnly
     default: "None"
-author: Phil Schwartz (@schwartzmx), Trond Hindenes (@trondhindenes)
+author: Phil Schwartz (@schwartzmx), Trond Hindenes (@trondhindenes), Hans-Joachim Kliemeck (@h0nIg)
 '''
 
 EXAMPLES = '''
