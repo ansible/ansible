@@ -90,16 +90,12 @@ options:
           Eg: nics: "net-id=uuid-1,net-id=uuid-2"'
      required: false
      default: None
-   public_ip:
+   auto_ip:
      description:
         - Ensure instance has public ip however the cloud wants to do that
      required: false
      default: 'yes'
-   auto_floating_ip:
-     description:
-        - If the module should automatically assign a floating IP
-     required: false
-     default: 'yes'
+     aliases: ['auto_floating_ip', 'public_ip']
    floating_ips:
      decription:
         - list of valid floating IPs that pre-exist to assign to this node
@@ -198,7 +194,7 @@ EXAMPLES = '''
       timeout: 200
       flavor: 101
       security_groups: default
-      auto_floating_ip: yes
+      auto_ip: yes
 
 # Creates a new instance in named cloud mordred availability zone az2
 # and assigns a pre-known floating IP
@@ -379,7 +375,7 @@ def _create_server(module, cloud):
     server = cloud.create_server(
         ip_pool=module.params['floating_ip_pools'],
         ips=module.params['floating_ips'],
-        auto_ip=module.params['auto_floating_ip'],
+        auto_ip=module.params['auto_ip'],
         root_volume=module.params['root_volume'],
         terminate_volume=module.params['terminate_volume'],
         wait=module.params['wait'], timeout=module.params['timeout'],
@@ -398,18 +394,18 @@ def _delete_floating_ip_list(cloud, server, extra_ips):
 def _check_floating_ips(module, cloud, server):
     changed = False
 
-    auto_floating_ip = module.params['auto_floating_ip']
+    auto_ip = module.params['auto_ip']
     floating_ips = module.params['floating_ips']
     floating_ip_pools = module.params['floating_ip_pools']
 
-    if floating_ip_pools or floating_ips or auto_floating_ip:
+    if floating_ip_pools or floating_ips or auto_ip:
         ips = openstack_find_nova_addresses(server.addresses, 'floating')
         if not ips:
             # If we're configured to have a floating but we don't have one,
             # let's add one
             server = cloud.add_ips_to_server(
                 server,
-                auto_ip=auto_floating_ip,
+                auto_ip=auto_ip,
                 ips=floating_ips,
                 ip_pool=floating_ip_pools,
             )
@@ -466,7 +462,7 @@ def main():
         meta                            = dict(default=None),
         userdata                        = dict(default=None),
         config_drive                    = dict(default=False, type='bool'),
-        auto_floating_ip                = dict(default=True, type='bool'),
+        auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
         floating_ips                    = dict(default=None),
         floating_ip_pools               = dict(default=None),
         root_volume                     = dict(default=None),
@@ -475,8 +471,8 @@ def main():
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
-            ['auto_floating_ip', 'floating_ips'],
-            ['auto_floating_ip', 'floating_ip_pools'],
+            ['auto_ip', 'floating_ips'],
+            ['auto_ip', 'floating_ip_pools'],
             ['floating_ips', 'floating_ip_pools'],
             ['flavor', 'flavor_ram'],
             ['image', 'root_volume'],
