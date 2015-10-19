@@ -102,8 +102,8 @@ Try {
     If ($bind_hostname) {
       $site_parameters.HostHeader = $bind_hostname
     }
-    
-    # Fix for error "New-Item : Index was outside the bounds of the array." 
+
+    # Fix for error "New-Item : Index was outside the bounds of the array."
     # This is a bug in the New-WebSite commandlet. Apparently there must be at least one site configured in IIS otherwise New-WebSite crashes.
     # For more details, see http://stackoverflow.com/questions/3573889/ps-c-new-website-blah-throws-index-was-outside-the-bounds-of-the-array
     $sites_list = get-childitem -Path IIS:\sites
@@ -171,15 +171,21 @@ Catch
   Fail-Json (New-Object psobject) $_.Exception.Message
 }
 
-$site = Get-Website | Where { $_.Name -eq $name }
-$result.site = New-Object psobject @{
-  Name = $site.Name
-  ID = $site.ID
-  State = $site.State
-  PhysicalPath = $site.PhysicalPath
-  ApplicationPool = $site.applicationPool
-  Bindings = @($site.Bindings.Collection | ForEach-Object { $_.BindingInformation })
+if ($state -ne 'absent')
+{
+  $site = Get-Website | Where { $_.Name -eq $name }
 }
 
+if ($site)
+{
+  $result.site = New-Object psobject @{
+    Name = $site.Name
+    ID = $site.ID
+    State = $site.State
+    PhysicalPath = $site.PhysicalPath
+    ApplicationPool = $site.applicationPool
+    Bindings = @($site.Bindings.Collection | ForEach-Object { $_.BindingInformation })
+  }
+}
 
 Exit-Json $result
