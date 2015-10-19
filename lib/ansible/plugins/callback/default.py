@@ -61,8 +61,7 @@ class CallbackModule(CallbackBase):
     def v2_runner_on_ok(self, result):
 
         if result._task.action == 'include':
-            msg = 'included: %s for %s' % (result._task.args.get('_raw_params'), result._host.name)
-            color = 'cyan'
+            return
         elif result._result.get('changed', False):
             if result._task.delegate_to is not None or result._task._local_action:
                 if result._task._local_action:
@@ -88,7 +87,7 @@ class CallbackModule(CallbackBase):
             self._process_items(result)
         else:
 
-            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result and result._task.action != 'include':
+            if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
                 msg += " => %s" % (self._dump_results(result._result),)
             self._display.display(msg, color=color)
 
@@ -149,8 +148,7 @@ class CallbackModule(CallbackBase):
     def v2_playbook_item_on_ok(self, result):
 
         if result._task.action == 'include':
-            msg = 'included: %s for %s' % (result._task.args.get('_raw_params'), result._host.name)
-            color = 'cyan'
+            return
         elif result._result.get('changed', False):
             msg = "changed: [%s]" % result._host.get_name()
             color = 'yellow'
@@ -160,7 +158,7 @@ class CallbackModule(CallbackBase):
 
         msg += " => (item=%s)" % (result._result['item'],)
 
-        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result and result._task.action != 'include':
+        if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += " => %s" % self._dump_results(result._result)
         self._display.display(msg, color=color)
 
@@ -185,5 +183,10 @@ class CallbackModule(CallbackBase):
         msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), result._result['item'])
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += " => %s" % self._dump_results(result._result)
+        self._display.display(msg, color='cyan')
+
+    def v2_playbook_on_include(self, included_file):
+        msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
+        color = 'cyan'
         self._display.display(msg, color='cyan')
 
