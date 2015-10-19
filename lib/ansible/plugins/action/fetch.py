@@ -18,14 +18,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import pwd
-import random
-import traceback
-import tempfile
 import base64
 
-from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
