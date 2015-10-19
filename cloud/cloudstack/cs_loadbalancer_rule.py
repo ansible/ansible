@@ -78,12 +78,12 @@ options:
     default: false
   cidr:
     description:
+      - CIDR (full notation) to be used for firewall rule if required.
     required: false
     default: null
   protocol:
     description:
       - The protocol to be used on the load balancer
-      - CIDR (full notation) to be used for firewall rule if required.
     required: false
     default: null
   project:
