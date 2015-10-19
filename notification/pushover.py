@@ -102,11 +102,11 @@ def main():
 
     msg_object = Pushover(module, module.params['user_key'], module.params['app_token'])
     try:
-        msg_object.run(module.params['pri'], module.params['msg'])
+        response = msg_object.run(module.params['pri'], module.params['msg'])
     except:
         module.fail_json(msg='Unable to send msg via pushover')
 
-    module.exit_json(msg=msg, changed=False)
+    module.exit_json(msg='message sent successfully: %s' % response, changed=False)
 
 # import module snippets
 from ansible.module_utils.basic import *
