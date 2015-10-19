@@ -48,7 +48,7 @@ Control Machine Requirements
 
 Currently Ansible can be run from any machine with Python 2.6 or 2.7 installed (Windows isn't supported for the control machine).
 
-This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
+This includes Red Hat, Debian, CentOS, openSUSE, OS X, any of the BSDs, and so on.
 
 .. note::
 
@@ -179,6 +179,27 @@ Now let's test things with a ping command:
 
 You can also use "sudo make install" if you wish.
 
++++++++++++++++++++++++++++++++++++
+
+Latest Release Via Zypper / SUSE
+
+add RPM repository from OBS ( openbuild server )
+
+start yast2 (system management tool) , choose repositories, 
+add repository: http://download.opensuse.org/factory/repo/oss/
+give it a name 
+and add it.
+
+to install, simply do
+yast2 -> software 
+search for ansible.
+
+OR
+
+commandline:
+zypper in ansible
+
+++++++++++++++++++++++
 .. _from_yum:
 
 Latest Release Via Yum
