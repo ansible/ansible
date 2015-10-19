@@ -23,7 +23,6 @@ class ActionModule(ActionBase):
     ''' Create inventory groups based on variables '''
 
     ### We need to be able to modify the inventory
-    BYPASS_HOST_LOOP = True
     TRANSFERS_FILES = False
 
     def run(self, tmp=None, task_vars=dict()):
