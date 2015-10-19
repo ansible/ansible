@@ -19,13 +19,12 @@ __metaclass__ = type
 
 import datetime
 import signal
-import sys
 import termios
 import time
 import tty
 
 from os import isatty
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 
 class AnsibleTimeoutExceeded(Exception):
