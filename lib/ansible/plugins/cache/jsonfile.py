@@ -26,7 +26,7 @@ except ImportError:
     import json
 
 from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.plugins.cache.base import BaseCacheModule
 from ansible.utils.unicode import to_bytes
@@ -140,7 +140,7 @@ class CacheModule(BaseCacheModule):
             pass
         try:
             os.remove("%s/%s" % (self._cache_dir, key))
-        except (OSError,IOError) as e:
+        except (OSError, IOError):
             pass #TODO: only pass on non existing?
 
     def flush(self):
