@@ -21,7 +21,7 @@ __metaclass__ = type
 
 import time
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins.strategy import StrategyBase
 
