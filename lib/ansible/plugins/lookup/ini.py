@@ -19,11 +19,10 @@ __metaclass__ = type
 
 import StringIO
 import os
-import codecs
 import ConfigParser
 import re
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 class LookupModule(LookupBase):
@@ -47,7 +46,7 @@ class LookupModule(LookupBase):
         # Retrieve a single value
         try:
             value = self.cp.get(section, key)
-        except ConfigParser.NoOptionError as e:
+        except ConfigParser.NoOptionError:
             return dflt
         return value
 
@@ -77,7 +76,7 @@ class LookupModule(LookupBase):
                     assert(name in paramvals)
                     paramvals[name] = value
             except (ValueError, AssertionError) as e:
-                raise errors.AnsibleError(e)
+                raise AnsibleError(e)
 
             path = self._loader.path_dwim_relative(basedir, 'files', paramvals['file'])
             if paramvals['type'] == "properties":

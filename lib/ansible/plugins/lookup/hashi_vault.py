@@ -31,7 +31,7 @@ __metaclass__ = type
 
 import os
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 
@@ -59,14 +59,11 @@ class HashiVault:
             raise AnsibleError("Invalid Hashicorp Vault Token Specified")
 
     def get(self):
-        value = ""
-
         data = self.client.read(self.secret)
-        if data == None:
+        if data is None:
             raise AnsibleError("The secret %s doesn't seem to exist" % self.secret)
         else:
             return data['data']['value']
-
 
 
 class LookupModule(LookupBase):

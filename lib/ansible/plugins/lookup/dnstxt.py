@@ -17,8 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import os
-
 HAVE_DNS=False
 try:
     import dns.resolver
@@ -27,7 +25,7 @@ try:
 except ImportError:
     pass
 
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 # ==============================================================
@@ -58,7 +56,7 @@ class LookupModule(LookupBase):
                 string = 'NXDOMAIN'
             except dns.resolver.Timeout:
                 string = ''
-            except dns.exception.DNSException as e:
+            except DNSException as e:
                 raise AnsibleError("dns.resolver unhandled exception", e)
 
             ret.append(''.join(string))
