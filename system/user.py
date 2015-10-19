@@ -1352,20 +1352,21 @@ class SunOS(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.module.check_mode:
-            return (0, '', '')
-        else:
-            # modify the user if cmd will do anything
-            if cmd_len != len(cmd):
+        # modify the user if cmd will do anything
+        if cmd_len != len(cmd):
+            (rc, out, err) = (0, '', '')
+            if not self.module.check_mode:
                 cmd.append(self.name)
                 (rc, out, err) = self.execute_command(cmd)
                 if rc is not None and rc != 0:
                     self.module.fail_json(name=self.name, msg=err, rc=rc)
-            else:
-                (rc, out, err) = (None, '', '')
+        else:
+            (rc, out, err) = (None, '', '')
 
-            # we have to set the password by editing the /etc/shadow file 
-            if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+        # we have to set the password by editing the /etc/shadow file 
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            (rc, out, err) = (0, '', '')
+            if not self.module.check_mode:
                 try:
                     lines = []
                     for line in open(self.SHADOWFILE, 'rb').readlines():
@@ -1382,7 +1383,7 @@ class SunOS(User):
                 except Exception, err:
                     self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
-            return (rc, out, err)
+        return (rc, out, err)
 
 # ===========================================
 class DarwinUser(User):
