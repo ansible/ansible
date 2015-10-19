@@ -19,7 +19,13 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from ansible.errors.yaml_strings import *
+from ansible.errors.yaml_strings import ( YAML_POSITION_DETAILS,
+        YAML_COMMON_UNQUOTED_VARIABLE_ERROR,
+        YAML_COMMON_DICT_ERROR,
+        YAML_COMMON_UNQUOTED_COLON_ERROR,
+        YAML_COMMON_PARTIALLY_QUOTED_LINE_ERROR,
+        YAML_COMMON_UNBALANCED_QUOTES_ERROR )
+
 from ansible.utils.unicode import to_unicode, to_str
 
 
