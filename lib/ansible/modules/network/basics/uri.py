@@ -472,7 +472,6 @@ def main():
         content_type, params = cgi.parse_header(uresp['content_type'])
         if 'charset' in params:
             content_encoding = params['charset']
-        import q ; q.q(content_encoding)
         u_content = unicode(content, content_encoding, errors='replace')
         if content_type.startswith('application/json') or \
                 content_type.startswith('text/json'):
