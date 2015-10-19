@@ -50,9 +50,9 @@ options:
         required: false
         default: '*'
         description:
-            - One or more (shell type) patterns, which restrict the list of files to be returned to
+            - One or more (shell or regex) patterns, which restrict the list of files to be returned to
               those whose basenames match at least one of the patterns specified.  Multiple patterns can be
-              specified using a list. The patterns can be simple shell globs or a python regex prefixed by a '~'.
+              specified using a list.
         aliases: ['pattern']
     contains:
         required: false
@@ -123,7 +123,7 @@ EXAMPLES = '''
 - find: paths="/var/tmp" age="3600" age_stamp=atime recurse=yes
 
 # find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-- find: paths="/var/tmp" patterns="~.*\.(?:old|log\.gz)$" size="10m"
+- find: paths="/var/tmp" patterns="^.*?\.(?:old|log\.gz)$" size="10m"
 
 '''
 
@@ -156,14 +156,25 @@ examined:
 
 def pfilter(f, patterns=None):
     '''filter using glob patterns'''
+
     if patterns is None:
         return True
+
+    match = False
     for p in patterns:
-        if p.startswith('~'):
-           r =  re.compile(p[1:])
-           return r.match(f)
-        else:
-           return fnmatch.fnmatch(f, p)
+        try:
+            r =  re.compile(p)
+            match = r.match(f)
+        except:
+            pass
+
+        if not match:
+            match = fnmatch.fnmatch(f, p)
+
+        if match:
+            break
+
+    return match
 
 
 def agefilter(st, now, age, timestamp):
