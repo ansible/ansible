@@ -23,7 +23,6 @@ import fnmatch
 import os
 import sys
 import re
-import stat
 import itertools
 
 from ansible.compat.six import string_types
@@ -134,7 +133,7 @@ class Inventory(object):
                 return re.search(pattern_str[1:], str)
             else:
                 return fnmatch.fnmatch(str, pattern_str)
-        except Exception as e:
+        except Exception:
             raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
     def _match_list(self, items, item_attr, pattern_str):
@@ -144,7 +143,7 @@ class Inventory(object):
                 pattern = re.compile(fnmatch.translate(pattern_str))
             else:
                 pattern = re.compile(pattern_str[1:])
-        except Exception as e:
+        except Exception:
             raise AnsibleError('invalid host pattern: %s' % pattern_str)
 
         for item in items:
@@ -397,7 +396,6 @@ class Inventory(object):
         """
 
         results = []
-        hosts = []
         hostnames = set()
 
         def __append_host_to_results(host):
