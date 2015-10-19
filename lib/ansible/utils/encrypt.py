@@ -30,6 +30,13 @@ try:
 except:
     pass
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 KEYCZAR_AVAILABLE=False
 try:
     try:
@@ -44,7 +51,7 @@ try:
             import keyczar.errors as key_errors
             from keyczar.keys import AesKey
         except PowmInsecureWarning:
-            system_warning(
+            display.system_warning(
                 "The version of gmp you have installed has a known issue regarding " + \
                 "timing vulnerabilities when used with pycrypto. " + \
                 "If possible, you should update it (i.e. yum update gmp)."
