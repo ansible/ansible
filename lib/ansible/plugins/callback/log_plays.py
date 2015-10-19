@@ -54,10 +54,7 @@ class CallbackModule(CallbackBase):
                 data = 'omitted'
             else:
                 data = data.copy()
-                invocation = data.pop('invocation', None)
                 data = json.dumps(data)
-                if invocation is not None:
-                    data = json.dumps(invocation) + " => %s " % data
 
         path = os.path.join("/var/log/ansible/hosts", host)
         now = time.strftime(self.TIME_FORMAT, time.localtime())
