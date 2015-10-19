@@ -138,6 +138,7 @@ New Modules:
 * cloudstack: cs_instancegroup
 * cloudstack: cs_ip_address
 * cloudstack: cs_loadbalancer_rule
+* cloudstack: cs_loadbalancer_rule_member
 * cloudstack: cs_network
 * cloudstack: cs_portforward
 * cloudstack: cs_project
