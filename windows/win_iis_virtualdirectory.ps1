@@ -66,7 +66,11 @@ $directory_path = if($application) {
 }
 
 # Directory info
-$directory = Get-WebVirtualDirectory -Site $site -Name $name
+$directory = if($application) {
+  Get-WebVirtualDirectory -Site $site -Name $name -Application $application
+} else {
+  Get-WebVirtualDirectory -Site $site -Name $name
+}
 
 try {
   # Add directory
