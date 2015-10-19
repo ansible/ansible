@@ -145,7 +145,7 @@ class ResultProcess(multiprocessing.Process):
                             self._send_result(('add_host', result_item))
                         elif 'add_group' in result_item:
                             # this task added a new group (group_by module)
-                            self._send_result(('add_group', result._task))
+                            self._send_result(('add_group', result._host, result_item))
                         elif 'ansible_facts' in result_item:
                             # if this task is registering facts, do that now
                             item = result_item.get('item', None)

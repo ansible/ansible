@@ -223,14 +223,15 @@ class StrategyBase:
                     ret_results.append(task_result)
 
                 elif result[0] == 'add_host':
-                    task_result = result[1]
-                    new_host_info = task_result.get('add_host', dict())
+                    result_item = result[1]
+                    new_host_info = result_item.get('add_host', dict())
 
                     self._add_host(new_host_info)
 
                 elif result[0] == 'add_group':
-                    task        = result[1]
-                    self._add_group(task, iterator)
+                    host = result[1]
+                    result_item = result[2]
+                    self._add_group(host, result_item)
 
                 elif result[0] == 'notify_handler':
                     task_result  = result[1]
@@ -353,44 +354,35 @@ class StrategyBase:
         # FIXME: is this still required?
         self._inventory.clear_pattern_cache()
 
-    def _add_group(self, task, iterator):
+    def _add_group(self, host, result_item):
         '''
         Helper function to add a group (if it does not exist), and to assign the
         specified host to that group.
         '''
 
+        changed = False
+
         # the host here is from the executor side, which means it was a
         # serialized/cloned copy and we'll need to look up the proper
         # host object from the master inventory
-        groups = {}
-        changed = False
+        real_host = self._inventory.get_host(host.name)
 
-        for host in self._inventory.get_hosts():
-            original_task = iterator.get_original_task(host, task)
-            all_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=original_task)
-            templar = Templar(loader=self._loader, variables=all_vars)
-            group_name = templar.template(original_task.args.get('key'))
-            if task.evaluate_conditional(templar=templar, all_vars=all_vars):
-                if group_name not in groups:
-                    groups[group_name] = []
-                groups[group_name].append(host)
+        group_name = result_item.get('add_group')
+        new_group = self._inventory.get_group(group_name)
+        if not new_group:
+            # create the new group and add it to inventory
+            new_group = Group(name=group_name)
+            self._inventory.add_group(new_group)
+            new_group.vars = self._inventory.get_group_vars(new_group)
 
-        for group_name, hosts in iteritems(groups):
-            new_group = self._inventory.get_group(group_name)
-            if not new_group:
-                # create the new group and add it to inventory
-                new_group = Group(name=group_name)
-                self._inventory.add_group(new_group)
-                new_group.vars = self._inventory.get_group_vars(new_group)
+            # and add the group to the proper hierarchy
+            allgroup = self._inventory.get_group('all')
+            allgroup.add_child_group(new_group)
+            changed = True
 
-                # and add the group to the proper hierarchy
-                allgroup = self._inventory.get_group('all')
-                allgroup.add_child_group(new_group)
-                changed = True
-            for host in hosts:
-                if group_name not in host.get_groups():
-                    new_group.add_host(host)
-                    changed = True
+        if group_name not in host.get_groups():
+            new_group.add_host(real_host)
+            changed = True
 
         return changed
 
