@@ -44,7 +44,6 @@ options:
       - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
     required: true
     default: null
-    aliases: []
   dest:
     description:
       - path of where to download the file to (if desired). If I(dest) is a directory, the basename of the file on the remote server will be used.
@@ -73,7 +72,7 @@ options:
     version_added: "2.0"
   method:
     description:
-      - The HTTP method of the request or response.
+      - The HTTP method of the request or response. It MUST be uppercase.
     required: false
     choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE", "CONNECT", "REFRESH" ]
     default: "GET"
