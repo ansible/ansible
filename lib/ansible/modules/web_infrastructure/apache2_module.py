@@ -56,7 +56,7 @@ def _disable_module(module):
 
     result, stdout, stderr = module.run_command("%s %s" % (a2dismod_binary, name))
 
-    if re.match(r'.*\b' + name + r' already disabled', stdout, re.S):
+    if re.match(r'.*\b' + name + r' already disabled', stdout, re.S|re.M):
         module.exit_json(changed = False, result = "Success")
     elif result != 0:
         module.fail_json(msg="Failed to disable module %s: %s" % (name, stdout))
@@ -71,7 +71,7 @@ def _enable_module(module):
 
     result, stdout, stderr = module.run_command("%s %s" % (a2enmod_binary, name))
 
-    if re.match(r'.*\b' + name + r' already enabled', stdout, re.S):
+    if re.match(r'.*\b' + name + r' already enabled', stdout, re.S|re.M):
         module.exit_json(changed = False, result = "Success")
     elif result != 0:
         module.fail_json(msg="Failed to enable module %s: %s" % (name, stdout))
