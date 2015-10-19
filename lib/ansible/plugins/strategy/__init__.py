@@ -401,6 +401,7 @@ class StrategyBase:
 
         try:
             data = self._loader.load_from_file(included_file._filename)
+            self._tqm.send_callback('v2_playbook_on_include', included_file)
             if data is None:
                 return []
         except AnsibleError as e:
