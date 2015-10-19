@@ -23,7 +23,7 @@ import ast
 import re
 
 from ansible import constants as C
-from ansible.errors import *
+from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
@@ -231,7 +231,7 @@ class InventoryParser(object):
         try:
             tokens = shlex_split(line, comments=True)
         except ValueError as e:
-            self._raise_error("Error parsing host definition '%s': %s" % (varstring, e))
+            self._raise_error("Error parsing host definition '%s': %s" % (line, e))
 
         (hostnames, port) = self._expand_hostpattern(tokens[0])
         hosts = self._Hosts(hostnames, port)
