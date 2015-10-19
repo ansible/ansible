@@ -22,9 +22,9 @@ DOCUMENTATION = '''
 ---
 module: win_iis_virtualdirectory
 version_added: "2.0"
-short_description: Configures a IIS virtual directories.
+short_description: Configures a virtual directory in IIS.
 description:
-     - Creates, Removes and configures a IIS Web site
+     - Creates, Removes and configures a virtual directory in IIS.
 options:
   name:
     description:
@@ -37,12 +37,11 @@ options:
       - absent
       - present
     required: false
-    default: null
+    default: present
   site:
     description:
       - The site name under which the virtual directory is created or exists.
-    required: false
-    default: null
+    required: true
   application:
     description:
       - The application under which the virtual directory is created or exists.
@@ -54,4 +53,15 @@ options:
     required: false
     default: null
 author: Henrik Wallström
+'''
+
+EXAMPLES = '''
+# This creates a virtual directory if it doesn't exist.
+$ ansible -i hosts -m win_iis_virtualdirectory -a "name='somedirectory' site=somesite state=present physical_path=c:\\virtualdirectory\\some" host
+
+# This removes a virtual directory if it exists.
+$ ansible -i hosts -m win_iis_virtualdirectory -a "name='somedirectory' site=somesite state=absent" host
+
+# This creates a virtual directory on an application if it doesn't exist.
+$ ansible -i hosts -m win_iis_virtualdirectory -a "name='somedirectory' site=somesite application=someapp state=present physical_path=c:\\virtualdirectory\\some" host
 '''
