@@ -25,6 +25,7 @@ import os
 import os.path
 import pipes
 import subprocess
+import traceback
 
 from ansible import constants as C
 from ansible.errors import AnsibleError
