@@ -21,3 +21,4 @@
     - { role: test_cs_portforward,          tags: test_cs_portforward }
     - { role: test_cs_account,              tags: test_cs_account }
     - { role: test_cs_firewall,             tags: test_cs_firewall }
+    - { role: test_cs_loadbalancer_rule,    tags: test_cs_loadbalancer_rule }
