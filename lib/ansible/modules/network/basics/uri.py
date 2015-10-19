@@ -472,7 +472,8 @@ def main():
         content_type, params = cgi.parse_header(uresp['content_type'])
         if 'charset' in params:
             content_encoding = params['charset']
-        u_content = unicode(content, content_encoding, errors='xmlcharrefreplace')
+        import q ; q.q(content_encoding)
+        u_content = unicode(content, content_encoding, errors='replace')
         if content_type.startswith('application/json') or \
                 content_type.startswith('text/json'):
             try:
@@ -481,7 +482,7 @@ def main():
             except:
                 pass
     else:
-        u_content = unicode(content, content_encoding, errors='xmlcharrefreplace')
+        u_content = unicode(content, content_encoding, errors='replace')
 
     if resp['status'] not in status_code:
         module.fail_json(msg="Status code was not " + str(status_code), content=u_content, **uresp)
