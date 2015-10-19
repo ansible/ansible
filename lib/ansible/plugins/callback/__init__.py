@@ -292,3 +292,7 @@ class CallbackBase:
 
     def v2_playbook_on_item_skipped(self, result):
         pass # no v1
+
+    def v2_playbook_on_include(self, included_file):
+        pass #no v1 correspondance
+
