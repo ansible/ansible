@@ -44,9 +44,9 @@ options:
     required: false
     default: no
     choices: [ "yes", "no" ]
-  no-suggests:
+  no-recommends:
     description:
-      - Corresponds to the C(--no-suggests) option for I(urpmi).
+      - Corresponds to the C(--no-recommends) option for I(urpmi).
     required: false
     default: yes
     choices: [ "yes", "no" ]
@@ -130,7 +130,7 @@ def remove_packages(module, packages):
     module.exit_json(changed=False, msg="package(s) already absent")
 
 
-def install_packages(module, pkgspec, force=True, no_suggests=True):
+def install_packages(module, pkgspec, force=True, no_recommends=True):
 
     packages = ""
     for package in pkgspec:
@@ -138,17 +138,17 @@ def install_packages(module, pkgspec, force=True, no_suggests=True):
             packages += "'%s' " % package
 
     if len(packages) != 0:
-        if no_suggests:
-            no_suggests_yes = '--no-suggests'
+        if no_recommends:
+            no_recommends_yes = '--no-recommends'
         else:
-            no_suggests_yes = ''
+            no_recommends_yes = ''
 
         if force:
             force_yes = '--force'
         else:
             force_yes = ''
 
-        cmd = ("%s --auto %s --quiet %s %s" % (URPMI_PATH, force_yes, no_suggests_yes, packages))
+        cmd = ("%s --auto %s --quiet %s %s" % (URPMI_PATH, force_yes, no_recommends_yes, packages))
 
         rc, out, err = module.run_command(cmd)
 
@@ -168,12 +168,12 @@ def install_packages(module, pkgspec, force=True, no_suggests=True):
 
 def main():
     module = AnsibleModule(
-            argument_spec    = dict(
-                state        = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
-                update_cache = dict(default=False, aliases=['update-cache'], type='bool'),
-                force        = dict(default=True, type='bool'),
-                no_suggests  = dict(default=True, aliases=['no-suggests'], type='bool'),
-                package      = dict(aliases=['pkg', 'name'], required=True)))
+            argument_spec     = dict(
+                state         = dict(default='installed', choices=['installed', 'removed', 'absent', 'present']),
+                update_cache  = dict(default=False, aliases=['update-cache'], type='bool'),
+                force         = dict(default=True, type='bool'),
+                no_recommends = dict(default=True, aliases=['no-recommends'], type='bool'),
+                package       = dict(aliases=['pkg', 'name'], required=True)))
                 
 
     if not os.path.exists(URPMI_PATH):
@@ -182,7 +182,7 @@ def main():
     p = module.params
 
     force_yes = p['force']
-    no_suggest_yes = p['no_suggests']
+    no_recommends_yes = p['no_recommends']
 
     if p['update_cache']:
         update_package_db(module)
@@ -190,7 +190,7 @@ def main():
     packages = p['package'].split(',')
 
     if p['state'] in [ 'installed', 'present' ]:
-        install_packages(module, packages, force_yes, no_suggest_yes)
+        install_packages(module, packages, force_yes, no_recommends_yes)
 
     elif p['state'] in [ 'removed', 'absent' ]:
         remove_packages(module, packages)
