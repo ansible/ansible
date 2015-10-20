@@ -357,9 +357,11 @@ class PlayContext(Base):
                 if connection_type in delegated_vars:
                     break
             else:
-                if new_info.remote_addr in C.LOCALHOST:
+                remote_addr_local  = new_info.remote_addr in C.LOCALHOST
+                inv_hostname_local = delegated_vars.get('inventory_hostname') in C.LOCALHOST
+                if remote_addr_local and inv_hostname_local:
                     setattr(new_info, 'connection', 'local')
-                elif getattr(new_info, 'connection', None) == 'local' and new_info.remote_addr not in C.LOCALHOST:
+                elif getattr(new_info, 'connection', None) == 'local' and (not remote_addr_local or not inv_hostname_local):
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
 
         # set no_log to default if it was not previouslly set
