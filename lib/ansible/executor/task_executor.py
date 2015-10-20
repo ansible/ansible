@@ -276,7 +276,7 @@ class TaskExecutor:
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
         if not self._task.evaluate_conditional(templar, variables):
-            self._display.debug("when evaulation failed, skipping this task")
+            self._display.debug("when evaluation failed, skipping this task")
             return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
 
         # if this task is a TaskInclude, we just return now with a success code so the
