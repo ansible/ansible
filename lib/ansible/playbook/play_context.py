@@ -357,7 +357,11 @@ class PlayContext(Base):
                 if connection_type in delegated_vars:
                     break
             else:
-                delegated_to_localhost = new_info.remote_addr in C.LOCALHOST
+                if C.DEFAULT_REMOTE_PORT is not None:
+                    using_default_port = new_info.port is None or new_info.port == int(C.DEFAULT_REMOTE_PORT)
+                else:
+                    using_default_port = new_info.port is None
+                delegated_to_localhost = new_info.remote_addr in C.LOCALHOST and using_default_port
                 if delegated_to_localhost:
                     new_info.connection = 'local'
                 elif getattr(new_info, 'connection', None) == 'local' and not delegated_to_localhost:
