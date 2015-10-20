@@ -75,11 +75,7 @@ options:
       - An associative array of access logs configuration settings (see example)
     require: false
     default: None
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    aliases: ['aws_region', 'ec2_region']
+    version_added: "2.0"
   subnets:
     description:
       - A list of VPC subnets to use when creating ELB. Zones should be empty if using this.
