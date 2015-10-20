@@ -205,7 +205,7 @@ Below is an example tasks file that explains how a role works.  Our common role 
     # file: roles/common/tasks/main.yml
 
     - name: be sure ntp is installed
-      yum: pkg=ntp state=installed
+      yum: name=ntp state=installed
       tags: ntp
 
     - name: be sure ntp is configured
