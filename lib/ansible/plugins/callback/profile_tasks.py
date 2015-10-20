@@ -18,6 +18,10 @@
 # Provides per-task timing, ongoing playbook elapsed time and
 # ordered list of top 20 longest running tasks at end
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import time
 
 from ansible.plugins.callback import CallbackBase
