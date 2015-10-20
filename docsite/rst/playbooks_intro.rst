@@ -62,7 +62,7 @@ For starters, here's a playbook that contains just one play::
       remote_user: root
       tasks:
       - name: ensure apache is at the latest version
-        yum: pkg=httpd state=latest
+        yum: name=httpd state=latest
       - name: write the apache config file
         template: src=/srv/httpd.j2 dest=/etc/httpd.conf
         notify:
@@ -88,7 +88,7 @@ YAML dictionaries to supply the modules with their ``key=value`` arguments.::
       tasks:
       - name: ensure apache is at the latest version
         yum:
-          pkg: httpd
+          name: httpd
           state: latest
       - name: write the apache config file
         template:
@@ -115,7 +115,7 @@ the web servers, and then the database servers. For example::
 
       tasks:
       - name: ensure apache is at the latest version
-        yum: pkg=httpd state=latest
+        yum: name=httpd state=latest
       - name: write the apache config file
         template: src=/srv/httpd.j2 dest=/etc/httpd.conf
 
