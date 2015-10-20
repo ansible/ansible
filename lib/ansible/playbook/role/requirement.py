@@ -140,17 +140,19 @@ class RoleRequirement(RoleDefinition):
             role = RoleRequirement.role_spec_parse(role['role'])
         else:
             role = role.copy()
-            # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
-            if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
-                role["src"] = "git+" + role["src"]
 
-            if '+' in role["src"]:
-                (scm, src) = role["src"].split('+')
-                role["scm"] = scm
-                role["src"] = src
+            if 'src'in role:
+                # New style: { src: 'galaxy.role,version,name', other_vars: "here" }
+                if 'github.com' in role["src"] and 'http' in role["src"] and '+' not in role["src"] and not role["src"].endswith('.tar.gz'):
+                    role["src"] = "git+" + role["src"]
 
-            if 'name' not in role:
-                role["name"] = RoleRequirement.repo_url_to_role_name(role["src"])
+                if '+' in role["src"]:
+                    (scm, src) = role["src"].split('+')
+                    role["scm"] = scm
+                    role["src"] = src
+
+                if 'name' not in role:
+                    role["name"] = RoleRequirement.repo_url_to_role_name(role["src"])
 
             if 'version' not in role:
                 role['version'] = ''
