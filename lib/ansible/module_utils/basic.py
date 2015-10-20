@@ -65,7 +65,7 @@ import grp
 import pwd
 import platform
 import errno
-from itertools import repeat
+from itertools import repeat, chain
 
 try:
     import syslog
@@ -109,9 +109,24 @@ except AttributeError:
         return d.items()
 else:
     # Python 2
-    def iteritems(d):               # Python 2
+    def iteritems(d):
         return d.iteritems()
 
+try:
+    NUMBERTYPES = (int, long, float)
+except NameError:
+    # Python 3
+    NUMBERTYPES = (int, float)
+
+# Python2 & 3 way to get NoneType
+NoneType = type(None)
+
+try:
+    from collections import Sequence, Mapping
+except ImportError:
+    # python2.5
+    Sequence = (list, tuple)
+    Mapping = (dict,)
 
 try:
     import json
@@ -408,6 +423,51 @@ def heuristic_log_sanitize(data):
 
     return ''.join(output)
 
+def _return_values(obj):
+    """ Return stringified values from datastructures. For use with removing
+    sensitive values pre-jsonification."""
+    if isinstance(obj, basestring):
+        if obj:
+            yield obj
+        return
+    elif isinstance(obj, Sequence):
+        for element in obj:
+            for subelement in _return_values(element):
+                yield subelement
+    elif isinstance(obj, Mapping):
+        for element in obj.items():
+            for subelement in _return_values(element[1]):
+                yield subelement
+    elif isinstance(obj, (bool, NoneType)):
+        # This must come before int because bools are also ints
+        return
+    elif isinstance(obj, NUMBERTYPES):
+        yield str(obj)
+    else:
+        raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
+
+def _remove_values(value, no_log_strings):
+    """ Remove strings in no_log_strings from value.  If value is a container
+    type, then remove a lot more"""
+    if isinstance(value, basestring):
+        if value in no_log_strings:
+            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+        for omit_me in no_log_strings:
+            value = value.replace(omit_me, '*' * 8)
+    elif isinstance(value, Sequence):
+        return [_remove_values(elem, no_log_strings) for elem in value]
+    elif isinstance(value, Mapping):
+        return dict((k, _remove_values(v, no_log_strings)) for k, v in value.items())
+    elif isinstance(value, tuple(chain(NUMBERTYPES, (bool, NoneType)))):
+        stringy_value = str(value)
+        if stringy_value in no_log_strings:
+            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+        for omit_me in no_log_strings:
+            if omit_me in stringy_value:
+                return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+    else:
+        raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+    return value
 
 def is_executable(path):
     '''is the given path executable?'''
@@ -1397,7 +1457,7 @@ class AnsibleModule(object):
         ''' return a bool for the arg '''
         if arg is None or type(arg) == bool:
             return arg
-        if type(arg) in types.StringTypes:
+        if isinstance(arg, basestring):
             arg = arg.lower()
         if arg in BOOLEANS_TRUE:
             return True
@@ -1432,11 +1492,30 @@ class AnsibleModule(object):
         for path in self.cleanup_files:
             self.cleanup(path)
 
+    def remove_no_log_values(self, to_jsonify):
+        """ Strip values associated with no_log parameters from output.
+            Note: does not strip dict keys, only dict values.
+        """
+        no_log_strings = set()
+        # Use the argspec to determine which args are no_log
+        for arg_name, arg_opts in self.argument_spec.items():
+            if arg_opts.get('no_log', False):
+                # Find the value for the no_log'd param
+                no_log_object = self.params.get(arg_name, None)
+                if no_log_object:
+                    no_log_strings.update(_return_values(no_log_object))
+
+        for field, value in to_jsonify.items():
+            to_jsonify[field] = _remove_values(value, no_log_strings)
+
+        return to_jsonify
+
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
         if not 'changed' in kwargs:
             kwargs['changed'] = False
+        self.remove_no_log_values(kwargs)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
         sys.exit(0)
@@ -1446,6 +1525,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+        self.remove_no_log_values(kwargs)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
         sys.exit(1)
