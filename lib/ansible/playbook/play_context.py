@@ -358,9 +358,9 @@ class PlayContext(Base):
                     break
             else:
                 if new_info.remote_addr in C.LOCALHOST:
-                    setattr(new_info, 'connection', 'local')
+                    new_info.connection = 'local'
                 elif getattr(new_info, 'connection', None) == 'local' and new_info.remote_addr not in C.LOCALHOST:
-                    setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
+                    new_info.connection = C.DEFAULT_TRANSPORT
 
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
