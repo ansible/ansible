@@ -154,69 +154,6 @@ class TestModuleUtilsBasic(unittest.TestCase):
 
         self.assertEqual(test_data, res2)
 
-    def test_module_utils_basic_heuristic_log_sanitize(self):
-        from ansible.module_utils.basic import heuristic_log_sanitize
-
-        URL_SECRET = 'http://username:pas:word@foo.com/data'
-        SSH_SECRET = 'username:pas:word@foo.com/data'
-
-        def _gen_data(records, per_rec, top_level, secret_text):
-            hostvars = {'hostvars': {}}
-            for i in range(1, records, 1):
-                host_facts = {'host%s' % i:
-                                {'pstack':
-                                    {'running': '875.1',
-                                     'symlinked': '880.0',
-                                     'tars': [],
-                                     'versions': ['885.0']},
-                             }}
-                if per_rec:
-                    host_facts['host%s' % i]['secret'] = secret_text
-                hostvars['hostvars'].update(host_facts)
-            if top_level:
-                hostvars['secret'] = secret_text
-            return hostvars
-
-        url_data = repr(_gen_data(3, True, True, URL_SECRET))
-        ssh_data = repr(_gen_data(3, True, True, SSH_SECRET))
-
-        url_output = heuristic_log_sanitize(url_data)
-        ssh_output = heuristic_log_sanitize(ssh_data)
-
-        # Basic functionality: Successfully hid the password
-        try:
-            self.assertNotIn('pas:word', url_output)
-            self.assertNotIn('pas:word', ssh_output)
-
-            # Slightly more advanced, we hid all of the password despite the ":"
-            self.assertNotIn('pas', url_output)
-            self.assertNotIn('pas', ssh_output)
-        except AttributeError:
-            # python2.6 or less's unittest
-            self.assertFalse('pas:word' in url_output, '%s is present in %s' % ('"pas:word"', url_output))
-            self.assertFalse('pas:word' in ssh_output, '%s is present in %s' % ('"pas:word"', ssh_output))
-
-            self.assertFalse('pas' in url_output, '%s is present in %s' % ('"pas"', url_output))
-            self.assertFalse('pas' in ssh_output, '%s is present in %s' % ('"pas"', ssh_output))
-
-        # In this implementation we replace the password with 8 "*" which is
-        # also the length of our password.  The url fields should be able to
-        # accurately detect where the password ends so the length should be
-        # the same:
-        self.assertEqual(len(url_output), len(url_data))
-
-        # ssh checking is harder as the heuristic is overzealous in many
-        # cases.  Since the input will have at least one ":" present before
-        # the password we can tell some things about the beginning and end of
-        # the data, though:
-        self.assertTrue(ssh_output.startswith("{'"))
-        self.assertTrue(ssh_output.endswith("}"))
-        try:
-            self.assertIn(":********@foo.com/data'", ssh_output)
-        except AttributeError:
-            # python2.6 or less's unittest
-            self.assertTrue(":********@foo.com/data'" in ssh_output, '%s is not present in %s' % (":********@foo.com/data'", ssh_output))
-
     def test_module_utils_basic_get_module_path(self):
         from ansible.module_utils.basic import get_module_path
         with patch('os.path.realpath', return_value='/path/to/foo/'):
