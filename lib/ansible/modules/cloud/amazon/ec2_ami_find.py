@@ -163,6 +163,105 @@ EXAMPLES = '''
     wait: yes
 '''
 
+RETURN = '''
+ami_id:
+    description: id of found amazon image
+    returned: when AMI found
+    type: string
+    sample: "ami-e9095e8c"
+architecture:
+    description: architecture of image
+    returned: when AMI found
+    type: string
+    sample: "x86_64"
+architecture:
+    description: architecture of image
+    returned: when AMI found
+    type: string
+    sample: "x86_64"
+block_device_mapping:
+    description: block device mapping associated with image
+    returned: when AMI found
+    type: dictionary of block devices
+    sample: {
+	"/dev/xvda": {
+    	    "delete_on_termination": true,
+            "encrypted": false,
+            "size": 8,
+            "snapshot_id": "snap-ca0330b8",
+            "volume_type": "gp2"
+    }
+creationDate:
+    description: creation date of image
+    returned: when AMI found
+    type: string
+    sample: "2015-10-15T22:43:44.000Z"
+description:
+    description: description of image
+    returned: when AMI found
+    type: string
+    sample: "test-server01"
+hypervisor:
+    description: type of hypervisor
+    returned: when AMI found
+    type: string
+    sample: "xen"
+is_public:
+    description: whether image is public
+    returned: when AMI found
+    type: bool
+    sample: false
+location:
+    description: location of image
+    returned: when AMI found
+    type: string
+    sample: "435210894375/test-server01-20151015-234343"
+name:
+    description: ami name of image
+    returned: when AMI found
+    type: string
+    sample: "test-server01-20151015-234343"
+owner_id:
+    description: owner of image
+    returned: when AMI found
+    type: string
+    sample: "435210894375"
+platform:
+    description: plaform of image
+    returned: when AMI found
+    type: string
+    sample: null
+root_device_name:
+    description: rood device name of image
+    returned: when AMI found
+    type: string
+    sample: "/dev/xvda"
+root_device_type:
+    description: rood device type of image
+    returned: when AMI found
+    type: string
+    sample: "ebs"
+state:
+    description: state of image
+    returned: when AMI found
+    type: string
+    sample: "available"
+tags:
+    description: tags assigned to image
+    returned: when AMI found
+    type: dictionary of tags
+    sample: {
+	"Environment": "devel",
+	"Name": "test-server01",
+        "Role": "web"
+    }
+virtualization_type:
+    description: image virtualization type
+    returned: when AMI found
+    type: string
+    sample: "hvm"
+'''
+
 try:
     import boto.ec2
     from boto.ec2.blockdevicemapping import BlockDeviceType, BlockDeviceMapping
@@ -323,4 +422,3 @@ from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
-
