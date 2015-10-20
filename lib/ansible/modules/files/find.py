@@ -25,8 +25,6 @@ import stat
 import fnmatch
 import time
 import re
-import shutil
-
 
 DOCUMENTATION = '''
 ---
@@ -50,9 +48,9 @@ options:
         required: false
         default: '*'
         description:
-            - One or more (shell or regex) patterns, which restrict the list of files to be returned to
-              those whose basenames match at least one of the patterns specified.  Multiple patterns can be
-              specified using a list.
+            - One or more (shell or regex) patterns, which type is controled by C(use_regex) option.
+            - The patterns restrict the list of files to be returned to those whose basenames match at
+              least one of the patterns specified. Multiple patterns can be specified using a list.
         aliases: ['pattern']
     contains:
         required: false
@@ -109,6 +107,12 @@ options:
         choices: [ True, False ]
         description:
             - Set this to true to retrieve a file's sha1 checksum
+    use_regex:
+        required: false
+        default: "False"
+        choices: [ True, False ]
+        description:
+            - If false the patterns are file globs (shell) if true they are python regexes
 '''
 
 
@@ -122,9 +126,11 @@ EXAMPLES = '''
 # Recursively find /var/tmp files with last access time greater than 3600 seconds
 - find: paths="/var/tmp" age="3600" age_stamp=atime recurse=yes
 
-# find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
-- find: paths="/var/tmp" patterns="^.*?\.(?:old|log\.gz)$" size="10m"
+# find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz
+- find: paths="/var/tmp" patterns="'*.old','*.log.gz'" size="10m"
 
+# find /var/log files equal or greater than 10 megabytes ending with .old or .log.gz via regex
+- find: paths="/var/tmp" patterns="^.*?\.(?:old|log\.gz)$" size="10m" use_regex=True
 '''
 
 RETURN = '''
@@ -154,27 +160,24 @@ examined:
     sample: 34
 '''
 
-def pfilter(f, patterns=None):
+def pfilter(f, patterns=None, use_regex=False):
     '''filter using glob patterns'''
 
     if patterns is None:
         return True
 
-    match = False
-    for p in patterns:
-        try:
+    if use_regex:
+        for p in patterns:
             r =  re.compile(p)
-            match = r.match(f)
-        except:
-            pass
+            if r.match(f):
+                return True
+    else:
 
-        if not match:
-            match = fnmatch.fnmatch(f, p)
+        for p in patterns:
+            if fnmatch.fnmatch(f, p):
+                return True
 
-        if match:
-            break
-
-    return match
+    return False
 
 
 def agefilter(st, now, age, timestamp):
@@ -262,6 +265,7 @@ def main():
             hidden        = dict(default="False", type='bool'),
             follow        = dict(default="False", type='bool'),
             get_checksum  = dict(default="False", type='bool'),
+            use_regex     = dict(default="False", type='bool'),
         ),
     )
 
@@ -307,16 +311,21 @@ def main():
                     if os.path.basename(fsname).startswith('.') and not params['hidden']:
                        continue
 
-                    st = os.stat(fsname)
+                    try:
+                        st = os.stat(fsname)
+                    except:
+                        msg+="%s was skipped as it does not seem to be a valid file or it cannot be accessed\n" % fsname
+                        continue
+
                     r = {'path': fsname}
                     if stat.S_ISDIR(st.st_mode) and params['file_type'] == 'directory':
-                        if pfilter(fsobj, params['patterns']) and agefilter(st, now, age, params['age_stamp']):
+                        if pfilter(fsobj, params['patterns'], params['use_regex']) and agefilter(st, now, age, params['age_stamp']):
 
                             r.update(statinfo(st))
                             filelist.append(r)
 
                     elif stat.S_ISREG(st.st_mode) and params['file_type'] == 'file':
-                        if pfilter(fsobj, params['patterns']) and \
+                        if pfilter(fsobj, params['patterns'], params['use_regex']) and \
                            agefilter(st, now, age, params['age_stamp']) and \
                            sizefilter(st, size) and \
                            contentfilter(fsname, params['contains']):
@@ -329,7 +338,7 @@ def main():
                 if not params['recurse']:
                     break
         else:
-            msg+="%s was skipped as it does not seem to be a valid directory or it cannot be accessed\n"
+            msg+="%s was skipped as it does not seem to be a valid directory or it cannot be accessed\n" % npath
 
     matched = len(filelist)
     module.exit_json(files=filelist, changed=False, msg=msg, matched=matched, examined=looked)
