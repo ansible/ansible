@@ -94,9 +94,9 @@ class IncludedFile:
                             include_target = templar.template(include_result['include'])
                             include_file = loader.path_dwim_relative(original_task._role._role_path, 'tasks', include_target)
                         else:
-                            include_file = loader.path_dwim(res._task.args.get('_raw_params'))
+                            include_file = loader.path_dwim(include_result['include'])
                     else:
-                        include_file = loader.path_dwim(res._task.args.get('_raw_params'))
+                        include_file = loader.path_dwim(include_result['include'])
 
                     include_file = templar.template(include_file)
                     inc_file = IncludedFile(include_file, include_variables, original_task)
