@@ -75,6 +75,7 @@ options:
       - An associative array of access logs configuration settings (see example)
     require: false
     default: None
+    version_added: "2.0"
   subnets:
     description:
       - A list of VPC subnets to use when creating ELB. Zones should be empty if using this.
