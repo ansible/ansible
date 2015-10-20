@@ -20,6 +20,9 @@
 ########################################################################
 ''' This manages remote shared Ansible objects, mainly roles'''
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 
 from ansible.compat.six import string_types
