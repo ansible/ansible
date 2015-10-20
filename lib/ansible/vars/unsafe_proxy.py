@@ -53,46 +53,28 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.utils.unicode import to_unicode
+from ansible.compat.six import string_types, text_type
+
 __all__ = ['UnsafeProxy', 'AnsibleUnsafe', 'wrap_var']
 
 
 class AnsibleUnsafe(object):
     __UNSAFE__ = True
 
-try:
-    unicode
-except NameError:
-    # Python 3
-    class AnsibleUnsafeBytes(bytes, AnsibleUnsafe):
-        pass
+class AnsibleUnsafeText(text_type, AnsibleUnsafe):
+    pass
 
-    class AnsibleUnsafeStr(str, AnsibleUnsafe):
-        pass
-
-    class UnsafeProxy(object):
-        def __new__(cls, obj, *args, **kwargs):
-            if obj.__class__ == str:
-                return AnsibleUnsafeStr(obj)
-            elif obj.__class__ == bytes:
-                return AnsibleUnsafeBytes(obj)
-            else:
-                return obj
-else:
-    # Python 2
-    class AnsibleUnsafeStr(str, AnsibleUnsafe):
-        pass
-
-    class AnsibleUnsafeUnicode(unicode, AnsibleUnsafe):
-        pass
-
-    class UnsafeProxy(object):
-        def __new__(cls, obj, *args, **kwargs):
-            if obj.__class__ == unicode:
-                return AnsibleUnsafeUnicode(obj)
-            elif obj.__class__ == str:
-                return AnsibleUnsafeStr(obj)
-            else:
-                return obj
+class UnsafeProxy(object):
+    def __new__(cls, obj, *args, **kwargs):
+        # In our usage we should only receive unicode strings.
+        # This conditional and conversion exists to sanity check the values
+        # we're given but we may want to take it out for testing and sanitize
+        # our input instead.
+        if isinstance(obj, string_types):
+            obj = to_unicode(obj, errors='strict')
+            return AnsibleUnsafeText(obj)
+        return obj
 
 
 def _wrap_dict(v):
