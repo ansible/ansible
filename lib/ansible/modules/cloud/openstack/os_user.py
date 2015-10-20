@@ -41,7 +41,8 @@ options:
    password:
      description:
         - Password for the user
-     required: true
+     required: true when I(state) is present
+     default: None
    email:
      description:
         - Email address for the user
@@ -91,6 +92,34 @@ EXAMPLES = '''
 '''
 
 
+RETURN = '''
+user:
+    description: Dictionary describing the user.
+    returned: On success when I(state) is 'present'
+    type: dictionary
+    contains:
+        default_project_id:
+            description: User default project ID. Only present with Keystone >= v3.
+            type: string
+            sample: "4427115787be45f08f0ec22a03bfc735"
+        domain_id:
+            description: User domain ID. Only present with Keystone >= v3.
+            type: string
+            sample: "default"
+        email:
+            description: User email address
+            type: string
+            sample: "demo@example.com"
+        id:
+            description: User ID
+            type: string
+            sample: "f59382db809c43139982ca4189404650"
+        name:
+            description: User name
+            type: string
+            sample: "demouser"
+'''
+
 def _needs_update(module, user):
     keys = ('email', 'default_project', 'domain', 'enabled')
     for key in keys:
@@ -117,7 +146,12 @@ def main():
     )
 
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(
+        argument_spec,
+        required_if=[
+            ('state', 'present', ['password'])
+        ],
+        **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
