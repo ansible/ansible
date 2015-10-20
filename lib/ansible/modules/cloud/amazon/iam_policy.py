@@ -305,7 +305,7 @@ def main():
   region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
   try:
-      iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
+      iam = boto.iam.connect_to_region(region, **aws_connect_kwargs)
   except boto.exception.NoAuthHandlerFound, e:
       module.fail_json(msg=str(e))
 
