@@ -310,7 +310,15 @@ class GalaxyCLI(CLI):
             try:
                 f = open(role_file, 'r')
                 if role_file.endswith('.yaml') or role_file.endswith('.yml'):
-                    for role in yaml.safe_load(f.read()):
+                    try:
+                        required_roles =  yaml.safe_load(f.read())
+                    except Exception as e:
+                        raise AnsibleError("Unable to load data from the requirements file: %s" % role_file)
+
+                    if required_roles is None:
+                        raise AnsibleError("No roles found in file: %s" % role_file)
+
+                    for role in required_roles:
                         role = RoleRequirement.role_yaml_parse(role)
                         self.display.debug('found role %s in yaml file' % str(role))
                         if 'name' not in role and 'scm' not in role:
