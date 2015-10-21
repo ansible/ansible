@@ -2045,7 +2045,7 @@ def main():
             comment=dict(default=None, type='str'),
             home=dict(default=None, type='str'),
             shell=dict(default=None, type='str'),
-            password=dict(default=None, type='str'),
+            password=dict(default=None, type='str', no_log=True),
             login_class=dict(default=None, type='str'),
             # following options are specific to userdel
             force=dict(default='no', type='bool'),
@@ -2063,7 +2063,7 @@ def main():
             ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
             ssh_key_file=dict(default=None, type='str'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
-            ssh_key_passphrase=dict(default=None, type='str'),
+            ssh_key_passphrase=dict(default=None, type='str', no_log=True),
             update_password=dict(default='always',choices=['always','on_create'],type='str'),
             expires=dict(default=None, type='float'),
         ),
@@ -2161,4 +2161,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
