@@ -75,12 +75,12 @@ options:
      required: false
      default: None
    ramdisk:
-     descrption:
+     description:
         - The name of an existing ramdisk image that will be associated with this image
      required: false
      default: None
    kernel:
-     descrption:
+     description:
         - The name of an existing kernel image that will be associated with this image
      required: false
      default: None
