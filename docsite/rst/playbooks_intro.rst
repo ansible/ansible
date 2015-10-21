@@ -7,7 +7,7 @@ About Playbooks
 ```````````````
 
 Playbooks are a completely different way to use ansible than in adhoc task execution mode, and are
-particularly powerful. 
+particularly powerful.
 
 Simply put, playbooks are the basis for a really simple configuration management and multi-machine deployment system,
 unlike any that already exist, and one that is very well suited to deploying complex applications.
@@ -50,7 +50,7 @@ server group, then more commands back on the webservers group, etc.
 
 "plays" are more or less a sports analogy.  You can have quite a lot of plays that affect your systems
 to do different things.  It's not as if you were just defining one particular state or model, and you
-can run different plays at different times.  
+can run different plays at different times.
 
 For starters, here's a playbook that contains just one play::
 
@@ -264,7 +264,7 @@ nice to have reasonably good descriptions of each task step.  If the name
 is not provided though, the string fed to 'action' will be used for
 output.
 
-Tasks can be declared using the legacy ``action: module options`` format, but 
+Tasks can be declared using the legacy ``action: module options`` format, but
 it is recommended that you use the more conventional ``module: options`` format.
 This recommended format is used throughout the documentation, but you may
 encounter the older format in some playbooks.
@@ -387,10 +387,12 @@ won't need them for much else.
    * If two handler tasks have the same name, only one will run.
      `* <https://github.com/ansible/ansible/issues/4943>`_
 
-Roles are described later on.  It's worthwhile to point out that handlers are
-automatically processed between ``pre_tasks``, ``roles``, ``tasks``, and ``post_tasks``
-sections.  If you ever want to flush all the handler commands immediately though,
-in 1.2 and later, you can::
+Roles are described later on, but it's worthwhile to point out that:
+
+* handlers notified within ``pre_tasks``, ``tasks``, and ``post_tasks`` sections are automatically flushed in the end of section where they were notified;
+* handlers notified within ``roles`` section are automatically flushed in the end of ``tasks`` section, but before any ``tasks`` handlers.
+
+If you ever want to flush all the handler commands immediately though, in 1.2 and later, you can::
 
     tasks:
        - shell: some tasks go here
