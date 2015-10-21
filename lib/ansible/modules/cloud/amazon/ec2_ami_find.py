@@ -184,8 +184,8 @@ block_device_mapping:
     returned: when AMI found
     type: dictionary of block devices
     sample: {
-	"/dev/xvda": {
-    	    "delete_on_termination": true,
+        "/dev/xvda": {
+            "delete_on_termination": true,
             "encrypted": false,
             "size": 8,
             "snapshot_id": "snap-ca0330b8",
@@ -251,8 +251,8 @@ tags:
     returned: when AMI found
     type: dictionary of tags
     sample: {
-	"Environment": "devel",
-	"Name": "test-server01",
+        "Environment": "devel",
+        "Name": "test-server01",
         "Role": "web"
     }
 virtualization_type:
