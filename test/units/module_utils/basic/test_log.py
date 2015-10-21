@@ -103,7 +103,7 @@ class TestAnsibleModuleLogSyslog(unittest.TestCase):
             u'Toshio くらとみ non-ascii test': u'Toshio くらとみ non-ascii test'.encode('utf-8'),
             b'Byte string': b'Byte string',
             u'Toshio くらとみ non-ascii test'.encode('utf-8'): u'Toshio くらとみ non-ascii test'.encode('utf-8'),
-            b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'
+            b'non-utf8 :\xff: test': b'non-utf8 :\xff: test'.decode('utf-8', 'replace').encode('utf-8'),
             }
 
     py3_output_data = {

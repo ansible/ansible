@@ -29,7 +29,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 
 from ansible.module_utils import basic
 from ansible.module_utils.basic import heuristic_log_sanitize
-from ansible.module_utils.basic import _return_values, _remove_values
+from ansible.module_utils.basic import return_values, remove_values
 
 
 class TestReturnValues(unittest.TestCase):
@@ -50,10 +50,10 @@ class TestReturnValues(unittest.TestCase):
 
     def test_return_values(self):
         for data, expected in self.dataset:
-            self.assertEquals(frozenset(_return_values(data)), expected)
+            self.assertEquals(frozenset(return_values(data)), expected)
 
     def test_unknown_type(self):
-        self.assertRaises(TypeError, frozenset, _return_values(object()))
+        self.assertRaises(TypeError, frozenset, return_values(object()))
 
 
 class TestRemoveValues(unittest.TestCase):
@@ -98,54 +98,13 @@ class TestRemoveValues(unittest.TestCase):
 
     def test_no_removal(self):
         for value, no_log_strings in self.dataset_no_remove:
-            self.assertEquals(_remove_values(value, no_log_strings), value)
+            self.assertEquals(remove_values(value, no_log_strings), value)
 
     def test_strings_to_remove(self):
         for value, no_log_strings, expected in self.dataset_remove:
-            self.assertEquals(_remove_values(value, no_log_strings), expected)
+            self.assertEquals(remove_values(value, no_log_strings), expected)
 
     def test_unknown_type(self):
-        self.assertRaises(TypeError, _remove_values, object(), frozenset())
+        self.assertRaises(TypeError, remove_values, object(), frozenset())
 
 
-@unittest.skipIf(sys.version_info[0] >= 3, "Python 3 is not supported on targets (yet)")
-class TestAnsibleModuleRemoveNoLogValues(unittest.TestCase):
-    OMIT = 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-    dataset = (
-            (dict(username='person', password='$ecret k3y'),
-                dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
-                    not_secret='following the leader'),
-                dict(one=1, pwd=OMIT, url='https://username:password12345@foo.com/login/',
-                    not_secret='following the leader')
-                ),
-            (dict(username='person', password='password12345'),
-                dict(one=1, pwd='$ecret k3y', url='https://username:password12345@foo.com/login/',
-                    not_secret='following the leader'),
-                dict(one=1, pwd='$ecret k3y', url='https://username:********@foo.com/login/',
-                    not_secret='following the leader')
-                ),
-            (dict(username='person', password='$ecret k3y'),
-                dict(one=1, pwd='$ecret k3y', url='https://username:$ecret k3y@foo.com/login/',
-                    not_secret='following the leader'),
-                dict(one=1, pwd=OMIT, url='https://username:********@foo.com/login/',
-                    not_secret='following the leader')
-                ),
-            )
-
-    def setUp(self):
-        self.COMPLEX_ARGS = basic.MODULE_COMPLEX_ARGS
-
-    def tearDown(self):
-        basic.MODULE_COMPLEX_ARGS = self.COMPLEX_ARGS
-
-    def test_remove_no_log_values(self):
-        for args, return_val, expected in self.dataset:
-            basic.MODULE_COMPLEX_ARGS = json.dumps(args)
-            module = basic.AnsibleModule(
-                argument_spec = dict(
-                    username=dict(),
-                    password=dict(no_log=True),
-                    token=dict(no_log=True),
-                    ),
-                )
-            self.assertEquals(module.remove_no_log_values(return_val), expected)
