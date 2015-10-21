@@ -245,8 +245,8 @@ stat:
         lnk_source:
             description: Original path
             returned: success, path exists and user can read stats and the path is a symbolic link
-            type: boolean
-            sample: True
+            type: string
+            sample: /home/foobar/21102015-1445431274-908472971
         md5:
             description: md5 hash of the path
             returned: success, path exists and user can read stats and path supports hashing and md5 is supported
