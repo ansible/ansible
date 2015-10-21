@@ -24,96 +24,22 @@ $ErrorActionPreference = "Stop"
 # POWERSHELL_COMMON
 
 $params = Parse-Args $args;
+
 $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
+$name = Get-Attr $params "name" -failifempty $true
+$state = Get-Attr $params "state" "present" -validateSet "present", "absent", "started", "stopped", "restarted" -resultobj $result
 
-If ($params.name)
-{
-    $name = $params.name
-}
-Else
-{
-    Fail-Json $result "missing required argument: name"
-}
+$application = Get-Attr $params "application" $null
+$appParameters = Get-Attr $params "app_parameters" $null
 
-If ($params.state)
-{
-    $state = $params.state.ToString().ToLower()
-    $validStates = "present", "absent", "started", "stopped", "restarted"
+$stdoutFile = Get-Attr $params "stdout_file" $null
+$stderrFile = Get-Attr $params "stderr_file" $null
+$dependencies = Get-Attr $params "dependencies" $null
 
-    If ($validStates -notcontains $state)
-    {
-        Fail-Json $result "state is $state; must be one of: $validStates"
-    }
-}
-else
-{
-    $state = "present"
-}
-
-If ($params.application)
-{
-    $application = $params.application
-}
-Else
-{
-    $application = $null
-}
-
-If ($params.app_parameters)
-{
-    $appParameters = $params.app_parameters
-}
-Else
-{
-    $appParameters = $null
-}
-
-If ($params.stdout_file)
-{
-    $stdoutFile = $params.stdout_file
-}
-Else
-{
-    $stdoutFile = $null
-}
-
-If ($params.stderr_file)
-{
-    $stderrFile = $params.stderr_file
-}
-Else
-{
-    $stderrFile = $null
-}
-
-If ($params.dependencies)
-{
-    $dependencies = $params.dependencies
-}
-Else
-{
-    $dependencies = $null
-}
-
-If ($params.user)
-{
-    $user = $params.user
-}
-Else
-{
-    $user = $null
-}
-
-If ($params.password)
-{
-    $password = $params.password
-}
-Else
-{
-    $password = $null
-}
+$user = Get-Attr $params "user" $null
+$password = Get-Attr $params "password" $null
 
 Function Service-Exists
 {
