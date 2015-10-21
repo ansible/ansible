@@ -98,7 +98,10 @@ try:
     from firewall.client import Rich_Rule
     from firewall.client import FirewallClient
     fw = FirewallClient()
-    HAS_FIREWALLD = True
+    if not fw.connected:
+        HAS_FIREWALLD = False
+    else:
+        HAS_FIREWALLD = True
 except ImportError:
     HAS_FIREWALLD = False
 
