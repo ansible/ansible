@@ -91,7 +91,7 @@ Set-Attr $result "changed" $false;
 
 $path = Get-Attr $params "path" -failifempty $true
 $user = Get-Attr $params "user" -failifempty $true
-$recurse = Get-Attr $params "recurse" "no" -validateSet "no","yes" -resultobj $result
+$recurse = Get-Attr $params "recurse" "no" -validateSet "no","yes" -resultobj $result | ConvertTo-Bool
 
 If (-Not (Test-Path -Path $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
@@ -117,7 +117,7 @@ Try {
     $acl.setOwner($objUser)
     Set-Acl $file.FullName $acl
 
-    If ($recurse -eq "yes") {
+    If ($recurse) {
         $files = Get-ChildItem -Path $path -Force -Recurse
         ForEach($file in $files){
             $acl = Get-Acl $file.FullName
