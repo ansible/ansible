@@ -55,7 +55,7 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Basic provisioning example
-- ec2_search:
+- ec2_remote_facts:
     key: mykey
     value: myvalue
   register: servers
