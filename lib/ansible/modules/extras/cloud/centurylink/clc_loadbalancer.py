@@ -172,6 +172,48 @@ notes:
     - Users can set CLC_V2_API_URL to specify an endpoint for pointing to a different CLC environment.
 '''
 
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+loadbalancer:
+    description: The load balancer result object from CLC
+    returned: success
+    type: dict
+    sample:
+        {
+           "description":"test-lb",
+           "id":"ab5b18cb81e94ab9925b61d1ca043fb5",
+           "ipAddress":"66.150.174.197",
+           "links":[
+              {
+                 "href":"/v2/sharedLoadBalancers/wfad/wa1/ab5b18cb81e94ab9925b61d1ca043fb5",
+                 "rel":"self",
+                 "verbs":[
+                    "GET",
+                    "PUT",
+                    "DELETE"
+                 ]
+              },
+              {
+                 "href":"/v2/sharedLoadBalancers/wfad/wa1/ab5b18cb81e94ab9925b61d1ca043fb5/pools",
+                 "rel":"pools",
+                 "verbs":[
+                    "GET",
+                    "POST"
+                 ]
+              }
+           ],
+           "name":"test-lb",
+           "pools":[
+
+           ],
+           "status":"enabled"
+        }
+'''
+
 __version__ = '${version}'
 
 from time import sleep
@@ -827,8 +869,8 @@ class ClcLoadBalancer:
         argument_spec = dict(
             name=dict(required=True),
             description=dict(default=None),
-            location=dict(required=True, default=None),
-            alias=dict(required=True, default=None),
+            location=dict(required=True),
+            alias=dict(required=True),
             port=dict(choices=[80, 443]),
             method=dict(choices=['leastConnection', 'roundRobin']),
             persistence=dict(choices=['standard', 'sticky']),

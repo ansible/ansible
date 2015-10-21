@@ -98,6 +98,41 @@ EXAMPLES = '''
       debug: var=policy
 '''
 
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+policy:
+    description: The anti affinity policy information
+    returned: success
+    type: dict
+    sample:
+        {
+           "id":"1a28dd0988984d87b9cd61fa8da15424",
+           "name":"test_aa_policy",
+           "location":"UC1",
+           "links":[
+              {
+                 "rel":"self",
+                 "href":"/v2/antiAffinityPolicies/wfad/1a28dd0988984d87b9cd61fa8da15424",
+                 "verbs":[
+                    "GET",
+                    "DELETE",
+                    "PUT"
+                 ]
+              },
+              {
+                 "rel":"location",
+                 "href":"/v2/datacenters/wfad/UC1",
+                 "id":"uc1",
+                 "name":"UC1 - US West (Santa Clara)"
+              }
+           ]
+        }
+'''
+
 __version__ = '${version}'
 
 from distutils.version import LooseVersion
