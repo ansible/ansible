@@ -26,7 +26,7 @@ $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
 $path = Get-Attr $params "path" -failifempty $true
-$copy = Get-Attr $params "copy" "no" -validateSet "no","yes" -resultobj $result
+$copy = Get-Attr $params "copy" "no" -validateSet "no","yes" -resultobj $result | ConvertTo-Bool
 
 If (-Not (Test-Path -Path $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
@@ -36,7 +36,7 @@ Try {
     $objACL = Get-ACL $path
     $alreadyDisabled = !$objACL.AreAccessRulesProtected
 
-    If ($copy -eq "yes") {
+    If ($copy) {
         $objACL.SetAccessRuleProtection($True, $True)
     } Else {
         $objACL.SetAccessRuleProtection($True, $False)
