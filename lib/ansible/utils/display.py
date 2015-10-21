@@ -264,8 +264,8 @@ class Display:
             self._errors[new_msg] = 1
 
     @staticmethod
-    def prompt(self, msg):
-        prompt_string = to_bytes(msg, encoding=self._output_encoding())
+    def prompt(msg):
+        prompt_string = to_bytes(msg, encoding=Display._output_encoding())
         if sys.version_info >= (3,):
             # Convert back into text on python3.  We do this double conversion
             # to get rid of characters that are illegal in the user's locale
