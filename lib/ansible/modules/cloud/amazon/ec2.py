@@ -222,7 +222,7 @@ options:
     description:
       - whether instance is using optimized EBS volumes, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSOptimized.html)
     required: false
-    default: false
+    default: 'false'
   exact_count:
     version_added: "1.5"
     description:
