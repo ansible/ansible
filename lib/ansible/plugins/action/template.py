@@ -26,6 +26,7 @@ import time
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
+from ansible.utils.boolean import boolean
 from ansible.utils.unicode import to_bytes, to_unicode
 
 class ActionModule(ActionBase):
@@ -57,6 +58,7 @@ class ActionModule(ActionBase):
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
         faf    = self._task.first_available_file
+        force  = boolean(self._task.args.get('force', False))
 
         if (source is None and faf is not None) or dest is None:
             return dict(failed=True, msg="src and dest are required")
@@ -162,11 +164,13 @@ class ActionModule(ActionBase):
                 )
                 result = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
             else:
-                result=dict(changed=True)
+                if remote_checksum == '1' or force:
+                    result = dict(changed=True)
+                else:
+                    result = dict(changed=False)
 
             if result.get('changed', False) and self._play_context.diff:
                 result['diff'] = diff
-            #    result['diff'] = dict(before=dest_contents, after=resultant, before_header=dest, after_header=source)
 
             return result
 
