@@ -73,10 +73,27 @@ EXAMPLES = '''
 - name: Deploy package
       clc_blueprint_package:
         server_ids:
-            - UC1WFSDANS01
-            - UC1WFSDANS02
+            - UC1TEST-SERVER1
+            - UC1TEST-SERVER2
         package_id: 77abb844-579d-478d-3955-c69ab4a7ba1a
         package_params: {}
+'''
+
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+server_ids:
+    description: The list of server ids that are changed
+    returned: success
+    type: list
+    sample:
+        [
+            "UC1TEST-SERVER1",
+            "UC1TEST-SERVER2"
+        ]
 '''
 
 __version__ = '${version}'
@@ -203,7 +220,7 @@ class ClcBlueprintPackage:
                 parameters=package_params)
         except CLCException as ex:
             self.module.fail_json(msg='Failed to install package : {0} to server {1}. {2}'.format(
-                package_id, server.id, ex.response_text
+                package_id, server.id, ex.message
             ))
         return result
 
