@@ -27,7 +27,7 @@ module: win_acl_inheritance
 version_added: "2.0"
 short_description: Disable ACL inheritance
 description:
-    - Disable ACL inheritance and optionally converts ACE to dedicated ACE
+    - Disable ACL (Access Control List) inheritance and optionally converts ACE (Access Control Entry) to dedicated ACE
 options:
   path:
     description:
@@ -48,12 +48,12 @@ EXAMPLES = '''
 # Playbook example
 ---
 - name: Disable and copy
-  win_owner:
+  win_acl_inheritance:
     path: 'C:\\apache\\'
     copy: yes
 
 - name: Disable
-  win_owner:
+  win_acl_inheritance:
     path: 'C:\\apache\\'
     copy: no
 '''
