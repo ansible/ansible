@@ -150,7 +150,9 @@ class AnsibleCloudStack(object):
         return False
 
 
-    def _get_by_key(self, key=None, my_dict={}):
+    def _get_by_key(self, key=None, my_dict=None):
+        if my_dict is None:
+            my_dict = {}
         if key:
             if key in my_dict:
                 return my_dict[key]
