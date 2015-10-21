@@ -69,8 +69,8 @@ EXAMPLES = '''
 - name: Create server snapshot
   clc_server_snapshot:
     server_ids:
-        - UC1TESTSVR01
-        - UC1TESTSVR02
+        - UC1TEST-SVR01
+        - UC1TEST-SVR02
     expiration_days: 10
     wait: True
     state: present
@@ -78,18 +78,35 @@ EXAMPLES = '''
 - name: Restore server snapshot
   clc_server_snapshot:
     server_ids:
-        - UC1TESTSVR01
-        - UC1TESTSVR02
+        - UC1TEST-SVR01
+        - UC1TEST-SVR02
     wait: True
     state: restore
 
 - name: Delete server snapshot
   clc_server_snapshot:
     server_ids:
-        - UC1TESTSVR01
-        - UC1TESTSVR02
+        - UC1TEST-SVR01
+        - UC1TEST-SVR02
     wait: True
     state: absent
+'''
+
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+server_ids:
+    description: The list of server ids that are changed
+    returned: success
+    type: list
+    sample:
+        [
+            "UC1TEST-SVR01",
+            "UC1TEST-SVR02"
+        ]
 '''
 
 __version__ = '${version}'

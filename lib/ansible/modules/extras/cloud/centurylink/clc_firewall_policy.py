@@ -128,6 +128,52 @@ EXAMPLES = '''
         firewall_policy_id: 'c62105233d7a4231bd2e91b9c791e43e1'
 '''
 
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+firewall_policy_id
+    description: The fire wall policy id
+    returned: success
+    type: string
+    sample: fc36f1bfd47242e488a9c44346438c05
+firewall_policy:
+    description: The fire wall policy information
+    returned: success
+    type: dict
+    sample:
+        {
+           "destination":[
+              "10.1.1.0/24",
+              "10.2.2.0/24"
+           ],
+           "destinationAccount":"wfad",
+           "enabled":true,
+           "id":"fc36f1bfd47242e488a9c44346438c05",
+           "links":[
+              {
+                 "href":"http://api.ctl.io/v2-experimental/firewallPolicies/wfad/uc1/fc36f1bfd47242e488a9c44346438c05",
+                 "rel":"self",
+                 "verbs":[
+                    "GET",
+                    "PUT",
+                    "DELETE"
+                 ]
+              }
+           ],
+           "ports":[
+              "any"
+           ],
+           "source":[
+              "10.1.1.0/24",
+              "10.2.2.0/24"
+           ],
+           "status":"active"
+        }
+'''
+
 __version__ = '${version}'
 
 import urlparse
