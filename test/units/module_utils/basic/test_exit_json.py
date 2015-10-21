@@ -50,21 +50,33 @@ class TestAnsibleModuleExitJson(unittest.TestCase):
     def test_exit_json_no_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
             self.module.exit_json()
-        self.assertEquals(ctx.exception.code, 0)
+        if isinstance(ctx.exception, int):
+            # Python2.6... why does sys.exit behave this way?
+            self.assertEquals(ctx.exception, 0)
+        else:
+            self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
         self.assertEquals(return_val, dict(changed=False))
 
     def test_exit_json_args_exits(self):
         with self.assertRaises(SystemExit) as ctx:
             self.module.exit_json(msg='message')
-        self.assertEquals(ctx.exception.code, 0)
+        if isinstance(ctx.exception, int):
+            # Python2.6... why does sys.exit behave this way?
+            self.assertEquals(ctx.exception, 0)
+        else:
+            self.assertEquals(ctx.exception.code, 0)
         return_val = json.loads(self.fake_stream.getvalue())
         self.assertEquals(return_val, dict(msg="message", changed=False))
 
     def test_fail_json_exits(self):
         with self.assertRaises(SystemExit) as ctx:
             self.module.fail_json(msg='message')
-        self.assertEquals(ctx.exception.code, 1)
+        if isinstance(ctx.exception, int):
+            # Python2.6... why does sys.exit behave this way?
+            self.assertEquals(ctx.exception, 1)
+        else:
+            self.assertEquals(ctx.exception.code, 1)
         return_val = json.loads(self.fake_stream.getvalue())
         self.assertEquals(return_val, dict(msg="message", failed=True))
 
