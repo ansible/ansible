@@ -154,7 +154,8 @@ def main():
                     disk_format=module.params['disk_format'],
                     container_format=module.params['container_format'],
                     wait=module.params['wait'],
-                    timeout=module.params['timeout']
+                    timeout=module.params['timeout'],
+                    is_public=module.params['is_public'],
                 )
                 changed = True
                 if not module.params['wait']:
