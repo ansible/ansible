@@ -85,18 +85,6 @@ class TestHeuristicLogSanitize(unittest.TestCase):
         self.assertTrue(ssh_output.endswith("}"))
         self.assertIn(":********@foo.com/data'", ssh_output)
 
-
-class TestStripNoLog(unittest.TestCase):
-    def setUp(self):
-        data = ''
-
-    def test_return_strings(self):
-        pass
-
-    def test_strip_no_log(self):
-        pass
-
-class TestAnsibleModuleStripNoLogValues(unittest.TestCase):
-    pass
-
-
+    def test_hides_parameter_secrets(self):
+        output = heuristic_log_sanitize('token="secret", user="person", token_entry="test=secret"', frozenset(['secret']))
+        self.assertNotIn('secret', output)

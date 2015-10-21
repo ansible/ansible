@@ -364,7 +364,53 @@ def json_dict_bytes_to_unicode(d, encoding='utf-8'):
     else:
         return d
 
-def heuristic_log_sanitize(data):
+def return_values(obj):
+    """ Return stringified values from datastructures. For use with removing
+    sensitive values pre-jsonification."""
+    if isinstance(obj, basestring):
+        if obj:
+            yield obj
+        return
+    elif isinstance(obj, Sequence):
+        for element in obj:
+            for subelement in return_values(element):
+                yield subelement
+    elif isinstance(obj, Mapping):
+        for element in obj.items():
+            for subelement in return_values(element[1]):
+                yield subelement
+    elif isinstance(obj, (bool, NoneType)):
+        # This must come before int because bools are also ints
+        return
+    elif isinstance(obj, NUMBERTYPES):
+        yield str(obj)
+    else:
+        raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
+
+def remove_values(value, no_log_strings):
+    """ Remove strings in no_log_strings from value.  If value is a container
+    type, then remove a lot more"""
+    if isinstance(value, basestring):
+        if value in no_log_strings:
+            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+        for omit_me in no_log_strings:
+            value = value.replace(omit_me, '*' * 8)
+    elif isinstance(value, Sequence):
+        return [remove_values(elem, no_log_strings) for elem in value]
+    elif isinstance(value, Mapping):
+        return dict((k, remove_values(v, no_log_strings)) for k, v in value.items())
+    elif isinstance(value, tuple(chain(NUMBERTYPES, (bool, NoneType)))):
+        stringy_value = str(value)
+        if stringy_value in no_log_strings:
+            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+        for omit_me in no_log_strings:
+            if omit_me in stringy_value:
+                return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+    else:
+        raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
+    return value
+
+def heuristic_log_sanitize(data, no_log_values=None):
     ''' Remove strings that look like passwords from log messages '''
     # Currently filters:
     # user:pass@foo/whatever and http://username:pass@wherever/foo
@@ -421,53 +467,10 @@ def heuristic_log_sanitize(data):
             output.insert(0, data[begin:sep + 1])
             prev_begin = begin
 
-    return ''.join(output)
-
-def _return_values(obj):
-    """ Return stringified values from datastructures. For use with removing
-    sensitive values pre-jsonification."""
-    if isinstance(obj, basestring):
-        if obj:
-            yield obj
-        return
-    elif isinstance(obj, Sequence):
-        for element in obj:
-            for subelement in _return_values(element):
-                yield subelement
-    elif isinstance(obj, Mapping):
-        for element in obj.items():
-            for subelement in _return_values(element[1]):
-                yield subelement
-    elif isinstance(obj, (bool, NoneType)):
-        # This must come before int because bools are also ints
-        return
-    elif isinstance(obj, NUMBERTYPES):
-        yield str(obj)
-    else:
-        raise TypeError('Unknown parameter type: %s, %s' % (type(obj), obj))
-
-def _remove_values(value, no_log_strings):
-    """ Remove strings in no_log_strings from value.  If value is a container
-    type, then remove a lot more"""
-    if isinstance(value, basestring):
-        if value in no_log_strings:
-            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-        for omit_me in no_log_strings:
-            value = value.replace(omit_me, '*' * 8)
-    elif isinstance(value, Sequence):
-        return [_remove_values(elem, no_log_strings) for elem in value]
-    elif isinstance(value, Mapping):
-        return dict((k, _remove_values(v, no_log_strings)) for k, v in value.items())
-    elif isinstance(value, tuple(chain(NUMBERTYPES, (bool, NoneType)))):
-        stringy_value = str(value)
-        if stringy_value in no_log_strings:
-            return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-        for omit_me in no_log_strings:
-            if omit_me in stringy_value:
-                return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
-    else:
-        raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
-    return value
+    output = ''.join(output)
+    if no_log_values:
+        output = remove_values(output, no_log_values)
+    return output
 
 def is_executable(path):
     '''is the given path executable?'''
@@ -502,11 +505,21 @@ class AnsibleModule(object):
                 if k not in self.argument_spec:
                     self.argument_spec[k] = v
 
+        self.params = self._load_params()
+
+        # Save parameter values that should never be logged
+        self.no_log_values = set()
+        # Use the argspec to determine which args are no_log
+        for arg_name, arg_opts in self.argument_spec.items():
+            if arg_opts.get('no_log', False):
+                # Find the value for the no_log'd param
+                no_log_object = self.params.get(arg_name, None)
+                if no_log_object:
+                    self.no_log_values.update(return_values(no_log_object))
+
         # check the locale as set by the current environment, and
         # reset to LANG=C if it's an invalid/unavailable locale
         self._check_locale()
-
-        self.params = self._load_params()
 
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
 
@@ -540,6 +553,7 @@ class AnsibleModule(object):
             self._check_required_if(required_if)
 
         self._set_defaults(pre=False)
+
         if not self.no_log:
             self._log_invocation()
 
@@ -1337,20 +1351,16 @@ class AnsibleModule(object):
 
             # We want journal to always take text type
             # syslog takes bytes on py2, text type on py3
-            if sys.version_info >= (3,):
-                if isinstance(msg, bytes):
-                    journal_msg = msg.decode('utf-8', 'replace')
-                    syslog_msg = journal_msg
-                else:
-                    # TODO: surrogateescape is a danger here
-                    journal_msg = syslog_msg = msg
+            if isinstance(msg, bytes):
+                journal_msg = remove_values(msg.decode('utf-8', 'replace'), self.no_log_values)
             else:
-                if isinstance(msg, bytes):
-                    journal_msg = msg.decode('utf-8', 'replace')
-                    syslog_msg = msg
-                else:
-                     journal_msg = msg
-                     syslog_msg = msg.encode('utf-8', 'replace')
+                # TODO: surrogateescape is a danger here on Py3
+                journal_msg = remove_values(msg, self.no_log_values)
+
+            if sys.version_info >= (3,):
+                syslog_msg = journal_msg
+            else:
+                syslog_msg = journal_msg.encode('utf-8', 'replace')
 
             if has_journal:
                 journal_args = [("MODULE", os.path.basename(__file__))]
@@ -1386,7 +1396,7 @@ class AnsibleModule(object):
                     param_val = str(param_val)
                 elif isinstance(param_val, unicode):
                     param_val = param_val.encode('utf-8')
-                log_args[param] = heuristic_log_sanitize(param_val)
+                log_args[param] = heuristic_log_sanitize(param_val, self.no_log_values)
 
         msg = []
         for arg in log_args:
@@ -1492,30 +1502,12 @@ class AnsibleModule(object):
         for path in self.cleanup_files:
             self.cleanup(path)
 
-    def remove_no_log_values(self, to_jsonify):
-        """ Strip values associated with no_log parameters from output.
-            Note: does not strip dict keys, only dict values.
-        """
-        no_log_strings = set()
-        # Use the argspec to determine which args are no_log
-        for arg_name, arg_opts in self.argument_spec.items():
-            if arg_opts.get('no_log', False):
-                # Find the value for the no_log'd param
-                no_log_object = self.params.get(arg_name, None)
-                if no_log_object:
-                    no_log_strings.update(_return_values(no_log_object))
-
-        for field, value in to_jsonify.items():
-            to_jsonify[field] = _remove_values(value, no_log_strings)
-
-        return to_jsonify
-
     def exit_json(self, **kwargs):
         ''' return from the module, without error '''
         self.add_path_info(kwargs)
         if not 'changed' in kwargs:
             kwargs['changed'] = False
-        self.remove_no_log_values(kwargs)
+        kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
         sys.exit(0)
@@ -1525,7 +1517,7 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
-        self.remove_no_log_values(kwargs)
+        kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
         sys.exit(1)
@@ -1776,7 +1768,8 @@ class AnsibleModule(object):
                     continue
                 else:
                     is_passwd = True
-            clean_args.append(heuristic_log_sanitize(arg))
+            arg = heuristic_log_sanitize(arg, self.no_log_values)
+            clean_args.append(arg)
         clean_args = ' '.join(pipes.quote(arg) for arg in clean_args)
 
         if data:
@@ -1872,7 +1865,7 @@ class AnsibleModule(object):
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
 
         if rc != 0 and check_rc:
-            msg = heuristic_log_sanitize(stderr.rstrip())
+            msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)
             self.fail_json(cmd=clean_args, rc=rc, stdout=stdout, stderr=stderr, msg=msg)
 
         # reset the pwd
