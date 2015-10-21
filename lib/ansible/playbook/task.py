@@ -171,6 +171,15 @@ class Task(Base, Conditional, Taggable, Become):
         args_parser = ModuleArgsParser(task_ds=ds)
         (action, args, delegate_to) = args_parser.parse()
 
+        # the command/shell/script modules used to support the `cmd` arg,
+        # which corresponds to what we now call _raw_params, so move that
+        # value over to _raw_params (assuming it is empty)
+        if action in ('command', 'shell', 'script'):
+            if 'cmd' in args:
+                if args.get('_raw_params', '') != '':
+                    raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified. Please put everything in one or the other place.", obj=ds)
+                args['_raw_params'] = args.pop('cmd')
+
         new_ds['action']      = action
         new_ds['args']        = args
         new_ds['delegate_to'] = delegate_to
