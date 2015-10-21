@@ -47,7 +47,7 @@ from ansible.errors import AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.plugins import shell_loader
 from ansible.utils.path import makedirs_safe
-from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.utils.unicode import to_bytes, to_unicode, to_str
 
 class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
@@ -200,8 +200,8 @@ class Connection(ConnectionBase):
         except Exception as e:
             traceback.print_exc()
             raise AnsibleError("failed to exec cmd %s" % cmd)
-        result.std_out = to_unicode(result.std_out)
-        result.std_err = to_unicode(result.std_err)
+        result.std_out = to_bytes(result.std_out)
+        result.std_err = to_bytes(result.std_err)
         return (result.status_code, result.std_out, result.std_err)
 
     def put_file(self, in_path, out_path):
@@ -239,7 +239,7 @@ class Connection(ConnectionBase):
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
-                        raise IOError(to_unicode(result.std_err))
+                        raise IOError(to_str(result.std_err))
                 except Exception:
                     traceback.print_exc()
                     raise AnsibleError('failed to transfer file to "%s"' % out_path)
@@ -281,7 +281,7 @@ class Connection(ConnectionBase):
                     cmd_parts = self._shell._encode_script(script, as_list=True)
                     result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
                     if result.status_code != 0:
-                        raise IOError(to_unicode(result.std_err))
+                        raise IOError(to_str(result.std_err))
                     if result.std_out.strip() == '[DIR]':
                         data = None
                     else:
