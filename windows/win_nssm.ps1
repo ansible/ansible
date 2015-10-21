@@ -33,6 +33,7 @@ $state = Get-Attr $params "state" "present" -validateSet "present", "absent", "s
 
 $application = Get-Attr $params "application" $null
 $appParameters = Get-Attr $params "app_parameters" $null
+$startMode = Get-Attr $params "start_mode" "auto" -validateSet "auto", "manual", "disabled" -resultobj $result
 
 $stdoutFile = Get-Attr $params "stdout_file" $null
 $stderrFile = Get-Attr $params "stderr_file" $null
@@ -403,6 +404,43 @@ Function Nssm-Update-Dependencies
     }
 }
 
+Function Nssm-Update-StartMode
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$name,
+        [Parameter(Mandatory=$true)]
+        [string]$mode
+    )
+
+    $cmd = "nssm get ""$name"" Start"
+    $results = invoke-expression $cmd
+
+    if ($LastExitCode -ne 0)
+    {
+        Set-Attr $result "nssm_error_cmd" $cmd
+        Set-Attr $result "nssm_error_log" "$results"
+        Throw "Error updating start mode for service ""$name"""
+    }
+
+    $modes=@{"auto" = "SERVICE_AUTO_START"; "manual" = "SERVICE_DEMAND_START"; "disabled" = "SERVICE_DISABLED"}
+    $mappedMode = $modes.$mode
+    if ($mappedMode -ne $results) {
+        $cmd = "nssm set ""$name"" Start $mappedMode"
+        $results = invoke-expression $cmd
+
+        if ($LastExitCode -ne 0)
+        {
+            Set-Attr $result "nssm_error_cmd" $cmd
+            Set-Attr $result "nssm_error_log" "$results"
+            Throw "Error updating start mode for service ""$name"""
+        }
+
+        $result.changed = $true
+    }
+}
+
 Function Nssm-Get-Status
 {
     [CmdletBinding()]
@@ -548,6 +586,7 @@ Try
             Nssm-Set-Ouput-Files -name $name -stdout $stdoutFile -stderr $stderrFile
             Nssm-Update-Dependencies -name $name -dependencies $dependencies
             Nssm-Update-Credentials -name $name -user $user -password $password
+            Nssm-Update-StartMode -name $name -mode $startMode
         }
         "started" {
             Nssm-Install -name $name -application $application
@@ -555,6 +594,7 @@ Try
             Nssm-Set-Ouput-Files -name $name -stdout $stdoutFile -stderr $stderrFile
             Nssm-Update-Dependencies -name $name -dependencies $dependencies
             Nssm-Update-Credentials -name $name -user $user -password $password
+            Nssm-Update-StartMode -name $name -mode $startMode
             Nssm-Start -name $name
         }
         "stopped" {
@@ -563,6 +603,7 @@ Try
             Nssm-Set-Ouput-Files -name $name -stdout $stdoutFile -stderr $stderrFile
             Nssm-Update-Dependencies -name $name -dependencies $dependencies
             Nssm-Update-Credentials -name $name -user $user -password $password
+            Nssm-Update-StartMode -name $name -mode $startMode
             Nssm-Stop -name $name
         }
         "restarted" {
@@ -571,6 +612,7 @@ Try
             Nssm-Set-Ouput-Files -name $name -stdout $stdoutFile -stderr $stderrFile
             Nssm-Update-Dependencies -name $name -dependencies $dependencies
             Nssm-Update-Credentials -name $name -user $user -password $password
+            Nssm-Update-StartMode -name $name -mode $startMode
             Nssm-Restart -name $name
         }
     }

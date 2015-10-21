@@ -86,6 +86,19 @@ options:
       - Password to be used for service startup
     required: false
     default: null
+  password:
+    description:
+      - Password to be used for service startup
+    required: false
+    default: null
+  start_mode:
+    description:
+      - If C(auto) is selected, the service will start at bootup. C(manual) means that the service will start only when another service needs it. C(disabled) means that the service will stay off, regardless if it is needed or not.
+    required: false
+    choices:
+      - auto
+      - manual
+      - disabled
 author:
   - "Adam Keech (@smadam813)"
   - "George Frank (@georgefrank)"
@@ -150,6 +163,13 @@ EXAMPLES = '''
     application: C:\windows\\foo.exe
     user: foouser
     password: secret
+
+# Install the foo service but do not start it automatically
+- win_nssm:
+    name: foo
+    application: C:\windows\\foo.exe
+    state: present
+    start_mode: manual
 
 # Remove the foo service
 - win_nssm:
