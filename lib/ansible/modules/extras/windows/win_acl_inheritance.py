@@ -25,17 +25,25 @@ DOCUMENTATION = '''
 ---
 module: win_acl_inheritance
 version_added: "2.0"
-short_description: Disable ACL inheritance
+short_description: Change ACL inheritance
 description:
-    - Disable ACL (Access Control List) inheritance and optionally converts ACE (Access Control Entry) to dedicated ACE
+    - Change ACL (Access Control List) inheritance and optionally copy inherited ACE's (Access Control Entry) to dedicated ACE's or vice versa.
 options:
   path:
     description:
-      - Path to be used for disabling
+      - Path to be used for changing inheritance
     required: true
-  copy:
+  state:
     description:
-      - Indicates if the inherited ACE should be copied to dedicated ACE
+      - Specify whether to enable I(present) or disable I(absent) ACL inheritance
+    required: false
+    choices:
+      - present
+      - absent
+    default: absent
+  reorganize:
+    description:
+      - For P(state) = I(absent), indicates if the inherited ACE's should be copied. For P(state) = I(present), indicates if the inherited ACE's should be simplified.
     required: false
     choices:
       - no
@@ -47,13 +55,20 @@ author: Hans-Joachim Kliemeck (@h0nIg)
 EXAMPLES = '''
 # Playbook example
 ---
-- name: Disable and copy
+- name: Disable inherited ACE's
   win_acl_inheritance:
     path: 'C:\\apache\\'
-    copy: yes
+    state: absent
 
-- name: Disable
+- name: Disable and copy inherited ACE's
   win_acl_inheritance:
     path: 'C:\\apache\\'
-    copy: no
+    state: absent
+    reorganize: yes
+
+- name: Enable and remove dedicated ACE's
+  win_acl_inheritance:
+    path: 'C:\\apache\\'
+    state: present
+    reorganize: yes
 '''

@@ -26,7 +26,8 @@ $result = New-Object PSObject;
 Set-Attr $result "changed" $false;
 
 $path = Get-Attr $params "path" -failifempty $true
-$copy = Get-Attr $params "copy" "no" -validateSet "no","yes" -resultobj $result | ConvertTo-Bool
+$state = Get-Attr $params "state" "absent" -validateSet "present","absent" -resultobj $result
+$reorganize = Get-Attr $params "reorganize" "no" -validateSet "no","yes" -resultobj $result | ConvertTo-Bool
 
 If (-Not (Test-Path -Path $path)) {
     Fail-Json $result "$path file or directory does not exist on the host"
@@ -34,19 +35,44 @@ If (-Not (Test-Path -Path $path)) {
  
 Try {
     $objACL = Get-ACL $path
-    $alreadyDisabled = !$objACL.AreAccessRulesProtected
+    $inheritanceEnabled = !$objACL.AreAccessRulesProtected
 
-    If ($copy) {
-        $objACL.SetAccessRuleProtection($True, $True)
-    } Else {
-        $objACL.SetAccessRuleProtection($True, $False)
-    }
+    If (($state -eq "present") -And !$inheritanceEnabled) {
+        If ($reorganize) {
+            $objACL.SetAccessRuleProtection($True, $True)
+        } Else {
+            $objACL.SetAccessRuleProtection($True, $False)
+        }
 
-    If ($alreadyDisabled) {
+        Set-ACL $path $objACL
         Set-Attr $result "changed" $true;
     }
+    Elseif (($state -eq "absent") -And $inheritanceEnabled) {
+        # second parameter is ignored if first=$False
+        $objACL.SetAccessRuleProtection($False, $False)
 
-    Set-ACL $path $objACL
+        If ($reorganize) {
+            # convert explicit ACE to inherited ACE
+            ForEach($inheritedRule in $objACL.Access) {
+                If (!$inheritedRule.IsInherited) {
+                    Continue
+                }
+
+                ForEach($explicitRrule in $objACL.Access) {
+                    If ($inheritedRule.IsInherited) {
+                        Continue
+                    }
+
+                    If (($inheritedRule.FileSystemRights -eq $explicitRrule.FileSystemRights) -And ($inheritedRule.AccessControlType -eq $explicitRrule.AccessControlType) -And ($inheritedRule.IdentityReference -eq $explicitRrule.IdentityReference) -And ($inheritedRule.InheritanceFlags -eq $explicitRrule.InheritanceFlags) -And ($inheritedRule.PropagationFlags -eq $explicitRrule.PropagationFlags)) {
+                        $objACL.RemoveAccessRule($explicitRrule)
+                    }
+                }
+            }
+        }
+
+        Set-ACL $path $objACL
+        Set-Attr $result "changed" $true;
+    }
 }
 Catch {
     Fail-Json $result "an error occured when attempting to disable inheritance"
