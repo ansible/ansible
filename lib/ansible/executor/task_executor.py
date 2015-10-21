@@ -488,7 +488,7 @@ class TaskExecutor:
                     del variables[i]
             # now replace the interpreter values with those that may have come
             # from the delegated-to host
-            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._host.name, dict())
+            delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict())
             if isinstance(delegated_vars, dict):
                 for i in delegated_vars:
                     if i.startswith("ansible_") and i.endswith("_interpreter"):
