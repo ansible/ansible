@@ -183,14 +183,14 @@ block_device_mapping:
     description: block device mapping associated with image
     returned: when AMI found
     type: dictionary of block devices
-    sample: {
-        "/dev/xvda": {
-            "delete_on_termination": true,
-            "encrypted": false,
-            "size": 8,
-            "snapshot_id": "snap-ca0330b8",
-            "volume_type": "gp2"
-    }
+    sample: "{
+        '/dev/xvda': {
+            'delete_on_termination': true,
+            'encrypted': false,
+            'size': 8,
+            'snapshot_id': 'snap-ca0330b8',
+            'volume_type': 'gp2'
+    }"
 creationDate:
     description: creation date of image
     returned: when AMI found
@@ -250,11 +250,11 @@ tags:
     description: tags assigned to image
     returned: when AMI found
     type: dictionary of tags
-    sample: {
-        "Environment": "devel",
-        "Name": "test-server01",
-        "Role": "web"
-    }
+    sample: "{
+        'Environment': 'devel',
+        'Name': 'test-server01',
+        'Role': 'web'
+    }"
 virtualization_type:
     description: image virtualization type
     returned: when AMI found
