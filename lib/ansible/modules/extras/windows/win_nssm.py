@@ -71,16 +71,32 @@ options:
       - Parameters to be passed to the application when it starts
     required: false
     default: null
+  dependencies:
+    description:
+      - Service dependencies that has to be started to trigger startup, separated by comma.
+    required: false
+    default: null
+  user:
+    description:
+      - User to be used for service startup
+    required: false
+    default: null
+  password:
+    description:
+      - Password to be used for service startup
+    required: false
+    default: null
 author:
   - "Adam Keech (@smadam813)"
   - "George Frank (@georgefrank)"
+  - "Hans-Joachim Kliemeck (@h0nIg)"
 '''
 
 EXAMPLES = '''
 # Install and start the foo service
 - win_nssm:
     name: foo
-    application: C:\windowsk\\foo.exe
+    application: C:\windows\\foo.exe
 
 # Install and start the foo service with a key-value pair argument
 # This will yield the following command: C:\windows\\foo.exe bar "true"
@@ -121,6 +137,19 @@ EXAMPLES = '''
     application: C:\windows\\foo.exe
     stdout_file: C:\windows\\foo.log
     stderr_file: C:\windows\\foo.log
+
+# Install and start the foo service, but wait for dependencies tcpip and adf
+- win_nssm:
+    name: foo
+    application: C:\windows\\foo.exe
+    dependencies: 'adf,tcpip'
+
+# Install and start the foo service with dedicated user
+- win_nssm:
+    name: foo
+    application: C:\windows\\foo.exe
+    user: foouser
+    password: secret
 
 # Remove the foo service
 - win_nssm:

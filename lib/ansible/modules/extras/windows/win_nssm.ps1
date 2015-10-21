@@ -2,6 +2,8 @@
 # This file is part of Ansible
 #
 # Copyright 2015, George Frank <george@georgefrank.net>
+# Copyright 2015, Adam Keech
+# Copyright 2015, Hans-Joachim Kliemeck <git@kliemeck.de>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,6 +86,33 @@ If ($params.stderr_file)
 Else
 {
     $stderrFile = $null
+}
+
+If ($params.dependencies)
+{
+    $dependencies = $params.dependencies
+}
+Else
+{
+    $dependencies = $null
+}
+
+If ($params.user)
+{
+    $user = $params.user
+}
+Else
+{
+    $user = $null
+}
+
+If ($params.password)
+{
+    $password = $params.password
+}
+Else
+{
+    $password = $null
 }
 
 Function Service-Exists
@@ -365,6 +394,89 @@ Function Nssm-Set-Ouput-Files
     $results = invoke-expression $cmd
 }
 
+Function Nssm-Update-Credentials
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$name,
+        [Parameter(Mandatory=$false)]
+        [string]$user,
+        [Parameter(Mandatory=$false)]
+        [string]$password
+    )
+
+    $cmd = "nssm get ""$name"" ObjectName"
+    $results = invoke-expression $cmd
+
+    if ($LastExitCode -ne 0)
+    {
+        Set-Attr $result "nssm_error_cmd" $cmd
+        Set-Attr $result "nssm_error_log" "$results"
+        Throw "Error updating credentials for service ""$name"""
+    }
+
+    if ($user -ne $null) {
+        If ($password -eq $null) {
+            Throw "User without password is informed for service ""$name"""
+        }
+
+        $fullUser = $user
+        If (-Not($user -contains "@") -And ($user.Split("\").count -eq 1)) {
+            $fullUser = ".\" + $user
+        }
+
+        If ($results -ne $fullUser) {
+            $cmd = "nssm set ""$name"" ObjectName $fullUser $password"
+            $results = invoke-expression $cmd
+
+            if ($LastExitCode -ne 0)
+            {
+                Set-Attr $result "nssm_error_cmd" $cmd
+                Set-Attr $result "nssm_error_log" "$results"
+                Throw "Error updating credentials for service ""$name"""
+            }
+
+            $result.changed = $true
+        }
+    }
+}
+
+Function Nssm-Update-Dependencies
+{
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$name,
+        [Parameter(Mandatory=$false)]
+        [string]$dependencies
+    )
+
+    $cmd = "nssm get ""$name"" DependOnService"
+    $results = invoke-expression $cmd
+
+    if ($LastExitCode -ne 0)
+    {
+        Set-Attr $result "nssm_error_cmd" $cmd
+        Set-Attr $result "nssm_error_log" "$results"
+        Throw "Error updating dependencies for service ""$name"""
+    }
+
+    If (($dependencies -ne $null) -And ($results.Tolower() -ne $dependencies.Tolower())) {
+        $cmd = "nssm set ""$name"" DependOnService $dependencies"
+        $results = invoke-expression $cmd
+
+        if ($LastExitCode -ne 0)
+        {
+            Set-Attr $result "nssm_error_cmd" $cmd
+            Set-Attr $result "nssm_error_log" "$results"
+            Throw "Error updating dependencies for service ""$name"""
+        }
+
+        $result.changed = $true
+    }
+}
+
 Function Nssm-Get-Status
 {
     [CmdletBinding()]
@@ -508,23 +620,31 @@ Try
             Nssm-Install -name $name -application $application
             Nssm-Update-AppParameters -name $name -appParameters $appParameters
             Nssm-Set-Ouput-Files -name $name -stdout $stdoutFile -stderr $stderrFile
+            Nssm-Update-Dependencies -name $name -dependencies $dependencies
+            Nssm-Update-Credentials -name $name -user $user -password $password
         }
         "started" {
             Nssm-Install -name $name -application $application
             Nssm-Update-AppParameters -name $name -appParameters $appParameters
             Nssm-Set-Ouput-Files -name $name -stdout $stdoutFile -stderr $stderrFile
+            Nssm-Update-Dependencies -name $name -dependencies $dependencies
+            Nssm-Update-Credentials -name $name -user $user -password $password
             Nssm-Start -name $name
         }
         "stopped" {
             Nssm-Install -name $name -application $application
             Nssm-Update-AppParameters -name $name -appParameters $appParameters
             Nssm-Set-Ouput-Files -name $name -stdout $stdoutFile -stderr $stderrFile
+            Nssm-Update-Dependencies -name $name -dependencies $dependencies
+            Nssm-Update-Credentials -name $name -user $user -password $password
             Nssm-Stop -name $name
         }
         "restarted" {
             Nssm-Install -name $name -application $application
             Nssm-Update-AppParameters -name $name -appParameters $appParameters
             Nssm-Set-Ouput-Files -name $name -stdout $stdoutFile -stderr $stderrFile
+            Nssm-Update-Dependencies -name $name -dependencies $dependencies
+            Nssm-Update-Credentials -name $name -user $user -password $password
             Nssm-Restart -name $name
         }
     }
