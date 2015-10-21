@@ -400,7 +400,9 @@ class RequestWithMethod(urllib2.Request):
     Originally contained in library/net_infrastructure/dnsmadeeasy
     '''
 
-    def __init__(self, url, method, data=None, headers={}):
+    def __init__(self, url, method, data=None, headers=None):
+        if headers is None:
+            headers = {}
         self._method = method
         urllib2.Request.__init__(self, url, data, headers)
 
