@@ -27,6 +27,7 @@ from ansible import errors
 from ansible import utils
 from ansible.callbacks import vvv, vvvv, verbose
 from ansible.runner.shell_plugins import powershell
+from ansible.utils.unicode import to_bytes
 
 try:
     from winrm import Response
@@ -162,7 +163,7 @@ class Connection(object):
         except Exception, e:
             traceback.print_exc()
             raise errors.AnsibleError("failed to exec cmd %s" % cmd)
-        return (result.status_code, '', result.std_out.encode('utf-8'), result.std_err.encode('utf-8'))
+        return (result.status_code, '', to_bytes(result.std_out), to_bytes(result.std_err))
 
     def put_file(self, in_path, out_path):
         vvv("PUT %s TO %s" % (in_path, out_path), host=self.host)
