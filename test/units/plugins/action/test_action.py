@@ -29,9 +29,15 @@ from ansible.plugins.action import ActionBase
 
 class TestActionBase(unittest.TestCase):
 
+    class DerivedActionBase(ActionBase):
+        def run(self, tmp=None, task_vars=None):
+            # We're not testing the plugin run() method, just the helper
+            # methods ActionBase defines
+            return dict()
+
     def test_sudo_only_if_user_differs(self):
         play_context = PlayContext()
-        action_base = ActionBase(None, None, play_context, None, None, None)
+        action_base = self.DerivedActionBase(None, None, play_context, None, None, None)
         action_base._connection = Mock(exec_command=Mock(return_value=(0, '', '')))
 
         play_context.become = True

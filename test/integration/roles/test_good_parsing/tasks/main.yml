@@ -155,11 +155,9 @@
     that:
       - complex_param == "this is a param in a complex arg with double quotes"
 
-#- name: test variable module name
-#  action: "{{ variable_module_name }} msg='this should be debugged'"
-#  register: result
-#
-#- debug: var=result
+- name: test variable module name
+  action: "{{ variable_module_name }} msg='this should be debugged'"
+  register: result
 
 - name: assert the task with variable module name ran
   assert:

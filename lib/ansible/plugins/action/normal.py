@@ -19,11 +19,15 @@ __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
 
+
 class ActionModule(ActionBase):
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
 
-        results = self._execute_module(tmp=tmp, task_vars=task_vars)
+        results = super(ActionModule, self).run(tmp, task_vars)
+        results.update(self._execute_module(tmp=tmp, task_vars=task_vars))
 
         # Remove special fields from the result, which can only be set
         # internally by the executor engine. We do this only here in

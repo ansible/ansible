@@ -25,11 +25,13 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for package operations '''
+        if task_vars is None:
+            task_vars = dict()
 
-        name  = self._task.args.get('name', None)
-        state = self._task.args.get('state', None)
+        result = super(ActionModule, self).run(tmp, task_vars)
+
         module = self._task.args.get('use', 'auto')
 
         if module == 'auto':
@@ -41,7 +43,7 @@ class ActionModule(ActionBase):
         if module == 'auto':
             facts = self._execute_module(module_name='setup', module_args=dict(filter='ansible_service_mgr'), task_vars=task_vars)
             self._display.debug("Facts %s" % facts)
-            if not 'failed' in facts:
+            if 'failed' not in facts:
                 module = getattr(facts['ansible_facts'], 'ansible_service_mgr', 'auto')
 
         if not module or module == 'auto' or module not in self._shared_loader_obj.module_loader:
@@ -54,8 +56,9 @@ class ActionModule(ActionBase):
                 del new_module_args['use']
 
             self._display.vvvv("Running %s" % module)
-            return self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars)
-
+            result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars))
         else:
+            result['failed'] = True
+            result['msg'] = 'Could not detect which service manager to use. Try gathering facts or setting the "use" option.'
 
-            return {'failed': True, 'msg': 'Could not detect which service manager to use. Try gathering facts or setting the "use" option.'}
+        return result

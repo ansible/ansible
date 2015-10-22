@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.template import ActionModule as TemplateActionModule
 
+
 # Even though TemplateActionModule inherits from ActionBase, we still need to
 # directly inherit from ActionBase to appease the plugin loader.
 class ActionModule(TemplateActionModule, ActionBase):
