@@ -301,7 +301,6 @@ you avoid ever writing sensitive plaintext to disk.
 * Configuration items defined as paths (local only) now all support shell style interpolations.
 * Many fixes and new options added to modules, too many to list here.
 * Now you can see task file and line number when using verbosity of 3 or above.
-* Removed the automatically added invocation field from output of modules.  It's no longer needed by the code.
 
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 
