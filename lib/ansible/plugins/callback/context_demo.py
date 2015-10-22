@@ -28,8 +28,7 @@ class CallbackModule(CallbackBase):
     """
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'aggregate'
-    CALLBACK_NAME = 'context_demo'
-    CALLBACK_NEEDS_WHITELIST = True
+    CALLBACK_TYPE = 'context_demo'
 
     def v2_on_any(self, *args, **kwargs):
         i = 0
