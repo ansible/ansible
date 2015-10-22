@@ -90,7 +90,7 @@ def _system_state_change(module, secgroup):
 def main():
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
-        description=dict(default=None),
+        description=dict(default=''),
         state=dict(default='present', choices=['absent', 'present']),
     )
 
