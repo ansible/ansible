@@ -47,9 +47,9 @@ except ImportError:
 
 __all__ = ['StrategyBase']
 
-# FIXME: this should probably be in the plugins/__init__.py, with
-#        a smarter mechanism to set all of the attributes based on
-#        the loaders created there
+# TODO: this should probably be in the plugins/__init__.py, with
+#       a smarter mechanism to set all of the attributes based on
+#       the loaders created there
 class SharedPluginLoaderObj:
     '''
     A simple object to make pass the various plugin loaders to
@@ -327,7 +327,6 @@ class StrategyBase:
             allgroup.add_host(new_host)
 
         # Set/update the vars for this host
-        # FIXME: probably should have a set vars method for the host?
         new_vars = host_info.get('host_vars', dict())
         new_host.vars = self._inventory.get_host_vars(new_host)
         new_host.vars.update(new_vars)
@@ -351,7 +350,6 @@ class StrategyBase:
 
         # clear pattern caching completely since it's unpredictable what
         # patterns may have referenced the group
-        # FIXME: is this still required?
         self._inventory.clear_pattern_cache()
 
     def _add_group(self, host, result_item):

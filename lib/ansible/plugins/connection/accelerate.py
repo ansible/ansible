@@ -166,10 +166,6 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        # FIXME:
-        #if sudoable and self..become and self.runner.become_method not in self.become_methods_supported:
-        #    raise AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
-
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 

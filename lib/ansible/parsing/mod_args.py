@@ -243,7 +243,6 @@ class ModuleArgsParser:
         # this is the 'extra gross' scenario detailed above, so we grab
         # the args and pass them in as additional arguments, which can/will
         # be overwritten via dict updates from the other arg sources below
-        # FIXME: add test cases for this
         additional_args = self._task_ds.get('args', dict())
 
         # We can have one of action, local_action, or module specified

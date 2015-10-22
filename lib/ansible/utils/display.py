@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-# FIXME: copied mostly from old code, needs py3 improvements
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
@@ -227,7 +226,6 @@ class Display:
             except OSError:
                 self.warning("somebody cleverly deleted cowsay or something during the PB run.  heh.")
 
-        #FIXME: make this dynamic on tty size (look and ansible-doc)
         msg = msg.strip()
         star_len = (79 - len(msg))
         if star_len < 0:
