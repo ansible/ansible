@@ -441,6 +441,13 @@ class ActionBase:
         if 'stdout' in data and 'stdout_lines' not in data:
             data['stdout_lines'] = data.get('stdout', u'').splitlines()
 
+        # store the module invocation details back into the result
+        if self._task.async != 0:
+            data['invocation'] = dict(
+                module_args = module_args,
+                module_name = module_name,
+            )
+
         self._display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
