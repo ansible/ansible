@@ -38,6 +38,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'osx_say'
+    CALLBACK_NEEDS_WHITELIST = True
 
     def __init__(self, display):
 
