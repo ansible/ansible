@@ -739,19 +739,19 @@ If multiple variables of the same name are defined in different places, they get
 
 .. include:: ansible_ssh_changes_note.rst
 
-In 1.x the precedence is:
+In 1.x the precedence is (last listed wins):
 
- * extra vars (``-e`` in the command line) always win
- * then come connection variables (``ansible_user``, etc)
- * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
- * then come the variables defined in inventory
- * then come the facts discovered about a system
  * then "role defaults", which are the most "defaulty" and lose in priority to everything.
+ * then come the facts discovered about a system
+ * then come the variables defined in inventory
+ * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
+ * then come connection variables (``ansible_user``, etc)
+ * extra vars (``-e`` in the command line) always win
 
 .. note:: In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
 
-In 2.x we have made the order of precedence more specific (last one wins):
+In 2.x we have made the order of precedence more specific (last listed wins):
 
   * role defaults [1]_
   * inventory vars [2]_
@@ -769,6 +769,8 @@ In 2.x we have made the order of precedence more specific (last one wins):
   * block vars (only for tasks in block)
   * task vars (only for the task)
   * extra vars
+
+Basically, anything that goes into "role defaults" (the defaults folder inside the role) is the most malleable and easily overridden. Anything in the vars directory of the role overrides previous versions of that variable in namespace.  The idea here to follow is that the more explicit you get in scope, the more precedence it takes with command line ``-e`` extra vars always winning.  Host and/or inventory variables can win over role defaults, but not explicit includes like the vars directory or an ``include_vars`` task.
 
 .. rubric:: Footnotes
 
