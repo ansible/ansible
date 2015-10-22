@@ -19,12 +19,12 @@ __metaclass__ = type
 
 import os
 import re
-import pipes
 import ansible.constants as C
 import time
 import random
 
 from ansible.compat.six import text_type
+from ansible.compat.six.moves import shlex_quote
 
 _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
@@ -42,7 +42,7 @@ class ShellModule(object):
             LC_MESSAGES = C.DEFAULT_MODULE_LANG,
         )
         env.update(kwargs)
-        return ' '.join(['%s=%s' % (k, pipes.quote(text_type(v))) for k,v in env.items()])
+        return ' '.join(['%s=%s' % (k, shlex_quote(text_type(v))) for k,v in env.items()])
 
     def join_path(self, *args):
         return os.path.join(*args)
@@ -51,11 +51,11 @@ class ShellModule(object):
         return path.endswith('/')
 
     def chmod(self, mode, path):
-        path = pipes.quote(path)
+        path = shlex_quote(path)
         return 'chmod %s %s' % (mode, path)
 
     def remove(self, path, recurse=False):
-        path = pipes.quote(path)
+        path = shlex_quote(path)
         cmd = 'rm -f '
         if recurse:
             cmd += '-r '
@@ -90,8 +90,8 @@ class ShellModule(object):
         # Check that the user_path to expand is safe
         if user_home_path != '~':
             if not _USER_HOME_PATH_RE.match(user_home_path):
-                # pipes.quote will make the shell return the string verbatim
-                user_home_path = pipes.quote(user_home_path)
+                # shlex_quote will make the shell return the string verbatim
+                user_home_path = shlex_quote(user_home_path)
         return 'echo %s' % user_home_path
 
     def checksum(self, path, python_interp):
@@ -123,7 +123,7 @@ class ShellModule(object):
         # Quoting gets complex here.  We're writing a python string that's
         # used by a variety of shells on the remote host to invoke a python
         # "one-liner".
-        shell_escaped_path = pipes.quote(path)
+        shell_escaped_path = shlex_quote(path)
         test = "rc=flag; [ -r %(p)s ] || rc=2; [ -f %(p)s ] || rc=1; [ -d %(p)s ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}  \"%(p)s && exit 0" % dict(p=shell_escaped_path, i=python_interp)
         csums = [
             "({0} -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python > 2.4 (including python3)
@@ -138,7 +138,7 @@ class ShellModule(object):
         # don't quote the cmd if it's an empty string, because this will
         # break pipelining mode
         if cmd.strip() != '':
-            cmd = pipes.quote(cmd)
+            cmd = shlex_quote(cmd)
         cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
         if arg_path is not None:
             cmd_parts.append(arg_path)

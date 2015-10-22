@@ -21,12 +21,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import pipes
 import random
 import re
 import string
 
 from ansible.compat.six import iteritems, string_types
+from ansible.compat.six.moves import shlex_quote
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.attribute import Attribute, FieldAttribute
@@ -385,7 +385,7 @@ class PlayContext(Base):
             becomecmd   = None
             randbits    = ''.join(random.choice(string.ascii_lowercase) for x in range(32))
             success_key = 'BECOME-SUCCESS-%s' % randbits
-            success_cmd = pipes.quote('echo %s; %s' % (success_key, cmd))
+            success_cmd = shlex_quote('echo %s; %s' % (success_key, cmd))
 
             # set executable to use for the privilege escalation method, with various overrides
             exe = self.become_exe or \
@@ -407,7 +407,7 @@ class PlayContext(Base):
                 # it fail if it would have prompted for a password.
                 #
                 # Passing a quoted compound command to sudo (or sudo -s)
-                # directly doesn't work, so we shellquote it with pipes.quote()
+                # directly doesn't work, so we shellquote it with shlex_quote()
                 # and pass the quoted string to the user's shell.
 
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
@@ -429,6 +429,7 @@ class PlayContext(Base):
 
             elif self.become_method == 'pbrun':
 
+                # NOTE: this is 'assword' on purpose as diff versions does not capitalize it the same way.
                 prompt='assword:'
                 becomecmd = '%s -b %s -u %s %s' % (exe, flags, self.become_user, success_cmd)
 
@@ -462,7 +463,7 @@ class PlayContext(Base):
             if self.become_pass:
                 self.prompt = prompt
             self.success_key = success_key
-            return ('%s -c %s' % (executable, pipes.quote(becomecmd)))
+            return ('%s -c %s' % (executable, shlex_quote(becomecmd)))
 
         return cmd
 

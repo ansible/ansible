@@ -21,13 +21,14 @@ __metaclass__ = type
 
 import fcntl
 import os
-import pipes
 import pty
 import pwd
 import select
 import shlex
 import subprocess
 import time
+
+from ansible.compat.six.moves import shlex_quote
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
@@ -302,10 +303,11 @@ class Connection(ConnectionBase):
         # have removed from the output), we retain it to be processed with the
         # next chunk.
 
-        remainder = ''
         if output and not output[-1].endswith('\n'):
             remainder = output[-1]
             output = output[:-1]
+        else:
+            remainder = ''
 
         return ''.join(output), remainder
 
@@ -314,7 +316,7 @@ class Connection(ConnectionBase):
         Starts the command and communicates with it until it ends.
         '''
 
-        display_cmd = map(pipes.quote, cmd[:-1]) + [cmd[-1]]
+        display_cmd = map(shlex_quote, cmd[:-1]) + [cmd[-1]]
         self._display.vvv('SSH: EXEC {0}'.format(' '.join(display_cmd)), host=self.host)
 
         # Start the given command. If we don't need to pipeline data, we can try
@@ -615,11 +617,11 @@ class Connection(ConnectionBase):
         host = '[%s]' % self.host
 
         if C.DEFAULT_SCP_IF_SSH:
-            cmd = self._build_command('scp', in_path, '{0}:{1}'.format(host, pipes.quote(out_path)))
+            cmd = self._build_command('scp', in_path, '{0}:{1}'.format(host, shlex_quote(out_path)))
             in_data = None
         else:
             cmd = self._build_command('sftp', host)
-            in_data = "put {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
+            in_data = "put {0} {1}\n".format(shlex_quote(in_path), shlex_quote(out_path))
 
         (returncode, stdout, stderr) = self._run(cmd, in_data)
 
@@ -638,11 +640,11 @@ class Connection(ConnectionBase):
         host = '[%s]' % self.host
 
         if C.DEFAULT_SCP_IF_SSH:
-            cmd = self._build_command('scp', '{0}:{1}'.format(host, pipes.quote(in_path)), out_path)
+            cmd = self._build_command('scp', '{0}:{1}'.format(host, shlex_quote(in_path)), out_path)
             in_data = None
         else:
             cmd = self._build_command('sftp', host)
-            in_data = "get {0} {1}\n".format(pipes.quote(in_path), pipes.quote(out_path))
+            in_data = "get {0} {1}\n".format(shlex_quote(in_path), shlex_quote(out_path))
 
         (returncode, stdout, stderr) = self._run(cmd, in_data)
 
