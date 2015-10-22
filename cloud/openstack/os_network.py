@@ -146,7 +146,10 @@ def main():
         if state == 'present':
             if not net:
                 net = cloud.create_network(name, shared, admin_state_up, external)
-            module.exit_json(changed=False, network=net, id=net['id'])
+                changed = True
+            else:
+                changed = False
+            module.exit_json(changed=changed, network=net, id=net['id'])
 
         elif state == 'absent':
             if not net:
