@@ -100,6 +100,9 @@ New Modules:
 * amazon: ec2_vpc_route_table_facts
 * amazon: ec2_vpc_subnet
 * amazon: ec2_win_password
+* amazon: ecs_cluster
+* amazon: ecs_task
+* amazon: ecs_taskdefinition
 * amazon: elasticache_subnet_group
 * amazon: iam
 * amazon: iam_policy
