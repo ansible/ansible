@@ -347,6 +347,9 @@ class VariableManager:
                     variables['hostvars'] = hostvars
                     variables['vars'] = hostvars[host.get_name()]
 
+        if play:
+            variables['role_names'] = [r._role_name for r in play.roles]
+
         if task:
             if task._role:
                 variables['role_path'] = task._role._role_path
