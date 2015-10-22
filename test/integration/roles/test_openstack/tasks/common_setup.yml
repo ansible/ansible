@@ -1,0 +1,59 @@
+# ========================================================================
+
+- name: fetch cirros image
+  get_url:
+    dest: "{{openstack_tmpdir}}/{{resource_prefix}}cirros.qcow2"
+    url: "{{openstack_cirros_url}}"
+
+- os_image:
+    auth: "{{openstack_auth}}"
+    name: "{{resource_prefix}}cirros"
+    state: present
+    disk_format: qcow2
+    container_format: bare
+    filename: "{{openstack_tmpdir}}/{{resource_prefix}}cirros.qcow2"
+  register: cirros_image
+
+- debug:
+    var: cirros_image
+  when: openstack_debug
+
+- assert:
+    that:
+      - cirros_image|changed
+      - cirros_image.id
+
+# ========================================================================
+
+- name: ensure ssh key is absent
+  file:
+    path: "{{openstack_tmpdir}}/{{resource_prefix}}id_rsa"
+    state: absent
+
+- name: create new ssh key
+  command: >
+    ssh-keygen -N '' -f
+    "{{openstack_tmpdir}}/{{resource_prefix}}id_rsa"
+  register: create_ssh_key
+
+- assert:
+    that:
+      - create_ssh_key|changed
+
+- name: register public key to nova
+  os_keypair:
+    auth: "{{openstack_auth}}"
+    name: "{{resource_prefix}}ssh_key"
+    state: present
+    public_key_file: "{{openstack_tmpdir}}/{{resource_prefix}}id_rsa.pub"
+  register: ssh_keypair
+
+- debug:
+    var: ssh_keypair
+  when: openstack_debug
+
+- assert:
+    that:
+      - ssh_keypair|changed
+      - ssh_keypair.id
+

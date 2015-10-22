@@ -1,0 +1,24 @@
+- name: remove cirros image from glance
+  os_image:
+    auth: "{{openstack_auth}}"
+    name: "{{resource_prefix}}cirros"
+    state: absent
+
+- name: remove local copy of cirros disk image
+  file:
+    path: "{{openstack_tmpdir}}/{{resource_prefix}}cirros.qcow2"
+    state: absent
+
+- name: remove ssh keypair from nova
+  os_keypair:
+    auth: "{{openstack_auth}}"
+    name: "{{resource_prefix}}ssh_key"
+    state: absent
+
+- name: remove generated ssh key
+  file:
+    path: "{{openstack_tmpdir}}/{{resource_prefix}}{{item}}"
+    state: absent
+  with_items:
+    - id_rsa
+    - id_rsa.pub

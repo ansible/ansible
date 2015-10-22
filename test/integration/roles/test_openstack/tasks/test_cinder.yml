@@ -1,0 +1,63 @@
+- block:
+
+# ========================================================================
+
+    - name: create a cinder volume
+      os_volume:
+        auth: "{{openstack_auth}}"
+        display_name: "{{resource_prefix}}volume"
+        state: present
+        size: "{{openstack_volume_size}}"
+      register: test_volume
+
+    - debug:
+        var: test_volume
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_volume|changed
+          - test_volume.id
+          - test_volume.volume.status == 'available'
+
+# ========================================================================
+
+    - name: attach volume to server
+      os_server_volume:
+        auth: "{{openstack_auth}}"
+        state: present
+        server: "{{test_server.id}}"
+        volume: "{{test_volume.id}}"
+        device: /dev/vdb
+      register: test_volume_attach
+
+    - debug:
+        var: test_volume_attach
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_volume_attach|changed
+          - test_volume_attach.id
+          - test_volume_attach.attachments.0.server_id == test_server.id
+          - test_volume_attach.attachments.0.volume_id == test_volume.id
+
+# ========================================================================
+
+  always:
+    
+    - name: detach cinder volume
+      os_server_volume:
+        auth: "{{openstack_auth}}"
+        state: absent
+        server: "{{test_server.id}}"
+        volume: "{{test_volume.id}}"
+        device: /dev/vdb
+
+    - name: remove cinder volume
+      os_volume:
+        auth: "{{openstack_auth}}"
+        display_name: "{{resource_prefix}}volume"
+        state: absent
+      when: '"cinder" in openstack_tests'
+

@@ -1,0 +1,48 @@
+- block:
+
+# ========================================================================
+
+    - include: common_setup.yml
+
+# ========================================================================
+
+    - name: create a nova server
+      os_server:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}server"
+        state: present
+        nics:
+          - net-name: "{{openstack_private_network}}"
+        image: "{{resource_prefix}}cirros"
+        flavor: "{{openstack_flavor}}"
+        key_name: "{{resource_prefix}}ssh_key"
+      register: test_server
+
+    - debug:
+        var: test_server
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_server|changed
+          - test_server.server.image.id == cirros_image.id
+          - test_server.server.status == 'ACTIVE'
+
+# ========================================================================
+
+    - include: test_cinder.yml
+      when: '"cinder" in openstack_tests'
+
+# ========================================================================
+
+  always:
+    - os_server:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}server"
+        state: absent
+
+# ========================================================================
+
+    - include: common_teardown.yml
+
+# ========================================================================
