@@ -63,6 +63,7 @@
 - name: verify apt module outputs
   assert:
     that:
+        - "'invocation' in apt_result"
         - "'changed' in apt_result"
         - "'stderr' in apt_result"
         - "'stdout' in apt_result"
