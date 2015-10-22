@@ -150,12 +150,13 @@ class TaskQueueManager:
                 # the name of the current plugin and type to see if we need to skip
                 # loading this callback plugin
                 callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
+                callback_needs_whitelist  = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
                 (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
                 if callback_type == 'stdout':
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
-                elif C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST:
+                elif callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST):
                     continue
 
                 self._callback_plugins.append(callback_plugin(self._display))
