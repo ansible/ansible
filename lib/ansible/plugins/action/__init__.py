@@ -27,8 +27,9 @@ import random
 import stat
 import tempfile
 import time
+from abc import ABCMeta, abstractmethod
 
-from ansible.compat.six import binary_type, text_type, iteritems
+from ansible.compat.six import binary_type, text_type, iteritems, with_metaclass
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure
@@ -42,7 +43,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-class ActionBase:
+class ActionBase(with_metaclass(ABCMeta, object)):
 
     '''
     This class is the base class for all action plugins, and defines
@@ -62,11 +63,39 @@ class ActionBase:
 
         self._supports_check_mode = True
 
-    def _configure_module(self, module_name, module_args, task_vars=dict()):
+    @abstractmethod
+    def run(self, tmp=None, task_vars=None):
+        """ Action Plugins should implement this method to perform their
+        tasks.  Everything else in this base class is a helper method for the
+        action plugin to do that.
+
+        :kwarg tmp: Temporary directory.  Sometimes an action plugin sets up
+            a temporary directory and then calls another module.  This parameter
+            allows us to reuse the same directory for both.
+        :kwarg task_vars: The variables (host vars, group vars, config vars,
+            etc) associated with this task.
+        :returns: dictionary of results from the module
+
+        Implementors of action modules may find the following variables especially useful:
+
+        * Module parameters.  These are stored in self._task.args
+        """
+        # store the module invocation details into the results
+        results =  {}
+        if self._task.async == 0:
+            results['invocation'] = dict(
+                module_name = self._task.action,
+                module_args = self._task.args,
+            )
+        return results
+
+    def _configure_module(self, module_name, module_args, task_vars=None):
         '''
         Handles the loading and templating of the module code through the
         modify_module() function.
         '''
+        if task_vars is None:
+            task_vars = dict()
 
         # Search module path(s) for named module.
         for mod_type in self._connection.module_implementation_preferences:
@@ -321,10 +350,12 @@ class ActionBase:
 
         return data[idx:]
 
-    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=dict(), persist_files=False, delete_remote_tmp=True):
+    def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True):
         '''
         Transfer and run a module along with its arguments.
         '''
+        if task_vars is None:
+            task_vars = dict()
 
         # if a module name was not specified for this execution, use
         # the action from the task
@@ -432,13 +463,6 @@ class ActionBase:
         # isn't already a stdout_lines value there
         if 'stdout' in data and 'stdout_lines' not in data:
             data['stdout_lines'] = data.get('stdout', u'').splitlines()
-
-        # store the module invocation details back into the result
-        if self._task.async == 0:
-            data['invocation'] = dict(
-                module_args = module_args,
-                module_name = module_name,
-            )
 
         self._display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
