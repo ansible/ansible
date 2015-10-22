@@ -63,10 +63,10 @@ import os
 import pipes
 
 def package_installed(module, name):
-    cmd = [module.get_bin_path('pkginfo', True)]
+    cmd = ['pkginfo']
     cmd.append('-q')
     cmd.append(name)
-    rc, out, err = module.run_command(' '.join(cmd))
+    rc, out, err = run_command(module, cmd)
     if rc == 0:
         return True
     else:
@@ -79,16 +79,16 @@ def package_latest(module, name, site):
         cmd += [ '-t', pipes.quote(site) ]
     cmd.append(pipes.quote(name))
     cmd += [ '| tail -1 | grep -v SAME' ]
-    rc, out, err = module.run_command(' '.join(cmd), use_unsafe_shell=True)
+    rc, out, err = run_command(module, cmd, use_unsafe_shell=True)
     if rc == 1:
         return True
     else:
         return False
 
-def run_command(module, cmd):
+def run_command(module, cmd, **kwargs):
     progname = cmd[0]
-    cmd[0] = module.get_bin_path(progname, True)
-    return module.run_command(cmd)
+    cmd[0] = module.get_bin_path(progname, True, ['/opt/csw/bin'])
+    return module.run_command(cmd, **kwargs)
 
 def package_install(module, state, name, site):
     cmd = [ 'pkgutil', '-iy' ]
