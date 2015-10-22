@@ -38,20 +38,14 @@ Try {
     $inheritanceEnabled = !$objACL.AreAccessRulesProtected
 
     If (($state -eq "present") -And !$inheritanceEnabled) {
-        If ($reorganize) {
-            $objACL.SetAccessRuleProtection($True, $True)
-        } Else {
-            $objACL.SetAccessRuleProtection($True, $False)
-        }
-
-        Set-ACL $path $objACL
-        Set-Attr $result "changed" $true;
-    }
-    Elseif (($state -eq "absent") -And $inheritanceEnabled) {
         # second parameter is ignored if first=$False
         $objACL.SetAccessRuleProtection($False, $False)
 
         If ($reorganize) {
+            # it wont work without intermediate save, state would be the same
+            Set-ACL $path $objACL
+            $objACL = Get-ACL $path
+
             # convert explicit ACE to inherited ACE
             ForEach($inheritedRule in $objACL.Access) {
                 If (!$inheritedRule.IsInherited) {
@@ -59,7 +53,7 @@ Try {
                 }
 
                 ForEach($explicitRrule in $objACL.Access) {
-                    If ($inheritedRule.IsInherited) {
+                    If ($explicitRrule.IsInherited) {
                         Continue
                     }
 
@@ -68,6 +62,16 @@ Try {
                     }
                 }
             }
+        }
+
+        Set-ACL $path $objACL
+        Set-Attr $result "changed" $true;
+    }
+    Elseif (($state -eq "absent") -And $inheritanceEnabled) {
+        If ($reorganize) {
+            $objACL.SetAccessRuleProtection($True, $True)
+        } Else {
+            $objACL.SetAccessRuleProtection($True, $False)
         }
 
         Set-ACL $path $objACL
