@@ -275,9 +275,14 @@ class TaskExecutor:
         # the final task post-validation. We do this before the post validation due to
         # the fact that the conditional may specify that the task be skipped due to a
         # variable not being present which would otherwise cause validation to fail
-        if not self._task.evaluate_conditional(templar, variables):
-            self._display.debug("when evaluation failed, skipping this task")
-            return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
+        try:
+            if not self._task.evaluate_conditional(templar, variables):
+                self._display.debug("when evaluation failed, skipping this task")
+                return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
+        except AnsibleError:
+            # skip conditional exception in the case of includes as the vars needed might not be avaiable except in the included tasks or due to tags
+            if self._task.action != 'include':
+                raise
 
         # if this task is a TaskInclude, we just return now with a success code so the
         # main thread can expand the task list for the given host
