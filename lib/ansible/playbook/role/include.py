@@ -36,7 +36,8 @@ __all__ = ['RoleInclude']
 class RoleInclude(RoleDefinition):
 
     """
-    FIXME: docstring
+    A derivative of RoleDefinition, used by playbook code when a role
+    is included for execution in a play.
     """
 
     _delegate_to          = FieldAttribute(isa='string')

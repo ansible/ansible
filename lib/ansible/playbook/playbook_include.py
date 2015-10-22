@@ -107,8 +107,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
             else:
                 # some basic error checking, to make sure vars are properly
                 # formatted and do not conflict with k=v parameters
-                # FIXME: we could merge these instead, but controlling the order
-                #        in which they're encountered could be difficult
                 if k == 'vars':
                     if 'vars' in new_ds:
                         raise AnsibleParserError("include parameters cannot be mixed with 'vars' entries for include statements", obj=ds)
@@ -129,8 +127,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
         if len(items) == 0:
             raise AnsibleParserError("include statements must specify the file name to include", obj=ds)
         else:
-            # FIXME/TODO: validate that items[0] is a file, which also
-            #             exists and is readable
             new_ds['include'] = items[0]
             if len(items) > 1:
                 # rejoin the parameter portion of the arguments and
@@ -139,7 +135,6 @@ class PlaybookInclude(Base, Conditional, Taggable):
                 if 'tags' in params:
                     new_ds['tags'] = params.pop('tags')
                 if 'vars' in new_ds:
-                    # FIXME: see fixme above regarding merging vars
                     raise AnsibleParserError("include parameters cannot be mixed with 'vars' entries for include statements", obj=ds)
                 new_ds['vars'] = params
 

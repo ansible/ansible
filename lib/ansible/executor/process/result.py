@@ -108,11 +108,11 @@ class ResultProcess(multiprocessing.Process):
                     self._send_result(('register_host_var', result._host, result._task.register, result._result))
 
                 # send callbacks, execute other options based on the result status
-                # FIXME: this should all be cleaned up and probably moved to a sub-function.
-                #        the fact that this sometimes sends a TaskResult and other times
-                #        sends a raw dictionary back may be confusing, but the result vs.
-                #        results implementation for tasks with loops should be cleaned up
-                #        better than this
+                # TODO: this should all be cleaned up and probably moved to a sub-function.
+                #       the fact that this sometimes sends a TaskResult and other times
+                #       sends a raw dictionary back may be confusing, but the result vs.
+                #       results implementation for tasks with loops should be cleaned up
+                #       better than this
                 if result.is_unreachable():
                     self._send_result(('host_unreachable', result))
                 elif result.is_failed():
@@ -163,8 +163,8 @@ class ResultProcess(multiprocessing.Process):
             except (KeyboardInterrupt, IOError, EOFError):
                 break
             except:
-                # FIXME: we should probably send a proper callback here instead of
-                #        simply dumping a stack trace on the screen
+                # TODO: we should probably send a proper callback here instead of
+                #       simply dumping a stack trace on the screen
                 traceback.print_exc()
                 break
 

@@ -183,8 +183,6 @@ class Base:
 
         # Walk all attributes in the class. We sort them based on their priority
         # so that certain fields can be loaded before others, if they are dependent.
-        # FIXME: we currently don't do anything with private attributes but
-        #        may later decide to filter them out of 'ds' here.
         base_attributes = self._get_base_attributes()
         for name, attr in sorted(base_attributes.items(), key=operator.itemgetter(1)):
             # copy the value over unless a _load_field method is defined

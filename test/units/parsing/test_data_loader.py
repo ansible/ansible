@@ -32,7 +32,6 @@ from ansible.parsing.yaml.objects import AnsibleMapping
 class TestDataLoader(unittest.TestCase):
 
     def setUp(self):
-        # FIXME: need to add tests that utilize vault_password
         self._loader = DataLoader()
 
     def tearDown(self):

@@ -131,7 +131,6 @@ class WorkerProcess(multiprocessing.Process):
                         task_result = TaskResult(host, task, dict(unreachable=True))
                         self._rslt_q.put(task_result, block=False)
                 except:
-                    # FIXME: most likely an abort, catch those kinds of errors specifically
                     break
             except Exception as e:
                 if isinstance(e, (IOError, EOFError, KeyboardInterrupt)) and not isinstance(e, TemplateNotFound):
@@ -144,7 +143,6 @@ class WorkerProcess(multiprocessing.Process):
                     except:
                         debug("WORKER EXCEPTION: %s" % e)
                         debug("WORKER EXCEPTION: %s" % traceback.format_exc())
-                        # FIXME: most likely an abort, catch those kinds of errors specifically
                         break
 
         debug("WORKER PROCESS EXITING")

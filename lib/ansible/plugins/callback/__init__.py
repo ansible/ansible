@@ -40,9 +40,6 @@ class CallbackBase:
     custom actions.
     '''
 
-    # FIXME: the list of functions here needs to be updated once we have
-    #        finalized the list of callback methods used in the default callback
-
     def __init__(self, display):
         self._display = display
         if self._display.verbosity >= 4:

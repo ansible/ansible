@@ -341,7 +341,6 @@ class TaskExecutor:
         result = None
         for attempt in range(retries):
             if attempt > 0:
-                # FIXME: this should use the self._display.callback/message passing mechanism
                 self._display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color="red")
                 result['attempts'] = attempt + 1
 
@@ -479,8 +478,6 @@ class TaskExecutor:
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
         '''
-
-        # FIXME: calculation of connection params/auth stuff should be done here
 
         if not self._play_context.remote_addr:
             self._play_context.remote_addr = self._host.address

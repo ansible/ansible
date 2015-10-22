@@ -233,7 +233,6 @@ class Play(Base, Taggable, Become):
                 vars_prompts.append(prompt_data)
         return vars_prompts
 
-    # FIXME: post_validation needs to ensure that become/su/sudo have only 1 set
     def _compile_roles(self):
         '''
         Handles the role compilation step, returning a flat list of tasks

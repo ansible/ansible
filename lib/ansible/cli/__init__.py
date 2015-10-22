@@ -38,7 +38,7 @@ from ansible.utils.display import Display
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
-    #FIXME: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
+    # TODO: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
 
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
@@ -223,8 +223,8 @@ class CLI(object):
         async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False):
         ''' create an options parser for most ansible scripts '''
 
-        #FIXME: implemente epilog parsing
-        #OptionParser.format_epilog = lambda self, formatter: self.epilog
+        # TODO: implement epilog parsing
+        #       OptionParser.format_epilog = lambda self, formatter: self.epilog
 
         # base opts
         parser = SortedOptParser(usage, version=CLI.version("%prog"))

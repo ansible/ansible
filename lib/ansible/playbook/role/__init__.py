@@ -37,10 +37,10 @@ from ansible.utils.vars import combine_vars
 
 __all__ = ['Role', 'hash_params']
 
-# FIXME: this should be a utility function, but can't be a member of
-#        the role due to the fact that it would require the use of self
-#        in a static method. This is also used in the base class for
-#        strategies (ansible/plugins/strategy/__init__.py)
+# TODO: this should be a utility function, but can't be a member of
+#       the role due to the fact that it would require the use of self
+#       in a static method. This is also used in the base class for
+#       strategies (ansible/plugins/strategy/__init__.py)
 def hash_params(params):
     if not isinstance(params, dict):
         return params
@@ -128,7 +128,6 @@ class Role(Base, Become, Conditional, Taggable):
             return r
 
         except RuntimeError:
-            # FIXME: needs a better way to access the ds in the role include
             raise AnsibleError("A recursion loop was detected with the roles specified. Make sure child roles do not have dependencies on parent roles", obj=role_include._ds)
 
     def _load_role_data(self, role_include, parent_role=None):
@@ -244,7 +243,6 @@ class Role(Base, Become, Conditional, Taggable):
         return self._parents
 
     def get_default_vars(self):
-        # FIXME: get these from dependent roles too
         default_vars = dict()
         for dep in self.get_all_dependencies():
             default_vars = combine_vars(default_vars, dep.get_default_vars())

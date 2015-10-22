@@ -50,7 +50,8 @@ except ImportError:
 class RoleRequirement(RoleDefinition):
 
     """
-    FIXME: document various ways role specs can be specified
+    Helper class for Galaxy, which is used to parse both dependencies
+    specified in meta/main.yml and requirements.yml files.
     """
 
     def __init__(self):

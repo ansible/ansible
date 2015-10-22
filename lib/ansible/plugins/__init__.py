@@ -232,13 +232,12 @@ class PluginLoader:
             # they can have any suffix
             suffix = ''
 
-        ### FIXME:
-        # Instead of using the self._paths cache (PATH_CACHE) and
-        # self._searched_paths we could use an iterator.  Before enabling that
-        # we need to make sure we don't want to add additional directories
-        # (add_directory()) once we start using the iterator.  Currently, it
-        # looks like _get_paths() never forces a cache refresh so if we expect
-        # additional directories to be added later, it is buggy.
+        # TODO: Instead of using the self._paths cache (PATH_CACHE) and
+        #       self._searched_paths we could use an iterator.  Before enabling that
+        #       we need to make sure we don't want to add additional directories
+        #       (add_directory()) once we start using the iterator.  Currently, it
+        #       looks like _get_paths() never forces a cache refresh so if we expect
+        #       additional directories to be added later, it is buggy.
         for path in (p for p in self._get_paths() if p not in self._searched_paths and os.path.isdir(p)):
             try:
                 full_paths = (os.path.join(path, f) for f in os.listdir(path))

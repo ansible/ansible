@@ -181,7 +181,7 @@ class PlaybookExecutor:
             self.display.display("No issues encountered")
             return result
 
-        # FIXME: this stat summary stuff should be cleaned up and moved
+        # TODO: this stat summary stuff should be cleaned up and moved
         #        to a new method, if it even belongs here...
         self._display.banner("PLAY RECAP")
 

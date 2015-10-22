@@ -88,12 +88,10 @@ class ActionBase:
             module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type)
             if module_path:
                 break
-        else: # This is a for-else: http://bit.ly/1ElPkyg
-            # FIXME: Why is it necessary to look for the windows version?
-            # Shouldn't all modules be installed?
-            #
+        else:
             # Use Windows version of ping module to check module paths when
-            # using a connection that supports .ps1 suffixes.
+            # using a connection that supports .ps1 suffixes. We check specifically
+            # for win_ping here, otherwise the code would look for ping.ps1
             if '.ps1' in self._connection.module_implementation_preferences:
                 ping_module = 'win_ping'
             else:
@@ -138,8 +136,6 @@ class ActionBase:
         Determines if a temp path should be created before the action is executed.
         '''
 
-        # FIXME: modified from original, needs testing? Since this is now inside
-        #        the action plugin, it should make it just this simple
         return getattr(self, 'TRANSFERS_FILES', False)
 
     def _late_needs_tmp_path(self, tmp, module_style):
@@ -158,8 +154,6 @@ class ActionBase:
             return True
         return False
 
-    # FIXME: return a datastructure in this function instead of raising errors -
-    #        the new executor pipeline handles it much better that way
     def _make_tmp_path(self):
         '''
         Create and return a temporary path on a remote box.
@@ -199,8 +193,6 @@ class ActionBase:
                 output = output + u": %s" % result['stdout']
             raise AnsibleConnectionFailure(output)
 
-        # FIXME: do we still need to do this?
-        #rc = self._connection._shell.join_path(utils.last_non_blank_line(result['stdout']).strip(), '')
         rc = self._connection._shell.join_path(result['stdout'].strip(), u'').splitlines()[-1]
 
         # Catch failure conditions, files should never be
