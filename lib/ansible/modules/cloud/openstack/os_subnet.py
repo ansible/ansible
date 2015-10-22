@@ -302,7 +302,9 @@ def main():
                     changed = True
                 else:
                     changed = False
-            module.exit_json(changed=changed)
+            module.exit_json(changed=changed,
+                             subnet=subnet,
+                             id=subnet['id'])
 
         elif state == 'absent':
             if not subnet:
