@@ -403,22 +403,7 @@ class LinuxService(Service):
                 self.svc_initscript = initscript
 
         def check_systemd():
-            # verify systemd is installed (by finding systemctl)
-            if not location.get('systemctl', False):
-                return False
-
-            # Check if init is the systemd command, using comm as cmdline could be symlink
-            try:
-                f = open('/proc/1/comm', 'r')
-            except IOError, err:
-                # If comm doesn't exist, old kernel, no systemd
-                return False
-
-            for line in f:
-                if 'systemd' in line:
-                    return True
-
-            return False
+            return os.path.exists("/run/systemd/system/")
 
         # Locate a tool to enable/disable a service
         if location.get('systemctl',False) and check_systemd():
