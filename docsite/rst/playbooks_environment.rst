@@ -33,6 +33,17 @@ The environment can also be stored in a variable, and accessed like so::
         - apt: name=cobbler state=installed
           environment: proxy_env
 
+You can also use it at a playbook level::
+
+    - hosts: testhost
+
+      roles:
+         - php
+         - nginx
+
+      environment:
+        http_proxy: http://proxy.example.com:8080
+
 While just proxy settings were shown above, any number of settings can be supplied.  The most logical place
 to define an environment hash might be a group_vars file, like so::
 
