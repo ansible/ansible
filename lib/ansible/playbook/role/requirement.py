@@ -40,6 +40,13 @@ VALID_SPEC_KEYS = [
     'version',
 ]
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class RoleRequirement(RoleDefinition):
 
     """
@@ -76,6 +83,8 @@ class RoleRequirement(RoleDefinition):
         #   'version': 'v1.0',
         #   'name': 'repo'
         # }
+
+        display.deprecated("The comma separated role spec format, use the yaml/explicit format instead.")
 
         default_role_versions = dict(git='master', hg='tip')
 
