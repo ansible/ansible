@@ -20,14 +20,18 @@ __metaclass__ = type
 import os
 
 from ansible.errors import AnsibleError
-from ansible.parsing import DataLoader
 from ansible.plugins.action import ActionBase
+
 
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         source = self._task.args.get('_raw_params')
 
@@ -43,7 +47,11 @@ class ActionModule(ActionBase):
                 data = {}
             if not isinstance(data, dict):
                 raise AnsibleError("%s must be stored as a dictionary/hash" % source)
-            return dict(ansible_facts=data, _ansible_no_log=not show_content)
+            result['ansible_facts'] = data
+            result['_ansible_no_log'] = not show_content
         else:
-            return dict(failed=True, msg="Source file not found.", file=source)
+            result['failed'] = True
+            result['msg'] = "Source file not found."
+            result['file'] = source
 
+        return result

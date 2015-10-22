@@ -21,7 +21,6 @@ __metaclass__ = type
 
 import json
 import os
-import pipes
 import tempfile
 
 from ansible import constants as C
@@ -30,10 +29,15 @@ from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
 from ansible.utils.unicode import to_bytes
 
+
 class ActionModule(ActionBase):
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         source  = self._task.args.get('src', None)
         content = self._task.args.get('content', None)
@@ -44,11 +48,17 @@ class ActionModule(ActionBase):
         remote_src = boolean(self._task.args.get('remote_src', False))
 
         if (source is None and content is None and faf is None) or dest is None:
-            return dict(failed=True, msg="src (or content) and dest are required")
+            result['failed'] = True
+            result['msg'] = "src (or content) and dest are required"
+            return result
         elif (source is not None or faf is not None) and content is not None:
-            return dict(failed=True, msg="src and content are mutually exclusive")
+            result['failed'] = True
+            result['msg'] = "src and content are mutually exclusive"
+            return result
         elif content is not None and dest is not None and dest.endswith("/"):
-            return dict(failed=True, msg="dest must be a file if content is defined")
+            result['failed'] = True
+            result['msg'] = "dest must be a file if content is defined"
+            return result
 
         # Check if the source ends with a "/"
         source_trailing_slash = False
@@ -69,19 +79,24 @@ class ActionModule(ActionBase):
                     content_tempfile = self._create_content_tempfile(content)
                 source = content_tempfile
             except Exception as err:
-                return dict(failed=True, msg="could not write content temp file: %s" % err)
+                result['failed'] = True
+                result['msg'] = "could not write content temp file: %s" % err
+                return result
 
         # if we have first_available_file in our vars
         # look up the files and use the first one we find as src
         elif faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None))
             if source is None:
-                return  dict(failed=True, msg="could not find src in first_available_file list")
+                result['failed'] = True
+                result['msg'] = "could not find src in first_available_file list"
+                return result
 
         elif remote_src:
             new_module_args = self._task.args.copy()
             del new_module_args['remote_src']
-            return self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=False)
+            result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=False))
+            return result
 
         else:
             if self._task._role is not None:
@@ -117,7 +132,7 @@ class ActionModule(ActionBase):
             source_files.append((source, os.path.basename(source)))
 
         changed = False
-        module_result = {"changed": False}
+        module_return = dict(changed=False)
 
         # A register for if we executed a module.
         # Used to cut down on command calls when not recursive.
@@ -142,7 +157,9 @@ class ActionModule(ActionBase):
 
             # If local_checksum is not defined we can't find the file so we should fail out.
             if local_checksum is None:
-                return dict(failed=True, msg="could not find src=%s" % source_full)
+                result['failed'] = True
+                result['msg'] = "could not find src=%s" % source_full
+                return result
 
             # This is kind of optimization - if user told us destination is
             # dir, do path manipulation right away, otherwise we still check
@@ -160,7 +177,9 @@ class ActionModule(ActionBase):
                 if content is not None:
                     # If source was defined as content remove the temporary file and fail out.
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
-                    return dict(failed=True, msg="can not use content with a dir as dest")
+                    result['failed'] = True
+                    result['msg'] = "can not use content with a dir as dest"
+                    return result
                 else:
                     # Append the relative source location to the destination and retry remote_checksum
                     dest_file = self._connection._shell.join_path(dest, source_rel)
@@ -250,9 +269,10 @@ class ActionModule(ActionBase):
 
             if not module_return.get('checksum'):
                 module_return['checksum'] = local_checksum
-            if module_return.get('failed') == True:
-                return module_return
-            if module_return.get('changed') == True:
+            if module_return.get('failed'):
+                result.update(module_return)
+                return result
+            if module_return.get('changed'):
                 changed = True
 
             # the file module returns the file path as 'path', but
@@ -265,9 +285,9 @@ class ActionModule(ActionBase):
             self._remove_tmp_path(tmp)
 
         if module_executed and len(source_files) == 1:
-            result = module_return
+            result.update(module_return)
         else:
-            result = dict(dest=dest, src=source, changed=changed)
+            result.update(dict(dest=dest, src=source, changed=changed))
 
         if diffs:
             result['diff'] = diffs
@@ -288,8 +308,6 @@ class ActionModule(ActionBase):
             f.close()
         return content_tempfile
 
-
     def _remove_tempfile_if_content_defined(self, content, content_tempfile):
         if content is not None:
             os.remove(content_tempfile)
-

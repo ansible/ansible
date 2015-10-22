@@ -26,13 +26,20 @@ from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum, checksum_s, md5, secure_hash
 from ansible.utils.path import makedirs_safe
 
+
 class ActionModule(ActionBase):
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for fetch operations '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.check_mode:
-            return dict(skipped=True, msg='check mode not (yet) supported for this module')
+            result['skipped'] = True
+            result['msg'] = 'check mode not (yet) supported for this module'
+            return result
 
         source            = self._task.args.get('src', None)
         dest              = self._task.args.get('dest', None)
@@ -41,10 +48,14 @@ class ActionModule(ActionBase):
         validate_checksum = boolean(self._task.args.get('validate_checksum', self._task.args.get('validate_md5')))
 
         if 'validate_md5' in self._task.args and 'validate_checksum' in self._task.args:
-            return dict(failed=True, msg="validate_checksum and validate_md5 cannot both be specified")
+            result['failed'] = True
+            result['msg'] = "validate_checksum and validate_md5 cannot both be specified"
+            return result
 
         if source is None or dest is None:
-            return dict(failed=True, msg="src and dest are required")
+            result['failed'] = True
+            result['msg'] = "src and dest are required"
+            return result
 
         source = self._connection._shell.join_path(source)
         source = self._remote_expand_user(source)
@@ -58,8 +69,12 @@ class ActionModule(ActionBase):
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
             if slurpres.get('failed'):
                 if remote_checksum == '1' and not fail_on_missing:
-                   return dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
-                return slurpres
+                    result['msg'] = "the remote file does not exist, not transferring, ignored"
+                    result['file'] = source
+                    result['changed'] = False
+                    return result
+                result.update(slurpres)
+                return result
             else:
                 if slurpres['encoding'] == 'base64':
                     remote_data = base64.b64decode(slurpres['content'])
@@ -103,18 +118,30 @@ class ActionModule(ActionBase):
             # these don't fail because you may want to transfer a log file that possibly MAY exist
             # but keep going to fetch other log files
             if remote_checksum == '0':
-                result = dict(msg="unable to calculate the checksum of the remote file", file=source, changed=False)
+                result['msg'] = "unable to calculate the checksum of the remote file"
+                result['file'] = source
+                result['changed'] = False
             elif remote_checksum == '1':
                 if fail_on_missing:
-                    result = dict(failed=True, msg="the remote file does not exist", file=source)
+                    result['failed'] = True
+                    result['msg'] = "the remote file does not exist"
+                    result['file'] = source
                 else:
-                    result = dict(msg="the remote file does not exist, not transferring, ignored", file=source, changed=False)
+                    result['msg'] = "the remote file does not exist, not transferring, ignored"
+                    result['file'] = source
+                    result['changed'] = False
             elif remote_checksum == '2':
-                result = dict(msg="no read permission on remote file, not transferring, ignored", file=source, changed=False)
+                result['msg'] = "no read permission on remote file, not transferring, ignored"
+                result['file'] = source
+                result['changed'] = False
             elif remote_checksum == '3':
-                result = dict(msg="remote file is a directory, fetch cannot work on directories", file=source, changed=False)
+                result['msg'] = "remote file is a directory, fetch cannot work on directories"
+                result['file'] = source
+                result['changed'] = False
             elif remote_checksum == '4':
-                result = dict(msg="python isn't present on the system.  Unable to compute checksum", file=source, changed=False)
+                result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+                result['file'] = source
+                result['changed'] = False
             return result
 
         # calculate checksum for the local file
@@ -143,8 +170,10 @@ class ActionModule(ActionBase):
                 new_md5 = None
 
             if validate_checksum and new_checksum != remote_checksum:
-                return dict(failed=True, md5sum=new_md5, msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum)
-            return dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum)
+                result.update(dict(failed=True, md5sum=new_md5, msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
+                return result
+            result.update(dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
+            return result
         else:
             # For backwards compatibility.  We'll return None on FIPS enabled
             # systems
@@ -153,5 +182,5 @@ class ActionModule(ActionBase):
             except ValueError:
                 local_md5 = None
 
-            return dict(changed=False, md5sum=local_md5, file=source, dest=dest, checksum=local_checksum)
-
+            result.update(dict(changed=False, md5sum=local_md5, file=source, dest=dest, checksum=local_checksum))
+            return result

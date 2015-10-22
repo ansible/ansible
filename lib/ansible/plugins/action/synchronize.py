@@ -101,8 +101,12 @@ class ActionModule(ActionBase):
             if key.startswith("ansible_") and key.endswith("_interpreter"):
                 task_vars[key] = localhost[key]
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' generates params and passes them on to the rsync module '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         original_transport = task_vars.get('ansible_connection') or self._play_context.connection
         remote_transport = False
@@ -124,7 +128,7 @@ class ActionModule(ActionBase):
         # ansible's delegate_to mechanism to determine which host rsync is
         # running on so localhost could be a non-controller machine if
         # delegate_to is used)
-        src_host  = '127.0.0.1'
+        src_host = '127.0.0.1'
         inventory_hostname = task_vars.get('inventory_hostname')
         dest_host_inventory_vars = task_vars['hostvars'].get(inventory_hostname)
         dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
@@ -236,7 +240,7 @@ class ActionModule(ActionBase):
             self._task.args['ssh_args'] = C.ANSIBLE_SSH_ARGS
 
         # run the module and store the result
-        result = self._execute_module('synchronize', task_vars=task_vars)
+        result.update(self._execute_module('synchronize', task_vars=task_vars))
 
         if 'SyntaxError' in result['msg']:
             # Emit a warning about using python3 because synchronize is

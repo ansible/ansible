@@ -23,20 +23,27 @@ import os
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 
+
 class ActionModule(ActionBase):
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         src        = self._task.args.get('src', None)
-        dest       = self._task.args.get('dest', None)
         remote_src = boolean(self._task.args.get('remote_src', 'no'))
 
         if src is None:
-            return dict(failed=True, msg="src is required")
+            result['failed'] = True
+            result['msg'] = "src is required"
+            return result
         elif remote_src:
             # everything is remote, so we just execute the module
             # without changing any of the module arguments
-            return self._execute_module(task_vars=task_vars)
+            result.update(self._execute_module(task_vars=task_vars))
+            return result
 
         if self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
@@ -61,4 +68,5 @@ class ActionModule(ActionBase):
             )
         )
 
-        return self._execute_module('patch', module_args=new_module_args, task_vars=task_vars)
+        result.update(self._execute_module('patch', module_args=new_module_args, task_vars=task_vars))
+        return result

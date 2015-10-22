@@ -21,17 +21,23 @@ from ansible.plugins.action import ActionBase
 
 import re
 
+
 class ActionModule(ActionBase):
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.check_mode:
             # in --check mode, always skip this module execution
-            return dict(skipped=True)
+            result['skipped'] = True
+            return result
 
         executable = self._task.args.get('executable')
-        result = self._low_level_execute_command(self._task.args.get('_raw_params'), executable=executable)
+        result.update(self._low_level_execute_command(self._task.args.get('_raw_params'), executable=executable))
 
         # for some modules (script, raw), the sudo success key
         # may leak into the stdout due to the way the sudo/su
