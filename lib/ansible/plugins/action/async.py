@@ -23,13 +23,20 @@ import random
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
 
+
 class ActionModule(ActionBase):
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' transfer the given module name, plus the async module, then run it '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.check_mode:
-            return dict(skipped=True, msg='check mode not supported for this module')
+            result['skipped'] = True
+            result['msg'] = 'check mode not supported for this module'
+            return result
 
         if not tmp:
             tmp = self._make_tmp_path()
@@ -60,7 +67,7 @@ class ActionModule(ActionBase):
         async_jid   = str(random.randint(0, 999999999999))
 
         async_cmd = " ".join([str(x) for x in [env_string, async_module_path, async_jid, async_limit, remote_module_path, argsfile]])
-        result = self._low_level_execute_command(cmd=async_cmd)
+        result.update(self._low_level_execute_command(cmd=async_cmd))
 
         # clean up after
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
@@ -69,5 +76,3 @@ class ActionModule(ActionBase):
         result['changed'] = True
 
         return result
-
-

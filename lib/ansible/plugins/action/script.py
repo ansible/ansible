@@ -22,14 +22,21 @@ import os
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
 
+
 class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for file transfer operations '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.check_mode:
-            return dict(skipped=True, msg='check mode not supported for this module')
+            result['skipped'] = True
+            result['msg'] = 'check mode not supported for this module'
+            return result
 
         if not tmp:
             tmp = self._make_tmp_path()
@@ -39,8 +46,8 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
-            result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars, tmp=tmp, persist_files=True)
-            stat = result.get('stat', None)
+            res = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars, tmp=tmp, persist_files=True)
+            stat = res.get('stat', None)
             if stat and stat.get('exists', False):
                 return dict(skipped=True, msg=("skipped, since %s exists" % creates))
 
@@ -49,8 +56,8 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains removes=filename
             # and the filename does not exist. This allows idempotence
             # of command executions.
-            result = self._execute_module(module_name='stat', module_args=dict(path=removes), task_vars=task_vars, tmp=tmp, persist_files=True)
-            stat = result.get('stat', None)
+            res = self._execute_module(module_name='stat', module_args=dict(path=removes), task_vars=task_vars, tmp=tmp, persist_files=True)
+            stat = res.get('stat', None)
             if stat and not stat.get('exists', False):
                 return dict(skipped=True, msg=("skipped, since %s does not exist" % removes))
 
@@ -84,7 +91,7 @@ class ActionModule(ActionBase):
         env_string = self._compute_environment_string()
         script_cmd = ' '.join([env_string, tmp_src, args])
 
-        result = self._low_level_execute_command(cmd=script_cmd, sudoable=True)
+        result.update(self._low_level_execute_command(cmd=script_cmd, sudoable=True))
 
         # clean up after
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:

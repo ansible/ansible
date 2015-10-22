@@ -21,14 +21,19 @@ from ansible.errors import AnsibleError
 from ansible.playbook.conditional import Conditional
 from ansible.plugins.action import ActionBase
 
+
 class ActionModule(ActionBase):
     ''' Fail with custom message '''
 
     TRANSFERS_FILES = False
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
 
-        if not 'that' in self._task.args:
+        result = super(ActionModule, self).run(tmp, task_vars)
+
+        if 'that' not in self._task.args:
             raise AnsibleError('conditional required in "that" string')
 
         msg = None
@@ -38,7 +43,7 @@ class ActionModule(ActionBase):
         # make sure the 'that' items are a list
         thats = self._task.args['that']
         if not isinstance(thats, list):
-            thats = [ thats ]
+            thats = [thats]
 
         # Now we iterate over the that items, temporarily assigning them
         # to the task's when value so we can evaluate the conditional using
@@ -47,19 +52,18 @@ class ActionModule(ActionBase):
         # that value now
         cond = Conditional(loader=self._loader)
         for that in thats:
-            cond.when = [ that ]
+            cond.when = [that]
             test_result = cond.evaluate_conditional(templar=self._templar, all_vars=task_vars)
             if not test_result:
-                result = dict(
-                   failed       = True,
-                   evaluated_to = test_result,
-                   assertion    = that,
-                )
+                result['failed'] = True
+                result['evaluated_to'] = test_result
+                result['assertion'] = that
 
                 if msg:
                     result['msg'] = msg
 
                 return result
 
-        return dict(changed=False, msg='all assertions passed')
-
+        result['changed'] = False
+        result['msg'] = 'all assertions passed'
+        return result

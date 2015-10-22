@@ -19,7 +19,6 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
-import pipes
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
@@ -29,8 +28,12 @@ class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for unarchive operations '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         source  = self._task.args.get('src', None)
         dest    = self._task.args.get('dest', None)
@@ -38,7 +41,9 @@ class ActionModule(ActionBase):
         creates = self._task.args.get('creates', None)
 
         if source is None or dest is None:
-            return dict(failed=True, msg="src (or content) and dest are required")
+            result['failed'] = True
+            result['msg'] = "src (or content) and dest are required"
+            return result
 
         if not tmp:
             tmp = self._make_tmp_path()
@@ -47,11 +52,12 @@ class ActionModule(ActionBase):
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
-            module_args_tmp = "path=%s" % creates
             result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars)
             stat = result.get('stat', None)
             if stat and stat.get('exists', False):
-                return dict(skipped=True, msg=("skipped, since %s exists" % creates))
+                result['skipped'] = True
+                result['msg'] = "skipped, since %s exists" % creates
+                return result
 
         dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
         source = os.path.expanduser(source)
@@ -64,9 +70,13 @@ class ActionModule(ActionBase):
 
         remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
         if remote_checksum != '3':
-            return dict(failed=True, msg="dest '%s' must be an existing dir" % dest)
+            result['failed'] = True
+            result['msg'] = "dest '%s' must be an existing dir" % dest
+            return result
         elif remote_checksum == '4':
-            return dict(failed=True, msg="python isn't present on the system.  Unable to compute checksum")
+            result['failed'] = True
+            result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            return result
 
         if copy:
             # transfer the file to a remote tmp location
@@ -99,5 +109,5 @@ class ActionModule(ActionBase):
             )
 
         # execute the unarchive module now, with the updated args
-        return self._execute_module(module_args=new_module_args, task_vars=task_vars)
-
+        result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
+        return result

@@ -61,20 +61,26 @@ class CallbackModule(CallbackBase):
         if result._task.action in C.MODULE_NO_JSON:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"FAILED"), color='red')
         else:
-            self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color='red')
+            abridged_result = result.copy(result._result)
+            abridged_result.pop('invocation', None)
+            self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(abridged_result, indent=4)), color='red')
 
     def v2_runner_on_ok(self, result):
         if result._task.action in C.MODULE_NO_JSON:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"SUCCESS"), color='green')
         else:
-            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color='green')
+            abridged_result = result.copy(result._result)
+            abridged_result.pop('invocation', None)
+            self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(abridged_result, indent=4)), color='green')
             self._handle_warnings(result._result)
 
     def v2_runner_on_skipped(self, result):
         self._display.display("%s | SKIPPED" % (result._host.get_name()), color='cyan')
 
     def v2_runner_on_unreachable(self, result):
-        self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color='yellow')
+        abridged_result = result.copy(result._result)
+        abridged_result.pop('invocation', None)
+        self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(abridged_result, indent=4)), color='yellow')
 
     def v2_on_file_diff(self, result):
         if 'diff' in result._result and result._result['diff']:

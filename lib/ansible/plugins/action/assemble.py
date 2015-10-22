@@ -20,15 +20,13 @@ __metaclass__ = type
 
 import os
 import os.path
-import pipes
-import shutil
 import tempfile
-import base64
 import re
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum_s
+
 
 class ActionModule(ActionBase):
 
@@ -75,10 +73,16 @@ class ActionModule(ActionBase):
         tmp.close()
         return temp_path
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         if self._play_context.check_mode:
-            return dict(skipped=True, msg=("skipped, this module does not support check_mode."))
+            result['skipped'] = True
+            result['msg'] = "skipped, this module does not support check_mode."
+            return result
 
         src        = self._task.args.get('src', None)
         dest       = self._task.args.get('dest', None)
@@ -87,12 +91,15 @@ class ActionModule(ActionBase):
         regexp     = self._task.args.get('regexp', None)
         ignore_hidden = self._task.args.get('ignore_hidden', False)
 
-
         if src is None or dest is None:
-            return dict(failed=True, msg="src and dest are required")
+            result['failed'] = True
+            result['msg'] = "src and dest are required"
+            return result
 
         if boolean(remote_src):
-            return self._execute_module(tmp=tmp, task_vars=task_vars)
+            result.update(self._execute_module(tmp=tmp, task_vars=task_vars))
+            return result
+
         elif self._task._role is not None:
             src = self._loader.path_dwim_relative(self._task._role._role_path, 'files', src)
         else:
@@ -136,7 +143,8 @@ class ActionModule(ActionBase):
             res = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
             if diff:
                 res['diff'] = diff
-            return res
+            result.update(res)
+            return result
         else:
             new_module_args = self._task.args.copy()
             new_module_args.update(
@@ -147,4 +155,5 @@ class ActionModule(ActionBase):
                 )
             )
 
-            return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp)
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars, tmp=tmp))
+            return result

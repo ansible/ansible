@@ -22,6 +22,7 @@ __metaclass__ = type
 from ansible.plugins.action import ActionBase
 from ansible.plugins.action.copy import ActionModule as CopyActionModule
 
+
 # Even though CopyActionModule inherits from ActionBase, we still need to
 # directly inherit from ActionBase to appease the plugin loader.
 class ActionModule(CopyActionModule, ActionBase):
