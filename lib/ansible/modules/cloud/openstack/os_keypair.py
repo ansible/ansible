@@ -146,10 +146,14 @@ def main():
                             " as offered. Delete key first." % name
                     )
                 else:
-                    module.exit_json(changed=False, key=keypair)
+                    changed = False
+            else:
+                keypair = cloud.create_keypair(name, public_key)
+                changed = True
 
-            new_key = cloud.create_keypair(name, public_key)
-            module.exit_json(changed=True, key=new_key)
+            module.exit_json(changed=changed,
+                             key=keypair,
+                             id=keypair['id'])
 
         elif state == 'absent':
             if keypair:
