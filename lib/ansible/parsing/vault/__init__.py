@@ -360,7 +360,7 @@ class VaultFile(object):
 
         _, self.tmpfile = tempfile.mkstemp()
 
-    ### FIXME:
+    ### TODO:
     # __del__ can be problematic in python... For this use case, make
     # VaultFile a context manager instead (implement __enter__ and __exit__)
     def __del__(self):

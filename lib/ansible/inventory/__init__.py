@@ -117,8 +117,6 @@ class Inventory(object):
 
         self._vars_plugins = [ x for x in vars_loader.all(self) ]
 
-        # FIXME: shouldn't be required, since the group/host vars file
-        #        management will be done in VariableManager
         # get group vars from group_vars/ files and vars plugins
         for group in self.groups.values():
             group.vars = combine_vars(group.vars, self.get_group_variables(group.name))
@@ -648,11 +646,11 @@ class Inventory(object):
         if dir_name != self._playbook_basedir:
             self._playbook_basedir = dir_name
             # get group vars from group_vars/ files
-            # FIXME: excluding the new_pb_basedir directory may result in group_vars
-            #        files loading more than they should, however with the file caching
-            #        we do this shouldn't be too much of an issue. Still, this should
-            #        be fixed at some point to allow a "first load" to touch all of the
-            #        directories, then later runs only touch the new basedir specified
+            # TODO: excluding the new_pb_basedir directory may result in group_vars
+            #       files loading more than they should, however with the file caching
+            #       we do this shouldn't be too much of an issue. Still, this should
+            #       be fixed at some point to allow a "first load" to touch all of the
+            #       directories, then later runs only touch the new basedir specified
             for group in self.groups.values():
                 #group.vars = combine_vars(group.vars, self.get_group_vars(group, new_pb_basedir=True))
                 group.vars = combine_vars(group.vars, self.get_group_vars(group))
@@ -708,7 +706,6 @@ class Inventory(object):
             if _basedir == self._playbook_basedir and scan_pass != 1:
                 continue
 
-            # FIXME: these should go to VariableManager
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
                 base_path = os.path.realpath(os.path.join(basedir, "group_vars/%s" % group.name))

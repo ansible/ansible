@@ -70,6 +70,9 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         if isinstance(ds, dict):
             ds = super(RoleDefinition, self).preprocess_data(ds)
 
+        # save the original ds for use later
+        self._ds = ds
+
         # we create a new data structure here, using the same
         # object used internally by the YAML parsing code so we
         # can preserve file:line:column information if it exists
@@ -96,9 +99,6 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
 
         # we store the role path internally
         self._role_path = role_path
-
-        # save the original ds for use later
-        self._ds = ds
 
         # and return the cleaned-up data structure
         return new_ds
@@ -176,10 +176,7 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
                 if self._loader.path_exists(role_path):
                     return (role_name, role_path)
 
-        # FIXME: make the parser smart about list/string entries in
-        #        the yaml so the error line/file can be reported here
-
-        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)))
+        raise AnsibleError("the role '%s' was not found in %s" % (role_name, ":".join(role_search_paths)), obj=self._ds)
 
     def _split_role_params(self, ds):
         '''
