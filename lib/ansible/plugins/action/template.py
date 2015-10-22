@@ -17,7 +17,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import base64
 import datetime
 import os
 import pwd
@@ -28,6 +27,7 @@ from ansible.plugins.action import ActionBase
 from ansible.utils.hashing import checksum_s
 from ansible.utils.boolean import boolean
 from ansible.utils.unicode import to_bytes, to_unicode
+
 
 class ActionModule(ActionBase):
 
@@ -52,8 +52,12 @@ class ActionModule(ActionBase):
 
         return remote_checksum
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
@@ -61,7 +65,9 @@ class ActionModule(ActionBase):
         force  = boolean(self._task.args.get('force', False))
 
         if (source is None and faf is not None) or dest is None:
-            return dict(failed=True, msg="src and dest are required")
+            result['failed'] = True
+            result['msg'] = "src and dest are required"
+            return result
 
         if tmp is None:
             tmp = self._make_tmp_path()
@@ -69,7 +75,9 @@ class ActionModule(ActionBase):
         if faf:
             source = self._get_first_available_file(faf, task_vars.get('_original_file', None, 'templates'))
             if source is None:
-                return dict(failed=True, msg="could not find src in first_available_file list")
+                result['failed'] = True
+                result['msg'] = "could not find src in first_available_file list"
+                return result
         else:
             if self._task._role is not None:
                 source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', source)
@@ -128,20 +136,21 @@ class ActionModule(ActionBase):
             resultant = self._templar.template(template_data, preserve_trailing_newlines=True, escape_backslashes=False, convert_data=False)
             self._templar.set_available_variables(old_vars)
         except Exception as e:
-            return dict(failed=True, msg=type(e).__name__ + ": " + str(e))
+            result['failed'] = True
+            result['msg'] = type(e).__name__ + ": " + str(e)
+            return result
 
         local_checksum = checksum_s(resultant)
         remote_checksum = self.get_checksum(dest, task_vars, not directory_prepended, source=source)
         if isinstance(remote_checksum, dict):
             # Error from remote_checksum is a dict.  Valid return is a str
-            return remote_checksum
+            result.update(remote_checksum)
+            return result
 
         diff = {}
         new_module_args = self._task.args.copy()
 
         if local_checksum != remote_checksum:
-            dest_contents = ''
-
             # if showing diffs, we need to get the remote value
             if self._play_context.diff:
                 diff = self._get_diff_data(dest, resultant, task_vars, source_file=False)
@@ -162,12 +171,12 @@ class ActionModule(ActionBase):
                        follow=True,
                     ),
                 )
-                result = self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars)
+                result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars))
             else:
                 if remote_checksum == '1' or force:
-                    result = dict(changed=True)
+                    result['changed'] = True
                 else:
-                    result = dict(changed=False)
+                    result['changed'] = False
 
             if result.get('changed', False) and self._play_context.diff:
                 result['diff'] = diff
@@ -189,5 +198,5 @@ class ActionModule(ActionBase):
                 ),
             )
 
-            return self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars)
-
+            result.update(self._execute_module(module_name='file', module_args=new_module_args, task_vars=task_vars))
+            return result

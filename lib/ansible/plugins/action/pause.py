@@ -27,11 +27,14 @@ from os import isatty
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 
+
 class AnsibleTimeoutExceeded(Exception):
     pass
 
+
 def timeout_handler(signum, frame):
     raise AnsibleTimeoutExceeded
+
 
 class ActionModule(ActionBase):
     ''' pauses execution for a length or time, or until input is received '''
@@ -39,13 +42,17 @@ class ActionModule(ActionBase):
     PAUSE_TYPES = ['seconds', 'minutes', 'prompt', '']
     BYPASS_HOST_LOOP = True
 
-    def run(self, tmp=None, task_vars=dict()):
+    def run(self, tmp=None, task_vars=None):
         ''' run the pause action module '''
+        if task_vars is None:
+            task_vars = dict()
+
+        result = super(ActionModule, self).run(tmp, task_vars)
 
         duration_unit = 'minutes'
         prompt = None
         seconds = None
-        result = dict(
+        result.update(dict(
             changed = False,
             rc      = 0,
             stderr  = '',
@@ -53,37 +60,37 @@ class ActionModule(ActionBase):
             start   = None,
             stop    = None,
             delta   = None,
-        )
+        ))
 
         # Is 'args' empty, then this is the default prompted pause
         if self._task.args is None or len(self._task.args.keys()) == 0:
-            pause_type = 'prompt'
             prompt = "[%s]\nPress enter to continue:" % self._task.get_name().strip()
 
         # Are 'minutes' or 'seconds' keys that exist in 'args'?
         elif 'minutes' in self._task.args or 'seconds' in self._task.args:
             try:
                 if 'minutes' in self._task.args:
-                    pause_type = 'minutes'
                     # The time() command operates in seconds so we need to
                     # recalculate for minutes=X values.
                     seconds = int(self._task.args['minutes']) * 60
                 else:
-                    pause_type = 'seconds'
                     seconds = int(self._task.args['seconds'])
                     duration_unit = 'seconds'
 
             except ValueError as e:
-                return dict(failed=True, msg="non-integer value given for prompt duration:\n%s" % str(e))
+                result['failed'] = True
+                result['msg'] = "non-integer value given for prompt duration:\n%s" % str(e)
+                return result
 
         # Is 'prompt' a key in 'args'?
         elif 'prompt' in self._task.args:
-            pause_type = 'prompt'
             prompt = "[%s]\n%s:" % (self._task.get_name().strip(), self._task.args['prompt'])
 
         else:
             # I have no idea what you're trying to do. But it's so wrong.
-            return dict(failed=True, msg="invalid pause type given. must be one of: %s" % ", ".join(self.PAUSE_TYPES))
+            result['failed'] = True
+            result['msg'] = "invalid pause type given. must be one of: %s" % ", ".join(self.PAUSE_TYPES)
+            return result
 
         ########################################################################
         # Begin the hard work!
