@@ -40,7 +40,6 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'log_plays'
-    CALLBACK_NEEDS_WHITELIST = True
 
     TIME_FORMAT="%b %d %Y %H:%M:%S"
     MSG_FORMAT="%(now)s - %(category)s - %(data)s\n\n"
