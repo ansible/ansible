@@ -37,6 +37,7 @@ options:
         required: false
         default: install
     arguments:
+        version_added: "2.0"
         description:
             - Composer arguments like required package, version and so on
         required: false
