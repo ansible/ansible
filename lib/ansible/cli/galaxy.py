@@ -368,11 +368,23 @@ class GalaxyCLI(CLI):
                         raise AnsibleError("No roles found in file: %s" % role_file)
 
                     for role in required_roles:
-                        role = RoleRequirement.role_yaml_parse(role)
-                        display.vvv('found role %s in yaml file' % str(role))
-                        if 'name' not in role and 'scm' not in role:
-                            raise AnsibleError("Must specify name or src for role")
-                        roles_left.append(GalaxyRole(self.galaxy, **role))
+                        if "include" not in role:
+                            role = RoleRequirement.role_yaml_parse(role)
+                            display.vvv("found role %s in yaml file" % str(role))
+                            if "name" not in role and "scm" not in role:
+                                raise AnsibleError("Must specify name or src for role")
+                            roles_left.append(GalaxyRole(self.galaxy, **role))
+                        else:
+                            with open(role["include"]) as f_include:
+                                try:
+                                    roles_left += [
+                                        GalaxyRole(self.galaxy, **r) for r in
+                                        map(RoleRequirement.role_yaml_parse,
+                                            yaml.safe_load(f_include))
+                                    ]
+                                except Exception as e:
+                                    msg = "Unable to load data from the include requirements file: %s %s"
+                                    raise AnsibleError(msg % (role_file, e))
                 else:
                     display.deprecated("going forward only the yaml format will be supported")
                     # roles listed in a file, one per line
