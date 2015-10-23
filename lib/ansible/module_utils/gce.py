@@ -41,11 +41,11 @@ def gce_connect(module, provider=None):
 
     # If any of the values are not given as parameters, check the appropriate
     # environment variables.
-    if not service_account_email:
+    if service_account_email is None:
         service_account_email = os.environ.get('GCE_EMAIL', None)
-    if not project_id:
+    if project_id is None:
         project_id = os.environ.get('GCE_PROJECT', None)
-    if not pem_file:
+    if pem_file is None:
         pem_file = os.environ.get('GCE_PEM_FILE_PATH', None)
 
     # If we still don't have one or more of our credentials, attempt to
