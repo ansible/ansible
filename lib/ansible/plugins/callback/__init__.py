@@ -50,7 +50,8 @@ class CallbackBase:
 
     def _dump_results(self, result, indent=None, sort_keys=True):
 
-        if result.get('_ansible_no_log', False):
+        no_log = result.get('_ansible_no_log', False):
+        if no_log:
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         if not indent and '_ansible_verbose_always' in result and result['_ansible_verbose_always']:
@@ -60,6 +61,10 @@ class CallbackBase:
         for k in result.keys():
             if isinstance(k, string_types) and k.startswith('_ansible_'):
                 del result[k]
+
+        # remove invocation info unless its very very verbose
+        if 'invocation' in result and (self._display.verbosity < 3 or no_log):
+            del result['invocation']
 
         return json.dumps(result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
