@@ -61,7 +61,7 @@ class CallbackModule(CallbackBase):
         if result._task.action in C.MODULE_NO_JSON:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"FAILED"), color='red')
         else:
-            abridged_result = result.copy(result._result)
+            abridged_result = result._result.copy()
             abridged_result.pop('invocation', None)
             self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(abridged_result, indent=4)), color='red')
 
@@ -69,7 +69,7 @@ class CallbackModule(CallbackBase):
         if result._task.action in C.MODULE_NO_JSON:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result,"SUCCESS"), color='green')
         else:
-            abridged_result = result.copy(result._result)
+            abridged_result = result._result.copy()
             abridged_result.pop('invocation', None)
             self._display.display("%s | SUCCESS => %s" % (result._host.get_name(), self._dump_results(abridged_result, indent=4)), color='green')
             self._handle_warnings(result._result)
@@ -78,7 +78,7 @@ class CallbackModule(CallbackBase):
         self._display.display("%s | SKIPPED" % (result._host.get_name()), color='cyan')
 
     def v2_runner_on_unreachable(self, result):
-        abridged_result = result.copy(result._result)
+        abridged_result = result._result.copy()
         abridged_result.pop('invocation', None)
         self._display.display("%s | UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(abridged_result, indent=4)), color='yellow')
 
