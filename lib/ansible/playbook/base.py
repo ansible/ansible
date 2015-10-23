@@ -304,6 +304,8 @@ class Base:
                 method = getattr(self, '_post_validate_%s' % name, None)
                 if method:
                     value = method(attribute, getattr(self, name), templar)
+                elif attribute.isa == 'class':
+                    value = getattr(self, name)
                 else:
                     # if the attribute contains a variable, template it now
                     value = templar.template(getattr(self, name))
@@ -363,6 +365,10 @@ class Base:
                             value = dict()
                         elif not isinstance(value, dict):
                             raise TypeError("%s is not a dictionary" % value)
+                    elif attribute.isa == 'class':
+                        if not isinstance(value, attribute.class_type):
+                            raise TypeError("%s is not a valid %s (got a %s instead)" % (name, attribute.class_type, type(value)))
+                        value.post_validate(templar=templar)
 
                 # and assign the massaged value back to the attribute field
                 setattr(self, name, value)
