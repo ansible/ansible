@@ -27,6 +27,7 @@ class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
 
+        convert_data_p = kwargs.get('convert_data', True)
         basedir = self.get_basedir(variables)
 
         ret = []
@@ -46,7 +47,7 @@ class LookupModule(LookupBase):
                         searchpath.insert(1, variables['role_path'])
 
                     self._templar.environment.loader.searchpath = searchpath
-                    res = self._templar.template(template_data, preserve_trailing_newlines=True)
+                    res = self._templar.template(template_data, preserve_trailing_newlines=True,convert_data=convert_data_p)
                     ret.append(res)
             else:
                 raise AnsibleError("the template file %s could not be found for the lookup" % term)
