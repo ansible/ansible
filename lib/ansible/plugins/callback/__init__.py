@@ -48,19 +48,28 @@ class CallbackBase:
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
-    def _dump_results(self, result, indent=None, sort_keys=True):
-
-        no_log = result.get('_ansible_no_log', False):
-        if no_log:
+    def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=None):
+        if result.get('_ansible_no_log', False):
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         if not indent and '_ansible_verbose_always' in result and result['_ansible_verbose_always']:
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        for k in result.keys():
+        abridged_result = result.copy()
+        for k in abridged_result.keys():
             if isinstance(k, string_types) and k.startswith('_ansible_'):
-                del result[k]
+                del abridged_result[k]
+
+        # Remove invocation unless verbosity is turned up or the specific
+        # callback wants to keep it
+        if keep_invocation is None:
+            if self._display.verbosity < 3:
+                keep_invocation = False
+            else:
+                keep_invocation = True
+        if not keep_invocation and 'invocation' in result:
+            del abridged_result['invocation']
 
         # remove invocation info unless its very very verbose
         if 'invocation' in result and (self._display.verbosity < 3 or no_log):
@@ -222,7 +231,7 @@ class CallbackBase:
     def v2_runner_on_async_poll(self, result):
         host = result._host.get_name()
         jid = result._result.get('ansible_job_id')
-         #FIXME, get real clock
+        #FIXME, get real clock
         clock = 0
         self.runner_on_async_poll(host, result._result, jid, clock)
 
@@ -297,4 +306,3 @@ class CallbackBase:
 
     def v2_playbook_on_include(self, included_file):
         pass #no v1 correspondance
-
