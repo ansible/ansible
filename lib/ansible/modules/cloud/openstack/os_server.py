@@ -78,7 +78,8 @@ options:
      default: None
    security_groups:
      description:
-        - The name of the security group to which the instance should be added
+        - Names of the security groups to which the instance should be
+          added.  This may be a YAML list or a common separated string.
      required: false
      default: None
    nics:
@@ -366,7 +367,7 @@ def _create_server(module, cloud):
         flavor=flavor_dict['id'],
         nics=nics,
         meta=module.params['meta'],
-        security_groups=module.params['security_groups'].split(','),
+        security_groups=module.params['security_groups'],
         userdata=module.params['userdata'],
         config_drive=module.params['config_drive'],
     )
@@ -459,7 +460,7 @@ def main():
         flavor_ram                      = dict(default=None, type='int'),
         flavor_include                  = dict(default=None),
         key_name                        = dict(default=None),
-        security_groups                 = dict(default='default'),
+        security_groups                 = dict(default=['default'], type='list'),
         nics                            = dict(default=[], type='list'),
         meta                            = dict(default=None),
         userdata                        = dict(default=None),
