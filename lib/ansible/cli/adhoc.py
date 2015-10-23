@@ -19,6 +19,9 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 ########################################################
+
+import os
+
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
@@ -27,6 +30,7 @@ from ansible.inventory import Inventory
 from ansible.parsing import DataLoader
 from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
+from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
@@ -137,6 +141,13 @@ class AdHocCLI(CLI):
             if pattern.endswith(".yml"):
                 err = err + ' (did you mean to run ansible-playbook?)'
             raise AnsibleOptionsError(err)
+
+        # dynamically load any plugins from the playbook directory
+        for name, obj in get_all_plugin_loaders():
+            if obj.subdir:
+                plugin_path = os.path.join('.', obj.subdir)
+                if os.path.isdir(plugin_path):
+                    obj.add_directory(plugin_path)
 
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
