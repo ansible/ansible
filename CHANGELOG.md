@@ -153,6 +153,7 @@ New Modules:
 * cloudstack: cs_user
 * cloudstack: cs_vmsnapshot
 * datadog_monitor
+* deploy_helper
 * dpkg_selections
 * elasticsearch_plugin
 * expect
