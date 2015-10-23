@@ -61,8 +61,7 @@ options:
    security_groups:
      description:
         - Security group(s) ID(s) or name(s) associated with the port (comma
-          separated for multiple security groups - no spaces between comma(s)
-          or YAML list).
+          separated string or YAML list)
      required: false
      default: None
    no_security_groups:
@@ -220,7 +219,7 @@ def _needs_update(module, port, cloud):
                       'device_id']
     compare_dict = ['allowed_address_pairs',
                     'extra_dhcp_opt']
-    compare_comma_separated_list = ['security_groups']
+    compare_list = ['security_groups']
 
     for key in compare_simple:
         if module.params[key] is not None and module.params[key] != port[key]:
@@ -229,7 +228,7 @@ def _needs_update(module, port, cloud):
         if module.params[key] is not None and cmp(module.params[key],
                                                   port[key]) != 0:
             return True
-    for key in compare_comma_separated_list:
+    for key in compare_list:
         if module.params[key] is not None and (set(module.params[key]) !=
                                                set(port[key])):
             return True
@@ -309,7 +308,7 @@ def main():
         fixed_ips=dict(default=None),
         admin_state_up=dict(default=None),
         mac_address=dict(default=None),
-        security_groups=dict(default=None),
+        security_groups=dict(default=None, type='list'),
         no_security_groups=dict(default=False, type='bool'),
         allowed_address_pairs=dict(default=None),
         extra_dhcp_opt=dict(default=None),
@@ -336,13 +335,11 @@ def main():
     try:
         cloud = shade.openstack_cloud(**module.params)
         if module.params['security_groups']:
-            if type(module.params['security_groups']) == str:
-                module.params['security_groups'] = module.params[
-                    'security_groups'].split(',')
             # translate security_groups to UUID's if names where provided
-            module.params['security_groups'] = map(
-                lambda v: get_security_group_id(module, cloud, v),
-                module.params['security_groups'])
+            module.params['security_groups'] = [
+                get_security_group_id(module, cloud, v)
+                for v in module.params['security_groups']
+            ]
 
         port = None
         network_id = None
