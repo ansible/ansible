@@ -335,7 +335,9 @@ def main():
 
                     changed = True
 
-            module.exit_json(changed=changed, router=router)
+            module.exit_json(changed=changed,
+                             router=router,
+                             id=router['id'])
 
         elif state == 'absent':
             if not router:
