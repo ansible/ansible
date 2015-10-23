@@ -47,8 +47,6 @@ class IncludedFile:
         included_files = []
 
         for res in results:
-            if res._host.name in tqm._failed_hosts:
-                continue
 
             if res._task.action == 'include':
                 if res._task.loop:
