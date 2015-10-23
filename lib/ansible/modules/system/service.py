@@ -403,7 +403,7 @@ class LinuxService(Service):
                 self.svc_initscript = initscript
 
         def check_systemd():
-            return os.path.exists("/run/systemd/system/")
+            return os.path.exists("/run/systemd/system/") or os.path.exists("/dev/.run/systemd/") or os.path.exists("/dev/.systemd/")
 
         # Locate a tool to enable/disable a service
         if location.get('systemctl',False) and check_systemd():
