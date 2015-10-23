@@ -212,22 +212,22 @@ class TestTaskExecutor(unittest.TestCase):
         # No replacement
         #
         mock_task.action = 'yum'
-        new_items = te._squash_items(items=items, variables=job_vars)
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
 
         mock_task.action = 'foo'
         mock_task.args={'name': '{{item}}'}
-        new_items = te._squash_items(items=items, variables=job_vars)
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
 
         mock_task.action = 'yum'
         mock_task.args={'name': 'static'}
-        new_items = te._squash_items(items=items, variables=job_vars)
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
 
         mock_task.action = 'yum'
         mock_task.args={'name': '{{pkg_mgr}}'}
-        new_items = te._squash_items(items=items, variables=job_vars)
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
 
         #
@@ -235,12 +235,12 @@ class TestTaskExecutor(unittest.TestCase):
         #
         mock_task.action = 'yum'
         mock_task.args={'name': '{{item}}'}
-        new_items = te._squash_items(items=items, variables=job_vars)
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a','c']])
 
         mock_task.action = '{{pkg_mgr}}'
         mock_task.args={'name': '{{item}}'}
-        new_items = te._squash_items(items=items, variables=job_vars)
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
 
         #
@@ -249,7 +249,7 @@ class TestTaskExecutor(unittest.TestCase):
         #
         mock_task.action = '{{unknown}}'
         mock_task.args={'name': '{{item}}'}
-        new_items = te._squash_items(items=items, variables=job_vars)
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
 
         items = [dict(name='a', state='present'),
@@ -257,7 +257,7 @@ class TestTaskExecutor(unittest.TestCase):
                 dict(name='c', state='present')]
         mock_task.action = 'yum'
         mock_task.args={'name': '{{item}}'}
-        new_items = te._squash_items(items=items, variables=job_vars)
+        new_items = te._squash_items(items=items, loop_var='item', variables=job_vars)
         self.assertEqual(new_items, items)
 
     def test_task_executor_execute(self):

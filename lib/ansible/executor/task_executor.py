@@ -224,9 +224,17 @@ class TaskExecutor:
         #task_vars = self._job_vars.copy()
         task_vars = self._job_vars
 
-        items = self._squash_items(items, task_vars)
+        loop_var = 'item'
+        if self._task.loop_control:
+            # the value may be 'None', so we still need to default it back to 'item' 
+            loop_var = self._task.loop_control.loop_var or 'item'
+
+        if loop_var in task_vars:
+            raise AnsibleError("the loop variable '%s' is already in use. You should set the `loop_var` value in the `loop_control` option for the task to something else to avoid variable collisions" % loop_var)
+
+        items = self._squash_items(items, loop_var, task_vars)
         for item in items:
-            task_vars['item'] = item
+            task_vars[loop_var] = item
 
             try:
                 tmp_task = self._task.copy()
@@ -245,15 +253,16 @@ class TaskExecutor:
 
             # now update the result with the item info, and append the result
             # to the list of results
-            res['item'] = item
+            res[loop_var] = item
             res['_ansible_item_result'] = True
 
             self._rslt_q.put(TaskResult(self._host, self._task, res), block=False)
             results.append(res)
+            del task_vars[loop_var]
 
         return results
 
-    def _squash_items(self, items, variables):
+    def _squash_items(self, items, loop_var, variables):
         '''
         Squash items down to a comma-separated list for certain modules which support it
         (typically package management modules).
@@ -283,18 +292,18 @@ class TaskExecutor:
                 template_no_item = template_with_item = None
                 if name:
                     if templar._contains_vars(name):
-                        variables['item'] = '\0$'
+                        variables[loop_var] = '\0$'
                         template_no_item = templar.template(name, variables, cache=False)
-                        variables['item'] = '\0@'
+                        variables[loop_var] = '\0@'
                         template_with_item = templar.template(name, variables, cache=False)
-                        del variables['item']
+                        del variables[loop_var]
 
                     # Check if the user is doing some operation that doesn't take
                     # name/pkg or the name/pkg field doesn't have any variables
                     # and thus the items can't be squashed
                     if template_no_item != template_with_item:
                         for item in items:
-                            variables['item'] = item
+                            variables[loop_var] = item
                             if self._task.evaluate_conditional(templar, variables):
                                 new_item = templar.template(name, cache=False)
                                 final_items.append(new_item)

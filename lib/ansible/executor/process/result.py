@@ -171,7 +171,10 @@ class ResultProcess(multiprocessing.Process):
                             self._send_result(('add_group', result._host, result_item))
                         elif 'ansible_facts' in result_item:
                             # if this task is registering facts, do that now
-                            item = result_item.get('item', None)
+                            loop_var = 'item'
+                            if result._task.loop_control:
+                                loop_var = result._task.loop_control.get('loop_var') or 'item'
+                            item = result_item.get(loop_var, None)
                             if result._task.action == 'include_vars':
                                 for (key, value) in iteritems(result_item['ansible_facts']):
                                     self._send_result(('set_host_var', result._host, result._task, item, key, value))

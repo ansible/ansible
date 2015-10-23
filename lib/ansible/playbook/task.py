@@ -32,6 +32,7 @@ from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.conditional import Conditional
+from ansible.playbook.loop_control import LoopControl
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
@@ -78,6 +79,7 @@ class Task(Base, Conditional, Taggable, Become):
     _first_available_file = FieldAttribute(isa='list')
     _loop                 = FieldAttribute(isa='string', private=True)
     _loop_args            = FieldAttribute(isa='list', private=True)
+    _loop_control         = FieldAttribute(isa='class', class_type=LoopControl)
     _name                 = FieldAttribute(isa='string', default='')
     _notify               = FieldAttribute(isa='list')
     _poll                 = FieldAttribute(isa='int')
@@ -219,6 +221,16 @@ class Task(Base, Conditional, Taggable, Become):
                     new_ds[k] = v
 
         return super(Task, self).preprocess_data(new_ds)
+
+    def _load_loop_control(self, attr, ds):
+        if not isinstance(ds, dict):
+           raise AnsibleParserError(
+               "the `loop_control` value must be specified as a dictionary and cannot " \
+               "be a variable itself (though it can contain variables)",
+               obj=ds,
+           )
+
+        return LoopControl.load(data=ds, variable_manager=self._variable_manager, loader=self._loader)
 
     def post_validate(self, templar):
         '''

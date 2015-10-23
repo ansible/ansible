@@ -23,7 +23,7 @@ from copy import deepcopy
 
 class Attribute:
 
-    def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0, always_post_validate=False):
+    def __init__(self, isa=None, private=False, default=None, required=False, listof=None, priority=0, class_type=None, always_post_validate=False):
 
         self.isa = isa
         self.private = private
@@ -31,6 +31,7 @@ class Attribute:
         self.required = required
         self.listof = listof
         self.priority = priority
+        self.class_type = class_type
         self.always_post_validate = always_post_validate
 
         if default is not None and self.isa in ('list', 'dict', 'set'):
