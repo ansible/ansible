@@ -46,9 +46,9 @@ options:
     required: true
   email:
     description:
-       - The email address for the registry account
+       - The email address for the registry account. Note that private registries usually don't need this, but if you want to log into your Docker Hub account (default behaviour) you need to specify this in order to be able to log in.
     required: false
-    default: anonymous@localhost.local
+    default: None
   reauth:
     description:
        - Whether refresh existing authentication on the Docker server (boolean)
@@ -218,7 +218,7 @@ def main():
             registry        = dict(required=False, default='https://index.docker.io/v1/'),
             username        = dict(required=True),
             password        = dict(required=True),
-            email           = dict(required=False, default='anonymous@localhost.local'),
+            email           = dict(required=False, default=None),
             reauth          = dict(required=False, default=False, type='bool'),
             dockercfg_path  = dict(required=False, default='~/.dockercfg'),
             docker_url      = dict(default='unix://var/run/docker.sock'),
