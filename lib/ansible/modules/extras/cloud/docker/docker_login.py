@@ -70,7 +70,7 @@ options:
     required: false
     default: 600
 
-requirements: [ "docker-py" ]
+requirements: [ "python >= 2.6", "docker-py" ]
 '''
 
 EXAMPLES = '''
