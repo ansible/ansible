@@ -72,10 +72,10 @@ class CallbackBase:
             del abridged_result['invocation']
 
         # remove invocation info unless its very very verbose
-        if 'invocation' in result and (self._display.verbosity < 3 or no_log):
-            del result['invocation']
+        if 'invocation' in abridged_result and self._display.verbosity < 3:
+            del abridged_result['invocation']
 
-        return json.dumps(result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
