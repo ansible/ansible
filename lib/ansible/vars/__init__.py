@@ -34,6 +34,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.cli import CLI
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
 from ansible.parsing import DataLoader
