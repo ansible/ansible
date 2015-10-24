@@ -23,7 +23,6 @@ import fcntl
 import os
 import pipes
 import pty
-import pwd
 import select
 import shlex
 import subprocess
@@ -188,7 +187,7 @@ class Connection(ConnectionBase):
             )
 
         user = self._play_context.remote_user
-        if user and user != pwd.getpwuid(os.geteuid())[0]:
+        if user:
             self._add_args(
                 "ANSIBLE_REMOTE_USER/remote_user/ansible_user/user/-u set",
                 ("-o", "User={0}".format(self._play_context.remote_user))
