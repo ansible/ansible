@@ -69,6 +69,17 @@ def preprocess_vars(a):
 
     return data
 
+def strip_internal_keys(dirty):
+    '''
+    All keys stating with _ansible_ are internal, so create a copy of the 'dirty' dict
+    and remove them from the clean one before returning it
+    '''
+    clean = dirty.copy()
+    for k in dirty.keys():
+        if isinstance(k, string_types) and k.startswith('_ansible_'):
+            del clean[k]
+    return clean
+
 class VariableManager:
 
     def __init__(self):
