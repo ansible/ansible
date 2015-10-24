@@ -68,11 +68,8 @@ class CallbackBase:
                 keep_invocation = False
             else:
                 keep_invocation = True
-        if not keep_invocation and 'invocation' in result:
-            del abridged_result['invocation']
 
-        # remove invocation info unless its very very verbose
-        if 'invocation' in abridged_result and self._display.verbosity < 3:
+        if not keep_invocation and 'invocation' in result:
             del abridged_result['invocation']
 
         return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
