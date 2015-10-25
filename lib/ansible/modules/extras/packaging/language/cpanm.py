@@ -111,8 +111,7 @@ def _is_package_installed(module, name, locallib, cpanm):
     else:
        return False
 
-def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only,
-                    installdeps, cpanm):
+def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo):
     # this code should use "%s" like everything else and just return early but not fixing all of it now.
     # don't copy stuff like this
     if from_path:
@@ -174,8 +173,7 @@ def main():
 
     if not installed:
         out_cpanm = err_cpanm = ''
-        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror,
-                                    mirror_only, installdeps, cpanm)
+        cmd       = _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, installdeps, cpanm, use_sudo)
 
         rc_cpanm, out_cpanm, err_cpanm = module.run_command(cmd, check_rc=False)
 
