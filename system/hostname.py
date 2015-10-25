@@ -481,6 +481,15 @@ class ScientificLinuxHostname(Hostname):
     else:
         strategy_class = RedHatStrategy
 
+class OracleLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Oracle linux server'
+    distribution_version = get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
+        strategy_class = SystemdStrategy
+    else:
+        strategy_class = RedHatStrategy
+
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Amazon'
