@@ -663,6 +663,7 @@ class Ec2Inventory(object):
             conn_autoscale = self.connect_to_aws(autoscale, region)
             conn_ec2 = self.connect_to_aws(ec2, region)
             if conn_autoscale and conn_ec2:
+                reservations = []
                 autoscale_groups = conn_autoscale.get_all_groups()
                 for autoscale_group in autoscale_groups:
                   tags = {}
