@@ -485,6 +485,36 @@ Subsequent loops over the registered variable to inspect the results may look li
       when: item.rc != 0
       with_items: "{{echo.results}}"
 
+
+
+.. _loops_and_includes
+
+Loops and Includes
+
+``````````````````
+
+In 2.0 you are able to use with_ loops and task includes (but not playbook includes), this adds the ability to loop over the set of tasks in one shot.
+There are a couple of things that you need to keep in mind, a included task that has it's own with_ loop will overwrite the value of the special `item` variable.
+So if you want access to both the include's `item` and the current task's `item` you should use `set_fact` to create a alias to the outer one.::
+
+
+    - include: test.yml
+      with_items:
+        - 1
+        - 2
+        - 3
+
+in test.yml::
+
+    - set_fact: outer_loop="{{item}}"
+
+    - debug: msg="outer item={{outer_loop}} inner item={{item}}"
+      with_items:
+        - a
+        - b
+        - c
+
+
 .. _writing_your_own_iterators:
 
 Writing Your Own Iterators
