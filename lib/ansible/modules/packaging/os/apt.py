@@ -559,7 +559,7 @@ def main():
 
     if not HAS_PYTHON_APT:
         try:
-            module.run_command('apt-get update && apt-get install python-apt -y -q', use_unsafe_shell=True, check_rc=True)
+            module.run_command('apt-get update && apt-get install python-apt -y -q --force-yes', use_unsafe_shell=True, check_rc=True)
             global apt, apt_pkg
             import apt
             import apt.debfile
