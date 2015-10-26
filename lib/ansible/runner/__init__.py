@@ -407,6 +407,9 @@ class Runner(object):
             # the hostname was not found in the inventory, so
             # we just ignore this and try the next method
             pass
+        except TypeError, e:
+            # Someone is trying to pass a list or some other 'non string' as a host.
+            raise errors.AnsibleError("Invalid type for delegate_to: %s" % str(e))
 
         if thisuser is None and self.remote_user:
             # user defined by play/runner
