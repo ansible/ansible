@@ -42,11 +42,18 @@ options:
     aliases: []
   get_checksum:
     description:
-      - Whether to return a checksum of the file (currently sha1)
+      - Whether to return a checksum of the file (default sha1)
     required: false
     default: yes
     aliases: []
     version_added: "1.8"
+  checksum_algorithm:
+    description:
+      - Algorithm to determine checksum of file. Will throw an error if the host is unable to use specified algorithm.
+    required: false
+    choices: [ 'sha1', 'sha224', 'sha256', 'sha384', 'sha512' ]
+    default: sha1
+    version_added: "2.0"
 author: "Bruce Pennypacker (@bpennypacker)"
 '''
 
@@ -84,6 +91,9 @@ EXAMPLES = '''
 
 # Don't do md5 checksum
 - stat: path=/path/to/myhugefile get_md5=no
+
+# Use sha256 to calculate checksum
+- stat: path=/path/to/something checksum_algorithm=sha256
 '''
 
 RETURN = '''
@@ -254,7 +264,7 @@ stat:
             sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
         checksum:
             description: hash of the path
-            returned: success, path exists and user can read stats and path supports hashing
+            returned: success, path exists, user can read stats, path supports hashing and supplied checksum algorithm is available
             type: string
             sample: 50ba294cdf28c0d5bcde25708df53346825a429f
         pw_name:
@@ -281,7 +291,8 @@ def main():
             path = dict(required=True),
             follow = dict(default='no', type='bool'),
             get_md5 = dict(default='yes', type='bool'),
-            get_checksum = dict(default='yes', type='bool')
+            get_checksum = dict(default='yes', type='bool'),
+            checksum_algorithm = dict(default='sha1', type='str', choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'])
         ),
         supports_check_mode = True
     )
@@ -291,6 +302,7 @@ def main():
     follow = module.params.get('follow')
     get_md5 = module.params.get('get_md5')
     get_checksum = module.params.get('get_checksum')
+    checksum_algorithm = module.params.get('checksum_algorithm')
 
     try:
         if follow:
@@ -351,8 +363,7 @@ def main():
             d['md5']       = None
 
     if S_ISREG(mode) and get_checksum and os.access(path,os.R_OK):
-        d['checksum']       = module.sha1(path)
-
+        d['checksum']      = module.digest_from_file(path, checksum_algorithm)
 
     try:
         pw = pwd.getpwuid(st.st_uid)
