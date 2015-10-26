@@ -130,6 +130,15 @@ notes:
     that the other packages come from (such as epel-release) then that package
     needs to be installed in a separate task. This mimics yum's command line
     behaviour.
+  - 'Yum itself has two types of groups.  "Package groups" are specified in the
+    rpm itself while "environment groups" are specified in a separate file
+    (usually by the distribution).  Unfortunately, this division becomes
+    apparent to ansible users because ansible needs to operate on the group
+    of packages in a single transaction and yum requires groups to be specified
+    in different ways when used in that way.  Package groups are specified as
+    "@development-tools" and environment groups are "@^gnome-desktop-environment'.
+    Use the "yum group list" command to see which category of group the group
+    you want to install falls into.'
 # informational: requirements for nodes
 requirements: [ yum ]
 author:
@@ -161,6 +170,9 @@ EXAMPLES = '''
 
 - name: install the 'Development tools' package group
   yum: name="@Development tools" state=present
+
+- name: install the 'Gnome desktop' environment group
+  yum: name="@^gnome-desktop-environment" state=present
 '''
 
 # 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
