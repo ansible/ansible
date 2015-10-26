@@ -177,7 +177,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             Setting this up is performed by the action plugin prior to running
             ``exec_command``. So we just get passed :param:`cmd` which has the
             BecomeCommand already added.  (Examples: sudo, su)
-        :Command: Is the command we're actualy trying to run remotely.
+        :Command: Is the command we're actually trying to run remotely.
             (Examples: mkdir -p $HOME/.ansible, python $HOME/.ansible/tmp-script-file)
         """
         pass
