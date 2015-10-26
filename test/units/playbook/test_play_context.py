@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import pwd
 import os
 
 from ansible.compat.tests import unittest
@@ -55,7 +54,7 @@ class TestPlayContext(unittest.TestCase):
         play_context = PlayContext(options=options)
         self.assertEqual(play_context.connection, 'smart')
         self.assertEqual(play_context.remote_addr, None)
-        self.assertEqual(play_context.remote_user, pwd.getpwuid(os.geteuid())[0])
+        self.assertEqual(play_context.remote_user, None)
         self.assertEqual(play_context.password, '')
         self.assertEqual(play_context.port, None)
         self.assertEqual(play_context.private_key_file, C.DEFAULT_PRIVATE_KEY_FILE)
