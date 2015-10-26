@@ -146,7 +146,7 @@ class ActionModule(ActionBase):
         use_delegate = False
         if dest_host == delegate_to:
             # edge case: explicit delegate and dest_host are the same
-            # so we run rsync on the remote machine targetting its localhost
+            # so we run rsync on the remote machine targeting its localhost
             # (itself)
             dest_host = '127.0.0.1'
             use_delegate = True
