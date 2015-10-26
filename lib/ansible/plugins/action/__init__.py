@@ -154,7 +154,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     continue
                 if not isinstance(environment, dict):
                     raise AnsibleError("environment must be a dictionary, received %s (%s)" % (environment, type(environment)))
-                # very deliberatly using update here instead of combine_vars, as
+                # very deliberately using update here instead of combine_vars, as
                 # these environment settings should not need to merge sub-dicts
                 final_environment.update(environment)
 
