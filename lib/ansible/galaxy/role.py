@@ -306,7 +306,7 @@ class GalaxyRole(object):
                    raise AnsibleError("Could not update files in %s: %s" % (self.path, str(e)))
 
                 # return the parsed yaml metadata
-                display.display("- %s was installed successfully" % self.name)
+                display.display("- %s was installed successfully" % self.version_string)
                 try:
                     os.unlink(tmp_file)
                 except (OSError,IOError) as e:
@@ -327,3 +327,14 @@ class GalaxyRole(object):
         }
         """
         return dict(scm=self.scm, src=self.src, version=self.version, name=self.name)
+
+    @property
+    def version_string(self):
+        """
+        Returns "rolename (version)" if version is not null
+        Returns "rolename" otherwise
+        """
+        if self.version:
+            return "%s (%s)" % (self.name, self.version)
+        else:
+            return self.name
