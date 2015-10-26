@@ -93,7 +93,12 @@ class VaultCLI(CLI):
             # read vault_pass from a file
             self.vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader)
         else:
-            self.vault_pass, _= self.ask_vault_passwords(ask_vault_pass=True, ask_new_vault_pass=False, confirm_new=False)
+            newpass = False
+            rekey = False
+            if self.options.new_vault_password_file:
+                newpass = self.action in ['create', 'rekey', 'encrypt']
+                rekey = self.action == 'rekey'
+            self.vault_pass, self.new_vault_pass = self.ask_vault_passwords(ask_new_vault_pass=newpass, rekey=rekey)
 
         if self.options.new_vault_password_file:
             # for rekey only
@@ -149,12 +154,7 @@ class VaultCLI(CLI):
             if not (os.path.isfile(f)):
                 raise AnsibleError(f + " does not exist")
 
-        if self.new_vault_pass:
-            new_password = self.new_vault_pass
-        else:
-            __, new_password = self.ask_vault_passwords(ask_vault_pass=False, ask_new_vault_pass=True, confirm_new=True)
-
         for f in self.args:
-            self.editor.rekey_file(f, new_password)
+            self.editor.rekey_file(f, self.new_vault_pass)
 
         self.display.display("Rekey successful", stderr=True)
