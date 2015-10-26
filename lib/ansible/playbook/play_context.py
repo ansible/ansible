@@ -26,6 +26,9 @@ import random
 import re
 import string
 
+from pwd import getpwuid
+from os import geteuid
+
 from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
@@ -479,3 +482,7 @@ class PlayContext(Base):
                 for prop, varnames in MAGIC_VARIABLE_MAPPING.items():
                     if special_var in varnames:
                         variables[special_var] = getattr(self, prop)
+
+        # for backwards compat
+        if variables['ansible_ssh_user'] is None:
+            variables['ansible_ssh_user'] = getpwuid(geteuid())[0]
