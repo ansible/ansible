@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import collections
 import itertools
 import operator
 import uuid
@@ -247,7 +248,13 @@ class Base:
         new_me = self.__class__()
 
         for name in self._get_base_attributes():
-            setattr(new_me, name, getattr(self, name))
+            attr_val = getattr(self, name)
+            if isinstance(attr_val, collections.Sequence):
+                setattr(new_me, name, attr_val[:])
+            elif isinstance(attr_val, collections.Mapping):
+                setattr(new_me, name, attr_val.copy())
+            else:
+                setattr(new_me, name, attr_val)
 
         new_me._loader           = self._loader
         new_me._variable_manager = self._variable_manager
