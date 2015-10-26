@@ -36,7 +36,6 @@ from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
-from ansible.parsing import DataLoader
 from ansible.plugins import lookup_loader
 from ansible.plugins.cache import FactCache
 from ansible.template import Templar
