@@ -23,7 +23,7 @@ import os
 import sys
 
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
 
