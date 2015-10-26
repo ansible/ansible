@@ -65,6 +65,12 @@ options:
      description:
        - all arguments accepted by the M(file) module also work here
      required: false
+  state:
+     description:
+       - If set to C(absent) the option or section will be removed if present instead of created.
+     required: false
+     default: "present"
+     choices: [ "present", "absent" ]
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
@@ -110,21 +116,14 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
 
 
     if state == 'absent':
-        if option is None and value is None:
-            if cp.has_section(section):
-                cp.remove_section(section)
-                changed = True
+        if option is None:
+            changed = cp.remove_section(section)
         else:
-            if option is not None:
-                try:
-                    if cp.get(section, option):
-                        cp.remove_option(section, option)
-                        changed = True
-                except ConfigParser.InterpolationError:
-                    cp.remove_option(section, option)
-                    changed = True
-                except:
-                    pass
+            try:
+                changed = cp.remove_option(section, option)
+            except ConfigParser.NoSectionError:
+                # Option isn't present if the section isn't either
+                pass
 
     if state == 'present':
 
@@ -212,4 +211,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
