@@ -54,7 +54,7 @@ options:
     default: filter
     choices: [ "filter", "nat", "mangle", "raw", "security" ]
   state:
-    description: Wheter the rule should be absent or present.
+    description: Whether the rule should be absent or present.
     required: false
     default: present
     choices: [ "present", "absent" ]
