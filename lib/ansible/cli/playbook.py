@@ -29,7 +29,7 @@ from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.inventory import Inventory
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 

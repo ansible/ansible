@@ -25,7 +25,7 @@ from string import ascii_letters, digits
 from ansible.compat.six import string_types
 from ansible.compat.six.moves import configparser
 
-from ansible.parsing.splitter import unquote
+from ansible.parsing.quoting import unquote
 from ansible.errors import AnsibleOptionsError
 
 # copied from utils, avoid circular reference fun :)

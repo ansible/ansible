@@ -26,20 +26,16 @@ import uuid
 
 from functools import partial
 from inspect import getmembers
-from io import FileIO
 
 from ansible.compat.six import iteritems, string_types, text_type
 
 from jinja2.exceptions import UndefinedError
 
 from ansible.errors import AnsibleParserError
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.template import Templar
 from ansible.utils.boolean import boolean
-from ansible.utils.debug import debug
 from ansible.utils.vars import combine_vars, isidentifier
-from ansible.template import template
 
 class Base:
 
