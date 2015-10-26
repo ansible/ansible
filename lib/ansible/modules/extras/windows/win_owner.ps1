@@ -111,11 +111,11 @@ Try {
     $acl = Get-Acl $file.FullName
 
     If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
+        $acl.setOwner($objUser)
+        Set-Acl $file.FullName $acl
+
         Set-Attr $result "changed" $true;
     }
-
-    $acl.setOwner($objUser)
-    Set-Acl $file.FullName $acl
 
     If ($recurse) {
         $files = Get-ChildItem -Path $path -Force -Recurse
@@ -123,11 +123,11 @@ Try {
             $acl = Get-Acl $file.FullName
 
             If ($acl.getOwner([System.Security.Principal.SecurityIdentifier]) -ne $objUser) {
+                $acl.setOwner($objUser)
+                Set-Acl $file.FullName $acl
+
                 Set-Attr $result "changed" $true;
             }
-
-            $acl.setOwner($objUser)
-            Set-Acl $file.FullName $acl
         }
     }
 }
