@@ -265,6 +265,7 @@ class Zfs(object):
         volsize = properties.pop('volsize', None)
         volblocksize = properties.pop('volblocksize', None)
         origin = properties.pop('origin', None)
+        createparent = properties.pop('createparent', None)
         if "@" in self.name:
             action = 'snapshot'
         elif origin:
