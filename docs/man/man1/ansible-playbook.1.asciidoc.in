@@ -34,28 +34,26 @@ The names of one or more YAML format files to run as ansible playbooks.
 OPTIONS
 -------
 
+*--ask-become-pass*::
+
+Ask for privilege escalation password.
+
 *-k*, *--ask-pass*::
 
-Prompt for the SSH password instead of assuming key-based
-authentication with ssh-agent.
+Prompt for the connection password, if it is needed for the transport used.
+For example, using ssh and not having  a key-based authentication with ssh-agent.
+
+*--ask-su-pass*::
+
+Prompt for su password, used with --su (deprecated, use become).
 
 *-K*, *--ask-sudo-pass*::
 
-Prompt for the password to use for playbook plays that request sudo
-access, if any.
+Prompt for the password to use with --sudo, if any (deprecated, use become).
 
-*-b*, *--become*::
+*--ask-vault-pass*::
 
-Run operations with become (nopasswd implied)
-
-*--become-method=BECOME_METHOD*::
-
-Privilege escalation method to use (default=sudo),
-valid choices: [ sudo | su | pbrun | pfexec | runas | doas ]
-
-*--become-user=BECOME_USER*::
-
-Run operations as this user (default=None).
+Prompt for vault password.
 
 *-C*, *--check*::
 
@@ -65,7 +63,7 @@ a simulation.
 
 *-c* 'CONNECTION', *--connection=*'CONNECTION'::
 
-Connection type to use.  Possible options are 'paramiko' (SSH), 'ssh',
+Connection type to use.  Most common options are 'paramiko' (SSH), 'ssh', 'winrm'
 and 'local'.  'local' is mostly useful for crontab or kickstarts.
 
 *-D*, *--diff*::
@@ -73,10 +71,10 @@ and 'local'.  'local' is mostly useful for crontab or kickstarts.
 When changing any templated files, show the unified diffs of how they changed.  When
 used with --check, shows how the files would have changed if --check were not used.
 
-*-e* 'VARS', *--extra-vars=*'VARS'::
+*-e* 'EXTRA_VARS', *--extra-vars=*'EXTRA_VARS'::
 
 Extra variables to inject into a playbook, in key=value key=value format or
-as quoted JSON (hashes and arrays). To load variables from a file, specify
+as quoted YAML/JSON (hashes and arrays). To load variables from a file, specify
 the file preceded by @ (e.g. @vars.yml).
 
 *--flush-cache*::
@@ -97,12 +95,13 @@ Show help page and exit
 
 *-i* 'PATH', *--inventory=*'PATH'::
 
-The 'PATH' to the inventory hosts file, which defaults to
-'/etc/ansible/hosts'.
+The 'PATH' to the inventory, which defaults to '/etc/ansible/hosts'.
+Alternatively you can use a comma separated list of hosts or single host with traling comma 'host,'.
 
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 
 Further limits the selected host/group patterns.
+You can prefix it with '~' to indicate that the patter in a regex.
 
 *--list-hosts*::
 
@@ -110,11 +109,11 @@ Outputs a list of matching hosts; does not execute anything else.
 
 *--list-tags*::
 
-List all available tags.
+List all available tags; does not execute anything else.
 
 *--list-tasks*::
 
-List all tasks that would be executed
+List all tasks that would be executed; does not execute anything else.
 
 *-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
 
@@ -144,12 +143,11 @@ Run operations with su (deprecated, use become)
 
 *-R SU-USER*, *--su-user=*'SU_USER'::
 
-run operations with su as this user (default=root)
-(deprecated, use become)
+run operations with su as this user (default=root) (deprecated, use become)
 
 *-s*, *--sudo*::
 
-Run operations with sudo (nopasswd) (deprecated, use become)
+Run the command as the user given by -u and sudo to root (deprecated, use become).
 
 *--ssh-common-args=*''-o ProxyCommand="ssh -W %h:%p ..." ...''::
 
@@ -169,9 +167,9 @@ Add the specified arguments to any scp command-line.
 
 Add the specified arguments to any ssh command-line.
 
-*-U*, 'SUDO_USER', *--sudo-user=*'SUDO_USER'::
+*-U* 'SUDO_USERNAME', *--sudo-user=*'SUDO_USERNAME'::
 
-Desired sudo user (default=root) (deprecated, use become).
+Sudo to 'SUDO_USERNAME' deafult is root. (deprecated, use become).
 
 *--skip-tags=*'SKIP_TAGS'::
 
@@ -191,8 +189,7 @@ Connection timeout to use when trying to talk to hosts, in 'SECONDS'.
 
 *-u* 'USERNAME', *--user=*'USERNAME'::
 
-Use this remote user name on playbook steps that do not indicate a
-user name to run as.
+Use this 'USERNAME' to login to the target host, instead of the current user.
 
 *--vault-password-file=*'VAULT_PASSWORD_FILE'::
 
@@ -207,6 +204,7 @@ up to three times for more output.
 
 Show program's version number and exit.
 
+
 ENVIRONMENT
 -----------
 
@@ -215,6 +213,11 @@ The following environment variables may be specified.
 ANSIBLE_INVENTORY  -- Override the default ansible inventory file
 
 ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+ANSIBLE_CONFIG -- Override the default ansible config file
+
+Many more are available for most options in ansible.cfg
+
 
 FILES
 -----
@@ -226,6 +229,7 @@ FILES
 /etc/ansible/ansible.cfg -- Config file, used if present
 
 ~/.ansible.cfg -- User config file, overrides the default config if present
+
 
 AUTHOR
 ------
@@ -245,7 +249,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible*(1), *ansible-pull*(1), *ansible-doc*(1)
+*ansible*(1), *ansible-pull*(1), *ansible-doc*(1), *ansible-vault*(1), *ansible-galaxy*(1)
 
 Extensive documentation is available in the documentation site:
 <http://docs.ansible.com>. IRC and mailing list info can be found

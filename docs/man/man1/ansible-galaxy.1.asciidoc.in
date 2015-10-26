@@ -18,10 +18,9 @@ ansible-galaxy [init|info|install|list|remove] [--help] [options] ...
 DESCRIPTION
 -----------
 
-*Ansible Galaxy* is a shared repository for Ansible roles (added in
-ansible version 1.2). The ansible-galaxy command can be used to manage
-these roles, or by creating a skeleton framework for roles you'd like
-to upload to Galaxy.
+*Ansible Galaxy* is a shared repository for Ansible roles.
+The ansible-galaxy command can be used to manage these roles,
+or by creating a skeleton framework for roles you'd like to upload to Galaxy.
 
 COMMON OPTIONS
 --------------
@@ -43,16 +42,16 @@ $ ansible-galaxy install [options] [-r FILE | role_name(s)[,version] | tar_file(
 
 Roles can be installed in several different ways:
 
-* A username.rolename[,version] - this will install a single role. The Galaxy 
-  API will be contacted to provide the information about the role, and the 
-  corresponding .tar.gz will be downloaded from *github.com*. If the version 
+* A username.rolename[,version] - this will install a single role. The Galaxy
+  API will be contacted to provide the information about the role, and the
+  corresponding .tar.gz will be downloaded from *github.com*. If the version
   is omitted, the most recent version available will be installed.
 
 * A file name, using *-r* - this will install multiple roles listed one per
   line. The format of each line is the same as above: username.rolename[,version]
 
 * A .tar.gz of a valid role you've downloaded directly from *github.com*. This
-  is mainly useful when the system running Ansible does not have access to 
+  is mainly useful when the system running Ansible does not have access to
   the Galaxy API, for instance when behind a firewall or proxy.
 
 
@@ -164,7 +163,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible*(1), *ansible-pull*(1), *ansible-doc*(1)
+*ansible*(1), *ansible-pull*(1), *ansible-doc*(1), *ansible-playbook*(1), *ansible-vault*(1)
 
 Extensive documentation is available in the documentation site:
 <http://docs.ansible.com>. IRC and mailing list info can be found
