@@ -27,6 +27,7 @@ from copy import deepcopy
 from ansible.compat.six import string_types
 
 from ansible import constants as C
+from ansible.vars import strip_internal_keys
 from ansible.utils.unicode import to_unicode
 
 __all__ = ["CallbackBase"]
@@ -56,10 +57,7 @@ class CallbackBase:
             indent = 4
 
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
-        abridged_result = result.copy()
-        for k in abridged_result.keys():
-            if isinstance(k, string_types) and k.startswith('_ansible_'):
-                del abridged_result[k]
+        abridged_result = strip_internal_keys(result)
 
         # Remove invocation unless verbosity is turned up or the specific
         # callback wants to keep it
