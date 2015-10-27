@@ -24,8 +24,10 @@ import json
 import subprocess
 import sys
 import time
+import itertools
 
 from ansible.compat.six import iteritems
+from ansible.compat.six.moves import range
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
@@ -327,10 +329,18 @@ class TaskExecutor:
         # Read some values from the task, so that we can modify them if need be
         if self._task.until is not None:
             retries = self._task.retries
-            if retries <= 0:
-                retries = 1
+            if retries < 0:
+                retries = -1
         else:
             retries = 1
+
+        # Translate retries into an iterator.  If the user has requested 
+        # infinite retries this is an infinite itertools.count() iterator,
+        # otherwise it is a range() iterator.
+        if retries < 0:
+            retry_range = itertools.count()
+        else:
+            retry_range = range(retries)
 
         delay = self._task.delay
         if delay < 0:
@@ -342,9 +352,10 @@ class TaskExecutor:
 
         self._display.debug("starting attempt loop")
         result = None
-        for attempt in range(retries):
+        for attempt in retry_range:
             if attempt > 0:
-                self._display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color="red")
+                remaining = 'inf' if (retries < 0) else (retries-attempt)
+                self._display.display("FAILED - RETRYING: %s (%s retries left). Result was: %s" % (self._task, remaining, result), color="red")
                 result['attempts'] = attempt + 1
 
             self._display.debug("running the handler")
@@ -406,7 +417,7 @@ class TaskExecutor:
                     # if the result is not failed, stop trying
                     break
 
-            if attempt < retries - 1:
+            if (retries < 0) or (attempt < retries - 1):
                 time.sleep(delay)
             else:
                 _evaluate_changed_when_result(result)
