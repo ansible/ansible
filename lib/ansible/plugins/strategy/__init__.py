@@ -226,7 +226,7 @@ class StrategyBase:
                     result_item = result[1]
                     new_host_info = result_item.get('add_host', dict())
 
-                    self._add_host(new_host_info)
+                    self._add_host(new_host_info, iterator)
 
                 elif result[0] == 'add_group':
                     host = result[1]
@@ -309,7 +309,7 @@ class StrategyBase:
 
         return ret_results
 
-    def _add_host(self, host_info):
+    def _add_host(self, host_info, iterator):
         '''
         Helper function to add a new host to inventory based on a task result.
         '''
@@ -351,6 +351,10 @@ class StrategyBase:
         # clear pattern caching completely since it's unpredictable what
         # patterns may have referenced the group
         self._inventory.clear_pattern_cache()
+
+        # also clear the hostvar cache entry for the given play, so that
+        # the new hosts are available if hostvars are referenced
+        self._variable_manager.invalidate_hostvars_cache(play=iterator._play)
 
     def _add_group(self, host, result_item):
         '''
