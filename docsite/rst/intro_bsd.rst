@@ -44,7 +44,7 @@ Once this is done you can now use other ansible modules aside from ``raw``.
 Setting python interpreter
 ``````````````````````````
 
-To support the multitude of Unix/Linux OSs and distributions ansible cannot rely on the environment or ``env`` to find the correct python, by default modules point at ``/usr/bin/python`` as this is the most common location. On the BSDs you cannot rely on this so you should tell ansible where python is located, through the ``ansible_python_interpreter`` invenotry variable::
+To support the multitude of Unix/Linux OSs and distributions ansible cannot rely on the environment or ``env`` to find the correct python, by default modules point at ``/usr/bin/python`` as this is the most common location. On the BSDs you cannot rely on this so you should tell ansible where python is located, through the ``ansible_python_interpreter`` inventory variable::
 
     [freebsd:vars]
     ansible_python_interpreter=/usr/local/bin/python2.7
