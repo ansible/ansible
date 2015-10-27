@@ -36,6 +36,8 @@ import os
 import sys
 import traceback
 
+from pkg_resources import DistributionNotFound
+
 from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
@@ -98,6 +100,9 @@ if __name__ == '__main__':
     except AnsibleError as e:
         display.error(to_unicode(e), wrap_text=False)
         sys.exit(1)
+    except DistributionNotFound as e:
+        display.error("There is an issue with the Ansible installation: %s" % to_unicode(e))
+        sys.exit(10)
     except KeyboardInterrupt:
         display.error("User interrupted execution")
         sys.exit(99)
