@@ -23,7 +23,7 @@ __metaclass__ = type
 from nose import tools
 from ansible.compat.tests import unittest
 
-from ansible.parsing.splitter import unquote
+from ansible.parsing.quoting import unquote
 
 
 # Tests using nose's test generators cannot use unittest base class.

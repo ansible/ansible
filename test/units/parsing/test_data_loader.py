@@ -26,7 +26,7 @@ from ansible.compat.tests import unittest
 from ansible.compat.tests.mock import patch, mock_open
 from ansible.errors import AnsibleParserError
 
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.yaml.objects import AnsibleMapping
 
 class TestDataLoader(unittest.TestCase):
