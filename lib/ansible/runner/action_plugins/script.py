@@ -52,6 +52,11 @@ class ActionModule(object):
             elif m.group(2) == "removes":
                 removes = v
         module_args = r.sub("", module_args)
+        if complex_args:
+            if creates is None:
+                creates = complex_args.get('creates', None)
+            if removes is None:
+                removes = complex_args.get('removes', None)
 
         if creates:
             # do not run the command if the line contains creates=filename

@@ -42,6 +42,8 @@ class ActionModule(object):
             if m.group(2) == "executable":
                 executable = v
         module_args = r.sub("", module_args)
+        if complex_args and executable is None:
+            executable = complex_args.get('executable', None)
 
         result = self.runner._low_level_exec_command(conn, module_args, tmp, sudoable=True, executable=executable,
                                                      become=self.runner.become)
