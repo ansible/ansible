@@ -28,9 +28,11 @@ playbook.
 OPTIONS
 -------
 
-*-M* 'directory', *--module-path=*'directory'::
+*-M* 'DIRECTORY', *--module-path=*'DIRECTORY'::
 
-Add an additional directory to the default path for finding module libraries.
+the 'DIRECTORY' search path to load modules from. The default is
+'/usr/share/ansible'. This can also be set with the ANSIBLE_LIBRARY
+environment variable.
 
 *-s*, *--snippet=*::
 
@@ -40,6 +42,24 @@ a kind of task template.
 *-l*, *--list=*::
 
 Produce a terse listing of modules and a short description of each.
+
+
+ENVIRONMENT
+-----------
+
+ANSIBLE_LIBRARY -- Override the default ansible module library path
+
+
+FILES
+-----
+
+/usr/share/ansible/ -- Default module library
+
+/etc/ansible/ansible.cfg -- Config file, used if present
+
+~/.ansible.cfg -- User config file, overrides the default config if present
+
+
 
 AUTHOR
 ------
@@ -59,7 +79,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible-playbook*(1), *ansible*(1), *ansible-pull*(1)
+*ansible-playbook*(1), *ansible*(1), *ansible-pull*(1), *ansible-vault*(1), *ansible-galaxy*(1)
 
 Extensive documentation is available in the documentation site:
 <http://docs.ansible.com>. IRC and mailing list info can be found

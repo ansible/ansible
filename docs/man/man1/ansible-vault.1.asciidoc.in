@@ -7,7 +7,7 @@ ansible-vault(1)
 
 NAME
 ----
-ansible-vault - manage encrypted YAML data.
+ansible-vault - manage encrypted ansible vars files (YAML).
 
 
 SYNOPSIS
@@ -18,15 +18,16 @@ ansible-vault [create|decrypt|edit|encrypt|rekey] [--help] [options] file_name
 DESCRIPTION
 -----------
 
-*ansible-vault* can encrypt any structured data file used by Ansible. This can include 
-*group_vars/* or *host_vars/* inventory variables, variables loaded by *include_vars* or 
-*vars_files*, or variable files passed on the ansible-playbook command line with 
-*-e @file.yml* or *-e @file.json*. Role variables and defaults are also included!
+*ansible-vault* can encrypt any structured data file used by Ansible.
+This can include *group_vars/* or *host_vars/* inventory variables,
+variables loaded by *include_vars* or *vars_files*, or variable files
+passed on the ansible-playbook command line with *-e @file.yml* or *-e @file.json*.
+Role variables and defaults are also included!
 
-Because Ansible tasks, handlers, and so on are also data, these can also be encrypted with 
-vault. If you’d like to not betray what variables you are even using, you can go as far to 
-keep an individual task file entirely encrypted.
+Because Ansible tasks, handlers, and so on are also data, these can also be encrypted with vault.
+If you’d like to not betray what variables you are even using, you can go as far to keep an individual task file entirely encrypted.
 
+The password used with vault currently must be the same for all files you wish to use together at the same time.
 
 COMMON OPTIONS
 --------------
@@ -50,22 +51,19 @@ the password.
 
 Show a help message related to the given sub-command.
 
-*--debug*::
 
-Enable debugging output for troubleshooting.
+If '--valut-password-file' is not supplied ansib-vault will automatically prompt for passwords as required.
+
 
 CREATE
 ------
 
 *$ ansible-vault create [options] FILE*
 
-The *create* sub-command is used to initialize a new encrypted file. 
+The *create* sub-command is used to initialize a new encrypted file.
 
-First you will be prompted for a password. The password used with vault currently 
-must be the same for all files you wish to use together at the same time.
-
-After providing a password, the tool will launch whatever editor you have defined 
-with $EDITOR, and defaults to vim. Once you are done with the editor session, the 
+After providing a password, the tool will launch whatever editor you have defined
+with $EDITOR, and defaults to vim. Once you are done with the editor session, the
 file will be saved as encrypted data.
 
 The default cipher is AES (which is shared-secret based).
@@ -75,11 +73,11 @@ EDIT
 
 *$ ansible-vault edit [options] FILE*
 
-The *edit* sub-command is used to modify a file which was previously encrypted
-using ansible-vault.
+The *edit* sub-command is used to modify a file which was previously encrypted using ansible-vault.
 
-This command will decrypt the file to a temporary file and allow you to edit the 
-file, saving it back when done and removing the temporary file.
+This command will decrypt the file to a temporary file and allow you to edit the file,
+saving it back when done and removing the temporary file.
+
 
 REKEY
 -----
@@ -87,24 +85,23 @@ REKEY
 *$ ansible-vault rekey [options] FILE_1 [FILE_2, ..., FILE_N]*
 
 The *rekey* command is used to change the password on a vault-encrypted files.
-This command can update multiple files at once, and will prompt for both the
-old and new passwords before modifying any data.
+This command can update multiple files at once.
+
 
 ENCRYPT
 -------
 
 *$ ansible-vault encrypt [options] FILE_1 [FILE_2, ..., FILE_N]*
 
-The *encrypt* sub-command is used to encrypt pre-existing data files. As with the
-*rekey* command, you can specify multiple files in one command.
+The *encrypt* sub-command is used to encrypt pre-existing data files.
+As with the *rekey* command, you can specify multiple files in one command.
 
-Starting with version 2.0, the *encrypt* command accepts an *--output FILENAME*
-option to determine where encrypted output is stored. With this option, input is
-read from the (at most one) filename given on the command line; if no input file
-is given, input is read from stdin. Either the input or the output file may be
-given as '-' for stdin and stdout respectively. If neither input nor output file
-is given, the command acts as a filter, reading plaintext from stdin and writing
-it to stdout.
+The *encrypt* command accepts an *--output FILENAME* option to determine where
+encrypted output is stored. With this option, input is read from the (at most one)
+filename given on the command line; if no input file is given, input is read from stdin.
+Either the input or the output file may be given as '-' for stdin and stdout respectively.
+If neither input nor output file is given, the command acts as a filter,
+reading plaintext from stdin and writing it to stdout.
 
 Thus any of the following invocations can be used:
 
@@ -124,10 +121,10 @@ DECRYPT
 
 *$ ansible-vault decrypt [options] FILE_1 [FILE_2, ..., FILE_N]*
 
-The *decrypt* sub-command is used to remove all encryption from data files. The files
-will be stored as plain-text YAML once again, so be sure that you do not run this
-command on data files with active passwords or other sensitive data. In most cases, 
-users will want to use the *edit* sub-command to modify the files securely.
+The *decrypt* sub-command is used to remove all encryption from data files.
+The files will be stored as plain-text YAML once again, so be sure that you do not run this
+command on data files with active passwords or other sensitive data.
+In most cases, users will want to use the *edit* sub-command to modify the files securely.
 
 As with *encrypt*, the *decrypt* subcommand also accepts the *--output FILENAME*
 option to specify where plaintext output is stored, and stdin/stdout is handled
@@ -151,7 +148,7 @@ Ansible is released under the terms of the GPLv3 License.
 SEE ALSO
 --------
 
-*ansible*(1), *ansible-pull*(1), *ansible-doc*(1)
+*ansible*(1), *ansible-pull*(1), *ansible-doc*(1), *ansible-playbook*(1), *ansible-galaxy*(1)
 
 Extensive documentation is available in the documentation site:
 <http://docs.ansible.com>. IRC and mailing list info can be found
