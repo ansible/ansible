@@ -332,6 +332,11 @@ class VariableManager:
         debug("done with get_vars()")
         return all_vars
 
+    def invalidate_hostvars_cache(self, play):
+        hostvars_cache_entry = self._get_cache_entry(play=play)
+        if hostvars_cache_entry in HOSTVARS_CACHE:
+            del HOSTVARS_CACHE[hostvars_cache_entry]
+
     def _get_magic_variables(self, loader, play, host, task, include_hostvars, include_delegate_to):
         '''
         Returns a dictionary of so-called "magic" variables in Ansible,
