@@ -15,6 +15,7 @@ Other Notable Changes:
 * Fix a bug with the crypttab module omitting certain characters from the name of the device
 * Fix bug with uri module not handling all binary files
 * Fix bug with ini_file not removing options set to an empty string
+* Fix bug with script and raw modules not honoring parameters passed via yaml dict syntax
 
 ## 1.9.4 "Dancing In the Street" - Oct 10, 2015
 
