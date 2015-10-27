@@ -83,13 +83,17 @@ options:
     required: false
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
-     is as easy as apt-get install python-mysqldb. (See M(apt).)
+     is as easy as apt-get install python-mysqldb. (See M(apt).) For CentOS/Fedora, this
+     is as easy as yum install MySQL-python. (See M(yum).)
+   - Requires the mysql command line client. For Centos/Fedora, this is as easy as
+     yum install mariadb (See M(yum).). For Debian/Ubuntu this is as easy as
+     apt-get install mariadb-client. (See M(apt).)
    - Both I(login_password) and I(login_user) are required when you are
      passing credentials. If none are present, the module will attempt to read
      the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
      default login of C(root) with no password.
 requirements: [ ConfigParser ]
-author: "Mark Theunissen (@marktheunissen)"
+author: "Ansible Core Team"
 '''
 
 EXAMPLES = '''
