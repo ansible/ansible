@@ -132,7 +132,8 @@ class PlayIterator:
                      (s, task) = self.get_next_task_for_host(host, peek=True)
                      if s.run_state == self.ITERATING_COMPLETE:
                          break
-                     if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task):
+                     if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task) or \
+                        task.get_name() == play_context.start_at_task or fnmatch.fnmatch(task.get_name(), play_context.start_at_task):
                          # we have our match, so clear the start_at_task field on the
                          # play context to flag that we've started at a task (and future
                          # plays won't try to advance)
