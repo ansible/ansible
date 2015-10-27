@@ -136,7 +136,7 @@ notes:
     apparent to ansible users because ansible needs to operate on the group
     of packages in a single transaction and yum requires groups to be specified
     in different ways when used in that way.  Package groups are specified as
-    "@development-tools" and environment groups are "@^gnome-desktop-environment'.
+    "@development-tools" and environment groups are "@^gnome-desktop-environment".
     Use the "yum group list" command to see which category of group the group
     you want to install falls into.'
 # informational: requirements for nodes
