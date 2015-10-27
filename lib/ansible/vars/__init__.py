@@ -34,6 +34,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.cli import CLI
+from ansible.compat.six import string_types
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
 from ansible.parsing import DataLoader
@@ -68,6 +69,17 @@ def preprocess_vars(a):
             raise AnsibleError("variable files must contain either a dictionary of variables, or a list of dictionaries. Got: %s (%s)" % (a, type(a)))
 
     return data
+
+def strip_internal_keys(dirty):
+    '''
+    All keys stating with _ansible_ are internal, so create a copy of the 'dirty' dict
+    and remove them from the clean one before returning it
+    '''
+    clean = dirty.copy()
+    for k in dirty.keys():
+        if isinstance(k, string_types) and k.startswith('_ansible_'):
+            del clean[k]
+    return clean
 
 class VariableManager:
 
