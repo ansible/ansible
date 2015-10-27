@@ -21,14 +21,11 @@ __metaclass__ = type
 
 import os
 import sys
-import traceback
 
-from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
-from ansible.utils.display import Display
 
 class VaultCLI(CLI):
     """ Vault command line class """

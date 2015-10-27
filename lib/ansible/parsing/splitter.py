@@ -23,6 +23,7 @@ import re
 import codecs
 
 from ansible.errors import AnsibleError
+from ansible.parsing.quoting import unquote
 
 # Decode escapes adapted from rspeer's answer here:
 # http://stackoverflow.com/questions/4020539/process-escape-sequences-in-a-string-in-python
@@ -263,12 +264,3 @@ def split_args(args):
         raise Exception("error while splitting arguments, either an unbalanced jinja2 block or quotes")
 
     return params
-
-def is_quoted(data):
-    return len(data) > 1 and data[0] == data[-1] and data[0] in ('"', "'") and data[-2] != '\\'
-
-def unquote(data):
-    ''' removes first and last quotes from a string, if the string starts and ends with the same quotes '''
-    if is_quoted(data):
-        return data[1:-1]
-    return data
