@@ -174,6 +174,10 @@ def list_modules(module_dir, depth=0):
                 categories[category][module] = d
                 categories['all'][module] = d
 
+    # keep module tests out of becomeing module docs
+    if 'test' in categories:
+        del categories['test']
+
     return categories
 
 #####################################################################################
