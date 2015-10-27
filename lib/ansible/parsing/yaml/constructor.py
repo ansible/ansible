@@ -43,15 +43,19 @@ class AnsibleConstructor(Constructor):
         data.ansible_pos = self._node_position_info(node)
 
     def construct_mapping(self, node, deep=False):
-        # This first part fixes a problem with pyyaml's handling of duplicate
-        # dict keys.
-        # from SafeConstructor
+        # Most of this is from yaml.constructor.SafeConstructor.  We replicate
+        # it here so that we can warn users when they have duplicate dict keys
+        # (pyyaml silently allows overwriting keys)
         if not isinstance(node, MappingNode):
             raise ConstructorError(None, None,
                     "expected a mapping node, but found %s" % node.id,
                     node.start_mark)
         self.flatten_mapping(node)
         mapping = AnsibleMapping()
+
+        # Add our extra information to the returned value
+        mapping.ansible_pos = self._node_position_info(node)
+
         for key_node, value_node in node.value:
             key = self.construct_object(key_node, deep=deep)
             try:
@@ -61,13 +65,10 @@ class AnsibleConstructor(Constructor):
                         "found unacceptable key (%s)" % exc, key_node.start_mark)
 
             if key in mapping:
-                display.warning('While constructing a mapping%s found a duplicate dict key (%s).  Using last value only.' % (node.start_mark, key_node.start_mark))
+                display.warning('While constructing a mapping from {1}, line {2}, column {3}, found a duplicate dict key ({0}).  Using last defined value only.'.format(key, *mapping.ansible_pos))
 
             value = self.construct_object(value_node, deep=deep)
             mapping[key] = value
-
-        # Add our extra information to the returned value
-        mapping.ansible_pos = self._node_position_info(node)
 
         return mapping
 
