@@ -68,7 +68,6 @@ class Task(Base, Conditional, Taggable, Become):
     _args                 = FieldAttribute(isa='dict', default=dict())
     _action               = FieldAttribute(isa='string')
 
-    _always_run           = FieldAttribute(isa='bool')
     _any_errors_fatal     = FieldAttribute(isa='bool')
     _async                = FieldAttribute(isa='int', default=0)
     _changed_when         = FieldAttribute(isa='string')
@@ -76,7 +75,6 @@ class Task(Base, Conditional, Taggable, Become):
     _delegate_to          = FieldAttribute(isa='string')
     _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
-    _ignore_errors        = FieldAttribute(isa='bool')
     _loop                 = FieldAttribute(isa='string', private=True)
     _loop_args            = FieldAttribute(isa='list', private=True)
     _name                 = FieldAttribute(isa='string', default='')
@@ -84,7 +82,6 @@ class Task(Base, Conditional, Taggable, Become):
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=1)
-    _run_once             = FieldAttribute(isa='bool')
     _until                = FieldAttribute(isa='list') # ?
 
     def __init__(self, block=None, role=None, task_include=None):
