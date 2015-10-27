@@ -1,7 +1,7 @@
 #!powershell
 # This file is part of Ansible
 #
-# Copyright 2015, Corwin Brown <blakfeld@gmail.com>
+# Copyright 2015, Corwin Brown <corwin.brown@maxpoint.com>
 #
 # Ansible is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,32 +27,22 @@ $result = New-Object psobject @{
 
 # Build Arguments
 $webrequest_opts = @{}
-if (Get-Member -InputObject $params -Name url) {
-    $url = $params.url.ToString()
-    $webrequest_opts.Uri = $url
-} else {
-    Fail-Json $result "Missing required argument: url"
-}
 
-if (Get-Member -InputObject $params -Name method) {
-    $method = $params.method.ToString()
-    $webrequest_opts.Method = $method
-}
+$url = Get-AnsibleParam -obj $params -name "url" -failifempty $true
+$method = Get-AnsibleParam -obj $params "method" -default "GET"
+$content_type = Get-AnsibleParam -obj $params -name "content_type"
+$body = Get-AnsibleParam -obj $params -name "body"
 
-if (Get-Member -InputObject $params -Name content_type) {
-    $content_type = $params.method.content_type.ToString()
-    $webrequest_opts.ContentType = $content_type
-}
+$webrequest_opts.Uri = $url
+Set-Attr $result.win_uri "url" $url
 
-if (Get-Member -InputObject $params -Name body) {
-    $body = $params.method.body.ToString()
-    $webrequest_opts.Body = $body
-}
+@webrequest_opts.Method = $method
+Set-Attr $result.win_uri "method" $method
 
-if (Get-Member -InputObject $params -Name headers) {
-    $headers = $params.headers
-    Set-Attr $result.win_uri "headers" $headers
+@webrequest_opts.content_type = $content_type
+Set-Attr $result.content_type "content_type" $content_type
 
+if ($headers -ne $null) {
     $req_headers = @{}
     ForEach ($header in $headers.psobject.properties) {
         $req_headers.Add($header.Name, $header.Value)
