@@ -33,7 +33,7 @@ options:
     default: null
   password:
     description:
-      - set the user's password
+      - set the user's password. (Required when adding a user)
     required: false
     default: null
   host:
