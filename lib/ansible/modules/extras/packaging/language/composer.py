@@ -133,8 +133,6 @@ def parse_out(string):
     return re.sub("\s+", " ", string).strip()
 
 def has_changed(string):
-    if string == "":
-        return False
     return "Nothing to install or update" not in string
 
 def get_available_options(module, command='install'):
