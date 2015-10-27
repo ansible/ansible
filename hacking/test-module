@@ -36,7 +36,7 @@ import subprocess
 import traceback
 import optparse
 import ansible.utils.vars as utils_vars
-from ansible.parsing import DataLoader
+from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.utils.jsonify import jsonify
 from ansible.parsing.splitter import parse_kv
 import ansible.executor.module_common as module_common
