@@ -39,7 +39,7 @@ If (($state -Ne $FALSE) -And ($state -NotIn $valid_states)) {
 # Attributes parameter - Pipe separated list of attributes where
 # keys and values are separated by comma (paramA:valyeA|paramB:valueB)
 $attributes = @{};
-If ($params.attributes) {
+If (Get-Member -InputObject $params -Name attributes) {
   $params.attributes -split '\|' | foreach {
     $key, $value = $_ -split "\:";
     $attributes.Add($key, $value);
