@@ -24,7 +24,7 @@
 DOCUMENTATION = """
 ---
 module: win_uri
-version_added: ""
+version_added: "2.0"
 short_description: Interacts with webservices.
 description:
   - Interacts with HTTP and HTTPS services.
@@ -32,10 +32,12 @@ options:
   url:
     description:
       - HTTP or HTTPS URL in the form of (http|https)://host.domain:port/path
+    required: true
   method:
     description:
       - The HTTP Method of the request or response.
     default: GET
+    required: false
     choices:
       - GET
       - POST
@@ -53,13 +55,17 @@ options:
   body:
     description:
       - The body of the HTTP request/response to the web service.
+    required: false
+    default: None
   headers:
     description:
       - Key Value pairs for headers. Example "Host: www.somesite.com"
-author: Corwin Brown
+    required: false
+    default: None
+author: Corwin Brown (@blakfeld)
 """
 
-Examples= """
+Examples = """
 # Send a GET request and store the output:
 ---
 - name: Perform a GET and Store Output
@@ -90,4 +96,19 @@ Examples= """
     url: http://www.somesite.com
     method: POST
     body: "{ 'some': 'json' }"
+
+# Check if a file is available on a webserver
+---
+- name: Ensure Build is Available on Fileserver
+  when: ensure_build
+  win_uri:
+    url: "http://www.somesite.com"
+    method: HEAD
+    headers:
+      test: one
+      another: two
+  register: build_check_output
+  until: build_check_output.StatusCode == 200
+  retries: 30
+  delay: 10
 """
