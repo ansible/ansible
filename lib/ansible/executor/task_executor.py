@@ -325,8 +325,11 @@ class TaskExecutor:
             self._task.args = dict((i[0], i[1]) for i in iteritems(self._task.args) if i[1] != omit_token)
 
         # Read some values from the task, so that we can modify them if need be
-        retries = self._task.retries
-        if retries <= 0:
+        if self._task.until is not None:
+            retries = self._task.retries
+            if retries <= 0:
+                retries = 1
+        else:
             retries = 1
 
         delay = self._task.delay
