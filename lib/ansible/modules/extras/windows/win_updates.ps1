@@ -307,7 +307,7 @@ Function RunAsScheduledJob {
   $schedjob = Register-ScheduledJob @rsj_args
 
   # RunAsTask isn't available in PS3- fall back to a 2s future trigger
-  if($schedjob.RunAsTask) {
+  if($schedjob | Get-Member -Name RunAsTask) {
     Write-DebugLog "Starting scheduled job (PS4 method)"
     $schedjob.RunAsTask()
   }
@@ -337,8 +337,8 @@ Function RunAsScheduledJob {
   $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
   # NB: output from scheduled jobs is delayed after completion (including the sub-objects after the primary Output object is available)
-  While (($job.Output -eq $null -or $job.Output.job_output -eq $null) -and $sw.ElapsedMilliseconds -lt 15000) {
-    Write-DebugLog "Waiting for job output to be non-null..."
+  While (($job.Output -eq $null -or -not $job.Output.Keys.Contains('job_output')) -and $sw.ElapsedMilliseconds -lt 15000) {
+    Write-DebugLog "Waiting for job output to populate..."
     Start-Sleep -Milliseconds 500
   }
 
@@ -351,7 +351,7 @@ Function RunAsScheduledJob {
       DebugOutput = $job.Debug
   }
 
-  If ($job.Output -eq $null -or $job.Output.job_output -eq $null) {
+  If ($job.Output -eq $null -or -not $job.Output.Keys.Contains('job_output')) {
       $ret.Output = @{failed = $true; msg = "job output was lost"}
   }
   Else {
@@ -404,7 +404,7 @@ $parsed_args = Parse-Args $args $true
 $parsed_args.psobject.properties | foreach -begin {$job_args=@{}} -process {$job_args."$($_.Name)" = $_.Value} -end {$job_args}
 
 # set the log_path for the global log function we injected earlier
-$log_path = $job_args.log_path
+$log_path = $job_args['log_path']
 
 Log-Forensics
 
