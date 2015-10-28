@@ -84,7 +84,7 @@ Login to a Docker registry without performing any other action. Make sure that t
 
 - name: login to private Docker remote registry and force reauthentification
   docker_login:
-    registry: https://your.private.registry.io/v1/
+    registry: your.private.registry.io
     username: yourself
     password: secrets3
     reauth: yes
@@ -139,10 +139,6 @@ class DockerLoginManager:
 
         if self.reauth:
             self.log.append("Enforcing reauthentification")
-
-        # Extract hostname part from self.registry if url was specified.
-        registry_url = urlparse(self.registry)
-        self.registry = registry_url.netloc or registry_url.path
 
         # Connect to registry and login if not already logged in or reauth is enforced.
         try:
