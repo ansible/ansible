@@ -31,16 +31,17 @@ $webrequest_opts = @{}
 $url = Get-AnsibleParam -obj $params -name "url" -failifempty $true
 $method = Get-AnsibleParam -obj $params "method" -default "GET"
 $content_type = Get-AnsibleParam -obj $params -name "content_type"
+$headers = Get-AnsibleParam -obj $params -name "headers"
 $body = Get-AnsibleParam -obj $params -name "body"
 
 $webrequest_opts.Uri = $url
 Set-Attr $result.win_uri "url" $url
 
-@webrequest_opts.Method = $method
+$webrequest_opts.Method = $method
 Set-Attr $result.win_uri "method" $method
 
-@webrequest_opts.content_type = $content_type
-Set-Attr $result.content_type "content_type" $content_type
+$webrequest_opts.ContentType = $content_type
+Set-Attr $result.win_uri "content_type" $content_type
 
 if ($headers -ne $null) {
     $req_headers = @{}
