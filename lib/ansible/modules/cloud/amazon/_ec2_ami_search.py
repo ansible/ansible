@@ -66,7 +66,6 @@ options:
     default: paravirtual
     choices: ["paravirtual", "hvm"]
 
-author: Lorin Hochstein
 '''
 
 EXAMPLES = '''

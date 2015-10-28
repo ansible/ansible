@@ -65,8 +65,9 @@ options:
     required: false
     default: false
     version_added: "2.0"
-extends_documentation_fragment: aws
-author: "Lorin Hochstein (@lorin) <lorin@nimbisservices.com>"
+extends_documentation_fragment:
+    - aws
+    - ec2
 author: "Rick Mendes (@rickmendes) <rmendes@illumina.com>"
 notes:
    - This module will return C(public_ip) on success, which will contain the
