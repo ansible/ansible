@@ -279,4 +279,8 @@ class TaskQueueManager:
                     try:
                         method(*args, **kwargs)
                     except Exception as e:
-                        self._display.warning('Error when using %s: %s' % (method, str(e)))
+                        try:
+                            v1_method = method.replace('v2_','')
+                            v1_method(*args, **kwargs)
+                        except Exception:
+                            self._display.warning('Error when using %s: %s' % (method, str(e)))
