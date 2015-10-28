@@ -135,7 +135,7 @@ options:
     version_added: "2.0"
   log_opt:
     description:
-      - Additional options to pass to the logging driver selected above. See Docker `log-driver 
+      - Additional options to pass to the logging driver selected above. See Docker `log-driver
         <https://docs.docker.com/reference/logging/overview/>` documentation for more information.
         Requires docker >=1.7.0.
     required: false
@@ -1486,24 +1486,20 @@ class DockerManager(object):
                 self.module.fail_json(msg="failed to login to the remote registry, check your username/password.", error=repr(e))
         try:
             changes = list(self.client.pull(image, tag=tag, stream=True, **extra_params))
-            try:
-                last = changes[-1]
-                # seems Docker 1.8 puts an empty dict at the end of the
-                # stream; catch that and get the previous instead
-                # https://github.com/ansible/ansible-modules-core/issues/2043
-                if last.strip() == '{}':
-                    last = changes[-2]
-            except IndexError:
-                last = '{}'
-            status = json.loads(last).get('status', '')
-            if status.startswith('Status: Image is up to date for'):
-                # Image is already up to date. Don't increment the counter.
-                pass
-            elif (status.startswith('Status: Downloaded newer image for') or
-                    status.startswith('Download complete')):
-                # Image was updated. Increment the pull counter.
-                self.increment_counter('pulled')
-            else:
+            pull_success = False
+            for change in changes:
+                status = json.loads(change).get('status', '')
+                if status.startswith('Status: Image is up to date for'):
+                    # Image is already up to date. Don't increment the counter.
+                    pull_success = True
+                    break
+                elif (status.startswith('Status: Downloaded newer image for') or
+                        status.startswith('Download complete')):
+                    # Image was updated. Increment the pull counter.
+                    self.increment_counter('pulled')
+                    pull_success = True
+                    break
+            if not pull_success:
                 # Unrecognized status string.
                 self.module.fail_json(msg="Unrecognized status from pull.", status=status, changes=changes)
         except Exception as e:
