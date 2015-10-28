@@ -7,4 +7,7 @@ test_hash:
   host_vars_testhost: "this is in host_vars/testhost"
 
 # Support execution from within a virtualenv
-ansible_python_interpreter: ${VIRTUAL_ENV-/usr}/bin/python
+ansible_python_interpreter: '/usr/bin/env python'
+
+# Var precedence testing
+defaults_file_var_role3: "overridden from inventory"

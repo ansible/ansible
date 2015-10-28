@@ -6,24 +6,23 @@ Accelerated Mode
 You Might Not Need This!
 ````````````````````````
 
-Are you running Ansible 1.5 or later?  If so, you may not need accelerate mode due to a new feature called "SSH pipelining" and should read the :ref:`pipelining` section of the documentation.
+Are you running Ansible 1.5 or later?  If so, you may not need accelerated mode due to a new feature called "SSH pipelining" and should read the :ref:`pipelining` section of the documentation.
 
-For users on 1.5 and later, accelerate mode only makes sense if you are (A) are managing from an Enterprise Linux 6 or earlier host
-   and still are on paramiko, or (B) can't enable TTYs with sudo as described in the pipelining docs.
+For users on 1.5 and later, accelerated mode only makes sense if you (A) are managing from an Enterprise Linux 6 or earlier host and still are on paramiko, or (B) can't enable TTYs with sudo as described in the pipelining docs.
 
 If you can use pipelining, Ansible will reduce the amount of files transferred over the wire, 
-making everything much more efficient, and performance will be on par with accelerate mode in nearly all cases, possibly excluding very large file transfer.   Because less moving parts are involved, pipelining is better than accelerate mode for nearly all use cases.
+making everything much more efficient, and performance will be on par with accelerated mode in nearly all cases, possibly excluding very large file transfer.   Because less moving parts are involved, pipelining is better than accelerated mode for nearly all use cases.
 
-Accelerate mode remains around in support of EL6
+Accelerated moded remains around in support of EL6
 control machines and other constrained environments.
 
-Accelerate Mode Details
-```````````````````````
+Accelerated Mode Details
+````````````````````````
 
 While OpenSSH using the ControlPersist feature is quite fast and scalable, there is a certain small amount of overhead involved in
 using SSH connections.  While many people will not encounter a need, if you are running on a platform that doesn't have ControlPersist support (such as an EL6 control machine), you'll probably be even more interested in tuning options.
 
-Accelerate mode is there to help connections work faster, but still uses SSH for initial secure key exchange.  There is no
+Accelerated mode is there to help connections work faster, but still uses SSH for initial secure key exchange.  There is no
 additional public key infrastructure to manage, and this does not require things like NTP or even DNS. 
 
 Accelerated mode can be anywhere from 2-6x faster than SSH with ControlPersist enabled, and 10x faster than paramiko.
@@ -76,4 +75,11 @@ As noted above, accelerated mode also supports running tasks via sudo, however t
 * You must remove requiretty from your sudoers options.
 * Prompting for the sudo password is not yet supported, so the NOPASSWD option is required for sudo'ed commands.
 
+As of Ansible version `1.6`, you can also allow the use of multiple keys for connections from multiple Ansible management nodes. To do so, add the following option
+to your `ansible.cfg` configuration::
+
+    accelerate_multi_key = yes
+
+When enabled, the daemon will open a UNIX socket file (by default `$ANSIBLE_REMOTE_TEMP/.ansible-accelerate/.local.socket`). New connections over SSH can
+use this socket file to upload new keys to the daemon.
 

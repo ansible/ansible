@@ -61,22 +61,9 @@ For instance, if deploying multiple wordpress instances, I could
 contain all of my wordpress tasks in a single wordpress.yml file, and use it like so::
 
    tasks:
-     - include: wordpress.yml user=timmy
-     - include: wordpress.yml user=alice
-     - include: wordpress.yml user=bob
-
-If you are running Ansible 1.4 and later, include syntax is streamlined to match roles, and also allows passing list and dictionary parameters::
-   
-    tasks:
-     - { include: wordpress.yml, user: timmy, ssh_keys: [ 'keys/one.txt', 'keys/two.txt' ] }
-
-Using either syntax, variables passed in can then be used in the included files.  We've already covered them a bit in :doc:`playbooks_variables`.
-You can reference them like this::
-
-   {{ user }}
-
-(In addition to the explicitly passed-in parameters, all variables from
-the vars section are also available for use here as well.)
+     - include: wordpress.yml wp_user=timmy
+     - include: wordpress.yml wp_user=alice
+     - include: wordpress.yml wp_user=bob
 
 Starting in 1.0, variables can also be passed to include files using an alternative syntax,
 which also supports structured variables::
@@ -85,11 +72,18 @@ which also supports structured variables::
 
       - include: wordpress.yml
         vars:
-            remote_user: timmy
-            some_list_variable:
-              - alpha
-              - beta
-              - gamma
+            wp_user: timmy
+            ssh_keys:
+              - keys/one.txt
+              - keys/two.txt
+
+Using either syntax, variables passed in can then be used in the included files.  We'll cover them in :doc:`playbooks_variables`.
+You can reference them like this::
+
+   {{ wp_user }}
+
+(In addition to the explicitly passed-in parameters, all variables from
+the vars section are also available for use here as well.)
 
 Playbooks can include other playbooks too, but that's mentioned in a later section.
 
@@ -153,7 +147,7 @@ Roles
 
 .. versionadded:: 1.2
 
-Now that you have learned about vars_files, tasks, and handlers, what is the best way to organize your playbooks?
+Now that you have learned about tasks and handlers, what is the best way to organize your playbooks?
 The short answer is to use roles!  Roles are ways of automatically loading certain vars_files, tasks, and
 handlers based on a known file structure.  Grouping content by roles also allows easy sharing of roles with other users.
 
@@ -172,6 +166,7 @@ Example project structure::
          tasks/
          handlers/
          vars/
+         defaults/
          meta/
        webservers/
          files/
@@ -179,6 +174,7 @@ Example project structure::
          tasks/
          handlers/
          vars/
+         defaults/
          meta/
 
 In a playbook, it would look like this::
@@ -210,7 +206,7 @@ If any files are not present, they are just ignored.  So it's ok to not have a '
 for instance.
 
 Note, you are still allowed to list tasks, vars_files, and handlers "loose" in playbooks without using roles,
-but roles are a good organizational feature and are highly recommended.  if there are loose things in the playbook,
+but roles are a good organizational feature and are highly recommended.  If there are loose things in the playbook,
 the roles are evaluated first.
 
 Also, should you wish to parameterize roles, by adding variables, you can do so, like this::
@@ -299,6 +295,9 @@ Role dependencies can also be specified as a full path, just like top level role
     dependencies:
        - { role: '/path/to/common/roles/foo', x: 1 }
 
+Role dependencies can also be installed from source control repos or tar files (via `galaxy`) using comma separated format of path, an optional version (tag, commit, branch etc) and optional friendly role name (an attempt is made to derive a role name from the repo name or archive filename). Both through the command line or via a requirements.yml passed to ansible-galaxy.
+
+
 Roles dependencies are always executed before the role that includes them, and are recursive. By default, 
 roles can also only be added as a dependency once - if another role also lists it as a dependency it will
 not be run again. This behavior can be overridden by adding `allow_duplicates: yes` to the `meta/main.yml` file.
@@ -333,10 +332,45 @@ The resulting order of execution would be as follows::
 .. note::
    Variable inheritance and scope are detailed in the :doc:`playbooks_variables`.
 
+Embedding Modules In Roles
+``````````````````````````
+
+This is an advanced topic that should not be relevant for most users.
+
+If you write a custom module (see :doc:`developing_modules`) you may wish to distribute it as part of a role.  Generally speaking, Ansible as a project is very interested
+in taking high-quality modules into ansible core for inclusion, so this shouldn't be the norm, but it's quite easy to do.
+
+A good example for this is if you worked at a company called AcmeWidgets, and wrote an internal module that helped configure your internal software, and you wanted other
+people in your organization to easily use this module -- but you didn't want to tell everyone how to configure their Ansible library path.
+
+Alongside the 'tasks' and 'handlers' structure of a role, add a directory named 'library'.  In this 'library' directory, then include the module directly inside of it.
+
+Assuming you had this::
+
+    roles/
+       my_custom_modules/
+           library/
+              module1
+              module2
+
+The module will be usable in the role itself, as well as any roles that are called *after* this role, as follows::
+
+
+    - hosts: webservers
+      roles:
+        - my_custom_modules
+        - some_other_role_using_my_custom_modules
+        - yet_another_role_using_my_custom_modules
+
+This can also be used, with some limitations, to modify modules in Ansible's core distribution, such as to use development versions of modules before they are released
+in production releases.  This is not always advisable as API signatures may change in core components, however, and is not always guaranteed to work.  It can be a handy
+way of carrying a patch against a core module, however, should you have good reason for this.  Naturally the project prefers that contributions be directed back
+to github whenever possible via a pull request.
+
 Ansible Galaxy
 ``````````````
 
-`Ansible Galaxy <http://galaxy.ansible.com>`_, is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
+`Ansible Galaxy <http://galaxy.ansible.com>`_ is a free site for finding, downloading, rating, and reviewing all kinds of community developed Ansible roles and can be a great way to get a jumpstart on your automation projects.
 
 You can sign up with social auth, and the download client 'ansible-galaxy' is included in Ansible 1.4.2 and later.
 
@@ -344,6 +378,8 @@ Read the "About" page on the Galaxy site for more information.
 
 .. seealso::
 
+   :doc:`galaxy`
+       How to share roles on galaxy, role management
    :doc:`YAMLSyntax`
        Learn about YAML syntax
    :doc:`playbooks`

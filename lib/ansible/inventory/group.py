@@ -14,11 +14,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
 
-class Group(object):
+from ansible.errors import AnsibleError
+from ansible.utils.debug import debug
+
+class Group:
     ''' a group of ansible hosts '''
 
-    __slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
+    #__slots__ = [ 'name', 'hosts', 'vars', 'child_groups', 'parent_groups', 'depth', '_hosts_cache' ]
 
     def __init__(self, name=None):
 
@@ -28,9 +33,49 @@ class Group(object):
         self.vars = {}
         self.child_groups = []
         self.parent_groups = []
-        self.clear_hosts_cache()
-        if self.name is None:
-            raise Exception("group name is required")
+        self._hosts_cache = None
+
+        #self.clear_hosts_cache()
+        #if self.name is None:
+        #    raise Exception("group name is required")
+
+    def __repr__(self):
+        return self.get_name()
+
+    def __getstate__(self):
+        return self.serialize()
+
+    def __setstate__(self, data):
+        return self.deserialize(data)
+
+    def serialize(self):
+        parent_groups = []
+        for parent in self.parent_groups:
+            parent_groups.append(parent.serialize())
+
+        result = dict(
+            name=self.name,
+            vars=self.vars.copy(),
+            parent_groups=parent_groups,
+            depth=self.depth,
+        )
+
+        return result
+
+    def deserialize(self, data):
+        self.__init__()
+        self.name = data.get('name')
+        self.vars = data.get('vars', dict())
+        self.depth = data.get('depth', 0)
+
+        parent_groups = data.get('parent_groups', [])
+        for parent_data in parent_groups:
+            g = Group()
+            g.deserialize(parent_data)
+            self.parent_groups.append(g)
+
+    def get_name(self):
+        return self.name
 
     def add_child_group(self, group):
 
@@ -40,9 +85,28 @@ class Group(object):
         # don't add if it's already there
         if not group in self.child_groups:
             self.child_groups.append(group)
+
+            # update the depth of the child
             group.depth = max([self.depth+1, group.depth])
-            group.parent_groups.append(self)
+
+            # update the depth of the grandchildren
+            group._check_children_depth()
+
+            # now add self to child's parent_groups list, but only if there
+            # isn't already a group with the same name
+            if not self.name in [g.name for g in group.parent_groups]:
+                group.parent_groups.append(self)
+
             self.clear_hosts_cache()
+
+    def _check_children_depth(self):
+
+        try:
+            for group in self.child_groups:
+                group.depth = max([self.depth+1, group.depth])
+                group._check_children_depth()
+        except RuntimeError:
+            raise AnsibleError("The group named '%s' has a recursive dependency loop." % self.name)
 
     def add_host(self, host):
 
@@ -83,7 +147,7 @@ class Group(object):
                 hosts.append(mine)
         return hosts
 
-    def get_variables(self):
+    def get_vars(self):
         return self.vars.copy()
 
     def _get_ancestors(self):

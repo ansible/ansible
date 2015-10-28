@@ -1,10 +1,10 @@
-The value of groups_tree_var = 4000.
+The value of groups_tree_var = 5000.
 This comes from host, not the parents or grandparents.
 
 The value of the grandparent variable grandparent_var is
 not overridden and is = 2000
 
-The value of the parent variable is not overriden and
+The value of the parent variable is not overridden and
 is = 6000
 
 The variable 'overridden_in_parent' is set in the parent

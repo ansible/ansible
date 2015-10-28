@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# (c) 2012-2014, Michael DeHaan <michael@ansible.com> and others
 #
 # This file is part of Ansible
 #
@@ -17,6 +18,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function
 import os
 import glob
 import sys
@@ -30,21 +32,24 @@ import time
 import datetime
 import subprocess
 import cgi
+import warnings
 from jinja2 import Environment, FileSystemLoader
+from six import iteritems
 
-import ansible.utils
-import ansible.utils.module_docs as module_docs
+from ansible.utils import module_docs
+from ansible.utils.vars import merge_hash
+from ansible.errors import AnsibleError
 
 #####################################################################################
 # constants and paths
 
 # if a module is added in a version of Ansible older than this, don't print the version added information
 # in the module documentation because everyone is assumed to be running something newer than this already.
-TO_OLD_TO_BE_NOTABLE = 1.0
+TO_OLD_TO_BE_NOTABLE = 1.3
 
 # Get parent directory of the directory this script lives in
 MODULEDIR=os.path.abspath(os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'library'
+    os.path.dirname(os.path.realpath(__file__)), os.pardir, 'lib', 'ansible', 'modules'
 ))
 
 # The name of the DOCUMENTATION template
@@ -58,16 +63,21 @@ _MODULE = re.compile(r"M\(([^)]+)\)")
 _URL    = re.compile(r"U\(([^)]+)\)")
 _CONST  = re.compile(r"C\(([^)]+)\)")
 
+DEPRECATED = " (D)"
+NOTCORE    = " (E)"
 #####################################################################################
 
 def rst_ify(text):
     ''' convert symbols like I(this is in italics) to valid restructured text '''
 
-    t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
-    t = _BOLD.sub(r'**' + r"\1" + r"**", t)
-    t = _MODULE.sub(r'``' + r"\1" + r"``", t)
-    t = _URL.sub(r"\1", t)
-    t = _CONST.sub(r'``' + r"\1" + r"``", t)
+    try:
+        t = _ITALIC.sub(r'*' + r"\1" + r"*", text)
+        t = _BOLD.sub(r'**' + r"\1" + r"**", t)
+        t = _MODULE.sub(r':ref:`' + r"\1 <\1>" + r"`", t)
+        t = _URL.sub(r"\1", t)
+        t = _CONST.sub(r'``' + r"\1" + r"``", t)
+    except Exception as e:
+        raise AnsibleError("Could not process (%s) : %s" % (str(text), str(e)))
 
     return t
 
@@ -106,30 +116,68 @@ def write_data(text, options, outputname, module):
     ''' dumps module output to a file or the screen, as requested '''
 
     if options.output_dir is not None:
-        f = open(os.path.join(options.output_dir, outputname % module), 'w')
+        fname = os.path.join(options.output_dir, outputname % module)
+        fname = fname.replace(".py","")
+        f = open(fname, 'w')
         f.write(text.encode('utf-8'))
         f.close()
     else:
-        print text
+        print(text)
 
 #####################################################################################
 
-def list_modules(module_dir):
+
+def list_modules(module_dir, depth=0):
     ''' returns a hash of categories, each category being a hash of module names to file paths '''
 
-    categories = dict(all=dict())
-    files = glob.glob("%s/*" % module_dir)
-    for d in files:
-        if os.path.isdir(d):
-            files2 = glob.glob("%s/*" % d)
-            for f in files2:
-                tokens = f.split("/")
-                module = tokens[-1]
-                category = tokens[-2]
+    categories = dict(all=dict(),_aliases=dict())
+    if depth <= 3: # limit # of subdirs
+
+        files = glob.glob("%s/*" % module_dir)
+        for d in files:
+
+            category = os.path.splitext(os.path.basename(d))[0]
+            if os.path.isdir(d):
+
+                res = list_modules(d, depth + 1)
+                for key in res.keys():
+                    if key in categories:
+                        categories[key] = merge_hash(categories[key], res[key])
+                        res.pop(key, None)
+
+                if depth < 2:
+                    categories.update(res)
+                else:
+                    category = module_dir.split("/")[-1]
+                    if not category in categories:
+                        categories[category] = res
+                    else:
+                        categories[category].update(res)
+            else:
+                module = category
+                category = os.path.basename(module_dir)
+                if not d.endswith(".py") or d.endswith('__init__.py'):
+                    # windows powershell modules have documentation stubs in python docstring
+                    # format (they are not executed) so skip the ps1 format files
+                    continue
+                elif module.startswith("_") and os.path.islink(d):
+                    source = os.path.splitext(os.path.basename(os.path.realpath(d)))[0]
+                    module = module.replace("_","",1)
+                    if not d in categories['_aliases']:
+                        categories['_aliases'][source] = [module]
+                    else:
+                        categories['_aliases'][source].update(module)
+                    continue
+
                 if not category in categories:
                     categories[category] = {}
-                categories[category][module] = f
-                categories['all'][module] = f
+                categories[category][module] = d
+                categories['all'][module] = d
+
+    # keep module tests out of becomeing module docs
+    if 'test' in categories:
+        del categories['test']
+
     return categories
 
 #####################################################################################
@@ -177,26 +225,60 @@ def jinja2_environment(template_dir, typ):
     return env, template, outputname
 
 #####################################################################################
+def too_old(added):
+    if not added:
+        return False
+    try:
+        added_tokens = str(added).split(".")
+        readded = added_tokens[0] + "." + added_tokens[1]
+        added_float = float(readded)
+    except ValueError as e:
+        warnings.warn("Could not parse %s: %s" % (added, str(e)))
+        return False
+    return (added_float < TO_OLD_TO_BE_NOTABLE)
 
-def process_module(module, options, env, template, outputname, module_map):
-
-    print "rendering: %s" % module
+def process_module(module, options, env, template, outputname, module_map, aliases):
 
     fname = module_map[module]
+    if isinstance(fname, dict):
+        return "SKIPPED"
+
+    basename = os.path.basename(fname)
+    deprecated = False
 
     # ignore files with extensions
-    if os.path.basename(fname).find(".") != -1:
+    if not basename.endswith(".py"):
         return
+    elif module.startswith("_"):
+        if os.path.islink(fname):
+            return  # ignore, its an alias
+        deprecated = True
+        module = module.replace("_","",1)
+
+    print("rendering: %s" % module)
 
     # use ansible core library to parse out doc metadata YAML and plaintext examples
-    doc, examples = ansible.utils.module_docs.get_docstring(fname, verbose=options.verbose)
+    doc, examples, returndocs = module_docs.get_docstring(fname, verbose=options.verbose)
 
     # crash if module is missing documentation and not explicitly hidden from docs index
-    if doc is None and module not in ansible.utils.module_docs.BLACKLIST_MODULES:
-        sys.stderr.write("*** ERROR: CORE MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
-        sys.exit(1)
     if doc is None:
-        return "SKIPPED"
+        if module in module_docs.BLACKLIST_MODULES:
+            return "SKIPPED"
+        else:
+            sys.stderr.write("*** ERROR: MODULE MISSING DOCUMENTATION: %s, %s ***\n" % (fname, module))
+            sys.exit(1)
+
+    if deprecated and 'deprecated' not in doc:
+        sys.stderr.write("*** ERROR: DEPRECATED MODULE MISSING 'deprecated' DOCUMENTATION: %s, %s ***\n" % (fname, module))
+        sys.exit(1)
+
+    if "/core/" in fname:
+        doc['core'] = True
+    else:
+        doc['core'] = False
+
+    if module in aliases:
+        doc['aliases'] = aliases[module]
 
     all_keys = []
 
@@ -211,45 +293,95 @@ def process_module(module, options, env, template, outputname, module_map):
         added = doc['version_added']
 
     # don't show version added information if it's too old to be called out
-    if added:
-        added_tokens = str(added).split(".")
-        added = added_tokens[0] + "." + added_tokens[1]
-        added_float = float(added)
-        if added and added_float < TO_OLD_TO_BE_NOTABLE:
-            del doc['version_added']
+    if too_old(added):
+        del doc['version_added']
 
-    for (k,v) in doc['options'].iteritems():
-        all_keys.append(k)
+    if 'options' in doc and doc['options']:
+        for (k,v) in iteritems(doc['options']):
+            # don't show version added information if it's too old to be called out
+            if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
+                del doc['options'][k]['version_added']
+            all_keys.append(k)
+
     all_keys = sorted(all_keys)
-    doc['option_keys'] = all_keys
 
+    doc['option_keys']      = all_keys
     doc['filename']         = fname
     doc['docuri']           = doc['module'].replace('_', '-')
     doc['now_date']         = datetime.date.today().strftime('%Y-%m-%d')
     doc['ansible_version']  = options.ansible_version
     doc['plainexamples']    = examples  #plain text
+    if returndocs:
+        try:
+            doc['returndocs']       = yaml.safe_load(returndocs)
+        except:
+            print("could not load yaml: %s" % returndocs)
+            raise
+    else:
+        doc['returndocs']       = None
 
     # here is where we build the table of contents...
 
-    text = template.render(doc)
+    try:
+        text = template.render(doc)
+    except Exception as e:
+        raise AnsibleError("Failed to render doc for %s: %s" % (fname, str(e)))
     write_data(text, options, outputname, module)
+    return doc['short_description']
 
 #####################################################################################
+
+def print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map, aliases):
+    modstring = module
+    modname = module
+    if module in deprecated:
+        modstring = modstring + DEPRECATED
+        modname = "_" + module
+    elif module not in core:
+        modstring = modstring + NOTCORE
+
+    result = process_module(modname, options, env, template, outputname, module_map, aliases)
+
+    if result != "SKIPPED":
+        category_file.write("  %s - %s <%s_module>\n" % (modstring, rst_ify(result), module))
 
 def process_category(category, categories, options, env, template, outputname):
 
     module_map = categories[category]
 
+    aliases = {}
+    if '_aliases' in categories:
+        aliases = categories['_aliases']
+
     category_file_path = os.path.join(options.output_dir, "list_of_%s_modules.rst" % category)
     category_file = open(category_file_path, "w")
-    print "*** recording category %s in %s ***" % (category, category_file_path)
+    print("*** recording category %s in %s ***" % (category, category_file_path))
 
-    # TODO: start a new category file
+    # start a new category file
 
     category = category.replace("_"," ")
     category = category.title()
 
-    modules = module_map.keys()
+    modules = []
+    deprecated = []
+    core = []
+    for module in module_map.keys():
+
+        if isinstance(module_map[module], dict):
+            for mod in module_map[module].keys():
+                if mod.startswith("_"):
+                    mod = mod.replace("_","",1)
+                    deprecated.append(mod)
+                elif '/core/' in module_map[module][mod]:
+                    core.append(mod)
+        else:
+            if module.startswith("_"):
+                module = module.replace("_","",1)
+                deprecated.append(module)
+            elif '/core/' in module_map[module]:
+                core.append(module)
+        modules.append(module)
+
     modules.sort()
 
     category_header = "%s Modules" % (category.title())
@@ -259,17 +391,34 @@ def process_category(category, categories, options, env, template, outputname):
 %s
 %s
 
-.. toctree::
-   :maxdepth: 1
+.. toctree:: :maxdepth: 1
 
 """ % (category_header, underscores))
-
+    sections = []
     for module in modules:
-        result = process_module(module, options, env, template, outputname, module_map)
-        if result != "SKIPPED":
-            category_file.write("   %s_module\n" % module)
+        if module in module_map and isinstance(module_map[module], dict):
+            sections.append(module)
+            continue
+        else:
+            print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map, aliases)
 
+    sections.sort()
+    for section in sections:
+        category_file.write("\n%s\n%s\n\n" % (section.replace("_"," ").title(),'-' * len(section)))
+        category_file.write(".. toctree:: :maxdepth: 1\n\n")
 
+        section_modules = module_map[section].keys()
+        section_modules.sort()
+        #for module in module_map[section]:
+        for module in section_modules:
+            print_modules(module, category_file, deprecated, core, options, env, template, outputname, module_map[section], aliases)
+
+    category_file.write("""\n\n
+.. note::
+    - %s: This marks a module as deprecated, which means a module is kept for backwards compatibility but usage is discouraged.  The module documentation details page may explain more about this rationale.
+    - %s: This marks a module as 'extras', which means it ships with ansible but may be a newer module and possibly (but not necessarily) less actively maintained than 'core' modules.
+    - Tickets filed on modules are filed to different repos than those on the main open source project. Core module tickets should be filed at `ansible/ansible-modules-core on GitHub <http://github.com/ansible/ansible-modules-core>`_, extras tickets to `ansible/ansible-modules-extras on GitHub <http://github.com/ansible/ansible-modules-extras>`_
+""" % (DEPRECATED, NOTCORE))
     category_file.close()
 
     # TODO: end a new category file
@@ -280,13 +429,13 @@ def validate_options(options):
     ''' validate option parser options '''
 
     if not options.module_dir:
-        print >>sys.stderr, "--module-dir is required"
+        print("--module-dir is required", file=sys.stderr)
         sys.exit(1)
     if not os.path.exists(options.module_dir):
-        print >>sys.stderr, "--module-dir does not exist: %s" % options.module_dir
+        print("--module-dir does not exist: %s" % options.module_dir, file=sys.stderr)
         sys.exit(1)
     if not options.template_dir:
-        print "--template-dir must be specified"
+        print("--template-dir must be specified")
         sys.exit(1)
 
 #####################################################################################
@@ -314,6 +463,8 @@ def main():
     category_list_file.write("   :maxdepth: 1\n\n")
 
     for category in category_names:
+        if category.startswith("_"):
+            continue
         category_list_file.write("   list_of_%s_modules\n" % category)
         process_category(category, categories, options, env, template, outputname)
 

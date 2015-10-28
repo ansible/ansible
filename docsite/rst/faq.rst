@@ -3,18 +3,32 @@ Frequently Asked Questions
 
 Here are some commonly-asked questions and their answers.
 
-.. _users_and_ports:
+
+.. _set_environment:
+
+How can I set the PATH or any other environment variable for a task or entire playbook?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Setting environment variables can be done with the `environment` keyword. It can be used at task or play level::
+
+    environment:
+      PATH: "{{ ansible_env.PATH }}:/thingy/bin"
+      SOME: value
+
+
 
 How do I handle different machines needing different user accounts or ports to log in with?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Setting inventory variables in the inventory file is the easiest way.
 
+.. include:: ansible_ssh_changes_note.rst
+
 For instance, suppose these hosts have different usernames and ports::
 
     [webservers]
-    asdf.example.com  ansible_ssh_port=5000   ansible_ssh_user=alice
-    jkl.example.com   ansible_ssh_port=5001   ansible_ssh_user=bob
+    asdf.example.com  ansible_port=5000   ansible_user=alice
+    jkl.example.com   ansible_port=5001   ansible_user=bob
 
 You can also dictate the connection type to be used, if you want::
 
@@ -43,6 +57,37 @@ consider managing from a Fedora or openSUSE client even though you are managing 
 
 We keep paramiko as the default as if you are first installing Ansible on an EL box, it offers a better experience
 for new users.
+
+.. _use_ssh_jump_hosts:
+
+How do I configure a jump host to access servers that I have no direct access to?
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+With Ansible 2, you can set a `ProxyCommand` in the
+`ansible_ssh_common_args` inventory variable. Any arguments specified in
+this variable are added to the sftp/scp/ssh command line when connecting
+to the relevant host(s). Consider the following inventory group::
+
+    [gatewayed]
+    foo ansible_host=192.0.2.1
+    bar ansible_host=192.0.2.2
+
+You can create `group_vars/gatewayed.yml` with the following contents::
+
+    ansible_ssh_common_args: '-o ProxyCommand="ssh -W %h:%p -q user@gateway.example.com"'
+
+Ansible will append these arguments to the command line when trying to
+connect to any hosts in the group `gatewayed`. (These arguments are used
+in addition to any `ssh_args` from `ansible.cfg`, so you do not need to
+repeat global `ControlPersist` settings in `ansible_ssh_common_args`.)
+
+Note that `ssh -W` is available only with OpenSSH 5.4 or later. With
+older versions, it's necessary to execute `nc %h:%p` or some equivalent
+command on the bastion host.
+
+With earlier versions of Ansible, it was necessary to configure a
+suitable `ProxyCommand` for one or more hosts in `~/.ssh/config`,
+or globally by setting `ssh_args` in `ansible.cfg`.
 
 .. _ec2_cloud_performance:
 
@@ -81,7 +126,7 @@ What is the best way to make content reusable/redistributable?
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 If you have not done so already, read all about "Roles" in the playbooks documentation.  This helps you make playbook content
-self contained, and works will with things like git submodules for sharing content with others.
+self-contained, and works well with things like git submodules for sharing content with others.
 
 If some of these plugin types look strange to you, see the API documentation for more details about ways Ansible can be extended.
 
@@ -112,7 +157,16 @@ Ansible by default gathers "facts" about the machines under management, and thes
 
     ansible -m setup hostname
 
-This will print out a dictionary of all of the facts that are available for that particular host.
+This will print out a dictionary of all of the facts that are available for that particular host. You might want to pipe the output to a pager.
+
+.. _browse_inventory_vars:
+
+How do I see all the inventory vars defined for my host?
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+You can see the resulting vars you define in inventory running the following command::
+
+    ansible -m debug -a "var=hostvars['hostname']" localhost
 
 .. _host_loops:
 
@@ -140,16 +194,16 @@ Then you can use the facts inside your template, like this::
 
 .. _programatic_access_to_a_variable:
 
-How do I access a variable name programatically?
-++++++++++++++++++++++++++++++++++++++++++++++++
+How do I access a variable name programmatically?
++++++++++++++++++++++++++++++++++++++++++++++++++
 
 An example may come up where we need to get the ipv4 address of an arbitrary interface, where the interface to be used may be supplied
 via a role parameter or other input.  Variable names can be built by adding strings together, like so::
 
     {{ hostvars[inventory_hostname]['ansible_' + which_interface]['ipv4']['address'] }}
 
-The trick about going through hostvars is neccessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
-is a magic variable that indiciates the current host you are looping over in the host loop.
+The trick about going through hostvars is necessary because it's a dictionary of the entire namespace of variables.  'inventory_hostname'
+is a magic variable that indicates the current host you are looping over in the host loop.
 
 .. _first_host_in_a_group:
 
@@ -166,10 +220,10 @@ Anyway, here's the trick::
     {{ hostvars[groups['webservers'][0]]['ansible_eth0']['ipv4']['address'] }}
 
 Notice how we're pulling out the hostname of the first machine of the webservers group.  If you are doing this in a template, you
-could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact:
+could use the Jinja2 '#set' directive to simplify this, or in a playbook, you could also use set_fact::
 
     - set_fact: headnode={{ groups[['webservers'][0]] }}
- 
+
     - debug: msg={{ hostvars[headnode].ansible_eth0.ipv4.address }}
 
 Notice how we interchanged the bracket syntax for dots -- that can be done anywhere.
@@ -179,17 +233,7 @@ Notice how we interchanged the bracket syntax for dots -- that can be done anywh
 How do I copy files recursively onto a target host?
 +++++++++++++++++++++++++++++++++++++++++++++++++++
 
-The "copy" module doesn't handle recursive copies of directories. A common solution to do this is to use a local action to call 'rsync' to recursively copy files to the managed servers.
-
-Here is an example::
-
-    ---
-    # ...
-      tasks:
-      - name: recursively copy files from management server to target
-        local_action: command rsync -a /path/to/files $inventory_hostname:/path/to/target/
-
-Note that you'll need passphrase-less SSH or ssh-agent set up to let rsync copy without prompting for a passphrase or password.
+The "copy" module has a recursive parameter, though if you want to do something more efficient for a large number of files, take a look at the "synchronize" module instead, which wraps rsync.  See the module index for info on both of these modules.
 
 .. _shell_env:
 
@@ -227,14 +271,16 @@ password hashing library is installed.
 
 Once the library is ready, SHA512 password values can then be generated as follows::
 
-    python -c "from passlib.hash import sha512_crypt; print sha512_crypt.encrypt('<password>')"
+    python -c "from passlib.hash import sha512_crypt; import getpass; print sha512_crypt.encrypt(getpass.getpass())"
 
 .. _commercial_support:
 
 Can I get training on Ansible or find commercial support?
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Yes!  See `our Guru offering <http://www.ansible.com/ansible-guru>_` for online support, and support is also included with :doc:`tower`. You can also read our `service page <http://www.ansible.com/ansible-services>`_ and email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+Yes!  See our `services page <http://www.ansible.com/services>`_ for information on our services and training offerings. Support is also included with :doc:`tower`. Email `info@ansible.com <mailto:info@ansible.com>`_ for further details.
+
+We also offer free web-based training classes on a regular basis. See our `webinar page <http://www.ansible.com/webinars-training>`_ for more info on upcoming webinars.
 
 .. _web_interface:
 
@@ -249,16 +295,33 @@ and easy to use. See :doc:`tower`.
 How do I submit a change to the documentation?
 ++++++++++++++++++++++++++++++++++++++++++++++
 
-Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/tree/devel/docsite/latest#readme>`_.  Thanks!
+Great question!  Documentation for Ansible is kept in the main project git repository, and complete instructions for contributing can be found in the docs README `viewable on GitHub <https://github.com/ansible/ansible/blob/devel/docsite/README.md>`_.  Thanks!
 
 .. _keep_secret_data:
 
 How do I keep secret data in my playbook?
 +++++++++++++++++++++++++++++++++++++++++
 
-If you would like to keep secret data in your Ansible content and still share it publically or keep things in source control, see :doc:`playbooks_vault`.
+If you would like to keep secret data in your Ansible content and still share it publicly or keep things in source control, see :doc:`playbooks_vault`.
 
 .. _i_dont_see_my_question:
+
+In Ansible 1.8 and later, if you have a task that you don't want to show the results or command given to it when using -v (verbose) mode, the following task or playbook attribute can be useful::
+
+    - name: secret task
+      shell: /usr/bin/do_something --value={{ secret_value }}
+      no_log: True
+
+This can be used to keep verbose output but hide sensitive information from others who would otherwise like to be able to see the output.
+
+The no_log attribute can also apply to an entire play::
+
+    - hosts: all
+      no_log: True
+
+Though this will make the play somewhat difficult to debug.  It's recommended that this
+be applied to single tasks only, once a playbook is completed.   
+
 
 I don't see my question here
 ++++++++++++++++++++++++++++
@@ -273,7 +336,7 @@ Please see the section below for a link to IRC and the Google Group, where you c
        An introduction to playbooks
    :doc:`playbooks_best_practices`
        Best practices advice
-   `User Mailing List <http://groups.google.com/group/ansible-devel>`_
+   `User Mailing List <http://groups.google.com/group/ansible-project>`_
        Have a question?  Stop by the google group!
    `irc.freenode.net <http://irc.freenode.net>`_
        #ansible IRC chat channel

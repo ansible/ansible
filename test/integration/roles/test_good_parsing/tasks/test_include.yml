@@ -1,0 +1,1 @@
+- set_fact: "{{fact_name}}='{{param}}'"

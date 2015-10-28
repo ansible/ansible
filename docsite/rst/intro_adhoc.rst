@@ -108,7 +108,7 @@ Using the :ref:`shell` module looks like this::
 When running any command with the Ansible *ad hoc* CLI (as opposed to
 :doc:`Playbooks <playbooks>`), pay particular attention to shell quoting rules, so
 the local shell doesn't eat a variable before it gets passed to Ansible.
-For example, using double vs single quotes in the above example would
+For example, using double rather than single quotes in the above example would
 evaluate the variable on the box you were on.
 
 So far we've been demoing simple command execution, but most Ansible modules usually do not work like
@@ -123,7 +123,7 @@ File Transfer
 
 Here's another use case for the `/usr/bin/ansible` command line.  Ansible can SCP lots of files to multiple machines in parallel.
 
-To transfer a file directly to many different servers::
+To transfer a file directly to many servers::
 
     $ ansible atlanta -m copy -a "src=/etc/hosts dest=/tmp/hosts"
 
@@ -154,11 +154,11 @@ with yum.
 
 Ensure a package is installed, but don't update it::
 
-    $ ansible webservers -m yum -a "name=acme state=installed"
+    $ ansible webservers -m yum -a "name=acme state=present"
 
 Ensure a package is installed to a specific version::
 
-    $ ansible webservers -m yum -a "name=acme-1.5 state=installed"
+    $ ansible webservers -m yum -a "name=acme-1.5 state=present"
 
 Ensure a package is at the latest version::
 
@@ -166,7 +166,7 @@ Ensure a package is at the latest version::
 
 Ensure a package is not installed::
 
-    $ ansible webservers -m yum -a "name=acme state=removed"
+    $ ansible webservers -m yum -a "name=acme state=absent"
 
 Ansible has modules for managing packages under many platforms.  If your package manager
 does not have a module available for it, you can install
@@ -225,16 +225,16 @@ Ensure a service is stopped::
 Time Limited Background Operations
 ``````````````````````````````````
 
-Long running operations can be backgrounded, and their status can be
-checked on later. The same job ID is given to the same task on all
-hosts, so you won't lose track.  If you kick hosts and don't want
-to poll, it looks like this::
+Long running operations can be backgrounded, and their status can be checked on
+later. If you kick hosts and don't want to poll, it looks like this::
 
-    $ ansible all -B 3600 -a "/usr/bin/long_running_operation --do-stuff"
+    $ ansible all -B 3600 -P 0 -a "/usr/bin/long_running_operation --do-stuff"
 
-If you do decide you want to check on the job status later, you can::
+If you do decide you want to check on the job status later, you can use the
+async_status module, passing it the job id that was returned when you ran
+the original job in the background::
 
-    $ ansible all -m async_status -a "jid=123456789"
+    $ ansible web1.example.com -m async_status -a "jid=488359678239.2844"
 
 Polling is built-in and looks like this::
 
@@ -248,7 +248,7 @@ Be sure to use a high enough ``--forks`` value if you want to get all of your jo
 very quickly. After the time limit (in seconds) runs out (``-B``), the process on
 the remote nodes will be terminated.
 
-Typically you'll be only be backgrounding long-running
+Typically you'll only be backgrounding long-running
 shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`Playbooks <playbooks>` also support polling, and have a simplified syntax for this.
 
 .. _checking_facts:
@@ -261,7 +261,7 @@ system.  These can be used to implement conditional execution of tasks but also 
 
     $ ansible all -m setup
 
-Its also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
+It's also possible to filter this output to just export certain facts, see the "setup" module documentation for details.
 
 Read more about facts at :doc:`playbooks_variables` once you're ready to read up on :doc:`Playbooks <playbooks>`. 
 

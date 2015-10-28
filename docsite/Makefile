@@ -10,6 +10,10 @@ docs: clean modules staticmin
 	-(cp *.jpg htmlout/)
 	-(cp *.png htmlout/)
 
+variables:
+	(mkdir -p htmlout/)
+	dot variables.dot -Tpng -o htmlout/variables.png
+
 viewdocs: clean staticmin
 	./build-site.py view
 
@@ -36,7 +40,7 @@ clean:
 .PHONEY: docs clean
 
 modules: $(FORMATTER) ../hacking/templates/rst.j2
-	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../library -o rst/
+	PYTHONPATH=../lib $(FORMATTER) -t rst --template-dir=../hacking/templates --module-dir=../lib/ansible/modules -o rst/
 
 staticmin:
 	cat _themes/srtd/static/css/theme.css | sed -e 's/^[ \t]*//g; s/[ \t]*$$//g; s/\([:{;,]\) /\1/g; s/ {/{/g; s/\/\*.*\*\///g; /^$$/d' | sed -e :a -e '$$!N; s/\n\(.\)/\1/; ta' > _themes/srtd/static/css/theme.min.css

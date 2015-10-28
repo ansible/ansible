@@ -15,6 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import sys
 import shlex
@@ -27,7 +30,7 @@ def run_cmd(cmd, live=False, readsize=10):
 
     cmdargs = shlex.split(cmd)
     p = subprocess.Popen(cmdargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    
+
     stdout = ''
     stderr = ''
     rpipes = [p.stdout, p.stderr]

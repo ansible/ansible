@@ -10,9 +10,10 @@
 @{ title }@
 @{ '+' * title_len }@
 
-{% if author %}
-:Author: @{ author }@
+{% if version_added is defined -%}
+.. versionadded:: @{ version_added }@
 {% endif %}
+
 
 .. contents::
    :local:
@@ -25,16 +26,33 @@
  #
  --------------------------------------------#}
 
+{% if deprecated is defined -%}
+DEPRECATED
+----------
+
+@{ deprecated }@
+{% endif %}
+
 Synopsis
 --------
-
-{% if version_added is defined -%}
-.. versionadded:: @{ version_added }@
-{% endif %}
 
 {% for desc in description -%}
 @{ desc | convert_symbols_to_format }@
 {% endfor %}
+
+{% if aliases is defined -%}
+Aliases: @{ ','.join(aliases) }@
+{% endif %}
+
+{% if requirements %}
+Requirements
+------------
+
+{% for req in requirements %}
+  * @{ req | convert_symbols_to_format }@
+{% endfor %}
+{% endif %}
+
 
 {% if options -%}
 Options
@@ -53,7 +71,7 @@ Options
     {% for k in option_keys %}
     {% set v = options[k] %}
     <tr>
-    <td>@{ k }@</td>
+    <td>@{ k }@<br/><div style="font-size: small;">{% if v['version_added'] %} (added in @{v['version_added']}@){% endif %}</div></td>
     <td>{% if v.get('required', False) %}yes{% else %}no{% endif %}</td>
     <td>{% if v['default'] %}@{ v['default'] }@{% endif %}</td>
     {% if v.get('type', 'not_bool') == 'bool' %}
@@ -61,47 +79,114 @@ Options
     {% else %}
     <td><ul>{% for choice in v.get('choices',[]) -%}<li>@{ choice }@</li>{% endfor -%}</ul></td>
     {% endif %}
-    <td>{% for desc in v.description -%}@{ desc | html_ify }@{% endfor -%}{% if v['version_added'] %} (added in Ansible @{v['version_added']}@){% endif %}</td>
-    </tr>
+    <td>{% for desc in v.description -%}<div>@{ desc | html_ify }@</div>{% endfor -%} {% if 'aliases' in v and v.aliases -%}</br>
+        <div style="font-size: small;">aliases: @{ v.aliases|join(', ') }@<div>{%- endif %}</td></tr>
     {% endfor %}
     </table>
+    </br>
+
 {% endif %}
 
-{% if requirements %}
-{% for req in requirements %}
 
-.. note:: Requires @{ req | convert_symbols_to_format }@
-
-{% endfor %}
-{% endif %}
-
-{% if examples or plainexamples %}
+{% if examples or plainexamples -%}
 Examples
 --------
 
-.. raw:: html
+ ::
 
 {% for example in examples %}
-    {% if example['description'] %}<p>@{ example['description'] | html_ify }@</p>{% endif %}
-    <p>
-    <pre>
+{% if example['description'] %}@{ example['description'] | indent(4, True) }@{% endif %}
 @{ example['code'] | escape | indent(4, True) }@
-    </pre>
-    </p>
 {% endfor %}
-    <br/>
-
-{% if plainexamples %}
-
-::
-
-@{ plainexamples | indent(4, True) }@
-{% endif %}
+{% if plainexamples %}@{ plainexamples | indent(4, True) }@{% endif %}
 {% endif %}
 
-{% if notes %}
+
+{% if returndocs -%}
+Return Values
+-------------
+
+Common return values are documented here :doc:`common_return_values`, the following are the fields unique to this module:
+
+.. raw:: html
+
+    <table border=1 cellpadding=4>
+    <tr>
+    <th class="head">name</th>
+    <th class="head">description</th>
+    <th class="head">returned</th>
+    <th class="head">type</th>
+    <th class="head">sample</th>
+    </tr>
+
+    {% for entry in returndocs %}
+    <tr>
+        <td> @{ entry }@ </td>
+        <td> @{ returndocs[entry].description }@ </td>
+        <td align=center> @{ returndocs[entry].returned }@ </td>
+        <td align=center> @{ returndocs[entry].type }@ </td>
+        <td align=center> @{ returndocs[entry].sample}@ </td>
+    </tr>
+    {% if returndocs[entry].type == 'dictionary' %}
+    <tr><td>contains: </td>
+    <td colspan=4>
+        <table border=1 cellpadding=2>
+        <tr>
+        <th class="head">name</th>
+        <th class="head">description</th>
+        <th class="head">returned</th>
+        <th class="head">type</th>
+        <th class="head">sample</th>
+        </tr>
+
+        {% for sub in returndocs[entry].contains %}
+        <tr>
+        <td> @{ sub }@ </td>
+        <td> @{ returndocs[entry].contains[sub].description }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].returned }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].type }@ </td>
+        <td align=center> @{ returndocs[entry].contains[sub].sample}@ </td>
+        </tr>
+        {% endfor %}
+
+        </table>
+    </td></tr>
+
+    {% endif %}
+    {% endfor %}
+
+    </table>
+    </br></br>
+{% endif %}
+
+{% if notes -%}
+Notes
+-----
+
 {% for note in notes %}
 .. note:: @{ note | convert_symbols_to_format }@
 {% endfor %}
 {% endif %}
+
+
+{% if not deprecated %}
+    {% if core %}
+
+This is a Core Module
+---------------------
+
+For more information on what this means please read :doc:`modules_core`
+
+    {% else %}
+
+This is an Extras Module
+------------------------
+
+For more information on what this means please read :doc:`modules_extra`
+
+    {% endif %}
+{% endif %}
+
+For help in developing on modules, should you be so inclined, please read :doc:`community`, :doc:`developing_test_pr` and :doc:`developing_modules`.
+
 

@@ -3293,7 +3293,7 @@ code, .rst-content tt {
     border: solid 1px #e1e4e5;
     font-size: 75%;
     padding: 0 5px;
-    font-family: "Incosolata", "Consolata", "Monaco", monospace;
+    font-family: "Inconsolata", "Consolata", "Monaco", monospace;
     color: #e74c3c;
     overflow-x: auto;
 }
@@ -3439,7 +3439,7 @@ a.wy-text-neutral:hover {
     border-right: solid 1px #e6e9ea;
     margin: 0;
     padding: 12px 12px;
-    font-family: "Incosolata", "Consolata", "Monaco", monospace;
+    font-family: "Inconsolata", "Consolata", "Monaco", monospace;
     font-size: 12px;
     line-height: 1.5;
     color: #d9d9d9;
@@ -3449,7 +3449,7 @@ div[class^='highlight'] pre {
     white-space: pre;
     margin: 0;
     padding: 12px 12px;
-    font-family: "Incosolata", "Consolata", "Monaco", monospace;
+    font-family: "Inconsolata", "Consolata", "Monaco", monospace;
     font-size: 12px;
     line-height: 1.5;
     display: block;
@@ -4633,4 +4633,123 @@ span[id*='MathJax-Span'] {
 
 #search-box-id {
     padding-right: 25px;
+}
+
+.DocSiteProduct-header {
+    flex: 1;
+    -webkit-flex: 1;
+    padding: 20px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: column;
+    -webkit-flex-direction: column;
+    align-items: center;
+    -webkit-align-items: center;
+    justify-content: flex-start;
+    -webkit-justify-content: flex-start;
+    margin-left: 20px;
+    margin-right: 20px;
+    text-decoration: none;
+    font-weight: 400;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.DocSiteProduct-header:active,
+.DocSiteProduct-header:focus {
+    color: #fff;
+}
+
+.DocSiteProduct-header:visited {
+    color: #fff;
+}
+
+.DocSiteProduct-header--core {
+    font-size: 25px;
+    background-color: #5bbdbf;
+    border: 2px solid #5bbdbf;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    color: #fff;
+}
+
+.DocSiteProduct-headerAlign {
+    width: 100%;
+}
+
+.DocSiteProduct-logo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: -9px;
+}
+
+.DocSiteProduct-logoText {
+    margin-top: 6px;
+    font-size: 25px;
+}
+
+.DocSite-nav {
+    flex: initial;
+    -webkit-flex: initial;
+    display: flex;
+    display: -webkit-flex;
+    flex-direction: row;
+    -webkit-flex-direction: row;
+    justify-content: flex-start;
+    -webkit-justify-content: flex-start;
+    padding: 15px;
+    background-color: #000;
+    text-decoration: none;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.DocSiteNav-logo {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+}
+
+.DocSiteNav-title {
+    color: #fff;
+    font-size: 20px;
+}
+
+.wy-menu-vertical a {
+    padding: 0;
+}
+
+.wy-menu-vertical a.reference.internal {
+    padding: 0.4045em 1.618em;
+}
+
+
+.DocSiteBanner {
+    width: 100%;
+    display: flex;
+    display: -webkit-flex;
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+    justify-content: space-between;
+    -webkit-justify-content: space-between;
+    background-color: #ff5850;
+    margin-bottom: 25px;
+}
+
+.DocSiteBanner-imgWrapper {
+    max-width: 100%;
+}
+
+@media screen and (max-width: 1403px) {
+    .DocSiteBanner {
+        width: 100%;
+        display: flex;
+        display: -webkit-flex;
+        flex-wrap: wrap;
+        -webkit-flex-wrap: wrap;
+        justify-content: center;
+        -webkit-justify-content: center;
+        background-color: #fff;
+        margin-bottom: 25px;
+    }
 }

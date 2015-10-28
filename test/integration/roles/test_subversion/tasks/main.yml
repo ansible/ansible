@@ -44,7 +44,7 @@
 #            "Revision: 9", 
 #            "URL: https://github.com/jimi-c/test_role"
 #        ], 
-#        "befbore": null, 
+#        "before": null, 
 #        "changed": true, 
 #        "invocation": {
 #            "module_args": "repo=https://github.com/jimi-c/test_role dest=~/ansible_testing/svn", 
@@ -59,11 +59,16 @@
       - "'after' in subverted"
       - "subverted.after.1 == 'URL: https://github.com/jimi-c/test_role'"
       - "not subverted.before"
-      - "subverted.changed"      
+      - "subverted.changed"
 
 - name: repeated checkout
   subversion: repo={{ repo }} dest={{ checkout_dir }}
   register: subverted2
+
+- name: verify on a reclone things are marked unchanged
+  assert:
+    that:
+      - "not subverted2.changed"
 
 - name: check for tags
   stat: path={{ checkout_dir }}/tags
@@ -77,7 +82,7 @@
   stat: path={{ checkout_dir }}/branches
   register: branches
 
-- name: assert presense of tags/trunk/branches
+- name: assert presence of tags/trunk/branches
   assert:
     that:
       - "tags.stat.isdir"
@@ -90,14 +95,29 @@
 
 - debug: var=subverted3
 
-# FIXME: this needs to be fixed in the code see GitHub 6079
+- name: checkout with export
+  subversion: repo={{ repo }} dest={{ output_dir }}/svn-export export=True
+  register: subverted4
 
-#- name: verify on a reclone things are marked unchanged
-#  assert:
-#    that:
-#      - "not subverted.changed"
+- name: check for tags
+  stat: path={{ output_dir }}/svn-export/tags
+  register: export_tags
+
+- name: check for trunk
+  stat: path={{ output_dir }}/svn-export/trunk
+  register: export_trunk
+
+- name: check for branches
+  stat: path={{ output_dir }}/svn-export/branches
+  register: export_branches
+
+- name: assert presence of tags/trunk/branches in export
+  assert:
+    that:
+      - "export_tags.stat.isdir"
+      - "export_trunk.stat.isdir"
+      - "export_branches.stat.isdir"
+      - "subverted4.changed"
 
 # TBA: test for additional options or URL variants welcome
-
-
 

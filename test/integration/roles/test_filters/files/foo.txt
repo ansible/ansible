@@ -1,17 +1,6 @@
 This is a test of various filter plugins found in Ansible (ex: core.py), and 
 not so much a test of the core filters in Jinja2.
 
-Dumping a nested structure to JSON
-
-[
-    "this is a list element", 
-    {
-        "this": "is a hash element in a list", 
-        "warp": 9, 
-        "where": "endor"
-    }
-]
-
 Dumping the same structure to YAML
 
 - this is a list element

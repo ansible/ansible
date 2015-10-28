@@ -28,8 +28,11 @@ formatting hint when the range is expanded. e.g. [001:010] is to be
 expanded into 001, 002 ...009, 010.
 
 Note that when beg is specified with left zero padding, then the length of
-end must be the same as that of beg, else a exception is raised.
+end must be the same as that of beg, else an exception is raised.
 '''
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import string
 
 from ansible import errors
@@ -37,14 +40,11 @@ from ansible import errors
 def detect_range(line = None):
     '''
     A helper function that checks a given host line to see if it contains
-    a range pattern descibed in the docstring above.
+    a range pattern described in the docstring above.
 
     Returnes True if the given line contains a pattern, else False.
     '''
-    if (line.find("[") != -1 and
-        line.find(":") != -1 and
-        line.find("]") != -1 and
-        line.index("[") < line.index(":") < line.index("]")):
+    if '[' in line:
         return True
     else:
         return False
@@ -75,12 +75,11 @@ def expand_hostname_range(line = None):
         #   of hosts and then repeat until none left.
         # - also add an optional third parameter which contains the step. (Default: 1)
         #   so range can be [01:10:2] -> 01 03 05 07 09
-        # FIXME: make this work for alphabetic sequences too.
 
         (head, nrange, tail) = line.replace('[','|',1).replace(']','|',1).split('|')
         bounds = nrange.split(":")
         if len(bounds) != 2 and len(bounds) != 3:
-            raise errors.AnsibleError("host range incorrectly specified")
+            raise errors.AnsibleError("host range must be begin:end or begin:end:step")
         beg = bounds[0]
         end = bounds[1]
         if len(bounds) == 2:
@@ -90,11 +89,11 @@ def expand_hostname_range(line = None):
         if not beg:
             beg = "0"
         if not end:
-            raise errors.AnsibleError("host range end value missing")
+            raise errors.AnsibleError("host range must specify end value")
         if beg[0] == '0' and len(beg) > 1:
             rlen = len(beg) # range length formatting hint
             if rlen != len(end):
-                raise errors.AnsibleError("host range format incorrectly specified!")
+                raise errors.AnsibleError("host range must specify equal-length begin and end formats")
             fill = lambda _: str(_).zfill(rlen)  # range sequence
         else:
             fill = str
@@ -103,9 +102,9 @@ def expand_hostname_range(line = None):
             i_beg = string.ascii_letters.index(beg)
             i_end = string.ascii_letters.index(end)
             if i_beg > i_end:
-                raise errors.AnsibleError("host range format incorrectly specified!")
-            seq = string.ascii_letters[i_beg:i_end+1]
-        except ValueError:  # not a alpha range
+                raise errors.AnsibleError("host range must have begin <= end")
+            seq = list(string.ascii_letters[i_beg:i_end+1:int(step)])
+        except ValueError:  # not an alpha range
             seq = range(int(beg), int(end)+1, int(step))
 
         for rseq in seq:

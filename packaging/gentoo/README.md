@@ -1,3 +1,3 @@
-Gentoo ebuilds are available here:
+Gentoo ebuilds are available in the main tree:
 
-https://github.com/uu/ubuilds
+emerge ansible

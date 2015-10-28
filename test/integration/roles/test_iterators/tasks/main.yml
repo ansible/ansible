@@ -19,7 +19,7 @@
 # WITH_ITEMS
 
 - name: test with_items
-  set_fact: "{{ item + '=moo' }}"
+  set_fact: "{{ item }}=moo"
   with_items:
     - 'foo'
     - 'bar'
@@ -36,10 +36,10 @@
 # WITH_NESTED
 
 - name: test with_nested
-  set_fact: "{{ item.0 + item.1 + '=x' }}"
+  set_fact: "{{ item.0 + item.1 }}=x"
   with_nested:
     - [ 'a', 'b' ]
-    - [ 'c', 'd' ]        
+    - [ 'c', 'd' ]
 
 - debug: var=ac
 - debug: var=ad
@@ -57,8 +57,12 @@
 # WITH_SEQUENCE
 
 - name: test with_sequence
-  set_fact: "{{ 'x' + item + '=' + item }}"
+  set_fact: "{{ 'x' + item }}={{ item }}"
   with_sequence: start=0 end=3
+
+- name: test with_sequence backwards
+  set_fact: "{{ 'y' + item }}={{ item }}"
+  with_sequence: start=3 end=0 stride=-1
 
 - name: verify with_sequence
   assert:
@@ -67,14 +71,39 @@
         - "x1 == '1'"
         - "x2 == '2'"
         - "x3 == '3'"
+        - "y3 == '3'"
+        - "y2 == '2'"
+        - "y1 == '1'"
+        - "y0 == '0'"
+
+- name: test with_sequence not failing on count == 0
+  debug: msg='previously failed with backward counting error'
+  with_sequence: count=0
+  register: count_of_zero
+
+- name: test with_sequence does 1 when start == end
+  debug: msg='should run once'
+  with_sequence: start=1 end=1
+  register: start_equal_end
+
+- name: test with_sequence count 1
+  set_fact: "{{ 'x' + item }}={{ item }}"
+  with_sequence: count=1
+  register: count_of_one
+
+- assert:
+    that:
+        - not start_equal_end| skipped
+        - count_of_zero | skipped
+        - not count_of_one | skipped
 
 # WITH_RANDOM_CHOICE
 
 - name: test with_random_choice
-  set_fact: "{{ 'random=' + item }}"
+  set_fact: "random={{ item }}"
   with_random_choice:
     - "foo"
-    - "bar" 
+    - "bar"
 
 - name: verify with_random_choice
   assert:
@@ -84,7 +113,7 @@
 # WITH_SUBELEMENTS
 
 - name: test with_subelements
-  set_fact: "{{ '_'+ item.0.id + item.1 + '=' + item.1 }}"
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
   with_subelements:
     - element_data
     - the_list
@@ -97,11 +126,44 @@
         - "_ye == 'e'"
         - "_yf == 'f'"
 
+- name: test with_subelements in subkeys
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - element_data
+    - the.sub.key.list
+
+- name: verify with_subelements in subkeys results
+  assert:
+    that:
+        - "_xq == 'q'"
+        - "_xr == 'r'"
+        - "_yi == 'i'"
+        - "_yo == 'o'"
+
+- name: test with_subelements with missing key or subkey
+  set_fact: "{{ '_'+ item.0.id + item.1 }}={{ item.1 }}"
+  with_subelements:
+    - element_data_missing
+    - the.sub.key.list
+    - skip_missing: yes
+  register: _subelements_missing_subkeys
+
+- debug: var=_subelements_missing_subkeys
+- debug: var=_subelements_missing_subkeys.results|length
+- name: verify with_subelements in subkeys results
+  assert:
+    that:
+        - _subelements_missing_subkeys.skipped is not defined
+        - _subelements_missing_subkeys.results|length == 2
+        - "_xk == 'k'"
+        - "_xl == 'l'"
+
+
 # WITH_TOGETHER        
 
 - name: test with_together
   #shell: echo {{ item }}
-  set_fact: "{{ item.0 + '=' + item.1 }}"
+  set_fact: "{{ item.0 }}={{ item.1 }}"
   with_together:
     - [ 'a', 'b', 'c', 'd' ]
     - [ '1', '2', '3', '4' ]
@@ -124,7 +186,7 @@
 
 - name: test with_first_found
   #shell: echo {{ item }}
-  set_fact: "{{ 'first_found=' + item }}"
+  set_fact: "first_found={{ item }}"
   with_first_found:
     - "{{ output_dir + '/does_not_exist' }}"
     - "{{ output_dir + '/foo1' }}"
@@ -146,7 +208,7 @@
 
 - name: test with_lines
   #shell: echo "{{ item }}"
-  set_fact: "{{ item + '=set' }}" 
+  set_fact: "{{ item }}=set" 
   with_lines: for i in $(seq 1 5); do echo "l$i" ; done;
 
 - name: verify with_lines results
@@ -164,7 +226,7 @@
   register: list_data
 
 - name: create indexed list
-  set_fact: "{{ item[1] + item[0]|string + '=set' }}"
+  set_fact: "{{ item[1] + item[0]|string }}=set"
   with_indexed_items: list_data.stdout_lines  
 
 - name: verify with_indexed_items result
@@ -179,8 +241,7 @@
 # WITH_FLATTENED
 
 - name: test with_flattened
-  #shell: echo {{ item + "test" }}
-  set_fact: "{{ item + '=flattened' }}"
+  set_fact: "{{ item }}=flattened"
   with_flattened:
     - [ 'a__' ]
     - [ 'b__', ['c__', 'd__'] ]        
