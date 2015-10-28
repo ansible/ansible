@@ -142,7 +142,7 @@ class TestPlayContext(unittest.TestCase):
         self.assertEqual(cmd, """%s -c '%s %s -u %s %s -c '"'"'echo %s; %s'"'"''""" % (default_exe, sudo_exe, sudo_flags, play_context.become_user, default_exe, play_context.success_key, default_cmd))
         play_context.become_pass = 'testpass'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable=default_exe)
-        self.assertEqual(cmd, """%s -c '%s %s -p "%s" -u %s %s -c '"'"'echo %s; %s'"'"''""" % (default_exe, sudo_exe, sudo_flags, play_context.prompt, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(cmd, """%s -c '%s %s -p "%s" -u %s %s -c '"'"'echo %s; %s'"'"''""" % (default_exe, sudo_exe, sudo_flags.replace('-n',''), play_context.prompt, play_context.become_user, default_exe, play_context.success_key, default_cmd))
 
         play_context.become_pass = None
 
