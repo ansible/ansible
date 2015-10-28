@@ -25,6 +25,8 @@ import shutil
 import tempfile
 import base64
 import datetime
+from distutils.version import LooseVersion
+
 try:
     import json
 except ImportError:
@@ -142,7 +144,8 @@ options:
     version_added: '1.9.2'
 
 # informational: requirements for nodes
-requirements: [ urlparse, httplib2 ]
+requirements:
+  - httplib2 >= 0.7.0
 author: "Romeo Theriault (@romeotheriault)"
 '''
 
@@ -197,11 +200,15 @@ EXAMPLES = '''
 
 '''
 
-HAS_HTTPLIB2 = True
+HAS_HTTPLIB2 = False
+
 try:
     import httplib2
-except ImportError:
-    HAS_HTTPLIB2 = False
+    if LooseVersion(httplib2.__version__) >= LooseVersion('0.7'):
+        HAS_HTTPLIB2 = True
+except ImportError, AttributeError:
+    # AttributeError if __version__ is not present
+    pass
 
 HAS_URLPARSE = True
 
@@ -381,7 +388,7 @@ def main():
     )
 
     if not HAS_HTTPLIB2:
-        module.fail_json(msg="httplib2 is not installed")
+        module.fail_json(msg="httplib2 >= 0.7 is not installed")
     if not HAS_URLPARSE:
         module.fail_json(msg="urlparse is not installed")
 
