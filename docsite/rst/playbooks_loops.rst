@@ -93,6 +93,35 @@ And you want to print every user's name and phone number.  You can loop through 
 
 .. _looping_over_fileglobs:
 
+Looping over Files
+``````````````````
+
+``with_file`` iterates over a list of files, setting `item` to the content of each file in sequence.  It can be used like this::
+
+    ---
+    - hosts: all
+
+      tasks:
+
+        # emit a debug message containing the content of each file.
+        - debug:
+            msg: "{{item}}"
+          with_file:
+            - first_example_file
+            - second_example_file
+
+Assuming that ``first_example_file`` contained the text "hello" and ``second_example_file`` contained the text "world", this would result in::
+
+    TASK [debug msg={{item}}] ******************************************************
+    ok: [localhost] => (item=hello) => {
+        "item": "hello", 
+        "msg": "hello"
+    }
+    ok: [localhost] => (item=world) => {
+        "item": "world", 
+        "msg": "world"
+    }
+
 Looping over Fileglobs
 ``````````````````````
 
