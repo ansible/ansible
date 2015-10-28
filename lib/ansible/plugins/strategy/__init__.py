@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 from ansible.compat.six.moves import queue as Queue
-from ansible.compat.six import iteritems, text_type
+from ansible.compat.six import iteritems, text_type, string_types
 
 import time
 
@@ -431,6 +431,17 @@ class StrategyBase:
             # then we create a temporary set of vars to ensure the variable reference is unique
             temp_vars = b._task_include.vars.copy()
             temp_vars.update(included_file._args.copy())
+            # pop tags out of the include args, if they were specified there, and assign
+            # them to the include. If the include already had tags specified, we raise an
+            # error so that users know not to specify them both ways
+            tags = temp_vars.pop('tags', [])
+            if isinstance(tags, string_types):
+                tags = [ tags ]
+            if len(tags) > 0:
+                if len(b._task_include.tags) > 0:
+                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task)", obj=included_file._task._ds)
+                self._display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
+                b._task_include.tags = tags
             b._task_include.vars = temp_vars
 
         return block_list
