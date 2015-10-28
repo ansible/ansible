@@ -401,6 +401,37 @@ like this::
 The EXAMPLES section, just like the documentation section, is required in
 all module pull requests for new modules.
 
+Possible return values from the module should also be documented
+in addition to :doc:`common_return_values`.
+The fields unique to the module must be written in plain text
+in a ``RETURN`` string within the module like this::
+
+    RETURN = '''
+    field_name:
+      description: field description
+      returned: success, changed, or more detailed conditions
+      type: boolean, integer, string, list, etc.
+      sample: sample field value
+    dict_field_name:
+      description: dict field description
+      returned: success, changed, or more detailed conditions
+      type: dictionary
+      sample: sample dict field value
+      contains:
+        dict_key:
+          description: dict description
+          returned: success, changed, or more detailed conditions
+          type: boolean, integer, string, list, etc.
+          sample: sample dict value
+    '''
+
+If the module has no special fields other than :doc:`common_return_values`,
+``RETURN`` should explicitly have an empty dictionary::
+
+    RETURN = '''
+    {}
+    '''
+
 .. _module_dev_testing:
 
 Building & Testing
