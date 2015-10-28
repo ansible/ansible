@@ -416,9 +416,9 @@ class PlayContext(Base):
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
                     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p "%s" -S -u %s %s -c %s' % (exe, flags, prompt, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, executable, success_cmd)
                 else:
-                    becomecmd = '%s %s -n -S -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
 
 
             elif self.become_method == 'su':
