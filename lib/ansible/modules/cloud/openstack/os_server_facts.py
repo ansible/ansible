@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
+import fnmatch
+
 try:
     import shade
     from shade import meta
@@ -25,34 +27,47 @@ except ImportError:
 DOCUMENTATION = '''
 ---
 module: os_server_facts
-short_description: Retrieve facts about a compute instance
-extends_documentation_fragment: openstack
+short_description: Retrieve facts about one or more compute instances
 version_added: "2.0"
-author: "Monty Taylor (@emonty)"
 description:
-   - Retrieve facts about a server instance from OpenStack.
+    - Retrieve facts about server instances from OpenStack.
 notes:
-   - Facts are placed in the C(openstack) variable.
+    - This module creates a new top-level C(openstack_servers) fact, which
+      contains a list of servers.
+requirements:
+    - "python >= 2.6"
+    - "shade"
 options:
    server:
      description:
-        - Name or ID of the instance
-     required: true
-requirements: ["shade"]
+       - restrict results to servers with names matching
+         this glob expression (e.g., C<web*>).
+     required: false
+     default: None
+   detailed:
+     description:
+        - when true, return additional detail about servers at the expense
+          of additional API calls.
+     required: false
+     default: false
+extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about a previously created server named vm1
+# Gather facts about all servers named C<web*>:
 - os_server_facts:
     cloud: rax-dfw
-    server: vm1
-- debug: var=openstack
+    server: web*
+- debug:
+    var: openstack_servers
 '''
+
 
 def main():
 
     argument_spec = openstack_full_argument_spec(
-        server=dict(required=True),
+        server=dict(required=False),
+        detailed=dict(required=False, type='bool'),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
@@ -62,10 +77,16 @@ def main():
 
     try:
         cloud = shade.openstack_cloud(**module.params)
-        server = cloud.get_server(module.params['server'])
-        hostvars = dict(openstack=meta.get_hostvars_from_server(
-            cloud, server))
-        module.exit_json(changed=False, ansible_facts=hostvars)
+        openstack_servers = cloud.list_servers(
+            detailed=module.params['detailed'])
+
+        if module.params['server']:
+            # filter servers by name
+            pattern = module.params['server']
+            openstack_servers = [server for server in openstack_servers
+                                 if fnmatch.fnmatch(server['name'], pattern)]
+        module.exit_json(changed=False, ansible_facts=dict(
+            openstack_servers=openstack_servers))
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)
@@ -73,5 +94,5 @@ def main():
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-main()
-
+if __name__ == '__main__':
+    main()
