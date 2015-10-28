@@ -162,13 +162,9 @@ class DockerLoginManager:
         # Get status from registry response.
         if self.response.has_key("Status"):
             self.log.append(self.response["Status"])
-            if self.response["Status"] == "Login Succeeded":
-                self.changed = True
-        else:
-            self.log.append("Already Authentificated")
 
-        # Update the dockercfg if changed but not failed.
-        if self.has_changed() and not self.module.check_mode:
+        # Update the dockercfg if not in check mode.
+        if not self.module.check_mode:
             self.update_dockercfg()
 
     # This is what the underlaying docker-py unfortunately doesn't do (yet).
@@ -182,9 +178,9 @@ class DockerLoginManager:
             open(self.dockercfg_path, "w")
             self.log.append("Created new Docker config file at %s" % self.dockercfg_path)
         else:
-            self.log.append("Updated existing Docker config file at %s" % self.dockercfg_path)
+            self.log.append("Found existing Docker config file at %s" % self.dockercfg_path)
 
-        # Get existing dockercfg into a dict.
+        # Build a dict for the existing dockercfg.
         try:
             docker_config = json.load(open(self.dockercfg_path, "r"))
         except ValueError:
@@ -193,16 +189,22 @@ class DockerLoginManager:
             docker_config["auths"] = dict()
         if not docker_config["auths"].has_key(self.registry):
             docker_config["auths"][self.registry] = dict()
-        docker_config["auths"][self.registry] = dict(
+
+        # Calculate docker credentials based on current parameters.
+        new_docker_config = dict(
             auth  = base64.b64encode(self.username + b':' + self.password),
             email = self.email
         )
 
-        # Write updated dockercfg to dockercfg file.
-        try:
-            json.dump(docker_config, open(self.dockercfg_path, "w"), indent=4, sort_keys=True)
-        except Exception as e:
-            self.module.fail_json(msg="failed to write auth details to file", error=repr(e))
+        # Update config if persisted credentials differ from current credentials.
+        if new_docker_config != docker_config["auths"][self.registry]:
+            docker_config["auths"][self.registry] = new_docker_config
+            try:
+                json.dump(docker_config, open(self.dockercfg_path, "w"), indent=4, sort_keys=True)
+            except Exception as e:
+                self.module.fail_json(msg="failed to write auth details to file", error=repr(e))
+            self.log.append("Updated Docker config with new credentials.")
+            self.changed = True
 
     # Compatible to docker-py auth.decode_docker_auth()
     def encode_docker_auth(self, auth):
