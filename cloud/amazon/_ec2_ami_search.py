@@ -66,6 +66,7 @@ options:
     default: paravirtual
     choices: ["paravirtual", "hvm"]
 
+author: "Ansible Core Team (deprecated)"
 '''
 
 EXAMPLES = '''
