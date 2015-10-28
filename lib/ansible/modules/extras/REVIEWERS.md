@@ -43,8 +43,7 @@ Openstack: @emonty @shrews @dguerri @juliakreger @j2sol @rcarrillocruz
 
 Windows: @trondhindenes @petemounce @elventear @smadam813 @jhawkesworth @angstwad @sivel @chrishoffman @cchurch
 
-AWS: @jsmartin @scicoin-project @tombamford @garethr @lorin @jarv @jsdalton @silviud @adq @zbal @zeekin @willthames @lwade @carsongee @defionscode
-@tastychutney @bpennypacker @loia
+AWS: @jsmartin @scicoin-project @tombamford @garethr @jarv @jsdalton @silviud @adq @zbal @zeekin @willthames @lwade @carsongee @defionscode @tastychutney @bpennypacker @loia
 
 Docker: @cove @joshuaconner @softzilla @smashwilson
 
