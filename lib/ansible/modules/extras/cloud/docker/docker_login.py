@@ -58,7 +58,7 @@ options:
     description:
        - Use a custom path for the .dockercfg file
     required: false
-    default: ~/.dockercfg
+    default: ~/.docker/config.json
   docker_url:
     descriptions:
        - Refers to the protocol+hostname+port where the Docker server is hosted
@@ -176,6 +176,9 @@ class DockerLoginManager:
 
         # Create dockercfg file if it does not exist.
         if not os.path.exists(self.dockercfg_path):
+            dockercfg_path_dir = os.path.dirname(self.dockercfg_path)
+            if not os.path.exists(dockercfg_path_dir):
+                os.makedirs(dockercfg_path_dir)
             open(self.dockercfg_path, "w")
             self.log.append("Created new Docker config file at %s" % self.dockercfg_path)
         else:
@@ -186,9 +189,11 @@ class DockerLoginManager:
             docker_config = json.load(open(self.dockercfg_path, "r"))
         except ValueError:
             docker_config = dict()
-        if not docker_config.has_key(self.registry):
-            docker_config[self.registry] = dict()
-        docker_config[self.registry] = dict(
+        if not docker_config.has_key("auths"):
+            docker_config["auths"] = dict()
+        if not docker_config["auths"].has_key(self.registry):
+            docker_config["auths"][self.registry] = dict()
+        docker_config["auths"][self.registry] = dict(
             auth  = base64.b64encode(self.username + b':' + self.password),
             email = self.email
         )
@@ -220,7 +225,7 @@ def main():
             password        = dict(required=True),
             email           = dict(required=False, default=None),
             reauth          = dict(required=False, default=False, type='bool'),
-            dockercfg_path  = dict(required=False, default='~/.dockercfg'),
+            dockercfg_path  = dict(required=False, default='~/.docker/config.json'),
             docker_url      = dict(default='unix://var/run/docker.sock'),
             timeout         = dict(default=10, type='int')
         ),
