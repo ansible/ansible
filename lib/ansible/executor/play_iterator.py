@@ -396,6 +396,9 @@ class PlayIterator:
         return None
 
     def _insert_tasks_into_state(self, state, task_list):
+        if state.fail_state != self.FAILED_NONE:
+            return state
+
         if state.run_state == self.ITERATING_TASKS:
             if state.tasks_child_state:
                 state.tasks_child_state = self._insert_tasks_into_state(state.tasks_child_state, task_list)
