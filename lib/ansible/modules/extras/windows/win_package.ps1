@@ -100,7 +100,15 @@ Function Throw-TerminatingError
         [System.Management.Automation.ErrorRecord] $ErrorRecord
     )
     
-    $exception = new-object "System.InvalidOperationException" $Message,$ErrorRecord.Exception
+    if ($errorRecord)
+    {
+        $exception = new-object "System.InvalidOperationException" $Message,$ErrorRecord.Exception
+    }
+    Else
+    {
+        $exception = new-object "System.InvalidOperationException" $Message
+    }
+    
     $errorRecord = New-Object System.Management.Automation.ErrorRecord $exception,"MachineStateIncorrect","InvalidOperation",$null
     throw $errorRecord
 }
@@ -186,7 +194,19 @@ Function Validate-StandardArguments
         try
         {
             Trace-Message "Parsing $ProductId as an identifyingNumber"
-            $identifyingNumber = "{{{0}}}" -f [Guid]::Parse($ProductId).ToString().ToUpper()
+            $TestGuid = [system.guid]::NewGuid()
+            #Check to see if the productid is a guid
+            if ([guid]::TryParse($ProductId, [ref]$TestGuid))
+            {
+                $identifyingNumber = "{{{0}}}" -f [Guid]::Parse($ProductId).ToString().ToUpper()
+                Trace-Message "Parsed $ProductId as $identifyingNumber (is guid)"
+            }
+            Else
+            {
+                $identifyingNumber = $ProductId
+                Trace-Message "Parsed $ProductId as $identifyingNumber (is not guid)"
+            }
+            
             Trace-Message "Parsed $ProductId as $identifyingNumber"
         }
         catch
@@ -1288,24 +1308,19 @@ Else
     }
     catch
     {
-        $errormsg = $_[0].exception
-    }
-
-    if ($errormsg)
-    {
+        $errormsg = $_
         Fail-Json -obj $result -message $errormsg.ToString()
     }
-    Else
-    {
-        #Check if DSC thinks the computer needs a reboot:
-        if ($global:DSCMachineStatus -eq 1)
-        {
-            Set-Attr $result "restart_required" $true
-        }
 
-        #Set-TargetResource did its job. We can assume a change has happened
-        Set-Attr $result "changed" $true
-        Exit-Json -obj $result
+    #Check if DSC thinks the computer needs a reboot:
+    if ((get-variable DSCMachinestatus -Scope Global -ea 0) -and ($global:DSCMachineStatus -eq 1))
+    {
+        Set-Attr $result "restart_required" $true
     }
+
+    #Set-TargetResource did its job. We can assume a change has happened
+    Set-Attr $result "changed" $true
+    Exit-Json -obj $result
+    
 }
 
