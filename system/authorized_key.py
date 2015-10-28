@@ -82,7 +82,7 @@ options:
     version_added: "1.9"
 description:
     - "Adds or removes authorized keys for particular user accounts"
-author: "Brad Olson (@bradobro)"
+author: "Ansible Core Team"
 '''
 
 EXAMPLES = '''
