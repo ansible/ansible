@@ -160,7 +160,10 @@ stdout_callback
 
 .. versionadded:: 2.0
 
-This setting allows you to override the default stdout callback for ansible-playbook.
+This setting allows you to override the default stdout callback for
+ansible-playbook::
+
+    stdout_callback = skippy
 
 .. _callback_whitelist:
 
@@ -171,7 +174,9 @@ callback_whitelist
 
 Now ansible ships with all included callback plugins ready to use but they are disabled by default,
 this setting lets you enable a list of additional callbacks, this cannot change or override the
-default stdout callback, use :ref:`stdout_callback` for that.
+default stdout callback, use :ref:`stdout_callback` for that. ::
+
+    callback_whitelist = timer,mail
 
 
 .. _command_warnings:
