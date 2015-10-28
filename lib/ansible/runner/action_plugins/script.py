@@ -62,9 +62,10 @@ class ActionModule(object):
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence
             # of command executions.
-            module_args_tmp = "path=%s" % creates
+            module_args_tmp = ""
+            complex_args_tmp = dict(path=creates)
             module_return = self.runner._execute_module(conn, tmp, 'stat', module_args_tmp, inject=inject,
-                                                        complex_args=complex_args, persist_files=True)
+                                                        complex_args=complex_args_tmp, persist_files=True)
             stat = module_return.result.get('stat', None)
             if stat and stat.get('exists', False):
                 return ReturnData(
@@ -79,9 +80,10 @@ class ActionModule(object):
             # do not run the command if the line contains removes=filename
             # and the filename does not exist. This allows idempotence
             # of command executions.
-            module_args_tmp = "path=%s" % removes
+            module_args_tmp = ""
+            complex_args_tmp = dict(path=creates)
             module_return = self.runner._execute_module(conn, tmp, 'stat', module_args_tmp, inject=inject,
-                                                        complex_args=complex_args, persist_files=True)
+                                                        complex_args=complex_args_tmp, persist_files=True)
             stat = module_return.result.get('stat', None)
             if stat and not stat.get('exists', False):
                 return ReturnData(
