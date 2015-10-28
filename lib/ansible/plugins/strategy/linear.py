@@ -275,25 +275,29 @@ class StrategyModule(StrategyBase):
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             new_blocks = self._load_included_file(included_file, iterator=iterator)
+
+                            for new_block in new_blocks:
+                                noop_block = Block(parent_block=task._block)
+                                noop_block.block  = [noop_task for t in new_block.block]
+                                noop_block.always = [noop_task for t in new_block.always]
+                                noop_block.rescue = [noop_task for t in new_block.rescue]
+                                for host in hosts_left:
+                                    if host in included_file._hosts:
+                                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=included_file._task)
+                                        final_block = new_block.filter_tagged_tasks(play_context, task_vars)
+                                        all_blocks[host].append(final_block)
+                                    else:
+                                        all_blocks[host].append(noop_block)
+
                         except AnsibleError as e:
                             for host in included_file._hosts:
+                                self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-                            self._display.warning(str(e))
+                            self._display.error(e, wrap_text=False)
                             continue
 
-                        for new_block in new_blocks:
-                            noop_block = Block(parent_block=task._block)
-                            noop_block.block  = [noop_task for t in new_block.block]
-                            noop_block.always = [noop_task for t in new_block.always]
-                            noop_block.rescue = [noop_task for t in new_block.rescue]
-                            for host in hosts_left:
-                                if host in included_file._hosts:
-                                    task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=included_file._task)
-                                    final_block = new_block.filter_tagged_tasks(play_context, task_vars)
-                                    all_blocks[host].append(final_block)
-                                else:
-                                    all_blocks[host].append(noop_block)
-
+                    # finally go through all of the hosts and append the
+                    # accumulated blocks to their list of tasks
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
 

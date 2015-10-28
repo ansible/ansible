@@ -199,10 +199,11 @@ class StrategyBase:
                         self._tqm._stats.increment('skipped', host.name)
                         self._tqm.send_callback('v2_runner_on_skipped', task_result)
                     elif result[0] == 'host_task_ok':
-                        self._tqm._stats.increment('ok', host.name)
-                        if 'changed' in task_result._result and task_result._result['changed']:
-                            self._tqm._stats.increment('changed', host.name)
-                        self._tqm.send_callback('v2_runner_on_ok', task_result)
+                        if task.action != 'include':
+                            self._tqm._stats.increment('ok', host.name)
+                            if 'changed' in task_result._result and task_result._result['changed']:
+                                self._tqm._stats.increment('changed', host.name)
+                            self._tqm.send_callback('v2_runner_on_ok', task_result)
 
                         if self._diff and 'diff' in task_result._result:
                             self._tqm.send_callback('v2_on_file_diff', task_result)
@@ -395,10 +396,29 @@ class StrategyBase:
 
         try:
             data = self._loader.load_from_file(included_file._filename)
-            self._tqm.send_callback('v2_playbook_on_include', included_file)
             if data is None:
                 return []
+            elif not isinstance(data, list):
+                raise AnsibleError("included task files must contain a list of tasks")
+
+            block_list = load_list_of_blocks(
+                data,
+                play=included_file._task._block._play,
+                parent_block=included_file._task._block,
+                task_include=included_file._task,
+                role=included_file._task._role,
+                use_handlers=is_handler,
+                loader=self._loader
+            )
+
+            # since we skip incrementing the stats when the task result is
+            # first processed, we do so now for each host in the list
+            for host in included_file._hosts:
+                self._tqm._stats.increment('ok', host.name)
+
         except AnsibleError as e:
+            # mark all of the hosts including this file as failed, send callbacks,
+            # and increment the stats for this host
             for host in included_file._hosts:
                 tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=str(e)))
                 iterator.mark_host_failed(host)
@@ -406,19 +426,6 @@ class StrategyBase:
                 self._tqm._stats.increment('failures', host.name)
                 self._tqm.send_callback('v2_runner_on_failed', tr)
             return []
-
-        if not isinstance(data, list):
-            raise AnsibleParserError("included task files must contain a list of tasks", obj=included_file._task._ds)
-
-        block_list = load_list_of_blocks(
-            data,
-            play=included_file._task._block._play,
-            parent_block=included_file._task._block,
-            task_include=included_file._task,
-            role=included_file._task._role,
-            use_handlers=is_handler,
-            loader=self._loader
-        )
 
         # set the vars for this task from those specified as params to the include
         for b in block_list:
@@ -444,6 +451,8 @@ class StrategyBase:
                 b._task_include.tags = tags
             b._task_include.vars = temp_vars
 
+        # finally, send the callback and return the list of blocks loaded
+        self._tqm.send_callback('v2_playbook_on_include', included_file)
         return block_list
 
     def run_handlers(self, iterator, play_context):
