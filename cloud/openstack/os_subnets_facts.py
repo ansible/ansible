@@ -23,19 +23,19 @@ except ImportError:
 
 DOCUMENTATION = '''
 ---
-module: os_networks_facts
-short_description: Retrieve facts about one or more OpenStack networks.
+module: os_subnets_facts
+short_description: Retrieve facts about one or more OpenStack subnets.
 version_added: "2.0"
 author: "Davide Agnello (@dagnello)"
 description:
-    - Retrieve facts about one or more networks from OpenStack.
+    - Retrieve facts about one or more subnets from OpenStack.
 requirements:
     - "python >= 2.6"
     - "shade"
 options:
-   network:
+   subnet:
      description:
-        - Name or ID of the Network
+        - Name or ID of the subnet
      required: false
    filters:
      description:
@@ -46,28 +46,28 @@ extends_documentation_fragment: openstack
 '''
 
 EXAMPLES = '''
-# Gather facts about previously created networks
-- os_networks_facts:
+# Gather facts about previously created subnets
+- os_subnets_facts:
     auth:
       auth_url: https://your_api_url.com:9000/v2.0
       username: user
       password: password
       project_name: someproject
-- debug: var=openstack_networks
+- debug: var=openstack_subnets
 
-# Gather facts about a previously created network by name
-- os_networks_facts:
+# Gather facts about a previously created subnet by name
+- os_subnets_facts:
     auth:
       auth_url: https://your_api_url.com:9000/v2.0
       username: user
       password: password
       project_name: someproject
-    name:  network1
-- debug: var=openstack_networks
+    name:  subnet1
+- debug: var=openstack_subnets
 
-# Gather facts about a previously created network with filter (note: name and
+# Gather facts about a previously created subnet with filter (note: name and
   filters parameters are Not mutually exclusive)
-- os_networks_facts:
+- os_subnets_facts:
     auth:
       auth_url: https://your_api_url.com:9000/v2.0
       username: user
@@ -75,15 +75,12 @@ EXAMPLES = '''
       project_name: someproject
     filters:
       tenant_id: 55e2ce24b2a245b09f181bf025724cbe
-      subnets:
-        - 057d4bdf-6d4d-4728-bb0f-5ac45a6f7400
-        - 443d4dc0-91d4-4998-b21c-357d10433483
-- debug: var=openstack_networks
+- debug: var=openstack_subnets
 '''
 
 RETURN = '''
-openstack_networks:
-    description: has all the openstack facts about the networks
+openstack_subnets:
+    description: has all the openstack facts about the subnets
     returned: always, but can be null
     type: complex
     contains:
@@ -92,25 +89,41 @@ openstack_networks:
             returned: success
             type: string
         name:
-            description: Name given to the network.
+            description: Name given to the subnet.
             returned: success
             type: string
-        status:
-            description: Network status.
+        network_id:
+            description: Network ID this subnet belongs in.
             returned: success
             type: string
-        subnets:
-            description: Subnet(s) included in this network.
+        cidr:
+            description: Subnet's CIDR.
+            returned: success
+            type: string
+        gateway_ip:
+            description: Subnet's gateway ip.
+            returned: success
+            type: string
+        enable_dhcp:
+            description: DHCP enable flag for this subnet.
+            returned: success
+            type: bool
+        ip_version:
+            description: IP version for this subnet.
+            returned: success
+            type: int
+        tenant_id:
+            description: Tenant id associated with this subnet.
+            returned: success
+            type: string
+        dns_nameservers:
+            description: DNS name servers for this subnet.
             returned: success
             type: list of strings
-        tenant_id:
-            description: Tenant id associated with this network.
+        allocation_pools:
+            description: Allocation pools associated with this subnet.
             returned: success
-            type: string
-        shared:
-            description: Network shared flag.
-            returned: success
-            type: boolean
+            type: list of dicts
 '''
 
 def main():
@@ -126,10 +139,10 @@ def main():
 
     try:
         cloud = shade.openstack_cloud(**module.params)
-        networks = cloud.search_networks(module.params['name'],
+        subnets = cloud.search_subnets(module.params['name'],
                                          module.params['filters'])
         module.exit_json(changed=False, ansible_facts=dict(
-            openstack_networks=networks))
+            openstack_subnets=subnets))
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message)

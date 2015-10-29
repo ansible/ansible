@@ -130,6 +130,15 @@ notes:
     that the other packages come from (such as epel-release) then that package
     needs to be installed in a separate task. This mimics yum's command line
     behaviour.
+  - 'Yum itself has two types of groups.  "Package groups" are specified in the
+    rpm itself while "environment groups" are specified in a separate file
+    (usually by the distribution).  Unfortunately, this division becomes
+    apparent to ansible users because ansible needs to operate on the group
+    of packages in a single transaction and yum requires groups to be specified
+    in different ways when used in that way.  Package groups are specified as
+    "@development-tools" and environment groups are "@^gnome-desktop-environment".
+    Use the "yum group list" command to see which category of group the group
+    you want to install falls into.'
 # informational: requirements for nodes
 requirements: [ yum ]
 author:
@@ -161,6 +170,9 @@ EXAMPLES = '''
 
 - name: install the 'Development tools' package group
   yum: name="@Development tools" state=present
+
+- name: install the 'Gnome desktop' environment group
+  yum: name="@^gnome-desktop-environment" state=present
 '''
 
 # 64k.  Number of bytes to read at a time when manually downloading pkgs via a url
@@ -755,7 +767,11 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
 
     if update_all:
         cmd = yum_basecmd + ['update']
+        will_update = set(updates.keys())
+        will_update_from_other_package = dict()
     else:
+        will_update = set()
+        will_update_from_other_package = dict()
         for spec in items:
             # some guess work involved with groups. update @<group> will install the group if missing
             if spec.startswith('@'):
@@ -779,8 +795,19 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                     nothing_to_do = False
                     break
 
-            if spec in pkgs['update'] and spec in updates.keys():
-                nothing_to_do = False
+                # this contains the full NVR and spec could contain wildcards
+                # or virtual provides (like "python-*" or "smtp-daemon") while
+                # updates contains name only.
+                this_name_only = '-'.join(this.split('-')[:-2])
+                if spec in pkgs['update'] and this_name_only in updates.keys():
+                    nothing_to_do = False
+                    will_update.add(spec)
+                    # Massage the updates list
+                    if spec != this_name_only:
+                        # For reporting what packages would be updated more
+                        # succinctly
+                        will_update_from_other_package[spec] = this_name_only
+                    break
 
             if nothing_to_do:
                 res['results'].append("All packages providing %s are up to date" % spec)
@@ -793,12 +820,6 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
                 res['msg'] += "The following packages have pending transactions: %s" % ", ".join(conflicts)
                 module.fail_json(**res)
 
-    # list of package updates
-    if update_all:
-        will_update = updates.keys()
-    else:
-        will_update = [u for u in pkgs['update'] if u in updates.keys() or u.startswith('@')]
-
     # check_mode output
     if module.check_mode:
         to_update = []
@@ -806,6 +827,9 @@ def latest(module, items, repoq, yum_basecmd, conf_file, en_repos, dis_repos):
             if w.startswith('@'):
                 to_update.append((w, None))
                 msg = '%s will be updated' % w
+            elif w not in updates:
+                other_pkg = will_update_from_other_package[w]
+                to_update.append((w, 'because of (at least) %s-%s.%s from %s' % (other_pkg, updates[other_pkg]['version'], updates[other_pkg]['dist'], updates[other_pkg]['repo'])))
             else:
                 to_update.append((w, '%s.%s from %s' % (updates[w]['version'], updates[w]['dist'], updates[w]['repo'])))
 

@@ -1352,20 +1352,21 @@ class SunOS(User):
             cmd.append('-s')
             cmd.append(self.shell)
 
-        if self.module.check_mode:
-            return (0, '', '')
-        else:
-            # modify the user if cmd will do anything
-            if cmd_len != len(cmd):
+        # modify the user if cmd will do anything
+        if cmd_len != len(cmd):
+            (rc, out, err) = (0, '', '')
+            if not self.module.check_mode:
                 cmd.append(self.name)
                 (rc, out, err) = self.execute_command(cmd)
                 if rc is not None and rc != 0:
                     self.module.fail_json(name=self.name, msg=err, rc=rc)
-            else:
-                (rc, out, err) = (None, '', '')
+        else:
+            (rc, out, err) = (None, '', '')
 
-            # we have to set the password by editing the /etc/shadow file 
-            if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+        # we have to set the password by editing the /etc/shadow file 
+        if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            (rc, out, err) = (0, '', '')
+            if not self.module.check_mode:
                 try:
                     lines = []
                     for line in open(self.SHADOWFILE, 'rb').readlines():
@@ -1382,7 +1383,7 @@ class SunOS(User):
                 except Exception, err:
                     self.module.fail_json(msg="failed to update users password: %s" % str(err))
 
-            return (rc, out, err)
+        return (rc, out, err)
 
 # ===========================================
 class DarwinUser(User):
@@ -2044,7 +2045,7 @@ def main():
             comment=dict(default=None, type='str'),
             home=dict(default=None, type='str'),
             shell=dict(default=None, type='str'),
-            password=dict(default=None, type='str'),
+            password=dict(default=None, type='str', no_log=True),
             login_class=dict(default=None, type='str'),
             # following options are specific to userdel
             force=dict(default='no', type='bool'),
@@ -2062,7 +2063,7 @@ def main():
             ssh_key_type=dict(default=ssh_defaults['type'], type='str'),
             ssh_key_file=dict(default=None, type='str'),
             ssh_key_comment=dict(default=ssh_defaults['comment'], type='str'),
-            ssh_key_passphrase=dict(default=None, type='str'),
+            ssh_key_passphrase=dict(default=None, type='str', no_log=True),
             update_password=dict(default='always',choices=['always','on_create'],type='str'),
             expires=dict(default=None, type='float'),
         ),
@@ -2160,4 +2161,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()

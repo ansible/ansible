@@ -97,9 +97,12 @@ options:
       - You can specify a different logging driver for the container than for the daemon.
         "json-file" Default logging driver for Docker. Writes JSON messages to file.
         docker logs command is available only for this logging driver.
-        "none" disables any logging for the container. docker logs won't be available with this driver.
+        "none" disables any logging for the container.
         "syslog" Syslog logging driver for Docker. Writes log messages to syslog.
         docker logs command is not available for this logging driver.
+        "journald" Journald logging driver for Docker. Writes log messages to "journald".
+        "gelf" Graylog Extended Log Format (GELF) logging driver for Docker. Writes log messages to a GELF endpoint likeGraylog or Logstash.
+        "fluentd" Fluentd logging driver for Docker. Writes log messages to "fluentd" (forward input).
         If not defined explicitly, the Docker daemon's default ("json-file") will apply.
         Requires docker >= 1.6.0.
     required: false
@@ -108,11 +111,14 @@ options:
       - json-file
       - none
       - syslog
+      - journald
+      - gelf
+      - fluentd
     version_added: "2.0"
   log_opt:
     description:
-      - Additional options to pass to the logging driver selected above. See Docker log-driver
-        documentation for more information (https://docs.docker.com/reference/logging/overview/).
+      - Additional options to pass to the logging driver selected above. See Docker `log-driver 
+        <https://docs.docker.com/reference/logging/overview/>` documentation for more information.
         Requires docker >=1.7.0.
     required: false
     default: null
@@ -1056,11 +1062,11 @@ class DockerManager(object):
                     continue
 
             # EXPOSED PORTS
-            expected_exposed_ports = set((image['ContainerConfig']['ExposedPorts'] or {}).keys())
+            expected_exposed_ports = set((image['ContainerConfig'].get('ExposedPorts') or {}).keys())
             for p in (self.exposed_ports or []):
                 expected_exposed_ports.add("/".join(p))
 
-            actually_exposed_ports = set((container["Config"]["ExposedPorts"] or {}).keys())
+            actually_exposed_ports = set((container["Config"].get("ExposedPorts") or {}).keys())
 
             if actually_exposed_ports != expected_exposed_ports:
                 self.reload_reasons.append('exposed_ports ({0} => {1})'.format(actually_exposed_ports, expected_exposed_ports))
@@ -1386,6 +1392,11 @@ class DockerManager(object):
             changes = list(self.client.pull(image, tag=tag, stream=True, **extra_params))
             try:
                 last = changes[-1]
+                # seems Docker 1.8 puts an empty dict at the end of the
+                # stream; catch that and get the previous instead
+                # https://github.com/ansible/ansible-modules-core/issues/2043
+                if last.strip() == '{}':
+                    last = changes[-2]
             except IndexError:
                 last = '{}'
             status = json.loads(last).get('status', '')
@@ -1662,7 +1673,7 @@ def main():
             net             = dict(default=None),
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
-            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog']),
+            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog', 'journald', 'gelf', 'fluentd']),
             log_opt         = dict(default=None, type='dict'),
             cpu_set         = dict(default=None),
             cap_add         = dict(default=None, type='list'),

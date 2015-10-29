@@ -25,6 +25,8 @@ import shutil
 import tempfile
 import base64
 import datetime
+from distutils.version import LooseVersion
+
 try:
     import json
 except ImportError:
@@ -44,7 +46,6 @@ options:
       - HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
     required: true
     default: null
-    aliases: []
   dest:
     description:
       - path of where to download the file to (if desired). If I(dest) is a directory, the basename of the file on the remote server will be used.
@@ -74,7 +75,7 @@ options:
     version_added: "2.0"
   method:
     description:
-      - The HTTP method of the request or response.
+      - The HTTP method of the request or response. It MUST be uppercase.
     required: false
     choices: [ "GET", "POST", "PUT", "HEAD", "DELETE", "OPTIONS", "PATCH", "TRACE", "CONNECT", "REFRESH" ]
     default: "GET"
@@ -144,7 +145,8 @@ options:
     version_added: '1.9.2'
 
 # informational: requirements for nodes
-requirements: [ urlparse, httplib2 ]
+requirements:
+  - httplib2 >= 0.7.0
 author: "Romeo Theriault (@romeotheriault)"
 '''
 
@@ -199,11 +201,15 @@ EXAMPLES = '''
 
 '''
 
-HAS_HTTPLIB2 = True
+HAS_HTTPLIB2 = False
+
 try:
     import httplib2
-except ImportError:
-    HAS_HTTPLIB2 = False
+    if LooseVersion(httplib2.__version__) >= LooseVersion('0.7'):
+        HAS_HTTPLIB2 = True
+except ImportError, AttributeError:
+    # AttributeError if __version__ is not present
+    pass
 
 HAS_URLPARSE = True
 
@@ -383,7 +389,7 @@ def main():
     )
 
     if not HAS_HTTPLIB2:
-        module.fail_json(msg="httplib2 is not installed")
+        module.fail_json(msg="httplib2 >= 0.7 is not installed")
     if not HAS_URLPARSE:
         module.fail_json(msg="urlparse is not installed")
 
@@ -474,7 +480,7 @@ def main():
         content_type, params = cgi.parse_header(uresp['content_type'])
         if 'charset' in params:
             content_encoding = params['charset']
-        u_content = unicode(content, content_encoding, errors='xmlcharrefreplace')
+        u_content = unicode(content, content_encoding, errors='replace')
         if content_type.startswith('application/json') or \
                 content_type.startswith('text/json'):
             try:
@@ -483,7 +489,7 @@ def main():
             except:
                 pass
     else:
-        u_content = unicode(content, content_encoding, errors='xmlcharrefreplace')
+        u_content = unicode(content, content_encoding, errors='replace')
 
     if resp['status'] not in status_code:
         module.fail_json(msg="Status code was not " + str(status_code), content=u_content, **uresp)
