@@ -13,7 +13,7 @@ ansible-pull - pull playbooks from VCS server and run them using this machine as
 
 SYNOPSIS
 --------
-ansible-pull -d DEST -U URL [options] [ <filename.yml> ]
+ansible-pull -U URL [options] [ <filename.yml> ]
 
 
 DESCRIPTION

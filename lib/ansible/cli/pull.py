@@ -50,7 +50,7 @@ class PullCLI(CLI):
         ''' create an options parser for bin/ansible '''
 
         self.parser = CLI.base_parser(
-            usage='%prog  -d <destdir> -U <repository> [options]',
+            usage='%prog -U <repository> [options]',
             connect_opts=True,
             vault_opts=True,
             runtask_opts=True,
@@ -67,7 +67,7 @@ class PullCLI(CLI):
             help='sleep for random interval (between 0 and n number of seconds) before starting. This is a useful way to disperse git requests')
         self.parser.add_option('-f', '--force', dest='force', default=False, action='store_true',
             help='run the playbook even if the repository could not be updated')
-        self.parser.add_option('-d', '--directory', dest='dest', default=None, help='directory to checkout repository to')
+        self.parser.add_option('-d', '--directory', dest='dest', default='~/.ansible/pull', help='directory to checkout repository to')
         self.parser.add_option('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
         self.parser.add_option('-C', '--checkout', dest='checkout',
             help='branch/tag/commit to checkout.  ' 'Defaults to behavior of repository module.')
@@ -90,9 +90,6 @@ class PullCLI(CLI):
 
         if not self.options.url:
             raise AnsibleOptionsError("URL for repository not specified, use -h for help")
-
-        if not self.options.dest:
-            raise AnsibleOptionsError("Destination directory for checkout not specified, use -h for help")
 
         if self.options.module_name not in self.SUPPORTED_REPO_MODULES:
             raise AnsibleOptionsError("Unsuported repo module %s, choices are %s" % (self.options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
@@ -129,6 +126,7 @@ class PullCLI(CLI):
         #TODO: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
             repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
+            print(repo_opts)
             if self.options.checkout:
                 repo_opts += ' version=%s' % self.options.checkout
 
