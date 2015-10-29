@@ -401,6 +401,30 @@ like this::
 The EXAMPLES section, just like the documentation section, is required in
 all module pull requests for new modules.
 
+The RETURN section documents what the module returns. For each value returned,
+provide a ``description``, in what circumstances the value is ``returned``,
+the ``type`` of the value and a ``sample``.  For example, from
+the ``copy`` module::
+
+    RETURN = '''
+    dest:
+        description: destination file/path
+        returned: success
+        type: string
+        sample: "/path/to/file.txt"
+    src:
+        description: source file used for the copy on the target machine
+        returned: changed
+        type: string
+        sample: "/home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source"
+    md5sum:
+        description: md5 checksum of the file after running copy
+        returned: when supported
+        type: string
+        sample: "2a5aeecc61dc98c4d780b14b330e3282"
+    ...
+    '''
+
 .. _module_dev_testing:
 
 Building & Testing
@@ -494,7 +518,7 @@ Module checklist
 * Try to normalize parameters with other modules, you can have aliases for when user is more familiar with underlying API name for the option
 * Being pep8 compliant is nice, but not a requirement. Specifically, the 80 column limit now hinders readability more that it improves it
 * Avoid '`action`/`command`', they are imperative and not declarative, there are other ways to express the same thing
-* Sometimes you want to split the module, specially if you are adding a list/info state, you want a _facts version
+* Do not add `list` or `info` state options to an existing module - create a new `_facts` module.
 * If you are asking 'how can I have a module execute other modules' ... you want to write a role
 * Return values must be able to be serialized as json via the python stdlib
   json library.  basic python types (strings, int, dicts, lists, etc) are
