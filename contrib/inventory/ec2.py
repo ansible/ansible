@@ -703,7 +703,8 @@ class Ec2Inventory(object):
                 self.push(self.inventory, key, dest)
                 if self.nested_groups:
                     self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
-                    self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+                    if v:
+                        self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
@@ -1309,3 +1310,4 @@ class Ec2Inventory(object):
 
 # Run the script
 Ec2Inventory()
+
