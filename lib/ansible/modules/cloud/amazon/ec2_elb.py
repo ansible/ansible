@@ -55,10 +55,10 @@ options:
     choices: [ "yes", "no" ]
   wait:
     description:
-      - Wait for instance registration or deregistration to complete successfully before returning.  
+      - Wait for instance registration or deregistration to complete successfully before returning.
     required: false
     default: yes
-    choices: [ "yes", "no" ] 
+    choices: [ "yes", "no" ]
   validate_certs:
     description:
       - When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
@@ -90,7 +90,7 @@ roles:
   - myrole
 post_tasks:
   - name: Instance Register
-    local_action: 
+    local_action:
       module: ec2_elb
       instance_id: "{{ ansible_ec2_instance_id }}"
       ec2_elbs: "{{ item }}"
@@ -259,12 +259,23 @@ class ElbManager:
            ec2_elbs = self._get_auto_scaling_group_lbs()
 
         try:
-            elb = connect_to_aws(boto.ec2.elb, self.region, 
-                                 **self.aws_connect_params)
+            elb = connect_to_aws(boto.ec2.elb, self.region, **self.aws_connect_params)
         except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
 
-        elbs = elb.get_all_load_balancers()
+        elbs = []
+        marker = None
+        while True:
+            try:
+                newelbs = elb.get_all_load_balancers(marker=marker)
+                if not newelbs.is_truncated:
+                    break
+                elbs.extend(newelbs)
+                marker = newelbs.next_marker
+            except TypeError:
+                # Older version of boto do not allow for params
+                elbs = elb.get_all_load_balancers()
+                break
 
         if ec2_elbs:
             lbs = sorted(lb for lb in elbs if lb.name in ec2_elbs)
@@ -305,8 +316,7 @@ class ElbManager:
     def _get_instance(self):
         """Returns a boto.ec2.InstanceObject for self.instance_id"""
         try:
-            ec2 = connect_to_aws(boto.ec2, self.region, 
-                                 **self.aws_connect_params)
+            ec2 = connect_to_aws(boto.ec2, self.region, **self.aws_connect_params)
         except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
         return ec2.get_only_instances(instance_ids=[self.instance_id])[0]
@@ -333,7 +343,7 @@ def main():
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
 
-    if not region: 
+    if not region:
         module.fail_json(msg="Region must be specified as a parameter, in EC2_REGION or AWS_REGION environment variables or in boto configuration file")
 
     ec2_elbs = module.params['ec2_elbs']
@@ -345,8 +355,7 @@ def main():
         module.fail_json(msg="ELBs are required for registration")
 
     instance_id = module.params['instance_id']
-    elb_man = ElbManager(module, instance_id, ec2_elbs, 
-                         region=region, **aws_connect_params)
+    elb_man = ElbManager(module, instance_id, ec2_elbs, region=region, **aws_connect_params)
 
     if ec2_elbs is not None:
         for elb in ec2_elbs:
