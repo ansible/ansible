@@ -18,12 +18,14 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import socket
-import datetime
-import time
-import sys
-import re
 import binascii
+import datetime
+import math
+import re
+import select
+import socket
+import sys
+import time
 
 HAS_PSUTIL = False
 try:
@@ -349,6 +351,10 @@ def main():
     state = params['state']
     path = params['path']
     search_regex = params['search_regex']
+    if search_regex is not None:
+        compiled_search_re = re.compile(search_regex, re.MULTILINE)
+    else:
+        compiled_search_re = None
 
     if port and path:
         module.fail_json(msg="port and path parameter can not both be passed to wait_for")
@@ -404,55 +410,72 @@ def main():
             if path:
                 try:
                     os.stat(path)
-                    if search_regex:
-                        try:
-                            f = open(path)
-                            try:
-                                if re.search(search_regex, f.read(), re.MULTILINE):
-                                    break
-                                else:
-                                    time.sleep(1)
-                            finally:
-                                f.close()
-                        except IOError:
-                            time.sleep(1)
-                            pass
-                    else:
-                        break
                 except OSError, e:
-                    # File not present
-                    if e.errno == 2:
-                        time.sleep(1)
-                    else:
+                    # If anything except file not present, throw an error
+                    if e.errno != 2:
                         elapsed = datetime.datetime.now() - start
                         module.fail_json(msg="Failed to stat %s, %s" % (path, e.strerror), elapsed=elapsed.seconds)
+                    # file doesn't exist yet, so continue
+                else:
+                    # File exists.  Are there additional things to check?
+                    if not compiled_search_re:
+                        # nope, succeed!
+                        break
+                    try:
+                        f = open(path)
+                        try:
+                            if re.search(compiled_search_re, f.read()):
+                                # String found, success!
+                                break
+                        finally:
+                            f.close()
+                    except IOError:
+                        pass
             elif port:
+                alt_connect_timeout = math.ceil((end - datetime.datetime.now()).total_seconds())
                 try:
-                    s = _create_connection( (host, port), connect_timeout)
-                    if search_regex:
+                    s = _create_connection((host, port), min(connect_timeout, alt_connect_timeout))
+                except:
+                    # Failed to connect by connect_timeout. wait and try again
+                    pass
+                else:
+                    # Connected -- are there additional conditions?
+                    if compiled_search_re:
                         data = ''
                         matched = False
-                        while 1:
-                            data += s.recv(1024)
-                            if not data:
+                        while datetime.datetime.now() < end:
+                            max_timeout = math.ceil((end - datetime.datetime.now()).total_seconds())
+                            (readable, w, e) = select.select([s], [], [], max_timeout)
+                            if not readable:
+                                # No new data.  Probably means our timeout
+                                # expired
+                                continue
+                            response = s.recv(1024)
+                            if not response:
+                                # Server shutdown
                                 break
-                            elif re.search(search_regex, data, re.MULTILINE):
+                            data += response
+                            if re.search(compiled_search_re, data):
                                 matched = True
                                 break
+
+                        # Shutdown the client socket
+                        s.shutdown(socket.SHUT_RDWR)
+                        s.close()
                         if matched:
-                            s.shutdown(socket.SHUT_RDWR)
-                            s.close()
+                            # Found our string, success!
                             break
                     else:
+                        # Connection established, success!
                         s.shutdown(socket.SHUT_RDWR)
                         s.close()
                         break
-                except:
-                    time.sleep(1)
-                    pass
-            else:
-                time.sleep(1)
-        else:
+
+            # Conditions not yet met, wait and try again
+            time.sleep(1)
+
+        else:   # while-else
+            # Timeout expired
             elapsed = datetime.datetime.now() - start
             if port:
                 if search_regex:
@@ -485,4 +508,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()
