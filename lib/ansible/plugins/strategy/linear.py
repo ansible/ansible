@@ -176,7 +176,6 @@ class StrategyModule(StrategyBase):
                     run_once = False
                     work_to_do = True
 
-
                     # test to see if the task across all hosts points to an action plugin which
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
