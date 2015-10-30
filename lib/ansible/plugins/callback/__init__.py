@@ -56,10 +56,6 @@ class CallbackBase:
         if not indent and '_ansible_verbose_always' in result and result['_ansible_verbose_always']:
             indent = 4
 
-        # no_log trumps invocation
-        if '_ansible_no_log' in result and result['_ansible_no_log']:
-            keep_invocation = False
-
         # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
         abridged_result = strip_internal_keys(result)
 
@@ -111,7 +107,7 @@ class CallbackBase:
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
 
     def _get_item(self, result):
-        if '_ansible_no_log' in result and result['_ansible_no_log']:
+        if result.get('_ansible_no_log', False):
             item = "(censored due to no_log)"
         else:
             item = result.get('item', None)
