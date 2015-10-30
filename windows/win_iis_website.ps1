@@ -37,6 +37,7 @@ If (($state -ne $FALSE) -and ($state -ne 'started') -and ($state -ne 'stopped') 
 
 # Path parameter
 $physical_path = Get-Attr $params "physical_path" $FALSE;
+$site_id = Get-Attr $params "site_id" $FALSE;
 
 # Application Pool Parameter
 $application_pool = Get-Attr $params "application_pool" $FALSE;
@@ -89,6 +90,10 @@ Try {
 
     If ($application_pool) {
       $site_parameters.ApplicationPool = $application_pool
+    }
+
+    If ($site_id) {
+        $site_parameters.ID = $site_id
     }
 
     If ($bind_port) {
