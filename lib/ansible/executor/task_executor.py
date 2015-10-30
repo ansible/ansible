@@ -307,12 +307,6 @@ class TaskExecutor:
             return dict(include=include_file, include_variables=include_variables)
 
         # Now we do final validation on the task, which sets all fields to their final values.
-        # In the case of debug tasks, we save any 'var' params and restore them after validating
-        # so that variables are not replaced too early.
-        prev_var = None
-        if self._task.action == 'debug' and 'var' in self._task.args:
-            prev_var = self._task.args.pop('var')
-
         self._task.post_validate(templar=templar)
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
@@ -320,9 +314,6 @@ class TaskExecutor:
                 self._display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
-
-        if prev_var is not None:
-            self._task.args['var'] = prev_var
 
         # get the connection and the handler for this execution
         self._connection = self._get_connection(variables=variables, templar=templar)
