@@ -502,12 +502,24 @@ class StrategyBase:
         if notified_hosts is None:
             notified_hosts = self._notified_handlers[handler_name]
 
+        run_once = False
+        try:
+            action = action_loader.get(handler.action, class_only=True)
+            if handler.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
+                run_once = True
+        except KeyError:
+            # we don't care here, because the action may simply not have a
+            # corresponding action plugin
+            pass
+
         host_results = []
         for host in notified_hosts:
             if not handler.has_triggered(host) and (host.name not in self._tqm._failed_hosts or play_context.force_handlers):
                 task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
                 task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
+                if run_once:
+                    break
 
         # collect the results from the handler run
         host_results = self._wait_on_pending_results(iterator)
