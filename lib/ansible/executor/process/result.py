@@ -21,7 +21,6 @@ __metaclass__ = type
 
 from ansible.compat.six.moves import queue
 from ansible.compat.six import iteritems, text_type
-from ansible.vars import strip_internal_keys
 
 import multiprocessing
 import time
@@ -106,7 +105,7 @@ class ResultProcess(multiprocessing.Process):
 
                 # if this task is registering a result, do it now
                 if result._task.register:
-                    self._send_result(('register_host_var', result._host, result._task.register, strip_internal_keys(result._result)))
+                    self._send_result(('register_host_var', result._host, result._task.register, result._result))
 
                 # send callbacks, execute other options based on the result status
                 # TODO: this should all be cleaned up and probably moved to a sub-function.
