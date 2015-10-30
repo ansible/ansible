@@ -25,8 +25,6 @@ from ansible.inventory import Inventory
 class LookupModule(LookupBase):
 
     def get_hosts(self, variables, pattern):
-        #print(variables)
-        #print(variables['groups'])
         hosts = []
         if pattern in variables['groups']:
             hosts = variables['groups'][pattern]
