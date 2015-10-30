@@ -84,7 +84,7 @@ options:
       - The state of module
     required: false
     default: present
-    choices: [ "present", "absent", "latest" ]
+    choices: [ "present", "absent", "latest", "forcereinstall" ]
   extra_args:
     description:
       - Extra arguments passed to pip.
@@ -154,6 +154,9 @@ EXAMPLES = '''
 
 # Install (Bottle) for Python 3.3 specifically,using the 'pip-3.3' executable.
 - pip: name=bottle executable=pip-3.3
+
+# Install (Bottle), forcing reinstallation if it's already installed
+- pip: name=bottle state=forcereinstall
 '''
 
 def _get_cmd_options(module, cmd):
@@ -235,6 +238,7 @@ def main():
         present='install',
         absent='uninstall -y',
         latest='install -U',
+        forcereinstall='install -U --force-reinstall',
     )
 
     module = AnsibleModule(
@@ -358,7 +362,7 @@ def main():
 
         is_present = _is_present(name, version, out.split())
 
-        changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
+        changed = (state == 'present' and not is_present) or (state == 'absent' and is_present) or (state == 'forcereinstall' and is_present)
         module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
     if requirements or has_vcs:
