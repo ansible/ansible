@@ -252,18 +252,18 @@ class Line(object):
     def _split_line(self, line):
         fields = line.split()
         try:
-            field2 = field[2]
+            field2 = fields[2]
         except IndexError:
             field2 = None
         try:
-            field3 = field[3]
+            field3 = fields[3]
         except IndexError:
             field3 = None
 
         return (fields[0],
                 fields[1],
                 field2,
-                fields3)
+                field3)
 
     def remove(self):
         self.line, self.name, self.backing_device = '', None, None
