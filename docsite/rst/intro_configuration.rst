@@ -160,7 +160,9 @@ stdout_callback
 
 .. versionadded:: 2.0
 
-This setting allows you to override the default stdout callback for ansible-playbook.
+This setting allows you to override the default stdout callback for ansible-playbook::
+
+    stdout_callback = skippy
 
 .. _callback_whitelist:
 
@@ -169,10 +171,11 @@ callback_whitelist
 
 .. versionadded:: 2.0
 
-Now ansible ships with all included callback plugins ready to use but they are disabled by default,
-this setting lets you enable a list of additional callbacks, this cannot change or override the
-default stdout callback, use :ref:`stdout_callback` for that.
+Now ansible ships with all included callback plugins ready to use but they are disabled by default.
+This setting lets you enable a list of additional callbacks. This cannot change or override the
+default stdout callback, use :ref:`stdout_callback` for that::
 
+    callback_whitelist = timer,mail
 
 .. _command_warnings:
 
@@ -318,7 +321,9 @@ New in 1.6, the 'gathering' setting controls the default policy of facts gatheri
 The value 'implicit' is the default, which means that the fact cache will be ignored and facts will be gathered per play unless 'gather_facts: False' is set.
 The value 'explicit' is the inverse, facts will not be gathered unless directly requested in the play.
 The value 'smart' means each new host that has no facts discovered will be scanned, but if the same host is addressed in multiple plays it will not be contacted again in the playbook run.
-This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the fact cache.
+This option can be useful for those wishing to save fact gathering time. Both 'smart' and 'explicit' will use the fact cache::
+
+    gathering = smart
 
 hash_behaviour
 ==============
@@ -423,7 +428,9 @@ Most users will not need to use this feature.  See :doc:`developing_plugins` for
 module_lang
 ===========
 
-This is to set the default language to communicate between the module and the system. By default, the value is 'C'.
+This is to set the default language to communicate between the module and the system. By default, the value is 'C'::
+
+    module_lang = en_US.UTF-8
 
 .. _module_name:
 
@@ -628,7 +635,9 @@ The default is 'smart', which will use 'ssh' (OpenSSH based) if the local operat
 technology, and then will otherwise use 'paramiko'.  Other transport options include 'local', 'chroot', 'jail', and so on.
 
 Users should usually leave this setting as 'smart' and let their playbooks choose an alternate setting when needed with the
-'connection:' play parameter.
+'connection:' play parameter::
+
+    transport = paramiko
 
 .. _vars_plugins:
 
@@ -885,4 +894,6 @@ special_context_filesystems
 
 This is a list of file systems that require special treatment when dealing with security context.
 The normal behaviour is for operations to copy the existing context or use the user default, this changes it to use a file system dependent context.
-The default list is: nfs,vboxsf,fuse,ramfs
+The default list is: nfs,vboxsf,fuse,ramfs::
+
+    special_context_filesystems = nfs,vboxsf,fuse,ramfs,myspecialfs
