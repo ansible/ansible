@@ -26,55 +26,33 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-If (Get-Member -InputObject $params -Name creates) {
+$creates = Get-AnsibleParam -obj $params -name "creates"
+If ($creates -ne $null) {
     If (Test-Path $params.creates) {
         Exit-Json $result "The 'creates' file or directory already exists."
     }
-
 }
 
-If (Get-Member -InputObject $params -Name src) {
-    $src = $params.src.toString()
+$src = Get-AnsibleParam -obj $params -name "src" -failifempty $true
+If (-Not (Test-Path -path $src)){
+    Fail-Json $result "src file: $src does not exist."
+}
 
-    If (-Not (Test-Path -path $src)){
-        Fail-Json $result "src file: $src does not exist."
+$ext = [System.IO.Path]::GetExtension($src)
+
+
+$dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
+If (-Not (Test-Path $dest -PathType Container)){
+    Try{
+        New-Item -itemtype directory -path $dest
     }
-
-    $ext = [System.IO.Path]::GetExtension($src)
-}
-Else {
-    Fail-Json $result "missing required argument: src"
-}
-
-If (-Not($params.dest -eq $null)) {
-    $dest = $params.dest.toString()
-
-    If (-Not (Test-Path $dest -PathType Container)){
-        Try{
-            New-Item -itemtype directory -path $dest
-        }
-        Catch {
-            Fail-Json $result "Error creating $dest directory"
-        }
+    Catch {
+        Fail-Json $result "Error creating $dest directory"
     }
 }
-Else {
-    Fail-Json $result "missing required argument: dest"
-}
 
-If (Get-Member -InputObject $params -Name recurse) {
-   $recurse = ConvertTo-Bool ($params.recurse)
-}
-Else {
-    $recurse = $false
-}
-
-If (Get-Member -InputObject $params -Name rm) {
-    $rm = ConvertTo-Bool ($params.rm)
-}
-Else {
-    $rm = $false
-}
+$recurse = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "recurse" -default "false")
+$rm = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "rm" -default "false")
 
 If ($ext -eq ".zip" -And $recurse -eq $false) {
     Try {
