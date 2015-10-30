@@ -110,7 +110,8 @@ EXAMPLES = '''
 - composer: command=install working_dir=/path/to/project
 
 - composer:
-    command: "require my/package"
+    command: "require"
+    arguments: "my/package"
     working_dir: "/path/to/project"
 
 # Clone project and install with all dependencies
@@ -172,7 +173,7 @@ def main():
     command = module.params['command']
     if re.search(r"\s", command):
         module.fail_json(msg="Use the 'arguments' param for passing arguments with the 'command'")
-    
+
     arguments = module.params['arguments']
     available_options = get_available_options(module=module, command=command)
 
