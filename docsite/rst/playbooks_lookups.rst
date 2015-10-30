@@ -10,6 +10,8 @@ in Ansible, and are typically used to load variables or templates with informati
 
 .. note:: Lookups occur on the local computer, not on the remote computer.
 
+.. note:: Lookups are executed with a cwd relative to the role or play, as opposed to local tasks which are executed with the cwd of the executed script.
+
 .. note:: Since 1.9 you can pass wantlist=True to lookups to use in jinja2 template "for" loops.
 
 .. contents:: Topics
