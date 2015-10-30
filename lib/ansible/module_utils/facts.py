@@ -311,7 +311,7 @@ class Facts(object):
             for (path, name) in Facts.OSDIST_LIST:
                 if os.path.exists(path):
                     if os.path.getsize(path) > 0:
-                        if self.facts['distribution'] in ('Fedora', ):
+                        if self.facts['distribution'] in ('Fedora', 'Centos', ):
                             # Once we determine the value is one of these distros
                             # we trust the values are always correct
                             break
