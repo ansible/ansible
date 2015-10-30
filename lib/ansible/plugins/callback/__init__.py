@@ -49,7 +49,8 @@ class CallbackBase:
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=None):
-        if result.get('_ansible_no_log', False):
+        no_log = result.get('_ansible_no_log', False)
+        if no_log:
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
 
         if not indent and '_ansible_verbose_always' in result and result['_ansible_verbose_always']:
