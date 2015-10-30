@@ -126,7 +126,6 @@ class PullCLI(CLI):
         #TODO: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
             repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
-            print(repo_opts)
             if self.options.checkout:
                 repo_opts += ' version=%s' % self.options.checkout
 
