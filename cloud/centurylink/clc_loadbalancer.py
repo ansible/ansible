@@ -78,6 +78,21 @@ options:
     required: False
     default: present
     choices: ['present', 'absent', 'port_absent', 'nodes_present', 'nodes_absent']
+requirements:
+    - python = 2.7
+    - requests >= 2.5.0
+    - clc-sdk
+author: "CLC Runner (@clc-runner)"
+notes:
+    - To use this module, it is required to set the below environment variables which enables access to the
+      Centurylink Cloud
+          - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
+          - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
+    - Alternatively, the module accepts the API token and account alias. The API token can be generated using the
+      CLC account login and password via the HTTP api call @ https://api.ctl.io/v2/authentication/login
+          - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login
+          - CLC_ACCT_ALIAS, the account alias associated with the centurylink cloud
+    - Users can set CLC_V2_API_URL to specify an endpoint for pointing to a different CLC environment.
 '''
 
 EXAMPLES = '''
@@ -156,20 +171,48 @@ EXAMPLES = '''
         nodes:
           - { 'ipAddress': '10.11.22.123', 'privatePort': 80 }
         state: absent
-requirements:
-    - python = 2.7
-    - requests >= 2.5.0
-    - clc-sdk
-notes:
-    - To use this module, it is required to set the below environment variables which enables access to the
-      Centurylink Cloud
-          - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
-          - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
-    - Alternatively, the module accepts the API token and account alias. The API token can be generated using the
-      CLC account login and password via the HTTP api call @ https://api.ctl.io/v2/authentication/login
-          - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login
-          - CLC_ACCT_ALIAS, the account alias associated with the centurylink cloud
-    - Users can set CLC_V2_API_URL to specify an endpoint for pointing to a different CLC environment.
+'''
+
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+loadbalancer:
+    description: The load balancer result object from CLC
+    returned: success
+    type: dict
+    sample:
+        {
+           "description":"test-lb",
+           "id":"ab5b18cb81e94ab9925b61d1ca043fb5",
+           "ipAddress":"66.150.174.197",
+           "links":[
+              {
+                 "href":"/v2/sharedLoadBalancers/wfad/wa1/ab5b18cb81e94ab9925b61d1ca043fb5",
+                 "rel":"self",
+                 "verbs":[
+                    "GET",
+                    "PUT",
+                    "DELETE"
+                 ]
+              },
+              {
+                 "href":"/v2/sharedLoadBalancers/wfad/wa1/ab5b18cb81e94ab9925b61d1ca043fb5/pools",
+                 "rel":"pools",
+                 "verbs":[
+                    "GET",
+                    "POST"
+                 ]
+              }
+           ],
+           "name":"test-lb",
+           "pools":[
+
+           ],
+           "status":"enabled"
+        }
 '''
 
 __version__ = '${version}'
@@ -827,8 +870,8 @@ class ClcLoadBalancer:
         argument_spec = dict(
             name=dict(required=True),
             description=dict(default=None),
-            location=dict(required=True, default=None),
-            alias=dict(required=True, default=None),
+            location=dict(required=True),
+            alias=dict(required=True),
             port=dict(choices=[80, 443]),
             method=dict(choices=['leastConnection', 'roundRobin']),
             persistence=dict(choices=['standard', 'sticky']),

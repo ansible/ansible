@@ -50,6 +50,7 @@ requirements:
     - python = 2.7
     - requests >= 2.5.0
     - clc-sdk
+author: "CLC Runner (@clc-runner)"
 notes:
     - To use this module, it is required to set the below environment variables which enables access to the
       Centurylink Cloud
@@ -96,6 +97,41 @@ EXAMPLES = '''
 
     - name: debug
       debug: var=policy
+'''
+
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+policy:
+    description: The anti affinity policy information
+    returned: success
+    type: dict
+    sample:
+        {
+           "id":"1a28dd0988984d87b9cd61fa8da15424",
+           "name":"test_aa_policy",
+           "location":"UC1",
+           "links":[
+              {
+                 "rel":"self",
+                 "href":"/v2/antiAffinityPolicies/wfad/1a28dd0988984d87b9cd61fa8da15424",
+                 "verbs":[
+                    "GET",
+                    "DELETE",
+                    "PUT"
+                 ]
+              },
+              {
+                 "rel":"location",
+                 "href":"/v2/datacenters/wfad/UC1",
+                 "id":"uc1",
+                 "name":"UC1 - US West (Santa Clara)"
+              }
+           ]
+        }
 '''
 
 __version__ = '${version}'

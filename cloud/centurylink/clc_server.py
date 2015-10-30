@@ -193,7 +193,7 @@ options:
       - The template to use for server creation.  Will search for a template if a partial string is provided.
         This is required when state is 'present'
     default: None
-    required: false
+    required: False
   ttl:
     description:
       - The time to live for the server in seconds.  The server will be deleted when this time expires.
@@ -204,7 +204,20 @@ options:
       - The type of server to create.
     default: 'standard'
     required: False
-    choices: ['standard', 'hyperscale']
+    choices: ['standard', 'hyperscale', 'bareMetal']
+  configuration_id:
+    description:
+      -  Only required for bare metal servers.
+         Specifies the identifier for the specific configuration type of bare metal server to deploy.
+    default: None
+    required: False
+  os_type:
+    description:
+      - Only required for bare metal servers.
+        Specifies the OS to provision with the bare metal server.
+    default: None
+    required: False
+    choices: ['redHat6_64Bit', 'centOS6_64Bit', 'windows2012R2Standard_64Bit', 'ubuntu14_64Bit']
   wait:
     description:
       - Whether to wait for the provisioning tasks to finish before returning.
@@ -215,6 +228,7 @@ requirements:
     - python = 2.7
     - requests >= 2.5.0
     - clc-sdk
+author: "CLC Runner (@clc-runner)"
 notes:
     - To use this module, it is required to set the below environment variables which enables access to the
       Centurylink Cloud
@@ -248,18 +262,201 @@ EXAMPLES = '''
 
 - name: Stop a Server
   clc_server:
-    server_ids: ['UC1ACCTTEST01']
+    server_ids: ['UC1ACCT-TEST01']
     state: stopped
 
 - name: Start a Server
   clc_server:
-    server_ids: ['UC1ACCTTEST01']
+    server_ids: ['UC1ACCT-TEST01']
     state: started
 
 - name: Delete a Server
   clc_server:
-    server_ids: ['UC1ACCTTEST01']
+    server_ids: ['UC1ACCT-TEST01']
     state: absent
+'''
+
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+server_ids:
+    description: The list of server ids that are created
+    returned: success
+    type: list
+    sample:
+        [
+            "UC1TEST-SVR01",
+            "UC1TEST-SVR02"
+        ]
+partially_created_server_ids:
+    description: The list of server ids that are partially created
+    returned: success
+    type: list
+    sample:
+        [
+            "UC1TEST-SVR01",
+            "UC1TEST-SVR02"
+        ]
+servers:
+    description: The list of server objects returned from CLC
+    returned: success
+    type: list
+    sample:
+        [
+           {
+              "changeInfo":{
+                 "createdBy":"service.wfad",
+                 "createdDate":1438196820,
+                 "modifiedBy":"service.wfad",
+                 "modifiedDate":1438196820
+              },
+              "description":"test-server",
+              "details":{
+                 "alertPolicies":[
+
+                 ],
+                 "cpu":1,
+                 "customFields":[
+
+                 ],
+                 "diskCount":3,
+                 "disks":[
+                    {
+                       "id":"0:0",
+                       "partitionPaths":[
+
+                       ],
+                       "sizeGB":1
+                    },
+                    {
+                       "id":"0:1",
+                       "partitionPaths":[
+
+                       ],
+                       "sizeGB":2
+                    },
+                    {
+                       "id":"0:2",
+                       "partitionPaths":[
+
+                       ],
+                       "sizeGB":14
+                    }
+                 ],
+                 "hostName":"",
+                 "inMaintenanceMode":false,
+                 "ipAddresses":[
+                    {
+                       "internal":"10.1.1.1"
+                    }
+                 ],
+                 "memoryGB":1,
+                 "memoryMB":1024,
+                 "partitions":[
+
+                 ],
+                 "powerState":"started",
+                 "snapshots":[
+
+                 ],
+                 "storageGB":17
+              },
+              "groupId":"086ac1dfe0b6411989e8d1b77c4065f0",
+              "id":"test-server",
+              "ipaddress":"10.120.45.23",
+              "isTemplate":false,
+              "links":[
+                 {
+                    "href":"/v2/servers/wfad/test-server",
+                    "id":"test-server",
+                    "rel":"self",
+                    "verbs":[
+                       "GET",
+                       "PATCH",
+                       "DELETE"
+                    ]
+                 },
+                 {
+                    "href":"/v2/groups/wfad/086ac1dfe0b6411989e8d1b77c4065f0",
+                    "id":"086ac1dfe0b6411989e8d1b77c4065f0",
+                    "rel":"group"
+                 },
+                 {
+                    "href":"/v2/accounts/wfad",
+                    "id":"wfad",
+                    "rel":"account"
+                 },
+                 {
+                    "href":"/v2/billing/wfad/serverPricing/test-server",
+                    "rel":"billing"
+                 },
+                 {
+                    "href":"/v2/servers/wfad/test-server/publicIPAddresses",
+                    "rel":"publicIPAddresses",
+                    "verbs":[
+                       "POST"
+                    ]
+                 },
+                 {
+                    "href":"/v2/servers/wfad/test-server/credentials",
+                    "rel":"credentials"
+                 },
+                 {
+                    "href":"/v2/servers/wfad/test-server/statistics",
+                    "rel":"statistics"
+                 },
+                 {
+                    "href":"/v2/servers/wfad/510ec21ae82d4dc89d28479753bf736a/upcomingScheduledActivities",
+                    "rel":"upcomingScheduledActivities"
+                 },
+                 {
+                    "href":"/v2/servers/wfad/510ec21ae82d4dc89d28479753bf736a/scheduledActivities",
+                    "rel":"scheduledActivities",
+                    "verbs":[
+                       "GET",
+                       "POST"
+                    ]
+                 },
+                 {
+                    "href":"/v2/servers/wfad/test-server/capabilities",
+                    "rel":"capabilities"
+                 },
+                 {
+                    "href":"/v2/servers/wfad/test-server/alertPolicies",
+                    "rel":"alertPolicyMappings",
+                    "verbs":[
+                       "POST"
+                    ]
+                 },
+                 {
+                    "href":"/v2/servers/wfad/test-server/antiAffinityPolicy",
+                    "rel":"antiAffinityPolicyMapping",
+                    "verbs":[
+                       "PUT",
+                       "DELETE"
+                    ]
+                 },
+                 {
+                    "href":"/v2/servers/wfad/test-server/cpuAutoscalePolicy",
+                    "rel":"cpuAutoscalePolicyMapping",
+                    "verbs":[
+                       "PUT",
+                       "DELETE"
+                    ]
+                 }
+              ],
+              "locationId":"UC1",
+              "name":"test-server",
+              "os":"ubuntu14_64Bit",
+              "osType":"Ubuntu 14 64-bit",
+              "status":"active",
+              "storageType":"standard",
+              "type":"standard"
+           }
+        ]
 '''
 
 __version__ = '${version}'
@@ -361,7 +558,7 @@ class ClcServer:
 
         elif state == 'present':
             # Changed is always set to true when provisioning new instances
-            if not p.get('template'):
+            if not p.get('template') and p.get('type') != 'bareMetal':
                 return self.module.fail_json(
                     msg='template parameter is required for new instance')
 
@@ -406,7 +603,7 @@ class ClcServer:
                 choices=[
                     'standard',
                     'hyperscale']),
-            type=dict(default='standard', choices=['standard', 'hyperscale']),
+            type=dict(default='standard', choices=['standard', 'hyperscale', 'bareMetal']),
             primary_dns=dict(default=None),
             secondary_dns=dict(default=None),
             additional_disks=dict(type='list', default=[]),
@@ -440,6 +637,14 @@ class ClcServer:
                     'UDP',
                     'ICMP']),
             public_ip_ports=dict(type='list', default=[]),
+            configuration_id=dict(default=None),
+            os_type=dict(default=None,
+                         choices=[
+                             'redHat6_64Bit',
+                             'centOS6_64Bit',
+                             'windows2012R2Standard_64Bit',
+                             'ubuntu14_64Bit'
+                         ]),
             wait=dict(type='bool', default=True))
 
         mutually_exclusive = [
@@ -462,7 +667,6 @@ class ClcServer:
         v2_api_passwd = env.get('CLC_V2_API_PASSWD', False)
         clc_alias = env.get('CLC_ACCT_ALIAS', False)
         api_url = env.get('CLC_V2_API_URL', False)
-
         if api_url:
             self.clc.defaults.ENDPOINT_URL_V2 = api_url
 
@@ -520,9 +724,12 @@ class ClcServer:
         """
         location = module.params.get('location')
         try:
-            datacenter = clc.v2.Datacenter(location)
-            return datacenter
-        except CLCException:
+            if not location:
+                account = clc.v2.Account()
+                location = account.data.get('primaryDataCenter')
+            data_center = clc.v2.Datacenter(location)
+            return data_center
+        except CLCException as ex:
             module.fail_json(
                 msg=str(
                     "Unable to find location: {0}".format(location)))
@@ -668,9 +875,10 @@ class ClcServer:
         """
         lookup_template = module.params.get('template')
         state = module.params.get('state')
+        type = module.params.get('type')
         result = None
 
-        if state == 'present':
+        if state == 'present' and type != 'bareMetal':
             try:
                 result = datacenter.Templates().Search(lookup_template)[0].id
             except CLCException:
@@ -793,7 +1001,9 @@ class ClcServer:
             'source_server_password': p.get('source_server_password'),
             'cpu_autoscale_policy_id': p.get('cpu_autoscale_policy_id'),
             'anti_affinity_policy_id': p.get('anti_affinity_policy_id'),
-            'packages': p.get('packages')
+            'packages': p.get('packages'),
+            'configuration_id': p.get('configuration_id'),
+            'os_type': p.get('os_type')
         }
 
         count = override_count if override_count else p.get('count')
@@ -1124,7 +1334,12 @@ class ClcServer:
             if state == 'started':
                 result = server.PowerOn()
             else:
-                result = server.PowerOff()
+                # Try to shut down the server and fall back to power off when unable to shut down.
+                result = server.ShutDown()
+                if result and hasattr(result, 'requests') and result.requests[0]:
+                    return result
+                else:
+                    result = server.PowerOff()
         except CLCException:
             module.fail_json(
                 msg='Unable to change power state for server {0}'.format(
@@ -1251,7 +1466,9 @@ class ClcServer:
                         'customFields': server_params.get('custom_fields'),
                         'additionalDisks': server_params.get('additional_disks'),
                         'ttl': server_params.get('ttl'),
-                        'packages': server_params.get('packages')}))
+                        'packages': server_params.get('packages'),
+                        'configurationId': server_params.get('configuration_id'),
+                        'osType': server_params.get('os_type')}))
 
             result = clc.v2.Requests(res)
         except APIFailedResponse as ex:

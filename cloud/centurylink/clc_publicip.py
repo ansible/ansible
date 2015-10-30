@@ -27,22 +27,23 @@ description:
 version_added: "2.0"
 options:
   protocol:
-    descirption:
+    description:
       - The protocol that the public IP will listen for.
     default: TCP
     choices: ['TCP', 'UDP', 'ICMP']
     required: False
   ports:
     description:
-      - A list of ports to expose.
-    required: True
+      - A list of ports to expose. This is required when state is 'present'
+    required: False
+    default: None
   server_ids:
     description:
       - A list of servers to create public ips on.
     required: True
   state:
     description:
-      - Determine wheteher to create or delete public IPs. If present module will not create a second public ip if one
+      - Determine whether to create or delete public IPs. If present module will not create a second public ip if one
         already exists.
     default: present
     choices: ['present', 'absent']
@@ -57,11 +58,12 @@ requirements:
     - python = 2.7
     - requests >= 2.5.0
     - clc-sdk
+author: "CLC Runner (@clc-runner)"
 notes:
     - To use this module, it is required to set the below environment variables which enables access to the
       Centurylink Cloud
           - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
-          - CLC_V2_API_PASSWORD, the account passwod for the centurylink cloud
+          - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
     - Alternatively, the module accepts the API token and account alias. The API token can be generated using the
       CLC account login and password via the HTTP api call @ https://api.ctl.io/v2/authentication/login
           - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login
@@ -83,8 +85,8 @@ EXAMPLES = '''
         ports:
             - 80
         server_ids:
-            - UC1ACCTSRVR01
-            - UC1ACCTSRVR02
+            - UC1TEST-SVR01
+            - UC1TEST-SVR02
         state: present
       register: clc
 
@@ -99,13 +101,30 @@ EXAMPLES = '''
     - name: Create Public IP For Servers
       clc_publicip:
         server_ids:
-            - UC1ACCTSRVR01
-            - UC1ACCTSRVR02
+            - UC1TEST-SVR01
+            - UC1TEST-SVR02
         state: absent
       register: clc
 
     - name: debug
       debug: var=clc
+'''
+
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+server_ids:
+    description: The list of server ids that are changed
+    returned: success
+    type: list
+    sample:
+        [
+            "UC1TEST-SVR01",
+            "UC1TEST-SVR02"
+        ]
 '''
 
 __version__ = '${version}'
@@ -136,7 +155,6 @@ else:
 class ClcPublicIp(object):
     clc = clc_sdk
     module = None
-    group_dict = {}
 
     def __init__(self, module):
         """
@@ -158,7 +176,6 @@ class ClcPublicIp(object):
     def process_request(self):
         """
         Process the request - Main Code Path
-        :param params: dictionary of module parameters
         :return: Returns with either an exit_json or fail_json
         """
         self._set_clc_credentials_from_env()
@@ -167,21 +184,18 @@ class ClcPublicIp(object):
         ports = params['ports']
         protocol = params['protocol']
         state = params['state']
-        requests = []
-        chagned_server_ids = []
-        changed = False
 
         if state == 'present':
-            changed, chagned_server_ids, requests = self.ensure_public_ip_present(
+            changed, changed_server_ids, requests = self.ensure_public_ip_present(
                 server_ids=server_ids, protocol=protocol, ports=ports)
         elif state == 'absent':
-            changed, chagned_server_ids, requests = self.ensure_public_ip_absent(
+            changed, changed_server_ids, requests = self.ensure_public_ip_absent(
                 server_ids=server_ids)
         else:
             return self.module.fail_json(msg="Unknown State: " + state)
         self._wait_for_requests_to_complete(requests)
         return self.module.exit_json(changed=changed,
-                                     server_ids=chagned_server_ids)
+                                     server_ids=changed_server_ids)
 
     @staticmethod
     def _define_module_argument_spec():
@@ -192,7 +206,7 @@ class ClcPublicIp(object):
         argument_spec = dict(
             server_ids=dict(type='list', required=True),
             protocol=dict(default='TCP', choices=['TCP', 'UDP', 'ICMP']),
-            ports=dict(type='list', required=True),
+            ports=dict(type='list'),
             wait=dict(type='bool', default=True),
             state=dict(default='present', choices=['present', 'absent']),
         )
@@ -265,6 +279,7 @@ class ClcPublicIp(object):
         return changed, changed_server_ids, results
 
     def _remove_publicip_from_server(self, server):
+        result = None
         try:
             for ip_address in server.PublicIPs().public_ips:
                     result = ip_address.Delete()

@@ -58,11 +58,12 @@ requirements:
     - python = 2.7
     - requests >= 2.5.0
     - clc-sdk
+author: "CLC Runner (@clc-runner)"
 notes:
     - To use this module, it is required to set the below environment variables which enables access to the
       Centurylink Cloud
           - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
-          - CLC_V2_API_PASSWORD, the account passwod for the centurylink cloud
+          - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
     - Alternatively, the module accepts the API token and account alias. The API token can be generated using the
       CLC account login and password via the HTTP api call @ https://api.ctl.io/v2/authentication/login
           - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login
@@ -108,6 +109,110 @@ EXAMPLES = '''
     - name: debug
       debug: var=clc
 
+'''
+
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+group:
+    description: The group information
+    returned: success
+    type: dict
+    sample:
+        {
+           "changeInfo":{
+              "createdBy":"service.wfad",
+              "createdDate":"2015-07-29T18:52:47Z",
+              "modifiedBy":"service.wfad",
+              "modifiedDate":"2015-07-29T18:52:47Z"
+           },
+           "customFields":[
+
+           ],
+           "description":"test group",
+           "groups":[
+
+           ],
+           "id":"bb5f12a3c6044ae4ad0a03e73ae12cd1",
+           "links":[
+              {
+                 "href":"/v2/groups/wfad",
+                 "rel":"createGroup",
+                 "verbs":[
+                    "POST"
+                 ]
+              },
+              {
+                 "href":"/v2/servers/wfad",
+                 "rel":"createServer",
+                 "verbs":[
+                    "POST"
+                 ]
+              },
+              {
+                 "href":"/v2/groups/wfad/bb5f12a3c6044ae4ad0a03e73ae12cd1",
+                 "rel":"self",
+                 "verbs":[
+                    "GET",
+                    "PATCH",
+                    "DELETE"
+                 ]
+              },
+              {
+                 "href":"/v2/groups/wfad/086ac1dfe0b6411989e8d1b77c4065f0",
+                 "id":"086ac1dfe0b6411989e8d1b77c4065f0",
+                 "rel":"parentGroup"
+              },
+              {
+                 "href":"/v2/groups/wfad/bb5f12a3c6044ae4ad0a03e73ae12cd1/defaults",
+                 "rel":"defaults",
+                 "verbs":[
+                    "GET",
+                    "POST"
+                 ]
+              },
+              {
+                 "href":"/v2/groups/wfad/bb5f12a3c6044ae4ad0a03e73ae12cd1/billing",
+                 "rel":"billing"
+              },
+              {
+                 "href":"/v2/groups/wfad/bb5f12a3c6044ae4ad0a03e73ae12cd1/archive",
+                 "rel":"archiveGroupAction"
+              },
+              {
+                 "href":"/v2/groups/wfad/bb5f12a3c6044ae4ad0a03e73ae12cd1/statistics",
+                 "rel":"statistics"
+              },
+              {
+                 "href":"/v2/groups/wfad/bb5f12a3c6044ae4ad0a03e73ae12cd1/upcomingScheduledActivities",
+                 "rel":"upcomingScheduledActivities"
+              },
+              {
+                 "href":"/v2/groups/wfad/bb5f12a3c6044ae4ad0a03e73ae12cd1/horizontalAutoscalePolicy",
+                 "rel":"horizontalAutoscalePolicyMapping",
+                 "verbs":[
+                    "GET",
+                    "PUT",
+                    "DELETE"
+                 ]
+              },
+              {
+                 "href":"/v2/groups/wfad/bb5f12a3c6044ae4ad0a03e73ae12cd1/scheduledActivities",
+                 "rel":"scheduledActivities",
+                 "verbs":[
+                    "GET",
+                    "POST"
+                 ]
+              }
+           ],
+           "locationId":"UC1",
+           "name":"test group",
+           "status":"active",
+           "type":"default"
+        }
 '''
 
 __version__ = '${version}'
@@ -178,13 +283,16 @@ class ClcGroup(object):
         if state == "absent":
             changed, group, requests = self._ensure_group_is_absent(
                 group_name=group_name, parent_name=parent_name)
-
+            if requests:
+                self._wait_for_requests_to_complete(requests)
         else:
-            changed, group, requests = self._ensure_group_is_present(
+            changed, group = self._ensure_group_is_present(
                 group_name=group_name, parent_name=parent_name, group_description=group_description)
-        if requests:
-            self._wait_for_requests_to_complete(requests)
-        self.module.exit_json(changed=changed, group=group_name)
+        try:
+            group = group.data
+        except AttributeError:
+            group = group_name
+        self.module.exit_json(changed=changed, group=group)
 
     @staticmethod
     def _define_module_argument_spec():
@@ -238,14 +346,16 @@ class ClcGroup(object):
         :return: changed, group
         """
         changed = False
-        requests = []
+        group = []
+        results = []
 
         if self._group_exists(group_name=group_name, parent_name=parent_name):
             if not self.module.check_mode:
-                request = self._delete_group(group_name)
-                requests.append(request)
+                group.append(group_name)
+                result = self._delete_group(group_name)
+                results.append(result)
             changed = True
-        return changed, group_name, requests
+        return changed, group, results
 
     def _delete_group(self, group_name):
         """
@@ -281,6 +391,7 @@ class ClcGroup(object):
         parent = parent_name if parent_name is not None else self.root_group.name
         description = group_description
         changed = False
+        group = group_name
 
         parent_exists = self._group_exists(group_name=parent, parent_name=None)
         child_exists = self._group_exists(
@@ -292,8 +403,8 @@ class ClcGroup(object):
             changed = False
         elif parent_exists and not child_exists:
             if not self.module.check_mode:
-                self._create_group(
-                    group=group_name,
+                group = self._create_group(
+                    group=group,
                     parent=parent,
                     description=description)
             changed = True
@@ -303,7 +414,7 @@ class ClcGroup(object):
                 parent +
                 " does not exist")
 
-        return changed, group_name, None
+        return changed, group
 
     def _create_group(self, group, parent, description):
         """
@@ -319,8 +430,7 @@ class ClcGroup(object):
             response = parent.Create(name=group, description=description)
         except CLCException, ex:
             self.module.fail_json(msg='Failed to create group :{0}. {1}'.format(
-                    group, ex.response_text
-                ))
+                group, ex.response_text))
         return response
 
     def _group_exists(self, group_name, parent_name):

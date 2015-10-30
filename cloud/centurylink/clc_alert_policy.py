@@ -76,6 +76,7 @@ requirements:
     - python = 2.7
     - requests >= 2.5.0
     - clc-sdk
+author: "CLC Runner (@clc-runner)"
 notes:
     - To use this module, it is required to set the below environment variables which enables access to the
       Centurylink Cloud
@@ -128,6 +129,52 @@ EXAMPLES = '''
 
     - name: debug
       debug: var=policy
+'''
+
+RETURN = '''
+changed:
+    description: A flag indicating if any change was made or not
+    returned: success
+    type: boolean
+    sample: True
+policy:
+    description: The alert policy information
+    returned: success
+    type: dict
+    sample:
+        {
+            "actions": [
+                {
+                "action": "email",
+                "settings": {
+                    "recipients": [
+                        "user1@domain.com",
+                        "user1@domain.com"
+                    ]
+                }
+                }
+            ],
+            "id": "ba54ac54a60d4a4f1ed6d48c1ce240a7",
+            "links": [
+                {
+                "href": "/v2/alertPolicies/alias/ba54ac54a60d4a4fb1d6d48c1ce240a7",
+                "rel": "self",
+                "verbs": [
+                    "GET",
+                    "DELETE",
+                    "PUT"
+                ]
+                }
+            ],
+            "name": "test_alert",
+            "triggers": [
+                {
+                "duration": "00:05:00",
+                "metric": "disk",
+                "threshold": 80.0
+                }
+            ]
+        }
 '''
 
 __version__ = '${version}'
