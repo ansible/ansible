@@ -88,6 +88,12 @@ And here's an example showing some specific version downloads from multiple sour
     - src: https://github.com/bennojoy/nginx
       version: master
       name: nginx_role
+
+    # from github, specifying a subdirectory (ansible/role) that
+    # contains the role
+    - src: https://github.com/auser/test-project
+      name: test
+      src_path: ansible/role
     
     # from a webserver, where the role is packaged in a tar.gz
     - src: https://some.webserver.example.com/files/master.tar.gz
