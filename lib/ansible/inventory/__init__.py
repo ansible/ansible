@@ -189,7 +189,8 @@ class Inventory(object):
             return list(itertools.chain(*map(cls.split_host_pattern, pattern)))
 
         if ';' in pattern:
-            display.deprecated("Use ',' instead of ';' to separate host patterns")
+            patterns = re.split('\s*;\s*', pattern)
+            display.deprecated("Use ',' or ':' instead of ';' to separate host patterns")
 
         # If it's got commas in it, we'll treat it as a straightforward
         # comma-separated list of patterns.
@@ -199,7 +200,6 @@ class Inventory(object):
 
         # If it doesn't, it could still be a single pattern. This accounts for
         # non-separator uses of colons: IPv6 addresses and [x:y] host ranges.
-
         else:
             (base, port) = parse_address(pattern, allow_ranges=True)
             if base:
@@ -218,9 +218,6 @@ class Inventory(object):
                         )+              # occurring once or more
                     ''', pattern, re.X
                 )
-
-                if len(patterns) > 1:
-                    display.deprecated("Use ',' instead of ':' to separate host patterns")
 
         return [p.strip() for p in patterns]
 
