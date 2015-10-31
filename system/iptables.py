@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+#
 # (c) 2015, Linus Unnebäck <linus@folkdatorn.se>
 #
 # This file is part of Ansible
@@ -226,8 +226,8 @@ def append_param(rule, param, flag, is_list):
 
 def append_comm(rule, param):
     if param:
-    	    rule.extend(['-m'])
-    	    rule.extend(['comment'])
+        rule.extend(['-m'])
+        rule.extend(['comment'])
 
 
 def construct_rule(params):
@@ -295,7 +295,7 @@ def main():
             source_port=dict(required=False, default=None, type='str'),
             destination_port=dict(required=False, default=None, type='str'),
             to_ports=dict(required=False, default=None, type='str'),
-	    comment=dict(required=False, default=None, type='str'),
+            comment=dict(required=False, default=None, type='str'),
         ),
     )
     args = dict(
