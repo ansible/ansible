@@ -288,6 +288,8 @@ Minor changes:
 
 * Many more tests. The new API makes things more testable and we took advantage of it.
 * big_ip modules now support turning off ssl certificate validation (use only for self-signed certificates).
+* Use "pattern1:pattern2" to combine host matching patterns. The undocumented
+use of semicolons or commas to combine patterns is no longer supported.
 * Use ``hosts: groupname[x:y]`` to select a subset of hosts in a group; the
 ``[x-y]`` range syntax is no longer supported. Note that ``[0:1]`` matches
 two hosts, i.e. the range is inclusive of its endpoints.
