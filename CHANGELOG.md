@@ -3,37 +3,33 @@ Ansible Changes By Release
 
 ## 2.0 "Over the Hills and Far Away" - ACTIVE DEVELOPMENT
 
-Major Changes:
+###Major Changes:
 
+* Releases are now named after Led Zeppelin songs, 1.9 will be the last Van Halen named release.
 * The new block/rescue/always directives allow for making task blocks and exception-like semantics
 * New strategy plugins (e.g. `free`) allow control over the flow of task execution per play. The default (`linear`) will be the same as before.
 * Improved error handling, with more detailed parser messages. General exception handling and display has been revamped.
-* Task includes are now evaluated during execution, allowing more dynamic includes and options.
-* "with\_<lookup>" loops can now be used with includes since they are dynamic.
-* Callback, connection and lookup plugin APIs have changed. Some projects will require modification to work with the new versions.
+* Task includes are now evaluated during execution, allowing more dynamic includes and options. Play includes are unchanged both still use the `include` directive.
+* "with\_<lookup>" loops can now be used with task includes since they are dynamic.
+* Callback, connection, cache and lookup plugin APIs have changed. Existing plugins might require modification to work with the new versions.
 * Callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg.
 * Many API changes. Those integrating directly with Ansible's API will encounter breaking changes, but the new API is much easier to use and test.
-* Settings are now more inheritable; what you set at play, block or role will be automatically inherited by the contained. This allows for new features to automatically be settable at all levels, previously we had to manually code this.
+* Settings are now more inheritable; what you set at play, block or role will be automatically inherited by the contained.
+  This allows for new features to automatically be settable at all levels, previously we had to manually code this.
 * Template code now retains types for bools and numbers instead of turning them into strings.
- If you need the old behaviour, quote the value and it will get passed around as a string
+  If you need the old behaviour, quote the value and it will get passed around as a string
+* Empty variables and variables set to null in yaml will no longer be converted to empty strings.  They will retain the value of `None`.
+  To go back to the old behaviour, you can override the `null_representation` setting to an empty string in your config file or
+  by setting the `ANSIBLE_NULL_REPRESENTATION` environment variable.
 * Added `meta: refresh_inventory` to force rereading the inventory in a play.
-* Vars are now settable at play, block, role and task level.
-* Empty variables and variables set to null in yaml will no longer be converted to empty strings.
-They will retain the value of `None`. To go back to the old behaviour, you can override
-the `null_representation` setting to an empty string in your config file or by setting the
-`ANSIBLE_NULL_REPRESENTATION` environment variable.
-* The `ansible_ssh_common_args` inventory variable now provides a
-  convenient way to configure a per-group or per-host ssh ProxyCommand
-  or set any other ssh options. Also, `ansible_ssh_extra_args` can be
-  used to set options that are accepted only by ssh (not sftp or scp,
-  which have their own analogous settings).
-* Use `pattern1,pattern2` to combine host matching patterns. The use of
-  ':' as a separator is deprecated (accepted with a warning) because it
-  conflicts with IPv6 addresses. The undocumented use of ';' as a
-  separator is no longer supported.
-* Backslashes used when specifying parameters in jinja2 expressions in YAML
-dicts sometimes needed to be escaped twice. This has been fixed so that
-escaping once works. Here's an example of how playbooks need to be modified:
+* Now when you delegate an action that returns ansible_facts, these facts will be applied to the delegated host, unlike before when they were applied to the current host.
+  This re-executes inventory scripts, but does not force them to ignore any cache they might use.
+* Vars are now settable at play, block, role and task level with the `vars` directive and scoped to the tasks contained.
+* New ssh configuration variables(`ansible_ssh_common_args`, `ansible_ssh_extra_args`) can be used to configure a
+  per-group or per-host ssh ProxyCommand or set any other ssh options.
+  `ansible_ssh_extra_args` is used to set options that are accepted only by ssh (not sftp or scp, which have their own analogous settings).
+* Backslashes used when specifying parameters in jinja2 expressions in YAML dicts sometimes needed to be escaped twice.
+  This has been fixed so that escaping once works. Here's an example of how playbooks need to be modified:
 
     ```
     # Syntax in 1.9.x
@@ -74,9 +70,12 @@ newline being stripped you can change your playbook like this:
     # Output
     "msg": "Testing some things"
     ```
+
+###Plugins
+
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
 
-Deprecated Modules (new ones in parens):
+####Deprecated Modules (new ones in parens):
 
 * ec2_ami_search (ec2_ami_find)
 * quantum_network (os_network)
@@ -87,7 +86,7 @@ Deprecated Modules (new ones in parens):
 * quantum_router_gateway (os_router)
 * quantum_router_interface (os_router)
 
-New Modules:
+####New Modules:
 
 * amazon: ec2_ami_copy
 * amazon: ec2_ami_find
@@ -260,7 +259,7 @@ New Modules:
 * zabbix_screen
 * znode
 
-New Inventory scripts:
+####New Inventory scripts:
 
 * cloudstack
 * fleetctl
@@ -269,44 +268,45 @@ New Inventory scripts:
 * proxmox
 * serf
 
-New Lookups:
+####New Lookups:
 
 * credstash
 * hashi_vault
 * ini
 * shelvefile
 
-New filters:
+####New Filters:
 
 * combine
 
-New Connection Methods:
+####New Connection:
 
-* Added a connection plugin for talking to docker containers on the ansible controller machine without using ssh.
+* docker: for talking to docker containers on the ansible controller machine without using ssh.
 
-Minor changes:
+###Minor changes:
 
 * Many more tests. The new API makes things more testable and we took advantage of it.
 * big_ip modules now support turning off ssl certificate validation (use only for self-signed certificates).
-* Use "pattern1:pattern2" to combine host matching patterns. The undocumented
-use of semicolons or commas to combine patterns is no longer supported.
-* Use ``hosts: groupname[x:y]`` to select a subset of hosts in a group; the
-``[x-y]`` range syntax is no longer supported. Note that ``[0:1]`` matches
-two hosts, i.e. the range is inclusive of its endpoints.
-* Now when you delegate an action that returns ansible_facts, these facts will be applied to the delegated host, unlike before when they were applied to the current host.
 * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support.
 * synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting.
 * Play output is now dynamically sized to terminal with a minimum of 80 coluumns (old default).
 * vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron).
 * Support for OpenBSD's 'doas' privilege escalation method.
 * Most vault operations can now be done over multilple files.
-* ansible-vault encrypt/decrypt read from stdin if no other input file is given,
-and can write to a given ``--output file`` (including stdout, '-'). This lets
-you avoid ever writing sensitive plaintext to disk.
+* ansible-vault encrypt/decrypt read from stdin if no other input file is given, and can write to a given ``--output file`` (including stdout, '-').
+  This lets you avoid ever writing sensitive plaintext to disk.
 * ansible-vault rekey accepts the --new-vault-password-file option.
+* ansible-vault now preserves file permissions on edit and rekey and defaults to restrictive permissions for other options.
 * Configuration items defined as paths (local only) now all support shell style interpolations.
 * Many fixes and new options added to modules, too many to list here.
 * Now you can see task file and line number when using verbosity of 3 or above.
+* The ``[x-y]`` host range syntax is no longer supported. Note that ``[0:1]`` matches two hosts, i.e. the range is inclusive of its endpoints.
+* We now recommend the Use `pattern1,pattern2` to combine host matching patterns.
+* The use of ':' as a separator conflicts with IPv6 addresses and host ranges. It will be deprecated in the future.
+* The undocumented use of ';' as a separator is now deprecated.
+* modules and callbacks have been extended to support no_log to avoid data disclosure.
+* new managed_syslog option has been added to control output to syslog on managed machines, no_log supercsedes this settings.
+* Lookup, vars and action plugin pathing has been normalized, all now follow the same sequence to find relative files.
 
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 
