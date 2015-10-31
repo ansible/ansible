@@ -103,10 +103,13 @@ import sys
 def do_ini(module, filename, section=None, option=None, value=None, state='present', backup=False):
 
 
-    with open(filename, 'r') as ini_file:
+    ini_file = open(filename, 'r')
+    try:
         ini_lines = ini_file.readlines()
         # append a fake section line to simplify the logic
         ini_lines.append('[')
+    finally:
+        ini_file.close()
 
     within_section = not section
     section_start = 0
@@ -168,8 +171,11 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
     if changed and not module.check_mode:
         if backup:
             module.backup_local(filename)
-        with open(filename, 'w') as ini_file:
+        ini_file = open(filename, 'w')
+        try:
             ini_file.writelines(ini_lines)
+        finally:
+            ini_file.close()
 
     return changed
 
