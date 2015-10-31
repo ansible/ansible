@@ -86,6 +86,9 @@ class VaultCLI(CLI):
         super(VaultCLI, self).run()
         loader = DataLoader()
 
+        # set default restrictive umask
+        old_umask = os.umask(0o077)
+
         if self.options.vault_password_file:
             # read vault_pass from a file
             self.vault_pass = CLI.read_vault_password_file(self.options.vault_password_file, loader)
@@ -107,6 +110,9 @@ class VaultCLI(CLI):
         self.editor = VaultEditor(self.vault_pass)
 
         self.execute()
+
+        # and restore umask
+        os.umask(old_umask)
 
     def execute_encrypt(self):
 
