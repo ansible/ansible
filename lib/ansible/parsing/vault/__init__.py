@@ -221,8 +221,6 @@ class VaultEditor:
         self.vault = VaultLib(password)
 
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
-        # make sure the umask is set to a sane value
-        old_umask = os.umask(0o077)
 
         # Create a tempfile
         _, tmp_path = tempfile.mkstemp()
@@ -245,9 +243,6 @@ class VaultEditor:
 
         # shuffle tmp file into place
         self.shuffle_files(tmp_path, filename)
-
-        # and restore umask
-        os.umask(old_umask)
 
     def encrypt_file(self, filename, output_file=None):
 
@@ -303,12 +298,18 @@ class VaultEditor:
 
         check_prereqs()
 
+        prev = os.stat(filename)
         ciphertext = self.read_data(filename)
         plaintext = self.vault.decrypt(ciphertext)
 
         new_vault = VaultLib(new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
+
         self.write_data(new_ciphertext, filename)
+
+        # preserve permitions
+        os.chmod(filename, prev.st_mode)
+        os.chown(filename, prev.st_uid, prev.st_gid)
 
     def read_data(self, filename):
         try:
@@ -333,10 +334,18 @@ class VaultEditor:
                 fh.write(bytes)
 
     def shuffle_files(self, src, dest):
+        prev = None
         # overwrite dest with src
         if os.path.isfile(dest):
+            prev = os.stat(dest)
             os.remove(dest)
         shutil.move(src, dest)
+
+        # reset permissions if needed
+        if prev is not None:
+            #TODO: selinux, ACLs, xattr?
+            os.chmod(dest, prev.st_mode)
+            os.chown(dest, prev.st_uid, prev.st_gid)
 
     def _editor_shell_command(self, filename):
         EDITOR = os.environ.get('EDITOR','vim')
