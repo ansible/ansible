@@ -36,10 +36,13 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 ``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
-When you work with dictionaries note that you should avoid keys which are valid attributes for a dictionary in Python.
-As a rule of thump, avoid all key names that start and end with two underscores for example ``__do_not_use__``.
+When you work with more complex data types like dicts and sets note that you
+should avoid keys which are valid attributes for these data types in Python.
+As a rule of thump, avoid all key names that start and end with two underscores
+for example ``__do_not_use__``.
 Also avoid any of the following words:
-``clear``, ``copy``, ``fromkeys``, ``get``, ``has_key``, ``items``, ``iteritems``, ``iterkeys``, ``itervalues``, ``keys``, ``pop``, ``popitem``, ``setdefault``, ``update``, ``values``, ``viewitems``, ``viewkeys``, ``viewvalues``.
+``add``, ``clear``, ``copy``, ``difference``, ``difference_update``, ``discard``, ``fromkeys``, ``get``, ``has_key``, ``intersection``, ``intersection_update``, ``isdisjoint``, ``issubset``, ``issuperset``, ``items``, ``iteritems``, ``iterkeys``, ``itervalues``, ``keys``, ``pop``, ``popitem``, ``remove``, ``setdefault``, ``symmetric_difference``, ``symmetric_difference_update``, ``union``, ``update``, ``values``, ``viewitems``, ``viewkeys``, ``viewvalues``.
+.
 
 .. _variables_in_inventory:
 
