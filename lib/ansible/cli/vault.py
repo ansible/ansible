@@ -95,9 +95,9 @@ class VaultCLI(CLI):
         else:
             newpass = False
             rekey = False
-            if self.options.new_vault_password_file:
-                newpass = self.action in ['create', 'rekey', 'encrypt']
-                rekey = self.action == 'rekey'
+            if not self.options.new_vault_password_file:
+                newpass = (self.action in ['create', 'rekey', 'encrypt'])
+                rekey = (self.action == 'rekey')
             self.vault_pass, self.new_vault_pass = self.ask_vault_passwords(ask_new_vault_pass=newpass, rekey=rekey)
 
         if self.options.new_vault_password_file:
