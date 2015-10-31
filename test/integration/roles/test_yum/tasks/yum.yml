@@ -30,7 +30,7 @@
 
 - name: verify uninstallation of sos
   assert:
-    that: 
+    that:
         - "yum_result.rc == 0"
         - "rpm_result.rc == 1"
 
@@ -41,7 +41,7 @@
 
 - name: verify no change on re-uninstall
   assert:
-    that: 
+    that:
         - "not yum_result.changed"
 
 # INSTALL
@@ -59,7 +59,7 @@
 
 - name: verify installation of sos
   assert:
-    that: 
+    that:
         - "yum_result.rc == 0"
         - "yum_result.changed"
         - "rpm_result.rc == 0"
@@ -67,7 +67,6 @@
 - name: verify yum module outputs
   assert:
     that:
-        - "'invocation' in yum_result"
         - "'changed' in yum_result"
         - "'msg' in yum_result"
         - "'rc' in yum_result"
@@ -80,9 +79,9 @@
 
 - name: verify no change on second install
   assert:
-    that: 
+    that:
         - "not yum_result.changed"
- 
+
 # Multiple packages
 - name: uninstall sos and sharutils
   yum: name=sos,sharutils state=removed
