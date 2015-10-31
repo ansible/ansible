@@ -162,7 +162,6 @@
 - name: assert the task with variable module name ran
   assert:
     that:
-      - result.invocation.module_name == "debug"
       - result.msg == "this should be debugged"
 
 - name: test conditional includes
