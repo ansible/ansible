@@ -68,7 +68,7 @@ options:
     choices: [ "present", "absent", "dump", "import" ]
   collation:
     description:
-      - Collation mode
+      - Collation mode (sorting). This only applies to new table/databases and does not update existing ones, this is a limitation of MySQL.
     required: false
     default: null
   encoding:
