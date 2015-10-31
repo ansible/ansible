@@ -112,7 +112,6 @@ class CLI(object):
 
         vault_pass = None
         new_vault_pass = None
-
         try:
             if rekey or not ask_new_vault_pass:
                 vault_pass = getpass.getpass(prompt="Vault password: ")
@@ -251,12 +250,10 @@ class CLI(object):
         if vault_opts:
             parser.add_option('--ask-vault-pass', default=False, dest='ask_vault_pass', action='store_true',
                 help='ask for vault password')
-            parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE,
-                dest='vault_password_file', help="vault password file", action="callback",
-                callback=CLI.expand_tilde, type=str)
-            parser.add_option('--new-vault-password-file',
-                dest='new_vault_password_file', help="new vault password file for rekey", action="callback",
-                callback=CLI.expand_tilde, type=str)
+            parser.add_option('--vault-password-file', default=C.DEFAULT_VAULT_PASSWORD_FILE, dest='vault_password_file',
+                help="vault password file", action="callback", callback=CLI.expand_tilde, type=str)
+            parser.add_option('--new-vault-password-file', dest='new_vault_password_file',
+                help="new vault password file for rekey", action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--output', default=None, dest='output_file',
                 help='output file name for encrypt or decrypt; use - for stdout')
 
