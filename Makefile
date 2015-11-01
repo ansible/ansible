@@ -58,7 +58,7 @@ DEBUILD_BIN ?= debuild
 DEBUILD_OPTS = --source-option="-I"
 DPUT_BIN ?= dput
 DPUT_OPTS ?=
-DEB_DATE := $(shell date +"%a, %d %b %Y %T %z")
+DEB_DATE := $(LC_TIME=C shell date +"%a, %d %b %Y %T %z")
 ifeq ($(OFFICIAL),yes)
     DEB_RELEASE = $(RELEASE)ppa
     # Sign OFFICIAL builds using 'DEBSIGN_KEYID'
