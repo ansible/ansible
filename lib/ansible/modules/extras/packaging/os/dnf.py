@@ -241,9 +241,6 @@ def _mark_package_install(module, base, pkg_spec):
 
 
 def ensure(module, base, state, names):
-    if not util.am_i_root():
-        module.fail_json(msg="This command has to be run under the root user.")
-
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
@@ -337,12 +334,20 @@ def main():
         mutually_exclusive=[['name', 'list']],
         supports_check_mode=True)
     params = module.params
-    base = _base(
-        module, params['conf_file'], params['disable_gpg_check'],
-        params['disablerepo'], params['enablerepo'])
     if params['list']:
+        base = _base(
+            module, params['conf_file'], params['disable_gpg_check'],
+            params['disablerepo'], params['enablerepo'])
         list_items(module, base, params['list'])
     else:
+        # Note: base takes a long time to run so we want to check for failure
+        # before running it.
+        if not util.am_i_root():
+            module.fail_json(msg="This command has to be run under the root user.")
+        base = _base(
+            module, params['conf_file'], params['disable_gpg_check'],
+            params['disablerepo'], params['enablerepo'])
+
         ensure(module, base, params['state'], params['name'])
 
 
