@@ -133,6 +133,7 @@ class Facts(object):
                  { 'path' : '/usr/bin/emerge',      'name' : 'portage' },
                  { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
                  { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
+                 { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
     ]
 
     def __init__(self, load_on_init=True):
