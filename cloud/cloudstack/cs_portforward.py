@@ -135,7 +135,6 @@ EXAMPLES = '''
     public_port: 53
     private_port: 53
     protocol: udp
-    open_firewall: true
 
 # remove ssh port forwarding
 - local_action:
