@@ -122,6 +122,7 @@ class Templar:
         self._filters             = None
         self._tests               = None
         self._available_variables = variables
+        self._cached_result       = {}
 
         if loader:
             self._basedir = loader.get_basedir()
@@ -298,18 +299,24 @@ class Templar:
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
-                    result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                    # Using a cache in order to prevent template calls with already templated variables
+                    cache_key = variable + str(preserve_trailing_newlines) + str(escape_backslashes) + str(overrides)
+                    try:
+                        result = self._cached_result[cache_key]
+                    except KeyError:
+                        result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        if convert_data:
+                            # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                            if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                              result.startswith("[") or result in ("True", "False"):
+                                eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                                if eval_results[1] is None:
+                                    result = eval_results[0]
+                                else:
+                                    # FIXME: if the safe_eval raised an error, should we do something with it?
+                                    pass
+                        self._cached_result[cache_key] = result
 
-                    if convert_data:
-                        # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                        if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                           result.startswith("[") or result in ("True", "False"):
-                            eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
-                            if eval_results[1] is None:
-                                result = eval_results[0]
-                            else:
-                                # FIXME: if the safe_eval raised an error, should we do something with it?
-                                pass
 
                 #return self._clean_data(result)
                 return result
