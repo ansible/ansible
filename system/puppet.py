@@ -45,9 +45,9 @@ options:
     default: None
   show_diff:
     description:
-      - Should puppet return diffs of changes applied. Defaults to yes, to match puppet agent --test. Change to no to avoid leaking secret changes.
+      - Should puppet return diffs of changes applied. Defaults to off to avoid leaking secret changes by default.
     required: false
-    default: yes
+    default: no
     choices: [ "yes", "no" ]
   facts:
     description:
@@ -109,7 +109,7 @@ def main():
             puppetmaster=dict(required=False, default=None),
             manifest=dict(required=False, default=None),
             show_diff=dict(
-                default=True, aliases=['show-diff'], type='bool'),
+                default=False, aliases=['show-diff'], type='bool'),
             facts=dict(default=None),
             facter_basename=dict(default='ansible'),
             environment=dict(required=False, default=None),
