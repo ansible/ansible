@@ -36,9 +36,25 @@ Variable names should be letters, numbers, and underscores.  Variables should al
 
 ``foo-port``, ``foo port``, ``foo.port`` and ``12`` are not valid variable names.
 
-When you work with more complex data types like dictionaries and sets note that you should avoid keys which are valid attributes for a data type in Python.
-As a rule of thump, avoid all key names that start and end with two underscores for example ``__do_not_use__``.
-Also avoid any of the following words:
+YAML also supports dictionaries which map keys to values.  For instance::
+
+  foo:
+    field1: one
+    field2: two
+
+You can then reference a specific field in the dictionary using either bracket
+notation or dot notation::
+
+  foo['field1']
+  foo.field1
+
+These will both reference the same value ("one").  However, if you choose to
+use dot notation be aware that some keys can cause problems because they
+collide with attributes and methods of python dictionaries.  You should use
+bracket notation instead of dot notation if you use keys which start and end
+with two underscores (Those are reserved for special meanings in python) or
+are any of the known public attributes:
+
 ``add``, ``append``, ``as_integer_ratio``, ``bit_length``, ``capitalize``, ``center``, ``clear``, ``conjugate``, ``copy``, ``count``, ``decode``, ``denominator``, ``difference``, ``difference_update``, ``discard``, ``encode``, ``endswith``, ``expandtabs``, ``extend``, ``find``, ``format``, ``fromhex``, ``fromkeys``, ``get``, ``has_key``, ``hex``, ``imag``, ``index``, ``insert``, ``intersection``, ``intersection_update``, ``isalnum``, ``isalpha``, ``isdecimal``, ``isdigit``, ``isdisjoint``, ``is_integer``, ``islower``, ``isnumeric``, ``isspace``, ``issubset``, ``issuperset``, ``istitle``, ``isupper``, ``items``, ``iteritems``, ``iterkeys``, ``itervalues``, ``join``, ``keys``, ``ljust``, ``lower``, ``lstrip``, ``numerator``, ``partition``, ``pop``, ``popitem``, ``real``, ``remove``, ``replace``, ``reverse``, ``rfind``, ``rindex``, ``rjust``, ``rpartition``, ``rsplit``, ``rstrip``, ``setdefault``, ``sort``, ``split``, ``splitlines``, ``startswith``, ``strip``, ``swapcase``, ``symmetric_difference``, ``symmetric_difference_update``, ``title``, ``translate``, ``union``, ``update``, ``upper``, ``values``, ``viewitems``, ``viewkeys``, ``viewvalues``, ``zfill``.
 
 .. _variables_in_inventory:
