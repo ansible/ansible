@@ -130,11 +130,11 @@ class AnsibleCloudStack(object):
 
             # Optionally limit by a list of keys
             if only_keys and key not in only_keys:
-                continue;
+                continue
 
             # Skip None values
             if value is None:
-                continue;
+                continue
 
             if key in current_dict:
 
