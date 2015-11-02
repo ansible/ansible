@@ -260,6 +260,8 @@ class Templar:
 
         assert isinstance(variables, dict)
         self._available_variables = variables.copy()
+        # Clearing cache
+        self._cached_result       = {}
 
     def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True):
         '''
