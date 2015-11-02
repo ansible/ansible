@@ -73,12 +73,10 @@ if __name__ == '__main__':
             from ansible.cli.vault import VaultCLI as mycli
         elif me == 'ansible-galaxy':
             from ansible.cli.galaxy import GalaxyCLI as mycli
-
-        try:
-            cli = mycli(sys.argv, display=display)
-        except NameError:
+        else:
             raise AnsibleError("Ansible sub-program not implemented: %s" % me)
 
+        cli = mycli(sys.argv, display=display)
         cli.parse()
         sys.exit(cli.run())
 
