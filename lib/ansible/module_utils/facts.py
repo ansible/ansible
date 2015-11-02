@@ -136,6 +136,7 @@ class Facts(object):
                  { 'path' : '/usr/sbin/pkgadd',     'name' : 'svr4pkg' },
                  { 'path' : '/usr/bin/pkg',         'name' : 'pkg' },
                  { 'path' : '/usr/bin/xbps-install','name' : 'xbps' },
+                 { 'path' : '/usr/local/sbin/pkg',  'name' : 'pkgng' },
     ]
 
     def __init__(self, load_on_init=True):
@@ -150,6 +151,7 @@ class Facts(object):
             self.get_selinux_facts()
             self.get_fips_facts()
             self.get_pkg_mgr_facts()
+            self.get_service_mgr_facts()
             self.get_lsb_facts()
             self.get_date_time_facts()
             self.get_user_facts()
@@ -534,6 +536,58 @@ class Facts(object):
         if self.facts['system'] == 'OpenBSD':
                 self.facts['pkg_mgr'] = 'openbsd_pkg'
 
+    def get_service_mgr_facts(self):
+        #TODO: detect more custom init setups like bootscripts, dmd, s6, etc
+        # also other OSs other than linux might need to check across several possible candidates
+
+        # try various forms of querying pid 1
+        proc_1 = get_file_content('/proc/1/comm')
+        if proc_1 is None:
+            rc, proc_1, err = module.run_command("ps -p 1 -o comm|tail -n 1", use_unsafe_shell=True)
+
+        if proc_1 in ['init', '/sbin/init']:
+            # many systems return init, so this cannot be trusted
+            proc_1 = None
+
+        # if not init/None it should be an identifiable or custom init, so we are done!
+        if proc_1 is not None:
+            self.facts['service_mgr'] = proc_1
+
+        # start with the easy ones
+        elif  self.facts['distribution'] == 'MacOSX':
+            #FIXME: find way to query executable, version matching is not ideal
+            from distutils.version import LooseVersion
+            if LooseVersion(platform.mac_ver()[0]) >= LooseVersion('10.4'):
+                self.facts['service_mgr'] = 'launchd'
+            else:
+                self.facts['service_mgr'] = 'systemstarter'
+        elif self.facts['system'].endswith('BSD') or self.facts['system'] in ['Bitrig', 'DragonFly']:
+            proc_1 = check_init()
+            if proc_1 is not None:
+                self.facts['service_mgr'] = proc_1
+            else:
+                #FIXME: we might want to break out to individual BSDs
+                self.facts['service_mgr'] = 'bsdinit'
+        elif self.facts['system'] == 'AIX':
+            self.facts['service_mgr'] = 'src'
+        elif self.facts['system'] == 'SunOS':
+            #FIXME: smf?
+            self.facts['service_mgr'] = 'svcs'
+        elif self.facts['system'] == 'Linux':
+
+            if self._check_systemd():
+                self.facts['service_mgr'] = 'systemd'
+            elif module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
+                self.facts['service_mgr'] = 'upstart'
+            elif module.get_bin_path('rc-service'):
+                self.facts['service_mgr'] = 'openrc'
+            elif os.path.exists('/etc/init.d/'):
+                self.facts['service_mgr'] = 'sysvinit'
+
+        if not self.facts.get('service_mgr', False):
+            # if we cannot detect, fallback to generic 'service'
+            self.facts['service_mgr'] = 'service'
+
     def get_lsb_facts(self):
         lsb_path = module.get_bin_path('lsb_release')
         if lsb_path:
@@ -643,6 +697,16 @@ class Facts(object):
         self.facts['date_time']['tz'] = time.strftime("%Z")
         self.facts['date_time']['tz_offset'] = time.strftime("%z")
 
+    def _check_systemd(self):
+        # tools must be installed
+        if module.get_bin_path('systemctl'):
+
+            # this should show if systemd is the boot init system, if check_init faild to mark as systemd
+            # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
+            for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
+                if os.path.exists(canary):
+                    return True
+        return False
 
     # User
     def get_user_facts(self):
@@ -1436,6 +1500,8 @@ class FreeBSDHardware(Hardware):
             else:
                 self.facts[k] = 'NA'
 
+class DragonFlyHardware(FreeBSDHardware):
+    pass
 
 class NetBSDHardware(Hardware):
     """
@@ -2334,6 +2400,13 @@ class FreeBSDNetwork(GenericBsdIfconfigNetwork, Network):
     """
     platform = 'FreeBSD'
 
+class DragonFlyNetwork(GenericBsdIfconfigNetwork, Network):
+    """
+    This is the DragonFly Network Class.
+    It uses the GenericBsdIfconfigNetwork unchanged.
+    """
+    platform = 'DragonFly'
+
 class AIXNetwork(GenericBsdIfconfigNetwork, Network):
     """
     This is the AIX Network Class.
@@ -2755,6 +2828,9 @@ class FreeBSDVirtual(Virtual):
     def get_virtual_facts(self):
         self.facts['virtualization_type'] = ''
         self.facts['virtualization_role'] = ''
+
+class DragonFlyVirtual(FreeBSDVirtual):
+    pass
 
 class OpenBSDVirtual(Virtual):
     """
