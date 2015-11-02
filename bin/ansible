@@ -74,7 +74,7 @@ def specialised_cli(executed_as):
     elif executed_as == 'ansible-galaxy':
         from ansible.cli.galaxy import GalaxyCLI as requested_cli
     if requested_cli is None:
-        raise AnsibleError("Program not implemented: %s" % executed_as)
+        raise AnsibleError('Program not implemented: %s' % executed_as)
     return requested_cli
 
 def report_exception(exception, display):
@@ -107,14 +107,14 @@ if __name__ == '__main__':
         sys.exit(ERROR_GENERIC)
 
     except KeyboardInterrupt:
-        display.error("User interrupted execution")
+        display.error('User interrupted execution')
         sys.exit(ERROR_EXECUTION_INTERRUPTED)
 
     except Exception as e:
         have_cli_options = cli is not None and cli.options is not None
-        display.error("Unexpected Exception: %s" % to_unicode(e), wrap_text=False)
+        display.error('Unexpected Exception: %s' % to_unicode(e), wrap_text=False)
         if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
-            display.display("the full traceback was:\n\n%s" % traceback.format_exc())
+            display.display('the full traceback was:\n\n%s' % traceback.format_exc())
         else:
-            display.display("to see the full traceback, use -vvv")
+            display.display('to see the full traceback, use -vvv')
         sys.exit(ERROR_UNEXPECTED)
