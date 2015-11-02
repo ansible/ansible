@@ -158,6 +158,7 @@ newline being stripped you can change your playbook like this:
 * expect
 * find
 * hall
+* ipify_facts
 * iptables
 * libvirt: virt_net
 * libvirt: virt_pool
