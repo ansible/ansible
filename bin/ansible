@@ -40,6 +40,14 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
 
+ERROR_GENERIC = 1
+ERROR_HOST_FAILED = 2 # Reserved. Returned by TaskQueueManager
+ERROR_HOST_UNREACHABLE = 3 # Reserved. Returned by TaskQueueManager
+ERROR_PARSING = 4
+ERROR_COMMAND_OPTIONS = 5
+ERROR_EXECUTION_INTERRUPTED = 99
+ERROR_UNEXPECTED = 250
+
 ########################################
 ### OUTPUT OF LAST RESORT ###
 class LastResort(object):
@@ -85,23 +93,20 @@ if __name__ == '__main__':
     except AnsibleOptionsError as e:
         cli.parser.print_help()
         display.error(to_unicode(e), wrap_text=False)
-        sys.exit(5)
+        sys.exit(ERROR_COMMAND_OPTIONS)
+
     except AnsibleParserError as e:
         display.error(to_unicode(e), wrap_text=False)
-        sys.exit(4)
-# TQM takes care of these, but leaving comment to reserve the exit codes
-#    except AnsibleHostUnreachable as e:
-#        display.error(str(e))
-#        sys.exit(3)
-#    except AnsibleHostFailed as e:
-#        display.error(str(e))
-#        sys.exit(2)
+        sys.exit(ERROR_PARSING)
+
     except AnsibleError as e:
         display.error(to_unicode(e), wrap_text=False)
-        sys.exit(1)
+        sys.exit(ERROR_GENERIC)
+
     except KeyboardInterrupt:
         display.error("User interrupted execution")
-        sys.exit(99)
+        sys.exit(ERROR_EXECUTION_INTERRUPTED)
+
     except Exception as e:
         have_cli_options = cli is not None and cli.options is not None
         display.error("Unexpected Exception: %s" % to_unicode(e), wrap_text=False)
@@ -109,4 +114,4 @@ if __name__ == '__main__':
             display.display("the full traceback was:\n\n%s" % traceback.format_exc())
         else:
             display.display("to see the full traceback, use -vvv")
-        sys.exit(250)
+        sys.exit(ERROR_UNEXPECTED)
