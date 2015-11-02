@@ -74,12 +74,13 @@ if __name__ == '__main__':
         elif me == 'ansible-galaxy':
             from ansible.cli.galaxy import GalaxyCLI as mycli
 
-        cli = mycli(sys.argv, display=display)
-        if cli:
-            cli.parse()
-            sys.exit(cli.run())
-        else:
-            raise AnsibleError("Program not implemented: %s" % me)
+        try:
+            cli = mycli(sys.argv, display=display)
+        except NameError:
+            raise AnsibleError("Ansible sub-program not implemented: %s" % me)
+
+        cli.parse()
+        sys.exit(cli.run())
 
     except AnsibleOptionsError as e:
         cli.parser.print_help()
