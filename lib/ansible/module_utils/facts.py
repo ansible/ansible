@@ -575,19 +575,7 @@ class Facts(object):
             self.facts['service_mgr'] = 'svcs'
         elif self.facts['system'] == 'Linux':
 
-            def check_systemd(module):
-                # tools must be installed
-                if module.get_bin_path('systemctl'):
-
-                    # this should show if systemd is the boot init system, if check_init faild to mark as systemd
-                    # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
-                    for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
-                        if os.path.exists(canary):
-                            return True
-
-                return False
-
-            if check_systemd(module):
+            if self._check_systemd(module):
                 self.facts['service_mgr'] = 'systemd'
             elif module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
                 self.facts['service_mgr'] = 'upstart'
@@ -709,6 +697,16 @@ class Facts(object):
         self.facts['date_time']['tz'] = time.strftime("%Z")
         self.facts['date_time']['tz_offset'] = time.strftime("%z")
 
+    def _check_systemd(self):
+        # tools must be installed
+        if module.get_bin_path('systemctl'):
+
+            # this should show if systemd is the boot init system, if check_init faild to mark as systemd
+            # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
+            for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
+                if os.path.exists(canary):
+                    return True
+        return False
 
     # User
     def get_user_facts(self):
