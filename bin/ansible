@@ -50,7 +50,7 @@ class LastResort(object):
     def display(self, msg):
         print(msg, file=LastResort.OUTPUT_FILE)
 
-    def error(self, msg, wrap_text=None):
+    def error(self, msg, **kwargs):
         print(msg, file=LastResort.OUTPUT_FILE)
 
 if __name__ == '__main__':
