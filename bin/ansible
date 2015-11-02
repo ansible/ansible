@@ -51,6 +51,24 @@ class LastResort(object):
     def error(self, msg, **kwargs):
         self.display(msg)
 
+def specialised_cli(executed_as):
+    requested_cli = None
+    if executed_as == 'ansible-playbook':
+        from ansible.cli.playbook import PlaybookCLI as requested_cli
+    elif executed_as == 'ansible':
+        from ansible.cli.adhoc import AdHocCLI as requested_cli
+    elif executed_as == 'ansible-pull':
+        from ansible.cli.pull import PullCLI as requested_cli
+    elif executed_as == 'ansible-doc':
+        from ansible.cli.doc import DocCLI as requested_cli
+    elif executed_as == 'ansible-vault':
+        from ansible.cli.vault import VaultCLI as requested_cli
+    elif executed_as == 'ansible-galaxy':
+        from ansible.cli.galaxy import GalaxyCLI as requested_cli
+    if requested_cli is None:
+        raise AnsibleError("Program not implemented: %s" % executed_as)
+    return requested_cli
+
 if __name__ == '__main__':
 
     display = LastResort()
@@ -59,24 +77,7 @@ if __name__ == '__main__':
 
     try:
         display = Display()
-
-        requested_cli = None
-        if executed_as == 'ansible-playbook':
-            from ansible.cli.playbook import PlaybookCLI as requested_cli
-        elif executed_as == 'ansible':
-            from ansible.cli.adhoc import AdHocCLI as requested_cli
-        elif executed_as == 'ansible-pull':
-            from ansible.cli.pull import PullCLI as requested_cli
-        elif executed_as == 'ansible-doc':
-            from ansible.cli.doc import DocCLI as requested_cli
-        elif executed_as == 'ansible-vault':
-            from ansible.cli.vault import VaultCLI as requested_cli
-        elif executed_as == 'ansible-galaxy':
-            from ansible.cli.galaxy import GalaxyCLI as requested_cli
-
-        if requested_cli is None:
-            raise AnsibleError("Program not implemented: %s" % executed_as)
-
+        requested_cli = specialised_cli(executed_as)
         cli = requested_cli(sys.argv, display=display)
         cli.parse()
         sys.exit(cli.run())
