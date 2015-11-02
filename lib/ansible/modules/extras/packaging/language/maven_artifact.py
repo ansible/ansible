@@ -296,7 +296,7 @@ def main():
             artifact_id = dict(default=None),
             version = dict(default=None),
             classifier = dict(default=None),
-            extension = dict(default=None, required=True),
+            extension = dict(default='jar'),
             repository_url = dict(default=None),
             username = dict(default=None),
             password = dict(default=None),
