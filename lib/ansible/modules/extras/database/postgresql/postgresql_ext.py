@@ -165,9 +165,9 @@ def main():
     try:
         if module.check_mode:
             if state == "absent":
-                changed = not db_exists(cursor, ext)
+                changed = not ext_exists(cursor, ext)
             elif state == "present":
-                changed = db_exists(cursor, ext)
+                changed = ext_exists(cursor, ext)
             module.exit_json(changed=changed,ext=ext)
 
         if state == "absent":
