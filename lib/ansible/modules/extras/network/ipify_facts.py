@@ -82,7 +82,7 @@ def main():
         argument_spec = dict(
             api_url = dict(default='https://api.ipify.org'),
         ),
-        supports_check_mode=False
+        supports_check_mode=True,
     )
 
     ipify_facts = IpifyFacts().run()
