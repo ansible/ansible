@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 ---
 module: pushover
 version_added: "2.0"
-short_description: Send notifications via u(https://pushover.net)
+short_description: Send notifications via https://pushover.net
 description:
    - Send notifications via pushover, to subscriber list of devices, and email
      addresses. Requires pushover app on devices.
@@ -34,18 +34,18 @@ notes:
 options:
   msg:
     description:
-      What message you wish to send.
+      - What message you wish to send.
     required: true
   app_token:
     description:
-      Pushover issued token identifying your pushover app.
+      - Pushover issued token identifying your pushover app.
     required: true
   user_key:
     description:
-      Pushover issued authentication key for your user.
+      - Pushover issued authentication key for your user.
     required: true
   pri:
-    description: Message priority (see u(https://pushover.net) for details.)
+    description: Message priority (see https://pushover.net for details.)
     required: false
 
 author: "Jim Richardson (@weaselkeeper)"
