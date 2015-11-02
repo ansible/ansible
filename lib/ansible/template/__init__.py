@@ -310,7 +310,7 @@ class Templar:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
                     # Using a cache in order to prevent template calls with already templated variables
-                    sha1_hash = sha1(variable + str(preserve_trailing_newlines) + str(escape_backslashes) + str(fail_on_undefined) + str(overrides)).hexdigest()
+                    sha1_hash = sha1(variable.encode('utf-8') + str(preserve_trailing_newlines) + str(escape_backslashes) + str(fail_on_undefined) + str(overrides)).hexdigest()
                     if sha1_hash in self._cached_result:
                         result = self._cached_result[sha1_hash]
                     else:
