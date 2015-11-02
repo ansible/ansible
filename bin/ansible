@@ -61,19 +61,19 @@ if __name__ == '__main__':
         display = Display()
 
         if executed_as == 'ansible-playbook':
-            from ansible.cli.playbook import PlaybookCLI as mycli
+            from ansible.cli.playbook import PlaybookCLI as requested_cli
         elif executed_as == 'ansible':
-            from ansible.cli.adhoc import AdHocCLI as mycli
+            from ansible.cli.adhoc import AdHocCLI as requested_cli
         elif executed_as == 'ansible-pull':
-            from ansible.cli.pull import PullCLI as mycli
+            from ansible.cli.pull import PullCLI as requested_cli
         elif executed_as == 'ansible-doc':
-            from ansible.cli.doc import DocCLI as mycli
+            from ansible.cli.doc import DocCLI as requested_cli
         elif executed_as == 'ansible-vault':
-            from ansible.cli.vault import VaultCLI as mycli
+            from ansible.cli.vault import VaultCLI as requested_cli
         elif executed_as == 'ansible-galaxy':
-            from ansible.cli.galaxy import GalaxyCLI as mycli
+            from ansible.cli.galaxy import GalaxyCLI as requested_cli
 
-        cli = mycli(sys.argv, display=display)
+        cli = requested_cli(sys.argv, display=display)
         if cli:
             cli.parse()
             sys.exit(cli.run())
