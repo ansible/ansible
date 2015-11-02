@@ -55,22 +55,22 @@ if __name__ == '__main__':
 
     display = LastResort()
     cli = None
-    me = os.path.basename(sys.argv[0])
+    executed_as = os.path.basename(sys.argv[0])
 
     try:
         display = Display()
 
-        if me == 'ansible-playbook':
+        if executed_as == 'ansible-playbook':
             from ansible.cli.playbook import PlaybookCLI as mycli
-        elif me == 'ansible':
+        elif executed_as == 'ansible':
             from ansible.cli.adhoc import AdHocCLI as mycli
-        elif me == 'ansible-pull':
+        elif executed_as == 'ansible-pull':
             from ansible.cli.pull import PullCLI as mycli
-        elif me == 'ansible-doc':
+        elif executed_as == 'ansible-doc':
             from ansible.cli.doc import DocCLI as mycli
-        elif me == 'ansible-vault':
+        elif executed_as == 'ansible-vault':
             from ansible.cli.vault import VaultCLI as mycli
-        elif me == 'ansible-galaxy':
+        elif executed_as == 'ansible-galaxy':
             from ansible.cli.galaxy import GalaxyCLI as mycli
 
         cli = mycli(sys.argv, display=display)
@@ -78,7 +78,7 @@ if __name__ == '__main__':
             cli.parse()
             sys.exit(cli.run())
         else:
-            raise AnsibleError("Program not implemented: %s" % me)
+            raise AnsibleError("Program not implemented: %s" % executed_as)
 
     except AnsibleOptionsError as e:
         cli.parser.print_help()
