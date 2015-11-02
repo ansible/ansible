@@ -61,22 +61,19 @@ if __name__ == '__main__':
     try:
         display = Display()
 
-        if me == 'ansible-playbook':
-            from ansible.cli.playbook import PlaybookCLI as mycli
-        elif me == 'ansible':
-            from ansible.cli.adhoc import AdHocCLI as mycli
-        elif me == 'ansible-pull':
-            from ansible.cli.pull import PullCLI as mycli
-        elif me == 'ansible-doc':
-            from ansible.cli.doc import DocCLI as mycli
-        elif me == 'ansible-vault':
-            from ansible.cli.vault import VaultCLI as mycli
-        elif me == 'ansible-galaxy':
-            from ansible.cli.galaxy import GalaxyCLI as mycli
-
+        sub = None
         try:
+            if me.find('-') != -1:
+                target = me.split('-')
+                if len(target) > 1:
+                    sub = target[1]
+                    myclass = "%sCLI" % sub.capitalize()
+                    mycli = getattr(__import__("ansible.cli.%s" % sub, fromlist=[myclass]), myclass)
+            elif me == 'ansible':
+                from ansible.cli.adhoc import AdHocCLI as mycli
+
             cli = mycli(sys.argv, display=display)
-        except NameError:
+        except (ImportError,NameError):
             raise AnsibleError("Ansible sub-program not implemented: %s" % me)
 
         cli.parse()
