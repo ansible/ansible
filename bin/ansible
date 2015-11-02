@@ -60,6 +60,7 @@ if __name__ == '__main__':
     try:
         display = Display()
 
+        requested_cli = None
         if executed_as == 'ansible-playbook':
             from ansible.cli.playbook import PlaybookCLI as requested_cli
         elif executed_as == 'ansible':
@@ -73,12 +74,12 @@ if __name__ == '__main__':
         elif executed_as == 'ansible-galaxy':
             from ansible.cli.galaxy import GalaxyCLI as requested_cli
 
-        cli = requested_cli(sys.argv, display=display)
-        if cli:
-            cli.parse()
-            sys.exit(cli.run())
-        else:
+        if requested_cli is None:
             raise AnsibleError("Program not implemented: %s" % executed_as)
+
+        cli = requested_cli(sys.argv, display=display)
+        cli.parse()
+        sys.exit(cli.run())
 
     except AnsibleOptionsError as e:
         cli.parser.print_help()
