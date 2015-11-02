@@ -19,6 +19,7 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
+
 $params = Parse-Args $args;
 
 $result = New-Object psobject @{
@@ -47,7 +48,8 @@ If (-Not (Test-Path $dest -PathType Container)){
         New-Item -itemtype directory -path $dest
     }
     Catch {
-        Fail-Json $result "Error creating $dest directory"
+        $err_msg = $_.Exception.Message
+        Fail-Json $result "Error creating $dest directory! Msg: $err_msg"
     }
 }
 
@@ -63,7 +65,8 @@ If ($ext -eq ".zip" -And $recurse -eq $false) {
         $result.changed = $true
     }
     Catch {
-        Fail-Json $result "Error unzipping $src to $dest"
+        $err_msg = $_.Exception.Message
+        Fail-Json $result "Error unzipping $src to $dest! Msg: $err_msg"
     }
 }
 # Requires PSCX
@@ -107,11 +110,12 @@ Else {
         }
     }
     Catch {
+        $err_msg = $_.Exception.Message
         If ($recurse) {
-            Fail-Json $result "Error recursively expanding $src to $dest"
+            Fail-Json $result "Error recursively expanding $src to $dest! Msg: $err_msg"
         }
         Else {
-            Fail-Json $result "Error expanding $src to $dest"
+            Fail-Json $result "Error expanding $src to $dest! Msg: $err_msg"
         }
     }
 }
