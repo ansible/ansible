@@ -75,31 +75,31 @@ options:
         certificate was issued for that host. If this is unspecified, tls will
         only be used if one of the other tls options require it.
     choices: [ "no", "encrypt", "verify" ]
-    version_added: "1.9"
+    version_added: "2.0"
   tls_client_cert:
     description:
       - Path to the PEM-encoded certificate used to authenticate docker client.
         If specified tls_client_key must be valid
     default: ${DOCKER_CERT_PATH}/cert.pem
-    version_added: "1.9"
+    version_added: "2.0"
   tls_client_key:
     description:
       - Path to the PEM-encoded key used to authenticate docker client. If
         specified tls_client_cert must be valid
     default: ${DOCKER_CERT_PATH}/key.pem
-    version_added: "1.9"
+    version_added: "2.0"
   tls_ca_cert:
     description:
       - Path to a PEM-encoded certificate authority to secure the Docker connection.
         This has no effect if use_tls is encrypt.
     default: ${DOCKER_CERT_PATH}/ca.pem
-    version_added: "1.9"
+    version_added: "2.0"
   tls_hostname:
     description:
       - A hostname to check matches what's supplied in the docker server's
         certificate.  If unspecified, the hostname is taken from the docker_url.
     default: Taken from docker_url
-    version_added: "1.9"
+    version_added: "2.0"
   docker_api_version:
     description:
       - Remote API version to use. This defaults to the current default as
@@ -417,7 +417,7 @@ def main():
                 they are set in .bash_profile you will need to symlink
                 it to .bashrc.
                 '''
-                module.exit_json(failed=True, chaged=manager.has_changed(), msg="SSLError: " + str(e) + environment_error)
+                module.exit_json(failed=True, changed=manager.has_changed(), msg="SSLError: " + str(e) + environment_error)
             # If the above is true it's likely the hostname does not match
             else:
                 environment_error = '''
@@ -426,10 +426,10 @@ def main():
                 resolve the issue please open an issue at
                 ansible/ansible-modules-core and ping michaeljs1990
                 '''
-                module.exit_json(failed=True, chaged=manager.has_changed(), msg="SSLError: " + str(e) + environment_error)
+                module.exit_json(failed=True, changed=manager.has_changed(), msg="SSLError: " + str(e) + environment_error)
         # General error for non darwin users
         else:
-            module.exit_json(failed=True, chaged=manager.has_changed(), msg="SSLError: " + str(e))
+            module.exit_json(failed=True, changed=manager.has_changed(), msg="SSLError: " + str(e))
 
     except ConnectionError as e:
         if get_platform() == "Darwin" and "DOCKER_HOST" not in os.environ:
@@ -441,9 +441,9 @@ def main():
             they are set in .bash_profile you will need to symlink
             it to .bashrc.
             '''
-            module.exit_json(failed=True, chaged=manager.has_changed(), msg="ConnectionError: " + str(e) + environment_error)
+            module.exit_json(failed=True, changed=manager.has_changed(), msg="ConnectionError: " + str(e) + environment_error)
 
-        module.exit_json(failed=True, chaged=manager.has_changed(), msg="ConnectionError: " + str(e))
+        module.exit_json(failed=True, changed=manager.has_changed(), msg="ConnectionError: " + str(e))
 
     except DockerAPIError as e:
         module.exit_json(failed=True, changed=manager.has_changed(), msg="Docker API error: " + e.explanation)
