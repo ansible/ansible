@@ -232,18 +232,18 @@ class Templar:
 
                 elif token[1] == self.variable_end[1]:
                     prev_idx = None
-                    if token == '%}' and block_openings:
+                    if token == self.block_end and block_openings:
                         prev_idx = block_openings.pop()
-                    elif token == '}}' and print_openings:
+                    elif token == self.variable_end and print_openings:
                         prev_idx = print_openings.pop()
 
                     if prev_idx is not None:
                         # replace the opening
                         data.seek(prev_idx, os.SEEK_SET)
-                        data.write('{#')
+                        data.write(self.environment.comment_start_string)
                         # replace the closing
                         data.seek(token_start, os.SEEK_SET)
-                        data.write('#}')
+                        data.write(self.environment.comment_end_string)
 
                 else:
                     raise AnsibleError("Error while cleaning data for safety: unhandled regex match")
