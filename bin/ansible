@@ -45,13 +45,11 @@ from ansible.utils.unicode import to_unicode
 class LastResort(object):
     """Output of last resort."""
 
-    OUTPUT_FILE = sys.stderr
-
-    def display(self, msg):
-        print(msg, file=LastResort.OUTPUT_FILE)
+    def display(self, msg, **kwargs):
+        print(msg, file=sys.stderr)
 
     def error(self, msg, **kwargs):
-        print(msg, file=LastResort.OUTPUT_FILE)
+        self.display(msg)
 
 if __name__ == '__main__':
 
