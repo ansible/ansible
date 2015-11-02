@@ -205,9 +205,8 @@ options:
     required: false
   ctstate:
     description:
-      - "ctstate is a comma separated list of the connection states to match in
-        the conntrack module. Possible states are: 'INVALID', 'NEW',
-        'ESTABLISHED', 'RELATED', 'UNTRACKED', 'SNAT', 'DNAT'"
+      - "ctstate is a list of the connection states to match in the conntrack module.
+        Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED', 'UNTRACKED', 'SNAT', 'DNAT'"
     required: false
 '''
 
@@ -264,7 +263,7 @@ def construct_rule(params):
     append_comm(rule, params['comment'])
     append_param(rule, params['comment'], '--comment', False)
     append_conntrack(rule, params['ctstate'])
-    append_param(rule, params['ctstate'], '--ctstate', False)
+    append_param(rule, ','.join(params['ctstate']), '--ctstate', False)
     return rule
 
 
@@ -314,7 +313,7 @@ def main():
             destination_port=dict(required=False, default=None, type='str'),
             to_ports=dict(required=False, default=None, type='str'),
             comment=dict(required=False, default=None, type='str'),
-            ctstate=dict(required=False, default=None, type='str'),
+            ctstate=dict(required=False, default=None, type='list'),
         ),
     )
     args = dict(
