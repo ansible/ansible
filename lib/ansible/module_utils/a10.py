@@ -26,6 +26,10 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import json
+# Note: modules using this must have from ansible.module_utils.urls import *
+# before this is imported
+
 AXAPI_PORT_PROTOCOLS = {
     'tcp': 2,
     'udp': 3,
