@@ -109,9 +109,12 @@ if __name__ == '__main__':
 
     except Exception as e:
         have_cli_options = cli is not None and cli.options is not None
-        display.error("Unexpected Exception: %s" % to_unicode(e), wrap_text=False)
-        if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
-            display.display("the full traceback was:\n\n%s" % traceback.format_exc())
+        display.error('Unexpected Exception: %s' % to_unicode(e),
+                      wrap_text=False)
+        if (not have_cli_options
+                or have_cli_options and cli.options.verbosity > 2):
+            full_traceback = traceback.format_exc()
+            display.display('the full traceback was:\n\n%s' % full_traceback)
         else:
             display.display("to see the full traceback, use -vvv")
         sys.exit(ERROR_UNEXPECTED)
