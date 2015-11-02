@@ -37,7 +37,6 @@ import ConfigParser
 import StringIO
 
 from string import maketrans
-from distutils.version import LooseVersion
 
 try:
     import selinux
@@ -557,6 +556,7 @@ class Facts(object):
         # start with the easy ones
         elif  self.facts['distribution'] == 'MacOSX':
             #FIXME: find way to query executable, version matching is not ideal
+            from distutils.version import LooseVersion
             if LooseVersion(platform.mac_ver()[0]) >= LooseVersion('10.4'):
                 self.facts['service_mgr'] = 'launchd'
             else:
