@@ -39,6 +39,11 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
 
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import sha as sha1
+
 from numbers import Number
 
 __all__ = ['Templar']
@@ -270,6 +275,9 @@ class Templar:
         before being sent through the template engine. 
         '''
 
+        if fail_on_undefined is None:
+            fail_on_undefined = self._fail_on_undefined_errors
+
         # Don't template unsafe variables, instead drop them back down to
         # their constituent type.
         if hasattr(variable, '__UNSAFE__'):
@@ -302,10 +310,10 @@ class Templar:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
                     # Using a cache in order to prevent template calls with already templated variables
-                    cache_key = variable + str(preserve_trailing_newlines) + str(escape_backslashes) + str(overrides)
-                    try:
-                        result = self._cached_result[cache_key]
-                    except KeyError:
+                    sha1_hash = sha1(variable + str(preserve_trailing_newlines) + str(escape_backslashes) + str(fail_on_undefined) + str(overrides)).hexdigest()
+                    if sha1_hash in self._cached_result:
+                        result = self._cached_result[sha1_hash]
+                    else:
                         result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
                         if convert_data:
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
@@ -317,7 +325,7 @@ class Templar:
                                 else:
                                     # FIXME: if the safe_eval raised an error, should we do something with it?
                                     pass
-                        self._cached_result[cache_key] = result
+                        self._cached_result[sha1_hash] = result
 
 
                 #return self._clean_data(result)
