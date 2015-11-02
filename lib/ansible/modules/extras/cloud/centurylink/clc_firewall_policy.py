@@ -135,7 +135,7 @@ changed:
     returned: success
     type: boolean
     sample: True
-firewall_policy_id
+firewall_policy_id:
     description: The fire wall policy id
     returned: success
     type: string
