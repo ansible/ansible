@@ -268,10 +268,10 @@ class ElbManager:
         while True:
             try:
                 newelbs = elb.get_all_load_balancers(marker=marker)
-                if not newelbs.is_truncated:
+                marker = newelbs.next_marker
+                if not marker:
                     break
                 elbs.extend(newelbs)
-                marker = newelbs.next_marker
             except TypeError:
                 # Older version of boto do not allow for params
                 elbs = elb.get_all_load_balancers()
