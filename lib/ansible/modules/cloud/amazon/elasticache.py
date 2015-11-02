@@ -48,6 +48,7 @@ options:
         - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the specified engine will be used.
     required: false
     default: none
+    version_added: "2.0"
   node_type:
     description:
       - The compute and memory capacity of the nodes in the cache cluster
