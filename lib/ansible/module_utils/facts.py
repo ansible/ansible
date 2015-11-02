@@ -575,7 +575,7 @@ class Facts(object):
             self.facts['service_mgr'] = 'svcs'
         elif self.facts['system'] == 'Linux':
 
-            if self._check_systemd(module):
+            if self._check_systemd():
                 self.facts['service_mgr'] = 'systemd'
             elif module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
                 self.facts['service_mgr'] = 'upstart'
