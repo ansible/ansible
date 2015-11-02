@@ -40,6 +40,8 @@ from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
 
 class LastResort(object):
+    """Output of last resort."""
+
     def display(self, msg):
         print(msg, file=sys.stderr)
 
