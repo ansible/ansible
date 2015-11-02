@@ -17,95 +17,107 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-########################################################
-from __future__ import (absolute_import, division, print_function)
-__metaclass__ = type
+from __future__ import (absolute_import,
+                        print_function)
 
 __requires__ = ['ansible']
+
 try:
+    # Use pkg_resources to find the correct versions of libraries and set
+    # sys.path appropriately when there are multiversion installs...
     import pkg_resources
 except Exception:
-    # Use pkg_resources to find the correct versions of libraries and set
-    # sys.path appropriately when there are multiversion installs.  But we
-    # have code that better expresses the errors in the places where the code
-    # is actually used (the deps are optional for many code paths) so we don't
-    # want to fail here.
+    # ... we have code that better expresses the errors in the places where the
+    # code is actually used (the deps are optional for many code paths) so we
+    # don't want to fail here.
     pass
 
 import os
 import sys
 import traceback
 
-from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.errors import (AnsibleError,
+                            AnsibleOptionsError,
+                            AnsibleParserError)
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
 
-########################################
-### OUTPUT OF LAST RESORT ###
+ERROR_GENERIC = 1
+ERROR_HOST_FAILED = 2 # Reserved. Returned by TaskQueueManager
+ERROR_HOST_UNREACHABLE = 3 # Reserved. Returned by TaskQueueManager
+ERROR_PARSING = 4
+ERROR_COMMAND_OPTIONS = 5
+ERROR_EXECUTION_INTERRUPTED = 99
+ERROR_UNEXPECTED = 250
+
 class LastResort(object):
-    def display(self, msg):
+    """Output of last resort."""
+
+    def display(self, msg, **kwargs):
         print(msg, file=sys.stderr)
 
-    def error(self, msg, wrap_text=None):
-        print(msg, file=sys.stderr)
+    def error(self, msg, **kwargs):
+        self.display(msg)
 
+def specialised_cli(executed_as):
+    requested_cli = None
+    if executed_as == 'ansible-playbook':
+        from ansible.cli.playbook import PlaybookCLI as requested_cli
+    elif executed_as == 'ansible':
+        from ansible.cli.adhoc import AdHocCLI as requested_cli
+    elif executed_as == 'ansible-pull':
+        from ansible.cli.pull import PullCLI as requested_cli
+    elif executed_as == 'ansible-doc':
+        from ansible.cli.doc import DocCLI as requested_cli
+    elif executed_as == 'ansible-vault':
+        from ansible.cli.vault import VaultCLI as requested_cli
+    elif executed_as == 'ansible-galaxy':
+        from ansible.cli.galaxy import GalaxyCLI as requested_cli
+    if requested_cli is None:
+        raise AnsibleError('Program not implemented: %s' % executed_as)
+    return requested_cli
 
-########################################
+def report_exception(exception, display):
+    display.error(to_unicode(e), wrap_text=False)
 
 if __name__ == '__main__':
 
     display = LastResort()
     cli = None
-    me = os.path.basename(sys.argv[0])
+    executed_as = os.path.basename(sys.argv[0])
 
     try:
         display = Display()
-
-        if me == 'ansible-playbook':
-            from ansible.cli.playbook import PlaybookCLI as mycli
-        elif me == 'ansible':
-            from ansible.cli.adhoc import AdHocCLI as mycli
-        elif me == 'ansible-pull':
-            from ansible.cli.pull import PullCLI as mycli
-        elif me == 'ansible-doc':
-            from ansible.cli.doc import DocCLI as mycli
-        elif me == 'ansible-vault':
-            from ansible.cli.vault import VaultCLI as mycli
-        elif me == 'ansible-galaxy':
-            from ansible.cli.galaxy import GalaxyCLI as mycli
-
-        cli = mycli(sys.argv, display=display)
-        if cli:
-            cli.parse()
-            sys.exit(cli.run())
-        else:
-            raise AnsibleError("Program not implemented: %s" % me)
+        requested_cli = specialised_cli(executed_as)
+        cli = requested_cli(sys.argv, display=display)
+        cli.parse()
+        sys.exit(cli.run())
 
     except AnsibleOptionsError as e:
         cli.parser.print_help()
-        display.error(to_unicode(e), wrap_text=False)
-        sys.exit(5)
+        report_exception(e, display)
+        sys.exit(ERROR_COMMAND_OPTIONS)
+
     except AnsibleParserError as e:
-        display.error(to_unicode(e), wrap_text=False)
-        sys.exit(4)
-# TQM takes care of these, but leaving comment to reserve the exit codes
-#    except AnsibleHostUnreachable as e:
-#        display.error(str(e))
-#        sys.exit(3)
-#    except AnsibleHostFailed as e:
-#        display.error(str(e))
-#        sys.exit(2)
+        report_exception(e, display)
+        sys.exit(ERROR_PARSING)
+
     except AnsibleError as e:
-        display.error(to_unicode(e), wrap_text=False)
-        sys.exit(1)
+        report_exception(e, display)
+        sys.exit(ERROR_GENERIC)
+
     except KeyboardInterrupt:
-        display.error("User interrupted execution")
-        sys.exit(99)
+        display.error('User interrupted execution')
+        sys.exit(ERROR_EXECUTION_INTERRUPTED)
+
     except Exception as e:
         have_cli_options = cli is not None and cli.options is not None
-        display.error("Unexpected Exception: %s" % to_unicode(e), wrap_text=False)
-        if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
-            display.display("the full traceback was:\n\n%s" % traceback.format_exc())
+        display.error('Unexpected Exception: %s' % to_unicode(e),
+                      wrap_text=False)
+        if (not have_cli_options
+                or have_cli_options and cli.options.verbosity > 2):
+            full_traceback = traceback.format_exc()
+            display.display('the full traceback was:\n\n%s' % full_traceback)
         else:
-            display.display("to see the full traceback, use -vvv")
-        sys.exit(250)
+            display.display('to see the full traceback, use -vvv')
+        sys.exit(ERROR_UNEXPECTED)
