@@ -21,6 +21,7 @@ from __future__ import (absolute_import,
                         print_function)
 
 __requires__ = ['ansible']
+
 try:
     import pkg_resources
 except Exception:
@@ -35,7 +36,9 @@ import os
 import sys
 import traceback
 
-from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
+from ansible.errors import (AnsibleError,
+                            AnsibleOptionsError,
+                            AnsibleParserError)
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
 
