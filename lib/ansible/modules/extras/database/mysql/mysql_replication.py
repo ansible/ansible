@@ -334,7 +334,8 @@ def main():
         else:
             db_connection = MySQLdb.connect(host=module.params["login_host"], port=module.params["login_port"], user=login_user, passwd=login_password)
     except Exception, e:
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
+        errno, errstr = e.args
+        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials (%s: %s)" % (errno, errstr) )
     try:
         cursor = db_connection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
     except Exception, e:
