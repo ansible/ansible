@@ -40,19 +40,19 @@ except:
     HAS_LOOSE_VERSION = False
 
 
-def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
+def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, profile_name=None, **params):
     if conn_type not in ['both', 'resource', 'client']:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
 
     if conn_type == 'resource':
-        resource = boto3.session.Session().resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = boto3.session.Session(profile_name=profile_name).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return resource
     elif conn_type == 'client':
-        client = boto3.session.Session().client(resource, region_name=region, endpoint_url=endpoint, **params)
+        client = boto3.session.Session(profile_name=profile_name).client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client
     else:
-        resource = boto3.session.Session().resource(resource, region_name=region, endpoint_url=endpoint, **params)
-        client = boto3.session.Session().client(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = boto3.session.Session(profile_name=profile_name).resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        client = boto3.session.Session(profile_name=profile_name).client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
 
 def aws_common_argument_spec():
@@ -150,10 +150,8 @@ def get_aws_connection_info(module, boto3=False):
         if validate_certs:
             boto_params['verify'] = validate_certs
 
-        if profile_name:
-            boto_params['profile_name'] = profile_name
-
-
+        return region, ec2_url, profile_name, boto_params
+        
     else:
         boto_params = dict(aws_access_key_id=access_key,
                            aws_secret_access_key=secret_key,
@@ -168,8 +166,8 @@ def get_aws_connection_info(module, boto3=False):
 
         if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
             boto_params['validate_certs'] = validate_certs
-
-    return region, ec2_url, boto_params
+        
+        return region, ec2_url, boto_params
 
 
 def get_ec2_creds(module):
