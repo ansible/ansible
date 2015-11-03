@@ -56,6 +56,13 @@ try:
 except ImportError:
     import simplejson as json
 
+# The distutils module is not shipped with SUNWPython on Solaris.
+# It's in the SUNWPython-devel package which also contains development files
+# that don't belong on production boxes.  Since our Solaris code doesn't
+# depend on LooseVersion, do not import it on Solaris.
+if platform.system() != 'SunOS':
+    from distutils.version import LooseVersion
+
 
 # --------------------------------------------------------------
 # timeout function to make sure some fact gathering
@@ -230,13 +237,13 @@ class Facts(object):
             fact = 'loading %s' % fact_base
             try:
                 fact = json.loads(out)
-            except ValueError, e:
+            except ValueError:
                 # load raw ini
                 cp = ConfigParser.ConfigParser()
                 try:
                     cp.readfp(StringIO.StringIO(out))
-                except ConfigParser.Error, e:
-                    fact="error loading fact - please check content"
+                except ConfigParser.Error:
+                    fact = "error loading fact - please check content"
                 else:
                     fact = {}
                     #print cp.sections()
@@ -510,7 +517,7 @@ class Facts(object):
                         self.facts['cmdline'][item[0]] = True
                     else:
                         self.facts['cmdline'][item[0]] = item[1]
-            except ValueError, e:
+            except ValueError:
                 pass
 
     def get_public_ssh_host_keys(self):
@@ -556,7 +563,6 @@ class Facts(object):
         # start with the easy ones
         elif  self.facts['distribution'] == 'MacOSX':
             #FIXME: find way to query executable, version matching is not ideal
-            from distutils.version import LooseVersion
             if LooseVersion(platform.mac_ver()[0]) >= LooseVersion('10.4'):
                 self.facts['service_mgr'] = 'launchd'
             else:
@@ -636,7 +642,7 @@ class Facts(object):
             self.facts['selinux']['status'] = 'enabled'
             try:
                 self.facts['selinux']['policyvers'] = selinux.security_policyvers()
-            except OSError, e:
+            except OSError:
                 self.facts['selinux']['policyvers'] = 'unknown'
             try:
                 (rc, configmode) = selinux.selinux_getenforcemode()
@@ -644,12 +650,12 @@ class Facts(object):
                     self.facts['selinux']['config_mode'] = Facts.SELINUX_MODE_DICT.get(configmode, 'unknown')
                 else:
                     self.facts['selinux']['config_mode'] = 'unknown'
-            except OSError, e:
+            except OSError:
                 self.facts['selinux']['config_mode'] = 'unknown'
             try:
                 mode = selinux.security_getenforce()
                 self.facts['selinux']['mode'] = Facts.SELINUX_MODE_DICT.get(mode, 'unknown')
-            except OSError, e:
+            except OSError:
                 self.facts['selinux']['mode'] = 'unknown'
             try:
                 (rc, policytype) = selinux.selinux_getpolicytype()
@@ -657,7 +663,7 @@ class Facts(object):
                     self.facts['selinux']['type'] = policytype
                 else:
                     self.facts['selinux']['type'] = 'unknown'
-            except OSError, e:
+            except OSError:
                 self.facts['selinux']['type'] = 'unknown'
 
 
@@ -978,7 +984,7 @@ class LinuxHardware(Hardware):
                     if key == 'form_factor':
                         try:
                             self.facts['form_factor'] = FORM_FACTOR[int(data)]
-                        except IndexError, e:
+                        except IndexError:
                             self.facts['form_factor'] = 'unknown (%s)' % data
                     else:
                         self.facts[key] = data
@@ -1029,7 +1035,7 @@ class LinuxHardware(Hardware):
                         statvfs_result = os.statvfs(fields[1])
                         size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
                         size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
-                    except OSError, e:
+                    except OSError:
                         continue
 
                     uuid = 'NA'
@@ -2958,7 +2964,7 @@ class SunOSVirtual(Virtual):
                                 hostfeatures.append(arg[0])
                         if( len(hostfeatures) > 0 ):
                             self.facts['virtualization_role'] = 'host (' + ','.join(hostfeatures) + ')'
-            except ValueError, e:
+            except ValueError:
                 pass
 
 def get_file_content(path, default=None, strip=True):
