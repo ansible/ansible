@@ -76,6 +76,12 @@ def get_instance_info(instance):
     interfaces = []
     for interface in instance.interfaces:
       interfaces.append({ 'id': interface.id, 'mac_address': interface.mac_address }.copy())
+
+    # If an instance is terminated, sourceDestCheck is no longer returned
+    try:
+      source_dest_check = instance.sourceDestCheck
+    except AttributeError:
+      source_dest_check = None
  
     instance_info = { 'id': instance.id,
                     'kernel': instance.kernel,
@@ -90,7 +96,7 @@ def get_instance_info(instance):
                     'ramdisk': instance.ramdisk,
                     'tags': instance.tags,
                     'key_name': instance.key_name,
-                    'source_destination_check': instance.sourceDestCheck,
+                    'source_destination_check': source_dest_check,
                     'image_id': instance.image_id,
                     'groups': groups,
                     'interfaces': interfaces,
