@@ -326,7 +326,7 @@ def main():
             to_ports=dict(required=False, default=None, type='str'),
             comment=dict(required=False, default=None, type='str'),
             ctstate=dict(required=False, default=[], type='list'),
-            limit=dict(required=False, default=[], type='list'),
+            limit=dict(required=False, default=None, type='str'),
         ),
     )
     args = dict(
