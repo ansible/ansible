@@ -149,7 +149,9 @@ Function ParseAppParameters()
         [string]$appParameters
     )
 
-    return ConvertFrom-StringData -StringData $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n")
+    $escapedAppParameters = $appParameters.TrimStart("@").TrimStart("{").TrimEnd("}").Replace("; ","`n").Replace("\","\\")
+
+    return ConvertFrom-StringData -StringData $escapedAppParameters
 }
 
 
