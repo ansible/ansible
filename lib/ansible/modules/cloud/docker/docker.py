@@ -96,6 +96,11 @@ options:
       - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
     default: null
     version_added: "1.5"
+  devices:
+    description:
+      - List of host devices to expose to container
+    default: null
+    required: false
   log_driver:
     description:
       - You can specify a different logging driver for the container than for the daemon.
@@ -390,6 +395,8 @@ EXAMPLES = '''
 #   stopped and removed, and a new one will be launched in its place.
 # - link this container to the existing redis container launched above with
 #   an alias.
+# - grant the container read write permissions for the host's /dev/sda device 
+#   through a node named /dev/xvda
 # - bind TCP port 9000 within the container to port 8080 on all interfaces
 #   on the host.
 # - bind UDP port 9001 within the container to port 8081 on the host, only
@@ -404,6 +411,8 @@ EXAMPLES = '''
     pull: always
     links:
     - "myredis:aliasedredis"
+    devices:
+    - "/dev/sda:/dev/xvda:rwm"
     ports:
     - "8080:9000"
     - "127.0.0.1:8081:9001/udp"
@@ -606,6 +615,7 @@ class DockerManager(object):
     # docker-py version is a tuple of ints because we have to compare them
     # server APIVersion is passed to a docker-py function that takes strings
     _cap_ver_req = {
+            'devices': ((0, 7, 0), '1.2'),
             'dns': ((0, 3, 0), '1.10'),
             'volumes_from': ((0, 3, 0), '1.10'),
             'restart_policy': ((0, 5, 0), '1.14'),
@@ -843,10 +853,14 @@ class DockerManager(object):
         }
 
         optionals = {}
-        for optional_param in ('dns', 'volumes_from', 'restart_policy',
-                'restart_policy_retry', 'pid', 'extra_hosts', 'log_driver',
-                'cap_add', 'cap_drop', 'read_only', 'log_opt'):
+        for optional_param in ('devices', 'dns', 'volumes_from', 
+                'restart_policy', 'restart_policy_retry', 'pid', 'extra_hosts', 
+                'log_driver', 'cap_add', 'cap_drop', 'read_only', 'log_opt'):
             optionals[optional_param] = self.module.params.get(optional_param)
+
+        if optionals['devices'] is not None:
+            self.ensure_capability('devices')
+            params['devices'] = optionals['devices']
 
         if optionals['dns'] is not None:
             self.ensure_capability('dns')
@@ -1303,6 +1317,24 @@ class DockerManager(object):
                 differing.append(container)
                 continue
 
+            # DEVICES 
+
+            expected_devices = set()
+            for device in (self.module.params.get('devices') or []):
+                if len(device.split(':')) == 2:
+                    expected_devices.add(device + ":rwm")
+                else:
+                    expected_devices.add(device)
+
+            actual_devices = set()
+            for device in (container['HostConfig']['Devices'] or []):
+                actual_devices.add("{PathOnHost}:{PathInContainer}:{CgroupPermissions}".format(**device))
+
+            if actual_devices != expected_devices:
+                self.reload_reasons.append('devices ({0} => {1})'.format(actual_devices, expected_devices))
+                differing.append(container)
+                continue
+
             # DNS
 
             expected_dns = set(self.module.params.get('dns') or [])
@@ -1688,6 +1720,7 @@ def main():
             volumes         = dict(default=None, type='list'),
             volumes_from    = dict(default=None),
             links           = dict(default=None, type='list'),
+            devices         = dict(default=None, type='list'),
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
             docker_url      = dict(),
