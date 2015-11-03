@@ -62,6 +62,8 @@ options:
       - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the specified engine will be used.
     required: false
     default: None
+    version_added: "2.0"
+    aliases: [ 'parameter_group' ]
   cache_subnet_group:
     description:
       - The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
@@ -153,7 +155,7 @@ class ElastiCacheManager(object):
     EXIST_STATUSES = ['available', 'creating', 'rebooting', 'modifying']
 
     def __init__(self, module, name, engine, cache_engine_version, node_type,
-                 num_nodes, cache_port, parameter_group, cache_subnet_group,
+                 num_nodes, cache_port, cache_parameter_group, cache_subnet_group,
                  cache_security_groups, security_group_ids, zone, wait,
                  hard_modify, region, **aws_connect_kwargs):
         self.module = module
@@ -163,7 +165,7 @@ class ElastiCacheManager(object):
         self.node_type = node_type
         self.num_nodes = num_nodes
         self.cache_port = cache_port
-        self.parameter_group = parameter_group
+        self.cache_parameter_group = cache_parameter_group
         self.cache_subnet_group = cache_subnet_group
         self.cache_security_groups = cache_security_groups
         self.security_group_ids = security_group_ids
@@ -222,7 +224,7 @@ class ElastiCacheManager(object):
                                                       engine_version=self.cache_engine_version,
                                                       cache_security_group_names=self.cache_security_groups,
                                                       security_group_ids=self.security_group_ids,
-                                                      cache_parameter_group_name=self.parameter_group,
+                                                      cache_parameter_group_name=self.cache_parameter_group,
                                                       cache_subnet_group_name=self.cache_subnet_group,
                                                       preferred_availability_zone=self.zone,
                                                       port=self.cache_port)
@@ -298,7 +300,7 @@ class ElastiCacheManager(object):
                                                   num_cache_nodes=self.num_nodes,
                                                   cache_node_ids_to_remove=nodes_to_remove,
                                                   cache_security_group_names=self.cache_security_groups,
-                                                  cache_parameter_group_name=self.parameter_group,
+                                                  cache_parameter_group_name=self.cache_parameter_group,
                                                   security_group_ids=self.security_group_ids,
                                                   apply_immediately=True,
                                                   engine_version=self.cache_engine_version)
@@ -489,8 +491,9 @@ def main():
             cache_engine_version={'required': False},
             node_type={'required': False, 'default': 'cache.m1.small'},
             num_nodes={'required': False, 'default': None, 'type': 'int'},
-            cache_port={'required': False, 'default': 11211, 'type': 'int'},
-            parameter_group={'required': False, 'default': None},
+            # alias for compat with the original PR 1950
+            cache_parameter_group={'required': False, 'default': None, 'aliases': ['parameter_group']},
+            cache_port={'required': False, 'type': 'int'},
             cache_subnet_group={'required': False, 'default': None},
             cache_security_groups={'required': False, 'default': [default],
                                    'type': 'list'},
@@ -524,7 +527,7 @@ def main():
     zone = module.params['zone']
     wait = module.params['wait']
     hard_modify = module.params['hard_modify']
-    parameter_group = module.params['parameter_group']
+    cache_parameter_group = module.params['cache_parameter_group']
 
     if cache_subnet_group and cache_security_groups == [default]:
         cache_security_groups = []
@@ -543,7 +546,7 @@ def main():
     elasticache_manager = ElastiCacheManager(module, name, engine,
                                              cache_engine_version, node_type,
                                              num_nodes, cache_port,
-                                             parameter_group,
+                                             cache_parameter_group,
                                              cache_subnet_group,
                                              cache_security_groups,
                                              security_group_ids, zone, wait,
