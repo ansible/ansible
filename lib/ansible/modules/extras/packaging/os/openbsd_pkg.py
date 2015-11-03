@@ -18,8 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import re
 import shlex
+import sqlite3
 
 DOCUMENTATION = '''
 ---
@@ -41,6 +43,21 @@ options:
           - C(present) will make sure the package is installed.
             C(latest) will make sure the latest version of the package is installed.
             C(absent) will make sure the specified package is not installed.
+    build:
+        required: false
+        choices: [ yes, no ]
+        default: no
+        description:
+          - Build the package from source instead of downloading and installing
+            a binary. Requires that the port source tree is already installed.
+            Automatically builds and installs the 'sqlports' package, if it is
+            not already installed.
+    ports_dir:
+        required: false
+        default: /usr/ports
+        description:
+          - When used in combination with the 'build' option, allows overriding
+            the default ports source directory.
 '''
 
 EXAMPLES = '''
@@ -52,6 +69,9 @@ EXAMPLES = '''
 
 # Make sure nmap is not installed
 - openbsd_pkg: name=nmap state=absent
+
+# Make sure nmap is installed, build it from source if it is not
+- openbsd_pkg: name=nmap state=present build=yes
 
 # Specify a pkg flavour with '--'
 - openbsd_pkg: name=vim--nox11 state=present
@@ -118,15 +138,33 @@ def get_package_state(name, pkg_spec, module):
 
 # Function used to make sure a package is present.
 def package_present(name, installed_state, pkg_spec, module):
+    build = module.params['build']
+
     if module.check_mode:
         install_cmd = 'pkg_add -Imn'
     else:
-        install_cmd = 'pkg_add -Im'
+        if build is True:
+            port_dir = "%s/%s" % (module.params['ports_dir'], get_package_source_path(name, pkg_spec, module))
+            if os.path.isdir(port_dir):
+                if pkg_spec['flavor']:
+                    flavors = pkg_spec['flavor'].replace('-', ' ')
+                    install_cmd = "cd %s && make clean=depends && FLAVOR=\"%s\" make install && make clean=depends" % (port_dir, flavors)
+                elif pkg_spec['subpackage']:
+                    install_cmd = "cd %s && make clean=depends && SUBPACKAGE=\"%s\" make install && make clean=depends" % (port_dir, pkg_spec['subpackage'])
+                else:
+                    install_cmd = "cd %s && make install && make clean=depends" % (port_dir)
+            else:
+                module.fail_json(msg="the port source directory %s does not exist" % (port_dir))
+        else:
+            install_cmd = 'pkg_add -Im'
 
     if installed_state is False:
 
         # Attempt to install the package
-        (rc, stdout, stderr) = execute_command("%s %s" % (install_cmd, name), module)
+        if build is True and not module.check_mode:
+            (rc, stdout, stderr) = module.run_command(install_cmd, module, use_unsafe_shell=True)
+        else:
+            (rc, stdout, stderr) = execute_command("%s %s" % (install_cmd, name), module)
 
         # The behaviour of pkg_add is a bit different depending on if a
         # specific version is supplied or not.
@@ -134,7 +172,7 @@ def package_present(name, installed_state, pkg_spec, module):
         # When a specific version is supplied the return code will be 0 when
         # a package is found and 1 when it is not, if a version is not
         # supplied the tool will exit 0 in both cases:
-        if pkg_spec['version']:
+        if pkg_spec['version'] or build is True:
             # Depend on the return code.
             module.debug("package_present(): depending on return code")
             if rc:
@@ -177,6 +215,10 @@ def package_present(name, installed_state, pkg_spec, module):
 
 # Function used to make sure a package is the latest available version.
 def package_latest(name, installed_state, pkg_spec, module):
+
+    if module.params['build'] is True:
+        module.fail_json(msg="the combination of build=%s and state=latest is not supported" % module.params['build'])
+
     if module.check_mode:
         upgrade_cmd = 'pkg_add -umn'
     else:
@@ -275,6 +317,7 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['version']           = match.group('version')
             pkg_spec['flavor_separator']  = match.group('flavor_separator')
             pkg_spec['flavor']            = match.group('flavor')
+            pkg_spec['style']             = 'version'
         else:
             module.fail_json(msg="Unable to parse package name at version_match: " + name)
 
@@ -287,6 +330,7 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['version']           = None
             pkg_spec['flavor_separator']  = '-'
             pkg_spec['flavor']            = match.group('flavor')
+            pkg_spec['style']             = 'versionless'
         else:
             module.fail_json(msg="Unable to parse package name at versionless_match: " + name)
 
@@ -299,6 +343,7 @@ def parse_package_name(name, pkg_spec, module):
             pkg_spec['version']           = None
             pkg_spec['flavor_separator']  = None
             pkg_spec['flavor']            = None
+            pkg_spec['style']             = 'stem'
         else:
             module.fail_json(msg="Unable to parse package name at else: " + name)
 
@@ -308,6 +353,48 @@ def parse_package_name(name, pkg_spec, module):
         match = re.search("-$", pkg_spec['flavor'])
         if match:
             module.fail_json(msg="Trailing dash in flavor: " + pkg_spec['flavor'])
+
+# Function used for figuring out the port path.
+def get_package_source_path(name, pkg_spec, module):
+    pkg_spec['subpackage'] = None
+    if pkg_spec['stem'] == 'sqlports':
+        return 'databases/sqlports'
+    else:
+        # try for an exact match first
+        conn = sqlite3.connect('/usr/local/share/sqlports')
+        first_part_of_query = 'SELECT fullpkgpath, fullpkgname FROM ports WHERE fullpkgname'
+        query = first_part_of_query + ' = ?'
+        cursor = conn.execute(query, (name,))
+        results = cursor.fetchall()
+
+        # next, try for a fuzzier match
+        if len(results) < 1:
+            looking_for = pkg_spec['stem'] + (pkg_spec['version_separator'] or '-') + (pkg_spec['version'] or '%')
+            query = first_part_of_query + ' LIKE ?'
+            if pkg_spec['flavor']:
+                looking_for += pkg_spec['flavor_separator'] + pkg_spec['flavor']
+                cursor = conn.execute(query, (looking_for,))
+            elif pkg_spec['style'] == 'versionless':
+                query += ' AND fullpkgname NOT LIKE ?'
+                cursor = conn.execute(query, (looking_for, "%s-%%" % looking_for,))
+            else:
+                cursor = conn.execute(query, (looking_for,))
+            results = cursor.fetchall()
+
+        # error if we don't find exactly 1 match
+        conn.close()
+        if len(results) < 1:
+            module.fail_json(msg="could not find a port by the name '%s'" % name)
+        if len(results) > 1:
+            matches = map(lambda x:x[1], results)
+            module.fail_json(msg="too many matches, unsure which to build: %s" % ' OR '.join(matches))
+
+        # there's exactly 1 match, so figure out the subpackage, if any, then return
+        fullpkgpath = results[0][0]
+        parts = fullpkgpath.split(',')
+        if len(parts) > 1 and parts[1][0] == '-':
+            pkg_spec['subpackage'] = parts[1]
+        return parts[0]
 
 # Function used for upgrading all installed packages.
 def upgrade_packages(module):
@@ -348,12 +435,16 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             state = dict(required=True, choices=['absent', 'installed', 'latest', 'present', 'removed']),
+            build = dict(default='no', type='bool'),
+            ports_dir = dict(default='/usr/ports'),
         ),
         supports_check_mode = True
     )
 
     name      = module.params['name']
     state     = module.params['state']
+    build     = module.params['build']
+    ports_dir = module.params['ports_dir']
 
     rc = 0
     stdout = ''
@@ -361,6 +452,18 @@ def main():
     result = {}
     result['name'] = name
     result['state'] = state
+    result['build'] = build
+
+    if build is True:
+        if not os.path.isdir(ports_dir):
+            module.fail_json(msg="the ports source directory %s does not exist" % (ports_dir))
+
+        # build sqlports if its not installed yet
+        pkg_spec = {}
+        parse_package_name('sqlports', pkg_spec, module)
+        installed_state = get_package_state(name, pkg_spec, module)
+        if not installed_state:
+            package_present('sqlports', installed_state, pkg_spec, module)
 
     if name == '*':
         if state != 'latest':
