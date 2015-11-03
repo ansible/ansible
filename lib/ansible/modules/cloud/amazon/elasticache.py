@@ -43,12 +43,6 @@ options:
       - The version number of the cache engine
     required: false
     default: none
-  cache_parameter_group_name:
-    description:
-        - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the specified engine will be used.
-    required: false
-    default: none
-    version_added: "2.0"
   node_type:
     description:
       - The compute and memory capacity of the nodes in the cache cluster
@@ -63,9 +57,9 @@ options:
       - The port number on which each of the cache nodes will accept connections
     required: false
     default: none
-  parameter_group:
+  cache_parameter_group:
     description:
-      - Specify non-default parameter group names to be associated with cache cluster
+      - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the specified engine will be used.
     required: false
     default: None
   cache_subnet_group:
@@ -161,12 +155,11 @@ class ElastiCacheManager(object):
     def __init__(self, module, name, engine, cache_engine_version, node_type,
                  num_nodes, cache_port, parameter_group, cache_subnet_group,
                  cache_security_groups, security_group_ids, zone, wait,
-                 hard_modify, region, cache_parameter_group_name=None, **aws_connect_kwargs):
+                 hard_modify, region, **aws_connect_kwargs):
         self.module = module
         self.name = name
         self.engine = engine
         self.cache_engine_version = cache_engine_version
-        self.cache_parameter_group_name = cache_parameter_group_name
         self.node_type = node_type
         self.num_nodes = num_nodes
         self.cache_port = cache_port
@@ -227,7 +220,6 @@ class ElastiCacheManager(object):
                                                       cache_node_type=self.node_type,
                                                       engine=self.engine,
                                                       engine_version=self.cache_engine_version,
-                                                      cache_parameter_group_name=self.cache_parameter_group_name,
                                                       cache_security_group_names=self.cache_security_groups,
                                                       security_group_ids=self.security_group_ids,
                                                       cache_parameter_group_name=self.parameter_group,
@@ -309,8 +301,7 @@ class ElastiCacheManager(object):
                                                   cache_parameter_group_name=self.parameter_group,
                                                   security_group_ids=self.security_group_ids,
                                                   apply_immediately=True,
-                                                  engine_version=self.cache_engine_version,
-                                                  cache_parameter_group_name=self.cache_parameter_group_name)
+                                                  engine_version=self.cache_engine_version)
         except boto.exception.BotoServerError, e:
             self.module.fail_json(msg=e.message)
 
@@ -496,7 +487,6 @@ def main():
             name={'required': True},
             engine={'required': False, 'default': 'memcached'},
             cache_engine_version={'required': False},
-            cache_parameter_group_name={'required': False},
             node_type={'required': False, 'default': 'cache.m1.small'},
             num_nodes={'required': False, 'default': None, 'type': 'int'},
             cache_port={'required': False, 'default': 11211, 'type': 'int'},
@@ -525,7 +515,6 @@ def main():
     state = module.params['state']
     engine = module.params['engine']
     cache_engine_version = module.params['cache_engine_version']
-    cache_parameter_group_name = module.params['cache_parameter_group_name']
     node_type = module.params['node_type']
     num_nodes = module.params['num_nodes']
     cache_port = module.params['cache_port']
@@ -552,16 +541,13 @@ def main():
         module.fail_json(msg=str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     elasticache_manager = ElastiCacheManager(module, name, engine,
-                                             cache_engine_version,
-                                             node_type,
+                                             cache_engine_version, node_type,
                                              num_nodes, cache_port,
                                              parameter_group,
                                              cache_subnet_group,
                                              cache_security_groups,
                                              security_group_ids, zone, wait,
-                                             hard_modify, region,
-                                             cache_parameter_group_name=cache_parameter_group_name,
-                                             **aws_connect_kwargs)
+                                             hard_modify, region, **aws_connect_kwargs)
 
     if state == 'present':
         elasticache_manager.ensure_present()
