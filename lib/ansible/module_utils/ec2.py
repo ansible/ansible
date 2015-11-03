@@ -167,7 +167,7 @@ def get_aws_connection_info(module, boto3=False):
 
         if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
             boto_params['validate_certs'] = validate_certs
-        
+    
     return region, ec2_url, boto_params
 
 
