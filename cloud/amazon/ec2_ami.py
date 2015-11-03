@@ -86,8 +86,7 @@ options:
       - Users and groups that should be able to launch the ami. Expects dictionary with a key of user_ids and/or group_names. user_ids should be a list of account ids. group_name should be a list of groups, "all" is the only acceptable value currently.
     required: false
     default: null
-    aliases: []
-
+    version_added: "2.0"
 author: "Evan Duffield (@scicoin-project) <eduffield@iacquire.com>"
 extends_documentation_fragment:
     - aws
