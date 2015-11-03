@@ -150,7 +150,8 @@ def get_aws_connection_info(module, boto3=False):
         if validate_certs:
             boto_params['verify'] = validate_certs
 
-        return region, ec2_url, profile_name, boto_params
+        if profile_name:
+            return region, ec2_url, profile_name, boto_params
         
     else:
         boto_params = dict(aws_access_key_id=access_key,
@@ -167,7 +168,7 @@ def get_aws_connection_info(module, boto3=False):
         if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
             boto_params['validate_certs'] = validate_certs
         
-        return region, ec2_url, boto_params
+    return region, ec2_url, boto_params
 
 
 def get_ec2_creds(module):
