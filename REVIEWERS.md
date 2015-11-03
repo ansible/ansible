@@ -49,6 +49,8 @@ Docker: @cove @joshuaconner @softzilla @smashwilson
 
 Red Hat Network: @barnabycourt @vritant @flossware
 
+Zabbix: @cove @harrisongu @abulimov
+
 PR Process
 =======
 
