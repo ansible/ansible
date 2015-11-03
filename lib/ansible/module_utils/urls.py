@@ -669,7 +669,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     urllib2.install_opener(opener)
 
     if method:
-        if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT'):
+        if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT','PATCH'):
             raise ConnectionError('invalid HTTP request method; %s' % method.upper())
         request = RequestWithMethod(url, method.upper(), data)
     else:
