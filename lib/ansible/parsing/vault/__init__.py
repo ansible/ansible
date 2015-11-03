@@ -307,7 +307,7 @@ class VaultEditor:
 
         self.write_data(new_ciphertext, filename)
 
-        # preserve permitions
+        # preserve permissions
         os.chmod(filename, prev.st_mode)
         os.chown(filename, prev.st_uid, prev.st_gid)
 
