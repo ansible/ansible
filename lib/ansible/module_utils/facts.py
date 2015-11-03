@@ -562,12 +562,8 @@ class Facts(object):
             else:
                 self.facts['service_mgr'] = 'systemstarter'
         elif self.facts['system'].endswith('BSD') or self.facts['system'] in ['Bitrig', 'DragonFly']:
-            proc_1 = check_init()
-            if proc_1 is not None:
-                self.facts['service_mgr'] = proc_1
-            else:
-                #FIXME: we might want to break out to individual BSDs
-                self.facts['service_mgr'] = 'bsdinit'
+            #FIXME: we might want to break out to individual BSDs
+            self.facts['service_mgr'] = 'bsdinit'
         elif self.facts['system'] == 'AIX':
             self.facts['service_mgr'] = 'src'
         elif self.facts['system'] == 'SunOS':
@@ -701,7 +697,7 @@ class Facts(object):
         # tools must be installed
         if module.get_bin_path('systemctl'):
 
-            # this should show if systemd is the boot init system, if check_init faild to mark as systemd
+            # this should show if systemd is the boot init system, if checking init faild to mark as systemd
             # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
             for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
                 if os.path.exists(canary):
