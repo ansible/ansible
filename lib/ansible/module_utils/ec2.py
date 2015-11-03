@@ -40,20 +40,26 @@ except:
     HAS_LOOSE_VERSION = False
 
 
-def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, profile_name=None, **params):
+def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
+    profile = None
+    if params.get('profile_name'):
+        profile = params['profile_name']
+        params.pop("profile_name")
+
     if conn_type not in ['both', 'resource', 'client']:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
 
     if conn_type == 'resource':
-        resource = boto3.session.Session(profile_name=profile_name).resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
         return resource
     elif conn_type == 'client':
-        client = boto3.session.Session(profile_name=profile_name).client(resource, region_name=region, endpoint_url=endpoint, **params)
+        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client
     else:
-        resource = boto3.session.Session(profile_name=profile_name).resource(resource, region_name=region, endpoint_url=endpoint, **params)
-        client = boto3.session.Session(profile_name=profile_name).client(resource, region_name=region, endpoint_url=endpoint, **params)
+        resource = boto3.session.Session(profile_name=profile).resource(resource, region_name=region, endpoint_url=endpoint, **params)
+        client = boto3.session.Session(profile_name=profile).client(resource, region_name=region, endpoint_url=endpoint, **params)
         return client, resource
+
 
 def aws_common_argument_spec():
     return dict(
@@ -151,8 +157,8 @@ def get_aws_connection_info(module, boto3=False):
             boto_params['verify'] = validate_certs
 
         if profile_name:
-            return region, ec2_url, profile_name, boto_params
-        
+            boto_params['profile_name'] = profile_name
+
     else:
         boto_params = dict(aws_access_key_id=access_key,
                            aws_secret_access_key=secret_key,
