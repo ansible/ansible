@@ -122,7 +122,7 @@ def not_in_host_file(self, host):
 
         try:
             host_fh = open(hf)
-        except IOError, e:
+        except IOError:
             hfiles_not_found += 1
             continue
         else:
@@ -156,7 +156,6 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
 
     """ use ssh-keyscan to add the hostkey """
 
-    result = False
     keyscan_cmd = module.get_bin_path('ssh-keyscan', True)
 
     if 'USER' in os.environ:
