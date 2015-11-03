@@ -41,10 +41,7 @@ except:
 
 
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
-    profile = None
-    if params.get('profile_name'):
-        profile = params['profile_name']
-        params.pop("profile_name")
+    profile = params.pop('profile_name', None)
 
     if conn_type not in ['both', 'resource', 'client']:
         module.fail_json(msg='There is an issue in the code of the module. You must specify either both, resource or client to the conn_type parameter in the boto3_conn function call')
