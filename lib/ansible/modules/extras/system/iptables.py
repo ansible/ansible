@@ -208,6 +208,10 @@ options:
       - "ctstate is a list of the connection states to match in the conntrack module.
         Possible states are: 'INVALID', 'NEW', 'ESTABLISHED', 'RELATED', 'UNTRACKED', 'SNAT', 'DNAT'"
     required: false
+  limit:
+    description:
+      - "Specifies the maximum average number of matches to allow per second. The number can specify units explicitly, using `/second', `/minute', `/hour' or `/day', or parts of them (so `5/second' is the same as `5/s')."
+    required: false
 '''
 
 EXAMPLES = '''
@@ -244,6 +248,11 @@ def append_conntrack(rule, param):
         rule.extend(['-m'])
         rule.extend(['conntrack'])
 
+def append_limit(rule, param):
+    if param:
+        rule.extend(['-m'])
+        rule.extend(['limit'])
+
 
 def construct_rule(params):
     rule = []
@@ -265,6 +274,8 @@ def construct_rule(params):
     if params['ctstate']:
         append_conntrack(rule, params['ctstate'])
         append_param(rule, ','.join(params['ctstate']), '--ctstate', False)
+    append_limit(rule, params['limit'])
+    append_param(rule, params['limit'], '--limit', False)
     return rule
 
 
@@ -315,6 +326,7 @@ def main():
             to_ports=dict(required=False, default=None, type='str'),
             comment=dict(required=False, default=None, type='str'),
             ctstate=dict(required=False, default=[], type='list'),
+            limit=dict(required=False, default=[], type='list'),
         ),
     )
     args = dict(
