@@ -78,6 +78,41 @@
   pip: name={{ pip_test_package }} state=present
 
 
+# Test virtualenv installations
 
+- name: make sure the test env doesn't exist
+  file: state=absent name={{ output_dir }}/pipenv
 
+- name: create a requirement file with an vcs url
+  copy: dest={{ output_dir }}/pipreq.txt
+    content="-e git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
 
+- name: install the requirement file in a virtualenv
+  pip: requirements={{ output_dir}}/pipreq.txt
+    virtualenv={{ output_dir }}/pipenv
+  register: req_installed
+
+- name: check that a change occurred
+  assert:
+    that:
+      - "req_installed.changed"
+
+- name: repeat installation to check status didn't change
+  pip: requirements={{ output_dir}}/pipreq.txt
+    virtualenv={{ output_dir }}/pipenv
+  register: req_installed
+
+- name: check that a change didn't occurr this time (bug ansible#1705)
+  assert:
+    that:
+      - "not req_installed.changed"
+
+- name: install the same module from url
+  pip: name="git+https://github.com/dvarrazzo/pyiso8601#egg=pyiso8601"
+    virtualenv={{ output_dir }}/pipenv
+  register: url_installed
+
+- name: check that a change didn't occurr (bug ansible-modules-core#1645)
+  assert:
+    that:
+      - "not url_installed.changed"
