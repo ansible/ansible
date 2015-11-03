@@ -76,7 +76,7 @@ class HostVars(collections.Mapping):
         data = self._variable_manager.get_vars(loader=self._loader, host=host, play=self._play, include_hostvars=False)
 
         # Using cache in order to avoid template call
-        sha1_hash = sha1(str(data)).hexdigest()
+        sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
         if sha1_hash in self._cached_result:
             result = self._cached_result[sha1_hash]
         else:
