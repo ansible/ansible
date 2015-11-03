@@ -165,7 +165,7 @@ class PluginLoader(object):
             else:
                 suffixes = ['.py', '']
 
-        potential_names = frozenset('%s%s' % (name, s) for s in suffixes)
+        potential_names = list('%s%s' % (name, s) for s in suffixes)
         for full_name in potential_names:
             if full_name in self._plugin_path_cache:
                 return self._plugin_path_cache[full_name]
