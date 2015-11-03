@@ -30,7 +30,6 @@ import os
 import re
 import types
 import ConfigParser
-import shlex
 
 
 class RegistrationBase(object):
