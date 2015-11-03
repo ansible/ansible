@@ -262,8 +262,9 @@ def construct_rule(params):
     append_param(rule, params['to_ports'], '--to-ports', False)
     append_comm(rule, params['comment'])
     append_param(rule, params['comment'], '--comment', False)
-    append_conntrack(rule, params['ctstate'])
-    append_param(rule, ','.join(params['ctstate']), '--ctstate', False)
+    if params['ctstate']:
+        append_conntrack(rule, params['ctstate'])
+        append_param(rule, ','.join(params['ctstate']), '--ctstate', False)
     return rule
 
 
