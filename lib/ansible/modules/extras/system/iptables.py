@@ -313,7 +313,7 @@ def main():
             destination_port=dict(required=False, default=None, type='str'),
             to_ports=dict(required=False, default=None, type='str'),
             comment=dict(required=False, default=None, type='str'),
-            ctstate=dict(required=False, default=None, type='list'),
+            ctstate=dict(required=False, default=[], type='list'),
         ),
     )
     args = dict(
