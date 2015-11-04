@@ -34,6 +34,8 @@ try:
 except ImportError:
     pass
 
+import ssl
+
 DOCUMENTATION = '''
 ---
 module: vsphere_guest
@@ -48,6 +50,11 @@ options:
     required: true
     default: null
     aliases: []
+  insecure:
+    description:
+      - Ignore SSL verification errors when connection to vcenter
+    required: false
+    default: false
   guest:
     description:
       - The virtual server name you wish to manage.
@@ -1574,6 +1581,7 @@ def main():
             cluster=dict(required=False, default=None, type='str'),
             force=dict(required=False, type='bool', default=False),
             esxi=dict(required=False, type='dict', default={}),
+            insecure=dict(required=False, type='bool', default=False),
             power_on_after_clone=dict(required=False, type='bool', default=True)
 
 
@@ -1615,12 +1623,20 @@ def main():
     from_template = module.params['from_template']
     snapshot_to_clone = module.params['snapshot_to_clone']
     power_on_after_clone = module.params['power_on_after_clone']
+    insecure = module.params['insecure']
 
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
     try:
         viserver.connect(vcenter_hostname, username, password)
+    except ssl.SSLError as sslerr:
+        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror and insecure:
+            default_context = ssl._create_default_https_context
+            ssl._create_default_https_context = ssl._create_unverified_context
+            viserver.connect(vcenter_hostname, username, password)
+        else:
+            raise Exception(sslerr)
     except VIApiException, err:
         module.fail_json(msg="Cannot connect to %s: %s" %
                          (vcenter_hostname, err))
