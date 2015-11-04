@@ -198,10 +198,16 @@ def delete_user(module, iam, name):
             iam.get_all_access_keys(name).list_access_keys_result.access_key_metadata]
         for key in current_keys:
             iam.delete_access_key(key, name)
-        login_profile = iam.get_login_profiles(name)
-        if login_profile:
-           iam.delete_login_profile(name)
-        del_meta = iam.delete_user(name).delete_user_response
+        try:
+            login_profile = iam.get_login_profiles(name).get_login_profile_response
+        except boto.exception.BotoServerError, err:
+            error_msg = boto_exception(err)
+            if ('Cannot find Login Profile') in error_msg:
+
+               del_meta = iam.delete_user(name).delete_user_response
+            else:
+              iam.delete_login_profile(name)
+              del_meta = iam.delete_user(name).delete_user_response
     except Exception as ex:
         module.fail_json(changed=False, msg="delete failed %s" %ex)
         if ('must detach all policies first') in error_msg:
@@ -661,7 +667,7 @@ def main():
                 try:
                    set_users_groups(module, iam, name, '')
                    del_meta, name, changed = delete_user(module, iam, name)
-                   module.exit_json(deleted_user=name, changed=changed, orig_user_list=orig_user_list)
+                   module.exit_json(deleted_user=name, changed=changed)
 
                 except Exception as ex:
                        module.fail_json(changed=changed, msg=str(ex))
