@@ -62,9 +62,9 @@ options:
     default: null
   install_recommends:
     description:
-      - Corresponds to the C(--no-install-recommends) option for I(apt). Default behavior (C(yes)) replicates apt's default behavior; C(no) does not install recommended packages. Suggested packages are never installed.
+      - Corresponds to the C(--no-install-recommends) option for I(apt). C(yes) installs recommended packages.  C(no) does not install recommended packages. By default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
     required: false
-    default: yes
+    default: null
     choices: [ "yes", "no" ]
   force:
     description:
@@ -231,7 +231,7 @@ def package_status(m, pkgname, version, cache, state):
                 provided_packages = cache.get_providing_packages(pkgname)
                 if provided_packages:
                     is_installed = False
-                    # when virtual package providing only one package, look up status of target package 
+                    # when virtual package providing only one package, look up status of target package
                     if cache.is_virtual_package(pkgname) and len(provided_packages) == 1:
                         package = provided_packages[0]
                         installed, upgradable, has_files = package_status(m, package.name, version, cache, state='install')
@@ -339,7 +339,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
     return new_pkgspec
 
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
-            install_recommends=True, force=False,
+            install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
             build_dep=False):
     pkg_list = []
@@ -385,8 +385,12 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
-        if not install_recommends:
-            cmd += " --no-install-recommends"
+
+        if install_recommends is False:
+            cmd += " -o APT::Install-Recommends=no"
+        elif install_recommends is True:
+            cmd += " -o APT::Install-Recommends=yes"
+        # install_recommends is None uses the OS default
 
         rc, out, err = m.run_command(cmd)
         if rc:
@@ -547,7 +551,7 @@ def main():
             package = dict(default=None, aliases=['pkg', 'name'], type='list'),
             deb = dict(default=None),
             default_release = dict(default=None, aliases=['default-release']),
-            install_recommends = dict(default='yes', aliases=['install-recommends'], type='bool'),
+            install_recommends = dict(default=None, aliases=['install-recommends'], type='bool'),
             force = dict(default='no', type='bool'),
             upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS)
@@ -559,7 +563,7 @@ def main():
 
     if not HAS_PYTHON_APT:
         try:
-            module.run_command('apt-get update && apt-get install python-apt -y -q', use_unsafe_shell=True, check_rc=True)
+            module.run_command('apt-get update && apt-get install python-apt -y -q --force-yes', use_unsafe_shell=True, check_rc=True)
             global apt, apt_pkg
             import apt
             import apt.debfile

@@ -35,7 +35,7 @@ options:
     default: null
     aliases: ['ec2_secret_key', 'secret_key']
   bucket:
-    description: 
+    description:
       - Bucket name.
     required: true
     default: null
@@ -131,12 +131,12 @@ options:
     default: 0
     version_added: "2.0"
   s3_url:
-    description: 
+    description:
       - S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
     default: null
     aliases: [ S3_URL ]
   src:
-    description: 
+    description:
       - The source file path when performing a PUT operation.
     required: false
     default: null
@@ -146,7 +146,6 @@ options:
 requirements: [ "boto" ]
 author:
     - "Lester Wade (@lwade)"
-    - "Ralph Tice (@ralph-tice)"
 extends_documentation_fragment: aws
 '''
 
@@ -416,17 +415,11 @@ def main():
         if acl not in CannedACLStrings:
             module.fail_json(msg='Unknown permission specified: %s' % str(acl))
 
-    if overwrite not in  ['always', 'never', 'different']:
+    if overwrite not in ['always', 'never', 'different']:
         if module.boolean(overwrite):
             overwrite = 'always'
         else:
-            overwrite='never'
-
-    if overwrite not in  ['always', 'never', 'different']:
-        if module.boolean(overwrite):
-            overwrite = 'always'
-        else:
-            overwrite='never'
+            overwrite = 'never'
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -486,7 +479,7 @@ def main():
         # First, we check to see if the bucket exists, we get "bucket" returned.
         bucketrtn = bucket_check(module, s3, bucket)
         if bucketrtn is False:
-            module.fail_json(msg="Target bucket cannot be found", failed=True)
+            module.fail_json(msg="Source bucket cannot be found", failed=True)
 
         # Next, we check to see if the key in the bucket exists. If it exists, it also returns key_matches md5sum check.
         keyrtn = key_check(module, s3, bucket, obj, version=version)

@@ -47,12 +47,6 @@ options:
       - create or deregister/delete image
     required: false
     default: 'present'
-  region:
-    description:
-      - The AWS region to use.  Must be specified if ec2_url is not used. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    default: null
-    aliases: [ 'aws_region', 'ec2_region' ]
   description:
     description:
       - An optional human-readable string describing the contents and purpose of the AMI.
@@ -72,7 +66,8 @@ options:
   device_mapping:
     version_added: "2.0"
     description:
-      - An optional list of devices with custom configurations (same block-device-mapping parameters)
+      - An optional list of device hashes/dictionaries with custom configurations (same block-device-mapping parameters)
+      - "Valid properties include: device_name, volume_type, size (in GB), delete_on_termination (boolean), no_device (boolean), snapshot_id, iops (for io1 volume_type)"
     required: false
     default: null
   delete_snapshot:
@@ -86,9 +81,16 @@ options:
     required: false
     default: null
     version_added: "2.0"
-
+  launch_permissions:
+    description:
+      - Users and groups that should be able to launch the ami. Expects dictionary with a key of user_ids and/or group_names. user_ids should be a list of account ids. group_name should be a list of groups, "all" is the only acceptable value currently.
+    required: false
+    default: null
+    version_added: "2.0"
 author: "Evan Duffield (@scicoin-project) <eduffield@iacquire.com>"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 # Thank you to iAcquire for sponsoring development of this module.
@@ -133,6 +135,21 @@ EXAMPLES = '''
           volume_type: gp2
   register: instance
 
+# AMI Creation, excluding a volume attached at /dev/sdb
+- ec2_ami
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    instance_id: i-xxxxxx
+    name: newtest
+    device_mapping:
+        - device_name: /dev/sda1
+          size: XXX
+          delete_on_termination: true
+          volume_type: gp2
+        - device_name: /dev/sdb
+          no_device: yes
+  register: instance
+
 # Deregister/Delete AMI
 - ec2_ami:
     aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
@@ -151,6 +168,25 @@ EXAMPLES = '''
     delete_snapshot: False
     state: absent
 
+# Update AMI Launch Permissions, making it public
+- ec2_ami:
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    region: xxxxxx
+    image_id: "{{ instance.image_id }}"
+    state: present
+    launch_permissions:
+      group_names: ['all']
+
+# Allow AMI to be launched by another account
+- ec2_ami:
+    aws_access_key: xxxxxxxxxxxxxxxxxxxxxxx
+    aws_secret_key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    region: xxxxxx
+    image_id: "{{ instance.image_id }}"
+    state: present
+    launch_permissions:
+      user_ids: ['123456789012']
 '''
 
 import sys
@@ -181,6 +217,7 @@ def create_image(module, ec2):
     no_reboot = module.params.get('no_reboot')
     device_mapping = module.params.get('device_mapping')
     tags =  module.params.get('tags')
+    launch_permissions = module.params.get('launch_permissions')
 
     try:
         params = {'instance_id': instance_id,
@@ -241,6 +278,12 @@ def create_image(module, ec2):
             ec2.create_tags(image_id, tags)
         except boto.exception.EC2ResponseError, e:
             module.fail_json(msg = "Image tagging failed => %s: %s" % (e.error_code, e.error_message))
+    if launch_permissions:
+        try:
+            img = ec2.get_image(image_id)
+            img.set_launch_permissions(**launch_permissions)
+        except boto.exception.BotoServerError, e:
+            module.fail_json(msg="%s: %s" % (e.error_code, e.error_message), image_id=image_id)
 
     module.exit_json(msg="AMI creation operation complete", image_id=image_id, state=img.state, changed=True)
 
@@ -281,6 +324,36 @@ def deregister_image(module, ec2):
     sys.exit(0)
 
 
+def update_image(module, ec2):
+    """
+    Updates AMI
+    """
+
+    image_id = module.params.get('image_id')
+    launch_permissions = module.params.get('launch_permissions')
+    if 'user_ids' in launch_permissions:
+        launch_permissions['user_ids'] = [str(user_id) for user_id in launch_permissions['user_ids']]
+
+    img = ec2.get_image(image_id)
+    if img == None:
+        module.fail_json(msg = "Image %s does not exist" % image_id, changed=False)
+
+    try:
+        set_permissions = img.get_launch_permissions()
+        if set_permissions != launch_permissions:
+            if ('user_ids' in launch_permissions and launch_permissions['user_ids']) or ('group_names' in launch_permissions and launch_permissions['group_names']):
+                res = img.set_launch_permissions(**launch_permissions)
+            elif ('user_ids' in set_permissions and set_permissions['user_ids']) or ('group_names' in set_permissions and set_permissions['group_names']):
+                res = img.remove_launch_permissions(**set_permissions)
+            else:
+                module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
+            module.exit_json(msg="AMI launch permissions updated", launch_permissions=launch_permissions, set_perms=set_permissions, changed=True)
+        else:
+            module.exit_json(msg="AMI not updated", launch_permissions=set_permissions, changed=False)
+
+    except boto.exception.BotoServerError, e:
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -294,7 +367,8 @@ def main():
             no_reboot = dict(default=False, type="bool"),
             state = dict(default='present'),
             device_mapping = dict(type='list'),
-            tags = dict(type='dict')
+            tags = dict(type='dict'),
+            launch_permissions = dict(type='dict')
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -314,6 +388,10 @@ def main():
         deregister_image(module, ec2)
 
     elif module.params.get('state') == 'present':
+        if module.params.get('image_id') and module.params.get('launch_permissions'):
+            # Update image's launch permissions
+            update_image(module, ec2)
+
         # Changed is always set to true when provisioning new AMI
         if not module.params.get('instance_id'):
             module.fail_json(msg='instance_id parameter is required for new image')

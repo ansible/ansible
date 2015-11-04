@@ -42,13 +42,10 @@ options:
       - List of subnet IDs that make up the Elasticache subnet group.
     required: false
     default: null
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
-    required: true
-    aliases: ['aws_region', 'ec2_region']
 author: "Tim Mahoney (@timmahoney)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

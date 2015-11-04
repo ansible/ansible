@@ -90,6 +90,12 @@ options:
     required: false
     default: null
     version_added: "1.0"
+  editable:
+    description:
+      - Pass the editable flag for versioning URLs.
+    required: false
+    default: yes
+    version_added: "2.0"
   chdir:
     description:
       - cd into this directory before running the command
@@ -120,6 +126,9 @@ EXAMPLES = '''
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'
+
+# Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
+- pip: name='git+http://myrepo/app/MyApp' editable=false
 
 # Install (MyApp) from local tarball
 - pip: name='file:///path/to/MyApp.tar.gz'
@@ -239,7 +248,8 @@ def main():
             virtualenv_python=dict(default=None, required=False, type='str'),
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
-            chdir=dict(default=None, required=False),
+            editable=dict(default='yes', type='bool', required=False),
+            chdir=dict(default=None, required=False, type='path'),
             executable=dict(default=None, required=False),
         ),
         required_one_of=[['name', 'requirements']],
@@ -257,6 +267,10 @@ def main():
 
     if state == 'latest' and version is not None:
         module.fail_json(msg='version is incompatible with state=latest')
+
+    if chdir is None:
+        # this is done to avoid permissions issues with privilege escalation and virtualenvs
+        chdir =  tempfile.gettempdir()
 
     err = ''
     out = ''
@@ -285,10 +299,7 @@ def main():
                 cmd += ' -p%s' % virtualenv_python
 
             cmd = "%s %s" % (cmd, env)
-            this_dir = tempfile.gettempdir()
-            if chdir:
-                this_dir = os.path.join(this_dir, chdir)
-            rc, out_venv, err_venv = module.run_command(cmd, cwd=this_dir)
+            rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
             out += out_venv
             err += err_venv
             if rc != 0:
@@ -311,15 +322,16 @@ def main():
     # Automatically apply -e option to extra_args when source is a VCS url. VCS
     # includes those beginning with svn+, git+, hg+ or bzr+
     if name:
-        if name.startswith('svn+') or name.startswith('git+') or \
-                name.startswith('hg+') or name.startswith('bzr+'):
-            args_list = []  # used if extra_args is not used at all
-            if extra_args:
-                args_list = extra_args.split(' ')
-            if '-e' not in args_list:
-                args_list.append('-e')
-                # Ok, we will reconstruct the option string
-                extra_args = ' '.join(args_list)
+        if module.params['editable']:
+            if name.startswith('svn+') or name.startswith('git+') or \
+                    name.startswith('hg+') or name.startswith('bzr+'):
+                args_list = []  # used if extra_args is not used at all
+                if extra_args:
+                    args_list = extra_args.split(' ')
+                if '-e' not in args_list:
+                    args_list.append('-e')
+                    # Ok, we will reconstruct the option string
+                    extra_args = ' '.join(args_list)
 
     if extra_args:
         cmd += ' %s' % extra_args
@@ -328,9 +340,6 @@ def main():
     elif requirements:
         cmd += ' -r %s' % requirements
 
-    this_dir = tempfile.gettempdir()
-    if chdir:
-        this_dir = os.path.join(this_dir, chdir)
 
     if module.check_mode:
         if extra_args or requirements or state == 'latest' or not name:
@@ -340,7 +349,8 @@ def main():
             module.exit_json(changed=True)
 
         freeze_cmd = '%s freeze' % pip
-        rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=this_dir)
+
+        rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=chdir)
 
         if rc != 0:
             module.exit_json(changed=True)
@@ -353,7 +363,7 @@ def main():
         changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
         module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
-    rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=this_dir)
+    rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
     out += out_pip
     err += err_pip
     if rc == 1 and state == 'absent' and \

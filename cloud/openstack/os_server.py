@@ -76,25 +76,25 @@ options:
      default: None
    security_groups:
      description:
-        - The name of the security group to which the instance should be added
+        - Names of the security groups to which the instance should be
+          added.  This may be a YAML list or a common separated string.
      required: false
      default: None
    nics:
      description:
         - A list of networks to which the instance's interface should
-          be attached. Networks may be referenced by net-id or net-name.
+          be attached. Networks may be referenced by net-id/net-name/port-id
+          or port-name.
+        - 'Also this accepts a string containing a list of (net/port)-(id/name)
+          Eg: nics: "net-id=uuid-1,port-name=myport"'
      required: false
      default: None
-   public_ip:
+   auto_ip:
      description:
         - Ensure instance has public ip however the cloud wants to do that
      required: false
      default: 'yes'
-   auto_floating_ip:
-     description:
-        - If the module should automatically assign a floating IP
-     required: false
-     default: 'yes'
+     aliases: ['auto_floating_ip', 'public_ip']
    floating_ips:
      description:
         - list of valid floating IPs that pre-exist to assign to this node
@@ -107,8 +107,9 @@ options:
      default: None
    meta:
      description:
-        - A list of key value pairs that should be provided as a metadata to
-          the new instance.
+        - 'A list of key value pairs that should be provided as a metadata to
+          the new instance or a string containing a list of key-value pairs.
+          Eg:  meta: "key1=value1,key2=value2"'
      required: false
      default: None
    wait:
@@ -194,7 +195,7 @@ EXAMPLES = '''
       timeout: 200
       flavor: 101
       security_groups: default
-      auto_floating_ip: yes
+      auto_ip: yes
 
 # Creates a new instance in named cloud mordred availability zone az2
 # and assigns a pre-known floating IP
@@ -241,6 +242,44 @@ EXAMPLES = '''
       image: Ubuntu 14.04 LTS (Trusty Tahr) (PVHVM)
       flavor_ram: 4096
       flavor_include: Performance
+
+# Creates a new instance and attaches to multiple network
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance with a string
+    os_server:
+      name: vm1
+      auth:
+         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         username: admin
+         password: admin
+         project_name: admin
+       name: vm1
+       image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+       key_name: ansible_key
+       timeout: 200
+       flavor: 4
+       nics: "net-id=4cb08b20-62fe-11e5-9d70-feff819cdc9f,net-id=542f0430-62fe-11e5-9d70-feff819cdc9f..."
+
+# Creates a new instance and attaches to a network and passes metadata to
+# the instance
+- os_server:
+       state: present
+       auth:
+         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         username: admin
+         password: admin
+         project_name: admin
+       name: vm1
+       image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+       key_name: ansible_key
+       timeout: 200
+       flavor: 4
+       nics:
+         - net-id: 34605f38-e52a-25d2-b6ec-754a13ffb723
+         - net-name: another_network
+       meta: "hostname=test1,group=uge_master"
 '''
 
 
@@ -250,9 +289,19 @@ def _exit_hostvars(module, cloud, server, changed=True):
         changed=changed, server=server, id=server.id, openstack=hostvars)
 
 
+def _parse_nics(nics):
+    for net in nics:
+        if type(net) == str:
+            for nic in net.split(','):
+                yield dict((nic.split('='),))
+        else:
+            yield net
+
 def _network_args(module, cloud):
     args = []
-    for net in module.params['nics']:
+    nics = module.params['nics']
+
+    for net in _parse_nics(nics):
         if net.get('net-id'):
             args.append(net)
         elif net.get('net-name'):
@@ -305,13 +354,20 @@ def _create_server(module, cloud):
 
     nics = _network_args(module, cloud)
 
+    if type(module.params['meta']) is str:
+        metas = {}
+        for kv_str in module.params['meta'].split(","):
+            k, v = kv_str.split("=")
+            metas[k] = v
+        module.params['meta'] = metas
+
     bootkwargs = dict(
         name=module.params['name'],
         image=image_id,
         flavor=flavor_dict['id'],
         nics=nics,
         meta=module.params['meta'],
-        security_groups=module.params['security_groups'].split(','),
+        security_groups=module.params['security_groups'],
         userdata=module.params['userdata'],
         config_drive=module.params['config_drive'],
     )
@@ -322,7 +378,7 @@ def _create_server(module, cloud):
     server = cloud.create_server(
         ip_pool=module.params['floating_ip_pools'],
         ips=module.params['floating_ips'],
-        auto_ip=module.params['auto_floating_ip'],
+        auto_ip=module.params['auto_ip'],
         root_volume=module.params['root_volume'],
         terminate_volume=module.params['terminate_volume'],
         wait=module.params['wait'], timeout=module.params['timeout'],
@@ -341,18 +397,18 @@ def _delete_floating_ip_list(cloud, server, extra_ips):
 def _check_floating_ips(module, cloud, server):
     changed = False
 
-    auto_floating_ip = module.params['auto_floating_ip']
+    auto_ip = module.params['auto_ip']
     floating_ips = module.params['floating_ips']
     floating_ip_pools = module.params['floating_ip_pools']
 
-    if floating_ip_pools or floating_ips or auto_floating_ip:
+    if floating_ip_pools or floating_ips or auto_ip:
         ips = openstack_find_nova_addresses(server.addresses, 'floating')
         if not ips:
             # If we're configured to have a floating but we don't have one,
             # let's add one
             server = cloud.add_ips_to_server(
                 server,
-                auto_ip=auto_floating_ip,
+                auto_ip=auto_ip,
                 ips=floating_ips,
                 ip_pool=floating_ip_pools,
             )
@@ -404,12 +460,12 @@ def main():
         flavor_ram                      = dict(default=None, type='int'),
         flavor_include                  = dict(default=None),
         key_name                        = dict(default=None),
-        security_groups                 = dict(default='default'),
+        security_groups                 = dict(default=['default'], type='list'),
         nics                            = dict(default=[], type='list'),
         meta                            = dict(default=None),
         userdata                        = dict(default=None),
         config_drive                    = dict(default=False, type='bool'),
-        auto_floating_ip                = dict(default=True, type='bool'),
+        auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
         floating_ips                    = dict(default=None),
         floating_ip_pools               = dict(default=None),
         root_volume                     = dict(default=None),
@@ -418,8 +474,8 @@ def main():
     )
     module_kwargs = openstack_module_kwargs(
         mutually_exclusive=[
-            ['auto_floating_ip', 'floating_ips'],
-            ['auto_floating_ip', 'floating_ip_pools'],
+            ['auto_ip', 'floating_ips'],
+            ['auto_ip', 'floating_ip_pools'],
             ['floating_ips', 'floating_ip_pools'],
             ['flavor', 'flavor_ram'],
             ['image', 'root_volume'],

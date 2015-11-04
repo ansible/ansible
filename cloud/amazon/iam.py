@@ -97,10 +97,12 @@ options:
     aliases: [ 'ec2_access_key', 'access_key' ]
 notes:
   - 'Currently boto does not support the removal of Managed Policies, the module will error out if your user/group/role has managed policies when you try to do state=absent. They will need to be removed manually.'
-author: 
+author:
     - "Jonathan I. Davila (@defionscode)"
     - "Paul Seiffert (@seiffert)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
@@ -563,7 +565,10 @@ def main():
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
     try:
-        iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
+        if region:
+            iam = boto.iam.connect_to_region(region, **aws_connect_kwargs)
+        else:
+            iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
 

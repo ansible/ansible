@@ -61,14 +61,10 @@ options:
     default: null
     aliases: []
     choices: [ 'mysql5.1', 'mysql5.5', 'mysql5.6', 'oracle-ee-11.2', 'oracle-se-11.2', 'oracle-se1-11.2', 'postgres9.3', 'postgres9.4', 'sqlserver-ee-10.5', 'sqlserver-ee-11.0', 'sqlserver-ex-10.5', 'sqlserver-ex-11.0', 'sqlserver-se-10.5', 'sqlserver-se-11.0', 'sqlserver-web-10.5', 'sqlserver-web-11.0']
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
-    required: true
-    default: null
-    aliases: ['aws_region', 'ec2_region']
 author: "Scott Anderson (@tastychutney)"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

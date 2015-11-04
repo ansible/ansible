@@ -74,14 +74,6 @@ options:
         description:
         - Additional arguments provided on the command line
         aliases: [ 'args' ]
-    must_exist:
-        required: false
-        default: true
-        version_added: "2.0"
-        description:
-        - Avoid a module failure if the named service does not exist. Useful
-          for opportunistically starting/stopping/restarting a list of
-          potential services.
 '''
 
 EXAMPLES = '''
@@ -106,8 +98,6 @@ EXAMPLES = '''
 # Example action to restart network service for interface eth0
 - service: name=network state=restarted args=eth0
 
-# Example action to restart nova-compute if it exists
-- service: name=nova-compute state=restarted must_exist=no
 '''
 
 import platform
@@ -169,9 +159,6 @@ class Service(object):
         self.rcconf_value   = None
         self.svc_change     = False
 
-        # select whether we dump additional debug info through syslog
-        self.syslogging = False
-
     # ===========================================
     # Platform specific methods (must be replaced by subclass).
 
@@ -191,9 +178,6 @@ class Service(object):
     # Generic methods that should be used on all platforms.
 
     def execute_command(self, cmd, daemonize=False):
-        if self.syslogging:
-            syslog.openlog('ansible-%s' % os.path.basename(__file__))
-            syslog.syslog(syslog.LOG_NOTICE, 'Command %s, daemonize %r' % (cmd, daemonize))
 
         # Most things don't need to be daemonized
         if not daemonize:
@@ -411,7 +395,7 @@ class LinuxService(Service):
         location = dict()
 
         for binary in binaries:
-            location[binary] = self.module.get_bin_path(binary)
+            location[binary] = self.module.get_bin_path(binary, opt_dirs=paths)
 
         for initdir in initpaths:
             initscript = "%s/%s" % (initdir,self.name)
@@ -419,25 +403,31 @@ class LinuxService(Service):
                 self.svc_initscript = initscript
 
         def check_systemd():
-            # verify systemd is installed (by finding systemctl)
-            if not location.get('systemctl', False):
-                return False
 
-            # Check if init is the systemd command, using comm as cmdline could be symlink
-            try:
-                f = open('/proc/1/comm', 'r')
-            except IOError, err:
-                # If comm doesn't exist, old kernel, no systemd
-                return False
+            # tools must be installed
+            if location.get('systemctl',False):
 
-            for line in f:
-                if 'systemd' in line:
-                    return True
+                # this should show if systemd is the boot init system
+                # these mirror systemd's own sd_boot test http://www.freedesktop.org/software/systemd/man/sd_booted.html
+                for canary in ["/run/systemd/system/", "/dev/.run/systemd/", "/dev/.systemd/"]:
+                    if os.path.exists(canary):
+                        return True
+
+                # If all else fails, check if init is the systemd command, using comm as cmdline could be symlink
+                try:
+                    f = open('/proc/1/comm', 'r')
+                except IOError:
+                    # If comm doesn't exist, old kernel, no systemd
+                    return False
+
+                for line in f:
+                    if 'systemd' in line:
+                        return True
 
             return False
 
         # Locate a tool to enable/disable a service
-        if location.get('systemctl',False) and check_systemd():
+        if check_systemd():
             # service is managed by systemd
             self.__systemd_unit = self.name
             self.svc_cmd = location['systemctl']
@@ -481,11 +471,8 @@ class LinuxService(Service):
                 self.enable_cmd = location['chkconfig']
 
         if self.enable_cmd is None:
-            if self.module.params['must_exist']:
-                self.module.fail_json(msg="no service or tool found for: %s" % self.name)
-            else:
-                # exiting without change on non-existent service
-                self.module.exit_json(changed=False, exists=False)
+            # exiting without change on non-existent service
+            self.module.exit_json(changed=False, exists=False)
 
         # If no service control tool selected yet, try to see if 'service' is available
         if self.svc_cmd is None and location.get('service', False):
@@ -493,11 +480,7 @@ class LinuxService(Service):
 
         # couldn't find anything yet
         if self.svc_cmd is None and not self.svc_initscript:
-            if self.module.params['must_exist']:
-                self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
-            else:
-                # exiting without change on non-existent service
-                self.module.exit_json(changed=False, exists=False)
+            self.module.exit_json(changed=False, exists=False)
 
         if location.get('initctl', False):
             self.svc_initctl = location['initctl']
@@ -722,7 +705,8 @@ class LinuxService(Service):
                 (rc, out, err) = self.execute_command("%s --list %s" % (self.enable_cmd, self.name))
             if not self.name in out:
                 self.module.fail_json(msg="service %s does not support chkconfig" % self.name)
-            state = out.split()[-1]
+            #TODO: look back on why this is here
+            #state = out.split()[-1]
 
             # Check if we're already in the correct state
             if "3:%s" % action in out and "5:%s" % action in out:
@@ -984,7 +968,6 @@ class FreeBsdService(Service):
                 self.rcconf_file = rcfile
 
         rc, stdout, stderr = self.execute_command("%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments))
-        cmd = "%s %s %s %s" % (self.svc_cmd, self.name, 'rcvar', self.arguments)
         try:
             rcvars = shlex.split(stdout, comments=True)
         except:
@@ -1442,7 +1425,6 @@ def main():
             enabled = dict(type='bool'),
             runlevel = dict(required=False, default='default'),
             arguments = dict(aliases=['args'], default=''),
-            must_exist = dict(type='bool', default=True),
         ),
         supports_check_mode=True
     )
@@ -1451,11 +1433,9 @@ def main():
 
     service = Service(module)
 
-    if service.syslogging:
-        syslog.openlog('ansible-%s' % os.path.basename(__file__))
-        syslog.syslog(syslog.LOG_NOTICE, 'Service instantiated - platform %s' % service.platform)
-        if service.distribution:
-            syslog.syslog(syslog.LOG_NOTICE, 'Service instantiated - distribution %s' % service.distribution)
+    module.debug('Service instantiated - platform %s' % service.platform)
+    if service.distribution:
+        module.debug('Service instantiated - distribution %s' % service.distribution)
 
     rc = 0
     out = ''
@@ -1527,4 +1507,5 @@ def main():
     module.exit_json(**result)
 
 from ansible.module_utils.basic import *
+
 main()

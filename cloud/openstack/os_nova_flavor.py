@@ -217,8 +217,13 @@ def main():
                     rxtx_factor=module.params['rxtx_factor'],
                     is_public=module.params['is_public']
                 )
-                module.exit_json(changed=True, flavor=flavor)
-            module.exit_json(changed=False, flavor=flavor)
+                changed=True
+            else:
+                changed=False
+
+            module.exit_json(changed=changed,
+                             flavor=flavor,
+                             id=flavor['id'])
 
         elif state == 'absent':
             if flavor:

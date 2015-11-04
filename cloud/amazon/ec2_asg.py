@@ -46,15 +46,15 @@ options:
     required: true
   min_size:
     description:
-      - Minimum number of instances in group
+      - Minimum number of instances in group, if unspecified then the current group value will be used.
     required: false
   max_size:
     description:
-      - Maximum number of instances in group
+      - Maximum number of instances in group, if unspecified then the current group value will be used.
     required: false
   desired_capacity:
     description:
-      - Desired number of instances in group
+      - Desired number of instances in group, if unspecified then the current group value will be used.
     required: false
   replace_all_instances:
     description:
@@ -80,11 +80,6 @@ options:
     required: false
     version_added: "1.8"
     default: True
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the EC2_REGION environment variable, if any, is used.
-    required: false
-    aliases: ['aws_region', 'ec2_region']
   vpc_zone_identifier:
     description:
       - List of VPC subnets to use
@@ -134,7 +129,9 @@ options:
     default: Default
     choices: ['OldestInstance', 'NewestInstance', 'OldestLaunchConfiguration', 'ClosestToNextInstanceHour', 'Default']
     version_added: "2.0"
-extends_documentation_fragment: aws
+extends_documentation_fragment:
+    - aws
+    - ec2
 """
 
 EXAMPLES = '''
@@ -258,9 +255,10 @@ def get_properties(autoscaling_group):
     properties['viable_instances'] = 0
     properties['terminating_instances'] = 0
 
+    instance_facts = {}
+
     if autoscaling_group.instances:
         properties['instances'] = [i.instance_id for i in autoscaling_group.instances]
-        instance_facts = {}
         for i in autoscaling_group.instances:
             instance_facts[i.instance_id] = {'health_status': i.health_status,
                                             'lifecycle_state': i.lifecycle_state,
@@ -277,7 +275,7 @@ def get_properties(autoscaling_group):
                 properties['terminating_instances'] += 1
             if i.lifecycle_state == 'Pending':
                 properties['pending_instances'] += 1
-        properties['instance_facts'] = instance_facts
+    properties['instance_facts'] = instance_facts
     properties['load_balancers'] = autoscaling_group.load_balancers
 
     if getattr(autoscaling_group, "tags", None):
@@ -591,6 +589,13 @@ def replace(connection, module):
         changed = False
         return(changed, props)
         
+    #check if min_size/max_size/desired capacity have been specified and if not use ASG values
+    if min_size is None:
+        min_size = as_group.min_size
+    if max_size is None:
+        max_size = as_group.max_size
+    if desired_capacity is None:
+        desired_capacity = as_group.desired_capacity
     # set temporary settings and wait for them to be reached
     # This should get overriden if the number of instances left is less than the batch size.
 
