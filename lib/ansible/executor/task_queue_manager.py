@@ -96,7 +96,7 @@ class TaskQueueManager:
         self._workers = []
 
     def _initialize_workers(self, num):
-        for i in range(num):
+        for i in xrange(num_workers):
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
 

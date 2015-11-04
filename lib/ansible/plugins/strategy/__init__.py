@@ -22,6 +22,9 @@ __metaclass__ = type
 from ansible.compat.six.moves import queue as Queue
 from ansible.compat.six import iteritems, text_type, string_types
 
+import json
+import pickle
+import sys
 import time
 
 from jinja2.exceptions import UndefinedError
@@ -37,7 +40,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.playbook.role import hash_params
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
-from ansible.vars.unsafe_proxy import wrap_var
+from ansible.vars.unsafe_proxy import wrap_var, AnsibleJSONUnsafeEncoder
 
 try:
     from __main__ import display
@@ -127,11 +130,8 @@ class StrategyBase:
         Base class method to add extra variables/information to the list of task
         vars sent through the executor engine regarding the task queue manager state.
         '''
-
-        new_vars = vars.copy()
-        new_vars['ansible_current_hosts'] = self.get_hosts_remaining(play)
-        new_vars['ansible_failed_hosts'] = self.get_failed_hosts(play)
-        return new_vars
+        vars['ansible_current_hosts'] = [h.name for h in self.get_hosts_remaining(play)]
+        vars['ansible_failed_hosts'] = [h.name for h in self.get_failed_hosts(play)]
 
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
@@ -263,7 +263,7 @@ class StrategyBase:
 
                     if task.delegate_to is not None:
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                        task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
+                        add_tqm_variables(task_vars, play=iterator._play)
                         if item is not None:
                             task_vars['item'] = item
                         templar = Templar(loader=self._loader, variables=task_vars)
@@ -516,7 +516,7 @@ class StrategyBase:
         for host in notified_hosts:
             if not handler.has_triggered(host) and (host.name not in self._tqm._failed_hosts or play_context.force_handlers):
                 task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=handler)
-                task_vars = self.add_tqm_variables(task_vars, play=iterator._play)
+                self.add_tqm_variables(task_vars, play=iterator._play)
                 self._queue_task(host, handler, task_vars, play_context)
                 if run_once:
                     break

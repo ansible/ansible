@@ -77,6 +77,13 @@ class Inventory(object):
 
         self.parse_inventory(host_list)
 
+    def serialize(self):
+        data = dict()
+        return data
+
+    def deserialize(self, data):
+        pass
+
     def parse_inventory(self, host_list):
 
         if isinstance(host_list, string_types):
@@ -686,8 +693,6 @@ class Inventory(object):
             basedirs = [self._playbook_basedir]
 
         for basedir in basedirs:
-            display.debug('getting vars from %s' % basedir)
-
             # this can happen from particular API usages, particularly if not run
             # from /usr/bin/ansible-playbook
             if basedir in ('', None):

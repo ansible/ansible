@@ -83,7 +83,10 @@ class AnsibleJ2Vars:
         if isinstance(variable, dict) and varname == "vars" or isinstance(variable, HostVars):
             return variable
         else:
-            return self._templar.template(variable)
+            if self._templar._contains_vars(variable):
+                return self._templar.template(variable)
+            else:
+                return variable
 
     def add_locals(self, locals):
         '''

@@ -156,7 +156,8 @@ class TaskExecutor:
         # create a copy of the job vars here so that we can modify
         # them temporarily without changing them too early for other
         # parts of the code that might still need a pristine version
-        vars_copy = self._job_vars.copy()
+        #vars_copy = self._job_vars.copy()
+        vars_copy = self._job_vars
 
         # now we update them with the play context vars
         self._play_context.update_vars(vars_copy)
@@ -196,7 +197,8 @@ class TaskExecutor:
 
         # make copies of the job vars and task so we can add the item to
         # the variables and re-validate the task with the item variable
-        task_vars = self._job_vars.copy()
+        #task_vars = self._job_vars.copy()
+        task_vars = self._job_vars
 
         items = self._squash_items(items, task_vars)
         for item in items:
@@ -357,7 +359,8 @@ class TaskExecutor:
 
         # make a copy of the job vars here, in case we need to update them
         # with the registered variable value later on when testing conditions
-        vars_copy = variables.copy()
+        #vars_copy = variables.copy()
+        vars_copy = variables
 
         self._display.debug("starting attempt loop")
         result = None
