@@ -328,6 +328,8 @@ class GalaxyCLI(CLI):
                     self.display.deprecated("going forward only the yaml format will be supported")
                     # roles listed in a file, one per line
                     for rline in f.readlines():
+                        if rline.startswith("#") or rline.strip() == '':
+                            continue
                         self.display.debug('found role %s in text file' % str(rline))
                         role = RoleRequirement.role_yaml_parse(rline.strip())
                         roles_left.append(GalaxyRole(self.galaxy, **role))
