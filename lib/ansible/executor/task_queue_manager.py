@@ -92,9 +92,10 @@ class TaskQueueManager:
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
+        #FIXME: should this move to 'run' and get serial and play pattern applied as limiter?
         # Treat "forks" config parameter as max value. Only create number of workers
-        # equal to number of hosts in inventory if less than max value or serial batch.
-        num_workers = min(self._options.forks, self._options.serial, len(self._inventory.list_hosts()))
+        # equal to number of hosts in inventory if less than max value.
+        num_workers = min(self._options.forks, len(self._inventory.list_hosts()))
 
         self._workers = []
         for i in range(num_workers):
