@@ -201,14 +201,18 @@ def create_user(module, iam, name, pwd, path, key_state, key_count):
 
 
 def delete_user(module, iam, name):
+    del_meta = ''
     try:
         current_keys = [ck['access_key_id'] for ck in
             iam.get_all_access_keys(name).list_access_keys_result.access_key_metadata]
         for key in current_keys:
             iam.delete_access_key(key, name)
+        login_profile = iam.get_login_profiles(name)
+        if login_profile:
+           iam.delete_login_profile(name)
         del_meta = iam.delete_user(name).delete_user_response
-    except boto.exception.BotoServerError, err:
-        error_msg = boto_exception(err)
+    except Exception as ex:
+        module.fail_json(changed=False, msg="delete failed %s" %ex)
         if ('must detach all policies first') in error_msg:
             for policy in iam.get_all_user_policies(name).list_user_policies_result.policy_names:
                 iam.delete_user_policy(name, policy)
@@ -222,7 +226,7 @@ def delete_user(module, iam, name):
                                                             "currently supported by boto. Please detach the polices "
                                                             "through the console and try again." % name)
                 else:
-                    module.fail_json(changed=changed, msg=str(err))
+                    module.fail_json(changed=changed, msg=str(del_meta))
             else:
                 changed = True
                 return del_meta, name, changed
@@ -659,15 +663,20 @@ def main():
             else:
                 module.exit_json(
                     changed=changed, groups=user_groups, user_name=name, keys=key_list)
+
         elif state == 'update' and not user_exists:
             module.fail_json(
                 msg="The user %s does not exit. No update made." % name)
+
         elif state == 'absent':
-            if name in orig_user_list:
-                set_users_groups(module, iam, name, '')
-                del_meta, name, changed = delete_user(module, iam, name)
-                module.exit_json(
-                    deletion_meta=del_meta, deleted_user=name, changed=changed)
+            if user_exists:
+                try:
+                   set_users_groups(module, iam, name, '')
+                   del_meta, name, changed = delete_user(module, iam, name)
+                   module.exit_json(deleted_user=name, changed=changed, orig_user_list=orig_user_list)
+
+                except Exception as ex:
+                       module.fail_json(changed=changed, msg=str(ex))
             else:
                 module.exit_json(
                     changed=False, msg="User %s is already absent from your AWS IAM users" % name)
@@ -699,9 +708,11 @@ def main():
             if not new_path and not new_name:
                 module.exit_json(
                     changed=changed, group_name=name, group_path=cur_path)
+
         elif state == 'update' and not group_exists:
             module.fail_json(
                 changed=changed, msg="Update Failed. Group %s doesn't seem to exit!" % name)
+
         elif state == 'absent':
             if name in orig_group_list:
                 removed_group, changed = delete_group(iam=iam, name=name)
