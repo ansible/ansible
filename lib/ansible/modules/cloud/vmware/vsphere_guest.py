@@ -816,6 +816,9 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             # set the new RAM size
             spec.set_element_memoryMB(int(vm_hardware['memory_mb']))
             changes['memory'] = vm_hardware['memory_mb']
+    # ===( Reconfigure Network )====#
+    if vm_nic:
+        changed = reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_nic, cluster_name)
 
     # ====( Config Memory )====#
     if 'num_cpus' in vm_hardware:
@@ -886,6 +889,104 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
 
     module.exit_json(changed=False)
 
+
+def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_nic, cluster_name=None):
+        s = vsphere_client
+        nics = {}
+        request = VI.ReconfigVM_TaskRequestMsg()
+        _this = request.new__this(vm._mor)
+        _this.set_attribute_type(vm._mor.get_attribute_type())
+        request.set_element__this(_this)
+        nic_changes = []
+        datacenter = esxi['datacenter']
+        # Datacenter managed object reference
+        dclist = [k for k,
+             v in vsphere_client.get_datacenters().items() if v == datacenter]
+        if dclist:
+            dcmor=dclist[0]
+        else:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
+        dcprops = VIProperty(vsphere_client, dcmor)
+        nfmor = dcprops.networkFolder._obj
+        for k,v in vm_nic.iteritems():
+            nicNum = k[len(k) -1]
+            if vm_nic[k]['network_type'] == 'dvs':
+                portgroupKey = find_portgroup_key(module, s, nfmor, vm_nic[k]['network'])
+                todvs = True
+            elif vm_nic[k]['network_type'] == 'standard':
+                todvs = False
+            # Detect cards that need to be changed and network type (and act accordingly)
+            for dev in vm.properties.config.hardware.device:
+                if dev._type in ["VirtualE1000", "VirtualE1000e",
+                                 "VirtualPCNet32", "VirtualVmxnet",
+                                 "VirtualNmxnet2", "VirtualVmxnet3"]:
+                    devNum = dev.deviceInfo.label[len(dev.deviceInfo.label) - 1]
+                    if devNum == nicNum:
+                        fromdvs = dev.deviceInfo.summary.split(':')[0] == 'DVSwitch'
+                        if todvs and fromdvs:
+                            if dev.backing.port._obj.get_element_portgroupKey() != portgroupKey:
+                                nics[k] = (dev, portgroupKey, 1)
+                        elif fromdvs and not todvs:
+                            nics[k] = (dev, '', 2)
+                        elif not fromdvs and todvs:
+                            nics[k] = (dev, portgroupKey, 3)
+                        elif not fromdvs and not todvs:
+                            if dev.backing._obj.get_element_deviceName() != vm_nic[k]['network']:
+                                nics[k] = (dev, '', 2)
+                            else:
+                                pass
+                        else:
+                            module.exit_json()
+
+        if len(nics) > 0:
+            for nic, obj in nics.iteritems():
+                """
+                1,2 and 3 are used to mark which action should be taken
+                1 = from a distributed switch to a distributed switch
+                2 = to a standard switch
+                3 = to a distributed switch
+                """
+                dev = obj[0]
+                pgKey = obj[1]
+                dvsKey = obj[2]
+                if dvsKey == 1:
+                    dev.backing.port._obj.set_element_portgroupKey(pgKey)
+                    dev.backing.port._obj.set_element_portKey('')
+                if dvsKey == 3:
+                    dvswitch_uuid = find_dvswitch_uuid(module, s, nfmor, pgKey)
+                    nic_backing_port = VI.ns0.DistributedVirtualSwitchPortConnection_Def(
+                        "nic_backing_port").pyclass()
+                    nic_backing_port.set_element_switchUuid(dvswitch_uuid)
+                    nic_backing_port.set_element_portgroupKey(pgKey)
+                    nic_backing_port.set_element_portKey('')
+                    nic_backing = VI.ns0.VirtualEthernetCardDistributedVirtualPortBackingInfo_Def(
+                        "nic_backing").pyclass()
+                    nic_backing.set_element_port(nic_backing_port)
+                    dev._obj.set_element_backing(nic_backing)
+                if dvsKey == 2:
+                    nic_backing = VI.ns0.VirtualEthernetCardNetworkBackingInfo_Def(
+                        "nic_backing").pyclass()
+                    nic_backing.set_element_deviceName(vm_nic[nic]['network'])
+                    dev._obj.set_element_backing(nic_backing)
+            for nic, obj in nics.iteritems():
+                dev = obj[0]
+                spec = request.new_spec()
+                nic_change = spec.new_deviceChange()
+                nic_change.set_element_device(dev._obj)
+                nic_change.set_element_operation("edit")
+                nic_changes.append(nic_change)
+            spec.set_element_deviceChange(nic_changes)
+            request.set_element_spec(spec)
+            ret = vsphere_client._proxy.ReconfigVM_Task(request)._returnval
+            task = VITask(ret, vsphere_client)
+            status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
+            if status == task.STATE_SUCCESS:
+                return(True)
+            elif status == task.STATE_ERROR:
+                module.fail_json(msg="Could not change network %s" % task.get_error_message())
+        elif len(nics) == 0:
+            return(False)
 
 def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
 
