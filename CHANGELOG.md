@@ -14,17 +14,17 @@ Ansible Changes By Release
 * Callback, connection, cache and lookup plugin APIs have changed. Existing plugins might require modification to work with the new versions.
 * Callbacks are now shipped in the active directory and don't need to be copied, just whitelisted in ansible.cfg.
 * Many API changes. Those integrating directly with Ansible's API will encounter breaking changes, but the new API is much easier to use and test.
-* Settings are now more inheritable; what you set at play, block or role will be automatically inherited by the contained.
+* Settings are now more inheritable; what you set at play, block or role will be automatically inherited by the contained tasks.
   This allows for new features to automatically be settable at all levels, previously we had to manually code this.
+* Vars are now settable at play, block, role and task level with the `vars` directive and scoped to the tasks contained.
 * Template code now retains types for bools and numbers instead of turning them into strings.
   If you need the old behaviour, quote the value and it will get passed around as a string
 * Empty variables and variables set to null in yaml will no longer be converted to empty strings.  They will retain the value of `None`.
   To go back to the old behaviour, you can override the `null_representation` setting to an empty string in your config file or
   by setting the `ANSIBLE_NULL_REPRESENTATION` environment variable.
 * Added `meta: refresh_inventory` to force rereading the inventory in a play.
-* Now when you delegate an action that returns ansible_facts, these facts will be applied to the delegated host, unlike before when they were applied to the current host.
   This re-executes inventory scripts, but does not force them to ignore any cache they might use.
-* Vars are now settable at play, block, role and task level with the `vars` directive and scoped to the tasks contained.
+* Now when you delegate an action that returns ansible_facts, these facts will be applied to the delegated host, unlike before when they were applied to the current host.
 * New ssh configuration variables(`ansible_ssh_common_args`, `ansible_ssh_extra_args`) can be used to configure a
   per-group or per-host ssh ProxyCommand or set any other ssh options.
   `ansible_ssh_extra_args` is used to set options that are accepted only by ssh (not sftp or scp, which have their own analogous settings).
@@ -302,12 +302,13 @@ newline being stripped you can change your playbook like this:
 * Many fixes and new options added to modules, too many to list here.
 * Now you can see task file and line number when using verbosity of 3 or above.
 * The ``[x-y]`` host range syntax is no longer supported. Note that ``[0:1]`` matches two hosts, i.e. the range is inclusive of its endpoints.
-* We now recommend the Use `pattern1,pattern2` to combine host matching patterns.
-* The use of ':' as a separator conflicts with IPv6 addresses and host ranges. It will be deprecated in the future.
+* We now recommend `pattern1,pattern2` to combine host matching patterns.
+  The use of ':' as a separator conflicts with IPv6 addresses and host ranges. It will be deprecated in the future.
 * The undocumented use of ';' as a separator is now deprecated.
 * modules and callbacks have been extended to support no_log to avoid data disclosure.
-* new managed_syslog option has been added to control output to syslog on managed machines, no_log supercsedes this settings.
-* Lookup, vars and action plugin pathing has been normalized, all now follow the same sequence to find relative files.
+* new managed_syslog option has been added to control output to syslog on managed machines, no_log supersedes this settings.
+* Lookup, vars and action plugin path resolution has been normalized, all now follow the same sequence to find relative files.
+* SSH pipelining can now be controlled by setting the ansible_ssh_pipelining variable for a host/task/etc.
 
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 

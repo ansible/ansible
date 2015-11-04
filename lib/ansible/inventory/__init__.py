@@ -190,7 +190,7 @@ class Inventory(object):
 
         if ';' in pattern:
             patterns = re.split('\s*;\s*', pattern)
-            display.deprecated("Use ',' or ':' instead of ';' to separate host patterns")
+            display.deprecated("Use ',' instead of ';' to separate host patterns")
 
         # If it's got commas in it, we'll treat it as a straightforward
         # comma-separated list of patterns.
