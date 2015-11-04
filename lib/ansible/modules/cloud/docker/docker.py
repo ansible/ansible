@@ -334,10 +334,9 @@ options:
   labels:
     description:
       - Set container labels. Requires docker >= 1.6 and docker-py >= 1.2.0.
-    requered: false
+    required: false
     default: null
     version_added: "1.9.4"
-
 author:
     - "Cove Schneider (@cove)"
     - "Joshua Conner (@joshuaconner)"
