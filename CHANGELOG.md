@@ -308,6 +308,7 @@ newline being stripped you can change your playbook like this:
 * modules and callbacks have been extended to support no_log to avoid data disclosure.
 * new managed_syslog option has been added to control output to syslog on managed machines, no_log supersedes this settings.
 * Lookup, vars and action plugin path resolution has been normalized, all now follow the same sequence to find relative files.
+* SSH pipelining can now be controlled by setting the ansible_ssh_pipelining variable for a host/task/etc.
 
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 
