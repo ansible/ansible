@@ -235,7 +235,7 @@ def connect(module, login_user=None, login_password=None, config_file=''):
 
 def user_exists(cursor, user, host, host_all):
     if host_all:
-        cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user,host))
+        cursor.execute("SELECT count(*) FROM user WHERE user = %s", user)
     else:
         cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user,host))
 
