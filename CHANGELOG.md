@@ -304,7 +304,7 @@ newline being stripped you can change your playbook like this:
 * The ``[x-y]`` host range syntax is no longer supported. Note that ``[0:1]`` matches two hosts, i.e. the range is inclusive of its endpoints.
 * We now recommend `pattern1,pattern2` to combine host matching patterns.
   The use of ':' as a separator conflicts with IPv6 addresses and host ranges. It will be deprecated in the future.
-* The undocumented use of ';' as a separator is no longer supported.
+* The undocumented use of ';' as a separator is now deprecated.
 * modules and callbacks have been extended to support no_log to avoid data disclosure.
 * new managed_syslog option has been added to control output to syslog on managed machines, no_log supersedes this settings.
 * Lookup, vars and action plugin path resolution has been normalized, all now follow the same sequence to find relative files.
