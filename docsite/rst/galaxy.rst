@@ -100,6 +100,12 @@ And here's an example showing some specific version downloads from multiple sour
     # from bitbucket, alternative syntax and caveats
     - src: http://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
+   
+   # from gitlab or other git-based scm   
+    - src: git@gitlab.company.com:mygroup/ansible-base.git
+      scm: git
+      version: 0.1.0
+      path: roles/
 
 As you can see in the above, there are a large amount of controls available
 to customize where roles can be pulled from, and what to save roles as.     
