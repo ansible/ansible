@@ -17,7 +17,6 @@
 
 try:
     import shade
-    from shade import meta
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
@@ -29,7 +28,9 @@ short_description: Manage OpenStack Identity Domains
 extends_documentation_fragment: openstack
 version_added: "2.1"
 description:
-    - Manage  OpenStack Identity Domains
+    - Create, update, or delete OpenStack Identity domains. If a domain
+      with the supplied name already exists, it will be updated with the
+      new description and enabled attributes.
 options:
    name:
      description:
@@ -57,9 +58,67 @@ requirements:
 
 EXAMPLES = '''
 # Create a domain
-- os_keystone_domain: name=demo description="Demo Domain"
+- os_keystone_domain:
+     cloud: mycloud
+     state: present
+     name: demo
+     description: Demo Domain
+
+# Delete a domain
+- os_keystone_domain:
+     cloud: mycloud
+     state: absent
+     name: demo
 '''
 
+RETURN = '''
+domain:
+    description: Dictionary describing the domain.
+    returned: On success when I(state) is 'present'
+    type: dictionary
+    contains:
+        id:
+            description: Domain ID.
+            type: string
+            sample: "474acfe5-be34-494c-b339-50f06aa143e4"
+        name:
+            description: Domain name.
+            type: string
+            sample: "demo"
+        description:
+            description: Domain description.
+            type: string
+            sample: "Demo Domain"
+        enabled:
+            description: Domain description.
+            type: boolean
+            sample: True
+
+id:
+    description: The domain ID.
+    returned: On success when I(state) is 'present'
+    type: string
+    sample: "474acfe5-be34-494c-b339-50f06aa143e4"
+'''
+
+def _needs_update(module, domain):
+    if domain.description != module.params['description']:
+        return True
+    if domain.enabled != module.params['enabled']:
+        return True
+    return False
+
+def _system_state_change(module, domain):
+    state = module.params['state']
+    if state == 'absent' and domain:
+        return True
+
+    if state == 'present':
+        if domain is None:
+            return True
+        return _needs_update(module, domain)
+
+    return False
 
 def main():
 
@@ -68,26 +127,35 @@ def main():
         description=dict(default=None),
         enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present']),
-        # Override endpoint_type default since this is an admin function
-        endpoint_type=dict(
-            default='admin', choices=['public', 'internal', 'admin']),
-    ))
+    )
 
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
 
-    name = module.params.pop('name')
-    description = module.params.pop('description')
-    enabled = module.params.pop('enabled')
-    state = module.params.pop('state')
+    name = module.params['name']
+    description = module.params['description']
+    enabled = module.params['enabled']
+    state = module.params['state']
 
     try:
         cloud = shade.operator_cloud(**module.params)
 
-        domain = cloud.get_identity_domain(name=name)
+        domains = cloud.search_domains(filters=dict(name=name))
+
+        if len(domains) > 1:
+            module.fail_json(msg='Domain name %s is not unique' % name)
+        elif len(domains) == 1:
+            domain = domains[0]
+        else:
+            domain = None
+
+        if module.check_mode:
+            module.exit_json(changed=_system_state_change(module, domain))
 
         if state == 'present':
             if domain is None:
@@ -95,15 +163,15 @@ def main():
                     name=name, description=description, enabled=enabled)
                 changed = True
             else:
-                if (domain.name != name or domain.description != description
-                        or domain.enabled != enabled):
-                    cloud.update_domain(
+                if _needs_update(module, domain):
+                    domain = cloud.update_domain(
                         domain.id, name=name, description=description,
                         enabled=enabled)
                     changed = True
                 else:
                     changed = False
-            module.exit_json(changed=changed, domain=domain)
+            module.exit_json(changed=changed, domain=domain, id=domain.id)
+
         elif state == 'absent':
             if domain is None:
                 changed=False
@@ -113,11 +181,11 @@ def main():
             module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=e.message, extra_data=e.extra_data)
+        module.fail_json(msg=e.message)
+
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-
 
 if __name__ == '__main__':
     main()
