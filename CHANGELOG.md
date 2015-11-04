@@ -308,6 +308,8 @@ newline being stripped you can change your playbook like this:
 * modules and callbacks have been extended to support no_log to avoid data disclosure.
 * new managed_syslog option has been added to control output to syslog on managed machines, no_log supercsedes this settings.
 * Lookup, vars and action plugin pathing has been normalized, all now follow the same sequence to find relative files.
+* We do not ignore the explicitly set login user for ssh when it matches the 'current user' anymore, this allows overriding .ssh/config when it is set
+  explicitly. Leaving it unset will still use the same user and respect .ssh/config.
 
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 
