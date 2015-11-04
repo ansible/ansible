@@ -26,7 +26,7 @@ The most obvious is downloading roles from the Ansible Galaxy website::
 
    ansible-galaxy install username.rolename
 
-.. _roles_path:
+.. _galaxy_cli_roles_path:
 
 roles_path
 ===============

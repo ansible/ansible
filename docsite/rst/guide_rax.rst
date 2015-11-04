@@ -1,7 +1,7 @@
 Rackspace Cloud Guide
 =====================
 
-.. _introduction:
+.. _rax_introduction:
 
 Introduction
 ````````````

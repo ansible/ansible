@@ -552,7 +552,7 @@ The default location is ~/ and can be changed to any writeable path::
 
 The directory will be created if it does not already exist.
 
-.. _roles_path:
+.. _cfg_roles_path:
 
 roles_path
 ==========
