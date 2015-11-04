@@ -198,7 +198,7 @@ class VariableManager:
             debug("vars are cached, returning them now")
             return VARIABLE_CACHE[cache_entry]
 
-        all_vars = defaultdict(dict)
+        all_vars = dict()
         magic_variables = self._get_magic_variables(
             loader=loader,
             play=play,
