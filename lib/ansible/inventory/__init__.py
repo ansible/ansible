@@ -37,6 +37,8 @@ from ansible.plugins import vars_loader
 from ansible.utils.vars import combine_vars
 from ansible.parsing.utils.addresses import parse_address
 
+HOSTS_PATTERNS_CACHE = {}
+
 try:
     from __main__ import display
 except ImportError:
@@ -157,6 +159,11 @@ class Inventory(object):
         """
 
         patterns = Inventory.split_host_pattern(pattern)
+        patterns_hash = str(patterns)
+        # Check if pattern already computed
+        if patterns_hash in HOSTS_PATTERNS_CACHE:
+            return HOSTS_PATTERNS_CACHE[patterns_hash]
+
         hosts = self._evaluate_patterns(patterns)
 
         # mainly useful for hostvars[host] access
@@ -170,6 +177,7 @@ class Inventory(object):
             if self._restriction is not None:
                 hosts = [ h for h in hosts if h in self._restriction ]
 
+        HOSTS_PATTERNS_CACHE[patterns_hash] = hosts
         return hosts
 
     @classmethod
