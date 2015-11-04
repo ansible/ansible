@@ -92,8 +92,14 @@ class TaskQueueManager:
         # plugins for inter-process locking.
         self._connection_lockfile = tempfile.TemporaryFile()
 
+        # Treat "forks" config parameter as max value. Only create number of workers
+        # equal to number of hosts in inventory if less than max value.
+        num_workers = self._options.forks
+        if self._options.forks > len(self._inventory.list_hosts()):
+            num_workers = len(self._inventory.list_hosts())
+
         self._workers = []
-        for i in range(self._options.forks):
+        for i in range(num_workers):
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
 
@@ -266,4 +272,3 @@ class TaskQueueManager:
                         method(*args, **kwargs)
                     except Exception as e:
                         self._display.warning('Error when using %s: %s' % (method, str(e)))
-
