@@ -28,6 +28,13 @@ from ansible import constants as C
 from ansible.inventory.host import Host
 from ansible.template import Templar
 
+STATIC_VARS = [
+  'inventory_hostname', 'inventory_hostname_short',
+  'inventory_file', 'inventory_dir', 'playbook_dir',
+  'ansible_play_hosts', 'play_hosts', 'groups', 'ungrouped', 'group_names',
+  'ansible_version', 'omit', 'role_names'
+]
+
 try:
     from hashlib import sha1
 except ImportError:
@@ -81,7 +88,7 @@ class HostVars(collections.Mapping):
             result = self._cached_result[sha1_hash]
         else:
             templar = Templar(variables=data, loader=self._loader)
-            result = templar.template(data, fail_on_undefined=False)
+            result = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
             self._cached_result[sha1_hash] = result
         return result
 
