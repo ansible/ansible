@@ -223,7 +223,7 @@ def delete_user(module, iam, name):
                                                             "currently supported by boto. Please detach the polices "
                                                             "through the console and try again." % name)
                 else:
-                    module.fail_json(changed=changed, msg=str(del_meta))
+                    module.fail_json(changed=changed, msg=str(error_msg))
             else:
                 changed = True
                 return del_meta, name, changed
