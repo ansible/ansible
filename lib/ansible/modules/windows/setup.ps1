@@ -26,11 +26,9 @@ $result = New-Object psobject @{
 };
 
 $win32_os = Get-CimInstance Win32_OperatingSystem
+$win32_cs = Get-CimInstance Win32_ComputerSystem
 $osversion = [Environment]::OSVersion
-$memory = @()
-$memory += Get-WmiObject win32_Physicalmemory
-$capacity = 0
-$memory | foreach {$capacity += $_.Capacity}
+$capacity = $win32_cs.TotalPhysicalMemory # Win32_PhysicalMemory is empty on some virtual platforms
 $netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
 
 $ActiveNetcfg = @(); $ActiveNetcfg+= $netcfg | where {$_.ipaddress -ne $null}
