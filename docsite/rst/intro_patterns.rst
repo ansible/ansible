@@ -79,9 +79,8 @@ You can refer to hosts within the group by adding a subscript to the group name:
 
     webservers[0]       # == cobweb
     webservers[-1]      # == weber
-    webservers[0:1]     # == webservers[0],webservers[1]
+    webservers[0-1]     # == webservers[0],webservers[1]
                         # == cobweb,webbing
-    webservers[1:]      # == webbing,weber
 
 Most people don't specify patterns as regular expressions, but you can.  Just start the pattern with a '~'::
 
