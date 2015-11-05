@@ -47,9 +47,7 @@ class LookupModule(LookupBase):
     def get_regions(self):
         regions_cache = os.path.join(self.cache_dir, 'regions')
         regions = self.check_cache(regions_cache)
-        if regions:
-            pass
-        else:
+        if not regions:
             try:
                 regions = boto.ec2.regions()
                 regions = [ r.name for r in regions ]
@@ -63,9 +61,7 @@ class LookupModule(LookupBase):
     def get_stack_info(self, region, stack_name):
         stack_cache = os.path.join(self.cache_dir, region + '-' + stack_name)
         outputs = self.check_cache(stack_cache)
-        if outputs:
-          pass
-        else:
+        if not outputs:
           try:
             conn = boto.cloudformation.connect_to_region(region)
             stack = conn.describe_stacks(stack_name_or_id=stack_name)[0]
@@ -73,13 +69,13 @@ class LookupModule(LookupBase):
             outputs = stack.outputs
             pickle.dump(outputs, fh)
           except:
-            outputs = ''
+            outputs = []
 
         return outputs
 
     def run(self, terms, inject=None, **kwargs):
         if not os.path.isdir(self.cache_dir):
-            os.mkdir(self.cache_dir)
+            os.makedirs(self.cache_dir)
 
         regions = self.get_regions()
 
