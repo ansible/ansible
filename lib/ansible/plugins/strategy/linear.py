@@ -173,6 +173,9 @@ class StrategyModule(StrategyBase):
                     if not task:
                         continue
 
+                    if self._tqm._terminated:
+                        break
+
                     run_once = False
                     work_to_do = True
 

@@ -26,6 +26,7 @@ import json
 import pickle
 import sys
 import time
+import zlib
 
 from jinja2.exceptions import UndefinedError
 
@@ -152,7 +153,28 @@ class StrategyBase:
             # way to share them with the forked processes
             shared_loader_obj = SharedPluginLoaderObj()
 
-            main_q.put((host, task, self._loader.get_basedir(), task_vars, play_context, shared_loader_obj), block=False)
+            # compress (and convert) the data if so configured, which can
+            # help a lot when the variable dictionary is huge. We pop the
+            # hostvars out of the task variables right now, due to the fact
+            # that they're not JSON serializable
+            compressed_vars = False
+            hostvars = task_vars.pop('hostvars', None)
+            if C.DEFAULT_VAR_COMPRESSION_LEVEL > 0:
+                zip_vars = zlib.compress(json.dumps(task_vars), C.DEFAULT_VAR_COMPRESSION_LEVEL)
+                compressed_vars = True
+                # we're done with the original dict now, so delete it to
+                # try and reclaim some memory space, which is helpful if the
+                # data contained in the dict is very large
+                del task_vars
+            else:
+                zip_vars = task_vars
+
+            # and queue the task
+            main_q.put((host, task, self._loader.get_basedir(), zip_vars, hostvars, compressed_vars, play_context, shared_loader_obj), block=False)
+
+            # nuke the hostvars object too, as its no longer needed
+            del hostvars
+
             self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
