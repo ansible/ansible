@@ -235,8 +235,9 @@ class TaskExecutor:
         # that aren't available until later (it could even use vars from the
         # with_items loop) so don't make the templated string permanent yet.
         templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
-        if templar._contains_vars(self._task.action):
-            task_action = templar.template(self._task.action, fail_on_undefined=False)
+        task_action = self._task.action
+        if templar._contains_vars(task_action):
+            task_action = templar.template(task_action, fail_on_undefined=False)
 
         if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
             if all(isinstance(o, string_types) for o in items):
