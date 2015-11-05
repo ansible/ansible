@@ -29,18 +29,19 @@ import pickle
 class LookupModule(LookupBase):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
-        self.cache_dir = os.path.join(os.environ['HOME'],'.stack_outputs')
-        self.cache_time = 60
+        self.cache_dir = os.path.join(os.getenv('HOME',''),'.stack_outputs')
+        self.cache_time = 60.0
 
     def check_cache(self, file):
-        now = int(time.time())
-        data = ''
+        now = time.time()
+        data = []
         if os.path.isfile(file):
             # check time stamp of file
-            if ( now - int(os.path.getmtime(file)) ) < self.cache_time:
+            if ( now - os.path.getmtime(file) ) < self.cache_time:
                 fh = open(file, 'r')
                 data = pickle.load(fh)
 
+        # returns a list of strings
         return data
 
     def get_regions(self):
@@ -92,8 +93,8 @@ class LookupModule(LookupBase):
             stack_name = args[1]
             keys = args[2:]
         else:
-          if 'AWS_REGION' in os.environ:
-              region = os.environ['AWS_REGION']
+          region = os.getenv('AWS_REGION')
+          if region:
               if not region in regions:
                   raise AnsibleError('%s is not a valid aws region' % region)
               stack_name = args[0]
