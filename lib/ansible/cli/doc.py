@@ -19,11 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import fcntl
 import datetime
 import os
-import struct
-import termios
 import traceback
 import textwrap
 
@@ -117,9 +114,9 @@ class DocCLI(CLI):
                     doc['returndocs']       = returndocs
 
                     if self.options.show_snippet:
-                        text += DocCLI.get_snippet_text(doc)
+                        text += self.get_snippet_text(doc)
                     else:
-                        text += DocCLI.get_man_text(doc)
+                        text += self.get_man_text(doc)
                 else:
                     # this typically means we couldn't even parse the docstring, not just that the YAML is busted,
                     # probably a quoting issue.
@@ -155,11 +152,7 @@ class DocCLI(CLI):
 
 
     def get_module_list_text(self):
-        tty_size = 0
-        if os.isatty(0):
-            tty_size = struct.unpack('HHHH',
-                fcntl.ioctl(0, termios.TIOCGWINSZ, struct.pack('HHHH', 0, 0, 0, 0)))[1]
-        columns = max(60, tty_size)
+        columns = self.display.columns
         displace = max(len(x) for x in self.module_list)
         linelimit = columns - displace - 5
         text = []
@@ -208,13 +201,15 @@ class DocCLI(CLI):
                 ret.append(i)
         return os.pathsep.join(ret)
 
-    @staticmethod
-    def get_snippet_text(doc):
+    def get_snippet_text(self, doc):
 
         text = []
         desc = CLI.tty_ify(doc['short_description'])
         text.append("- name: %s" % (desc))
         text.append("  action: %s" % (doc['module']))
+        pad = 31
+        subdent = ''.join([" " for a in xrange(pad)])
+        limit = self.display.columns - pad
 
         for o in sorted(doc['options'].keys()):
             opt = doc['options'][o]
@@ -224,25 +219,25 @@ class DocCLI(CLI):
                 s = o + "="
             else:
                 s = o
-
-            text.append("      %-20s   # %s" % (s, desc))
+            text.append("      %-20s   # %s" % (s, textwrap.fill(desc, limit, subsequent_indent=subdent)))
         text.append('')
 
         return "\n".join(text)
 
-    @staticmethod
-    def get_man_text(doc):
+    def get_man_text(self, doc):
 
         opt_indent="        "
         text = []
         text.append("> %s\n" % doc['module'].upper())
+        pad = self.display.columns * 0.20
+        limit = max(self.display.columns - int(pad), 70)
 
         if isinstance(doc['description'], list):
             desc = " ".join(doc['description'])
         else:
             desc = doc['description']
 
-        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent="  ", subsequent_indent="  "))
+        text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent="  ", subsequent_indent="  "))
 
         if 'option_keys' in doc and len(doc['option_keys']) > 0:
             text.append("Options (= is mandatory):\n")
@@ -268,19 +263,16 @@ class DocCLI(CLI):
             if 'default' in opt:
                 default = str(opt['default'])
                 desc = desc + " [Default: " + default + "]"
-            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), initial_indent=opt_indent,
-                                 subsequent_indent=opt_indent))
+            text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent=opt_indent, subsequent_indent=opt_indent))
 
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             notes = " ".join(doc['notes'])
-            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), initial_indent="  ",
-                                subsequent_indent=opt_indent))
+            text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), limit-6, initial_indent="  ", subsequent_indent=opt_indent))
 
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])
-            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), initial_indent="  ",
-                                subsequent_indent=opt_indent))
+            text.append("Requirements:%s\n" % textwrap.fill(CLI.tty_ify(req), limit-16, initial_indent="  ", subsequent_indent=opt_indent))
 
         if 'examples' in doc and len(doc['examples']) > 0:
             text.append("Example%s:\n" % ('' if len(doc['examples']) < 2 else 's'))
