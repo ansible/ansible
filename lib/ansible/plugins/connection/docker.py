@@ -118,9 +118,9 @@ class Connection(ConnectionBase):
             )
             self._connected = True
 
-    def exec_command(self, cmd, in_data=None, sudoable=False):
+    def exec_command(self, cmd, in_data=None, sudoable=False, tty=False):
         """ Run a command on the docker host """
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable, tty=tty)
 
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
         # -i is needed to keep stdin open which allows pipelining to work

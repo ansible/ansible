@@ -183,7 +183,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if tmp and "tmp" in tmp:
             # tmp has already been created
             return False
-        if not self._connection.has_pipelining or not self._play_context.pipelining or C.DEFAULT_KEEP_REMOTE_FILES or self._play_context.become_method == 'su':
+        if not self._connection.has_pipelining or not self._play_context.pipelining or C.DEFAULT_KEEP_REMOTE_FILES:
             # tmp is necessary to store the module source code
             # or we want to keep the files on the target system
             return True
@@ -483,7 +483,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 rm_tmp = tmp
 
-        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp)
+        python_interp = task_vars.get('ansible_python_interpreter', 'python')
+
+        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp, python_interpreter=python_interp, connection=self._connection)
         cmd = cmd.strip()
 
         sudoable = True
@@ -492,7 +494,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # specified in the play, not the sudo_user
             sudoable = False
 
-        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
+        res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data, tty=True)
 
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if self._play_context.become and self._play_context.become_user != 'root':
@@ -522,7 +524,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=C.DEFAULT_EXECUTABLE, encoding_errors='replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None,
+            tty=False, executable=C.DEFAULT_EXECUTABLE, encoding_errors='replace'):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -553,7 +556,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = executable + ' -c ' + pipes.quote(cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
-        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable, tty=tty)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type

@@ -217,8 +217,8 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
-    def exec_command(self, cmd, in_data=None, sudoable=True):
-        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
+    def exec_command(self, cmd, in_data=None, sudoable=True, tty=False):
+        super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable, tty=tty)
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
         cmd_parts = map(to_unicode, cmd_parts)
         script = None

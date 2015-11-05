@@ -145,7 +145,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     @ensure_connect
     @abstractmethod
-    def exec_command(self, cmd, in_data=None, sudoable=True):
+    def exec_command(self, cmd, in_data=None, sudoable=True, tty=False):
         """Run a command on the remote host.
 
         :arg cmd: byte string containing the command
@@ -156,6 +156,8 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
             a command via a privilege escalation mechanism.  This may affect
             how the connection plugin returns data.  Note that not all
             connections can handle privilege escalation.
+        :kwarg tty: Tell the connection plugin whether or not to allocate a
+            terminal to run this command. Used only by the ssh plugin.
         :returns: a tuple of (return code, stdout, stderr)  The return code is
             an int while stdout and stderr are both byte strings.
 
