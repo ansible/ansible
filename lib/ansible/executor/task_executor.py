@@ -229,13 +229,21 @@ class TaskExecutor:
         Squash items down to a comma-separated list for certain modules which support it
         (typically package management modules).
         '''
-        if len(items) > 0 and self._task.action in self.SQUASH_ACTIONS:
+        # _task.action could contain templatable strings (via action: and
+        # local_action:)  Template it before comparing.  If we don't end up
+        # optimizing it here, the templatable string might use template vars
+        # that aren't available until later (it could even use vars from the
+        # with_items loop) so don't make the templated string permanent yet.
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
+        if templar._contains_vars(self._task.action):
+            task_action = templar.template(self._task.action, fail_on_undefined=False)
+
+        if len(items) > 0 and task_action in self.SQUASH_ACTIONS:
             if all(isinstance(o, string_types) for o in items):
                 final_items = []
                 name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
                 for item in items:
                     variables['item'] = item
-                    templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=variables)
                     if self._task.evaluate_conditional(templar, variables):
                         if templar._contains_vars(name):
                             new_item = templar.template(name)
@@ -244,14 +252,15 @@ class TaskExecutor:
                             final_items.append(item)
                 self._task.args['name'] = final_items
                 return [final_items]
-            # Right now we only optimize single entries.  In the future we
-            # could optimize more types:
-            # * lists can be squashed together
-            # * dicts could squash entries that match in all cases except the
-            #   name or pkg field.
-            # Note: we really should be checking that the name or pkg field
-            # contains a template that expands with our with_items values.
-            # If it doesn't then we may break things
+            #elif:
+                # Right now we only optimize single entries.  In the future we
+                # could optimize more types:
+                # * lists can be squashed together
+                # * dicts could squash entries that match in all cases except the
+                #   name or pkg field.
+                # Note: we really should be checking that the name or pkg field
+                # contains a template that expands with our with_items values.
+                # If it doesn't then we may break things
         return items
 
     def _execute(self, variables=None):
