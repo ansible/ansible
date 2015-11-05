@@ -111,7 +111,6 @@ class LookupModule(LookupBase):
                 raise AnsibleError('aws region not found in argument or AWS_REGION env var')
 
         resources = self.get_stack_info(region, stack_name)
-        outputs = self.get_stack_outputs(region, stack_name)
         return_val = []
 
         if resources:
@@ -119,11 +118,6 @@ class LookupModule(LookupBase):
             for obj in resources:
                 if obj.logical_resource_id in keys:
                     return_val.append(obj.physical_resource_id)
-
-        if outputs:
-            for obj in outputs:
-                if obj.key in keys:
-                    return_val.append(obj.value)
 
         if not return_val:
             raise AnsibleError('Nothing was retured by lookup')
