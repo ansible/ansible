@@ -28,6 +28,7 @@ import signal
 import sys
 import time
 import traceback
+import zlib
 
 from jinja2.exceptions import TemplateNotFound
 
@@ -100,7 +101,14 @@ class WorkerProcess(multiprocessing.Process):
             task = None
             try:
                 debug("waiting for a message...")
-                (host, task, basedir, job_vars, play_context, shared_loader_obj) = self._main_q.get()
+                (host, task, basedir, zip_vars, hostvars, compressed_vars, play_context, shared_loader_obj) = self._main_q.get()
+
+                if compressed_vars:
+                    job_vars = json.loads(zlib.decompress(zip_vars))
+                else:
+                    job_vars = zip_vars
+                job_vars['hostvars'] = hostvars
+
                 debug("there's work to be done! got a task/handler to work on: %s" % task)
 
                 # because the task queue manager starts workers (forks) before the
