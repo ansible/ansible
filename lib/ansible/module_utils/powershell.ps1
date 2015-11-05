@@ -249,7 +249,7 @@ Function GetAccountSID
             $IsUpn = $false
         } 
     }
-    Elseif ($AccountName -contains "@")
+    Elseif ($AccountName.contains("@"))
     {
         $IsDomainAccount = $true
         $IsUpn = $true
