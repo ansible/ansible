@@ -204,7 +204,7 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_task.action = 'yum'
         new_items = te._squash_items(items=items, variables=job_vars)
-        self.assertEqual(new_items, ['a,c'])
+        self.assertEqual(new_items, [['a','c']])
 
     def test_task_executor_execute(self):
         fake_loader = DictDataLoader({})
