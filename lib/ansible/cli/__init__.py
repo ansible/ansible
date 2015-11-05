@@ -346,7 +346,11 @@ class CLI(object):
         if gitinfo:
             result = result + " {0}".format(gitinfo)
         result += "\n  config file = %s" % C.CONFIG_FILE
-        result = result + "\n  configured module search path = %s" % C.DEFAULT_MODULE_PATH
+        if C.DEFAULT_MODULE_PATH is None:
+            cpath = "Default w/o overrides"
+        else:
+            cpath = C.DEFAULT_MODULE_PATH
+        result = result + "\n  configured module search path = %s" % cpath
         return result
 
     @staticmethod
