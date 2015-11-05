@@ -212,7 +212,7 @@ class DocCLI(CLI):
     def get_snippet_text(doc):
 
         text = []
-        desc = CLI.tty_ify(" ".join(doc['short_description']))
+        desc = CLI.tty_ify(doc['short_description'])
         text.append("- name: %s" % (desc))
         text.append("  action: %s" % (doc['module']))
 
