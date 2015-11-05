@@ -151,6 +151,8 @@ class ActionModule(ActionBase):
         new_module_args = self._task.args.copy()
 
         if local_checksum != remote_checksum:
+
+            result['changed'] = True
             # if showing diffs, we need to get the remote value
             if self._play_context.diff:
                 diff = self._get_diff_data(dest, resultant, task_vars, source_file=False)
@@ -172,11 +174,6 @@ class ActionModule(ActionBase):
                     ),
                 )
                 result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars))
-            else:
-                if remote_checksum == '1' or force:
-                    result['changed'] = True
-                else:
-                    result['changed'] = False
 
             if result.get('changed', False) and self._play_context.diff:
                 result['diff'] = diff
