@@ -42,7 +42,7 @@ Function UserSearch
         }
  
     }
-    Elseif ($AccountName -contains "@")
+    Elseif ($AccountName.contains("@"))
     {
         $IsDomainAccount = $true
         $IsUpn = $true
