@@ -37,15 +37,15 @@ from ansible import __version__ as __ansible_version__
 class LookupModule(LookupBase):
     def __init__(self, basedir=None, **kwargs):
         self.basedir = basedir
-        self.cache_dir = os.path.join(os.environ['HOME'],'.stack_resources')
-        self.cache_time = 60
+        self.cache_dir = os.path.join(os.getenv('HOME',''),'.stack_resources')
+        self.cache_time = 60.0
 
     def check_cache(self, file):
-        now = int(time.time())
-        data = ''
+        now = time.time()
+        data = []
         if os.path.isfile(file):
             # check time stamp of file
-            if ( now - int(os.path.getmtime(file)) ) < self.cache_time:
+            if ( now - os.path.getmtime(file) ) < self.cache_time:
                 fh = open(file, 'r')
                 data = pickle.load(fh)
 
@@ -54,9 +54,7 @@ class LookupModule(LookupBase):
     def get_regions(self):
         regions_cache = os.path.join(self.cache_dir, 'regions')
         regions = self.check_cache(regions_cache)
-        if regions:
-            pass
-        else:
+        if not regions:
             try:
                 regions = boto.ec2.regions()
                 regions = [ r.name for r in regions ]
@@ -70,9 +68,7 @@ class LookupModule(LookupBase):
     def get_stack_info(self, region, stack_name):
         stack_cache = os.path.join(self.cache_dir, region + '-' + stack_name)
         resources = self.check_cache(stack_cache)
-        if resources:
-            pass
-        else:
+        if not resources:
             try:
                 conn = boto.cloudformation.connect_to_region(region)
                 stack = conn.list_stack_resources(stack_name_or_id=stack_name)
@@ -85,13 +81,13 @@ class LookupModule(LookupBase):
                 resources = stack
                 pickle.dump(resources, fh)
             except:
-                resources = ''
+                resources = []
 
         return resources
 
     def run(self, terms, inject=None, **kwargs):
         if not os.path.isdir(self.cache_dir):
-            os.mkdir(self.cache_dir)
+            os.makedirs(self.cache_dir)
 
         regions = self.get_regions()
 
@@ -105,8 +101,8 @@ class LookupModule(LookupBase):
             stack_name = args[1]
             keys = args[2:]
         else:
-            if 'AWS_REGION' in os.environ:
-                region = os.environ['AWS_REGION']
+            region = os.getenv('AWS_REGION')
+            if region:
                 if not region in regions:
                     raise AnsibleError('%s is not a valid aws region' % region)
                 stack_name = args[0]
@@ -116,20 +112,20 @@ class LookupModule(LookupBase):
 
         resources = self.get_stack_info(region, stack_name)
         outputs = self.get_stack_outputs(region, stack_name)
-        returns = []
+        return_val = []
 
         if resources:
             resources = sorted(resources, key=lambda x: x.logical_resource_id)
             for obj in resources:
                 if obj.logical_resource_id in keys:
-                    returns.append(obj.physical_resource_id)
+                    return_val.append(obj.physical_resource_id)
 
         if outputs:
             for obj in outputs:
                 if obj.key in keys:
-                    returns.append(obj.value)
+                    return_val.append(obj.value)
 
-        if len(returns) == 0:
+        if not return_val:
             raise AnsibleError('Nothing was retured by lookup')
 
-        return returns
+        return return_val
