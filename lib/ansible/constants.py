@@ -190,6 +190,12 @@ DEFAULT_BECOME_ASK_PASS   = get_config(p, 'privilege_escalation', 'become_ask_pa
 
 
 # PLUGINS
+
+# Modules that can optimize with_items loops into a single call.  Currently
+# these modules must (1) take a "name" or "pkg" parameter that is a list.  If
+# the module takes both, bad things could happen.
+# In the future we should probably generalize this even further
+# (mapping of param: squash field)
 DEFAULT_SQUASH_ACTIONS         = get_config(p, DEFAULTS, 'squash_actions',     'ANSIBLE_SQUASH_ACTIONS', "apt, yum, pkgng, zypper, dnf", islist=True)
 # paths
 DEFAULT_ACTION_PLUGIN_PATH     = get_config(p, DEFAULTS, 'action_plugins',     'ANSIBLE_ACTION_PLUGINS', '~/.ansible/plugins/action:/usr/share/ansible/plugins/action', ispath=True)

@@ -63,6 +63,7 @@ class TaskQueueManager:
         self._callbacks_loaded = False
         self._callback_plugins = []
         self._start_at_done    = False
+        self._result_prc       = None
 
         # make sure the module path (if specified) is parsed and
         # added to the module_loader object
@@ -93,11 +94,13 @@ class TaskQueueManager:
         self._connection_lockfile = tempfile.TemporaryFile()
 
         self._workers = []
-        for i in range(self._options.forks):
+
+    def _initialize_workers(self, num):
+        for i in range(num):
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
 
-            prc = WorkerProcess(self, main_q, rslt_q, loader)
+            prc = WorkerProcess(self, main_q, rslt_q, self._loader)
             prc.start()
 
             self._workers.append((prc, main_q, rslt_q))
@@ -150,12 +153,13 @@ class TaskQueueManager:
                 # the name of the current plugin and type to see if we need to skip
                 # loading this callback plugin
                 callback_type = getattr(callback_plugin, 'CALLBACK_TYPE', None)
+                callback_needs_whitelist  = getattr(callback_plugin, 'CALLBACK_NEEDS_WHITELIST', False)
                 (callback_name, _) = os.path.splitext(os.path.basename(callback_plugin._original_path))
                 if callback_type == 'stdout':
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
-                elif C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST:
+                elif callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST):
                     continue
 
                 self._callback_plugins.append(callback_plugin(self._display))
@@ -172,6 +176,12 @@ class TaskQueueManager:
         a given task (meaning no hosts move on to the next task until all hosts
         are done with the current task).
         '''
+
+        # Treat "forks" config parameter as max value. Only create number of workers
+        # equal to number of hosts in inventory if less than max value.
+        contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(play.hosts))]
+        contenders =  [ v for v in contenders if v is not None and v > 0 ]
+        self._initialize_workers(min( contenders ))
 
         if not self._callbacks_loaded:
             self.load_callbacks()
@@ -213,21 +223,25 @@ class TaskQueueManager:
         if getattr(self._options, 'start_at_task', None) is not None and play_context.start_at_task is None:
             self._start_at_done = True
 
-        # and run the play using the strategy
-        return strategy.run(iterator, play_context)
+        # and run the play using the strategy and cleanup on way out
+        play_return = strategy.run(iterator, play_context)
+        self._cleanup_workers()
+        return play_return
 
     def cleanup(self):
         self._display.debug("RUNNING CLEANUP")
-
         self.terminate()
-
         self._final_q.close()
-        self._result_prc.terminate()
+        self._cleanup_workers()
 
-        for (worker_prc, main_q, rslt_q) in self._workers:
-            rslt_q.close()
-            main_q.close()
-            worker_prc.terminate()
+    def _cleanup_workers(self):
+        if self._result_prc:
+            self._result_prc.terminate()
+
+            for (worker_prc, main_q, rslt_q) in self._workers:
+                rslt_q.close()
+                main_q.close()
+                worker_prc.terminate()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
@@ -265,5 +279,8 @@ class TaskQueueManager:
                     try:
                         method(*args, **kwargs)
                     except Exception as e:
-                        self._display.warning('Error when using %s: %s' % (method, str(e)))
-
+                        try:
+                            v1_method = method.replace('v2_','')
+                            v1_method(*args, **kwargs)
+                        except Exception:
+                            self._display.warning('Error when using %s: %s' % (method, str(e)))

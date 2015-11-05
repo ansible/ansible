@@ -186,7 +186,7 @@ class TestTaskExecutor(unittest.TestCase):
         mock_shared_loader = None
 
         new_stdin = None
-        job_vars = dict()
+        job_vars = dict(pkg_mgr='yum')
 
         te = TaskExecutor(
             host = mock_host,
@@ -204,7 +204,24 @@ class TestTaskExecutor(unittest.TestCase):
 
         mock_task.action = 'yum'
         new_items = te._squash_items(items=items, variables=job_vars)
-        self.assertEqual(new_items, ['a,c'])
+        self.assertEqual(new_items, [['a','c']])
+
+        mock_task.action = '{{pkg_mgr}}'
+        new_items = te._squash_items(items=items, variables=job_vars)
+        self.assertEqual(new_items, [['a', 'c']])
+
+        # Smoketests -- these won't optimize but make sure that they don't
+        # traceback either
+        mock_task.action = '{{unknown}}'
+        new_items = te._squash_items(items=items, variables=job_vars)
+        self.assertEqual(new_items, ['a', 'b', 'c'])
+
+        items = [dict(name='a', state='present'),
+                dict(name='b', state='present'),
+                dict(name='c', state='present')]
+        mock_task.action = 'yum'
+        new_items = te._squash_items(items=items, variables=job_vars)
+        self.assertEqual(new_items, items)
 
     def test_task_executor_execute(self):
         fake_loader = DictDataLoader({})

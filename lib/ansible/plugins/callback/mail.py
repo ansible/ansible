@@ -74,6 +74,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'mail'
+    CALLBACK_NEEDS_WHITELIST = True
 
     def v2_runner_on_failed(self, res, ignore_errors=False):
 

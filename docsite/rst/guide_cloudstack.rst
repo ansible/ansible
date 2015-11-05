@@ -1,7 +1,7 @@
 CloudStack Cloud Guide
 ======================
 
-.. _introduction:
+.. _cloudstack_introduction:
 
 Introduction
 ````````````
@@ -88,7 +88,7 @@ Use Cases
 The following should give you some ideas how to use the modules to provision VMs to the cloud. As always, there isn't only one way to do it. But as always: keep it simple for the beginning is always a good start.
 
 Use Case: Provisioning in a Advanced Networking CloudStack setup
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Our CloudStack cloud has an advanced networking setup, we would like to provision web servers, which get a static NAT and open firewall ports 80 and 443. Further we provision database servers, to which we do not give any access to. For accessing the VMs by SSH we use a SSH jump host.
 
 This is how our inventory looks like:
