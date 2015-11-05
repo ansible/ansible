@@ -257,7 +257,7 @@ class Inventory(object):
         for p in patterns:
             # avoid resolving a pattern that is a plain host
             if p in self._hosts_cache:
-                hosts.append(self.get_host(p))
+                hosts.add(self.get_host(p))
             else:
                 that = self._match_one_pattern(p)
                 if p.startswith("!"):
