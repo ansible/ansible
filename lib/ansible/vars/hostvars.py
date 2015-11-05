@@ -56,7 +56,7 @@ class HostVars(collections.Mapping):
             new_host.set_variable("ansible_python_interpreter", sys.executable)
             new_host.set_variable("ansible_connection", "local")
             new_host.address = '127.0.0.1'
-            hosts.add(new_host)
+            hosts.append(new_host)
 
         for host in hosts:
             self._lookup[host.name] = host

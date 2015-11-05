@@ -252,7 +252,7 @@ class Inventory(object):
         """
 
         patterns = Inventory.order_patterns(patterns)
-        hosts = set()
+        hosts = []
 
         for p in patterns:
             # avoid resolving a pattern that is a plain host
@@ -261,11 +261,12 @@ class Inventory(object):
             else:
                 that = self._match_one_pattern(p)
                 if p.startswith("!"):
-                    hosts = hosts.difference_update(that)
+                    hosts = [ h for h in hosts if h not in that ]
                 elif p.startswith("&"):
-                    hosts = hosts.intersection_update(that)
+                    hosts = [ h for h in hosts if h in that ]
                 else:
-                    hosts.update(that)
+                    to_append = [ h for h in that if h.name not in [ y.name for y in hosts ] ]
+                    hosts.extend(to_append)
         return hosts
 
     def _match_one_pattern(self, pattern):
