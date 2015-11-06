@@ -761,8 +761,8 @@ If multiple variables of the same name are defined in different places, they get
 In 1.x the precedence is (last listed wins):
 
  * then "role defaults", which are the most "defaulty" and lose in priority to everything.
- * then come the facts discovered about a system
  * then come the variables defined in inventory
+ * then come the facts discovered about a system
  * then comes "most everything else" (command line switches, vars in play, included vars, role vars, etc)
  * then come connection variables (``ansible_user``, etc)
  * extra vars (``-e`` in the command line) always win
