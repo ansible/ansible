@@ -59,6 +59,14 @@ options:
       - Used with C(state=present). If specified, the file will be created
         if it does not already exist. If set to "no", will fail if the
         file does not exist
+  update:
+    required: false
+    choices: [ "yes", "no" ]
+    default: "yes"
+    description:
+      - Used with C(state=present). If specified, the password will be
+        updated if the user already exists. If set to "no", it will kept
+        the current user's password when the user already exists.
 notes:
   - "This module depends on the I(passlib) Python library, which needs to be installed on all target systems."
   - "On Debian, Ubuntu, or Fedora: install I(python-passlib)."
@@ -120,7 +128,7 @@ def create_missing_directories(dest):
         os.makedirs(destpath)
 
 
-def present(dest, username, password, crypt_scheme, create, check_mode):
+def present(dest, username, password, crypt_scheme, create, update, check_mode):
     """ Ensures user is present
 
     Returns (msg, changed) """
@@ -156,16 +164,31 @@ def present(dest, username, password, crypt_scheme, create, check_mode):
         else:
             found = ht.verify(username, password)
 
-        if found:
+        # User found and password matched
+        if found is True:
             return ("%s already present" % username, False)
         else:
-            if not check_mode:
-                if getattr(ht, 'set_password', None):
-                    ht.set_password(username, password)
-                else:
-                    ht.update(username, password)
-                ht.save()
-            return ("Add/update %s" % username, True)
+            # User not found
+            if found is None:
+                if not check_mode:
+                    if getattr(ht, 'set_password', None):
+                        ht.set_password(username, password)
+                    else:
+                        ht.update(username, password)
+                    ht.save()
+                return ("Add %s" % username, True)
+            # User found and password didn't match, updating
+            if update:
+                if not check_mode:
+                    if getattr(ht, 'set_password', None):
+                        ht.set_password(username, password)
+                    else:
+                        ht.update(username, password)
+                    ht.save()
+                return ("Update %s" % username, True)
+            # User found and password didn't match, but not updating
+            else:
+                return ("%s already present" % username, False)
 
 
 def absent(dest, username, check_mode):
@@ -207,6 +230,7 @@ def main():
         crypt_scheme=dict(required=False, default="apr_md5_crypt"),
         state=dict(required=False, default="present"),
         create=dict(type='bool', default='yes'),
+        update=dict(type='bool', default='yes'),
 
     )
     module = AnsibleModule(argument_spec=arg_spec,
@@ -219,6 +243,7 @@ def main():
     crypt_scheme = module.params['crypt_scheme']
     state = module.params['state']
     create = module.params['create']
+    update = module.params['update']
     check_mode = module.check_mode
 
     if not passlib_installed:
@@ -256,7 +281,7 @@ def main():
 
     try:
         if state == 'present':
-            (msg, changed) = present(path, username, password, crypt_scheme, create, check_mode)
+            (msg, changed) = present(path, username, password, crypt_scheme, create, update, check_mode)
         elif state == 'absent':
             if not os.path.exists(path):
                 module.exit_json(msg="%s not present" % username,
