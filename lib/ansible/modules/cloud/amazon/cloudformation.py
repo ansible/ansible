@@ -312,10 +312,7 @@ def main():
     stack_outputs = {}
 
     try:
-        cfn = boto.cloudformation.connect_to_region(
-                  region,
-                  **aws_connect_kwargs
-              )
+        cfn = connect_to_aws(boto.cloudformation, region, **aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound, e:
         module.fail_json(msg=str(e))
     update = False

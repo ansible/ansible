@@ -712,10 +712,7 @@ def main():
     # If we have a region specified, connect to its endpoint.
     if region:
         try:
-            vpc_conn = boto.vpc.connect_to_region(
-                region,
-                **aws_connect_kwargs
-            )
+            vpc_conn = connect_to_aws(boto.vpc, region, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
     else:
