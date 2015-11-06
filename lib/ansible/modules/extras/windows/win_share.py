@@ -29,7 +29,7 @@ short_description: Manage Windows shares
 description:
      - Add, modify or remove Windows share and set share permissions.
 requirements:
-    - Windows 8, Windows 2012 or newer
+    - Windows 8.1 / Windows 2012 or newer
 options:
   name:
     description:
