@@ -178,8 +178,11 @@ class TaskQueueManager:
         '''
 
         # Fork # of forks, # of hosts or serial, whichever is lowest
-        contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(play.hosts))]
-        contenders =  [ v for v in contenders if v is not None and v > 0 ]
+        contestants =  [self._options.forks, play.serial, len(self._inventory.get_hosts(play.hosts))]
+        contenders = []
+        for value in contestants:
+            if value is not None and value > 0:
+                contenders.append(value)
         self._initialize_workers(min( contenders ))
 
         if not self._callbacks_loaded:
