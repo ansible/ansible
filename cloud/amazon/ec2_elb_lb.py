@@ -107,6 +107,7 @@ options:
     description:
       - Wait a specified timeout allowing connections to drain before terminating an instance
     required: false
+    default: "no"
     aliases: []
     version_added: "1.8"
   idle_timeout:
