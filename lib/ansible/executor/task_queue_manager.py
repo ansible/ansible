@@ -177,8 +177,7 @@ class TaskQueueManager:
         are done with the current task).
         '''
 
-        # Treat "forks" config parameter as max value. Only create number of workers
-        # equal to number of hosts in inventory if less than max value.
+        # Fork # of forks, # of hosts or serial, whichever is lowest
         contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(play.hosts))]
         contenders =  [ v for v in contenders if v is not None and v > 0 ]
         self._initialize_workers(min( contenders ))
