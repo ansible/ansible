@@ -2,7 +2,7 @@ Source: ansible
 Section: admin
 Priority: optional
 Standards-Version: 3.9.3
-Maintainer: Michael DeHaan <michael.dehaan@gmail.com>
+Maintainer: Ansible, Inc. <support@ansible.com>
 Build-Depends: cdbs, debhelper (>= 5.0.0), asciidoc, python, python-support, python-setuptools
 Homepage: http://ansible.github.com/
 
