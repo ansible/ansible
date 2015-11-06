@@ -26,7 +26,7 @@ options:
         description:
             - A list of ZooKeeper servers (format '[server]:[port]').
         required: true
-    path:
+    name:
         description:
             - The path of the znode.
         required: true
