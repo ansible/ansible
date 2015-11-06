@@ -237,10 +237,10 @@ class TaskQueueManager:
         if self._result_prc:
             self._result_prc.terminate()
 
-            for (worker_prc, main_q, rslt_q) in self._workers:
-                rslt_q.close()
-                main_q.close()
-                worker_prc.terminate()
+        for (worker_prc, main_q, rslt_q) in self._workers:
+            rslt_q.close()
+            main_q.close()
+            worker_prc.terminate()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
