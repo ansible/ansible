@@ -63,6 +63,7 @@ class PullCLI(CLI):
             vault_opts=True,
             runtask_opts=True,
             subset_opts=True,
+            check_opts=True,
             inventory_opts=True,
             module_opts=True,
             runas_prompt_opts=True,
