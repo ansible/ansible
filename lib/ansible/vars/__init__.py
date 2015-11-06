@@ -89,7 +89,9 @@ class VariableManager:
         self._vars_cache = defaultdict(dict)
         self._extra_vars = defaultdict(dict)
         self._host_vars_files = defaultdict(dict)
+        self._vaulted_host_vars_files = defaultdict(dict)
         self._group_vars_files = defaultdict(dict)
+        self._vaulted_group_vars_files = defaultdict(dict)
         self._inventory = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
 
@@ -228,24 +230,42 @@ class VariableManager:
             # we merge in vars from groups specified in the inventory (INI or script)
             all_vars = combine_vars(all_vars, host.get_group_vars())
 
-            # then we merge in the special 'all' group_vars first, if they exist
+            # then we merge in the special 'all.vault' group_vars first, if they exist
+            if 'all.vault' in self._vaulted_group_vars_files:
+                data = preprocess_vars(self._vaulted_group_vars_files['all.vault'])
+                for item in data:
+                    all_vars = combine_vars(all_vars, item)
+
+            # then we merge in the special 'all' group_vars, if the exist
             if 'all' in self._group_vars_files:
                 data = preprocess_vars(self._group_vars_files['all'])
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
             for group in host.get_groups():
-                if group.name in self._group_vars_files and group.name != 'all':
-                    for data in self._group_vars_files[group.name]:
-                        data = preprocess_vars(data)
-                        for item in data:
-                            all_vars = combine_vars(all_vars, item)
+                if group.name != 'all':
+                    if group.name + '.vault' in self._vaulted_group_vars_files:
+                        for data in self._vaulted_group_vars_files[group.name + '.vault']:
+                            data = preprocess_vars(data)
+                            for item in data:
+                                all_vars = combine_vars(all_vars, item)
+
+                    if group.name in self._group_vars_files:
+                        for data in self._group_vars_files[group.name]:
+                            data = preprocess_vars(data)
+                            for item in data:
+                                all_vars = combine_vars(all_vars, item)
 
             # then we merge in vars from the host specified in the inventory (INI or script)
             all_vars = combine_vars(all_vars, host.get_vars())
 
             # then we merge in the host_vars/<hostname> file, if it exists
             host_name = host.get_name()
+            if host_name + '.vault' in self._vaulted_host_vars_files:
+                for data in self._vaulted_host_vars_files[host_name + '.vault']:
+                    data = preprocess_vars(data)
+                    for item in data:
+                        all_vars = combine_vars(all_vars, item)
             if host_name in self._host_vars_files:
                 for data in self._host_vars_files[host_name]:
                     data = preprocess_vars(data)
@@ -536,6 +556,22 @@ class VariableManager:
         else:
             return dict()
 
+    def add_vaulted_host_vars_file(self, path, loader):
+        '''
+        Loads and caches a host_vars file in the _vaulted_host_vars_files dict,
+        where the key to that dictionary is the basename of the file, minus
+        the extension, for matching against a given inventory host name
+        '''
+        
+        (name, data) = self._load_inventory_file(path + '.vault', loader)
+        if data:
+            if name not in self._vaulted_host_vars_files:
+                self._vaulted_host_vars_files[name] = []
+            self._vaulted_host_vars_files[name].append(data)
+            return data
+        else:
+            return dict()
+
     def add_group_vars_file(self, path, loader):
         '''
         Loads and caches a host_vars file in the _host_vars_files dict,
@@ -548,6 +584,22 @@ class VariableManager:
             if name not in self._group_vars_files:
                 self._group_vars_files[name] = []
             self._group_vars_files[name].append(data)
+            return data
+        else:
+            return dict()
+
+    def add_vaulted_group_vars_file(self, path, loader):
+        '''
+        Loads and caches a host_vars file in the _host_vars_files dict,
+        where the key to that dictionary is the basename of the file, minus
+        the extension, for matching against a given inventory host name
+        '''
+
+        (name, data) = self._load_inventory_file(path + '.vault', loader)
+        if data:
+            if name not in self._group_vars_files:
+                self._vaulted_group_vars_files[name] = []
+            self._vaulted_group_vars_files[name].append(data)
             return data
         else:
             return dict()
