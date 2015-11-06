@@ -246,7 +246,7 @@ def main():
 
     try:
         if region:
-            iam = boto.iam.connect_to_region(region, **aws_connect_kwargs)
+            iam = connect_to_aws(boto.iam, region, **aws_connect_kwargs)
         else:
             iam = boto.iam.connection.IAMConnection(**aws_connect_kwargs)
     except boto.exception.NoAuthHandlerFound, e:

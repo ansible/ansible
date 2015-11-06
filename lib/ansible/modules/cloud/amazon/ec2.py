@@ -1387,7 +1387,7 @@ def main():
 
     if region:
         try:
-            vpc = boto.vpc.connect_to_region(region, **aws_connect_kwargs)
+            vpc = connect_to_aws(boto.vpc, region, **aws_connect_kwargs)
         except boto.exception.NoAuthHandlerFound, e:
             module.fail_json(msg = str(e))
     else:

@@ -116,7 +116,7 @@ def main():
         module.fail_json(msg = str("Either region or AWS_REGION or EC2_REGION environment variable or boto config aws_region or ec2_region must be set."))
 
     try:
-        conn = boto.rds.connect_to_region(region, **aws_connect_kwargs)
+        conn = connect_to_aws(boto.rds, region, **aws_connect_kwargs)
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
