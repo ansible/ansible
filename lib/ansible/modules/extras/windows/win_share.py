@@ -91,7 +91,7 @@ EXAMPLES = '''
   win_share:
     name: internal
     description: top secret share
-    path: C:\\shares\\internal\\
+    path: C:/shares/internal
     list: 'no'
     full: Administrators,CEO
     read: HR-Global
@@ -101,7 +101,7 @@ EXAMPLES = '''
   win_share:
     name: company
     description: top secret share
-    path: C:\\shares\\company\\
+    path: C:/shares/company
     list: 'yes'
     full: Administrators,CEO
     read: Global

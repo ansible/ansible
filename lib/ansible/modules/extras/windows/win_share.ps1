@@ -144,6 +144,9 @@ Try {
             Fail-Json $result "$path directory does not exist on the host"
         }
 
+        # normalize path and remove slash at the end
+        $path = (Get-Item $path).FullName -replace ".$"
+
         # need to (re-)create share
         If (!$share) {
             New-SmbShare -Name $name -Path $path
