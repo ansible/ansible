@@ -150,7 +150,7 @@ class ActionModule(ActionBase):
         diff = {}
         new_module_args = self._task.args.copy()
 
-        if local_checksum != remote_checksum:
+        if force and local_checksum != remote_checksum:
 
             result['changed'] = True
             # if showing diffs, we need to get the remote value
