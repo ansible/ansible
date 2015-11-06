@@ -140,7 +140,7 @@ class OVSPort(object):
 
     def set(self, set_opt):
         """ Set attributes on a port. """
-        self.module("set called %s" % set_opt)
+        self.module.log("set called %s" % set_opt)
         if (not set_opt):
             return False
 
