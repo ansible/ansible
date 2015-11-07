@@ -51,7 +51,7 @@ class HostVars(collections.Mapping):
         self._loader = loader
         self._play = play
         self._variable_manager = variable_manager
-        self._cached_result = {}
+        self._cached_result = dict()
 
         hosts = inventory.get_hosts(ignore_limits_and_restrictions=True)
 
@@ -106,10 +106,16 @@ class HostVars(collections.Mapping):
         return len(self._lookup)
 
     def __getstate__(self):
-        return dict(loader=self._loader, lookup=self._lookup, play=self._play, var_manager=self._variable_manager)
+        return dict(
+            loader=self._loader,
+            lookup=self._lookup,
+            play=self._play,
+            var_manager=self._variable_manager,
+        )
 
     def __setstate__(self, data):
         self._play = data.get('play')
         self._loader = data.get('loader')
         self._lookup = data.get('lookup')
         self._variable_manager = data.get('var_manager')
+        self._cached_result = dict()
