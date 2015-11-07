@@ -39,6 +39,11 @@ from ansible.template.template import AnsibleJ2Template
 from ansible.template.vars import AnsibleJ2Vars
 from ansible.utils.debug import debug
 
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import sha as sha1
+
 from numbers import Number
 
 __all__ = ['Templar']
@@ -122,6 +127,7 @@ class Templar:
         self._filters             = None
         self._tests               = None
         self._available_variables = variables
+        self._cached_result       = {}
 
         if loader:
             self._basedir = loader.get_basedir()
@@ -254,18 +260,23 @@ class Templar:
         '''
         Sets the list of template variables this Templar instance will use
         to template things, so we don't have to pass them around between
-        internal methods.
+        internal methods. We also clear the template cache here, as the variables
+        are being changed.
         '''
 
         assert isinstance(variables, dict)
         self._available_variables = variables
+        self._cached_result       = {}
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = ['']):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
         before being sent through the template engine. 
         '''
+
+        if fail_on_undefined is None:
+            fail_on_undefined = self._fail_on_undefined_errors
 
         # Don't template unsafe variables, instead drop them back down to
         # their constituent type.
@@ -298,18 +309,26 @@ class Templar:
                             elif resolved_val is None:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
-                    result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                    # Using a cache in order to prevent template calls with already templated variables
+                    variable_hash = sha1(text_type(variable).encode('utf-8'))
+                    options_hash  = sha1((text_type(preserve_trailing_newlines) + text_type(escape_backslashes) + text_type(fail_on_undefined) + text_type(overrides)).encode('utf-8'))
+                    sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
+                    if sha1_hash in self._cached_result:
+                        result = self._cached_result[sha1_hash]
+                    else:
+                        result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                        if convert_data:
+                            # if this looks like a dictionary or list, convert it to such using the safe_eval method
+                            if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
+                              result.startswith("[") or result in ("True", "False"):
+                                eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
+                                if eval_results[1] is None:
+                                    result = eval_results[0]
+                                else:
+                                    # FIXME: if the safe_eval raised an error, should we do something with it?
+                                    pass
+                        self._cached_result[sha1_hash] = result
 
-                    if convert_data:
-                        # if this looks like a dictionary or list, convert it to such using the safe_eval method
-                        if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
-                           result.startswith("[") or result in ("True", "False"):
-                            eval_results = safe_eval(result, locals=self._available_variables, include_exceptions=True)
-                            if eval_results[1] is None:
-                                result = eval_results[0]
-                            else:
-                                # FIXME: if the safe_eval raised an error, should we do something with it?
-                                pass
 
                 #return self._clean_data(result)
                 return result
@@ -321,7 +340,10 @@ class Templar:
                 # we don't use iteritems() here to avoid problems if the underlying dict
                 # changes sizes due to the templating, which can happen with hostvars
                 for k in variable.keys():
-                    d[k] = self.template(variable[k], preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                    if k not in static_vars:
+                        d[k] = self.template(variable[k], preserve_trailing_newlines=preserve_trailing_newlines, fail_on_undefined=fail_on_undefined, overrides=overrides)
+                    else:
+                        d[k] = variable[k]
                 return d
             else:
                 return variable
