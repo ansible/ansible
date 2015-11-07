@@ -53,6 +53,7 @@ options:
     required: false
     choices: [ 'sha1', 'sha224', 'sha256', 'sha384', 'sha512' ]
     default: sha1
+    aliases: [ 'checksum_algo' ]
     version_added: "2.0"
 author: "Bruce Pennypacker (@bpennypacker)"
 '''
@@ -292,7 +293,7 @@ def main():
             follow = dict(default='no', type='bool'),
             get_md5 = dict(default='yes', type='bool'),
             get_checksum = dict(default='yes', type='bool'),
-            checksum_algorithm = dict(default='sha1', type='str', choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'])
+            checksum_algorithm = dict(default='sha1', type='str', choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'], aliases=['checksum_algo'])
         ),
         supports_check_mode = True
     )
