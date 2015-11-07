@@ -28,6 +28,18 @@ from ansible import constants as C
 from ansible.inventory.host import Host
 from ansible.template import Templar
 
+STATIC_VARS = [
+  'inventory_hostname', 'inventory_hostname_short',
+  'inventory_file', 'inventory_dir', 'playbook_dir',
+  'ansible_play_hosts', 'play_hosts', 'groups', 'ungrouped', 'group_names',
+  'ansible_version', 'omit', 'role_names'
+]
+
+try:
+    from hashlib import sha1
+except ImportError:
+    from sha import sha as sha1
+
 __all__ = ['HostVars']
 
 # Note -- this is a Mapping, not a MutableMapping
@@ -39,6 +51,7 @@ class HostVars(collections.Mapping):
         self._loader = loader
         self._play = play
         self._variable_manager = variable_manager
+        self._cached_result = dict()
 
         hosts = inventory.get_hosts(ignore_limits_and_restrictions=True)
 
@@ -68,8 +81,16 @@ class HostVars(collections.Mapping):
 
         host = self._lookup.get(host_name)
         data = self._variable_manager.get_vars(loader=self._loader, host=host, play=self._play, include_hostvars=False)
-        templar = Templar(variables=data, loader=self._loader)
-        return templar.template(data, fail_on_undefined=False)
+
+        # Using cache in order to avoid template call
+        sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
+        if sha1_hash in self._cached_result:
+            result = self._cached_result[sha1_hash]
+        else:
+            templar = Templar(variables=data, loader=self._loader)
+            result = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
+            self._cached_result[sha1_hash] = result
+        return result
 
     def __contains__(self, host_name):
         item = self.get(host_name)
@@ -85,10 +106,16 @@ class HostVars(collections.Mapping):
         return len(self._lookup)
 
     def __getstate__(self):
-        return dict(loader=self._loader, lookup=self._lookup, play=self._play, var_manager=self._variable_manager)
+        return dict(
+            loader=self._loader,
+            lookup=self._lookup,
+            play=self._play,
+            var_manager=self._variable_manager,
+        )
 
     def __setstate__(self, data):
         self._play = data.get('play')
         self._loader = data.get('loader')
         self._lookup = data.get('lookup')
         self._variable_manager = data.get('var_manager')
+        self._cached_result = dict()
