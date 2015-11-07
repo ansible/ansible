@@ -337,6 +337,7 @@ author:
     - "Pavel Antonov (@softzilla)"
     - "Ash Wilson (@smashwilson)"
     - "Thomas Steinbach (@ThomasSteinbach)"
+    - "Philippe Jandot (@zfil)"
 requirements:
     - "python >= 2.6"
     - "docker-py >= 0.3.0"
