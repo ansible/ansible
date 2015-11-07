@@ -62,7 +62,7 @@ class ActionModule(ActionBase):
         source = self._task.args.get('src', None)
         dest   = self._task.args.get('dest', None)
         faf    = self._task.first_available_file
-        force  = boolean(self._task.args.get('force', False))
+        force  = boolean(self._task.args.get('force', True))
 
         if (source is None and faf is not None) or dest is None:
             result['failed'] = True
