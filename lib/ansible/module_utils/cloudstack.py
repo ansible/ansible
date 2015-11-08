@@ -348,9 +348,10 @@ class AnsibleCloudStack(object):
                 args['resourcetype'] = resource_type
                 args['tags']         = tags
                 if operation == "create":
-                    self.cs.createTags(**args)
+                    response = self.cs.createTags(**args)
                 else:
-                    self.cs.deleteTags(**args)
+                    response = self.cs.deleteTags(**args)
+                self.poll_job(response)
 
 
     def _tags_that_should_exist_or_be_updated(self, resource, tags):
