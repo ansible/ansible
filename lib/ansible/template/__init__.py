@@ -332,8 +332,8 @@ class Templar:
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
                         # be dynamic in the cache (filters, lookups, etc.)
-                        if var_name not in (None, 'item'):
-                            self._cached_result[sha1_hash] = result
+                        #if var_name not in (None, 'item'):
+                        #    self._cached_result[sha1_hash] = result
 
                 return result
 
