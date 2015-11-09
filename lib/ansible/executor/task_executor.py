@@ -256,7 +256,7 @@ class TaskExecutor:
                     variables['item'] = item
                     if self._task.evaluate_conditional(templar, variables):
                         if templar._contains_vars(name):
-                            new_item = templar.template(name)
+                            new_item = templar.template(name, cache=False)
                             final_items.append(new_item)
                         else:
                             final_items.append(item)
