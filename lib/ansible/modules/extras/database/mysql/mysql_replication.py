@@ -308,7 +308,7 @@ def main():
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
     else:
-        warnings.filterwarnings('ignore', category=MySQLdb.Warning)
+        warnings.filterwarnings('error', category=MySQLdb.Warning)
 
     # Either the caller passes both a username and password with which to connect to
     # mysql, or they pass neither and allow this module to read the credentials from
