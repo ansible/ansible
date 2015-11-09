@@ -66,7 +66,7 @@ def nxapi_argument_spec(spec=None):
         host=dict(required=True),
         port=dict(),
         url_username=dict(required=True, aliases=['username']),
-        url_password=dict(required=False, aliases=['password']),
+        url_password=dict(required=True, aliases=['password']),
         use_ssl=dict(default=False, type='bool'),
         command_type=dict(default='cli_show_ascii', choices=NXAPI_COMMAND_TYPES)
     ))
