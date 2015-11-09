@@ -37,6 +37,8 @@ from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.utils.boolean import boolean
 from ansible.utils.vars import combine_vars, isidentifier
 
+BASE_ATTRIBUTES = {}
+
 class Base:
 
     # connection/transport
@@ -123,12 +125,19 @@ class Base:
         Returns the list of attributes for this class (or any subclass thereof).
         If the attribute name starts with an underscore, it is removed
         '''
+
+        # check cache before retrieving attributes
+        if self.__class__ in BASE_ATTRIBUTES:
+            return BASE_ATTRIBUTES[self.__class__]
+
+        # Cache init
         base_attributes = dict()
         for (name, value) in getmembers(self.__class__):
             if isinstance(value, Attribute):
                if name.startswith('_'):
                    name = name[1:]
                base_attributes[name] = value
+        BASE_ATTRIBUTES[self.__class__] = base_attributes
         return base_attributes
 
     def _initialize_base_attributes(self):
