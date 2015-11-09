@@ -46,6 +46,13 @@ from ansible.utils.vars import combine_vars
 from ansible.vars.hostvars import HostVars
 from ansible.vars.unsafe_proxy import wrap_var
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 VARIABLE_CACHE = dict()
 HOSTVARS_CACHE = dict()
 
@@ -320,6 +327,13 @@ class VariableManager:
         all_vars = combine_vars(all_vars, self._extra_vars)
         all_vars = combine_vars(all_vars, magic_variables)
 
+        # special case for the 'environment' magic variable, as someone
+        # may have set it as a variable and we don't want to stomp on it
+        if task and 'environment' not in all_vars:
+            all_vars['environment'] = task.environment
+        else:
+            display.warning("The variable 'environment' appears to be used already, which is also used internally for environment variables set on the task/block/play. You should use a different variable name to avoid conflicts with this internal variable")
+
         # if we have a task and we're delegating to another host, figure out the
         # variables for that host now so we don't have to rely on hostvars later
         if task and task.delegate_to is not None and include_delegate_to:
@@ -366,7 +380,6 @@ class VariableManager:
             variables['role_names'] = [r._role_name for r in play.roles]
 
         if task:
-            variables['environment'] = task.environment
             if task._role:
                 variables['role_path'] = task._role._role_path
 
