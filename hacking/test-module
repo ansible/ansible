@@ -129,7 +129,7 @@ def boilerplate_module(modfile, args, interpreter, check, destfile):
         task_vars[interpreter_type] = interpreter_path
 
     if check:
-         complex_args['CHECKMODE'] = True
+         complex_args['_ansible_check_mode'] = True
 
     (module_data, module_style, shebang) = module_common.modify_module(
         modfile,
