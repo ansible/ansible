@@ -2983,11 +2983,13 @@ def get_file_content(path, default=None, strip=True):
 
 def get_file_lines(path):
     '''file.readlines() that closes the file'''
-    datafile = open(path)
-    try:
-        return datafile.readlines()
-    finally:
-        datafile.close()
+    if os.path.exists(path) and os.access(path, os.R_OK):
+        try:
+            datafile = open(path)
+            return datafile.readlines()
+        finally:
+            datafile.close()
+    return []
 
 def ansible_facts(module):
     facts = {}
