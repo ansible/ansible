@@ -272,7 +272,6 @@ class VariableManager:
                 # we assume each item in the list is itself a list, as we
                 # support "conditional includes" for vars_files, which mimics
                 # the with_first_found mechanism.
-                #vars_file_list = templar.template(vars_file_item)
                 vars_file_list = vars_file_item
                 if not isinstance(vars_file_list, list):
                      vars_file_list = [ vars_file_list ]
