@@ -1687,7 +1687,7 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, shell_env=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
         args is the command to run
@@ -1736,10 +1736,14 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Set a temporary env path if a prefix is passed
         env=os.environ
+        # Set a temporary env path if a prefix is passed
         if path_prefix:
             env['PATH']="%s:%s" % (path_prefix, env['PATH'])
+
+        # setup shell env if passed
+        if shell_env:
+           env.update(shell_env)
 
         # create a printable version of the command for use
         # in reporting later, which strips out things like
@@ -1784,7 +1788,7 @@ class AnsibleModule(object):
             stderr=subprocess.PIPE
         )
 
-        if path_prefix:
+        if path_prefix or shell_env:
             kwargs['env'] = env
         if cwd and os.path.isdir(cwd):
             kwargs['cwd'] = cwd
