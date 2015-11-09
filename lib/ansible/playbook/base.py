@@ -442,7 +442,7 @@ class Base:
             new_value = [ new_value ]
 
         #return list(set(value + new_value))
-        return [i for i,_ in itertools.groupby(value + new_value)]
+        return [i for i,_ in itertools.groupby(value + new_value) if i is not None]
 
     def __getstate__(self):
         return self.serialize()
