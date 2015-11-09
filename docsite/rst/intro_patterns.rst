@@ -39,7 +39,7 @@ This means the host may be in either one group or the other::
 
 You can exclude groups as well, for instance, all machines must be in the group webservers but not in the group phoenix::
 
-    webservers,!phoenix
+    webservers:!phoenix
 
 You can also specify the intersection of two groups.  This would mean the hosts must be in the group webservers and
 the host must also be in the group staging::
@@ -48,7 +48,7 @@ the host must also be in the group staging::
 
 You can do combinations::
 
-    webservers,dbservers,&staging,!phoenix
+    webservers:dbservers:&staging:!phoenix
 
 The above configuration means "all machines in the groups 'webservers' and 'dbservers' are to be managed if they are in
 the group 'staging' also, but the machines are not to be managed if they are in the group 'phoenix' ... whew!
