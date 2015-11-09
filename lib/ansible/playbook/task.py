@@ -383,8 +383,8 @@ class Task(Base, Conditional, Taggable, Become):
         Override for the 'tags' getattr fetcher, used from Base.
         '''
         environment = self._attributes['environment']
-        if environment is None:
-            environment = self._get_parent_attribute('environment')
-
+        parent_environment = self._get_parent_attribute('environment', extend=True)
+        if parent_environment is not None:
+            environment = self._extend_value(environment, parent_environment)
         return environment
 
