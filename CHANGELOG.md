@@ -303,13 +303,16 @@ newline being stripped you can change your playbook like this:
 * Now you can see task file and line number when using verbosity of 3 or above.
 * The ``[x-y]`` host range syntax is no longer supported. Note that ``[0:1]`` matches two hosts, i.e. the range is inclusive of its endpoints.
 * We now recommend the Use `pattern1,pattern2` to combine host matching patterns.
-* The use of ':' as a separator conflicts with IPv6 addresses and host ranges. It will be deprecated in the future.
-* The undocumented use of ';' as a separator is now deprecated.
+  * The use of ':' as a separator conflicts with IPv6 addresses and host ranges. It will be deprecated in the future.
+  * The undocumented use of ';' as a separator is now deprecated.
 * modules and callbacks have been extended to support no_log to avoid data disclosure.
 * new managed_syslog option has been added to control output to syslog on managed machines, no_log supercsedes this settings.
 * Lookup, vars and action plugin pathing has been normalized, all now follow the same sequence to find relative files.
 * We do not ignore the explicitly set login user for ssh when it matches the 'current user' anymore, this allows overriding .ssh/config when it is set
   explicitly. Leaving it unset will still use the same user and respect .ssh/config. This also means ansible_ssh_user can now return a None value.
+* Handling of undefined variables has changed.  In most places they will now raise an error instead of silently injecting an empty string.  Use the default filter if you want to approximate the old behaviour::
+
+    - debug: msg="The error message was: {{error_code |default('') }}"
 
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 
