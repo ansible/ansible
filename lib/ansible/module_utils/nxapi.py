@@ -77,7 +77,10 @@ def nxapi_argument_spec(spec=None):
 def nxapi_url(module):
     """Constructs a valid NXAPI url
     """
-    proto = 'https' if module.params['use_ssl'] else 'http'
+    if module.params['use_ssl']:
+        proto = 'https'
+    else:
+        proto = 'http'
     host = module.params['host']
     url = '{}://{}'.format(proto, host)
     port = module.params['port']
