@@ -268,7 +268,7 @@ class Templar:
         self._available_variables = variables
         self._cached_result       = {}
 
-    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = ['']):
+    def template(self, variable, convert_bare=False, preserve_trailing_newlines=True, escape_backslashes=True, fail_on_undefined=None, overrides=None, convert_data=True, static_vars = [''], cache = True):
         '''
         Templates (possibly recursively) any given data as input. If convert_bare is
         set to True, the given data will be wrapped as a jinja2 variable ('{{foo}}')
@@ -299,7 +299,6 @@ class Templar:
                     # Check to see if the string we are trying to render is just referencing a single
                     # var.  In this case we don't want to accidentally change the type of the variable
                     # to a string by using the jinja template renderer. We just want to pass it.
-                    var_name = None
                     only_one = self.SINGLE_VAR.match(variable)
                     if only_one:
                         var_name = only_one.group(1)
@@ -311,10 +310,12 @@ class Templar:
                                 return C.DEFAULT_NULL_REPRESENTATION
 
                     # Using a cache in order to prevent template calls with already templated variables
-                    variable_hash = sha1(text_type(variable).encode('utf-8'))
-                    options_hash  = sha1((text_type(preserve_trailing_newlines) + text_type(escape_backslashes) + text_type(fail_on_undefined) + text_type(overrides)).encode('utf-8'))
-                    sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
-                    if var_name not in (None, 'item') and sha1_hash in self._cached_result:
+                    sha1_hash = None
+                    if cache:
+                        variable_hash = sha1(text_type(variable).encode('utf-8'))
+                        options_hash  = sha1((text_type(preserve_trailing_newlines) + text_type(escape_backslashes) + text_type(fail_on_undefined) + text_type(overrides)).encode('utf-8'))
+                        sha1_hash = variable_hash.hexdigest() + options_hash.hexdigest()
+                    if cache and sha1_hash in self._cached_result:
                         result = self._cached_result[sha1_hash]
                     else:
                         result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
@@ -332,7 +333,7 @@ class Templar:
                         # we only cache in the case where we have a single variable
                         # name, to make sure we're not putting things which may otherwise
                         # be dynamic in the cache (filters, lookups, etc.)
-                        if var_name not in (None, 'item'):
+                        if cache:
                             self._cached_result[sha1_hash] = result
 
                 return result
