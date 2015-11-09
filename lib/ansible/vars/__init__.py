@@ -366,6 +366,7 @@ class VariableManager:
             variables['role_names'] = [r._role_name for r in play.roles]
 
         if task:
+            variables['environment'] = task.environment
             if task._role:
                 variables['role_path'] = task._role._role_path
 
