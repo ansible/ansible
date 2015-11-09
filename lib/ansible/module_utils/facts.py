@@ -727,7 +727,7 @@ class Facts(object):
 
     def get_dns_facts(self):
         self.facts['dns'] = {}
-        for line in get_file_lines('/etc/resolv.conf'):
+        for line in get_file_content('/etc/resolv.conf', '').splitlines():
             if line.startswith('#') or line.startswith(';') or line.strip() == '':
                 continue
             tokens = line.split()
