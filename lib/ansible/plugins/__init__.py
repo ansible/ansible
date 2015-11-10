@@ -307,8 +307,10 @@ class PluginLoader:
         if name in sys.modules:
             # See https://github.com/ansible/ansible/issues/13110
             return sys.modules[name]
-        with open(path, 'r') as module_file:
-            module = imp.load_source(name, path, module_file)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            with open(path, 'r') as module_file:
+                module = imp.load_source(name, path, module_file)
         return module
 
     def get(self, name, *args, **kwargs):
@@ -344,9 +346,7 @@ class PluginLoader:
                     continue
 
                 if path not in self._module_cache:
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", RuntimeWarning)
-                        self._module_cache[path] = self._load_module_source(name, path)
+                    self._module_cache[path] = self._load_module_source(name, path)
 
                 if kwargs.get('class_only', False):
                     obj = getattr(self._module_cache[path], self.class_name)
