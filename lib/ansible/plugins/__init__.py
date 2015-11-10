@@ -304,6 +304,9 @@ class PluginLoader:
     __contains__ = has_plugin
 
     def _load_module_source(self, name, path):
+        if name in sys.modules:
+            # See https://github.com/ansible/ansible/issues/13110
+            return sys.modules[name]
         with open(path, 'r') as module_file:
             module = imp.load_source(name, path, module_file)
         return module
