@@ -22,7 +22,6 @@ __metaclass__ = type
 import multiprocessing
 import os
 import socket
-import sys
 import tempfile
 
 from ansible import constants as C
@@ -82,12 +81,6 @@ class TaskQueueManager:
         self._unreachable_hosts = dict()
 
         self._final_q = multiprocessing.Queue()
-
-        # create the pool of worker threads, based on the number of forks specified
-        try:
-            fileno = sys.stdin.fileno()
-        except ValueError:
-            fileno = None
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
