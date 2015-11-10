@@ -34,6 +34,7 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'default'
 
     def v2_runner_on_failed(self, result, ignore_errors=False):
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if 'exception' in result._result:
             if self._display.verbosity < 3:
                 # extract just the actual error message from the exception text
@@ -50,8 +51,8 @@ class CallbackModule(CallbackBase):
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
         else:
-            if result._task.delegate_to:
-                self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), result._task.delegate_to, self._dump_results(result._result)), color='red')
+            if delegated_vars:
+                self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color='red')
             else:
                 self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
 
@@ -60,17 +61,18 @@ class CallbackModule(CallbackBase):
 
     def v2_runner_on_ok(self, result):
 
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if result._task.action == 'include':
             return
         elif result._result.get('changed', False):
-            if result._task.delegate_to is not None:
-                msg = "changed: [%s -> %s]" % (result._host.get_name(), result._task.delegate_to)
+            if delegated_vars:
+                msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
             else:
                 msg = "changed: [%s]" % result._host.get_name()
             color = 'yellow'
         else:
-            if result._task.delegate_to is not None:
-                msg = "ok: [%s -> %s]" % (result._host.get_name(), result._task.delegate_to)
+            if delegated_vars:
+                msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
             else:
                 msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
@@ -96,8 +98,9 @@ class CallbackModule(CallbackBase):
                 self._display.display(msg, color='cyan')
 
     def v2_runner_on_unreachable(self, result):
-        if result._task.delegate_to:
-            self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), result._task.delegate_to, self._dump_results(result._result)), color='red')
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
+        if delegated_vars:
+            self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color='red')
         else:
             self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
 
@@ -135,13 +138,20 @@ class CallbackModule(CallbackBase):
 
     def v2_playbook_item_on_ok(self, result):
 
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if result._task.action == 'include':
             return
         elif result._result.get('changed', False):
-            msg = "changed: [%s]" % result._host.get_name()
+            if delegated_vars:
+                msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            else:
+                msg = "changed: [%s]" % result._host.get_name()
             color = 'yellow'
         else:
-            msg = "ok: [%s]" % result._host.get_name()
+            if delegated_vars:
+                msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
+            else:
+                msg = "ok: [%s]" % result._host.get_name()
             color = 'green'
 
         msg += " => (item=%s)" % (result._result['item'],)
@@ -151,6 +161,7 @@ class CallbackModule(CallbackBase):
         self._display.display(msg, color=color)
 
     def v2_playbook_item_on_failed(self, result):
+        delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if 'exception' in result._result:
             if self._display.verbosity < 3:
                 # extract just the actual error message from the exception text
@@ -164,7 +175,11 @@ class CallbackModule(CallbackBase):
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
-        self._display.display("failed: [%s] => (item=%s) => %s" % (result._host.get_name(), result._result['item'], self._dump_results(result._result)), color='red')
+        if delegated_vars:
+            self._display.display("failed: [%s -> %s] => (item=%s) => %s" % (result._host.get_name(), delegated_vars['ansible_host'], result._result['item'], self._dump_results(result._result)), color='red')
+        else:
+            self._display.display("failed: [%s] => (item=%s) => %s" % (result._host.get_name(), result._result['item'], self._dump_results(result._result)), color='red')
+
         self._handle_warnings(result._result)
 
     def v2_playbook_item_on_skipped(self, result):
