@@ -166,9 +166,14 @@ class Inventory(object):
         """
 
         # Check if pattern already computed
-        pattern_hash = str(pattern)
+        if isinstance(pattern, list):
+            pattern_hash = u":".join(pattern)
+        else:
+            pattern_hash = pattern
+        pattern_hash += u":%s" % ignore_limits_and_restrictions
+
         if pattern_hash in HOSTS_PATTERNS_CACHE:
-            return HOSTS_PATTERNS_CACHE[pattern_hash]
+            return HOSTS_PATTERNS_CACHE[pattern_hash][:]
 
         patterns = Inventory.split_host_pattern(pattern)
         hosts = self._evaluate_patterns(patterns)
@@ -184,7 +189,7 @@ class Inventory(object):
             if self._restriction is not None:
                 hosts = [ h for h in hosts if h in self._restriction ]
 
-        HOSTS_PATTERNS_CACHE[pattern_hash] = hosts
+        HOSTS_PATTERNS_CACHE[pattern_hash] = hosts[:]
         return hosts
 
     @classmethod
