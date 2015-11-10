@@ -28,7 +28,6 @@ import os
 from ansible.compat.six import string_types
 
 from ansible.errors import AnsibleError
-from ansible.utils.display import Display
 
 #      default_readme_template
 #      default_meta_template
@@ -37,12 +36,7 @@ from ansible.utils.display import Display
 class Galaxy(object):
     ''' Keeps global galaxy info '''
 
-    def __init__(self, options, display=None):
-
-        if display is None:
-            self.display = Display()
-        else:
-            self.display = display
+    def __init__(self, options):
 
         self.options = options
         roles_paths = getattr(self.options, 'roles_path', [])
@@ -65,11 +59,9 @@ class Galaxy(object):
     def remove_role(self, role_name):
         del self.roles[role_name]
 
-
     def _str_from_data_file(self, filename):
         myfile = os.path.join(self.DATA_PATH, filename)
         try:
             return open(myfile).read()
         except Exception as e:
             raise AnsibleError("Could not open %s: %s" % (filename, str(e)))
-

@@ -79,7 +79,7 @@ if __name__ == '__main__':
             else:
                 raise
 
-        cli = mycli(sys.argv, display=display)
+        cli = mycli(sys.argv)
         cli.parse()
         sys.exit(cli.run())
 

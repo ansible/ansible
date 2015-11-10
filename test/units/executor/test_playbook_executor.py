@@ -61,7 +61,6 @@ class TestPlayIterator(unittest.TestCase):
         })
 
         mock_inventory = MagicMock()
-        mock_display = MagicMock()
         mock_var_manager = MagicMock()
 
         # fake out options to use the syntax CLI switch, which will ensure
@@ -74,7 +73,6 @@ class TestPlayIterator(unittest.TestCase):
             inventory=mock_inventory,
             variable_manager=mock_var_manager,
             loader=fake_loader,
-            display=mock_display,
             options=mock_options,
             passwords=[],
         )

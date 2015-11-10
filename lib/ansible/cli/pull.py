@@ -33,6 +33,14 @@ from ansible.cli import CLI
 from ansible.plugins import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 ########################################################
 
 class PullCLI(CLI):
@@ -94,7 +102,7 @@ class PullCLI(CLI):
         if self.options.module_name not in self.SUPPORTED_REPO_MODULES:
             raise AnsibleOptionsError("Unsuported repo module %s, choices are %s" % (self.options.module_name, ','.join(self.SUPPORTED_REPO_MODULES)))
 
-        self.display.verbosity = self.options.verbosity
+        display.verbosity = self.options.verbosity
         self.validate_conflicts(vault_opts=True)
 
     def run(self):
@@ -104,8 +112,8 @@ class PullCLI(CLI):
 
         # log command line
         now = datetime.datetime.now()
-        self.display.display(now.strftime("Starting Ansible Pull at %F %T"))
-        self.display.display(' '.join(sys.argv))
+        display.display(now.strftime("Starting Ansible Pull at %F %T"))
+        display.display(' '.join(sys.argv))
 
         # Build Checkout command
         # Now construct the ansible command
@@ -152,19 +160,19 @@ class PullCLI(CLI):
 
         # Nap?
         if self.options.sleep:
-            self.display.display("Sleeping for %d seconds..." % self.options.sleep)
-            time.sleep(self.options.sleep);
+            display.display("Sleeping for %d seconds..." % self.options.sleep)
+            time.sleep(self.options.sleep)
 
         # RUN the Checkout command
         rc, out, err = run_cmd(cmd, live=True)
 
         if rc != 0:
             if self.options.force:
-                self.display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
+                display.warning("Unable to update repository. Continuing with (forced) run of playbook.")
             else:
                 return rc
         elif self.options.ifchanged and '"changed": true' not in out:
-            self.display.display("Repository has not changed, quitting.")
+            display.display("Repository has not changed, quitting.")
             return 0
 
         playbook = self.select_playbook(path)
@@ -197,10 +205,9 @@ class PullCLI(CLI):
             try:
                 shutil.rmtree(self.options.dest)
             except Exception as e:
-                self.display.error("Failed to remove %s: %s" % (self.options.dest, str(e)))
+                display.error("Failed to remove %s: %s" % (self.options.dest, str(e)))
 
         return rc
-
 
     def try_playbook(self, path):
         if not os.path.exists(path):
@@ -215,7 +222,7 @@ class PullCLI(CLI):
             playbook = os.path.join(path, self.args[0])
             rc = self.try_playbook(playbook)
             if rc != 0:
-                self.display.warning("%s: %s" % (playbook, self.PLAYBOOK_ERRORS[rc]))
+                display.warning("%s: %s" % (playbook, self.PLAYBOOK_ERRORS[rc]))
                 return None
             return playbook
         else:
@@ -232,5 +239,5 @@ class PullCLI(CLI):
                 else:
                     errors.append("%s: %s" % (pb, self.PLAYBOOK_ERRORS[rc]))
             if playbook is None:
-                self.display.warning("\n".join(errors))
+                display.warning("\n".join(errors))
             return playbook
