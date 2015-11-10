@@ -461,6 +461,17 @@ class TaskExecutor:
         if self._task.notify is not None:
             result['_ansible_notify'] = self._task.notify
 
+        # add the delegated vars to the result, so we can reference them
+        # on the results side without having to do any further templating
+        # FIXME: we only want a limited set of variables here, so this is currently
+        #        hardcoded but should be possibly fixed if we want more or if
+        #        there is another source of truth we can use
+        delegated_vars = variables.get('ansible_delegated_vars', dict()).get(self._task.delegate_to, dict()).copy()
+        if len(delegated_vars) > 0:
+            result["_ansible_delegated_vars"] = dict()
+            for k in ('ansible_host', ):
+                result["_ansible_delegated_vars"][k] = delegated_vars.get(k)
+
         # preserve no_log setting
         result["_ansible_no_log"] = self._play_context.no_log
 
