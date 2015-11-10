@@ -27,7 +27,6 @@ import sys
 
 from ansible.compat.six import string_types
 
-from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
@@ -36,6 +35,14 @@ from ansible.utils.color import colorize, hostcolor
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.unicode import to_unicode
 
+try:
+    from __main__ import display
+    display = display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class PlaybookExecutor:
 
     '''
@@ -43,12 +50,11 @@ class PlaybookExecutor:
     basis for bin/ansible-playbook operation.
     '''
 
-    def __init__(self, playbooks, inventory, variable_manager, loader, display, options, passwords):
+    def __init__(self, playbooks, inventory, variable_manager, loader, options, passwords):
         self._playbooks        = playbooks
         self._inventory        = inventory
         self._variable_manager = variable_manager
         self._loader           = loader
-        self._display          = display
         self._options          = options
         self.passwords         = passwords
         self._unreachable_hosts = dict()
@@ -56,7 +62,7 @@ class PlaybookExecutor:
         if options.listhosts or options.listtasks or options.listtags or options.syntax:
             self._tqm = None
         else:
-            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, display=display, options=options, passwords=self.passwords)
+            self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
 
     def run(self):
 
@@ -81,7 +87,7 @@ class PlaybookExecutor:
 
                 i = 1
                 plays = pb.get_plays()
-                self._display.vv('%d plays in %s' % (len(plays), playbook_path))
+                display.vv('%d plays in %s' % (len(plays), playbook_path))
 
                 for play in plays:
                     if play._included_path is not None:
@@ -178,18 +184,18 @@ class PlaybookExecutor:
                 self._cleanup()
 
         if self._options.syntax:
-            self.display.display("No issues encountered")
+            display.display("No issues encountered")
             return result
 
         # TODO: this stat summary stuff should be cleaned up and moved
         #        to a new method, if it even belongs here...
-        self._display.banner("PLAY RECAP")
+        display.banner("PLAY RECAP")
 
         hosts = sorted(self._tqm._stats.processed.keys())
         for h in hosts:
             t = self._tqm._stats.summarize(h)
 
-            self._display.display(u"%s : %s %s %s %s" % (
+            display.display(u"%s : %s %s %s %s" % (
                 hostcolor(h, t),
                 colorize(u'ok', t['ok'], 'green'),
                 colorize(u'changed', t['changed'], 'yellow'),
@@ -198,7 +204,7 @@ class PlaybookExecutor:
                 screen_only=True
             )
 
-            self._display.display(u"%s : %s %s %s %s" % (
+            display.display(u"%s : %s %s %s %s" % (
                 hostcolor(h, t, False),
                 colorize(u'ok', t['ok'], None),
                 colorize(u'changed', t['changed'], None),
@@ -207,7 +213,7 @@ class PlaybookExecutor:
                 log_only=True
             )
 
-        self._display.display("", screen_only=True)
+        display.display("", screen_only=True)
         # END STATS STUFF
 
         return result
@@ -230,7 +236,7 @@ class PlaybookExecutor:
             serial_pct = int(play.serial.replace("%",""))
             serial = int((serial_pct/100.0) * len(all_hosts))
         else:
-            if play.serial is None: 
+            if play.serial is None:
                 serial = -1
             else:
                 serial = int(play.serial)
@@ -281,12 +287,12 @@ class PlaybookExecutor:
                     second = do_prompt("confirm " + msg, private)
                     if result == second:
                         break
-                    self._display.display("***** VALUES ENTERED DO NOT MATCH ****")
+                    display.display("***** VALUES ENTERED DO NOT MATCH ****")
             else:
                 result = do_prompt(msg, private)
         else:
             result = None
-            self._display.warning("Not prompting as we are not in interactive mode")
+            display.warning("Not prompting as we are not in interactive mode")
 
         # if result is false and default is not None
         if not result and default is not None:
@@ -298,5 +304,3 @@ class PlaybookExecutor:
         # handle utf-8 chars
         result = to_unicode(result, errors='strict')
         return result
-
-
