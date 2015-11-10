@@ -21,7 +21,7 @@ You'll need this Python module installed on the execution host, usually your wor
 
     $ pip install cs
 
-.. note:: cs also includes a command line interface for ad-hoc ineraction with the CloudStack API e.g. ``$ cs listVirtualMachines state=Running``.
+.. note:: cs also includes a command line interface for ad-hoc interaction with the CloudStack API e.g. ``$ cs listVirtualMachines state=Running``.
 
 Credentials File
 ````````````````
@@ -43,7 +43,7 @@ The structure of the ini file must look like this:
     key = api key
     secret = api secret
 
-.. Note:: The section ``[cloudstack]`` is the default section. ``CLOUDSTACK_REGION`` environment variable can be used to define the default region.
+.. Note:: The section ``[cloudstack]`` is the default section. ``CLOUDSTACK_REGION`` environment variable can be used to define the default section.
 
 Regions
 ```````
@@ -73,7 +73,17 @@ By passing the argument ``api_region`` with the CloudStack modules, the region w
 
 .. code-block:: yaml
 
-    - name: ensure my ssh pubkey exists on all CloudStack regions
+    - name: ensure my ssh public key exists on Exoscale
+      local_action: cs_sshkeypair
+        name: my-ssh-key
+        public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+        api_region: exoscale
+
+Or by looping over a regions list if you want to do the task in every region:
+
+.. code-block:: yaml
+
+    - name: ensure my ssh public key exists in all CloudStack regions
       local_action: cs_sshkeypair
         name: my-ssh-key
         public_key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
@@ -130,7 +140,7 @@ Our database servers should get more CPU and RAM, so we define to use a ``Large`
     ---
     cs_offering: Large
 
-The web servers should get a ``Small`` offering as we would scale them horizontaly, which is also our default offering.
+The web servers should get a ``Small`` offering as we would scale them horizontally, which is also our default offering. We also ensure the known web ports are opened for the world.
 
 .. code-block:: yaml
 
@@ -178,19 +188,18 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
           cs_staticnat: vm="{{ inventory_hostname_short }}" ip_address="{{ public_ip }}"
           when: public_ip is defined
 
-In the above play, we use the group ``cloud-vm`` to handle all VMs in the cloud but use ``connetion=local`` because we want the modules to be executed locally.
+In the above play we defined 3 tasks and use the group ``cloud-vm`` as target to handle all VMs in the cloud but instead SSH to these VMs, we use ``connetion=local`` to execute the API calls locally from our workstation.
 
-Note that for some modules, e.g. ``cs_sshkeypair`` you usually want this to be executed only once, not for every VM. Therefore you would make a separate play for this targeting localhost.
+In the first task, we ensure we have a running VM created with the Debian template. If the VM is already created but stopped, it would just start it. If you like to change the offering on an exisiting VM, you must add ``force: yes`` to the task, which would stop the VM, change the offering and start the VM again.
 
-.. code-block:: yaml
+In the second task we ensure the ports are opened if we give a public IP to the VM. 
 
-    - name: configure ssh keys
-      hosts: localhost
-      connection: local
-      tasks:
-      - name: ensure my ssh pubkey exists
-        cs_sshkeypair: name=my_key public_key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+In the third task we add static NAT to the VMs having a public IP defined. 
 
+
+.. Note:: The public IP addresses must have been acquired in advance, also see ``cs_ip_address``
+
+.. Note:: For some modules, e.g. ``cs_sshkeypair`` you usually want this to be executed only once, not for every VM. Therefore you would make a separate play for it targeting localhost. You find an example in the use cases below.
 
 Use Case: Provisioning on a Basic Networking CloudStack setup
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -268,7 +277,7 @@ The playbook looks like the following:
       hosts: cloud-vm
       connection: local
       tasks:
-      - name: create and run VMs on cloudstack
+      - name: create and run VMs on CloudStack
         cs_instance:
           name: "{{ inventory_hostname_short }}"
           template: Linux Debian 7 64-bit 20GB Disk
