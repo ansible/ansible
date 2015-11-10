@@ -121,6 +121,7 @@ options:
         "journald" Journald logging driver for Docker. Writes log messages to "journald".
         "gelf" Graylog Extended Log Format (GELF) logging driver for Docker. Writes log messages to a GELF endpoint likeGraylog or Logstash.
         "fluentd" Fluentd logging driver for Docker. Writes log messages to "fluentd" (forward input).
+        "awslogs" Awslogs logging driver for Docker. Writes log messages to AWS Cloudwatch Logs.
         If not defined explicitly, the Docker daemon's default ("json-file") will apply.
         Requires docker >= 1.6.0.
     required: false
@@ -132,6 +133,7 @@ options:
       - journald
       - gelf
       - fluentd
+      - awslogs
     version_added: "2.0"
   log_opt:
     description:
@@ -1819,7 +1821,7 @@ def main():
             net             = dict(default=None),
             pid             = dict(default=None),
             insecure_registry = dict(default=False, type='bool'),
-            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog', 'journald', 'gelf', 'fluentd']),
+            log_driver      = dict(default=None, choices=['json-file', 'none', 'syslog', 'journald', 'gelf', 'fluentd', 'awslogs']),
             log_opt         = dict(default=None, type='dict'),
             cpu_set         = dict(default=None),
             cap_add         = dict(default=None, type='list'),
