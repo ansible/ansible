@@ -558,7 +558,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
-        except (ssl.SSLError, socket.error), e:
+        except (ssl.SSLError, socket.error) as e:
             # fail if we tried all of the certs but none worked
             if 'connection refused' in str(e).lower():
                 raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
@@ -762,22 +762,22 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(r.info())
         info['url'] = r.geturl()  # The URL goes in too, because of redirects.
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
-    except NoSSLError, e:
+    except NoSSLError as e:
         distribution = get_distribution()
         if distribution.lower() == 'redhat':
             module.fail_json(msg='%s. You can also install python-ssl from EPEL' % str(e))
         else:
             module.fail_json(msg='%s' % str(e))
-    except (ConnectionError, ValueError), e:
+    except (ConnectionError, ValueError) as e:
         module.fail_json(msg=str(e))
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         info.update(dict(msg=str(e), status=e.code))
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))
-    except socket.error, e:
+    except socket.error as e:
         info.update(dict(msg="Connection failure: %s" % str(e), status=-1))
-    except Exception, e:
+    except Exception as e:
         info.update(dict(msg="An unknown error occurred: %s" % str(e), status=-1))
 
     return r, info
