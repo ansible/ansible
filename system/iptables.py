@@ -246,7 +246,7 @@ def append_comm(rule, param):
 def append_conntrack(rule, param):
     if param:
         rule.extend(['-m'])
-        rule.extend(['conntrack'])
+        rule.extend(['state'])
 
 def append_limit(rule, param):
     if param:
@@ -273,7 +273,7 @@ def construct_rule(params):
     append_param(rule, params['comment'], '--comment', False)
     if params['ctstate']:
         append_conntrack(rule, params['ctstate'])
-        append_param(rule, ','.join(params['ctstate']), '--ctstate', False)
+        append_param(rule, ','.join(params['ctstate']), '--state', False)
     append_limit(rule, params['limit'])
     append_param(rule, params['limit'], '--limit', False)
     return rule
