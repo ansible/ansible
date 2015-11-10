@@ -62,23 +62,35 @@ Function Set-Attr($obj, $name, $value)
 # Helper function to convert a powershell object to JSON to echo it, exiting
 # the script
 # Example: Exit-Json $result
-Function Exit-Json($obj)
+Function Exit-Json
 {
+    (
+    $obj,
+    
+    [ValidateLength(0,99)]
+    [int]$Depth=10)
     # If the provided $obj is undefined, define one to be nice
     If (-not $obj.GetType)
     {
         $obj = New-Object psobject
     }
 
-    echo $obj | ConvertTo-Json -Compress -Depth 99
+    echo $obj | ConvertTo-Json -Compress -Depth $Depth
     Exit
 }
 
 # Helper function to add the "msg" property and "failed" property, convert the
 # powershell object to JSON and echo it, exiting the script
 # Example: Fail-Json $result "This is the failure message"
-Function Fail-Json($obj, $message = $null)
+Function Fail-Json
 {
+    (
+        $obj,
+        $message = $null,
+        
+        [ValidateLength(0,99)]
+        [int]$Depth=10
+    )
     # If we weren't given 2 args, and the only arg was a string, create a new
     # psobject and use the arg as the failure message
     If ($message -eq $null -and $obj.GetType().Name -eq "String")
@@ -94,7 +106,7 @@ Function Fail-Json($obj, $message = $null)
 
     Set-Attr $obj "msg" $message
     Set-Attr $obj "failed" $true
-    echo $obj | ConvertTo-Json -Compress -Depth 99
+    echo $obj | ConvertTo-Json -Compress -Depth $Depth
     Exit 1
 }
 
