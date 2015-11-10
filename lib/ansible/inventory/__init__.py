@@ -170,7 +170,12 @@ class Inventory(object):
             pattern_hash = u":".join(pattern)
         else:
             pattern_hash = pattern
-        pattern_hash += u":%s" % ignore_limits_and_restrictions
+
+        if not ignore_limits_and_restrictions:
+            if self._subset:
+                pattern_hash += u":%s" % self._subset
+            if self._restriction:
+                pattern_hash += u":%s" % self._restriction
 
         if pattern_hash in HOSTS_PATTERNS_CACHE:
             return HOSTS_PATTERNS_CACHE[pattern_hash][:]
