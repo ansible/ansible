@@ -33,7 +33,6 @@ from ansible.utils import module_docs
 
 try:
     from __main__ import display
-    display = display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()

@@ -30,6 +30,12 @@ from ansible import constants as C
 from ansible.vars import strip_internal_keys
 from ansible.utils.unicode import to_unicode
 
+try:
+    from __main__ import display as global_display
+except ImportError:
+    from ansible.utils.display import Display
+    global_display = Display()
+
 __all__ = ["CallbackBase"]
 
 
@@ -41,8 +47,12 @@ class CallbackBase:
     custom actions.
     '''
 
-    def __init__(self, display):
-        self._display = display
+    def __init__(self, display=None):
+        if display:
+            self._display = display
+        else:
+            self._display = global_display
+
         if self._display.verbosity >= 4:
             name = getattr(self, 'CALLBACK_NAME', 'unnamed')
             ctype = getattr(self, 'CALLBACK_TYPE', 'old')

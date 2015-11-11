@@ -39,7 +39,6 @@ from ansible.vars.unsafe_proxy import UnsafeProxy
 
 try:
     from __main__ import display
-    display = display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
