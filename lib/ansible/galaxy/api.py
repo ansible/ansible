@@ -277,4 +277,3 @@ class GalaxyAPI(object):
         return data
         
 
-

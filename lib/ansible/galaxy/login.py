@@ -112,4 +112,3 @@ class GalaxyLogin(object):
             raise AnsibleError(res['message'])
 
         return data['token']
-
