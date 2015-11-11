@@ -145,7 +145,7 @@ Try {
         }
 
         # normalize path and remove slash at the end
-        $path = (Get-Item $path).FullName -replace ".$"
+        $path = (Get-Item $path).FullName -replace "\\$"
 
         # need to (re-)create share
         If (!$share) {
