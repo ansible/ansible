@@ -43,6 +43,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class ActionBase(with_metaclass(ABCMeta, object)):
 
     '''
@@ -59,6 +60,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         self._loader            = loader
         self._templar           = templar
         self._shared_loader_obj = shared_loader_obj
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display           = display
 
         self._supports_check_mode = True
@@ -129,8 +131,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if module_path2 is not None:
                 raise AnsibleError("The module %s was not found in configured module paths" % (module_name))
             else:
-                raise AnsibleError("The module %s was not found in configured module paths. " \
-                                   "Additionally, core modules are missing. If this is a checkout, " \
+                raise AnsibleError("The module %s was not found in configured module paths. "
+                                   "Additionally, core modules are missing. If this is a checkout, "
                                    "run 'git submodule update --init --recursive' to correct this problem." % (module_name))
 
         # insert shared code and arguments into the module
@@ -199,9 +201,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmp_mode = 0o755
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
-        self._display.debug("executing _low_level_execute_command to create the tmp path")
+        display.debug("executing _low_level_execute_command to create the tmp path")
         result = self._low_level_execute_command(cmd, sudoable=False)
-        self._display.debug("done with creation of tmp path")
+        display.debug("done with creation of tmp path")
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -212,12 +214,16 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 if self._play_context.verbosity > 3:
                     output = u'SSH encountered an unknown error. The output was:\n%s%s' % (result['stdout'], result['stderr'])
                 else:
-                    output = u'SSH encountered an unknown error during the connection. We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue'
+                    output = (u'SSH encountered an unknown error during the connection.'
+                            ' We recommend you re-run the command using -vvvv, which will enable SSH debugging output to help diagnose the issue')
 
             elif u'No space left on device' in result['stderr']:
                 output = result['stderr']
             else:
-                output = 'Authentication or permission failure.  In some cases, you may have been able to authenticate and did not have permissions on the remote directory. Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp". Failed command was: %s, exited with result %d' % (cmd, result['rc'])
+                output = ('Authentication or permission failure.'
+                        ' In some cases, you may have been able to authenticate and did not have permissions on the remote directory.'
+                        ' Consider changing the remote temp path in ansible.cfg to a path rooted in "/tmp".'
+                        ' Failed command was: %s, exited with result %d' % (cmd, result['rc']))
             if 'stdout' in result and result['stdout'] != u'':
                 output = output + u": %s" % result['stdout']
             raise AnsibleConnectionFailure(output)
@@ -238,9 +244,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
-            self._display.debug("calling _low_level_execute_command to remove the tmp path")
+            display.debug("calling _low_level_execute_command to remove the tmp path")
             self._low_level_execute_command(cmd, sudoable=False)
-            self._display.debug("done removing the tmp path")
+            display.debug("done removing the tmp path")
 
     def _transfer_data(self, remote_path, data):
         '''
@@ -275,9 +281,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         cmd = self._connection._shell.chmod(mode, path)
-        self._display.debug("calling _low_level_execute_command to chmod the remote path")
+        display.debug("calling _low_level_execute_command to chmod the remote path")
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
-        self._display.debug("done with chmod call")
+        display.debug("done with chmod call")
         return res
 
     def _remote_checksum(self, path, all_vars):
@@ -288,9 +294,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         python_interp = all_vars.get('ansible_python_interpreter', 'python')
 
         cmd = self._connection._shell.checksum(path, python_interp)
-        self._display.debug("calling _low_level_execute_command to get the remote checksum")
+        display.debug("calling _low_level_execute_command to get the remote checksum")
         data = self._low_level_execute_command(cmd, sudoable=True)
-        self._display.debug("done getting the remote checksum")
+        display.debug("done getting the remote checksum")
         try:
             data2 = data['stdout'].strip().splitlines()[-1]
             if data2 == u'':
@@ -300,7 +306,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             else:
                 return data2.split()[0]
         except IndexError:
-            self._display.warning(u"Calculating checksum failed unusually, please report this to "
+            display.warning(u"Calculating checksum failed unusually, please report this to "
                 u"the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n" % (to_unicode(cmd), data))
             # this will signal that it changed and allow things to keep going
             return "INVALIDCHECKSUM"
@@ -318,9 +324,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 expand_path = '~%s' % self._play_context.become_user
 
         cmd = self._connection._shell.expand_user(expand_path)
-        self._display.debug("calling _low_level_execute_command to expand the remote user path")
+        display.debug("calling _low_level_execute_command to expand the remote user path")
         data = self._low_level_execute_command(cmd, sudoable=False)
-        self._display.debug("done expanding the remote user path")
+        display.debug("done expanding the remote user path")
         #initial_fragment = utils.last_non_blank_line(data['stdout'])
         initial_fragment = data['stdout'].strip().splitlines()[-1]
 
@@ -395,7 +401,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 args_file_path = self._connection._shell.join_path(tmp, 'args')
 
         if remote_module_path or module_style != 'new':
-            self._display.debug("transferring module to remote")
+            display.debug("transferring module to remote")
             self._transfer_data(remote_module_path, module_data)
             if module_style == 'old':
                 # we need to dump the module args to a k=v string in a file on
@@ -404,7 +410,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 for k,v in iteritems(module_args):
                     args_data += '%s="%s" ' % (k, pipes.quote(v))
                 self._transfer_data(args_file_path, args_data)
-            self._display.debug("done transferring module to remote")
+            display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
 
@@ -436,14 +442,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # specified in the play, not the sudo_user
             sudoable = False
 
-        self._display.debug("calling _low_level_execute_command() for command %s" % cmd)
+        display.debug("calling _low_level_execute_command() for command %s" % cmd)
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
-        self._display.debug("_low_level_execute_command returned ok")
+        display.debug("_low_level_execute_command returned ok")
 
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if self._play_context.become and self._play_context.become_user != 'root':
-            # not sudoing to root, so maybe can't delete files as that other user
-            # have to clean up temp files as original user in a second step
+                # not sudoing to root, so maybe can't delete files as that other user
+                # have to clean up temp files as original user in a second step
                 cmd2 = self._connection._shell.remove(tmp, recurse=True)
                 self._low_level_execute_command(cmd2, sudoable=False)
 
@@ -464,7 +470,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if 'stdout' in data and 'stdout_lines' not in data:
             data['stdout_lines'] = data.get('stdout', u'').splitlines()
 
-        self._display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
+        display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
     def _low_level_execute_command(self, cmd, sudoable=True, in_data=None,
@@ -486,21 +492,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if executable is not None:
             cmd = executable + ' -c ' + cmd
 
-        self._display.debug("in _low_level_execute_command() (%s)" % (cmd,))
+        display.debug("in _low_level_execute_command() (%s)" % (cmd,))
         if not cmd:
             # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-            self._display.debug("no command, exiting _low_level_execute_command()")
+            display.debug("no command, exiting _low_level_execute_command()")
             return dict(stdout='', stderr='')
 
         allow_same_user = C.BECOME_ALLOW_SAME_USER
         same_user = self._play_context.become_user == self._play_context.remote_user
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
-            self._display.debug("using become for this command")
+            display.debug("using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
-        self._display.debug("executing the command %s through the connection" % cmd)
+        display.debug("executing the command %s through the connection" % cmd)
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        self._display.debug("command execution done")
+        display.debug("command execution done")
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
@@ -518,7 +524,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             err = stderr
 
-        self._display.debug("done with _low_level_execute_command() (%s)" % (cmd,))
+        display.debug("done with _low_level_execute_command() (%s)" % (cmd,))
         if rc is None:
             rc = 0
 
@@ -526,9 +532,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
     def _get_first_available_file(self, faf, of=None, searchdir='files'):
 
-        self._display.deprecated("first_available_file, use with_first_found or lookup('first_found',...) instead")
+        display.deprecated("first_available_file, use with_first_found or lookup('first_found',...) instead")
         for fn in faf:
-            fn_orig = fn
             fnt = self._templar.template(fn)
             if self._task._role is not None:
                 lead = self._task._role._role_path
@@ -551,7 +556,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
     def _get_diff_data(self, destination, source, task_vars, source_file=True):
 
         diff = {}
-        self._display.debug("Going to peek to see if file has changed permissions")
+        display.debug("Going to peek to see if file has changed permissions")
         peek_result = self._execute_module(module_name='file', module_args=dict(path=destination, diff_peek=True), task_vars=task_vars, persist_files=True)
 
         if not('failed' in peek_result and peek_result['failed']) or peek_result.get('rc', 0) == 0:
@@ -563,7 +568,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             elif peek_result['size'] > C.MAX_FILE_SIZE_FOR_DIFF:
                 diff['dst_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
             else:
-                self._display.debug("Slurping the file %s" % source)
+                display.debug("Slurping the file %s" % source)
                 dest_result = self._execute_module(module_name='slurp', module_args=dict(path=destination), task_vars=task_vars, persist_files=True)
                 if 'content' in dest_result:
                     dest_contents = dest_result['content']
@@ -575,7 +580,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     diff['before'] = dest_contents
 
             if source_file:
-                self._display.debug("Reading local copy of the file %s" % source)
+                display.debug("Reading local copy of the file %s" % source)
                 try:
                     src = open(source)
                     src_contents = src.read(8192)
@@ -590,7 +595,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     diff['after_header'] = source
                     diff['after'] = src_contents
             else:
-                self._display.debug("source of file passed in")
+                display.debug("source of file passed in")
                 diff['after_header'] = 'dynamically generated'
                 diff['after'] = source
 
