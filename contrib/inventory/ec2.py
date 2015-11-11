@@ -96,6 +96,41 @@ In addition, if an instance has AWS Tags associated with it, each tag is a new
 variable named:
  - ec2_tag_[Key] = [Value]
 
+And if the Value has spaces it's split by whitespace in multiple tag groups
+like this:
+ AWS Tag & Value:
+  "private:app" = "app01 app02 app03 app04 app05     app06"
+
+ ec2.py groups:
+  "tag_private_app_app01": [
+    "172..."
+  ],
+  "tag_private_app_app01_app02_app03_app04_app05_____app06": [
+    "172..."
+  ],
+  "tag_private_app_app02": [
+    "172..."
+  ],
+  "tag_private_app_app03": [
+    "172..."
+  ],
+  "tag_private_app_app04": [
+    "172..."
+  ],
+  "tag_private_app_app05": [
+    "172..."
+  ],
+  "tag_private_app_app06": [
+    "172..."
+  ],
+
+The idea is to be able to have more fine grained groups like:
+ - private:app = "list of apps/services the host is running like dns web db cache"
+ - private:env = "production/staging/testing"
+
+And be able to combine it like:
+ ansible-playbook --limit 'tag_private_app_cache:&tag_private_env_staging'
+
 Security groups are comma-separated in 'ec2_security_group_ids' and
 'ec2_security_group_names'.
 '''
@@ -698,9 +733,12 @@ class Ec2Inventory(object):
             for k, v in instance.tags.items():
                 if v:
                     key = self.to_safe("tag_" + k + "=" + v)
+                    self.push(self.inventory, key, dest)
+                    for subtag in v.split():
+                        self.push(self.inventory, self.to_safe("tag_" + k + "=" + subtag), dest)
                 else:
                     key = self.to_safe("tag_" + k)
-                self.push(self.inventory, key, dest)
+                    self.push(self.inventory, key, dest)
                 if self.nested_groups:
                     self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
                     if v:
