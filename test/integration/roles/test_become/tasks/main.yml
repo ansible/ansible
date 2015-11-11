@@ -24,6 +24,8 @@
     state: touch
 
 - name: check that the path in the user's home dir was created
+  become: True
+  become_user: "{{ become_test_user }}"
   stat:
     path: "~{{ become_test_user }}/foo.txt"
   register: results
@@ -41,6 +43,8 @@
     dest: "~/bar.txt"
 
 - name: check that the path in the user's home dir was created
+  become: True
+  become_user: "{{ become_test_user }}"
   stat:
     path: "~{{ become_test_user }}/bar.txt"
   register: results
@@ -58,6 +62,8 @@
     dest: "~/baz.txt"
 
 - name: check that the path in the user's home dir was created
+  become: True
+  become_user: "{{ become_test_user }}"
   stat:
     path: "~{{ become_test_user }}/baz.txt"
   register: results
