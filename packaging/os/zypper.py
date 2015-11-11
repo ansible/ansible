@@ -161,7 +161,7 @@ def get_package_state(m, packages):
     for stdoutline in stdout.splitlines():
         match = rpmoutput_re.match(stdoutline)
         if match == None:
-            return None
+            continue
         package = match.group(1)
         result = match.group(2)
         if result == 'is installed':
@@ -169,18 +169,13 @@ def get_package_state(m, packages):
         else:
             installed_state[package] = False
 
-    for package in packages:
-        if package not in installed_state:
-            print package + ' was not returned by rpm \n'
-            return None
-
     return installed_state
 
 # Function used to make sure a package is present.
 def package_present(m, name, installed_state, package_type, disable_gpg_check, disable_recommends, old_zypper):
     packages = []
     for package in name:
-        if installed_state[package] is False:
+        if package not in installed_state or installed_state[package] is False:
             packages.append(package)
     if len(packages) != 0:
         cmd = ['/usr/bin/zypper', '--non-interactive']
@@ -246,7 +241,7 @@ def package_latest(m, name, installed_state, package_type, disable_gpg_check, di
 def package_absent(m, name, installed_state, package_type, old_zypper):
     packages = []
     for package in name:
-        if installed_state[package] is True:
+        if package not in installed_state or installed_state[package] is True:
             packages.append(package)
     if len(packages) != 0:
         cmd = ['/usr/bin/zypper', '--non-interactive', 'remove', '-t', package_type]
