@@ -34,15 +34,15 @@ options:
   subscriptions:
     description:
       - List of subscriptions to apply to the topic. Note that AWS requires
-      subscriptions to be confirmed, so you will need to confirm any new
-      subscriptions.
+        subscriptions to be confirmed, so you will need to confirm any new
+        subscriptions.
   purge_subscriptions:
     description:
-      - Whether to purge any subscriptions not listed here. NOTE: AWS does not
+      - "Whether to purge any subscriptions not listed here. NOTE: AWS does not
         allow you to purge any PendingConfirmation subscriptions, so if any
         exist and would be purged, they are silently skipped. This means that
         somebody could come back later and confirm the subscription. Sorry.
-        Blame Amazon.
+        Blame Amazon."
     default: True
 extends_documentation_fragment: aws
 requirements: [ "boto" ]
