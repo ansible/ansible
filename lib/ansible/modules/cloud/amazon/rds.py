@@ -271,6 +271,33 @@ EXAMPLES = '''
     command: reboot
     instance_name: database
     wait: yes
+    
+# Restore a Postgres db instance from a snapshot, wait for it to become available again, and
+#  then modify it to add your security group. Also, display the new endpoint.
+#  Note that the "publicly_accessible" option is allowed here just as it is in the AWS CLI
+- local_action:
+     module: rds
+     command: restore
+     snapshot: mypostgres-snapshot
+     instance_name: MyNewInstanceName
+     region: us-west-2
+     zone: us-west-2b
+     subnet: default-vpc-xx441xxx
+     publicly_accessible: yes
+     wait: yes
+     wait_timeout: 600
+     tags:
+         Name: pg1_test_name_tag 
+  register: rds
+  
+- local_action:
+     module: rds
+     command: modify
+     instance_name: MyNewInstanceName
+     region: us-west-2
+     vpc_security_groups: sg-xxx945xx
+          
+- debug: msg="The new db endpoint is {{ rds.instance.endpoint }}"
 
 '''
 
