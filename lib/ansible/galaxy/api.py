@@ -28,8 +28,15 @@ import json
 from urllib2 import quote as urlquote, HTTPError
 from urlparse import urlparse
 
-from ansible.errors import AnsibleError, AnsibleOptionsError
+from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class GalaxyAPI(object):
     ''' This class is meant to be used as a API client for an Ansible Galaxy server '''
@@ -52,7 +59,7 @@ class GalaxyAPI(object):
         if server_version in self.SUPPORTED_VERSIONS:
             self.baseurl = '%s/api/%s' % (api_server, server_version)
             self.version = server_version # for future use
-            self.galaxy.display.vvvvv("Base API: %s" % self.baseurl)
+            display.vvvvv("Base API: %s" % self.baseurl)
         else:
             raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
 
@@ -68,7 +75,7 @@ class GalaxyAPI(object):
         try:
             data = json.load(open_url(api_server, validate_certs=self.galaxy.options.validate_certs))
             return data.get("current_version", 'v1')
-        except Exception as e:
+        except Exception:
             # TODO: report error
             return None
 
@@ -83,12 +90,12 @@ class GalaxyAPI(object):
             user_name = ".".join(parts[0:-1])
             role_name = parts[-1]
             if notify:
-                self.galaxy.display.display("- downloading role '%s', owned by %s" % (role_name, user_name))
+                display.display("- downloading role '%s', owned by %s" % (role_name, user_name))
         except:
             raise AnsibleError("- invalid role name (%s). Specify role as format: username.rolename" % role_name)
 
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
-        self.galaxy.display.vvvv("- %s" % (url))
+        display.vvvv("- %s" % (url))
         try:
             data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
             if len(data["results"]) != 0:
@@ -109,13 +116,13 @@ class GalaxyAPI(object):
             url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
             data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
             results = data['results']
-            done = (data.get('next', None) == None)
+            done = (data.get('next', None) is None)
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
-                self.galaxy.display.display(url)
+                display.display(url)
                 data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
                 results += data['results']
-                done = (data.get('next', None) == None)
+                done = (data.get('next', None) is None)
             return results
         except:
             return None
@@ -134,13 +141,13 @@ class GalaxyAPI(object):
                 results = data
             done = True
             if "next" in data:
-                done = (data.get('next', None) == None)
+                done = (data.get('next', None) is None)
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
-                self.galaxy.display.display(url)
+                display.display(url)
                 data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
                 results += data['results']
-                done = (data.get('next', None) == None)
+                done = (data.get('next', None) is None)
             return results
         except Exception as error:
             raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
@@ -168,7 +175,7 @@ class GalaxyAPI(object):
         for plat in platforms:
             search_url += '&chain__platforms__name=' + urlquote(plat)
 
-        self.galaxy.display.debug("Executing query: %s" % search_url)
+        display.debug("Executing query: %s" % search_url)
         try:
             data = json.load(open_url(search_url, validate_certs=self.galaxy.options.validate_certs))
         except HTTPError as e:
