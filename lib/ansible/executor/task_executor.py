@@ -252,16 +252,19 @@ class TaskExecutor:
             if all(isinstance(o, string_types) for o in items):
                 final_items = []
                 name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
-                for item in items:
-                    variables['item'] = item
-                    if self._task.evaluate_conditional(templar, variables):
-                        if templar._contains_vars(name):
-                            new_item = templar.template(name, cache=False)
-                            final_items.append(new_item)
-                        else:
-                            final_items.append(item)
-                self._task.args['name'] = final_items
-                return [final_items]
+                # The user is doing an upgrade or some other operation
+                # that doesn't take name or pkg.
+                if name:
+                    for item in items:
+                        variables['item'] = item
+                        if self._task.evaluate_conditional(templar, variables):
+                            if templar._contains_vars(name):
+                                new_item = templar.template(name, cache=False)
+                                final_items.append(new_item)
+                            else:
+                                final_items.append(item)
+                    self._task.args['name'] = final_items
+                    return [final_items]
             #elif:
                 # Right now we only optimize single entries.  In the future we
                 # could optimize more types:
