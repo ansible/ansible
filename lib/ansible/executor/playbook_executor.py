@@ -102,6 +102,7 @@ class PlaybookExecutor:
                             encrypt   = var.get("encrypt", None)
                             salt_size = var.get("salt_size", None)
                             salt      = var.get("salt", None)
+                            required  = var.get("required", False)
 
                             if vname not in play.vars:
                                 if self._tqm:
@@ -253,7 +254,7 @@ class PlaybookExecutor:
 
             return serialized_batches
 
-    def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, required=False, default=None):
 
         if sys.__stdin__.isatty():
             if prompt and default is not None:
@@ -278,10 +279,19 @@ class PlaybookExecutor:
             if confirm:
                 while True:
                     result = do_prompt(msg, private)
+                    if not result and required:
+                        self._display.display("***** REQUIRED VALUE ****")
+                        continue
                     second = do_prompt("confirm " + msg, private)
                     if result == second:
                         break
                     self._display.display("***** VALUES ENTERED DO NOT MATCH ****")
+            elif required and default is not None:
+                while True:
+                    result = do_prompt(msg, private)
+                    if result:
+                        break
+                    self._display.display("***** REQUIRED VALUE ****")
             else:
                 result = do_prompt(msg, private)
         else:

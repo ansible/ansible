@@ -86,6 +86,18 @@ However, the only parameters accepted are 'salt' or 'salt_size'. You can use you
 'salt', or have one generated automatically using 'salt_size'. If nothing is specified, a salt
 of size 8 will be generated.
 
+You can also prevent empty prompt:
+
+   vars_prompt:
+
+     - name: "my_password2"
+       prompt: "Enter password2"
+       private: yes
+       required: yes
+       encrypt: "sha512_crypt"
+       confirm: yes
+       salt_size: 7
+
 .. seealso::
 
    :doc:`playbooks`
