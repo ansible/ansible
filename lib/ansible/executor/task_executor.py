@@ -379,7 +379,7 @@ class TaskExecutor:
         result = None
         for attempt in range(retries):
             if attempt > 0:
-                display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color="red")
+                display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color="dark gray")
                 result['attempts'] = attempt + 1
 
             display.debug("running the handler")
