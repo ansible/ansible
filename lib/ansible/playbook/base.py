@@ -280,10 +280,6 @@ class Base:
         any _post_validate_<foo> functions.
         '''
 
-        basedir = None
-        if self._loader is not None:
-            basedir = self._loader.get_basedir()
-
         # save the omit value for later checking
         omit_value = templar._available_variables.get('omit')
 
