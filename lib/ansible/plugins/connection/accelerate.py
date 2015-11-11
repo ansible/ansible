@@ -33,7 +33,6 @@ from ansible.utils.encrypt import key_for_hostname, keyczar_encrypt, keyczar_dec
 
 try:
     from __main__ import display
-    display = display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()

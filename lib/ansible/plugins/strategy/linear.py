@@ -154,9 +154,9 @@ class StrategyModule(StrategyBase):
         while work_to_do and not self._tqm._terminated:
 
             try:
-                self._display.debug("getting the remaining hosts for this loop")
+                display.debug("getting the remaining hosts for this loop")
                 hosts_left = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                self._display.debug("done getting the remaining hosts for this loop")
+                display.debug("done getting the remaining hosts for this loop")
 
                 # queue up this task for each host in the inventory
                 callback_sent = False
@@ -198,7 +198,7 @@ class StrategyModule(StrategyBase):
                         # If there is no metadata, the default behavior is to not allow duplicates,
                         # if there is metadata, check to see if the allow_duplicates flag was set to true
                         if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
-                            self._display.debug("'%s' skipped because role has already run" % task)
+                            display.debug("'%s' skipped because role has already run" % task)
                             continue
 
                     if task.action == 'meta':
@@ -212,11 +212,11 @@ class StrategyModule(StrategyBase):
                                 skip_rest = True
                                 break
 
-                        self._display.debug("getting variables")
+                        display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
                         templar = Templar(loader=self._loader, variables=task_vars)
-                        self._display.debug("done getting variables")
+                        display.debug("done getting variables")
 
                         if not callback_sent:
                             display.debug("sending task start callback, copying the task so we can template it temporarily")
@@ -250,18 +250,19 @@ class StrategyModule(StrategyBase):
                 if skip_rest:
                     continue
 
-                self._display.debug("done queuing things up, now waiting for results queue to drain")
+                display.debug("done queuing things up, now waiting for results queue to drain")
                 results = self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
                 if not work_to_do and len(iterator.get_failed_hosts()) > 0:
-                    self._display.debug("out of hosts to run on")
+                    display.debug("out of hosts to run on")
                     self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
                     result = False
                     break
 
                 try:
-                    included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator, loader=self._loader, variable_manager=self._variable_manager)
+                    included_files = IncludedFile.process_include_results(host_results, self._tqm,
+                            iterator=iterator, loader=self._loader, variable_manager=self._variable_manager)
                 except AnsibleError as e:
                     return False
 
@@ -285,7 +286,8 @@ class StrategyModule(StrategyBase):
                                 noop_block.rescue = [noop_task for t in new_block.rescue]
                                 for host in hosts_left:
                                     if host in included_file._hosts:
-                                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=included_file._task)
+                                        task_vars = self._variable_manager.get_vars(loader=self._loader,
+                                                play=iterator._play, host=host, task=included_file._task)
                                         final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                                         all_blocks[host].append(final_block)
                                     else:
@@ -295,7 +297,7 @@ class StrategyModule(StrategyBase):
                             for host in included_file._hosts:
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
-                            self._display.error(e, wrap_text=False)
+                            display.error(e, wrap_text=False)
                             continue
 
                     # finally go through all of the hosts and append the
@@ -303,9 +305,9 @@ class StrategyModule(StrategyBase):
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
 
-                self._display.debug("results queue empty")
+                display.debug("results queue empty")
             except (IOError, EOFError) as e:
-                self._display.debug("got IOError/EOFError in task loop: %s" % e)
+                display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed
                 return False
 
@@ -313,4 +315,3 @@ class StrategyModule(StrategyBase):
         # and runs any outstanding handlers which have been triggered
 
         return super(StrategyModule, self).run(iterator, play_context, result)
-

@@ -22,7 +22,6 @@ from ansible.plugins.lookup import LookupBase
 
 try:
     from __main__ import display
-    display = display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()

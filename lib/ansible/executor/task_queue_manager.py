@@ -35,7 +35,6 @@ from ansible.template import Templar
 
 try:
     from __main__ import display
-    display = display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
@@ -161,11 +160,7 @@ class TaskQueueManager:
                 elif callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST):
                     continue
 
-                # is it too late to change the API for v2 callback plugins?
-                # display is not necessary.
-                self._callback_plugins.append(callback_plugin(display))
-            else:
-                self._callback_plugins.append(callback_plugin())
+            self._callback_plugins.append(callback_plugin())
 
         self._callbacks_loaded = True
 
