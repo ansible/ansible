@@ -288,4 +288,3 @@ class GalaxyAPI(object):
         url = "%s/removerole/?github_user=%s&github_repo=%s" % (self.baseurl,github_user,github_repo)
         data = self.__call_galaxy(url, headers=self.__auth_header(), method='DELETE')
         return data
-        
