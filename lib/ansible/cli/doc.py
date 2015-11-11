@@ -239,6 +239,9 @@ class DocCLI(CLI):
 
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent="  ", subsequent_indent="  "))
 
+        if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
+            text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
+
         if 'option_keys' in doc and len(doc['option_keys']) > 0:
             text.append("Options (= is mandatory):\n")
 
@@ -268,7 +271,6 @@ class DocCLI(CLI):
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             notes = " ".join(doc['notes'])
             text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), limit-6, initial_indent="  ", subsequent_indent=opt_indent))
-
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])
