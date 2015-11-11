@@ -56,32 +56,6 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     version_added: "2.1"
-  login_user:
-    description:
-      - The username used to authenticate with
-    required: false
-    default: null
-  login_password:
-    description:
-      - The password used to authenticate with
-    required: false
-    default: null
-  login_host:
-    description:
-      - Host running the database
-    required: false
-    default: localhost
-  login_port:
-    description:
-      - Port of the MySQL server
-    required: false
-    default: 3306
-    version_added: '1.4'
-  login_unix_socket:
-    description:
-      - The path to a Unix domain socket for local connections
-    required: false
-    default: null
   priv:
     description:
       - "MySQL privileges string in the format: C(db.table:priv1,priv2)"
@@ -116,19 +90,7 @@ options:
     version_added: "1.9"
     description:
       - C(always) will update passwords if they differ.  C(on_create) will only set the password for newly created users.
-  config_file:
-    description:
-      - Specify a config file from which user and password are to be read 
-    required: false
-    default: null
-    version_added: "1.8"
 notes:
-   - Requires the MySQLdb Python package on the remote host. For Ubuntu, this
-     is as easy as apt-get install python-mysqldb.
-   - Both C(login_password) and C(login_user) are required when you are
-     passing credentials. If none are present, the module will attempt to read
-     the credentials from C(~/.my.cnf), and finally fall back to using the MySQL
-     default login of 'root' with no password.
    - "MySQL server installs with default login_user of 'root' and no password. To secure this user
      as part of an idempotent playbook, you must create at least two tasks: the first must change the root user's password,
      without providing any login_user/login_password details. The second must drop a ~/.my.cnf file containing
@@ -136,8 +98,8 @@ notes:
      the file."
    - Currently, there is only support for the `mysql_native_password` encryted password hash module.
 
-requirements: [ "MySQLdb" ]
 author: "Jonathan Mainguy (@Jmainguy)"
+extends_documentation_fragment: mysql
 '''
 
 EXAMPLES = """
@@ -212,25 +174,18 @@ class InvalidPrivsError(Exception):
 # MySQL module specific support methods.
 #
 
-def connect(module, login_user=None, login_password=None, config_file=''):
-    config = {
-        'host': module.params['login_host'],
-        'db': 'mysql'
-    }
+# User Authentication Management was change in MySQL 5.7
+# This is a generic check for if the server version is less than version 5.7
+def server_version_check(cursor):
+    cursor.execute("SELECT VERSION()");
+    result = cursor.fetchone()
+    version_str = result[0]
+    version = version_str.split('.')
 
-    if module.params['login_unix_socket']:
-        config['unix_socket'] = module.params['login_unix_socket']
+    if (int(version[0]) <= 5 and int(version[1]) < 7):
+      return True
     else:
-        config['port'] = module.params['login_port']
-
-    if os.path.exists(config_file):
-        config['read_default_file'] = config_file
-    else:
-        config['user'] = login_user
-        config['passwd'] = login_password
-        
-    db_connection = MySQLdb.connect(**config)
-    return db_connection.cursor()
+      return False
 
 def user_exists(cursor, user, host, host_all):
     if host_all:
@@ -480,6 +435,9 @@ def main():
             check_implicit_admin=dict(default=False, type='bool'),
             update_password=dict(default="always", choices=["always", "on_create"]),
             config_file=dict(default="~/.my.cnf"),
+            ssl_cert=dict(default=None),
+            ssl_key=dict(default=None),
+            ssl_ca=dict(default=None),
         )
     )
     login_user = module.params["login_user"]
@@ -495,6 +453,10 @@ def main():
     config_file = module.params['config_file']
     append_privs = module.boolean(module.params["append_privs"])
     update_password = module.params['update_password']
+    ssl_cert = module.params["ssl_cert"]
+    ssl_key = module.params["ssl_key"]
+    ssl_ca = module.params["ssl_ca"]
+    db = 'mysql'
 
     config_file = os.path.expanduser(os.path.expandvars(config_file))
     if not mysqldb_found:
@@ -510,14 +472,14 @@ def main():
     try:
         if check_implicit_admin:
             try:
-                cursor = connect(module, 'root', '', config_file)
+                cursor = mysql_connect(module, 'root', '', config_file, ssl_cert, ssl_key, ssl_ca, db)
             except:
                 pass
 
         if not cursor:
-            cursor = connect(module, login_user, login_password, config_file)
+            cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db)
     except Exception, e:
-        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
+        module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
 
     if state == "present":
         if user_exists(cursor, user, host):
@@ -548,5 +510,6 @@ def main():
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.database import *
+from ansible.module_utils.mysql import *
 if __name__ == '__main__':
     main()
