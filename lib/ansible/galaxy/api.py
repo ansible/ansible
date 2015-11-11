@@ -25,6 +25,8 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
+import urllib
+
 from urllib2 import quote as urlquote, HTTPError
 from urlparse import urlparse
 
@@ -43,19 +45,25 @@ class GalaxyAPI(object):
 
     SUPPORTED_VERSIONS = ['v1']
 
-    def __init__(self, galaxy, api_server):
+    def __init__(self, galaxy, config, api_server):
 
         self.galaxy = galaxy
-
+        self.config = config
+        
         try:
             urlparse(api_server, scheme='https')
         except:
             raise AnsibleError("Invalid server API url passed: %s" % api_server)
 
+        self.validate_certs = True
+        if self.galaxy.options.validate_certs == False:
+            self.validate_certs = False
+        elif config.get_key('validate_certs') == False:
+            self.validate_certs = False
+        display.display.vvv('Check for valid certs: %s' % self.validate_certs)
+                
         server_version = self.get_server_api_version('%s/api/' % (api_server))
-        if not server_version:
-            raise AnsibleError("Could not retrieve server API version: %s" % api_server)
-
+       
         if server_version in self.SUPPORTED_VERSIONS:
             self.baseurl = '%s/api/%s' % (api_server, server_version)
             self.version = server_version # for future use
@@ -68,17 +76,77 @@ class GalaxyAPI(object):
         Fetches the Galaxy API current version to ensure
         the API server is up and reachable.
         """
-        #TODO: fix galaxy server which returns current_version path (/api/v1) vs actual version (v1)
-        # also should set baseurl using supported_versions which has path
-        return 'v1'
+        try:
+            data = json.load(open_url(api_server, validate_certs=self.validate_certs))
+            return data['current_version']
+        except Exception as e:
+            raise AnsibleError("Could not retrieve server API version: %s" % api_server)
+    
+    def authenticate(self, github_token):
+        """
+        Retrieve an authentication token
+        """
+        url = '%s/token/' % self.baseurl
+        args = urllib.urlencode({"github_token": github_token})
+        data = {}
+        try:
+            data = json.load(open_url(url, data=args, validate_certs=self.validate_certs))
+        except Exception as e:
+            raise AnsibleError("authentication error %s" % str(e))
+        
+        if data.has_key('message'):
+            raise AnsibleError(data['message'])
+
+        return data
+
+    def create_import_task(self, github_user, github_repo, reference=None, alternate_name=None):
+        """
+        Post an import request
+        """
+        token = self.config.get_key('access_token')
+        if token is None:
+            raise AnsibleError("No access token. You must first use login to authenticate and obtain an access token.")
+
+        url = '%s/import/' % self.baseurl
+        args = urllib.urlencode({
+            "github_user": github_user,
+            "github_repo": github_repo,
+            "reference": reference,
+            "alternate_role_name": alternate_name
+        })
+        headers = {'Authorization': 'Token ' + token}
+        data = {}
+        try:
+            data = json.load(open_url(url, data=args, validate_certs=self.validate_certs, headers=headers))
+        except Exception as e:
+            raise AnsibleError("import error %s" % str(e))
+        
+        if data.has_key('detail'):
+            raise AnsibleError(data['detail'])
+
+        return data
+
+    def get_import_task(self, task_id=None, github_user=None, github_repo=None):
+        """
+        Check the status of an import task. Returns only the most recent import task when
+        given github_user/github_repo.
+        """
+        url = '%s/import/' % self.baseurl
+        if not task_id is None:
+            url = "%s?id=%d" % (url,task_id)
+        elif not github_user is None and not github_repo is None:
+            url = "%s?github_user=%s&github_repo=%s" % (url,github_user,github_repo)
+        else:
+            raise AnsibleError("Expected task_id or github_user and github_repo")
 
         try:
-            data = json.load(open_url(api_server, validate_certs=self.galaxy.options.validate_certs))
-            return data.get("current_version", 'v1')
-        except Exception:
-            # TODO: report error
-            return None
+            data = json.load(open_url(url, validate_certs=self.validate_certs))
+        except Exception as e:
+            raise AnsibleError("import error %s" % str(e))
 
+        return data['results'][0]
+
+       
     def lookup_role_by_name(self, role_name, notify=True):
         """
         Find a role by name
@@ -97,7 +165,7 @@ class GalaxyAPI(object):
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
         display.vvvv("- %s" % (url))
         try:
-            data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
+            data = json.load(open_url(url, validate_certs=self.validate_certs))
             if len(data["results"]) != 0:
                 return data["results"][0]
         except:
@@ -114,13 +182,13 @@ class GalaxyAPI(object):
 
         try:
             url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
-            data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
+            data = json.load(open_url(url, validate_certs=self.validate_certs))
             results = data['results']
             done = (data.get('next', None) is None)
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
                 display.display(url)
-                data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
+                data = json.load(open_url(url, validate_certs=self.validate_certs))
                 results += data['results']
                 done = (data.get('next', None) is None)
             return results
@@ -134,7 +202,7 @@ class GalaxyAPI(object):
 
         try:
             url = '%s/%s/?page_size' % (self.baseurl, what)
-            data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
+            data = json.load(open_url(url, validate_certs=self.validate_certs))
             if "results" in data:
                 results = data['results']
             else:
@@ -145,7 +213,7 @@ class GalaxyAPI(object):
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
                 display.display(url)
-                data = json.load(open_url(url, validate_certs=self.galaxy.options.validate_certs))
+                data = json.load(open_url(url, validate_certs=self.validate_certs))
                 results += data['results']
                 done = (data.get('next', None) is None)
             return results
@@ -177,7 +245,7 @@ class GalaxyAPI(object):
 
         display.debug("Executing query: %s" % search_url)
         try:
-            data = json.load(open_url(search_url, validate_certs=self.galaxy.options.validate_certs))
+            data = json.load(open_url(search_url, validate_certs=self.validate_certs))
         except HTTPError as e:
             raise AnsibleError("Unsuccessful request to server: %s" % str(e))
 
