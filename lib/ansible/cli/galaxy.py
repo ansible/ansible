@@ -122,8 +122,8 @@ class GalaxyCLI(CLI):
                 help='show the value of the specified key')
             self.parser.set_usage("usage: %prog config [opitons] key value")
         elif self.action == "setup":
-            self.parser.set_usage("usage: %prog source [options] source secret")
-            self.parser.add_option('-r', '--remove', dest='setup_id', default=None,
+            self.parser.set_usage("usage: %prog setup [options] source secret")
+            self.parser.add_option('-r', '--remove', dest='remove_id', default=None,
                 help='Remove the integration matching the provided ID value. Use --list to see ID values.')
             self.parser.add_option('-l', '--list', dest="setup_list", action='store_true', default=False,
                 help='List all of your integrations.')
@@ -646,6 +646,12 @@ class GalaxyCLI(CLI):
             for secret in secrets:
                 display.display("%-10s %-10s %s" % (secret['id'], secret['source'], secret['secret']),color="green")
             display.display(u'\n' + "NOTE: only the last 4 characters of a Secret are shown." + u'\n', color="yellow")
+            return 0
+
+        if self.options.remove_id:
+            # Remove a secret
+            self.api.remove_secret(self.options.remove_id)
+            display.display("Secret removed. Integrations using this secret will not longer work.", color="green")
             return 0
 
         if len(self.args) < 2:

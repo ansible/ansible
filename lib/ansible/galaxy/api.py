@@ -81,7 +81,8 @@ class GalaxyAPI(object):
         if args and not headers:
             headers = self.__auth_header()
         try:
-            data = json.load(open_url(url, data=args, validate_certs=self.validate_certs, headers=headers, method=method))
+            resp = open_url(url, data=args, validate_certs=self.validate_certs, headers=headers, method=method)
+            data = json.load(resp) if method != 'DELETE' else {}
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['detail'])
@@ -133,13 +134,9 @@ class GalaxyAPI(object):
             url = "%s?github_user=%s&github_repo=%s" % (url,github_user,github_repo)
         else:
             raise AnsibleError("Expected task_id or github_user and github_repo")
-
-        try:
-            data = json.load(open_url(url, validate_certs=self.validate_certs))
-        except HTTPError as e:
-            res = json.load(e)
-            raise AnsibleError(res['detail'])
-
+        
+        data = self.__call_galaxy(url)
+        
         return data['results'][0]
 
        
@@ -240,6 +237,7 @@ class GalaxyAPI(object):
             search_url += '&chain__platforms__name=' + urlquote(plat)
 
         display.debug("Executing query: %s" % search_url)
+
         try:
             data = json.load(open_url(search_url, validate_certs=self.validate_certs))
         except HTTPError as e:
@@ -260,6 +258,11 @@ class GalaxyAPI(object):
     def list_secrets(self):
         url = "%s/notification_secrets" % self.baseurl
         data = self.__call_galaxy(url, headers=self.__auth_header())
+        return data
+
+    def remove_secret(self, secret_id):
+        url = "%s/notification_secrets/%s/" % (self.baseurl, secret_id)
+        data = self.__call_galaxy(url, headers=self.__auth_header(), method='DELETE')
         return data
 
 
