@@ -77,7 +77,7 @@ class ResultProcess(multiprocessing.Process):
                     debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
             except queue.Empty:
-                time.sleep(0.01)
+                pass
 
             if self._cur_worker == starting_point:
                 break
