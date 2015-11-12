@@ -93,9 +93,7 @@ class ActionModule(ActionBase):
                 return result
 
         elif remote_src:
-            new_module_args = self._task.args.copy()
-            del new_module_args['remote_src']
-            result.update(self._execute_module(module_name='copy', module_args=new_module_args, task_vars=task_vars, delete_remote_tmp=False))
+            result.update(self._execute_module(module_name='copy', module_args=self._task.args, task_vars=task_vars, delete_remote_tmp=False))
             return result
 
         else:
