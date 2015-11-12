@@ -73,11 +73,11 @@ class ResultProcess(multiprocessing.Process):
             try:
                 if not rslt_q.empty():
                     debug("worker %d has data to read" % self._cur_worker)
-                    result = rslt_q.get()
+                    result = rslt_q.get(block=False)
                     debug("got a result from worker %d: %s" % (self._cur_worker, result))
                     break
             except queue.Empty:
-                pass
+                time.sleep(0.01)
 
             if self._cur_worker == starting_point:
                 break

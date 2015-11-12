@@ -311,7 +311,7 @@ class StrategyBase:
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
             except Queue.Empty:
-                pass
+                time.sleep(0.01)
 
         return ret_results
 

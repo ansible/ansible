@@ -239,9 +239,6 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host.get_name()] = True
                         self._queue_task(host, task, task_vars, play_context)
 
-                    results = self._process_pending_results(iterator)
-                    host_results.extend(results)
-
                     # if we're bypassing the host loop, break out now
                     if run_once:
                         break
