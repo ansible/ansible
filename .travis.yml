@@ -18,7 +18,7 @@ addons:
     packages:
       - python2.4
 install:
-  - pip install tox PyYAML Jinja2 sphinx
+  - pip install tox PyYAML Jinja2 sphinx coveralls
 script:
 # urllib2's defaults are not secure enough for us
 - ./test/code-smell/replace-urlopen.sh .
