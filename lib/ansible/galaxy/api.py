@@ -61,7 +61,7 @@ class GalaxyAPI(object):
         elif config.get_key('validate_certs') == False:
             self.validate_certs = False
         display.display.vvv('Check for valid certs: %s' % self.validate_certs)
-                
+
         server_version = self.get_server_api_version('%s/api/' % (api_server))
        
         if server_version in self.SUPPORTED_VERSIONS:
