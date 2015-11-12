@@ -60,7 +60,7 @@ class GalaxyAPI(object):
             self.validate_certs = False
         elif config.get_key('validate_certs') == False:
             self.validate_certs = False
-        display.display.vvv('Check for valid certs: %s' % self.validate_certs)
+        display.vvv('Check for valid certs: %s' % self.validate_certs)
 
         server_version = self.get_server_api_version('%s/api/' % (api_server))
        
@@ -104,7 +104,7 @@ class GalaxyAPI(object):
         """
         url = '%s/tokens/' % self.baseurl
         args = urllib.urlencode({"github_token": github_token})
-        data = sellf.__call_galaxy(url, args=args)
+        data = self.__call_galaxy(url, args=args)
         return data
 
     def create_import_task(self, github_user, github_repo, reference=None, alternate_name=None):

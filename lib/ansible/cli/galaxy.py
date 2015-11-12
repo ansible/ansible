@@ -76,7 +76,7 @@ class GalaxyCLI(CLI):
         # options specific to actions
         if self.action == "import":
             self.parser.set_usage("usage: %prog import [options] github_user github_repo")
-            self.parser.add_option('-a', '--alternate-name', dest='alternate_name',
+            self.parser.add_option('-a', '--alternate-name', dest='alternate_name', default='',
                 help='An alternate name for the role. Otherwise, the repo name is used.')
             self.parser.add_option('-n', '--no-wait', dest='wait', action='store_false', default=True,
                 help='Don\'t wait for import results.')
@@ -167,7 +167,7 @@ class GalaxyCLI(CLI):
                 api_server = os.environ['GALAXY_SERVER']
             elif self.config.get_key('galaxy_server'):
                 api_server = self.config.get_key('galaxy_server')
-            self.display.vvv("Connecting to galaxy_server: %s" % api_server)
+            display.vvv("Connecting to galaxy_server: %s" % api_server)
             
             self.api = GalaxyAPI(self.galaxy, self.config, api_server)
             if not self.api:
@@ -541,7 +541,7 @@ class GalaxyCLI(CLI):
         self.config.set_key('access_token',galaxy_response['token'])
         self.config.save()
 
-        self.display.display("Succesfully logged into Galaxy as %s" % galaxy_response['username'])
+        display.display("Succesfully logged into Galaxy as %s" % galaxy_response['username'])
         return 0
 
     def execute_config(self):
@@ -563,9 +563,9 @@ class GalaxyCLI(CLI):
             key = self.args.pop()
             val = self.config.get_key(key)
             if val:
-                self.display.display('%s: %s' % (key,val))
+                display.display('%s: %s' % (key,val))
             else:
-                self.display.display('%s not defined' % key)
+                display.display('%s not defined' % key)
             return 0
 
         # Set the key
@@ -574,7 +574,7 @@ class GalaxyCLI(CLI):
 
         val = self.args.pop()
         key = self.args.pop()
-        self.display.vvv('set %s to %s in ansible-galaxy config' % (key,val))
+        display.vvv('set %s to %s in ansible-galaxy config' % (key,val))
         self.config.set_key(key,val)
         self.config.save()
         return 0
@@ -605,11 +605,11 @@ class GalaxyCLI(CLI):
             task = self.api.create_import_task(github_user, github_repo, reference=self.options.reference,
                 alternate_name=self.options.alternate_name)
 
-            self.display.display("Successfully submitted import request %d" % task['id'])
+            display.display("Successfully submitted import request %d" % task['id'])
 
             if not self.options.wait:
-                self.display.display("Role name: %s" % task['summary_fields']['role']['name'])
-                self.display.display("Repo: %s/%s" % (task['github_user'],task['github_repo']))
+                display.display("Role name: %s" % task['summary_fields']['role']['name'])
+                display.display("Repo: %s/%s" % (task['github_user'],task['github_repo']))
 
 
         if self.options.check_status or self.options.wait:
@@ -620,7 +620,7 @@ class GalaxyCLI(CLI):
                 task = self.api.get_import_task(task_id=task['id'])
                 for msg in task['summary_fields']['task_messages']:
                     if msg['id'] not in msg_list:
-                        self.display.display(msg['message_text'], color=colors[msg['message_type']])
+                        display.display(msg['message_text'], color=colors[msg['message_type']])
                         msg_list.append(msg['id'])
                 if task['state'] in ['SUCCESS', 'FAILED']:
                     finished = True
@@ -639,13 +639,13 @@ class GalaxyCLI(CLI):
             secrets = self.api.list_secrets()
             if len(secrets) == 0:
                 # None found
-                self.display.display("No secrets found.")
+                display.display("No secrets found.")
                 return 0
-            self.display.display(u'\n' + "ID         Source     Secret", color="green")
-            self.display.display("---------- ---------- ----------", color="green")
+            display.display(u'\n' + "ID         Source     Secret", color="green")
+            display.display("---------- ---------- ----------", color="green")
             for secret in secrets:
-                self.display.display("%-10s %-10s %s" % (secret['id'], secret['source'], secret['secret']),color="green")
-            self.display.display(u'\n' + "NOTE: only the last 4 characters of a Secret are shown." + u'\n', color="yellow")
+                display.display("%-10s %-10s %s" % (secret['id'], secret['source'], secret['secret']),color="green")
+            display.display(u'\n' + "NOTE: only the last 4 characters of a Secret are shown." + u'\n', color="yellow")
             return 0
 
         if len(self.args) < 2:

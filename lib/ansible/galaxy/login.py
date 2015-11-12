@@ -35,6 +35,12 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.module_utils.urls import open_url
 from ansible.utils.color import stringc
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class GalaxyLogin(object):
     ''' Class to handle authenticating user with Galaxy API prior to performing CUD operations '''
 
@@ -44,18 +50,17 @@ class GalaxyLogin(object):
         self.galaxy = galaxy
         self.github_username = None
         self.github_password = None
-        self.display = galaxy.display
         
         if github_token == None:
             self.get_credentials()
 
     def get_credentials(self):
-        self.display.display(u'\n\n' + "We need your " + stringc("Github login",'bright cyan') + 
+        display.display(u'\n\n' + "We need your " + stringc("Github login",'bright cyan') + 
             " to identify you.", screen_only=True)
-        self.display.display("This information will " + stringc("not be sent to Galaxy",'bright cyan') + 
+        display.display("This information will " + stringc("not be sent to Galaxy",'bright cyan') + 
             ", only to " + stringc("api.github.com.","yellow"), screen_only=True)
-        self.display.display("The password will not be displayed." + u'\n\n', screen_only=True)
-        self.display.display("Use " + stringc("--github-token",'yellow') + 
+        display.display("The password will not be displayed." + u'\n\n', screen_only=True)
+        display.display("Use " + stringc("--github-token",'yellow') + 
             " if you do not want to enter your password." + u'\n\n', screen_only=True)
         
         try:
@@ -85,7 +90,7 @@ class GalaxyLogin(object):
 
         for token in tokens:
             if token['note'] == 'ansible-galaxy login':
-                self.display.vvvvv('removing token: %s' % token['token_last_eight'])
+                display.vvvvv('removing token: %s' % token['token_last_eight'])
                 try: 
                     open_url('https://api.github.com/authorizations/%d' % token['id'], url_username=self.github_username,
                         url_password=self.github_password, method='DELETE', force_basic_auth=True,)

@@ -27,12 +27,18 @@ import os
 import yaml
 from stat import *
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class GalaxyConfig(object):
     ''' Class to manage ~/.ansible_galaxy/config.yml '''
 
     def __init__(self, galaxy):
         self.galaxy = galaxy
-        self.display = galaxy.display
         self.path = os.path.expanduser("~") + '/.ansible_galaxy'
         self.file = self.path + '/config.yml'
         self.config = yaml.safe_load(self.__open_config_for_read())
@@ -41,7 +47,7 @@ class GalaxyConfig(object):
         
     def __open_config_for_read(self):
         if os.path.isfile(self.file):
-            self.display.vvv('Opened galaxy config %s' % self.file)
+            display.vvv('Opened galaxy config %s' % self.file)
             return open(self.file, 'r')
         # config.yml not found, create and chomd u+rw
         if not os.path.isdir(self.path):
@@ -50,7 +56,7 @@ class GalaxyConfig(object):
         f = open(self.file,'w')
         f.close()
         os.chmod(self.file,S_IRUSR|S_IWUSR) # owner has +rw
-        self.display.vvv('Created galaxy config %s' % self.file) 
+        display.vvv('Created galaxy config %s' % self.file) 
         return open(self.file, 'r')
 
     def set_key(self, key, value): 
