@@ -64,6 +64,12 @@ options:
     required: false
     default: false
     version_added: "2.0"
+  version:
+    description:
+      - minimum version of perl module to consider acceptable
+    required: false
+    default: false
+    version_added: "2.0"
   system_lib:
     description:
      -  Use this if you want to install modules to the system perl include path. You must be root or have "passwordless" sudo for this to work.
@@ -98,13 +104,21 @@ EXAMPLES = '''
 
 # install Dancer perl package into the system root path
 - cpanm: name=Dancer system_lib=yes
+
+# install Dancer if it's not already installed
+# OR the installed version is older than version 1.0
+- cpanm: name=Dancer version=1.0
 '''
 
-def _is_package_installed(module, name, locallib, cpanm):
+def _is_package_installed(module, name, locallib, cpanm, version):
     cmd = ""
     if locallib:
         os.environ["PERL5LIB"] = "%s/lib/perl5" % locallib
-    cmd = "%s perl -M%s -e '1'" % (cmd, name)
+    cmd = "%s perl -e ' use %s" % (cmd, name)
+    if version:
+       cmd = "%s %s;'" % (cmd, version)
+    else:
+       cmd = "%s;'" % cmd
     res, stdout, stderr = module.run_command(cmd, check_rc=False)
     if res == 0:
        return True
@@ -150,6 +164,7 @@ def main():
         mirror_only=dict(default=False, type='bool'),
         installdeps=dict(default=False, type='bool'),
         system_lib=dict(default=False, type='bool', aliases=['use_sudo']),
+        version=dict(default=None, required=False),
     )
 
     module = AnsibleModule(
@@ -166,10 +181,11 @@ def main():
     mirror_only = module.params['mirror_only']
     installdeps = module.params['installdeps']
     use_sudo    = module.params['system_lib']
+    version     = module.params['version']
 
     changed   = False
 
-    installed = _is_package_installed(module, name, locallib, cpanm)
+    installed = _is_package_installed(module, name, locallib, cpanm, version)
 
     if not installed:
         out_cpanm = err_cpanm = ''
