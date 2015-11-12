@@ -80,8 +80,10 @@ options:
     version_added: "1.5"
   volumes:
     description:
-      - List of volumes to mount within the container using docker CLI-style
-      - 'syntax: C(/host:/container[:mode]) where "mode" may be "rw", "ro", "Z", "z".'
+      - List of volumes to mount within the container
+      - 'Use docker CLI-style syntax: C(/host:/container[:mode])'
+      - You can specify a read mode for the mount with either C(ro) or C(rw).  SELinux hosts can additionally
+        use C(z) or C(Z) mount options to use a shared or private label for the volume.
     default: null
   volumes_from:
     description:
@@ -640,8 +642,8 @@ class DockerManager(object):
                     mode = 'rw'
                     # with supplied bind mode
                     if len(parts) == 3:
-                        if parts[2] not in ['ro', 'rw', 'z', 'Z']:
-                            self.module.fail_json(msg='bind mode needs to be one of "ro", "rw", "z", or "Z"')
+                        if parts[2] not in ["rw", "rw,Z", "rw,z", "z,rw", "Z,rw", "Z", "z", "ro", "ro,Z", "ro,z", "z,ro", "Z,ro"]:
+                            self.module.fail_json(msg='invalid bind mode ' + parts[2])
                         else:
                             mode = parts[2]
                     self.binds[parts[0]] = {'bind': parts[1], 'mode': mode }
