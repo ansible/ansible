@@ -154,8 +154,7 @@ class GalaxyAPI(object):
             raise AnsibleError("Expected task_id or github_user and github_repo")
         
         data = self.__call_galaxy(url)
-        return data['results']
-
+        return data['results'][0]
        
     def lookup_role_by_name(self, role_name, notify=True):
         """
@@ -197,7 +196,7 @@ class GalaxyAPI(object):
             done = (data.get('next', None) is None)
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
-                display.display(url)
+                display.vvv(url)
                 data = json.load(open_url(url, validate_certs=self._validate_certs))
                 results += data['results']
                 done = (data.get('next', None) is None)
@@ -221,7 +220,7 @@ class GalaxyAPI(object):
                 done = (data.get('next', None) is None)
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
-                display.display(url)
+                display.vvv(url)
                 data = json.load(open_url(url, validate_certs=self._validate_certs))
                 results += data['results']
                 done = (data.get('next', None) is None)

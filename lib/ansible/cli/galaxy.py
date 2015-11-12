@@ -741,12 +741,13 @@ class GalaxyCLI(CLI):
         if self.options.remove_id:
             # Remove a secret
             self.api.remove_secret(self.options.remove_id)
-            display.display("Integration removed.", color="green")
+            display.display("Secret removed. Integrations using this secret will not longer work.", color="green")
             return 0
 
         if len(self.args) < 4:
             raise AnsibleError("Missing one or more arguments. Expecting: source github_user github_repo secret")
-
+            return 0
+            
         secret = self.args.pop()
         github_repo = self.args.pop()
         github_user = self.args.pop()
