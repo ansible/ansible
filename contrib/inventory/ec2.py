@@ -148,6 +148,7 @@ except ImportError:
 
 
 class Ec2Inventory(object):
+
     def _empty_inventory(self):
         return {"_meta" : {"hostvars" : {}}}
 
@@ -327,6 +328,11 @@ class Ec2Inventory(object):
         self.cache_path_cache = cache_dir + "/ansible-ec2.cache"
         self.cache_path_index = cache_dir + "/ansible-ec2.index"
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
+
+        if config.has_option('ec2', 'expand_csv_tags'):
+            self.expand_csv_tags = config.getboolean('ec2', 'expand_csv_tags')
+        else:
+            self.expand_csv_tags = False
 
         # Configure nested groups instead of flat namespace.
         if config.has_option('ec2', 'nested_groups'):
@@ -792,17 +798,21 @@ class Ec2Inventory(object):
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
             for k, v in instance.tags.items():
-                if v:
-                    key = self.to_safe("tag_" + k + "=" + v)
+                if self.expand_csv_tags and v and ',' in v:
+                    values = map(lambda x: x.strip(), v.split(','))
                 else:
-                    key = self.to_safe("tag_" + k)
-                self.push_inventory(key, dest)
-                if self.nested_groups:
-                    self.push_group(
-                        self.inventory, 'tags', self.to_safe("tag_" + k))
+                    values = [v]
+
+                for v in values:
                     if v:
-                        self.push_group(
-                            self.inventory, self.to_safe("tag_" + k), key)
+                        key = self.to_safe("tag_" + k + "=" + v)
+                    else:
+                        key = self.to_safe("tag_" + k)
+                    self.push_inventory(key, dest)
+                    if self.nested_groups:
+                        self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                        if v:
+                            self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
@@ -1195,6 +1205,8 @@ class Ec2Inventory(object):
                 instance_vars['ec2_placement'] = value.zone
             elif key == 'ec2_tags':
                 for k, v in value.items():
+                    if self.expand_csv_tags and ',' in v:
+                        v = map(lambda x: x.strip(), v.split(','))
                     key = self.to_safe('ec2_tag_' + k)
                     instance_vars[key] = v
             elif key == 'ec2_groups':
@@ -1432,7 +1444,7 @@ class Ec2Inventory(object):
     def to_safe(self, word):
         ''' Converts 'bad' characters in a string to underscores so they can be used as Ansible groups '''
         regex = "[^A-Za-z0-9\_"
-        if self.replace_dash_in_groups:
+        if not self.replace_dash_in_groups:
             regex += "\-"
         return re.sub(regex + "]", "_", word)
 

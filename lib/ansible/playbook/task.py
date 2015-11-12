@@ -24,12 +24,11 @@ from ansible.compat.six import iteritems, string_types
 from ansible.errors import AnsibleError
 
 from ansible.parsing.mod_args import ModuleArgsParser
-from ansible.parsing.splitter import parse_kv
 from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject, AnsibleMapping, AnsibleUnicode
 
-from ansible.plugins import module_loader, lookup_loader
+from ansible.plugins import lookup_loader
 
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.block import Block
@@ -37,14 +36,14 @@ from ansible.playbook.conditional import Conditional
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
 
-__all__ = ['Task']
-
 try:
     from __main__ import display
-    display = display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+__all__ = ['Task']
+
 
 class Task(Base, Conditional, Taggable, Become):
 
@@ -94,24 +93,24 @@ class Task(Base, Conditional, Taggable, Become):
         super(Task, self).__init__()
 
     def get_path(self):
-       ''' return the absolute path of the task with its line number '''
+        ''' return the absolute path of the task with its line number '''
 
-       if hasattr(self, '_ds'):
-           return "%s:%s" % (self._ds._data_source, self._ds._line_number)
+        if hasattr(self, '_ds'):
+            return "%s:%s" % (self._ds._data_source, self._ds._line_number)
 
     def get_name(self):
-       ''' return the name of the task '''
+        ''' return the name of the task '''
 
-       if self._role and self.name:
-           return "%s : %s" % (self._role.get_name(), self.name)
-       elif self.name:
-           return self.name
-       else:
-           flattened_args = self._merge_kv(self.args)
-           if self._role:
-               return "%s : %s %s" % (self._role.get_name(), self.action, flattened_args)
-           else:
-               return "%s %s" % (self.action, flattened_args)
+        if self._role and self.name:
+            return "%s : %s" % (self._role.get_name(), self.name)
+        elif self.name:
+            return self.name
+        else:
+            flattened_args = self._merge_kv(self.args)
+            if self._role:
+                return "%s : %s %s" % (self._role.get_name(), self.action, flattened_args)
+            else:
+                return "%s %s" % (self.action, flattened_args)
 
     def _merge_kv(self, ds):
         if ds is None:
@@ -174,7 +173,8 @@ class Task(Base, Conditional, Taggable, Become):
         if action in ('command', 'shell', 'script'):
             if 'cmd' in args:
                 if args.get('_raw_params', '') != '':
-                    raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified. Please put everything in one or the other place.", obj=ds)
+                    raise AnsibleError("The 'cmd' argument cannot be used when other raw parameters are specified."
+                            " Please put everything in one or the other place.", obj=ds)
                 args['_raw_params'] = args.pop('cmd')
 
         new_ds['action']      = action
@@ -204,7 +204,9 @@ class Task(Base, Conditional, Taggable, Become):
                 # here, and show a deprecation message as we will remove this at
                 # some point in the future.
                 if action == 'include' and k not in self._get_base_attributes() and k not in self.DEPRECATED_ATTRIBUTES:
-                    self._display.deprecated("Specifying include variables at the top-level of the task is deprecated. Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\nfor currently supported syntax regarding included files and variables")
+                    display.deprecated("Specifying include variables at the top-level of the task is deprecated."
+                            " Please see:\nhttp://docs.ansible.com/ansible/playbooks_roles.html#task-include-files-and-encouraging-reuse\n\n"
+                            " for currently supported syntax regarding included files and variables")
                     new_ds['vars'][k] = v
                 else:
                     new_ds[k] = v
@@ -249,7 +251,8 @@ class Task(Base, Conditional, Taggable, Become):
 
         for env_item in value:
             if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
-                self._display.deprecated("Using bare variables for environment is deprecated. Update your playbooks so that the environment value uses the full variable syntax ('{{foo}}')")
+                display.deprecated("Using bare variables for environment is deprecated."
+                        " Update your playbooks so that the environment value uses the full variable syntax ('{{foo}}')")
                 break
         return templar.template(value, convert_bare=True)
 
@@ -387,4 +390,3 @@ class Task(Base, Conditional, Taggable, Become):
         if parent_environment is not None:
             environment = self._extend_value(environment, parent_environment)
         return environment
-

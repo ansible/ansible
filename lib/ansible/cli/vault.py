@@ -27,16 +27,23 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.parsing.vault import VaultEditor
 from ansible.cli import CLI
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class VaultCLI(CLI):
     """ Vault command line class """
 
     VALID_ACTIONS = ("create", "decrypt", "edit", "encrypt", "rekey", "view")
 
-    def __init__(self, args, display=None):
+    def __init__(self, args):
 
         self.vault_pass = None
         self.new_vault_pass = None
-        super(VaultCLI, self).__init__(args, display)
+        super(VaultCLI, self).__init__(args)
 
     def parse(self):
 
@@ -63,7 +70,7 @@ class VaultCLI(CLI):
             self.parser.set_usage("usage: %prog rekey [options] file_name")
 
         self.options, self.args = self.parser.parse_args()
-        self.display.verbosity = self.options.verbosity
+        display.verbosity = self.options.verbosity
 
         can_output = ['encrypt', 'decrypt']
 
@@ -117,24 +124,24 @@ class VaultCLI(CLI):
     def execute_encrypt(self):
 
         if len(self.args) == 0 and sys.stdin.isatty():
-            self.display.display("Reading plaintext input from stdin", stderr=True)
+            display.display("Reading plaintext input from stdin", stderr=True)
 
         for f in self.args or ['-']:
             self.editor.encrypt_file(f, output_file=self.options.output_file)
 
         if sys.stdout.isatty():
-            self.display.display("Encryption successful", stderr=True)
+            display.display("Encryption successful", stderr=True)
 
     def execute_decrypt(self):
 
         if len(self.args) == 0 and sys.stdin.isatty():
-            self.display.display("Reading ciphertext input from stdin", stderr=True)
+            display.display("Reading ciphertext input from stdin", stderr=True)
 
         for f in self.args or ['-']:
             self.editor.decrypt_file(f, output_file=self.options.output_file)
 
         if sys.stdout.isatty():
-            self.display.display("Decryption successful", stderr=True)
+            display.display("Decryption successful", stderr=True)
 
     def execute_create(self):
 
@@ -160,4 +167,4 @@ class VaultCLI(CLI):
         for f in self.args:
             self.editor.rekey_file(f, self.new_vault_pass)
 
-        self.display.display("Rekey successful", stderr=True)
+        display.display("Rekey successful", stderr=True)

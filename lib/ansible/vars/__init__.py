@@ -48,7 +48,6 @@ from ansible.vars.unsafe_proxy import wrap_var
 
 try:
     from __main__ import display
-    display = display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
@@ -99,13 +98,6 @@ class VariableManager:
         self._group_vars_files = defaultdict(dict)
         self._inventory = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
-
-        try:
-            from __main__ import display
-            self._display = display
-        except ImportError:
-            from ansible.utils.display import Display
-            self._display = Display()
 
     def __getstate__(self):
         data = dict(
@@ -308,7 +300,7 @@ class VariableManager:
                     else:
                         # we do not have a full context here, and the missing variable could be
                         # because of that, so just show a warning and continue
-                        self._display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
+                        display.vvv("skipping vars_file '%s' due to an undefined variable" % vars_file_item)
                         continue
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
@@ -418,7 +410,7 @@ class VariableManager:
                 except AnsibleUndefinedVariable as e:
                     if 'has no attribute' in str(e):
                         loop_terms = []
-                        self._display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
+                        display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
                     else:
                         raise
                 items = lookup_loader.get(task.loop, loader=loader, templar=templar).run(terms=loop_terms, variables=vars_copy)

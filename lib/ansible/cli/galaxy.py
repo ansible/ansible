@@ -28,7 +28,6 @@ import sys
 import yaml
 
 from collections import defaultdict
-from distutils.version import LooseVersion
 from jinja2 import Environment
 
 import ansible.constants as C
@@ -39,16 +38,23 @@ from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.role import GalaxyRole
 from ansible.playbook.role.requirement import RoleRequirement
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class GalaxyCLI(CLI):
 
     VALID_ACTIONS = ("init", "info", "install", "list", "remove", "search")
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
 
-    def __init__(self, args, display=None):
+    def __init__(self, args):
 
         self.api = None
         self.galaxy = None
-        super(GalaxyCLI, self).__init__(args, display)
+        super(GalaxyCLI, self).__init__(args)
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -57,7 +63,6 @@ class GalaxyCLI(CLI):
             usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
             epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
-
 
         self.set_action()
 
@@ -109,8 +114,8 @@ class GalaxyCLI(CLI):
 
         # get options, args and galaxy object
         self.options, self.args =self.parser.parse_args()
-        self.display.verbosity = self.options.verbosity
-        self.galaxy = Galaxy(self.options, self.display)
+        display.verbosity = self.options.verbosity
+        self.galaxy = Galaxy(self.options)
 
         return True
 
@@ -178,10 +183,10 @@ class GalaxyCLI(CLI):
             if os.path.isfile(role_path):
                 raise AnsibleError("- the path %s already exists, but is a file - aborting" % role_path)
             elif not force:
-                raise AnsibleError("- the directory %s already exists." % role_path + \
-                            "you can use --force to re-initialize this directory,\n" + \
-                            "however it will reset any main.yml files that may have\n" + \
-                                "been modified there already.")
+                raise AnsibleError("- the directory %s already exists."
+                            "you can use --force to re-initialize this directory,\n"
+                            "however it will reset any main.yml files that may have\n"
+                            "been modified there already." % role_path)
 
         # create the default README.md
         if not os.path.exists(role_path):
@@ -234,7 +239,7 @@ class GalaxyCLI(CLI):
                 f = open(main_yml_path, 'w')
                 f.write('---\n# %s file for %s\n' % (dir,role_name))
                 f.close()
-        self.display.display("- %s was created successfully" % role_name)
+        display.display("- %s was created successfully" % role_name)
 
     def execute_info(self):
         """
@@ -297,7 +302,7 @@ class GalaxyCLI(CLI):
             # the user needs to specify one of either --role-file
             # or specify a single user/role name
             raise AnsibleOptionsError("- you must specify a user/role name or a roles file")
-        elif len(self.args) == 1 and not role_file is None:
+        elif len(self.args) == 1 and role_file is not None:
             # using a role file is mutually exclusive of specifying
             # the role name on the command line
             raise AnsibleOptionsError("- please specify a user/role name, or a roles file, but not both")
@@ -320,22 +325,22 @@ class GalaxyCLI(CLI):
 
                     for role in required_roles:
                         role = RoleRequirement.role_yaml_parse(role)
-                        self.display.debug('found role %s in yaml file' % str(role))
+                        display.debug('found role %s in yaml file' % str(role))
                         if 'name' not in role and 'scm' not in role:
                             raise AnsibleError("Must specify name or src for role")
                         roles_left.append(GalaxyRole(self.galaxy, **role))
                 else:
-                    self.display.deprecated("going forward only the yaml format will be supported")
+                    display.deprecated("going forward only the yaml format will be supported")
                     # roles listed in a file, one per line
                     for rline in f.readlines():
                         if rline.startswith("#") or rline.strip() == '':
                             continue
-                        self.display.debug('found role %s in text file' % str(rline))
+                        display.debug('found role %s in text file' % str(rline))
                         role = RoleRequirement.role_yaml_parse(rline.strip())
                         roles_left.append(GalaxyRole(self.galaxy, **role))
                 f.close()
             except (IOError, OSError) as e:
-                self.display.error('Unable to open %s: %s' % (role_file, str(e)))
+                display.error('Unable to open %s: %s' % (role_file, str(e)))
         else:
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
@@ -343,18 +348,17 @@ class GalaxyCLI(CLI):
                 roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
 
         for role in roles_left:
-            self.display.debug('Installing role %s ' % role.name)
+            display.debug('Installing role %s ' % role.name)
             # query the galaxy API for the role data
-            role_data = None
 
             if role.install_info is not None and not force:
-                self.display.display('- %s is already installed, skipping.' % role.name)
+                display.display('- %s is already installed, skipping.' % role.name)
                 continue
 
             try:
                 installed = role.install()
             except AnsibleError as e:
-                self.display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
+                display.warning("- %s was NOT installed successfully: %s " % (role.name, str(e)))
                 self.exit_without_ignore()
                 continue
 
@@ -362,7 +366,7 @@ class GalaxyCLI(CLI):
             if not no_deps and installed:
                 role_dependencies = role.metadata.get('dependencies') or []
                 for dep in role_dependencies:
-                    self.display.debug('Installing dep %s' % dep)
+                    display.debug('Installing dep %s' % dep)
                     dep_req = RoleRequirement()
                     dep_info = dep_req.role_yaml_parse(dep)
                     dep_role = GalaxyRole(self.galaxy, **dep_info)
@@ -372,15 +376,15 @@ class GalaxyCLI(CLI):
                         continue
                     if dep_role.install_info is None or force:
                         if dep_role not in roles_left:
-                            self.display.display('- adding dependency: %s' % dep_role.name)
+                            display.display('- adding dependency: %s' % dep_role.name)
                             roles_left.append(dep_role)
                         else:
-                            self.display.display('- dependency %s already pending installation.' % dep_role.name)
+                            display.display('- dependency %s already pending installation.' % dep_role.name)
                     else:
-                        self.display.display('- dependency %s is already installed, skipping.' % dep_role.name)
+                        display.display('- dependency %s is already installed, skipping.' % dep_role.name)
 
             if not installed:
-                self.display.warning("- %s was NOT installed successfully." % role.name)
+                display.warning("- %s was NOT installed successfully." % role.name)
                 self.exit_without_ignore()
 
         return 0
@@ -398,9 +402,9 @@ class GalaxyCLI(CLI):
             role = GalaxyRole(self.galaxy, role_name)
             try:
                 if role.remove():
-                    self.display.display('- successfully removed %s' % role_name)
+                    display.display('- successfully removed %s' % role_name)
                 else:
-                    self.display.display('- %s is not installed, skipping.' % role_name)
+                    display.display('- %s is not installed, skipping.' % role_name)
             except Exception as e:
                 raise AnsibleError("Failed to remove role %s: %s" % (role_name, str(e)))
 
@@ -429,9 +433,9 @@ class GalaxyCLI(CLI):
                 if not version:
                     version = "(unknown version)"
                 # show some more info about single roles here
-                self.display.display("- %s, %s" % (name, version))
+                display.display("- %s, %s" % (name, version))
             else:
-                self.display.display("- the role %s was not found" % name)
+                display.display("- the role %s was not found" % name)
         else:
             # show all valid roles in the roles_path directory
             roles_path = self.get_opt('roles_path')
@@ -450,7 +454,7 @@ class GalaxyCLI(CLI):
                         version = install_info.get("version", None)
                     if not version:
                         version = "(unknown version)"
-                    self.display.display("- %s, %s" % (path_file, version))
+                    display.display("- %s, %s" % (path_file, version))
         return 0
 
     def execute_search(self):
@@ -464,7 +468,7 @@ class GalaxyCLI(CLI):
         response = self.api.search_roles(search, self.options.platforms, self.options.tags)
 
         if 'count' in response:
-            self.galaxy.display.display("Found %d roles matching your search:\n" % response['count'])
+            display.display("Found %d roles matching your search:\n" % response['count'])
 
         data = ''
         if 'results' in response:

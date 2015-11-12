@@ -27,6 +27,12 @@ from os import isatty
 from ansible.errors import AnsibleError
 from ansible.plugins.action import ActionBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class AnsibleTimeoutExceeded(Exception):
     pass
@@ -105,10 +111,10 @@ class ActionModule(ActionBase):
                 signal.signal(signal.SIGALRM, timeout_handler)
                 signal.alarm(seconds)
                 # show the prompt
-                self._display.display("Pausing for %d seconds" % seconds)
-                self._display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
+                display.display("Pausing for %d seconds" % seconds)
+                display.display("(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)\r"),
             else:
-                self._display.display(prompt)
+                display.display(prompt)
 
             # save the attributes on the existing (duped) stdin so
             # that we can restore them later after we set raw mode
@@ -129,7 +135,7 @@ class ActionModule(ActionBase):
 
                     if not seconds:
                         if not isatty(fd):
-                            self._display.warning("Not waiting from prompt as stdin is not interactive")
+                            display.warning("Not waiting from prompt as stdin is not interactive")
                             break
                         # read key presses and act accordingly
                         if key_pressed == '\r':
@@ -140,7 +146,7 @@ class ActionModule(ActionBase):
                 except KeyboardInterrupt:
                     if seconds is not None:
                         signal.alarm(0)
-                    self._display.display("Press 'C' to continue the play or 'A' to abort \r"),
+                    display.display("Press 'C' to continue the play or 'A' to abort \r"),
                     if self._c_or_a():
                         break
                     else:

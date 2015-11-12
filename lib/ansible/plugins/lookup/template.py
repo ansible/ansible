@@ -23,6 +23,13 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class LookupModule(LookupBase):
 
     def run(self, terms, variables, **kwargs):
@@ -32,10 +39,10 @@ class LookupModule(LookupBase):
         ret = []
 
         for term in terms:
-            self._display.debug("File lookup term: %s" % term)
+            display.debug("File lookup term: %s" % term)
 
             lookupfile = self._loader.path_dwim_relative(basedir, 'templates', term)
-            self._display.vvvv("File lookup using %s as file" % lookupfile)
+            display.vvvv("File lookup using %s as file" % lookupfile)
             if lookupfile and os.path.exists(lookupfile):
                 with open(lookupfile, 'r') as f:
                     template_data = f.read()

@@ -18,7 +18,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import traceback
 import os
 import shutil
 import subprocess
@@ -30,6 +29,13 @@ import ansible.constants as C
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class Connection(ConnectionBase):
     ''' Local based connections '''
@@ -48,7 +54,7 @@ class Connection(ConnectionBase):
         self._play_context.remote_user = getpass.getuser()
 
         if not self._connected:
-            self._display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user, host=self._play_context.remote_addr))
+            display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user, host=self._play_context.remote_addr))
             self._connected = True
         return self
 
@@ -57,15 +63,15 @@ class Connection(ConnectionBase):
 
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
-        self._display.debug("in local.exec_command()")
+        display.debug("in local.exec_command()")
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
-        self._display.vvv("{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
+        display.vvv("{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook
-        self._display.debug("opening command with Popen()")
+        display.debug("opening command with Popen()")
         p = subprocess.Popen(
             cmd,
             shell=isinstance(cmd, basestring),
@@ -74,7 +80,7 @@ class Connection(ConnectionBase):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        self._display.debug("done running command with Popen()")
+        display.debug("done running command with Popen()")
 
         if self._play_context.prompt and sudoable:
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -99,11 +105,11 @@ class Connection(ConnectionBase):
             fcntl.fcntl(p.stdout, fcntl.F_SETFL, fcntl.fcntl(p.stdout, fcntl.F_GETFL) & ~os.O_NONBLOCK)
             fcntl.fcntl(p.stderr, fcntl.F_SETFL, fcntl.fcntl(p.stderr, fcntl.F_GETFL) & ~os.O_NONBLOCK)
 
-        self._display.debug("getting output with communicate()")
+        display.debug("getting output with communicate()")
         stdout, stderr = p.communicate()
-        self._display.debug("done communicating")
+        display.debug("done communicating")
 
-        self._display.debug("done with local.exec_command()")
+        display.debug("done with local.exec_command()")
         return (p.returncode, stdout, stderr)
 
     def put_file(self, in_path, out_path):
@@ -111,7 +117,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        self._display.vvv("{0} PUT {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
+        display.vvv("{0} PUT {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
         try:
@@ -126,7 +132,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        self._display.vvv("{0} FETCH {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
+        display.vvv("{0} FETCH {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
         self.put_file(in_path, out_path)
 
     def close(self):

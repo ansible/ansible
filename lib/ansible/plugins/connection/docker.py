@@ -37,7 +37,14 @@ import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 BUFSIZE = 65536
+
 
 class Connection(ConnectionBase):
     ''' Local docker based connections '''
@@ -103,7 +110,7 @@ class Connection(ConnectionBase):
         """ Connect to the container. Nothing to do """
         super(Connection, self)._connect()
         if not self._connected:
-            self._display.vvv("ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
+            display.vvv("ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
                 self._play_context.remote_user, host=self._play_context.remote_addr)
             )
             self._connected = True
@@ -116,7 +123,7 @@ class Connection(ConnectionBase):
         # -i is needed to keep stdin open which allows pipelining to work
         local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
-        self._display.vvv("EXEC %s" % (local_cmd), host=self._play_context.remote_addr)
+        display.vvv("EXEC %s" % (local_cmd), host=self._play_context.remote_addr)
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -140,7 +147,7 @@ class Connection(ConnectionBase):
     def put_file(self, in_path, out_path):
         """ Transfer a file from local to docker container """
         super(Connection, self).put_file(in_path, out_path)
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         out_path = self._prefix_login_path(out_path)
         if not os.path.exists(in_path):
@@ -175,7 +182,7 @@ class Connection(ConnectionBase):
     def fetch_file(self, in_path, out_path):
         """ Fetch a file from container to local. """
         super(Connection, self).fetch_file(in_path, out_path)
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         in_path = self._prefix_login_path(in_path)
         # out_path is the final file path, but docker takes a directory, not a

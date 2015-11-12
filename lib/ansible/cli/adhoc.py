@@ -34,6 +34,13 @@ from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 ########################################################
 
 class AdHocCLI(CLI):
@@ -68,7 +75,7 @@ class AdHocCLI(CLI):
         if len(self.args) != 1:
             raise AnsibleOptionsError("Missing target hosts")
 
-        self.display.verbosity = self.options.verbosity
+        display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 
         return True
@@ -85,7 +92,6 @@ class AdHocCLI(CLI):
         ''' use Runner lib to do SSH things '''
 
         super(AdHocCLI, self).run()
-
 
         # only thing left should be host pattern
         pattern = self.args[0]
@@ -121,7 +127,7 @@ class AdHocCLI(CLI):
         hosts = inventory.list_hosts(pattern)
         no_hosts = False
         if len(hosts) == 0:
-            self.display.warning("provided hosts list is empty, only localhost is available")
+            display.warning("provided hosts list is empty, only localhost is available")
             no_hosts = True
 
         if self.options.subset:
@@ -131,9 +137,9 @@ class AdHocCLI(CLI):
                 raise AnsibleError("Specified --limit does not match any hosts")
 
         if self.options.listhosts:
-            self.display.display('  hosts (%d):' % len(hosts))
+            display.display('  hosts (%d):' % len(hosts))
             for host in hosts:
-                self.display.display('    %s' % host)
+                display.display('    %s' % host)
             return 0
 
         if self.options.module_name in C.MODULE_REQUIRE_ARGS and not self.options.module_args:
@@ -168,7 +174,6 @@ class AdHocCLI(CLI):
                     inventory=inventory,
                     variable_manager=variable_manager,
                     loader=loader,
-                    display=self.display,
                     options=self.options,
                     passwords=passwords,
                     stdout_callback=cb,

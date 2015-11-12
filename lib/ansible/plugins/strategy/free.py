@@ -31,6 +31,7 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+
 class StrategyModule(StrategyBase):
 
     def run(self, iterator, play_context):
@@ -69,31 +70,31 @@ class StrategyModule(StrategyBase):
             host_results = []
             while True:
                 host = hosts_left[last_host]
-                self._display.debug("next free host: %s" % host)
+                display.debug("next free host: %s" % host)
                 host_name = host.get_name()
 
                 # peek at the next task for the host, to see if there's
                 # anything to do do for this host
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
-                self._display.debug("free host state: %s" % state)
-                self._display.debug("free host task: %s" % task)
+                display.debug("free host state: %s" % state)
+                display.debug("free host task: %s" % task)
                 if host_name not in self._tqm._failed_hosts and host_name not in self._tqm._unreachable_hosts and task:
 
                     # set the flag so the outer loop knows we've still found
                     # some work which needs to be done
                     work_to_do = True
 
-                    self._display.debug("this host has work to do")
+                    display.debug("this host has work to do")
 
                     # check to see if this host is blocked (still executing a previous task)
-                    if not host_name in self._blocked_hosts or not self._blocked_hosts[host_name]:
+                    if host_name not in self._blocked_hosts or not self._blocked_hosts[host_name]:
                         # pop the task, mark the host blocked, and queue it
                         self._blocked_hosts[host_name] = True
                         (state, task) = iterator.get_next_task_for_host(host)
 
-                        self._display.debug("getting variables")
+                        display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
-                        self._display.debug("done getting variables")
+                        display.debug("done getting variables")
 
                         # check to see if this task should be skipped, due to it being a member of a
                         # role which has already run (and whether that role allows duplicate execution)
@@ -101,7 +102,7 @@ class StrategyModule(StrategyBase):
                             # If there is no metadata, the default behavior is to not allow duplicates,
                             # if there is metadata, check to see if the allow_duplicates flag was set to true
                             if task._role._metadata is None or task._role._metadata and not task._role._metadata.allow_duplicates:
-                                self._display.debug("'%s' skipped because role has already run" % task)
+                                display.debug("'%s' skipped because role has already run" % task)
                                 continue
 
                         if task.action == 'meta':
@@ -138,7 +139,8 @@ class StrategyModule(StrategyBase):
             host_results.extend(results)
 
             try:
-                included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator, loader=self._loader, variable_manager=self._variable_manager)
+                included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator,
+                        loader=self._loader, variable_manager=self._variable_manager)
             except AnsibleError as e:
                 return False
 
@@ -151,7 +153,7 @@ class StrategyModule(StrategyBase):
                     except AnsibleError as e:
                         for host in included_file._hosts:
                             iterator.mark_host_failed(host)
-                        self._display.warning(str(e))
+                        display.warning(str(e))
                         continue
 
                     for host in hosts_left:
@@ -174,4 +176,3 @@ class StrategyModule(StrategyBase):
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered
         return super(StrategyModule, self).run(iterator, play_context, result)
-

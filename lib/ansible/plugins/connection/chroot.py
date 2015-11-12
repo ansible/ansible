@@ -31,6 +31,11 @@ from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils.basic import is_executable
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 BUFSIZE = 65536
 
@@ -70,7 +75,7 @@ class Connection(ConnectionBase):
         ''' connect to the chroot; nothing to do here '''
         super(Connection, self)._connect()
         if not self._connected:
-            self._display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
+            display.vvv("THIS IS A LOCAL CHROOT DIR", host=self.chroot)
             self._connected = True
 
     def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
@@ -84,7 +89,7 @@ class Connection(ConnectionBase):
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
         local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
-        self._display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
+        display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -116,7 +121,7 @@ class Connection(ConnectionBase):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to chroot '''
         super(Connection, self).put_file(in_path, out_path)
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
+        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.chroot)
 
         out_path = pipes.quote(self._prefix_login_path(out_path))
         try:
@@ -138,7 +143,7 @@ class Connection(ConnectionBase):
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from chroot to local '''
         super(Connection, self).fetch_file(in_path, out_path)
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
+        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.chroot)
 
         in_path = pipes.quote(self._prefix_login_path(in_path))
         try:

@@ -31,15 +31,22 @@ from ansible.plugins import module_loader
 from ansible.cli import CLI
 from ansible.utils import module_docs
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class DocCLI(CLI):
     """ Vault command line class """
 
     BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
     IGNORE_FILES = [ "COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES", "test-docs.sh"]
 
-    def __init__(self, args, display=None):
+    def __init__(self, args):
 
-        super(DocCLI, self).__init__(args, display)
+        super(DocCLI, self).__init__(args)
         self.module_list = []
 
     def parse(self):
@@ -56,8 +63,7 @@ class DocCLI(CLI):
                 help='Show playbook snippet for specified module(s)')
 
         self.options, self.args = self.parser.parse_args()
-        self.display.verbosity = self.options.verbosity
-
+        display.verbosity = self.options.verbosity
 
     def run(self):
 
@@ -86,7 +92,7 @@ class DocCLI(CLI):
             try:
                 filename = module_loader.find_plugin(module)
                 if filename is None:
-                    self.display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
+                    display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
                     continue
 
                 if any(filename.endswith(x) for x in self.BLACKLIST_EXTS):
@@ -95,8 +101,8 @@ class DocCLI(CLI):
                 try:
                     doc, plainexamples, returndocs = module_docs.get_docstring(filename, verbose=(self.options.verbosity > 0))
                 except:
-                    self.display.vvv(traceback.print_exc())
-                    self.display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
+                    display.vvv(traceback.print_exc())
+                    display.error("module %s has a documentation error formatting or is missing documentation\nTo see exact traceback use -vvv" % module)
                     continue
 
                 if doc is not None:
@@ -122,7 +128,7 @@ class DocCLI(CLI):
                     # probably a quoting issue.
                     raise AnsibleError("Parsing produced an empty object.")
             except Exception as e:
-                self.display.vvv(traceback.print_exc())
+                display.vvv(traceback.print_exc())
                 raise AnsibleError("module %s missing documentation (or could not parse documentation): %s\n" % (module, str(e)))
 
         self.pager(text)
@@ -150,9 +156,8 @@ class DocCLI(CLI):
                 module = os.path.splitext(module)[0] # removes the extension
                 self.module_list.append(module)
 
-
     def get_module_list_text(self):
-        columns = self.display.columns
+        columns = display.columns
         displace = max(len(x) for x in self.module_list)
         linelimit = columns - displace - 5
         text = []
@@ -189,7 +194,6 @@ class DocCLI(CLI):
             text.extend(deprecated)
         return "\n".join(text)
 
-
     @staticmethod
     def print_paths(finder):
         ''' Returns a string suitable for printing of the search path '''
@@ -209,7 +213,7 @@ class DocCLI(CLI):
         text.append("  action: %s" % (doc['module']))
         pad = 31
         subdent = ''.join([" " for a in xrange(pad)])
-        limit = self.display.columns - pad
+        limit = display.columns - pad
 
         for o in sorted(doc['options'].keys()):
             opt = doc['options'][o]
@@ -229,8 +233,8 @@ class DocCLI(CLI):
         opt_indent="        "
         text = []
         text.append("> %s\n" % doc['module'].upper())
-        pad = self.display.columns * 0.20
-        limit = max(self.display.columns - int(pad), 70)
+        pad = display.columns * 0.20
+        limit = max(display.columns - int(pad), 70)
 
         if isinstance(doc['description'], list):
             desc = " ".join(doc['description'])
@@ -238,6 +242,9 @@ class DocCLI(CLI):
             desc = doc['description']
 
         text.append("%s\n" % textwrap.fill(CLI.tty_ify(desc), limit, initial_indent="  ", subsequent_indent="  "))
+
+        if 'deprecated' in doc and doc['deprecated'] is not None and len(doc['deprecated']) > 0:
+            text.append("DEPRECATED: \n%s\n" % doc['deprecated'])
 
         if 'option_keys' in doc and len(doc['option_keys']) > 0:
             text.append("Options (= is mandatory):\n")
@@ -268,7 +275,6 @@ class DocCLI(CLI):
         if 'notes' in doc and doc['notes'] and len(doc['notes']) > 0:
             notes = " ".join(doc['notes'])
             text.append("Notes:%s\n" % textwrap.fill(CLI.tty_ify(notes), limit-6, initial_indent="  ", subsequent_indent=opt_indent))
-
 
         if 'requirements' in doc and doc['requirements'] is not None and len(doc['requirements']) > 0:
             req = ", ".join(doc['requirements'])

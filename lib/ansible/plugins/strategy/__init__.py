@@ -23,8 +23,6 @@ from ansible.compat.six.moves import queue as Queue
 from ansible.compat.six import iteritems, text_type, string_types
 
 import json
-import pickle
-import sys
 import time
 import zlib
 
@@ -35,13 +33,11 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
-from ansible.playbook.handler import Handler
 from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
-from ansible.playbook.role import hash_params
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
-from ansible.vars.unsafe_proxy import wrap_var, AnsibleJSONUnsafeEncoder
+from ansible.vars.unsafe_proxy import wrap_var
 
 try:
     from __main__ import display
@@ -50,6 +46,7 @@ except ImportError:
     display = Display()
 
 __all__ = ['StrategyBase']
+
 
 # TODO: this should probably be in the plugins/__init__.py, with
 #       a smarter mechanism to set all of the attributes based on
@@ -66,6 +63,7 @@ class SharedPluginLoaderObj:
         self.test_loader   = test_loader
         self.lookup_loader = lookup_loader
         self.module_loader = module_loader
+
 
 class StrategyBase:
 
@@ -84,6 +82,7 @@ class StrategyBase:
         self._final_q           = tqm._final_q
         self._step              = getattr(tqm._options, 'step', False)
         self._diff              = getattr(tqm._options, 'diff', False)
+        # Backwards compat: self._display isn't really needed, just import the global display and use that.
         self._display           = display
 
         # internal counters
@@ -100,7 +99,7 @@ class StrategyBase:
         failed_hosts      = self._tqm._failed_hosts.keys()
         unreachable_hosts = self._tqm._unreachable_hosts.keys()
 
-        self._display.debug("running handlers")
+        display.debug("running handlers")
         result &= self.run_handlers(iterator, play_context)
 
         # now update with the hosts (if any) that failed or were
@@ -121,7 +120,8 @@ class StrategyBase:
             return 0
 
     def get_hosts_remaining(self, play):
-        return [host for host in self._inventory.get_hosts(play.hosts) if host.name not in self._tqm._failed_hosts and host.name not in self._tqm._unreachable_hosts]
+        return [host for host in self._inventory.get_hosts(play.hosts)
+                if host.name not in self._tqm._failed_hosts and host.name not in self._tqm._unreachable_hosts]
 
     def get_failed_hosts(self, play):
         return [host for host in self._inventory.get_hosts(play.hosts) if host.name in self._tqm._failed_hosts]
@@ -137,12 +137,12 @@ class StrategyBase:
     def _queue_task(self, host, task, task_vars, play_context):
         ''' handles queueing the task up to be sent to a worker '''
 
-        self._display.debug("entering _queue_task() for %s/%s" % (host, task))
+        display.debug("entering _queue_task() for %s/%s" % (host, task))
 
         # and then queue the new task
-        self._display.debug("%s - putting task (%s) in queue" % (host, task))
+        display.debug("%s - putting task (%s) in queue" % (host, task))
         try:
-            self._display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
+            display.debug("worker is %d (out of %d available)" % (self._cur_worker+1, len(self._workers)))
 
             (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
             self._cur_worker += 1
@@ -167,7 +167,7 @@ class StrategyBase:
                 # data contained in the dict is very large
                 del task_vars
             else:
-                zip_vars = task_vars
+                zip_vars = task_vars  # noqa (pyflakes false positive because task_vars is deleted in the conditional above)
 
             # and queue the task
             main_q.put((host, task, self._loader.get_basedir(), zip_vars, hostvars, compressed_vars, play_context, shared_loader_obj), block=False)
@@ -178,9 +178,9 @@ class StrategyBase:
             self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
             # most likely an abort
-            self._display.debug("got an error while queuing: %s" % e)
+            display.debug("got an error while queuing: %s" % e)
             return
-        self._display.debug("exiting _queue_task() for %s/%s" % (host, task))
+        display.debug("exiting _queue_task() for %s/%s" % (host, task))
 
     def _process_pending_results(self, iterator):
         '''
@@ -193,7 +193,7 @@ class StrategyBase:
         while not self._final_q.empty() and not self._tqm._terminated:
             try:
                 result = self._final_q.get(block=False)
-                self._display.debug("got result from result worker: %s" % ([text_type(x) for x in result],))
+                display.debug("got result from result worker: %s" % ([text_type(x) for x in result],))
 
                 # all host status messages contain 2 entries: (msg, task_result)
                 if result[0] in ('host_task_ok', 'host_task_failed', 'host_task_skipped', 'host_unreachable'):
@@ -202,7 +202,7 @@ class StrategyBase:
                     task = task_result._task
                     if result[0] == 'host_task_failed' or task_result.is_failed():
                         if not task.ignore_errors:
-                            self._display.debug("marking %s as failed" % host.name)
+                            display.debug("marking %s as failed" % host.name)
                             if task.run_once:
                                 # if we're using run_once, we have to fail every host here
                                 [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
@@ -266,7 +266,7 @@ class StrategyBase:
 
                     if task_result._host not in self._notified_handlers[handler_name]:
                         self._notified_handlers[handler_name].append(task_result._host)
-                        self._display.vv("NOTIFIED HANDLER %s" % (handler_name,))
+                        display.vv("NOTIFIED HANDLER %s" % (handler_name,))
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
@@ -323,12 +323,12 @@ class StrategyBase:
 
         ret_results = []
 
-        self._display.debug("waiting for pending results...")
+        display.debug("waiting for pending results...")
         while self._pending_results > 0 and not self._tqm._terminated:
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
             time.sleep(0.01)
-        self._display.debug("no more pending results, returning what we have")
+        display.debug("no more pending results, returning what we have")
 
         return ret_results
 
@@ -468,8 +468,9 @@ class StrategyBase:
                 tags = [ tags ]
             if len(tags) > 0:
                 if len(b._task_include.tags) > 0:
-                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task)", obj=included_file._task._ds)
-                self._display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
+                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task)",
+                            obj=included_file._task._ds)
+                display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 b._task_include.tags = tags
             b._task_include.vars = temp_vars
 
@@ -579,12 +580,12 @@ class StrategyBase:
                     for host in included_file._hosts:
                         iterator.mark_host_failed(host)
                         self._tqm._failed_hosts[host.name] = True
-                    self._display.warning(str(e))
+                    display.warning(str(e))
                     continue
 
         # wipe the notification list
         self._notified_handlers[handler_name] = []
-        self._display.debug("done running handlers, result is: %s" % result)
+        display.debug("done running handlers, result is: %s" % result)
         return result
 
     def _take_step(self, task, host=None):
@@ -594,19 +595,19 @@ class StrategyBase:
             msg = u'Perform task: %s on %s (y/n/c): ' % (task, host)
         else:
             msg = u'Perform task: %s (y/n/c): ' % task
-        resp = self._display.prompt(msg)
+        resp = display.prompt(msg)
 
         if resp.lower() in ['y','yes']:
-            self._display.debug("User ran task")
+            display.debug("User ran task")
             ret = True
         elif resp.lower() in ['c', 'continue']:
-            self._display.debug("User ran task and cancled step mode")
+            display.debug("User ran task and cancled step mode")
             self._step = False
             ret = True
         else:
-            self._display.debug("User skipped task")
+            display.debug("User skipped task")
 
-        self._display.banner(msg)
+        display.banner(msg)
 
         return ret
 

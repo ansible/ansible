@@ -39,6 +39,7 @@ from ansible.utils.vars import combine_vars, isidentifier
 
 BASE_ATTRIBUTES = {}
 
+
 class Base:
 
     # connection/transport
@@ -74,13 +75,6 @@ class Base:
 
         # and initialize the base attributes
         self._initialize_base_attributes()
-
-        try:
-            from __main__ import display
-            self._display = display
-        except ImportError:
-            from ansible.utils.display import Display
-            self._display = Display()
 
     # The following three functions are used to programatically define data
     # descriptors (aka properties) for the Attributes of all of the playbook
@@ -134,9 +128,9 @@ class Base:
         base_attributes = dict()
         for (name, value) in getmembers(self.__class__):
             if isinstance(value, Attribute):
-               if name.startswith('_'):
-                   name = name[1:]
-               base_attributes[name] = value
+                if name.startswith('_'):
+                    name = name[1:]
+                base_attributes[name] = value
         BASE_ATTRIBUTES[self.__class__] = base_attributes
         return base_attributes
 
@@ -246,7 +240,8 @@ class Base:
                 value = getattr(self, name)
                 if value is not None:
                     if attribute.isa == 'string' and isinstance(value, (list, dict)):
-                        raise AnsibleParserError("The field '%s' is supposed to be a string type, however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds())
+                        raise AnsibleParserError("The field '%s' is supposed to be a string type,"
+                                " however the incoming data structure is a %s" % (name, type(value)), obj=self.get_ds())
 
     def copy(self):
         '''
@@ -279,10 +274,6 @@ class Base:
         all the variables.  Run basic types (from isa) as well as
         any _post_validate_<foo> functions.
         '''
-
-        basedir = None
-        if self._loader is not None:
-            basedir = self._loader.get_basedir()
 
         # save the omit value for later checking
         omit_value = templar._available_variables.get('omit')
@@ -340,7 +331,8 @@ class Base:
                         if attribute.listof is not None:
                             for item in value:
                                 if not isinstance(item, attribute.listof):
-                                    raise AnsibleParserError("the field '%s' should be a list of %s, but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
+                                    raise AnsibleParserError("the field '%s' should be a list of %s,"
+                                            " but the item '%s' is a %s" % (name, attribute.listof, item, type(item)), obj=self.get_ds())
                                 elif attribute.required and attribute.listof == string_types:
                                     if item is None or item.strip() == "":
                                         raise AnsibleParserError("the field '%s' is required, and cannot have empty values" % (name,), obj=self.get_ds())
@@ -362,10 +354,12 @@ class Base:
                 setattr(self, name, value)
 
             except (TypeError, ValueError) as e:
-                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s. Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
+                raise AnsibleParserError("the field '%s' has an invalid value (%s), and could not be converted to an %s."
+                        " Error was: %s" % (name, value, attribute.isa, e), obj=self.get_ds())
             except UndefinedError as e:
                 if templar._fail_on_undefined_errors and name != 'name':
-                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined. The error was: %s" % (name,e), obj=self.get_ds())
+                    raise AnsibleParserError("the field '%s' has an invalid value, which appears to include a variable that is undefined."
+                            " The error was: %s" % (name,e), obj=self.get_ds())
 
     def serialize(self):
         '''
@@ -459,4 +453,3 @@ class Base:
     def __setstate__(self, data):
         self.__init__()
         self.deserialize(data)
-

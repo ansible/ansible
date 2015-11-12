@@ -19,6 +19,12 @@ __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class ActionModule(ActionBase):
 
@@ -41,7 +47,7 @@ class ActionModule(ActionBase):
 
         if module == 'auto':
             facts = self._execute_module(module_name='setup', module_args=dict(filter='ansible_pkg_mgr'), task_vars=task_vars)
-            self._display.debug("Facts %s" % facts)
+            display.debug("Facts %s" % facts)
             if 'failed' not in facts:
                 module = getattr(facts['ansible_facts'], 'ansible_pkg_mgr', 'auto')
 
@@ -57,7 +63,7 @@ class ActionModule(ActionBase):
             if 'use' in new_module_args:
                 del new_module_args['use']
 
-            self._display.vvvv("Running %s" % module)
+            display.vvvv("Running %s" % module)
             result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars))
             return result
         else:

@@ -31,6 +31,11 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 BUFSIZE = 65536
 
@@ -58,7 +63,7 @@ class Connection(ConnectionBase):
         self.jls_cmd = self._search_executable('jls')
         self.jexec_cmd = self._search_executable('jexec')
 
-        if not self.jail in self.list_jails():
+        if self.jail not in self.list_jails():
             raise AnsibleError("incorrect jail name %s" % self.jail)
 
     @staticmethod
@@ -90,7 +95,7 @@ class Connection(ConnectionBase):
         ''' connect to the jail; nothing to do here '''
         super(Connection, self)._connect()
         if not self._connected:
-            self._display.vvv("THIS IS A LOCAL JAIL DIR", host=self.jail)
+            display.vvv("THIS IS A LOCAL JAIL DIR", host=self.jail)
             self._connected = True
 
     def _buffered_exec_command(self, cmd, stdin=subprocess.PIPE):
@@ -104,7 +109,7 @@ class Connection(ConnectionBase):
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
         local_cmd = [self.jexec_cmd, self.jail, executable, '-c', cmd]
 
-        self._display.vvv("EXEC %s" % (local_cmd), host=self.jail)
+        display.vvv("EXEC %s" % (local_cmd), host=self.jail)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -143,7 +148,7 @@ class Connection(ConnectionBase):
     def put_file(self, in_path, out_path):
         ''' transfer a file from local to jail '''
         super(Connection, self).put_file(in_path, out_path)
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
+        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self.jail)
 
         out_path = pipes.quote(self._prefix_login_path(out_path))
         try:
@@ -165,7 +170,7 @@ class Connection(ConnectionBase):
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from jail to local '''
         super(Connection, self).fetch_file(in_path, out_path)
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
+        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self.jail)
 
         in_path = pipes.quote(self._prefix_login_path(in_path))
         try:

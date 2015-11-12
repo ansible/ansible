@@ -37,7 +37,14 @@ from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
 from ansible.vars.unsafe_proxy import UnsafeProxy
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 __all__ = ['TaskExecutor']
+
 
 class TaskExecutor:
 
@@ -61,20 +68,13 @@ class TaskExecutor:
         self._loader            = loader
         self._shared_loader_obj = shared_loader_obj
 
-        try:
-            from __main__ import display
-            self._display = display
-        except ImportError:
-            from ansible.utils.display import Display
-            self._display = Display()
-
     def run(self):
         '''
         The main executor entrypoint, where we determine if the specified
-        task requires looping and either runs the task with 
+        task requires looping and either runs the task with
         '''
 
-        self._display.debug("in run()")
+        display.debug("in run()")
 
         try:
             # lookup plugins need to know if this task is executing from
@@ -95,9 +95,9 @@ class TaskExecutor:
                     failed  = False
                     for item in item_results:
                         if 'changed' in item and item['changed']:
-                           changed = True
+                            changed = True
                         if 'failed' in item and item['failed']:
-                           failed = True
+                            failed = True
 
                     # create the overall result item, and set the changed/failed
                     # flags there to reflect the overall result of the loop
@@ -114,9 +114,9 @@ class TaskExecutor:
                 else:
                     res = dict(changed=False, skipped=True, skipped_reason='No items in the list', results=[])
             else:
-                self._display.debug("calling self._execute()")
+                display.debug("calling self._execute()")
                 res = self._execute()
-                self._display.debug("_execute() done")
+                display.debug("_execute() done")
 
             # make sure changed is set in the result, if it's not present
             if 'changed' not in res:
@@ -133,9 +133,9 @@ class TaskExecutor:
                     return res._obj
                 return res
 
-            self._display.debug("dumping result to json")
+            display.debug("dumping result to json")
             res = _clean_res(res)
-            self._display.debug("done dumping result, returning")
+            display.debug("done dumping result, returning")
             return res
         except AnsibleError as e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
@@ -145,7 +145,7 @@ class TaskExecutor:
             except AttributeError:
                 pass
             except Exception as e:
-                self._display.debug("error closing connection: %s" % to_unicode(e))
+                display.debug("error closing connection: %s" % to_unicode(e))
 
     def _get_loop_items(self):
         '''
@@ -166,23 +166,26 @@ class TaskExecutor:
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
-                #TODO: remove convert_bare true and deprecate this in with_ 
+                #TODO: remove convert_bare true and deprecate this in with_
                 if self._task.loop == 'first_found':
                     # first_found loops are special.  If the item is undefined
                     # then we want to fall through to the next value rather
                     # than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False, convert_bare=True)
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
+                            loader=self._loader, fail_on_undefined=False, convert_bare=True)
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
                 else:
                     try:
-                        loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=True)
+                        loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
+                                loader=self._loader, fail_on_undefined=True, convert_bare=True)
                     except AnsibleUndefinedVariable as e:
                         if 'has no attribute' in str(e):
                             loop_terms = []
-                            self._display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
+                            display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
                         else:
                             raise
-                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=vars_copy)
+                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader,
+                        templar=templar).run(terms=loop_terms, variables=vars_copy)
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
 
@@ -252,16 +255,19 @@ class TaskExecutor:
             if all(isinstance(o, string_types) for o in items):
                 final_items = []
                 name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
-                for item in items:
-                    variables['item'] = item
-                    if self._task.evaluate_conditional(templar, variables):
-                        if templar._contains_vars(name):
-                            new_item = templar.template(name, cache=False)
-                            final_items.append(new_item)
-                        else:
-                            final_items.append(item)
-                self._task.args['name'] = final_items
-                return [final_items]
+                # The user is doing an upgrade or some other operation
+                # that doesn't take name or pkg.
+                if name:
+                    for item in items:
+                        variables['item'] = item
+                        if self._task.evaluate_conditional(templar, variables):
+                            if templar._contains_vars(name):
+                                new_item = templar.template(name, cache=False)
+                                final_items.append(new_item)
+                            else:
+                                final_items.append(item)
+                    self._task.args['name'] = final_items
+                    return [final_items]
             #elif:
                 # Right now we only optimize single entries.  In the future we
                 # could optimize more types:
@@ -310,7 +316,7 @@ class TaskExecutor:
         # variable not being present which would otherwise cause validation to fail
         try:
             if not self._task.evaluate_conditional(templar, variables):
-                self._display.debug("when evaluation failed, skipping this task")
+                display.debug("when evaluation failed, skipping this task")
                 return dict(changed=False, skipped=True, skip_reason='Conditional check failed', _ansible_no_log=self._play_context.no_log)
         except AnsibleError:
             # skip conditional exception in the case of includes as the vars needed might not be avaiable except in the included tasks or due to tags
@@ -337,7 +343,7 @@ class TaskExecutor:
         if '_variable_params' in self._task.args:
             variable_params = self._task.args.pop('_variable_params')
             if isinstance(variable_params, dict):
-                self._display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts")
+                display.deprecated("Using variables for task params is unsafe, especially if the variables come from an external source like facts")
                 variable_params.update(self._task.args)
                 self._task.args = variable_params
 
@@ -367,21 +373,21 @@ class TaskExecutor:
         # make a copy of the job vars here, in case we need to update them
         # with the registered variable value later on when testing conditions
         #vars_copy = variables.copy()
-        vars_copy = variables
+        vars_copy = variables.copy()
 
-        self._display.debug("starting attempt loop")
+        display.debug("starting attempt loop")
         result = None
         for attempt in range(retries):
             if attempt > 0:
-                self._display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color="red")
+                display.display("FAILED - RETRYING: %s (%d retries left). Result was: %s" % (self._task, retries-attempt, result), color="dark gray")
                 result['attempts'] = attempt + 1
 
-            self._display.debug("running the handler")
+            display.debug("running the handler")
             try:
                 result = self._handler.run(task_vars=variables)
             except AnsibleConnectionFailure as e:
                 return dict(unreachable=True, msg=str(e))
-            self._display.debug("handler run complete")
+            display.debug("handler run complete")
 
             if self._task.async > 0:
                 # the async_wrapper module returns dumped JSON via its stdout
@@ -394,6 +400,22 @@ class TaskExecutor:
                 if self._task.poll > 0:
                     result = self._poll_async_result(result=result, templar=templar)
 
+            # helper methods for use below in evaluating changed/failed_when
+            def _evaluate_changed_when_result(result):
+                if self._task.changed_when is not None:
+                    cond = Conditional(loader=self._loader)
+                    cond.when = [ self._task.changed_when ]
+                    result['changed'] = cond.evaluate_conditional(templar, vars_copy)
+
+            def _evaluate_failed_when_result(result):
+                if self._task.failed_when is not None:
+                    cond = Conditional(loader=self._loader)
+                    cond.when = [ self._task.failed_when ]
+                    failed_when_result = cond.evaluate_conditional(templar, vars_copy)
+                    result['failed_when_result'] = result['failed'] = failed_when_result
+                    return failed_when_result
+                return False
+
             # update the local copy of vars with the registered value, if specified,
             # or any facts which may have been generated by the module execution
             if self._task.register:
@@ -402,54 +424,32 @@ class TaskExecutor:
             if 'ansible_facts' in result:
                 vars_copy.update(result['ansible_facts'])
 
-            # create a conditional object to evaluate task conditions
-            cond = Conditional(loader=self._loader)
+            # set the failed property if the result has a non-zero rc. This will be
+            # overridden below if the failed_when property is set
+            if result.get('rc', 0) != 0:
+                result['failed'] = True
 
-            def _evaluate_changed_when_result(result):
-                if self._task.changed_when is not None:
-                    cond.when = [ self._task.changed_when ]
-                    result['changed'] = cond.evaluate_conditional(templar, vars_copy)
-
-            def _evaluate_failed_when_result(result):
-                if self._task.failed_when is not None:
-                    cond.when = [ self._task.failed_when ]
-                    failed_when_result = cond.evaluate_conditional(templar, vars_copy)
-                    result['failed_when_result'] = result['failed'] = failed_when_result
-                    return failed_when_result
-                return False
-
-            if self._task.until:
-                cond.when = self._task.until
-                if cond.evaluate_conditional(templar, vars_copy):
-                    _evaluate_changed_when_result(result)
-                    _evaluate_failed_when_result(result)
-                    break
-            elif (self._task.changed_when is not None or self._task.failed_when is not None) and 'skipped' not in result:
-                    _evaluate_changed_when_result(result)
-                    if _evaluate_failed_when_result(result):
-                        break
-            elif 'failed' not in result:
-                if result.get('rc', 0) != 0:
-                    result['failed'] = True
-                else:
-                    # if the result is not failed, stop trying
-                    break
-
-            if attempt < retries - 1:
-                time.sleep(delay)
-            else:
+            # if we didn't skip this task, use the helpers to evaluate the changed/
+            # failed_when properties
+            if 'skipped' not in result:
                 _evaluate_changed_when_result(result)
                 _evaluate_failed_when_result(result)
+
+            if attempt < retries - 1:
+                cond = Conditional(loader=self._loader)
+                cond.when = self._task.until
+                if cond.evaluate_conditional(templar, vars_copy):
+                    break
+
+                # no conditional check, or it failed, so sleep for the specified time
+                time.sleep(delay)
+
+            elif 'failed' not in result:
+                break
 
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
         if self._task.register:
-            ### FIXME:
-            # If we remove invocation, we should also be removing _ansible*
-            # and maybe ansible_facts.
-            # Remove invocation from registered vars
-            #if 'invocation' in result:
-            #    del result['invocation']
             variables[self._task.register] = result
 
         if 'ansible_facts' in result:
@@ -476,7 +476,7 @@ class TaskExecutor:
         result["_ansible_no_log"] = self._play_context.no_log
 
         # and return
-        self._display.debug("attempt loop complete, returning result")
+        display.debug("attempt loop complete, returning result")
         return result
 
     def _poll_async_result(self, result, templar):
@@ -629,4 +629,3 @@ class TaskExecutor:
             raise AnsibleError("the handler '%s' was not found" % handler_name)
 
         return handler
-

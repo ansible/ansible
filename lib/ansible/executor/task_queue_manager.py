@@ -21,8 +21,6 @@ __metaclass__ = type
 
 import multiprocessing
 import os
-import socket
-import sys
 import tempfile
 
 from ansible import constants as C
@@ -35,7 +33,14 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 __all__ = ['TaskQueueManager']
+
 
 class TaskQueueManager:
 
@@ -49,12 +54,11 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, variable_manager, loader, display, options, passwords, stdout_callback=None):
+    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
         self._loader           = loader
-        self._display          = display
         self._options          = options
         self._stats            = AggregateStats()
         self.passwords         = passwords
@@ -82,12 +86,6 @@ class TaskQueueManager:
         self._unreachable_hosts = dict()
 
         self._final_q = multiprocessing.Queue()
-
-        # create the pool of worker threads, based on the number of forks specified
-        try:
-            fileno = sys.stdin.fileno()
-        except ValueError:
-            fileno = None
 
         # A temporary file (opened pre-fork) used by connection
         # plugins for inter-process locking.
@@ -162,9 +160,7 @@ class TaskQueueManager:
                 elif callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST):
                     continue
 
-                self._callback_plugins.append(callback_plugin(self._display))
-            else:
-                self._callback_plugins.append(callback_plugin())
+            self._callback_plugins.append(callback_plugin())
 
         self._callbacks_loaded = True
 
@@ -228,7 +224,7 @@ class TaskQueueManager:
         return play_return
 
     def cleanup(self):
-        self._display.debug("RUNNING CLEANUP")
+        display.debug("RUNNING CLEANUP")
         self.terminate()
         self._final_q.close()
         self._cleanup_processes()
@@ -282,4 +278,4 @@ class TaskQueueManager:
                             v1_method = method.replace('v2_','')
                             v1_method(*args, **kwargs)
                         except Exception:
-                            self._display.warning('Error when using %s: %s' % (method, str(e)))
+                            display.warning('Error when using %s: %s' % (method, str(e)))

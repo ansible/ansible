@@ -21,27 +21,25 @@ __metaclass__ = type
 
 from ansible.compat.six import string_types
 
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleParserError
 
-from ansible.playbook.attribute import Attribute, FieldAttribute
+from ansible.playbook.attribute import FieldAttribute
 from ansible.playbook.base import Base
 from ansible.playbook.become import Become
 from ansible.playbook.block import Block
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.playbook.task import Task
 from ansible.vars import preprocess_vars
-
-
-__all__ = ['Play']
 
 try:
     from __main__ import display
-    display = display
 except ImportError:
     from ansible.utils.display import Display
     display = Display()
+
+
+__all__ = ['Play']
 
 
 class Play(Base, Taggable, Become):
@@ -102,8 +100,8 @@ class Play(Base, Taggable, Become):
         return self.get_name()
 
     def get_name(self):
-       ''' return the name of the Play '''
-       return self._attributes.get('name')
+        ''' return the name of the Play '''
+        return self._attributes.get('name')
 
     @staticmethod
     def load(data, variable_manager=None, loader=None):
@@ -124,7 +122,8 @@ class Play(Base, Taggable, Become):
             # this should never happen, but error out with a helpful message
             # to the user if it does...
             if 'remote_user' in ds:
-                raise AnsibleParserError("both 'user' and 'remote_user' are set for %s. The use of 'user' is deprecated, and should be removed" % self.get_name(), obj=ds)
+                raise AnsibleParserError("both 'user' and 'remote_user' are set for %s."
+                        " The use of 'user' is deprecated, and should be removed" % self.get_name(), obj=ds)
 
             ds['remote_user'] = ds['user']
             del ds['user']
@@ -217,7 +216,7 @@ class Play(Base, Taggable, Become):
         vars_prompts = []
         for prompt_data in new_ds:
             if 'name' not in prompt_data:
-                self._display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
+                display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
                 for vname, prompt in prompt_data.iteritems():
                     vars_prompts.append(dict(
                         name      = vname,
@@ -345,4 +344,3 @@ class Play(Base, Taggable, Become):
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
         new_me._included_path = self._included_path
         return new_me
-

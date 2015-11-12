@@ -24,6 +24,12 @@ from ansible.plugins.action import ActionBase
 from ansible.parsing.utils.addresses import parse_address
 from ansible.errors import AnsibleError
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 
 class ActionModule(ActionBase):
     ''' Create inventory hosts and groups in the memory inventory'''
@@ -45,7 +51,7 @@ class ActionModule(ActionBase):
 
         # Parse out any hostname:port patterns
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))
-        self._display.vv("creating host via 'add_host': hostname=%s" % new_name)
+        display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
         name, port = parse_address(new_name, allow_ranges=False)
         if not name:

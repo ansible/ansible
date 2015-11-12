@@ -20,6 +20,13 @@ __metaclass__ = type
 from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.lookup import LookupBase
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 class LookupModule(LookupBase):
 
     def run(self, terms, variables=None, **kwargs):
@@ -29,7 +36,7 @@ class LookupModule(LookupBase):
         basedir = self.get_basedir(variables)
 
         for term in terms:
-            self._display.debug("File lookup term: %s" % term)
+            display.debug("File lookup term: %s" % term)
 
             # Special handling of the file lookup, used primarily when the
             # lookup is done from a role. If the file isn't found in the
@@ -38,7 +45,7 @@ class LookupModule(LookupBase):
             # itself (which will be relative to the current working dir)
 
             lookupfile = self._loader.path_dwim_relative(basedir, 'files', term)
-            self._display.vvvv("File lookup using %s as file" % lookupfile)
+            display.vvvv("File lookup using %s as file" % lookupfile)
             try:
                 if lookupfile:
                     contents, show_data = self._loader._get_file_contents(lookupfile)

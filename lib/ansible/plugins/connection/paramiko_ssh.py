@@ -26,14 +26,11 @@ __metaclass__ = type
 
 import warnings
 import os
-import pipes
 import socket
-import random
 import logging
 import tempfile
 import traceback
 import fcntl
-import re
 import sys
 
 from termios import tcflush, TCIFLUSH
@@ -45,6 +42,12 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
+
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
 
 AUTHENTICITY_MSG="""
 paramiko: The authenticity of host '%s' can't be established.
@@ -114,6 +117,7 @@ class MyAddPolicy(object):
 SSH_CONNECTION_CACHE = {}
 SFTP_CONNECTION_CACHE = {}
 
+
 class Connection(ConnectionBase):
     ''' SSH based connections with Paramiko '''
 
@@ -140,7 +144,7 @@ class Connection(ConnectionBase):
             raise AnsibleError("paramiko is not installed")
 
         port = self._play_context.port or 22
-        self._display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
+        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
 
         ssh = paramiko.SSHClient()
 
@@ -214,7 +218,7 @@ class Connection(ConnectionBase):
         if C.PARAMIKO_PTY:
             chan.get_pty(term=os.getenv('TERM', 'vt100'), width=int(os.getenv('COLUMNS', 0)), height=int(os.getenv('LINES', 0)))
 
-        self._display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
+        display.vvv("EXEC %s" % cmd, host=self._play_context.remote_addr)
 
         no_prompt_out = ''
         no_prompt_err = ''
@@ -225,7 +229,7 @@ class Connection(ConnectionBase):
             if self._play_context.prompt:
                 passprompt = False
                 while True:
-                    self._display.debug('Waiting for Privilege Escalation input')
+                    display.debug('Waiting for Privilege Escalation input')
                     if self.check_become_success(become_output):
                         break
                     elif self.check_password_prompt(become_output):
@@ -233,7 +237,7 @@ class Connection(ConnectionBase):
                         break
 
                     chunk = chan.recv(bufsize)
-                    self._display.debug("chunk is: %s" % chunk)
+                    display.debug("chunk is: %s" % chunk)
                     if not chunk:
                         if 'unknown user' in become_output:
                             raise AnsibleError( 'user %s does not exist' % self._play_context.become_user)
@@ -262,7 +266,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        self._display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv("PUT %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound("file or module does not exist: %s" % in_path)
@@ -291,7 +295,7 @@ class Connection(ConnectionBase):
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        self._display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
+        display.vvv("FETCH %s TO %s" % (in_path, out_path), host=self._play_context.remote_addr)
 
         try:
             self.sftp = self._connect_sftp()
@@ -305,7 +309,6 @@ class Connection(ConnectionBase):
 
     def _any_keys_added(self):
 
-        added_any = False
         for hostname, keys in iteritems(self.ssh._host_keys):
             for keytype, key in iteritems(keys):
                 added_this_time = getattr(key, '_added_by_ansible_this_time', False)
@@ -402,4 +405,3 @@ class Connection(ConnectionBase):
             fcntl.lockf(KEY_LOCK, fcntl.LOCK_UN)
 
         self.ssh.close()
-

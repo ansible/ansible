@@ -33,6 +33,13 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
+
 #---------------------------------------------------------------------------------------------------
 
 class PlaybookCLI(CLI):
@@ -73,7 +80,7 @@ class PlaybookCLI(CLI):
         if len(self.args) == 0:
             raise AnsibleOptionsError("You must specify a playbook file to run")
 
-        self.display.verbosity = self.options.verbosity
+        display.verbosity = self.options.verbosity
         self.validate_conflicts(runas_opts=True, vault_opts=True, fork_opts=True)
 
     def run(self):
@@ -129,7 +136,7 @@ class PlaybookCLI(CLI):
         no_hosts = False
         if len(inventory.list_hosts()) == 0:
             # Empty inventory
-            self.display.warning("provided hosts list is empty, only localhost is available")
+            display.warning("provided hosts list is empty, only localhost is available")
             no_hosts = True
         inventory.subset(self.options.subset)
         if len(inventory.list_hosts()) == 0 and no_hosts is False:
@@ -137,14 +144,14 @@ class PlaybookCLI(CLI):
             raise AnsibleError("Specified --limit does not match any hosts")
 
         # create the playbook executor, which manages running the plays via a task queue manager
-        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, display=self.display, options=self.options, passwords=passwords)
+        pbex = PlaybookExecutor(playbooks=self.args, inventory=inventory, variable_manager=variable_manager, loader=loader, options=self.options, passwords=passwords)
 
         results = pbex.run()
 
         if isinstance(results, list):
             for p in results:
 
-                self.display.display('\nplaybook: %s' % p['playbook'])
+                display.display('\nplaybook: %s' % p['playbook'])
                 i = 1
                 for play in p['plays']:
                     if play.name:
@@ -164,7 +171,7 @@ class PlaybookCLI(CLI):
                         for host in playhosts:
                             msg += "\n      %s" % host
 
-                    self.display.display(msg)
+                    display.display(msg)
 
                     if self.options.listtags or self.options.listtasks:
                         taskmsg = '    tasks:'
@@ -180,7 +187,7 @@ class PlaybookCLI(CLI):
                                     taskmsg += "    TAGS: [%s]" % ','.join(mytags.union(set(task.tags)))
                                 j = j + 1
 
-                        self.display.display(taskmsg)
+                        display.display(taskmsg)
 
                     i = i + 1
             return 0
