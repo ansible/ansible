@@ -110,5 +110,4 @@ class GalaxyLogin(object):
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['message'])
-
         return data['token']
