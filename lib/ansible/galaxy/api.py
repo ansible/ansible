@@ -71,6 +71,22 @@ class GalaxyAPI(object):
         else:
             raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
 
+    def __auth_header(self):
+        token = self.config.get_key('access_token')
+        if token is None:
+            raise AnsibleError("No access token. You must first use login to authenticate and obtain an access token.")
+        return {'Authorization': 'Token ' + token}
+
+    def __call_galaxy(self, url, args=None, headers=None, method=None):
+        if args and not headers:
+            headers = self.__auth_header()
+        try:
+            data = json.load(open_url(url, data=args, validate_certs=self.validate_certs, headers=headers, method=method))
+        except HTTPError as e:
+            res = json.load(e)
+            raise AnsibleError(res['detail'])
+        return data
+
     def get_server_api_version(self, api_server):
         """
         Fetches the Galaxy API current version to ensure
@@ -86,44 +102,23 @@ class GalaxyAPI(object):
         """
         Retrieve an authentication token
         """
-        url = '%s/token/' % self.baseurl
+        url = '%s/tokens/' % self.baseurl
         args = urllib.urlencode({"github_token": github_token})
-        data = {}
-        try:
-            data = json.load(open_url(url, data=args, validate_certs=self.validate_certs))
-        except Exception as e:
-            raise AnsibleError("authentication error %s" % str(e))
-        
-        if data.has_key('message'):
-            raise AnsibleError(data['message'])
-
+        data = sellf.__call_galaxy(url, args=args)
         return data
 
     def create_import_task(self, github_user, github_repo, reference=None, alternate_name=None):
         """
         Post an import request
         """
-        token = self.config.get_key('access_token')
-        if token is None:
-            raise AnsibleError("No access token. You must first use login to authenticate and obtain an access token.")
-
-        url = '%s/import/' % self.baseurl
+        url = '%s/imports/' % self.baseurl
         args = urllib.urlencode({
             "github_user": github_user,
             "github_repo": github_repo,
             "reference": reference,
             "alternate_role_name": alternate_name
         })
-        headers = {'Authorization': 'Token ' + token}
-        data = {}
-        try:
-            data = json.load(open_url(url, data=args, validate_certs=self.validate_certs, headers=headers))
-        except Exception as e:
-            raise AnsibleError("import error %s" % str(e))
-        
-        if data.has_key('detail'):
-            raise AnsibleError(data['detail'])
-
+        data = self.__call_galaxy(url, args=args)
         return data
 
     def get_import_task(self, task_id=None, github_user=None, github_repo=None):
@@ -131,7 +126,7 @@ class GalaxyAPI(object):
         Check the status of an import task. Returns only the most recent import task when
         given github_user/github_repo.
         """
-        url = '%s/import/' % self.baseurl
+        url = '%s/imports/' % self.baseurl
         if not task_id is None:
             url = "%s?id=%d" % (url,task_id)
         elif not github_user is None and not github_repo is None:
@@ -141,8 +136,9 @@ class GalaxyAPI(object):
 
         try:
             data = json.load(open_url(url, validate_certs=self.validate_certs))
-        except Exception as e:
-            raise AnsibleError("import error %s" % str(e))
+        except HTTPError as e:
+            res = json.load(e)
+            raise AnsibleError(res['detail'])
 
         return data['results'][0]
 
@@ -250,3 +246,23 @@ class GalaxyAPI(object):
             raise AnsibleError("Unsuccessful request to server: %s" % str(e))
 
         return data
+
+
+    def add_secret(self, source, secret):
+        url = "%s/notification_secrets/" % self.baseurl
+        args = urllib.urlencode({
+            "source": source,
+            "secret": secret
+        })
+        data = self.__call_galaxy(url,args=args)
+        return data
+
+    def list_secrets(self):
+        url = "%s/notification_secrets" % self.baseurl
+        data = self.__call_galaxy(url, headers=self.__auth_header())
+        return data
+
+
+        
+
+

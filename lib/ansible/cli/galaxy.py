@@ -52,7 +52,7 @@ except ImportError:
 
 class GalaxyCLI(CLI):
 
-    VALID_ACTIONS = ("import", "init", "info", "install", "list", "login", "remove", "search", "config")
+    VALID_ACTIONS = ("config","import", "init", "info", "install", "list", "login", "remove", "search", "setup")
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     DEFAULT_GALAXY_SERVER = "https://galaxy.ansible.com"
 
@@ -121,15 +121,21 @@ class GalaxyCLI(CLI):
             self.parser.add_option('-s', '--show', dest='show_true', action='store_true', default=False,
                 help='show the value of the specified key')
             self.parser.set_usage("usage: %prog config [opitons] key value")
+        elif self.action == "setup":
+            self.parser.set_usage("usage: %prog source [options] source secret")
+            self.parser.add_option('-r', '--remove', dest='setup_id', default=None,
+                help='Remove the integration matching the provided ID value. Use --list to see ID values.')
+            self.parser.add_option('-l', '--list', dest="setup_list", action='store_true', default=False,
+                help='List all of your integrations.')
 
         # options that apply to more than one action
-        if not self.action in ("config","import","init","login"):
+        if not self.action in ("config","import","init","login","setup"):
             self.parser.add_option('-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
                 help='The path to the directory containing your roles. '
                      'The default is the roles_path configured in your '
                      'ansible.cfg file (/etc/ansible/roles if not configured)')
 
-        if self.action in ("import","info","init","install","login","search"):
+        if self.action in ("import","info","init","install","login","search","setup"):
             self.parser.add_option('-s', '--server', dest='api_server', default=self.DEFAULT_GALAXY_SERVER,
                 help='The API server destination')
             self.parser.add_option('-c', '--ignore-certs', action='store_false', dest='validate_certs', default=True,
@@ -153,7 +159,7 @@ class GalaxyCLI(CLI):
         self.config = GalaxyConfig(self.galaxy)
 
         # if not offline, get connect to galaxy api
-        if self.action in ("import","info","install","search","login") or (self.action == 'init' and not self.options.offline):
+        if self.action in ("import","info","install","search","login","setup") or (self.action == 'init' and not self.options.offline):
             # set the API server
             if self.options.api_server != self.DEFAULT_GALAXY_SERVER:
                 api_server = self.options.api_server
@@ -516,9 +522,7 @@ class GalaxyCLI(CLI):
 
     def execute_login(self):
         """
-        Performing CUD actions with the Galaxy API requires user authentication. GalaxyLogin will verify 
-        the user's identify via Github, retreive an auth token from the Galaxy API and store it in the config
-        file.
+        Verify user's identify via Github and retreive an auth token from Galaxy.
         """
         # Authenticate with github and retrieve a token
         if self.options.token is None:
@@ -542,7 +546,7 @@ class GalaxyCLI(CLI):
 
     def execute_config(self):
         """
-        Set, unset or show values in ~/.ansible_galaxy/config.yml.
+        Set, unset or show values in config.yml.
         """
 
         if (self.options.unset_true or self.options.show_true) and len(self.args) == 0:
@@ -577,7 +581,7 @@ class GalaxyCLI(CLI):
 
     def execute_import(self):
         """
-        Import a role to Galaxy
+        Import a role into Galaxy
         """
         
         colors = {
@@ -624,4 +628,35 @@ class GalaxyCLI(CLI):
                     time.sleep(10)
 
         return 0
+
+    def execute_setup(self):
+        """
+        Setup an integration from Github or Travis
+        """
+
+        if self.options.setup_list:
+            # List existing integration secrets
+            secrets = self.api.list_secrets()
+            if len(secrets) == 0:
+                # None found
+                self.display.display("No secrets found.")
+                return 0
+            self.display.display(u'\n' + "ID         Source     Secret", color="green")
+            self.display.display("---------- ---------- ----------", color="green")
+            for secret in secrets:
+                self.display.display("%-10s %-10s %s" % (secret['id'], secret['source'], secret['secret']),color="green")
+            self.display.display(u'\n' + "NOTE: only the last 4 characters of a Secret are shown." + u'\n', color="yellow")
+            return 0
+
+        if len(self.args) < 2:
+            raise AnsibleError("Expecting two arguments: source and secret.")
+
+        secret = self.args.pop()
+        source = self.args.pop()
+
+        self.api.add_secret(source, secret)
+
+        return 0
+
+
         

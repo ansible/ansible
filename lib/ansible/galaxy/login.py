@@ -76,13 +76,22 @@ class GalaxyLogin(object):
         If for some reason an ansible-galaxy token was left from a prior login, remove it. We cannot
         retrieve the token after creation, so we are forced to create a new one.
         '''
-        tokens = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
-            url_password=self.github_password, force_basic_auth=True,))
+        try:
+            tokens = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
+                url_password=self.github_password, force_basic_auth=True,))
+        except HTTPError as e:
+            res = json.load(e)
+            raise AnsibleError(res['message'])
+
         for token in tokens:
             if token['note'] == 'ansible-galaxy login':
                 self.display.vvvvv('removing token: %s' % token['token_last_eight'])
-                open_url('https://api.github.com/authorizations/%d' % token['id'], url_username=self.github_username,
-                    url_password=self.github_password, method='DELETE', force_basic_auth=True,)
+                try: 
+                    open_url('https://api.github.com/authorizations/%d' % token['id'], url_username=self.github_username,
+                        url_password=self.github_password, method='DELETE', force_basic_auth=True,)
+                except HTTPError as e:
+                    res = json.load(e)
+                    raise AnsibleError(res['message'])
 
     def create_github_token(self):
         '''
@@ -90,7 +99,12 @@ class GalaxyLogin(object):
         '''
         self.remove_github_token()
         args = json.dumps({"scopes":["public_repo"], "note":"ansible-galaxy login"})
-        data = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
-            url_password=self.github_password, force_basic_auth=True, data=args))
+        try:
+            data = json.load(open_url(self.GITHUB_AUTH, url_username=self.github_username,
+                url_password=self.github_password, force_basic_auth=True, data=args))
+        except HTTPError as e:
+            res = json.load(e)
+            raise AnsibleError(res['message'])
+
         return data['token']
 
