@@ -164,7 +164,8 @@ class Templar:
         self.block_end      = self.environment.block_end_string
         self.variable_start = self.environment.variable_start_string
         self.variable_end   = self.environment.variable_end_string
-        self._clean_regex   = re.compile(r'(?:%s[%s%s]|[%s%s]%s)' % (self.variable_start[0], self.variable_start[1], self.block_start[1], self.block_end[0], self.variable_end[0], self.variable_end[1]))
+        self._clean_regex   = re.compile(r'(?:%s|%s|%s|%s)' % (self.variable_start, self.block_start, self.block_end, self.variable_end))
+        self._no_type_regex = re.compile(r'.*\|(?:%s)\s*(?:%s)?$' % ('|'.join(C.STRING_TYPE_FILTERS), self.variable_end))
 
     def _get_filters(self):
         '''
@@ -278,8 +279,7 @@ class Templar:
         if fail_on_undefined is None:
             fail_on_undefined = self._fail_on_undefined_errors
 
-        # Don't template unsafe variables, instead drop them back down to
-        # their constituent type.
+        # Don't template unsafe variables, instead drop them back down to their constituent type.
         if hasattr(variable, '__UNSAFE__'):
             if isinstance(variable, text_type):
                 return self._clean_data(text_type(variable))
@@ -294,6 +294,7 @@ class Templar:
 
             if isinstance(variable, string_types):
                 result = variable
+
                 if self._contains_vars(variable):
 
                     # Check to see if the string we are trying to render is just referencing a single
@@ -319,7 +320,7 @@ class Templar:
                         result = self._cached_result[sha1_hash]
                     else:
                         result = self._do_template(variable, preserve_trailing_newlines=preserve_trailing_newlines, escape_backslashes=escape_backslashes, fail_on_undefined=fail_on_undefined, overrides=overrides)
-                        if convert_data:
+                        if convert_data and not self._no_type_regex.match(variable):
                             # if this looks like a dictionary or list, convert it to such using the safe_eval method
                             if (result.startswith("{") and not result.startswith(self.environment.variable_start_string)) or \
                               result.startswith("[") or result in ("True", "False"):
