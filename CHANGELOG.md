@@ -267,6 +267,7 @@ newline being stripped you can change your playbook like this:
 * openvz
 * nagios_ndo
 * proxmox
+* rudder
 * serf
 
 ####New Lookups:
