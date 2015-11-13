@@ -30,6 +30,7 @@ from ansible.plugins.connection import ConnectionBase
 #from ansible.plugins.connection.funcd import Connection as FuncdConnection
 #from ansible.plugins.connection.jail import Connection as JailConnection
 #from ansible.plugins.connection.libvirt_lxc import Connection as LibvirtLXCConnection
+from ansible.plugins.connection.lxc import Connection as LxcConnection
 from ansible.plugins.connection.local import Connection as LocalConnection
 from ansible.plugins.connection.paramiko_ssh import Connection as ParamikoConnection
 from ansible.plugins.connection.ssh import Connection as SSHConnection
@@ -88,6 +89,9 @@ class TestConnectionBaseClass(unittest.TestCase):
 #
 #    def test_libvirt_lxc_connection_module(self):
 #        self.assertIsInstance(LibvirtLXCConnection(), LibvirtLXCConnection)
+
+    def test_lxc_connection_module(self):
+        self.assertIsInstance(LxcConnection(self.play_context, self.in_stream), LxcConnection)
 
     def test_local_connection_module(self):
         self.assertIsInstance(LocalConnection(self.play_context, self.in_stream), LocalConnection)
