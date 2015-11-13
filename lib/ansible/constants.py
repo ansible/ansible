@@ -263,6 +263,7 @@ GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY
 
 # characters included in auto-generated passwords
 DEFAULT_PASSWORD_CHARS = ascii_letters + digits + ".,:-_"
+STRING_TYPE_FILTERS = get_config(p, 'jinja2', 'dont_type_filters', 'ANSIBLE_STRING_TYPE_FILTERS', ['string', 'to_json', 'to_nice_json', 'to_yaml', 'ppretty', 'json'], islist=True )
 
 # non-configurable things
 MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
