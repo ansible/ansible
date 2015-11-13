@@ -42,6 +42,7 @@ EXAMPLES = '''
 - hostname: name=web01
 '''
 
+import socket
 from distutils.version import LooseVersion
 
 # import module snippets
@@ -563,6 +564,10 @@ def main():
         hostname.set_permanent_hostname(name)
         changed = True
 
-    module.exit_json(changed=changed, name=name, ansible_facts=dict(ansible_hostname=name))
+    module.exit_json(changed=changed, name=name,
+                     ansible_facts=dict(ansible_hostname=name.split('.')[0],
+                                        ansible_nodename=name,
+                                        ansible_fqdn=socket.getfqdn(),
+                                        ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
 
 main()
