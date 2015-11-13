@@ -23,6 +23,8 @@
     state: touch
 
 - name: check that the path in the user's home dir was created
+  sudo: True
+  sudo_user: "{{ sudo_test_user }}"
   stat:
     path: "~{{ sudo_test_user }}/foo.txt"
   register: results
@@ -40,6 +42,8 @@
     dest: "~/bar.txt"
 
 - name: check that the path in the user's home dir was created
+  sudo: True
+  sudo_user: "{{ sudo_test_user }}"
   stat:
     path: "~{{ sudo_test_user }}/bar.txt"
   register: results
@@ -57,6 +61,8 @@
     dest: "~/baz.txt"
 
 - name: check that the path in the user's home dir was created
+  sudo: True
+  sudo_user: "{{ sudo_test_user }}"
   stat:
     path: "~{{ sudo_test_user }}/baz.txt"
   register: results
