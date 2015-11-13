@@ -404,6 +404,8 @@ def main():
         # tripping of things like * and @.
         decoded_name = rset.name.replace(r'\052', '*')
         decoded_name = decoded_name.replace(r'\100', '@')
+        #Need to save this changes in rset, because of comparing rset.to_xml() == wanted_rset.to_xml() in next block
+	rset.name = decoded_name
 
         if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == str(identifier_in):
             found_record = True
