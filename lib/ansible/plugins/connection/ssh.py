@@ -392,7 +392,10 @@ class Connection(ConnectionBase):
             become_error=False, become_nopasswd_error=False
         )
 
-        timeout = self._play_context.timeout
+        # select timeout should be longer than the connect timeout, otherwise
+        # they will race each other when we can't connect, and the connect
+        # timeout usually fails
+        timeout = 2 + self._play_context.timeout
         rpipes = [p.stdout, p.stderr]
         for fd in rpipes:
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
