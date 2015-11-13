@@ -414,6 +414,10 @@ class Connection(ConnectionBase):
 
             if not rfd:
                 if state <= states.index('awaiting_escalation'):
+                    # If the process has already exited, then it's not really a
+                    # timeout; we'll let the normal error handling deal with it.
+                    if p.poll() is not None:
+                        break
                     self._terminate_process(p)
                     raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, stdout))
 
