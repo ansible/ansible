@@ -75,7 +75,8 @@ class GalaxyCLI(CLI):
 
         # options specific to actions
         if self.action == "import":
-            self.parser.set_usage("usage: %prog import [options] github_user github_repo")
+            self.parser.set_usage("usage: %prog import [options] github_user github_repo" + 
+                u'\n\n' + "Import a role to galaxy.ansible.com.")
             self.parser.add_option('-a', '--alternate-name', dest='alternate_name', default='',
                 help='An alternate name for the role. Otherwise, the repo name is used.')
             self.parser.add_option('-n', '--no-wait', dest='wait', action='store_false', default=True,
@@ -120,9 +121,11 @@ class GalaxyCLI(CLI):
                 help='remove the specified key from the configuration file')
             self.parser.add_option('-s', '--show', dest='show_true', action='store_true', default=False,
                 help='show the value of the specified key')
-            self.parser.set_usage("usage: %prog config [opitons] key value")
+            self.parser.set_usage("usage: %prog config [opitons] key value" + u'\n\n' + 
+                "Set or remove keys in ~/.ansible-galaxy/config.yml.")
         elif self.action == "setup":
-            self.parser.set_usage("usage: %prog setup [options] source secret")
+            self.parser.set_usage("usage: %prog setup [options] source github_uer github_repo secret" +
+                u'\n\n' + "Create an integration or web hook from either github or travis.")
             self.parser.add_option('-r', '--remove', dest='remove_id', default=None,
                 help='Remove the integration matching the provided ID value. Use --list to see ID values.')
             self.parser.add_option('-l', '--list', dest="setup_list", action='store_true', default=False,
@@ -639,28 +642,31 @@ class GalaxyCLI(CLI):
             secrets = self.api.list_secrets()
             if len(secrets) == 0:
                 # None found
-                display.display("No secrets found.")
+                display.display("No integrations found.")
                 return 0
-            display.display(u'\n' + "ID         Source     Secret", color="green")
+            display.display(u'\n' + "ID         Source     Repo", color="green")
             display.display("---------- ---------- ----------", color="green")
             for secret in secrets:
-                display.display("%-10s %-10s %s" % (secret['id'], secret['source'], secret['secret']),color="green")
-            display.display(u'\n' + "NOTE: only the last 4 characters of a Secret are shown." + u'\n', color="yellow")
+                display.display("%-10s %-10s %s/%s" % (secret['id'], secret['source'], secret['github_user'],
+                    secret['github_repo']),color="green")
             return 0
 
         if self.options.remove_id:
             # Remove a secret
             self.api.remove_secret(self.options.remove_id)
-            display.display("Secret removed. Integrations using this secret will not longer work.", color="green")
+            display.display("Integration removed.", color="green")
             return 0
 
-        if len(self.args) < 2:
-            raise AnsibleError("Expecting two arguments: source and secret.")
+        if len(self.args) < 4:
+            raise AnsibleError("Missing one or more arguments. Expecting: source github_user github_repo secret")
 
         secret = self.args.pop()
+        github_repo = self.args.pop()
+        github_user = self.args.pop()
         source = self.args.pop()
 
-        self.api.add_secret(source, secret)
+        resp = self.api.add_secret(source, github_user, github_repo, secret)
+        self.display.display("Added integration for %s %s/%s" % (resp['source'], resp['github_user'], resp['github_repo']))
 
         return 0
 
