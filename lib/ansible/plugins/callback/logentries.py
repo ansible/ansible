@@ -64,13 +64,15 @@ import ConfigParser
 import uuid
 try:
     import certifi
+    HAS_CERTIFI = True
 except ImportError:
-    print("please do 'pip install certifi'")
+    HAS_CERTIFI = False
 
 try:
     import flatdict
+    HAS_FLATDICT = True
 except ImportError:
-    print("please do 'pip install flatdict'")
+    HAS_FLATDICT = False
 
 from ansible.plugins.callback import CallbackBase
 
@@ -194,6 +196,16 @@ class CallbackModule(CallbackBase):
 
     def __init__(self):
         super(CallbackModule, self).__init__()
+
+        if not HAS_CERTIFI:
+            self.disabled =True
+            self.display.warning('The `certifi` python module is not installed. '
+                                 'Disabling the Logentries callback plugin.')
+
+        if not HAS_FLATDICT:
+            self.disabled =True
+            self.display.warning('The `flatdict` python module is not installed. '
+                                 'Disabling the Logentries callback plugin.')
 
         config_path = os.path.abspath(os.path.dirname(__file__))
         config = ConfigParser.ConfigParser()
