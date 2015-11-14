@@ -52,6 +52,9 @@ Or create a logentries.ini config file that sites next to the plugin with the fo
 
 """
 
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import socket
 import random
@@ -188,8 +191,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_TYPE = 'notification'
     CALLBACK_NAME = 'logentries'
 
-    def __init__(self, display):
-        super(CallbackModule, self).__init__(display)
+    def __init__(self):
+        super(CallbackModule, self).__init__()
 
         config_path = os.path.abspath(os.path.dirname(__file__))
         config = ConfigParser.ConfigParser()
