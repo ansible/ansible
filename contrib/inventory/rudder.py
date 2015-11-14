@@ -152,7 +152,7 @@ class RudderInventory(object):
 
         try:
             self.inventory = json.loads(json_cache)
-        except ValueError, e:
+        except ValueError as e:
             self.fail_with_error('Could not parse JSON response from local cache', 'parsing local cache')
 
     def write_cache(self):
@@ -270,7 +270,7 @@ class RudderInventory(object):
 
         try:
             data = json.loads(content)
-        except ValueError, e:
+        except ValueError as e:
             self.fail_with_error('Could not parse JSON response from Rudder API', 'reading API response')
 
         return data
