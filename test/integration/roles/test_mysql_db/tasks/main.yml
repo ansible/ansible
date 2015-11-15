@@ -19,8 +19,9 @@
 # ============================================================
 
 - name: make sure the test database is not there
-  command: mysql "-e drop database '{{db_name}}';"
-  ignore_errors: True
+  command: mysql {{db_name}}
+  register: mysql_db_check
+  failed_when: "'1049' not in mysql_db_check.stderr"
 
 - name: test state=present for a database name (expect changed=true)
   mysql_db: name={{ db_name }} state=present
