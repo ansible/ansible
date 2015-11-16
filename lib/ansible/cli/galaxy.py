@@ -77,12 +77,12 @@ class GalaxyCLI(CLI):
         if self.action == "import":
             self.parser.set_usage("usage: %prog import [options] github_user github_repo" + 
                 u'\n\n' + "Import a role to galaxy.ansible.com.")
-            self.parser.add_option('-a', '--alternate-name', dest='alternate_name', default='',
-                help='An alternate name for the role. Otherwise, the repo name is used.')
+            #self.parser.add_option('-a', '--alternate-name', dest='alternate_name', default='',
+            #    help='An alternate name for the role. Otherwise, the repo name is used.')
             self.parser.add_option('-n', '--no-wait', dest='wait', action='store_false', default=True,
                 help='Don\'t wait for import results.')
-            self.parser.add_option('-r', '--reference', dest='reference',
-                help='The name of a commit/branch/tag. Default: the repository\'s default branch (usually master)')
+            self.parser.add_option('-b', '--branch', dest='reference',
+                help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
             self.parser.add_option('-t', '--status', dest='check_status', action='store_true', default=False,
                 help='Check the status of the most recent import request for given github_user/github_repo.')
         elif self.action == "info":
@@ -606,14 +606,24 @@ class GalaxyCLI(CLI):
         else:
             # Submit an import request
             task = self.api.create_import_task(github_user, github_repo, reference=self.options.reference,
-                alternate_name=self.options.alternate_name)
-
+                alternate_name=None)
+            
+            if len(task) > 1:
+                # found multiple roles associated with github_user/github_repo
+                display.display("WARNING: More than one Galaxy role associated with Github repo %s/%s." % (github_user,github_repo),
+                    color='yellow')
+                display.display("The following Galaxy roles are being updated:" + u'\n', color='yellow')
+                for t in task:
+                    display.display('%s.%s' % (t['summary_fields']['role']['namespace'],t['summary_fields']['role']['name']), color='yellow')
+                display.display(u'\n' + "To properly namespace this role, remove each of the above and re-import %s/%s from scratch" % (github_user,github_repo),
+                    color='yellow')
+                return 0
+            
+            # found a single role as expected
             display.display("Successfully submitted import request %d" % task['id'])
-
             if not self.options.wait:
                 display.display("Role name: %s" % task['summary_fields']['role']['name'])
                 display.display("Repo: %s/%s" % (task['github_user'],task['github_repo']))
-
 
         if self.options.check_status or self.options.wait:
             # Get the status of the import
@@ -666,7 +676,7 @@ class GalaxyCLI(CLI):
         source = self.args.pop()
 
         resp = self.api.add_secret(source, github_user, github_repo, secret)
-        self.display.display("Added integration for %s %s/%s" % (resp['source'], resp['github_user'], resp['github_repo']))
+        display.display("Added integration for %s %s/%s" % (resp['source'], resp['github_user'], resp['github_repo']))
 
         return 0
 

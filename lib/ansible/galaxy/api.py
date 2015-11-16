@@ -120,6 +120,8 @@ class GalaxyAPI(object):
             "alternate_role_name": alternate_name
         })
         data = self.__call_galaxy(url, args=args)
+        if data.get('results', None):
+            return data['results']
         return data
 
     def get_import_task(self, task_id=None, github_user=None, github_repo=None):
@@ -192,7 +194,6 @@ class GalaxyAPI(object):
         """
         Fetch the list of items specified.
         """
-
         try:
             url = '%s/%s/?page_size' % (self.baseurl, what)
             data = json.load(open_url(url, validate_certs=self.validate_certs))
@@ -244,7 +245,6 @@ class GalaxyAPI(object):
             raise AnsibleError("Unsuccessful request to server: %s" % str(e))
 
         return data
-
 
     def add_secret(self, source, github_user, github_repo, secret):
         url = "%s/notification_secrets/" % self.baseurl
