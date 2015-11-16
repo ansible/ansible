@@ -39,6 +39,7 @@ REPLACER_WINDOWS  = "# POWERSHELL_COMMON"
 REPLACER_WINARGS  = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
 REPLACER_JSONARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 REPLACER_VERSION  = "\"<<ANSIBLE_VERSION>>\""
+REPLACER_SELINUX  = "<<SELINUX_SPECIAL_FILESYSTEMS>>"
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
@@ -172,6 +173,7 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
     module_data = module_data.replace(REPLACER_COMPLEX, python_repred_args)
     module_data = module_data.replace(REPLACER_WINARGS, module_args_json)
     module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
+    module_data = module_data.replace(REPLACER_SELINUX, ','.join(C.DEFAULT_SELINUX_SPECIAL_FS))
 
     if module_style == 'new':
         facility = C.DEFAULT_SYSLOG_FACILITY
@@ -200,4 +202,3 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
     module_data = b"\n".join(lines)
 
     return (module_data, module_style, shebang)
-
