@@ -472,7 +472,7 @@ class PlayContext(Base):
                     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
 
                 prompt = detect_su_prompt
-                becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, shell, success_cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote("%s -c %s" % (shell, success_cmd)))
 
             elif self.become_method == 'pbrun':
 
@@ -482,13 +482,13 @@ class PlayContext(Base):
             elif self.become_method == 'pfexec':
 
                 # No user as it uses it's own exec_attr to figure it out
-                becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
+                becomecmd = '%s %s %s' % (exe, flags, success_cmd)
 
             elif self.become_method == 'runas':
                 raise AnsibleError("'runas' is not yet implemented")
                 #TODO: figure out prompt
                 # this is not for use with winrm plugin but if they ever get ssh native on windoez
-                becomecmd = '%s %s /user:%s "%s"' % (exe, flags, self.become_user, success_cmd)
+                becomecmd = '%s %s /user:%s %s' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'doas':
 
