@@ -359,15 +359,15 @@ class VariableManager:
                 for (group_name, group) in iteritems(self._inventory.groups):
                     variables['groups'][group_name] = [h.name for h in group.get_hosts()]
 
-                if include_hostvars:
-                    hostvars_cache_entry = self._get_cache_entry(play=play)
-                    if hostvars_cache_entry in HOSTVARS_CACHE:
-                        hostvars = HOSTVARS_CACHE[hostvars_cache_entry]
-                    else:
-                        hostvars = HostVars(play=play, inventory=self._inventory, loader=loader, variable_manager=self)
-                        HOSTVARS_CACHE[hostvars_cache_entry] = hostvars
-                    variables['hostvars'] = hostvars
-                    variables['vars'] = hostvars[host.get_name()]
+                #if include_hostvars:
+                #    hostvars_cache_entry = self._get_cache_entry(play=play)
+                #    if hostvars_cache_entry in HOSTVARS_CACHE:
+                #        hostvars = HOSTVARS_CACHE[hostvars_cache_entry]
+                #    else:
+                #        hostvars = HostVars(play=play, inventory=self._inventory, loader=loader, variable_manager=self)
+                #        HOSTVARS_CACHE[hostvars_cache_entry] = hostvars
+                #    variables['hostvars'] = hostvars
+                #    variables['vars'] = hostvars[host.get_name()]
 
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
