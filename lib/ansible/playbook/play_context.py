@@ -501,7 +501,7 @@ class PlayContext(Base):
                 if self.become_user:
                     flags += ' -u %s ' % self.become_user
 
-                becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, shell, success_cmd)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
