@@ -88,14 +88,6 @@ project:
     returned: On success when I(state) is 'present'
     type: dictionary
     contains:
-        description:
-            description: Project description
-            type: string
-            sample: "demodescription"
-        domain_id:
-            description: Project domain ID. Only present with Keystone >= v3.
-            type: string
-            sample: "default"
         id:
             description: Project ID
             type: string
@@ -104,6 +96,14 @@ project:
             description: Project name
             type: string
             sample: "demoproject"
+        description:
+            description: Project description
+            type: string
+            sample: "demodescription"
+        enabled:
+            description: Boolean to indicate if project is enabled
+            type: bool
+            sample: True
 '''
 
 def _needs_update(module, project):
