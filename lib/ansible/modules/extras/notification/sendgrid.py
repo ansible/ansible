@@ -24,33 +24,34 @@ version_added: "2.0"
 module: sendgrid
 short_description: Sends an email with the SendGrid API
 description:
-   - Sends an email with a SendGrid account through their API, not through
-     the SMTP service.
+   - "Sends an email with a SendGrid account through their API, not through
+     the SMTP service."
 notes:
-   - This module is non-idempotent because it sends an email through the
-     external API. It is idempotent only in the case that the module fails.
-   - Like the other notification modules, this one requires an external
+   - "This module is non-idempotent because it sends an email through the
+     external API. It is idempotent only in the case that the module fails."
+   - "Like the other notification modules, this one requires an external
      dependency to work. In this case, you'll need an active SendGrid
-     account.
+     account."
 options:
   username:
     description:
-      username for logging into the SendGrid account
+      - username for logging into the SendGrid account
     required: true
   password:
-    description: password that corresponds to the username
+    description: 
+      - password that corresponds to the username
     required: true
   from_address:
     description:
-      the address in the "from" field for the email
+      - the address in the "from" field for the email
     required: true
   to_addresses:
     description:
-      a list with one or more recipient email addresses
+      - a list with one or more recipient email addresses
     required: true
   subject:
     description:
-      the desired subject for the email
+      - the desired subject for the email
     required: true
 
 author: "Matt Makai (@makaimc)"
