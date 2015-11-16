@@ -425,8 +425,7 @@ class PlayContext(Base):
         success_key = None
         self.prompt = None
 
-        if executable is None:
-            executable = C.DEFAULT_EXECUTABLE
+        shell = executable or C.DEFAULT_EXECUTABLE
 
         if self.become:
 
@@ -461,9 +460,9 @@ class PlayContext(Base):
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
                     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, shell, success_cmd)
                 else:
-                    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, shell, success_cmd)
 
 
             elif self.become_method == 'su':
@@ -473,7 +472,7 @@ class PlayContext(Base):
                     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
 
                 prompt = detect_su_prompt
-                becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, executable, success_cmd)
+                becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, shell, success_cmd)
 
             elif self.become_method == 'pbrun':
 
@@ -510,7 +509,7 @@ class PlayContext(Base):
             if self.become_pass:
                 self.prompt = prompt
             self.success_key = success_key
-            return ('%s -c %s' % (executable, pipes.quote(becomecmd)))
+            return ('%s -c %s' % (shell, pipes.quote(becomecmd)))
 
         return cmd
 
