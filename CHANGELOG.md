@@ -285,6 +285,11 @@ newline being stripped you can change your playbook like this:
 
 * docker: for talking to docker containers on the ansible controller machine without using ssh.
 
+####New Callbacks:
+
+* logentries: plugin to send play data to logentries service
+* skippy: same as default but does not display skip messages
+
 ###Minor changes:
 
 * Many more tests. The new API makes things more testable and we took advantage of it.
