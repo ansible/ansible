@@ -27,6 +27,8 @@
     repo_submodule1: 'https://github.com/abadger/test_submodules_subm1.git'
     repo_submodule1_newer: 'https://github.com/abadger/test_submodules_subm1_newer.git'
     repo_submodule2: 'https://github.com/abadger/test_submodules_subm2.git'
+    repo_update_url_1: 'https://github.com/ansible-test-robinro/git-test-old'
+    repo_update_url_2: 'https://github.com/ansible-test-robinro/git-test-new'
     known_host_files:
       - "{{ lookup('env','HOME') }}/.ssh/known_hosts"
       - '/etc/ssh/ssh_known_hosts'
@@ -346,3 +348,41 @@
 
 - assert:
     that: '{{ submodule2.stdout_lines|length }} == 4'
+# test change of repo url
+# see https://github.com/ansible/ansible-modules-core/pull/721
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: Clone example git repo
+  git:
+    repo: '{{ repo_update_url_1 }}'
+    dest: '{{ checkout_dir }}'
+
+- name: Clone repo with changed url to the same place
+  git:
+    repo: '{{ repo_update_url_2 }}'
+    dest: '{{ checkout_dir }}'
+  register: clone2
+
+- assert:
+    that: "clone2|success"
+
+- name: check url updated
+  shell: git remote show origin | grep Fetch
+  register: remote_url
+  args:
+    chdir: '{{ checkout_dir }}'
+
+- assert:
+    that: 
+    - "'git-test-new' in remote_url.stdout"
+    - "'git-test-old' not in remote_url.stdout"
+
+- name: check for new content in git-test-new
+  stat: path={{ checkout_dir }}/newfilename
+  register: repo_content
+
+- name: assert presence of new file in repo (i.e. working copy updated)
+  assert:
+    that: "repo_content.stat.exists"
