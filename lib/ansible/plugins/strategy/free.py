@@ -156,13 +156,18 @@ class StrategyModule(StrategyBase):
                         display.warning(str(e))
                         continue
 
-                    for host in hosts_left:
-                        if host in included_file._hosts:
-                            task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=included_file._task)
-                            final_blocks = []
-                            for new_block in new_blocks:
-                                final_blocks.append(new_block.filter_tagged_tasks(play_context, task_vars))
-                            iterator.add_tasks(host, final_blocks)
+                    display.debug("generating all_blocks data")
+                    all_blocks = dict((host, []) for host in hosts_left)
+                    display.debug("done generating all_blocks data")
+                    for new_block in new_blocks:
+                        task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=included_file._task)
+                        final_block = new_block.filter_tagged_tasks(play_context, task_vars)
+                        for host in hosts_left:
+                            if host in included_file._hosts:
+                                all_blocks[host].append(final_block)
+
+                for host in hosts_left:
+                    iterator.add_tasks(host, all_blocks[host])
 
             # pause briefly so we don't spin lock
             time.sleep(0.05)
