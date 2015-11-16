@@ -414,6 +414,7 @@ class StrategyBase:
         Loads an included YAML file of tasks, applying the optional set of variables.
         '''
 
+        display.debug("loading included file: %s" % included_file._filename)
         try:
             data = self._loader.load_from_file(included_file._filename)
             if data is None:
@@ -474,6 +475,7 @@ class StrategyBase:
 
         # finally, send the callback and return the list of blocks loaded
         self._tqm.send_callback('v2_playbook_on_include', included_file)
+        display.debug("done processing included file")
         return block_list
 
     def run_handlers(self, iterator, play_context):
