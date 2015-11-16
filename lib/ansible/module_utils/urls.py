@@ -339,8 +339,6 @@ class CustomHTTPSHandler(urllib2.HTTPSHandler):
     def https_open(self, req):
         return self.do_open(CustomHTTPSConnection, req)
 
-    https_request = urllib2.AbstractHTTPHandler.do_request_
-
 def generic_urlparse(parts):
     '''
     Returns a dictionary of url parts as parsed by urlparse,
