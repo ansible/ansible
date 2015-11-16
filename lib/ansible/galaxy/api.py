@@ -25,8 +25,12 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import json
-from urllib2 import quote as urlquote, HTTPError
-from urlparse import urlparse
+
+from ansible.compat import six
+from ansible.compat.six.moves.urllib.parse import quote as urlquote
+from ansible.compat.six.moves.urllib.error import HTTPError
+
+from ansible.compat.six.moves.urllib.parse import urlparse
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
@@ -177,7 +181,13 @@ class GalaxyAPI(object):
 
         display.debug("Executing query: %s" % search_url)
         try:
-            data = json.load(open_url(search_url, validate_certs=self.galaxy.options.validate_certs))
+            resp = open_url(search_url, validate_certs=self.galaxy.options.validate_certs)
+            if six.PY3:
+                # assume utf-8 encoding
+                resp = str(resp.read(), encoding='utf-8')
+                data = json.loads(resp)
+            else:
+                data = json.load(resp)
         except HTTPError as e:
             raise AnsibleError("Unsuccessful request to server: %s" % str(e))
 
