@@ -158,7 +158,6 @@ class StrategyBase:
             # hostvars out of the task variables right now, due to the fact
             # that they're not JSON serializable
             compressed_vars = False
-            hostvars = task_vars.pop('hostvars', None)
             if C.DEFAULT_VAR_COMPRESSION_LEVEL > 0:
                 zip_vars = zlib.compress(json.dumps(task_vars), C.DEFAULT_VAR_COMPRESSION_LEVEL)
                 compressed_vars = True
@@ -170,10 +169,7 @@ class StrategyBase:
                 zip_vars = task_vars  # noqa (pyflakes false positive because task_vars is deleted in the conditional above)
 
             # and queue the task
-            main_q.put((host, task, self._loader.get_basedir(), zip_vars, hostvars, compressed_vars, play_context, shared_loader_obj), block=False)
-
-            # nuke the hostvars object too, as its no longer needed
-            del hostvars
+            main_q.put((host, task, self._loader.get_basedir(), zip_vars, compressed_vars, play_context, shared_loader_obj))
 
             self._pending_results += 1
         except (EOFError, IOError, AssertionError) as e:
@@ -192,7 +188,7 @@ class StrategyBase:
 
         while not self._final_q.empty() and not self._tqm._terminated:
             try:
-                result = self._final_q.get(block=False)
+                result = self._final_q.get()
                 display.debug("got result from result worker: %s" % ([text_type(x) for x in result],))
 
                 # all host status messages contain 2 entries: (msg, task_result)
@@ -277,6 +273,7 @@ class StrategyBase:
                     var_value = wrap_var(result[3])
 
                     self._variable_manager.set_nonpersistent_facts(host, {var_name: var_value})
+                    self._tqm._hostvars_manager.hostvars().set_variable_manager(self._variable_manager)
 
                 elif result[0] in ('set_host_var', 'set_host_facts'):
                     host = result[1]
@@ -307,11 +304,12 @@ class StrategyBase:
                             self._variable_manager.set_nonpersistent_facts(target_host, facts)
                         else:
                             self._variable_manager.set_host_facts(target_host, facts)
+                    self._tqm._hostvars_manager.hostvars().set_variable_manager(self._variable_manager)
 
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
             except Queue.Empty:
-                time.sleep(0.01)
+                time.sleep(0.0001)
 
         return ret_results
 
@@ -327,7 +325,7 @@ class StrategyBase:
         while self._pending_results > 0 and not self._tqm._terminated:
             results = self._process_pending_results(iterator)
             ret_results.extend(results)
-            time.sleep(0.01)
+            time.sleep(0.0001)
         display.debug("no more pending results, returning what we have")
 
         return ret_results

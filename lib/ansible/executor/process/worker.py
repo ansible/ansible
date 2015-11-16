@@ -59,11 +59,13 @@ class WorkerProcess(multiprocessing.Process):
     for reading later.
     '''
 
-    def __init__(self, tqm, main_q, rslt_q, loader):
+    def __init__(self, tqm, main_q, rslt_q, hostvars_manager, loader):
 
+        super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
         self._main_q   = main_q
         self._rslt_q   = rslt_q
+        self._hostvars = hostvars_manager
         self._loader   = loader
 
         # dupe stdin, if we have one
@@ -82,8 +84,6 @@ class WorkerProcess(multiprocessing.Process):
             # couldn't get stdin's fileno, so we just carry on
             pass
 
-        super(WorkerProcess, self).__init__()
-
     def run(self):
         '''
         Called when the process is started, and loops indefinitely
@@ -100,14 +100,15 @@ class WorkerProcess(multiprocessing.Process):
         while True:
             task = None
             try:
-                debug("waiting for a message...")
-                (host, task, basedir, zip_vars, hostvars, compressed_vars, play_context, shared_loader_obj) = self._main_q.get()
+                #debug("waiting for work")
+                (host, task, basedir, zip_vars, compressed_vars, play_context, shared_loader_obj) = self._main_q.get(block=False)
 
                 if compressed_vars:
                     job_vars = json.loads(zlib.decompress(zip_vars))
                 else:
                     job_vars = zip_vars
-                job_vars['hostvars'] = hostvars
+
+                job_vars['hostvars'] = self._hostvars.hostvars()
 
                 debug("there's work to be done! got a task/handler to work on: %s" % task)
 
@@ -142,7 +143,7 @@ class WorkerProcess(multiprocessing.Process):
                 debug("done sending task result")
 
             except queue.Empty:
-                pass
+                time.sleep(0.0001)
             except AnsibleConnectionFailure:
                 try:
                     if task:
