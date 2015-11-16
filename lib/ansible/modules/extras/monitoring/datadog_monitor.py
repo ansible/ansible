@@ -52,7 +52,7 @@ options:
         description: ["The type of the monitor."]
         required: false
         default: null
-        choices: ['metric alert', 'service check']
+        choices: ['metric alert', 'service check', 'event alert']
     query:
         description: ["The monitor query to notify on with syntax varying depending on what type of monitor you are creating."]
         required: false
@@ -139,7 +139,7 @@ def main():
             api_key=dict(required=True),
             app_key=dict(required=True),
             state=dict(required=True, choises=['present', 'absent', 'mute', 'unmute']),
-            type=dict(required=False, choises=['metric alert', 'service check']),
+            type=dict(required=False, choises=['metric alert', 'service check', 'event alert']),
             name=dict(required=True),
             query=dict(required=False),
             message=dict(required=False, default=None),
