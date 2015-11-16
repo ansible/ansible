@@ -124,7 +124,7 @@ class PlainTextSocketAppender(object):
                 return
             except Exception:
                 if self.verbose:
-                    print("Unable to connect to Logentries")
+                    self._display.warning("Unable to connect to Logentries")
 
             root_delay *= 2
             if (root_delay > self.MAX_DELAY):
@@ -163,9 +163,10 @@ class PlainTextSocketAppender(object):
 
 try:
     import ssl
+    HAS_SSL=True
 except ImportError:  # for systems without TLS support.
     SocketAppender = PlainTextSocketAppender
-    print("Unable to import ssl module. Will send over port 80.")
+    HAS_SSL=False
 else:
 
     class TLSSocketAppender(PlainTextSocketAppender):
@@ -197,14 +198,17 @@ class CallbackModule(CallbackBase):
     def __init__(self):
         super(CallbackModule, self).__init__()
 
+        if not HAS_SSL:
+            self._display.warning("Unable to import ssl module. Will send over port 80.")
+
         if not HAS_CERTIFI:
             self.disabled =True
-            self.display.warning('The `certifi` python module is not installed. '
+            self._display.warning('The `certifi` python module is not installed. '
                                  'Disabling the Logentries callback plugin.')
 
         if not HAS_FLATDICT:
             self.disabled =True
-            self.display.warning('The `flatdict` python module is not installed. '
+            self._display.warning('The `flatdict` python module is not installed. '
                                  'Disabling the Logentries callback plugin.')
 
         config_path = os.path.abspath(os.path.dirname(__file__))
@@ -253,8 +257,7 @@ class CallbackModule(CallbackBase):
             self.token = os.getenv('LOGENTRIES_ANSIBLE_TOKEN')
             if self.token is None:
                 self.disabled = True
-                self._display.warning(
-                    'Logentries token could not be loaded. The logentries token can be provided using the `LOGENTRIES_TOKEN` environment variable')
+                self._display.warning('Logentries token could not be loaded. The logentries token can be provided using the `LOGENTRIES_TOKEN` environment variable')
 
             self.flatten = os.getenv('LOGENTRIES_FLATTEN')
             if self.flatten is None:
