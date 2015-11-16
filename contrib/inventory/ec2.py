@@ -505,7 +505,7 @@ class Ec2Inventory(object):
         # that's why we need to call describe directly (it would be called by
         # the shorthand method anyway...)
         try:
-            conn = elasticache.connect_to_region(region)
+            conn = self.connect_to_aws(elasticache, region)
             if conn:
                 # show_cache_node_info = True
                 # because we also want nodes' information
@@ -541,7 +541,7 @@ class Ec2Inventory(object):
         # that's why we need to call describe directly (it would be called by
         # the shorthand method anyway...)
         try:
-            conn = elasticache.connect_to_region(region)
+            conn = self.connect_to_aws(elasticache, region)
             if conn:
                 response = conn.describe_replication_groups()
 
