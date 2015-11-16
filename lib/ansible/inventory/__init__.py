@@ -455,6 +455,8 @@ class Inventory(object):
 
     def clear_pattern_cache(self):
         ''' called exclusively by the add_host plugin to allow patterns to be recalculated '''
+        global HOSTS_PATTERNS_CACHE
+        HOSTS_PATTERNS_CACHE = {}
         self._pattern_cache = {}
 
     def groups_for_host(self, host):
