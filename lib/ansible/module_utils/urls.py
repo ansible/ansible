@@ -82,13 +82,14 @@
 # Agreement.
 
 try:
-    import urllib2
+    import ansible.compat.six.moves.urllib.request as urllib_req
+    import ansible.compat.six.moves.urllib.error as urllib_err
     HAS_URLLIB2 = True
 except:
     HAS_URLLIB2 = False
 
 try:
-    import urlparse
+    import ansible.compat.six.moves.urllib.parse as urlparse
     HAS_URLPARSE = True
 except:
     HAS_URLPARSE = False
@@ -257,7 +258,7 @@ if not HAS_MATCH_HOSTNAME:
     HAS_MATCH_HOSTNAME = True
 
 
-import httplib
+from ansible.compat.six.moves import http_client as httplib
 import os
 import re
 import sys
@@ -334,7 +335,7 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
         else:
             self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
-class CustomHTTPSHandler(urllib2.HTTPSHandler):
+class CustomHTTPSHandler(urllib_req.HTTPSHandler):
 
     def https_open(self, req):
         return self.do_open(CustomHTTPSConnection, req)
@@ -392,7 +393,7 @@ def generic_urlparse(parts):
             generic_parts['port']     = None
     return generic_parts
 
-class RequestWithMethod(urllib2.Request):
+class RequestWithMethod(urllib_req.Request):
     '''
     Workaround for using DELETE/PUT/etc with urllib2
     Originally contained in library/net_infrastructure/dnsmadeeasy
@@ -402,16 +403,16 @@ class RequestWithMethod(urllib2.Request):
         if headers is None:
             headers = {}
         self._method = method
-        urllib2.Request.__init__(self, url, data, headers)
+        urllib_req.Request.__init__(self, url, data, headers)
 
     def get_method(self):
         if self._method:
             return self._method
         else:
-            return urllib2.Request.get_method(self)
+            return urllib_req.Request.get_method(self)
 
 
-class SSLValidationHandler(urllib2.BaseHandler):
+class SSLValidationHandler(urllib_req.BaseHandler):
     '''
     A custom handler class for SSL validation.
 
@@ -556,7 +557,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
             # close the ssl connection
             #ssl_s.unwrap()
             s.close()
-        except (ssl.SSLError, socket.error), e:
+        except (ssl.SSLError, socket.error) as e:
             # fail if we tried all of the certs but none worked
             if 'connection refused' in str(e).lower():
                 raise ConnectionError('Failed to connect to %s:%s.' % (self.hostname, self.port))
@@ -635,7 +636,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             url = urlparse.urlunparse(parsed)
 
         if username and not force_basic_auth:
-            passman = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            passman = urllib_req.HTTPPasswordMgrWithDefaultRealm()
 
             # this creates a password manager
             passman.add_password(None, netloc, username, password)
@@ -643,7 +644,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             # because we have put None at the start it will always
             # use this username/password combination for  urls
             # for which `theurl` is a super-url
-            authhandler = urllib2.HTTPBasicAuthHandler(passman)
+            authhandler = urllib_req.HTTPBasicAuthHandler(passman)
 
             # create the AuthHandler
             handlers.append(authhandler)
@@ -655,7 +656,7 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
             headers["Authorization"] = "Basic %s" % base64.b64encode("%s:%s" % (username, password))
 
     if not use_proxy:
-        proxyhandler = urllib2.ProxyHandler({})
+        proxyhandler = urllib_req.ProxyHandler({})
         handlers.append(proxyhandler)
 
     # pre-2.6 versions of python cannot use the custom https
@@ -663,19 +664,20 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
     if hasattr(socket, 'create_connection'):
         handlers.append(CustomHTTPSHandler)
 
-    opener = urllib2.build_opener(*handlers)
-    urllib2.install_opener(opener)
+    opener = urllib_req.build_opener(*handlers)
+    urllib_req.install_opener(opener)
 
     if method:
         if method.upper() not in ('OPTIONS','GET','HEAD','POST','PUT','DELETE','TRACE','CONNECT','PATCH'):
             raise ConnectionError('invalid HTTP request method; %s' % method.upper())
         request = RequestWithMethod(url, method.upper(), data)
     else:
-        request = urllib2.Request(url, data)
+        request = urllib_req.Request(url, data)
 
     # add the custom agent header, to help prevent issues
     # with sites that block the default urllib agent string
-    request.add_header('User-agent', http_agent)
+    if http_agent:
+        request.add_header('User-agent', http_agent)
 
     # if we're ok with getting a 304, set the timestamp in the
     # header, otherwise make sure we don't get a cached copy
@@ -692,11 +694,15 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         for header in headers:
             request.add_header(header, headers[header])
 
-    urlopen_args = [request, None]
+    urlopen_args = {
+        'url': request,
+        'data': None
+    }
+
     if sys.version_info >= (2,6,0):
         # urlopen in python prior to 2.6.0 did not
         # have a timeout parameter
-        urlopen_args.append(timeout)
+        urlopen_args['timeout'] = timeout
 
     if HAS_SSLCONTEXT and not validate_certs:
         # In 2.7.9, the default context validates certificates
@@ -705,9 +711,9 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         context.options |= ssl.OP_NO_SSLv3
         context.verify_mode = ssl.CERT_NONE
         context.check_hostname = False
-        urlopen_args += (None, None, None, context)
+        urlopen_args['context'] = context
 
-    r = urllib2.urlopen(*urlopen_args)
+    r = urllib_req.urlopen(**urlopen_args)
     return r
 
 #
@@ -760,22 +766,22 @@ def fetch_url(module, url, data=None, headers=None, method=None,
         info.update(r.info())
         info['url'] = r.geturl()  # The URL goes in too, because of redirects.
         info.update(dict(msg="OK (%s bytes)" % r.headers.get('Content-Length', 'unknown'), status=200))
-    except NoSSLError, e:
+    except NoSSLError as e:
         distribution = get_distribution()
         if distribution.lower() == 'redhat':
             module.fail_json(msg='%s. You can also install python-ssl from EPEL' % str(e))
         else:
             module.fail_json(msg='%s' % str(e))
-    except (ConnectionError, ValueError), e:
+    except (ConnectionError, ValueError) as e:
         module.fail_json(msg=str(e))
-    except urllib2.HTTPError, e:
+    except urllib_err.HTTPError as e:
         info.update(dict(msg=str(e), status=e.code))
-    except urllib2.URLError, e:
+    except urllib_err.URLError as e:
         code = int(getattr(e, 'code', -1))
         info.update(dict(msg="Request failed: %s" % str(e), status=code))
-    except socket.error, e:
+    except socket.error as e:
         info.update(dict(msg="Connection failure: %s" % str(e), status=-1))
-    except Exception, e:
+    except Exception as e:
         info.update(dict(msg="An unknown error occurred: %s" % str(e), status=-1))
 
     return r, info
