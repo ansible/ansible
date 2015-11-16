@@ -77,7 +77,7 @@ class HostVars(collections.Mapping):
     def __getitem__(self, host_name):
 
         if host_name not in self._lookup:
-            return j2undefined
+            return j2undefined()
 
         host = self._lookup.get(host_name)
         data = self._variable_manager.get_vars(loader=self._loader, host=host, play=self._play, include_hostvars=False)
