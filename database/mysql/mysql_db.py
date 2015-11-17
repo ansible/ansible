@@ -68,7 +68,7 @@ options:
     choices: [ "present", "absent", "dump", "import" ]
   collation:
     description:
-      - Collation mode
+      - Collation mode (sorting). This only applies to new table/databases and does not update existing ones, this is a limitation of MySQL.
     required: false
     default: null
   encoding:
@@ -79,7 +79,7 @@ options:
   target:
     description:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
-        files (C(.sql)) as well as bzip2 (C(.bz2)), gzip (C(.gz)) and xz compressed files are supported.
+        files (C(.sql)) as well as bzip2 (C(.bz2)), gzip (C(.gz)) and xz (Added in 2.0) compressed files are supported.
     required: false
 notes:
    - Requires the MySQLdb Python package on the remote host. For Ubuntu, this

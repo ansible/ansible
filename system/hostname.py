@@ -42,6 +42,7 @@ EXAMPLES = '''
 - hostname: name=web01
 '''
 
+import socket
 from distutils.version import LooseVersion
 
 # import module snippets
@@ -481,6 +482,15 @@ class ScientificLinuxHostname(Hostname):
     else:
         strategy_class = RedHatStrategy
 
+class OracleLinuxHostname(Hostname):
+    platform = 'Linux'
+    distribution = 'Oracle linux server'
+    distribution_version = get_distribution_version()
+    if distribution_version and LooseVersion(distribution_version) >= LooseVersion("7"):
+        strategy_class = SystemdStrategy
+    else:
+        strategy_class = RedHatStrategy
+
 class AmazonLinuxHostname(Hostname):
     platform = 'Linux'
     distribution = 'Amazon'
@@ -554,6 +564,10 @@ def main():
         hostname.set_permanent_hostname(name)
         changed = True
 
-    module.exit_json(changed=changed, name=name, ansible_facts=dict(ansible_hostname=name))
+    module.exit_json(changed=changed, name=name,
+                     ansible_facts=dict(ansible_hostname=name.split('.')[0],
+                                        ansible_nodename=name,
+                                        ansible_fqdn=socket.getfqdn(),
+                                        ansible_domain='.'.join(socket.getfqdn().split('.')[1:])))
 
 main()

@@ -122,10 +122,10 @@ def main():
     argument_spec = openstack_full_argument_spec(
         server=dict(required=True),
         state=dict(default='present', choices=['absent', 'present']),
-        network=dict(required=False),
-        floating_ip_address=dict(required=False),
+        network=dict(required=False, default=None),
+        floating_ip_address=dict(required=False, default=None),
         reuse=dict(required=False, type='bool', default=False),
-        fixed_address=dict(required=False),
+        fixed_address=dict(required=False, default=None),
         wait=dict(required=False, type='bool', default=False),
         timeout=dict(required=False, type='int', default=60),
     )
@@ -154,23 +154,12 @@ def main():
                 msg="server {0} not found".format(server_name_or_id))
 
         if state == 'present':
-            if floating_ip_address is None:
-                if reuse:
-                    f_ip = cloud.available_floating_ip(network=network)
-                else:
-                    f_ip = cloud.create_floating_ip(network=network)
-            else:
-                f_ip = _get_floating_ip(cloud, floating_ip_address)
-                if f_ip is None:
-                    module.fail_json(
-                        msg="floating IP {0} not found".format(
-                            floating_ip_address))
-
-            cloud.attach_ip_to_server(
-                server_id=server['id'], floating_ip_id=f_ip['id'],
+            cloud.add_ips_to_server(
+                server=server, ips=floating_ip_address, reuse=reuse,
                 fixed_address=fixed_address, wait=wait, timeout=timeout)
+            fip_address = cloud.get_server_public_ip(server)
             # Update the floating IP status
-            f_ip = cloud.get_floating_ip(id=f_ip['id'])
+            f_ip = _get_floating_ip(cloud, fip_address)
             module.exit_json(changed=True, floating_ip=f_ip)
 
         elif state == 'absent':
