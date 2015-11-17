@@ -101,13 +101,14 @@ class VariableManager:
 
     def __getstate__(self):
         data = dict(
-            fact_cache = self._fact_cache.copy(),
-            np_fact_cache = self._nonpersistent_fact_cache.copy(),
-            vars_cache = self._vars_cache.copy(),
-            extra_vars = self._extra_vars.copy(),
-            host_vars_files = self._host_vars_files.copy(),
-            group_vars_files = self._group_vars_files.copy(),
+            fact_cache = self._fact_cache,
+            np_fact_cache = self._nonpersistent_fact_cache,
+            vars_cache = self._vars_cache,
+            extra_vars = self._extra_vars,
+            host_vars_files = self._host_vars_files,
+            group_vars_files = self._group_vars_files,
             omit_token = self._omit_token,
+            #inventory = self._inventory,
         )
         return data
 
@@ -257,6 +258,8 @@ class VariableManager:
                 all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
+
+        all_vars['vars'] = all_vars.copy()
 
         if play:
             all_vars = combine_vars(all_vars, play.get_vars())
