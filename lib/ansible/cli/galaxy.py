@@ -618,8 +618,8 @@ class GalaxyCLI(CLI):
                 display.display(u'\n' + "To properly namespace this role, remove each of the above and re-import %s/%s from scratch" % (github_user,github_repo),
                     color='yellow')
                 return 0
-            
             # found a single role as expected
+            task = task[0]
             display.display("Successfully submitted import request %d" % task['id'])
             if not self.options.wait:
                 display.display("Role name: %s" % task['summary_fields']['role']['name'])
@@ -630,7 +630,7 @@ class GalaxyCLI(CLI):
             msg_list = []
             finished = False
             while not finished:
-                task = self.api.get_import_task(task_id=task['id'])
+                task = self.api.get_import_task(task_id=task['id'])[0]
                 for msg in task['summary_fields']['task_messages']:
                     if msg['id'] not in msg_list:
                         display.display(msg['message_text'], color=colors[msg['message_type']])

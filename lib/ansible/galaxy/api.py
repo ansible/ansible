@@ -138,8 +138,7 @@ class GalaxyAPI(object):
             raise AnsibleError("Expected task_id or github_user and github_repo")
         
         data = self.__call_galaxy(url)
-        
-        return data['results'][0]
+        return data['results']
 
        
     def lookup_role_by_name(self, role_name, notify=True):
