@@ -24,9 +24,8 @@ author: "Dag Wieers (@dagwieers)"
 module: set_fact
 short_description: Set host facts from a task
 description:
-     - This module allows setting new variables.  Variables are set on a host-by-host basis
-       just like facts discovered by the setup module.
-     - These variables will survive between plays.
+     - This module allows setting new variables.  Variables are set on a host-by-host basis just like facts discovered by the setup module.
+     - These variables will survive between plays during an Ansible run, but will not be saved across executions even if you use a fact cache.
 options:
   key_value:
     description:
