@@ -70,23 +70,14 @@ class HostVars(collections.Mapping):
 
         data = self._variable_manager.get_vars(loader=self._loader, host=host, play=self._play, include_hostvars=False)
 
-        #****************************************************
-        # TESTING REMOVAL OF THIS
-        #****************************************************
-        # Since we template much later now in 2.0, it may be completely unrequired to do
-        # a full template of the vars returned above, which is quite costly in time when
-        # the result is large.
-        # Using cache in order to avoid template call
-        #sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
-        #if sha1_hash in self._cached_result:
-        #    result = self._cached_result[sha1_hash]
-        #else:
-        #    templar = Templar(variables=data, loader=self._loader)
-        #    result = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
-        #    self._cached_result[sha1_hash] = result
-        #return result
-        #****************************************************
-        return data
+        sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
+        if sha1_hash in self._cached_result:
+            result = self._cached_result[sha1_hash]
+        else:
+            templar = Templar(variables=data, loader=self._loader)
+            result = templar.template(data, fail_on_undefined=False, static_vars=STATIC_VARS)
+            self._cached_result[sha1_hash] = result
+        return result
 
     def __contains__(self, host_name):
         return self._find_host(host_name) is not None
