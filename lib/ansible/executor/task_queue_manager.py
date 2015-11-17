@@ -198,11 +198,13 @@ class TaskQueueManager:
             'hostvars',
             callable=lambda: hostvars,
             # FIXME: this is the list of exposed methods to the DictProxy object, plus our
-            #        one special one (set_variable_manager). There's probably a better way
+            #        special ones (set_variable_manager/set_inventory). There's probably a better way
             #        to do this with a proper BaseProxy/DictProxy derivative
-            exposed=('set_variable_manager', '__contains__', '__delitem__', '__getitem__',
-                     '__len__', '__setitem__', 'clear', 'copy', 'get', 'has_key', 'items',
-                     'keys', 'pop', 'popitem', 'setdefault', 'update', 'values'),
+            exposed=(
+                'set_variable_manager', 'set_inventory', '__contains__', '__delitem__',
+                '__getitem__', '__len__', '__setitem__', 'clear', 'copy', 'get', 'has_key',
+                'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values'
+            ),
         )
         self._hostvars_manager = HostVarsManager()
         self._hostvars_manager.start()

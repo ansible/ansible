@@ -57,13 +57,16 @@ class HostVars(collections.Mapping):
     def set_variable_manager(self, variable_manager):
         self._variable_manager = variable_manager
 
+    def set_inventory(self, inventory):
+        self._inventory = inventory
+
     def _find_host(self, host_name):
         return self._inventory.get_host(host_name)
 
     def __getitem__(self, host_name):
         host = self._find_host(host_name)
         if host is None:
-            return j2undefined
+            raise j2undefined
 
         data = self._variable_manager.get_vars(loader=self._loader, host=host, play=self._play, include_hostvars=False)
 

@@ -119,7 +119,7 @@ class VariableManager:
         self._host_vars_files = data.get('host_vars_files', defaultdict(dict))
         self._group_vars_files = data.get('group_vars_files', defaultdict(dict))
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
-        self._inventory = None
+        self._inventory = data.get('inventory', None)
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
