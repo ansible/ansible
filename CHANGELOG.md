@@ -174,6 +174,7 @@ newline being stripped you can change your playbook like this:
 * openstack: os_nova_flavor
 * openstack: os_object
 * openstack: os_port
+* openstack: os_project
 * openstack: os_router
 * openstack: os_security_group
 * openstack: os_security_group_rule
