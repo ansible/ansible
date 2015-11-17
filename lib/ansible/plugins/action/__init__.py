@@ -160,6 +160,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # these environment settings should not need to merge sub-dicts
                 final_environment.update(environment)
 
+        final_environment = self._templar.template(final_environment)
         return self._connection._shell.env_prefix(**final_environment)
 
     def _early_needs_tmp_path(self):
