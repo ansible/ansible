@@ -246,11 +246,13 @@ class StrategyBase:
                     new_host_info = result_item.get('add_host', dict())
 
                     self._add_host(new_host_info, iterator)
+                    self._tqm._hostvars_manager.hostvars().set_inventory(self._inventory)
 
                 elif result[0] == 'add_group':
                     host = result[1]
                     result_item = result[2]
                     self._add_group(host, result_item)
+                    self._tqm._hostvars_manager.hostvars().set_inventory(self._inventory)
 
                 elif result[0] == 'notify_handler':
                     task_result  = result[1]
