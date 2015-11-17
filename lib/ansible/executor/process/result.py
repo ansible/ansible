@@ -142,8 +142,6 @@ class ResultProcess(multiprocessing.Process):
                                 # notifies all other threads
                                 for notify in result_item['_ansible_notify']:
                                     self._send_result(('notify_handler', result, notify))
-                            # now remove the notify field from the results, as its no longer needed
-                            result_item.pop('_ansible_notify')
 
                         if 'add_host' in result_item:
                             # this task added a new host (add_host module)
