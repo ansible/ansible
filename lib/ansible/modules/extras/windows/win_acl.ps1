@@ -94,7 +94,7 @@ $path = Get-Attr $params "path" -failifempty $true
 $user = Get-Attr $params "user" -failifempty $true
 $rights = Get-Attr $params "rights" -failifempty $true
 
-$type = Get-Attr $params "type" -validateSet "allow","deny" -resultobj $result
+$type = Get-Attr $params "type" -failifempty $true -validateSet "allow","deny" -resultobj $result
 $state = Get-Attr $params "state" "present" -validateSet "present","absent" -resultobj $result
 
 $inherit = Get-Attr $params "inherit" ""
