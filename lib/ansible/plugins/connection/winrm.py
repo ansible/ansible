@@ -46,6 +46,7 @@ from ansible.errors import AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import makedirs_safe
 from ansible.utils.unicode import to_bytes, to_unicode, to_str
+from ansible.utils.vars import combine_vars
 
 try:
     from __main__ import display
@@ -81,7 +82,7 @@ class Connection(ConnectionBase):
         '''
         Override WinRM-specific options from host variables.
         '''
-        host_vars = host.get_vars()
+        host_vars = combine_vars(host.get_group_vars(), host.get_vars())
 
         self._winrm_host = self._play_context.remote_addr
         self._winrm_port = int(self._play_context.port or 5986)
@@ -96,10 +97,12 @@ class Connection(ConnectionBase):
             self._winrm_realm = None
         self._winrm_realm = host_vars.get('ansible_winrm_realm', self._winrm_realm) or None
 
+        transport_selector = 'ssl' if self._winrm_scheme == 'https' else 'plaintext'
+
         if HAVE_KERBEROS and ('@' in self._winrm_user or self._winrm_realm):
-            self._winrm_transport = 'kerberos,plaintext'
+            self._winrm_transport = 'kerberos,%s' % transport_selector
         else:
-            self._winrm_transport = 'plaintext'
+            self._winrm_transport = transport_selector
         self._winrm_transport = host_vars.get('ansible_winrm_transport', self._winrm_transport)
         if isinstance(self._winrm_transport, basestring):
             self._winrm_transport = [x.strip() for x in self._winrm_transport.split(',') if x.strip()]
