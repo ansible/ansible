@@ -17,7 +17,6 @@
 
 try:
     import shade
-    from shade import meta
     HAS_SHADE = True
 except ImportError:
     HAS_SHADE = False
@@ -28,6 +27,7 @@ module: os_user_group
 short_description: Associate OpenStack Identity users and groups
 extends_documentation_fragment: openstack
 version_added: "2.0"
+author: "Monty Taylor (@emonty)"
 description:
     - Add and remove users from groups
 options:
@@ -51,57 +51,66 @@ requirements:
 
 EXAMPLES = '''
 # Add the demo user to the demo group
-- os_user_group: user=demo group=demo
+- os_user_group:
+  cloud: mycloud
+  user: demo
+  group: demo
 '''
 
 
-def main():
+def _system_state_change(state, in_group):
+    if state == 'present' and not in_group:
+        return True
+    if state == 'absent' and in_group:
+        return True
+    return False
 
+def main():
     argument_spec = openstack_full_argument_spec(
-    argument_spec = dict(
         user=dict(required=True),
         group=dict(required=True),
         state=dict(default='present', choices=['absent', 'present']),
-    ))
+    )
 
     module_kwargs = openstack_module_kwargs()
-    module = AnsibleModule(argument_spec, **module_kwargs)
+    module = AnsibleModule(argument_spec,
+                           supports_check_mode=True,
+                           **module_kwargs)
 
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
 
-    user = module.params.pop('user')
-    group = module.params.pop('group')
-    state = module.params.pop('state')
+    user = module.params['user']
+    group = module.params['group']
+    state = module.params['state']
 
     try:
-        cloud = shade.openstack_cloud(**module.params)
+        cloud = shade.operator_cloud(**module.params)
 
         in_group = cloud.is_user_in_group(user, group)
 
-        if state == 'present':
+        if module.check_mode:
+            module.exit_json(changed=_system_state_change(state, in_group))
 
-            if in_group:
-                changed = False
-            else:
-                cloud.add_user_to_group(
-                    user_name_or_id=user, group_name_or_id=group)
+        changed = False
+        if state == 'present':
+            if not in_group:
+                cloud.add_user_to_group(user, group)
                 changed = True
+
         elif state == 'absent':
             if in_group:
-                cloud.remove_user_from_group(
-                    user_name_or_id=user, group_name_or_id=group)
+                cloud.remove_user_from_group(user, group)
                 changed=True
-            else:
-                changed=False
+
         module.exit_json(changed=changed)
 
     except shade.OpenStackCloudException as e:
         module.fail_json(msg=e.message, extra_data=e.extra_data)
 
+
 from ansible.module_utils.basic import *
 from ansible.module_utils.openstack import *
-
 
 if __name__ == '__main__':
     main()
