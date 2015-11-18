@@ -74,7 +74,12 @@ options:
     required: false
     version_added: 1.9
     default: null
-    aliases: []
+  alias_evaluate_target_health:
+    description:
+      - Whether or not to evaluate an alias target health. Useful for aliases to Elastic Load Balancers.
+    required: false
+    version_added: "2.0"
+    default: false
   value:
     description:
       - The new value when creating a DNS record.  Multiple comma-spaced values are allowed for non-alias records.  When deleting a record all values for the record must be specified or Route53 will not delete it.
@@ -145,7 +150,9 @@ options:
     required: false
     default: null
     version_added: "2.0"
-author: "Bruce Pennypacker (@bpennypacker)"
+author: 
+  - "Bruce Pennypacker (@bpennypacker)"
+  - "Mike Buzzetti <mike.buzzetti@gmail.com>"
 extends_documentation_fragment: aws
 '''
 
@@ -208,7 +215,19 @@ EXAMPLES = '''
       alias=True
       alias_hosted_zone_id="{{ elb_zone_id }}"
 
-# Use a routing policy to distribute traffic:
+# Add an alias record that points to an Amazon ELB and evaluates it health:
+- route53:
+      command=create
+      zone=foo.com
+      record=elb.foo.com
+      type=A
+      value="{{ elb_dns_name }}"
+      alias=True
+      alias_hosted_zone_id="{{ elb_zone_id }}"
+      alias_evaluate_target_health=True
+
+# Add an AAAA record with Hosted Zone ID.  Note that because there are colons in the value
+# that the entire parameter list must be quoted:
 - route53:
       command: "create"
       zone: "foo.com"
@@ -285,24 +304,25 @@ def commit(changes, retry_interval):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            command              = dict(choices=['get', 'create', 'delete'], required=True),
-            zone                 = dict(required=True),
-            hosted_zone_id       = dict(required=False, default=None),
-            record               = dict(required=True),
-            ttl                  = dict(required=False, default=3600),
-            type                 = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
-            alias                = dict(required=False, type='bool'),
-            alias_hosted_zone_id = dict(required=False),
-            value                = dict(required=False),
-            overwrite            = dict(required=False, type='bool'),
-            retry_interval       = dict(required=False, default=500)
-            private_zone         = dict(required=False, type='bool', default=False),
-            identifier           = dict(required=False, default=None),
-            weight               = dict(required=False, type='int'),
-            region               = dict(required=False),
-            health_check         = dict(required=False),
-            failover             = dict(required=False),
-            vpc_id               = dict(required=False),
+            command                      = dict(choices=['get', 'create', 'delete'], required=True),
+            zone                         = dict(required=True),
+            hosted_zone_id               = dict(required=False, default=None),
+            record                       = dict(required=True),
+            ttl                          = dict(required=False, type='int', default=3600),
+            type                         = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
+            alias                        = dict(required=False, type='bool'),
+            alias_hosted_zone_id         = dict(required=False),
+            alias_evaluate_target_health = dict(required=False, type='bool', default=False),
+            value                        = dict(required=False),
+            overwrite                    = dict(required=False, type='bool'),
+            retry_interval               = dict(required=False, default=500),
+            private_zone                 = dict(required=False, type='bool', default=False),
+            identifier                   = dict(required=False, default=None),
+            weight                       = dict(required=False, type='int'),
+            region                       = dict(required=False),
+            health_check                 = dict(required=False),
+            failover                    = dict(required=False),
+            vpc_id                      = dict(required=False),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -310,22 +330,24 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    command_in              = module.params.get('command')
-    zone_in                 = module.params.get('zone').lower()
-    hosted_zone_id_in       = module.params.get('hosted_zone_id')
-    ttl_in                  = int(module.params.get('ttl'))
-    record_in               = module.params.get('record').lower()
-    type_in                 = module.params.get('type')
-    value_in                = module.params.get('value')
-    alias_hosted_zone_id_in = module.params.get('alias_hosted_zone_id')
-    retry_interval_in       = module.params.get('retry_interval')
-    private_zone_in         = module.params.get('private_zone')
-    identifier_in           = module.params.get('identifier')
-    weight_in               = module.params.get('weight')
-    region_in               = module.params.get('region')
-    health_check_in         = module.params.get('health_check')
-    failover_in             = module.params.get('failover')
-    vpc_id_in               = module.params.get('vpc_id')
+    command_in                      = module.params.get('command')
+    zone_in                         = module.params.get('zone').lower()
+    hosted_zone_id_in               = module.params.get('hosted_zone_id')
+    ttl_in                          = module.params.get('ttl')
+    record_in                       = module.params.get('record').lower()
+    type_in                         = module.params.get('type')
+    value_in                        = module.params.get('value')
+    alias_in                        = module.params.get('alias')
+    alias_hosted_zone_id_in         = module.params.get('alias_hosted_zone_id')
+    alias_evaluate_target_health_in = module.params.get('alias_evaluate_target_health')
+    retry_interval_in               = module.params.get('retry_interval')
+    private_zone_in                 = module.params.get('private_zone')
+    identifier_in                   = module.params.get('identifier')
+    weight_in                       = module.params.get('weight')
+    region_in                       = module.params.get('region')
+    health_check_in                 = module.params.get('health_check')
+    failover_in                     = module.params.get('failover')
+    vpc_id_in                       = module.params.get('vpc_id')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -394,7 +416,7 @@ def main():
         health_check=health_check_in, failover=failover_in)
     for v in value_list:
         if alias_in:
-            wanted_rset.set_alias(alias_hosted_zone_id_in, v)
+            wanted_rset.set_alias(alias_hosted_zone_id_in, v, alias_evaluate_target_health_in)
         else:
             wanted_rset.add_value(v)
 
@@ -405,7 +427,7 @@ def main():
         decoded_name = rset.name.replace(r'\052', '*')
         decoded_name = decoded_name.replace(r'\100', '@')
         #Need to save this changes in rset, because of comparing rset.to_xml() == wanted_rset.to_xml() in next block
-	rset.name = decoded_name
+        rset.name = decoded_name
 
         if rset.type == type_in and decoded_name.lower() == record_in.lower() and str(rset.identifier) == str(identifier_in):
             found_record = True
@@ -427,6 +449,7 @@ def main():
               record['value'] = rset.alias_dns_name
               record['values'] = [rset.alias_dns_name]
               record['alias_hosted_zone_id'] = rset.alias_hosted_zone_id
+              record['alias_evaluate_target_health'] = rset.alias_evaluate_target_health
             else:
               record['alias'] = False
               record['value'] = ','.join(sorted(rset.resource_records))
