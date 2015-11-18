@@ -26,7 +26,7 @@ Installing on the Control Machine
 
 On a Linux control machine::
 
-   pip install https://github.com/diyan/pywinrm/archive/master.zip#egg=pywinrm
+   pip install "pywinrm>=0.1.1"
 
 Active Directory Support
 ++++++++++++++++++++++++
