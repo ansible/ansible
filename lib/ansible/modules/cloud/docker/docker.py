@@ -309,7 +309,7 @@ options:
   restart_policy:
     description:
       - Container restart policy.
-    choices: ["no", "on-failure", "always"]
+    choices: ["no", "on-failure", "always", "unless-stopped"]
     default: null
     version_added: "1.9"
   restart_policy_retry:
@@ -1775,7 +1775,7 @@ def main():
             detach          = dict(default=True, type='bool'),
             state           = dict(default='started', choices=['present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent', 'running']),
             signal          = dict(default=None),
-            restart_policy  = dict(default=None, choices=['always', 'on-failure', 'no']),
+            restart_policy  = dict(default=None, choices=['always', 'on-failure', 'no', 'unless-stopped']),
             restart_policy_retry = dict(default=0, type='int'),
             extra_hosts     = dict(type='dict'),
             debug           = dict(default=False, type='bool'),
