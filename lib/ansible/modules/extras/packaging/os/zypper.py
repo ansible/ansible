@@ -144,7 +144,7 @@ def get_package_state(m, packages):
             package = packages[i]
             if not os.path.isfile(package) and not '://' in package:
                 stderr = "No Package file matching '%s' found on system" % package
-                m.fail_json(msg=stderr)
+                m.fail_json(msg=stderr, rc=1)
             # Get packagename from rpm file
             cmd = ['/bin/rpm', '--query', '--qf', '%{NAME}', '--package']
             cmd.append(package)
@@ -311,11 +311,12 @@ def main():
 
     if rc != 0:
         if stderr:
-            module.fail_json(msg=stderr)
+            module.fail_json(msg=stderr, rc=rc)
         else:
-            module.fail_json(msg=stdout)
+            module.fail_json(msg=stdout, rc=rc)
 
     result['changed'] = changed
+    result['rc'] = rc
 
     module.exit_json(**result)
 
