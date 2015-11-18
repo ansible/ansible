@@ -253,10 +253,10 @@ def set_snat(api,name,snat):
         current_state=get_snat_type(api,name)
         if snat is None:
             return updated
-        if snat == 'None' and current_state != 'SRC_TRANS_NONE':
+        elif snat == 'None' and current_state != 'SRC_TRANS_NONE':
             api.LocalLB.VirtualServer.set_source_address_translation_none(virtual_servers = [name])
             updated = True
-        if snat == 'Automap' and current_state != 'SRC_TRANS_AUTOMAP':
+        elif snat == 'Automap' and current_state != 'SRC_TRANS_AUTOMAP':
             api.LocalLB.VirtualServer.set_source_address_translation_automap(virtual_servers = [name])
             updated = True
         return updated
@@ -386,21 +386,21 @@ def main():
         result = {'changed': False}  # default
 
         if state == 'absent':
-                if not module.check_mode:
-                    if vs_exists(api,name):
-                        # hack to handle concurrent runs of module
-                        # pool might be gone before we actually remove
-                        try:
-                            vs_remove(api,name)
-                            result = {'changed' : True, 'deleted' : name }
-                        except bigsuds.OperationFailed, e:
-                            if "was not found" in str(e):
-                                result['changed']= False
-                            else:
-                                raise
-                else:
-                    # check-mode return value
-                    result = {'changed': True}
+            if not module.check_mode:
+                if vs_exists(api,name):
+                    # hack to handle concurrent runs of module
+                    # pool might be gone before we actually remove
+                    try:
+                        vs_remove(api,name)
+                        result = {'changed' : True, 'deleted' : name }
+                    except bigsuds.OperationFailed, e:
+                        if "was not found" in str(e):
+                            result['changed']= False
+                        else:
+                            raise
+            else:
+                # check-mode return value
+                result = {'changed': True}
 
         elif state == 'present':
             update = False
@@ -409,8 +409,8 @@ def main():
                     module.fail_json(msg="both destination and port must be supplied to create a VS")
                 if not module.check_mode:
                     # a bit of a hack to handle concurrent runs of this module.
-                    # even though we've checked the pool doesn't exist,
-                    # it may exist by the time we run create_pool().
+                    # even though we've checked the virtual_server doesn't exist,
+                    # it may exist by the time we run virtual_server().
                     # this catches the exception and does something smart
                     # about it!
                     try:
@@ -421,7 +421,7 @@ def main():
                         set_default_persistence_profiles(api,name,default_persistence_profile)
                         result = {'changed': True}
                     except bigsuds.OperationFailed, e:
-                            raise Exception('Error on creating Virtual Server : %s' % e)
+                        raise Exception('Error on creating Virtual Server : %s' % e)
                 else:
                     # check-mode return value
                     result = {'changed': True}
