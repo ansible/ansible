@@ -196,7 +196,7 @@ def main():
             error=True, stdout=stdout, stderr=stderr)
     elif rc == 2:
         # success with changes
-        module.exit_json(rc=0, changed=True)
+        module.exit_json(rc=0, changed=True, stdout=stdout, stderr=stderr)
     elif rc == 124:
         # timeout
         module.exit_json(
