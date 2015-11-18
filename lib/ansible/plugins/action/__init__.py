@@ -506,7 +506,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         display.debug("executing the command %s through the connection" % cmd)
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        display.debug("command execution done")
+        display.debug("command execution done: rc=%s" % (rc))
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
@@ -524,6 +524,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             err = stderr
 
+        display.debug("stdout=%s, stderr=%s" % (stdout, stderr))
         display.debug("done with _low_level_execute_command() (%s)" % (cmd,))
         if rc is None:
             rc = 0
