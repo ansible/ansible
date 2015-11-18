@@ -310,7 +310,7 @@ def main():
                 if rc != 0:
                     module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
             if remote_src:
-                tmpdest = tempfile.mkstemp(dir=os.basedir(dest))
+                _, tmpdest = tempfile.mkstemp(dir=os.path.dirname(dest))
                 shutil.copy2(src, tmpdest)
                 module.atomic_move(tmpdest, dest)
             else:
