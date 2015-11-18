@@ -186,7 +186,7 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
       # Role doesn't exist so it's safe to assume the policy doesn't either
       module.exit_json(changed=False)
     else:
-      module.fail_json(e.message)
+      module.fail_json(msg=e.message)
       
   try:    
     for pol in current_policies:
