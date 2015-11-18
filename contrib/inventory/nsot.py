@@ -148,9 +148,6 @@ from pynsot.client import get_api_client
 from pynsot.app import HttpServerError
 from click.exceptions import UsageError
 
-# Version source of truth is in setup.py
-__version__ = pkg_resources.require('ansible_nsot')[0].version
-
 
 def warning(*objs):
         print("WARNING: ", *objs, file=sys.stderr)
@@ -299,7 +296,6 @@ def parse_args():
     # Establish parser with options and error out if no action provided
     parser = argparse.ArgumentParser(
         description=desc,
-        version=__version__,
         conflict_handler='resolve',
     )
 
