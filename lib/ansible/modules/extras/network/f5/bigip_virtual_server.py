@@ -64,9 +64,13 @@ options:
         version_added: 2.0
     state:
         description:
-            - Pool member state
-        required: true
+            - Virtual Server state
+        required: false
         default: present
+        description:
+            - Absent : delete the VS if present
+            - present (and its synonym enabled) : create if needed the VS and set state to enabled
+            - absent : create if needed the VS and set state to disabled
         choices: ['present', 'absent', 'enabled', 'disabled']
         aliases: []
     partition:
@@ -308,7 +312,22 @@ def set_port(api,name,port):
     except bigsuds.OperationFailed, e:
         raise Exception('Error on setting port : %s'% e )
 
+def get_state(api,name):
+    return api.LocalLB.VirtualServer.get_enabled_state(virtual_servers = [name])[0]
 
+def set_state(api,name,state):
+    updated=False
+    try:
+        current_state=get_state(api,name)
+        # We consider that being present is equivalent to enabled
+        if state == 'present':
+            state='enabled'
+        if STATES[state] != current_state:
+            api.LocalLB.VirtualServer.set_enabled_state(virtual_servers=[name],states=[STATES[state]])
+            updated=True
+        return updated
+    except bigsuds.OperationFailed, e:
+        raise Exception('Error on setting state : %s'% e )
 
 def get_description(api,name):
     return api.LocalLB.VirtualServer.get_description(virtual_servers = [name])[0]
@@ -402,7 +421,7 @@ def main():
                 # check-mode return value
                 result = {'changed': True}
 
-        elif state == 'present':
+        else:
             update = False
             if not vs_exists(api, name):
                 if (not destination) or (not port):
@@ -419,6 +438,7 @@ def main():
                         set_snat(api,name,snat)
                         set_description(api,name,description)
                         set_default_persistence_profiles(api,name,default_persistence_profile)
+                        set_state(api,name,state)
                         result = {'changed': True}
                     except bigsuds.OperationFailed, e:
                         raise Exception('Error on creating Virtual Server : %s' % e)
@@ -440,22 +460,13 @@ def main():
                         result['changed']|=set_snat(api,name,snat)
                         result['changed']|=set_profiles(api,name,all_profiles)
                         result['changed']|=set_default_persistence_profiles(api,name,default_persistence_profile)
+                        result['changed']|=set_state(api,name,state)
                         api.System.Session.submit_transaction()
                     except Exception,e:
                         raise Exception("Error on updating Virtual Server : %s" % e)
                 else:
                     # check-mode return value
                     result = {'changed': True}
-
-        elif state in ('disabled', 'enabled'):
-            if name is None:
-                module.fail_json(msg="name parameter required when " \
-                                     "state=enabled/disabled")
-            if not module.check_mode:
-                pass
-            else:
-                # check-mode return value
-                result = {'changed': True}
 
     except Exception, e:
         module.fail_json(msg="received exception: %s" % e)
