@@ -11,10 +11,14 @@ import argparse
 import traceback
 
 from fnmatch import fnmatch
+from distutils.version import StrictVersion
+
 from utils import find_globals
 
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
+
+from ansible import __version__ as ansible_version
 from ansible.module_utils import basic as module_utils_basic
 
 # We only use StringIO, since we cannot setattr on cStringIO
@@ -295,6 +299,22 @@ class ModuleValidator(Validator):
             self.warnings.append('Redeclared basic.py variable or '
                                  'function: %s' % ', '.join(redeclared))
 
+    def _check_version_added(self, doc):
+        try:
+            version_added = StrictVersion(doc.get('version_added', 0))
+        except ValueError:
+            self.errors.append('version_added is not a valid version '
+                               'number: %s' % version_added)
+            return
+
+        strict_ansible_version = StrictVersion(ansible_version)
+        should_be = '.'.join(ansible_version.split('.')[:2])
+
+        if (version_added < strict_ansible_version or
+                strict_ansible_version < version_added):
+            self.errors.append('version_added should be %s. Currently %s' %
+                               (should_be, version_added))
+
     def validate(self):
         super(ModuleValidator, self).validate()
 
@@ -339,6 +359,8 @@ class ModuleValidator(Validator):
                 self.traces.append(trace)
             if not bool(doc):
                 self.errors.append('Invalid or no DOCUMENTATION provided')
+            else:
+                self._check_version_added(doc)
             if not bool(examples):
                 self.errors.append('No EXAMPLES provided')
             if not bool(ret):
