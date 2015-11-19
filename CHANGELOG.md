@@ -267,6 +267,7 @@ newline being stripped you can change your playbook like this:
 * fleetctl
 * openvz
 * nagios_ndo
+* nsot
 * proxmox
 * rudder
 * serf
