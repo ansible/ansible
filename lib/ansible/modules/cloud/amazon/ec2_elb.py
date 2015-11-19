@@ -269,9 +269,9 @@ class ElbManager:
             try:
                 newelbs = elb.get_all_load_balancers(marker=marker)
                 marker = newelbs.next_marker
+                elbs.extend(newelbs)
                 if not marker:
                     break
-                elbs.extend(newelbs)
             except TypeError:
                 # Older version of boto do not allow for params
                 elbs = elb.get_all_load_balancers()
