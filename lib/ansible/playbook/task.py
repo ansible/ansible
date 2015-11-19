@@ -272,6 +272,14 @@ class Task(Base, Conditional, Taggable, Become):
 
         return all_vars
 
+    def get_include_params(self):
+        all_vars = dict()
+        if self._task_include:
+            all_vars.update(self._task_include.get_include_params())
+        if self.action == 'include':
+            all_vars.update(self.vars)
+        return all_vars
+
     def copy(self, exclude_block=False):
         new_me = super(Task, self).copy()
 

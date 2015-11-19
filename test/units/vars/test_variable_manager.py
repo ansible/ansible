@@ -173,6 +173,7 @@ class TestVariableManager(unittest.TestCase):
         mock_task._role = None
         mock_task.loop = None
         mock_task.get_vars.return_value = dict(foo="bar")
+        mock_task.get_include_params.return_value = dict()
 
         v = VariableManager()
         self.assertEqual(v.get_vars(loader=fake_loader, task=mock_task, use_cache=False).get("foo"), "bar")

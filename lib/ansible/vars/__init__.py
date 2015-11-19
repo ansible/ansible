@@ -319,6 +319,12 @@ class VariableManager:
             all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
             all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
+        # special case for include tasks, where the include params
+        # may be specified in the vars field for the task, which should
+        # have higher precedence than the vars/np facts above
+        if task:
+            all_vars = combine_vars(all_vars, task.get_include_params())
+
         all_vars = combine_vars(all_vars, self._extra_vars)
         all_vars = combine_vars(all_vars, magic_variables)
 
