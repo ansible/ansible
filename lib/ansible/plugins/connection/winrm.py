@@ -179,6 +179,7 @@ class Connection(ConnectionBase):
             self.shell_id = self.protocol.open_shell(codepage=65001) # UTF-8
         command_id = None
         try:
+            stdin_push_failed = False
             command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args), console_mode_stdin=(stdin_iterator == None))
 
             # TODO: try/except around this, so we can get/return the command result on a broken pipe or other failure (probably more useful than the 500 that comes from this)
@@ -187,11 +188,10 @@ class Connection(ConnectionBase):
                     for (data, is_last) in stdin_iterator:
                         self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
             except:
-                # TODO: set/propagate an error flag, but don't throw (or include the command output in the exception)
-                pass
+                stdin_push_failed = True
 
             # NB: this could hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
-            # Consider adding pywinrm status check/abort operations to see if the target is still running after a failure.
+            # FUTURE: Consider adding pywinrm status check/abort operations to see if the target is still running after a failure.
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
             if from_exec:
                 display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
@@ -199,6 +199,10 @@ class Connection(ConnectionBase):
                 display.vvvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
             display.vvvvvv('WINRM STDOUT %s' % to_unicode(response.std_out), host=self._winrm_host)
             display.vvvvvv('WINRM STDERR %s' % to_unicode(response.std_err), host=self._winrm_host)
+
+            if stdin_push_failed:
+                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, response.std_err))
+
             return response
         finally:
             if command_id:
@@ -305,18 +309,18 @@ class Connection(ConnectionBase):
         result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._put_file_stdin_iterator(in_path, out_path))
         # TODO: improve error handling
         if result.status_code != 0:
-            raise IOError(to_str(result.std_err))
+            raise AnsibleError(to_str(result.std_err))
 
         put_output = json.loads(result.std_out)
         remote_sha1 = put_output.get("sha1")
 
         if not remote_sha1:
-            raise IOError("Remote sha1 was not returned")
+            raise AnsibleError("Remote sha1 was not returned")
 
         local_sha1 = secure_hash(in_path)
 
         if not remote_sha1 == local_sha1:
-            raise IOError("Remote sha1 hash {0} does not match local hash {1}".format(remote_sha1, local_sha1))
+            raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(remote_sha1, local_sha1))
 
 
     def fetch_file(self, in_path, out_path):
