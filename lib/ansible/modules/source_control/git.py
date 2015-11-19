@@ -55,7 +55,7 @@ options:
         version_added: "1.5"
         description:
             - if C(yes), adds the hostkey for the repo url if not already 
-              added. If ssh_args contains "-o StrictHostKeyChecking=no", 
+              added. If ssh_opts contains "-o StrictHostKeyChecking=no", 
               this parameter is ignored.
     ssh_opts:
         required: false
