@@ -134,10 +134,7 @@ class ActionModule(ActionBase):
         try:
             dest_host = dest_host_inventory_vars['ansible_host']
         except KeyError:
-            try:
-                dest_host = dest_host_inventory_vars['ansible_ssh_host']
-            except KeyError:
-                dest_host = inventory_hostname
+            dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
 
         dest_is_local = dest_host in C.LOCALHOST
 
