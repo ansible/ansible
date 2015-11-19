@@ -177,7 +177,7 @@ class ModuleValidator(Validator):
             indent = INDENT_REGEX.search(line)
             for i in indent.groups():
                 if '\t' in i:
-                    index = line.index(i)
+                    index = line.index('\t')
                     self.errors.append('indentation contains tabs. line %d '
                                        'column %d' % (line_no + 1, index))
 
