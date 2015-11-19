@@ -24,6 +24,8 @@ import os
 import re
 import shlex
 import traceback
+import json
+import xmltodict
 
 from ansible.compat.six.moves.urllib.parse import urlunsplit
 
@@ -44,6 +46,7 @@ except ImportError:
 
 from ansible.errors import AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.hashing import secure_hash
 from ansible.utils.path import makedirs_safe
 from ansible.utils.unicode import to_bytes, to_unicode, to_str
 from ansible.utils.vars import combine_vars
@@ -151,7 +154,21 @@ class Connection(ConnectionBase):
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
-    def _winrm_exec(self, command, args=(), from_exec=False):
+    def _winrm_send_input(self, protocol, shell_id, command_id, stdin, eof=False):
+        rq = {'env:Envelope': protocol._get_soap_header(
+            resource_uri='http://schemas.microsoft.com/wbem/wsman/1/windows/shell/cmd',
+            action='http://schemas.microsoft.com/wbem/wsman/1/windows/shell/Send',
+            shell_id=shell_id)}
+        stream = rq['env:Envelope'].setdefault('env:Body', {}).setdefault('rsp:Send', {})\
+            .setdefault('rsp:Stream', {})
+        stream['@Name'] = 'stdin'
+        stream['@CommandId'] = command_id
+        stream['#text'] = base64.b64encode(to_bytes(stdin))
+        if eof:
+            stream['@End'] = 'true'
+        rs = protocol.send_message(xmltodict.unparse(rq))
+
+    def _winrm_exec(self, command, args=(), from_exec=False, stdin_iterator=None):
         if from_exec:
             display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
         else:
@@ -162,7 +179,19 @@ class Connection(ConnectionBase):
             self.shell_id = self.protocol.open_shell(codepage=65001) # UTF-8
         command_id = None
         try:
-            command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args))
+            stdin_push_failed = False
+            command_id = self.protocol.run_command(self.shell_id, to_bytes(command), map(to_bytes, args), console_mode_stdin=(stdin_iterator == None))
+
+            # TODO: try/except around this, so we can get/return the command result on a broken pipe or other failure (probably more useful than the 500 that comes from this)
+            try:
+                if stdin_iterator:
+                    for (data, is_last) in stdin_iterator:
+                        self._winrm_send_input(self.protocol, self.shell_id, command_id, data, eof=is_last)
+            except:
+                stdin_push_failed = True
+
+            # NB: this could hang if the receiver is still running (eg, network failed a Send request but the server's still happy).
+            # FUTURE: Consider adding pywinrm status check/abort operations to see if the target is still running after a failure.
             response = Response(self.protocol.get_command_output(self.shell_id, command_id))
             if from_exec:
                 display.vvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
@@ -170,6 +199,10 @@ class Connection(ConnectionBase):
                 display.vvvvvv('WINRM RESULT %r' % to_unicode(response), host=self._winrm_host)
             display.vvvvvv('WINRM STDOUT %s' % to_unicode(response.std_out), host=self._winrm_host)
             display.vvvvvv('WINRM STDERR %s' % to_unicode(response.std_err), host=self._winrm_host)
+
+            if stdin_push_failed:
+                raise AnsibleError('winrm send_input failed; \nstdout: %s\nstderr %s' % (response.std_out, response.std_err))
+
             return response
         finally:
             if command_id:
@@ -212,45 +245,83 @@ class Connection(ConnectionBase):
         result.std_err = to_bytes(result.std_err)
         return (result.status_code, result.std_out, result.std_err)
 
+    # FUTURE: determine buffer size at runtime via remote winrm config?
+    def _put_file_stdin_iterator(self, in_path, out_path, buffer_size=250000):
+        in_size = os.path.getsize(in_path)
+        offset = 0
+        with open(in_path, 'rb') as in_file:
+            for out_data in iter((lambda:in_file.read(buffer_size)), ''):
+                offset += len(out_data)
+                self._display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
+                # yes, we're double-encoding over the wire in this case- we want to ensure that the data shipped to the end PS pipeline is still b64-encoded
+                b64_data = base64.b64encode(out_data) + '\r\n'
+                # cough up the data, as well as an indicator if this is the last chunk so winrm_send knows to set the End signal
+                yield b64_data, (in_file.tell() == in_size)
+
+            if offset == 0: # empty file, return an empty buffer + eof to close it
+                yield "", True
+
     def put_file(self, in_path, out_path):
         super(Connection, self).put_file(in_path, out_path)
         out_path = self._shell._unquote(out_path)
         display.vvv('PUT "%s" TO "%s"' % (in_path, out_path), host=self._winrm_host)
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
-        with open(in_path) as in_file:
-            in_size = os.path.getsize(in_path)
-            script_template = '''
-                $s = [System.IO.File]::OpenWrite("%s");
-                [void]$s.Seek(%d, [System.IO.SeekOrigin]::Begin);
-                $b = [System.Convert]::FromBase64String("%s");
-                [void]$s.Write($b, 0, $b.length);
-                [void]$s.SetLength(%d);
-                [void]$s.Close();
-            '''
-            # Determine max size of data we can pass per command.
-            script = script_template % (self._shell._escape(out_path), in_size, '', in_size)
-            cmd = self._shell._encode_script(script)
-            # Encode script with no data, subtract its length from 8190 (max
-            # windows command length), divide by 2.67 (UTF16LE base64 command
-            # encoding), then by 1.35 again (data base64 encoding).
-            buffer_size = int(((8190 - len(cmd)) / 2.67) / 1.35)
-            for offset in xrange(0, in_size or 1, buffer_size):
-                try:
-                    out_data = in_file.read(buffer_size)
-                    if offset == 0:
-                        if out_data.lower().startswith('#!powershell') and not out_path.lower().endswith('.ps1'):
-                            out_path = out_path + '.ps1'
-                    b64_data = base64.b64encode(out_data)
-                    script = script_template % (self._shell._escape(out_path), offset, b64_data, in_size)
-                    display.vvvvv('WINRM PUT "%s" to "%s" (offset=%d size=%d)' % (in_path, out_path, offset, len(out_data)), host=self._winrm_host)
-                    cmd_parts = self._shell._encode_script(script, as_list=True)
-                    result = self._winrm_exec(cmd_parts[0], cmd_parts[1:])
-                    if result.status_code != 0:
-                        raise IOError(to_str(result.std_err))
-                except Exception:
-                    traceback.print_exc()
-                    raise AnsibleError('failed to transfer file to "%s"' % out_path)
+
+        script_template = '''
+            begin {{
+                $path = "{0}"
+
+                $DebugPreference = "Continue"
+                $ErrorActionPreference = "Stop"
+                Set-StrictMode -Version 2
+
+                $fd = [System.IO.File]::Create($path)
+
+                $sha1 = [System.Security.Cryptography.SHA1CryptoServiceProvider]::Create()
+
+                $bytes = @() #initialize for empty file case
+            }}
+            process {{
+               $bytes = [System.Convert]::FromBase64String($input)
+               $sha1.TransformBlock($bytes, 0, $bytes.Length, $bytes, 0) | Out-Null
+               $fd.Write($bytes, 0, $bytes.Length)
+            }}
+            end {{
+                $sha1.TransformFinalBlock($bytes, 0, 0) | Out-Null
+
+                $hash = [System.BitConverter]::ToString($sha1.Hash).Replace("-", "").ToLowerInvariant()
+
+                $fd.Close()
+
+                Write-Output "{{""sha1"":""$hash""}}"
+            }}
+        '''
+
+        # FUTURE: this sucks- why can't the module/shell stuff do this?
+        with open(in_path, 'r') as temp_file:
+            if temp_file.read(15).lower().startswith('#!powershell') and not out_path.lower().endswith('.ps1'):
+                out_path = out_path + '.ps1'
+
+        script = script_template.format(self._shell._escape(out_path))
+        cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
+
+        result = self._winrm_exec(cmd_parts[0], cmd_parts[1:], stdin_iterator=self._put_file_stdin_iterator(in_path, out_path))
+        # TODO: improve error handling
+        if result.status_code != 0:
+            raise AnsibleError(to_str(result.std_err))
+
+        put_output = json.loads(result.std_out)
+        remote_sha1 = put_output.get("sha1")
+
+        if not remote_sha1:
+            raise AnsibleError("Remote sha1 was not returned")
+
+        local_sha1 = secure_hash(in_path)
+
+        if not remote_sha1 == local_sha1:
+            raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(remote_sha1, local_sha1))
+
 
     def fetch_file(self, in_path, out_path):
         super(Connection, self).fetch_file(in_path, out_path)
