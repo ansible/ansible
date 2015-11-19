@@ -36,7 +36,7 @@ def failed(*a, **kw):
 
 def success(*a, **kw):
     ''' Test if task result yields success '''
-    return not failed(*a, **kw) and not skipped(*a, **kw)
+    return not failed(*a, **kw)
 
 def changed(*a, **kw):
     ''' Test if task result yields changed '''
