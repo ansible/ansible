@@ -213,15 +213,6 @@ class PluginLoader:
     def find_plugin(self, name, mod_type=''):
         ''' Find a plugin named name '''
 
-        # The particular cache to look for modules within.  This matches the
-        # requested mod_type
-        pull_cache = self._plugin_path_cache[mod_type]
-        try:
-            return pull_cache[name]
-        except KeyError:
-            # Cache miss.  Now let's find the plugin
-            pass
-
         if mod_type:
             suffix = mod_type
         elif self.class_name:
@@ -231,6 +222,15 @@ class PluginLoader:
             # Only Ansible Modules.  Ansible modules can be any executable so
             # they can have any suffix
             suffix = ''
+
+        # The particular cache to look for modules within.  This matches the
+        # requested mod_type
+        pull_cache = self._plugin_path_cache[suffix]
+        try:
+            return pull_cache[name]
+        except KeyError:
+            # Cache miss.  Now let's find the plugin
+            pass
 
         # TODO: Instead of using the self._paths cache (PATH_CACHE) and
         #       self._searched_paths we could use an iterator.  Before enabling that
