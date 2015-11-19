@@ -405,6 +405,8 @@ class TaskExecutor:
                 # the async_wrapper module returns dumped JSON via its stdout
                 # response, so we parse it here and replace the result
                 try:
+                    if 'skipped' in result and result['skipped'] or 'failed' in result and result['failed']:
+                        return result
                     result = json.loads(result.get('stdout'))
                 except (TypeError, ValueError) as e:
                     return dict(failed=True, msg="The async task did not return valid JSON: %s" % str(e))
