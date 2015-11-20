@@ -337,7 +337,7 @@ Function RunAsScheduledJob {
   $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
   # NB: output from scheduled jobs is delayed after completion (including the sub-objects after the primary Output object is available)
-  While (($job.Output -eq $null -or -not $job.Output.Keys.Contains('job_output')) -and $sw.ElapsedMilliseconds -lt 15000) {
+  While (($job.Output -eq $null -or -not ($job.Output | Get-Member -Name Keys) -or -not $job.Output.Keys.Contains('job_output')) -and $sw.ElapsedMilliseconds -lt 15000) {
     Write-DebugLog "Waiting for job output to populate..."
     Start-Sleep -Milliseconds 500
   }
