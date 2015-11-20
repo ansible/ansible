@@ -220,7 +220,7 @@ def main():
         argument_spec = dict(
             registry        = dict(required=False, default='https://index.docker.io/v1/'),
             username        = dict(required=True),
-            password        = dict(required=True),
+            password        = dict(required=True, no_log=True),
             email           = dict(required=False, default=None),
             reauth          = dict(required=False, default=False, type='bool'),
             dockercfg_path  = dict(required=False, default='~/.docker/config.json'),
