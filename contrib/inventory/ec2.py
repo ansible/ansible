@@ -350,7 +350,7 @@ class Ec2Inventory(object):
             'group_by_vpc_id',
             'group_by_security_group',
             'group_by_tag_keys',
-            'group_by_tag_keys_plain',
+            'group_by_tag_values',
             'group_by_tag_none',
             'group_by_route53_names',
             'group_by_rds_engine',
@@ -701,7 +701,7 @@ class Ec2Inventory(object):
                                             'Please upgrade boto >= 2.3.0.']))
 
         # Inventory: Group by tag keys
-        if self.group_by_tag_keys:
+        if self.group_by_tag_keys or self.group_by_tag_values:
             for k, v in instance.tags.items():
                 if self.expand_csv_tags and v and ',' in v:
                     values = map(lambda x: x.strip(), v.split(','))
@@ -713,7 +713,7 @@ class Ec2Inventory(object):
                     if v:
                         if self.group_by_tag_keys:
                             keys.append(self.to_safe("tag_" + k + "=" + v))
-                        if self.group_by_tag_keys_plain:
+                        if self.group_by_tag_values:
                             keys.append(self.to_safe(v))
                     else:
                         keys.append(self.to_safe("tag_" + k))
