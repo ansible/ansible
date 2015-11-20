@@ -199,6 +199,12 @@ if __name__ == '__main__':
                 notice("Module complete (%s)"%os.getpid())
                 sys.exit(0)
 
+    except SystemExit:
+        # On python2.4, SystemExit is a subclass of Exception.
+        # This block makes python2.4 behave the same as python2.5+
+        e = get_exception()
+        sys.exit(e.code)
+
     except Exception:
         e = get_exception()
         notice("error: %s"%(e))
