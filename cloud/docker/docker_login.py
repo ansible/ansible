@@ -33,9 +33,9 @@ description:
 options:
   registry:
     description:
-       - URL of the registry, defaults to: https://index.docker.io/v1/
+       - "URL of the registry, defaults to: https://index.docker.io/v1/"
     required: false
-    default: https://index.docker.io/v1/
+    default: "https://index.docker.io/v1/"
   username:
     description:
        - The username for the registry account
