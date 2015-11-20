@@ -154,6 +154,7 @@ newline being stripped you can change your playbook like this:
 * datadog_monitor
 * deploy_helper
 * dpkg_selections
+* docker: docker_login
 * elasticsearch_plugin
 * expect
 * find
