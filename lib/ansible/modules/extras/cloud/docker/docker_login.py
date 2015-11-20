@@ -70,7 +70,7 @@ options:
     required: false
     default: 600
 
-requirements: [ "python >= 2.6", "docker-py" ]
+requirements: [ "python >= 2.6", "docker-py >= 1.1.0" ]
 '''
 
 EXAMPLES = '''
@@ -102,11 +102,16 @@ import os.path
 import json
 import base64
 from urlparse import urlparse
+from distutils.version import StrictVersion
 
 try:
     import docker.client
     from docker.errors import APIError as DockerAPIError
     has_lib_docker = True
+    if StrictVersion(docker.__version__) >= StrictVersion("1.1.0"):
+        has_correct_lib_docker_version = True
+    else:
+        has_correct_lib_docker_version = False
 except ImportError, e:
     has_lib_docker = False
 
@@ -231,7 +236,10 @@ def main():
     )
 
     if not has_lib_docker:
-        module.fail_json(msg="python library docker-py required: pip install docker-py==1.1.0")
+        module.fail_json(msg="python library docker-py required: pip install docker-py>=1.1.0")
+
+    if not has_correct_lib_docker_version:
+        module.fail_json(msg="your version of docker-py is outdated: pip install docker-py>=1.1.0")
 
     if not has_lib_requests_execeptions:
         module.fail_json(msg="python library requests required: pip install requests")
