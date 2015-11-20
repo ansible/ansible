@@ -350,6 +350,7 @@ class Ec2Inventory(object):
             'group_by_vpc_id',
             'group_by_security_group',
             'group_by_tag_keys',
+            'group_by_tag_keys_plain',
             'group_by_tag_none',
             'group_by_route53_names',
             'group_by_rds_engine',
@@ -708,15 +709,20 @@ class Ec2Inventory(object):
                     values = [v]
 
                 for v in values:
+                    keys = []
                     if v:
-                        key = self.to_safe("tag_" + k + "=" + v)
+                        if self.group_by_tag_keys:
+                            keys.append(self.to_safe("tag_" + k + "=" + v))
+                        if self.group_by_tag_keys_plain:
+                            keys.append(self.to_safe(v))
                     else:
-                        key = self.to_safe("tag_" + k)
-                    self.push(self.inventory, key, dest)
-                    if self.nested_groups:
-                        self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
-                        if v:
-                            self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+                        keys.append(self.to_safe("tag_" + k))
+                    for key in keys:
+                        self.push(self.inventory, key, dest)
+                        if self.nested_groups:
+                            self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
+                            if v:
+                                self.push_group(self.inventory, self.to_safe("tag_" + k), key)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
