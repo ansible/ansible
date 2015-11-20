@@ -80,8 +80,10 @@ class Connection(ConnectionBase):
         docker_version = self._get_docker_version()
         if LooseVersion(docker_version) < LooseVersion('1.3'):
             raise AnsibleError('docker connection type requires docker 1.3 or higher')
-        if LooseVersion(docker_version) >= LooseVersion('1.8.0'):
-            self.can_copy_bothways = True
+        # Docker cp in 1.8.0 sets the owner and group to root rather than the
+        # user that the docker container is set to use by default.
+        #if LooseVersion(docker_version) >= LooseVersion('1.8.0'):
+        #    self.can_copy_bothways = True
 
     @staticmethod
     def _sanitize_version(version):
@@ -93,7 +95,7 @@ class Connection(ConnectionBase):
         cmd_output = subprocess.check_output(cmd)
 
         for line in cmd_output.split('\n'):
-            if line.startswith('Server version:'): # old docker versions
+            if line.startswith('Server version:'):  # old docker versions
                 return self._sanitize_version(line.split()[2])
 
         # no result yet, must be newer Docker version
