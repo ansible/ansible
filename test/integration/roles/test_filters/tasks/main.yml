@@ -44,6 +44,19 @@
     that: 
         - 'diff_result_9851.stdout == ""'
 
+- name: cleanup test data for fileglob
+  file: path={{output_dir}}/foo state=absent
+
+- name: create subdir for fileglob test data
+  file: path={{output_dir}}/foo state=directory
+
+- name: prep test data for fileglob
+  file: path={{output_dir}}/foo/{{ item }} state=touch
+  with_items:
+    - a
+    - b
+    - d
+
 - name: fill in a basic template
   template: src=foo.j2 dest={{output_dir}}/foo.templated mode=0644
   register: template_result
