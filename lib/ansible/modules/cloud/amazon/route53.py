@@ -297,7 +297,7 @@ def main():
             overwrite            = dict(required=False, type='bool'),
             retry_interval       = dict(required=False, default=500)
             private_zone         = dict(required=False, type='bool', default=False),
-            identifier           = dict(required=False),
+            identifier           = dict(required=False, default=None),
             weight               = dict(required=False, type='int'),
             region               = dict(required=False),
             health_check         = dict(required=False),
@@ -407,7 +407,7 @@ def main():
         #Need to save this changes in rset, because of comparing rset.to_xml() == wanted_rset.to_xml() in next block
 	rset.name = decoded_name
 
-        if rset.type == type_in and decoded_name.lower() == record_in.lower() and rset.identifier == str(identifier_in):
+        if rset.type == type_in and decoded_name.lower() == record_in.lower() and str(rset.identifier) == str(identifier_in):
             found_record = True
             record['zone'] = zone_in
             record['type'] = rset.type
