@@ -102,24 +102,25 @@ import os.path
 import json
 import base64
 from urlparse import urlparse
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 
 try:
     import docker.client
     from docker.errors import APIError as DockerAPIError
     has_lib_docker = True
-    if StrictVersion(docker.__version__) >= StrictVersion("1.1.0"):
+    if LooseVersion(docker.__version__) >= LooseVersion("1.1.0"):
         has_correct_lib_docker_version = True
     else:
         has_correct_lib_docker_version = False
-except ImportError, e:
+except ImportError:
     has_lib_docker = False
 
 try:
-    from requests.exceptions import *
-    has_lib_requests_execeptions = True
-except ImportError, e:
-    has_lib_requests_execeptions = False
+    import requests
+    has_lib_requests = True
+except ImportError:
+    has_lib_requests = False
+
 
 class DockerLoginManager:
 
@@ -161,7 +162,7 @@ class DockerLoginManager:
             self.module.fail_json(msg="failed to login to the remote registry", error=repr(e))
 
         # Get status from registry response.
-        if self.response.has_key("Status"):
+        if "Status" in self.response:
             self.log.append(self.response["Status"])
 
         # Update the dockercfg if not in check mode.
@@ -186,9 +187,9 @@ class DockerLoginManager:
             docker_config = json.load(open(self.dockercfg_path, "r"))
         except ValueError:
             docker_config = dict()
-        if not docker_config.has_key("auths"):
+        if "auths" not in docker_config:
             docker_config["auths"] = dict()
-        if not docker_config["auths"].has_key(self.registry):
+        if self.registry not in docker_config["auths"]:
             docker_config["auths"][self.registry] = dict()
 
         # Calculate docker credentials based on current parameters.
@@ -219,6 +220,7 @@ class DockerLoginManager:
     def has_changed(self):
         return self.changed
 
+
 def main():
 
     module = AnsibleModule(
@@ -241,7 +243,7 @@ def main():
     if not has_correct_lib_docker_version:
         module.fail_json(msg="your version of docker-py is outdated: pip install docker-py>=1.1.0")
 
-    if not has_lib_requests_execeptions:
+    if not has_lib_requests:
         module.fail_json(msg="python library requests required: pip install requests")
 
     try:
