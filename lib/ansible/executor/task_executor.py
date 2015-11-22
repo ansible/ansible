@@ -244,6 +244,7 @@ class TaskExecutor:
             # now update the result with the item info, and append the result
             # to the list of results
             res['item'] = item
+            #TODO: send item results to callback here, instead of all at the end
             results.append(res)
 
         return results
