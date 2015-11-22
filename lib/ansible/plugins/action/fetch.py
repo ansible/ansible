@@ -60,20 +60,22 @@ class ActionModule(ActionBase):
         source = self._connection._shell.join_path(source)
         source = self._remote_expand_user(source)
 
-        # calculate checksum for the remote file
-        remote_checksum = self._remote_checksum(source, all_vars=task_vars)
+        remote_checksum = None
+        if not self._play_context.become:
+            # calculate checksum for the remote file, don't bother if using become as slurp will be used
+            remote_checksum = self._remote_checksum(source, all_vars=task_vars)
 
-        # use slurp if sudo and permissions are lacking
+        # use slurp if permissions are lacking or privilege escalation is needed
         remote_data = None
-        if remote_checksum in ('1', '2') or self._play_context.become:
+        if remote_checksum in ('1', '2', None):
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
             if slurpres.get('failed'):
                 if remote_checksum == '1' and not fail_on_missing:
                     result['msg'] = "the remote file does not exist, not transferring, ignored"
                     result['file'] = source
                     result['changed'] = False
-                    return result
-                result.update(slurpres)
+                else:
+                    result.update(slurpres)
                 return result
             else:
                 if slurpres['encoding'] == 'base64':
@@ -115,8 +117,8 @@ class ActionModule(ActionBase):
         dest = dest.replace("//","/")
 
         if remote_checksum in ('0', '1', '2', '3', '4'):
-            # these don't fail because you may want to transfer a log file that possibly MAY exist
-            # but keep going to fetch other log files
+            # these don't fail because you may want to transfer a log file that
+            # possibly MAY exist but keep going to fetch other log files
             if remote_checksum == '0':
                 result['msg'] = "unable to calculate the checksum of the remote file"
                 result['file'] = source
@@ -162,8 +164,7 @@ class ActionModule(ActionBase):
                 except (IOError, OSError) as e:
                     raise AnsibleError("Failed to fetch the file: %s" % e)
             new_checksum = secure_hash(dest)
-            # For backwards compatibility.  We'll return None on FIPS enabled
-            # systems
+            # For backwards compatibility. We'll return None on FIPS enabled systems
             try:
                 new_md5 = md5(dest)
             except ValueError:
@@ -171,16 +172,14 @@ class ActionModule(ActionBase):
 
             if validate_checksum and new_checksum != remote_checksum:
                 result.update(dict(failed=True, md5sum=new_md5, msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
-                return result
-            result.update(dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
-            return result
+            else:
+                result.update(dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
         else:
-            # For backwards compatibility.  We'll return None on FIPS enabled
-            # systems
+            # For backwards compatibility. We'll return None on FIPS enabled systems
             try:
                 local_md5 = md5(dest)
             except ValueError:
                 local_md5 = None
-
             result.update(dict(changed=False, md5sum=local_md5, file=source, dest=dest, checksum=local_checksum))
-            return result
+
+        return result
