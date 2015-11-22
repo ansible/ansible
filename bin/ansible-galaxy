@@ -423,18 +423,16 @@ def get_galaxy_install_info(role_name, options):
     Returns the YAML data contained in 'meta/.galaxy_install_info',
     if it exists.
     """
-
+    info_data = None
     try:
         info_path = os.path.join(get_role_path(role_name, options), 'meta/.galaxy_install_info')
         if os.path.isfile(info_path):
             f = open(info_path, 'r')
             info_data = yaml.safe_load(f)
             f.close()
-            return info_data
-        else:
-            return None
     except:
-        return None    
+        pass
+    return info_data
 
 def write_galaxy_install_info(role_name, role_version, options):
     """
@@ -451,6 +449,7 @@ def write_galaxy_install_info(role_name, role_version, options):
         info_path = os.path.join(get_role_path(role_name, options), 'meta/.galaxy_install_info')
         f = open(info_path, 'w+')
         info_data = yaml.safe_dump(info, f)
+        f.write(info_data)
         f.close()
     except:
         return False
@@ -495,7 +494,7 @@ def fetch_role(role_name, target, role_data, options):
     except Exception, e:
         # TODO: better urllib2 error handling for error 
         #       messages that are more exact
-        print "- error: failed to download the file."
+        print "- error: failed to download the file: %s" % str(e)
         return False
 
 def install_role(role_name, role_version, role_filename, options):
@@ -568,7 +567,7 @@ def install_role(role_name, role_version, role_filename, options):
             # write out the install info file for later use
             write_galaxy_install_info(role_name, role_version, options)
         except OSError, e:
-            print "- error: you do not have permission to modify files in %s" % role_path
+            print "- error: you do not have permission to modify files in %s: %s" % (role_path, str(e))
             return False
 
         # return the parsed yaml metadata
@@ -613,7 +612,7 @@ def execute_init(args, options, parser):
                 sys.exit(1)
     except Exception, e:
         parser.print_help()
-        print "- no role name specified for init"
+        print "- could not init specified role name: %s" % str(e)
         sys.exit(1)
 
     ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
@@ -760,7 +759,6 @@ def execute_install(args, options, parser):
     no_deps    = get_opt(options, "no_deps", False)
     roles_path = get_opt(options, "roles_path")
 
-    roles_done = []
     if role_file:
         f = open(role_file, 'r')
         if role_file.endswith('.yaml') or role_file.endswith('.yml'):
@@ -842,9 +840,9 @@ def execute_install(args, options, parser):
             if not no_deps and installed:
                 if not role_data:
                     role_data = get_role_metadata(role.get("name"), options)
-                    role_dependencies = role_data['dependencies']
+                    role_dependencies = role_data.get('dependencies',[])
                 else:
-                    role_dependencies = role_data['summary_fields']['dependencies'] # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
+                    role_dependencies = role_data['summary_fields'].get('dependencies',[]) # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
                 if not role_dependencies:
                     role_dependencies = []
                 for dep in role_dependencies:
