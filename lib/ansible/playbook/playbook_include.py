@@ -55,9 +55,9 @@ class PlaybookInclude(Base, Conditional, Taggable):
         # playbook objects
         new_obj = super(PlaybookInclude, self).load_data(ds, variable_manager, loader)
 
-        all_vars = dict()
+        all_vars = self.vars.copy()
         if variable_manager:
-            all_vars = variable_manager.get_vars(loader=loader)
+            all_vars.update(variable_manager.get_vars(loader=loader))
 
         templar = Templar(loader=loader, variables=all_vars)
         if not new_obj.evaluate_conditional(templar=templar, all_vars=all_vars):
@@ -66,7 +66,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
         # then we use the object to load a Playbook
         pb = Playbook(loader=loader)
 
-        file_name = new_obj.include
+        file_name = templar.template(new_obj.include)
         if not os.path.isabs(file_name):
             file_name = os.path.join(basedir, file_name)
 
