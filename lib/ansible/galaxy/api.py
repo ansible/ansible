@@ -82,7 +82,7 @@ class GalaxyAPI(object):
             headers = self.__auth_header()
         try:
             resp = open_url(url, data=args, validate_certs=self.validate_certs, headers=headers, method=method)
-            data = json.load(resp) if method != 'DELETE' else {}
+            data = json.load(resp)
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['detail'])
@@ -266,7 +266,14 @@ class GalaxyAPI(object):
         data = self.__call_galaxy(url, headers=self.__auth_header(), method='DELETE')
         return data
 
-
+    def delete_role(self, github_user, github_repo):
+        url = "%s/removerole/" % self.baseurl
+        args = urllib.urlencode({
+            "github_user": github_user,
+            "github_repo": github_repo,
+        })
+        data = self.__call_galaxy(url, args=args, headers=self.__auth_header(), method='DELETE')
+        return data
         
 
 

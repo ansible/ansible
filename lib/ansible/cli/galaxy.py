@@ -49,19 +49,57 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-
 class GalaxyCLI(CLI):
 
-    VALID_ACTIONS = ("config","import", "init", "info", "install", "list", "login", "remove", "search", "setup")
+    available_commands = {
+        "config":    "manage ~/.ansible-galaxy/config.yml",
+        "delete":    "remove a role from Galaxy",
+        "import":    "add a role contained in a GitHub repo to Galaxy",
+        "info":      "display details about a particular role",
+        "init":      "create a role directory structure in your roles path",
+        "install":   "download a role into your roles path",
+        "list":      "enumerate roles found in your roles path",
+        "login":     "authenticate with Galaxy API and store the token",
+        "remove":    "delete a role from your roles path",
+        "search":    "query the Galaxy API",
+        "setup":     "add a TravisCI or GitHub integration to Galaxy",
+    }
+
+    # VALID_ACTIONS = ("config", "delete", "import", "init", "info", "install", "list", "login", "remove", "search", "setup")
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     DEFAULT_GALAXY_SERVER = "https://galaxy.ansible.com"
 
     def __init__(self, args):
+        
+        self.VALID_ACTIONS = []
+        for key in self.available_commands:
+            self.VALID_ACTIONS.append(key)
 
         self.api = None
         self.galaxy = None
         self.config = None
         super(GalaxyCLI, self).__init__(args)
+
+    def set_action(self):
+        """
+        Get the action the user wants to execute from the sys argv list.
+        """
+        for i in range(0,len(self.args)):
+            arg = self.args[i]
+            if arg in self.VALID_ACTIONS:
+                self.action = arg
+                del self.args[i]
+                break
+
+        if not self.action:
+            self.show_available_actions()
+
+    def show_available_actions(self):
+        # list available commands
+        display.display("usage: ansible-galaxy COMMAND [--help] [options] ...")
+        display.display(u'\n' + "availabe commands:" + u'\n\n')
+        for key in self.available_commands:
+            display.display(u'\t' + "%-12s %s" % (key, self.available_commands[key]))
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -70,15 +108,14 @@ class GalaxyCLI(CLI):
             usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
             epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
-
+        
         self.set_action()
 
         # options specific to actions
-        if self.action == "import":
-            self.parser.set_usage("usage: %prog import [options] github_user github_repo" + 
-                u'\n\n' + "Import a role to galaxy.ansible.com.")
-            #self.parser.add_option('-a', '--alternate-name', dest='alternate_name', default='',
-            #    help='An alternate name for the role. Otherwise, the repo name is used.')
+        if self.action == "delete":
+            self.parser.set_usage("usage: %prog delete [options] github_user github_repo")
+        elif self.action == "import":
+            self.parser.set_usage("usage: %prog import [options] github_user github_repo")
             self.parser.add_option('-n', '--no-wait', dest='wait', action='store_false', default=True,
                 help='Don\'t wait for import results.')
             self.parser.add_option('-b', '--branch', dest='reference',
@@ -138,7 +175,7 @@ class GalaxyCLI(CLI):
                      'The default is the roles_path configured in your '
                      'ansible.cfg file (/etc/ansible/roles if not configured)')
 
-        if self.action in ("import","info","init","install","login","search","setup"):
+        if self.action in ("import","info","init","install","login","search","setup","delete"):
             self.parser.add_option('-s', '--server', dest='api_server', default=self.DEFAULT_GALAXY_SERVER,
                 help='The API server destination')
             self.parser.add_option('-c', '--ignore-certs', action='store_false', dest='validate_certs', default=True,
@@ -148,21 +185,26 @@ class GalaxyCLI(CLI):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False,
                 help='Force overwriting an existing role')
 
-        # get options, args and galaxy object
-        self.options, self.args =self.parser.parse_args()
-        display.verbosity = self.options.verbosity
-        self.galaxy = Galaxy(self.options)
+        if self.action:
+            # get options, args and galaxy object
+            self.options, self.args =self.parser.parse_args()
+            display.verbosity = self.options.verbosity
+            self.galaxy = Galaxy(self.options)
 
         return True
 
     def run(self):
+
+        if not self.action:
+            return True
 
         super(GalaxyCLI, self).run()
 
         self.config = GalaxyConfig(self.galaxy)
 
         # if not offline, get connect to galaxy api
-        if self.action in ("import","info","install","search","login","setup") or (self.action == 'init' and not self.options.offline):
+        if self.action in ("import","info","install","search","login","setup","delete") or \
+            (self.action == 'init' and not self.options.offline):
             # set the API server
             if self.options.api_server != self.DEFAULT_GALAXY_SERVER:
                 api_server = self.options.api_server
@@ -680,5 +722,27 @@ class GalaxyCLI(CLI):
 
         return 0
 
+    def execute_delete(self):
+        """
+        Delete a role from galaxy.ansible.com
+        """
+
+        if len(self.args) < 2:
+            raise AnsibleError("Missing one or more arguments. Expected: github_user github_repo")
+        
+        github_repo = self.args.pop()
+        github_user = self.args.pop()
+        resp = self.api.delete_role(github_user, github_repo)
+
+        if len(resp['deleted_roles']) > 1:
+            display.display("Deleted the following roles:")
+            display.display("ID     User            Name")
+            display.display("------ --------------- ----------")
+            for role in resp['deleted_roles']:
+                display.display("%-8s %-15s %s" % (role.id,role.namespace,role.name))
+        
+        display.display(resp['status'])
+
+        return True
 
         
