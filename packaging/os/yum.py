@@ -51,7 +51,7 @@ options:
       - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file.  To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages."
     required: true
     default: null
-    aliases: []
+    aliases: [ 'pkg' ]
   exclude:
     description:
       - "Package name(s) to exclude when state=present, or latest"
@@ -65,9 +65,9 @@ options:
     default: null
   state:
     description:
-      - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
+      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
     required: false
-    choices: [ "present", "latest", "absent" ]
+    choices: [ "present", "installed", "latest", "absent", "removed" ]
     default: "present"
   enablerepo:
     description:
