@@ -128,7 +128,7 @@ EXAMPLES = """
 - mysql_user: name=sally host_all=yes state=absent
 
 # Specify grants composed of more than one word
-- mysql_user: name=replication password=12345 priv=*.*:"REPLICATION CLIENT" state=present
+- mysql_user: name=replication password=12345 priv="*.*:REPLICATION CLIENT" state=present
 
 # Revoke all privileges for user 'bob' and password '12345'
 - mysql_user: name=bob password=12345 priv=*.*:USAGE state=present
