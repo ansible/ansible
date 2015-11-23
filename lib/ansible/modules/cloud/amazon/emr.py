@@ -13,6 +13,106 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+DOCUMENTATION = '''
+---
+module: emr
+short_description: Create, terminate and add steps to EMR clusters.
+description:
+    - Manipulate Elastic Map Reduce clusters. If jobflow_id is not provided a new cluster will be launched with the specified configuration. If jobflow_id is provided, jar_steps steps will be added to the current cluster. If state is 'absent' the cluster will be terminated.
+version_added: "1.0"
+options:
+  region:
+    description:
+      - The region in which the EMR cluster will be created.
+    required: true
+  cluster_name:
+    description:
+      - The name of the EMR cluster.
+    required: true
+  log_uri:
+    description:
+      - URI of the S3 bucket to place logs.
+    required: true
+  vpc_subnet_id:
+    description:
+      - The VPC in which the EMR will be created.
+    required: true
+    default: null
+  jobflow_role:
+    description:
+      - An IAM role for the job flow. The EC2 instances of the job flow assume this role.
+    required: false
+    default: null
+  service_role:
+    description:
+      - The IAM role that will be assumed by the Amazon EMR service to access AWS resources on your behalf.
+    required: false
+    default: null
+  ec2_keyname:
+    description:
+      - EC2 key used for the instances.
+    required: true
+  visible_to_all_users:
+    description:
+      - Whether the job flow is visible to all IAM users of the AWS account associated with the job flow. If this value is set to True, all IAM users of that AWS account can view and (if they have the proper policy permissions set) manage the job flow. If it is set to False, only the IAM user that created the job flow can view and manage it.
+    required: false
+    default: true
+  ami_version:
+    description:
+      - Amazon Machine Image (AMI) version to use for instances.
+    required: false
+    default: latest
+  enable_debugging:
+    description:
+      - Denotes whether AWS console debugging should be enabled.
+    required: false
+    default: false
+  jobflow_id:
+    description:
+      - The job flow id of the current running cluster.
+    required: false
+    default: null
+  bootstrap_actions:
+    description:
+      - List of bootstrap actions that run before Hadoop starts.
+    required: false
+    default: null
+  instance_groups:
+    description:
+      - List of instance groups to use when creating this job..
+    required: true
+  jar_steps:
+    description:
+      - List of steps to add with the job.
+    required: false
+    default: null
+  tags:
+    description:
+      - A dictionary containing the name/value pairs. If you want to create only a tag name, the value for that tag should be the empty string (e.g. '') or None.
+    required: false
+    default: null
+  keep_alive:
+    description:
+      - Denotes whether the cluster should stay alive upon completion.
+    required: false
+    default: false
+  termination_protection:
+    description: Enables termination protection in the cluster,
+    required: false
+    default: false
+  state:
+    description:
+      - If state is set to 'present' a new EMR cluster will be created. If it's set to 'absent' it will try to terminate the cluster with the provided jobflow_id.
+    required: false
+    default: 'present'
+  force_termination:
+    description:
+      - If set and state is 'absent' will terminate the cluster even if the termination protection is enabled.
+    required: false
+    default: false
+extends_documentation_fragment:
+    - aws
+'''
 
 EXAMPLES = '''
 ---
@@ -157,9 +257,9 @@ try:
     from boto.emr.step import JarStep
     from boto.emr.step import InstallHiveStep
     from boto.emr.bootstrap_action import BootstrapAction
+    HAS_BOTO = True
 except ImportError:
-    print "failed=True msg='boto.emr required for this module'"
-    sys.exit(1)
+    HAS_BOTO = False
 
 class ElasticMapReduceManager(object):
     """ Manages an elastic map reduce cluster. """
@@ -386,12 +486,14 @@ def main():
             instance_groups={'type': 'list', 'default': None},
             enable_debugging={'default': False, 'type': 'bool'},
             keep_alive={'default': False, 'type': 'bool'},
-            action_on_failure={'default': None, 'choices': ['TERMINATE_JOB_FLOW', 'CANCEL_AND_WAIT', 'CONTINUE', 'TERMINATE_CLUSTER']},
             termination_protection={'default': False, 'type': 'bool'},
             force_termination={'default': False, 'type': 'bool'},
             state={'default': 'present'}
         )
     )
+
+    if not HAS_BOTO:
+        module.fail_json(msg='boto required for this module')
 
     _, aws_access_key, aws_secret_key, region = get_ec2_creds(module)
     emrm = ElasticMapReduceManager(module, aws_access_key, aws_secret_key, region, **module.params)
