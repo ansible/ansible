@@ -137,9 +137,7 @@ class Hg(object):
         if not before:
             return False
 
-        args = ['update', '-C', '-R', self.dest]
-        if self.revision is not None:
-            args = args + ['-r', self.revision]
+        args = ['update', '-C', '-R', self.dest, '-r', '.']
         (rc, out, err) = self._command(args)
         if rc != 0:
             self.module.fail_json(msg=err)
