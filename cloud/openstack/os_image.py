@@ -56,12 +56,12 @@ options:
      default: None
    min_disk:
      description:
-        - The minimum disk space required to deploy this image
+        - The minimum disk space (in GB) required to boot this image
      required: false
      default: None
    min_ram:
      description:
-        - The minimum ram required to deploy this image
+        - The minimum ram (in MB) required to boot this image
      required: false
      default: None
    is_public:
@@ -125,8 +125,8 @@ def main():
         disk_format       = dict(default='qcow2', choices=['ami', 'ari', 'aki', 'vhd', 'vmdk', 'raw', 'qcow2', 'vdi', 'iso']),
         container_format  = dict(default='bare', choices=['ami', 'aki', 'ari', 'bare', 'ovf', 'ova']),
         owner             = dict(default=None),
-        min_disk          = dict(default=None),
-        min_ram           = dict(default=None),
+        min_disk          = dict(type='int', default=0),
+        min_ram           = dict(type='int', default=0),
         is_public         = dict(default=False),
         filename          = dict(default=None),
         ramdisk           = dict(default=None),
@@ -156,6 +156,8 @@ def main():
                     wait=module.params['wait'],
                     timeout=module.params['timeout'],
                     is_public=module.params['is_public'],
+                    min_disk=module.params['min_disk'],
+                    min_ram=module.params['min_ram']
                 )
                 changed = True
                 if not module.params['wait']:
