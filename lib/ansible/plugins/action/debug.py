@@ -19,7 +19,7 @@ __metaclass__ = type
 
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
-
+from ansible.utils.unicode import to_unicode
 
 class ActionModule(ActionBase):
     ''' Print statements during execution '''
@@ -43,7 +43,7 @@ class ActionModule(ActionBase):
             results = self._templar.template(self._task.args['var'], convert_bare=True)
             if type(self._task.args['var']) in (list, dict):
                 # If var is a list or dict, use the type as key to display
-                result[str(type(self._task.args['var']))] = results
+                result[to_unicode(type(self._task.args['var']))] = results
             else:
                 if results == self._task.args['var']:
                     results = "VARIABLE IS NOT DEFINED!"
