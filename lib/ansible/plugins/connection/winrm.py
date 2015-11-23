@@ -169,14 +169,16 @@ class Connection(ConnectionBase):
         rs = protocol.send_message(xmltodict.unparse(rq))
 
     def _winrm_exec(self, command, args=(), from_exec=False, stdin_iterator=None):
+        if not self.protocol:
+            self.protocol = self._winrm_connect()
+            self._connected = True
+        if not self.shell_id:
+            self.shell_id = self.protocol.open_shell(codepage=65001) # UTF-8
+            display.vvvvv('WINRM OPEN SHELL: %s' % self.shell_id, host=self._winrm_host)
         if from_exec:
             display.vvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
         else:
             display.vvvvvv("WINRM EXEC %r %r" % (command, args), host=self._winrm_host)
-        if not self.protocol:
-            self.protocol = self._winrm_connect()
-        if not self.shell_id:
-            self.shell_id = self.protocol.open_shell(codepage=65001) # UTF-8
         command_id = None
         try:
             stdin_push_failed = False
@@ -211,6 +213,7 @@ class Connection(ConnectionBase):
     def _connect(self):
         if not self.protocol:
             self.protocol = self._winrm_connect()
+            self._connected = True
         return self
 
     def exec_command(self, cmd, in_data=None, sudoable=True):
@@ -387,5 +390,8 @@ class Connection(ConnectionBase):
 
     def close(self):
         if self.protocol and self.shell_id:
+            display.vvvvv('WINRM CLOSE SHELL: %s' % self.shell_id, host=self._winrm_host)
             self.protocol.close_shell(self.shell_id)
-            self.shell_id = None
+        self.shell_id = None
+        self.protocol = None
+        self._connected = False

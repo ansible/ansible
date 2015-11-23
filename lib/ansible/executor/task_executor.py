@@ -67,6 +67,7 @@ class TaskExecutor:
         self._new_stdin         = new_stdin
         self._loader            = loader
         self._shared_loader_obj = shared_loader_obj
+        self._connection        = None
 
     def run(self):
         '''
@@ -361,8 +362,9 @@ class TaskExecutor:
                 self._task.args = variable_params
 
         # get the connection and the handler for this execution
-        self._connection = self._get_connection(variables=variables, templar=templar)
-        self._connection.set_host_overrides(host=self._host)
+        if not self._connection or not getattr(self._connection, '_connected', False):
+            self._connection = self._get_connection(variables=variables, templar=templar)
+            self._connection.set_host_overrides(host=self._host)
 
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
