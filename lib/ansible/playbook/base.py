@@ -36,6 +36,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.attribute import Attribute, FieldAttribute
 from ansible.utils.boolean import boolean
 from ansible.utils.vars import combine_vars, isidentifier
+from ansible.utils.unicode import to_unicode
 
 BASE_ATTRIBUTES = {}
 
@@ -310,7 +311,7 @@ class Base:
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = text_type(value)
+                        value = text_type(to_unicode(value))
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':
