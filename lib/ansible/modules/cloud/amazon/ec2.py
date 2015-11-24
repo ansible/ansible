@@ -888,9 +888,9 @@ def create_instances(module, ec2, vpc, override_count=None):
                 grp_details = ec2.get_all_security_groups()
             if isinstance(group_name, basestring):
                 group_name = [group_name]
-            unmatched = list(set(group_name) - set([str(grp.name) for grp in grp_details]))
+            unmatched = set(group_name).difference(str(grp.name) for grp in grp_details)
             if len(unmatched) > 0:
-                module.fail_json(msg="the following group names are not valid: %s" % ','.join(unmatched))
+                module.fail_json(msg="The following group names are not valid: %s" % ', '.join(unmatched))
             group_id = [ str(grp.id) for grp in grp_details if str(grp.name) in group_name ]
         # Now we try to lookup the group id testing if group exists.
         elif group_id:
