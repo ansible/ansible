@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from multiprocessing.managers import SyncManager, DictProxy
 import multiprocessing
 import os
 import tempfile
@@ -32,6 +33,7 @@ from ansible.executor.stats import AggregateStats
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
+from ansible.vars.hostvars import HostVars
 
 try:
     from __main__ import display
@@ -98,7 +100,7 @@ class TaskQueueManager:
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
 
-            prc = WorkerProcess(self, main_q, rslt_q, self._loader)
+            prc = WorkerProcess(self, main_q, rslt_q, self._hostvars_manager, self._loader)
             prc.start()
 
             self._workers.append((prc, main_q, rslt_q))
@@ -173,11 +175,6 @@ class TaskQueueManager:
         are done with the current task).
         '''
 
-        # Fork # of forks, # of hosts or serial, whichever is lowest
-        contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(play.hosts))]
-        contenders =  [ v for v in contenders if v is not None and v > 0 ]
-        self._initialize_processes(min(contenders))
-
         if not self._callbacks_loaded:
             self.load_callbacks()
 
@@ -186,6 +183,36 @@ class TaskQueueManager:
 
         new_play = play.copy()
         new_play.post_validate(templar)
+
+        class HostVarsManager(SyncManager):
+            pass
+
+        hostvars = HostVars(
+            play=new_play,
+            inventory=self._inventory,
+            variable_manager=self._variable_manager,
+            loader=self._loader,
+        )
+
+        HostVarsManager.register(
+            'hostvars',
+            callable=lambda: hostvars,
+            # FIXME: this is the list of exposed methods to the DictProxy object, plus our
+            #        special ones (set_variable_manager/set_inventory). There's probably a better way
+            #        to do this with a proper BaseProxy/DictProxy derivative
+            exposed=(
+                'set_variable_manager', 'set_inventory', '__contains__', '__delitem__',
+                '__getitem__', '__len__', '__setitem__', 'clear', 'copy', 'get', 'has_key',
+                'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values'
+            ),
+        )
+        self._hostvars_manager = HostVarsManager()
+        self._hostvars_manager.start()
+
+        # Fork # of forks, # of hosts or serial, whichever is lowest
+        contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(new_play.hosts))]
+        contenders =  [ v for v in contenders if v is not None and v > 0 ]
+        self._initialize_processes(min(contenders))
 
         play_context = PlayContext(new_play, self._options, self.passwords, self._connection_lockfile.fileno())
         for callback_plugin in self._callback_plugins:
@@ -221,6 +248,7 @@ class TaskQueueManager:
         # and run the play using the strategy and cleanup on way out
         play_return = strategy.run(iterator, play_context)
         self._cleanup_processes()
+        self._hostvars_manager.shutdown()
         return play_return
 
     def cleanup(self):

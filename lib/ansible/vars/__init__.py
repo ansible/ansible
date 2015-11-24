@@ -101,13 +101,14 @@ class VariableManager:
 
     def __getstate__(self):
         data = dict(
-            fact_cache = self._fact_cache.copy(),
-            np_fact_cache = self._nonpersistent_fact_cache.copy(),
-            vars_cache = self._vars_cache.copy(),
-            extra_vars = self._extra_vars.copy(),
-            host_vars_files = self._host_vars_files.copy(),
-            group_vars_files = self._group_vars_files.copy(),
+            fact_cache = self._fact_cache,
+            np_fact_cache = self._nonpersistent_fact_cache,
+            vars_cache = self._vars_cache,
+            extra_vars = self._extra_vars,
+            host_vars_files = self._host_vars_files,
+            group_vars_files = self._group_vars_files,
             omit_token = self._omit_token,
+            #inventory = self._inventory,
         )
         return data
 
@@ -119,7 +120,7 @@ class VariableManager:
         self._host_vars_files = data.get('host_vars_files', defaultdict(dict))
         self._group_vars_files = data.get('group_vars_files', defaultdict(dict))
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
-        self._inventory = None
+        self._inventory = data.get('inventory', None)
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
@@ -258,6 +259,8 @@ class VariableManager:
             except KeyError:
                 pass
 
+        all_vars['vars'] = all_vars.copy()
+
         if play:
             all_vars = combine_vars(all_vars, play.get_vars())
 
@@ -316,6 +319,12 @@ class VariableManager:
             all_vars = combine_vars(all_vars, self._vars_cache.get(host.get_name(), dict()))
             all_vars = combine_vars(all_vars, self._nonpersistent_fact_cache.get(host.name, dict()))
 
+        # special case for include tasks, where the include params
+        # may be specified in the vars field for the task, which should
+        # have higher precedence than the vars/np facts above
+        if task:
+            all_vars = combine_vars(all_vars, task.get_include_params())
+
         all_vars = combine_vars(all_vars, self._extra_vars)
         all_vars = combine_vars(all_vars, magic_variables)
 
@@ -359,15 +368,15 @@ class VariableManager:
                 for (group_name, group) in iteritems(self._inventory.groups):
                     variables['groups'][group_name] = [h.name for h in group.get_hosts()]
 
-                if include_hostvars:
-                    hostvars_cache_entry = self._get_cache_entry(play=play)
-                    if hostvars_cache_entry in HOSTVARS_CACHE:
-                        hostvars = HOSTVARS_CACHE[hostvars_cache_entry]
-                    else:
-                        hostvars = HostVars(play=play, inventory=self._inventory, loader=loader, variable_manager=self)
-                        HOSTVARS_CACHE[hostvars_cache_entry] = hostvars
-                    variables['hostvars'] = hostvars
-                    variables['vars'] = hostvars[host.get_name()]
+                #if include_hostvars:
+                #    hostvars_cache_entry = self._get_cache_entry(play=play)
+                #    if hostvars_cache_entry in HOSTVARS_CACHE:
+                #        hostvars = HOSTVARS_CACHE[hostvars_cache_entry]
+                #    else:
+                #        hostvars = HostVars(play=play, inventory=self._inventory, loader=loader, variable_manager=self)
+                #        HOSTVARS_CACHE[hostvars_cache_entry] = hostvars
+                #    variables['hostvars'] = hostvars
+                #    variables['vars'] = hostvars[host.get_name()]
 
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]

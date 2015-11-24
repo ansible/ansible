@@ -239,9 +239,6 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host.get_name()] = True
                         self._queue_task(host, task, task_vars, play_context)
 
-                    results = self._process_pending_results(iterator)
-                    host_results.extend(results)
-
                     # if we're bypassing the host loop, break out now
                     if run_once:
                         break
@@ -267,31 +264,44 @@ class StrategyModule(StrategyBase):
                     return False
 
                 if len(included_files) > 0:
+                    display.debug("we have included files to process")
                     noop_task = Task()
                     noop_task.action = 'meta'
                     noop_task.args['_raw_params'] = 'noop'
                     noop_task.set_loader(iterator._play._loader)
 
+                    display.debug("generating all_blocks data")
                     all_blocks = dict((host, []) for host in hosts_left)
+                    display.debug("done generating all_blocks data")
                     for included_file in included_files:
+                        display.debug("processing included file: %s" % included_file._filename)
                         # included hosts get the task list while those excluded get an equal-length
                         # list of noop tasks, to make sure that they continue running in lock-step
                         try:
                             new_blocks = self._load_included_file(included_file, iterator=iterator)
 
+                            display.debug("iterating over new_blocks loaded from include file")
                             for new_block in new_blocks:
+                                task_vars = self._variable_manager.get_vars(
+                                    loader=self._loader,
+                                    play=iterator._play,
+                                    task=included_file._task,
+                                )
+                                display.debug("filtering new block on tags")
+                                final_block = new_block.filter_tagged_tasks(play_context, task_vars)
+                                display.debug("done filtering new block on tags")
+
                                 noop_block = Block(parent_block=task._block)
                                 noop_block.block  = [noop_task for t in new_block.block]
                                 noop_block.always = [noop_task for t in new_block.always]
                                 noop_block.rescue = [noop_task for t in new_block.rescue]
+
                                 for host in hosts_left:
                                     if host in included_file._hosts:
-                                        task_vars = self._variable_manager.get_vars(loader=self._loader,
-                                                play=iterator._play, host=host, task=included_file._task)
-                                        final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                                         all_blocks[host].append(final_block)
                                     else:
                                         all_blocks[host].append(noop_block)
+                            display.debug("done iterating over new_blocks loaded from include file")
 
                         except AnsibleError as e:
                             for host in included_file._hosts:
@@ -302,8 +312,13 @@ class StrategyModule(StrategyBase):
 
                     # finally go through all of the hosts and append the
                     # accumulated blocks to their list of tasks
+                    display.debug("extending task lists for all hosts with included blocks")
+
                     for host in hosts_left:
                         iterator.add_tasks(host, all_blocks[host])
+
+                    display.debug("done extending task lists")
+                    display.debug("done processing included files")
 
                 display.debug("results queue empty")
             except (IOError, EOFError) as e:

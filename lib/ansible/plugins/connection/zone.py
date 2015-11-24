@@ -45,13 +45,8 @@ class Connection(ConnectionBase):
     ''' Local zone based connections '''
 
     transport = 'zone'
-    # Pipelining may work.  Someone needs to test by setting this to True and
-    # having pipelining=True in their ansible.cfg
-    has_pipelining = False
-    # Some become_methods may work in v2 (sudo works for other chroot-based
-    # plugins while su seems to be failing).  If some work, check chroot.py to
-    # see how to disable just some methods.
-    become_methods = frozenset()
+    has_pipelining = True
+    become_methods = frozenset(C.BECOME_METHODS).difference(('su',))
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         super(Connection, self).__init__(play_context, new_stdin, *args, **kwargs)
@@ -114,13 +109,10 @@ class Connection(ConnectionBase):
         compared to exec_command() it looses some niceties like being able to
         return the process's exit code immediately.
         '''
-        # FIXME: previous code took pains not to invoke /bin/sh and left out
-        # -c.  Not sure why as cmd could contain shell metachars (like
-        # cmd = "mkdir -p $HOME/pathname && echo $HOME/pathname") which
-        # probably wouldn't work without a shell.  Get someone to test that
-        # this connection plugin works and then we can remove this note
-        executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-        local_cmd = [self.zlogin_cmd, self.zone, executable, '-c', cmd]
+        # Note: zlogin invokes a shell (just like ssh does) so we do not pass
+        # this through /bin/sh -c here.  Instead it goes through the shell
+        # that zlogin selects.
+        local_cmd = [self.zlogin_cmd, self.zone, cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.zone)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
@@ -131,13 +123,6 @@ class Connection(ConnectionBase):
     def exec_command(self, cmd, in_data=None, sudoable=False):
         ''' run a command on the zone '''
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
-
-        # TODO: Check whether we can send the command to stdin via
-        # p.communicate(in_data)
-        # If we can, then we can change this plugin to has_pipelining=True and
-        # remove the error if in_data is given.
-        if in_data:
-            raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
 
         p = self._buffered_exec_command(cmd)
 

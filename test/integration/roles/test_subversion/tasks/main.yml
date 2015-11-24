@@ -36,7 +36,7 @@
 
 - debug: var=subverted
 
-- shell: ls ~/ansible_testing/svn
+- shell: ls {{ checkout_dir }}
 
 # FIXME: the before/after logic here should be fixed to make them hashes, see GitHub 6078
 # looks like this: {

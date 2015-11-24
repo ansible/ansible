@@ -60,7 +60,6 @@ class Connection(ConnectionBase):
     # management here.
 
     def _connect(self):
-        self._connected = True
         return self
 
     @staticmethod
@@ -284,7 +283,7 @@ class Connection(ConnectionBase):
         for l in chunk.splitlines(True):
             suppress_output = False
 
-            # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, l.rstrip('\r\n')))
+            #display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, l.rstrip('\r\n')))
             if self._play_context.prompt and self.check_password_prompt(l):
                 display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, l.rstrip('\r\n')))
                 self._flags['become_prompt'] = True
@@ -392,7 +391,10 @@ class Connection(ConnectionBase):
             become_error=False, become_nopasswd_error=False
         )
 
-        timeout = self._play_context.timeout
+        # select timeout should be longer than the connect timeout, otherwise
+        # they will race each other when we can't connect, and the connect
+        # timeout usually fails
+        timeout = 2 + self._play_context.timeout
         rpipes = [p.stdout, p.stderr]
         for fd in rpipes:
             fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
@@ -411,6 +413,10 @@ class Connection(ConnectionBase):
 
             if not rfd:
                 if state <= states.index('awaiting_escalation'):
+                    # If the process has already exited, then it's not really a
+                    # timeout; we'll let the normal error handling deal with it.
+                    if p.poll() is not None:
+                        break
                     self._terminate_process(p)
                     raise AnsibleError('Timeout (%ds) waiting for privilege escalation prompt: %s' % (timeout, stdout))
 

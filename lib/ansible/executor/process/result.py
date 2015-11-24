@@ -58,7 +58,7 @@ class ResultProcess(multiprocessing.Process):
 
     def _send_result(self, result):
         debug(u"sending result: %s" % ([text_type(x) for x in result],))
-        self._final_q.put(result, block=False)
+        self._final_q.put(result)
         debug("done sending result")
 
     def _read_worker_result(self):
@@ -101,7 +101,7 @@ class ResultProcess(multiprocessing.Process):
             try:
                 result = self._read_worker_result()
                 if result is None:
-                    time.sleep(0.01)
+                    time.sleep(0.0001)
                     continue
 
                 clean_copy = strip_internal_keys(result._result)
@@ -142,8 +142,6 @@ class ResultProcess(multiprocessing.Process):
                                 # notifies all other threads
                                 for notify in result_item['_ansible_notify']:
                                     self._send_result(('notify_handler', result, notify))
-                            # now remove the notify field from the results, as its no longer needed
-                            result_item.pop('_ansible_notify')
 
                         if 'add_host' in result_item:
                             # this task added a new host (add_host module)

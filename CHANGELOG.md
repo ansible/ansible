@@ -154,6 +154,7 @@ newline being stripped you can change your playbook like this:
 * datadog_monitor
 * deploy_helper
 * dpkg_selections
+* docker: docker_login
 * elasticsearch_plugin
 * expect
 * find
@@ -174,6 +175,7 @@ newline being stripped you can change your playbook like this:
 * openstack: os_nova_flavor
 * openstack: os_object
 * openstack: os_port
+* openstack: os_project
 * openstack: os_router
 * openstack: os_security_group
 * openstack: os_security_group_rule
@@ -266,7 +268,9 @@ newline being stripped you can change your playbook like this:
 * fleetctl
 * openvz
 * nagios_ndo
+* nsot
 * proxmox
+* rudder
 * serf
 
 ####New Lookups:
@@ -283,6 +287,11 @@ newline being stripped you can change your playbook like this:
 ####New Connection:
 
 * docker: for talking to docker containers on the ansible controller machine without using ssh.
+
+####New Callbacks:
+
+* logentries: plugin to send play data to logentries service
+* skippy: same as default but does not display skip messages
 
 ###Minor changes:
 

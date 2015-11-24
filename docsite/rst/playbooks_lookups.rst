@@ -273,6 +273,10 @@ Here are some examples::
 
          - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
+         # loading a json file from a template as a string
+         - debug: msg="{{ lookup('template', './some_json.json.j2', convert_data=False) }} is a value from evaluation of this template"
+
+
          - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
 
          # shelvefile lookup retrieves a string value corresponding to a key inside a Python shelve file

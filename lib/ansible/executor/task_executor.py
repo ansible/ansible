@@ -67,6 +67,7 @@ class TaskExecutor:
         self._new_stdin         = new_stdin
         self._loader            = loader
         self._shared_loader_obj = shared_loader_obj
+        self._connection        = None
 
     def run(self):
         '''
@@ -153,16 +154,19 @@ class TaskExecutor:
         and returns the items result.
         '''
 
-        # create a copy of the job vars here so that we can modify
-        # them temporarily without changing them too early for other
-        # parts of the code that might still need a pristine version
-        #vars_copy = self._job_vars.copy()
-        vars_copy = self._job_vars
+        # save the play context variables to a temporary dictionary,
+        # so that we can modify the job vars without doing a full copy
+        # and later restore them to avoid modifying things too early
+        play_context_vars = dict()
+        self._play_context.update_vars(play_context_vars)
 
-        # now we update them with the play context vars
-        self._play_context.update_vars(vars_copy)
+        old_vars = dict()
+        for k in play_context_vars.keys():
+            if k in self._job_vars:
+                old_vars[k] = self._job_vars[k]
+            self._job_vars[k] = play_context_vars[k]
 
-        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=vars_copy)
+        templar = Templar(loader=self._loader, shared_loader_obj=self._shared_loader_obj, variables=self._job_vars)
         items = None
         if self._task.loop:
             if self._task.loop in self._shared_loader_obj.lookup_loader:
@@ -185,9 +189,18 @@ class TaskExecutor:
                         else:
                             raise
                 items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader,
-                        templar=templar).run(terms=loop_terms, variables=vars_copy)
+                        templar=templar).run(terms=loop_terms, variables=self._job_vars)
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
+
+        # now we restore any old job variables that may have been modified,
+        # and delete them if they were in the play context vars but not in
+        # the old variables dictionary
+        for k in play_context_vars.keys():
+            if k in old_vars:
+                self._job_vars[k] = old_vars[k]
+            else:
+                del self._job_vars[k]
 
         if items:
             from ansible.vars.unsafe_proxy import UnsafeProxy
@@ -232,6 +245,7 @@ class TaskExecutor:
             # now update the result with the item info, and append the result
             # to the list of results
             res['item'] = item
+            #TODO: send item results to callback here, instead of all at the end
             results.append(res)
 
         return results
@@ -348,8 +362,9 @@ class TaskExecutor:
                 self._task.args = variable_params
 
         # get the connection and the handler for this execution
-        self._connection = self._get_connection(variables=variables, templar=templar)
-        self._connection.set_host_overrides(host=self._host)
+        if not self._connection or not getattr(self._connection, 'connected', False):
+            self._connection = self._get_connection(variables=variables, templar=templar)
+            self._connection.set_host_overrides(host=self._host)
 
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
@@ -393,6 +408,8 @@ class TaskExecutor:
                 # the async_wrapper module returns dumped JSON via its stdout
                 # response, so we parse it here and replace the result
                 try:
+                    if 'skipped' in result and result['skipped'] or 'failed' in result and result['failed']:
+                        return result
                     result = json.loads(result.get('stdout'))
                 except (TypeError, ValueError) as e:
                     return dict(failed=True, msg="The async task did not return valid JSON: %s" % str(e))

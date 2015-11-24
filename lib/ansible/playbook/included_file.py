@@ -24,6 +24,12 @@ import os
 from ansible.errors import AnsibleError
 from ansible.template import Templar
 
+try:
+    from __main__ import display
+except ImportError:
+    from ansible.utils.display import Display
+    display = Display()
+
 class IncludedFile:
 
     def __init__(self, filename, args, task):
