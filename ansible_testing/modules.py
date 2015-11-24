@@ -293,6 +293,22 @@ class ModuleValidator(Validator):
         if not os.path.isfile(py_path):
             self.errors.append('Missing python documentation file')
 
+    def _get_docs(self):
+        docs = None
+        examples = None
+        ret = None
+        for child in self.ast.body:
+            if isinstance(child, ast.Assign):
+                for grandchild in child.targets:
+                    if grandchild.id == 'DOCUMENTATION':
+                        docs = child.value.s
+                    elif grandchild.id == 'EXAMPLES':
+                        examples = child.value.s[1:]
+                    elif grandchild.id == 'RETURN':
+                        ret = child.value.s
+
+        return docs, examples, ret
+
     def _find_redeclarations(self):
         g = set()
         find_globals(g, self.ast.body)
@@ -352,7 +368,8 @@ class ModuleValidator(Validator):
                 doc, examples, ret = get_docstring(self.path, verbose=True)
                 trace = None
             except:
-                doc, examples, ret = get_docstring(self.path)
+                doc = None
+                _, examples, ret = self._get_docs()
                 trace = traceback.format_exc()
             finally:
                 sys.stdout = sys_stdout
