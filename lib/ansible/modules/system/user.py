@@ -1683,7 +1683,8 @@ class DarwinUser(User):
         out = ''
         err = ''
 
-        self._make_group_numerical()
+        if self.group:
+            self._make_group_numerical()
 
         for field in self.fields:
             if self.__dict__.has_key(field[0]) and self.__dict__[field[0]]:
