@@ -117,6 +117,8 @@ class ModuleValidator(Validator):
         self.basename = os.path.basename(self.path)
         self.name, _ = os.path.splitext(self.basename)
 
+        self._python_module_override = False
+
         with open(path) as f:
             self.text = f.read()
         self.length = len(self.text.splitlines())
@@ -134,7 +136,7 @@ class ModuleValidator(Validator):
         return self.path
 
     def _python_module(self):
-        if self.path.endswith('.py'):
+        if self.path.endswith('.py') or self._python_module_override:
             return True
         return False
 
@@ -334,7 +336,7 @@ class ModuleValidator(Validator):
             self.errors.append('Official Ansible modules must have a .py '
                                'extension for python modules or a .ps1 '
                                'for powershell modules')
-            return
+            self._python_module_override = True
 
         if self._python_module() and self.ast is None:
             self.errors.append('Python SyntaxError while parsing module')
