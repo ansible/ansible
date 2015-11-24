@@ -105,7 +105,8 @@ class GalaxyAPI(object):
         """
         url = '%s/tokens/' % self.baseurl
         args = urllib.urlencode({"github_token": github_token})
-        data = self.__call_galaxy(url, args=args)
+        resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST")
+        data = json.load(resp)
         return data
 
     def create_import_task(self, github_user, github_repo, reference=None, alternate_name=None):
