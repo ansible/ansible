@@ -75,6 +75,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
         self.success_key = None
         self.prompt = None
+        self._connected = False
 
         # load the shell plugin for this action/connection
         if play_context.shell:
@@ -87,6 +88,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         self._shell = shell_loader.get(shell_type)
         if not self._shell:
             raise AnsibleError("Invalid shell type specified (%s), or the plugin for that shell type is missing." % shell_type)
+
+    @property
+    def connected(self):
+        return self._connected
 
     def _become_method_supported(self):
         ''' Checks if the current class supports this privilege escalation method '''
