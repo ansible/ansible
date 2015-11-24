@@ -46,7 +46,7 @@ class GalaxyRole(object):
     SUPPORTED_SCMS = set(['git', 'hg'])
     META_MAIN = os.path.join('meta', 'main.yml')
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
-    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
+    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
 
 
     def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):

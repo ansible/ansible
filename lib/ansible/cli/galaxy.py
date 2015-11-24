@@ -29,7 +29,7 @@ import getpass
 import json
 import time
 
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from jinja2 import Environment
 
 import ansible.constants as C
@@ -51,21 +51,20 @@ except ImportError:
 
 class GalaxyCLI(CLI):
 
-    available_commands = {
-        "config":    "manage ~/.ansible-galaxy/config.yml",
-        "delete":    "remove a role from Galaxy",
-        "import":    "add a role contained in a GitHub repo to Galaxy",
-        "info":      "display details about a particular role",
-        "init":      "create a role directory structure in your roles path",
-        "install":   "download a role into your roles path",
-        "list":      "enumerate roles found in your roles path",
-        "login":     "authenticate with Galaxy API and store the token",
-        "remove":    "delete a role from your roles path",
-        "search":    "query the Galaxy API",
-        "setup":     "add a TravisCI or GitHub integration to Galaxy",
-    }
+    available_commands = OrderedDict([
+        ("config",    "manage ~/.ansible-galaxy/config.yml"),
+        ("delete",    "remove a role from Galaxy"),
+        ("import",    "add a role contained in a GitHub repo to Galaxy"),
+        ("info",      "display details about a particular role"),
+        ("init",      "create a role directory structure in your roles path"),
+        ("install",   "download a role into your roles path"),
+        ("list",      "enumerate roles found in your roles path"),
+        ("login",     "authenticate with Galaxy API and store the token"),
+        ("remove",    "delete a role from your roles path"),
+        ("search",    "query the Galaxy API"),
+        ("setup",     "add a TravisCI or GitHub integration to Galaxy"),
+    ])
 
-    # VALID_ACTIONS = ("config", "delete", "import", "init", "info", "install", "list", "login", "remove", "search", "setup")
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     DEFAULT_GALAXY_SERVER = "https://galaxy.ansible.com"
 
@@ -96,10 +95,11 @@ class GalaxyCLI(CLI):
 
     def show_available_actions(self):
         # list available commands
-        display.display("usage: ansible-galaxy COMMAND [--help] [options] ...")
+        display.display(u'\n' + "usage: ansible-galaxy COMMAND [--help] [options] ...")
         display.display(u'\n' + "availabe commands:" + u'\n\n')
         for key in self.available_commands:
             display.display(u'\t' + "%-12s %s" % (key, self.available_commands[key]))
+        display.display(' ')
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -276,7 +276,7 @@ class GalaxyCLI(CLI):
                             "however it will reset any main.yml files that may have\n"
                             "been modified there already." % role_path)
 
-        # create the default README.md
+        # create default README.md
         if not os.path.exists(role_path):
             os.makedirs(role_path)
         readme_path = os.path.join(role_path, "README.md")
@@ -284,9 +284,16 @@ class GalaxyCLI(CLI):
         f.write(self.galaxy.default_readme)
         f.close()
 
+        # create default .travis.yml
+        travis = Environment().from_string(self.galaxy.default_travis).render()
+        f = open(os.path.join(role_path, '.travis.yml'), 'w')
+        f.write(travis)
+        f.close()
+
         for dir in GalaxyRole.ROLE_DIRS:
             dir_path = os.path.join(init_path, role_name, dir)
             main_yml_path = os.path.join(dir_path, 'main.yml')
+
             # create the directory if it doesn't exist already
             if not os.path.exists(dir_path):
                 os.makedirs(dir_path)
@@ -322,6 +329,20 @@ class GalaxyCLI(CLI):
                 f.write(rendered_meta)
                 f.close()
                 pass
+            elif dir == "tests":
+                # create tests/test.yml
+                inject = dict(
+                    role_name = role_name
+                )
+                playbook = Environment().from_string(self.galaxy.default_test).render(inject)
+                f = open(os.path.join(dir_path, 'test.yml'), 'w')
+                f.write(playbook)
+                f.close()
+
+                # create tests/inventory
+                f = open(os.path.join(dir_path, 'inventory'), 'w')
+                f.write('localhost')
+                f.close()
             elif dir not in ('files','templates'):
                 # just write a (mostly) empty YAML file for main.yml
                 f = open(main_yml_path, 'w')
