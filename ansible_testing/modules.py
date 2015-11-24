@@ -27,7 +27,7 @@ from StringIO import StringIO
 
 
 BLACKLIST_DIRS = frozenset(('.git',))
-INDENT_REGEX = re.compile(r'(^[ \t]*)')
+INDENT_REGEX = re.compile(r'([\t]*)')
 BASIC_RESERVED = frozenset((r for r in dir(module_utils_basic) if r[0] != '_'))
 
 
@@ -176,11 +176,10 @@ class ModuleValidator(Validator):
     def _check_for_tabs(self):
         for line_no, line in enumerate(self.text.splitlines()):
             indent = INDENT_REGEX.search(line)
-            for i in indent.groups():
-                if '\t' in i:
-                    index = line.index('\t')
-                    self.errors.append('indentation contains tabs. line %d '
-                                       'column %d' % (line_no + 1, index))
+            if indent and '\t' in line:
+                index = line.index('\t')
+                self.errors.append('indentation contains tabs. line %d '
+                                   'column %d' % (line_no + 1, index))
 
     def _find_json_import(self):
         for child in self.ast.body:
