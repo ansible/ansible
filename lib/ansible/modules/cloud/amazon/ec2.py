@@ -245,12 +245,11 @@ options:
     default: null
     aliases: ['network_interface']
   spot_launch_group:
-    version_added: "2.0"
+    version_added: "2.1"
     description:
       - Launch group for spot request, see U(http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/how-spot-instances-work.html#spot-launch-group)
     required: false
     default: null
-    aliases: []
 
 author:
     - "Tim Gerla (@tgerla)"
