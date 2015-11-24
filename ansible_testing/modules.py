@@ -7,6 +7,7 @@ import re
 import abc
 import ast
 import sys
+import yaml
 import argparse
 import traceback
 
@@ -365,6 +366,12 @@ class ModuleValidator(Validator):
                 self.errors.append('No EXAMPLES provided')
             if not bool(ret):
                 self.warnings.append('No RETURN provided')
+            else:
+                try:
+                    yaml.safe_load(ret)
+                except:
+                    self.errors.append('RETURN is not valid YAML')
+                    self.traces.append(traceback.format_exc())
 
         if self._python_module() and not self._just_docs():
             self._check_for_sys_exit()
