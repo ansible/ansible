@@ -206,12 +206,14 @@ class GalaxyCLI(CLI):
         if self.action in ("import","info","install","search","login","setup","delete") or \
             (self.action == 'init' and not self.options.offline):
             # set the API server
-            if self.options.api_server != self.DEFAULT_GALAXY_SERVER:
+            if self.options.api_server:
                 api_server = self.options.api_server
             elif os.environ.get('GALAXY_SERVER'):
                 api_server = os.environ['GALAXY_SERVER']
             elif self.config.get_key('galaxy_server'):
                 api_server = self.config.get_key('galaxy_server')
+            else:
+                api_server=self.DEFAULT_GALAXY_SERVER
             display.vvv("Connecting to galaxy_server: %s" % api_server)
             
             self.api = GalaxyAPI(self.galaxy, self.config, api_server)
@@ -628,7 +630,7 @@ class GalaxyCLI(CLI):
             # show key
             key = self.args.pop()
             val = self.config.get_key(key)
-            if val:
+            if val != None:
                 display.display('%s: %s' % (key,val))
             else:
                 display.display('%s not defined' % key)
