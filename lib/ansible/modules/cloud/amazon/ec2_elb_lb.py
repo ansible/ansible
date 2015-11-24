@@ -768,7 +768,7 @@ class ElbManager(object):
     def _set_security_groups(self):
         if self.security_group_ids != None and set(self.elb.security_groups) != set(self.security_group_ids):
             self.elb_conn.apply_security_groups_to_lb(self.name, self.security_group_ids)
-            self.Changed = True
+            self.changed = True
 
     def _set_health_check(self):
         """Set health check values on ELB as needed"""
@@ -806,8 +806,12 @@ class ElbManager(object):
     def _set_cross_az_load_balancing(self):
         attributes = self.elb.get_attributes()
         if self.cross_az_load_balancing:
+            if not attributes.cross_zone_load_balancing.enabled:
+                self.changed = True
             attributes.cross_zone_load_balancing.enabled = True
         else:
+            if attributes.cross_zone_load_balancing.enabled:
+                self.changed = True
             attributes.cross_zone_load_balancing.enabled = False
         self.elb_conn.modify_lb_attribute(self.name, 'CrossZoneLoadBalancing',
                                           attributes.cross_zone_load_balancing.enabled)
@@ -841,16 +845,23 @@ class ElbManager(object):
     def _set_connection_draining_timeout(self):
         attributes = self.elb.get_attributes()
         if self.connection_draining_timeout is not None:
+            if not attributes.connection_draining.enabled or \
+                    attributes.connection_draining.timeout != self.connection_draining_timeout:
+                self.changed = True
             attributes.connection_draining.enabled = True
             attributes.connection_draining.timeout = self.connection_draining_timeout
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
         else:
+            if attributes.connection_draining.enabled:
+                self.changed = True
             attributes.connection_draining.enabled = False
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
 
     def _set_idle_timeout(self):
         attributes = self.elb.get_attributes()
         if self.idle_timeout is not None:
+            if attributes.connecting_settings.idle_timeout != self.idle_timeout:
+                self.changed = True
             attributes.connecting_settings.idle_timeout = self.idle_timeout
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectingSettings', attributes.connecting_settings)
 
