@@ -146,7 +146,7 @@ from six import iteritems
 
 class ConsulInventory(object):
 
-  def __init__(self):
+  def __init__(self, config):
     ''' Create an inventory based on the catalog of nodes and services
     registered in a consul cluster'''
     self.node_metadata = {}
@@ -158,7 +158,6 @@ class ConsulInventory(object):
     self.nodes_by_availability = {}
     self.current_dc = None
 
-    config = ConsulConfig()
     self.config = config
 
     self.consul_api = config.get_consul_api()
@@ -172,7 +171,7 @@ class ConsulInventory(object):
       self.load_all_data_consul()
 
     self.combine_all_results()
-    print(json.dumps(self.inventory, sort_keys=True, indent=2))
+    return None
 
   def load_all_data_consul(self):
     ''' cycle through each of the datacenters in the consul catalog and process
@@ -355,8 +354,13 @@ class ConsulInventory(object):
 
 class ConsulConfig(dict):
 
-  def __init__(self):
-    self.read_settings()
+  def __init__(self, cfg_file = None):
+    self.config_options = ['host', 'token', 'datacenter', 'servers_suffix',
+                           'tags', 'kv_metadata', 'kv_groups', 'availability',
+                           'unavailable_suffix', 'available_suffix', 'url',
+                           'domain']
+    if cfg_file is not None:
+      self.read_settings(cfg_file)
     self.read_cli_args()
 
   def has_config(self, name):
@@ -365,20 +369,17 @@ class ConsulConfig(dict):
     else:
       return False
 
-  def read_settings(self):
+  def set_config(self, name, value = None):
+    setattr(self, name, value)
+
+  def read_settings(self, cfg_file):
     ''' Reads the settings from the consul.ini file '''
     config = ConfigParser.SafeConfigParser()
-    config.read(os.path.dirname(os.path.realpath(__file__)) + '/consul.ini')
+    config.read(cfg_file)
 
-    config_options = ['host', 'token', 'datacenter', 'servers_suffix',
-                      'tags', 'kv_metadata', 'kv_groups', 'availability',
-                      'unavailable_suffix', 'available_suffix', 'url',
-                      'domain']
-    for option in config_options:
-      value = None
-      if config.has_option('consul', option):
-          value = config.get('consul', option)
-      setattr(self, option, value)
+    for option in self.config_options:
+      value = config.get('consul', option) if config.has_option('consul', option) else None
+      self.set_config(option, value)
 
   def read_cli_args(self):
     ''' Command line argument processing '''
@@ -426,4 +427,7 @@ class ConsulConfig(dict):
               token = 'anonymous'
       return consul.Consul(host=host, port=port, token=token)
 
-ConsulInventory()
+if __name__ == "__main__":
+  config = ConsulConfig(os.path.dirname(os.path.realpath(__file__)) + '/consul.ini')
+  consul_inventory = ConsulInventory(config)
+  print(json.dumps(consul_inventory.inventory, sort_keys=True, indent=2))
