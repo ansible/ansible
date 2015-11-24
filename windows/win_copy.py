@@ -44,16 +44,6 @@ options:
     required: true
     default: null
 author: "Jon Hawkesworth (@jhawkesworth)"
-notes:
-   - The "win_copy" module is best used for small files only.
-     This module should **not** be used for files bigger than 3Mb as
-     this will result in a 500 response from the winrm host
-     and it will not be possible to connect via winrm again until the
-     windows remote management service has been restarted on the 
-     windows host.
-     Files larger than 1Mb will take minutes to transfer.
-     The recommended way to transfer large files is using win_get_url 
-     or collecting from a windows file share folder.  
 '''
 
 EXAMPLES = '''
