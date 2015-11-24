@@ -27,7 +27,7 @@ DOCUMENTATION = '''
 ---
 module: yumrepo
 author: Jiri Tyr (@jtyr)
-version_added: '2.0'
+version_added: '2.1'
 short_description: Add and remove YUM repositories
 description:
   - Add or remove YUM repositories in RPM-based Linux distributions.
@@ -283,7 +283,8 @@ options:
     description:
       - Username to use for basic authentication to a repo or really any url.
 
-extends_documentation_fragment: files
+extends_documentation_fragment:
+    - files
 
 notes:
   - All comments will be removed if modifying an existing repo file.
