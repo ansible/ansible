@@ -60,7 +60,6 @@ class Connection(ConnectionBase):
     # management here.
 
     def _connect(self):
-        self._connected = True
         return self
 
     @staticmethod
@@ -284,7 +283,7 @@ class Connection(ConnectionBase):
         for l in chunk.splitlines(True):
             suppress_output = False
 
-            # display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, l.rstrip('\r\n')))
+            #display.debug("Examining line (source=%s, state=%s): '%s'" % (source, state, l.rstrip('\r\n')))
             if self._play_context.prompt and self.check_password_prompt(l):
                 display.debug("become_prompt: (source=%s, state=%s): '%s'" % (source, state, l.rstrip('\r\n')))
                 self._flags['become_prompt'] = True
@@ -372,7 +371,7 @@ class Connection(ConnectionBase):
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
                 display.debug('Initial state: %s: %s' % (states[state], self._play_context.prompt))
-            elif self._play_context.become and self._play_context.success_key and not self._connected:
+            elif self._play_context.become and self._play_context.success_key:
                 # We're requesting escalation without a password, so we have to
                 # detect success/failure before sending any initial data.
                 state = states.index('awaiting_escalation')
