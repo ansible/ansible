@@ -829,13 +829,17 @@ def promote_db_instance(module, conn):
     instance_name = module.params.get('instance_name')
     
     result = conn.get_db_instance(instance_name)
+    if not result:
+        module.fail_json(msg="DB Instance %s does not exist" % instance_name)
+
     if result.get_data().get('replication_source'):
-        changed = False
-    else:
         try:
             result = conn.promote_read_replica(instance_name, **params)
+            changed = True
         except RDSException, e:
             module.fail_json(msg=e.message)
+    else:
+        changed = False
 
     if module.params.get('wait'):
         resource = await_resource(conn, result, 'available', module)
