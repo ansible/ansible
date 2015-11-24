@@ -362,7 +362,7 @@ class TaskExecutor:
                 self._task.args = variable_params
 
         # get the connection and the handler for this execution
-        if not self._connection or not getattr(self._connection, '_connected', False):
+        if not self._connection or not getattr(self._connection, 'connected', False):
             self._connection = self._get_connection(variables=variables, templar=templar)
             self._connection.set_host_overrides(host=self._host)
 

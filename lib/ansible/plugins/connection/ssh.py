@@ -372,7 +372,7 @@ class Connection(ConnectionBase):
                 # wait for a password prompt.
                 state = states.index('awaiting_prompt')
                 display.debug('Initial state: %s: %s' % (states[state], self._play_context.prompt))
-            elif self._play_context.become and self._play_context.success_key:
+            elif self._play_context.become and self._play_context.success_key and not self._connected:
                 # We're requesting escalation without a password, so we have to
                 # detect success/failure before sending any initial data.
                 state = states.index('awaiting_escalation')
