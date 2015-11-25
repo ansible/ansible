@@ -23,7 +23,7 @@ DOCUMENTATION = '''
 ---
 module: ping
 version_added: historical
-short_description: Try to connect to host, veryify a usable python and return C(pong) on success.
+short_description: Try to connect to host, verify a usable python and return C(pong) on success.
 description:
    - A trivial test module, this module always returns C(pong) on successful
      contact. It does not make sense in playbooks, but it is useful from
