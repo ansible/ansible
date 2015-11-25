@@ -457,12 +457,17 @@ class Connection(ConnectionBase):
                 tmp_stdout = tmp_stderr = ''
 
             # If we see a privilege escalation prompt, we send the password.
+            # (If we're expecting a prompt but the escalation succeeds, we
+            # didn't need the password and can carry on regardless.)
 
-            if states[state] == 'awaiting_prompt' and self._flags['become_prompt']:
-                display.debug('Sending become_pass in response to prompt')
-                stdin.write(self._play_context.become_pass + '\n')
-                self._flags['become_prompt'] = False
-                state += 1
+            if states[state] == 'awaiting_prompt':
+                if self._flags['become_prompt']:
+                    display.debug('Sending become_pass in response to prompt')
+                    stdin.write(self._play_context.become_pass + '\n')
+                    self._flags['become_prompt'] = False
+                    state += 1
+                elif self._flags['become_success']:
+                    state += 1
 
             # We've requested escalation (with or without a password), now we
             # wait for an error message or a successful escalation.
