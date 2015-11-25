@@ -311,5 +311,5 @@ class CallbackBase:
     def v2_playbook_item_on_failed(self, result):
         pass
 
-    def v2_playbook_item_on_skipped(self, result)
+    def v2_playbook_item_on_skipped(self, result):
         pass
