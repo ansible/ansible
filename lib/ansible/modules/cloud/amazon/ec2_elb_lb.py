@@ -107,7 +107,6 @@ options:
     description:
       - Wait a specified timeout allowing connections to drain before terminating an instance
     required: false
-    default: "None"
     aliases: []
     version_added: "1.8"
   idle_timeout:
@@ -128,6 +127,14 @@ options:
       - An associative array of stickness policy settings. Policy will be applied to all listeners ( see example )
     required: false
     version_added: "2.0"
+  wait_for:
+    description:
+      - When specified, Ansible will check the status of the load balancer to ensure it has been successfully
+        removed from AWS.
+    required: false
+    default: no
+    choices: ["yes", "no"]
+    version_added: 2.0
 
 extends_documentation_fragment: aws
 """
@@ -200,6 +207,13 @@ EXAMPLES = """
     module: ec2_elb_lb
     name: "test-please-delete"
     state: absent
+
+# Ensure ELB is gone and wait for check
+- local_action:
+    module: ec2_elb_lb
+    name: "test-please-delete"
+    state: absent
+    wait_for: yes
 
 # Normally, this module will purge any listeners that exist on the ELB
 # but aren't specified in the listeners parameter. If purge_listeners is
@@ -321,8 +335,9 @@ class ElbManager(object):
                  zones=None, purge_zones=None, security_group_ids=None,
                  health_check=None, subnets=None, purge_subnets=None,
                  scheme="internet-facing", connection_draining_timeout=None,
-                 idle_timeout, cross_az_load_balancing=None, access_logs=None,
-                 stickiness=None, region=None, **aws_connect_params):
+                 idle_timeout=None,
+                 cross_az_load_balancing=None, access_logs=None,
+                 stickiness=None, wait_for=None, region=None, **aws_connect_params):
 
         self.module = module
         self.name = name
@@ -340,6 +355,7 @@ class ElbManager(object):
         self.cross_az_load_balancing = cross_az_load_balancing
         self.access_logs = access_logs
         self.stickiness = stickiness
+        self.wait_for = wait_for
 
         self.aws_connect_params = aws_connect_params
         self.region = region
@@ -348,6 +364,7 @@ class ElbManager(object):
         self.status = 'gone'
         self.elb_conn = self._get_elb_connection()
         self.elb = self._get_elb()
+        self.ec2_conn = self._get_ec2_connection()
 
     def ensure_ok(self):
         """Create the ELB"""
@@ -378,6 +395,14 @@ class ElbManager(object):
         """Destroy the ELB"""
         if self.elb:
             self._delete_elb()
+            if self.wait_for:
+                elb_removed = self._wait_for_elb_removed()
+                # Unfortunately even though the ELB itself is removed quickly
+                # the interfaces take longer so reliant security groups cannot
+                # be deleted until the interface has registered as removed.
+                elb_interface_removed = self._wait_for_elb_interface_removed()
+                if not (elb_removed and elb_interface_removed):
+                    self.module.fail_json(msg='Timed out waiting for removal of load balancer.')
 
     def get_info(self):
         try:
@@ -478,6 +503,50 @@ class ElbManager(object):
 
         return info
 
+    def _wait_for_elb_removed(self):
+        polling_increment_secs = 30
+        max_retries = 10
+        status_achieved = False
+
+        for x in range(0, max_retries):
+            try:
+                result = self.elb_conn.get_all_lb_attributes(self.name)
+            except (boto.exception.BotoServerError, StandardError), e:
+                if "LoadBalancerNotFound" in e.code:
+                    status_achieved = True
+                    break
+                else:
+                    time.sleep(polling_increment_secs)
+
+        return status_achieved
+
+    def _wait_for_elb_interface_removed(self):
+        polling_increment_secs = 30
+        max_retries = 10
+        status_achieved = False
+
+        elb_interfaces = self.ec2_conn.get_all_network_interfaces(
+                    filters={'attachment.instance-owner-id': 'amazon-elb',
+                        'description': 'ELB {0}'.format(self.name) })
+
+        for x in range(0, max_retries):
+            for interface in elb_interfaces:
+                try:
+                    result = self.ec2_conn.get_all_network_interfaces(interface.id)
+                    if result == []:
+                        status_achieved = True
+                        break
+                    else:
+                        time.sleep(polling_increment_secs)
+                except (boto.exception.BotoServerError, StandardError), e:
+                    if 'InvalidNetworkInterfaceID' in e.code:
+                        status_achieved = True
+                        break
+                    else:
+                        self.module.fail_json(msg=str(e))
+
+        return status_achieved
+
     def _get_elb(self):
         elbs = self.elb_conn.get_all_load_balancers()
         for elb in elbs:
@@ -490,6 +559,13 @@ class ElbManager(object):
             return connect_to_aws(boto.ec2.elb, self.region,
                                   **self.aws_connect_params)
         except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+            self.module.fail_json(msg=str(e))
+
+    def _get_ec2_connection(self):
+        try:
+            return connect_to_aws(boto.ec2, self.region,
+                                  **self.aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, StandardError), e:
             self.module.fail_json(msg=str(e))
 
     def _delete_elb(self):
@@ -893,7 +969,8 @@ def main():
             idle_timeout={'default': None, 'required': False},
             cross_az_load_balancing={'default': None, 'required': False},
             stickiness={'default': None, 'required': False, 'type': 'dict'},
-            access_logs={'default': None, 'required': False, 'type': 'dict'}
+            access_logs={'default': None, 'required': False, 'type': 'dict'},
+            wait_for={'default': False, 'type': 'bool', 'required': False}
         )
     )
 
@@ -926,6 +1003,7 @@ def main():
     idle_timeout = module.params['idle_timeout']
     cross_az_load_balancing = module.params['cross_az_load_balancing']
     stickiness = module.params['stickiness']
+    wait_for = module.params['wait_for']
 
     if state == 'present' and not listeners:
         module.fail_json(msg="At least one port is required for ELB creation")
@@ -952,7 +1030,8 @@ def main():
                          purge_zones, security_group_ids, health_check,
                          subnets, purge_subnets, scheme,
                          connection_draining_timeout, idle_timeout,
-                         cross_az_load_balancing, access_logs, stickiness,
+                         cross_az_load_balancing,
+                         access_logs, stickiness, wait_for,
                          region=region, **aws_connect_params)
 
     # check for unsupported attributes for this version of boto
