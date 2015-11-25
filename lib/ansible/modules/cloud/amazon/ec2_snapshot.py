@@ -79,7 +79,7 @@ options:
       - If the volume's most recent snapshot has started less than `last_snapshot_min_age' minutes ago, a new snapshot will not be created.
     required: false
     default: 0
-    version_added: "1.9"
+    version_added: "2.0"
 
 author: "Will Thames (@willthames)"
 extends_documentation_fragment: aws
