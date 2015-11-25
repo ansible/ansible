@@ -77,12 +77,12 @@ cloudstack_local_ipv4:
   type: string
   sample: 185.19.28.35
 cloudstack_public_hostname:
-  description: public hostname of the instance.
+  description: public IPv4 of the router. Same as C(cloudstack_public_ipv4).
   returned: success
   type: string
   sample: VM-ab4e80b0-3e7e-4936-bdc5-e334ba5b0139
 cloudstack_public_ipv4:
-  description: public IPv4 of the instance.
+  description: public IPv4 of the router.
   returned: success
   type: string
   sample: 185.19.28.35
