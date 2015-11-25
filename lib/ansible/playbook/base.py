@@ -27,7 +27,7 @@ import uuid
 from functools import partial
 from inspect import getmembers
 
-from ansible.compat.six import iteritems, string_types, text_type
+from ansible.compat.six import iteritems, string_types
 
 from jinja2.exceptions import UndefinedError
 
@@ -311,7 +311,7 @@ class Base:
                 # and make sure the attribute is of the type it should be
                 if value is not None:
                     if attribute.isa == 'string':
-                        value = text_type(to_unicode(value))
+                        value = to_unicode(value)
                     elif attribute.isa == 'int':
                         value = int(value)
                     elif attribute.isa == 'float':
