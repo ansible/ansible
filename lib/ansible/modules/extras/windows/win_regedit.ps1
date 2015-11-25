@@ -31,8 +31,6 @@ $state = Get-Attr -obj $params -name "state" -validateSet "present","absent" -de
 $registryData = Get-Attr -obj $params -name "data" -default $null
 $registryDataType = Get-Attr -obj $params -name "datatype" -validateSet "binary","dword","expandstring","multistring","string","qword" -default "string"
 
-$registryKey = "Registry::" + $registryKey
-
 If ($state -eq "present" -and $registryData -eq $null -and $registryValue -ne $null)
 {
     Fail-Json $result "missing required argument: data"
