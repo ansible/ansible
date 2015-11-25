@@ -219,7 +219,7 @@ this, just have the module return a `ansible_facts` key, like so, along with oth
     }
 
 These 'facts' will be available to all statements called after that module (but not before) in the playbook.
-A good idea might be make a module called 'site_facts' and always call it at the top of each playbook, though
+A good idea might be to make a module called 'site_facts' and always call it at the top of each playbook, though
 we're always open to improving the selection of core facts in Ansible as well.
 
 .. _common_module_boilerplate:
