@@ -1319,9 +1319,10 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         # Power on the VM if it was requested
         power_state(vm, state, True)
 
+        vmfacts=gather_facts(vm)
         vsphere_client.disconnect()
         module.exit_json(
-            ansible_facts=gather_facts(vm),
+            ansible_facts=vmfacts,
             changed=True,
             changes="Created VM %s" % guest)
 
