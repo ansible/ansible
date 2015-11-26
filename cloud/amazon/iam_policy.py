@@ -64,9 +64,9 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Create and policy with the name of 'Admin' to the group 'administrators'
+# Create a policy with the name of 'Admin' to the group 'administrators'
 tasks:
-- name: Create two new IAM users with API keys
+- name: Assign a policy called Admin to the administrators group
   iam_policy:
     iam_type: group
     iam_name: administrators
@@ -87,7 +87,7 @@ task:
      - Luigi
   register: new_groups
 
-- name:
+- name: Apply READ-ONLY policy to new groups that have been recently created
   iam_policy:
     iam_type: group
     iam_name: "{{ item.created_group.group_name }}"
