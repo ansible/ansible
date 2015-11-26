@@ -40,7 +40,7 @@ options:
     description:
       - Limit type, see C(man limits) for an explanation
     required: true
-    choices: [ "hard", "soft" ]
+    choices: [ "hard", "soft", "-" ]
   limit_item:
     description:
       - The limit to be set
