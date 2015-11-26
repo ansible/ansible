@@ -176,6 +176,10 @@ EXAMPLES = '''
         size_gb: 10
         type: thin
         datastore: storage001
+        # VMs can be put into folders. The value given here is either the full path
+        # to the folder (e.g. production/customerA/lamp) or just the last component
+        # of the path (e.g. lamp):
+        folder: production/customerA/lamp
     vm_nic:
       nic1:
         type: vmxnet3
@@ -988,6 +992,48 @@ def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_n
         elif len(nics) == 0:
             return(False)
 
+
+def _build_folder_tree(nodes, parent):
+    tree = {}
+
+    for node in nodes:
+        if node['parent'] == parent:
+            tree[node['name']] = dict.copy(node)
+            tree[node['name']]['subfolders'] = _build_folder_tree(nodes, node['id'])
+            del tree[node['name']]['parent']
+
+    return tree
+
+
+def _find_path_in_tree(tree, path):
+    for name, o in tree.iteritems():
+        if name == path[0]:
+            if len(path) == 1:
+                return o
+            else:
+                return _find_path_in_tree(o['subfolders'], path[1:])
+
+    return None
+
+
+def _get_folderid_for_path(vsphere_client, datacenter, path):
+    content = vsphere_client._retrieve_properties_traversal(property_names=['name', 'parent'], obj_type=MORTypes.Folder)
+    if not content: return {}
+
+    node_list = [
+        {
+            'id': o.Obj,
+            'name': o.PropSet[0].Val,
+            'parent': (o.PropSet[1].Val if len(o.PropSet) > 1 else None)
+        } for o in content
+    ]
+
+    tree = _build_folder_tree(node_list, datacenter)
+    tree = _find_path_in_tree(tree, ['vm'])['subfolders']
+    folder = _find_path_in_tree(tree, path.split('/'))
+    return folder['id'] if folder else None
+
+
 def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
 
     datacenter = esxi['datacenter']
@@ -1008,13 +1054,19 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
 
     # virtualmachineFolder managed object reference
     if vm_extra_config.get('folder'):
-        if vm_extra_config['folder'] not in vsphere_client._get_managed_objects(MORTypes.Folder).values():
+        # try to find the folder by its full path, e.g. 'production/customerA/lamp'
+        vmfmor = _get_folderid_for_path(vsphere_client, dcmor, vm_extra_config.get('folder'))
+
+        # try the legacy behaviour of just matching the folder name, so 'lamp' alone matches 'production/customerA/lamp'
+        if vmfmor is None:
+            for mor, name in vsphere_client._get_managed_objects(MORTypes.Folder).iteritems():
+                if name == vm_extra_config['folder']:
+                    vmfmor = mor
+
+        # if neither of strategies worked, bail out
+        if vmfmor is None:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find folder named: %s" % vm_extra_config['folder'])
-
-        for mor, name in vsphere_client._get_managed_objects(MORTypes.Folder).iteritems():
-            if name == vm_extra_config['folder']:
-                vmfmor = mor
     else:
         vmfmor = dcprops.vmFolder._obj
 
