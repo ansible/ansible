@@ -32,6 +32,7 @@ options:
   api_token:
     description:
      - DigitalOcean api token.
+    version_added: "1.9.5"
   id:
     description:
      - Numeric, the droplet id you want to operate on.
@@ -44,7 +45,8 @@ options:
 
 notes:
   - Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
-  - Version 2 of DigitalOcean API is used.
+  - As of Ansible 1.9.5 and 2.0, Version 2 of the DigitalOcean API is used, this removes C(client_id) and C(api_key) options in favor of C(api_token).
+  - If you are running Ansible 1.9.4 or earlier you might not be able to use the included version of this module as the API version used has been retired. 
 
 requirements:
   - "python >= 2.6"
