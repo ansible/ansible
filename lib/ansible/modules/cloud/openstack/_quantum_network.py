@@ -160,17 +160,16 @@ def _get_neutron_client(module, kwargs):
 def _set_tenant_id(module):
     global _os_tenant_id
     if not module.params['tenant_name']:
-        tenant_name = module.params['login_tenant_name']
+        _os_tenant_id = _os_keystone.tenant_id
     else:
         tenant_name = module.params['tenant_name']
 
-    for tenant in _os_keystone.tenants.list():
-        if tenant.name == tenant_name:
-            _os_tenant_id = tenant.id
-            break
+        for tenant in _os_keystone.tenants.list():
+            if tenant.name == tenant_name:
+                _os_tenant_id = tenant.id
+                break
     if not _os_tenant_id:
         module.fail_json(msg = "The tenant id cannot be found, please check the parameters")
-
 
 def _get_net_id(neutron, module):
     kwargs = {
