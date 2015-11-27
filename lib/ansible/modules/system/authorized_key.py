@@ -81,14 +81,14 @@ options:
     default: "no"
     version_added: "1.9"
   validate_certs:
-     description:
-      - If C(no), SSL certificates will not be validated.  This should only
-        set to C(no) used on personally controlled sites using self-signed
-        certificates.  Prior to 2.0 the code defaulted to C(yes).
+    description:
+      - This only applies if using a https url as the source of the keys. If set to C(no), the SSL certificates will not be validated. 
+      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site. 
+      - Prior to 2.1 the code worked as if this was set to C(yes).
     required: false
     default: "yes"
     choices: ["yes", "no"]
-    version_added: "2.0" 
+    version_added: "2.1" 
 description:
     - "Adds or removes authorized keys for particular user accounts"
 author: "Ansible Core Team"
@@ -102,32 +102,30 @@ EXAMPLES = '''
 - authorized_key: user=charlie key=https://github.com/charlie.keys
 
 # Using alternate directory locations:
-- authorized_key: user=charlie
-                  key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
-                  path='/etc/ssh/authorized_keys/charlie'
-                  manage_dir=no
+- authorized_key:
+    user: charlie
+    key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+    path: '/etc/ssh/authorized_keys/charlie'
+    manage_dir: no
 
 # Using with_file
 - name: Set up authorized_keys for the deploy user
-  authorized_key: user=deploy
-                  key="{{ item }}"
+  authorized_key: user=deploy key="{{ item }}"
   with_file:
     - public_keys/doe-jane
     - public_keys/doe-john
 
 # Using key_options:
-- authorized_key: user=charlie
-                  key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
-                  key_options='no-port-forwarding,from="10.0.1.1"'
+- authorized_key:
+    user: charlie
+    key:  "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+    key_options: 'no-port-forwarding,from="10.0.1.1"'
 
 # Using validate_certs:
-- authorized_key: user=charlie
-                  key=https://github.com/user.keys
-                  validate_certs=no
+- authorized_key: user=charlie key=https://github.com/user.keys validate_certs=no
 
 # Set up authorized_keys exclusively with one key
-- authorized_key: user=root key="{{ item }}" state=present
-                   exclusive=yes
+- authorized_key: user=root key="{{ item }}" state=present exclusive=yes
   with_file:
     - public_keys/doe-jane
 '''
