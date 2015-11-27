@@ -80,6 +80,15 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     version_added: "1.9"
+  validate_certs:
+     description:
+      - If C(no), SSL certificates will not be validated.  This should only
+        set to C(no) used on personally controlled sites using self-signed
+        certificates.  Prior to 2.0 the code defaulted to C(yes).
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    version_added: "2.0" 
 description:
     - "Adds or removes authorized keys for particular user accounts"
 author: "Ansible Core Team"
@@ -110,6 +119,11 @@ EXAMPLES = '''
 - authorized_key: user=charlie
                   key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
                   key_options='no-port-forwarding,from="10.0.1.1"'
+
+# Using validate_certs:
+- authorized_key: user=charlie
+                  key=https://github.com/user.keys
+                  validate_certs=no
 
 # Set up authorized_keys exclusively with one key
 - authorized_key: user=root key="{{ item }}" state=present
@@ -358,6 +372,7 @@ def enforce_state(module, params):
     state       = params.get("state", "present")
     key_options = params.get("key_options", None)
     exclusive   = params.get("exclusive", False)
+    validate_certs = params.get("validate_certs", True)
     error_msg   = "Error getting key from: %s"
 
     # if the key is a url, request it and use it as key source
@@ -460,6 +475,7 @@ def main():
            key_options = dict(required=False, type='str'),
            unique      = dict(default=False, type='bool'),
            exclusive   = dict(default=False, type='bool'),
+           validate_certs = dict(default=True, type='bool'),
         ),
         supports_check_mode=True
     )
