@@ -96,7 +96,8 @@ function WriteLines($outlines, $dest, $linesep, $encodingobj, $validate) {
 	
 	# Commit changes to the destination file
 	$cleandest = $dest.Replace("/", "\");
-	Move-Item $temppath $cleandest -force;	
+	Copy-Item $temppath $cleandest -force;	
+	Remove-Item $temppath -force;
 }
 
 
