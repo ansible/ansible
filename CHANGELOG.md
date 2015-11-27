@@ -324,9 +324,11 @@ newline being stripped you can change your playbook like this:
 * Lookup, vars and action plugin pathing has been normalized, all now follow the same sequence to find relative files.
 * We do not ignore the explicitly set login user for ssh when it matches the 'current user' anymore, this allows overriding .ssh/config when it is set
   explicitly. Leaving it unset will still use the same user and respect .ssh/config. This also means ansible_ssh_user can now return a None value.
-* Handling of undefined variables has changed.  In most places they will now raise an error instead of silently injecting an empty string.  Use the default filter if you want to approximate the old behaviour::
+* Handling of undefined variables has changed.  In most places they will now raise an error instead of silently injecting an empty string.  Use the default filter if you want to approximate the old behaviour:
 
+    ```
     - debug: msg="The error message was: {{error_code |default('') }}"
+    ```
 
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 
