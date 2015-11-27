@@ -77,14 +77,14 @@ And here's an example showing some specific version downloads from multiple sour
     # from galaxy
     - src: yatesr.timezone
 
-    # from github
+    # from GitHub
     - src: https://github.com/bennojoy/nginx
 
-    # from github installing to a relative path
+    # from GitHub installing to a relative path
     - src: https://github.com/bennojoy/nginx
       path: vagrant/roles/
 
-    # from github, overriding the name and specifying a specific tag
+    # from GitHub, overriding the name and specifying a specific tag
     - src: https://github.com/bennojoy/nginx
       version: master
       name: nginx_role
@@ -93,15 +93,15 @@ And here's an example showing some specific version downloads from multiple sour
     - src: https://some.webserver.example.com/files/master.tar.gz
       name: http-role
 
-    # from bitbucket, if bitbucket happens to be operational right now :)
+    # from Bitbucket
     - src: git+http://bitbucket.org/willthames/git-ansible-galaxy
       version: v1.4
 
-    # from bitbucket, alternative syntax and caveats
+    # from Bitbucket, alternative syntax and caveats
     - src: http://bitbucket.org/willthames/hg-ansible-galaxy
       scm: hg
    
-   # from gitlab or other git-based scm   
+   # from GitLab or other git-based scm   
     - src: git@gitlab.company.com:mygroup/ansible-base.git
       scm: git
       version: 0.1.0
