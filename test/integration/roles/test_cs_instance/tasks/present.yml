@@ -21,7 +21,6 @@
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
     - not instance.tags
 
-
 - name: test create instance idempotence
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -44,7 +43,6 @@
     - instance.ssh_key == "{{ cs_resource_prefix }}-sshkey"
     - not instance.tags
 
-
 - name: test running instance not updated
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -59,7 +57,6 @@
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Running"
-
 
 - name: test stopping instance
   cs_instance:
@@ -76,7 +73,6 @@
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Stopped"
 
-
 - name: test stopping instance idempotence
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -88,7 +84,6 @@
     - instance|success
     - not instance|changed
     - instance.state == "Stopped"
-
 
 - name: test updating stopped instance
   cs_instance:
@@ -106,7 +101,6 @@
     - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
     - instance.state == "Stopped"
 
-
 - name: test starting instance
   cs_instance:
     name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
@@ -121,7 +115,6 @@
     - instance.display_name == "{{ cs_resource_prefix }}-display-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_2 }}"
     - instance.state == "Running"
-
 
 - name: test starting instance idempotence
   cs_instance:
@@ -166,3 +159,18 @@
     - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
     - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
     - instance.state == "Running"
+
+- name: test restore instance
+  cs_instance:
+    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    template: "{{ test_cs_instance_template }}"
+    state: restored
+  register: instance
+- name: verify restore instance
+  assert:
+    that:
+    - instance|success
+    - instance|changed
+    - instance.name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.display_name == "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
+    - instance.service_offering == "{{ test_cs_instance_offering_1 }}"
