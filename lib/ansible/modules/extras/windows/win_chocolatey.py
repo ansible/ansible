@@ -75,6 +75,24 @@ options:
     require: false
     default: null
     aliases: []
+  install_args:
+    description:
+      - Arguments to pass to the native installer
+    require: false
+    default: null
+    aliases: []
+  params:
+    description:
+      - Parameters to pass to the package
+    require: false
+    default: null
+    aliases: []
+  ignore_dependencies:
+    description:
+      - Ignore dependencies, only install/upgrade the package itself
+    require: false
+    default: false
+    aliases: []
 author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
 '''
 
