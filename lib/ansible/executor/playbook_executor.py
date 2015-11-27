@@ -111,7 +111,10 @@ class PlaybookExecutor:
                             if vname not in play.vars:
                                 if self._tqm:
                                     self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                if self._options.syntax:
+                                    play.vars[vname] = default
+                                else:
+                                    play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
 
                     # Create a temporary copy of the play here, so we can run post_validate
                     # on it without the templating changes affecting the original object.
