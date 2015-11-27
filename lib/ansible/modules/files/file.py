@@ -87,12 +87,6 @@ options:
       - 'force the creation of the symlinks in two cases: the source file does 
         not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
         "path" file and create symlink to the "src" file in place of it).'
-  diff_peek:
-    required: false
-    description:
-      - "Only check whether the file looks like binary. Returns with the parameter
-         'appears_binary' set to True or False depending on the initial content of the
-         file. This option is enabled when the option is set (to any value)."
 '''
 
 EXAMPLES = '''
@@ -161,9 +155,10 @@ def main():
             state = dict(choices=['file','directory','link','hard','touch','absent'], default=None),
             path  = dict(aliases=['dest', 'name'], required=True),
             original_basename = dict(required=False), # Internal use only, for recursive ops
-            recurse  = dict(default='no', type='bool'),
-            force = dict(required=False,default=False,type='bool'),
-            diff_peek = dict(default=None),
+            recurse  = dict(default=False, type='bool'),
+            force = dict(required=False, default=False, type='bool'),
+            diff_peek = dict(default=None), # Internal use only, for internal checks in the action plugins
+            validate = dict(required=False, default=None), # Internal use only, for template and copy
             src = dict(required=False, default=None),
         ),
         add_file_common_args=True,
