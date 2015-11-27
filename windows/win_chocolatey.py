@@ -33,8 +33,6 @@ options:
     description:
       - Name of the package to be installed
     required: true
-    default: null
-    aliases: []
   state:
     description:
       - State of the package on the system
@@ -43,7 +41,6 @@ options:
       - present
       - absent
     default: present
-    aliases: []
   force:
     description:
       - Forces install of the package (even if it already exists). Using Force will cause ansible to always report that a change was made
@@ -52,7 +49,6 @@ options:
       - yes
       - no
     default: no
-    aliases: []
   upgrade:
     description:
       - If package is already installed it, try to upgrade to the latest version or to the specified version
@@ -61,38 +57,32 @@ options:
       - yes
       - no
     default: no
-    aliases: []
   version:
     description:
       - Specific version of the package to be installed
       - Ignored when state == 'absent'
     required: false
     default: null
-    aliases: []
   source:
     description:
       - Specify source rather than using default chocolatey repository
     require: false
     default: null
-    aliases: []
   install_args:
     description:
       - Arguments to pass to the native installer
     require: false
     default: null
-    aliases: []
   params:
     description:
       - Parameters to pass to the package
     require: false
     default: null
-    aliases: []
   ignore_dependencies:
     description:
       - Ignore dependencies, only install/upgrade the package itself
     require: false
     default: false
-    aliases: []
 author: "Trond Hindenes (@trondhindenes), Peter Mounce (@petemounce), Pepe Barbe (@elventear), Adam Keech (@smadam813)"
 '''
 
