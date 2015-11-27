@@ -201,6 +201,7 @@ class Role(Base, Become, Conditional, Taggable):
     def _resolve_main(self, basepath):
         ''' flexibly handle variations in main filenames '''
         possible_mains = (
+            os.path.join(basepath, '__main__.yml'),
             os.path.join(basepath, 'main.yml'),
             os.path.join(basepath, 'main.yaml'),
             os.path.join(basepath, 'main.json'),
