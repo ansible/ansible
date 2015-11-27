@@ -1,7 +1,12 @@
 Ansible Changes By Release
 ==========================
 
-## 2.0 "Over the Hills and Far Away" - ACTIVE DEVELOPMENT
+## 2.1 TBD - ACTIVE DEVELOPMENT
+
+####New Modules:
+* cloudstack: cs_volume
+
+## 2.0 "Over the Hills and Far Away"
 
 ###Major Changes:
 
