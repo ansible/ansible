@@ -383,7 +383,9 @@ class VariableManager:
 
         if task:
             if task._role:
+                variables['role_name'] = task._role.get_name()
                 variables['role_path'] = task._role._role_path
+                variables['role_uuid'] = task._role._uuid
 
         if self._inventory is not None:
             variables['inventory_dir'] = self._inventory.basedir()
