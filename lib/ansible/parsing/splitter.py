@@ -83,11 +83,6 @@ def parse_kv(args, check_raw=False):
                 k = x[:pos]
                 v = x[pos + 1:]
 
-                # only internal variables can start with an underscore, so
-                # we don't allow users to set them directy in arguments
-                if k.startswith('_'):
-                    raise AnsibleError("invalid parameter specified: '%s'" % k)
-
                 # FIXME: make the retrieval of this list of shell/command
                 #        options a function, so the list is centralized
                 if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn'):

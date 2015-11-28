@@ -21,7 +21,7 @@ __metaclass__ = type
 
 from ansible.compat.six import iteritems, string_types
 
-from ansible.errors import AnsibleParserError
+from ansible.errors import AnsibleParserError,AnsibleError
 from ansible.plugins import module_loader
 from ansible.parsing.splitter import parse_kv, split_args
 from ansible.template import Templar
@@ -154,6 +154,13 @@ class ModuleArgsParser:
                 if isinstance(tmp_args, string_types):
                     tmp_args = parse_kv(tmp_args)
                 args.update(tmp_args)
+
+        # only internal variables can start with an underscore, so
+        # we don't allow users to set them directy in arguments
+        if action not in ('command', 'shell', 'script', 'raw'):
+            for arg in args:
+                if arg.startswith('_ansible_'):
+                    raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
 
         # finally, update the args we're going to return with the ones
         # which were normalized above
