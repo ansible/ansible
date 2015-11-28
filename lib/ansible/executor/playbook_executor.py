@@ -31,7 +31,6 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
 
-from ansible.utils.color import colorize, hostcolor
 from ansible.utils.encrypt import do_encrypt
 from ansible.utils.unicode import to_unicode
 
@@ -174,6 +173,10 @@ class PlaybookExecutor:
                 if entry:
                     entrylist.append(entry) # per playbook
 
+                # send the stats callback for this playbook
+                if self._tqm is not None:
+                    self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
+
                 # if the last result wasn't zero, break out of the playbook file name loop
                 if result != 0:
                     break
@@ -183,41 +186,11 @@ class PlaybookExecutor:
 
         finally:
             if self._tqm is not None:
-                self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
                 self._cleanup()
 
         if self._options.syntax:
             display.display("No issues encountered")
             return result
-
-        # TODO: this stat summary stuff should be cleaned up and moved
-        #        to a new method, if it even belongs here...
-        display.banner("PLAY RECAP")
-
-        hosts = sorted(self._tqm._stats.processed.keys())
-        for h in hosts:
-            t = self._tqm._stats.summarize(h)
-
-            display.display(u"%s : %s %s %s %s" % (
-                hostcolor(h, t),
-                colorize(u'ok', t['ok'], 'green'),
-                colorize(u'changed', t['changed'], 'yellow'),
-                colorize(u'unreachable', t['unreachable'], 'red'),
-                colorize(u'failed', t['failures'], 'red')),
-                screen_only=True
-            )
-
-            display.display(u"%s : %s %s %s %s" % (
-                hostcolor(h, t, False),
-                colorize(u'ok', t['ok'], None),
-                colorize(u'changed', t['changed'], None),
-                colorize(u'unreachable', t['unreachable'], None),
-                colorize(u'failed', t['failures'], None)),
-                log_only=True
-            )
-
-        display.display("", screen_only=True)
-        # END STATS STUFF
 
         return result
 
