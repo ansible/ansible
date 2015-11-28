@@ -183,6 +183,7 @@ class PlaybookExecutor:
 
         finally:
             if self._tqm is not None:
+                self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
                 self._cleanup()
 
         if self._options.syntax:
