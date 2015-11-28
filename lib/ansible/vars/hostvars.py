@@ -79,6 +79,15 @@ class HostVars(collections.Mapping):
             self._cached_result[sha1_hash] = result
         return result
 
+    def set_host_variable(self, host, varname, value):
+        self._variable_manager.set_host_variable(host, varname, value)
+
+    def set_nonpersistent_facts(self, host, facts):
+        self._variable_manager.set_nonpersistent_facts(host, facts)
+
+    def set_host_facts(self, host, facts):
+        self._variable_manager.set_host_facts(host, facts)
+
     def __contains__(self, host_name):
         return self._find_host(host_name) is not None
 
