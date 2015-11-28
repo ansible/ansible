@@ -21,6 +21,7 @@ __metaclass__ = type
 
 from ansible import constants as C
 from ansible.plugins.callback import CallbackBase
+from ansible.utils.color import colorize, hostcolor
 
 class CallbackModule(CallbackBase):
 
@@ -192,4 +193,31 @@ class CallbackModule(CallbackBase):
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
         color = 'cyan'
         self._display.display(msg, color='cyan')
+
+    def v2_playbook_on_stats(self, stats):
+        self._display.banner("PLAY RECAP")
+
+        hosts = sorted(stats.processed.keys())
+        for h in hosts:
+            t = stats.summarize(h)
+
+            self._display.display(u"%s : %s %s %s %s" % (
+                hostcolor(h, t),
+                colorize(u'ok', t['ok'], 'green'),
+                colorize(u'changed', t['changed'], 'yellow'),
+                colorize(u'unreachable', t['unreachable'], 'red'),
+                colorize(u'failed', t['failures'], 'red')),
+                screen_only=True
+            )
+
+            self._display.display(u"%s : %s %s %s %s" % (
+                hostcolor(h, t, False),
+                colorize(u'ok', t['ok'], None),
+                colorize(u'changed', t['changed'], None),
+                colorize(u'unreachable', t['unreachable'], None),
+                colorize(u'failed', t['failures'], None)),
+                log_only=True
+            )
+
+        self._display.display("", screen_only=True)
 
