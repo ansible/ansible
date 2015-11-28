@@ -107,9 +107,7 @@ class StrategyBase:
         failed_hosts      = set(failed_hosts).union(self._tqm._failed_hosts.keys())
         unreachable_hosts = set(unreachable_hosts).union(self._tqm._unreachable_hosts.keys())
 
-        # send the stats callback
-        self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
-
+        # return the appropriate code, depending on the status hosts after the run
         if len(unreachable_hosts) > 0:
             return 3
         elif len(failed_hosts) > 0:
