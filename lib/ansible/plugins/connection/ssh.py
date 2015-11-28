@@ -23,6 +23,7 @@ import fcntl
 import os
 import pipes
 import pty
+import re
 import select
 import shlex
 import subprocess
@@ -138,6 +139,8 @@ class Connection(ConnectionBase):
             self._command += ['sshpass', '-d{0}'.format(self.sshpass_pipe[0])]
 
         self._command += [binary]
+        self._command += ['-C']
+        self._command += ['-vvv']
 
         ## Next, additional arguments based on the configuration.
 
@@ -145,14 +148,6 @@ class Connection(ConnectionBase):
         # be disabled if the client side doesn't support the option.
         if binary == 'sftp' and C.DEFAULT_SFTP_BATCH_MODE:
             self._command += ['-b', '-']
-
-        self._command += ['-C']
-
-        if self._play_context.verbosity > 3:
-            self._command += ['-vvv']
-        elif binary == 'ssh':
-            # Older versions of ssh (e.g. in RHEL 6) don't accept sftp -q.
-            self._command += ['-q']
 
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
@@ -267,6 +262,35 @@ class Connection(ConnectionBase):
         except (OSError, IOError):
             pass
 
+    def _examine_ssh_line(self, line):
+        '''
+        Takes a line of ssh debug output and determines whether it's safe to
+        release the connection lock.
+        '''
+
+        # Do nothing if we've released the lock already.
+        if self._lock is False:
+            return
+
+        # The most reliable indication that ssh will not prompt for host key
+        # confirmation is a "Host ... is known and matches the ... host key"
+        # debug1 message, followed by the "Permanently added ..." warning on
+        # first-time connections. Connection failures and key verification
+        # failures also qualify.
+        #
+        # For multiplexed (ControlPersist) connections, the best we can do
+        # is to look for 'mux_client_request_session: entering'
+
+        key_known = "debug1: Host '\S+' is known and matches the \S+ host \S+"
+        key_added = "Warning: Permanently added '\S+' (\S+) to the list of known hosts"
+
+        if re.match(key_known, line) or \
+            re.match(key_added, line) or \
+            'Host key verification failed' in line or \
+            'mux_client_request_session: entering' in line or \
+            re.match('ssh: connect to host \S+ port \S+: ', line):
+            self._flags['can_unlock'] = True
+
     # This is separate from _run() because we need to do the same thing for stdout
     # and stderr.
     def _examine_output(self, source, state, chunk, sudoable):
@@ -298,6 +322,8 @@ class Connection(ConnectionBase):
             elif sudoable and self.check_missing_password(l):
                 display.debug("become_nopasswd_error: (source=%s, state=%s): '%s'" % (source, state, l.rstrip('\r\n')))
                 self._flags['become_nopasswd_error'] = True
+            else:
+                self._examine_ssh_line(l)
 
             if not suppress_output:
                 output.append(l)
@@ -321,6 +347,19 @@ class Connection(ConnectionBase):
 
         display_cmd = map(pipes.quote, cmd[:-1]) + [cmd[-1]]
         display.vvv('SSH: EXEC {0}'.format(' '.join(display_cmd)), host=self.host)
+
+        # We begin by acquiring the connection lock, so that if ssh issues a
+        # host key verification prompt, output from other connections doesn't
+        # obscure it. The lock can be released once we know that the host key
+        # has been accepted (either because of known_hosts or the prompt).
+        #
+        # FIXME: We can lock only against output from other connections. In 1.9
+        # terms, there's no runner.output_lockfile to prevent output from other
+        # subsystems. But at least we know that multiple ssh processes won't
+        # compete for input, so typing "yes" to a host key prompt will work.
+
+        self.connection_lock()
+        self._lock = True
 
         # Start the given command. If we don't need to pipeline data, we can try
         # to use a pseudo-tty (ssh will have been invoked with -tt). If we are
@@ -387,6 +426,7 @@ class Connection(ConnectionBase):
         tmp_stdout = tmp_stderr = ''
 
         self._flags = dict(
+            can_unlock=False,
             become_prompt=False, become_success=False,
             become_error=False, become_nopasswd_error=False
         )
@@ -437,11 +477,12 @@ class Connection(ConnectionBase):
                 tmp_stderr += chunk
                 display.debug("stderr chunk (state=%s):\n>>>%s<<<\n" % (state, chunk))
 
-            # We examine the output line-by-line until we have negotiated any
-            # privilege escalation prompt and subsequent success/error message.
-            # Afterwards, we can accumulate output without looking at it.
+            # We examine the output line-by-line until we have released the
+            # connection lock and negotiated any privilege escalation prompt and
+            # subsequent success or error message. Afterwards, we can accumulate
+            # output without looking at it.
 
-            if state < states.index('ready_to_send'):
+            if self._lock or state < states.index('ready_to_send'):
                 if tmp_stdout:
                     output, unprocessed = self._examine_output('stdout', states[state], tmp_stdout, sudoable)
                     stdout += output
@@ -455,6 +496,16 @@ class Connection(ConnectionBase):
                 stdout += tmp_stdout
                 stderr += tmp_stderr
                 tmp_stdout = tmp_stderr = ''
+
+            # We're always looking for the earliest opportunity to release the
+            # connection lock based on ssh host key messages (but if we see an
+            # escalation prompt or confirmation, that means the connection has
+            # been successfully established too).
+
+            if self._lock:
+                if self._flags['can_unlock'] or self._flags['become_prompt'] or self._flags['become_success']:
+                    self.connection_unlock()
+                    self._lock = False
 
             # If we see a privilege escalation prompt, we send the password.
             # (If we're expecting a prompt but the escalation succeeds, we
@@ -536,6 +587,15 @@ class Connection(ConnectionBase):
         # close stdin after process is terminated and stdout/stderr are read
         # completely (see also issue #848)
         stdin.close()
+
+        # One last check to make sure we release the connection lock. We should
+        # have been able to release it much earlier based on ssh messages or an
+        # escalation prompt. If we reach this, it probably means that ssh debug
+        # messages changed and we didn't request escalation.
+
+        if self._lock:
+            self._display.warning('Released connection lock only at process exit')
+            self.connection_unlock()
 
         if C.HOST_KEY_CHECKING:
             if cmd[0] == "sshpass" and p.returncode == 6:
