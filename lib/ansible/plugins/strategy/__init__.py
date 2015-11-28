@@ -275,7 +275,7 @@ class StrategyBase:
                     var_value = wrap_var(result[3])
 
                     self._variable_manager.set_nonpersistent_facts(host, {var_name: var_value})
-                    self._tqm._hostvars_manager.hostvars().set_variable_manager(self._variable_manager)
+                    self._tqm._hostvars_manager.hostvars().set_nonpersistent_facts(host, {var_name: var_value})
 
                 elif result[0] in ('set_host_var', 'set_host_facts'):
                     host = result[1]
@@ -300,13 +300,15 @@ class StrategyBase:
                         var_value = result[5]
 
                         self._variable_manager.set_host_variable(target_host, var_name, var_value)
+                        self._tqm._hostvars_manager.hostvars().set_host_variable(target_host, var_name, var_value)
                     elif result[0] == 'set_host_facts':
                         facts = result[4]
                         if task.action == 'set_fact':
                             self._variable_manager.set_nonpersistent_facts(target_host, facts)
+                            self._tqm._hostvars_manager.hostvars().set_nonpersistent_facts(target_host, facts)
                         else:
                             self._variable_manager.set_host_facts(target_host, facts)
-                    self._tqm._hostvars_manager.hostvars().set_variable_manager(self._variable_manager)
+                            self._tqm._hostvars_manager.hostvars().set_host_facts(target_host, facts)
 
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
