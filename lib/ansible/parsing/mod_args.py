@@ -157,7 +157,7 @@ class ModuleArgsParser:
 
         # only internal variables can start with an underscore, so
         # we don't allow users to set them directy in arguments
-        if action not in ('command', 'shell', 'script', 'raw'):
+        if args and action not in ('command', 'shell', 'script', 'raw'):
             for arg in args:
                 if arg.startswith('_ansible_'):
                     raise AnsibleError("invalid parameter specified for action '%s': '%s'" % (action, arg))
