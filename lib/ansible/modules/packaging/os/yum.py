@@ -117,6 +117,16 @@ options:
     choices: ["yes", "no"]
     aliases: []
 
+  validate_certs:
+    description:
+      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
+      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - Prior to 2.1 the code worked as if this was set to C(yes).
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    version_added: "2.1"
+
 notes:
   - When used with a loop of package names in a playbook, ansible optimizes
     the call to the yum module.  Instead of calling the module with a single
@@ -965,6 +975,7 @@ def main():
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
             update_cache=dict(required=False, default="no", type='bool'),
+            validate_certs=dict(required=False, defaults="yes", type='bool'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
