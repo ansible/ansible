@@ -18,7 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-from time import sleep
+import time
 
 DOCUMENTATION = '''
 ---
@@ -39,12 +39,13 @@ options:
     required: true
     default: null
     choices: [ "present", "started", "stopped", "restarted", "monitored", "unmonitored", "reloaded" ]
-  max_retries:
+  timeout:
     description:
-      - If there are pending actions for the service monitoried by monit Ansible will retry this
-        many times to perform the requested action. Between each retry Ansible will sleep for 1 second.
+      - If there are pending actions for the service monitored by monit, then Ansible will check
+        for up to this many seconds to verify the the requested action has been performed.
+        Ansible will sleep for five seconds between each check.
     required: false
-    default: 10
+    default: 300
     version_added: "2.0"
 requirements: [ ]
 author: "Darryl Stoflet (@dstoflet)" 
@@ -58,7 +59,7 @@ EXAMPLES = '''
 def main():
     arg_spec = dict(
         name=dict(required=True),
-        max_retries=dict(default=10, type='int'),
+        timeout=dict(default=300, type='int'),
         state=dict(required=True, choices=['present', 'started', 'restarted', 'stopped', 'monitored', 'unmonitored', 'reloaded'])
     )
 
@@ -66,7 +67,7 @@ def main():
 
     name = module.params['name']
     state = module.params['state']
-    max_retries = module.params['max_retries']
+    timeout = module.params['timeout']
 
     MONIT = module.get_bin_path('monit', True)
 
@@ -88,23 +89,22 @@ def main():
         module.run_command('%s %s %s' % (MONIT, command, name), check_rc=True)
         return status()
 
-    def wait_for_monit_to_stop_pending(sleep_time=1):
-        """Fails this run if there is no status or it's pending/initalizing for max_retries"""
-        running_status = status()
-        retries = 0
+    def wait_for_monit_to_stop_pending():
+        """Fails this run if there is no status or it's pending/initalizing for timeout"""
+        timeout_time = time.time() + timeout
+        sleep_time = 5
 
+        running_status = status()
         while running_status == '' or 'pending' in running_status or 'initializing' in running_status:
-            if retries >= max_retries:
+            if time.time() >= timeout_time:
                 module.fail_json(
-                    msg='too many retries waiting for empty, "pending", or "initiating" status to go away ({0})'.format(
+                    msg='waited too long for "pending", or "initiating" status to go away ({0})'.format(
                         running_status
                     ),
-                    retries=retries,
                     state=state
                 )
 
-            sleep(sleep_time)
-            retries += 1
+            time.sleep(sleep_time)
             running_status = status()
 
     if state == 'reloaded':
