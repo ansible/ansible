@@ -49,7 +49,7 @@ class Base:
     _remote_user         = FieldAttribute(isa='string')
 
     # variables
-    _vars                = FieldAttribute(isa='dict', default=dict(), priority=100)
+    _vars                = FieldAttribute(isa='dict', priority=100)
 
     # flags and misc. settings
     _environment         = FieldAttribute(isa='list')
@@ -76,6 +76,9 @@ class Base:
 
         # and initialize the base attributes
         self._initialize_base_attributes()
+
+        if self.vars is None:
+            self.vars = dict()
 
     # The following three functions are used to programatically define data
     # descriptors (aka properties) for the Attributes of all of the playbook
