@@ -50,11 +50,12 @@ options:
     required: true
     default: null
     aliases: []
-  insecure:
+  validate_certs:
     description:
-      - Ignore SSL verification errors when connection to vcenter
+      - Validate SSL certs.
     required: false
-    default: false
+    default: yes
+    choices: ['yes', 'no']
   guest:
     description:
       - The virtual server name you wish to manage.
@@ -1581,7 +1582,7 @@ def main():
             cluster=dict(required=False, default=None, type='str'),
             force=dict(required=False, type='bool', default=False),
             esxi=dict(required=False, type='dict', default={}),
-            insecure=dict(required=False, type='bool', default=False),
+            validate_certs=dict(required=False, type='bool', default=True),
             power_on_after_clone=dict(required=False, type='bool', default=True)
 
 
@@ -1623,7 +1624,7 @@ def main():
     from_template = module.params['from_template']
     snapshot_to_clone = module.params['snapshot_to_clone']
     power_on_after_clone = module.params['power_on_after_clone']
-    insecure = module.params['insecure']
+    validate_certs = module.params['validate_certs']
 
 
     # CONNECT TO THE SERVER
@@ -1631,7 +1632,7 @@ def main():
     try:
         viserver.connect(vcenter_hostname, username, password)
     except ssl.SSLError as sslerr:
-        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror and insecure:
+        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror and not validate_certs:
             default_context = ssl._create_default_https_context
             ssl._create_default_https_context = ssl._create_unverified_context
             viserver.connect(vcenter_hostname, username, password)
