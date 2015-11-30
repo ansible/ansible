@@ -444,8 +444,15 @@ class VariableManager:
                 continue
 
             # a dictionary of variables to use if we have to create a new host below
+            # we set the default port based on the default transport here, to make sure
+            # we use the proper default for windows
+            new_port = C.DEFAULT_REMOTE_PORT
+            if C.DEFAULT_TRANSPORT == 'winrm':
+                new_port = 5986
+
             new_delegated_host_vars = dict(
                 ansible_host=delegated_host_name,
+                ansible_port=new_port,
                 ansible_user=C.DEFAULT_REMOTE_USER,
                 ansible_connection=C.DEFAULT_TRANSPORT,
             )
