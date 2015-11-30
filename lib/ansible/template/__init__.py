@@ -391,6 +391,8 @@ class Templar:
         instance = self._lookup_loader.get(name.lower(), loader=self._loader, templar=self)
 
         if instance is not None:
+            wantlist = kwargs.pop('wantlist', False)
+
             from ansible.utils.listify import listify_lookup_plugin_terms
             loop_terms = listify_lookup_plugin_terms(terms=args, templar=self, loader=self._loader, fail_on_undefined=True, convert_bare=False)
             # safely catch run failures per #5059
@@ -404,8 +406,11 @@ class Templar:
                 ran = None
 
             if ran:
-                from ansible.vars.unsafe_proxy import UnsafeProxy
-                ran = UnsafeProxy(",".join(ran))
+                from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
+                if wantlist:
+                    ran = wrap_var(ran)
+                else:
+                    ran = UnsafeProxy(",".join(ran))
 
             return ran
         else:
