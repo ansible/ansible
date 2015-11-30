@@ -177,7 +177,8 @@ class TestVariableManager(unittest.TestCase):
         v = VariableManager()
         self.assertEqual(v.get_vars(loader=fake_loader, task=mock_task, use_cache=False).get("foo"), "bar")
 
-    def test_variable_manager_precedence(self):
+    @patch.object(Inventory, 'basedir')
+    def test_variable_manager_precedence(self, mock_basedir):
         '''
         Tests complex variations and combinations of get_vars() with different
         objects to modify the context under which variables are merged.
@@ -224,6 +225,7 @@ class TestVariableManager(unittest.TestCase):
             """,
         })
 
+        mock_basedir.return_value = './'
         inv1 = Inventory(loader=fake_loader, variable_manager=v, host_list='/etc/ansible/inventory1')
         inv1.set_playbook_basedir('./')
 

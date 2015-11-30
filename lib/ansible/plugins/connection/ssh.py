@@ -33,6 +33,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import unfrackpath, makedirs_safe
+from ansible.utils.unicode import to_bytes, to_unicode
 
 SSHPASS_AVAILABLE = None
 
@@ -101,7 +102,7 @@ class Connection(ConnectionBase):
         list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
         the argument list. The list will not contain any empty elements.
         """
-        return [x.strip() for x in shlex.split(argstring) if x.strip()]
+        return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
 
     def _add_args(self, explanation, args):
         """

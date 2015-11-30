@@ -144,9 +144,18 @@ To install from source.
 
     $ git clone git://github.com/ansible/ansible.git --recursive
     $ cd ./ansible
+
+Using Bash:
+
+.. code-block:: bash
+
     $ source ./hacking/env-setup
 
-If you want to suppress spurious warnings/errors, use:
+Using Fish::
+
+    $ . ./hacking/env-setup.fish
+
+If you want to suppress spurious warnings/errors, use::
 
     $ source ./hacking/env-setup -q
 

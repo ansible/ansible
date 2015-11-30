@@ -104,7 +104,7 @@ class Inventory(object):
                 all.add_host(Host(host, port))
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
-            if self._loader.is_directory(host_list):
+            if self.is_directory(host_list):
                 # Ensure basedir is inside the directory
                 host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(loader=self._loader, groups=self.groups, filename=host_list)
@@ -191,7 +191,7 @@ class Inventory(object):
             return list(itertools.chain(*map(self._split_pattern, pattern)))
 
         if ';' in pattern:
-            display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0, removed=True)
+            display.deprecated("Use ',' instead of ';' to separate host patterns")
 
         # If it's got commas in it, we'll treat it as a straightforward
         # comma-separated list of patterns.
@@ -222,7 +222,7 @@ class Inventory(object):
                 )
 
                 if len(patterns) > 1:
-                    display.deprecated("Use ',' instead of ':' or ';' to separate host patterns", version=2.0)
+                    display.deprecated("Use ',' instead of ':' to separate host patterns")
 
         return [p.strip() for p in patterns]
 
@@ -421,9 +421,11 @@ class Inventory(object):
 
     def _create_implicit_localhost(self, pattern):
         new_host = Host(pattern)
-        new_host.set_variable("ansible_python_interpreter", sys.executable)
+        new_host.address = "127.0.0.1"
+        new_host.vars = self.get_host_vars(new_host)
         new_host.set_variable("ansible_connection", "local")
-        new_host.address = '127.0.0.1'
+        if "ansible_python_interpreter" not in new_host.vars:
+            new_host.set_variable("ansible_python_interpreter", sys.executable)
         self.get_group("ungrouped").add_host(new_host)
         return new_host
 
@@ -590,23 +592,36 @@ class Inventory(object):
         self._restriction = None
 
     def is_file(self):
-        """ did inventory come from a file? """
+        """
+        Did inventory come from a file? We don't use the equivalent loader
+        methods in inventory, due to the fact that the loader does an implict
+        DWIM on the path, which may be incorrect for inventory paths relative
+        to the playbook basedir.
+        """
         if not isinstance(self.host_list, string_types):
             return False
-        return self._loader.path_exists(self.host_list)
+        return os.path.isfile(self.host_list) or self.host_list == os.devnull
+
+    def is_directory(self, path):
+        """
+        Is the inventory host list a directory? Same caveat for here as with
+        the is_file() method above.
+        """
+        if not isinstance(self.host_list, string_types):
+            return False
+        return os.path.isdir(path)
 
     def basedir(self):
         """ if inventory came from a file, what's the directory? """
         dname = self.host_list
-        if not self.is_file():
-            dname = None
-        elif self._loader.is_directory(self.host_list):
+        if self.is_directory(self.host_list):
             dname = self.host_list
+        elif not self.is_file():
+            dname = None
         else:
             dname = os.path.dirname(self.host_list)
             if dname is None or dname == '' or dname == '.':
-                cwd = os.getcwd()
-                dname = cwd
+                dname = os.getcwd()
         if dname:
             dname = os.path.abspath(dname)
         return dname

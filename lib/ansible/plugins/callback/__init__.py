@@ -111,7 +111,7 @@ class CallbackBase:
         if '_ansible_no_log' in result and result['_ansible_no_log']:
             item = "(censored due to no_log)"
         else:
-            item = result['item']
+            item = result.get('item', None)
 
         return item
 

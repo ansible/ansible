@@ -80,6 +80,9 @@ For numeric patterns, leading zeros can be included or removed, as desired. Rang
     [databases]
     db-[a:f].example.com
 
+.. include:: ansible_ssh_changes_note.rst
+
+
 You can also select the connection type and user on a per host basis:
 
 ::
@@ -241,7 +244,9 @@ Host connection:
 
 SSH connection:
 
-::
+.. include:: ansible_ssh_changes_note.rst
+
+
 
     ansible_host
       The name of the host to connect to, if different from the alias you wish to give to it.

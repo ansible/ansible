@@ -362,11 +362,6 @@ class PlayContext(Base):
                     setattr(new_info, 'connection', 'local')
                 elif getattr(new_info, 'connection', None) == 'local' and new_info.remote_addr not in C.LOCALHOST:
                     setattr(new_info, 'connection', C.DEFAULT_TRANSPORT)
-        elif task._local_action:
-            # otherwise, in the special instance that the task was specified
-            # as a local action, override the connection in case it was changed
-            # during some other step in the process
-            setattr(new_info, 'connection', 'local')
 
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:

@@ -44,7 +44,7 @@ from ansible.utils.debug import debug
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
 from ansible.vars.hostvars import HostVars
-from ansible.vars.unsafe_proxy import UnsafeProxy
+from ansible.vars.unsafe_proxy import wrap_var
 
 VARIABLE_CACHE = dict()
 HOSTVARS_CACHE = dict()
@@ -243,10 +243,7 @@ class VariableManager:
 
             # finally, the facts caches for this host, if it exists
             try:
-                host_facts = self._fact_cache.get(host.name, dict())
-                for k in host_facts.keys():
-                    if host_facts[k] is not None and not isinstance(host_facts[k], UnsafeProxy):
-                        host_facts[k] = UnsafeProxy(host_facts[k])
+                host_facts = wrap_var(self._fact_cache.get(host.name, dict()))
                 all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
@@ -258,7 +255,7 @@ class VariableManager:
                 # create a set of temporary vars here, which incorporate the extra
                 # and magic vars so we can properly template the vars_files entries
                 temp_vars = combine_vars(all_vars, self._extra_vars)
-                temp_vars = combine_vars(all_vars, magic_variables)
+                temp_vars = combine_vars(temp_vars, magic_variables)
                 templar = Templar(loader=loader, variables=temp_vars)
 
                 # we assume each item in the list is itself a list, as we
@@ -356,6 +353,7 @@ class VariableManager:
 
         if self._inventory is not None:
             variables['inventory_dir'] = self._inventory.basedir()
+            variables['inventory_file'] = self._inventory.src()
             if play:
                 # add the list of hosts in the play, as adjusted for limit/filters
                 # DEPRECATED: play_hosts should be deprecated in favor of ansible_play_hosts,
@@ -546,7 +544,7 @@ class VariableManager:
             self._fact_cache[host.name] = facts
         else:
             try:
-                self._fact_cache[host.name].update(facts)
+                self._fact_cache.update(host.name, facts)
             except KeyError:
                 self._fact_cache[host.name] = facts
 

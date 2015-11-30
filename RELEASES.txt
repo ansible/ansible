@@ -9,6 +9,9 @@ Active Development
 Released
 ++++++++
 
+1.9.4  "Dancing In the Streets" 10-09-2015
+1.9.3  "Dancing In the Streets" 09-03-2015
+1.9.2  "Dancing In the Streets" 06-24-2015
 1.9.1  "Dancing In the Streets" 04-27-2015
 1.9.0  "Dancing In the Streets" 03-25-2015
 1.8.4  "You Really Got Me" ---- 02-19-2015

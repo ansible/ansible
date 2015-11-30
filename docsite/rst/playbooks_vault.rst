@@ -7,6 +7,8 @@ New in Ansible 1.5, "Vault" is a feature of ansible that allows keeping sensitiv
 
 To enable this feature, a command line tool, `ansible-vault` is used to edit files, and a command line flag `--ask-vault-pass` or `--vault-password-file` is used. Alternately, you may specify the location of a password file or command Ansible to always prompt for the password in your ansible.cfg file. These options require no command line flag usage.
 
+For best practices advice, refer to :ref:`best_practices_for_variables_and_vaults`.
+
 .. _what_can_be_encrypted_with_vault:
 
 What Can Be Encrypted With Vault

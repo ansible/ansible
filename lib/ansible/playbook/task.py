@@ -95,11 +95,13 @@ class Task(Base, Conditional, Taggable, Become):
         self._role         = role
         self._task_include = task_include
 
-        # special flag for local_action: tasks, to make sure their
-        # connection type of local isn't overridden incorrectly
-        self._local_action = False
-
         super(Task, self).__init__()
+
+    def get_path(self):
+       ''' return the absolute path of the task with its line number '''
+
+       if hasattr(self, '_ds'):
+           return "%s:%s" % (self._ds._data_source, self._ds._line_number)
 
     def get_name(self):
        ''' return the name of the task '''
@@ -133,16 +135,6 @@ class Task(Base, Conditional, Taggable, Become):
     def load(data, block=None, role=None, task_include=None, variable_manager=None, loader=None):
         t = Task(block=block, role=role, task_include=task_include)
         return t.load_data(data, variable_manager=variable_manager, loader=loader)
-
-    def load_data(self, ds, variable_manager=None, loader=None):
-        '''
-        We override load_data for tasks so that we can pull special flags
-        out of the task args and set them internaly only so the user never
-        sees them.
-        '''
-        t = super(Task, self).load_data(ds=ds, variable_manager=variable_manager, loader=loader)
-        t._local_action = t.args.pop('_local_action', False)
-        return t
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
@@ -178,11 +170,11 @@ class Task(Base, Conditional, Taggable, Become):
         # and the delegate_to value from the various possible forms
         # supported as legacy
         args_parser = ModuleArgsParser(task_ds=ds)
-        (action, args, connection) = args_parser.parse()
+        (action, args, delegate_to) = args_parser.parse()
 
         new_ds['action']      = action
         new_ds['args']        = args
-        new_ds['connection'] = connection
+        new_ds['delegate_to'] = delegate_to
 
         # we handle any 'vars' specified in the ds here, as we may
         # be adding things to them below (special handling for includes).
@@ -195,7 +187,7 @@ class Task(Base, Conditional, Taggable, Become):
             new_ds['vars'] = dict()
 
         for (k,v) in iteritems(ds):
-            if k in ('action', 'local_action', 'args', 'connection') or k == action or k == 'shell':
+            if k in ('action', 'local_action', 'args', 'delegate_to') or k == action or k == 'shell':
                 # we don't want to re-assign these values, which were
                 # determined by the ModuleArgsParser() above
                 continue
@@ -274,7 +266,6 @@ class Task(Base, Conditional, Taggable, Become):
 
     def copy(self, exclude_block=False):
         new_me = super(Task, self).copy()
-        new_me._local_action = self._local_action
 
         new_me._block = None
         if self._block and not exclude_block:
@@ -292,7 +283,6 @@ class Task(Base, Conditional, Taggable, Become):
 
     def serialize(self):
         data = super(Task, self).serialize()
-        data['_local_action'] = self._local_action
 
         if self._block:
             data['block'] = self._block.serialize()
@@ -311,7 +301,6 @@ class Task(Base, Conditional, Taggable, Become):
         #from ansible.playbook.task_include import TaskInclude
 
         block_data = data.get('block')
-        self._local_action = data.get('_local_action', False)
 
         if block_data:
             b = Block()

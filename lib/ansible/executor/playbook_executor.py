@@ -24,6 +24,8 @@ import locale
 import signal
 import sys
 
+from six import string_types
+
 from ansible import constants as C
 from ansible.errors import *
 from ansible.executor.task_queue_manager import TaskQueueManager
@@ -101,7 +103,8 @@ class PlaybookExecutor:
                             salt      = var.get("salt", None)
 
                             if vname not in play.vars:
-                                self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                if self._tqm:
+                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
                                 play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
 
                     # Create a temporary copy of the play here, so we can run post_validate
@@ -185,21 +188,21 @@ class PlaybookExecutor:
         for h in hosts:
             t = self._tqm._stats.summarize(h)
 
-            self._display.display("%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s" % (
                 hostcolor(h, t),
-                colorize('ok', t['ok'], 'green'),
-                colorize('changed', t['changed'], 'yellow'),
-                colorize('unreachable', t['unreachable'], 'red'),
-                colorize('failed', t['failures'], 'red')),
+                colorize(u'ok', t['ok'], 'green'),
+                colorize(u'changed', t['changed'], 'yellow'),
+                colorize(u'unreachable', t['unreachable'], 'red'),
+                colorize(u'failed', t['failures'], 'red')),
                 screen_only=True
             )
 
-            self._display.display("%s : %s %s %s %s" % (
+            self._display.display(u"%s : %s %s %s %s" % (
                 hostcolor(h, t, False),
-                colorize('ok', t['ok'], None),
-                colorize('changed', t['changed'], None),
-                colorize('unreachable', t['unreachable'], None),
-                colorize('failed', t['failures'], None)),
+                colorize(u'ok', t['ok'], None),
+                colorize(u'changed', t['changed'], None),
+                colorize(u'unreachable', t['unreachable'], None),
+                colorize(u'failed', t['failures'], None)),
                 log_only=True
             )
 
@@ -222,11 +225,14 @@ class PlaybookExecutor:
 
         # check to see if the serial number was specified as a percentage,
         # and convert it to an integer value based on the number of hosts
-        if isinstance(play.serial, basestring) and play.serial.endswith('%'):
+        if isinstance(play.serial, string_types) and play.serial.endswith('%'):
             serial_pct = int(play.serial.replace("%",""))
             serial = int((serial_pct/100.0) * len(all_hosts))
         else:
-            serial = int(play.serial)
+            if play.serial is None: 
+                serial = -1
+            else:
+                serial = int(play.serial)
 
         # if the serial count was not specified or is invalid, default to
         # a list of all hosts, otherwise split the list of hosts into chunks

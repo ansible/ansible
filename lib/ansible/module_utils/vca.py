@@ -76,7 +76,7 @@ class VcaAnsibleModule(AnsibleModule):
         gateway_name = self.params['gateway_name']
         _gateway = self.vca.get_gateway(vdc_name, gateway_name)
         if not _gateway:
-            raise VcaError('vca instance has no gateway named %s' % name)
+            raise VcaError('vca instance has no gateway named %s' % gateway_name)
         self._gateway = _gateway
         return _gateway
 
@@ -84,11 +84,26 @@ class VcaAnsibleModule(AnsibleModule):
     def vdc(self):
         if self._vdc is not None:
             return self._vdc
-        _vdc = self.vca.get_vdc(self.params['vdc_name'])
+        vdc_name = self.params['vdc_name']
+        _vdc = self.vca.get_vdc(vdc_name)
         if not _vdc:
-            raise VcaError('vca instance has no vdc named %s' % name)
+            raise VcaError('vca instance has no vdc named %s' % vdc_name)
         self._vdc = _vdc
         return _vdc
+
+    def get_vapp(self, vapp_name):
+        vapp = self.vca.get_vapp(self.vdc, vapp_name)
+        if not vapp:
+            raise VcaError('vca instance has no vapp named %s' % vapp_name)
+        return vapp
+
+    def get_vm(self, vapp_name, vm_name):
+        vapp = self.get_vapp(vapp_name)
+        vms = [vm for vm in children.get_Vm() if vm.name == vm_name]
+        try:
+            return vms[0]
+        except IndexError:
+            raise VcaError('vapp has no vm named %s' % vm_name)
 
     def create_instance(self):
         service_type = self.params.get('service_type', DEFAULT_SERVICE_TYPE)
@@ -181,26 +196,26 @@ VCHS_REQ_ARGS = ['service_id']
 
 def _validate_module(module):
     if not HAS_PYVCLOUD:
-        module.fail_json("python module pyvcloud is needed for this module")
+        module.fail_json(msg="python module pyvcloud is needed for this module")
 
     service_type = module.params.get('service_type', DEFAULT_SERVICE_TYPE)
 
     if service_type == 'vca':
         for arg in VCA_REQ_ARGS:
             if module.params.get(arg) is None:
-                module.fail_json("argument %s is mandatory when service type "
+                module.fail_json(msg="argument %s is mandatory when service type "
                                  "is vca" % arg)
 
     if service_type == 'vchs':
         for arg in VCHS_REQ_ARGS:
             if module.params.get(arg) is None:
-                module.fail_json("argument %s is mandatory when service type "
+                module.fail_json(msg="argument %s is mandatory when service type "
                                  "is vchs" % arg)
 
     if service_type == 'vcd':
         for arg in VCD_REQ_ARGS:
             if module.params.get(arg) is None:
-                module.fail_json("argument %s is mandatory when service type "
+                module.fail_json(msg="argument %s is mandatory when service type "
                                  "is vcd" % arg)
 
 

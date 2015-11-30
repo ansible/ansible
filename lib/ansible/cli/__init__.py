@@ -473,13 +473,13 @@ class CLI(object):
             pass
 
     @classmethod
-    def tty_ify(self, text):
+    def tty_ify(cls, text):
 
-        t = self._ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
-        t = self._BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
-        t = self._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
-        t = self._URL.sub(r"\1", t)                      # U(word) => word
-        t = self._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
+        t = cls._ITALIC.sub("`" + r"\1" + "'", text)    # I(word) => `word'
+        t = cls._BOLD.sub("*" + r"\1" + "*", t)         # B(word) => *word*
+        t = cls._MODULE.sub("[" + r"\1" + "]", t)       # M(word) => [word]
+        t = cls._URL.sub(r"\1", t)                      # U(word) => word
+        t = cls._CONST.sub("`" + r"\1" + "'", t)        # C(word) => `word'
 
         return t
 

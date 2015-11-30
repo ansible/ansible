@@ -203,6 +203,7 @@ default      empty string   return value if the key is not in the ini file
 
 The Credstash Lookup
 ````````````````````
+.. versionadded:: 2.0
 
 Credstash is a small utility for managing secrets using AWS's KMS and DynamoDB: https://github.com/LuminalOSS/credstash
 
@@ -233,7 +234,9 @@ You can specify regions or tables to fetch secrets from::
     - name: "Test credstash lookup plugin -- get the company's github password"
       debug: msg="Credstash lookup! {{ lookup('credstash', 'company-github-password', table='company-passwords') }}"
 
+If you're not using 2.0 yet, you can do something similar with the credstash tool and the pipe lookup (see below)::
 
+    debug: msg="Poor man's credstash lookup! {{ lookup('pipe', 'credstash -r us-west-1 get my-other-password') }}"
 
 .. _more_lookups:
 
@@ -269,6 +272,9 @@ Here are some examples::
          - debug: msg="{{ lookup('template', './some_template.j2') }} is a value from evaluation of this template"
 
          - debug: msg="{{ lookup('etcd', 'foo') }} is a value from a locally running etcd"
+
+         # shelvefile lookup retrieves a string value corresponding to a key inside a Python shelve file
+         - debug: msg="{{ lookup('shelvefile', 'file=path_to_some_shelve_file.db key=key_to_retrieve') }}
 
          # The following lookups were added in 1.9
          - debug: msg="{{item}}"

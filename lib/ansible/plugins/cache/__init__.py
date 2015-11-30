@@ -20,6 +20,7 @@ __metaclass__ = type
 from collections import MutableMapping
 
 from ansible import constants as C
+from ansible.errors import AnsibleError
 from ansible.plugins import cache_loader
 
 try:
@@ -68,3 +69,8 @@ class FactCache(MutableMapping):
     def flush(self):
         """ Flush the fact cache of all keys. """
         self._plugin.flush()
+
+    def update(self, key, value):
+        host_cache = self._plugin.get(key)
+        host_cache.update(value)
+        self._plugin.set(key, host_cache)

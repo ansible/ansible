@@ -26,6 +26,7 @@ import random
 import subprocess
 import sys
 import time
+import locale
 import logging
 import getpass
 from struct import unpack, pack
@@ -35,8 +36,14 @@ from multiprocessing import Lock
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
 
+try:
+    # Python 2
+    input = raw_input
+except NameError:
+    # Python 3
+    pass
 
 
 # These are module level as we currently fork and serialize the whole process and locks in the objects don't play well with that
@@ -96,30 +103,50 @@ class Display:
                 self.noncow = random.choice(cows)
 
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
+        """ Display a message to the user
+
+        Note: msg *must* be a unicode string to prevent UnicodeError tracebacks.
+        """ 
 
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
-        msg2 = self._safe_output(msg, stderr=stderr)
         if color:
-            msg2 = stringc(msg, color)
+            msg = stringc(msg, color)
 
         if not log_only:
-            b_msg2 = to_bytes(msg2)
+            if not msg.endswith(u'\n'):
+                msg2 = msg + u'\n'
+            else:
+                msg2 = msg
+
+            msg2 = to_bytes(msg2, encoding=self._output_encoding(stderr=stderr))
+            if sys.version_info >= (3,):
+                # Convert back to text string on python3
+                # We first convert to a byte string so that we get rid of
+                # characters that are invalid in the user's locale
+                msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
+
             if not stderr:
-                print(b_msg2)
+                sys.stdout.write(msg2)
                 sys.stdout.flush()
             else:
-                print(b_msg2, file=sys.stderr)
+                sys.stderr.write(msg2)
                 sys.stderr.flush()
 
         if logger and not screen_only:
-            while msg.startswith("\n"):
-                msg = msg.replace("\n","")
-            b_msg = to_bytes(msg)
+            msg2 = msg.lstrip(u'\n')
+
+            msg2 = to_bytes(msg2)
+            if sys.version_info >= (3,):
+                # Convert back to text string on python3
+                # We first convert to a byte string so that we get rid of
+                # characters that are invalid in the user's locale
+                msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
+
             if color == 'red':
-                logger.error(b_msg)
+                logger.error(msg2)
             else:
-                logger.info(b_msg)
+                logger.info(msg2)
 
     def vv(self, msg, host=None):
         return self.verbose(msg, host=host, caplevel=1)
@@ -221,29 +248,33 @@ class Display:
 
     def error(self, msg, wrap_text=True):
         if wrap_text:
-            new_msg = "\n[ERROR]: %s" % msg
+            new_msg = u"\n[ERROR]: %s" % msg
             wrapped = textwrap.wrap(new_msg, self.columns)
-            new_msg = "\n".join(wrapped) + "\n"
+            new_msg = u"\n".join(wrapped) + u"\n"
         else:
             new_msg = msg
         if new_msg not in self._errors:
             self.display(new_msg, color='red', stderr=True)
             self._errors[new_msg] = 1
 
+    @staticmethod
     def prompt(self, msg):
+        prompt_string = to_bytes(msg, encoding=self._output_encoding())
+        if sys.version_info >= (3,):
+            # Convert back into text on python3.  We do this double conversion
+            # to get rid of characters that are illegal in the user's locale
+            prompt_string = to_unicode(prompt_string)
+        return input(prompt_string)
 
-        return raw_input(self._safe_output(msg))
-
-    def _safe_output(self, msg, stderr=False):
-
-        if not stderr and sys.stdout.encoding:
-            msg = to_bytes(msg, sys.stdout.encoding)
-        elif stderr and sys.stderr.encoding:
-            msg = to_bytes(msg, sys.stderr.encoding)
-        else:
-            msg = to_bytes(msg)
-
-        return msg
+    @staticmethod
+    def _output_encoding(stderr=False):
+        encoding = locale.getpreferredencoding()
+        # https://bugs.python.org/issue6202
+        # Python2 hardcodes an obsolete value on Mac.  Use MacOSX defaults
+        # instead.
+        if encoding in ('mac-roman',):
+            encoding = 'utf-8'
+        return encoding
 
     def _set_column_width(self):
         if os.isatty(0):
@@ -251,4 +282,3 @@ class Display:
         else:
             tty_size = 0
         self.columns = max(79, tty_size)
-
