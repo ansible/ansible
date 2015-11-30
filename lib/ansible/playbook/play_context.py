@@ -334,6 +334,8 @@ class PlayContext(Base):
                 display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
                 delegated_vars['ansible_host'] = delegated_host_name
 
+            # reset the port back to the default if none was specified, to prevent
+            # the delegated host from inheriting the original host's setting
             for port_var in MAGIC_VARIABLE_MAPPING.get('port'):
                 if port_var in delegated_vars:
                     break
@@ -342,6 +344,13 @@ class PlayContext(Base):
                     delegated_vars['ansible_port'] = 5986
                 else:
                     delegated_vars['ansible_port'] = C.DEFAULT_REMOTE_PORT
+
+            # and likewise for the remote user
+            for user_var in MAGIC_VARIABLE_MAPPING.get('remote_user'):
+                if user_var in delegated_vars:
+                    break
+            else:
+                delegated_vars['ansible_user'] = None
         else:
             delegated_vars = dict()
 
