@@ -17,6 +17,7 @@ Other Notable Changes:
 * Fix bug with ini_file not removing options set to an empty string
 * Fix bug with script and raw modules not honoring parameters passed via yaml dict syntax
 * Fix bug with plugin loading finding the wrong modules because the suffix checking was not ordered
+* Fix bug in the literal_eval module code used when we need python-2.4 compat
 
 ## 1.9.4 "Dancing In the Street" - Oct 10, 2015
 
