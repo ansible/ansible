@@ -34,7 +34,7 @@ except ImportError:
 
 from ansible import constants as C
 from ansible.cli import CLI
-from ansible.compat.six import string_types
+from ansible.compat.six import string_types, text_type
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleFileNotFound
 from ansible.inventory.host import Host
 from ansible.plugins import lookup_loader
@@ -385,7 +385,7 @@ class VariableManager:
             if task._role:
                 variables['role_name'] = task._role.get_name()
                 variables['role_path'] = task._role._role_path
-                variables['role_uuid'] = unicode(task._role._uuid)
+                variables['role_uuid'] = text_type(task._role._uuid)
 
         if self._inventory is not None:
             variables['inventory_dir'] = self._inventory.basedir()
