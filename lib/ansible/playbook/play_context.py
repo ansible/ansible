@@ -316,6 +316,13 @@ class PlayContext(Base):
             # the host name in the delegated variable dictionary here
             delegated_host_name = templar.template(task.delegate_to)
             delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
+
+            delegated_transport = C.DEFAULT_TRANSPORT
+            for transport_var in MAGIC_VARIABLE_MAPPING.get('connection'):
+                if transport_var in delegated_vars:
+                    delegated_transport = delegated_vars[transport_var]
+                    break
+
             # make sure this delegated_to host has something set for its remote
             # address, otherwise we default to connecting to it by name. This
             # may happen when users put an IP entry into their inventory, or if
@@ -326,6 +333,15 @@ class PlayContext(Base):
             else:
                 display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
                 delegated_vars['ansible_host'] = delegated_host_name
+
+            for port_var in MAGIC_VARIABLE_MAPPING.get('port'):
+                if port_var in delegated_vars:
+                    break
+            else:
+                if delegated_transport == 'winrm':
+                    delegated_vars['ansible_port'] = 5986
+                else:
+                    delegated_vars['ansible_port'] = C.DEFAULT_REMOTE_PORT
         else:
             delegated_vars = dict()
 
