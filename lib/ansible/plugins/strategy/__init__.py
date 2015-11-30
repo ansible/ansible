@@ -269,17 +269,26 @@ class StrategyBase:
                     # never follow the delegate_to value for registered vars and
                     # the variable goes in the fact_cache
                     host      = result[1]
-                    var_name  = result[2]
+                    task      = result[2]
                     var_value = wrap_var(result[3])
+                    var_name  = task.register
 
-                    self._variable_manager.set_nonpersistent_facts(host, {var_name: var_value})
-                    self._tqm._hostvars_manager.hostvars().set_nonpersistent_facts(host, {var_name: var_value})
+                    if task.run_once:
+                        host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                    else:
+                        host_list = [host]
+
+                    for target_host in host_list:
+                        self._variable_manager.set_nonpersistent_facts(target_host, {var_name: var_value})
+                        self._tqm._hostvars_manager.hostvars().set_nonpersistent_facts(target_host, {var_name: var_value})
 
                 elif result[0] in ('set_host_var', 'set_host_facts'):
                     host = result[1]
                     task = result[2]
                     item = result[3]
 
+                    # find the host we're actually refering too here, which may
+                    # be a host that is not really in inventory at all
                     if task.delegate_to is not None:
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
                         self.add_tqm_variables(task_vars, play=iterator._play)
@@ -287,26 +296,32 @@ class StrategyBase:
                             task_vars['item'] = item
                         templar = Templar(loader=self._loader, variables=task_vars)
                         host_name = templar.template(task.delegate_to)
-                        target_host = self._inventory.get_host(host_name)
-                        if target_host is None:
-                            target_host = Host(name=host_name)
+                        actual_host = self._inventory.get_host(host_name)
+                        if actual_host is None:
+                            actual_host = Host(name=host_name)
                     else:
-                        target_host = host
+                        actual_host = host
 
                     if result[0] == 'set_host_var':
                         var_name  = result[4]
                         var_value = result[5]
 
-                        self._variable_manager.set_host_variable(target_host, var_name, var_value)
-                        self._tqm._hostvars_manager.hostvars().set_host_variable(target_host, var_name, var_value)
+                        if task.run_once:
+                            host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                        else:
+                            host_list = [actual_host]
+
+                        for target_host in host_list:
+                            self._variable_manager.set_host_variable(target_host, var_name, var_value)
+                            self._tqm._hostvars_manager.hostvars().set_host_variable(target_host, var_name, var_value)
                     elif result[0] == 'set_host_facts':
                         facts = result[4]
                         if task.action == 'set_fact':
-                            self._variable_manager.set_nonpersistent_facts(target_host, facts)
-                            self._tqm._hostvars_manager.hostvars().set_nonpersistent_facts(target_host, facts)
+                            self._variable_manager.set_nonpersistent_facts(actual_host, facts)
+                            self._tqm._hostvars_manager.hostvars().set_nonpersistent_facts(actual_host, facts)
                         else:
-                            self._variable_manager.set_host_facts(target_host, facts)
-                            self._tqm._hostvars_manager.hostvars().set_host_facts(target_host, facts)
+                            self._variable_manager.set_host_facts(actual_host, facts)
+                            self._tqm._hostvars_manager.hostvars().set_host_facts(actual_host, facts)
 
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
