@@ -151,7 +151,7 @@ except ImportError:
             elif isinstance(node, List):
                 return list(map(_convert, node.nodes))
             elif isinstance(node, Dict):
-                return dict((_convert(k), _convert(v)) for k, v in node.items)
+                return dict((_convert(k), _convert(v)) for k, v in node.items())
             elif isinstance(node, Name):
                 if node.name in _safe_names:
                     return _safe_names[node.name]
