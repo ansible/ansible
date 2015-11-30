@@ -62,6 +62,7 @@ class Connection(ConnectionBase):
     '''WinRM connections over HTTP/HTTPS.'''
 
     module_implementation_preferences = ('.ps1', '')
+    become_methods = []
 
     def __init__(self,  *args, **kwargs):
 
@@ -72,7 +73,6 @@ class Connection(ConnectionBase):
         self._shell_type      = 'powershell'
 
         # TODO: Add runas support
-        self.become_methods_supported=[]
 
         super(Connection, self).__init__(*args, **kwargs)
 
