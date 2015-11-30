@@ -110,7 +110,7 @@ class ResultProcess(multiprocessing.Process):
 
                 # if this task is registering a result, do it now
                 if result._task.register:
-                    self._send_result(('register_host_var', result._host, result._task.register, clean_copy))
+                    self._send_result(('register_host_var', result._host, result._task, clean_copy))
 
                 # send callbacks, execute other options based on the result status
                 # TODO: this should all be cleaned up and probably moved to a sub-function.
