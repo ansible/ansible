@@ -1,5 +1,5 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-#
+/
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
@@ -229,7 +229,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 output = output + u": %s" % result['stdout']
             raise AnsibleConnectionFailure(output)
 
-        rc = self._connection._shell.join_path(result['stdout'].strip(), u'').splitlines()[-1]
+        try:
+            rc = self._connection._shell.join_path(result['stdout'].strip(), u'').splitlines()[-1]
+        except IndexError:
+            # stdout was empty or just space, set to / to trigger error in next if
+            rc = '/'
 
         # Catch failure conditions, files should never be
         # written to locations in /.
