@@ -202,6 +202,7 @@ class TaskQueueManager:
             #        to do this with a proper BaseProxy/DictProxy derivative
             exposed=(
                 'set_variable_manager', 'set_inventory', '__contains__', '__delitem__',
+                'set_nonpersistent_facts', 'set_host_facts', 'set_host_variable',
                 '__getitem__', '__len__', '__setitem__', 'clear', 'copy', 'get', 'has_key',
                 'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values'
             ),
