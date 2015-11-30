@@ -1,5 +1,5 @@
 # (c) 2012-2014, Michael DeHaan <michael.dehaan@gmail.com>
-/
+#
 # This file is part of Ansible
 #
 # Ansible is free software: you can redistribute it and/or modify
