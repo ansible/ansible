@@ -49,6 +49,13 @@ class ShellModule(object):
             return path
         return '"%s"' % path
 
+    # powershell requires that script files end with .ps1
+    def get_remote_filename(self, base_name):
+        if not base_name.strip().lower().endswith('.ps1'):
+            return base_name.strip() + '.ps1'
+
+        return base_name.strip()
+
     def path_has_trailing_slash(self, path):
         # Allow Windows paths to be specified using either slash.
         path = self._unquote(path)
