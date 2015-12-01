@@ -91,9 +91,6 @@ EXAMPLES = '''
 
 '''
 
-import time
-import sys
-
 try:
     import boto
     import boto.ec2
@@ -134,15 +131,15 @@ def vpc_exists(module, vpc, name, cidr_block, multi):
             module.fail_json(msg='Currently there are %d VPCs that have the same name and '
                              'CIDR block you specified. If you would like to create '
                              'the VPC anyway please pass True to the multi_ok param.' % len(matching_vpcs))
-    
+
     return matched_vpc
 
 
 def update_vpc_tags(vpc, module, vpc_obj, tags, name):
-    
+
     if tags is None:
         tags = dict()
-        
+
     tags.update({'Name': name})
     try:
         current_tags = dict((t.name, t.value) for t in vpc.get_all_tags(filters={'resource-id': vpc_obj.id}))
@@ -154,10 +151,10 @@ def update_vpc_tags(vpc, module, vpc_obj, tags, name):
     except Exception, e:
         e_msg=boto_exception(e)
         module.fail_json(msg=e_msg)
-        
+
 
 def update_dhcp_opts(connection, module, vpc_obj, dhcp_id):
-    
+
     if vpc_obj.dhcp_options_id != dhcp_id:
         connection.associate_dhcp_options(dhcp_id, vpc_obj.id)
         return True
@@ -209,48 +206,47 @@ def main():
     tags=module.params.get('tags')
     state=module.params.get('state')
     multi=module.params.get('multi_ok')
-    
+
     changed=False
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
+
     if region:
         try:
             connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
-        
+
     if dns_hostnames and not dns_support:
         module.fail_json('In order to enable DNS Hostnames you must also enable DNS support')
 
     if state == 'present':
-        
+
         # Check if VPC exists
         vpc_obj = vpc_exists(module, connection, name, cidr_block, multi)
-        
+
         if vpc_obj is None:
             try:
                 vpc_obj = connection.create_vpc(cidr_block, instance_tenancy=tenancy)
                 changed = True
             except BotoServerError, e:
                 module.fail_json(msg=e)
-        
-        if dhcp_id is not None:        
+
+        if dhcp_id is not None:
             try:
                 if update_dhcp_opts(connection, module, vpc_obj, dhcp_id):
                     changed = True
             except BotoServerError, e:
                 module.fail_json(msg=e)
-        
-        if tags is not None or name is not None:            
+
+        if tags is not None or name is not None:
             try:
                 if update_vpc_tags(connection, module, vpc_obj, tags, name):
                     changed = True
             except BotoServerError, e:
                 module.fail_json(msg=e)
-                
 
         # Note: Boto currently doesn't currently provide an interface to ec2-describe-vpc-attribute
         # which is needed in order to detect the current status of DNS options. For now we just update
@@ -261,21 +257,21 @@ def main():
         except BotoServerError, e:
             e_msg=boto_exception(e)
             module.fail_json(msg=e_msg)
-            
+
         # get the vpc obj again in case it has changed
         try:
             vpc_obj = connection.get_all_vpcs(vpc_obj.id)[0]
         except BotoServerError, e:
             e_msg=boto_exception(e)
             module.fail_json(msg=e_msg)
-        
+
         module.exit_json(changed=changed, vpc=get_vpc_values(vpc_obj))
 
     elif state == 'absent':
-        
+
         # Check if VPC exists
         vpc_obj = vpc_exists(module, connection, name, cidr_block, multi)
-        
+
         if vpc_obj is not None:
             try:
                 connection.delete_vpc(vpc_obj.id)
@@ -285,11 +281,12 @@ def main():
                 e_msg = boto_exception(e)
                 module.fail_json(msg="%s. You may want to use the ec2_vpc_subnet, ec2_vpc_igw, "
                 "and/or ec2_vpc_route_table modules to ensure the other components are absent." % e_msg)
-            
+
         module.exit_json(changed=changed, vpc=get_vpc_values(vpc_obj))
-            
+
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

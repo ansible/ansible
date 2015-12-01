@@ -116,7 +116,7 @@ except ImportError:
 
 # returns a tuple: (whether or not a parameter was changed, the remaining parameters that weren't found in this parameter group)
 
-class NotModifiableError(StandardError):
+class NotModifiableError(Exception):
     def __init__(self, error_message, *args):
         super(NotModifiableError, self).__init__(error_message, *args)
         self.error_message = error_message
@@ -179,7 +179,7 @@ def modify_group(group, params, immediate=False):
     new_params = dict(params)
 
     for key in new_params.keys():
-        if group.has_key(key):
+        if key in group:
             param = group[key]
             new_value = new_params[key]
 
@@ -285,7 +285,6 @@ def main():
                 else:
                     break
 
-
     except BotoServerError, e:
         module.fail_json(msg = e.error_message)
 
@@ -301,4 +300,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

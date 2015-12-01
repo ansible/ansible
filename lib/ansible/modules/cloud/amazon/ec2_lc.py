@@ -314,7 +314,7 @@ def main():
 
     try:
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, StandardError), e:
+    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
         module.fail_json(msg=str(e))
 
     state = module.params.get('state')
