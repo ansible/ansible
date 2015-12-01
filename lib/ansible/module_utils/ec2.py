@@ -40,6 +40,10 @@ except:
     HAS_LOOSE_VERSION = False
 
 
+class AnsibleAWSError(Exception):
+    pass
+
+
 def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
     params['aws_session_token'] = params.pop('security_token', None)
@@ -163,7 +167,7 @@ def get_aws_connection_info(module, boto3=False):
                            aws_secret_access_key=secret_key,
                            security_token=security_token)
 
-       # profile_name only works as a key in boto >= 2.24
+        # profile_name only works as a key in boto >= 2.24
         # so only set profile_name if passed as an argument
         if profile_name:
             if not boto_supports_profile_name():
@@ -195,9 +199,9 @@ def connect_to_aws(aws_module, region, **params):
     conn = aws_module.connect_to_region(region, **params)
     if not conn:
         if region not in [aws_module_region.name for aws_module_region in aws_module.regions()]:
-            raise StandardError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade boto or extend with endpoints_path" % (region, aws_module.__name__))
+            raise AnsibleAWSError("Region %s does not seem to be available for aws module %s. If the region definitely exists, you may need to upgrade boto or extend with endpoints_path" % (region, aws_module.__name__))
         else:
-            raise StandardError("Unknown problem connecting to region %s for aws module %s." % (region, aws_module.__name__))
+            raise AnsibleAWSError("Unknown problem connecting to region %s for aws module %s." % (region, aws_module.__name__))
     if params.get('profile_name'):
         conn = boto_fix_security_token_in_profile(conn, params['profile_name'])
     return conn
@@ -213,13 +217,13 @@ def ec2_connect(module):
     if region:
         try:
             ec2 = connect_to_aws(boto.ec2, region, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
             module.fail_json(msg=str(e))
     # Otherwise, no region so we fallback to the old connection method
     elif ec2_url:
         try:
             ec2 = boto.connect_ec2_endpoint(ec2_url, **boto_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="Either region or ec2_url must be specified")
