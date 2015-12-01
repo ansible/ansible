@@ -45,7 +45,7 @@ class Connection(ConnectionBase):
         ''' used to identify this connection object '''
         return 'local'
 
-    def _connect(self, port=None):
+    def _connect(self):
         ''' connect to the local host; nothing to do here '''
 
         # Because we haven't made any remote connection we're running as
