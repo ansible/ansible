@@ -547,7 +547,6 @@ More information on the patterns can be found on :doc:`intro_patterns`
 .. _loops_and_includes:
 
 Loops and Includes
-
 ``````````````````
 
 In 2.0 you are able to use `with_` loops and task includes (but not playbook includes), this adds the ability to loop over the set of tasks in one shot.
