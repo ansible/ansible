@@ -165,9 +165,7 @@ class StrategyModule(StrategyBase):
                         for host in hosts_left:
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)
-
-                for host in hosts_left:
-                    iterator.add_tasks(host, all_blocks[host])
+                                iterator.add_tasks(host, all_blocks[host])
 
             # pause briefly so we don't spin lock
             time.sleep(0.05)
