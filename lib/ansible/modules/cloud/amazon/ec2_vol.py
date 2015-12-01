@@ -47,7 +47,7 @@ options:
   volume_type:
     description:
       - Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS). "Standard" is the old EBS default
-        and continues to remain the Ansible default for backwards compatibility. 
+        and continues to remain the Ansible default for backwards compatibility.
     required: false
     default: standard
     version_added: "1.9"
@@ -69,7 +69,7 @@ options:
     default: null
   zone:
     description:
-      - zone in which to create the volume, if unset uses the zone the instance is in (if set) 
+      - zone in which to create the volume, if unset uses the zone the instance is in (if set)
     required: false
     default: null
     aliases: ['aws_zone', 'ec2_zone']
@@ -87,7 +87,7 @@ options:
     choices: ["yes", "no"]
     version_added: "1.5"
   state:
-    description: 
+    description:
       - whether to ensure the volume is present or absent, or to list existing volumes (The C(list) option was added in version 1.8).
     required: false
     default: present
@@ -99,15 +99,15 @@ extends_documentation_fragment: aws
 
 EXAMPLES = '''
 # Simple attachment action
-- ec2_vol: 
-    instance: XXXXXX 
-    volume_size: 5 
+- ec2_vol:
+    instance: XXXXXX
+    volume_size: 5
     device_name: sdd
 
-# Example using custom iops params   
+# Example using custom iops params
 - ec2_vol:
-    instance: XXXXXX 
-    volume_size: 5 
+    instance: XXXXXX
+    volume_size: 5
     iops: 100
     device_name: sdd
 
@@ -116,15 +116,15 @@ EXAMPLES = '''
     instance: XXXXXX
     snapshot: "{{ snapshot }}"
 
-# Playbook example combined with instance launch 
+# Playbook example combined with instance launch
 - ec2:
     keypair: "{{ keypair }}"
     image: "{{ image }}"
-    wait: yes 
+    wait: yes
     count: 3
   register: ec2
 - ec2_vol:
-    instance: "{{ item.id }} " 
+    instance: "{{ item.id }} "
     volume_size: 5
   with_items: ec2.instances
   register: ec2_vol
@@ -221,7 +221,7 @@ def get_volume(module, ec2):
     return vols[0]
 
 def get_volumes(module, ec2):
-    
+
     instance = module.params.get('instance')
 
     try:
@@ -252,12 +252,10 @@ def boto_supports_volume_encryption():
     """
     return hasattr(boto, 'Version') and LooseVersion(boto.Version) >= LooseVersion('2.29.0')
 
-    
+
 def create_volume(module, ec2, zone):
     changed = False
     name = module.params.get('name')
-    id = module.params.get('id')
-    instance = module.params.get('instance')
     iops = module.params.get('iops')
     encrypted = module.params.get('encrypted')
     volume_size = module.params.get('volume_size')
@@ -290,16 +288,16 @@ def create_volume(module, ec2, zone):
 
 
 def attach_volume(module, ec2, volume, instance):
-    
+
     device_name = module.params.get('device_name')
     changed = False
-    
+
     # If device_name isn't set, make a choice based on best practices here:
     # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
-    
+
     # In future this needs to be more dynamic but combining block device mapping best practices
     # (bounds for devices, as above) with instance.block_device_mapping data would be tricky. For me ;)
-    
+
     # Use password data attribute to tell whether the instance is Windows or Linux
     if device_name is None:
         try:
@@ -309,7 +307,7 @@ def attach_volume(module, ec2, volume, instance):
                 device_name = '/dev/xvdf'
         except boto.exception.BotoServerError, e:
             module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-    
+
     if volume.attachment_state() is not None:
         adata = volume.attach_data
         if adata.instance_id != instance.id:
@@ -328,9 +326,9 @@ def attach_volume(module, ec2, volume, instance):
     return volume, changed
 
 def detach_volume(module, ec2, volume):
-    
+
     changed = False
-    
+
     if volume.attachment_state() is not None:
         adata = volume.attach_data
         volume.detach()
@@ -338,15 +336,15 @@ def detach_volume(module, ec2, volume):
             time.sleep(3)
             volume.update()
         changed = True
-        
+
     return volume, changed
-        
+
 def get_volume_info(volume, state):
-    
+
     # If we're just listing volumes then do nothing, else get the latest update for the volume
     if state != 'list':
         volume.update()
-    
+
     volume_info = {}
     attachment = volume.attach_data
 
@@ -367,7 +365,7 @@ def get_volume_info(volume, state):
                     },
                     'tags': volume.tags
                 }
-    
+
     return volume_info
 
 def main():
@@ -395,34 +393,32 @@ def main():
     name = module.params.get('name')
     instance = module.params.get('instance')
     volume_size = module.params.get('volume_size')
-    volume_type = module.params.get('volume_type')
-    iops = module.params.get('iops')
     encrypted = module.params.get('encrypted')
     device_name = module.params.get('device_name')
     zone = module.params.get('zone')
     snapshot = module.params.get('snapshot')
     state = module.params.get('state')
-    
+
     # Ensure we have the zone or can get the zone
     if instance is None and zone is None and state == 'present':
         module.fail_json(msg="You must specify either instance or zone")
-    
+
     # Set volume detach flag
     if instance == 'None' or instance == '':
         instance = None
         detach_vol_flag = True
     else:
         detach_vol_flag = False
-        
+
     # Set changed flag
     changed = False
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
+
     if region:
         try:
             ec2 = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
@@ -469,11 +465,11 @@ def main():
 
     if volume_size and (id or snapshot):
         module.fail_json(msg="Cannot specify volume_size together with id or snapshot")
-    
+
     if state == 'present':
         volume, changed = create_volume(module, ec2, zone)
         if detach_vol_flag:
-            volume, changed = detach_volume(module, ec2, volume)    
+            volume, changed = detach_volume(module, ec2, volume)
         elif inst is not None:
             volume, changed = attach_volume(module, ec2, volume, inst)
 
@@ -487,4 +483,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

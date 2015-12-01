@@ -176,7 +176,7 @@ def main():
 
     try:
         connection = connect_to_aws(boto.ec2.autoscale, region, **aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, StandardError), e:
+    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
         module.fail_json(msg = str(e))
 
     if state == 'present':
@@ -185,4 +185,5 @@ def main():
         delete_scaling_policy(connection, module)
 
 
-main()
+if __name__ == '__main__':
+    main()
