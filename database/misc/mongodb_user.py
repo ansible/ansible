@@ -124,7 +124,7 @@ EXAMPLES = '''
 - mongodb_user: database=burgers name=joe password=12345 roles='readWriteAnyDatabase' state=present
 
 # add a user to database in a replica set, the primary server is automatically discovered and written to
-- mongodb_user: database=burgers name=bob replica_set=blecher password=12345 roles='readWriteAnyDatabase' state=present
+- mongodb_user: database=burgers name=bob replica_set=belcher password=12345 roles='readWriteAnyDatabase' state=present
 '''
 
 import ConfigParser
