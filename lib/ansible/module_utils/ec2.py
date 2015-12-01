@@ -177,6 +177,10 @@ def get_aws_connection_info(module, boto3=False):
         if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
             boto_params['validate_certs'] = validate_certs
 
+    for param, value in boto_params.items():
+        if isinstance(value, str):
+            boto_params[param] = unicode(value, 'utf-8', 'strict')
+
     return region, ec2_url, boto_params
 
 
