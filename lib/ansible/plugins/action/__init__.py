@@ -400,7 +400,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmp = self._make_tmp_path()
 
         if tmp:
-            remote_module_path = self._connection._shell.join_path(tmp, module_name)
+            remote_module_filename = self._connection._shell.get_remote_filename(module_name)
+            remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
             if module_style == 'old':
                 # we'll also need a temp file to hold our module arguments
                 args_file_path = self._connection._shell.join_path(tmp, 'args')

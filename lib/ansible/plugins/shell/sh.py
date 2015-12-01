@@ -47,6 +47,10 @@ class ShellModule(object):
     def join_path(self, *args):
         return os.path.join(*args)
 
+    # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
+    def get_remote_filename(self, base_name):
+        return base_name.strip()
+
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
 
