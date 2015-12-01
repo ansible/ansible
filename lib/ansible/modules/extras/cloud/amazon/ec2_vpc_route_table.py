@@ -98,7 +98,7 @@ EXAMPLES = '''
       - dest: 0.0.0.0/0
         instance_id: "{{ nat.instance_id }}"
   register: nat_route_table
-  
+
 '''
 
 
@@ -252,23 +252,23 @@ def get_route_table_by_id(vpc_conn, vpc_id, route_table_id):
     route_tables = vpc_conn.get_all_route_tables(route_table_ids=[route_table_id], filters={'vpc_id': vpc_id})
     if route_tables:
         route_table = route_tables[0]
-    
+
     return route_table
-    
+
 def get_route_table_by_tags(vpc_conn, vpc_id, tags):
-    
+
     count = 0
-    route_table = None 
+    route_table = None
     route_tables = vpc_conn.get_all_route_tables(filters={'vpc_id': vpc_id})
     for table in route_tables:
         this_tags = get_resource_tags(vpc_conn, table.id)
         if tags_match(tags, this_tags):
             route_table = table
             count +=1
-    
+
     if count > 1:
         raise RuntimeError("Tags provided do not identify a unique route table")
-    else:        
+    else:
         return route_table
 
 
@@ -462,7 +462,7 @@ def create_route_spec(connection, routes, vpc_id):
     return routes
 
 def ensure_route_table_present(connection, module):
-    
+
     lookup = module.params.get('lookup')
     propagating_vgw_ids = module.params.get('propagating_vgw_ids', [])
     route_table_id = module.params.get('route_table_id')
@@ -474,7 +474,7 @@ def ensure_route_table_present(connection, module):
         routes = create_route_spec(connection, module.params.get('routes'), vpc_id)
     except AnsibleIgwSearchException as e:
         module.fail_json(msg=e[0])
-    
+
     changed = False
     tags_valid = False
 
@@ -493,7 +493,7 @@ def ensure_route_table_present(connection, module):
             route_table = get_route_table_by_id(connection, vpc_id, route_table_id)
         except EC2ResponseError as e:
             module.fail_json(msg=e.message)
-        
+
     # If no route table returned then create new route table
     if route_table is None:
         try:
@@ -504,7 +504,7 @@ def ensure_route_table_present(connection, module):
                 module.exit_json(changed=True)
 
             module.fail_json(msg=e.message)
-        
+
     if routes is not None:
         try:
             result = ensure_routes(connection, route_table, routes, propagating_vgw_ids, check_mode)
@@ -559,18 +559,18 @@ def main():
             vpc_id = dict(default=None, required=True)
         )
     )
-    
+
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=True)
-    
+
     if not HAS_BOTO:
         module.fail_json(msg='boto is required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
+
     if region:
         try:
             connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
@@ -597,4 +597,3 @@ from ansible.module_utils.ec2 import *  # noqa
 
 if __name__ == '__main__':
     main()
-    

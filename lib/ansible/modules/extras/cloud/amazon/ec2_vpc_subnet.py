@@ -70,7 +70,7 @@ EXAMPLES = '''
     state: absent
     vpc_id: vpc-123456
     cidr: 10.0.1.16/28
-    
+
 '''
 
 import sys  # noqa
@@ -142,7 +142,7 @@ def create_subnet(vpc_conn, vpc_id, cidr, az, check_mode):
         if e.error_code == "DryRunOperation":
             subnet = None
         else:
-          raise AnsibleVPCSubnetCreationException(
+            raise AnsibleVPCSubnetCreationException(
               'Unable to create subnet {0}, error: {1}'.format(cidr, e))
 
     return subnet
@@ -249,14 +249,13 @@ def main():
     if not region:
         module.fail_json(msg='Region must be specified')
 
-    try:
-        vpc_conn = boto.vpc.connect_to_region(
-            region,
-            aws_access_key_id=aws_access_key,
-            aws_secret_access_key=aws_secret_key
-        )
-    except boto.exception.NoAuthHandlerFound as e:
-        module.fail_json(msg=str(e))
+    if region:
+        try:
+            connection = connect_to_aws(boto.vpc, region, **aws_connect_params)
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
+            module.fail_json(msg=str(e))
+    else:
+        module.fail_json(msg="region must be specified")
 
     vpc_id = module.params.get('vpc_id')
     tags = module.params.get('tags')
@@ -281,4 +280,3 @@ from ansible.module_utils.ec2 import *  # noqa
 
 if __name__ == '__main__':
     main()
-    

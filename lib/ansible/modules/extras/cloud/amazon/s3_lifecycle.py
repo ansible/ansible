@@ -98,7 +98,7 @@ EXAMPLES = '''
     prefix: /logs/
     status: enabled
     state: present
-    
+
 # Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier after 7 days and then delete after 90 days
 - s3_lifecycle:
     name: mybucket
@@ -107,7 +107,7 @@ EXAMPLES = '''
     prefix: /logs/
     status: enabled
     state: present
-    
+
 # Configure a lifecycle rule to transition all items with a prefix of /logs/ to glacier on 31 Dec 2020 and then delete on 31 Dec 2030. Note that midnight GMT must be specified.
 # Be sure to quote your date strings
 - s3_lifecycle:
@@ -117,20 +117,20 @@ EXAMPLES = '''
     prefix: /logs/
     status: enabled
     state: present
-    
+
 # Disable the rule created above
 - s3_lifecycle:
     name: mybucket
     prefix: /logs/
     status: disabled
     state: present
-    
+
 # Delete the lifecycle rule created above
 - s3_lifecycle:
     name: mybucket
     prefix: /logs/
     state: absent
-    
+
 '''
 
 import xml.etree.ElementTree as ET
@@ -186,7 +186,7 @@ def create_lifecycle_rule(connection, module):
         expiration_obj = Expiration(date=expiration_date)
     else:
         expiration_obj = None
-    
+
     # Create transition
     if transition_days is not None:
         transition_obj = Transition(days=transition_days, storage_class=storage_class.upper())
@@ -236,7 +236,7 @@ def create_lifecycle_rule(connection, module):
         bucket.configure_lifecycle(lifecycle_obj)
     except S3ResponseError, e:
         module.fail_json(msg=e.message)
-        
+
     module.exit_json(changed=changed)
 
 def compare_rule(rule_a, rule_b):
@@ -310,7 +310,7 @@ def destroy_lifecycle_rule(connection, module):
 
     # Create lifecycle
     lifecycle_obj = Lifecycle()
-    
+
     # Check if rule exists
     # If an ID exists, use that otherwise compare based on prefix
     if rule_id is not None:
@@ -327,8 +327,7 @@ def destroy_lifecycle_rule(connection, module):
                 changed = True
             else:
                 lifecycle_obj.append(existing_rule)
-                
-    
+
     # Write lifecycle to bucket or, if there no rules left, delete lifecycle configuration
     try:
         if lifecycle_obj:
@@ -337,9 +336,9 @@ def destroy_lifecycle_rule(connection, module):
             bucket.delete_lifecycle_configuration()
     except BotoServerError, e:
         module.fail_json(msg=e.message)
-        
+
     module.exit_json(changed=changed)
-    
+
 
 def main():
 
@@ -365,18 +364,18 @@ def main():
                                                  [ 'expiration_days', 'expiration_date' ],
                                                  [ 'expiration_days', 'transition_date' ],
                                                  [ 'transition_days', 'transition_date' ],
-                                                 [ 'transition_days', 'expiration_date' ]                 
+                                                 [ 'transition_days', 'expiration_date' ]
                                                  ]
                            )
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
-        
+
     if not HAS_DATEUTIL:
-        module.fail_json(msg='dateutil required for this module')    
+        module.fail_json(msg='dateutil required for this module')
 
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
+
     if region in ('us-east-1', '', None):
         # S3ism for the US Standard region
         location = Location.DEFAULT
@@ -389,7 +388,7 @@ def main():
         # use this as fallback because connect_to_region seems to fail in boto + non 'classic' aws accounts in some cases
         if connection is None:
             connection = boto.connect_s3(**aws_connect_params)
-    except (boto.exception.NoAuthHandlerFound, StandardError), e:
+    except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
         module.fail_json(msg=str(e))
 
     expiration_date = module.params.get("expiration_date")
@@ -402,13 +401,13 @@ def main():
             datetime.datetime.strptime(expiration_date, "%Y-%m-%dT%H:%M:%S.000Z")
         except ValueError, e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
-    
+
     if transition_date is not None:
         try:
             datetime.datetime.strptime(transition_date, "%Y-%m-%dT%H:%M:%S.000Z")
         except ValueError, e:
             module.fail_json(msg="expiration_date is not a valid ISO-8601 format. The time must be midnight and a timezone of GMT must be included")
-        
+
     if state == 'present':
         create_lifecycle_rule(connection, module)
     elif state == 'absent':
