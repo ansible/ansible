@@ -294,7 +294,7 @@ def main():
         argument_spec = dict(
             group_id = dict(default=None),
             artifact_id = dict(default=None),
-            version = dict(default=None),
+            version = dict(default="latest"),
             classifier = dict(default=None),
             extension = dict(default='jar'),
             repository_url = dict(default=None),
