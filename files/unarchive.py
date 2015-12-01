@@ -250,7 +250,7 @@ def pick_handler(src, dest, module):
         obj = handler(src, dest, module)
         if obj.can_handle_archive():
             return obj
-    module.fail_json(msg='Failed to find handler to unarchive. Make sure the required command to extract the file is installed.')
+    module.fail_json(msg='Failed to find handler for "%s". Make sure the required command to extract the file is installed.' % src)
 
 
 def main():
