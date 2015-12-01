@@ -36,6 +36,7 @@ Ansible Changes By Release
   `ansible_ssh_extra_args` is used to set options that are accepted only by ssh (not sftp or scp, which have their own analogous settings).
 * Backslashes used when specifying parameters in jinja2 expressions in YAML dicts sometimes needed to be escaped twice.
   This has been fixed so that escaping once works. Here's an example of how playbooks need to be modified:
+* ansible-pull can now verify the code it runs when using git as a source repository, using git's code signing and verification features.
 
     ```
     # Syntax in 1.9.x
