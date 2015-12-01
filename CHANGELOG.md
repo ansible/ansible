@@ -325,6 +325,7 @@ newline being stripped you can change your playbook like this:
     ```
     - debug: msg="The error message was: {{error_code |default('') }}"
     ```
+* The local connection type now supports su as a privilege escalation method
 
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 
