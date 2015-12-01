@@ -232,7 +232,7 @@ class VariableManager:
             if 'all' in self._group_vars_files:
                 data = preprocess_vars(self._group_vars_files['all'])
                 for item in data:
-                    all_vars = combine_vars(all_vars, item)
+                    all_vars = combine_vars(item, all_vars)
 
             for group in sorted(host.get_groups(), key=lambda g: g.depth):
                 if group.name in self._group_vars_files and group.name != 'all':
