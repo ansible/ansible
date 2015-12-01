@@ -71,11 +71,11 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'profile_tasks'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self, display):
+    def __init__(self):
         self.stats = {}
         self.current = None
 
-        super(CallbackModule, self).__init__(display)
+        super(CallbackModule, self).__init__()
 
     def _record_task(self, name):
         """

@@ -36,8 +36,8 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'tree'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self, display):
-        super(CallbackModule, self).__init__(display)
+    def __init__(self):
+        super(CallbackModule, self).__init__()
 
         self.tree = TREE_DIR
         if not self.tree:
