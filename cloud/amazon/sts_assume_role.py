@@ -16,7 +16,7 @@
 
 DOCUMENTATION = '''
 ---
-module: sts_assume_role 
+module: sts_assume_role
 short_description: Assume a role using AWS Security Token Service and obtain temporary credentials
 description:
     - Assume a role using AWS Security Token Service and obtain temporary credentials
@@ -25,7 +25,7 @@ author: Boris Ekelchik (@bekelchik)
 options:
   role_arn:
     description:
-      - The Amazon Resource Name (ARN) of the role that the caller is assuming (http://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html#Identifiers_ARNs) 
+      - The Amazon Resource Name (ARN) of the role that the caller is assuming (http://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html#Identifiers_ARNs)
     required: true
   role_session_name:
     description:
@@ -33,27 +33,27 @@ options:
     required: true
   policy:
     description:
-      - Supplemental policy to use in addition to assumed role's policies. 
+      - Supplemental policy to use in addition to assumed role's policies.
     required: false
     default: null
   duration_seconds:
     description:
-      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 3600 seconds (1 hour). By default, the value is set to 3600 seconds. 
+      - The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 3600 seconds (1 hour). By default, the value is set to 3600 seconds.
     required: false
     default: null
   external_id:
     description:
-      - A unique identifier that is used by third parties to assume a role in their customers' accounts. 
+      - A unique identifier that is used by third parties to assume a role in their customers' accounts.
     required: false
     default: null
   mfa_serial_number:
     description:
-      - he identification number of the MFA device that is associated with the user who is making the AssumeRole call. 
+      - he identification number of the MFA device that is associated with the user who is making the AssumeRole call.
     required: false
     default: null
   mfa_token:
     description:
-      - The value provided by the MFA device, if the trust policy of the role being assumed requires MFA. 
+      - The value provided by the MFA device, if the trust policy of the role being assumed requires MFA.
     required: false
     default: null
 notes:
@@ -67,12 +67,12 @@ EXAMPLES = '''
 # Note: These examples do not set authentication details, see the AWS Guide for details.
 
 # Assume an existing role (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
-sts_assume_role: 
+sts_assume_role:
   role_arn: "arn:aws:iam::123456789012:role/someRole"
   session_name: "someRoleSession"
 register: assumed_role
 
-# Use the assumed role above to tag an instance in account 123456789012 
+# Use the assumed role above to tag an instance in account 123456789012
 ec2_tag:
   aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
   aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
@@ -84,19 +84,16 @@ ec2_tag:
 
 '''
 
-import sys
-import time
-
 try:
     import boto.sts
     from boto.exception import BotoServerError
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-    
+
 
 def assume_role_policy(connection, module):
-    
+
     role_arn = module.params.get('role_arn')
     role_session_name = module.params.get('role_session_name')
     policy = module.params.get('policy')
@@ -105,13 +102,13 @@ def assume_role_policy(connection, module):
     mfa_serial_number = module.params.get('mfa_serial_number')
     mfa_token = module.params.get('mfa_token')
     changed = False
-    
+
     try:
         assumed_role = connection.assume_role(role_arn, role_session_name, policy, duration_seconds, external_id, mfa_serial_number, mfa_token)
-        changed = True    
+        changed = True
     except BotoServerError, e:
         module.fail_json(msg=e)
-        
+
     module.exit_json(changed=changed, sts_creds=assumed_role.credentials.__dict__, sts_user=assumed_role.user.__dict__)
 
 def main():
@@ -127,18 +124,18 @@ def main():
             mfa_token = dict(required=False, default=None)
         )
     )
-           
+
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
-    
+
     region, ec2_url, aws_connect_params = get_aws_connection_info(module)
-    
+
     if region:
         try:
             connection = connect_to_aws(boto.sts, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
@@ -147,10 +144,11 @@ def main():
         assume_role_policy(connection, module)
     except BotoServerError, e:
         module.fail_json(msg=e)
-        
-    
+
+
 # import module snippets
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

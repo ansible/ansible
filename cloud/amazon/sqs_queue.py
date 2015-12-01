@@ -215,8 +215,8 @@ def main():
 
     try:
         connection = connect_to_aws(boto.sqs, region, **aws_connect_params)
-        
-    except (NoAuthHandlerFound, StandardError), e:
+
+    except (NoAuthHandlerFound, AnsibleAWSError), e:
         module.fail_json(msg=str(e))
 
     state = module.params.get('state')
@@ -230,4 +230,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()
