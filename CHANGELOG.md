@@ -106,23 +106,30 @@ newline being stripped you can change your playbook like this:
 * amazon: ec2_eni
 * amazon: ec2_eni_facts
 * amazon: ec2_remote_facts
+* amazon: ec2_vpc_igw
 * amazon: ec2_vpc_net
 * amazon: ec2_vpc_route_table
 * amazon: ec2_vpc_route_table_facts
 * amazon: ec2_vpc_subnet
+* amazon: ec2_vpc_subnet_facts
 * amazon: ec2_win_password
 * amazon: ecs_cluster
 * amazon: ecs_task
 * amazon: ecs_taskdefinition
-* amazon: elasticache_subnet_group
+* amazon: elasticache_subnet_group_facts
 * amazon: iam
+* amazon: iam_cert
 * amazon: iam_policy
-* amazon: route53_zone
+* amazon: route53_facts
 * amazon: route53_health_check
+* amazon: route53_zone
 * amazon: sts_assume_role
 * amazon: s3_bucket
 * amazon: s3_lifecycle
 * amazon: s3_logging
+* amazon: sqs_queue
+* amazon: sns_topic
+* amazon: sts_assume_role
 * apk
 * bigip_gtm_wide_ip
 * bundler
@@ -163,25 +170,29 @@ newline being stripped you can change your playbook like this:
 * cloudstack: cs_template
 * cloudstack: cs_user
 * cloudstack: cs_vmsnapshot
+* cronvar
 * datadog_monitor
 * deploy_helper
-* dpkg_selections
 * docker: docker_login
+* dpkg_selections
 * elasticsearch_plugin
 * expect
 * find
+* google: gce_tag
 * hall
 * ipify_facts
 * iptables
 * libvirt: virt_net
 * libvirt: virt_pool
 * maven_artifact
-* openstack: os_ironic
-* openstack: os_ironic_node
+* openstack: os_auth
 * openstack: os_client_config
-* openstack: os_floating_ip
 * openstack: os_image
 * openstack: os_image_facts
+* openstack: os_floating_ip
+* openstack: os_ironic
+* openstack: os_ironic_node
+* openstack: os_keypair
 * openstack: os_network
 * openstack: os_network_facts
 * openstack: os_nova_flavor
@@ -197,6 +208,7 @@ newline being stripped you can change your playbook like this:
 * openstack: os_server_volume
 * openstack: os_subnet
 * openstack: os_subnet_facts
+* openstack: os_user
 * openstack: os_user_group
 * openstack: os_volume
 * openvswitch_db.
@@ -207,14 +219,15 @@ newline being stripped you can change your playbook like this:
 * profitbricks: profitbricks
 * profitbricks: profitbricks_datacenter
 * profitbricks: profitbricks_nic
-* profitbricks: profitbricks_snapshot
 * profitbricks: profitbricks_volume
 * profitbricks: profitbricks_volume_attachments
-* proxmox
-* proxmox_template
+* profitbricks: profitbricks_snapshot
+* proxmox: proxmox
+* proxmox: proxmox_template
 * puppet
 * pushover
 * pushbullet
+* rax: rax_clb_ssl
 * rax: rax_mon_alarm
 * rax: rax_mon_check
 * rax: rax_mon_entity
@@ -224,6 +237,7 @@ newline being stripped you can change your playbook like this:
 * rabbitmq_exchange
 * rabbitmq_queue
 * selinux_permissive
+* sendgrid
 * sensu_check
 * sensu_subscription
 * seport
@@ -235,21 +249,24 @@ newline being stripped you can change your playbook like this:
 * vertica_role
 * vertica_schema
 * vertica_user
-* vmware: vmware_datacenter
+* vmware: vca_fw
+* vmware: vca_nat
 * vmware: vmware_cluster
+* vmware: vmware_datacenter
 * vmware: vmware_dns_config
 * vmware: vmware_dvs_host
 * vmware: vmware_dvs_portgroup
 * vmware: vmware_dvswitch
 * vmware: vmware_host
-* vmware: vmware_vmkernel_ip_config
+* vmware: vmware_migrate_vmk
 * vmware: vmware_portgroup
+* vmware: vmware_target_canonical_facts
 * vmware: vmware_vm_facts
+* vmware: vmware_vm_vss_dvs_migrate
 * vmware: vmware_vmkernel
+* vmware: vmware_vmkernel_ip_config
 * vmware: vmware_vsan_cluster
 * vmware: vmware_vswitch
-* vmware: vca_fw
-* vmware: vca_nat
 * vmware: vsphere_copy
 * webfaction_app
 * webfaction_db
