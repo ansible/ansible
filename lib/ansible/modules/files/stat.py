@@ -111,7 +111,7 @@ stat:
         path:
             description: The full path of the file/object to get the facts of
             returned: success and if path exists
-            type: boolean
+            type: string
             sample: '/path/to/file'
         mode:
             description: Unix permissions of the file in octal
