@@ -77,8 +77,9 @@ class Base:
         # and initialize the base attributes
         self._initialize_base_attributes()
 
-        if self.vars is None:
-            self.vars = dict()
+        # and init vars, avoid using defaults in field declaration as it lives across plays
+        self.vars = dict()
+
 
     # The following three functions are used to programatically define data
     # descriptors (aka properties) for the Attributes of all of the playbook
