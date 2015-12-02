@@ -57,10 +57,10 @@ fi
 	cd "$ANSIBLE_HOME"
 	if [ "$verbosity" = silent ] ; then
 	    gen_egg_info > /dev/null 2>&1
-            find . -type f -name "*.pyc" -delete > /dev/null 2>&1
+            find . -type f -name "*.pyc" -exec rm {} \; > /dev/null 2>&1
 	else
 	    gen_egg_info
-            find . -type f -name "*.pyc" -delete
+            find . -type f -name "*.pyc" -exec rm {} \;
 	fi
 	cd "$current_dir"
 )
