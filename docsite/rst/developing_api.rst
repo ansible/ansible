@@ -17,11 +17,67 @@ This chapter discusses the Python API.
 
 .. _python_api:
 
-Python API
-----------
-
 The Python API is very powerful, and is how the ansible CLI and ansible-playbook
-are implemented.
+are implemented. In version 2.0 the core ansible got rewritten and the API was mostly rewritten.
+
+.. _python_api_20:
+
+Python API 2.0
+--------------
+
+In 2.0 things get a bit more complicated to start, but you end up with much more discrete and readable classes::
+
+
+    #!/usr/bin/python2
+
+    from collections import namedtuple
+    from ansible.parsing.dataloader import DataLoader
+    from ansible.vars import VariableManager
+    from ansible.inventory import Inventory
+    from ansible.playbook.play import Play
+    from ansible.executor.task_queue_manager import TaskQueueManager
+
+    Options = namedtuple('Options', ['connection','module_path', 'forks', 'remote_user', 'private_key_file', 'ssh_common_args', 'ssh_extra_args', 'sftp_extra_args', 'scp_extra_args', 'become', 'become_method', 'become_user', 'verbosity', 'check'])
+    # initialize needed objects
+    variable_manager = VariableManager()
+    loader = DataLoader()
+    options = Options(connection='local', module_path='/path/to/mymodules', forks=100, remote_user=None, private_key_file=None, ssh_common_args=None, ssh_extra_args=None, sftp_extra_args=None, scp_extra_args=None, become=None, become_method=None, become_user=None, verbosity=None, check=False)
+    passwords = dict(vault_pass='secret')
+
+    # create inventory and pass to var manager
+    inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list='localhost')
+    variable_manager.set_inventory(inventory)
+
+    # create play with tasks
+    play_source =  dict(
+            name = "Ansible Play",
+            hosts = 'localhost',
+            gather_facts = 'no',
+            tasks = [ dict(action=dict(module='debug', args=(msg='Hello Galaxy!'))) ]
+        )
+    play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
+
+    # actually run it
+    tqm = None
+    try:
+        tqm = TaskQueueManager(
+                  inventory=inventory,
+                  variable_manager=variable_manager,
+                  loader=loader,
+                  options=options,
+                  passwords=passwords,
+                  stdout_callback='default',
+              )
+        result = tqm.run(play)
+    finally:
+        if tqm is not None:
+            tqm.cleanup()
+
+
+.. _python_api_old:
+
+Python API pre 2.0
+------------------
 
 It's pretty simple::
 
@@ -51,7 +107,7 @@ expressed in the :doc:`modules` documentation.::
 A module can return any type of JSON data it wants, so Ansible can
 be used as a framework to rapidly build powerful applications and scripts.
 
-.. _detailed_api_example:
+.. _detailed_api_old_example:
 
 Detailed API Example
 ````````````````````
@@ -87,9 +143,9 @@ The following script prints out the uptime information for all hosts::
     for (hostname, result) in results['dark'].items():
         print "%s >>> %s" % (hostname, result)
 
-Advanced programmers may also wish to read the source to ansible itself, for
-it uses the Runner() API (with all available options) to implement the
-command line tools ``ansible`` and ``ansible-playbook``.
+Advanced programmers may also wish to read the source to ansible itself,
+for it uses the API (with all available options) to implement the ``ansible``
+command line tools (``lib/ansible/cli/``).
 
 .. seealso::
 
