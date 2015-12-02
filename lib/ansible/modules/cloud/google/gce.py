@@ -69,7 +69,7 @@ options:
     default: null
     choices: [
       "bigquery", "cloud-platform", "compute-ro", "compute-rw",
-      "computeaccounts-ro", "computeaccounts-rw", "datastore", "logging-write",
+      "useraccounts-ro", "useraccounts-rw", "datastore", "logging-write",
       "monitoring", "sql", "sql-admin", "storage-full", "storage-ro",
       "storage-rw", "taskqueue", "userinfo-email"
     ]
@@ -400,10 +400,7 @@ def create_instances(module, gce, instance_names):
                 bad_perms.append(perm)
         if len(bad_perms) > 0:
             module.fail_json(msg='bad permissions: %s' % str(bad_perms))
-        if service_account_email:
-            ex_sa_perms.append({'email': service_account_email})
-        else:
-            ex_sa_perms.append({'email': "default"})
+        ex_sa_perms.append({'email': "default"})
         ex_sa_perms[0]['scopes'] = service_account_permissions
 
     # These variables all have default values but check just in case
