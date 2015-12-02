@@ -46,11 +46,10 @@ __all__ = ['HostVars']
 class HostVars(collections.Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, play, inventory, variable_manager, loader):
+    def __init__(self, inventory, variable_manager, loader):
         self._lookup = dict()
         self._inventory = inventory
         self._loader = loader
-        self._play = play
         self._variable_manager = variable_manager
         self._cached_result = dict()
 
@@ -68,7 +67,7 @@ class HostVars(collections.Mapping):
         if host is None:
             raise j2undefined
 
-        data = self._variable_manager.get_vars(loader=self._loader, host=host, play=self._play, include_hostvars=False)
+        data = self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
 
         sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
         if sha1_hash in self._cached_result:
