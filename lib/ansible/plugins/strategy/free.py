@@ -145,6 +145,7 @@ class StrategyModule(StrategyBase):
                 return False
 
             if len(included_files) > 0:
+                all_blocks = dict((host, []) for host in hosts_left)
                 for included_file in included_files:
                     # included hosts get the task list while those excluded get an equal-length
                     # list of noop tasks, to make sure that they continue running in lock-step
@@ -157,7 +158,6 @@ class StrategyModule(StrategyBase):
                         continue
 
                     display.debug("generating all_blocks data")
-                    all_blocks = dict((host, []) for host in hosts_left)
                     display.debug("done generating all_blocks data")
                     for new_block in new_blocks:
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=included_file._task)
