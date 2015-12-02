@@ -188,7 +188,6 @@ class TaskQueueManager:
             pass
 
         hostvars = HostVars(
-            play=new_play,
             inventory=self._inventory,
             variable_manager=self._variable_manager,
             loader=self._loader,
