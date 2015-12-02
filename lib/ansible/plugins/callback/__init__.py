@@ -246,7 +246,7 @@ class CallbackBase:
     def v2_runner_on_file_diff(self, result, diff):
         pass #no v1 correspondance
 
-    def v2_playbook_on_start(self):
+    def v2_playbook_on_start(self, playbook):
         self.playbook_on_start()
 
     def v2_playbook_on_notify(self, result, handler):

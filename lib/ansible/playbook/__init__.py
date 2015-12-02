@@ -44,6 +44,7 @@ class Playbook:
         self._entries = []
         self._basedir = os.getcwd()
         self._loader  = loader
+        self._file_name = None
 
     @staticmethod
     def load(file_name, variable_manager=None, loader=None):
@@ -60,6 +61,8 @@ class Playbook:
 
         # set the loaders basedir
         self._loader.set_basedir(self._basedir)
+
+        self._file_name = file_name
 
         # dynamically load any plugins from the playbook directory
         for name, obj in get_all_plugin_loaders():
