@@ -62,7 +62,7 @@ options:
       - https://docs.python.org/2/library/tempfile.html#tempfile.tempdir
     required: false
     default: ''
-    version_added: '2.0'
+    version_added: '2.1'
   force:
     description:
       - If C(yes) and C(dest) is not a directory, will download the file every
