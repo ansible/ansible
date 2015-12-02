@@ -396,10 +396,8 @@ class PlayIterator:
         return None
 
     def _insert_tasks_into_state(self, state, task_list):
-        if state.fail_state != self.FAILED_NONE:
-            return state
-
-        if not task_list:
+        # if we've failed at all, or if the task list is empty, just return the current state
+        if state.fail_state != self.FAILED_NONE or not task_list:
             return state
 
         if state.run_state == self.ITERATING_TASKS:
