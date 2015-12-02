@@ -34,7 +34,10 @@ def load_list_of_blocks(ds, play, parent_block=None, role=None, task_include=Non
     # we import here to prevent a circular dependency with imports
     from ansible.playbook.block import Block
 
-    assert isinstance(ds, (list, type(None)))
+    try:
+        assert isinstance(ds, (list, type(None)))
+    except AssertionError:
+        raise AnsibleParserError("Task list is not a list, invalid format provided: %s" % ds)
 
     block_list = []
     if ds:
