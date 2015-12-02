@@ -82,6 +82,10 @@ class PlaybookExecutor:
                 if self._tqm is None: # we are doing a listing
                     entry = {'playbook': playbook_path}
                     entry['plays'] = []
+                else:
+                    # make sure the tqm has callbacks loaded
+                    self._tqm.load_callbacks()
+                    self._tqm.send_callback('v2_playbook_on_start', pb)
 
                 i = 1
                 plays = pb.get_plays()
@@ -130,8 +134,6 @@ class PlaybookExecutor:
                         entry['plays'].append(new_play)
 
                     else:
-                        # make sure the tqm has callbacks loaded
-                        self._tqm.load_callbacks()
                         self._tqm._unreachable_hosts.update(self._unreachable_hosts)
 
                         # we are actually running plays
