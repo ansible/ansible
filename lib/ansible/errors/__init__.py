@@ -44,7 +44,7 @@ class AnsibleError(Exception):
     which should be returned by the DataLoader() class.
     '''
 
-    def __init__(self, message, obj=None, show_content=True):
+    def __init__(self, message="", obj=None, show_content=True):
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
