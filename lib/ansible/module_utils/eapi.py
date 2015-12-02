@@ -32,14 +32,14 @@ from ansible.module_utils.eapi import *
 
 The eapi module provides the following common argument spec:
 
-    * host (str) - [Required] The IPv4 address or FQDN of the network device
+    * host (str) - The IPv4 address or FQDN of the network device
     * port (str) - Overrides the default port to use for the HTTP/S
         connection.  The default values are 80 for HTTP and
         443 for HTTPS
-    * username (str) - [Required] The username to use to authenticate
-        the HTTP/S connection.  Aliases: username
-    * password (str) - [Required] The password to use to authenticate
-        the HTTP/S connection.  Aliases: password
+    * username (str) - The username to use to authenticate the HTTP/S
+        connection.
+    * password (str) - The password to use to authenticate the HTTP/S
+        connection.
     * use_ssl (bool) - Specifies whether or not to use an encrypted (HTTPS)
         connection or not.  The default value is False.
     * enable_mode (bool) - Specifies whether or not to enter `enable` mode
@@ -61,7 +61,6 @@ EAPI_COMMON_ARGS = dict(
     password=dict(no_log=True),
     use_ssl=dict(default=True, type='bool'),
     enable_mode=dict(default=True, type='bool'),
-    enable_password=dict(no_log=True)
     enable_password=dict(no_log=True),
     device=dict()
 )
