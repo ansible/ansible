@@ -268,12 +268,7 @@ class GalaxyAPI(object):
         return data
 
     def delete_role(self, github_user, github_repo):
-        url = "%s/removerole/" % self.baseurl
-        args = urllib.urlencode({
-            "github_user": github_user,
-            "github_repo": github_repo,
-        })
-        data = self.__call_galaxy(url, args=args, headers=self.__auth_header(), method='DELETE')
+        url = "%s/removerole/?github_user=%s&github_repo=%s" % (self.baseurl,github_user,github_repo)
+        data = self.__call_galaxy(url, headers=self.__auth_header(), method='DELETE')
         return data
         
-
