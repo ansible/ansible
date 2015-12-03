@@ -161,7 +161,7 @@ class AdHocCLI(CLI):
         if self.options.one_line:
             cb = 'oneline'
         else:
-            cb = 'minimal'
+            cb = C.DEFAULT_STDOUT_CALLBACK
 
         if self.options.tree:
             C.DEFAULT_CALLBACK_WHITELIST.append('tree')
