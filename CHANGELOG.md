@@ -3,11 +3,6 @@ Ansible Changes By Release
 
 ## 2.1 TBD - ACTIVE DEVELOPMENT
 
-###Major Changes:
-
-* A fix was applied to make ansible's pipelining mode work with sudo when sudo
-  is configured to use requiretty.  Thanks to amenonsen and mgedmin!
-
 ####New Modules:
 * cloudstack: cs_volume
 
