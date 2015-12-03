@@ -94,9 +94,9 @@ def get_groups_from_server(server_vars):
     return groups
 
 
-def get_host_groups(inventory):
+def get_host_groups(inventory, refresh=False):
     (cache_file, cache_expiration_time) = get_cache_settings()
-    if is_cache_stale(cache_file, cache_expiration_time):
+    if is_cache_stale(cache_file, cache_expiration_time, refresh=refresh):
         groups = to_json(get_host_groups_from_cloud(inventory))
         open(cache_file, 'w').write(groups)
     else:
@@ -121,8 +121,10 @@ def get_host_groups_from_cloud(inventory):
     return groups
 
 
-def is_cache_stale(cache_file, cache_expiration_time):
+def is_cache_stale(cache_file, cache_expiration_time, refresh=False):
     ''' Determines if cache file has expired, or if it is still valid '''
+    if refresh:
+        return True
     if os.path.isfile(cache_file):
         mod_time = os.path.getmtime(cache_file)
         current_time = time.time()
@@ -176,7 +178,7 @@ def main():
         )
 
         if args.list:
-            output = get_host_groups(inventory)
+            output = get_host_groups(inventory, refresh=args.refresh)
         elif args.host:
             output = to_json(inventory.get_host(args.host))
         print(output)
