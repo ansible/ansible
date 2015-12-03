@@ -46,6 +46,8 @@ class TestReturnValues(unittest.TestCase):
                 'three': ['amigos', 'musketeers', None,
                     {'ping': 'pong', 'base': ('balls', 'raquets')}]},
                 frozenset(['1', 'dos', 'amigos', 'musketeers', 'pong', 'balls', 'raquets'])),
+            (u'Toshio くらとみ', frozenset(['Toshio くらとみ'])),
+            ('Toshio くらとみ', frozenset(['Toshio くらとみ'])),
         )
 
     def test_return_values(self):
