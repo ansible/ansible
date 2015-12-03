@@ -138,17 +138,12 @@ class ShellModule(object):
         cmd = "%s; %s || (echo \'0  \'%s)" % (test, cmd, shell_escaped_path)
         return cmd
 
-    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None, python_interpreter='python'):
+    def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):
         # don't quote the cmd if it's an empty string, because this will
         # break pipelining mode
-        env = env_string.strip()
-        exe = shebang.replace("#!", "").strip()
-        if cmd.strip() == '':
-            reader = "%s -uc 'import sys; [sys.stdout.write(s) for s in iter(sys.stdin.readline, \"__EOF__942d747a0772c3284ffb5920e234bd57__\\n\")]'|" % python_interpreter
-            cmd_parts = [env, reader, env, exe]
-        else:
+        if cmd.strip() != '':
             cmd = pipes.quote(cmd)
-            cmd_parts = [env, exe, cmd]
+        cmd_parts = [env_string.strip(), shebang.replace("#!", "").strip(), cmd]
         if arg_path is not None:
             cmd_parts.append(arg_path)
         new_cmd = " ".join(cmd_parts)
