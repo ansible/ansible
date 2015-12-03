@@ -34,6 +34,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.config import GalaxyConfig
 
 try:
     from __main__ import display
@@ -198,7 +199,7 @@ class GalaxyRole(object):
                 role_data = self.src
                 tmp_file = self.fetch(role_data)
             else:
-                api = GalaxyAPI(self.galaxy, self.options.api_server)
+                api = GalaxyAPI(self.galaxy)
                 role_data = api.lookup_role_by_name(self.src)
                 if not role_data:
                     raise AnsibleError("- sorry, %s was not found on %s." % (self.src, self.options.api_server))

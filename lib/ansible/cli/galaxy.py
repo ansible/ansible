@@ -36,7 +36,7 @@ import ansible.constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
-from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.api import GalaxyAPI, DEFAULT_GALAXY_SERVER
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.config import GalaxyConfig
@@ -66,8 +66,7 @@ class GalaxyCLI(CLI):
     ])
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
-    DEFAULT_GALAXY_SERVER = "https://galaxy.ansible.com"
-
+    
     def __init__(self, args):
         
         self.VALID_ACTIONS = []
@@ -176,7 +175,7 @@ class GalaxyCLI(CLI):
                      'ansible.cfg file (/etc/ansible/roles if not configured)')
 
         if self.action in ("import","info","init","install","login","search","setup","delete"):
-            self.parser.add_option('-s', '--server', dest='api_server', default=self.DEFAULT_GALAXY_SERVER,
+            self.parser.add_option('-s', '--server', dest='api_server', default=DEFAULT_GALAXY_SERVER,
                 help='The API server destination')
             self.parser.add_option('-c', '--ignore-certs', action='store_false', dest='validate_certs', default=True,
                 help='Ignore SSL certificate validation errors.')
@@ -204,19 +203,8 @@ class GalaxyCLI(CLI):
 
         # if not offline, get connect to galaxy api
         if self.action in ("import","info","install","search","login","setup","delete") or \
-            (self.action == 'init' and not self.options.offline):
-            # set the API server
-            if self.options.api_server:
-                api_server = self.options.api_server
-            elif os.environ.get('GALAXY_SERVER'):
-                api_server = os.environ['GALAXY_SERVER']
-            elif self.config.get_key('galaxy_server'):
-                api_server = self.config.get_key('galaxy_server')
-            else:
-                api_server=self.DEFAULT_GALAXY_SERVER
-            display.vvv("Connecting to galaxy_server: %s" % api_server)
-            
-            self.api = GalaxyAPI(self.galaxy, self.config, api_server)
+            (self.action == 'init' and not self.options.offline):            
+            self.api = GalaxyAPI(self.galaxy)
             if not self.api:
                 raise AnsibleError("The API server (%s) is not responding, please try again later." % api_server)
 

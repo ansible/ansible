@@ -32,6 +32,7 @@ from urlparse import urlparse
 
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
+from ansible.galaxy.config import GalaxyConfig
 
 try:
     from __main__ import display
@@ -39,28 +40,38 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
+DEFAULT_GALAXY_SERVER = "https://galaxy.ansible.com"
 
 class GalaxyAPI(object):
     ''' This class is meant to be used as a API client for an Ansible Galaxy server '''
 
     SUPPORTED_VERSIONS = ['v1']
 
-    def __init__(self, galaxy, config, api_server):
+    def __init__(self, galaxy):
 
         self.galaxy = galaxy
-        self.config = config
+        self.config = GalaxyConfig(self.galaxy)
         
+        self.validate_certs = True
+        if self.galaxy.options.validate_certs == False:
+            self.validate_certs = False
+        elif self.config.get_key('validate_certs') == False:
+            self.validate_certs = False
+        display.vvv('Check for valid certs: %s' % self.validate_certs)
+
+        # set the API server
+        if galaxy.options.api_server != DEFAULT_GALAXY_SERVER:
+            api_server = self.options.api_server
+        elif self.config.get_key('galaxy_server'):
+            api_server = self.config.get_key('galaxy_server')
+        else:
+            api_server=DEFAULT_GALAXY_SERVER
+        display.vvv("Connecting to galaxy_server: %s" % api_server)
+
         try:
             urlparse(api_server, scheme='https')
         except:
             raise AnsibleError("Invalid server API url passed: %s" % api_server)
-
-        self.validate_certs = True
-        if self.galaxy.options.validate_certs == False:
-            self.validate_certs = False
-        elif config.get_key('validate_certs') == False:
-            self.validate_certs = False
-        display.vvv('Check for valid certs: %s' % self.validate_certs)
 
         server_version = self.get_server_api_version('%s/api/' % (api_server))
        
