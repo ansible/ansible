@@ -68,3 +68,15 @@
         - '"0.10 GB" == 102400000|human_readable(unit="G")'
         - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
 
+- name: Check strftime
+  tags: "strftime"
+  assert:
+    that:
+        # epoch(1111111111) = 2005-03-18
+        - '"2005" == "%Y"|strftime(1111111111)'
+        - '"03"   == "%m"|strftime(1111111111)'
+        - '"18"   == "%d"|strftime(1111111111)'
+        # epoch(0) = 1970-01-01
+        - '"1970" == "%Y"|strftime(0)'
+        - '"01"   == "%m"|strftime(0)'
+        - '"01"   == "%d"|strftime(0)'
