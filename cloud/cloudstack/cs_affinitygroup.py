@@ -57,6 +57,11 @@ options:
       - Account the affinity group is related to.
     required: false
     default: null
+  project:
+    description:
+      - Name of the project the affinity group is related to.
+    required: false
+    default: null
   poll_async:
     description:
       - Poll async jobs until job has finished.
@@ -101,6 +106,21 @@ affinity_type:
   returned: success
   type: string
   sample: host anti-affinity
+project:
+  description: Name of project the affinity group is related to.
+  returned: success
+  type: string
+  sample: Production
+domain:
+  description: Domain the affinity group is related to.
+  returned: success
+  type: string
+  sample: example domain
+account:
+  description: Account the affinity group is related to.
+  returned: success
+  type: string
+  sample: example account
 '''
 
 try:
@@ -128,6 +148,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
             affinity_group = self.module.params.get('name')
 
             args                = {}
+            args['projectid']   = self.get_project(key='id')
             args['account']     = self.get_account('name')
             args['domainid']    = self.get_domain('id')
 
@@ -163,6 +184,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
             args['name']        = self.module.params.get('name')
             args['type']        = self.get_affinity_type()
             args['description'] = self.module.params.get('description')
+            args['projectid']   = self.get_project(key='id')
             args['account']     = self.get_account('name')
             args['domainid']    = self.get_domain('id')
 
@@ -185,6 +207,7 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
 
             args                = {}
             args['name']        = self.module.params.get('name')
+            args['projectid']   = self.get_project(key='id')
             args['account']     = self.get_account('name')
             args['domainid']    = self.get_domain('id')
 
@@ -209,6 +232,7 @@ def main():
         state = dict(choices=['present', 'absent'], default='present'),
         domain = dict(default=None),
         account = dict(default=None),
+        project = dict(default=None),
         poll_async = dict(choices=BOOLEANS, default=True),
     ))
 
