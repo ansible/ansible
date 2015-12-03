@@ -306,6 +306,22 @@ EXAMPLES = '''
     vpc_subnet_id: subnet-29e63245
     assign_public_ip: yes
 
+# Single instance with ssd gp2 root volume
+- ec2:
+    key_name: mykey
+    group: webserver
+    instance_type: c3.medium
+    image: ami-123456
+    wait: yes
+    wait_timeout: 500
+    volumes:
+      - device_name: /dev/xvda
+        volume_type: gp2
+        volume_size: 8
+    vpc_subnet_id: subnet-29e63245
+    assign_public_ip: yes
+    exact_count: 1
+
 # Multiple groups example
 - ec2:
     key_name: mykey
