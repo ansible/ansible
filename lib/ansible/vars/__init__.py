@@ -234,7 +234,7 @@ class VariableManager:
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
-            for group in host.get_groups():
+            for group in sorted(host.get_groups(), key=lambda g: g.depth):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
                         data = preprocess_vars(data)
@@ -404,7 +404,7 @@ class VariableManager:
         items = []
         if task.loop is not None:
             if task.loop in lookup_loader:
-                #TODO: remove convert_bare true and deprecate this in with_ 
+                #TODO: remove convert_bare true and deprecate this in with_
                 try:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=True)
                 except AnsibleUndefinedVariable as e:
@@ -604,4 +604,3 @@ class VariableManager:
         if host_name not in self._vars_cache:
             self._vars_cache[host_name] = dict()
         self._vars_cache[host_name][varname] = value
-
