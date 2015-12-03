@@ -536,6 +536,11 @@ To make use of one attribute from each item in a list of complex variables, use 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
     {{ ansible_mounts|map(attribute='mount')|join(',') }}
 
+To get the value of capturing group within a regex, use the "regex_capture" filter::
+
+    # get the version number
+    {{ 'myapp-1.0' | regex_capture('^[a-zA-Z]+-([0-9]+\.[0-9]+)$') }}
+
 A few useful filters are typically added with each new Ansible release.  The development documentation shows
 how to extend Ansible filters by writing your own as plugins, though in general, we encourage new ones
 to be added to core so everyone can make use of them.
