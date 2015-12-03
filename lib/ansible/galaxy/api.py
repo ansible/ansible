@@ -51,32 +51,27 @@ class GalaxyAPI(object):
 
         self.galaxy = galaxy
         self.config = GalaxyConfig(self.galaxy)
-        
-        self.validate_certs = True
+        self._api_server = DEFAULT_GALAXY_SERVER
+        self._validate_certs = True
+
+        # set validate_certs
         if self.galaxy.options.validate_certs == False:
-            self.validate_certs = False
+            self._validate_certs = False
         elif self.config.get_key('validate_certs') == False:
-            self.validate_certs = False
-        display.vvv('Check for valid certs: %s' % self.validate_certs)
+            self._validate_certs = False
+        display.vvv('Check for valid certs: %s' % self._validate_certs)
 
         # set the API server
         if galaxy.options.api_server != DEFAULT_GALAXY_SERVER:
-            api_server = self.options.api_server
+            self._api_server = self.options.api_server
         elif self.config.get_key('galaxy_server'):
-            api_server = self.config.get_key('galaxy_server')
-        else:
-            api_server=DEFAULT_GALAXY_SERVER
-        display.vvv("Connecting to galaxy_server: %s" % api_server)
+            self._api_server = self.config.get_key('galaxy_server')
+        display.vvv("Connecting to galaxy_server: %s" % self._api_server)
 
-        try:
-            urlparse(api_server, scheme='https')
-        except:
-            raise AnsibleError("Invalid server API url passed: %s" % api_server)
-
-        server_version = self.get_server_api_version('%s/api/' % (api_server))
+        server_version = self.get_server_api_version()
        
         if server_version in self.SUPPORTED_VERSIONS:
-            self.baseurl = '%s/api/%s' % (api_server, server_version)
+            self.baseurl = '%s/api/%s' % (self._api_server, server_version)
             self.version = server_version # for future use
             display.vvvvv("Base API: %s" % self.baseurl)
         else:
@@ -92,23 +87,32 @@ class GalaxyAPI(object):
         if args and not headers:
             headers = self.__auth_header()
         try:
-            resp = open_url(url, data=args, validate_certs=self.validate_certs, headers=headers, method=method)
+            resp = open_url(url, data=args, validate_certs=self._validate_certs, headers=headers, method=method)
             data = json.load(resp)
         except HTTPError as e:
             res = json.load(e)
             raise AnsibleError(res['detail'])
         return data
 
-    def get_server_api_version(self, api_server):
+    @property
+    def api_server(self):
+        return self._api_server    
+    
+    @property
+    def validate_certs(self):
+        return self._validate_certs
+
+    def get_server_api_version(self):
         """
         Fetches the Galaxy API current version to ensure
         the API server is up and reachable.
         """
         try:
-            data = json.load(open_url(api_server, validate_certs=self.validate_certs))
+            url = '%s/api/' % self._api_server
+            data = json.load(open_url(url, validate_certs=self._validate_certs))
             return data['current_version']
         except Exception as e:
-            raise AnsibleError("Could not retrieve server API version: %s" % api_server)
+            raise AnsibleError("Could not retrieve server API version: %s" % url)
     
     def authenticate(self, github_token):
         """
@@ -116,7 +120,7 @@ class GalaxyAPI(object):
         """
         url = '%s/tokens/' % self.baseurl
         args = urllib.urlencode({"github_token": github_token})
-        resp = open_url(url, data=args, validate_certs=self.validate_certs, method="POST")
+        resp = open_url(url, data=args, validate_certs=self._validate_certs, method="POST")
         data = json.load(resp)
         return data
 
@@ -171,7 +175,7 @@ class GalaxyAPI(object):
         url = '%s/roles/?owner__username=%s&name=%s' % (self.baseurl, user_name, role_name)
         display.vvvv("- %s" % (url))
         try:
-            data = json.load(open_url(url, validate_certs=self.validate_certs))
+            data = json.load(open_url(url, validate_certs=self._validate_certs))
             if len(data["results"]) != 0:
                 return data["results"][0]
         except:
@@ -188,13 +192,13 @@ class GalaxyAPI(object):
 
         try:
             url = '%s/roles/%d/%s/?page_size=50' % (self.baseurl, int(role_id), related)
-            data = json.load(open_url(url, validate_certs=self.validate_certs))
+            data = json.load(open_url(url, validate_certs=self._validate_certs))
             results = data['results']
             done = (data.get('next', None) is None)
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
                 display.display(url)
-                data = json.load(open_url(url, validate_certs=self.validate_certs))
+                data = json.load(open_url(url, validate_certs=self._validate_certs))
                 results += data['results']
                 done = (data.get('next', None) is None)
             return results
@@ -207,7 +211,7 @@ class GalaxyAPI(object):
         """
         try:
             url = '%s/%s/?page_size' % (self.baseurl, what)
-            data = json.load(open_url(url, validate_certs=self.validate_certs))
+            data = json.load(open_url(url, validate_certs=self._validate_certs))
             if "results" in data:
                 results = data['results']
             else:
@@ -218,40 +222,43 @@ class GalaxyAPI(object):
             while not done:
                 url = '%s%s' % (self.baseurl, data['next'])
                 display.display(url)
-                data = json.load(open_url(url, validate_certs=self.validate_certs))
+                data = json.load(open_url(url, validate_certs=self._validate_certs))
                 results += data['results']
                 done = (data.get('next', None) is None)
             return results
         except Exception as error:
             raise AnsibleError("Failed to download the %s list: %s" % (what, str(error)))
 
-    def search_roles(self, search, platforms=None, tags=None):
+    def search_roles(self, search, **kwargs):
 
-        search_url = self.baseurl + '/roles/?page=1'
+        search_url = self.baseurl + '/search/roles/?'
 
         if search:
-            search_url += '&search=' + urlquote(search)
+            search_url += '&autocomplete=' + urlquote(search)
 
-        if tags is None:
-            tags = []
-        elif isinstance(tags, basestring):
+        tags = kwargs.get('tags',None)
+        platforms = kwargs.get('platforms', None)
+        page_size = kwargs.get('page_size', None)
+        author = kwargs.get('author', None)
+
+        if tags and isinstance(tags, basestring):
             tags = tags.split(',')
-
-        for tag in tags:
-            search_url += '&chain__tags__name=' + urlquote(tag)
-
-        if platforms is None:
-            platforms = []
-        elif isinstance(platforms, basestring):
+            search_url += '&tags_autocomplete=' + '+'.join(tags)
+        
+        if platforms and isinstance(platforms, basestring):
             platforms = platforms.split(',')
+            search_url += '&platforms_autocomplete=' + '+'.join(platforms)
 
-        for plat in platforms:
-            search_url += '&chain__platforms__name=' + urlquote(plat)
+        if page_size:
+            search_url += '&page_size=%s' % page_size
 
-        display.debug("Executing query: %s" % search_url)
+        if author:
+            search_url += '&username_autocomplete=%s' % author
+   
+        display.vvv("Executing query: %s" % search_url)
 
         try:
-            data = json.load(open_url(search_url, validate_certs=self.validate_certs))
+            data = json.load(open_url(search_url, validate_certs=self._validate_certs))
         except HTTPError as e:
             raise AnsibleError("Unsuccessful request to server: %s" % str(e))
 

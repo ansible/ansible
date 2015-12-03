@@ -202,7 +202,7 @@ class GalaxyRole(object):
                 api = GalaxyAPI(self.galaxy)
                 role_data = api.lookup_role_by_name(self.src)
                 if not role_data:
-                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, self.options.api_server))
+                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
 
                 role_versions = api.fetch_role_related('versions', role_data['id'])
                 if not self.version:

@@ -62,7 +62,7 @@ class GalaxyCLI(CLI):
         ("login",     "authenticate with Galaxy API and store the token"),
         ("remove",    "delete a role from your roles path"),
         ("search",    "query the Galaxy API"),
-        ("setup",     "add a TravisCI or GitHub integration to Galaxy"),
+        ("setup",     "add a TravisCI integration to Galaxy"),
     ])
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
@@ -151,7 +151,9 @@ class GalaxyCLI(CLI):
                 help='list of OS platforms to filter by')
             self.parser.add_option('--galaxy-tags', dest='tags',
                 help='list of galaxy tags to filter by')
-            self.parser.set_usage("usage: %prog search [<search_term>] [--galaxy-tags <galaxy_tag1,galaxy_tag2>] [--platforms platform]")
+            self.parser.add_option('--author', dest='author',
+                help='GitHub username')
+            self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]")
         elif self.action == "config":
             self.parser.add_option('-u', '--unset', dest='unset_true', action='store_true', default=False,
                 help='remove the specified key from the configuration file')
@@ -161,7 +163,7 @@ class GalaxyCLI(CLI):
                 "Set or remove keys in ~/.ansible-galaxy/config.yml.")
         elif self.action == "setup":
             self.parser.set_usage("usage: %prog setup [options] source github_uer github_repo secret" +
-                u'\n\n' + "Create an integration or web hook from either github or travis.")
+                u'\n\n' + "Create an integration or web hook from travis.")
             self.parser.add_option('-r', '--remove', dest='remove_id', default=None,
                 help='Remove the integration matching the provided ID value. Use --list to see ID values.')
             self.parser.add_option('-l', '--list', dest="setup_list", action='store_true', default=False,
@@ -557,24 +559,46 @@ class GalaxyCLI(CLI):
         return 0
 
     def execute_search(self):
-
+        page_size = 1000
         search = None
-        if len(self.args) > 1:
-            raise AnsibleOptionsError("At most a single search term is allowed.")
-        elif len(self.args) == 1:
-            search = self.args.pop()
+        
+        if len(self.args):
+            terms = []
+            for i in range(len(self.args)):
+               terms.append(self.args.pop())
+            search = '+'.join(terms)
 
-        response = self.api.search_roles(search, self.options.platforms, self.options.tags)
+        if not search and not self.options.platforms and not self.options.tags and not self.options.author:
+            raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
 
-        if 'count' in response:
-            display.display("Found %d roles matching your search:\n" % response['count'])
+        response = self.api.search_roles(search, platforms=self.options.platforms,
+            tags=self.options.tags, author=self.options.author, page_size=page_size)
+    
+        if response['count'] == 0:
+            display.display("No roles match your search.", color="yellow")
+            return True
 
         data = ''
-        if 'results' in response:
-            for role in response['results']:
-                data += self._display_role_info(role)
 
+        if response['count'] > page_size:
+            data += ("Found %d roles matching your search. Showing first %s.\n" % (response['count'], page_size))
+        else:
+            data += ("Found %d roles matching your search:\n" % response['count'])
+
+        max_len = []
+        for role in response['results']:
+            max_len.append(len(role['username'] + '.' + role['name']))
+        name_len = max(max_len)
+        format_str = " %%-%ds %%s\n" % name_len
+        data +='\n'
+        data += (format_str % ("Name", "Description"))
+        data += (format_str % ("----", "-----------"))
+        for role in response['results']:
+            data += (format_str % (role['username'] + '.' + role['name'],role['description']))
+            
         self.pager(data)
+
+        return True
 
     def execute_login(self):
         """
