@@ -339,6 +339,18 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
+def extract(item, container, morekeys=None):
+    from jinja2.runtime import Undefined
+
+    value = container[item]
+
+    if value is not Undefined and morekeys is not None:
+        if not isinstance(morekeys, list):
+            morekeys = [morekeys]
+
+        value = reduce(lambda d, k: d[k], morekeys, value)
+
+    return value
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -415,4 +427,7 @@ class FilterModule(object):
 
             # comment-style decoration
             'comment': comment,
+
+            # array and dict lookups
+            'extract': extract,
         }
