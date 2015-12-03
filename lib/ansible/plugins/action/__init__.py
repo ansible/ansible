@@ -177,7 +177,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if tmp and "tmp" in tmp:
             # tmp has already been created
             return False
-        if not self._connection.has_pipelining or not self._play_context.pipelining or C.DEFAULT_KEEP_REMOTE_FILES:
+        if not self._connection.has_pipelining or not self._play_context.pipelining or C.DEFAULT_KEEP_REMOTE_FILES or self._play_context.become_method == 'su':
             # tmp is necessary to store the module source code
             # or we want to keep the files on the target system
             return True
@@ -439,9 +439,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 # not sudoing or sudoing to root, so can cleanup files in the same step
                 rm_tmp = tmp
 
-        python_interp = task_vars.get('ansible_python_interpreter', 'python')
-
-        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp, python_interpreter=python_interp)
+        cmd = self._connection._shell.build_module_command(environment_string, shebang, cmd, arg_path=args_file_path, rm_tmp=rm_tmp)
         cmd = cmd.strip()
 
         sudoable = True
