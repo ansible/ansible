@@ -6,6 +6,9 @@ Ansible Changes By Release
 ####New Modules:
 * cloudstack: cs_volume
 
+####New Filters:
+* extract
+
 ## 2.0 "Over the Hills and Far Away"
 
 ###Major Changes:
