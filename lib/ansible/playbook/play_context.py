@@ -350,7 +350,7 @@ class PlayContext(Base):
                 if user_var in delegated_vars:
                     break
             else:
-                delegated_vars['ansible_user'] = None
+                delegated_vars['ansible_user'] = task.remote_user or self.remote_user
         else:
             delegated_vars = dict()
 
