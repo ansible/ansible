@@ -80,7 +80,7 @@ def ios_module(**kwargs):
     """
     spec = kwargs.get('argument_spec') or dict()
 
-    argument_spec = url_argument_spec()
+    argument_spec = shell_argument_spec()
     argument_spec.update(IOS_COMMON_ARGS)
     if kwargs.get('argument_spec'):
         argument_spec.update(kwargs['argument_spec'])
@@ -150,21 +150,6 @@ class IosShell(object):
             responses.append(response)
         return responses
 
-def ios_from_args(module):
-    """Extracts the set of argumetns to build a valid IOS connection
-    """
-    params = dict()
-    for arg, attrs in IOS_COMMON_ARGS.iteritems():
-        if module.params['device']:
-            params[arg] = module.params['device'].get(arg)
-        if arg not in params or module.params[arg]:
-            params[arg] = module.params[arg]
-        if params[arg] is None:
-            if attrs.get('required'):
-                module.fail_json(msg='argument %s is required' % arg)
-            params[arg] = attrs.get('default')
-    return params
-
 def ios_connection(module):
     """Creates a connection to an IOS device based on the module arguments
     """
@@ -180,16 +165,16 @@ def ios_connection(module):
         shell = IosShell()
         shell.connect(host, port=port, username=username, password=password,
                     timeout=timeout)
+        shell.send('terminal length 0')
     except paramiko.ssh_exception.AuthenticationException, exc:
         module.fail_json(msg=exc.message)
     except socket.error, exc:
         module.fail_json(msg=exc.strerror, errno=exc.errno)
 
-    shell.send('terminal length 0')
-
     if module.params['enable_mode']:
         shell.authorize(module.params['enable_password'])
 
     return shell
+
 
 
