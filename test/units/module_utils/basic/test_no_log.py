@@ -69,6 +69,8 @@ class TestRemoveValues(unittest.TestCase):
                 'three': ['amigos', 'musketeers', None,
                     {'ping': 'pong', 'base': ['balls', 'raquets']}]},
                 frozenset(['nope'])),
+            ('Toshio くら', frozenset(['とみ'])),
+            (u'Toshio くら', frozenset(['とみ'])),
             )
     dataset_remove = (
             ('string', frozenset(['string']), OMIT),
@@ -94,6 +96,8 @@ class TestRemoveValues(unittest.TestCase):
             ('This sentence has an enigma wrapped in a mystery inside of a secret. - mr mystery',
                 frozenset(['enigma', 'mystery', 'secret']),
                 'This sentence has an ******** wrapped in a ******** inside of a ********. - mr ********'),
+            ('Toshio くらとみ', frozenset(['くらとみ']), 'Toshio ********'),
+            (u'Toshio くらとみ', frozenset(['くらとみ']), u'Toshio ********'),
             )
 
     def test_no_removal(self):
