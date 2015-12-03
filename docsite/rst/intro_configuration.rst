@@ -799,22 +799,15 @@ pipelining
 ==========
 
 Enabling pipelining reduces the number of SSH operations required to
-execute a module on the remote server, by executing many ansible modules without actual file transfer.
-This can result in a very significant performance improvement when enabled.
-As of Ansible 2.1.0 this option is enabled by default.
+execute a module on the remote server, by executing many ansible modules without actual file transfer. 
+This can result in a very significant performance improvement when enabled, however when using "sudo:" operations you must
+first disable 'requiretty' in /etc/sudoers on all managed hosts.
 
-In previous versions, this option was disabled because of a bad interaction
-with some sudo configurations.  If sudo was configured to 'requiretty' for
-operation then pipelining would not work and ansible would fail to connect
-properly.  This could be remedied by removing 'requiretty' in /etc/sudoers on
-all managed hosts.
+By default, this option is disabled to preserve compatibility with
+sudoers configurations that have requiretty (the default on many distros), but is highly
+recommended if you can enable it, eliminating the need for :doc:`playbooks_acceleration`::
 
-It is recommended to leave this option enabled.  If you are stuck with an old
-version of ansible your first choice option should be to remove requiretty
-from the sudoers configuration and only disable pipelining if you cannot do
-that.  Enabling this eliminates the need for :doc:`playbooks_acceleration`::
-
-    pipelining=True
+    pipelining=False
 
 .. _accelerate_settings:
 
