@@ -74,8 +74,10 @@ class PullCLI(CLI):
             help='sleep for random interval (between 0 and n number of seconds) before starting. This is a useful way to disperse git requests')
         self.parser.add_option('-f', '--force', dest='force', default=False, action='store_true',
             help='run the playbook even if the repository could not be updated')
-        self.parser.add_option('-d', '--directory', dest='dest', default='~/.ansible/pull', help='directory to checkout repository to')
-        self.parser.add_option('-U', '--url', dest='url', default=None, help='URL of the playbook repository')
+        self.parser.add_option('-d', '--directory', dest='dest', default='~/.ansible/pull',
+            help='directory to checkout repository to')
+        self.parser.add_option('-U', '--url', dest='url', default=None,
+            help='URL of the playbook repository')
         self.parser.add_option('-C', '--checkout', dest='checkout',
             help='branch/tag/commit to checkout.  ' 'Defaults to behavior of repository module.')
         self.parser.add_option('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
@@ -174,8 +176,7 @@ class PullCLI(CLI):
             display.display("Repository has not changed, quitting.")
             return 0
 
-        playbook = self.select_playbook(path)
-
+        playbook = self.select_playbook(self.options.dest)
         if playbook is None:
             raise AnsibleOptionsError("Could not find a playbook to run.")
 
