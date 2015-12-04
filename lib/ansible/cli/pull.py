@@ -64,10 +64,12 @@ class PullCLI(CLI):
             subset_opts=True,
             inventory_opts=True,
             module_opts=True,
+            runas_prompt_opts=True,
         )
 
         # options unique to pull
-        self.parser.add_option('--purge', default=False, action='store_true', help='purge checkout after playbook run')
+        self.parser.add_option('--purge', default=False, action='store_true',
+            help='purge checkout after playbook run')
         self.parser.add_option('-o', '--only-if-changed', dest='ifchanged', default=False, action='store_true',
             help='only run the playbook if the repository has been updated')
         self.parser.add_option('-s', '--sleep', dest='sleep', default=None,
@@ -94,6 +96,7 @@ class PullCLI(CLI):
             hostname = socket.getfqdn()
             # use a hostname dependent directory, in case of $HOME on nfs
             self.options.dest = os.path.join('~/.ansible/pull', hostname)
+        self.options.dest = os.path.expandvars(os.path.expanduser(self.options.dest))
 
         if self.options.sleep:
             try:
@@ -126,7 +129,7 @@ class PullCLI(CLI):
         node = platform.node()
         host = socket.getfqdn()
         limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
-        base_opts = '-c local "%s"' % limit_opts
+        base_opts = '-c local '
         if self.options.verbosity > 0:
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
 
@@ -137,7 +140,7 @@ class PullCLI(CLI):
         else:
             inv_opts = self.options.inventory
 
-        #TODO: enable more repo modules hg/svn?
+        #FIXME: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
             repo_opts = "name=%s dest=%s" % (self.options.url, self.options.dest)
             if self.options.checkout:
@@ -157,8 +160,8 @@ class PullCLI(CLI):
             raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-        cmd = '%s/ansible -i "%s" %s -m %s -a "%s"' % (
-            bin_path, inv_opts, base_opts, self.options.module_name, repo_opts
+        cmd = '%s/ansible -i "%s" %s -m %s -a "%s" "%s"' % (
+            bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts
         )
 
         for ev in self.options.extra_vars:
@@ -170,6 +173,8 @@ class PullCLI(CLI):
             time.sleep(self.options.sleep)
 
         # RUN the Checkout command
+        display.debug("running ansible with VCS module to checkout repo")
+        display.vvvv('EXEC: %s' % cmd)
         rc, out, err = run_cmd(cmd, live=True)
 
         if rc != 0:
@@ -193,16 +198,18 @@ class PullCLI(CLI):
             cmd += ' -i "%s"' % self.options.inventory
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
-        if self.options.ask_sudo_pass:
-            cmd += ' -K'
+        if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
+            cmd += ' --ask-become-pass'
         if self.options.tags:
             cmd += ' -t "%s"' % self.options.tags
-        if self.options.limit:
-            cmd += ' -l "%s"' % self.options.limit
+        if self.options.subset:
+            cmd += ' -l "%s"' % self.options.subset
 
         os.chdir(self.options.dest)
 
         # RUN THE PLAYBOOK COMMAND
+        display.debug("running ansible-playbook to do actual work")
+        display.debug('EXEC: %s' % cmd)
         rc, out, err = run_cmd(cmd, live=True)
 
         if self.options.purge:
