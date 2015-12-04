@@ -210,7 +210,7 @@ class CLI(object):
 
     @staticmethod
     def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
-            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False):
+            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False, runas_prompt_opts=False):
         ''' create an options parser for most ansible scripts '''
 
         # TODO: implement epilog parsing
@@ -267,10 +267,6 @@ class CLI(object):
 
         if runas_opts:
             # priv user defaults to root later on to enable detecting when this option was given here
-            parser.add_option('-K', '--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
-                help='ask for sudo password (deprecated, use become)')
-            parser.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
-                help='ask for su password (deprecated, use become)')
             parser.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
                 help="run operations with sudo (nopasswd) (deprecated, use become)")
             parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
@@ -287,6 +283,12 @@ class CLI(object):
                 help="privilege escalation method to use (default=%s), valid choices: [ %s ]" % (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
             parser.add_option('--become-user', default=None, dest='become_user', type='string',
                 help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
+
+        if runas_opts or runas_prompt_opts:
+            parser.add_option('-K', '--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
+                help='ask for sudo password (deprecated, use become)')
+            parser.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
+                help='ask for su password (deprecated, use become)')
             parser.add_option('--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
                 help='ask for privilege escalation password')
 
