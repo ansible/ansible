@@ -74,7 +74,7 @@ class PullCLI(CLI):
             help='sleep for random interval (between 0 and n number of seconds) before starting. This is a useful way to disperse git requests')
         self.parser.add_option('-f', '--force', dest='force', default=False, action='store_true',
             help='run the playbook even if the repository could not be updated')
-        self.parser.add_option('-d', '--directory', dest='dest', default='~/.ansible/pull',
+        self.parser.add_option('-d', '--directory', dest='dest', default=None,
             help='directory to checkout repository to')
         self.parser.add_option('-U', '--url', dest='url', default=None,
             help='URL of the playbook repository')
@@ -89,6 +89,11 @@ class PullCLI(CLI):
                  ' This needs the corresponding VCS module to support such an operation')
 
         self.options, self.args = self.parser.parse_args()
+
+        if not self.options.dest:
+            hostname = socket.getfqdn()
+            # use a hostname dependent directory, in case of $HOME on nfs
+            self.options.dest = os.path.join('~/.ansible/pull', hostname)
 
         if self.options.sleep:
             try:
