@@ -146,7 +146,7 @@ class TaskExecutor:
             except AttributeError:
                 pass
             except Exception as e:
-                display.debug("error closing connection: %s" % to_unicode(e))
+                display.debug(u"error closing connection: %s" % to_unicode(e))
 
     def _get_loop_items(self):
         '''
@@ -183,7 +183,7 @@ class TaskExecutor:
                         loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
                                 loader=self._loader, fail_on_undefined=True, convert_bare=True)
                     except AnsibleUndefinedVariable as e:
-                        if 'has no attribute' in str(e):
+                        if u'has no attribute' in to_unicode(e):
                             loop_terms = []
                             display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
                         else:
@@ -231,7 +231,7 @@ class TaskExecutor:
                 tmp_task = self._task.copy()
                 tmp_play_context = self._play_context.copy()
             except AnsibleParserError as e:
-                results.append(dict(failed=True, msg=str(e)))
+                results.append(dict(failed=True, msg=to_unicode(e)))
                 continue
 
             # now we swap the internal task and play context with their copies,
@@ -401,7 +401,7 @@ class TaskExecutor:
             try:
                 result = self._handler.run(task_vars=variables)
             except AnsibleConnectionFailure as e:
-                return dict(unreachable=True, msg=str(e))
+                return dict(unreachable=True, msg=to_unicode(e))
             display.debug("handler run complete")
 
             if self._task.async > 0:
@@ -412,7 +412,7 @@ class TaskExecutor:
                         return result
                     result = json.loads(result.get('stdout'))
                 except (TypeError, ValueError) as e:
-                    return dict(failed=True, msg="The async task did not return valid JSON: %s" % str(e))
+                    return dict(failed=True, msg=u"The async task did not return valid JSON: %s" % to_unicode(e))
 
                 if self._task.poll > 0:
                     result = self._poll_async_result(result=result, templar=templar)
