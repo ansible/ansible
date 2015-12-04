@@ -50,6 +50,7 @@ except ImportError:
 
 MAGIC_VARIABLE_MAPPING = dict(
    connection       = ('ansible_connection',),
+   connection_args  = ('ansible_connection_args',),
    remote_addr      = ('ansible_ssh_host', 'ansible_host'),
    remote_user      = ('ansible_ssh_user', 'ansible_user'),
    port             = ('ansible_ssh_port', 'ansible_port'),
@@ -136,6 +137,7 @@ class PlayContext(Base):
 
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
+    _connection_args  = FieldAttribute(isa='string')
     _remote_addr      = FieldAttribute(isa='string')
     _password         = FieldAttribute(isa='string')
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
@@ -242,6 +244,9 @@ class PlayContext(Base):
 
         if options.connection:
             self.connection = options.connection
+
+        if hasattr(options, 'connection_args') and options.connection_args:
+            self.connection_args = options.connection_args
 
         self.remote_user = options.remote_user
         self.private_key_file = options.private_key_file
