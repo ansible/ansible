@@ -176,35 +176,44 @@ Function Nssm-Update-AppParameters
         Throw "Error updating AppParameters for service ""$name"""
     }
 
-    $appParametersHash = ParseAppParameters -appParameters $appParameters
-
     $appParamKeys = @()
     $appParamVals = @()
     $singleLineParams = ""
-    $appParametersHash.GetEnumerator() |
-        % {
-            $key = $($_.Name)
-            $val = $($_.Value)
+    
+    if ($appParameters)
+    {
+        $appParametersHash = ParseAppParameters -appParameters $appParameters
+        $appParametersHash.GetEnumerator() |
+            % {
+                $key = $($_.Name)
+                $val = $($_.Value)
 
-            $appParamKeys += $key
-            $appParamVals += $val
+                $appParamKeys += $key
+                $appParamVals += $val
 
-            if ($key -eq "_") {
-                $singleLineParams = "$val " + $singleLineParams
-            } else {
-                $singleLineParams = $singleLineParams + "$key ""$val"""
+                if ($key -eq "_") {
+                    $singleLineParams = "$val " + $singleLineParams
+                } else {
+                    $singleLineParams = $singleLineParams + "$key ""$val"""
+                }
             }
-        }
+
+        Set-Attr $result "nssm_app_parameters_parsed" $appParametersHash
+        Set-Attr $result "nssm_app_parameters_keys" $appParamKeys
+        Set-Attr $result "nssm_app_parameters_vals" $appParamVals
+    }
 
     Set-Attr $result "nssm_app_parameters" $appParameters
-    Set-Attr $result "nssm_app_parameters_parsed" $appParametersHash
-    Set-Attr $result "nssm_app_parameters_keys" $appParamKeys
-    Set-Attr $result "nssm_app_parameters_vals" $appParamVals
     Set-Attr $result "nssm_single_line_app_parameters" $singleLineParams
 
     if ($results -ne $singleLineParams)
     {
-        $cmd = "nssm set ""$name"" AppParameters $singleLineParams"
+        if ($appParameters)
+        {
+            $cmd = "nssm set ""$name"" AppParameters $singleLineParams"
+        } else {
+            $cmd = "nssm set ""$name"" AppParameters '""""'"
+        }
         $results = invoke-expression $cmd
 
         if ($LastExitCode -ne 0)
