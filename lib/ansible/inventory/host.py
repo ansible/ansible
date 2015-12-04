@@ -38,7 +38,7 @@ class Host:
     def __eq__(self, other):
         if not isinstance(other, Host):
             return False
-        return self.name == other.name
+        return id(self) == id(other)
 
     def __ne__(self, other):
         return not self.__eq__(other)
