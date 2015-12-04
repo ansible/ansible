@@ -205,7 +205,7 @@ class InventoryDirectory(object):
         # because the __eq__/__ne__ methods in Host() compare the
         # name fields rather than references, we use id() here to
         # do the object comparison for merges
-        if id(self.hosts[host.name]) != id(host):
+        if self.hosts[host.name] != host:
             # different object, merge
             self._merge_hosts(self.hosts[host.name], host)
 
