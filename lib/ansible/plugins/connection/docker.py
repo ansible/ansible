@@ -68,12 +68,17 @@ class Connection(ConnectionBase):
         # configured to be connected to by root and they are not running as
         # root.
 
-        if 'docker_command' in kwargs:
-            self.docker_cmd = kwargs['docker_command']
+        if play_context.connection_command:
+            self.docker_cmd = [play_context.connection_command]
+        elif 'docker_command' in kwargs:
+            self.docker_cmd = [kwargs['docker_command']]
         else:
-            self.docker_cmd = distutils.spawn.find_executable('docker')
-            if not self.docker_cmd:
+            self.docker_cmd = [distutils.spawn.find_executable('docker')]
+            if not self.docker_cmd[0]:
                 raise AnsibleError("docker command not found in PATH")
+
+        if play_context.connection_args:
+            self.docker_cmd = self.docker_cmd + play_context.connection_args.split(' ')
 
         self.can_copy_bothways = False
 
@@ -91,7 +96,7 @@ class Connection(ConnectionBase):
 
     def _get_docker_version(self):
 
-        cmd = [self.docker_cmd, 'version']
+        cmd = self.docker_cmd + ['version']
         cmd_output = subprocess.check_output(cmd)
 
         for line in cmd_output.split('\n'):
@@ -99,10 +104,7 @@ class Connection(ConnectionBase):
                 return self._sanitize_version(line.split()[2])
 
         # no result yet, must be newer Docker version
-        new_docker_cmd = [
-            self.docker_cmd,
-            'version', '--format', "'{{.Server.Version}}'"
-        ]
+        new_docker_cmd = self.docker_cmd + ['version', '--format', "'{{.Server.Version}}'"]
 
         cmd_output = subprocess.check_output(new_docker_cmd)
 
@@ -123,7 +125,7 @@ class Connection(ConnectionBase):
 
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
         # -i is needed to keep stdin open which allows pipelining to work
-        local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
+        local_cmd = self.docker_cmd + ["exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self._play_context.remote_addr)
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
@@ -158,7 +160,7 @@ class Connection(ConnectionBase):
 
         if self.can_copy_bothways:
             # only docker >= 1.8.1 can do this natively
-            args = [ self.docker_cmd, "cp", in_path, "%s:%s" % (self._play_context.remote_addr, out_path) ]
+            args = self.docker_cmd + ["cp", in_path, "%s:%s" % (self._play_context.remote_addr, out_path) ]
             p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             if p.returncode != 0:
@@ -168,7 +170,7 @@ class Connection(ConnectionBase):
             # Older docker doesn't have native support for copying files into
             # running containers, so we use docker exec to implement this
             executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-            args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, executable, "-c",
+            args = self.docker_cmd + ["exec", "-i", self._play_context.remote_addr, executable, "-c",
                     "dd of={0} bs={1}".format(out_path, BUFSIZE)]
             with open(in_path, 'rb') as in_file:
                 try:
@@ -191,7 +193,7 @@ class Connection(ConnectionBase):
         # file path
         out_dir = os.path.dirname(out_path)
 
-        args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
+        args = self.docker_cmd + ["cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
