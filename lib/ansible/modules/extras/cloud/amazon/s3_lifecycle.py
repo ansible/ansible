@@ -223,6 +223,8 @@ def create_lifecycle_rule(connection, module):
                     lifecycle_obj.append(rule)
                     changed = True
                     appended = True
+            else:
+                lifecycle_obj.append(existing_rule)
         # If nothing appended then append now as the rule must not exist
         if not appended:
             lifecycle_obj.append(rule)
