@@ -54,7 +54,7 @@ options:
         default: null
         choices: ['metric alert', 'service check']
     query:
-        description: ["he monitor query to notify on with syntax varying depending on what type of monitor you are creating."]
+        description: ["The monitor query to notify on with syntax varying depending on what type of monitor you are creating."]
         required: false
         default: null
     name:

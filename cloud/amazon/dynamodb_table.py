@@ -268,8 +268,7 @@ def main():
 
     try:
         connection = connect_to_aws(boto.dynamodb2, region, **aws_connect_params)
-
-    except (NoAuthHandlerFound, StandardError), e:
+    except (NoAuthHandlerFound, AnsibleAWSError), e:
         module.fail_json(msg=str(e))
 
     state = module.params.get('state')

@@ -133,7 +133,7 @@ def main():
         module.params['login_host'],
         module.params['login_port'],
         urllib.quote(module.params['vhost'],''),
-        module.params['name']
+        urllib.quote(module.params['name'],'')
     )
     
     # Check if exchange already exists

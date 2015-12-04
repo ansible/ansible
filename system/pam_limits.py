@@ -40,7 +40,7 @@ options:
     description:
       - Limit type, see C(man limits) for an explanation
     required: true
-    choices: [ "hard", "soft" ]
+    choices: [ "hard", "soft", "-" ]
   limit_item:
     description:
       - The limit to be set
@@ -78,14 +78,22 @@ options:
       - Modify the limits.conf path.
     required: false
     default: "/etc/security/limits.conf"
+  comment:
+    description:
+      - Comment associated with the limit.
+    required: false
+    default: ''
 '''
 
 EXAMPLES = '''
-# Add or modify limits for the user joe
+# Add or modify nofile soft limit for the user joe
 - pam_limits: domain=joe limit_type=soft limit_item=nofile value=64000
 
-# Add or modify limits for the user joe. Keep or set the maximal value
-- pam_limits: domain=joe limit_type=soft limit_item=nofile value=1000000
+# Add or modify fsize hard limit for the user smith. Keep or set the maximal value.
+- pam_limits: domain=smith limit_type=hard limit_item=fsize value=1000000 use_max=yes
+
+# Add or modify memlock, both soft and hard, limit for the user james with a comment.
+- pam_limits: domain=james limit_type=- limit_item=memlock value=unlimited comment="unlimited memory lock for james"
 '''
 
 def main():

@@ -75,6 +75,7 @@ options:
     default: 0
 notes:
   - Not tested on any Debian based system.
+  - Requires the python2 bindings of firewalld, who may not be installed by default if the distribution switched to python 3 
 requirements: [ 'firewalld >= 0.2.11' ]
 author: "Adam Miller (@maxamillion)"
 '''
@@ -251,7 +252,7 @@ def main():
         module.fail(msg='permanent is a required parameter')
 
     if not HAS_FIREWALLD:
-        module.fail_json(msg='firewalld required for this module')
+        module.fail_json(msg='firewalld and its python 2 module are required for this module')
 
     ## Pre-run version checking
     if FW_VERSION < "0.2.11":

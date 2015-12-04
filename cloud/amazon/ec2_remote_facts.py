@@ -44,12 +44,12 @@ EXAMPLES = '''
     filters:
       instance-state-name: running
       "tag:Name": Example
-      
+
 # Gather facts about instance i-123456
 - ec2_remote_facts:
     filters:
       instance-id: i-123456
-      
+
 # Gather facts about all instances in vpc-123456 that are t2.small type
 - ec2_remote_facts:
     filters:
@@ -66,17 +66,23 @@ except ImportError:
     HAS_BOTO = False
 
 def get_instance_info(instance):
-    
+
     # Get groups
     groups = []
     for group in instance.groups:
-      groups.append({ 'id': group.id, 'name': group.name }.copy())
+        groups.append({ 'id': group.id, 'name': group.name }.copy())
 
     # Get interfaces
     interfaces = []
     for interface in instance.interfaces:
-      interfaces.append({ 'id': interface.id, 'mac_address': interface.mac_address }.copy())
- 
+        interfaces.append({ 'id': interface.id, 'mac_address': interface.mac_address }.copy())
+
+    # If an instance is terminated, sourceDestCheck is no longer returned
+    try:
+        source_dest_check = instance.sourceDestCheck
+    except AttributeError:
+        source_dest_check = None
+
     instance_info = { 'id': instance.id,
                     'kernel': instance.kernel,
                     'instance_profile': instance.instance_profile,
@@ -90,7 +96,7 @@ def get_instance_info(instance):
                     'ramdisk': instance.ramdisk,
                     'tags': instance.tags,
                     'key_name': instance.key_name,
-                    'source_destination_check': instance.sourceDestCheck,
+                    'source_destination_check': source_dest_check,
                     'image_id': instance.image_id,
                     'groups': groups,
                     'interfaces': interfaces,
@@ -112,23 +118,23 @@ def get_instance_info(instance):
                   }
 
     return instance_info
-    
+
 
 def list_ec2_instances(connection, module):
-    
+
     filters = module.params.get("filters")
     instance_dict_array = []
-    
+
     try:
         all_instances = connection.get_only_instances(filters=filters)
     except BotoServerError as e:
         module.fail_json(msg=e.message)
-        
+
     for instance in all_instances:
         instance_dict_array.append(get_instance_info(instance))
-        
+
     module.exit_json(instances=instance_dict_array)
-    
+
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -148,11 +154,11 @@ def main():
     if region:
         try:
             connection = connect_to_aws(boto.ec2, region, **aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
             module.fail_json(msg=str(e))
     else:
         module.fail_json(msg="region must be specified")
-        
+
     list_ec2_instances(connection, module)
 
 # import module snippets
@@ -161,4 +167,3 @@ from ansible.module_utils.ec2 import *
 
 if __name__ == '__main__':
     main()
-

@@ -91,6 +91,13 @@ options:
             - 'https://www.zabbix.com/documentation/2.0/manual/appendix/api/hostinterface/definitions#host_interface'
         required: false
         default: []
+    force:
+        description:
+            - Overwrite the host configuration, even if already present
+        required: false
+        default: "yes"
+        choices: [ "yes", "no" ]
+        version_added: "2.0"
 '''
 
 EXAMPLES = '''
@@ -370,6 +377,7 @@ def main():
             state=dict(default="present", choices=['present', 'absent']),
             timeout=dict(type='int', default=10),
             interfaces=dict(required=False),
+            force=dict(default=True, type='bool'),
             proxy=dict(required=False)
         ),
         supports_check_mode=True
@@ -388,6 +396,7 @@ def main():
     state = module.params['state']
     timeout = module.params['timeout']
     interfaces = module.params['interfaces']
+    force = module.params['force']
     proxy = module.params['proxy']
 
     # convert enabled to 0; disabled to 1
@@ -438,6 +447,9 @@ def main():
         else:
             if not group_ids:
                 module.fail_json(msg="Specify at least one group for updating host '%s'." % host_name)
+
+            if not force:
+                module.fail_json(changed=False, result="Host present, Can't update configuration without force")
 
             # get exist host's interfaces
             exist_interfaces = host._zapi.hostinterface.get({'output': 'extend', 'hostids': host_id})

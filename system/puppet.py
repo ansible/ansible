@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import os
 import pipes
 import stat
@@ -197,7 +196,7 @@ def main():
             error=True, stdout=stdout, stderr=stderr)
     elif rc == 2:
         # success with changes
-        module.exit_json(rc=0, changed=True)
+        module.exit_json(rc=0, changed=True, stdout=stdout, stderr=stderr)
     elif rc == 124:
         # timeout
         module.exit_json(

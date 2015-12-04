@@ -129,11 +129,10 @@ def create_tags_container(tags):
     tags_obj.add_tag_set(tag_set)
     return tags_obj
 
-def create_bucket(connection, module):
+def create_bucket(connection, module, location):
     
     policy = module.params.get("policy")
     name = module.params.get("name")
-    region = module.params.get("region")
     requester_pays = module.params.get("requester_pays")
     tags = module.params.get("tags")
     versioning = module.params.get("versioning")
@@ -143,7 +142,7 @@ def create_bucket(connection, module):
         bucket = connection.get_bucket(name)
     except S3ResponseError, e:
         try:
-            bucket = connection.create_bucket(name, location=region)
+            bucket = connection.create_bucket(name, location=location)
             changed = True
         except S3CreateError, e:
             module.fail_json(msg=e.message)
@@ -376,7 +375,7 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        create_bucket(connection, module)
+        create_bucket(connection, module, location)
     elif state == 'absent':
         destroy_bucket(connection, module)
 
