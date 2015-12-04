@@ -122,8 +122,9 @@ class Connection(ConnectionBase):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
+        exec_user = self._play_context.become_user if self._play_context.become else self._play_context.remote_user
         # -i is needed to keep stdin open which allows pipelining to work
-        local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
+        local_cmd = [self.docker_cmd, "exec", '-u', exec_user, '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self._play_context.remote_addr)
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
@@ -168,7 +169,8 @@ class Connection(ConnectionBase):
             # Older docker doesn't have native support for copying files into
             # running containers, so we use docker exec to implement this
             executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-            args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, executable, "-c",
+            exec_user = self._play_context.become_user if self._play_context.become else self._play_context.remote_user
+            args = [self.docker_cmd, "exec", '-u', exec_user, "-i", self._play_context.remote_addr, executable, "-c",
                     "dd of={0} bs={1}".format(out_path, BUFSIZE)]
             with open(in_path, 'rb') as in_file:
                 try:
