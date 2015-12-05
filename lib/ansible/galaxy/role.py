@@ -34,6 +34,7 @@ from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.galaxy.api import GalaxyAPI
+from ansible.galaxy.config import GalaxyConfig
 
 try:
     from __main__ import display
@@ -46,7 +47,7 @@ class GalaxyRole(object):
     SUPPORTED_SCMS = set(['git', 'hg'])
     META_MAIN = os.path.join('meta', 'main.yml')
     META_INSTALL = os.path.join('meta', '.galaxy_install_info')
-    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars')
+    ROLE_DIRS = ('defaults','files','handlers','meta','tasks','templates','vars','tests')
 
 
     def __init__(self, galaxy, name, src=None, version=None, scm=None, path=None):
@@ -198,10 +199,10 @@ class GalaxyRole(object):
                 role_data = self.src
                 tmp_file = self.fetch(role_data)
             else:
-                api = GalaxyAPI(self.galaxy, self.options.api_server)
+                api = GalaxyAPI(self.galaxy)
                 role_data = api.lookup_role_by_name(self.src)
                 if not role_data:
-                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, self.options.api_server))
+                    raise AnsibleError("- sorry, %s was not found on %s." % (self.src, api.api_server))
 
                 role_versions = api.fetch_role_related('versions', role_data['id'])
                 if not self.version:
