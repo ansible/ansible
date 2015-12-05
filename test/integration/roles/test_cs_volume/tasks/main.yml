@@ -43,22 +43,54 @@
   cs_volume:
     name: "{{ cs_resource_prefix }}_vol"
     disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 20
   register: vol
 - name: verify results test create volume
   assert:
     that:
     - vol|changed
+    - vol.size == 20 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
 - name: test create volume idempotence
   cs_volume:
     name: "{{ cs_resource_prefix }}_vol"
     disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 20
   register: vol
 - name: verify results test create volume idempotence
   assert:
     that:
     - not vol|changed
+    - vol.size == 20 * 1024 ** 3
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test shrink volume
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 10
+    shrink_ok: yes
+  register: vol
+- name: verify results test create volume
+  assert:
+    that:
+    - vol|changed
+    - vol.size == 10 * 1024 ** 3
+    - vol.name == "{{ cs_resource_prefix }}_vol"
+
+- name: test shrink volume idempotence
+  cs_volume:
+    name: "{{ cs_resource_prefix }}_vol"
+    disk_offering: "{{ test_cs_disk_offering_1 }}"
+    size: 10
+    shrink_ok: yes
+  register: vol
+- name: verify results test create volume
+  assert:
+    that:
+    - not vol|changed
+    - vol.size == 10 * 1024 ** 3
     - vol.name == "{{ cs_resource_prefix }}_vol"
 
 - name: test attach volume
