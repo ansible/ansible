@@ -178,24 +178,24 @@ class Inventory(object):
             if self._restriction:
                 pattern_hash += u":%s" % to_unicode(self._restriction)
 
-        if pattern_hash in HOSTS_PATTERNS_CACHE:
-            return HOSTS_PATTERNS_CACHE[pattern_hash][:]
+        if pattern_hash not in HOSTS_PATTERNS_CACHE:
 
-        patterns = Inventory.split_host_pattern(pattern)
-        hosts = self._evaluate_patterns(patterns)
+            patterns = Inventory.split_host_pattern(pattern)
+            hosts = self._evaluate_patterns(patterns)
 
-        # mainly useful for hostvars[host] access
-        if not ignore_limits_and_restrictions:
-            # exclude hosts not in a subset, if defined
-            if self._subset:
-                subset = self._evaluate_patterns(self._subset)
-                hosts = [ h for h in hosts if h in subset ]
+            # mainly useful for hostvars[host] access
+            if not ignore_limits_and_restrictions:
+                # exclude hosts not in a subset, if defined
+                if self._subset:
+                    subset = self._evaluate_patterns(self._subset)
+                    hosts = [ h for h in hosts if h in subset ]
 
-            # exclude hosts mentioned in any restriction (ex: failed hosts)
-            if self._restriction is not None:
-                hosts = [ h for h in hosts if h in self._restriction ]
+                # exclude hosts mentioned in any restriction (ex: failed hosts)
+                if self._restriction is not None:
+                    hosts = [ h for h in hosts if h in self._restriction ]
 
-        HOSTS_PATTERNS_CACHE[pattern_hash] = list(set(hosts))
+            HOSTS_PATTERNS_CACHE[pattern_hash] = list(set(hosts))
+
         return HOSTS_PATTERNS_CACHE[pattern_hash][:]
 
     @classmethod
