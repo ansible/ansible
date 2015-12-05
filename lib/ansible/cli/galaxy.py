@@ -36,10 +36,10 @@ import ansible.constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.galaxy import Galaxy
-from ansible.galaxy.api import GalaxyAPI, DEFAULT_GALAXY_SERVER
+from ansible.galaxy.api import GalaxyAPI
 from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
-from ansible.galaxy.config import GalaxyConfig
+from ansible.galaxy.token import GalaxyToken
 from ansible.playbook.role.requirement import RoleRequirement
 from ansible.module_utils.urls import open_url
 
@@ -52,7 +52,6 @@ except ImportError:
 class GalaxyCLI(CLI):
 
     available_commands = OrderedDict([
-        ("config",    "manage ~/.ansible-galaxy/config.yml"),
         ("delete",    "remove a role from Galaxy"),
         ("import",    "add a role contained in a GitHub repo to Galaxy"),
         ("info",      "display details about a particular role"),
@@ -75,7 +74,6 @@ class GalaxyCLI(CLI):
 
         self.api = None
         self.galaxy = None
-        self.config = None
         super(GalaxyCLI, self).__init__(args)
 
     def set_action(self):
@@ -154,13 +152,6 @@ class GalaxyCLI(CLI):
             self.parser.add_option('--author', dest='author',
                 help='GitHub username')
             self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]")
-        elif self.action == "config":
-            self.parser.add_option('-u', '--unset', dest='unset_true', action='store_true', default=False,
-                help='remove the specified key from the configuration file')
-            self.parser.add_option('-s', '--show', dest='show_true', action='store_true', default=False,
-                help='show the value of the specified key')
-            self.parser.set_usage("usage: %prog config [opitons] key value" + u'\n\n' + 
-                "Set or remove keys in ~/.ansible-galaxy/config.yml.")
         elif self.action == "setup":
             self.parser.set_usage("usage: %prog setup [options] source github_uer github_repo secret" +
                 u'\n\n' + "Create an integration or web hook from travis.")
@@ -177,7 +168,7 @@ class GalaxyCLI(CLI):
                      'ansible.cfg file (/etc/ansible/roles if not configured)')
 
         if self.action in ("import","info","init","install","login","search","setup","delete"):
-            self.parser.add_option('-s', '--server', dest='api_server', default=DEFAULT_GALAXY_SERVER,
+            self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER,
                 help='The API server destination')
             self.parser.add_option('-c', '--ignore-certs', action='store_false', dest='validate_certs', default=True,
                 help='Ignore SSL certificate validation errors.')
@@ -201,14 +192,10 @@ class GalaxyCLI(CLI):
 
         super(GalaxyCLI, self).run()
 
-        self.config = GalaxyConfig(self.galaxy)
-
         # if not offline, get connect to galaxy api
         if self.action in ("import","info","install","search","login","setup","delete") or \
             (self.action == 'init' and not self.options.offline):            
             self.api = GalaxyAPI(self.galaxy)
-            if not self.api:
-                raise AnsibleError("The API server (%s) is not responding, please try again later." % api_server)
 
         self.execute()
 
@@ -618,45 +605,10 @@ class GalaxyCLI(CLI):
             login.remove_github_token()
         
         # Store the Galaxy token 
-        self.config.set_key('access_token',galaxy_response['token'])
-        self.config.save()
+        token = GalaxyToken()
+        token.set(galaxy_response['token'])
 
         display.display("Succesfully logged into Galaxy as %s" % galaxy_response['username'])
-        return 0
-
-    def execute_config(self):
-        """
-        Set, unset or show values in config.yml.
-        """
-
-        if (self.options.unset_true or self.options.show_true) and len(self.args) == 0:
-            raise AnsibleError("Exepected at least one argument. Use --help.")
-
-        if self.options.unset_true:
-            # remove key
-            self.config.remove_key(self.args.pop())
-            self.config.save()
-            return 0
-        
-        if self.options.show_true:
-            # show key
-            key = self.args.pop()
-            val = self.config.get_key(key)
-            if val != None:
-                display.display('%s: %s' % (key,val))
-            else:
-                display.display('%s not defined' % key)
-            return 0
-
-        # Set the key
-        if len(self.args) != 2:
-            raise AnsibleError('Expected at least two arguments. Use --help.')
-
-        val = self.args.pop()
-        key = self.args.pop()
-        display.vvv('set %s to %s in ansible-galaxy config' % (key,val))
-        self.config.set_key(key,val)
-        self.config.save()
         return 0
 
     def execute_import(self):
@@ -696,23 +648,22 @@ class GalaxyCLI(CLI):
                     color='yellow')
                 return 0
             # found a single role as expected
-            task = task[0]
-            display.display("Successfully submitted import request %d" % task['id'])
+            display.display("Successfully submitted import request %d" % task[0]['id'])
             if not self.options.wait:
-                display.display("Role name: %s" % task['summary_fields']['role']['name'])
-                display.display("Repo: %s/%s" % (task['github_user'],task['github_repo']))
+                display.display("Role name: %s" % task[0]['summary_fields']['role']['name'])
+                display.display("Repo: %s/%s" % (task[0]['github_user'],task[0]['github_repo']))
 
         if self.options.check_status or self.options.wait:
             # Get the status of the import
             msg_list = []
             finished = False
             while not finished:
-                task = self.api.get_import_task(task_id=task['id'])[0]
-                for msg in task['summary_fields']['task_messages']:
+                task = self.api.get_import_task(task_id=task[0]['id'])
+                for msg in task[0]['summary_fields']['task_messages']:
                     if msg['id'] not in msg_list:
                         display.display(msg['message_text'], color=colors[msg['message_type']])
                         msg_list.append(msg['id'])
-                if task['state'] in ['SUCCESS', 'FAILED']:
+                if task[0]['state'] in ['SUCCESS', 'FAILED']:
                     finished = True
                 else:
                     time.sleep(10)

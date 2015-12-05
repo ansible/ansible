@@ -30,9 +30,10 @@ import urllib
 from urllib2 import quote as urlquote, HTTPError
 from urlparse import urlparse
 
+import ansible.constants as C
 from ansible.errors import AnsibleError
 from ansible.module_utils.urls import open_url
-from ansible.galaxy.config import GalaxyConfig
+from ansible.galaxy.token import GalaxyToken
 
 try:
     from __main__ import display
@@ -40,7 +41,6 @@ except ImportError:
     from ansible.utils.display import Display
     display = Display()
 
-DEFAULT_GALAXY_SERVER = "https://galaxy.ansible.com"
 
 class GalaxyAPI(object):
     ''' This class is meant to be used as a API client for an Ansible Galaxy server '''
@@ -50,22 +50,18 @@ class GalaxyAPI(object):
     def __init__(self, galaxy):
 
         self.galaxy = galaxy
-        self.config = GalaxyConfig(self.galaxy)
-        self._api_server = DEFAULT_GALAXY_SERVER
-        self._validate_certs = True
+        self.token = GalaxyToken()
+        self._api_server = C.GALAXY_SERVER
+        self._validate_certs = C.GALAXY_IGNORE_CERTS
 
         # set validate_certs
-        if self.galaxy.options.validate_certs == False:
-            self._validate_certs = False
-        elif self.config.get_key('validate_certs') == False:
+        if galaxy.options.validate_certs == False:
             self._validate_certs = False
         display.vvv('Check for valid certs: %s' % self._validate_certs)
 
         # set the API server
-        if galaxy.options.api_server != DEFAULT_GALAXY_SERVER:
-            self._api_server = self.options.api_server
-        elif self.config.get_key('galaxy_server'):
-            self._api_server = self.config.get_key('galaxy_server')
+        if galaxy.options.api_server != C.GALAXY_SERVER:
+            self._api_server = galaxy.options.api_server
         display.vvv("Connecting to galaxy_server: %s" % self._api_server)
 
         server_version = self.get_server_api_version()
@@ -73,12 +69,12 @@ class GalaxyAPI(object):
         if server_version in self.SUPPORTED_VERSIONS:
             self.baseurl = '%s/api/%s' % (self._api_server, server_version)
             self.version = server_version # for future use
-            display.vvvvv("Base API: %s" % self.baseurl)
+            display.vvv("Base API: %s" % self.baseurl)
         else:
             raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
 
     def __auth_header(self):
-        token = self.config.get_key('access_token')
+        token = self.token.get()
         if token is None:
             raise AnsibleError("No access token. You must first use login to authenticate and obtain an access token.")
         return {'Authorization': 'Token ' + token}
@@ -112,8 +108,8 @@ class GalaxyAPI(object):
             data = json.load(open_url(url, validate_certs=self._validate_certs))
             return data['current_version']
         except Exception as e:
-            raise AnsibleError("Could not retrieve server API version: %s" % url)
-    
+            raise AnsibleError("The API server (%s) is not responding, please try again later." % url)
+        
     def authenticate(self, github_token):
         """
         Retrieve an authentication token
@@ -142,8 +138,7 @@ class GalaxyAPI(object):
 
     def get_import_task(self, task_id=None, github_user=None, github_repo=None):
         """
-        Check the status of an import task. Returns only the most recent import task when
-        given github_user/github_repo.
+        Check the status of an import task.
         """
         url = '%s/imports/' % self.baseurl
         if not task_id is None:
@@ -154,7 +149,7 @@ class GalaxyAPI(object):
             raise AnsibleError("Expected task_id or github_user and github_repo")
         
         data = self.__call_galaxy(url)
-        return data['results'][0]
+        return data['results']
        
     def lookup_role_by_name(self, role_name, notify=True):
         """

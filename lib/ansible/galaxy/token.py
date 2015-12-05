@@ -34,52 +34,33 @@ except ImportError:
     display = Display()
 
 
-class GalaxyConfig(object):
-    ''' Class to manage ~/.ansible_galaxy/config.yml '''
+class GalaxyToken(object):
+    ''' Class to storing and retrieving token in ~/.ansible_galaxy '''
 
-    def __init__(self, galaxy):
-        self.galaxy = galaxy
-        self.path = os.path.expanduser("~") + '/.ansible_galaxy'
-        self.file = self.path + '/config.yml'
+    def __init__(self):
+        self.file = os.path.expanduser("~") + '/.ansible_galaxy'
         self.config = yaml.safe_load(self.__open_config_for_read())
         if not self.config:
             self.config = {}
         
     def __open_config_for_read(self):
         if os.path.isfile(self.file):
-            display.vvv('Opened galaxy config %s' % self.file)
+            display.vvv('Opened %s' % self.file)
             return open(self.file, 'r')
         # config.yml not found, create and chomd u+rw
-        if not os.path.isdir(self.path):
-            os.makedirs(self.path)
-            os.chmod(self.path,S_IRWXU) # owner has +rwx
         f = open(self.file,'w')
         f.close()
         os.chmod(self.file,S_IRUSR|S_IWUSR) # owner has +rw
-        display.vvv('Created galaxy config %s' % self.file) 
+        display.vvv('Created %s' % self.file) 
         return open(self.file, 'r')
 
-    def set_key(self, key, value): 
-        if value in ['true','yes','True','Yes']:
-            val = True
-        elif value in ['false','no','False','no']:
-            val = False
-        else:
-            val = value
-        self.config[key] = val
+    def set(self, token): 
+        self.config['token'] = token
+        self.save()
     
-    def remove_key(self, key):
-        if key in self.config:
-            self.config.pop(key)
-
-    def get_key(self, key):
-        val = self.config.get(key, None)
-        if val in ['true','yes','True','Yes']:
-            val = True
-        elif val in ['false','no','False','No']:
-            val = False
-        return val 
-
+    def get(self):
+        return self.config.get('token', None)
+    
     def save(self):
         with open(self.file,'w') as f:
             yaml.safe_dump(self.config,f,default_flow_style=False)
