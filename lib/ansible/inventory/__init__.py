@@ -195,8 +195,8 @@ class Inventory(object):
             if self._restriction is not None:
                 hosts = [ h for h in hosts if h in self._restriction ]
 
-        HOSTS_PATTERNS_CACHE[pattern_hash] = hosts[:]
-        return list(set(hosts))
+        HOSTS_PATTERNS_CACHE[pattern_hash] = list(set(hosts))
+        return HOSTS_PATTERNS_CACHE[pattern_hash][:]
 
     @classmethod
     def split_host_pattern(cls, pattern):
