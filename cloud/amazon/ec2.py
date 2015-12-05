@@ -504,7 +504,6 @@ EXAMPLES = '''
 #
 
 - ec2:
-    state: running
     key_name: mykey
     instance_type: c1.medium
     image: ami-40603AD1
@@ -522,7 +521,6 @@ EXAMPLES = '''
 #
 
 - ec2:
-    state: running
     key_name: mykey
     instance_type: c1.medium
     image: ami-40603AD1
