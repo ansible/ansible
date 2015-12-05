@@ -382,7 +382,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_check_mode'] = True
 
         # set no log in the module arguments, if required
-        if self._play_context.no_log or not C.DEFAULT_NO_TARGET_SYSLOG:
+        if self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG:
             module_args['_ansible_no_log'] = True
 
         # set debug in the module arguments, if required
