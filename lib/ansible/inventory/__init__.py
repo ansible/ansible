@@ -174,15 +174,16 @@ class Inventory(object):
         return results
 
     def get_hosts(self, pattern="all"):
-        """ 
+        """
         find all host names matching a pattern string, taking into account any inventory restrictions or
         applied subsets.
         """
 
         # process patterns
         if isinstance(pattern, list):
-            pattern = ';'.join(pattern)
-        patterns = pattern.replace(";",":").split(":")
+            patterns = pattern
+        else:
+            patterns = pattern.replace(";",":").replace(",",":").split(":")
         hosts = self._get_hosts(patterns)
 
         # exclude hosts not in a subset, if defined
