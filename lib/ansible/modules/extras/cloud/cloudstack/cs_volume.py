@@ -277,6 +277,8 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
             args['account'] = self.get_account(key='name')
             args['domainid'] = self.get_domain(key='id')
             args['projectid'] = self.get_project(key='id')
+            args['zoneid'] = self.get_zone(key='id')
+            args['displayvolume'] = self.module.params.get('display_volume')
             args['type'] = 'DATADISK'
 
             volumes = self.cs.listVolumes(**args)
@@ -445,7 +447,7 @@ def main():
     argument_spec.update(dict(
         name = dict(required=True),
         disk_offering = dict(default=None),
-        display_volume = dict(choices=BOOLEANS, default=True),
+        display_volume = dict(type='bool', default=None),
         max_iops = dict(type='int', default=None),
         min_iops = dict(type='int', default=None),
         size = dict(type='int', default=None),
@@ -453,14 +455,14 @@ def main():
         vm = dict(default=None),
         device_id = dict(type='int', default=None),
         custom_id = dict(default=None),
-        force = dict(choices=BOOLEANS, default=False),
-        shrink_ok = dict(choices=BOOLEANS, default=False),
+        force = dict(type='bool', default=False),
+        shrink_ok = dict(type='bool', default=False),
         state = dict(choices=['present', 'absent', 'attached', 'detached'], default='present'),
         zone = dict(default=None),
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -491,7 +493,7 @@ def main():
 
         result = acs_vol.get_result(volume)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
