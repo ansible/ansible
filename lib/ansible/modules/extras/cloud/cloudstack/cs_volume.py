@@ -95,6 +95,11 @@ options:
       - Considered on C(state=absnet) only.
     required: false
     default: false
+  shrink_ok:
+    description:
+      - Whether to allow to shrink the volume.
+    required: false
+    default: false
   vm:
     description:
       - Name of the virtual machine to attach the volume to.
@@ -303,7 +308,9 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
 
     def present_volume(self):
         volume = self.get_volume()
-        if not volume:
+        if volume:
+            volume = self.update_volume(volume)
+        else:
             disk_offering_id = self.get_disk_offering(key='id')
             snapshot_id = self.get_snapshot(key='id')
 
@@ -405,6 +412,34 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
         return volume
 
 
+    def update_volume(self, volume):
+        args_resize = {}
+        args_resize['id'] = volume['id']
+        args_resize['diskofferingid'] = self.get_disk_offering(key='id')
+        args_resize['maxiops'] = self.module.params.get('max_iops')
+        args_resize['miniops'] = self.module.params.get('min_iops')
+        args_resize['size'] = self.module.params.get('size')
+
+        # change unit from bytes to giga bytes to compare with args
+        volume_copy = volume.copy()
+        volume_copy['size'] = volume_copy['size'] / (2**30)
+
+        if self.has_changed(args_resize, volume_copy):
+
+            self.result['changed'] = True
+            if not self.module.check_mode:
+                args_resize['shrinkok'] = self.module.params.get('shrink_ok')
+                res = self.cs.resizeVolume(**args_resize)
+                if 'errortext' in res:
+                    self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
+                poll_async = self.module.params.get('poll_async')
+                if poll_async:
+                    volume = self.poll_job(res, 'volume')
+                self.volume = volume
+
+        return volume
+
+
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
@@ -419,6 +454,7 @@ def main():
         device_id = dict(type='int', default=None),
         custom_id = dict(default=None),
         force = dict(choices=BOOLEANS, default=False),
+        shrink_ok = dict(choices=BOOLEANS, default=False),
         state = dict(choices=['present', 'absent', 'attached', 'detached'], default='present'),
         zone = dict(default=None),
         domain = dict(default=None),
