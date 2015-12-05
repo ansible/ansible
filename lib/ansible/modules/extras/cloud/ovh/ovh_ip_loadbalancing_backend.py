@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from ovh.exceptions import APIError
 
 DOCUMENTATION = '''
 ---
@@ -7,12 +8,12 @@ module: ovh_ip_loadbalancing_backend
 short_description: Manage OVH IP LoadBalancing backends
 description:
     - Manage OVH (French European hosting provider) LoadBalancing IP backends
-version_added: "1.9"
+version_added: "2.0"
 author: Pascal HERAUD @pascalheraud
 notes:
     - Uses the python OVH Api U(https://github.com/ovh/python-ovh). You have to create an application (a key and secret) with a consummer key as described into U(https://eu.api.ovh.com/g934.first_step_with_api)
 requirements: 
-    - ovh >  0.35
+    - ovh >  0.3.5
 options:
     name:
         required: true
@@ -67,7 +68,12 @@ EXAMPLES = '''
 '''
 
 import sys
-import ovh
+try:
+    import ovh
+    import ovh.exceptions
+    HAS_OVH = True
+except ImportError:
+    HAS_OVH = False
 
 def getOvhClient(ansibleModule):
     endpoint  = ansibleModule.params.get('endpoint')
@@ -100,6 +106,9 @@ def main():
             consumer_key = dict(required=True),
         )
     )
+    
+    if not HAS_OVH:
+        module.fail_json(msg='ovh-api python module is required to run this module ')
 
     # Get parameters
     name   = module.params.get('name')
@@ -112,46 +121,65 @@ def main():
     client = getOvhClient(module)
 
     # Check that the load balancing exists
-    loadBalancings = client.get('/ip/loadBalancing')
+    try :
+        loadBalancings = client.get('/ip/loadBalancing')
+    except APIError as apiError:
+        module.fail_json(msg='Unable to call OVH api for getting the list of loadBalancing, check application key, secret, consumerkey and parameters. Error returned by OVH api was : {}'.format(apiError))
+        
     if not name in loadBalancings:
         module.fail_json(msg='IP LoadBalancing {} does not exist'.format(name))
 
     # Check that no task is pending before going on
     waitForNoTask(client, name)
 
-    backends = client.get('/ip/loadBalancing/{}/backend'.format(name))
+    try :
+        backends = client.get('/ip/loadBalancing/{}/backend'.format(name))
+    except APIError as apiError:
+        module.fail_json(msg='Unable to call OVH api for getting the list of backends of the loadBalancing, check application key, secret, consumerkey and parameters. Error returned by OVH api was : {}'.format(apiError))
     
     backendExists = backend in backends
     moduleChanged = False
-    if (state=="absent") :
-        if (backendExists) :
+    if state=="absent" :
+        if backendExists :
             # Remove backend
-            client.delete('/ip/loadBalancing/{}/backend/{}'.format(name, backend))
-            waitForNoTask(client, name)
+            try :
+                client.delete('/ip/loadBalancing/{}/backend/{}'.format(name, backend))
+                waitForNoTask(client, name)
+            except :
+                module.fail_json(msg='Unable to call OVH api for deleting the backend, check application key, secret, consumerkey and parameters. Error returned by OVH api was : {}'.format(apiError))
             moduleChanged = True
         else :
             moduleChanged = False
-    if (state=="present") :
-        if (backendExists) :
+    else :
+        if backendExists :
             moduleChanged = False
             # Get properties
             backendProperties = client.get('/ip/loadBalancing/{}/backend/{}'.format(name, backend))
             if (backendProperties['weight'] != weight):
                 # Change weight
-                client.post('/ip/loadBalancing/{}/backend/{}/setWeight'.format(name, backend), weight=weight)
-                waitForNoTask(client, name)
+                try :
+                     client.post('/ip/loadBalancing/{}/backend/{}/setWeight'.format(name, backend), weight=weight)
+                     waitForNoTask(client, name)
+                except APIError as apiError:
+                    module.fail_json(msg='Unable to call OVH api for updating the weight of the backend, check application key, secret, consumerkey and parameters. Error returned by OVH api was : {}'.format(apiError))
                 moduleChanged = True
             if (backendProperties['probe'] != probe):
                 # Change probe
                 backendProperties['probe'] = probe
-                client.put('/ip/loadBalancing/{}/backend/{}'.format(name, backend), probe=probe )
-                waitForNoTask(client, name)
+                try: 
+                    client.put('/ip/loadBalancing/{}/backend/{}'.format(name, backend), probe=probe )
+                    waitForNoTask(client, name)
+                except APIError as apiError:
+                    module.fail_json(msg='Unable to call OVH api for updating the propbe of the backend, check application key, secret, consumerkey and parameters. Error returned by OVH api was : {}'.format(apiError))
                 moduleChanged = True
                 
         else :
             # Creates backend
-            client.post('/ip/loadBalancing/{}/backend'.format(name), ipBackend=backend, probe=probe, weight=weight)
-            waitForNoTask(client, name)
+            try:
+                client.post('/ip/loadBalancing/{}/backend'.format(name), ipBackend=backend, probe=probe, weight=weight)
+                waitForNoTask(client, name)
+            except APIError as apiError:
+                module.fail_json(msg='Unable to call OVH api for creating the backend, check application key, secret, consumerkey and parameters. Error returned by OVH api was : {}'.format(apiError))
             moduleChanged = True
                                              
     module.exit_json(changed=moduleChanged)
