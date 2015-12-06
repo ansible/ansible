@@ -976,7 +976,7 @@ def main():
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
             update_cache=dict(required=False, default="no", type='bool'),
-            validate_certs=dict(required=False, defaults="yes", type='bool'),
+            validate_certs=dict(required=False, default="yes", type='bool'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
         ),
