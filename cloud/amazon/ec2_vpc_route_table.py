@@ -77,8 +77,8 @@ EXAMPLES = '''
     tags:
       Name: Public
     subnets:
-      - "{{ jumpbox_subnet.subnet_id }}"
-      - "{{ frontend_subnet.subnet_id }}"
+      - "{{ jumpbox_subnet.subnet.id }}"
+      - "{{ frontend_subnet.subnet.id }}"
       - "{{ vpn_subnet.subnet_id }}"
     routes:
       - dest: 0.0.0.0/0
@@ -92,7 +92,7 @@ EXAMPLES = '''
     tags:
       Name: Internal
     subnets:
-      - "{{ application_subnet.subnet_id }}"
+      - "{{ application_subnet.subnet.id }}"
       - 'Database Subnet'
       - '10.0.0.0/8'
     routes:
