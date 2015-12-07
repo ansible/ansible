@@ -25,7 +25,6 @@ __metaclass__ = type
 import os.path
 import sys
 import yaml
-import getpass
 import json
 import time
 
