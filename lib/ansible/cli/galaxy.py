@@ -152,8 +152,8 @@ class GalaxyCLI(CLI):
                 help='GitHub username')
             self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]")
         elif self.action == "setup":
-            self.parser.set_usage("usage: %prog setup [options] source github_uer github_repo secret" +
-                u'\n\n' + "Create an integration or web hook from travis.")
+            self.parser.set_usage("usage: %prog setup [options] source github_user github_repo secret" +
+                u'\n\n' + "Create an integration with travis.")
             self.parser.add_option('-r', '--remove', dest='remove_id', default=None,
                 help='Remove the integration matching the provided ID value. Use --list to see ID values.')
             self.parser.add_option('-l', '--list', dest="setup_list", action='store_true', default=False,
