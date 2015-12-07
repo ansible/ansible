@@ -22,7 +22,7 @@ __metaclass__ = type
 import yaml
 from ansible.compat.six import PY3
 
-from ansible.parsing.yaml.objects import AnsibleUnicode
+from ansible.parsing.yaml.objects import AnsibleUnicode, AnsibleSequence, AnsibleMapping
 from ansible.vars.hostvars import HostVars
 
 class AnsibleDumper(yaml.SafeDumper):
@@ -48,5 +48,15 @@ AnsibleDumper.add_representer(
 AnsibleDumper.add_representer(
     HostVars,
     represent_hostvars,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleSequence,
+    yaml.representer.SafeRepresenter.represent_list,
+)
+
+AnsibleDumper.add_representer(
+    AnsibleMapping,
+    yaml.representer.SafeRepresenter.represent_dict,
 )
 
