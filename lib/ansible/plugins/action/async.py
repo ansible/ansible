@@ -19,6 +19,7 @@ __metaclass__ = type
 
 import json
 import random
+import time
 
 from ansible import constants as C
 from ansible.plugins.action import ActionBase
@@ -70,9 +71,9 @@ class ActionModule(ActionBase):
         result.update(self._low_level_execute_command(cmd=async_cmd))
 
         # clean up after
+        time.sleep(1)
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
             self._remove_tmp_path(tmp)
 
         result['changed'] = True
-
         return result
