@@ -4,6 +4,7 @@ Ansible Changes By Release
 ## 2.1 TBD - ACTIVE DEVELOPMENT
 
 ####New Modules:
+* aws: ec2_vpc_net_facts
 * cloudstack: cs_volume
 
 ####New Filters:
