@@ -45,8 +45,12 @@ class ActionModule(ActionBase):
                 # If var is a list or dict, use the type as key to display
                 result[to_unicode(type(self._task.args['var']))] = results
             else:
+                # If var name is same as result, try to template it
                 if results == self._task.args['var']:
-                    results = "VARIABLE IS NOT DEFINED!"
+                    try:
+                        results = self._templar.template("{{" + results + "}}", convert_bare=True, fail_on_undefined=True)
+                    except:
+                        results = "VARIABLE IS NOT DEFINED!"
                 result[self._task.args['var']] = results
         else:
             result['msg'] = 'here we are'
