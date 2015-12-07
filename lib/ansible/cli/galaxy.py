@@ -113,7 +113,7 @@ class GalaxyCLI(CLI):
                 help='Force overwriting an existing role')
 
         # get options, args and galaxy object
-        self.options, self.args =self.parser.parse_args()
+        self.options, self.args =self.parser.parse_args(self.args[1:])
         display.verbosity = self.options.verbosity
         self.galaxy = Galaxy(self.options)
 
