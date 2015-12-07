@@ -826,6 +826,11 @@ class PlayBook(object):
                 # if there were failed tasks and handler execution
                 # is not forced, quit the play with an error
                 return False
+            elif task_errors:
+                # if there were failed tasks and handler execution is forced,
+                # execute all handlers and quit the play with an error
+                self.run_handlers(play)
+                return False
             else:
                 # no errors, go ahead and execute all handlers
                 if not self.run_handlers(play):
