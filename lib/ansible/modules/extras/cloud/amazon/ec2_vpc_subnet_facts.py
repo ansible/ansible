@@ -19,7 +19,7 @@ module: ec2_vpc_subnet_facts
 short_description: Gather facts about ec2 VPC subnets in AWS
 description:
     - Gather facts about ec2 VPC subnets in AWS
-version_added: "2.0"
+version_added: "2.1"
 author: "Rob White (@wimnat)"
 options:
   filters:
