@@ -70,7 +70,7 @@ class AdHocCLI(CLI):
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
 
-        self.options, self.args = self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args(self.args[1:])
 
         if len(self.args) != 1:
             raise AnsibleOptionsError("Missing target hosts")
