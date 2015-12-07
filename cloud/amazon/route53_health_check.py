@@ -104,7 +104,7 @@ EXAMPLES = '''
     string_match: "Hello"
     request_interval: 10
     failure_threshold: 2
-  record: my_health_check
+  register: my_health_check
 
 - route53:
     action: create
