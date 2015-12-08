@@ -61,6 +61,7 @@ def hash_params(params):
 class Role(Base, Become, Conditional, Taggable):
 
     _delegate_to = FieldAttribute(isa='string')
+    _delegate_facts = FieldAttribute(isa='bool', defalt=False)
 
     def __init__(self, play=None):
         self._role_name        = None
