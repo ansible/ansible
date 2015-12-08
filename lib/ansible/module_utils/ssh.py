@@ -91,12 +91,17 @@ class Ssh(object):
     def __init__(self):
         self.client = None
 
-    def open(self, host, port=22, username=None, password=None, timeout=10):
+    def open(self, host, port=22, username=None, password=None,
+            timeout=10, key_filename=None):
+
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+        use_keys = password is None
+
         ssh.connect(host, port=port, username=username, password=password,
-                    timeout=timeout, allow_agent=False, look_for_keys=False)
+                    timeout=timeout, allow_agent=use_keys, look_for_keys=use_keys,
+                    key_filename=key_filename)
 
         self.client = ssh
         return self.on_open()
