@@ -289,7 +289,7 @@ def main():
                 # os.path.exists() can return false in some
                 # circumstances where the directory does not have
                 # the execute bit for the current user set, in
-                # which case the stat() call will raise an OSError 
+                # which case the stat() call will raise an OSError
                 os.stat(os.path.dirname(dest))
             except OSError, e:
                 if "permission denied" in str(e).lower():
@@ -318,7 +318,7 @@ def main():
                     module.fail_json(msg="validate must contain %%s: %s" % (validate))
                 (rc,out,err) = module.run_command(validate % src)
                 if rc != 0:
-                    module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
+                    module.fail_json(msg="failed to validate", exit_status=rc, stdout=out, stderr=err)
             if remote_src:
                 _, tmpdest = tempfile.mkstemp(dir=os.path.dirname(dest))
                 shutil.copy2(src, tmpdest)
