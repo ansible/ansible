@@ -395,6 +395,10 @@ class PlayContext(Base):
         # set become defaults if not previouslly set
         task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
 
+        # have always_run override check mode
+        if task.always_run:
+            new_info.check_mode = False
+
         return new_info
 
     def make_become_cmd(self, cmd, executable=None):
