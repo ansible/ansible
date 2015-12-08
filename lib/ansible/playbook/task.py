@@ -72,7 +72,7 @@ class Task(Base, Conditional, Taggable, Become):
     _changed_when         = FieldAttribute(isa='string')
     _delay                = FieldAttribute(isa='int', default=5)
     _delegate_to          = FieldAttribute(isa='string')
-    _delegate_facts       = FieldAttribute(isa='bool', defalt=False)
+    _delegate_facts       = FieldAttribute(isa='bool', default=False)
     _failed_when          = FieldAttribute(isa='string')
     _first_available_file = FieldAttribute(isa='list')
     _loop                 = FieldAttribute(isa='string', private=True)
