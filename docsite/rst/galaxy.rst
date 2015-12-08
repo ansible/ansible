@@ -318,7 +318,7 @@ This only removes the role from Galaxy. It does not impact the actual GitHub rep
 Setup Travis Integerations
 --------------------------
 
-Using the setup command you can enable notifications from `travis <http://travis-ci.org>`. The setup command expects that the user previously authenticated with Galaxy using the login command.
+Using the setup command you can enable notifications from `travis <http://travis-ci.org>`_. The setup command expects that the user previously authenticated with Galaxy using the login command.
 
 ::
 
@@ -326,11 +326,11 @@ Using the setup command you can enable notifications from `travis <http://travis
 
     Added integration for travis chouseknecht/ansible-role-sendmail 
 
-The setup command requires your Travis token. The Travis token is not stored in Galaxy. It is used along with the GitHub username and repo to create a hash as described in `the Travis documentation <https://docs.travis-ci.com/user/notifications/>`. The calculated hash is stored in Galaxy and use to verify notifications received from Travis.
+The setup command requires your Travis token. The Travis token is not stored in Galaxy. It is used along with the GitHub username and repo to create a hash as described in `the Travis documentation <https://docs.travis-ci.com/user/notifications/>`_. The calculated hash is stored in Galaxy and used to verify notifications received from Travis.
 
-The setup command enables Galaxy to respond to notifications. Follow the `Travis getting started guide <https://docs.travis-ci.com/user/getting-started/>` to enable the Travis build process for the role repository.
+The setup command enables Galaxy to respond to notifications. Follow the `Travis getting started guide <https://docs.travis-ci.com/user/getting-started/>`_ to enable the Travis build process for the role repository.
 
-When you create your .travis.yml file add the following to cause Travis to notify Galaxy when build has completed:
+When you create your .travis.yml file add the following to cause Travis to notify Galaxy when a build completes:
 
 ::
 
