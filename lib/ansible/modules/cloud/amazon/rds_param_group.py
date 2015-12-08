@@ -47,7 +47,7 @@ options:
     required: false
     default: null
     aliases: []
-    choices: [ 'mysql5.1', 'mysql5.5', 'mysql5.6', 'oracle-ee-11.2', 'oracle-se-11.2', 'oracle-se1-11.2', 'postgres9.3', 'postgres9.4', 'sqlserver-ee-10.5', 'sqlserver-ee-11.0', 'sqlserver-ex-10.5', 'sqlserver-ex-11.0', 'sqlserver-se-10.5', 'sqlserver-se-11.0', 'sqlserver-web-10.5', 'sqlserver-web-11.0']
+    choices: [ 'aurora5.6', 'mariadb10.0', 'mysql5.1', 'mysql5.5', 'mysql5.6', 'oracle-ee-11.2', 'oracle-ee-12.1', 'oracle-se-11.2', 'oracle-se-12.1', 'oracle-se1-11.2', 'oracle-se1-12.1', 'postgres9.3', 'postgres9.4', 'sqlserver-ee-10.5', 'sqlserver-ee-11.0', 'sqlserver-ex-10.5', 'sqlserver-ex-11.0', 'sqlserver-ex-12.0', 'sqlserver-se-10.5', 'sqlserver-se-11.0', 'sqlserver-se-12.0', 'sqlserver-web-10.5', 'sqlserver-web-11.0', 'sqlserver-web-12.0' ]
   immediate:
     description:
       - Whether to apply the changes immediately, or after the next reboot of any associated instances.
@@ -60,13 +60,6 @@ options:
     required: false
     default: null
     aliases: []
-    choices: [ 'mysql5.1', 'mysql5.5', 'mysql5.6', 'oracle-ee-11.2', 'oracle-se-11.2', 'oracle-se1-11.2', 'postgres9.3', 'postgres9.4', 'sqlserver-ee-10.5', 'sqlserver-ee-11.0', 'sqlserver-ex-10.5', 'sqlserver-ex-11.0', 'sqlserver-se-10.5', 'sqlserver-se-11.0', 'sqlserver-web-10.5', 'sqlserver-web-11.0']
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
-    required: true
-    default: null
-    aliases: ['aws_region', 'ec2_region']
 author: "Scott Anderson (@tastychutney)"
 extends_documentation_fragment: aws
 '''
@@ -88,22 +81,30 @@ EXAMPLES = '''
 '''
 
 VALID_ENGINES = [
+    'aurora5.6',
+    'mariadb10.0',
     'mysql5.1',
     'mysql5.5',
     'mysql5.6',
     'oracle-ee-11.2',
+    'oracle-ee-12.1',
     'oracle-se-11.2',
+    'oracle-se-12.1',
     'oracle-se1-11.2',
+    'oracle-se1-12.1',
     'postgres9.3',
     'postgres9.4',
     'sqlserver-ee-10.5',
     'sqlserver-ee-11.0',
     'sqlserver-ex-10.5',
     'sqlserver-ex-11.0',
+    'sqlserver-ex-12.0',
     'sqlserver-se-10.5',
     'sqlserver-se-11.0',
+    'sqlserver-se-12.0',
     'sqlserver-web-10.5',
     'sqlserver-web-11.0',
+    'sqlserver-web-12.0',
 ]
 
 try:
