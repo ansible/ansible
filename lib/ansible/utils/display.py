@@ -103,6 +103,16 @@ class Display:
             elif os.path.exists("/opt/local/bin/cowsay"):
                 # MacPorts path for cowsay
                 self.cowsay = "/opt/local/bin/cowsay"
+            elif sys.platform == "darwin":
+                # Homebrew path for cowsay
+                try:
+                    cmd = subprocess.Popen(['brew', '--prefix'], stdout=subprocess.PIPE)
+                    (brew_prefix, err) = cmd.communicate()
+                    cowsay_path = os.path.join(brew_prefix, 'bin/cowsay')
+                    if os.path.exists(cowsay_path):
+                        self.cowsay = cowsay_path
+                except OSError:
+                    pass
 
     def display(self, msg, color=None, stderr=False, screen_only=False, log_only=False):
         """ Display a message to the user
