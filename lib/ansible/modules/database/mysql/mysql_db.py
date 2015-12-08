@@ -30,7 +30,7 @@ options:
   name:
     description:
       - name of the database to add or remove
-      - name=all May only be provided if I(state) is C(dump) or C(import). 
+      - name=all May only be provided if I(state) is C(dump) or C(import).
       - if name=all Works like --all-databases option for mysqldump (Added in 2.0)
     required: true
     default: null
@@ -370,7 +370,7 @@ def main():
             except Exception, e:
                 module.fail_json(msg="error deleting database: " + str(e))
         elif state == "dump":
-            rc, stdout, stderr = db_dump(module, login_host, login_user, 
+            rc, stdout, stderr = db_dump(module, login_host, login_user,
                                         login_password, db, target, all_databases,
                                         port=login_port,
                                         socket=module.params['login_unix_socket'])
@@ -379,7 +379,7 @@ def main():
             else:
                 module.exit_json(changed=True, db=db, msg=stdout)
         elif state == "import":
-            rc, stdout, stderr = db_import(module, login_host, login_user, 
+            rc, stdout, stderr = db_import(module, login_host, login_user,
                                         login_password, db, target, all_databases,
                                         port=login_port,
                                         socket=module.params['login_unix_socket'])
