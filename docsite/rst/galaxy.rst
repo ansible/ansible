@@ -221,20 +221,16 @@ This returns everything found in Galaxy for the role:
 List Installed Roles
 --------------------
 
-The list command shows the names of roles installed in roles_path.
+The list command shows the name and version of each role installed in roles_path.
 
 ::
 
     $ ansible-galaxy list
 
-The list of roles includes the installed version as well:
-
-::
-
-- chouseknecht.role-install_mongod, master
-- chouseknecht.test-role-1, v1.0.2
-- chrismeyersfsu.role-iptables, master
-- chrismeyersfsu.role-required_vars, master
+    - chouseknecht.role-install_mongod, master
+    - chouseknecht.test-role-1, v1.0.2
+    - chrismeyersfsu.role-iptables, master
+    - chrismeyersfsu.role-required_vars, master
 
 Remove an Installed Role
 ------------------------
@@ -264,14 +260,14 @@ To use the import, delete and setup commands authentication with Galaxy is requi
     Password for dsmith:
     Succesfully logged into Galaxy as dsmith
 
-As depicted above, the login command prompts for a GitHub username and password. It does not send this information to Galaxy. It actually authenticates with GitHub and creates a personal access token. It then sends the personal access token to Galaxy, which in turn verifies that you are you and returns an access token. The personal access token is then destroyed. No GitHub passwords or token are stored in Galaxy. 
+As depicted above, the login command prompts for a GitHub username and password. It does NOT send your password to Galaxy. It actually authenticates with GitHub and creates a personal access token. It then sends the personal access token to Galaxy, which in turn verifies that you are you and returns a Galaxy access token. After authentication completes the GitHub personal access token is destroyed. 
 
 If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the --github-token option to pass a personal access token that you create. Log into GitHub, go to Settings and click on Personal Access Token to create a token. 
 
 Import a Role
 -------------
 
-New in Ansible 2.0 roles can be imported using ansible-galaxy. The import command expects that the user previously authenticated with Galaxy using the login command.
+Roles can be imported using ansible-galaxy. The import command expects that the user previously authenticated with Galaxy using the login command.
 
 Import any GitHub repo you have access to:
 
@@ -307,7 +303,7 @@ If the --no-wait option is present, the command will not wait for results. Resul
 Delete a Role
 -------------
 
-Remove a role from the Galaxy web site using the delete command.  You can delete any role that you have access to in GitHub.
+Remove a role from the Galaxy web site using the delete command.  You can delete any role that you have access to in GitHub. The delete command expects that the user previously authenticated with Galaxy using the login command.
 
 ::
 
@@ -322,7 +318,7 @@ This only removes the role from Galaxy. It does not impact the actual GitHub rep
 Setup Travis Integerations
 --------------------------
 
-Using the setup command you can enable notifications from `travis <http://travis-ci.org>`.
+Using the setup command you can enable notifications from `travis <http://travis-ci.org>`. The setup command expects that the user previously authenticated with Galaxy using the login command.
 
 ::
 
@@ -351,6 +347,8 @@ List Travis Integrtions
 
 Use the --list option to display your Travis integrations:
 
+::
+
     $ ansible-galaxy setup --list
 
 
@@ -364,6 +362,8 @@ Remove Travis Integrations
 ==========================
 
 Use the --remove option to disable a Travis integration:
+
+::
 
     $ ansible-galaxy setup --remove ID
 
