@@ -157,7 +157,7 @@ class ActionModule(ActionBase):
             if self._play_context.diff:
                 diff = self._get_diff_data(dest, resultant, task_vars, source_file=False)
 
-            if not self._play_context.check_mode or self._task.always_run: # do actual work thorugh copy
+            if not self._play_context.check_mode: # do actual work thorugh copy
                 xfered = self._transfer_data(self._connection._shell.join_path(tmp, 'source'), resultant)
 
                 # fix file permissions when the copy is done as a different user
