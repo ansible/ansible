@@ -1674,9 +1674,10 @@ class DarwinUser(User):
         self._update_system_user()
         # here we don't care about change status since it is a creation,
         # thus changed is always true.
-        (rc, _out, _err, changed) = self._modify_group()
-        out += _out
-        err += _err
+        if self.groups:
+            (rc, _out, _err, changed) = self._modify_group()
+            out += _out
+            err += _err
         return (rc, err, out)
 
     def modify_user(self):
@@ -1708,12 +1709,13 @@ class DarwinUser(User):
             err += _err
             changed = rc
 
-        (rc, _out, _err, _changed) = self._modify_group()
-        out += _out
-        err += _err
+        if self.groups:
+            (rc, _out, _err, _changed) = self._modify_group()
+            out += _out
+            err += _err
 
-        if _changed is True:
-            changed = rc
+            if _changed is True:
+                changed = rc
 
         rc = self._update_system_user()
         if rc == 0:
