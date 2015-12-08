@@ -90,7 +90,7 @@ class PullCLI(CLI):
             help='verify GPG signature of checked out commit, if it fails abort running the playbook.'
                  ' This needs the corresponding VCS module to support such an operation')
 
-        self.options, self.args = self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args(self.args[1:])
 
         if not self.options.dest:
             hostname = socket.getfqdn()

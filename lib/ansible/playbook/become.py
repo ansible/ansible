@@ -90,15 +90,17 @@ class Become:
 
             display.deprecated("Instead of su/su_user, use become/become_user and set become_method to 'su' (default is sudo)")
 
-        # if we are becoming someone else, but some fields are unset,
-        # make sure they're initialized to the default config values
-        if ds.get('become', False):
-            if ds.get('become_method', None) is None:
-                ds['become_method'] = C.DEFAULT_BECOME_METHOD
-            if ds.get('become_user', None) is None:
-                ds['become_user'] = C.DEFAULT_BECOME_USER
 
         return ds
+
+    def set_become_defaults(self, become, become_method, become_user):
+        ''' if we are becoming someone else, but some fields are unset,
+            make sure they're initialized to the default config values  '''
+        if become:
+            if become_method is None:
+                become_method = C.DEFAULT_BECOME_METHOD
+            if become_user is None:
+                become_user = C.DEFAULT_BECOME_USER
 
     def _get_attr_become(self):
         '''

@@ -72,7 +72,7 @@ class PlaybookCLI(CLI):
         parser.add_option('--start-at-task', dest='start_at_task',
             help="start the playbook at the task matching this name")
 
-        self.options, self.args = parser.parse_args()
+        self.options, self.args = parser.parse_args(self.args[1:])
 
 
         self.parser = parser

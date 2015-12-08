@@ -133,7 +133,10 @@ class Task(Base, Conditional, Taggable, Become):
 
     def __repr__(self):
         ''' returns a human readable representation of the task '''
-        return "TASK: %s" % self.get_name()
+        if self.get_name() == 'meta ':
+            return "TASK: meta (%s)" % self.args['_raw_params']
+        else:
+            return "TASK: %s" % self.get_name()
 
     def _preprocess_loop(self, ds, new_ds, k, v):
         ''' take a lookup plugin name and store it correctly '''
