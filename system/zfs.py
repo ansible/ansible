@@ -39,6 +39,7 @@ options:
   origin:
     description:
       - Snapshot from which to create a clone
+    default: null
     required: false
   createparent:
     description:
@@ -48,6 +49,8 @@ options:
   key_value:
     description:
       - The C(zfs) module takes key=value pairs for zfs properties to be set. See the zfs(8) man page for more information.
+    default: null
+    required: false
 
 author: "Johan Wiren (@johanwiren)"
 '''
