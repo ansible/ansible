@@ -130,6 +130,29 @@ Here is an example::
 Note that you must have passphrase-less SSH keys or an ssh-agent configured for this to work, otherwise rsync
 will need to ask for a passphrase.
 
+.. _delegate_facts:
+
+Delegated facts
+```````````````
+
+.. versionadded:: 2.0
+
+Before 2.0 any facts gathered by a delegated task were assigned to the `inventory_hostname` (current host) instead of the host which actually produced the facts (delegated to host).
+The new directive `delegate_facts` if set to `True` will assing the task's gathered facts to the delegated host instead of the current one.::
+
+
+    - hosts: app_servers
+      tasks:
+        - name: gather facts from db servers
+          setup:
+          delegate_to: "{{item}}"
+          delegate_facts: True
+          with_items: "{{groups['dbservers'}}"
+
+The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers,
+that way you can lookup `hostvars['dbhost1']['default_ipv4_addresses'][0]` even though dbservers were not part of the play, or left out by using `--limit`.
+
+
 .. _run_once:
 
 Run Once
