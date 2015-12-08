@@ -53,8 +53,8 @@ author: "Johan Wiren (@johanwiren)"
 '''
 
 EXAMPLES = '''
-# Create a new file system called myfs in pool rpool
-- zfs: name=rpool/myfs state=present
+# Create a new file system called myfs in pool rpool with the setuid property turned off
+- zfs: name=rpool/myfs state=present setuid=off
 
 # Create a new volume called myvol in pool rpool.
 - zfs: name=rpool/myvol state=present volsize=10M
