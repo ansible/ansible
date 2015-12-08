@@ -42,9 +42,9 @@ Function Find-Command
     )
     $installed = get-command $command -erroraction Ignore
     write-verbose "$installed"
-    if ($installed.length -gt 0)
+    if ($installed)
     {
-        return $installed[0]
+        return $installed
     }
     return $null
 }
@@ -87,8 +87,12 @@ Function Test-IsInstalledFromWebPI
     }
     Write-Verbose "$results"
 
-    $matches = $results | select-string -pattern "^$package\s+"
-    return $matches.length -gt 0
+    if ($results -match "^$package\s+")
+    {
+        return $true
+    }
+
+    return $false
 }
 
 Function Install-WithWebPICmd
@@ -112,8 +116,8 @@ Function Install-WithWebPICmd
     }
 
     write-verbose "$results"
-    $success = $results | select-string -pattern "Install of Products: SUCCESS"
-    if ($success.length -gt 0)
+
+    if ($results -match "Install of Products: SUCCESS")
     {
         $result.changed = $true
     }
