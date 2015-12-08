@@ -137,14 +137,15 @@ def split_entry(entry):
         a.append(None)
 
     t, e, p = a
+    t = t.lower()
 
-    if t.lower().startswith("u"):
+    if t.startswith("u"):
         t = "user"
-    elif t.lower().startswith("g"):
+    elif t.startswith("g"):
         t = "group"
-    elif t.lower().startswith("m"):
+    elif t.startswith("m"):
         t = "mask"
-    elif t.lower().startswith("o"):
+    elif t.startswith("o"):
         t = "other"
     else:
         t = None
