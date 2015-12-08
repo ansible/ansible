@@ -392,6 +392,9 @@ class PlayContext(Base):
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
 
+        # set become defaults if not previouslly set
+        task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
+
         return new_info
 
     def make_become_cmd(self, cmd, executable=None):

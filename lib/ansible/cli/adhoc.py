@@ -70,7 +70,7 @@ class AdHocCLI(CLI):
             help="module name to execute (default=%s)" % C.DEFAULT_MODULE_NAME,
             default=C.DEFAULT_MODULE_NAME)
 
-        self.options, self.args = self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args(self.args[1:])
 
         if len(self.args) != 1:
             raise AnsibleOptionsError("Missing target hosts")
@@ -162,6 +162,9 @@ class AdHocCLI(CLI):
             cb = 'oneline'
         else:
             cb = 'minimal'
+
+        if not C.DEFAULT_LOAD_CALLBACK_PLUGINS:
+            C.DEFAULT_CALLBACK_WHITELIST = []
 
         if self.options.tree:
             C.DEFAULT_CALLBACK_WHITELIST.append('tree')
