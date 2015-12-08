@@ -524,7 +524,10 @@ class Facts(object):
         keytypes = ('dsa', 'rsa', 'ecdsa', 'ed25519')
 
         if self.facts['system'] == 'Darwin':
-            keydir = '/etc'
+            if self.facts['distribution'] == 'MacOSX' and LooseVersion(self.facts['distribution_version']) >= LooseVersion('10.11') :
+                keydir = '/etc/ssh'
+            else:
+                keydir = '/etc'
         else:
             keydir = '/etc/ssh'
 
