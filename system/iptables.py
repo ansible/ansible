@@ -54,12 +54,14 @@ options:
     default: filter
     choices: [ "filter", "nat", "mangle", "raw", "security" ]
   state:
-    description: Whether the rule should be absent or present.
+    description: 
+      - Whether the rule should be absent or present.
     required: false
     default: present
     choices: [ "present", "absent" ]
   ip_version:
-    description: Which version of the IP protocol this rule should apply to.
+    description: 
+      - Which version of the IP protocol this rule should apply to.
     required: false
     default: ipv4
     choices: [ "ipv4", "ipv6" ]
