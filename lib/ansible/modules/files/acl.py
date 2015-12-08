@@ -127,23 +127,29 @@ def split_entry(entry):
     ''' splits entry and ensures normalized return'''
 
     a = entry.split(':')
+
+    d = None
+    if entry.lower().startswith("d"):
+        d = True
+        a.pop(0)
+
     if len(a) == 2:
         a.append(None)
 
     t, e, p = a
 
-    if t.startswith("u"):
+    if t.lower().startswith("u"):
         t = "user"
-    elif t.startswith("g"):
+    elif t.lower().startswith("g"):
         t = "group"
-    elif t.startswith("m"):
+    elif t.lower().startswith("m"):
         t = "mask"
-    elif t.startswith("o"):
+    elif t.lower().startswith("o"):
         t = "other"
     else:
         t = None
 
-    return [t, e, p]
+    return [d, t, e, p]
 
 
 def build_entry(etype, entity, permissions=None):
@@ -269,16 +275,18 @@ def main():
         if etype or entity or permissions:
             module.fail_json(msg="'entry' MUST NOT be set when 'entity', 'etype' or 'permissions' are set.")
 
-        if state == 'present' and entry.count(":") != 2:
-            module.fail_json(msg="'entry' MUST have 3 sections divided by ':' when 'state=present'.")
+        if state == 'present' and not entry.count(":") in [2, 3]:
+            module.fail_json(msg="'entry' MUST have 3 or 4 sections divided by ':' when 'state=present'.")
 
-        if state == 'absent' and entry.count(":") != 1:
-            module.fail_json(msg="'entry' MUST have 2 sections divided by ':' when 'state=absent'.")
+        if state == 'absent' and not entry.count(":") in [1, 2]:
+            module.fail_json(msg="'entry' MUST have 2 or 3 sections divided by ':' when 'state=absent'.")
 
         if state == 'query':
             module.fail_json(msg="'entry' MUST NOT be set when 'state=query'.")
 
-        etype, entity, permissions = split_entry(entry)
+        default_flag, etype, entity, permissions = split_entry(entry)
+        if default_flag != None:
+            default = default_flag
 
     changed = False
     msg = ""
