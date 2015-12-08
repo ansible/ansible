@@ -1,0 +1,37 @@
+sudo: required
+dist: trusty
+language: python
+python:
+  - "2.7"
+services:
+  - docker
+env:
+  global:
+    - PATH="/usr/bin:$PATH"
+
+before_install:
+    # Ansible doesn't play well with virtualenv
+  - deactivate
+  - sudo apt-get update -qq
+  - sudo apt-get install docker-engine
+
+install:
+  - sudo pip install docker-py
+    # software-properties-common for ubuntu 14.04
+    # python-software-properties for ubuntu 12.04
+  - sudo apt-get install -y sshpass software-properties-common python-software-properties
+  - sudo apt-add-repository -y ppa:ansible/ansible
+  - sudo apt-get update -qq
+  - sudo apt-get install -y ansible
+  - sudo rm /usr/bin/python && sudo ln -s /usr/bin/python2.7 /usr/bin/python
+  - ansible-galaxy install -r test/requirements.yml -p test/roles/
+
+script:
+  # Ensure any invocation of ansible-playbook (i.e. sudo) results in host_key_checking disabled
+  - sudo ansible all -i "127.0.0.1," -m lineinfile -a "regexp=^#host_key_checking dest=/etc/ansible/ansible.cfg line='host_key_checking = False'" -c local
+  - ansible-playbook -i test/inventory test/main.yml --syntax-check
+  - sudo ansible-playbook -i test/inventory test/main.yml
+
+notifications:
+  # notify ansible galaxy of results
+  webhooks: http://goo.gl/nSuq9h
