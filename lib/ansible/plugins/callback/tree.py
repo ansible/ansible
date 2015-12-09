@@ -42,7 +42,7 @@ class CallbackModule(CallbackBase):
         self.tree = TREE_DIR
         if not self.tree:
             self.tree = os.path.expanduser("~/.ansible/tree")
-            self._display.warning("Defaulting to ~/.ansible/tree, invalid directory provided to tree option: %s" % self.tree)
+            self._display.warning("The tree callback is defaulting to ~/.ansible/tree, as an invalid directory was provided: %s" % self.tree)
 
     def write_tree_file(self, hostname, buf):
         ''' write something into treedir/hostname '''
