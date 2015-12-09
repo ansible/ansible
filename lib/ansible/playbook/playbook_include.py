@@ -35,7 +35,7 @@ class PlaybookInclude(Base, Conditional, Taggable):
 
     _name      = FieldAttribute(isa='string')
     _include   = FieldAttribute(isa='string')
-    _vars      = FieldAttribute(isa='dict', default='_ansible_container')
+    _vars      = FieldAttribute(isa='dict', default=dict())
 
     @staticmethod
     def load(data, basedir, variable_manager=None, loader=None):
