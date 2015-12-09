@@ -36,7 +36,7 @@
     make_target: "non_destructive"
   #pre_tasks:
   roles:
-    - { role: ansible_deps, tags: ansible_deps }
+    - { role: ansible_test_deps, tags: ansible_test_deps }
     - { role: run_integration,
         tags: run_integration,
         run_integration_test_flags: "{{ test_flags }}",
