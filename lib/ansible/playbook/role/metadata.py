@@ -40,7 +40,7 @@ class RoleMetadata(Base):
     '''
 
     _allow_duplicates = FieldAttribute(isa='bool', default=False)
-    _dependencies     = FieldAttribute(isa='list', default='_ansible_container')
+    _dependencies     = FieldAttribute(isa='list', default=[])
     _galaxy_info      = FieldAttribute(isa='GalaxyInfo')
 
     def __init__(self, owner=None):

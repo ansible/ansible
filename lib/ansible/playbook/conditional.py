@@ -33,7 +33,7 @@ class Conditional:
     to be run conditionally when a condition is met or skipped.
     '''
 
-    _when = FieldAttribute(isa='list', default='_ansible_container')
+    _when = FieldAttribute(isa='list', default=[])
 
     def __init__(self, loader=None):
         # when used directly, this class needs a loader, but we want to
