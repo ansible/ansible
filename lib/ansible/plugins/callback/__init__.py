@@ -59,6 +59,10 @@ class CallbackBase:
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
+    def _copy_result(self, result):
+        ''' helper for callbacks, so they don't all have to include deepcopy '''
+        return deepcopy(result)
+
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
             return json.dumps(dict(censored="the output has been hidden due to the fact that 'no_log: true' was specified for this result"))
@@ -126,7 +130,7 @@ class CallbackBase:
 
     def _process_items(self, result):
         for res in result._result['results']:
-            newres = deepcopy(result)
+            newres = self._copy_result(result)
             res['item'] = self._get_item(res)
             newres._result = res
             if 'failed' in res and res['failed']:

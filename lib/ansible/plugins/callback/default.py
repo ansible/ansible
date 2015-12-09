@@ -134,7 +134,14 @@ class CallbackModule(CallbackBase):
         self._display.banner(msg)
 
     def v2_on_file_diff(self, result):
-        if 'diff' in result._result and result._result['diff']:
+        if result._task.loop and 'results' in result._result:
+            for res in result._result['results']:
+                newres = self._copy_result(result)
+                res['item'] = self._get_item(res)
+                newres._result = res
+
+                self.v2_on_file_diff(newres)
+        elif 'diff' in result._result and result._result['diff']:
             self._display.display(self._get_diff(result._result['diff']))
 
     def v2_playbook_item_on_ok(self, result):
