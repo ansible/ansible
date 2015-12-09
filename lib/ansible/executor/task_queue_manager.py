@@ -56,7 +56,7 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True):
+    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
@@ -66,6 +66,7 @@ class TaskQueueManager:
         self.passwords         = passwords
         self._stdout_callback  = stdout_callback
         self._run_additional_callbacks = run_additional_callbacks
+        self._run_tree         = run_tree
 
         self._callbacks_loaded = False
         self._callback_plugins = []
@@ -160,6 +161,8 @@ class TaskQueueManager:
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
+                elif callback_name == 'tree' and self._run_tree:
+                    pass
                 elif not self._run_additional_callbacks or (callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                     continue
 
