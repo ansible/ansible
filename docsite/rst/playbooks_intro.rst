@@ -386,6 +386,7 @@ won't need them for much else.
    * Handler names live in a global namespace.
    * If two handler tasks have the same name, only one will run.
      `* <https://github.com/ansible/ansible/issues/4943>`_
+   * You cannot notify a handler that is defined inside of an include
 
 Roles are described later on, but it's worthwhile to point out that:
 
