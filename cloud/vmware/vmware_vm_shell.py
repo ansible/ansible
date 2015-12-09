@@ -24,7 +24,7 @@ module: vmware_vm_shell
 short_description: Execute a process in VM
 description:
     - Start a program in a VM without the need for network connection
-version_added: 2.0
+version_added: 2.1
 author: "Ritesh Khadgaray (@ritzk)"
 notes:
     - Tested on vSphere 5.5
@@ -134,6 +134,10 @@ def find_vm(content, vm_id, vm_id_type="dns_name", datacenter=None):
             vm = None
     elif vm_id_type == 'uuid':
         vm = si.FindByUuid(datacenter=datacenter, uuid=vm_id, vmSearch=True)
+    elif vm_id_type == 'vm_name':
+      for machine in get_all_objs(content, [vim.VirtualMachine]):
+        if machine.name == vm_id:
+          vm = machine
 
     return vm
 
@@ -151,7 +155,7 @@ def main():
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(datacenter=dict(default=None, type='str'),
                               vm_id=dict(required=True, type='str'),
-                              vm_id_type=dict(default='dns_name', type='str', choices=['inventory_path', 'uuid', 'dns_name']),
+                              vm_id_type=dict(default='vm_name', type='str', choices=['inventory_path', 'uuid', 'dns_name', 'vm_name']),
                               vm_username=dict(required=False, type='str'),
                               vm_password=dict(required=False, type='str', no_log=True),
                               vm_shell=dict(required=True, type='str'),
