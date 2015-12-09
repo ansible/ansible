@@ -31,7 +31,7 @@ On a Linux control machine::
 Active Directory Support
 ++++++++++++++++++++++++
 
-If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host), you will need to install the "python-kerberos" module and the MIT krb5 libraries it depends on.
+If you wish to connect to domain accounts published through Active Directory (as opposed to local accounts created on the remote host), you will need to install the "python-kerberos" module on the Ansible control host (and the MIT krb5 libraries it depends on). The Ansible control host also requires a properly configured computer account in Active Directory.
 
 Installing python-kerberos dependencies
 ---------------------------------------
@@ -131,7 +131,9 @@ To test this, ping the windows host you want to control by name then use the ip 
 
 If you get different hostnames back than the name you originally pinged, speak to your active directory administrator and get them to check that DNS Scavenging is enabled and that DNS and DHCP are updating each other.
 
-Check your ansible controller's clock is synchronised with your domain controller.  Kerberos is time sensitive and a little clock drift can cause tickets not be granted.
+Ensure that the Ansible controller has a properly configured computer account in the domain.
+
+Check your Ansible controller's clock is synchronised with your domain controller.  Kerberos is time sensitive and a little clock drift can cause tickets not be granted.
 
 Check you are using the real fully qualified domain name for the domain.  Sometimes domains are commonly known to users by aliases.  To check this run:
 
@@ -165,6 +167,8 @@ In group_vars/windows.yml, define the following inventory variables::
     ansible_password: SecretPasswordGoesHere
     ansible_port: 5986
     ansible_connection: winrm
+    # The following is necessary for Python 2.7.9+ when using default WinRM self-signed certificates:
+    ansible_winrm_server_cert_validation: ignore
 
 Although Ansible is mostly an SSH-oriented system, Windows management will not happen over SSH (`yet <http://blogs.msdn.com/b/powershell/archive/2015/06/03/looking-forward-microsoft-support-for-secure-shell-ssh.aspx>`).
 
@@ -189,6 +193,7 @@ Since 2.0, the following custom inventory variables are also supported for addit
 * ``ansible_winrm_path``: Specify an alternate path to the WinRM endpoint.  Ansible uses ``/wsman`` by default.
 * ``ansible_winrm_realm``: Specify the realm to use for Kerberos authentication.  If the username contains ``@``, Ansible will use the part of the username after ``@`` by default.
 * ``ansible_winrm_transport``: Specify one or more transports as a comma-separated list.  By default, Ansible will use ``kerberos,plaintext`` if the ``kerberos`` module is installed and a realm is defined, otherwise ``plaintext``.
+* ``ansible_winrm_server_cert_validation``: Specify the server certificate validation mode (``ignore`` or ``validate``). Ansible defaults to ``validate`` on Python 2.7.9 and higher, which will result in certificate validation errors against the Windows self-signed certificates. Unless verifiable certificates have been configured on the WinRM listeners, this should be set to ``ignore``
 * ``ansible_winrm_*``: Any additional keyword arguments supported by ``winrm.Protocol`` may be provided.
 
 .. _windows_system_prep:
@@ -221,7 +226,7 @@ Getting to PowerShell 3.0 or higher
 
 PowerShell 3.0 or higher is needed for most provided Ansible modules for Windows, and is also required to run the above setup script. Note that PowerShell 3.0 is only supported on Windows 7 SP1, Windows Server 2008 SP1, and later releases of Windows.
 
-Looking at an ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the win_ping technique referenced above.
+Looking at an Ansible checkout, copy the `examples/scripts/upgrade_to_ps3.ps1 <https://github.com/cchurch/ansible/blob/devel/examples/scripts/upgrade_to_ps3.ps1>`_ script onto the remote host and run a PowerShell console as an administrator.  You will now be running PowerShell 3 and can try connectivity again using the win_ping technique referenced above.
 
 .. _what_windows_modules_are_available:
 
@@ -248,10 +253,10 @@ Note there are a few other Ansible modules that don't start with "win" that also
 Developers: Supported modules and how it works
 ``````````````````````````````````````````````
 
-Developing ansible modules are covered in a `later section of the documentation <http://docs.ansible.com/developing_modules.html>`_, with a focus on Linux/Unix.
-What if you want to write Windows modules for ansible though?
+Developing Ansible modules are covered in a `later section of the documentation <http://docs.ansible.com/developing_modules.html>`_, with a focus on Linux/Unix.
+What if you want to write Windows modules for Ansible though?
 
-For Windows, ansible modules are implemented in PowerShell.  Skim those Linux/Unix module development chapters before proceeding.
+For Windows, Ansible modules are implemented in PowerShell.  Skim those Linux/Unix module development chapters before proceeding.
 
 Windows modules live in a "windows/" subfolder in the Ansible "library/" subtree.  For example, if a module is named
 "library/windows/win_ping", there will be embedded documentation in the "win_ping" file, and the actual PowerShell code will live in a "win_ping.ps1" file.  Take a look at the sources and this will make more sense.
@@ -351,7 +356,7 @@ form of new modules, tweaks to existing modules, documentation, or something els
    :doc:`developing_modules`
        How to write modules
    :doc:`playbooks`
-       Learning ansible's configuration management language
+       Learning Ansible's configuration management language
    `List of Windows Modules <http://docs.ansible.com/list_of_windows_modules.html>`_
        Windows specific module list, all implemented in PowerShell
    `Mailing List <http://groups.google.com/group/ansible-project>`_
