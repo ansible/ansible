@@ -388,7 +388,7 @@ class Inventory(object):
                     end = -1
                 subscript = (int(start), int(end))
                 if sep == '-':
-                    display.deprecated("Use [x:y] inclusive subscripts instead of [x-y]", version=2.0, removed=True)
+                    display.warning("Use [x:y] inclusive subscripts instead of [x-y] which has been removed")
 
         return (pattern, subscript)
 
