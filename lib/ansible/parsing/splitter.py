@@ -86,7 +86,7 @@ def parse_kv(args, check_raw=False):
                 # FIXME: make the retrieval of this list of shell/command
                 #        options a function, so the list is centralized
                 if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn'):
-                    raw_params.append(x)
+                    raw_params.append(orig_x)
                 else:
                     options[k.strip()] = unquote(v.strip())
             else:
