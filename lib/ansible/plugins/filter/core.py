@@ -193,6 +193,33 @@ def regex_escape(string):
     '''Escape all regular expressions special characters from STRING.'''
     return re.escape(string)
 
+
+def next_elem(alist, elem):
+    from jinja2 import Undefined
+
+    try:
+        i = alist.index(elem)
+        return alist[i+1]
+    except ValueError:
+        raise errors.AnsibleFilterError('%s not in %s' % (elem, alist))
+    except IndexError:
+        return Undefined()
+
+
+def prev_elem(alist, elem):
+    from jinja2 import Undefined
+
+    try:
+        i = alist.index(elem)
+        if i == 0:
+            return Undefined()
+        return alist[i-1]
+    except ValueError:
+        raise errors.AnsibleFilterError('%s not in %s' % (elem, alist))
+    except IndexError:
+        return Undefined()
+
+
 @environmentfilter
 def rand(environment, end, start=None, step=None):
     r = SystemRandom()
@@ -442,6 +469,9 @@ class FilterModule(object):
             'ternary': ternary,
 
             # list
+            'prev_elem': prev_elem,
+            'next_elem': next_elem,
+
             # random stuff
             'random': rand,
             'shuffle': randomize_list,

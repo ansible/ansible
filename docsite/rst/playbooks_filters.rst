@@ -113,6 +113,17 @@ To get the maximum value from a list of numbers::
 
     {{ [3, 4, 2] | max }}
 
+To get the next element after a certain element in a list::
+
+    {{ [3, 4, 2] | next_elem(4) }}
+
+To get the previous element before a certain element in a list::
+
+    {{ [3, 4, 2] | pref_elem(4) }}
+
+Asking for an element after the last or before the first one will
+return undefined.
+
 .. _set_theory_filters:
 
 Set Theory Filters
