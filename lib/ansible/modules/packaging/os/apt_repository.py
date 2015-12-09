@@ -116,7 +116,10 @@ def install_python_apt(module):
     if not module.check_mode:
         apt_get_path = module.get_bin_path('apt-get')
         if apt_get_path:
-            rc, so, se = module.run_command('%s update && %s install python-apt -y -q' % (apt_get_path, apt_get_path), use_unsafe_shell=True)
+            rc, so, se = module.run_command([apt_get_path, 'update'])
+            if rc != 0:
+                module.fail_json(msg="Failed to auto-install python-apt. Error was: '%s'" % se.strip())
+            rc, so, se = module.run_command([apt_get_path, 'install', 'python-apt', '-y', '-q'])
             if rc == 0:
                 global apt, apt_pkg, aptsources_distro, distro, HAVE_PYTHON_APT
                 import apt
