@@ -4,14 +4,13 @@ import sys
 try:
     import ovh
     import ovh.exceptions
+    from ovh.exceptions import APIError
     HAS_OVH = True
 except ImportError:
     HAS_OVH = False
 
 # import module snippets
 from ansible.module_utils.basic import *
-# and APIError from ovh api
-from ovh.exceptions import APIError
 
 DOCUMENTATION = '''
 ---
@@ -123,7 +122,7 @@ def main():
         argument_spec=dict(
             name=dict(required=True),
             backend=dict(required=True),
-            weight=dict(default='8', type='int'),
+            weight=dict(default=8, type='int'),
             probe=dict(default='none',
                        choices=['none', 'http', 'icmp', 'oco']),
             state=dict(default='present', choices=['present', 'absent']),
