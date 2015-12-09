@@ -64,7 +64,7 @@ class Task(Base, Conditional, Taggable, Become):
     # will be used if defined
     # might be possible to define others
 
-    _args                 = FieldAttribute(isa='dict', default=dict())
+    _args                 = FieldAttribute(isa='dict', default='_ansible_container')
     _action               = FieldAttribute(isa='string')
 
     _any_errors_fatal     = FieldAttribute(isa='bool')
