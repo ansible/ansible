@@ -50,49 +50,13 @@ except ImportError:
 
 class GalaxyCLI(CLI):
 
-    available_commands = {
-        "delete":    "remove a role from Galaxy",
-        "import":    "add a role contained in a GitHub repo to Galaxy",
-        "info":      "display details about a particular role",
-        "init":      "create a role directory structure in your roles path",
-        "install":   "download a role into your roles path",
-        "list":      "enumerate roles found in your roles path",
-        "login":     "authenticate with Galaxy API and store the token",
-        "remove":    "delete a role from your roles path",
-        "search":    "query the Galaxy API",
-        "setup":     "add a TravisCI integration to Galaxy",
-    } 
-
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
+    VALID_ACTIONS = ("delete","import","info","init","install","list","login","remove","search","setup")
     
     def __init__(self, args):
-        self.VALID_ACTIONS = self.available_commands.keys()
-        self.VALID_ACTIONS.sort()
         self.api = None
         self.galaxy = None
         super(GalaxyCLI, self).__init__(args)
-
-    def set_action(self):
-        """
-        Get the action the user wants to execute from the sys argv list.
-        """
-        for i in range(0,len(self.args)):
-            arg = self.args[i]
-            if arg in self.VALID_ACTIONS:
-                self.action = arg
-                del self.args[i]
-                break
-
-        if not self.action:
-            self.show_available_actions()
-
-    def show_available_actions(self):
-        # list available commands
-        display.display(u'\n' + "usage: ansible-galaxy COMMAND [--help] [options] ...")
-        display.display(u'\n' + "availabe commands:" + u'\n\n')
-        for key in self.VALID_ACTIONS:
-            display.display(u'\t' + "%-12s %s" % (key, self.available_commands[key]))
-        display.display(' ')
 
     def parse(self):
         ''' create an options parser for bin/ansible '''
@@ -109,11 +73,11 @@ class GalaxyCLI(CLI):
             self.parser.set_usage("usage: %prog delete [options] github_user github_repo")
         elif self.action == "import":
             self.parser.set_usage("usage: %prog import [options] github_user github_repo")
-            self.parser.add_option('-n', '--no-wait', dest='wait', action='store_false', default=True,
+            self.parser.add_option('--no-wait', dest='wait', action='store_false', default=True,
                 help='Don\'t wait for import results.')
-            self.parser.add_option('-b', '--branch', dest='reference',
+            self.parser.add_option('--branch', dest='reference',
                 help='The name of a branch to import. Defaults to the repository\'s default branch (usually master)')
-            self.parser.add_option('-t', '--status', dest='check_status', action='store_true', default=False,
+            self.parser.add_option('--status', dest='check_status', action='store_true', default=False,
                 help='Check the status of the most recent import request for given github_user/github_repo.')
         elif self.action == "info":
             self.parser.set_usage("usage: %prog info [options] role_name[,version]")
@@ -149,15 +113,14 @@ class GalaxyCLI(CLI):
                 help='GitHub username')
             self.parser.set_usage("usage: %prog search [searchterm1 searchterm2] [--galaxy-tags galaxy_tag1,galaxy_tag2] [--platforms platform1,platform2] [--author username]")
         elif self.action == "setup":
-            self.parser.set_usage("usage: %prog setup [options] source github_user github_repo secret" +
-                u'\n\n' + "Create an integration with travis.")
-            self.parser.add_option('-r', '--remove', dest='remove_id', default=None,
+            self.parser.set_usage("usage: %prog setup [options] source github_user github_repo secret")
+            self.parser.add_option('--remove', dest='remove_id', default=None,
                 help='Remove the integration matching the provided ID value. Use --list to see ID values.')
-            self.parser.add_option('-l', '--list', dest="setup_list", action='store_true', default=False,
+            self.parser.add_option('--list', dest="setup_list", action='store_true', default=False,
                 help='List all of your integrations.')
 
         # options that apply to more than one action
-        if not self.action in ("config","import","init","login","setup"):
+        if not self.action in ("import","init","login","setup"):
             self.parser.add_option('-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
                 help='The path to the directory containing your roles. '
                      'The default is the roles_path configured in your '
@@ -173,19 +136,14 @@ class GalaxyCLI(CLI):
             self.parser.add_option('-f', '--force', dest='force', action='store_true', default=False,
                 help='Force overwriting an existing role')
 
-        if self.action:
-            # get options, args and galaxy object
-            self.options, self.args =self.parser.parse_args()
-            display.verbosity = self.options.verbosity
-            self.galaxy = Galaxy(self.options)
+        self.options, self.args =self.parser.parse_args()
+        display.verbosity = self.options.verbosity
+        self.galaxy = Galaxy(self.options)
 
         return True
 
     def run(self):
-
-        if not self.action:
-            return True
-
+        
         super(GalaxyCLI, self).run()
 
         # if not offline, get connect to galaxy api
