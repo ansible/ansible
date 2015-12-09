@@ -137,8 +137,8 @@ Delegated facts
 
 .. versionadded:: 2.0
 
-Before 2.0 any facts gathered by a delegated task were assigned to the `inventory_hostname` (current host) instead of the host which actually produced the facts (delegated to host).
-The new directive `delegate_facts` if set to `True` will assing the task's gathered facts to the delegated host instead of the current one.::
+By default, any fact gathered by a delegated task are assigned to the `inventory_hostname` (the current host) instead of the host which actually produced the facts (the delegated to host).
+In 2.0, the directive `delegate_facts` may be set to `True` to assign the task's gathered facts to the delegated host instead of the current one.::
 
 
     - hosts: app_servers
@@ -149,8 +149,8 @@ The new directive `delegate_facts` if set to `True` will assing the task's gathe
           delegate_facts: True
           with_items: "{{groups['dbservers'}}"
 
-The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers,
-that way you can lookup `hostvars['dbhost1']['default_ipv4_addresses'][0]` even though dbservers were not part of the play, or left out by using `--limit`.
+The above will gather facts for the machines in the dbservers group and assign the facts to those machines and not to app_servers.
+This way you can lookup `hostvars['dbhost1']['default_ipv4_addresses'][0]` even though dbservers were not part of the play, or left out by using `--limit`.
 
 
 .. _run_once:
