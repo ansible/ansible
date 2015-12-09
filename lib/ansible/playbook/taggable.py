@@ -29,7 +29,7 @@ from ansible.template import Templar
 class Taggable:
 
     untagged = frozenset(['untagged'])
-    _tags = FieldAttribute(isa='list', default=[], listof=(string_types,int))
+    _tags = FieldAttribute(isa='list', default='_ansible_container', listof=(string_types,int))
 
     def __init__(self):
         super(Taggable, self).__init__()
