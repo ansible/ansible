@@ -52,6 +52,8 @@ class Galaxy(object):
         #TODO: move to getter for lazy loading
         self.default_readme = self._str_from_data_file('readme')
         self.default_meta = self._str_from_data_file('metadata_template.j2')
+        self.default_test = self._str_from_data_file('test_playbook.j2')
+        self.default_travis = self._str_from_data_file('travis.j2')
 
     def add_role(self, role):
         self.roles[role.name] = role
