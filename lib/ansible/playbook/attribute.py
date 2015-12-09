@@ -32,6 +32,17 @@ class Attribute:
         self.priority = priority
         self.always_post_validate = always_post_validate
 
+        # This is here to avoid `default=<container>` unwanted persistence across object instances
+        # We cannot rely on None as some fields use it to skip the code
+        # that would detect an empty container as a user error
+        if self.default == '_ansible_container':
+            if self.isa == 'list':
+                self.default = []
+            elif self.isa == 'dict':
+                self.default = {}
+            elif self.isa == 'set':
+                self.default = set()
+
     def __eq__(self, other):
         return other.priority == self.priority
 
