@@ -126,7 +126,7 @@ The above will create the following directory structure in the current working d
 ::
 
    README.md
-   .travsis.yml
+   .travis.yml
    defaults/
        main.yml
    files/
