@@ -102,7 +102,7 @@ class GalaxyCLI(CLI):
             self.parser.set_usage("usage: %prog list [role_name]")
         elif self.action == "login":
             self.parser.set_usage("usage: %prog login [options]")
-            self.parser.add_option('-g','--github-token', dest='token', default=None,
+            self.parser.add_option('--github-token', dest='token', default=None,
                 help='Identify with github token rather than username and password.')
         elif self.action == "search":
             self.parser.add_option('--platforms', dest='platforms',
@@ -120,7 +120,7 @@ class GalaxyCLI(CLI):
                 help='List all of your integrations.')
 
         # options that apply to more than one action
-        if not self.action in ("import","init","login","setup"):
+        if not self.action in ("delete","import","init","login","setup"):
             self.parser.add_option('-p', '--roles-path', dest='roles_path', default=C.DEFAULT_ROLES_PATH,
                 help='The path to the directory containing your roles. '
                      'The default is the roles_path configured in your '
