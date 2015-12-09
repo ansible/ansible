@@ -64,22 +64,22 @@ class Play(Base, Taggable, Become):
 
     # Connection
     _gather_facts        = FieldAttribute(isa='bool', default=None, always_post_validate=True)
-    _hosts               = FieldAttribute(isa='list', default=[], required=True, listof=string_types, always_post_validate=True)
+    _hosts               = FieldAttribute(isa='list', default='_ansible_container', required=True, listof=string_types, always_post_validate=True)
     _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
 
     # Variable Attributes
-    _vars_files          = FieldAttribute(isa='list', default=[], priority=99)
-    _vars_prompt         = FieldAttribute(isa='list', default=[], always_post_validate=True)
+    _vars_files          = FieldAttribute(isa='list', default='_ansible_container', priority=99)
+    _vars_prompt         = FieldAttribute(isa='list', default='_ansible_container', always_post_validate=True)
     _vault_password      = FieldAttribute(isa='string', always_post_validate=True)
 
     # Role Attributes
-    _roles               = FieldAttribute(isa='list', default=[], priority=90)
+    _roles               = FieldAttribute(isa='list', default='_ansible_container', priority=90)
 
     # Block (Task) Lists Attributes
-    _handlers            = FieldAttribute(isa='list', default=[])
-    _pre_tasks           = FieldAttribute(isa='list', default=[])
-    _post_tasks          = FieldAttribute(isa='list', default=[])
-    _tasks               = FieldAttribute(isa='list', default=[])
+    _handlers            = FieldAttribute(isa='list', default='_ansible_container')
+    _pre_tasks           = FieldAttribute(isa='list', default='_ansible_container')
+    _post_tasks          = FieldAttribute(isa='list', default='_ansible_container')
+    _tasks               = FieldAttribute(isa='list', default='_ansible_container')
 
     # Flag/Setting Attributes
     _any_errors_fatal    = FieldAttribute(isa='bool', default=False, always_post_validate=True)
