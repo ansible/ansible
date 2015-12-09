@@ -40,7 +40,7 @@ class ActionModule(ActionBase):
                 result['msg'] = self._task.args['msg']
         # FIXME: move the LOOKUP_REGEX somewhere else
         elif 'var' in self._task.args: # and not utils.LOOKUP_REGEX.search(self._task.args['var']):
-            results = self._templar.template(self._task.args['var'], convert_bare=True)
+            results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=False)
             if type(self._task.args['var']) in (list, dict):
                 # If var is a list or dict, use the type as key to display
                 result[to_unicode(type(self._task.args['var']))] = results
