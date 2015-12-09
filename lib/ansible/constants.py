@@ -255,7 +255,8 @@ ACCELERATE_MULTI_KEY           = get_config(p, 'accelerate', 'accelerate_multi_k
 PARAMIKO_PTY                   = get_config(p, 'paramiko_connection', 'pty', 'ANSIBLE_PARAMIKO_PTY', True, boolean=True)
 
 # galaxy related
-DEFAULT_GALAXY_URI             = get_config(p, 'galaxy', 'server_uri', 'ANSIBLE_GALAXY_SERVER_URI', 'https://galaxy.ansible.com')
+GALAXY_SERVER                  = get_config(p, 'galaxy', 'server', 'ANSIBLE_GALAXY_SERVER', 'https://galaxy.ansible.com')
+GALAXY_IGNORE_CERTS            = get_config(p, 'galaxy', 'ignore_certs', 'ANSIBLE_GALAXY_IGNORE', False, boolean=True)
 # this can be configured to blacklist SCMS but cannot add new ones unless the code is also updated
 GALAXY_SCMS                    = get_config(p, 'galaxy', 'scms', 'ANSIBLE_GALAXY_SCMS', 'git, hg', islist=True)
 
