@@ -195,6 +195,7 @@ def yum_base(conf_file=None):
     my = yum.YumBase()
     my.preconf.debuglevel=0
     my.preconf.errorlevel=0
+    my.preconf.plugins = True
     if conf_file and os.path.exists(conf_file):
         my.preconf.fn = conf_file
     if os.geteuid() != 0:
