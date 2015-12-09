@@ -85,6 +85,8 @@ newline being stripped you can change your playbook like this:
 ###Plugins
 
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
+* WinRM connection plugin passes all vars named `ansible_winrm_*` to the underlying pywinrm client. This allows, for instance, `ansible_winrm_server_cert_validation=ignore` to be used with newer versions of pywinrm to disable certificate validation on Python 2.7.9+.
+* WinRM connection plugin put_file is significantly faster and no longer has file size limitations. 
 
 ####Deprecated Modules (new ones in parens):
 
