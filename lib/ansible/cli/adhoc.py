@@ -158,7 +158,9 @@ class AdHocCLI(CLI):
         play_ds = self._play_ds(pattern, self.options.seconds, self.options.poll_interval)
         play = Play().load(play_ds, variable_manager=variable_manager, loader=loader)
 
-        if self.options.one_line:
+        if self.callback:
+            cb = self.callback
+        elif self.options.one_line:
             cb = 'oneline'
         else:
             cb = 'minimal'
@@ -166,7 +168,6 @@ class AdHocCLI(CLI):
         if self.options.tree:
             C.DEFAULT_CALLBACK_WHITELIST.append('tree')
             C.TREE_DIR = self.options.tree
-
         # now create a task queue manager to execute the play
         self._tqm = None
         try:

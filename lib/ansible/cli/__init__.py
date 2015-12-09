@@ -66,7 +66,7 @@ class CLI(object):
     LESS_OPTS = 'FRSX'  # -F (quit-if-one-screen) -R (allow raw ansi control chars)
                         # -S (chop long lines) -X (disable termcap init and de-init)
 
-    def __init__(self, args):
+    def __init__(self, args, callback=None):
         """
         Base init method for all command line programs
         """
@@ -75,6 +75,7 @@ class CLI(object):
         self.options = None
         self.parser = None
         self.action = None
+        self.callback = callback
 
     def set_action(self):
         """
