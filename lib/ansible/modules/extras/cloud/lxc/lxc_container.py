@@ -637,9 +637,10 @@ class LxcContainerManagement(object):
             variables.pop(v, None)
 
         return_dict = dict()
+        false_values = [None, ''] + BOOLEANS_FALSE
         for k, v in variables.items():
             _var = self.module.params.get(k)
-            if not [i for i in [None, ''] + BOOLEANS_FALSE if i == _var]:
+            if _var not in false_values:
                 return_dict[v] = _var
         else:
             return return_dict
