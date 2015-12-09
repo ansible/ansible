@@ -56,7 +56,7 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None):
+    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
@@ -65,6 +65,7 @@ class TaskQueueManager:
         self._stats            = AggregateStats()
         self.passwords         = passwords
         self._stdout_callback  = stdout_callback
+        self._run_additional_callbacks = run_additional_callbacks
 
         self._callbacks_loaded = False
         self._callback_plugins = []
@@ -159,7 +160,7 @@ class TaskQueueManager:
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
-                elif callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST):
+                elif not self._run_additional_callbacks or (callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                     continue
 
             self._callback_plugins.append(callback_plugin())

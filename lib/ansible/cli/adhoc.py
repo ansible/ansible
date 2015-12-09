@@ -163,9 +163,6 @@ class AdHocCLI(CLI):
         else:
             cb = 'minimal'
 
-        if not C.DEFAULT_LOAD_CALLBACK_PLUGINS:
-            C.DEFAULT_CALLBACK_WHITELIST = []
-
         if self.options.tree:
             C.DEFAULT_CALLBACK_WHITELIST.append('tree')
             C.TREE_DIR = self.options.tree
@@ -180,6 +177,7 @@ class AdHocCLI(CLI):
                     options=self.options,
                     passwords=passwords,
                     stdout_callback=cb,
+                    run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                 )
             result = self._tqm.run(play)
         finally:
