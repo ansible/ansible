@@ -163,9 +163,11 @@ class AdHocCLI(CLI):
         else:
             cb = 'minimal'
 
+        run_tree=False
         if self.options.tree:
             C.DEFAULT_CALLBACK_WHITELIST.append('tree')
             C.TREE_DIR = self.options.tree
+            run_tree=True
 
         # now create a task queue manager to execute the play
         self._tqm = None
@@ -178,6 +180,7 @@ class AdHocCLI(CLI):
                     passwords=passwords,
                     stdout_callback=cb,
                     run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
+                    run_tree=run_tree,
                 )
             result = self._tqm.run(play)
         finally:
