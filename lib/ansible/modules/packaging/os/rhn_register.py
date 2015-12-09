@@ -235,20 +235,20 @@ class Rhn(RegistrationBase):
             Register system to RHN.  If enable_eus=True, extended update
             support will be requested.
         '''
-        register_cmd = "/usr/sbin/rhnreg_ks --username='%s' --password='%s' --force" % (self.username, self.password)
+        register_cmd = ['/usr/sbin/rhnreg_ks', '--username', self.username, '--password', self.password, '--force']
         if self.module.params.get('server_url', None):
-            register_cmd += " --serverUrl=%s" % self.module.params.get('server_url')
+            register_cmd.extend(['--serverUrl', self.module.params.get('server_url')])
         if enable_eus:
-            register_cmd += " --use-eus-channel"
+            register_cmd.append('--use-eus-channel')
         if activationkey is not None:
-            register_cmd += " --activationkey '%s'" % activationkey
+            register_cmd.extend(['--activationkey', activationkey])
         if profilename is not None:
-            register_cmd += " --profilename '%s'" % profilename
+            register_cmd.extend(['--profilename', profilename])
         if sslcacert is not None:
-            register_cmd += " --sslCACert '%s'" % sslcacert
+            register_cmd.extend(['--sslCACert', sslcacert])
         if systemorgid is not None:
-            register_cmd += " --systemorgid '%s'" % systemorgid
-        rc, stdout, stderr = self.module.run_command(register_cmd, check_rc=True, use_unsafe_shell=True)
+            register_cmd.extend(['--systemorgid', systemorgid])
+        rc, stdout, stderr = self.module.run_command(register_cmd, check_rc=True)
 
     def api(self, method, *args):
         '''
