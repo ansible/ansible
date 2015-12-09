@@ -221,7 +221,7 @@ class StrategyBase:
                                 self._tqm._stats.increment('changed', host.name)
                             self._tqm.send_callback('v2_runner_on_ok', task_result)
 
-                        if self._diff and 'diff' in task_result._result:
+                        if self._diff:
                             self._tqm.send_callback('v2_on_file_diff', task_result)
 
                     self._pending_results -= 1
