@@ -377,7 +377,7 @@ def main():
             volume_size = dict(),
             volume_type = dict(choices=['standard', 'gp2', 'io1'], default='standard'),
             iops = dict(),
-            encrypted = dict(),
+            encrypted = dict(type='bool', default=False),
             device_name = dict(),
             zone = dict(aliases=['availability_zone', 'aws_zone', 'ec2_zone']),
             snapshot = dict(),
