@@ -260,8 +260,8 @@ class SystemdStrategy(GenericStrategy):
                 (rc, out, err))
 
     def get_permanent_hostname(self):
-        cmd = 'hostnamectl --static status'
-        rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
+        cmd = ['hostnamectl', '--static', 'status']
+        rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
