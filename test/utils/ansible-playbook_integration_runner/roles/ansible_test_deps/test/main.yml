@@ -4,21 +4,21 @@
   gather_facts: false
   vars:
     inventory:
-      - name: ansible_deps_host_1
+      - name: ansible_test_deps_host_1
         image: "chrismeyers/centos6"
-      - name: ansible_deps_host_2
+      - name: ansible_test_deps_host_2
         image: "chrismeyers/ubuntu12.04"
-      - name: ansible_deps_host_3
+      - name: ansible_test_deps_host_3
         image: "ubuntu-upstart:14.04"
   roles:
     - { role: provision_docker, provision_docker_company: 'ansible', provision_docker_inventory: "{{ inventory }}" }
 
-- name: Run ansible_deps Tests
+- name: Run ansible_test_deps Tests
   hosts: docker_containers
   vars:
     git_dir: "/tmp/ansible"
   roles:
-    - { role: ansible_deps }
+    - { role: ansible_test_deps }
   tasks:
     - name: Clone ansible
       git:
