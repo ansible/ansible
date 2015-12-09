@@ -76,14 +76,13 @@ def package_latest(module, name, site):
     # Only supports one package
     cmd = [ 'pkgutil', '--single', '-c' ]
     if site is not None:
-        cmd += [ '-t', pipes.quote(site) ]
-    cmd.append(pipes.quote(name))
-    cmd += [ '| tail -1 | grep -v SAME' ]
-    rc, out, err = run_command(module, cmd, use_unsafe_shell=True)
-    if rc == 1:
-        return True
-    else:
-        return False
+        cmd += [ '-t', site]
+    cmd.append(name)
+    rc, out, err = run_command(module, cmd)
+    # replace | tail -1 |grep -v SAME
+    # use -2, because splitting on \n create a empty line
+    # at the end of the list
+    return 'SAME' in out.split('\n')[-2]
 
 def run_command(module, cmd, **kwargs):
     progname = cmd[0]
