@@ -59,14 +59,18 @@ class WorkerProcess(multiprocessing.Process):
     for reading later.
     '''
 
-    def __init__(self, tqm, main_q, rslt_q, hostvars_manager, loader):
+    def __init__(self, rslt_q, task_vars, host, task, play_context, loader, variable_manager, shared_loader_obj):
 
         super(WorkerProcess, self).__init__()
         # takes a task queue manager as the sole param:
-        self._main_q   = main_q
-        self._rslt_q   = rslt_q
-        self._hostvars = hostvars_manager
-        self._loader   = loader
+        self._rslt_q            = rslt_q
+        self._task_vars         = task_vars
+        self._host              = host
+        self._task              = task
+        self._play_context      = play_context
+        self._loader            = loader
+        self._variable_manager  = variable_manager
+        self._shared_loader_obj = shared_loader_obj
 
         # dupe stdin, if we have one
         self._new_stdin = sys.stdin
@@ -97,73 +101,45 @@ class WorkerProcess(multiprocessing.Process):
         if HAS_ATFORK:
             atfork()
 
-        while True:
-            task = None
-            try:
-                #debug("waiting for work")
-                (host, task, basedir, zip_vars, compressed_vars, play_context, shared_loader_obj) = self._main_q.get(block=False)
+        try:
+            # execute the task and build a TaskResult from the result
+            debug("running TaskExecutor() for %s/%s" % (self._host, self._task))
+            executor_result = TaskExecutor(
+                self._host,
+                self._task,
+                self._task_vars,
+                self._play_context,
+                self._new_stdin,
+                self._loader,
+                self._shared_loader_obj,
+            ).run()
 
-                if compressed_vars:
-                    job_vars = json.loads(zlib.decompress(zip_vars))
-                else:
-                    job_vars = zip_vars
+            debug("done running TaskExecutor() for %s/%s" % (self._host, self._task))
+            self._host.vars = dict()
+            self._host.groups = []
+            task_result = TaskResult(self._host, self._task, executor_result)
 
-                job_vars['hostvars'] = self._hostvars.hostvars()
+            # put the result on the result queue
+            debug("sending task result")
+            self._rslt_q.put(task_result)
+            debug("done sending task result")
 
-                debug("there's work to be done! got a task/handler to work on: %s" % task)
+        except AnsibleConnectionFailure:
+            self._host.vars = dict()
+            self._host.groups = []
+            task_result = TaskResult(self._host, self._task, dict(unreachable=True))
+            self._rslt_q.put(task_result, block=False)
 
-                # because the task queue manager starts workers (forks) before the
-                # playbook is loaded, set the basedir of the loader inherted by
-                # this fork now so that we can find files correctly
-                self._loader.set_basedir(basedir)
-
-                # Serializing/deserializing tasks does not preserve the loader attribute,
-                # since it is passed to the worker during the forking of the process and
-                # would be wasteful to serialize. So we set it here on the task now, and
-                # the task handles updating parent/child objects as needed.
-                task.set_loader(self._loader)
-
-                # execute the task and build a TaskResult from the result
-                debug("running TaskExecutor() for %s/%s" % (host, task))
-                executor_result = TaskExecutor(
-                    host,
-                    task,
-                    job_vars,
-                    play_context,
-                    self._new_stdin,
-                    self._loader,
-                    shared_loader_obj,
-                ).run()
-                debug("done running TaskExecutor() for %s/%s" % (host, task))
-                task_result = TaskResult(host, task, executor_result)
-
-                # put the result on the result queue
-                debug("sending task result")
-                self._rslt_q.put(task_result)
-                debug("done sending task result")
-
-            except queue.Empty:
-                time.sleep(0.0001)
-            except AnsibleConnectionFailure:
+        except Exception as e:
+            if not isinstance(e, (IOError, EOFError, KeyboardInterrupt)) or isinstance(e, TemplateNotFound):
                 try:
-                    if task:
-                        task_result = TaskResult(host, task, dict(unreachable=True))
-                        self._rslt_q.put(task_result, block=False)
+                    self._host.vars = dict()
+                    self._host.groups = []
+                    task_result = TaskResult(self._host, self._task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
+                    self._rslt_q.put(task_result, block=False)
                 except:
-                    break
-            except Exception as e:
-                if isinstance(e, (IOError, EOFError, KeyboardInterrupt)) and not isinstance(e, TemplateNotFound):
-                    break
-                else:
-                    try:
-                        if task:
-                            task_result = TaskResult(host, task, dict(failed=True, exception=traceback.format_exc(), stdout=''))
-                            self._rslt_q.put(task_result, block=False)
-                    except:
-                        debug("WORKER EXCEPTION: %s" % e)
-                        debug("WORKER EXCEPTION: %s" % traceback.format_exc())
-                        break
+                    debug("WORKER EXCEPTION: %s" % e)
+                    debug("WORKER EXCEPTION: %s" % traceback.format_exc())
 
         debug("WORKER PROCESS EXITING")
-
 

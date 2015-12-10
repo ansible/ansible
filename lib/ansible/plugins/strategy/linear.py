@@ -169,6 +169,7 @@ class StrategyModule(StrategyBase):
                 skip_rest   = False
                 choose_step = True
 
+                results = []
                 for (host, task) in host_tasks:
                     if not task:
                         continue
@@ -243,12 +244,14 @@ class StrategyModule(StrategyBase):
                     if run_once:
                         break
 
+                    results += self._process_pending_results(iterator, one_pass=True)
+
                 # go to next host/task group
                 if skip_rest:
                     continue
 
                 display.debug("done queuing things up, now waiting for results queue to drain")
-                results = self._wait_on_pending_results(iterator)
+                results += self._wait_on_pending_results(iterator)
                 host_results.extend(results)
 
                 if not work_to_do and len(iterator.get_failed_hosts()) > 0:

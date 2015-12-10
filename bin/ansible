@@ -60,6 +60,7 @@ if __name__ == '__main__':
 
     try:
         display = Display()
+        display.debug("starting run")
 
         sub = None
         try:
