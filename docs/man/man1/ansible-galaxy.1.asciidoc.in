@@ -147,8 +147,9 @@ configured in your *ansible.cfg* file (/etc/ansible/roles if not configured)
 SEARCH
 ------
 
-The *search* sub-command returns a filtered list of roles found at
-galaxy.ansible.com.
+The *search* sub-command returns a filtered list of roles found on the remote
+server.
+
 
 USAGE
 ~~~~~
@@ -170,7 +171,7 @@ Provide a comma separated list of Platforms on which to filter.
 
 Specify the username of a Galaxy contributor on which to filter.
 
-*-c*, *--ingore-certs*::
+*-c*, *--ignore-certs*::
 
 Ignore TLS certificate errors. 
 
@@ -199,7 +200,7 @@ OPTIONS
 The path to the directory containing your roles. The default is the *roles_path* 
 configured in your *ansible.cfg* file (/etc/ansible/roles if not configured)
 
-*-c*, *--ingore-certs*::
+*-c*, *--ignore-certs*::
 
 Ignore TLS certificate errors. 
 
@@ -213,7 +214,7 @@ LOGIN
 
 The *login* sub-command is used to authenticate with galaxy.ansible.com. 
 Authentication is required to use the import, delete and setup commands.
-It will authenticate the user,retrieve a token from Galaxy, and store it
+It will authenticate the user, retrieve a token from Galaxy, and store it
 in the user's home directory.
 
 USAGE
@@ -236,7 +237,7 @@ click on Personal Access Token to create a token.
 OPTIONS
 ~~~~~~~
 
-*-c*, *--ingore-certs*::
+*-c*, *--ignore-certs*::
 
 Ignore TLS certificate errors. 
 
@@ -262,7 +263,7 @@ $ ansible-galaxy import [options] github_user github_repo
 
 OPTIONS
 ~~~~~~~
-*-c*, *--ingore-certs*::
+*-c*, *--ignore-certs*::
 
 Ignore TLS certificate errors. 
 
@@ -291,7 +292,7 @@ $ ansible-galaxy delete [options] github_user github_repo
 OPTIONS
 ~~~~~~~
 
-*-c*, *--ingore-certs*::
+*-c*, *--ignore-certs*::
 
 Ignore TLS certificate errors. 
 
@@ -323,7 +324,7 @@ $ ansible-galaxy setup [options] source github_user github_repo secret
 OPTIONS
 ~~~~~~~
 
-*-c*, *--ingore-certs*::
+*-c*, *--ignore-certs*::
 
 Ignore TLS certificate errors. 
 

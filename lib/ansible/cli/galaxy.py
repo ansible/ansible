@@ -49,7 +49,7 @@ except ImportError:
 class GalaxyCLI(CLI):
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
-    VALID_ACTIONS = ("delete","import","info","init","install","list","login","remove","search","setup")
+    VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
     
     def __init__(self, args):
         self.api = None

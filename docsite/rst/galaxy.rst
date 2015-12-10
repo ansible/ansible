@@ -364,8 +364,8 @@ When you create your .travis.yml file add the following to cause Travis to notif
     section of your ansible.cfg file.
 
 
-List Travis Integrtions
-=======================
+List Travis Integrations
+========================
 
 Use the --list option to display your Travis integrations:
 
