@@ -196,6 +196,8 @@ def main():
         argument_spec = dict(
             name =         dict(type='str', required=True),
             state =        dict(type='str', required=True, choices=['present', 'absent']),
+            # No longer used. Kept here to not interfere with zfs properties
+            createparent = dict(type='bool', required=False)
             ),
         supports_check_mode=True,
         check_invalid_arguments=False
