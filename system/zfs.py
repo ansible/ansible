@@ -176,9 +176,7 @@ class Zfs(object):
     def set_properties_if_changed(self):
         current_properties = self.get_current_properties()
         for prop, value in self.properties.iteritems():
-            if prop not in current_properties:
-                self.module.fail_json(msg="invalid property '%s'" % prop)
-            if current_properties[prop] != value:
+            if current_properties.get(prop, None) != value:
                 self.set_property(prop, value)
 
     def get_current_properties(self):
@@ -188,8 +186,9 @@ class Zfs(object):
         cmd += ['all', self.name]
         rc, out, err = self.module.run_command(" ".join(cmd))
         properties = dict()
-        for p, v in [l.split('\t')[1:3] for l in out.splitlines()]:
-            properties[p] = v
+        for prop, value, source in [l.split('\t')[1:4] for l in out.splitlines()]:
+            if source == 'local':
+                properties[prop] = value
         # Add alias for enhanced sharing properties
         properties['sharenfs'] = properties.get('share.nfs', None)
         properties['sharesmb'] = properties.get('share.smb', None)
