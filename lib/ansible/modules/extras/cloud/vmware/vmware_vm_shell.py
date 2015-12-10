@@ -135,9 +135,9 @@ def find_vm(content, vm_id, vm_id_type="dns_name", datacenter=None):
     elif vm_id_type == 'uuid':
         vm = si.FindByUuid(datacenter=datacenter, uuid=vm_id, vmSearch=True)
     elif vm_id_type == 'vm_name':
-      for machine in get_all_objs(content, [vim.VirtualMachine]):
-        if machine.name == vm_id:
-          vm = machine
+        for machine in get_all_objs(content, [vim.VirtualMachine]):
+            if machine.name == vm_id:
+                vm = machine
 
     return vm
 
