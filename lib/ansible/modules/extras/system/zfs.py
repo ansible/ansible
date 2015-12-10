@@ -33,7 +33,9 @@ options:
     required: true
   state:
     description:
-      - Whether to create (C(present)), or remove (C(absent)) a file system, snapshot or volume.
+      - Whether to create (C(present)), or remove (C(absent)) a 
+        file system, snapshot or volume. All parents/children
+        will be created/destroyed as needed to reach the desired state.
     choices: ['present', 'absent']
     required: true
   origin:
@@ -41,11 +43,6 @@ options:
       - Snapshot from which to create a clone
     default: null
     required: false
-  createparent:
-    description:
-      - Creates all non-existing parent file systems.
-    required: false
-    default: "on"
   key_value:
     description:
       - The C(zfs) module takes key=value pairs for zfs properties to be set. See the zfs(8) man page for more information.
@@ -119,7 +116,6 @@ class Zfs(object):
         volsize = properties.pop('volsize', None)
         volblocksize = properties.pop('volblocksize', None)
         origin = properties.pop('origin', None)
-        createparent = self.module.params.get('createparent')
         cmd = [self.zfs_cmd]
 
         if "@" in self.name:
@@ -132,8 +128,7 @@ class Zfs(object):
         cmd.append(action)
 
         if action in ['create', 'clone']:
-            if createparent:
-                cmd += ['-p']
+            cmd += ['-p']
 
         if volsize:
             cmd += ['-V', volsize]
@@ -201,7 +196,6 @@ def main():
         argument_spec = dict(
             name =         dict(type='str', required=True),
             state =        dict(type='str', required=True, choices=['present', 'absent']),
-            createparent = dict(type='bool', required=False, default=True),
             ),
         supports_check_mode=True,
         check_invalid_arguments=False
