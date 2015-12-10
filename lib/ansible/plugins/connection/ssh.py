@@ -463,7 +463,7 @@ class Connection(ConnectionBase):
             if states[state] == 'awaiting_prompt':
                 if self._flags['become_prompt']:
                     display.debug('Sending become_pass in response to prompt')
-                    stdin.write(self._play_context.become_pass + '\n')
+                    stdin.write('{0}\n'.format(to_bytes(self._play_context.become_pass )))
                     self._flags['become_prompt'] = False
                     state += 1
                 elif self._flags['become_success']:
