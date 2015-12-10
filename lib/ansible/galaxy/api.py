@@ -48,16 +48,15 @@ class GalaxyAPI(object):
     SUPPORTED_VERSIONS = ['v1']
 
     def __init__(self, galaxy):
-
         self.galaxy = galaxy
         self.token = GalaxyToken()
         self._api_server = C.GALAXY_SERVER
-        self._validate_certs = C.GALAXY_IGNORE_CERTS
+        self._validate_certs = not C.GALAXY_IGNORE_CERTS
 
         # set validate_certs
-        if galaxy.options.validate_certs == False:
+        if galaxy.options.ignore_certs:
             self._validate_certs = False
-        display.vvv('Check for valid certs: %s' % self._validate_certs)
+        display.vvv('Validate TLS certificates: %s' % self._validate_certs)
 
         # set the API server
         if galaxy.options.api_server != C.GALAXY_SERVER:
@@ -65,13 +64,12 @@ class GalaxyAPI(object):
         display.vvv("Connecting to galaxy_server: %s" % self._api_server)
 
         server_version = self.get_server_api_version()
-       
-        if server_version in self.SUPPORTED_VERSIONS:
-            self.baseurl = '%s/api/%s' % (self._api_server, server_version)
-            self.version = server_version # for future use
-            display.vvv("Base API: %s" % self.baseurl)
-        else:
+        if not server_version in self.SUPPORTED_VERSIONS:
             raise AnsibleError("Unsupported Galaxy server API version: %s" % server_version)
+
+        self.baseurl = '%s/api/%s' % (self._api_server, server_version)
+        self.version = server_version # for future use
+        display.vvv("Base API: %s" % self.baseurl)           
 
     def __auth_header(self):
         token = self.token.get()
