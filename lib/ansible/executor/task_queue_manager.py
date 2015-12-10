@@ -102,11 +102,7 @@ class TaskQueueManager:
         for i in xrange(num):
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
-
-            prc = WorkerProcess(self, main_q, rslt_q, self._hostvars_manager, self._loader)
-            prc.start()
-
-            self._workers.append((prc, main_q, rslt_q))
+            self._workers.append([None, main_q, rslt_q])
 
         self._result_prc = ResultProcess(self._final_q, self._workers)
         self._result_prc.start()
@@ -195,30 +191,11 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        class HostVarsManager(SyncManager):
-            pass
-
-        hostvars = HostVars(
+        self.hostvars = HostVars(
             inventory=self._inventory,
             variable_manager=self._variable_manager,
             loader=self._loader,
         )
-
-        HostVarsManager.register(
-            'hostvars',
-            callable=lambda: hostvars,
-            # FIXME: this is the list of exposed methods to the DictProxy object, plus our
-            #        special ones (set_variable_manager/set_inventory). There's probably a better way
-            #        to do this with a proper BaseProxy/DictProxy derivative
-            exposed=(
-                'set_variable_manager', 'set_inventory', '__contains__', '__delitem__',
-                'set_nonpersistent_facts', 'set_host_facts', 'set_host_variable',
-                '__getitem__', '__len__', '__setitem__', 'clear', 'copy', 'get', 'has_key',
-                'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values'
-            ),
-        )
-        self._hostvars_manager = HostVarsManager()
-        self._hostvars_manager.start()
 
         # Fork # of forks, # of hosts or serial, whichever is lowest
         contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(new_play.hosts))]
@@ -259,7 +236,6 @@ class TaskQueueManager:
         # and run the play using the strategy and cleanup on way out
         play_return = strategy.run(iterator, play_context)
         self._cleanup_processes()
-        self._hostvars_manager.shutdown()
         return play_return
 
     def cleanup(self):
@@ -275,7 +251,8 @@ class TaskQueueManager:
             for (worker_prc, main_q, rslt_q) in self._workers:
                 rslt_q.close()
                 main_q.close()
-                worker_prc.terminate()
+                if worker_prc and worker_prc.is_alive():
+                    worker_prc.terminate()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
