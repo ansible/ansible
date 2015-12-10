@@ -127,7 +127,7 @@ class GalaxyCLI(CLI):
         if self.action in ("import","info","init","install","login","search","setup","delete"):
             self.parser.add_option('-s', '--server', dest='api_server', default=C.GALAXY_SERVER,
                 help='The API server destination')
-            self.parser.add_option('-c', '--ignore-certs', action='store_false', dest='validate_certs', default=True,
+            self.parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=False,
                 help='Ignore SSL certificate validation errors.')
 
         if self.action in ("init","install"):
@@ -505,7 +505,7 @@ class GalaxyCLI(CLI):
             terms = []
             for i in range(len(self.args)):
                terms.append(self.args.pop())
-            search = '+'.join(terms)
+            search = '+'.join(terms[::-1])
 
         if not search and not self.options.platforms and not self.options.tags and not self.options.author:
             raise AnsibleError("Invalid query. At least one search term, platform, galaxy tag or author must be provided.")
@@ -520,9 +520,9 @@ class GalaxyCLI(CLI):
         data = ''
 
         if response['count'] > page_size:
-            data += ("Found %d roles matching your search. Showing first %s.\n" % (response['count'], page_size))
+            data += ("\nFound %d roles matching your search. Showing first %s.\n" % (response['count'], page_size))
         else:
-            data += ("Found %d roles matching your search:\n" % response['count'])
+            data += ("\nFound %d roles matching your search:\n" % response['count'])
 
         max_len = []
         for role in response['results']:

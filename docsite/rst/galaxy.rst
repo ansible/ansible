@@ -41,7 +41,7 @@ The most obvious use of the ansible-galaxy command is downloading roles from `th
    $ ansible-galaxy install username.rolename
 
 roles_path
-===============
+==========
 
 You can specify a particular directory where you want the downloaded roles to be placed::
 
