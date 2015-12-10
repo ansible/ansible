@@ -154,7 +154,7 @@ def main():
                 msg="server {0} not found".format(server_name_or_id))
 
         if state == 'present':
-            cloud.add_ips_to_server(
+            server = cloud.add_ips_to_server(
                 server=server, ips=floating_ip_address, reuse=reuse,
                 fixed_address=fixed_address, wait=wait, timeout=timeout)
             fip_address = cloud.get_server_public_ip(server)
