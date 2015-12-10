@@ -34,6 +34,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
+from ansible.plugins.callback import CallbackBase
 
 try:
     from __main__ import display
@@ -146,8 +147,14 @@ class TaskQueueManager:
         if self._stdout_callback is None:
             self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
 
-        if self._stdout_callback not in callback_loader:
-            raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+        if isinstance(self._stdout_callback, CallbackBase):
+            self._callback_plugins.append(self._stdout_callback)
+            stdout_callback_loaded = True
+        elif isinstance(self._stdout_callback, basestring):
+            if self._stdout_callback not in callback_loader:
+                raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+        else:
+            raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         for callback_plugin in callback_loader.all(class_only=True):
             if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
