@@ -194,7 +194,8 @@ class Inventory(object):
                 if self._restriction is not None:
                     hosts = [ h for h in hosts if h in self._restriction ]
 
-            HOSTS_PATTERNS_CACHE[pattern_hash] = list(set(hosts))
+            seen = set()
+            HOSTS_PATTERNS_CACHE[pattern_hash] = [x for x in hosts if x not in seen and not seen.add(x)]
 
         return HOSTS_PATTERNS_CACHE[pattern_hash][:]
 
