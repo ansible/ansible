@@ -872,7 +872,7 @@ class Nagios(object):
         pre = '[%s]' % int(time.time())
 
         post = '\n'
-        cmdstr = '%s %s %s' % (pre, cmd, post)
+        cmdstr = '%s %s%s' % (pre, cmd, post)
         self._write_command(cmdstr)
 
     def act(self):
