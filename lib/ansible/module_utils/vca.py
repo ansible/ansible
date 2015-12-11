@@ -108,7 +108,10 @@ class VcaAnsibleModule(AnsibleModule):
 
     def create_instance(self):
         service_type = self.params.get('service_type', DEFAULT_SERVICE_TYPE)
-        host = self.params.get('host', LOGIN_HOST.get('service_type'))
+        if service_type == 'vcd': 
+            host = self.params['host']
+        else:
+            host = LOGIN_HOST[service_type]
         username = self.params['username']
 
         version = self.params.get('api_version')
