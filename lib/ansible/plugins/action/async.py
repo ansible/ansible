@@ -70,7 +70,6 @@ class ActionModule(ActionBase):
         async_cmd = " ".join([str(x) for x in [env_string, async_module_path, async_jid, async_limit, remote_module_path, argsfile]])
         result.update(self._low_level_execute_command(cmd=async_cmd))
 
-        # clean up after
         time.sleep(1)
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
             self._remove_tmp_path(tmp)
