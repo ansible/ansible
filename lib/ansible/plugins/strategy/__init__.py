@@ -30,6 +30,11 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+<<<<<<< Updated upstream
+=======
+from ansible.executor.play_iterator import PlayIterator
+from ansible.executor.process.worker import WorkerProcess
+>>>>>>> Stashed changes
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
@@ -202,8 +207,10 @@ class StrategyBase:
                                 [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
                             else:
                                 iterator.mark_host_failed(host)
-                            self._tqm._failed_hosts[host.name] = True
-                            self._tqm._stats.increment('failures', host.name)
+                            (state, tmp_task) = iterator.get_next_task_for_host(host, peek=True)
+                            if state.run_state != PlayIterator.ITERATING_RESCUE:
+                                self._tqm._failed_hosts[host.name] = True
+                                self._tqm._stats.increment('failures', host.name)
                         else:
                             self._tqm._stats.increment('ok', host.name)
                         self._tqm.send_callback('v2_runner_on_failed', task_result, ignore_errors=task.ignore_errors)
