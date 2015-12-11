@@ -181,9 +181,7 @@ The search command will return a list of the first 1000 results matching your se
 
 .. note::
 
-    The search command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
-    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
-    section of your ansible.cfg file.
+   The format of results pictured here is new in Ansible 2.0.
 
 Get More Information About a Role
 ---------------------------------
