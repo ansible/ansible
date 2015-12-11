@@ -58,11 +58,12 @@ options:
     vm_id_type:
         description:
             - The identification tag for the VM
-        default: dns_name
+        default: vm_name
         choices:
             - 'uuid'
             - 'dns_name'
             - 'inventory_path'
+            - 'vm_name'
         required: False
     vm_username:
         description:
