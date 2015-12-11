@@ -319,7 +319,7 @@ class Connection(ConnectionBase):
         Starts the command and communicates with it until it ends.
         '''
 
-        display_cmd = map(pipes.quote, cmd[:-1]) + [cmd[-1]]
+        display_cmd = map(pipes.quote, cmd)
         display.vvv('SSH: EXEC {0}'.format(' '.join(display_cmd)), host=self.host)
 
         # Start the given command. If we don't need to pipeline data, we can try
