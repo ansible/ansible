@@ -150,7 +150,7 @@ class Role(Base, Become, Conditional, Taggable):
         current_when = getattr(self, 'when')[:]
         current_when.extend(role_include.when)
         setattr(self, 'when', current_when)
-        
+
         current_tags = getattr(self, 'tags')[:]
         current_tags.extend(role_include.tags)
         setattr(self, 'tags', current_tags)
@@ -174,7 +174,7 @@ class Role(Base, Become, Conditional, Taggable):
         if task_data:
             try:
                 self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader)
-            except:
+            except AssertionError:
                 raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=task_data)
 
         handler_data = self._load_role_yaml('handlers')
