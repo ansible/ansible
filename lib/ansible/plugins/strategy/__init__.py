@@ -30,11 +30,7 @@ from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
-<<<<<<< Updated upstream
-=======
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.worker import WorkerProcess
->>>>>>> Stashed changes
 from ansible.executor.task_result import TaskResult
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
