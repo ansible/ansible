@@ -49,12 +49,12 @@ options:
     aliases: []
   creates:
     description:
-      - a filename or glob pattern, when it already exists, this step will B(not) be run.
+      - a filename or (since 2.0) glob pattern, when it already exists, this step will B(not) be run.
     required: no
     default: null
   removes:
     description:
-      - a filename or glob pattern, when it does not exist, this step will B(not) be run.
+      - a filename or (since 2.0) glob pattern, when it does not exist, this step will B(not) be run.
     version_added: "0.8"
     required: no
     default: null
