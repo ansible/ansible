@@ -323,10 +323,12 @@ class TestStrategyBase(unittest.TestCase):
     def test_strategy_base_run_handlers(self):
         workers = []
         for i in range(0, 3):
+            mock_worker = MagicMock()
+            mock_worker.is_alive.return_value = False
             worker_main_q = MagicMock()
             worker_main_q.put.return_value = None
             worker_result_q = MagicMock()
-            workers.append([i, worker_main_q, worker_result_q])
+            workers.append([mock_worker, worker_main_q, worker_result_q])
 
         mock_tqm = MagicMock()
         mock_tqm._final_q = MagicMock()
