@@ -55,7 +55,7 @@ class ShellModule(object):
 
     # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
     def get_remote_filename(self, base_name):
-        return base_name.strip()
+        return '%s-%s' % (base_name.strip(), random.randint(0, 2**24))
 
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
