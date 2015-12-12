@@ -35,7 +35,7 @@ options:
       - set the user's password. (Required when adding a user)
     required: false
     default: null
-  password_hash:
+  encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash
     required: false
@@ -128,7 +128,7 @@ notes:
    - Currently, there is only support for the `mysql_native_password` encryted password hash module.
 
 requirements: [ "MySQLdb" ]
-author: "Ansible Core Team"
+author: "Jonathan Mainguy (@Jmainguy)"
 '''
 
 EXAMPLES = """
@@ -245,7 +245,7 @@ def user_add(cursor, user, host, password, encrypted, new_priv):
         for db_table, priv in new_priv.iteritems():
             privileges_grant(cursor, user,host,db_table,priv)
     return True
-        
+
 def is_hash(password):
     ishash = False
     if len(password) == 41 and password[0] == '*':
@@ -253,10 +253,10 @@ def is_hash(password):
             ishash = True
     return ishash
 
-def user_mod(cursor, user, host, password, password_hash, new_priv, append_privs):
+def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
     changed = False
     grant_option = False
-    
+
     # Handle clear text and hashed passwords.
     if bool(password):
         # Determine what user management method server uses
@@ -269,8 +269,9 @@ def user_mod(cursor, user, host, password, password_hash, new_priv, append_privs
         current_pass_hash = cursor.fetchone()
 
         if encrypted:
+            encrypted_string = (password)
             if is_hash(password):
-                if current_pass_hash[0] != encrypted:
+                if current_pass_hash[0] != encrypted_string:
                     if old_user_mgmt:
                         cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
                     else:
@@ -290,6 +291,7 @@ def user_mod(cursor, user, host, password, password_hash, new_priv, append_privs
                 else:
                     cursor.execute("ALTER USER %s@%s IDENTIFIED BY %s", (user, host, password))
                 changed = True
+
 
     # Handle privileges
     if new_priv is not None:
@@ -495,7 +497,14 @@ def main():
 
     if state == "present":
         if user_exists(cursor, user, host):
-            changed = user_mod(cursor, user, host, password, password_hash, priv, append_privs)
+            try:
+                if update_password == 'always':
+                    changed = user_mod(cursor, user, host, password, encrypted, priv, append_privs)
+                else:
+                    changed = user_mod(cursor, user, host, None, encrypted, priv, append_privs)
+
+            except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
+                module.fail_json(msg=str(e))
         else:
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
