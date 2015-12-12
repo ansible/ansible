@@ -43,7 +43,7 @@ options:
       - set the user's password. (Required when adding a user)
     required: false
     default: null
-  password_hash:
+  encrypted:
     description:
       - Indicate that the 'password' field is a `mysql_native_password` hash
     required: false
@@ -144,7 +144,7 @@ notes:
    - Currently, there is only support for the `mysql_native_password` encryted password hash module.
 
 requirements: [ "MySQLdb" ]
-author: "Ansible Core Team"
+author: "Jonathan Mainguy (@Jmainguy)"
 '''
 
 EXAMPLES = """
@@ -253,9 +253,21 @@ def user_add(cursor, user, host, host_all, password, new_priv):
             privileges_grant(cursor, user,host,db_table,priv)
     return True
 
-def user_mod(cursor, user, host, host_all, password, new_priv, append_privs):
+def is_hash(password):
+    ishash = False
+    if len(password) == 41 and password[0] == '*':
+        if frozenset(password[1:]).issubset(string.hexdigits):
+            ishash = True
+    return ishash
+
+def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
     changed = False
     grant_option = False
+
+    # Handle clear text and hashed passwords.
+    if bool(password):
+        # Determine what user management method server uses
+        old_user_mgmt = server_version_check(cursor)
 
     # to simplify code, if we have a specific host and no host_all, we create
     # a list with just host and loop over that
@@ -268,33 +280,45 @@ def user_mod(cursor, user, host, host_all, password, new_priv, append_privs):
         # Handle passwords
         if password is not None:
             cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
-            current_pass_hash = cursor.fetchone()
-            cursor.execute("SELECT PASSWORD(%s)", (password,))
+        else:
+            cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user,host))
+        current_pass_hash = cursor.fetchone()
+
+        if encrypted:
+            encrypted_string = (password)
+            if is_hash(password):
+                if current_pass_hash[0] != encrypted_string:
+                    if old_user_mgmt:
+                        cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
+                    else:
+                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
+                    changed = True
+            else:
+                module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
+        else:
+            if old_user_mgmt:
+                cursor.execute("SELECT PASSWORD(%s)", (password,))
+            else:
+                cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
             new_pass_hash = cursor.fetchone()
             if current_pass_hash[0] != new_pass_hash[0]:
                 cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,password))
                 changed = True
 
-        # Handle privileges
-        if new_priv is not None:
-            curr_priv = privileges_get(cursor, user,host)
 
-            # If the user has privileges on a db.table that doesn't appear at all in
-            # the new specification, then revoke all privileges on it.
-            for db_table, priv in curr_priv.iteritems():
-                # If the user has the GRANT OPTION on a db.table, revoke it first.
-                if "GRANT" in priv:
-                    grant_option = True
-                if db_table not in new_priv:
-                    if user != "root" and "PROXY" not in priv and not append_privs:
-                        privileges_revoke(cursor, user,host,db_table,priv,grant_option)
-                        changed = True
+    # Handle privileges
+    if new_priv is not None:
+        curr_priv = privileges_get(cursor, user,host)
 
-            # If the user doesn't currently have any privileges on a db.table, then
-            # we can perform a straight grant operation.
-            for db_table, priv in new_priv.iteritems():
-                if db_table not in curr_priv:
-                    privileges_grant(cursor, user,host,db_table,priv)
+        # If the user has privileges on a db.table that doesn't appear at all in
+        # the new specification, then revoke all privileges on it.
+        for db_table, priv in curr_priv.iteritems():
+            # If the user has the GRANT OPTION on a db.table, revoke it first.
+            if "GRANT" in priv:
+                grant_option = True
+            if db_table not in new_priv:
+                if user != "root" and "PROXY" not in priv and not append_privs:
+                    privileges_revoke(cursor, user,host,db_table,priv,grant_option)
                     changed = True
 
             # If the db.table specification exists in both the user's current privileges
@@ -502,12 +526,12 @@ def main():
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or ~/.my.cnf has the credentials")
 
     if state == "present":
-        if user_exists(cursor, user, host, host_all):
+        if user_exists(cursor, user, host):
             try:
                 if update_password == 'always':
-                    changed = user_mod(cursor, user, host, host_all, password, priv, append_privs)
+                    changed = user_mod(cursor, user, host, password, encrypted, priv, append_privs)
                 else:
-                    changed = user_mod(cursor, user, host, host_all, None, priv, append_privs)
+                    changed = user_mod(cursor, user, host, None, encrypted, priv, append_privs)
 
             except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
