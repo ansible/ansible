@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.strategy import StrategyBase
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
+from ansible.executor.play_iterator import PlayIterator
 
 from six.moves import queue as Queue
 from units.mock.loader import DictDataLoader
@@ -153,8 +154,12 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm._stats = MagicMock()
         mock_tqm._stats.increment.return_value = None
-        
+
+        mock_state = MagicMock()
+        mock_state.run_state = PlayIterator.ITERATING_COMPLETE
+
         mock_iterator = MagicMock()
+        mock_iterator.get_next_task_for_host.return_value = (mock_state, None)
         mock_iterator.mark_host_failed.return_value = None
 
         mock_host = MagicMock()
