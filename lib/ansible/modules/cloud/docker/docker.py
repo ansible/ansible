@@ -82,8 +82,9 @@ options:
     description:
       - List of volumes to mount within the container
       - 'Use docker CLI-style syntax: C(/host:/container[:mode])'
-      - You can specify a read mode for the mount with either C(ro) or C(rw).  SELinux hosts can additionally
-        use C(z) or C(Z) mount options to use a shared or private label for the volume.
+      - You can specify a read mode for the mount with either C(ro) or C(rw).
+        Starting at version 2.1, SELinux hosts can additionally use C(z) or C(Z)
+        mount options to use a shared or private label for the volume.
     default: null
   volumes_from:
     description:
