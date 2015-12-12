@@ -63,6 +63,11 @@ def get_error_message(xml_string):
     
 def get_eni_info(interface):
     
+    # Private addresses
+    private_addresses = []
+    for ip in interface.private_ip_addresses:
+        private_addresses.append({ 'private_ip_address': ip.private_ip_address, 'primary_address': ip.primary })
+
     interface_info = {'id': interface.id,
                       'subnet_id': interface.subnet_id,
                       'vpc_id': interface.vpc_id,
@@ -73,6 +78,7 @@ def get_eni_info(interface):
                       'private_ip_address': interface.private_ip_address,
                       'source_dest_check': interface.source_dest_check,
                       'groups': dict((group.id, group.name) for group in interface.groups),
+                      'private_ip_addresses': private_addresses
                       }
     
     if interface.attachment is not None:
