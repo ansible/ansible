@@ -25,7 +25,6 @@ __metaclass__ = type
 import os.path
 import sys
 import yaml
-import json
 import time
 
 from collections import defaultdict
@@ -40,7 +39,6 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.token import GalaxyToken
 from ansible.playbook.role.requirement import RoleRequirement
-from ansible.module_utils.urls import open_url
 
 try:
     from __main__ import display
@@ -61,10 +59,10 @@ class GalaxyCLI(CLI):
         "remove":    "delete a role from your roles path",
         "search":    "query the Galaxy API",
         "setup":     "add a TravisCI integration to Galaxy",
-    } 
+    }
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
-    
+
     def __init__(self, args):
         self.VALID_ACTIONS = self.available_commands.keys()
         self.VALID_ACTIONS.sort()
@@ -101,7 +99,7 @@ class GalaxyCLI(CLI):
             usage = "usage: %%prog [%s] [--help] [options] ..." % "|".join(self.VALID_ACTIONS),
             epilog = "\nSee '%s <command> --help' for more information on a specific command.\n\n" % os.path.basename(sys.argv[0])
         )
-        
+
         self.set_action()
 
         # options specific to actions
@@ -131,7 +129,7 @@ class GalaxyCLI(CLI):
             self.parser.add_option('-n', '--no-deps', dest='no_deps', action='store_true', default=False,
                 help='Don\'t download roles listed as dependencies')
             self.parser.add_option('-r', '--role-file', dest='role_file',
-                help='A file containing a list of roles to be imported')    
+                help='A file containing a list of roles to be imported')
         elif self.action == "remove":
             self.parser.set_usage("usage: %prog remove role1 role2 ...")
         elif self.action == "list":
@@ -190,7 +188,7 @@ class GalaxyCLI(CLI):
 
         # if not offline, get connect to galaxy api
         if self.action in ("import","info","install","search","login","setup","delete") or \
-            (self.action == 'init' and not self.options.offline):            
+            (self.action == 'init' and not self.options.offline):
             self.api = GalaxyAPI(self.galaxy)
 
         self.execute()
@@ -544,7 +542,7 @@ class GalaxyCLI(CLI):
     def execute_search(self):
         page_size = 1000
         search = None
-        
+
         if len(self.args):
             terms = []
             for i in range(len(self.args)):
@@ -556,7 +554,7 @@ class GalaxyCLI(CLI):
 
         response = self.api.search_roles(search, platforms=self.options.platforms,
             tags=self.options.tags, author=self.options.author, page_size=page_size)
-    
+
         if response['count'] == 0:
             display.display("No roles match your search.", color="yellow")
             return True
@@ -578,7 +576,7 @@ class GalaxyCLI(CLI):
         data += (format_str % ("----", "-----------"))
         for role in response['results']:
             data += (format_str % (role['username'] + '.' + role['name'],role['description']))
-            
+
         self.pager(data)
 
         return True
@@ -595,12 +593,12 @@ class GalaxyCLI(CLI):
             github_token = self.options.token
 
         galaxy_response = self.api.authenticate(github_token)
-        
+
         if self.options.token is None:
             # Remove the token we created
             login.remove_github_token()
-        
-        # Store the Galaxy token 
+
+        # Store the Galaxy token
         token = GalaxyToken()
         token.set(galaxy_response['token'])
 
@@ -611,7 +609,7 @@ class GalaxyCLI(CLI):
         """
         Import a role into Galaxy
         """
-        
+
         colors = {
             'INFO':    'normal',
             'WARNING': 'yellow',
@@ -631,7 +629,7 @@ class GalaxyCLI(CLI):
         else:
             # Submit an import request
             task = self.api.create_import_task(github_user, github_repo, reference=self.options.reference)
-            
+
             if len(task) > 1:
                 # found multiple roles associated with github_user/github_repo
                 display.display("WARNING: More than one Galaxy role associated with Github repo %s/%s." % (github_user,github_repo),
@@ -693,7 +691,7 @@ class GalaxyCLI(CLI):
         if len(self.args) < 4:
             raise AnsibleError("Missing one or more arguments. Expecting: source github_user github_repo secret")
             return 0
-            
+
         secret = self.args.pop()
         github_repo = self.args.pop()
         github_user = self.args.pop()
@@ -711,7 +709,7 @@ class GalaxyCLI(CLI):
 
         if len(self.args) < 2:
             raise AnsibleError("Missing one or more arguments. Expected: github_user github_repo")
-        
+
         github_repo = self.args.pop()
         github_user = self.args.pop()
         resp = self.api.delete_role(github_user, github_repo)
@@ -722,9 +720,8 @@ class GalaxyCLI(CLI):
             display.display("------ --------------- ----------")
             for role in resp['deleted_roles']:
                 display.display("%-8s %-15s %s" % (role.id,role.namespace,role.name))
-        
+
         display.display(resp['status'])
 
         return True
 
-        
