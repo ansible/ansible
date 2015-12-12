@@ -4,7 +4,7 @@ Releases
 .. contents:: Topics
    :local:
 
-.. schedule::
+.. _schedule:
 
 Release Schedule
 ````````````````
@@ -16,7 +16,7 @@ When a fix/feature gets added to the `devel` branch it will be part of the next 
 
 Sometimes an RC can be extended by a few days if a bugfix makes a change that can have far reaching consequences, so users have enough time to find any new issues that may stem from this.
 
-.. methods::
+.. _methods:
 
 Release methods
 ````````````````
@@ -25,7 +25,7 @@ Ansible normally goes through a 'release candidate', issuing an RC1 for a releas
 Otherwise fixes will be applied and an RC2 will be provided for testing and if no bugs after 2 days, the final release will be made, iterating this last step and incrementing the candidate number as we find major bugs.
 
 
-.. freezing::
+.. _freezing:
 
 Release feature freeze
 ``````````````````````
