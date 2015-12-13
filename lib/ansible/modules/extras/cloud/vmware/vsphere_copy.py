@@ -137,8 +137,9 @@ def main():
     }
 
     try:
-        r = open_url(module, url, data=data, headers=headers, method='PUT',
-                url_username=login, url_password=password, validate_certs=validate_certs)
+        r = open_url(url, data=data, headers=headers, method='PUT',
+                url_username=login, url_password=password, validate_certs=validate_certs,
+                force_basic_auth=True)
     except socket.error, e:
         if isinstance(e.args, tuple) and e[0] == errno.ECONNRESET:
             # VSphere resets connection if the file is in use and cannot be replaced
