@@ -350,6 +350,7 @@ newline being stripped you can change your playbook like this:
 * We do not ignore the explicitly set login user for ssh when it matches the 'current user' anymore, this allows overriding .ssh/config when it is set
   explicitly. Leaving it unset will still use the same user and respect .ssh/config. This also means ansible_ssh_user can now return a None value.
 * environment variables passed to remote shells now default to 'controller' settings, with fallback to en_us.UTF8 which was the previous default.
+* ansible-pull now defaults to doing shallow checkouts with git, use `--full` to return to previous behaviour.
 * Handling of undefined variables has changed.  In most places they will now raise an error instead of silently injecting an empty string.  Use the default filter if you want to approximate the old behaviour:
 
     ```
