@@ -119,7 +119,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type)
             if module_path:
                 break
-        else:
+        else:  # This is a for-else: http://bit.ly/1ElPkyg
             # Use Windows version of ping module to check module paths when
             # using a connection that supports .ps1 suffixes. We check specifically
             # for win_ping here, otherwise the code would look for ping.ps1
