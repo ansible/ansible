@@ -4,12 +4,13 @@ prune ticket_stubs
 prune packaging
 prune test
 prune hacking
-include README.md packaging/rpm/ansible.spec COPYING
+include README.md COPYING
 include examples/hosts
 include examples/ansible.cfg
 include lib/ansible/module_utils/powershell.ps1
 recursive-include lib/ansible/modules *
 recursive-include docs *
+recursive-include packaging *
 include Makefile
 include VERSION
 include MANIFEST.in
