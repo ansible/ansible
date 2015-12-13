@@ -80,8 +80,8 @@ class PullCLI(CLI):
             help='directory to checkout repository to')
         self.parser.add_option('-U', '--url', dest='url', default=None,
             help='URL of the playbook repository')
-        self.parser.add_option('--depth', dest='depth', default=None,
-            help='Depth of checkout, shallow checkout if greater or equal 1 . Defaults to full checkout.')
+        self.parser.add_option('--full', dest='fullclone', action='store_true',
+            help='Do a full clone, instead of a shallow one.')
         self.parser.add_option('-C', '--checkout', dest='checkout',
             help='branch/tag/commit to checkout.  ' 'Defaults to behavior of repository module.')
         self.parser.add_option('--accept-host-key', default=False, dest='accept_host_key', action='store_true',
@@ -157,8 +157,8 @@ class PullCLI(CLI):
             if self.options.verify:
                 repo_opts += ' verify_commit=yes'
                 
-            if self.options.depth:
-                repo_opts += ' depth=%s' % self.options.depth
+            if not self.options.fullclone:
+                repo_opts += ' depth=1'
 
 
         path = module_loader.find_plugin(self.options.module_name)
