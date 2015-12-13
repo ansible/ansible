@@ -26,6 +26,7 @@ from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.plugins.strategy import StrategyBase
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.executor.task_result import TaskResult
+from ansible.executor.play_iterator import PlayIterator
 
 from six.moves import queue as Queue
 from units.mock.loader import DictDataLoader
@@ -106,7 +107,9 @@ class TestStrategyBase(unittest.TestCase):
             worker_main_q = MagicMock()
             worker_main_q.put.return_value = None
             worker_result_q = MagicMock()
-            workers.append([i, worker_main_q, worker_result_q])
+            worker = None
+            workers.append([worker, worker_main_q, worker_result_q])
+
 
         mock_tqm = MagicMock()
         mock_tqm._final_q = MagicMock()
@@ -117,17 +120,13 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base._cur_worker = 0
         strategy_base._pending_results = 0
         strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
-        self.assertEqual(strategy_base._cur_worker, 1)
+        self.assertEqual(strategy_base._cur_worker, 0)
         self.assertEqual(strategy_base._pending_results, 1)
         strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
-        self.assertEqual(strategy_base._cur_worker, 2)
+        self.assertEqual(strategy_base._cur_worker, 1)
         self.assertEqual(strategy_base._pending_results, 2)
         strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
-        self.assertEqual(strategy_base._cur_worker, 0)
-        self.assertEqual(strategy_base._pending_results, 3)
-        workers[0][1].put.side_effect = EOFError
-        strategy_base._queue_task(host=MagicMock(), task=MagicMock(), task_vars=dict(), play_context=MagicMock())
-        self.assertEqual(strategy_base._cur_worker, 1)
+        self.assertEqual(strategy_base._cur_worker, 2)
         self.assertEqual(strategy_base._pending_results, 3)
 
     def test_strategy_base_process_pending_results(self):
@@ -153,8 +152,12 @@ class TestStrategyBase(unittest.TestCase):
 
         mock_tqm._stats = MagicMock()
         mock_tqm._stats.increment.return_value = None
-        
+
+        mock_state = MagicMock()
+        mock_state.run_state = PlayIterator.ITERATING_COMPLETE
+
         mock_iterator = MagicMock()
+        mock_iterator.get_next_task_for_host.return_value = (mock_state, None)
         mock_iterator.mark_host_failed.return_value = None
 
         mock_host = MagicMock()
@@ -318,10 +321,12 @@ class TestStrategyBase(unittest.TestCase):
     def test_strategy_base_run_handlers(self):
         workers = []
         for i in range(0, 3):
+            mock_worker = MagicMock()
+            mock_worker.is_alive.return_value = False
             worker_main_q = MagicMock()
             worker_main_q.put.return_value = None
             worker_result_q = MagicMock()
-            workers.append([i, worker_main_q, worker_result_q])
+            workers.append([mock_worker, worker_main_q, worker_result_q])
 
         mock_tqm = MagicMock()
         mock_tqm._final_q = MagicMock()
