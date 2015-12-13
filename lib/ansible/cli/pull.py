@@ -156,7 +156,7 @@ class PullCLI(CLI):
 
             if self.options.verify:
                 repo_opts += ' verify_commit=yes'
-                
+
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
 
