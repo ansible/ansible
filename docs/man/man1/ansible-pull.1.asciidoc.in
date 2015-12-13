@@ -95,6 +95,10 @@ Force running of playbook even if unable to update playbook repository.  This
 can be useful, for example, to enforce run-time state when a network
 connection may not always be up or possible.
 
+*--full*::
+
+Do a full clone of the repository. By default ansible-pull will do a shallow clone based on the last revision.
+
 *-h*, *--help*::
 
 Show the help message and exit.
