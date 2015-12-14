@@ -35,6 +35,13 @@ options:
       - set the user's password. (Required when adding a user)
     required: false
     default: null
+  encrypted:
+    description:
+      - Indicate that the 'password' field is a `mysql_native_password` hash
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
+    version_added: "2.0"
   host:
     description:
       - the 'host' part of the MySQL username
@@ -118,14 +125,18 @@ notes:
      without providing any login_user/login_password details. The second must drop a ~/.my.cnf file containing
      the new root credentials. Subsequent runs of the playbook will then succeed by reading the new credentials from
      the file."
+   - Currently, there is only support for the `mysql_native_password` encryted password hash module.
 
 requirements: [ "MySQLdb" ]
-author: "Ansible Core Team"
+author: "Jonathan Mainguy (@Jmainguy)"
 '''
 
 EXAMPLES = """
 # Create database user with name 'bob' and password '12345' with all database privileges
 - mysql_user: name=bob password=12345 priv=*.*:ALL state=present
+
+# Create database user with name 'bob' and previously hashed mysql native password '*EE0D72C1085C46C5278932678FBE2C6A782821B4' with all database privileges
+- mysql_user: name=bob password='*EE0D72C1085C46C5278932678FBE2C6A782821B4' encrypted=yes priv=*.*:ALL state=present
 
 # Creates database user 'bob' and password '12345' with all database privileges and 'WITH GRANT OPTION'
 - mysql_user: name=bob password=12345 priv=*.*:ALL,GRANT state=present
@@ -158,6 +169,7 @@ password=n<_665{vS43y
 import getpass
 import tempfile
 import re
+import string
 try:
     import MySQLdb
 except ImportError:
@@ -206,31 +218,80 @@ def connect(module, login_user=None, login_password=None, config_file=''):
     db_connection = MySQLdb.connect(**config)
     return db_connection.cursor()
 
+# User Authentication Management was change in MySQL 5.7
+# This is a generic check for if the server version is less than version 5.7
+def server_version_check(cursor):
+    cursor.execute("SELECT VERSION()");
+    result = cursor.fetchone()
+    version_str = result[0]
+    version = version_str.split('.')
+
+    if (int(version[0]) <= 5 and int(version[1]) < 7):
+      return True
+    else:
+      return False
+
 def user_exists(cursor, user, host):
     cursor.execute("SELECT count(*) FROM user WHERE user = %s AND host = %s", (user,host))
     count = cursor.fetchone()
     return count[0] > 0
 
-def user_add(cursor, user, host, password, new_priv):
-    cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
+def user_add(cursor, user, host, password, encrypted, new_priv):
+    if password and encrypted:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user,host,password))
+    elif password and not encrypted:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
             privileges_grant(cursor, user,host,db_table,priv)
     return True
 
-def user_mod(cursor, user, host, password, new_priv, append_privs):
+def is_hash(password):
+    ishash = False
+    if len(password) == 41 and password[0] == '*':
+        if frozenset(password[1:]).issubset(string.hexdigits):
+            ishash = True
+    return ishash
+
+def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
     changed = False
     grant_option = False
 
-    # Handle passwords
-    if password is not None:
-        cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
+    # Handle clear text and hashed passwords.
+    if bool(password):
+        # Determine what user management method server uses
+        old_user_mgmt = server_version_check(cursor)
+
+        if old_user_mgmt:
+            cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
+        else:
+            cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user,host))
         current_pass_hash = cursor.fetchone()
-        cursor.execute("SELECT PASSWORD(%s)", (password,))
-        new_pass_hash = cursor.fetchone()
-        if current_pass_hash[0] != new_pass_hash[0]:
-            cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,password))
-            changed = True
+
+        if encrypted:
+            encrypted_string = (password)
+            if is_hash(password):
+                if current_pass_hash[0] != encrypted_string:
+                    if old_user_mgmt:
+                        cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
+                    else:
+                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
+                    changed = True
+            else:
+                module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
+        else:
+            if old_user_mgmt:
+                cursor.execute("SELECT PASSWORD(%s)", (password,))
+            else:
+                cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
+            new_pass_hash = cursor.fetchone()
+            if current_pass_hash[0] != new_pass_hash[0]:
+                if old_user_mgmt:
+                    cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user, host, password))
+                else:
+                    cursor.execute("ALTER USER %s@%s IDENTIFIED BY %s", (user, host, password))
+                changed = True
+
 
     # Handle privileges
     if new_priv is not None:
@@ -388,6 +449,7 @@ def main():
             login_unix_socket=dict(default=None),
             user=dict(required=True, aliases=['name']),
             password=dict(default=None, no_log=True),
+            encrypted=dict(default=False, type='bool'),
             host=dict(default="localhost"),
             state=dict(default="present", choices=["absent", "present"]),
             priv=dict(default=None),
@@ -401,6 +463,7 @@ def main():
     login_password = module.params["login_password"]
     user = module.params["user"]
     password = module.params["password"]
+    encrypted = module.boolean(module.params["encrypted"])
     host = module.params["host"].lower()
     state = module.params["state"]
     priv = module.params["priv"]
@@ -436,9 +499,9 @@ def main():
         if user_exists(cursor, user, host):
             try:
                 if update_password == 'always':
-                    changed = user_mod(cursor, user, host, password, priv, append_privs)
+                    changed = user_mod(cursor, user, host, password, encrypted, priv, append_privs)
                 else:
-                    changed = user_mod(cursor, user, host, None, priv, append_privs)
+                    changed = user_mod(cursor, user, host, None, encrypted, priv, append_privs)
 
             except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
@@ -446,7 +509,7 @@ def main():
             if password is None:
                 module.fail_json(msg="password parameter required when adding a user")
             try:
-                changed = user_add(cursor, user, host, password, priv)
+                changed = user_add(cursor, user, host, password, encrypted, priv)
             except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
     elif state == "absent":
