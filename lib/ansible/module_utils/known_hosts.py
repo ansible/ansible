@@ -169,7 +169,7 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     if not os.path.exists(user_ssh_dir):
         if create_dir:
             try:
-                os.makedirs(user_ssh_dir, 0o700)
+                os.makedirs(user_ssh_dir, int('700', 8))
             except:
                 module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
         else:
