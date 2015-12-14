@@ -1,0 +1,9 @@
+---
+- name: copy a file from a task in a subdir
+  copy: src=test_role_files_path_file dest=/tmp/test_role_files_path_file
+  register: result
+
+- name: test if role base path is used not relatively to the subdir
+  assert:
+    that:
+      - 'not result|failed'

@@ -93,6 +93,9 @@ test_vault:
 test_delegate_to:
 	ansible-playbook test_delegate_to.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 
+test_role_files_path:
+	ansible-playbook test_role_files_path.yml -i $(INVENTORY)
+
 test_winrm:
 	ansible-playbook test_winrm.yml -i inventory.winrm -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 

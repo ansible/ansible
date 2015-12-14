@@ -1,0 +1,2 @@
+---
+- include: subdir/main.yml
