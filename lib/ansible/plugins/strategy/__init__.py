@@ -149,17 +149,20 @@ class StrategyBase:
             # way to share them with the forked processes
             shared_loader_obj = SharedPluginLoaderObj()
 
+            queued = False
             while True:
                 (worker_prc, main_q, rslt_q) = self._workers[self._cur_worker]
                 if worker_prc is None or not worker_prc.is_alive():
                     worker_prc = WorkerProcess(rslt_q, task_vars, host, task, play_context, self._loader, self._variable_manager, shared_loader_obj)
                     self._workers[self._cur_worker][0] = worker_prc
                     worker_prc.start()
-                    break
+                    queued = True
                 self._cur_worker += 1
                 if self._cur_worker >= len(self._workers):
                     self._cur_worker = 0
                     time.sleep(0.0001)
+                if queued:
+                    break
 
             del task_vars
             self._pending_results += 1
@@ -196,7 +199,7 @@ class StrategyBase:
                             else:
                                 iterator.mark_host_failed(host)
                             (state, tmp_task) = iterator.get_next_task_for_host(host, peek=True)
-                            if state.run_state != PlayIterator.ITERATING_RESCUE:
+                            if not state or state.run_state != PlayIterator.ITERATING_RESCUE:
                                 self._tqm._failed_hosts[host.name] = True
                                 self._tqm._stats.increment('failures', host.name)
                         else:
