@@ -58,7 +58,7 @@ Else
 
 Set-Attr $result "changed" $true;
 
-$logcontents = Get-Content $logfile;
+$logcontents = Get-Content $logfile | Out-String;
 Remove-Item $logfile;
 
 Set-Attr $result "log" $logcontents;
