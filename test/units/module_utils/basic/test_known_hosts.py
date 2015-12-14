@@ -33,6 +33,14 @@ class TestAnsibleModuleKnownHosts(unittest.TestCase):
             {'is_ssh_url': True, 'get_fqdn': 'five.example.org'},
         'ssh://six.example.org:21/example.org':
             {'is_ssh_url': True, 'get_fqdn': 'six.example.org'},
+        'ssh://[2001:DB8::abcd:abcd]/example.git':
+            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]'},
+        'ssh://[2001:DB8::abcd:abcd]:22/example.git':
+            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]'},
+        'username@[2001:DB8::abcd:abcd]/example.git':
+            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]'},
+        'username@[2001:DB8::abcd:abcd]:22/example.git':
+            {'is_ssh_url': True, 'get_fqdn': '[2001:DB8::abcd:abcd]'},
     }
 
     def test_is_ssh_url(self):
