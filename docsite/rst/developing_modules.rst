@@ -538,24 +538,34 @@ Windows modules checklist
 
     #!powershell
 
-then::
+  then::
+
     <GPL header>
-then::
+
+  then::
+
     # WANT_JSON
     # POWERSHELL_COMMON
     
-then, to parse all arguments into a variable modules generally use::
+  then, to parse all arguments into a variable modules generally use::
+
     $params = Parse-Args $args
 
 * Arguments:
     * Try and use state present and state absent like other modules
     * You need to check that all your mandatory args are present. You can do this using the builtin Get-AnsibleParam function. 
     * Required arguments::
+
         $package =  Get-AnsibleParam -obj $params -name name -failifempty $true
+
     * Required arguments with name validation::
+
         $state = Get-AnsibleParam -obj $params -name "State" -ValidateSet "Present","Absent" -resultobj $resultobj -failifempty $true
+
     * Optional arguments with name validation::
+
         $state = Get-AnsibleParam -obj $params -name "State" -default "Present" -ValidateSet "Present","Absent"
+
     * the If "FailIfEmpty" is true, the resultobj parameter is used to specify the object returned to fail-json. You can also override the default message 
       using $emptyattributefailmessage (for missing required attributes) and $ValidateSetErrorMessage (for attribute validation errors)
     * Look at existing modules for more examples of argument checking.
@@ -586,7 +596,7 @@ Starting in 1.8 you can deprecate modules by renaming them with a preceding _, i
 _old_cloud.py, This will keep the module available but hide it from the primary docs and listing.
 
 You can also rename modules and keep an alias to the old name by using a symlink that starts with _.
-This example allows the stat module to be called with fileinfo, making the following examples equivalent
+This example allows the stat module to be called with fileinfo, making the following examples equivalent::
 
     EXAMPLES = '''
     ln -s stat.py _fileinfo.py
