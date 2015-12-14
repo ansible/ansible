@@ -230,6 +230,8 @@ class CLI(object):
                 help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
                 help='further limit selected hosts to an additional pattern')
+            parser.add_option('--pass-limit-to-inventory', default=False, dest='passlimit', action='store_true',
+                help='pass the --limit argument to the inventory script')
 
         if module_opts:
             parser.add_option('-M', '--module-path', dest='module_path', default=None,

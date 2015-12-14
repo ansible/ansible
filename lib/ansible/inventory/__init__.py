@@ -51,7 +51,7 @@ class Inventory(object):
     Host inventory for ansible.
     """
 
-    def __init__(self, loader, variable_manager, host_list=C.DEFAULT_HOST_LIST):
+    def __init__(self, loader, variable_manager, host_list=C.DEFAULT_HOST_LIST, limit=None):
 
         # the host file file, or script path, or list of hosts
         # if a list, inventory data will NOT be loaded
@@ -78,7 +78,7 @@ class Inventory(object):
         self._restriction = None
         self._subset = None
 
-        self.parse_inventory(host_list)
+        self.parse_inventory(host_list,limit=limit)
 
     def serialize(self):
         data = dict()
@@ -87,7 +87,7 @@ class Inventory(object):
     def deserialize(self, data):
         pass
 
-    def parse_inventory(self, host_list):
+    def parse_inventory(self, host_list,limit=None):
 
         if isinstance(host_list, string_types):
             if "," in host_list:
@@ -118,7 +118,7 @@ class Inventory(object):
                 host_list = os.path.join(self.host_list, "")
                 self.parser = InventoryDirectory(loader=self._loader, groups=self.groups, filename=host_list)
             else:
-                self.parser = get_file_parser(host_list, self.groups, self._loader)
+                self.parser = get_file_parser(host_list, self.groups, self._loader, limit=limit)
                 vars_loader.add_directory(self.basedir(), with_subdir=True)
 
             if not self.parser:
