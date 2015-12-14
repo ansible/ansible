@@ -148,6 +148,12 @@ author: "Jonathan Mainguy (@Jmainguy)"
 '''
 
 EXAMPLES = """
+# Removes anonymous user account for localhost (the name parameter is required, but ignored)
+- mysql_user: name=anonymous user_anonymous=yes host=localhost state=absent
+
+# Removes all anonymous user accounts
+- mysql_user: name=anonymous user_anonymous=yes host_all=yes state=absent
+
 # Create database user with name 'bob' and password '12345' with all database privileges
 - mysql_user: name=bob password=12345 priv=*.*:ALL state=present
 
