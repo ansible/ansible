@@ -51,7 +51,7 @@ options:
       - "Package name, or package specifier with version, like C(name-1.0). When using state=latest, this can be '*' which means run: yum -y update. You can also pass a url or a local path to a rpm file.  To operate on several packages this can accept a comma separated list of packages or (as of 2.0) a list of packages."
     required: true
     default: null
-    aliases: []
+    aliases: [ 'pkg' ]
   exclude:
     description:
       - "Package name(s) to exclude when state=present, or latest"
@@ -65,9 +65,9 @@ options:
     default: null
   state:
     description:
-      - Whether to install (C(present), C(latest)), or remove (C(absent)) a package.
+      - Whether to install (C(present) or C(installed), C(latest)), or remove (C(absent) or C(removed)) a package.
     required: false
-    choices: [ "present", "latest", "absent" ]
+    choices: [ "present", "installed", "latest", "absent", "removed" ]
     default: "present"
   enablerepo:
     description:
@@ -116,6 +116,16 @@ options:
     default: "no"
     choices: ["yes", "no"]
     aliases: []
+
+  validate_certs:
+    description:
+      - This only applies if using a https url as the source of the rpm. e.g. for localinstall. If set to C(no), the SSL certificates will not be validated.
+      - This should only set to C(no) used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+      - Prior to 2.1 the code worked as if this was set to C(yes).
+    required: false
+    default: "yes"
+    choices: ["yes", "no"]
+    version_added: "2.1"
 
 notes:
   - When used with a loop of package names in a playbook, ansible optimizes
@@ -185,6 +195,7 @@ def yum_base(conf_file=None):
     my = yum.YumBase()
     my.preconf.debuglevel=0
     my.preconf.errorlevel=0
+    my.preconf.plugins = True
     if conf_file and os.path.exists(conf_file):
         my.preconf.fn = conf_file
     if os.geteuid() != 0:
@@ -965,6 +976,7 @@ def main():
             conf_file=dict(default=None),
             disable_gpg_check=dict(required=False, default="no", type='bool'),
             update_cache=dict(required=False, default="no", type='bool'),
+            validate_certs=dict(required=False, default="yes", type='bool'),
             # this should not be needed, but exists as a failsafe
             install_repoquery=dict(required=False, default="yes", type='bool'),
         ),

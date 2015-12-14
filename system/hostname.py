@@ -260,8 +260,8 @@ class SystemdStrategy(GenericStrategy):
                 (rc, out, err))
 
     def get_permanent_hostname(self):
-        cmd = 'hostnamectl --static status'
-        rc, out, err = self.module.run_command(cmd, use_unsafe_shell=True)
+        cmd = ['hostnamectl', '--static', 'status']
+        rc, out, err = self.module.run_command(cmd)
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
@@ -396,6 +396,57 @@ class SolarisStrategy(GenericStrategy):
         if rc != 0:
             self.module.fail_json(msg="Command failed rc=%d, out=%s, err=%s" %
                 (rc, out, err))
+
+# ===========================================
+
+class FreeBSDStrategy(GenericStrategy):
+    """
+    This is a FreeBSD hostname manipulation strategy class - it edits
+    the /etc/rc.conf.d/hostname file.
+    """
+
+    HOSTNAME_FILE = '/etc/rc.conf.d/hostname'
+
+    def get_permanent_hostname(self):
+
+        if not os.path.isfile(self.HOSTNAME_FILE):
+            try:
+                open(self.HOSTNAME_FILE, "a").write("hostname=temporarystub\n")
+            except IOError, err:
+                self.module.fail_json(msg="failed to write file: %s" %
+                    str(err))
+        try:
+            try:
+                f = open(self.HOSTNAME_FILE, 'r')
+                for line in f:
+                    line = line.strip()
+                    if line.startswith('hostname='):
+                        return line[10:].strip('"')
+            except Exception, err:
+                self.module.fail_json(msg="failed to read hostname: %s" % str(err))
+        finally:
+            f.close()
+
+        return None
+
+    def set_permanent_hostname(self, name):
+        try:
+            try:
+                f = open(self.HOSTNAME_FILE, 'r')
+                lines = [x.strip() for x in f]
+
+                for i, line in enumerate(lines):
+                    if line.startswith('hostname='):
+                        lines[i] = 'hostname="%s"' % name
+                        break
+                f.close()
+
+                f = open(self.HOSTNAME_FILE, 'w')
+                f.write('\n'.join(lines) + '\n')
+            except Exception, err:
+                self.module.fail_json(msg="failed to update hostname: %s" % str(err))
+        finally:
+            f.close()
 
 # ===========================================
 
@@ -540,6 +591,12 @@ class SolarisHostname(Hostname):
     platform = 'SunOS'
     distribution = None
     strategy_class = SolarisStrategy
+
+class FreeBSDHostname(Hostname):
+    platform = 'FreeBSD'
+    distribution = None
+    strategy_class = FreeBSDStrategy
+
 
 # ===========================================
 

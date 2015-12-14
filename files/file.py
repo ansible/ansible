@@ -157,8 +157,8 @@ def main():
             original_basename = dict(required=False), # Internal use only, for recursive ops
             recurse  = dict(default=False, type='bool'),
             force = dict(required=False, default=False, type='bool'),
-            diff_peek = dict(default=None),
-            validate = dict(required=False, default=None),
+            diff_peek = dict(default=None), # Internal use only, for internal checks in the action plugins
+            validate = dict(required=False, default=None), # Internal use only, for template and copy
             src = dict(required=False, default=None),
         ),
         add_file_common_args=True,
@@ -288,7 +288,7 @@ def main():
                         except OSError, ex:
                             # Possibly something else created the dir since the os.path.exists
                             # check above. As long as it's a dir, we don't need to error out.
-                            if not (ex.errno == errno.EEXISTS and os.isdir(curpath)):
+                            if not (ex.errno == errno.EEXIST and os.isdir(curpath)):
                                 raise
                         tmp_file_args = file_args.copy()
                         tmp_file_args['path']=curpath

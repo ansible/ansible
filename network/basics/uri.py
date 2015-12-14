@@ -159,7 +159,7 @@ EXAMPLES = '''
   register: webpage
 
 - action: fail
-  when: "'illustrative' not in webpage.content"
+  when: "'AWESOME' not in webpage.content"
 
 
 # Create a JIRA issue

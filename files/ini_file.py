@@ -97,6 +97,23 @@ EXAMPLES = '''
 
 import ConfigParser
 import sys
+import os
+
+# ==============================================================
+# match_opt
+
+def match_opt(option, line):
+  option = re.escape(option)
+  return re.match('%s *=' % option, line) \
+    or re.match('# *%s *=' % option, line) \
+    or re.match('; *%s *=' % option, line)
+
+# ==============================================================
+# match_active_opt
+
+def match_active_opt(option, line):
+  option = re.escape(option)
+  return re.match('%s *=' % option, line)
 
 # ==============================================================
 # do_ini
@@ -104,6 +121,11 @@ import sys
 def do_ini(module, filename, section=None, option=None, value=None, state='present', backup=False):
 
 
+    if not os.path.exists(filename):
+      try:
+        open(filename,'w').close()
+      except:
+        module.fail_json(msg="Destination file %s not writable" % filename)
     ini_file = open(filename, 'r')
     try:
         ini_lines = ini_file.readlines()
@@ -135,9 +157,7 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
             if within_section and option:
                 if state == 'present':
                     # change the existing option line
-                    if re.match('%s *=' % option, line) \
-                            or re.match('# *%s *=' % option, line) \
-                            or re.match('; *%s *=' % option, line):
+                    if match_opt(option, line):
                         newline = '%s = %s\n' % (option, value)
                         changed = ini_lines[index] != newline
                         ini_lines[index] = newline
@@ -148,14 +168,14 @@ def do_ini(module, filename, section=None, option=None, value=None, state='prese
                                 line = ini_lines[index]
                                 if line.startswith('['):
                                     break
-                                if re.match('%s *=' % option, line):
+                                if match_active_opt(option, line):
                                     del ini_lines[index]
                                 else:
                                     index = index + 1
                         break
                 else:
                     # comment out the existing option line
-                    if re.match('%s *=' % option, line):
+                    if match_active_opt(option, line):
                         ini_lines[index] = '#%s' % ini_lines[index]
                         changed = True
                         break

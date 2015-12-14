@@ -79,8 +79,11 @@ options:
     version_added: "1.5"
   volumes:
     description:
-      - List of volumes to mount within the container using docker CLI-style
-      - 'syntax: C(/host:/container[:mode]) where "mode" may be "rw" or "ro".'
+      - List of volumes to mount within the container
+      - 'Use docker CLI-style syntax: C(/host:/container[:mode])'
+      - You can specify a read mode for the mount with either C(ro) or C(rw).
+        Starting at version 2.1, SELinux hosts can additionally use C(z) or C(Z)
+        mount options to use a shared or private label for the volume.
     default: null
   volumes_from:
     description:
@@ -626,14 +629,14 @@ class DockerManager(object):
                 # host mount (e.g. /mnt:/tmp, bind mounts host's /tmp to /mnt in the container)
                 elif 2 <= len(parts) <= 3:
                     # default to read-write
-                    ro = False
+                    mode = 'rw'
                     # with supplied bind mode
                     if len(parts) == 3:
-                        if parts[2] not in ['ro', 'rw']:
-                            self.module.fail_json(msg='bind mode needs to either be "ro" or "rw"')
+                        if parts[2] not in ["rw", "rw,Z", "rw,z", "z,rw", "Z,rw", "Z", "z", "ro", "ro,Z", "ro,z", "z,ro", "Z,ro"]:
+                            self.module.fail_json(msg='invalid bind mode ' + parts[2])
                         else:
-                            ro = parts[2] == 'ro'
-                    self.binds[parts[0]] = {'bind': parts[1], 'ro': ro }
+                            mode = parts[2]
+                    self.binds[parts[0]] = {'bind': parts[1], 'mode': mode }
                 else:
                     self.module.fail_json(msg='volumes support 1 to 3 arguments')
 
@@ -1197,10 +1200,7 @@ class DockerManager(object):
                 for host_path, config in self.binds.iteritems():
                     if isinstance(config, dict):
                         container_path = config['bind']
-                        if config['ro']:
-                            mode = 'ro'
-                        else:
-                            mode = 'rw'
+                        mode = config['mode']
                     else:
                         container_path = config
                         mode = 'rw'
