@@ -99,7 +99,7 @@ class TaskQueueManager:
     def _initialize_processes(self, num):
         self._workers = []
 
-        for i in xrange(num):
+        for i in range(num):
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
             self._workers.append([None, main_q, rslt_q])
