@@ -69,7 +69,7 @@ options:
       - minimum version of perl module to consider acceptable
     required: false
     default: false
-    version_added: "2.0"
+    version_added: "2.1"
   system_lib:
     description:
      -  Use this if you want to install modules to the system perl include path. You must be root or have "passwordless" sudo for this to work.
