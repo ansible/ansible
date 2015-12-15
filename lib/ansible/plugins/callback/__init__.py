@@ -140,6 +140,12 @@ class CallbackBase:
             else:
                 self.v2_playbook_item_on_ok(newres)
 
+    def _clean_results(self, result, task_name):
+        if 'changed' in result and task_name in ['debug']:
+            del result['changed']
+        if 'invocation' in result and task_name in ['debug']:
+            del result['invocation']
+
     def set_play_context(self, play_context):
         pass
 
