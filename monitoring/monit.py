@@ -46,7 +46,7 @@ options:
         Ansible will sleep for five seconds between each check.
     required: false
     default: 300
-    version_added: "2.0"
+    version_added: "2.1"
 requirements: [ ]
 author: "Darryl Stoflet (@dstoflet)" 
 '''
