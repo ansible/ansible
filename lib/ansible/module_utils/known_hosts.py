@@ -28,7 +28,11 @@
 
 import os
 import hmac
-import urlparse
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 try:
     from hashlib import sha1
