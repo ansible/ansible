@@ -81,6 +81,16 @@ $ips = @()
 Foreach ($ip in $netcfg.IPAddress) { If ($ip) { $ips += $ip } }
 Set-Attr $result.ansible_facts "ansible_ip_addresses" $ips
 
+$env_vars = New-Object psobject
+foreach ($item in Get-ChildItem Env:)
+{
+    $name = $item | select -ExpandProperty Name
+    # Powershell ConvertTo-Json fails if string ends with \
+    $value = ($item | select -ExpandProperty Value).TrimEnd("\")
+    Set-Attr $env_vars $name $value
+}
+Set-Attr $result.ansible_facts "ansible_env" $env_vars
+
 $psversion = $PSVersionTable.PSVersion.Major
 Set-Attr $result.ansible_facts "ansible_powershell_version" $psversion
 
