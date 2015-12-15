@@ -653,7 +653,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
     elif resource_pool:
         try:
             cluster = [k for k,
-                       v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+                       v in vsphere_client.get_clusters().items() if v == cluster_name][0] if cluster_name else None
         except IndexError, e:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find Cluster named: %s" %
@@ -1056,7 +1056,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     if resource_pool:
         try:
             cluster = [k for k,
-                       v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+                       v in vsphere_client.get_clusters().items() if v == cluster_name][0] if cluster_name else None
         except IndexError, e:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find Cluster named: %s" %
