@@ -49,19 +49,15 @@ options:
       - 'A dictionary array of subnets to add of the form: { cidr: ..., az: ... , resource_tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: resource_tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed. As of 1.8, if the subnets parameter is not specified, no existing subnets will be modified.'
     required: false
     default: null
-    aliases: []
   vpc_id:
     description:
       - A VPC id to terminate when state=absent
     required: false
     default: null
-    aliases: []
   resource_tags:
     description:
       - 'A dictionary array of resource tags of the form: { tag1: value1, tag2: value2 }.  Tags in this list are used in conjunction with CIDR block to uniquely identify a VPC in lieu of vpc_id. Therefore, if CIDR/Tag combination does not exist, a new VPC will be created.  VPC tags not on this list will be ignored. Prior to 1.7, specifying a resource tag was optional.'
     required: true
-    default: null
-    aliases: []
     version_added: "1.6"
   internet_gateway:
     description:
@@ -69,37 +65,26 @@ options:
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-    aliases: []
   route_tables:
     description:
       - 'A dictionary array of route tables to add of the form: { subnets: [172.22.2.0/24, 172.22.3.0/24,], routes: [{ dest: 0.0.0.0/0, gw: igw},], resource_tags: ... }. Where the subnets list is those subnets the route table should be associated with, and the routes list is a list of routes to be in the table.  The special keyword for the gw of igw specifies that you should the route should go through the internet gateway attached to the VPC. gw also accepts instance-ids in addition igw. resource_tags is optional and uses dictionary form: { "Name": "public", ... }. This module is currently unable to affect the "main" route table due to some limitations in boto, so you must explicitly define the associated subnets or they will be attached to the main table implicitly. As of 1.8, if the route_tables parameter is not specified, no existing routes will be modified.'
     required: false
     default: null
-    aliases: []
   wait:
     description:
       - wait for the VPC to be in state 'available' before returning
     required: false
     default: "no"
     choices: [ "yes", "no" ]
-    aliases: []
   wait_timeout:
     description:
       - how long before wait gives up, in seconds
     default: 300
-    aliases: []
   state:
     description:
       - Create or terminate the VPC
     required: true
-    default: present
-    aliases: []
-  region:
-    description:
-      - The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used.
-    required: true
-    default: null
-    aliases: ['aws_region', 'ec2_region']
+    choices: [ "present", "absent" ]
 author: "Carson Gee (@carsongee)"
 extends_documentation_fragment: aws
 '''
