@@ -160,6 +160,12 @@ class HAProxy(object):
         self.wait_retries = self.module.params['wait_retries']
         self.wait_interval = self.module.params['wait_interval']
         self.command_results = []
+        self.status_servers = []
+        self.status_weights = []
+        self.previous_weights = []
+        self.previous_states  = []
+        self.current_states   = []
+        self.current_weights  = []
 
     def execute(self, cmd, timeout=200, capture_output=True):
         """
@@ -204,6 +210,34 @@ class HAProxy(object):
                 self.module.fail_json(msg="unable to find server %s/%s" % (pxname, svname))
 
         self.module.fail_json(msg="server %s/%s not status '%s' after %d retries. Aborting." % (pxname, svname, status, self.wait_retries))
+
+    def get_current_state(self, host, backend):
+        """
+        Gets the each original state value from show stat. 
+        Runs before and after to determine if values are changed. 
+        This relies on weight always being the next element after 
+        status in "show stat" as well as status states remaining
+        as indicated in status_states and haproxy documentation.
+        """
+   
+        output = self.execute('show stat')
+        output = output.lstrip('# ').strip()
+        output = output.split(',')
+        result = output
+        status_states = [ 'UP','DOWN','DRAIN','NOLB','MAINT' ]
+        self.status_server = []
+        status_weight_pos = []
+        self.status_weight = []
+
+        for check, status in enumerate(result):
+            if status in status_states:
+                self.status_server.append(status) 
+                status_weight_pos.append(check + 1) 
+
+        for weight in status_weight_pos:
+                self.status_weight.append(result[weight])
+
+        return{'self.status_server':self.status_server, 'self.status_weight':self.status_weight}
 
     def enabled(self, host, backend, weight):
         """
@@ -278,6 +312,10 @@ class HAProxy(object):
         Figure out what you want to do from ansible, and then do it.
         """
 
+	self.get_current_state(self.host, self.backend)
+	self.previous_states = ','.join(self.status_server)
+	self.previous_weights = ','.join(self.status_weight)
+
         # toggle enable/disbale server
         if self.state == 'enabled':
             self.enabled(self.host, self.backend, self.weight)
@@ -288,7 +326,17 @@ class HAProxy(object):
         else:
             self.module.fail_json(msg="unknown state specified: '%s'" % self.state)
 
-        self.module.exit_json(stdout=self.command_results, changed=True)
+        self.get_current_state(self.host, self.backend)
+        self.current_states = ','.join(self.status_server)
+        self.current_weights = ','.join(self.status_weight)
+
+
+        if self.current_weights != self.previous_weights:
+            self.module.exit_json(stdout=self.command_results, changed=True)  
+        elif self.current_states != self.previous_states:
+            self.module.exit_json(stdout=self.command_results, changed=True)
+        else:
+            self.module.exit_json(stdout=self.command_results, changed=False)  
 
 def main():
 
