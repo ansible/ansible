@@ -21,6 +21,7 @@ import base64
 import os
 import re
 import shlex
+import inspect
 import traceback
 import urlparse
 from ansible import errors
@@ -50,8 +51,8 @@ class Connection(object):
     '''WinRM connections over HTTP/HTTPS.'''
 
     transport_schemes = {
-        'http': [('kerberos', 'http'), ('plaintext', 'http'), ('plaintext', 'https')],
-        'https': [('kerberos', 'https'), ('plaintext', 'https')],
+        'http': [('kerberos', 'http'), ('plaintext', 'http'), ('ssl', 'https')],
+        'https': [('kerberos', 'https'), ('ssl', 'https')],
         }
 
     def __init__(self,  runner, host, port, user, password, *args, **kwargs):
@@ -75,6 +76,10 @@ class Connection(object):
         '''
         Establish a WinRM connection over HTTP/HTTPS.
         '''
+
+        # get winrm-specific connection vars
+        host_vars = self.runner.inventory._hosts_cache[self.delegate].get_variables()
+
         port = self.port or 5986
         vvv("ESTABLISH WINRM CONNECTION FOR USER: %s on PORT %s TO %s" % \
             (self.user, port, self.host), host=self.host)
@@ -88,11 +93,20 @@ class Connection(object):
             else:
                 realm = None
             endpoint = urlparse.urlunsplit((scheme, netloc, '/wsman', '', ''))
+
+            self._winrm_kwargs = dict(username=self.user, password=self.password, realm=realm)
+            argspec = inspect.getargspec(Protocol.__init__)
+            for arg in argspec.args:
+                if arg in ('self', 'endpoint', 'transport', 'username', 'password', 'realm'):
+                    continue
+                if 'ansible_winrm_%s' % arg in host_vars:
+                    self._winrm_kwargs[arg] = host_vars['ansible_winrm_%s' % arg]
+
             vvvv('WINRM CONNECT: transport=%s endpoint=%s' % (transport, endpoint),
                  host=self.host)
-            protocol = Protocol(endpoint, transport=transport,
-                                username=self.user, password=self.password,
-                                realm=realm)
+
+            protocol = Protocol(endpoint, transport=transport, **self._winrm_kwargs)
+
             try:
                 protocol.send_message('')
                 return protocol
