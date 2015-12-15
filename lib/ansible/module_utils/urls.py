@@ -328,6 +328,8 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
             sock = socket.create_connection((self.host, self.port), self.timeout)
 
         server_hostname = self.host
+        # Note: self._tunnel_host is not available on py < 2.6 but this code
+        # isn't used on py < 2.6 (lack of create_connection)
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
@@ -377,7 +379,10 @@ def generic_urlparse(parts):
         # get the username, password, etc.
         try:
             netloc_re = re.compile(r'^((?:\w)+(?::(?:\w)+)?@)?([A-Za-z0-9.-]+)(:\d+)?$')
-            (auth, hostname, port) = netloc_re.match(parts[1])
+            match = netloc_re.match(parts[1])
+            auth = match.group(1)
+            hostname = match.group(2)
+            port = match.group(3)
             if port:
                 # the capture group for the port will include the ':',
                 # so remove it and convert the port to an integer
@@ -387,6 +392,8 @@ def generic_urlparse(parts):
                 # and then split it up based on the first ':' found
                 auth = auth[:-1]
                 username, password = auth.split(':', 1)
+            else:
+                username = password = None
             generic_parts['username'] = username
             generic_parts['password'] = password
             generic_parts['hostname'] = hostname
@@ -394,7 +401,7 @@ def generic_urlparse(parts):
         except:
             generic_parts['username'] = None
             generic_parts['password'] = None
-            generic_parts['hostname'] = None
+            generic_parts['hostname'] = parts[1]
             generic_parts['port']     = None
     return generic_parts
 
@@ -536,7 +543,8 @@ class SSLValidationHandler(urllib2.BaseHandler):
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             if https_proxy:
                 proxy_parts = generic_urlparse(urlparse.urlparse(https_proxy))
-                s.connect((proxy_parts.get('hostname'), proxy_parts.get('port')))
+                port = proxy_parts.get('port') or 443
+                s.connect((proxy_parts.get('hostname'), port))
                 if proxy_parts.get('scheme') == 'http':
                     s.sendall(self.CONNECT_COMMAND % (self.hostname, self.port))
                     if proxy_parts.get('username'):
