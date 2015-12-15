@@ -64,6 +64,7 @@ class CallbackModule(CallbackBase):
             self._display.display("%s | FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result, indent=4)), color='red')
 
     def v2_runner_on_ok(self, result):
+        self._clean_results(result._result, result._task.action)
         if result._task.action in C.MODULE_NO_JSON:
             self._display.display(self._command_generic_msg(result._host.get_name(), result._result, "SUCCESS"), color='green')
         else:
