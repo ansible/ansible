@@ -326,11 +326,15 @@ class CustomHTTPSConnection(httplib.HTTPSConnection):
             sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
         else:
             sock = socket.create_connection((self.host, self.port), self.timeout)
+
+        server_hostname = self.host
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
+            server_hostname = self._tunnel_host
+
         if HAS_SSLCONTEXT:
-            self.sock = self.context.wrap_socket(sock, server_hostname=self.host)
+            self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
         else:
             self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
@@ -542,7 +546,7 @@ class SSLValidationHandler(urllib2.BaseHandler):
                     connect_result = s.recv(4096)
                     self.validate_proxy_response(connect_result)
                     if context:
-                        ssl_s = context.wrap_socket(s, server_hostname=proxy_parts.get('hostname'))
+                        ssl_s = context.wrap_socket(s, server_hostname=self.hostname)
                     else:
                         ssl_s = ssl.wrap_socket(s, ca_certs=tmp_ca_cert_path, cert_reqs=ssl.CERT_REQUIRED, ssl_version=PROTOCOL)
                         match_hostname(ssl_s.getpeercert(), self.hostname)
