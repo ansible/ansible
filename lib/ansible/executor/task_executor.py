@@ -32,6 +32,7 @@ from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVar
 from ansible.playbook.conditional import Conditional
 from ansible.playbook.task import Task
 from ansible.template import Templar
+from ansible.utils.connection import get_smart_connection_type
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.unicode import to_unicode
@@ -564,21 +565,7 @@ class TaskExecutor:
 
         conn_type = self._play_context.connection
         if conn_type == 'smart':
-            conn_type = 'ssh'
-            if sys.platform.startswith('darwin') and self._play_context.password:
-                # due to a current bug in sshpass on OSX, which can trigger
-                # a kernel panic even for non-privileged users, we revert to
-                # paramiko on that OS when a SSH password is specified
-                conn_type = "paramiko"
-            else:
-                # see if SSH can support ControlPersist if not use paramiko
-                try:
-                    cmd = subprocess.Popen(['ssh','-o','ControlPersist'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    (out, err) = cmd.communicate()
-                    if "Bad configuration option" in err or "Usage:" in err:
-                        conn_type = "paramiko"
-                except OSError:
-                    conn_type = "paramiko"
+            conn_type = get_smart_connection_type(self._play_context)
 
         connection = self._shared_loader_obj.connection_loader.get(conn_type, self._play_context, self._new_stdin)
         if not connection:

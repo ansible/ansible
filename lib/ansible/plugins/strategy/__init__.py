@@ -29,7 +29,7 @@ import zlib
 from jinja2.exceptions import UndefinedError
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable
+from ansible.errors import AnsibleError, AnsibleParserError, AnsibleUndefinedVariable, AnsibleConnectionFailure
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.task_result import TaskResult
@@ -39,6 +39,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
+from ansible.utils.connection import get_smart_connection_type
 from ansible.vars.unsafe_proxy import wrap_var
 
 try:
@@ -138,6 +139,33 @@ class StrategyBase:
         ''' handles queueing the task up to be sent to a worker '''
 
         display.debug("entering _queue_task() for %s/%s" % (host, task))
+
+        if C.HOST_KEY_CHECKING and not host.has_hostkey:
+            # caveat here, regarding with loops. It is assumed that none of the connection
+            # related variables would contain '{{item}}' as it would cause some really
+            # weird loops. As is, if someone did something odd like that they would need
+            # to disable host key checking
+            templar = Templar(loader=self._loader, variables=task_vars)
+            temp_pc = play_context.set_task_and_variable_override(task=task, variables=task_vars, templar=templar)
+            temp_pc.post_validate(templar)
+            if temp_pc.connection in ('smart', 'ssh') and get_smart_connection_type(temp_pc) == 'ssh':
+                try:
+                    # get the ssh connection plugin's class, and use its builtin
+                    # static method to fetch and save the key to the known_hosts file
+                    ssh_conn = connection_loader.get('ssh', class_only=True)
+                    ssh_conn.fetch_and_store_key(host, temp_pc)
+                except AnsibleConnectionFailure as e:
+                    # if that fails, add the host to the list of unreachable
+                    # hosts and send the appropriate callback
+                    self._tqm._unreachable_hosts[host.name] = True
+                    self._tqm._stats.increment('dark', host.name)
+                    tr = TaskResult(host=host, task=task, return_data=dict(msg=text_type(e)))
+                    self._tqm.send_callback('v2_runner_on_unreachable', tr)
+                    return
+
+            # finally, we set the has_hostkey flag to true for this
+            # host so we can skip it quickly in the future
+            host.has_hostkey = True
 
         task_vars['hostvars'] = self._tqm.hostvars
         # and then queue the new task

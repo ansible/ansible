@@ -19,7 +19,12 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from ansible.compat.six import text_type
+
+import base64
 import fcntl
+import hmac
+import operator
 import os
 import pipes
 import pty
@@ -28,9 +33,13 @@ import shlex
 import subprocess
 import time
 
+from hashlib import md5, sha1, sha256
+
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.boolean import boolean
+from ansible.utils.connection import get_smart_connection_type
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.unicode import to_bytes, to_unicode
 
@@ -41,7 +50,128 @@ except ImportError:
     display = Display()
 
 SSHPASS_AVAILABLE = None
+HASHED_KEY_MAGIC = "|1|"
 
+def split_args(argstring):
+    """
+    Takes a string like '-o Foo=1 -o Bar="foo bar"' and returns a
+    list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
+    the argument list. The list will not contain any empty elements.
+    """
+    return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
+
+def get_ssh_opts(play_context):
+    # FIXME: caching may help here
+    opts_dict = dict()
+    try:
+        cmd = ['ssh', '-G', play_context.remote_addr]
+        res = subprocess.check_output(cmd)
+        for line in res.split('\n'):
+            if ' ' in line:
+                (key, val) = line.split(' ', 1)
+            else:
+                key = line
+                val = ''
+            opts_dict[key.lower()] = val
+
+        # next, we manually override any options that are being
+        # set via ssh_args or due to the fact that `ssh -G` doesn't
+        # actually use the options set via -o
+        for opt in ['ssh_args', 'ssh_common_args', 'ssh_extra_args']:
+            attr = getattr(play_context, opt, None)
+            if attr is not None:
+                args = split_args(attr)
+                for arg in args:
+                    if '=' in arg:
+                        (key, val) = arg.split('=', 1)
+                        opts_dict[key.lower()] = val
+
+        return opts_dict
+    except subprocess.CalledProcessError:
+        return dict()
+
+def host_in_known_hosts(host, ssh_opts):
+    # the setting from the ssh_opts may actually be multiple files, so
+    # we use shlex.split and simply take the first one specified
+    user_host_file = os.path.expanduser(shlex.split(ssh_opts.get('userknownhostsfile', '~/.ssh/known_hosts'))[0])
+
+    host_file_list = []
+    host_file_list.append(user_host_file)
+    host_file_list.append("/etc/ssh/ssh_known_hosts")
+    host_file_list.append("/etc/ssh/ssh_known_hosts2")
+
+    hfiles_not_found = 0
+    for hf in host_file_list:
+        if not os.path.exists(hf):
+            continue
+        try:
+            host_fh = open(hf)
+        except (OSError, IOError) as e:
+            continue
+        else:
+            data = host_fh.read()
+            host_fh.close()
+
+        for line in data.split("\n"):
+            line = line.strip()
+            if line is None or " " not in line:
+                continue
+            tokens = line.split()
+            if not tokens:
+                continue
+            if tokens[0].find(HASHED_KEY_MAGIC) == 0:
+                # this is a hashed known host entry
+                try:
+                    (kn_salt, kn_host) = tokens[0][len(HASHED_KEY_MAGIC):].split("|",2)
+                    hash = hmac.new(kn_salt.decode('base64'), digestmod=sha1)
+                    hash.update(host)
+                    if hash.digest() == kn_host.decode('base64'):
+                        return True
+                except:
+                    # invalid hashed host key, skip it
+                    continue
+            else:
+                # standard host file entry
+                if host in tokens[0]:
+                    return True
+
+    return False
+
+def fetch_ssh_host_key(play_context, ssh_opts):
+    keyscan_cmd = ['ssh-keyscan']
+
+    if play_context.port:
+        keyscan_cmd.extend(['-p', text_type(play_context.port)])
+
+    if boolean(ssh_opts.get('hashknownhosts', 'no')):
+        keyscan_cmd.append('-H')
+
+    keyscan_cmd.append(play_context.remote_addr)
+
+    p = subprocess.Popen(keyscan_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+    (stdout, stderr) = p.communicate()
+    if stdout == '':
+        raise AnsibleConnectionFailure("Failed to connect to the host to fetch the host key: %s." % stderr)
+    else:
+        return stdout
+
+def add_host_key(host_key, ssh_opts):
+    # the setting from the ssh_opts may actually be multiple files, so
+    # we use shlex.split and simply take the first one specified
+    user_known_hosts = os.path.expanduser(shlex.split(ssh_opts.get('userknownhostsfile', '~/.ssh/known_hosts'))[0])
+    user_ssh_dir = os.path.dirname(user_known_hosts)
+
+    if not os.path.exists(user_ssh_dir):
+        raise AnsibleError("the user ssh directory does not exist: %s" % user_ssh_dir)
+    elif not os.path.isdir(user_ssh_dir):
+        raise AnsibleError("%s is not a directory" % user_ssh_dir)
+
+    try:
+        display.vv("adding to known_hosts file: %s" % user_known_hosts)
+        with open(user_known_hosts, 'a') as f:
+            f.write(host_key)
+    except (OSError, IOError) as e:
+        raise AnsibleError("error when trying to access the known hosts file: '%s', error was: %s" % (user_known_hosts, text_type(e)))
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
@@ -61,6 +191,56 @@ class Connection(ConnectionBase):
 
     def _connect(self):
         return self
+
+    @staticmethod
+    def fetch_and_store_key(host, play_context):
+        ssh_opts = get_ssh_opts(play_context)
+        if not host_in_known_hosts(play_context.remote_addr, ssh_opts):
+            display.debug("host %s does not have a known host key, fetching it" % host)
+
+            # build the list of valid host key types, for use later as we scan for keys.
+            # we also use this to determine the most preferred key when multiple keys are available
+            valid_host_key_types = [x.lower() for x in ssh_opts.get('hostbasedkeytypes', '').split(',')]
+
+            # attempt to fetch the key with ssh-keyscan. More than one key may be
+            # returned, so we save all and use the above list to determine which
+            host_key_data = fetch_ssh_host_key(play_context, ssh_opts).strip().split('\n')
+            host_keys = dict()
+            for host_key in host_key_data:
+                (host_info, key_type, key_hash) = host_key.strip().split(' ', 3)
+                key_type = key_type.lower()
+                if key_type in valid_host_key_types and key_type not in host_keys:
+                    host_keys[key_type.lower()] = host_key
+
+            if len(host_keys) == 0:
+                raise AnsibleConnectionFailure("none of the available host keys found were in the HostBasedKeyTypes configuration option")
+
+            # now we determine the preferred key by sorting the above dict on the
+            # index of the key type in the valid keys list
+            preferred_key = sorted(host_keys.items(), cmp=lambda x,y: cmp(valid_host_key_types.index(x), valid_host_key_types.index(y)), key=operator.itemgetter(0))[0]
+
+            # shamelessly copied from here:
+            # https://github.com/ojarva/python-sshpubkeys/blob/master/sshpubkeys/__init__.py#L39
+            # (which shamelessly copied it from somewhere else...)
+            (host_info, key_type, key_hash) = preferred_key[1].strip().split(' ', 3)
+            decoded_key = key_hash.decode('base64')
+            fp_plain = md5(decoded_key).hexdigest()
+            key_data = ':'.join(a+b for a, b in zip(fp_plain[::2], fp_plain[1::2]))
+
+            # prompt the user to add the key
+            # if yes, add it, otherwise raise AnsibleConnectionFailure
+            display.display("\nThe authenticity of host %s (%s) can't be established." % (host.name, play_context.remote_addr))
+            display.display("%s key fingerprint is SHA256:%s." % (key_type.upper(), sha256(decoded_key).digest().encode('base64').strip()))
+            display.display("%s key fingerprint is MD5:%s." % (key_type.upper(), key_data))
+            response = display.prompt("Are you sure you want to continue connecting (yes/no)? ")
+            display.display("")
+            if boolean(response):
+                add_host_key(host_key, ssh_opts)
+                return True
+            else:
+                raise AnsibleConnectionFailure("Host key validation failed.")
+
+        return False
 
     @staticmethod
     def _sshpass_available():
@@ -99,15 +279,6 @@ class Connection(ConnectionBase):
                 controlpath = True
 
         return controlpersist, controlpath
-
-    @staticmethod
-    def _split_args(argstring):
-        """
-        Takes a string like '-o Foo=1 -o Bar="foo bar"' and returns a
-        list ['-o', 'Foo=1', '-o', 'Bar=foo bar'] that can be added to
-        the argument list. The list will not contain any empty elements.
-        """
-        return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
 
     def _add_args(self, explanation, args):
         """
@@ -157,7 +328,7 @@ class Connection(ConnectionBase):
         # Next, we add [ssh_connection]ssh_args from ansible.cfg.
 
         if self._play_context.ssh_args:
-            args = self._split_args(self._play_context.ssh_args)
+            args = split_args(self._play_context.ssh_args)
             self._add_args("ansible.cfg set ssh_args", args)
 
         # Now we add various arguments controlled by configuration file settings
@@ -210,7 +381,7 @@ class Connection(ConnectionBase):
         for opt in ['ssh_common_args', binary + '_extra_args']:
             attr = getattr(self._play_context, opt, None)
             if attr is not None:
-                args = self._split_args(attr)
+                args = split_args(attr)
                 self._add_args("PlayContext set %s" % opt, args)
 
         # Check if ControlPersist is enabled and add a ControlPath if one hasn't

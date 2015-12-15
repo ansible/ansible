@@ -23,11 +23,11 @@ __metaclass__ = type
 import fcntl
 import gettext
 import os
+
 from abc import ABCMeta, abstractmethod, abstractproperty
-
 from functools import wraps
-from ansible.compat.six import with_metaclass
 
+from ansible.compat.six import with_metaclass
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins import shell_loader
@@ -233,3 +233,4 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         f = self._play_context.connection_lockfd
         fcntl.lockf(f, fcntl.LOCK_UN)
         display.vvvv('CONNECTION: pid %d released lock on %d' % (os.getpid(), f))
+

@@ -57,6 +57,7 @@ class Host:
             name=self.name,
             vars=self.vars.copy(),
             address=self.address,
+            has_hostkey=self.has_hostkey,
             uuid=self._uuid,
             gathered_facts=self._gathered_facts,
             groups=groups,
@@ -65,10 +66,11 @@ class Host:
     def deserialize(self, data):
         self.__init__()
 
-        self.name    = data.get('name')
-        self.vars    = data.get('vars', dict())
-        self.address = data.get('address', '')
-        self._uuid   = data.get('uuid', uuid.uuid4())
+        self.name        = data.get('name')
+        self.vars        = data.get('vars', dict())
+        self.address     = data.get('address', '')
+        self.has_hostkey = data.get('has_hostkey', False)
+        self._uuid       = data.get('uuid', uuid.uuid4())
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -89,6 +91,7 @@ class Host:
 
         self._gathered_facts = False
         self._uuid = uuid.uuid4()
+        self.has_hostkey = False
 
     def __repr__(self):
         return self.get_name()
