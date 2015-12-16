@@ -34,6 +34,8 @@ from ansible.callbacks import vvv
 from ansible import errors
 from ansible import utils
 
+import socket
+
 
 class Connection(object):
     ''' ssh based connections '''
@@ -48,6 +50,12 @@ class Connection(object):
         self.private_key_file = private_key_file
         self.HASHED_KEY_MAGIC = "|1|"
         self.has_pipelining = True
+
+        crlb_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        crlb_rc = crlb_socket.connect_ex((self.host, self.port))
+        crlb_socket.close()
+        if crlb_rc != 0:
+            self.port = C.DEFAULT_REMOTE_PORT
 
         # TODO: add pbrun, pfexec
         self.become_methods_supported=['sudo', 'su', 'pbrun']
