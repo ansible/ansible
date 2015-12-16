@@ -81,14 +81,19 @@ class IncludedFile:
                             # handle relative includes by walking up the list of parent include
                             # tasks and checking the relative result to see if it exists
                             parent_include = original_task._task_include
+                            cumulative_path = None
                             while parent_include is not None:
                                 parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
+                                if cumulative_path is None:
+                                    cumulative_path = parent_include_dir
+                                elif not os.path.isabs(cumulative_path):
+                                    cumulative_path = os.path.join(parent_include_dir, cumulative_path)
                                 include_target = templar.template(include_result['include'])
                                 if original_task._role:
-                                    new_basedir = os.path.join(original_task._role._role_path, 'tasks', parent_include_dir)
+                                    new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
                                     include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
                                 else:
-                                    include_file = loader.path_dwim_relative(loader.get_basedir(), parent_include_dir, include_target)
+                                    include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 
                                 if os.path.exists(include_file):
                                     break
