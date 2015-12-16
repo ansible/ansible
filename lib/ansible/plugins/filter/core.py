@@ -100,9 +100,11 @@ def to_nice_json(a, *args, **kw):
             else:
                 if major >= 2:
                     return simplejson.dumps(a, indent=4, sort_keys=True, *args, **kw)
+    try:
+        return json.dumps(a, indent=4, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
+    except:
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)
-    return json.dumps(a, indent=4, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
 
 def bool(a):
     ''' return a bool for the arg '''
