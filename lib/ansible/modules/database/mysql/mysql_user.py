@@ -182,10 +182,14 @@ def server_version_check(cursor):
     version_str = result[0]
     version = version_str.split('.')
 
+    # Currently we have no facility to handle new-style password update on
+    # mariadb and the old-style update continues to work
+    if version_str.lower().endswith('mariadb'):
+        return True
     if (int(version[0]) <= 5 and int(version[1]) < 7):
-      return True
+        return True
     else:
-      return False
+        return False
 
 def user_exists(cursor, user, host, host_all):
     if host_all:
