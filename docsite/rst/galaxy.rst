@@ -1,7 +1,7 @@
 Ansible Galaxy
 ++++++++++++++
 
-"Ansible Galaxy" can either refer to a website for sharing and downloading Ansible roles, or a command line tool that helps work with roles.
+"Ansible Galaxy" can either refer to a website for sharing and downloading Ansible roles, or a command line tool for managing and creating roles.
 
 .. contents:: Topics
 
@@ -10,26 +10,38 @@ The Website
 
 The website `Ansible Galaxy <https://galaxy.ansible.com>`_, is a free site for finding, downloading, and sharing community developed Ansible roles. Downloading roles from Galaxy is a great way to jumpstart your automation projects.
 
-You can sign up with social auth and use the download client 'ansible-galaxy' which is included in Ansible 1.4.2 and later.
+Access the Galaxy web site using GitHub OAuth, and to install roles use the 'ansible-galaxy' command line tool included in Ansible 1.4.2 and later.
 
 Read the "About" page on the Galaxy site for more information.
 
 The ansible-galaxy command line tool
 ````````````````````````````````````
 
-The command line ansible-galaxy has many different subcommands.
+The ansible-galaxy command has many different sub-commands for managing roles both locally and at `galaxy.ansible.com <https://galaxy.ansible.com>`_.
+
+.. note::
+
+    The search, login, import, delete, and setup commands in the Ansible 2.0 version of ansible-galaxy require access to the 
+    2.0 Beta release of the Galaxy web site available at `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_.
+
+    Use the ``--server`` option to access the beta site. For example::
+
+        $ ansible-galaxy search --server https://galaxy-qa.ansible.com mysql --author geerlingguy
+
+    Additionally, you can define a server in ansible.cfg::
+
+        [galaxy]
+        server=https://galaxy-qa.ansible.com
 
 Installing Roles
 ----------------
 
-The most obvious is downloading roles from the Ansible Galaxy website::
+The most obvious use of the ansible-galaxy command is downloading roles from `the Ansible Galaxy website <https://galaxy.ansible.com>`_::
 
    $ ansible-galaxy install username.rolename
 
-.. _galaxy_cli_roles_path:
-
 roles_path
-===============
+==========
 
 You can specify a particular directory where you want the downloaded roles to be placed::
 
@@ -164,7 +176,7 @@ The search command will return a list of the first 1000 results matching your se
 
 .. note::
 
-    The format of results pictured here is new in Ansible 2.0.
+   The format of results pictured here is new in Ansible 2.0.
 
 Get More Information About a Role
 ---------------------------------
@@ -207,10 +219,6 @@ This returns everything found in Galaxy for the role:
         travis_status_url: https://travis-ci.org/username/repo_name.svg?branch=master
         version:
         watchers_count: 1
-
-.. note::
-
-    The format of results pictured here is new in Ansible 2.0.
 
 
 List Installed Roles
@@ -257,7 +265,13 @@ To use the import, delete and setup commands authentication with Galaxy is requi
 
 As depicted above, the login command prompts for a GitHub username and password. It does NOT send your password to Galaxy. It actually authenticates with GitHub and creates a personal access token. It then sends the personal access token to Galaxy, which in turn verifies that you are you and returns a Galaxy access token. After authentication completes the GitHub personal access token is destroyed. 
 
-If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the --github-token option to pass a personal access token that you create. Log into GitHub, go to Settings and click on Personal Access Token to create a token. 
+If you do not wish to use your GitHub password, or if you have two-factor authentication enabled with GitHub, use the --github-token option to pass a personal access token that you create. Log into GitHub, go to Settings and click on Personal Access Token to create a token.
+
+.. note::
+
+    The login command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
+    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
+    section of your ansible.cfg file.
 
 Import a Role
 -------------
@@ -293,7 +307,9 @@ If the --no-wait option is present, the command will not wait for results. Resul
 
 .. note::
 
-    The import command is only available in Ansible 2.0.
+    The import command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
+    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
+    section of your ansible.cfg file.
 
 Delete a Role
 -------------
@@ -302,13 +318,15 @@ Remove a role from the Galaxy web site using the delete command.  You can delete
 
 ::
 
-    ansible-galaxy delete github_user github_repo
+    $ ansible-galaxy delete github_user github_repo
 
 This only removes the role from Galaxy. It does not impact the actual GitHub repo.
 
 .. note::
 
-    The delete command is only available in Ansible 2.0.
+    The delete command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
+    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
+    section of your ansible.cfg file.
 
 Setup Travis Integerations
 --------------------------
@@ -319,7 +337,7 @@ Using the setup command you can enable notifications from `travis <http://travis
 
     $ ansible-galaxy setup travis github_user github_repo xxxtravistokenxxx
 
-    Added integration for travis chouseknecht/ansible-role-sendmail 
+    Added integration for travis github_user/github_repo 
 
 The setup command requires your Travis token. The Travis token is not stored in Galaxy. It is used along with the GitHub username and repo to create a hash as described in `the Travis documentation <https://docs.travis-ci.com/user/notifications/>`_. The calculated hash is stored in Galaxy and used to verify notifications received from Travis.
 
@@ -334,11 +352,13 @@ When you create your .travis.yml file add the following to cause Travis to notif
 
 .. note::
 
-    The setup command is only available in Ansible 2.0.
+    The setup command in Ansible 2.0 requires using the Galaxy 2.0 Beta site. Use the ``--server`` option to access 
+    `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
+    section of your ansible.cfg file.
 
 
-List Travis Integrtions
-=======================
+List Travis Integrations
+========================
 
 Use the --list option to display your Travis integrations:
 
@@ -356,7 +376,7 @@ Use the --list option to display your Travis integrations:
 Remove Travis Integrations
 ==========================
 
-Use the --remove option to disable a Travis integration:
+Use the --remove option to disable and remove a Travis integration:
 
 ::
 
