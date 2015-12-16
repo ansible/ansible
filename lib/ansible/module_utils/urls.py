@@ -310,42 +310,45 @@ class NoSSLError(SSLValidationError):
     """Needed to connect to an HTTPS url but no ssl library available to verify the certificate"""
     pass
 
+# Some environments (Google Compute Engine's CoreOS deploys) do not compile
+# against openssl and thus do not have any HTTPS support.
+CustomHTTPSConnection = CustomHTTPSHandler = None
+if hasattr(httplib, 'HTTPSConnection') and hasattr(urllib2, 'HTTPSHandler'):
+    class CustomHTTPSConnection(httplib.HTTPSConnection):
+        def __init__(self, *args, **kwargs):
+            httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+            if HAS_SSLCONTEXT:
+                self.context = create_default_context()
+                if self.cert_file:
+                    self.context.load_cert_chain(self.cert_file, self.key_file)
 
-class CustomHTTPSConnection(httplib.HTTPSConnection):
-    def __init__(self, *args, **kwargs):
-        httplib.HTTPSConnection.__init__(self, *args, **kwargs)
-        if HAS_SSLCONTEXT:
-            self.context = create_default_context()
-            if self.cert_file:
-                self.context.load_cert_chain(self.cert_file, self.key_file)
+        def connect(self):
+            "Connect to a host on a given (SSL) port."
 
-    def connect(self):
-        "Connect to a host on a given (SSL) port."
+            if hasattr(self, 'source_address'):
+                sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
+            else:
+                sock = socket.create_connection((self.host, self.port), self.timeout)
 
-        if hasattr(self, 'source_address'):
-            sock = socket.create_connection((self.host, self.port), self.timeout, self.source_address)
-        else:
-            sock = socket.create_connection((self.host, self.port), self.timeout)
+            server_hostname = self.host
+            # Note: self._tunnel_host is not available on py < 2.6 but this code
+            # isn't used on py < 2.6 (lack of create_connection)
+            if self._tunnel_host:
+                self.sock = sock
+                self._tunnel()
+                server_hostname = self._tunnel_host
 
-        server_hostname = self.host
-        # Note: self._tunnel_host is not available on py < 2.6 but this code
-        # isn't used on py < 2.6 (lack of create_connection)
-        if self._tunnel_host:
-            self.sock = sock
-            self._tunnel()
-            server_hostname = self._tunnel_host
+            if HAS_SSLCONTEXT:
+                self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
+            else:
+                self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
 
-        if HAS_SSLCONTEXT:
-            self.sock = self.context.wrap_socket(sock, server_hostname=server_hostname)
-        else:
-            self.sock = ssl.wrap_socket(sock, keyfile=self.key_file, certfile=self.cert_file, ssl_version=PROTOCOL)
+    class CustomHTTPSHandler(urllib2.HTTPSHandler):
 
-class CustomHTTPSHandler(urllib2.HTTPSHandler):
+        def https_open(self, req):
+            return self.do_open(CustomHTTPSConnection, req)
 
-    def https_open(self, req):
-        return self.do_open(CustomHTTPSConnection, req)
-
-    https_request = urllib2.AbstractHTTPHandler.do_request_
+        https_request = urllib2.AbstractHTTPHandler.do_request_
 
 def generic_urlparse(parts):
     '''
@@ -673,8 +676,9 @@ def open_url(url, data=None, headers=None, method=None, use_proxy=True,
         handlers.append(proxyhandler)
 
     # pre-2.6 versions of python cannot use the custom https
-    # handler, since the socket class is lacking this method
-    if hasattr(socket, 'create_connection'):
+    # handler, since the socket class is lacking create_connection.
+    # Some python builds lack HTTPS support.
+    if hasattr(socket, 'create_connection') and CustomHTTPSHandler:
         handlers.append(CustomHTTPSHandler)
 
     opener = urllib2.build_opener(*handlers)
