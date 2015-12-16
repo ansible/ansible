@@ -82,6 +82,26 @@ newline being stripped you can change your playbook like this:
     "msg": "Testing some things"
     ```
 
+* When specifying complex args as a variable, the variable must use the full jinja2
+variable syntax ('{{var_name}}') - bare variable names there are no longer accepted.
+In fact, even specifying args with variables has been deprecated, and will not be
+allowed in future versions:
+
+    ```
+    ---
+    - hosts: localhost
+      connection: local
+      gather_facts: false
+      vars:
+        my_dirs:
+          - { path: /tmp/3a, state: directory, mode: 0755 }
+          - { path: /tmp/3b, state: directory, mode: 0700 }
+      tasks:
+        - file:
+          args: "{{item}}"
+          with_items: my_dirs
+    ```
+
 ###Plugins
 
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases

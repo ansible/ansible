@@ -137,7 +137,16 @@ class ModuleArgsParser:
         # than those which may be parsed/normalized next
         final_args = dict()
         if additional_args:
-            final_args.update(additional_args)
+            if isinstance(additional_args, string_types):
+                templar = Templar(loader=None)
+                if templar._contains_vars(additional_args):
+                    final_args['_variable_params'] = additional_args
+                else:
+                    raise AnsibleParserError("Complex args containing variables cannot use bare variables, and must use the full variable style ('{{var_name}}')")
+            elif isinstance(additional_args, dict):
+                final_args.update(additional_args)
+            else:
+                raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
 
         # how we normalize depends if we figured out what the module name is
         # yet.  If we have already figured it out, it's an 'old style' invocation.
