@@ -137,6 +137,8 @@ class ModuleArgsParser:
         # than those which may be parsed/normalized next
         final_args = dict()
         if additional_args:
+            if not isinstance(additional_args,dict):
+                raise AnsibleParserError('Complex args should be a dictionary')
             final_args.update(additional_args)
 
         # how we normalize depends if we figured out what the module name is
