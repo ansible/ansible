@@ -30,14 +30,6 @@ options:
     description:
       - name of the user (role) to add or remove
     required: true
-    default: null
-  user_anonymous:
-    description:
-      - username is to be ignored and anonymous users with no username
-        handled
-    required: false
-    choices: [ "yes", "no" ]
-    default: no
   password:
     description:
       - set the user's password. (Required when adding a user)
@@ -148,11 +140,11 @@ author: "Jonathan Mainguy (@Jmainguy)"
 '''
 
 EXAMPLES = """
-# Removes anonymous user account for localhost (the name parameter is required, but ignored)
-- mysql_user: name=anonymous user_anonymous=yes host=localhost state=absent
+# Removes anonymous user account for localhost
+- mysql_user: name='' host=localhost state=absent
 
 # Removes all anonymous user accounts
-- mysql_user: name=anonymous user_anonymous=yes host_all=yes state=absent
+- mysql_user: name='' host_all=yes state=absent
 
 # Create database user with name 'bob' and password '12345' with all database privileges
 - mysql_user: name=bob password=12345 priv=*.*:ALL state=present
@@ -477,7 +469,6 @@ def main():
             login_port=dict(default=3306, type='int'),
             login_unix_socket=dict(default=None),
             user=dict(required=True, aliases=['name']),
-            user_anonymous=dict(type="bool", default="no"),
             password=dict(default=None, no_log=True),
             encrypted=dict(default=False, type='bool'),
             host=dict(default="localhost"),
@@ -493,7 +484,6 @@ def main():
     login_user = module.params["login_user"]
     login_password = module.params["login_password"]
     user = module.params["user"]
-    user_anonymous = module.params["user_anonymous"]
     password = module.params["password"]
     encrypted = module.boolean(module.params["encrypted"])
     host = module.params["host"].lower()
@@ -504,9 +494,6 @@ def main():
     config_file = module.params['config_file']
     append_privs = module.boolean(module.params["append_privs"])
     update_password = module.params['update_password']
-
-    if user_anonymous:
-        user = ''
 
     config_file = os.path.expanduser(os.path.expandvars(config_file))
     if not mysqldb_found:
