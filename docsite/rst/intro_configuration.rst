@@ -897,3 +897,19 @@ The normal behaviour is for operations to copy the existing context or use the u
 The default list is: nfs,vboxsf,fuse,ramfs::
 
     special_context_filesystems = nfs,vboxsf,fuse,ramfs,myspecialfs
+
+Galaxy Settings
+---------------
+
+The following options can be set in the [galaxy] section of ansible.cfg:
+
+server
+======
+
+Override the default Galaxy server value of https://galaxy.ansible.com. Useful if you have a hosted version of the Galaxy web app or want to point to the testing site https://galaxy-qa.ansible.com. It does not work against private, hosted repos, which Galaxy can use for fetching and installing roles.
+
+ignore_certs
+============
+
+If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
+.
