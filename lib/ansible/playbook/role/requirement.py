@@ -38,6 +38,7 @@ VALID_SPEC_KEYS = [
     'scm',
     'src',
     'version',
+    'path',
 ]
 
 try:
