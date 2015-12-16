@@ -335,7 +335,7 @@ def main():
         domain = dict(default=None),
         project = dict(default=None),
         account = dict(default=None),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -358,7 +358,7 @@ def main():
 
         result = acs_lb_rule_member.get_result(rule)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

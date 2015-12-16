@@ -539,14 +539,14 @@ def main():
         vlan = dict(default=None),
         vpc = dict(default=None),
         isolated_pvlan = dict(default=None),
-        clean_up = dict(type='bool', choices=BOOLEANS, default=False),
+        clean_up = dict(type='bool', default=False),
         network_domain = dict(default=None),
         state = dict(choices=['present', 'absent', 'restarted' ], default='present'),
         acl_type = dict(choices=['account', 'domain'], default='account'),
         project = dict(default=None),
         domain = dict(default=None),
         account = dict(default=None),
-        poll_async = dict(type='bool', choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
     required_together = cs_required_together()
     required_together.extend([
@@ -578,7 +578,7 @@ def main():
 
         result = acs_network.get_result(network)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

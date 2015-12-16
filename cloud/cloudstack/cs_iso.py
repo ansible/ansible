@@ -306,10 +306,10 @@ def main():
         account = dict(default=None),
         project = dict(default=None),
         checksum = dict(default=None),
-        is_ready = dict(choices=BOOLEANS, default=False),
-        bootable = dict(choices=BOOLEANS, default=True),
-        is_featured = dict(choices=BOOLEANS, default=False),
-        is_dynamically_scalable = dict(choices=BOOLEANS, default=False),
+        is_ready = dict(type='bool', default=False),
+        bootable = dict(type='bool', default=True),
+        is_featured = dict(type='bool', default=False),
+        is_dynamically_scalable = dict(type='bool', default=False),
         state = dict(choices=['present', 'absent'], default='present'),
     ))
 
@@ -333,7 +333,7 @@ def main():
 
         result = acs_iso.get_result(iso)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

@@ -266,7 +266,7 @@ def main():
         state = dict(choices=['present', 'absent', 'active', 'suspended' ], default='present'),
         domain = dict(default=None),
         account = dict(default=None),
-        poll_async = dict(type='bool', choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -293,7 +293,7 @@ def main():
 
         result = acs_project.get_result(project)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

@@ -241,7 +241,7 @@ def main():
 
         result = acs_sshkey.get_result(ssh_key)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

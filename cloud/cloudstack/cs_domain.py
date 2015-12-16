@@ -244,8 +244,8 @@ def main():
         path = dict(required=True),
         state = dict(choices=['present', 'absent'], default='present'),
         network_domain = dict(default=None),
-        clean_up = dict(choices=BOOLEANS, default=False),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        clean_up = dict(type='bool', default=False),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -268,7 +268,7 @@ def main():
 
         result = acs_dom.get_result(domain)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

@@ -180,7 +180,7 @@ def main():
 
         result = acs_sg.get_result(sg)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
