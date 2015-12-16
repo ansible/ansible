@@ -377,9 +377,7 @@ class TestStrategyBase(unittest.TestCase):
             strategy_base._inventory = mock_inventory
             strategy_base._notified_handlers = {"test handler": [mock_host]}
 
-            mock_return_task = MagicMock(Handler)
-            mock_return_host = MagicMock(Host)
-            task_result = TaskResult(mock_return_host, mock_return_task, dict(changed=False))
+            task_result = TaskResult(Host('host01'), Handler(), dict(changed=False))
             tqm._final_q.put(('host_task_ok', task_result))
 
             result = strategy_base.run_handlers(iterator=mock_iterator, play_context=mock_play_context)
