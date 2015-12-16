@@ -95,8 +95,8 @@ options:
           be attached. Networks may be referenced by net-id/net-name/port-id
           or port-name.
         - 'Also this accepts a string containing a list of (net/port)-(id/name)
-          Eg: nics: "net-id=uuid-1,port-name=myport"'
-        Only one of network or nics should be supplied.
+          Eg: nics: "net-id=uuid-1,port-name=myport"
+          Only one of network or nics should be supplied.'
      required: false
      default: None
    auto_ip:
