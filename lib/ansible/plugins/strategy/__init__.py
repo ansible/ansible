@@ -185,10 +185,20 @@ class StrategyBase:
                 result = self._final_q.get()
                 display.debug("got result from result worker: %s" % ([text_type(x) for x in result],))
 
+                # helper method, used to find the original host from the one
+                # returned in the result/message, which has been serialized and
+                # thus had some information stripped from it to speed up the
+                # serialization process
+                def get_original_host(host):
+                    if host.name in self._inventory._hosts_cache:
+                       return self._inventory._hosts_cache[host.name]
+                    else:
+                       return self._inventory.get_host(host.name)
+
                 # all host status messages contain 2 entries: (msg, task_result)
                 if result[0] in ('host_task_ok', 'host_task_failed', 'host_task_skipped', 'host_unreachable'):
                     task_result = result[1]
-                    host = task_result._host
+                    host = get_original_host(task_result._host)
                     task = task_result._task
                     if result[0] == 'host_task_failed' or task_result.is_failed():
                         if not task.ignore_errors:
@@ -244,7 +254,7 @@ class StrategyBase:
                     self._add_host(new_host_info, iterator)
 
                 elif result[0] == 'add_group':
-                    host = result[1]
+                    host = get_original_host(result[1])
                     result_item = result[2]
                     self._add_group(host, result_item)
 
@@ -252,19 +262,20 @@ class StrategyBase:
                     task_result  = result[1]
                     handler_name = result[2]
 
-                    original_task = iterator.get_original_task(task_result._host, task_result._task)
+                    original_host = get_original_host(task_result._host)
+                    original_task = iterator.get_original_task(original_host, task_result._task)
                     if handler_name not in self._notified_handlers:
                         self._notified_handlers[handler_name] = []
 
-                    if task_result._host not in self._notified_handlers[handler_name]:
-                        self._notified_handlers[handler_name].append(task_result._host)
+                    if original_host not in self._notified_handlers[handler_name]:
+                        self._notified_handlers[handler_name].append(original_host)
                         display.vv("NOTIFIED HANDLER %s" % (handler_name,))
 
                 elif result[0] == 'register_host_var':
                     # essentially the same as 'set_host_var' below, however we
                     # never follow the delegate_to value for registered vars and
                     # the variable goes in the fact_cache
-                    host      = result[1]
+                    host      = get_original_host(result[1])
                     task      = result[2]
                     var_value = wrap_var(result[3])
                     var_name  = task.register
@@ -278,7 +289,7 @@ class StrategyBase:
                         self._variable_manager.set_nonpersistent_facts(target_host, {var_name: var_value})
 
                 elif result[0] in ('set_host_var', 'set_host_facts'):
-                    host = result[1]
+                    host = get_original_host(result[1])
                     task = result[2]
                     item = result[3]
 
