@@ -184,7 +184,7 @@ def main():
     )
 
     token = module.params["token"]
-    room = module.params["room"]
+    room = str(module.params["room"])
     msg = module.params["msg"]
     msg_from = module.params["msg_from"]
     color = module.params["color"]
