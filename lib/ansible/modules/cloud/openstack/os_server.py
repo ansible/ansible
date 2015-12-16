@@ -79,7 +79,7 @@ options:
    security_groups:
      description:
         - Names of the security groups to which the instance should be
-          added.  This may be a YAML list or a common separated string.
+          added. This may be a YAML list or a comma separated string.
      required: false
      default: None
    network:
