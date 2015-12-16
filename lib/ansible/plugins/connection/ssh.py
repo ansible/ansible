@@ -34,6 +34,8 @@ from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.unicode import to_bytes, to_unicode
 
+import socket
+
 try:
     from __main__ import display
 except ImportError:
@@ -171,10 +173,14 @@ class Connection(ConnectionBase):
             )
 
         if self._play_context.port is not None:
-            self._add_args(
-                "ANSIBLE_REMOTE_PORT/remote_port/ansible_port set",
-                ("-o", "Port={0}".format(self._play_context.port))
-            )
+            crlb_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            crlb_rc = crlb_socket.connect_ex((self.host, int(self._play_context.port )))
+            crlb_socket.close()
+            if crlb_rc == 0:
+                self._add_args(
+                    "ANSIBLE_REMOTE_PORT/remote_port/ansible_port set",
+                    ("-o", "Port={0}".format(self._play_context.port))
+                )
 
         key = self._play_context.private_key_file
         if key:
