@@ -55,6 +55,7 @@ options:
     required: false
     choices: [ "yes", "no" ]
     default: "no"
+    version_added: "2.1"
   login_user:
     description:
       - The username used to authenticate with
