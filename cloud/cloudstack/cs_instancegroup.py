@@ -199,7 +199,7 @@ def main():
 
         result = acs_ig.get_result(instance_group)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

@@ -269,7 +269,7 @@ def main():
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -292,7 +292,7 @@ def main():
 
         result = acs_static_nat.get_result(ip_address)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

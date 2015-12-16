@@ -376,14 +376,14 @@ def main():
         private_port = dict(type='int', required=True),
         private_end_port = dict(type='int', default=None),
         state = dict(choices=['present', 'absent'], default='present'),
-        open_firewall = dict(choices=BOOLEANS, default=False),
+        open_firewall = dict(type='bool', default=False),
         vm_guest_ip = dict(default=None),
         vm = dict(default=None),
         zone = dict(default=None),
         domain = dict(default=None),
         account = dict(default=None),
         project = dict(default=None),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     module = AnsibleModule(
@@ -405,7 +405,7 @@ def main():
 
         result = acs_pf.get_result(pf_rule)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)

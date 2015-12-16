@@ -44,7 +44,6 @@ options:
   state:
     description:
       - State of the instance.
-      - C(restored) added in version 2.1.
     required: false
     default: 'present'
     choices: [ 'deployed', 'started', 'stopped', 'restarted', 'restored', 'destroyed', 'expunged', 'present', 'absent' ]
@@ -827,23 +826,19 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 
     def restore_instance(self):
         instance = self.get_instance()
-
-        if not instance:
-            instance = self.deploy_instance()
-            return instance
-
         self.result['changed'] = True
+        # in check mode intance may not be instanciated
+        if instance:
+            args = {}
+            args['templateid'] = self.get_template_or_iso(key='id')
+            args['virtualmachineid'] = instance['id']
+            res = self.cs.restoreVirtualMachine(**args)
+            if 'errortext' in res:
+                self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
 
-        args = {}
-        args['templateid'] = self.get_template_or_iso(key='id')
-        args['virtualmachineid'] = instance['id']
-        res = self.cs.restoreVirtualMachine(**args)
-        if 'errortext' in res:
-            self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
-
-        poll_async = self.module.params.get('poll_async')
-        if poll_async:
-            instance = self._poll_job(res, 'virtualmachine')
+            poll_async = self.module.params.get('poll_async')
+            if poll_async:
+                instance = self._poll_job(res, 'virtualmachine')
         return instance
 
 
@@ -897,9 +892,9 @@ def main():
         user_data = dict(default=None),
         zone = dict(default=None),
         ssh_key = dict(default=None),
-        force = dict(choices=BOOLEANS, default=False),
+        force = dict(type='bool', default=False),
         tags = dict(type='list', aliases=[ 'tag' ], default=None),
-        poll_async = dict(choices=BOOLEANS, default=True),
+        poll_async = dict(type='bool', default=True),
     ))
 
     required_together = cs_required_together()
@@ -931,6 +926,7 @@ def main():
             instance = acs_instance.expunge_instance()
 
         elif state in ['restored']:
+            acs_instance.present_instance()
             instance = acs_instance.restore_instance()
 
         elif state in ['present', 'deployed']:
@@ -953,7 +949,7 @@ def main():
 
         result = acs_instance.get_result(instance)
 
-    except CloudStackException, e:
+    except CloudStackException as e:
         module.fail_json(msg='CloudStackException: %s' % str(e))
 
     module.exit_json(**result)
