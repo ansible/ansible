@@ -63,6 +63,13 @@ options:
         required: false
         default: 'yes'
         choices: ['yes', 'no']
+    filename:
+        version_added: '2.1'
+        description:
+            - Sets the name of the source list file in sources.list.d.
+              Defaults to a file name based on the repository source url.
+              The .list extension will be automatically added.
+        required: false
 author: "Alexander Saltanov (@sashka)"
 version_added: "0.7"
 requirements: [ python-apt ]
@@ -71,6 +78,9 @@ requirements: [ python-apt ]
 EXAMPLES = '''
 # Add specified repository into sources list.
 apt_repository: repo='deb http://archive.canonical.com/ubuntu hardy partner' state=present
+
+# Add specified repository into sources list using specified filename.
+apt_repository: repo='deb http://dl.google.com/linux/chrome/deb/ stable main' state=present filename='google-chrome'
 
 # Add source repository into sources list.
 apt_repository: repo='deb-src http://archive.canonical.com/ubuntu hardy partner' state=present
@@ -155,6 +165,9 @@ class SourcesList(object):
 
     def _suggest_filename(self, line):
         def _cleanup_filename(s):
+            filename = self.module.params['filename']
+            if filename is not None:
+                return filename
             return '_'.join(re.sub('[^a-zA-Z0-9]', ' ', s).split())
         def _strip_username_password(s):
             if '@' in s:
@@ -420,6 +433,7 @@ def main():
             state=dict(choices=['present', 'absent'], default='present'),
             mode=dict(required=False, default=0644),
             update_cache = dict(aliases=['update-cache'], type='bool', default='yes'),
+            filename=dict(required=False, default=None),
             # this should not be needed, but exists as a failsafe
             install_python_apt=dict(required=False, default="yes", type='bool'),
             validate_certs = dict(default='yes', type='bool'),
