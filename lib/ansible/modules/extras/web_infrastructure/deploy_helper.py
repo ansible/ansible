@@ -110,7 +110,7 @@ options:
     default: 5
     description:
       - the number of old releases to keep when cleaning. Used in C(finalize) and C(clean). Any unfinished builds
-        will be deleted first, so only correct releases will count.
+        will be deleted first, so only correct releases will count. The current version will not count.
 
 notes:
   - Facts are only returned for C(state=query) and C(state=present). If you use both, you should pass any overridden
@@ -318,6 +318,8 @@ class DeployHelper(object):
             else:
                 changed = True
                 if not self.module.check_mode:
+                    if not os.path.lexists(source):
+                        self.module.fail_json(msg="the symlink target %s doesn't exists" % source)
                     tmp_link_name = link_name + '.' + self.unfinished_filename
                     if os.path.islink(tmp_link_name):
                         os.unlink(tmp_link_name)
@@ -362,11 +364,15 @@ class DeployHelper(object):
 
         return changed
 
-    def cleanup(self, releases_path):
+    def cleanup(self, releases_path, reserve_version):
         changes = 0
 
         if os.path.lexists(releases_path):
             releases = [ f for f in os.listdir(releases_path) if os.path.isdir(os.path.join(releases_path,f)) ]
+            try:
+                releases.remove(reserve_version)
+            except ValueError:
+                pass
 
             if not self.module.check_mode:
                 releases.sort( key=lambda x: os.path.getctime(os.path.join(releases_path,x)), reverse=True)
@@ -442,12 +448,12 @@ def main():
         if deploy_helper.clean:
             changes += deploy_helper.remove_unfinished_link(facts['path'])
             changes += deploy_helper.remove_unfinished_builds(facts['releases_path'])
-            changes += deploy_helper.cleanup(facts['releases_path'])
+            changes += deploy_helper.cleanup(facts['releases_path'], facts['new_release'])
 
     elif deploy_helper.state == 'clean':
         changes += deploy_helper.remove_unfinished_link(facts['path'])
         changes += deploy_helper.remove_unfinished_builds(facts['releases_path'])
-        changes += deploy_helper.cleanup(facts['releases_path'])
+        changes += deploy_helper.cleanup(facts['releases_path'], facts['new_release'])
 
     elif deploy_helper.state == 'absent':
         # destroy the facts
