@@ -185,6 +185,11 @@ class StrategyBase:
                 result = self._final_q.get()
                 display.debug("got result from result worker: %s" % ([text_type(x) for x in result],))
 
+                # patch up hollowed-out hosts in any task_result objects
+                for r in result:
+                    if isinstance(r, TaskResult):
+                        r._host = self._inventory.get_host(r._host.name)
+
                 # all host status messages contain 2 entries: (msg, task_result)
                 if result[0] in ('host_task_ok', 'host_task_failed', 'host_task_skipped', 'host_unreachable'):
                     task_result = result[1]
