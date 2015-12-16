@@ -55,6 +55,24 @@ uses key=value escaping which has not changed.  The other option is to check for
     # Output
     "msg": "Testing some things"
 
+* When specifying complex args as a variable, the variable must use the full jinja2
+  variable syntax ('{{var_name}}') - bare variable names there are no longer accepted.
+  In fact, even specifying args with variables has been deprecated, and will not be
+  allowed in future versions::
+
+    ---
+    - hosts: localhost
+      connection: local
+      gather_facts: false
+      vars:
+        my_dirs:
+          - { path: /tmp/3a, state: directory, mode: 0755 }
+          - { path: /tmp/3b, state: directory, mode: 0700 }
+      tasks:
+        - file:
+          args: "{{item}}" # <- args here uses the full variable syntax
+          with_items: my_dirs
+
 * porting task includes
 * More dynamic. Corner-case formats that were not supposed to work now do not, as expected.
 * variables defined in the yaml dict format https://github.com/ansible/ansible/issues/13324
