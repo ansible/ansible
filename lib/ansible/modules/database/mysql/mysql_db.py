@@ -103,7 +103,9 @@ def db_delete(cursor, db):
 def db_dump(module, host, user, password, db_name, target, all_databases, port, config_file, socket=None, ssl_cert=None, ssl_key=None, ssl_ca=None):
     cmd = module.get_bin_path('mysqldump', True)
     # If defined, mysqldump demands --defaults-extra-file be the first option
-    cmd += " --defaults-extra-file=%s --quick" % pipes.quote(config_file)
+    if config_file:
+        cmd += " --defaults-extra-file=%s" % pipes.quote(config_file)
+    cmd += " --quick"
     if user is not None:
         cmd += " --user=%s" % pipes.quote(user)
     if password is not None:
@@ -145,7 +147,8 @@ def db_import(module, host, user, password, db_name, target, all_databases, port
 
     cmd = [module.get_bin_path('mysql', True)]
     # --defaults-file must go first, or errors out
-    cmd.append("--defaults-extra-file=%s" % pipes.quote(config_file))
+    if config_file:
+        cmd.append("--defaults-extra-file=%s" % pipes.quote(config_file))
     if user:
         cmd.append("--user=%s" % pipes.quote(user))
     if password:
@@ -270,6 +273,8 @@ def main():
             module.fail_json(msg="unable to find %s. Exception message: %s" % (config_file, e))
 
     changed = False
+    if not os.path.exists(config_file):
+        config_file = None
     if db_exists(cursor, db):
         if state == "absent":
             try:
