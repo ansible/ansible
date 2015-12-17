@@ -93,7 +93,7 @@
 
 # If distros start backporting SNI, can make a new conditional based on whether this works:
 # python -c 'from ssl import SSLContext'
-- debug: msg=get_url_result
+- debug: var=get_url_result
 - name: Assert that SNI works with this python version
   assert:
     that:
