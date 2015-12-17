@@ -377,6 +377,11 @@ allowed in future versions:
     - debug: msg="The error message was: {{error_code |default('') }}"
     ```
 
+* The yum module's detection of installed packages has been made more robust by
+  using /usr/bin/rpm in cases where it woud have used repoquery before.
+* The pip module now properly reports changes when packages are coming from a VCS.
+* Fixes for retrieving files over https when a CONNECT-only proxy is in the middle.
+
 ## 1.9.4 "Dancing In the Street" - Oct 9, 2015
 
 * Fixes a bug where yum state=latest would error if there were no updates to install.
