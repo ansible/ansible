@@ -160,11 +160,18 @@ options:
       - if set boot disk will be removed after instance destruction
     required: false
     default: "true"
-    aliases: []
+  preemptible:
+    version_added: "2.1"
+    description:
+      - if set to true, instances will be preemptible and time-limited.
+        (requires libcloud >= 0.20.0)
+    required: false
+    default: "false"
 
 requirements:
     - "python >= 2.6"
-    - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials"
+    - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials,
+      >= 0.20.0 if using preemptible option"
 notes:
   - Either I(name) or I(instance_names) is required.
 author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
@@ -346,6 +353,7 @@ def create_instances(module, gce, instance_names):
     ip_forward = module.params.get('ip_forward')
     external_ip = module.params.get('external_ip')
     disk_auto_delete = module.params.get('disk_auto_delete')
+    preemptible = module.params.get('preemptible')
     service_account_permissions = module.params.get('service_account_permissions')
     service_account_email = module.params.get('service_account_email')
 
@@ -438,16 +446,23 @@ def create_instances(module, gce, instance_names):
                 pd = gce.ex_get_volume("%s" % name, lc_zone)
             except ResourceNotFoundError:
                 pd = gce.create_volume(None, "%s" % name, image=lc_image())
+
+        gce_args = dict(
+            location=lc_zone,
+            ex_network=network, ex_tags=tags, ex_metadata=metadata,
+            ex_boot_disk=pd, ex_can_ip_forward=ip_forward,
+            external_ip=instance_external_ip, ex_disk_auto_delete=disk_auto_delete,
+            ex_service_accounts=ex_sa_perms
+        )
+        if preemptible is not None:
+            gce_args['ex_preemptible'] = preemptible
+
         inst = None
         try:
             inst = gce.ex_get_node(name, lc_zone)
         except ResourceNotFoundError:
             inst = gce.create_node(
-                name, lc_machine_type, lc_image(), location=lc_zone,
-                ex_network=network, ex_tags=tags, ex_metadata=metadata,
-                ex_boot_disk=pd, ex_can_ip_forward=ip_forward,
-                external_ip=instance_external_ip, ex_disk_auto_delete=disk_auto_delete,
-                ex_service_accounts=ex_sa_perms
+                name, lc_machine_type, lc_image(), **gce_args
             )
             changed = True
         except GoogleBaseError as e:
@@ -541,6 +556,7 @@ def main():
             ip_forward = dict(type='bool', default=False),
             external_ip=dict(default='ephemeral'),
             disk_auto_delete = dict(type='bool', default=True),
+            preemptible = dict(type='bool', default=None),
         )
     )
 
@@ -562,6 +578,7 @@ def main():
     tags = module.params.get('tags')
     zone = module.params.get('zone')
     ip_forward = module.params.get('ip_forward')
+    preemptible = module.params.get('preemptible')
     changed = False
 
     inames = []
@@ -576,6 +593,10 @@ def main():
                          changed=False)
     if not zone:
         module.fail_json(msg='Must specify a "zone"', changed=False)
+
+    if preemptible is not None and hasattr(libcloud, '__version__') and libcloud.__version__ < '0.20':
+        module.fail_json(msg="Apache Libcloud 0.20.0+ is required to use 'preemptible' option",
+                         changed=False)
 
     json_output = {'zone': zone}
     if state in ['absent', 'deleted']:
