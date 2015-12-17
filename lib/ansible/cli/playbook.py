@@ -187,7 +187,10 @@ class PlaybookCLI(CLI):
                                 if self.options.listtasks:
                                     cur_tags = list(mytags.union(set(task.tags)))
                                     cur_tags.sort()
-                                    taskmsg += "      %s" % task.action
+                                    if task.name:
+                                        taskmsg += "      %s" % task.get_name()
+                                    else:
+                                        taskmsg += "      %s" % task.action
                                     taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
 
                         if self.options.listtags:
