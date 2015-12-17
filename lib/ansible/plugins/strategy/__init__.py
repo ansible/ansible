@@ -576,6 +576,7 @@ class StrategyBase:
                 host_results,
                 self._tqm,
                 iterator=iterator,
+                inventory=self._inventory,
                 loader=self._loader,
                 variable_manager=self._variable_manager
             )
@@ -594,6 +595,7 @@ class StrategyBase:
                         for task in block.block:
                             result = self._do_handler_run(
                                 handler=task,
+                                handler_name=None,
                                 iterator=iterator,
                                 play_context=play_context,
                                 notified_hosts=included_file._hosts[:],
