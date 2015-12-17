@@ -98,7 +98,7 @@
 - name: assert that the broken test failed
   assert:
     that:
-    - "broken_enable_result.failed == True"
+    - "broken_enable_result|failed"
 
 - name: remove the test daemon script
   file: path=/usr/sbin/ansible_test_service state=absent
