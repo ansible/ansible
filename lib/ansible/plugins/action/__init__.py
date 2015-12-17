@@ -151,14 +151,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if not isinstance(environments, list):
                 environments = [ environments ]
 
+            # the environments as inherited need to be reversed, to make
+            # sure we merge in the parent's values first so those in the
+            # block then task 'win' in precedence
+            environments.reverse()
             for environment in environments:
                 if environment is None:
                     continue
-                if not isinstance(environment, dict):
-                    raise AnsibleError("environment must be a dictionary, received %s (%s)" % (environment, type(environment)))
+                temp_environment = self._templar.template(environment)
+                if not isinstance(temp_environment, dict):
+                    raise AnsibleError("environment must be a dictionary, received %s (%s)" % (temp_environment, type(temp_environment)))
                 # very deliberately using update here instead of combine_vars, as
                 # these environment settings should not need to merge sub-dicts
-                final_environment.update(environment)
+                final_environment.update(temp_environment)
 
         final_environment = self._templar.template(final_environment)
         return self._connection._shell.env_prefix(**final_environment)
