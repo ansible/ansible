@@ -13,14 +13,6 @@
   ignore_errors: true
   when: ansible_os_family == 'Debian'
 
-- name: Install virtualenv
-  yum: name=python-virtualenv state=installed
-  when: ansible_os_family == 'RedHat'
-
-- name: Install virtualenv
-  apt: name=python-virtualenv state=installed
-  when: ansible_os_family == 'Debian'
-
 - name: Install RH epel
   yum: name="epel-release" state=installed
   sudo: true
@@ -43,6 +35,7 @@
     - gcc
     - python-devel
     - libselinux-python
+    - python-virtualenv
   when: ansible_os_family == 'RedHat'
 
 - name: Install Debian ansible dependencies
@@ -57,6 +50,7 @@
     - git
     - unzip
     - python-dev
+    - python-virtualenv
   when: ansible_os_family == 'Debian'
 
 - name: Install ubuntu 12.04 ansible dependencies
