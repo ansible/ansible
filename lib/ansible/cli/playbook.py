@@ -156,7 +156,7 @@ class PlaybookCLI(CLI):
                 for idx, play in enumerate(p['plays']):
                     msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
                     mytags = set(play.tags)
-                    msg += '    TAGS: [%s]' % (','.join(mytags))
+                    msg += '\tTAGS: [%s]' % (','.join(mytags))
 
                     if self.options.listhosts:
                         playhosts = set(inventory.get_hosts(play.hosts))
@@ -166,8 +166,11 @@ class PlaybookCLI(CLI):
 
                     display.display(msg)
 
+                    all_tags = set()
                     if self.options.listtags or self.options.listtasks:
-                        taskmsg = '    tasks:'
+                        taskmsg = ''
+                        if self.options.listtasks:
+                            taskmsg = '    tasks:\n'
 
                         all_vars = variable_manager.get_vars(loader=loader, play=play)
                         play_context = PlayContext(play=play, options=self.options)
@@ -179,8 +182,18 @@ class PlaybookCLI(CLI):
                             for task in block.block:
                                 if task.action == 'meta':
                                     continue
-                                taskmsg += "\n      %s" % task.get_name()
-                                taskmsg += "    TAGS: [%s]" % ','.join(mytags.union(set(task.tags)))
+
+                                all_tags.update(task.tags)
+                                if self.options.listtasks:
+                                    cur_tags = list(mytags.union(set(task.tags)))
+                                    cur_tags.sort()
+                                    taskmsg += "      %s" % task.action
+                                    taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
+
+                        if self.options.listtags:
+                            cur_tags = list(mytags.union(all_tags))
+                            cur_tags.sort()
+                            taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)
 
                         display.display(taskmsg)
 
