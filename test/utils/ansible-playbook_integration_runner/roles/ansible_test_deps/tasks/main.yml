@@ -11,7 +11,12 @@
   when: ansible_os_family == 'Debian'
 
 - name: Install virtualenv
-  pip: name=virtualenv state=present
+  yum: name=python-virtualenv state=installed
+  when: ansible_os_family == 'RedHat'
+
+- name: Install virtualenv
+  apt: name=python-virtualenv state=installed
+  when: ansible_os_family == 'Debian'
 
 - name: Install RH epel
   yum: name="epel-release" state=installed
