@@ -571,14 +571,14 @@ def main():
 
     state = module.params['state']
     image = module.params['image']
-    root_volume = module.params['root_volume']
+    boot_volume = module.params['boot_volume']
     flavor = module.params['flavor']
     flavor_ram = module.params['flavor_ram']
 
     if state == 'present':
-        if not (image or root_volume):
+        if not (image or boot_volume):
             module.fail_json(
-                msg="Parameter 'image' or 'root_volume' is required "
+                msg="Parameter 'image' or 'boot_volume' is required "
                     "if state == 'present'"
             )
         if not flavor and not flavor_ram:
