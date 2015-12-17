@@ -60,15 +60,11 @@ def split_args(argstring):
     """
     return [to_unicode(x.strip()) for x in shlex.split(to_bytes(argstring)) if x.strip()]
 
-def get_ssh_opts(host, play_context):
+def get_ssh_opts(play_context):
     # FIXME: caching may help here
     opts_dict = dict()
     try:
-        remote_addr = play_context.remote_addr
-        if not remote_addr:
-            remote_addr = host.address
-
-        cmd = ['ssh', '-G', remote_addr]
+        cmd = ['ssh', '-G', play_context.remote_addr]
         res = subprocess.check_output(cmd)
         for line in res.split('\n'):
             if ' ' in line:
@@ -141,7 +137,7 @@ def host_in_known_hosts(host, ssh_opts):
 
     return False
 
-def fetch_ssh_host_key(host, play_context, ssh_opts):
+def fetch_ssh_host_key(play_context, ssh_opts):
     keyscan_cmd = ['ssh-keyscan']
 
     if play_context.port:
@@ -150,11 +146,7 @@ def fetch_ssh_host_key(host, play_context, ssh_opts):
     if boolean(ssh_opts.get('hashknownhosts', 'no')):
         keyscan_cmd.append('-H')
 
-    remote_addr = play_context.remote_addr
-    if not remote_addr:
-        remote_addr = host.address
-
-    keyscan_cmd.append(remote_addr)
+    keyscan_cmd.append(play_context.remote_addr)
 
     p = subprocess.Popen(keyscan_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
     (stdout, stderr) = p.communicate()
@@ -202,13 +194,8 @@ class Connection(ConnectionBase):
 
     @staticmethod
     def fetch_and_store_key(host, play_context):
-        ssh_opts = get_ssh_opts(host, play_context)
-
-        remote_addr = play_context.remote_addr
-        if not remote_addr:
-            remote_addr = host.address
-
-        if not host_in_known_hosts(remote_addr, ssh_opts):
+        ssh_opts = get_ssh_opts(play_context)
+        if not host_in_known_hosts(play_context.remote_addr, ssh_opts):
             display.debug("host %s does not have a known host key, fetching it" % host)
 
             # build the list of valid host key types, for use later as we scan for keys.
@@ -217,7 +204,7 @@ class Connection(ConnectionBase):
 
             # attempt to fetch the key with ssh-keyscan. More than one key may be
             # returned, so we save all and use the above list to determine which
-            host_key_data = fetch_ssh_host_key(host, play_context, ssh_opts).strip().split('\n')
+            host_key_data = fetch_ssh_host_key(play_context, ssh_opts).strip().split('\n')
             host_keys = dict()
             for host_key in host_key_data:
                 (host_info, key_type, key_hash) = host_key.strip().split(' ', 3)
@@ -242,7 +229,7 @@ class Connection(ConnectionBase):
 
             # prompt the user to add the key
             # if yes, add it, otherwise raise AnsibleConnectionFailure
-            display.display("\nThe authenticity of host %s (%s) can't be established." % (host.name, remote_addr))
+            display.display("\nThe authenticity of host %s (%s) can't be established." % (host.name, play_context.remote_addr))
             display.display("%s key fingerprint is SHA256:%s." % (key_type.upper(), sha256(decoded_key).digest().encode('base64').strip()))
             display.display("%s key fingerprint is MD5:%s." % (key_type.upper(), key_data))
             response = display.prompt("Are you sure you want to continue connecting (yes/no)? ")
