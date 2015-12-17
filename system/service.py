@@ -471,8 +471,7 @@ class LinuxService(Service):
                 self.enable_cmd = location['chkconfig']
 
         if self.enable_cmd is None:
-            # exiting without change on non-existent service
-            self.module.exit_json(changed=False, exists=False)
+            self.module.fail_json(msg="no service or tool found for: %s" % self.name)
 
         # If no service control tool selected yet, try to see if 'service' is available
         if self.svc_cmd is None and location.get('service', False):
@@ -480,7 +479,7 @@ class LinuxService(Service):
 
         # couldn't find anything yet
         if self.svc_cmd is None and not self.svc_initscript:
-            self.module.exit_json(changed=False, exists=False)
+            self.module.fail_json(msg='cannot find \'service\' binary or init script for service,  possible typo in service name?, aborting')
 
         if location.get('initctl', False):
             self.svc_initctl = location['initctl']
