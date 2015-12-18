@@ -33,6 +33,15 @@
     - include: ec2.yml
       when: groups['dynamic_hosts'] is not defined
 
+# Have to hardcode these per-slave. We can't even run setup yet so we can't
+# introspect what they have.
+- hosts: dynamic_hosts
+  sudo: true
+  tasks:
+    - name: Install packages that let setup and package manager modules run
+      raw: dnf install -y python2 python2-dnf libselinux-python
+      when: "{{ inventory_hostname }} == 'fedora-23-x86_64'"
+
 - hosts: dynamic_hosts
   sudo: true
   vars:
