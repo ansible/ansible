@@ -23,7 +23,7 @@ To save some typing, repeated tasks can be written in short-hand like so::
 
 If you have defined a YAML list in a variables file, or the 'vars' section, you can also do::
 
-    with_items: "{{somelist}}"
+    with_items: somelist
 
 The above would be the equivalent of::
 
