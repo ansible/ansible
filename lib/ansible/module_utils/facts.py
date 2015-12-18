@@ -1078,7 +1078,7 @@ class LinuxHardware(Hardware):
             sysfs_no_links = 0
             try:
                 path = os.readlink(os.path.join("/sys/block/", block))
-            except OSError, e:
+            except OSError as e:
                 if e.errno == errno.EINVAL:
                     path = block
                     sysfs_no_links = 1
