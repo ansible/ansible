@@ -36,7 +36,7 @@
   tasks:
     - name: Install packages that let setup and package manager modules run
       raw: dnf install -y python2 python2-dnf libselinux-python
-      when: "'{{ inventory_hostname }}' == 'fedora-23-x86_64'"
+      when: "'fedora-23' in '{{ inventory_hostname }}'"
 
 - hosts: dynamic_hosts
   sudo: true
