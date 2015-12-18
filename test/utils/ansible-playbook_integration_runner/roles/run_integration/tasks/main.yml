@@ -26,5 +26,5 @@
   register: test_results
   until: test_results.finished
   retries: 360
-  wait: 10
+  delay: 10
   ignore_errors: true
