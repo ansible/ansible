@@ -55,12 +55,8 @@
     - python-virtualenv
   when: ansible_os_family == 'Debian'
 
-#- name: update ca certificates
-#  yum: name=ca-certificates state=latest
-#  when: ansible_os_family == 'RedHat'
-
-- name: update all rpm packages
-  yum: name=* state=latest
+- name: update ca certificates
+  yum: name=ca-certificates state=latest
   when: ansible_os_family == 'RedHat'
 
 - name: Install ubuntu 12.04 ansible dependencies
