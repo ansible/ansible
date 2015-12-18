@@ -260,6 +260,27 @@ class Task(Base, Conditional, Taggable, Become):
                 break
         return templar.template(value, convert_bare=True)
 
+    def _post_validate_changed_when(self, attr, value, templar):
+        '''
+        changed_when is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
+    def _post_validate_failed_when(self, attr, value, templar):
+        '''
+        failed_when is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
+    def _post_validate_until(self, attr, value, templar):
+        '''
+        until is evaluated after the execution of the task is complete,
+        and should not be templated during the regular post_validate step.
+        '''
+        return value
+
     def get_vars(self):
         all_vars = dict()
         if self._block:
