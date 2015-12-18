@@ -42,6 +42,7 @@ options:
     description:
       - Specifies the repository path to install the package from.
       - Its global definition is done in C(/etc/opt/csw/pkgutil.conf).
+    required: false
   state:
     description:
       - Whether to install (C(present)), or remove (C(absent)) a package.
@@ -49,6 +50,12 @@ options:
       - "Note: The module has a limitation that (C(latest)) only works for one package, not lists of them."
     required: true
     choices: ["present", "absent", "latest"]
+  update_catalog:
+    description:
+      - If you want to refresh your catalog from the mirror, set this to (C(yes)).
+    required: false
+    choices: ["yes", "no"]
+    default: no
 '''
 
 EXAMPLES = '''
@@ -74,7 +81,7 @@ def package_installed(module, name):
 
 def package_latest(module, name, site):
     # Only supports one package
-    cmd = [ 'pkgutil', '--single', '-c' ]
+    cmd = [ 'pkgutil', '-U', '--single', '-c' ]
     if site is not None:
         cmd += [ '-t', site]
     cmd.append(name)
@@ -89,8 +96,10 @@ def run_command(module, cmd, **kwargs):
     cmd[0] = module.get_bin_path(progname, True, ['/opt/csw/bin'])
     return module.run_command(cmd, **kwargs)
 
-def package_install(module, state, name, site):
+def package_install(module, state, name, site, update_catalog):
     cmd = [ 'pkgutil', '-iy' ]
+    if update_catalog:
+        cmd += [ '-U' ]
     if site is not None:
         cmd += [ '-t', site ]
     if state == 'latest':
@@ -99,8 +108,10 @@ def package_install(module, state, name, site):
     (rc, out, err) = run_command(module, cmd)
     return (rc, out, err)
 
-def package_upgrade(module, name, site):
+def package_upgrade(module, name, site, update_catalog):
     cmd = [ 'pkgutil', '-ufy' ]
+    if update_catalog:
+        cmd += [ '-U' ]
     if site is not None:
         cmd += [ '-t', site ]
     cmd.append(name)
@@ -118,12 +129,14 @@ def main():
             name = dict(required = True),
             state = dict(required = True, choices=['present', 'absent','latest']),
             site = dict(default = None),
+            update_catalog = dict(required = False, default = "no", type='bool', choices=["yes","no"]),
         ),
         supports_check_mode=True
     )
     name = module.params['name']
     state = module.params['state']
     site = module.params['site']
+    update_catalog = module.params['update_catalog']
     rc = None
     out = ''
     err = ''
@@ -135,31 +148,42 @@ def main():
         if not package_installed(module, name):
             if module.check_mode:
                 module.exit_json(changed=True)
-            (rc, out, err) = package_install(module, state, name, site)
+            (rc, out, err) = package_install(module, state, name, site, update_catalog)
             # Stdout is normally empty but for some packages can be
             # very long and is not often useful
             if len(out) > 75:
                 out = out[:75] + '...'
+            if rc != 0:
+                module.fail_json(msg=err if err else out)
 
     elif state == 'latest':
         if not package_installed(module, name):
             if module.check_mode:
                 module.exit_json(changed=True)
-            (rc, out, err) = package_install(module, state, name, site)
+            (rc, out, err) = package_install(module, state, name, site, update_catalog)
+            if len(out) > 75:
+                out = out[:75] + '...'
+            if rc != 0:
+                module.fail_json(msg=err if err else out)
         else:
             if not package_latest(module, name, site):
                 if module.check_mode:
                     module.exit_json(changed=True) 
-                (rc, out, err) = package_upgrade(module, name, site)
+                (rc, out, err) = package_upgrade(module, name, site, update_catalog)
                 if len(out) > 75:
                     out = out[:75] + '...'
+                if rc != 0:
+                    module.fail_json(msg=err if err else out)
 
     elif state == 'absent':
         if package_installed(module, name):
             if module.check_mode:
                 module.exit_json(changed=True)
             (rc, out, err) = package_uninstall(module, name)
-            out = out[:75]
+            if len(out) > 75:
+                out = out[:75] + '...'
+            if rc != 0:
+                module.fail_json(msg=err if err else out)
 
     if rc is None:
         # pkgutil was not executed because the package was already present/absent
