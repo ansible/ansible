@@ -89,7 +89,7 @@
 
 - name: Install ubuntu 12.04 ansible pip deps
   sudo: true
-  pip: name="{{ item }}"
+  pip: name="{{ item }}" state=latest
   with_items:
     - pycrypto
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == "12.04"
