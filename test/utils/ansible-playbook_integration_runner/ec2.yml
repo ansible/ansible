@@ -28,6 +28,8 @@
 - name: Wait a little longer for centos
   pause: seconds=20
 
+- debug: var=ec2.results
+
 - name: Add hosts group temporary inventory group with pem path
   add_host:
     name: "{{ item.1.platform }} {{ ec2.results[item.0]['instances'][0]['public_ip'] }}"
