@@ -67,6 +67,14 @@
     - rubygems-integration
   when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == "14.04"
 
+# Not sure why CentOS 6 is working without this....
+#- name: Install Red Hat 6 ansible dependencies
+#  yum: name="{{ item }}" state=installed
+#  sudo: true
+#  with_items:
+#    - python-crypto2.6
+#  when: ansible_distribution in ('CentOS', 'RedHat') and ansible_distribution_major_version == "6"
+
 - name: Install ansible pip deps
   sudo: true
   pip: name="{{ item }}"
@@ -74,6 +82,13 @@
     - PyYAML
     - Jinja2
     - paramiko
+
+- name: Install ubuntu 12.04 ansible pip deps
+  sudo: true
+  pip: name="{{ item }}"
+  with_items:
+    - pycrypto
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == "12.04"
 
 - name: Remove tty sudo requirement
   sudo: true
