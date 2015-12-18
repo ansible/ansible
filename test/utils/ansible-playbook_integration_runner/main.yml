@@ -22,7 +22,12 @@
         image: "ami-96a818fe"
         ssh_user: "centos"
         platform: "centos-7-x86_64"
-          
+      - distribution: "Fedora"
+        version: "23"
+        image: "ami-518bfb3b"
+        ssh_user: "fedora"
+        platform: "fedora-23-x86_64"
+
   tasks:
     - debug: var=ansible_version
     - include: ec2.yml
