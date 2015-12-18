@@ -33,6 +33,7 @@
     - openssl
     - make
     - gcc
+    - gawk
     - python-devel
     - libselinux-python
     - python-virtualenv
@@ -49,6 +50,7 @@
     - mercurial
     - git
     - unzip
+    - gawk
     - python-dev
     - python-virtualenv
   when: ansible_os_family == 'Debian'
