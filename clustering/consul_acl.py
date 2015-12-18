@@ -313,13 +313,13 @@ def test_dependencies(module):
 
 def main():
     argument_spec = dict(
-        mgmt_token=dict(required=True),
+        mgmt_token=dict(required=True, no_log=True),
         host=dict(default='localhost'),
         name=dict(required=False),
         port=dict(default=8500, type='int'),
         rules=dict(default=None, required=False, type='list'),
         state=dict(default='present', choices=['present', 'absent']),
-        token=dict(required=False),
+        token=dict(required=False, no_log=True),
         token_type=dict(
             required=False, choices=['client', 'management'], default='client')
     )
