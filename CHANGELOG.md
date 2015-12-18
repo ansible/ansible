@@ -370,6 +370,7 @@ allowed in future versions:
 * We do not ignore the explicitly set login user for ssh when it matches the 'current user' anymore, this allows overriding .ssh/config when it is set
   explicitly. Leaving it unset will still use the same user and respect .ssh/config. This also means ansible_ssh_user can now return a None value.
 * environment variables passed to remote shells now default to 'controller' settings, with fallback to en_us.UTF8 which was the previous default.
+* add_hosts is much stricter about host name and will prevent invalid names from being added.
 * ansible-pull now defaults to doing shallow checkouts with git, use `--full` to return to previous behaviour.
 * random cows are more random
 * when: now gets the registered var after the first iteration, making it possible to break out of item loops
