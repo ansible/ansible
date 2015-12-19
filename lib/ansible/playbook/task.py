@@ -107,11 +107,10 @@ class Task(Base, Conditional, Taggable, Become):
         elif self.name:
             return self.name
         else:
-            flattened_args = self._merge_kv(self.args)
             if self._role:
-                return "%s : %s %s" % (self._role.get_name(), self.action, flattened_args)
+                return "%s : %s" % (self._role.get_name(), self.action)
             else:
-                return "%s %s" % (self.action, flattened_args)
+                return "%s" % (self.action,)
 
     def _merge_kv(self, ds):
         if ds is None:
