@@ -137,6 +137,9 @@ test_connection_lxc:
 test_connection_winrm:
 	(cd targets/connection_winrm && ./runme.sh $(TEST_FLAGS))
 
+test_connection_guestfs:
+	(cd targets/connection_guestfs && ./runme.sh $(TEST_FLAGS))
+
 destructive: setup
 	ANSIBLE_ROLES_PATH=$(shell pwd)/targets ansible-playbook destructive.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS)
 

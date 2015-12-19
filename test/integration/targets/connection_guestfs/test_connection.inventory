@@ -1,0 +1,13 @@
+[guestfs]
+guestfs-pipelining ansible_ssh_pipelining=true
+guestfs-no-pipelining ansible_ssh_pipelining=false
+
+[guestfs:vars]
+# 1. install python-libguestfs
+# 2. cd test/integration/targets/connection/
+# 3. download a cloud image (if possible, take one with python2)
+# wget http://vesta.informatik.rwth-aachen.de/ftp/pub/Linux/fedora/linux//releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-22-20150521.x86_64.qcow2
+ansible_connection=guestfs
+ansible_host=Fedora-Cloud-Base-22-20150521.x86_64.qcow2
+
+
