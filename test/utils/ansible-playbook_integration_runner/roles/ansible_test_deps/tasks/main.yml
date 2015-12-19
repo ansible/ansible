@@ -37,6 +37,8 @@
     - python-devel
     - libselinux-python
     - python-virtualenv
+    - yum
+    - yum-metadata-parser
   when: ansible_os_family == 'RedHat'
 
 - name: Install Debian ansible dependencies
