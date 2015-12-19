@@ -82,14 +82,13 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         * Module parameters.  These are stored in self._task.args
         """
+        # store the module invocation details into the results
         results =  {}
-        # This does not respect no_log set by module args, left here for debugging module invocation
-        #if self._task.async == 0:
-        #    # store the module invocation details into the results
-        #    results['invocation'] = dict(
-        #        module_name = self._task.action,
-        #        module_args = self._task.args,
-        #    )
+        if self._task.async == 0:
+            results['invocation'] = dict(
+                module_name = self._task.action,
+                module_args = self._task.args,
+            )
         return results
 
     def _configure_module(self, module_name, module_args, task_vars=None):
