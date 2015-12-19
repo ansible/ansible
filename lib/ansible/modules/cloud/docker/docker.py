@@ -101,6 +101,7 @@ options:
       - List of host devices to expose to container
     default: null
     required: false
+    version_added: "2.1"
   log_driver:
     description:
       - You can specify a different logging driver for the container than for the daemon.
@@ -395,7 +396,7 @@ EXAMPLES = '''
 #   stopped and removed, and a new one will be launched in its place.
 # - link this container to the existing redis container launched above with
 #   an alias.
-# - grant the container read write permissions for the host's /dev/sda device 
+# - grant the container read write permissions for the host's /dev/sda device
 #   through a node named /dev/xvda
 # - bind TCP port 9000 within the container to port 8080 on all interfaces
 #   on the host.
@@ -853,8 +854,8 @@ class DockerManager(object):
         }
 
         optionals = {}
-        for optional_param in ('devices', 'dns', 'volumes_from', 
-                'restart_policy', 'restart_policy_retry', 'pid', 'extra_hosts', 
+        for optional_param in ('devices', 'dns', 'volumes_from',
+                'restart_policy', 'restart_policy_retry', 'pid', 'extra_hosts',
                 'log_driver', 'cap_add', 'cap_drop', 'read_only', 'log_opt'):
             optionals[optional_param] = self.module.params.get(optional_param)
 
@@ -1317,7 +1318,7 @@ class DockerManager(object):
                 differing.append(container)
                 continue
 
-            # DEVICES 
+            # DEVICES
 
             expected_devices = set()
             for device in (self.module.params.get('devices') or []):
