@@ -48,7 +48,7 @@ options:
   metadata:
     description:
       - a hash/dictionary of custom data for the instance;
-        '{"key": "value", ...}'
+        '{"key":"value", ...}'
     required: false
     default: null
     aliases: []
