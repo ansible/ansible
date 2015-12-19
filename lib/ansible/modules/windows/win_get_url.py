@@ -70,22 +70,16 @@ options:
       - The full URL of the proxy server to download through.
     version_added: "2.0"
     required: false
-    choices: null
-    default: null
   proxy_username:
     description:
       - Proxy authentication username
     version_added: "2.0"
     required: false
-    choices: null
-    default: null
   proxy_password:
     description:
       - Proxy authentication password
     version_added: "2.0"
     required: false
-    choices: null
-    default: null
 author:
     - "Paul Durivage (@angstwad)"
     - "Takeshi Kuramochi (tksarah)"
