@@ -22,7 +22,7 @@ __metaclass__ = type
 from jinja2.exceptions import UndefinedError
 
 from ansible.compat.six import text_type
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleUndefinedVariable
 from ansible.playbook.attribute import FieldAttribute
 from ansible.template import Templar
 
@@ -89,16 +89,22 @@ class Conditional:
         # make sure the templar is using the variables specifed to this method
         templar.set_available_variables(variables=all_vars)
 
-        conditional = templar.template(conditional)
-        if not isinstance(conditional, basestring) or conditional == "":
-            return conditional
+        try:
+            conditional = templar.template(conditional)
+            if not isinstance(conditional, text_type) or conditional == "":
+                return conditional
 
-        # a Jinja2 evaluation that results in something Python can eval!
-        presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
-        conditional = templar.template(presented, fail_on_undefined=False)
-
-        val = conditional.strip()
-        if val == presented:
+            # a Jinja2 evaluation that results in something Python can eval!
+            presented = "{%% if %s %%} True {%% else %%} False {%% endif %%}" % conditional
+            conditional = templar.template(presented)
+            val = conditional.strip()
+            if val == "True":
+                return True
+            elif val == "False":
+                return False
+            else:
+                raise AnsibleError("unable to evaluate conditional: %s" % original)
+        except (AnsibleUndefinedVariable, UndefinedError) as e:
             # the templating failed, meaning most likely a
             # variable was undefined. If we happened to be
             # looking for an undefined variable, return True,
@@ -108,11 +114,5 @@ class Conditional:
             elif "is defined" in original:
                 return False
             else:
-                raise AnsibleError("error while evaluating conditional: %s (%s)" % (original, presented))
-        elif val == "True":
-            return True
-        elif val == "False":
-            return False
-        else:
-            raise AnsibleError("unable to evaluate conditional: %s" % original)
+                raise AnsibleError("error while evaluating conditional (%s): %s" % (original, e))
 

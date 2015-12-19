@@ -6,10 +6,12 @@
 
 - name: Get ansible source dir
   sudo: false
-  shell: "cd ~ && pwd"
+  shell: "cd ~/ansible && pwd"
   register: results
 
-- shell: ". hacking/env-setup && cd test/integration && make {{ run_integration_make_target }}"
+- shell: "ls -la && . hacking/env-setup && cd test/integration && make {{ run_integration_make_target }}"
+  args:
+    chdir: "{{ results.stdout }}"
   async: 3600
   poll: 0
   register: async_test_results
@@ -17,14 +19,13 @@
   environment:
     TEST_FLAGS: "{{ run_integration_test_flags|default(lookup('env', 'TEST_FLAGS')) }}"
     CREDENTIALS_FILE: "{{ run_integration_credentials_file|default(lookup('env', 'CREDENTIALS_FILE')) }}"
-  args:
-    chdir: "{{ results.stdout }}/ansible"
 
 - name: poll for test results
-  async_status:
-    jid: "{{async_test_results.ansible_job_id}}"
+  async_status: jid="{{async_test_results.ansible_job_id}}"
   register: test_results
   until: test_results.finished
-  retries: 360
-  delay: 10
+  retries: 120
+  delay: 30
   ignore_errors: true
+
+- debug: var=test_results
