@@ -53,7 +53,7 @@ options:
         Used to match and launch containers.
     default: null
     required: false
-    version_added: "2.0"
+    version_added: "2.1"
   command:
     description:
       - Command used to match and launch containers.
