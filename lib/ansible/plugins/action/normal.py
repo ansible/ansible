@@ -28,11 +28,13 @@ class ActionModule(ActionBase):
 
         results = super(ActionModule, self).run(tmp, task_vars)
         results.update(self._execute_module(tmp=tmp, task_vars=task_vars))
-
         # Remove special fields from the result, which can only be set
         # internally by the executor engine. We do this only here in
         # the 'normal' action, as other action plugins may set this.
-        for field in ('ansible_notify',):
+        #
+        # We don't want modules to determine that running the module fires
+        # notify handlers.  That's for the playbook to decide.
+        for field in ('_ansible_notify',):
             if field in results:
                 results.pop(field)
 
