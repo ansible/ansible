@@ -82,7 +82,7 @@ class Task(Base, Conditional, Taggable, Become):
     _poll                 = FieldAttribute(isa='int')
     _register             = FieldAttribute(isa='string')
     _retries              = FieldAttribute(isa='int', default=3)
-    _until                = FieldAttribute(isa='list')
+    _until                = FieldAttribute(isa='string')
 
     def __init__(self, block=None, role=None, task_include=None):
         ''' constructors a task, without the Task.load classmethod, it will be pretty blank '''
