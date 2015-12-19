@@ -96,12 +96,22 @@
   register: get_url_result
   ignore_errors: True
 
+- name: TROUBLESHOOTING
+  shell: curl https://foo.sni.velox.ch/ > /var/tmp/velox.html
+  register: trouble
+  ignore_errors: True
+  when: "{{ python_has_ssl_context }}"
+
+- debug: var=trouble
+  when: "{{ python_has_ssl_context }}"
+
+- debug: var=get_url_result
+  when: "{{ python_has_ssl_context }}"
+
 - command: "grep 'sent the following TLS server name indication extension' {{ output_dir}}/sni.html"
   register: data_result
   when: "{{ python_has_ssl_context }}"
 
-# If distros start backporting SNI, can make a new conditional based on whether this works:
-# python -c 'from ssl import SSLContext'
 - debug: var=get_url_result
 - name: Assert that SNI works with this python version
   assert:
