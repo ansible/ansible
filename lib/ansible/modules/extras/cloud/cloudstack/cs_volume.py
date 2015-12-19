@@ -394,18 +394,15 @@ class AnsibleCloudStackVolume(AnsibleCloudStack):
         volume = self.get_volume()
 
         if volume:
-            if 'attached' in volume:
-                if self.module.param.get('force'):
-                    self.detached_volume()
-                else:
-                    self.module.fail_json(msg="Volume '%s' is attached, use force=true for detaching and removing the volume." % volume.get('name'))
+            if 'attached' in volume and not self.module.param.get('force'):
+                self.module.fail_json(msg="Volume '%s' is attached, use force=true for detaching and removing the volume." % volume.get('name'))
 
             self.result['changed'] = True
             if not self.module.check_mode:
                 volume = self.detached_volume()
 
                 res = self.cs.deleteVolume(id=volume['id'])
-                if 'errortext' in volume:
+                if 'errortext' in res:
                     self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
                 poll_async = self.module.params.get('poll_async')
                 if poll_async:
