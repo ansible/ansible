@@ -39,6 +39,7 @@
     - python-virtualenv
     - yum
     - yum-metadata-parser
+    - redhat-rpm-config
   when: ansible_os_family == 'RedHat'
 
 - name: Install Debian ansible dependencies
