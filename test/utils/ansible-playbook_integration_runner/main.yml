@@ -74,4 +74,4 @@
 
     - name: Fail
       shell: 'echo "{{ inventory_hostname }}, Failed" && exit 1'
-      when: "test_results.rc != 0"
+      when: "'rc' not in test_results or test_results.rc != 0"

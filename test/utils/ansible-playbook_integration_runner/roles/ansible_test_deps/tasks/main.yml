@@ -53,6 +53,7 @@
   when: ansible_os_family == 'Debian'
 
 - name: update ca certificates
+  sudo: true
   yum: name=ca-certificates state=latest
   when: ansible_os_family == 'RedHat'
 
