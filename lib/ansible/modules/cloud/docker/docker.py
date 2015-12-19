@@ -352,7 +352,7 @@ options:
       - Set container labels. Requires docker >= 1.6 and docker-py >= 1.2.0.
     required: false
     default: null
-    version_added: "1.9.4"
+    version_added: "2.1"
   stop_timeout:
     description:
       - How many seconds to wait for the container to stop before killing it.
