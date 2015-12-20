@@ -297,14 +297,6 @@ class PlayContext(Base):
 
         new_info = self.copy()
 
-        # loop through a subset of attributes on the task object and set
-        # connection fields based on their values
-        for attr in TASK_ATTRIBUTE_OVERRIDES:
-            if hasattr(task, attr):
-                attr_val = getattr(task, attr)
-                if attr_val is not None:
-                    setattr(new_info, attr, attr_val)
-
         # next, use the MAGIC_VARIABLE_MAPPING dictionary to update this
         # connection info object with 'magic' variables from the variable list.
         # If the value 'ansible_delegated_vars' is in the variables, it means
@@ -360,6 +352,14 @@ class PlayContext(Base):
                     setattr(new_info, attr, delegated_vars[variable_name])
                 elif variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
+
+        # loop through a subset of attributes on the task object and set
+        # connection fields based on their values
+        for attr in TASK_ATTRIBUTE_OVERRIDES:
+            if hasattr(task, attr):
+                attr_val = getattr(task, attr)
+                if attr_val is not None:
+                    setattr(new_info, attr, attr_val)
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
