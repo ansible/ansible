@@ -30,10 +30,15 @@ options:
   name:
     description:
       - Host name of the instance. C(name) can only contain ASCII letters.
-    required: true
+      - Name will be generated (UUID) by CloudStack if not specified and can not be changed afterwards.
+      - Either C(name) or C(display_name) is required.
+    required: false
+    default: null
   display_name:
     description:
       - Custom display name of the instances.
+      - Display name will be set to C(name) if not specified.
+      - Either C(name) or C(display_name) is required.
     required: false
     default: null
   group:
@@ -226,16 +231,21 @@ EXAMPLES = '''
     service_offering: 2cpu_2gb
     force: yes
 
-# Create or update a instance on Exoscale's public cloud
+# Create or update a instance on Exoscale's public cloud using display_name.
+# Note: user_data can be used to kickstart the instance using cloud-init yaml config.
 - local_action:
     module: cs_instance
-    name: web-vm-1
+    display_name: web-vm-1
     template: Linux Debian 7 64-bit
     service_offering: Tiny
     ssh_key: john@example.com
     tags:
       - { key: admin, value: john }
       - { key: foo,   value: bar }
+    user_data: |
+        #cloud-config
+        packages:
+          - nginx
 
 # Create an instance with multiple interfaces specifying the IP addresses
 - local_action:
@@ -480,7 +490,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
     def get_instance(self):
         instance = self.instance
         if not instance:
-            instance_name = self.module.params.get('name')
+            instance_name = self.get_or_fallback('name', 'display_name')
 
             args                = {}
             args['account']     = self.get_account(key='name')
@@ -870,7 +880,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
 def main():
     argument_spec = cs_argument_spec()
     argument_spec.update(dict(
-        name = dict(required=True),
+        name = dict(default=None),
         display_name = dict(default=None),
         group = dict(default=None),
         state = dict(choices=['present', 'deployed', 'started', 'stopped', 'restarted', 'restored', 'absent', 'destroyed', 'expunged'], default='present'),
@@ -910,6 +920,9 @@ def main():
     module = AnsibleModule(
         argument_spec=argument_spec,
         required_together=required_together,
+        required_one_of = (
+            ['display_name', 'name'],
+        ),
         mutually_exclusive = (
             ['template', 'iso'],
         ),
