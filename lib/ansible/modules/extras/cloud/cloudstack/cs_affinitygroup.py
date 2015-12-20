@@ -124,18 +124,15 @@ class AnsibleCloudStackAffinityGroup(AnsibleCloudStack):
 
     def get_affinity_group(self):
         if not self.affinity_group:
-            affinity_group = self.module.params.get('name')
 
             args                = {}
             args['account']     = self.get_account('name')
             args['domainid']    = self.get_domain('id')
+            args['name']        = self.module.params.get('name')
 
             affinity_groups = self.cs.listAffinityGroups(**args)
             if affinity_groups:
-                for a in affinity_groups['affinitygroup']:
-                    if affinity_group in [ a['name'], a['id'] ]:
-                        self.affinity_group = a
-                        break
+                self.affinity_group = affinity_groups['affinitygroup'][0]
         return self.affinity_group
 
 
