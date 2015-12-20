@@ -4,14 +4,8 @@
   when: ansible_os_family == 'Debian'
 
 - name: Install sudo
-  yum: name=sudo state=installed
+  package: name=sudo state=installed
   ignore_errors: true
-  when: ansible_os_family == 'RedHat'
-
-- name: Install sudo
-  apt: name=sudo state=installed
-  ignore_errors: true
-  when: ansible_os_family == 'Debian'
 
 - name: Install RH epel
   yum: name="epel-release" state=installed
