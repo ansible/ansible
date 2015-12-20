@@ -126,7 +126,7 @@
   register: get_url_result
   ignore_errors: True
 
-- command: "grep '<h2>If You Can Read This, You\\'re SNIing</h2>' {{ output_dir}}/sni.html"
+- command: "grep '<h2>If You Can Read This, You.re SNIing</h2>' {{ output_dir}}/sni.html"
   register: data_result
   when: "{{ python_has_ssl_context }}"
 
