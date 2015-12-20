@@ -28,4 +28,14 @@
   delay: 30
   ignore_errors: true
 
-- debug: var=test_results
+- name: save stdout test results for each host
+  local_action: copy
+  args:
+    dest: "{{sync_dir}}/{{inventory_hostname}}.stdout_results.txt"
+    content: "{{test_results.stdout}}"
+
+- name: save stderr test results for each host
+  local_action: copy
+  args:
+    dest: "{{sync_dir}}/{{inventory_hostname}}.stderr_results.txt"
+    content: "{{test_results.stderr}}"
