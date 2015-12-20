@@ -19,7 +19,7 @@
         platform: "centos-6.5-x86_64"
       - distribution: "CentOS"
         version: "7"
-        image: "ami-96a818fe"
+        image: "ami-61bbf104"
         ssh_user: "centos"
         platform: "centos-7-x86_64"
       - distribution: "Fedora"
