@@ -5,7 +5,12 @@
 # install apache on the ec2 instances
 
 - name: install apache on new ec2 instances
-  yum: name=httpd
+  package: name=httpd
+  when: ansible_os_family == 'RedHat'
+
+- name: install apache on new ec2 instances
+  package: name=apache
+  when: ansible_os_family == 'Debian'
 
 - name: start and enable apache
   service: name=httpd state=started enabled=yes
