@@ -369,8 +369,7 @@ def create_virtual_machine(module, azure):
             vm_config = LinuxConfigurationSet(hostname, user, password, disable_ssh_password_authentication)
         else:
             #Create Windows Config
-            vm_config = WindowsConfigurationSet(hostname, password, module.params.get('reset_pass_atlogon'),\
-                                                 module.params.get('auto_updates'), None, user)
+            vm_config = WindowsConfigurationSet(hostname, password, None, module.params.get('auto_updates'), None, user)
             vm_config.domain_join = None
             if module.params.get('enable_winrm'):
                 listener = Listener('Http')
