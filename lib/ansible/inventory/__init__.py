@@ -110,7 +110,10 @@ class Inventory(object):
         elif isinstance(host_list, list):
             for h in host_list:
                 (host, port) = parse_address(h, allow_ranges=False)
-                all.add_host(Host(host, port))
+                if host is not None:
+                    all.add_host(Host(host, port))
+                else:
+                    all.add_host(Host(h))
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
             if self.is_directory(host_list):
