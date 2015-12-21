@@ -23,7 +23,7 @@ import ast
 import re
 
 from ansible import constants as C
-from ansible.errors import AnsibleError
+from ansible.errors import AnsibleError, AnsibleParserError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
@@ -264,9 +264,12 @@ class InventoryParser(object):
         # Can the given hostpattern be parsed as a host with an optional port
         # specification?
 
-        (pattern, port) = parse_address(hostpattern, allow_ranges=True)
-        if not pattern:
-            self._raise_error("Can't parse '%s' as host[:port]" % hostpattern)
+        try:
+            (pattern, port) = parse_address(hostpattern, allow_ranges=True)
+        except:
+            # not a recognizable host pattern
+            pattern = hostpattern
+            port = None
 
         # Once we have separated the pattern, we expand it into list of one or
         # more hostnames, depending on whether it contains any [x:y] ranges.
