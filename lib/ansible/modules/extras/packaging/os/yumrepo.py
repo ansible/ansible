@@ -172,6 +172,12 @@ options:
     required: true
     description:
       - Unique repository ID.
+  params:
+    required: false
+    default: None
+    description:
+      - Option used to allow the user to overwrite any of the other options. To
+        remove an option, set the value of the option to C(null).
   password:
     required: false
     default: None
@@ -283,7 +289,8 @@ options:
     description:
       - Username to use for basic authentication to a repo or really any url.
 
-extends_documentation_fragment: files
+extends_documentation_fragment:
+  - files
 
 notes:
   - All comments will be removed if modifying an existing repo file.
@@ -326,6 +333,25 @@ EXAMPLES = '''
     name: epel
     file: external_repos
     state: absent
+
+#
+# Allow to overwrite the yumrepo parameters by defining the parameters
+# as a variable in the defaults or vars file:
+#
+# my_role_somerepo_params:
+#   # Disable GPG checking
+#   gpgcheck: no
+#   # Remove the gpgkey option
+#   gpgkey: null
+#
+- name: Add Some repo
+  yumrepo:
+    name: somerepo
+    description: Some YUM repo
+    baseurl: http://server.com/path/to/the/repo
+    gpgkey: http://server.com/keys/somerepo.pub
+    gpgcheck: yes
+    params: "{{ my_role_somerepo_params }}"
 '''
 
 RETURN = '''
@@ -490,6 +516,7 @@ def main():
             mirrorlist=dict(),
             mirrorlist_expire=dict(),
             name=dict(required=True),
+            params=dict(),
             password=dict(no_log=True),
             protect=dict(type='bool'),
             proxy=dict(),
@@ -512,6 +539,12 @@ def main():
         add_file_common_args=True,
         supports_check_mode=True,
     )
+
+    # Update module parameters by user's parameters if defined
+    if 'params' in module.params and isinstance(module.params['params'], dict):
+        module.params.update(module.params['params'])
+        # Remove the params
+        module.params.pop('params', None)
 
     name = module.params['name']
     state = module.params['state']
