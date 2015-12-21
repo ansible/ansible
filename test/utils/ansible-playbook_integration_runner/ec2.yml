@@ -2,7 +2,7 @@
   ec2:
     group_id: 'sg-07bb906d' # jenkins-slave_new
     count: 1
-    instance_type: 'm3.large'
+    instance_type: 'm3.xlarge'
     image: '{{ item.image }}'
     wait: true
     region: 'us-east-1'

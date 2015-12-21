@@ -3,13 +3,14 @@
   synchronize: 
     src: "{{ sync_dir }}/"
     dest: "~/ansible"
+  no_log: true
 
 - name: Get ansible source dir
   sudo: false
   shell: "cd ~/ansible && pwd"
   register: results
 
-- shell: "ls -la && . hacking/env-setup && cd test/integration && TEST_FLAGS='-e clean_working_dir=no' make -j4 {{ run_integration_make_target }}"
+- shell: "ls -la && . hacking/env-setup && cd test/integration && TEST_FLAGS='-e clean_working_dir=no' make -j2 {{ run_integration_make_target }}"
   args:
     chdir: "{{ results.stdout }}"
   async: 3600
@@ -27,6 +28,7 @@
   retries: 120
   delay: 30
   ignore_errors: true
+  no_log: true
 
 - name: save stdout test results for each host
   local_action: copy
