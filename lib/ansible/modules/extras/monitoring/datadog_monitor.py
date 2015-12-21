@@ -144,12 +144,12 @@ def main():
             query=dict(required=False),
             message=dict(required=False, default=None),
             silenced=dict(required=False, default=None, type='dict'),
-            notify_no_data=dict(required=False, default=False, choices=BOOLEANS),
+            notify_no_data=dict(required=False, default=False, type='bool'),
             no_data_timeframe=dict(required=False, default=None),
             timeout_h=dict(required=False, default=None),
             renotify_interval=dict(required=False, default=None),
             escalation_message=dict(required=False, default=None),
-            notify_audit=dict(required=False, default=False, choices=BOOLEANS),
+            notify_audit=dict(required=False, default=False, type='bool'),
             thresholds=dict(required=False, type='dict', default={'ok': 1, 'critical': 1, 'warning': 1}),
         )
     )

@@ -100,10 +100,10 @@ def main():
             login_host = dict(default='localhost', type='str'),
             login_port = dict(default='15672', type='str'),
             vhost = dict(default='/', type='str'),
-            durable = dict(default=True, choices=BOOLEANS, type='bool'),
-            autoDelete = dict(default=False, choices=BOOLEANS, type='bool'),
-            internal = dict(default=False, choices=BOOLEANS, type='bool'),
-            exchangeType = dict(default='direct', aliases=['type'], type='str'),
+            durable = dict(default=True, type='bool'),
+            auto_delete = dict(default=False, type='bool'),
+            internal = dict(default=False, type='bool'),
+            exchange_type = dict(default='direct', aliases=['type'], type='str'),
             arguments = dict(default=dict(), type='dict')
         ),
         supports_check_mode = True
