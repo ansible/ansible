@@ -77,7 +77,14 @@ options:
    security_groups:
      description:
         - Names of the security groups to which the instance should be
-          added.  This may be a YAML list or a common separated string.
+          added. This may be a YAML list or a comma separated string.
+     required: false
+     default: None
+   network:
+     description:
+        - Name or ID of a network to attach this instance to. A simpler
+          version of the nics parameter, only one of network or nics should
+          be supplied.
      required: false
      default: None
    nics:
@@ -86,7 +93,8 @@ options:
           be attached. Networks may be referenced by net-id/net-name/port-id
           or port-name.
         - 'Also this accepts a string containing a list of (net/port)-(id/name)
-          Eg: nics: "net-id=uuid-1,port-name=myport"'
+          Eg: nics: "net-id=uuid-1,port-name=myport"
+          Only one of network or nics should be supplied.'
      required: false
      default: None
    auto_ip:
@@ -133,15 +141,32 @@ options:
         - Opaque blob of data which is made available to the instance
      required: false
      default: None
-   root_volume:
+   boot_from_volume:
      description:
-        - Boot instance from a volume
+        - Should the instance boot from a persistent volume created based on
+          the image given. Mututally exclusive with boot_volume.
+     required: false
+     default: false
+   volume_size:
+     description:
+        - The size of the volume to create in GB if booting from volume based
+          on an image.
+   boot_volume:
+     description:
+        - Volume name or id to use as the volume to boot from. Implies
+          boot_from_volume. Mutually exclusive with image and boot_from_volume.
      required: false
      default: None
+     aliases: ['root_volume']
    terminate_volume:
      description:
         - If true, delete volume when deleting instance (if booted from volume)
      default: false
+   volumes:
+     description:
+       - A list of preexisting volumes names or ids to attach to the instance
+     required: false
+     default: []
    state:
      description:
        - Should the resource be present or absent.
@@ -280,6 +305,52 @@ EXAMPLES = '''
          - net-id: 34605f38-e52a-25d2-b6ec-754a13ffb723
          - net-name: another_network
        meta: "hostname=test1,group=uge_master"
+
+# Creates a new instance and attaches to a specific network
+- os_server:
+       state: present
+       auth:
+         auth_url: https://region-b.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+         username: admin
+         password: admin
+         project_name: admin
+       name: vm1
+       image: 4f905f38-e52a-43d2-b6ec-754a13ffb529
+       key_name: ansible_key
+       timeout: 200
+       flavor: 4
+       network: another_network
+
+# Creates a new instance with 4G of RAM on a 75G Ubuntu Trusty volume
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance
+    os_server:
+      name: vm1
+      state: present
+      cloud: mordred
+      region_name: ams01
+      image: Ubuntu Server 14.04
+      flavor_ram: 4096
+      boot_from_volume: True
+      volume_size: 75
+
+# Creates a new instance with 2 volumes attached
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance
+    os_server:
+      name: vm1
+      state: present
+      cloud: mordred
+      region_name: ams01
+      image: Ubuntu Server 14.04
+      flavor_ram: 4096
+      volumes:
+      - photos
+      - music
 '''
 
 
@@ -301,7 +372,14 @@ def _network_args(module, cloud):
     args = []
     nics = module.params['nics']
 
+    if type(nics) != list:
+        module.fail_json(msg='The \'nics\' parameter must be a list.')
+
     for net in _parse_nics(nics):
+        if type(net) != dict:
+            module.fail_json(
+                msg='Each entry in the \'nics\' parameter must be a dict.')
+
         if net.get('net-id'):
             args.append(net)
         elif net.get('net-name'):
@@ -339,7 +417,7 @@ def _create_server(module, cloud):
     flavor_include = module.params['flavor_include']
 
     image_id = None
-    if not module.params['root_volume']:
+    if not module.params['boot_volume']:
         image_id = cloud.get_image_id(
             module.params['image'], module.params['image_exclude'])
 
@@ -371,7 +449,9 @@ def _create_server(module, cloud):
         userdata=module.params['userdata'],
         config_drive=module.params['config_drive'],
     )
-    for optional_param in ('region_name', 'key_name', 'availability_zone'):
+    for optional_param in (
+            'region_name', 'key_name', 'availability_zone', 'network',
+            'volume_size', 'volumes'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
 
@@ -379,7 +459,8 @@ def _create_server(module, cloud):
         ip_pool=module.params['floating_ip_pools'],
         ips=module.params['floating_ips'],
         auto_ip=module.params['auto_ip'],
-        root_volume=module.params['root_volume'],
+        boot_volume=module.params['boot_volume'],
+        boot_from_volume=module.params['boot_from_volume'],
         terminate_volume=module.params['terminate_volume'],
         wait=module.params['wait'], timeout=module.params['timeout'],
         **bootkwargs
@@ -461,6 +542,7 @@ def main():
         flavor_include                  = dict(default=None),
         key_name                        = dict(default=None),
         security_groups                 = dict(default=['default'], type='list'),
+        network                         = dict(default=None),
         nics                            = dict(default=[], type='list'),
         meta                            = dict(default=None),
         userdata                        = dict(default=None),
@@ -468,8 +550,11 @@ def main():
         auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
         floating_ips                    = dict(default=None),
         floating_ip_pools               = dict(default=None),
-        root_volume                     = dict(default=None),
+        volume_size                     = dict(default=False, type='int'),
+        boot_from_volume                = dict(default=False, type='bool'),
+        boot_volume                     = dict(default=None, aliases=['root_volume']),
         terminate_volume                = dict(default=False, type='bool'),
+        volumes                         = dict(default=[], type='list'),
         state                           = dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs(
@@ -478,7 +563,12 @@ def main():
             ['auto_ip', 'floating_ip_pools'],
             ['floating_ips', 'floating_ip_pools'],
             ['flavor', 'flavor_ram'],
-            ['image', 'root_volume'],
+            ['image', 'boot_volume'],
+            ['boot_from_volume', 'boot_volume'],
+            ['nics', 'network'],
+        ],
+        required_if=[
+            ('boot_from_volume', True, ['volume_size', 'image']),
         ],
     )
     module = AnsibleModule(argument_spec, **module_kwargs)
@@ -488,14 +578,14 @@ def main():
 
     state = module.params['state']
     image = module.params['image']
-    root_volume = module.params['root_volume']
+    boot_volume = module.params['boot_volume']
     flavor = module.params['flavor']
     flavor_ram = module.params['flavor_ram']
 
     if state == 'present':
-        if not (image or root_volume):
+        if not (image or boot_volume):
             module.fail_json(
-                msg="Parameter 'image' or 'root_volume' is required "
+                msg="Parameter 'image' or 'boot_volume' is required "
                     "if state == 'present'"
             )
         if not flavor and not flavor_ram:

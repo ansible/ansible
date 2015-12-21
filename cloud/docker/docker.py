@@ -46,6 +46,14 @@ options:
     default: missing
     choices: [ "missing", "always" ]
     version_added: "1.9"
+  entrypoint:
+    description:
+      - Corresponds to ``--entrypoint`` option of ``docker run`` command and
+        ``ENTRYPOINT`` directive of Dockerfile.
+        Used to match and launch containers.
+    default: null
+    required: false
+    version_added: "2.1"
   command:
     description:
       - Command used to match and launch containers.
@@ -95,6 +103,12 @@ options:
       - 'alias. Use docker CLI-style syntax: C(redis:myredis).'
     default: null
     version_added: "1.5"
+  devices:
+    description:
+      - List of host devices to expose to container
+    default: null
+    required: false
+    version_added: "2.1"
   log_driver:
     description:
       - You can specify a different logging driver for the container than for the daemon.
@@ -329,6 +343,18 @@ options:
     default: false
     aliases: []
     version_added: "2.0"
+  labels:
+    description:
+      - Set container labels. Requires docker >= 1.6 and docker-py >= 1.2.0.
+    required: false
+    default: null
+    version_added: "2.1"
+  stop_timeout:
+    description:
+      - How many seconds to wait for the container to stop before killing it.
+    required: false
+    default: 10
+    version_added: "2.0"
 author:
     - "Cove Schneider (@cove)"
     - "Joshua Conner (@joshuaconner)"
@@ -380,6 +406,8 @@ EXAMPLES = '''
 #   stopped and removed, and a new one will be launched in its place.
 # - link this container to the existing redis container launched above with
 #   an alias.
+# - grant the container read write permissions for the host's /dev/sda device
+#   through a node named /dev/xvda
 # - bind TCP port 9000 within the container to port 8080 on all interfaces
 #   on the host.
 # - bind UDP port 9001 within the container to port 8081 on the host, only
@@ -394,6 +422,8 @@ EXAMPLES = '''
     pull: always
     links:
     - "myredis:aliasedredis"
+    devices:
+    - "/dev/sda:/dev/xvda:rwm"
     ports:
     - "8080:9000"
     - "127.0.0.1:8081:9001/udp"
@@ -596,6 +626,7 @@ class DockerManager(object):
     # docker-py version is a tuple of ints because we have to compare them
     # server APIVersion is passed to a docker-py function that takes strings
     _cap_ver_req = {
+            'devices': ((0, 7, 0), '1.2'),
             'dns': ((0, 3, 0), '1.10'),
             'volumes_from': ((0, 3, 0), '1.10'),
             'restart_policy': ((0, 5, 0), '1.14'),
@@ -608,6 +639,8 @@ class DockerManager(object):
             'cap_add': ((0, 5, 0), '1.14'),
             'cap_drop': ((0, 5, 0), '1.14'),
             'read_only': ((1, 0, 0), '1.17'),
+            'labels': ((1, 2, 0), '1.18'),
+            'stop_timeout': ((0, 5, 0), '1.0'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -832,10 +865,14 @@ class DockerManager(object):
         }
 
         optionals = {}
-        for optional_param in ('dns', 'volumes_from', 'restart_policy',
-                'restart_policy_retry', 'pid', 'extra_hosts', 'log_driver',
-                'cap_add', 'cap_drop', 'read_only', 'log_opt'):
+        for optional_param in ('devices', 'dns', 'volumes_from',
+                'restart_policy', 'restart_policy_retry', 'pid', 'extra_hosts',
+                'log_driver', 'cap_add', 'cap_drop', 'read_only', 'log_opt'):
             optionals[optional_param] = self.module.params.get(optional_param)
+
+        if optionals['devices'] is not None:
+            self.ensure_capability('devices')
+            params['devices'] = optionals['devices']
 
         if optionals['dns'] is not None:
             self.ensure_capability('dns')
@@ -1054,6 +1091,21 @@ class DockerManager(object):
                 differing.append(container)
                 continue
 
+            # ENTRYPOINT
+
+            expected_entrypoint = self.module.params.get('entrypoint')
+            if expected_entrypoint:
+                expected_entrypoint = shlex.split(expected_entrypoint)
+                actual_entrypoint = container["Config"]["Entrypoint"]
+
+                if actual_entrypoint != expected_entrypoint:
+                    self.reload_reasons.append(
+                        'entrypoint ({0} => {1})'
+                        .format(actual_entrypoint, expected_entrypoint)
+                    )
+                    differing.append(container)
+                    continue
+
             # COMMAND
 
             expected_command = self.module.params.get('command')
@@ -1099,7 +1151,7 @@ class DockerManager(object):
                 self.module.fail_json(msg=str(e))
 
             #For v1.19 API and above use HostConfig, otherwise use Config
-            if api_version >= 1.19:
+            if docker.utils.compare_version('1.19', api_version) >= 0:
                 actual_mem = container['HostConfig']['Memory']
             else:
                 actual_mem = container['Config']['Memory']
@@ -1131,6 +1183,22 @@ class DockerManager(object):
             if actual_env != expected_env:
                 # Don't include the environment difference in the output.
                 self.reload_reasons.append('environment {0} => {1}'.format(actual_env, expected_env))
+                differing.append(container)
+                continue
+
+            # LABELS
+
+            expected_labels = {}
+            for name, value in self.module.params.get('labels').iteritems():
+                expected_labels[name] = str(value)
+
+            actual_labels = {}
+            for container_label in container['Config']['Labels'] or []:
+                name, value = container_label.split('=', 1)
+                actual_labels[name] = value
+
+            if actual_labels != expected_labels:
+                self.reload_reasons.append('labels {0} => {1}'.format(actual_labels, expected_labels))
                 differing.append(container)
                 continue
 
@@ -1276,6 +1344,24 @@ class DockerManager(object):
                 differing.append(container)
                 continue
 
+            # DEVICES
+
+            expected_devices = set()
+            for device in (self.module.params.get('devices') or []):
+                if len(device.split(':')) == 2:
+                    expected_devices.add(device + ":rwm")
+                else:
+                    expected_devices.add(device)
+
+            actual_devices = set()
+            for device in (container['HostConfig']['Devices'] or []):
+                actual_devices.add("{PathOnHost}:{PathInContainer}:{CgroupPermissions}".format(**device))
+
+            if actual_devices != expected_devices:
+                self.reload_reasons.append('devices ({0} => {1})'.format(actual_devices, expected_devices))
+                differing.append(container)
+                continue
+
             # DNS
 
             expected_dns = set(self.module.params.get('dns') or [])
@@ -1321,9 +1407,12 @@ class DockerManager(object):
         Return any matching containers that are already present.
         """
 
+        entrypoint = self.module.params.get('entrypoint')
+        if entrypoint is not None:
+            entrypoint = shlex.split(entrypoint)
         command = self.module.params.get('command')
-        if command:
-            command = command.strip()
+        if command is not None:
+            command = shlex.split(command)
         name = self.module.params.get('name')
         if name and not name.startswith('/'):
             name = '/' + name
@@ -1350,15 +1439,16 @@ class DockerManager(object):
                 details = _docker_id_quirk(details)
 
                 running_image = normalize_image(details['Config']['Image'])
-                running_command = container['Command'].strip()
 
                 image_matches = running_image in repo_tags
 
-                # if a container has an entrypoint, `command` will actually equal
-                # '{} {}'.format(entrypoint, command)
-                command_matches = (not command or running_command.endswith(command))
+                command_matches = command == details['Config']['Cmd']
+                entrypoint_matches = (
+                    entrypoint == details['Config']['Entrypoint']
+                )
 
-                matches = image_matches and command_matches
+                matches = (image_matches and command_matches and
+                           entrypoint_matches)
 
             if matches:
                 if not details:
@@ -1423,10 +1513,12 @@ class DockerManager(object):
         api_version = self.client.version()['ApiVersion']
 
         params = {'image':        self.module.params.get('image'),
+                  'entrypoint':   self.module.params.get('entrypoint'),
                   'command':      self.module.params.get('command'),
                   'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
                   'environment':  self.env,
+                  'labels':       self.module.params.get('labels'),
                   'hostname':     self.module.params.get('hostname'),
                   'domainname':   self.module.params.get('domainname'),
                   'detach':       self.module.params.get('detach'),
@@ -1440,7 +1532,7 @@ class DockerManager(object):
             params['host_config'] = self.create_host_config()
 
         #For v1.19 API and above use HostConfig, otherwise use Config
-        if api_version < 1.19:
+        if docker.utils.compare_version('1.19', api_version) < 0:
             params['mem_limit'] = mem_limit
         else:
             params['host_config']['Memory'] = mem_limit
@@ -1485,7 +1577,7 @@ class DockerManager(object):
 
     def stop_containers(self, containers):
         for i in containers:
-            self.client.stop(i['Id'])
+            self.client.stop(i['Id'], self.module.params.get('stop_timeout'))
             self.increment_counter('stopped')
 
         return [self.client.wait(i['Id']) for i in containers]
@@ -1602,6 +1694,10 @@ def restarted(manager, containers, count, name):
 
     containers.refresh()
 
+    for container in manager.get_differing_containers():
+        manager.stop_containers([container])
+        manager.remove_containers([container])
+
     manager.restart_containers(containers.running)
     started(manager, containers, count, name)
 
@@ -1636,6 +1732,7 @@ def main():
             count           = dict(default=1),
             image           = dict(required=True),
             pull            = dict(required=False, default='missing', choices=['missing', 'always']),
+            entrypoint      = dict(required=False, default=None, type='str'),
             command         = dict(required=False, default=None),
             expose          = dict(required=False, default=None, type='list'),
             ports           = dict(required=False, default=None, type='list'),
@@ -1643,6 +1740,7 @@ def main():
             volumes         = dict(default=None, type='list'),
             volumes_from    = dict(default=None),
             links           = dict(default=None, type='list'),
+            devices         = dict(default=None, type='list'),
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
             docker_url      = dict(),
@@ -1682,6 +1780,8 @@ def main():
             cap_add         = dict(default=None, type='list'),
             cap_drop        = dict(default=None, type='list'),
             read_only       = dict(default=None, type='bool'),
+            labels          = dict(default={}, type='dict'),
+            stop_timeout    = dict(default=10, type='int'),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
