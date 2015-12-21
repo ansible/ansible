@@ -39,6 +39,7 @@ USER_AGENT_VERSION="v1"
 def gce_connect(module, provider=None):
     """Return a Google Cloud Engine connection."""
     service_account_email = module.params.get('service_account_email', None)
+    credentials_file = module.params.get('credentials_file', None)
     pem_file = module.params.get('pem_file', None)
     project_id = module.params.get('project_id', None)
 
@@ -50,6 +51,8 @@ def gce_connect(module, provider=None):
         project_id = os.environ.get('GCE_PROJECT', None)
     if not pem_file:
         pem_file = os.environ.get('GCE_PEM_FILE_PATH', None)
+    if not credentials_file:
+        credentials_file = os.environ.get('GCE_CREDENTIALS_FILE_PATH', pem_file)
 
     # If we still don't have one or more of our credentials, attempt to
     # get the remaining values from the libcloud secrets file.
@@ -62,15 +65,15 @@ def gce_connect(module, provider=None):
         if hasattr(secrets, 'GCE_PARAMS'):
             if not service_account_email:
                 service_account_email = secrets.GCE_PARAMS[0]
-            if not pem_file:
-                pem_file = secrets.GCE_PARAMS[1]
+            if not credentials_file:
+                credentials_file = secrets.GCE_PARAMS[1]
         keyword_params = getattr(secrets, 'GCE_KEYWORD_PARAMS', {})
         if not project_id:
             project_id = keyword_params.get('project', None)
 
     # If we *still* don't have the credentials we need, then it's time to
     # just fail out.
-    if service_account_email is None or pem_file is None or project_id is None:
+    if service_account_email is None or credentials_file is None or project_id is None:
         module.fail_json(msg='Missing GCE connection parameters in libcloud '
                              'secrets file.')
         return None
@@ -80,7 +83,7 @@ def gce_connect(module, provider=None):
         provider = Provider.GCE
 
     try:
-        gce = get_driver(provider)(service_account_email, pem_file,
+        gce = get_driver(provider)(service_account_email, credentials_file,
                 datacenter=module.params.get('zone', None),
                 project=project_id)
         gce.connection.user_agent_append("%s/%s" % (
