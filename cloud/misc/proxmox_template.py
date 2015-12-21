@@ -156,14 +156,14 @@ def main():
       api_host = dict(required=True),
       api_user = dict(required=True),
       api_password = dict(no_log=True),
-      validate_certs = dict(type='bool', choices=BOOLEANS, default='no'),
+      validate_certs = dict(type='bool', default='no'),
       node = dict(),
       src = dict(),
       template = dict(),
       content_type = dict(default='vztmpl', choices=['vztmpl','iso']),
       storage = dict(default='local'),
       timeout = dict(type='int', default=30),
-      force = dict(type='bool', choices=BOOLEANS, default='no'),
+      force = dict(type='bool', default='no'),
       state = dict(default='present', choices=['present', 'absent']),
     )
   )
