@@ -308,6 +308,7 @@ class VariableManager:
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
+                    all_vars = combine_vars(all_vars, role.get_role_params())
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
         if task:
