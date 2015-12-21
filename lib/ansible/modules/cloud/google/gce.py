@@ -76,10 +76,15 @@ options:
   pem_file:
     version_added: 1.5.1
     description:
-      - path to the pem file associated with the service account email
+      - (deprecated) path to the pem file associated with the service account email
     required: false
     default: null
-    aliases: []
+  credentials_file:
+    version_added: 2.1.0
+    description:
+      - path to the JSON file associated with the service account email
+    default: null
+    required: false
   project_id:
     version_added: 1.5.1
     description:
@@ -158,7 +163,7 @@ options:
 
 requirements:
     - "python >= 2.6"
-    - "apache-libcloud >= 0.13.3"
+    - "apache-libcloud >= 0.17.0"
 notes:
   - Either I(name) or I(instance_names) is required.
 author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
@@ -191,14 +196,13 @@ EXAMPLES = '''
     image: debian-6
     zone: us-central1-a
     service_account_email: unique-email@developer.gserviceaccount.com
-    pem_file: /path/to/pem_file
+    credentials_file: /path/to/json_file
     project_id: project-id
   tasks:
     - name: Launch instances
       local_action: gce instance_names={{names}} machine_type={{machine_type}}
-                    image={{image}} zone={{zone}}
-                    service_account_email={{ service_account_email }}
-                    pem_file={{ pem_file }} project_id={{ project_id }}
+                    image={{image}} zone={{zone}} service_account_email={{ service_account_email }}
+                    credentials_file={{ credentials_file }} project_id={{ project_id }}
       register: gce
     - name: Wait for SSH to come up
       local_action: wait_for host={{item.public_ip}} port=22 delay=10
@@ -470,34 +474,35 @@ def terminate_instances(module, gce, instance_names, zone_name):
 
 def main():
     module = AnsibleModule(
-        argument_spec=dict(
-            image=dict(default='debian-7'),
-            instance_names=dict(),
-            machine_type=dict(default='n1-standard-1'),
-            metadata=dict(),
-            name=dict(),
-            network=dict(default='default'),
-            persistent_boot_disk=dict(type='bool', default=False),
-            disks=dict(type='list'),
-            state=dict(choices=['active', 'present', 'absent', 'deleted'],
-                       default='present'),
-            tags=dict(type='list'),
-            zone=dict(default='us-central1-a'),
-            service_account_email=dict(),
-            service_account_permissions=dict(type='list'),
-            pem_file=dict(),
-            project_id=dict(),
-            ip_forward=dict(type='bool', default=False),
-            external_ip=dict(choices=['ephemeral', 'none'],
-                             default='ephemeral'),
-            disk_auto_delete=dict(type='bool', default=True),
+        argument_spec = dict(
+            image = dict(default='debian-7'),
+            instance_names = dict(),
+            machine_type = dict(default='n1-standard-1'),
+            metadata = dict(),
+            name = dict(),
+            network = dict(default='default'),
+            persistent_boot_disk = dict(type='bool', default=False),
+            disks = dict(type='list'),
+            state = dict(choices=['active', 'present', 'absent', 'deleted'],
+                    default='present'),
+            tags = dict(type='list'),
+            zone = dict(default='us-central1-a'),
+            service_account_email = dict(),
+            service_account_permissions = dict(type='list'),
+            pem_file = dict(),
+            credentials_file = dict(),
+            project_id = dict(),
+            ip_forward = dict(type='bool', default=False),
+            external_ip = dict(choices=['ephemeral', 'none'],
+                    default='ephemeral'),
+            disk_auto_delete = dict(type='bool', default=True),
         )
     )
 
     if not HAS_PYTHON26:
         module.fail_json(msg="GCE module requires python's 'ast' module, python v2.6+")
     if not HAS_LIBCLOUD:
-        module.fail_json(msg='libcloud with GCE support (0.13.3+) required for this module')
+        module.fail_json(msg='libcloud with GCE support (0.17.0+) required for this module')
 
     gce = gce_connect(module)
 
