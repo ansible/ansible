@@ -26,7 +26,7 @@ from ansible.plugins.cache.memory import CacheModule as MemoryCache
 
 HAVE_MEMCACHED = True
 try:
-    import memcached
+    import memcache
 except ImportError:
     HAVE_MEMCACHED = False
 else:
