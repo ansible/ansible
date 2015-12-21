@@ -177,8 +177,8 @@ def main():
         argument_spec = dict(
             state = dict(default='present', choices=['present', 'installed', 'absent', 'removed', 'latest']),
             name = dict(type='list'),
-            update_cache = dict(default='no', choices=BOOLEANS, type='bool'),
-            upgrade = dict(default='no', choices=BOOLEANS, type='bool'),
+            update_cache = dict(default='no', type='bool'),
+            upgrade = dict(default='no', type='bool'),
         ),
         required_one_of = [['name', 'update_cache', 'upgrade']],
         supports_check_mode = True

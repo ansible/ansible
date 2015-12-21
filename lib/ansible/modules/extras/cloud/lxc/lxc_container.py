@@ -1684,7 +1684,7 @@ def main():
                 type='str'
             ),
             container_log=dict(
-                choices=BOOLEANS,
+                type='bool',
                 default='false'
             ),
             container_log_level=dict(
@@ -1696,11 +1696,11 @@ def main():
                 required=False
             ),
             clone_snapshot=dict(
-                choices=BOOLEANS,
+                type='bool',
                 default='false'
             ),
             archive=dict(
-                choices=BOOLEANS,
+                type='bool',
                 default='false'
             ),
             archive_path=dict(
