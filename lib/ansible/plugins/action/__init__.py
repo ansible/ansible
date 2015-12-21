@@ -499,7 +499,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
         '''
-
+        # We may need to revisit this later.
+        cmd = to_bytes(cmd, errors='strict')
         if executable is not None:
             cmd = executable + ' -c ' + cmd
 
