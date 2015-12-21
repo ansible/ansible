@@ -9,7 +9,7 @@
   shell: "cd ~/ansible && pwd"
   register: results
 
-- shell: "ls -la && . hacking/env-setup && cd test/integration && make {{ run_integration_make_target }}"
+- shell: "ls -la && . hacking/env-setup && cd test/integration && TEST_FLAGS='-e clean_working_dir=no' make -j4 {{ run_integration_make_target }}"
   args:
     chdir: "{{ results.stdout }}"
   async: 3600
