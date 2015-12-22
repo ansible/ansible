@@ -500,6 +500,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
         '''
+        # We may need to revisit this later.
+        cmd = to_bytes(cmd, errors='strict')
         if executable is not None:
             cmd = executable + ' -c ' + cmd
 
@@ -516,7 +518,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         display.debug("executing the command %s through the connection" % cmd)
-        rc, stdout, stderr = self._connection.exec_command(to_bytes(cmd, errors='strict'), in_data=in_data, sudoable=sudoable)
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
         display.debug("command execution done: rc=%s" % (rc))
 
         # stdout and stderr may be either a file-like or a bytes object.
