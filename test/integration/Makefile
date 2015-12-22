@@ -1,7 +1,8 @@
 INVENTORY ?= inventory
 VARS_FILE ?= integration_config.yml
 
-ANSIBLE_PLAYBOOK=python -m ansible playbook
+# Workaround for Python 2.6 module invoke, module -> module.__main__
+ANSIBLE_PLAYBOOK=python -m ansible.__main__ playbook
 
 # Create a semi-random string for use when testing cloud-based resources
 ifndef CLOUD_RESOURCE_PREFIX
