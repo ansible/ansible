@@ -16,5 +16,5 @@ script:
   - python2.4 -m compileall -fq -x 'cloud/|monitoring/zabbix.*\.py|/dnf\.py|/layman\.py|/maven_artifact\.py|clustering/(consul.*|znode)\.py|notification/pushbullet\.py' .
   - python2.6 -m compileall -fq .
   - python2.7 -m compileall -fq .
-  - ansible-validate-modules --exclude 'cloud/amazon/route53_zone\.py|network/snmp_facts\.py|notification/sns\.py|windows/win_iis_virtualdirectory\.py' .
+  - ansible-validate-modules --exclude 'cloud/amazon/route53_zone\.py|cloud/amazon/sns_topic\.py|messaging/rabbitmq_binding\.py|messaging/rabbitmq_exchange\.py|messaging/rabbitmq_queue\.py|monitoring/circonus_annotation\.py|network/snmp_facts\.py|notification/sns\.py' .
   #- ./test-docs.sh extras
