@@ -173,7 +173,8 @@ class ModuleValidator(Validator):
 
     def _check_for_sys_exit(self):
         if 'sys.exit(' in self.text:
-            self.errors.append('sys.exit() call found')
+            self.errors.append('sys.exit() call found. Should be '
+                               'exit_json/fail_json')
 
     def _check_for_gpl3_header(self):
         if ('GNU General Public License' not in self.text and
