@@ -19,8 +19,15 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from os.path import isdir, isfile, isabs, exists, lexists, islink, samefile, ismount
+from os.path import isdir, isfile, isabs, exists, lexists, islink, ismount
 from ansible import errors
+
+try:
+    from os.path import samefile
+except ImportError:
+    import os
+    def samefile(file1, file2):
+        return os.stat(file1) == os.stat(file2)
 
 class TestModule(object):
     ''' Ansible file jinja2 tests '''

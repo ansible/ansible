@@ -168,3 +168,19 @@ class VaultCLI(CLI):
             self.editor.rekey_file(f, self.new_vault_pass)
 
         display.display("Rekey successful", stderr=True)
+
+import sys
+import ansible.cli.common
+
+def entry_point():
+    display = ansible.cli.common.LastResort()
+    cli = None
+
+    try:
+        display = Display()
+
+        cli = VaultCLI(sys.argv)
+        cli.parse()
+        sys.exit(cli.run())
+    except:
+        ansible.cli.common.handle_exception(cli, display)

@@ -259,3 +259,19 @@ class PullCLI(CLI):
             if playbook is None:
                 display.warning("\n".join(errors))
             return playbook
+
+import sys
+import ansible.cli.common
+
+def entry_point():
+    display = ansible.cli.common.LastResort()
+    cli = None
+
+    try:
+        display = Display()
+
+        cli = PullCLI(sys.argv)
+        cli.parse()
+        sys.exit(cli.run())
+    except:
+        ansible.cli.common.handle_exception(cli, display)

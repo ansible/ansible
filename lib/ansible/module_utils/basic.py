@@ -61,8 +61,6 @@ import shutil
 import stat
 import tempfile
 import traceback
-import grp
-import pwd
 import platform
 import errno
 from itertools import repeat, chain
@@ -788,6 +786,7 @@ class AnsibleModule(object):
             uid = int(owner)
         except ValueError:
             try:
+                import pwd
                 uid = pwd.getpwnam(owner).pw_uid
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
@@ -810,6 +809,7 @@ class AnsibleModule(object):
             gid = int(group)
         except ValueError:
             try:
+                import grp
                 gid = grp.getgrnam(group).gr_gid
             except KeyError:
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
@@ -1014,10 +1014,12 @@ class AnsibleModule(object):
             kwargs['uid'] = uid
             kwargs['gid'] = gid
             try:
+                import pwd
                 user = pwd.getpwuid(uid)[0]
             except KeyError:
                 user = str(uid)
             try:
+                import grp
                 group = grp.getgrgid(gid)[0]
             except KeyError:
                 group = str(gid)
@@ -1646,6 +1648,7 @@ class AnsibleModule(object):
             # just get the LOGNAME environment variable instead
             login_name = os.environ.get('LOGNAME', None)
 
+        import pwd
         # if the original login_name doesn't match the currently
         # logged-in user, or if the SUDO_USER environment variable
         # is set, then this user has switched their credentials

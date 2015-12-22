@@ -190,3 +190,19 @@ class AdHocCLI(CLI):
                 self._tqm.cleanup()
 
         return result
+
+import sys
+import ansible.cli.common
+
+def entry_point():
+    display = ansible.cli.common.LastResort()
+    cli = None
+
+    try:
+        display = Display()
+
+        cli = AdHocCLI(sys.argv)
+        cli.parse()
+        sys.exit(cli.run())
+    except:
+        ansible.cli.common.handle_exception(cli, display)

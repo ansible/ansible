@@ -4,8 +4,8 @@
 set HACKING_DIR (dirname (status -f))
 set FULL_PATH (python -c "import os; print(os.path.realpath('$HACKING_DIR'))")
 set ANSIBLE_HOME (dirname $FULL_PATH)
+
 set PREFIX_PYTHONPATH $ANSIBLE_HOME/lib 
-set PREFIX_PATH $ANSIBLE_HOME/bin 
 set PREFIX_MANPATH $ANSIBLE_HOME/docs/man
 
 # Set PYTHONPATH
@@ -18,11 +18,6 @@ else
             echo "Appending PYTHONPATH"
             set -gx PYTHONPATH "$PREFIX_PYTHONPATH:$PYTHONPATH"
     end
-end
-
-# Set PATH
-if not contains $PREFIX_PATH $PATH
-    set -gx PATH $PREFIX_PATH $PATH
 end
 
 # Set MANPATH
@@ -54,7 +49,6 @@ if set -q argv
         echo ""
         echo "Setting up Ansible to run out of checkout..."
         echo ""
-        echo "PATH=$PATH"
         echo "PYTHONPATH=$PYTHONPATH"
         echo "ANSIBLE_LIBRARY=$ANSIBLE_LIBRARY"
         echo "MANPATH=$MANPATH"

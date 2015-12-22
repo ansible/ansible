@@ -50,7 +50,7 @@ class GalaxyCLI(CLI):
 
     SKIP_INFO_KEYS = ("name", "description", "readme_html", "related", "summary_fields", "average_aw_composite", "average_aw_score", "url" )
     VALID_ACTIONS = ("delete", "import", "info", "init", "install", "list", "login", "remove", "search", "setup")
-    
+
     def __init__(self, args):
         self.api = None
         self.galaxy = None
@@ -141,7 +141,7 @@ class GalaxyCLI(CLI):
         return True
 
     def run(self):
-        
+
         super(GalaxyCLI, self).run()
 
         # if not offline, get connect to galaxy api
@@ -683,3 +683,18 @@ class GalaxyCLI(CLI):
 
         return True
 
+import sys
+import ansible.cli.common
+
+def entry_point():
+    display = ansible.cli.common.LastResort()
+    cli = None
+
+    try:
+        display = Display()
+
+        cli = GalaxyCLI(sys.argv)
+        cli.parse()
+        sys.exit(cli.run())
+    except:
+        ansible.cli.common.handle_exception(cli, display)

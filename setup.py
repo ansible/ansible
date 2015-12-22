@@ -43,13 +43,15 @@ setup(name='ansible',
           'Topic :: System :: Systems Administration',
           'Topic :: Utilities',
       ],
-      scripts=[
-         'bin/ansible',
-         'bin/ansible-playbook',
-         'bin/ansible-pull',
-         'bin/ansible-doc',
-         'bin/ansible-galaxy',
-         'bin/ansible-vault',
-      ],
+      entry_points={
+            'console_scripts': [
+                  'ansible = ansible.cli.adhoc:entry_point',
+                  'ansible-playbook = ansible.cli.playbook:entry_point',
+                  'ansible-pull = ansible.cli.pull:entry_point',
+                  'ansible-doc = ansible.cli.doc:entry_point',
+                  'ansible-galaxy = ansible.cli.galaxy:entry_point',
+                  'ansible-vault = ansible.cli.vault:entry_point'
+            ]
+      },
       data_files=[],
 )
