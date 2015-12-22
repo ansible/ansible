@@ -400,7 +400,10 @@ class ModuleValidator(Validator):
             if not bool(examples):
                 self.errors.append('No EXAMPLES provided')
             if not bool(ret):
-                self.warnings.append('No RETURN provided')
+                if self._is_new_module():
+                    self.errors.append('No RETURN provided')
+                else:
+                    self.warnings.append('No RETURN provided')
             else:
                 try:
                     yaml.safe_load(ret)
