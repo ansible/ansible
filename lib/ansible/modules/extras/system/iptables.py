@@ -18,9 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this software.  If not, see <http://www.gnu.org/licenses/>.
 
-# import module snippets
-from ansible.module_utils.basic import *
-
 BINS = dict(
     ipv4='iptables',
     ipv6='ip6tables',
@@ -362,6 +359,9 @@ def main():
         remove_rule(iptables_path, module, module.params)
 
     module.exit_json(**args)
+
+# import module snippets
+from ansible.module_utils.basic import *
 
 if __name__ == '__main__':
     main()
