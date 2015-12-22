@@ -1274,7 +1274,7 @@ class AnsibleModule(object):
         if isinstance(value, bool):
             return value
 
-        if isinstance(value, basestring):
+        if isinstance(value, basestring) or isinstance(value, int):
             return self.boolean(value)
 
         raise TypeError('%s cannot be converted to a bool' % type(value))
