@@ -516,6 +516,7 @@ class AnsibleModule(object):
         self._debug = False
 
         self.aliases = {}
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -523,6 +524,14 @@ class AnsibleModule(object):
                     self.argument_spec[k] = v
 
         self.params = self._load_params()
+
+        # append to legal_inputs and then possibly check against them
+        try:
+            self.aliases = self._handle_aliases()
+        except Exception, e:
+            # use exceptions here cause its not safe to call vail json until no_log is processed
+            print('{"failed": true, "msg": "Module alias error: %s"}' % str(e))
+            sys.exit(1)
 
         # Save parameter values that should never be logged
         self.no_log_values = set()
@@ -538,10 +547,6 @@ class AnsibleModule(object):
         # reset to LANG=C if it's an invalid/unavailable locale
         self._check_locale()
 
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
-
-        # append to legal_inputs and then possibly check against them
-        self.aliases = self._handle_aliases()
 
         self._check_arguments(check_invalid_arguments)
 
@@ -1064,6 +1069,7 @@ class AnsibleModule(object):
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
     def _handle_aliases(self):
+        # this uses exceptions as it happens before we can safely call fail_json
         aliases_results = {} #alias:canon
         for (k,v) in self.argument_spec.items():
             self._legal_inputs.append(k)
@@ -1072,11 +1078,11 @@ class AnsibleModule(object):
             required = v.get('required', False)
             if default is not None and required:
                 # not alias specific but this is a good place to check this
-                self.fail_json(msg="internal error: required and default are mutually exclusive for %s" % k)
+                raise Exception("internal error: required and default are mutually exclusive for %s" % k)
             if aliases is None:
                 continue
             if type(aliases) != list:
-                self.fail_json(msg='internal error: aliases must be a list')
+                raise Exception('internal error: aliases must be a list')
             for alias in aliases:
                 self._legal_inputs.append(alias)
                 aliases_results[alias] = k
