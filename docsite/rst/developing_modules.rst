@@ -247,7 +247,7 @@ And instantiating the module class like::
         argument_spec = dict(
             state     = dict(default='present', choices=['present', 'absent']),
             name      = dict(required=True),
-            enabled   = dict(required=True, choices=BOOLEANS),
+            enabled   = dict(required=True, type='bool'),
             something = dict(aliases=['whatever'])
         )
     )
@@ -335,7 +335,7 @@ and guidelines:
 
 * If you have a company module that returns facts specific to your installations, a good name for this module is `site_facts`.
 
-* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "choices=BOOLEANS" and a module.boolean(value) casting function.
+* Modules accepting boolean status should generally accept 'yes', 'no', 'true', 'false', or anything else a user may likely throw at them.  The AnsibleModule common code supports this with "type='bool'" and a module.boolean(value) casting function.
 
 * Include a minimum of dependencies if possible.  If there are dependencies, document them at the top of the module file, and have the module raise JSON error messages when the import fails.
 
