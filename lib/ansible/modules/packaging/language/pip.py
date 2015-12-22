@@ -44,7 +44,8 @@ options:
     default: null
   requirements:
     description:
-      - The path to a pip requirements file
+      - The path to a pip requirements file, which should be local to the remote system. 
+        File can be specified as a relative path if using the chdir option.  
     required: false
     default: null
   virtualenv:
