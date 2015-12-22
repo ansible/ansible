@@ -77,8 +77,8 @@ def main():
         argument_spec=dict(
             name=dict(required=True, aliases=['publisher']),
             state=dict(default='present', choices=['present', 'absent']),
-            sticky=dict(choices=BOOLEANS),
-            enabled=dict(choices=BOOLEANS),
+            sticky=dict(type='bool'),
+            enabled=dict(type='bool'),
             # search_after=dict(),
             # search_before=dict(),
             origin=dict(type='list'),

@@ -78,7 +78,7 @@ def main():
                 ]
             ),
             accept_licenses=dict(
-                choices=BOOLEANS,
+                type='bool',
                 default=False,
                 aliases=['accept_licences', 'accept'],
             ),

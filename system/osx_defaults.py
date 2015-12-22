@@ -309,7 +309,7 @@ def main():
             array_add=dict(
                 default=False,
                 required=False,
-                choices=BOOLEANS,
+                type='bool',
             ),
             value=dict(
                 default=None,

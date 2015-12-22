@@ -240,8 +240,8 @@ def main():
         argument_spec = dict(
             name = dict(required=True),
             state = dict(choices=['started', 'stopped', 'restarted', 'killed', 'reloaded', 'once']),
-            enabled = dict(required=False, type='bool', choices=BOOLEANS),
-            downed = dict(required=False, type='bool', choices=BOOLEANS),
+            enabled = dict(required=False, type='bool'),
+            downed = dict(required=False, type='bool'),
             dist = dict(required=False, default='daemontools'),
             service_dir = dict(required=False, default='/service'),
             service_src = dict(required=False, default='/etc/service'),
