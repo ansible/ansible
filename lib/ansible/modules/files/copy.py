@@ -79,10 +79,10 @@ options:
     version_added: "1.5"
   remote_src:
     description:
-      - If False, it will search for src at originating/master machine, if True it will go to the remote/target machine for the src. Default is False.
-    choices: [ "True", "False" ]
+      - If set to no, it will search for src at originating/master machine, if set to yes it will go to the remote/target machine for the src. Default is no.
+    choices: [ "yes", "no" ]
     required: false
-    default: "False"
+    default: "no"
     version_added: "2.0"
 extends_documentation_fragment:
     - files
