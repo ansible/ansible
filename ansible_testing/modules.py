@@ -16,6 +16,7 @@ from distutils.version import StrictVersion
 
 from utils import find_globals
 
+from ansible.plugins import module_loader
 from ansible.executor.module_common import REPLACER_WINDOWS
 from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
 
@@ -156,6 +157,9 @@ class ModuleValidator(Validator):
 
     def _is_bottom_import_blacklisted(self):
         return self.object_name in self.BOTTOM_IMPORTS_BLACKLIST
+
+    def _is_new_module(self):
+        return not module_loader.has_plugin(self.name)
 
     def _check_interpreter(self, powershell=False):
         if powershell:
@@ -318,6 +322,9 @@ class ModuleValidator(Validator):
                                  'function: %s' % ', '.join(redeclared))
 
     def _check_version_added(self, doc):
+        if not self._is_new_module():
+            return
+
         try:
             version_added = StrictVersion(doc.get('version_added', '0.0'))
         except ValueError:
