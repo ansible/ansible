@@ -203,3 +203,19 @@ class PlaybookCLI(CLI):
             return 0
         else:
             return results
+
+import sys
+import ansible.cli.common
+
+def entry_point():
+    display = ansible.cli.common.LastResort()
+    cli = None
+
+    try:
+        display = Display()
+
+        cli = PlaybookCLI(sys.argv)
+        cli.parse()
+        sys.exit(cli.run())
+    except:
+        ansible.cli.common.handle_exception(cli, display)
