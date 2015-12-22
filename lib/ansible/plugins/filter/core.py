@@ -30,7 +30,6 @@ import types
 import pipes
 import glob
 import re
-import crypt
 import hashlib
 import string
 from functools import partial
@@ -228,6 +227,7 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
             salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(16)])
 
         if not HAS_PASSLIB:
+            import crypt
             if sys.platform.startswith('darwin'):
                 raise errors.AnsibleFilterError('|password_hash requires the passlib python module to generate password hashes on Mac OS X/Darwin')
             saltstring =  "$%s$%s" % (cryptmethod[hashtype],salt)
