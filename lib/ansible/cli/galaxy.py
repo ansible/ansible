@@ -525,7 +525,7 @@ class GalaxyCLI(CLI):
             data += ("\nFound %d roles matching your search:\n" % response['count'])
 
         max_len = []
-            for role in response['results']:
+        for role in response['results']:
             max_len.append(len(role['username'] + '.' + role['name']))
         name_len = max(max_len)
         format_str = " %%-%ds %%s\n" % name_len
