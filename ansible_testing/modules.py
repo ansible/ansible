@@ -196,6 +196,16 @@ class ModuleValidator(Validator):
                                              'already provided by '
                                              'ansible.module_utils.basic')
 
+    def _find_requests_import(self):
+        for child in self.ast.body:
+            if isinstance(child, ast.Import):
+                for name in child.names:
+                    if name.name == 'requests':
+                        self.errors.append('requests import found, '
+                                           'should use '
+                                           'ansible.module_utils.urls '
+                                           'instead')
+
     def _find_module_utils(self, main):
         linenos = []
         for child in self.ast.body:
@@ -401,6 +411,7 @@ class ModuleValidator(Validator):
         if self._python_module() and not self._just_docs():
             self._check_for_sys_exit()
             self._find_json_import()
+            self._find_requests_import()
             main = self._find_main_call()
             self._find_module_utils(main)
             self._find_has_import()
