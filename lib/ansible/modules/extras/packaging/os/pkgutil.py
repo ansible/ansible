@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2013, Alexander Winkler <mail () winkler-alexander.de>
-# 	based on svr4pkg by
-# 		Boyd Adamson <boyd () boydadamson.com> (2012)
+# based on svr4pkg by
+#  Boyd Adamson <boyd () boydadamson.com> (2012)
 #
 # This file is part of Ansible
 #
