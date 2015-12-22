@@ -101,6 +101,7 @@ class ModuleValidator(Validator):
         'ansible.module_utils.facts',
         'ansible.module_utils.splitter',
         'ansible.module_utils.known_hosts',
+        'ansible.module_utils.rax',
     ))
     BOTTOM_IMPORTS_BLACKLIST = frozenset((
         'command.py',
@@ -217,11 +218,8 @@ class ModuleValidator(Validator):
                     if child.module in self.BOTTOM_IMPORTS:
                         if (child.lineno < main - 10 and
                                 not self._is_bottom_import_blacklisted()):
-                            self.errors.append('%s import not near main()' %
-                                               child.module)
-                    else:
-                        self.warnings.append('%s import not near main()' %
-                                             child.module)
+                            self.errors.append('%s import not near call to '
+                                               'main()' % child.module)
 
                     linenos.append(child.lineno)
 
