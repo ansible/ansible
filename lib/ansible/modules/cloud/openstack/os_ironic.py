@@ -181,17 +181,12 @@ def _choose_id_value(module):
     return None
 
 
-def _is_value_true(value):
-    true_values = [True, 'yes', 'Yes', 'True', 'true']
-    if value in true_values:
-        return True
-    return False
 
 
 def _choose_if_password_only(module, patch):
     if len(patch) is 1:
-        if 'password' in patch[0]['path'] and _is_value_true(
-                module.params['skip_update_of_masked_password']):
+        if 'password' in patch[0]['path'] and
+                module.params['skip_update_of_masked_password']:
             # Return false to aabort update as the password appears
             # to be the only element in the patch.
             return False
@@ -217,7 +212,7 @@ def main():
         properties=dict(type='dict', default={}),
         ironic_url=dict(required=False),
         chassis_uuid=dict(required=False),
-        skip_update_of_masked_password=dict(required=False, choices=BOOLEANS),
+        skip_update_of_masked_password=dict(required=False, type='bool'),
         state=dict(required=False, default='present')
     )
     module_kwargs = openstack_module_kwargs()
