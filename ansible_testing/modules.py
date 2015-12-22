@@ -335,7 +335,7 @@ class ModuleValidator(Validator):
             return
 
         try:
-            version_added = StrictVersion(doc.get('version_added', '0.0'))
+            version_added = StrictVersion(str(doc.get('version_added', '0.0')))
         except ValueError:
             self.errors.append('version_added is not a valid version '
                                'number: %s' % version_added)
