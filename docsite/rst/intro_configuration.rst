@@ -739,6 +739,17 @@ instead.  Setting it to False will improve performance and is recommended when h
 
     record_host_keys=True
 
+.. _paramiko_proxy_command
+
+proxy_command
+=============
+
+.. versionadded:: 2.1
+
+Use an OpenSSH like ProxyCommand for proxying all Paramiko SSH connections through a bastion or jump host. Requires a minimum of Paramiko version 1.9.0. On Enterprise Linux 6 this is provided by ``python-paramiko1.10`` in the EPEL repository::
+
+    proxy_command = ssh -W "%h:%p" bastion
+
 .. _openssh_settings:
 
 OpenSSH Specific Settings

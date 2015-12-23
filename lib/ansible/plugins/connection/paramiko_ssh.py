@@ -158,6 +158,24 @@ class Connection(ConnectionBase):
                 pass # file was not found, but not required to function
             ssh.load_system_host_keys()
 
+        sock_kwarg = {}
+        if C.PARAMIKO_PROXY_COMMAND:
+            replacers = {
+                '%h': self._play_context.remote_addr,
+                '%p': port,
+                '%r': self._play_context.remote_user
+            }
+            proxy_command = C.PARAMIKO_PROXY_COMMAND
+            for find, replace in replacers.items():
+                proxy_command = proxy_command.replace(find, str(replace))
+            try:
+                sock_kwarg = {'sock': paramiko.ProxyCommand(proxy_command)}
+                display.vvv("CONFIGURE PROXY COMMAND FOR CONNECTION: %s" % proxy_command, host=self._play_context.remote_addr)
+            except AttributeError:
+                display.warning('Paramiko ProxyCommand support unavailable. '
+                                'Please upgrade to Paramiko 1.9.0 or newer. '
+                                'Not using configured ProxyCommand')
+
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
         allow_agent = True
@@ -179,6 +197,7 @@ class Connection(ConnectionBase):
                 password=self._play_context.password,
                 timeout=self._play_context.timeout,
                 port=port,
+                **sock_kwarg
             )
         except Exception as e:
             msg = str(e)
