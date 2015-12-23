@@ -473,7 +473,7 @@ def main():
     parser.add_argument('modules', help='Path to module or module directory')
     parser.add_argument('-w', '--warnings', help='Show warnings',
                         action='store_true')
-    parser.add_argument('--exclude', help='Regex exclusion pattern',
+    parser.add_argument('--exclude', help='RegEx exclusion pattern',
                         type=re_compile)
     args = parser.parse_args()
 
