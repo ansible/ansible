@@ -460,9 +460,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if 'stderr' in res and res['stderr'].startswith(u'Traceback'):
                 data['exception'] = res['stderr']
             else:
-                data['msg'] = res.get('stdout', u'')
+                data['msg'] = "MODULE FAILURE"
+                data['module_stdout'] = res.get('stdout', u'')
                 if 'stderr' in res:
-                    data['msg'] += res['stderr']
+                    data['module_stderr'] = res['stderr']
 
         # pre-split stdout into lines, if stdout is in the data and there
         # isn't already a stdout_lines value there

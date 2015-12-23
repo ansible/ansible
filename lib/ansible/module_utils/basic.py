@@ -1531,7 +1531,7 @@ class AnsibleModule(object):
         if not 'changed' in kwargs:
             kwargs['changed'] = False
         if 'invocation' not in kwargs:
-            kwargs['invocation'] = self.params
+            kwargs['invocation'] = {'module_args': self.params}
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
@@ -1543,7 +1543,7 @@ class AnsibleModule(object):
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
         if 'invocation' not in kwargs:
-            kwargs['invocation'] = self.params
+            kwargs['invocation'] = {'module_args': self.params}
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
