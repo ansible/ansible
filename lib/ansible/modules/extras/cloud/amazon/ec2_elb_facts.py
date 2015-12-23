@@ -110,7 +110,7 @@ def get_elb_listeners(listeners):
 def get_health_check(health_check):
     protocol, port_path = health_check.target.split(':')
     try:
-        port, path = port_path.split('/')
+        port, path = port_path.split('/', 1)
         path = '/{}'.format(path)
     except ValueError:
         port = port_path
