@@ -388,7 +388,7 @@ def main():
                 argument_spec = dict(
                     state = dict(default='present', choices=['present', 'absent']),
                     username = dict(default=None, required=False),
-                    password = dict(default=None, required=False),
+                    password = dict(default=None, required=False, no_log=True),
                     server_hostname = dict(default=rhn.config.get_option('server.hostname'), required=False),
                     server_insecure = dict(default=rhn.config.get_option('server.insecure'), required=False),
                     rhsm_baseurl = dict(default=rhn.config.get_option('rhsm.baseurl'), required=False),
