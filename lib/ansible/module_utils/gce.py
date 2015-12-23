@@ -27,10 +27,14 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+import json
 import os
 import traceback
 
 from libcloud.compute.types import Provider
+from distutils.version import LooseVersion
+
+import libcloud
 from libcloud.compute.providers import get_driver
 
 USER_AGENT_PRODUCT="Ansible-gce"
@@ -77,6 +81,22 @@ def gce_connect(module, provider=None):
         module.fail_json(msg='Missing GCE connection parameters in libcloud '
                              'secrets file.')
         return None
+    else:
+        # We have credentials but lets make sure that if they are JSON we have the minimum
+        # libcloud requirement met
+        try:
+            # Try to read credentials as JSON
+            with open(credentials_file) as credentials:
+                json.loads(credentials.read())
+            # If the credentials are proper JSON and we do not have the minimum
+            # required libcloud version, bail out and return a descriptive error
+            if LooseVersion(libcloud.__version__) < '0.17.0':
+                module.fail_json(msg='Using JSON credentials but libcloud minimum version not met. '
+                                     'Upgrade to libcloud>=0.17.0.')
+                return None
+        except ValueError, e:
+            # Not JSON
+            pass
 
     # Allow for passing in libcloud Google DNS (e.g, Provider.GOOGLE)
     if provider is None:
