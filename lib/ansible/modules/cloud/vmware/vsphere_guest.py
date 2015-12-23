@@ -877,6 +877,50 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
 
             changes['cpu'] = vm_hardware['num_cpus']
 
+    # Resize hard drives
+    if vm_disk:
+        spec = spec_singleton(spec, request, vm)
+        disk_num = 0
+        dev_changes = []
+        disks_changed = {}
+        for disk in sorted(vm_disk.iterkeys()):
+            try:
+                disksize = int(vm_disk[disk]['size_gb'])
+                # Convert the disk size to kilobytes
+                disksize = disksize * 1024 * 1024
+            except (KeyError, ValueError):
+                vsphere_client.disconnect()
+                module.fail_json(msg="Error in '%s' definition. Size needs to be specified as an integer." % disk)
+
+            # Get a list of the hard drives 
+            dev_list = [d for d in vm.properties.config.hardware.device if d._type=='VirtualDisk']
+            if disk_num >= len(dev_list):
+                vsphere_client.disconnect()
+                module.fail_json(msg="Error in '%s' definition. Too many disks defined in comparison to the VM's disk profile." % disk)
+            
+            # Make sure the new disk size is higher than the current value
+            dev = dev_list[disk_num]
+            if disksize < int(dev.capacityInKB):
+              vsphere_client.disconnect()
+              module.fail_json(msg="Error in '%s' definition. New size needs to be higher than the current value (%s GB)." % (disk, int(dev.capacityInKB) / 1024 / 1024))
+
+            # Set the new disk size
+            elif disksize > int(dev.capacityInKB):
+                dev_obj = dev._obj
+                dev_obj.set_element_capacityInKB(disksize)
+                dev_change = spec.new_deviceChange()
+                dev_change.set_element_operation("edit")
+                dev_change.set_element_device(dev_obj)
+                dev_changes.append(dev_change)
+                disks_changed[disk] = {'size_gb': int(vm_disk[disk]['size_gb'])}
+
+            disk_num = disk_num + 1
+
+        if dev_changes:
+            spec.set_element_deviceChange(dev_changes)
+            changes['disks'] = disks_changed
+
+            
     if len(changes):
 
         if shutdown and vm.is_powered_on():
