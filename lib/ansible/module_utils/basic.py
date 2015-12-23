@@ -528,7 +528,8 @@ class AnsibleModule(object):
         # append to legal_inputs and then possibly check against them
         try:
             self.aliases = self._handle_aliases()
-        except Exception, e:
+        except Exception:
+            e = get_exception()
             # use exceptions here cause its not safe to call vail json until no_log is processed
             print('{"failed": true, "msg": "Module alias error: %s"}' % str(e))
             sys.exit(1)
