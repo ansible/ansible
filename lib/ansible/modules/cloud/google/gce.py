@@ -76,11 +76,12 @@ options:
   pem_file:
     version_added: 1.5.1
     description:
-      - (deprecated) path to the pem file associated with the service account email
+      - path to the pem file associated with the service account email
+        This option is deprecated. Use 'credentials_file'.
     required: false
     default: null
   credentials_file:
-    version_added: 2.1.0
+    version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
     default: null
@@ -163,7 +164,7 @@ options:
 
 requirements:
     - "python >= 2.6"
-    - "apache-libcloud >= 0.17.0"
+    - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials"
 notes:
   - Either I(name) or I(instance_names) is required.
 author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
@@ -188,6 +189,9 @@ EXAMPLES = '''
 
 # Launch instances from a control node, runs some tasks on the new instances,
 # and then terminate them
+# This example uses JSON credentials with the credentials_file parameter
+# rather than the deprecated pem_file option with PEM formatted credentials.
+
 - name: Create a sandbox instance
   hosts: localhost
   vars:
@@ -225,6 +229,30 @@ EXAMPLES = '''
         module: gce
         state: 'absent'
         instance_names: {{gce.instance_names}}
+
+# The deprecated PEM file credentials can be used as follows
+- name: Create a sandbox instance with PEM credentials
+  hosts: localhost
+  vars:
+    names: foo,bar
+    machine_type: n1-standard-1
+    image: debian-6
+    zone: us-central1-a
+    service_account_email: unique-email@developer.gserviceaccount.com
+    pem_file: /path/to/pem_file
+    project_id: project-id
+  tasks:
+    - name: Launch instances
+      local_action: gce instance_names={{names}} machine_type={{machine_type}}
+                    image={{image}} zone={{zone}}
+                    service_account_email={{ service_account_email }}
+                    pem_file={{ pem_file }}
+                    project_id={{ project_id }}
+      register: gce
+    - name: Wait for SSH to come up
+      local_action: wait_for host={{item.public_ip}} port=22 delay=10
+                    timeout=60 state=started
+      with_items: {{gce.instance_data}}
 
 '''
 

@@ -119,12 +119,13 @@ options:
   pem_file:
     version_added: "1.6"
     description:
-      - (deprecated) path to the pem file associated with the service account email
+      - path to the pem file associated with the service account email
+        This option is deprecated. Use 'credentials_file'.
     required: false
     default: null
     aliases: []
   credentials_file:
-    version_added: 2.1.0
+    version_added: "2.1.0"
     description:
       - path to the JSON file associated with the service account email
     default: null
@@ -139,7 +140,7 @@ options:
 
 requirements:
     - "python >= 2.6"
-    - "apache-libcloud >= 0.17.0"
+    - "apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials"
 author: "Eric Johnson (@erjohnso) <erjohnso@google.com>"
 '''
 
