@@ -63,7 +63,15 @@ def disable_ssl_cert_validation():
     # You probably only want to do this for testing and never in production.
     # From https://www.python.org/dev/peps/pep-0476/#id29
     import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
+
+    try:
+        _create_unverified_https_context = ssl._create_unverified_context
+    except AttributeError:
+        # Legacy Python that doesn't verify HTTPS certificates by default
+        pass
+    else:
+        # Handle target environment that doesn't support HTTPS verification
+        ssl._create_default_https_context = _create_unverified_https_context
 
 # Fully Qualified name (with the partition)
 def fq_name(partition,name):
