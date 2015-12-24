@@ -59,7 +59,8 @@ options:
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
-              on personally controlled sites using self-signed certificates.
+              on personally controlled sites.  Prior to 2.0, this module would always
+              validate on python >= 2.7.9 and never validate on python <= 2.7.8
         required: false
         default: 'yes'
         choices: ['yes', 'no']
@@ -136,8 +137,8 @@ class F5(object):
         api: iControl API instance.
     """
 
-    def __init__(self, host, user, password, session=False):
-        self.api = bigsuds.BIGIP(hostname=host, username=user, password=password)
+    def __init__(self, host, user, password, session=False, validate_certs=True):
+        self.api = bigip_api(host, user, password, validate_certs)
         if session:
             self.start_session()
 
@@ -1574,12 +1575,6 @@ def generate_software_list(f5):
     software_list = software.get_all_software_status()
     return software_list
 
-def disable_ssl_cert_validation():
-    # You probably only want to do this for testing and never in production.
-    # From https://www.python.org/dev/peps/pep-0476/#id29
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
-
 
 def main():
     module = AnsibleModule(
@@ -1595,7 +1590,7 @@ def main():
     )
 
     if not bigsuds_found:
-        module.fail_json(msg="the python suds and bigsuds modules is required")
+        module.fail_json(msg="the python suds and bigsuds modules are required")
 
     server = module.params['server']
     user = module.params['user']
@@ -1603,6 +1598,12 @@ def main():
     validate_certs = module.params['validate_certs']
     session = module.params['session']
     fact_filter = module.params['filter']
+
+    if validate_certs:
+        import ssl
+        if not hasattr(ssl, 'SSLContext'):
+            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+
     if fact_filter:
         regex = fnmatch.translate(fact_filter)
     else:
@@ -1617,14 +1618,11 @@ def main():
     if not all(include_test):
         module.fail_json(msg="value of include must be one or more of: %s, got: %s" % (",".join(valid_includes), ",".join(include)))
 
-    if not validate_certs:
-        disable_ssl_cert_validation()
-
     try:
         facts = {}
 
         if len(include) > 0:
-            f5 = F5(server, user, password, session)
+            f5 = F5(server, user, password, session, validate_certs)
             saved_active_folder = f5.get_active_folder()
             saved_recursive_query_state = f5.get_recursive_query_state()
             if saved_active_folder != "/":
@@ -1685,6 +1683,7 @@ def main():
 
 # include magic from lib/ansible/module_common.py
 from ansible.module_utils.basic import *
+from ansible.module_utils.f5 import *
 
 if __name__ == '__main__':
     main()
