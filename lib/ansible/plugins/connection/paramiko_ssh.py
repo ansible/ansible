@@ -141,27 +141,7 @@ class Connection(ConnectionBase):
             self.ssh = SSH_CONNECTION_CACHE[cache_key] = self._connect_uncached()
         return self
 
-    def _connect_uncached(self):
-        ''' activates the connection object '''
-
-        if not HAVE_PARAMIKO:
-            raise AnsibleError("paramiko is not installed")
-
-        port = self._play_context.port or 22
-        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
-
-        ssh = paramiko.SSHClient()
-
-        self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
-
-        if C.HOST_KEY_CHECKING:
-            try:
-                #TODO: check if we need to look at several possible locations, possible for loop
-                ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
-            except IOError:
-                pass # file was not found, but not required to function
-            ssh.load_system_host_keys()
-
+    def _parse_proxy_command(self, port=22):
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
         ssh_common_args = getattr(self._play_context, 'ssh_common_args', None)
@@ -199,6 +179,31 @@ class Connection(ConnectionBase):
                 display.warning('Paramiko ProxyCommand support unavailable. '
                                 'Please upgrade to Paramiko 1.9.0 or newer. '
                                 'Not using configured ProxyCommand')
+
+        return sock_kwarg
+
+    def _connect_uncached(self):
+        ''' activates the connection object '''
+
+        if not HAVE_PARAMIKO:
+            raise AnsibleError("paramiko is not installed")
+
+        port = self._play_context.port or 22
+        display.vvv("ESTABLISH CONNECTION FOR USER: %s on PORT %s TO %s" % (self._play_context.remote_user, port, self._play_context.remote_addr), host=self._play_context.remote_addr)
+
+        ssh = paramiko.SSHClient()
+
+        self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
+
+        if C.HOST_KEY_CHECKING:
+            try:
+                #TODO: check if we need to look at several possible locations, possible for loop
+                ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
+            except IOError:
+                pass # file was not found, but not required to function
+            ssh.load_system_host_keys()
+
+        sock_kwarg = self._parse_proxy_command(port)
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
 
