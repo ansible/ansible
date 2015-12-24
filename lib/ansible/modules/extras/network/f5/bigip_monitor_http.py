@@ -54,7 +54,8 @@ options:
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
-              on personally controlled sites using self-signed certificates.
+              on personally controlled sites.  Prior to 2.0, this module would always
+              validate on python >= 2.7.9 and never validate on python <= 2.7.8
         required: false
         default: 'yes'
         choices: ['yes', 'no']
@@ -333,7 +334,7 @@ def main():
 
     # end monitor specific stuff
 
-    api = bigip_api(server, user, password)
+    api = bigip_api(server, user, password, validate_certs)
     monitor_exists = check_monitor_exists(module, api, monitor, parent)
 
 
