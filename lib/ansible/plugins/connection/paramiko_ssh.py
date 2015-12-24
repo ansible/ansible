@@ -32,6 +32,7 @@ import tempfile
 import traceback
 import fcntl
 import sys
+import re
 
 from termios import tcflush, TCIFLUSH
 from binascii import hexlify
@@ -54,6 +55,9 @@ paramiko: The authenticity of host '%s' can't be established.
 The %s key fingerprint is %s.
 Are you sure you want to continue connecting (yes/no)?
 """
+
+# SSH Options Regex
+SETTINGS_REGEX = re.compile(r'(\w+)(?:\s*=\s*|\s+)(.+)')
 
 # prevent paramiko warning noise -- see http://stackoverflow.com/questions/3920502/
 HAVE_PARAMIKO=False
@@ -158,14 +162,34 @@ class Connection(ConnectionBase):
                 pass # file was not found, but not required to function
             ssh.load_system_host_keys()
 
+        proxy_command = None
+        # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
+        ssh_common_args = getattr(self._play_context, 'ssh_common_args', None)
+        if ssh_common_args is not None:
+            args = self._split_ssh_args(ssh_common_args)
+            for i, arg in enumerate(args):
+                if arg.lower() == 'proxycommand':
+                    # _split_ssh_args split ProxyCommand from the command itself
+                    proxy_command = args[i + 1]
+                else:
+                    # ProxyCommand and the command itself are a single string
+                    match = SETTINGS_REGEX.match(arg)
+                    if match:
+                        if match.group(1).lower() == 'proxycommand':
+                            proxy_command = match.group(2)
+
+                if proxy_command:
+                    break
+
+        proxy_command = proxy_command or C.PARAMIKO_PROXY_COMMAND
+
         sock_kwarg = {}
-        if C.PARAMIKO_PROXY_COMMAND:
+        if proxy_command:
             replacers = {
                 '%h': self._play_context.remote_addr,
                 '%p': port,
                 '%r': self._play_context.remote_user
             }
-            proxy_command = C.PARAMIKO_PROXY_COMMAND
             for find, replace in replacers.items():
                 proxy_command = proxy_command.replace(find, str(replace))
             try:
