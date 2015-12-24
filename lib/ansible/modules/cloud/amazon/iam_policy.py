@@ -144,9 +144,7 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
       if urllib.unquote(iam.get_user_policy(name, pol).
                         get_user_policy_result.policy_document) == pdoc:
         policy_match = True
-        if policy_match:
-          msg=("The policy document you specified already exists "
-               "under the name %s." % pol)
+
     if state == 'present' and skip:
       if policy_name not in current_policies and not policy_match:
         changed = True
@@ -187,15 +185,12 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
       module.exit_json(changed=False)
     else:
       module.fail_json(msg=e.message)
-      
-  try:    
+
+  try:
     for pol in current_policies:
       if urllib.unquote(iam.get_role_policy(name, pol).
                         get_role_policy_result.policy_document) == pdoc:
         policy_match = True
-        if policy_match:
-          msg=("The policy document you specified already exists "
-               "under the name %s." % pol)
     if state == 'present' and skip:
       if policy_name not in current_policies and not policy_match:
         changed = True
@@ -303,10 +298,12 @@ def main():
           pdoc = json.dumps(json.load(json_data))
           json_data.close()
   elif module.params.get('policy_json') != None:
-      try:
-        pdoc = json.dumps(module.params.get('policy_json'))
-      except Exception as e:
-        module.fail_json(msg=str(e) + '\n' + module.params.get('policy_json'))
+      # if its a string, assume it is already JSON
+      if not isinstance(pdoc, basestring):
+        try:
+          pdoc = json.dumps(module.params.get('policy_json'))
+        except Exception as e:
+          module.fail_json(msg='Failed to convert the policy into valid JSON: %s' % str(e))
   else:
     pdoc=None
 
