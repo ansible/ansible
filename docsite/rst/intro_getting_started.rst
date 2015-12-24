@@ -55,6 +55,8 @@ public SSH key should be located in ``authorized_keys`` on those systems::
 
 This is an inventory file, which is also explained in greater depth here:  :doc:`intro_inventory`.
 
+.. NOTE:: Mac users who have installed Ansible using Homebrew, should edit (or create) /usr/local/etc/ansible/hosts instead of /etc/ansible/hosts mentioned above.
+
 We'll assume you are using SSH keys for authentication.  To set up SSH agent to avoid retyping passwords, you can
 do:
 
