@@ -57,7 +57,8 @@ options:
     validate_certs:
         description:
             - If C(no), SSL certificates will not be validated. This should only be used
-              on personally controlled sites using self-signed certificates.
+              on personally controlled sites.  Prior to 2.0, this module would always
+              validate on python >= 2.7.9 and never validate on python <= 2.7.8
         required: false
         default: 'yes'
         choices: ['yes', 'no']
@@ -390,9 +391,6 @@ def main():
     address = fq_name(partition,host)
     port = module.params['port']
 
-    if not validate_certs:
-        disable_ssl_cert_validation()
-
     # sanity check user supplied values
 
     if (host and not port) or (port and not host):
@@ -421,7 +419,7 @@ def main():
         module.fail_json(msg="quorum requires monitors parameter")
 
     try:
-        api = bigip_api(server, user, password)
+        api = bigip_api(server, user, password, validate_certs)
         result = {'changed': False}  # default
 
         if state == 'absent':
