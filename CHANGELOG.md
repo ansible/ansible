@@ -102,6 +102,13 @@ allowed in future versions:
           with_items: my_dirs
     ```
 
+* The bigip\* networking modules have a new parameter, validate_certs.  When
+  True (the default) the module will validate any hosts it connects to against
+  the TLS certificates it presents when run on new enough python versions.  If
+  the python version is too old to validate certificates or you used certificates
+  that cannot be validated against available CAs you will need to add
+  validate_certs=no to your playbook for those tasks.
+
 ###Plugins
 
 * Rewritten dnf module that should be faster and less prone to encountering bugs in cornercases
