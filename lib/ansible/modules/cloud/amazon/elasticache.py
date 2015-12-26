@@ -50,7 +50,7 @@ options:
     default: cache.m1.small
   num_nodes:
     description:
-      - The initial number of cache nodes that the cache cluster will have
+      - The initial number of cache nodes that the cache cluster will have. Required when state=present.
     required: false
   cache_port:
     description:
