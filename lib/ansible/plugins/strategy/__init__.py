@@ -110,12 +110,12 @@ class StrategyBase:
         unreachable_hosts = set(unreachable_hosts).union(self._tqm._unreachable_hosts.keys())
 
         # return the appropriate code, depending on the status hosts after the run
-        if len(unreachable_hosts) > 0:
-            return 3
-        elif len(failed_hosts) > 0:
+        if len(failed_hosts) > 0:
             return 2
         elif not result:
             return 1
+        elif len(unreachable_hosts) > 0:
+            return 3
         else:
             return 0
 
