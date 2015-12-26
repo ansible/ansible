@@ -35,9 +35,10 @@ options:
     required: true
   engine:
     description:
-      - Name of the cache engine to be used (memcached or redis)
+      - Name of the cache engine to be used.
     required: false
     default: memcached
+    choices: ['redis', 'memcached']
   cache_engine_version:
     description:
       - The version number of the cache engine
@@ -487,7 +488,7 @@ def main():
     argument_spec.update(dict(
             state={'required': True, 'choices': ['present', 'absent', 'rebooted']},
             name={'required': True},
-            engine={'required': False, 'default': 'memcached'},
+            engine={'required': False, 'choices': ['redis', 'memcached'], 'default': 'memcached'},
             cache_engine_version={'required': False},
             node_type={'required': False, 'default': 'cache.m1.small'},
             num_nodes={'required': False, 'default': None, 'type': 'int'},
@@ -496,9 +497,9 @@ def main():
             cache_port={'required': False, 'type': 'int'},
             cache_subnet_group={'required': False, 'default': None},
             cache_security_groups={'required': False, 'default': [default],
-                                   'type': 'list'},
+                                'type': 'list'},
             security_group_ids={'required': False, 'default': [],
-                                   'type': 'list'},
+                                'type': 'list'},
             zone={'required': False, 'default': None},
             wait={'required': False, 'type' : 'bool', 'default': True},
             hard_modify={'required': False, 'type': 'bool', 'default': False}
