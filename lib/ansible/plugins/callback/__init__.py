@@ -22,7 +22,7 @@ __metaclass__ = type
 import json
 import difflib
 import warnings
-from copy import deepcopy
+from copy import copy, deepcopy
 
 from ansible.compat.six import string_types
 
@@ -128,9 +128,18 @@ class CallbackBase:
 
         return item
 
+    def deepcopy_exclude(self, copyme, exclude=[]):
+        res = copy(copyme)
+        try:
+            setattr(res, exclude, None)
+        except TypeError:
+            for e in exclude:
+                setattr(res, e, None)
+        return deepcopy(res)
+
     def _process_items(self, result):
         for res in result._result['results']:
-            newres = self._copy_result(result)
+            newres = self.deepcopy_exclude(result, '_result')
             res['item'] = self._get_item(res)
             newres._result = res
             if 'failed' in res and res['failed']:
