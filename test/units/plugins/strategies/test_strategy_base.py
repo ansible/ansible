@@ -65,11 +65,11 @@ class TestStrategyBase(unittest.TestCase):
         strategy_base = StrategyBase(tqm=mock_tqm)
 
         self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context), 0)
+        mock_tqm._unreachable_hosts = dict(host1=True)
+        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context), 3)
         self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 1)
         mock_tqm._failed_hosts = dict(host1=True)
         self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 2)
-        mock_tqm._unreachable_hosts = dict(host1=True)
-        self.assertEqual(strategy_base.run(iterator=mock_iterator, play_context=mock_play_context, result=False), 3)
 
     def test_strategy_base_get_hosts(self):
         mock_hosts = []
