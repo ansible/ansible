@@ -65,6 +65,7 @@ import grp
 import pwd
 import platform
 import errno
+import datetime
 from itertools import repeat, chain
 
 try:
@@ -423,9 +424,12 @@ def remove_values(value, no_log_strings):
         for omit_me in no_log_strings:
             if omit_me in stringy_value:
                 return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
+    elif isinstance(value, datetime.datetime):
+        value = value.isoformat()
     else:
         raise TypeError('Value of unknown type: %s, %s' % (type(value), value))
     return value
+
 
 def heuristic_log_sanitize(data, no_log_values=None):
     ''' Remove strings that look like passwords from log messages '''
