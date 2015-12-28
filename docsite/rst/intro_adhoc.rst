@@ -112,7 +112,7 @@ For example, using double rather than single quotes in the above example would
 evaluate the variable on the box you were on.
 
 So far we've been demoing simple command execution, but most Ansible modules usually do not work like
-simple scripts. They make the remote system look like you state, and run the commands necessary to
+simple scripts. They make the remote system look like a state, and run the commands necessary to
 get it there.  This is commonly referred to as 'idempotence', and is a core design goal of Ansible.
 However, we also recognize that running arbitrary commands is equally important, so Ansible easily supports both.
 
