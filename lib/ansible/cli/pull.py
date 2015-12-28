@@ -130,7 +130,8 @@ class PullCLI(CLI):
         # Now construct the ansible command
         node = platform.node()
         host = socket.getfqdn()
-        limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+        limit_opts_clone = 'localhost'
+        limit_opts_play = 'localhost,%s,127.0.0.1,::1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
         base_opts = '-c local '
         if self.options.verbosity > 0:
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
@@ -167,7 +168,7 @@ class PullCLI(CLI):
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
         cmd = '%s/ansible -i "%s" %s -m %s -a "%s" "%s"' % (
-            bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts
+            bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts_clone
         )
 
         for ev in self.options.extra_vars:
@@ -208,8 +209,7 @@ class PullCLI(CLI):
             cmd += ' --ask-become-pass'
         if self.options.tags:
             cmd += ' -t "%s"' % self.options.tags
-        if self.options.subset:
-            cmd += ' -l "%s"' % self.options.subset
+        cmd += ' -l "%s"' % limit_opts_play
 
         os.chdir(self.options.dest)
 
