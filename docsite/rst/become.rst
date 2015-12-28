@@ -1,5 +1,5 @@
-Ansible Privilege Escalation
-++++++++++++++++++++++++++++
+Become (Privilege Escalation)
++++++++++++++++++++++++++++++
 
 Ansible can use existing privilege escalation systems to allow a user to execute tasks as another.
 
@@ -7,17 +7,17 @@ Ansible can use existing privilege escalation systems to allow a user to execute
 
 Become
 ``````
-Before 1.9 Ansible mostly allowed the use of sudo and a limited use of su to allow a login/remote user to become a different user
-and execute tasks, create resources with the 2nd user's permissions. As of 1.9 'become' supersedes the old sudo/su, while still
-being backwards compatible. This new system also makes it easier to add other privilege escalation tools like pbrun (Powerbroker),
-pfexec and others.
+Before 1.9 Ansible mostly allowed the use of `sudo` and a limited use of `su` to allow a login/remote user to become a different user
+and execute tasks, create resources with the 2nd user's permissions. As of 1.9 `become` supersedes the old sudo/su, while still
+being backwards compatible. This new system also makes it easier to add other privilege escalation tools like `pbrun` (Powerbroker),
+`pfexec` and others.
 
 
 New directives
 --------------
 
 become
-    equivalent to adding 'sudo:' or 'su:' to a play or task, set to 'true'/'yes' to activate privilege escalation
+    equivalent to adding `sudo:` or `su:` to a play or task, set to 'true'/'yes' to activate privilege escalation
 
 become_user
     equivalent to adding 'sudo_user:' or 'su_user:' to a play or task, set to user with desired privileges
