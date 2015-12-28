@@ -22,7 +22,7 @@ __metaclass__ = type
 import json
 import difflib
 import warnings
-from copy import copy, deepcopy
+from copy import deepcopy
 
 from ansible.compat.six import string_types
 
@@ -59,9 +59,20 @@ class CallbackBase:
             version = getattr(self, 'CALLBACK_VERSION', '1.0')
             self._display.vvvv('Loaded callback %s of type %s, v%s' % (name, ctype, version))
 
-    def _copy_result(self, result):
-        ''' helper for callbacks, so they don't all have to include deepcopy '''
-        return deepcopy(result)
+    ''' helper for callbacks, so they don't all have to include deepcopy '''
+    _copy_result = deepcopy
+
+    def _copy_result_exclude(self, result, exclude):
+        values = []
+        for e in exclude:
+            values.append(getattr(result, e))
+            setattr(result, e, None)
+
+        result_copy = deepcopy(result)
+        for i,e in enumerate(exclude):
+            setattr(result, e, values[i])
+
+        return result_copy
 
     def _dump_results(self, result, indent=None, sort_keys=True, keep_invocation=False):
         if result.get('_ansible_no_log', False):
@@ -128,18 +139,9 @@ class CallbackBase:
 
         return item
 
-    def deepcopy_exclude(self, copyme, exclude=[]):
-        res = copy(copyme)
-        try:
-            setattr(res, exclude, None)
-        except TypeError:
-            for e in exclude:
-                setattr(res, e, None)
-        return deepcopy(res)
-
     def _process_items(self, result):
         for res in result._result['results']:
-            newres = self.deepcopy_exclude(result, '_result')
+            newres = self._copy_result_exclude(result, ['_result'])
             res['item'] = self._get_item(res)
             newres._result = res
             if 'failed' in res and res['failed']:
