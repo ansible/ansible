@@ -125,6 +125,18 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'remote_user',
 )
 
+RESET_VARS = (
+    'ansible_connection',
+    'ansible_ssh_host',
+    'ansible_ssh_pass',
+    'ansible_ssh_port',
+    'ansible_ssh_user',
+    'ansible_ssh_private_key_file',
+    'ansible_ssh_pipelining',
+    'ansible_user',
+    'ansible_host',
+    'ansible_port',
+)
 
 class PlayContext(Base):
 
@@ -505,7 +517,8 @@ class PlayContext(Base):
 
         # TODO: should we be setting the more generic values here rather than
         #       the more specific _ssh_ ones?
-        for special_var in  ['ansible_connection', 'ansible_ssh_host', 'ansible_ssh_pass', 'ansible_ssh_port', 'ansible_ssh_user', 'ansible_ssh_private_key_file', 'ansible_ssh_pipelining']:
+        for special_var in RESET_VARS:
+
             if special_var not in variables:
                 for prop, varnames in MAGIC_VARIABLE_MAPPING.items():
                     if special_var in varnames:
