@@ -62,7 +62,8 @@ codeCodes = {
     'purple':    u'0;35', 'bright red':     u'1;31',
     'yellow':    u'0;33', 'bright purple':  u'1;35',
     'dark gray': u'1;30', 'bright yellow':  u'1;33',
-    'normal':    u'0'
+    'magenta':   u'0;35', 'bright magenta': u'1;35',
+    'normal':    u'0'   ,
 }
 
 def stringc(text, color):

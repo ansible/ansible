@@ -44,7 +44,7 @@ class CallbackModule(CallbackBase):
             else:
                 msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception']
 
-            self._display.display(msg, color='red')
+            self._display.display(msg, color=C.COLOR_ERROR)
 
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
@@ -53,12 +53,12 @@ class CallbackModule(CallbackBase):
             self._process_items(result)
         else:
             if delegated_vars:
-                self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color='red')
+                self._display.display("fatal: [%s -> %s]: FAILED! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color=C.COLOR_ERROR)
             else:
-                self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
+                self._display.display("fatal: [%s]: FAILED! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
         if result._task.ignore_errors:
-            self._display.display("...ignoring", color='cyan')
+            self._display.display("...ignoring", color=C.COLOR_SKIP)
 
     def v2_runner_on_ok(self, result):
 
@@ -71,13 +71,13 @@ class CallbackModule(CallbackBase):
                 msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
             else:
                 msg = "changed: [%s]" % result._host.get_name()
-            color = 'yellow'
+            color = C.COLOR_CHANGED
         else:
             if delegated_vars:
                 msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
             else:
                 msg = "ok: [%s]" % result._host.get_name()
-            color = 'green'
+            color = C.COLOR_OK
 
         if result._task.loop and 'results' in result._result:
             self._process_items(result)
@@ -97,17 +97,17 @@ class CallbackModule(CallbackBase):
                 msg = "skipping: [%s]" % result._host.get_name()
                 if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
                     msg += " => %s" % self._dump_results(result._result)
-                self._display.display(msg, color='cyan')
+                self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_runner_on_unreachable(self, result):
         delegated_vars = result._result.get('_ansible_delegated_vars', None)
         if delegated_vars:
-            self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color='red')
+            self._display.display("fatal: [%s -> %s]: UNREACHABLE! => %s" % (result._host.get_name(), delegated_vars['ansible_host'], self._dump_results(result._result)), color=C.COLOR_ERROR)
         else:
-            self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result)), color='red')
+            self._display.display("fatal: [%s]: UNREACHABLE! => %s" % (result._host.get_name(), self._dump_results(result._result)), color=C.COLOR_ERROR)
 
     def v2_playbook_on_no_hosts_matched(self):
-        self._display.display("skipping: no hosts matched", color='cyan')
+        self._display.display("skipping: no hosts matched", color=C.COLOR_SKIP)
 
     def v2_playbook_on_no_hosts_remaining(self):
         self._display.banner("NO MORE HOSTS LEFT")
@@ -117,7 +117,7 @@ class CallbackModule(CallbackBase):
         if self._display.verbosity > 2:
             path = task.get_path()
             if path:
-                self._display.display("task path: %s" % path, color='dark gray')
+                self._display.display("task path: %s" % path, color=C.COLOR_DEBUG)
 
     def v2_playbook_on_cleanup_task_start(self, task):
         self._display.banner("CLEANUP TASK [%s]" % task.get_name().strip())
@@ -155,13 +155,13 @@ class CallbackModule(CallbackBase):
                 msg = "changed: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
             else:
                 msg = "changed: [%s]" % result._host.get_name()
-            color = 'yellow'
+            color = C.COLOR_CHANGED
         else:
             if delegated_vars:
                 msg = "ok: [%s -> %s]" % (result._host.get_name(), delegated_vars['ansible_host'])
             else:
                 msg = "ok: [%s]" % result._host.get_name()
-            color = 'green'
+            color = C.COLOR_OK
 
         msg += " => (item=%s)" % (result._result['item'],)
 
@@ -179,15 +179,15 @@ class CallbackModule(CallbackBase):
             else:
                 msg = "An exception occurred during task execution. The full traceback is:\n" + result._result['exception']
 
-            self._display.display(msg, color='red')
+            self._display.display(msg, color=C.COLOR_ERROR)
 
             # finally, remove the exception from the result so it's not shown every time
             del result._result['exception']
 
         if delegated_vars:
-            self._display.display("failed: [%s -> %s] => (item=%s) => %s" % (result._host.get_name(), delegated_vars['ansible_host'], result._result['item'], self._dump_results(result._result)), color='red')
+            self._display.display("failed: [%s -> %s] => (item=%s) => %s" % (result._host.get_name(), delegated_vars['ansible_host'], result._result['item'], self._dump_results(result._result)), color=C.COLOR_ERROR)
         else:
-            self._display.display("failed: [%s] => (item=%s) => %s" % (result._host.get_name(), result._result['item'], self._dump_results(result._result)), color='red')
+            self._display.display("failed: [%s] => (item=%s) => %s" % (result._host.get_name(), result._result['item'], self._dump_results(result._result)), color=C.COLOR_ERROR)
 
         self._handle_warnings(result._result)
 
@@ -195,12 +195,12 @@ class CallbackModule(CallbackBase):
         msg = "skipping: [%s] => (item=%s) " % (result._host.get_name(), result._result['item'])
         if (self._display.verbosity > 0 or '_ansible_verbose_always' in result._result) and not '_ansible_verbose_override' in result._result:
             msg += " => %s" % self._dump_results(result._result)
-        self._display.display(msg, color='cyan')
+        self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_include(self, included_file):
         msg = 'included: %s for %s' % (included_file._filename, ", ".join([h.name for h in included_file._hosts]))
-        color = 'cyan'
-        self._display.display(msg, color='cyan')
+        color = C.COLOR_SKIP
+        self._display.display(msg, color=C.COLOR_SKIP)
 
     def v2_playbook_on_stats(self, stats):
         self._display.banner("PLAY RECAP")
@@ -211,10 +211,10 @@ class CallbackModule(CallbackBase):
 
             self._display.display(u"%s : %s %s %s %s" % (
                 hostcolor(h, t),
-                colorize(u'ok', t['ok'], 'green'),
-                colorize(u'changed', t['changed'], 'yellow'),
-                colorize(u'unreachable', t['unreachable'], 'red'),
-                colorize(u'failed', t['failures'], 'red')),
+                colorize(u'ok', t['ok'], C.COLOR_OK),
+                colorize(u'changed', t['changed'], C.COLOR_CHANGED),
+                colorize(u'unreachable', t['unreachable'], C.COLOR_UNREACHABLE),
+                colorize(u'failed', t['failures'], C.COLOR_ERROR)),
                 screen_only=True
             )
 
