@@ -19,7 +19,7 @@ short_description: create, delete, accept, and reject VPC peering connections be
 description:
   - Read the AWS documentation for VPC Peering Connections
     U(http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html)
-version_added: "2.1"    
+version_added: "2.1"
 options:
   vpc_id:
     description:
@@ -192,9 +192,7 @@ try:
     HAS_BOTO3 = True
 except ImportError:
     HAS_BOTO3 = False
-
-import q
-
+    
 
 def describe_peering_connections(vpc_id, peer_vpc_id, client):
     result = client.describe_vpc_peering_connections(Filters=[
