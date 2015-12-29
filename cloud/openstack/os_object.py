@@ -42,7 +42,7 @@ options:
         - Name to be give to the object. If omitted, operations will be on
           the entire container
      required: false
-   file:
+   filename:
      description:
         - Path to local file to be uploaded.
      required: false
