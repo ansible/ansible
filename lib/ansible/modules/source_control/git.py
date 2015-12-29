@@ -33,7 +33,7 @@ options:
         required: true
         aliases: [ name ]
         description:
-            - git, SSH, or HTTP protocol address of the git repository.
+            - git, SSH, or HTTP(S) protocol address of the git repository.
     dest:
         required: true
         description:
