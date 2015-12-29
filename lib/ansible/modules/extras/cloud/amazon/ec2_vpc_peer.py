@@ -104,8 +104,7 @@ EXAMPLES = '''
   ec2_vpc_peer:
     region: ap-southeast-2
     vpc_id: vpc-12345678
-    peer_vpc_id: vpc-87654321
-    peer_vpc_id: vpc-ce26b7ab
+    peer_vpc_id: vpc-12345678
     peer_owner_id: 123456789102
     state: present
   register: vpc_peer
@@ -138,8 +137,7 @@ EXAMPLES = '''
   ec2_vpc_peer:
     region: ap-southeast-2
     vpc_id: vpc-12345678
-    peer_vpc_id: vpc-87654321
-    peer_vpc_id: vpc-ce26b7ab
+    peer_vpc_id: vpc-12345678
     peer_owner_id: 123456789102
     state: present
   register: vpc_peer
@@ -157,8 +155,7 @@ EXAMPLES = '''
   ec2_vpc_peer:
     region: ap-southeast-2
     vpc_id: vpc-12345678
-    peer_vpc_id: vpc-87654321
-    peer_vpc_id: vpc-ce26b7ab
+    peer_vpc_id: vpc-12345678
     peer_owner_id: 123456789102
     state: present
   register: vpc_peer
