@@ -63,6 +63,7 @@ class PullCLI(CLI):
             runtask_opts=True,
             subset_opts=True,
             inventory_opts=True,
+            inventory_default=None,
             module_opts=True,
             runas_prompt_opts=True,
         )

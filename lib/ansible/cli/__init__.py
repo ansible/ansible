@@ -210,8 +210,23 @@ class CLI(object):
         setattr(parser.values, option.dest, os.path.expanduser(value))
 
     @staticmethod
-    def base_parser(usage="", output_opts=False, runas_opts=False, meta_opts=False, runtask_opts=False, vault_opts=False, module_opts=False,
-            async_opts=False, connect_opts=False, subset_opts=False, check_opts=False, inventory_opts=False, epilog=None, fork_opts=False, runas_prompt_opts=False):
+    def base_parser(usage="",
+                    output_opts=False,
+                    runas_opts=False,
+                    meta_opts=False,
+                    runtask_opts=False,
+                    vault_opts=False,
+                    module_opts=False,
+                    async_opts=False,
+                    connect_opts=False,
+                    subset_opts=False,
+                    check_opts=False,
+                    inventory_opts=False,
+                    inventory_default=C.DEFAULT_HOST_LIST,
+                    epilog=None,
+                    fork_opts=False,
+                    runas_prompt_opts=False,
+                    ):
         ''' create an options parser for most ansible scripts '''
 
         # TODO: implement epilog parsing
@@ -225,7 +240,7 @@ class CLI(object):
         if inventory_opts:
             parser.add_option('-i', '--inventory-file', dest='inventory',
                 help="specify inventory host path (default=%s) or comma separated host list" % C.DEFAULT_HOST_LIST,
-                default=C.DEFAULT_HOST_LIST, action="callback", callback=CLI.expand_tilde, type=str)
+                default=inventory_default, action="callback", callback=CLI.expand_tilde, type=str)
             parser.add_option('--list-hosts', dest='listhosts', action='store_true',
                 help='outputs a list of matching hosts; does not execute anything else')
             parser.add_option('-l', '--limit', default=C.DEFAULT_SUBSET, dest='subset',
