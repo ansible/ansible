@@ -1,10 +1,25 @@
 #!/usr/bin/python
+# This file is part of Ansible
 #
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 DOCUMENTATION = '''
 module: ec2_vpc_peer
-short_description: create or remove a peering connection between to ec2 VPCs.
+short_description: create, delete, accept, and reject VPC peering connections between two VPCs.
 description:
-    -
+  - Read the AWS documentation for VPC Peering Connections
+    U(http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html)
+version_added: "2.1"    
 options:
   vpc_id:
     description:
