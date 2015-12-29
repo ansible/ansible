@@ -154,7 +154,11 @@ def main():
             if len(out) > 75:
                 out = out[:75] + '...'
             if rc != 0:
-                module.fail_json(msg=err if err else out)
+                if err:
+                    msg = err
+                else:
+                    msg = out
+                module.fail_json(msg=msg)
 
     elif state == 'latest':
         if not package_installed(module, name):
@@ -164,7 +168,12 @@ def main():
             if len(out) > 75:
                 out = out[:75] + '...'
             if rc != 0:
-                module.fail_json(msg=err if err else out)
+                if err:
+                    msg = err
+                else:
+                    msg = out
+                module.fail_json(msg=msg)
+
         else:
             if not package_latest(module, name, site):
                 if module.check_mode:
@@ -173,7 +182,11 @@ def main():
                 if len(out) > 75:
                     out = out[:75] + '...'
                 if rc != 0:
-                    module.fail_json(msg=err if err else out)
+                    if err:
+                        msg = err
+                    else:
+                        msg = out
+                    module.fail_json(msg=msg)
 
     elif state == 'absent':
         if package_installed(module, name):
@@ -183,7 +196,11 @@ def main():
             if len(out) > 75:
                 out = out[:75] + '...'
             if rc != 0:
-                module.fail_json(msg=err if err else out)
+                if err:
+                    msg = err
+                else:
+                    msg = out
+                module.fail_json(msg=msg)
 
     if rc is None:
         # pkgutil was not executed because the package was already present/absent
