@@ -208,7 +208,6 @@ class PullCLI(CLI):
         if self.options.ask_sudo_pass or self.options.ask_su_pass or self.options.become_ask_pass:
             cmd += ' --ask-become-pass'
         if self.options.tags:
-            import pdb; pdb.set_trace()  # XXX BREAKPOINT
             cmd += ' -t "%s"' % self.options.tags
         if self.options.subset:
             cmd += ' -l "%s"' % self.options.subset
