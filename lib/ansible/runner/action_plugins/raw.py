@@ -34,7 +34,7 @@ class ActionModule(object):
             # in --check mode, always skip this module execution
             return ReturnData(conn=conn, comm_ok=True, result=dict(skipped=True))
 
-        executable = ''
+        executable = None
         # From library/command, keep in sync
         r = re.compile(r'(^|\s)(executable)=(?P<quote>[\'"])?(.*?)(?(quote)(?<!\\)(?P=quote))((?<!\\)\s|$)')
         for m in r.finditer(module_args):
