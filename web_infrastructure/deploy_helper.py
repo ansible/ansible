@@ -446,12 +446,12 @@ def main():
         changes += deploy_helper.remove_unfinished_file(facts['new_release_path'])
         changes += deploy_helper.create_link(facts['new_release_path'], facts['current_path'])
         if deploy_helper.clean:
-            changes += deploy_helper.remove_unfinished_link(facts['path'])
+            changes += deploy_helper.remove_unfinished_link(facts['project_path'])
             changes += deploy_helper.remove_unfinished_builds(facts['releases_path'])
             changes += deploy_helper.cleanup(facts['releases_path'], facts['new_release'])
 
     elif deploy_helper.state == 'clean':
-        changes += deploy_helper.remove_unfinished_link(facts['path'])
+        changes += deploy_helper.remove_unfinished_link(facts['project_path'])
         changes += deploy_helper.remove_unfinished_builds(facts['releases_path'])
         changes += deploy_helper.cleanup(facts['releases_path'], facts['new_release'])
 
