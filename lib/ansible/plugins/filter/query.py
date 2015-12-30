@@ -23,24 +23,21 @@ from ansible.plugins.lookup import LookupBase
 from ansible.utils.listify import listify_lookup_plugin_terms
 
 try:
-    from dq import query as dq_query
-    HAS_DQ = True
+    from jsonpath_rw import jsonpath, parse
+    HAS_LIB = True
 except ImportError:
-    HAS_DQ = False
+    HAS_LIB = False
+
 
 def query(data, expr):
     '''Query data using json-path based query language. Example:
     - debug: msg="{{ instance | .tagged_instances[*].block_device_mapping..volume_id') }}"
     '''
-    if not HAS_DQ:
-        raise AnsibleError('You need to install "dq" prior to running '
+    if not HAS_LIB:
+        raise AnsibleError('You need to install "jsonpath_rw" prior to running '
                            'query filter')
 
-    result = dq_query(expr, data)
-    if hasattr(result, '__iter__'):
-        return list(result)
-    else:
-        return [result]
+    return [match.value for match in parse(expr).find(data)]
 
 class FilterModule(object):
     ''' Query filter '''
