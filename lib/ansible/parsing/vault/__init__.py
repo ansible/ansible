@@ -219,7 +219,27 @@ class VaultEditor:
 
     def __init__(self, password):
         self.vault = VaultLib(password)
-
+        
+    def _shred_file(self, tmp_path):
+        """securely destroy a decrypted file."""
+        def generate_data(length):
+            import string, random
+            chars = string.ascii_lowercase + string.ascii_uppercase + string.digits
+            return ''.join(random.SystemRandom().choice(chars) for _ in range(length))
+        
+        if not os.path.isfile(tmp_path):
+            # file is already gone
+            return 
+            
+        ld = os.path.getsize(tmp_path)
+        passes = 3
+        with open(tmp_path,  "w") as fh:
+            for _ in range(int(passes)):
+                data = generate_data(ld)
+                fh.write(data)
+                fh.seek(0,  0)
+        os.remove(tmp_path)
+        
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
 
         # Create a tempfile
@@ -229,12 +249,18 @@ class VaultEditor:
             self.write_data(existing_data, tmp_path)
 
         # drop the user into an editor on the tmp file
-        call(self._editor_shell_command(tmp_path))
+        try:
+            call(self._editor_shell_command(tmp_path))
+        except: 
+            # whatever happens, destroy the decrypted file
+            self._shred_file(tmp_path)
+            raise 
+        
         tmpdata = self.read_data(tmp_path)
 
         # Do nothing if the content has not changed
         if existing_data == tmpdata and not force_save:
-            os.remove(tmp_path)
+            self._shred_file(tmp_path)
             return
 
         # encrypt new data and write out to tmp
@@ -329,7 +355,7 @@ class VaultEditor:
             sys.stdout.write(bytes)
         else:
             if os.path.isfile(filename):
-                os.remove(filename)
+                self._shred_file(filename)
             with open(filename, "wb") as fh:
                 fh.write(bytes)
 
@@ -338,6 +364,7 @@ class VaultEditor:
         # overwrite dest with src
         if os.path.isfile(dest):
             prev = os.stat(dest)
+            # old file 'dest' was encrypted, no need to _shred_file
             os.remove(dest)
         shutil.move(src, dest)
 
