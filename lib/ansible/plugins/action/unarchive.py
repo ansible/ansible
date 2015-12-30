@@ -69,13 +69,13 @@ class ActionModule(ActionBase):
                 source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'files', source)
 
         remote_checksum = self._remote_checksum(dest, all_vars=task_vars)
-        if remote_checksum != '3':
-            result['failed'] = True
-            result['msg'] = "dest '%s' must be an existing dir" % dest
-            return result
-        elif remote_checksum == '4':
+        if remote_checksum == '4':
             result['failed'] = True
             result['msg'] = "python isn't present on the system.  Unable to compute checksum"
+            return result
+        elif remote_checksum != '3':
+            result['failed'] = True
+            result['msg'] = "dest '%s' must be an existing dir" % dest
             return result
 
         if copy:
