@@ -113,7 +113,7 @@ options:
     version_added: "2.0"
   overwrite:
     description:
-      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations.
+      - Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations. Boolean or one of [Always, Never, Different], new in 2.0
     required: false
     default: true
     version_added: "1.2"
@@ -179,7 +179,7 @@ EXAMPLES = '''
 # Delete a bucket and all contents
 - s3: bucket=mybucket mode=delete
 
-# GET an object but dont download if the file checksums match
+# GET an object but dont download if the file checksums match. New in 2.0
 - s3: bucket=mybucket object=/my/desired/key.txt dest=/usr/local/myfile.txt mode=get overwrite=different
 
 # Delete an object from a bucket
