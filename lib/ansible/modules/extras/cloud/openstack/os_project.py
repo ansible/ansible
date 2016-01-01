@@ -49,6 +49,7 @@ options:
         - Domain id to create the project in if the cloud supports domains
      required: false
      default: None
+     aliases: ['domain']
    enabled:
      description:
         - Is the project enabled
@@ -138,7 +139,7 @@ def main():
     argument_spec = openstack_full_argument_spec(
         name=dict(required=True),
         description=dict(required=False, default=None),
-        domain=dict(required=False, default=None),
+        domain_id=dict(required=False, default=None, aliases=['domain']),
         enabled=dict(default=True, type='bool'),
         state=dict(default='present', choices=['absent', 'present'])
     )
@@ -155,7 +156,7 @@ def main():
 
     name = module.params['name']
     description = module.params['description']
-    domain = module.params['domain']
+    domain = module.params['domain_id']
     enabled = module.params['enabled']
     state = module.params['state']
 
