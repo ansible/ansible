@@ -63,7 +63,14 @@ options:
       - The database state
     required: false
     default: present
-    choices: [ "present", "absent" ]
+    choices: [ "present", "absent", "dump", "restore" ]
+    backup:
+      - Back up to a destination, requires target as well. Supported formats are
+        .gz, .tar, .bz, .xz, and .sql
+   restore:
+     - Restore from a destination. See backup for supported options
+   target:
+     - File to back up or restore from.
 author: "Ansible Core Team"
 extends_documentation_fragment:
 - postgres
@@ -89,6 +96,10 @@ HAS_PSYCOPG2 = False
 try:
     import psycopg2
     import psycopg2.extras
+    import pipes
+    import subprocess
+    import os
+
 except ImportError:
     pass
 else:
@@ -203,6 +214,89 @@ def db_matches(cursor, db, owner, template, encoding, lc_collate, lc_ctype):
         else:
             return True
 
+def db_dump(module, target, db, host, user, port):
+    if db:
+      flags = ' --dbname={0}'.format(pipes.quote(db))
+    if host:
+      flags += ' --host={0}'.format(pipes.quote(host))
+    if port:
+      flags += ' --port={0}'.format(pipes.quote(port))
+    if user:
+      flags += ' --username={0}'.format(pipes.quote(user))
+
+    cmd = module.get_bin_path('pg_dump', True)
+    comp_prog_path = None
+
+    if os.path.splitext(target)[-1] == '.tar':
+        flags += ' --format=t'
+    if os.path.splitext(target)[-1] == '.gz':
+        if module.get_bin_path('pigz'):
+          comp_prog_path = module.get_bin_path('pigz', True)
+        else:
+          comp_prog_path = module.get_bin_path('gzip', True)
+    elif os.path.splitext(target)[-1] == '.bz2':
+      comp_prog_path = module.get_bin_path('bzip2', True)
+    elif os.path.splitext(target)[-1] == '.xz':
+      comp_prog_path = module.get_bin_path('xz', True)
+
+    cmd += flags
+
+    if comp_prog_path:
+      cmd = '{0}|{1} > {2}'.format(cmd, comp_prog_path, pipes.quote(target))
+    else:
+      cmd = '{0} > {1}'.format(cmd, pipes.quote(target))
+
+
+    rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
+    return rc, stderr, stdout
+
+def db_import(module, target, db, host, user, port):
+    # set initial flags. These are the same in pg_restore as psql
+    flags = []
+    if db:
+      flags.append(' --dbname={0} '.format(pipes.quote(db)))
+    if host:
+      flags.append('--host={0} '.format(host))
+    if port:
+      flags.append('--port={0} '.format(port))
+    if user:
+      flags.append('--username={0} '.format(user))
+
+    comp_prog_path = None
+    cmd = module.get_bin_path('psql', True)
+
+    if os.path.splitext(target)[-1] == '.sql':
+      flags.append('--file={0} '.format(target))
+
+    elif os.path.splitext(target)[-1] == '.tar':
+        flags.append('--format=Tar {0}'.format(target))
+        comp_prog_path = [module.get_bin_path('pg_restore', True)]
+
+    elif os.path.splitext(target)[-1] == '.gz':
+        comp_prog_path = module.get_bin_path('zcat', True)
+
+    elif os.path.splitext(target)[-1] == '.xz':
+        comp_prog_path = module.get_bin_path('xzcat', True)
+
+    cmd += flags[0]
+
+    if comp_prog_path:
+      p1 = subprocess.Popen([comp_prog_path, target], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+      p2 = subprocess.Popen(cmd, stdin=p1.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+      (stdout2, stderr2) = p2.communicate()
+      p1.stdout.close()
+      p1.wait()
+      if p1.returncode != 0:
+        stderr1 = p1.stderr.read()
+        return p1.returncode, '', stderr1
+      else:
+        return p2.returncode, '', stderr2
+    else:
+      cmd = '{0} < {1}'.format(cmd, pipes.quote(target))
+
+    rc, stderr, stdout = module.run_command(cmd, use_unsafe_shell=True)
+    return rc, stderr, stdout
+
 # ===========================================
 # Module execution.
 #
@@ -216,7 +310,8 @@ def main():
         encoding=dict(default=""),
         lc_collate=dict(default=""),
         lc_ctype=dict(default=""),
-        state=dict(default="present", choices=["absent", "present"]),
+        state=dict(default="present", choices=["absent", "present", "dump", "import"]),
+        target=dict(default=""),
     ))
 
 
@@ -235,6 +330,7 @@ def main():
     encoding = module.params["encoding"]
     lc_collate = module.params["lc_collate"]
     lc_ctype = module.params["lc_ctype"]
+    target = module.params["target"]
     state = module.params["state"]
     sslrootcert = module.params["ssl_rootcert"]
     changed = False
@@ -255,12 +351,20 @@ def main():
 
     # If a login_unix_socket is specified, incorporate it here.
     is_localhost = "host" not in kw or kw["host"] == "" or kw["host"] == "localhost"
+
     if is_localhost and module.params["login_unix_socket"] != "":
         kw["host"] = module.params["login_unix_socket"]
+
+    if target == "":
+        target = "{0}/{1}.sql".format(os.getcwd(), db)
+        target = os.path.expanduser(target)
+    else:
+        target = os.path.expanduser(target)
 
     try:
         pgutils.ensure_libs(sslrootcert=module.params.get('ssl_rootcert'))
         db_connection = psycopg2.connect(database="postgres", **kw)
+
         # Enable autocommit so we can create databases
         if psycopg2.__version__ >= '2.4.2':
             db_connection.autocommit = True
@@ -303,6 +407,28 @@ def main():
             except SQLParseError:
                 e = get_exception()
                 module.fail_json(msg=str(e))
+
+        elif state == "dump":
+            try:
+                changed = db_dump(module, target, db, **kw)
+
+            except Exception:
+                e = get_exception()
+                module.fail_json(msg=str(e))
+
+        elif state == "import":
+            try:
+                rc, stdout, stderr = db_import(module, target, db, **kw)
+                if rc != 0:
+                  module.fail_json(msg="{0}".format(stderr))
+                else:
+                  module.exit_json(changed=True, msg=stdout)
+            except Exception:
+                e = get_exception()
+            except SQLParseError:
+                e = get_exception()
+                module.fail_json(msg=str(e))
+
     except NotSupportedError:
         e = get_exception()
         module.fail_json(msg=str(e))
