@@ -112,7 +112,7 @@ class Inventory(object):
                 try:
                     (host, port) = parse_address(h, allow_ranges=False)
                 except AnsibleError as e:
-                    display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_string(e))
+                    display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_unicode(e))
                     host = h
                     port = None
                 all.add_host(Host(host, port))
