@@ -36,17 +36,17 @@ USER_AGENT_VERSION="v1"
 
 def gce_connect(module, provider=None):
     """Return a Google Cloud Engine connection."""
-    service_account_email = module.params.get('service_account_email', None)
-    pem_file = module.params.get('pem_file', None)
-    project_id = module.params.get('project_id', None)
+    service_account_email = module.params.get('service_account_email')
+    pem_file = module.params.get('pem_file')
+    project_id = module.params.get('project_id')
 
     # If any of the values are not given as parameters, check the appropriate
     # environment variables.
-    if not service_account_email:
+    if service_account_email is None:
         service_account_email = os.environ.get('GCE_EMAIL', None)
-    if not project_id:
+    if project_id is None:
         project_id = os.environ.get('GCE_PROJECT', None)
-    if not pem_file:
+    if pem_file is None:
         pem_file = os.environ.get('GCE_PEM_FILE_PATH', None)
 
     # If we still don't have one or more of our credentials, attempt to
