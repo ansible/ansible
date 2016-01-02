@@ -54,7 +54,8 @@ class StrategyModule(StrategyBase):
         host_tasks = {}
         display.debug("building list of next tasks for hosts")
         for host in hosts:
-            host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
+            if not iterator.is_failed(host):
+                host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
         display.debug("done building task lists")
 
         num_setups = 0
@@ -98,7 +99,7 @@ class StrategyModule(StrategyBase):
             rvals = []
             display.debug("starting to advance hosts")
             for host in hosts:
-                host_state_task = host_tasks[host.name]
+                host_state_task = host_tasks.get(host.name)
                 if host_state_task is None:
                     continue
                 (s, t) = host_state_task
