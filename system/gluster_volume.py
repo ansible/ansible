@@ -353,6 +353,9 @@ def main():
     if cluster != None and cluster[-1] == '':
         cluster = cluster[0:-1]
 
+    if cluster == None:
+        cluster = [myhostname]
+
     if brick_paths != None and "," in brick_paths:
         brick_paths = brick_paths.split(",")
     else:
