@@ -16,24 +16,24 @@
 
 DOCUMENTATION = '''
 module: ec2_vpc_peering_facts
-short_description: Retrieves AWS VPC Peering details using AWS methods. Requires Boto3.
+short_description: Retrieves AWS VPC Peering details using AWS methods.
 description:
   - Gets various details related to AWS VPC Peers
-version_added: "2.1"
+version_added: "2.2"
+requirements: [ boto3 ]
 options:
   peer_connection_ids:
     description:
       - Get details of specific vpc peer IDs
     required: false
+    default: None
   filters:
     description:
       - A dict of filters to apply. Each dict item consists of a filter key and a filter value.
         See U(http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVpcPeeringConnections.html)
         for possible filters.
-  region:
-    description:
-      - VPC peers are region specific and a region must be provided.
-    required: true
+    required: false
+    default: None
 author: Karen Cheng(@Etherdaemon)
 extends_documentation_fragment: aws
 '''
@@ -114,13 +114,10 @@ def main():
     argument_spec.update(dict(
         filters=dict(default=None, type='dict'),
         peer_connection_ids=dict(default=None, type='list'),
-        region=dict(required=True),
         )
     )
 
-    module = AnsibleModule(
-        argument_spec=argument_spec,
-    )
+    module = AnsibleModule(argument_spec=argument_spec,)
 
     # Validate Requirements
     if not HAS_BOTO3:
@@ -128,9 +125,20 @@ def main():
 
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
+    except NameError as e:
+        # Getting around the get_aws_connection_info boto reliance for region
+        if "global name 'boto' is not defined" in e.message:
+            module.params['region'] = botocore.session.get_session().get_config_variable('region')
+            if not module.params['region']:
+                module.fail_json(msg="Error - no region provided")
+        else:
+            module.fail_json(msg="Can't retrieve connection information - "+str(e))
+
+    try:
+        region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         ec2 = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError, e:
-        module.fail_json(msg="Can't authorize connection - "+str(e))
+        module.fail_json(msg=str(e))
 
     results = get_vpc_peers(ec2, module)
 
