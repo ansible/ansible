@@ -221,7 +221,22 @@ class VaultEditor:
         self.vault = VaultLib(password)
         
     def _shred_file(self, tmp_path):
-        """securely destroy a decrypted file."""
+        """Securely destroy a decrypted file
+        
+        Inspired by unix `shred', try to destroy the secrets "so that they can be 
+        recovered only with great difficulty with specialised hardware, if at all".
+        
+        See https://github.com/ansible/ansible/pull/13700 .
+        
+        Note that:
+        - For flash: overwriting would have no effect (due to wear leveling). But the
+          added disk wear is considered insignificant. 
+        - For other storage systems: the filesystem lies to the vfs (kernel), the disk 
+          driver lies to the filesystem and the disk lies to the driver. But it's better
+          than nothing.
+        - most tmp dirs are now tmpfs (ramdisks), for which this is a non-issue.
+        """
+        
         def generate_data(length):
             import string, random
             chars = string.ascii_lowercase + string.ascii_uppercase + string.digits
@@ -234,7 +249,7 @@ class VaultEditor:
         ld = os.path.getsize(tmp_path)
         passes = 3
         with open(tmp_path,  "w") as fh:
-            for _ in range(int(passes)):
+            for _ in range(passes):
                 fh.seek(0,  0)
                 data = generate_data(ld)
                 fh.write(data)
