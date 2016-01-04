@@ -105,6 +105,10 @@ class CallbackBase:
                     if 'src_larger' in diff:
                         ret.append("diff skipped: source file size is greater than %d\n" % diff['src_larger'])
                     if 'before' in diff and 'after' in diff:
+                        # format complex structures into 'files'
+                        for x in ['before', 'after']:
+                            if isinstance(diff[x], dict):
+                                diff[x] = json.dumps(diff[x], sort_keys=True, indent=4)
                         if 'before_header' in diff:
                             before_header = "before: %s" % diff['before_header']
                         else:
