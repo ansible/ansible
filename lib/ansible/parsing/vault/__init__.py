@@ -235,9 +235,10 @@ class VaultEditor:
         passes = 3
         with open(tmp_path,  "w") as fh:
             for _ in range(int(passes)):
+                fh.seek(0,  0)
                 data = generate_data(ld)
                 fh.write(data)
-                fh.seek(0,  0)
+                os.fsync(fh)
         os.remove(tmp_path)
         
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
