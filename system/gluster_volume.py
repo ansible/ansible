@@ -350,8 +350,11 @@ def main():
 
     # Clean up if last element is empty. Consider that yml can look like this:
     #   cluster="{% for host in groups['glusterfs'] %}{{ hostvars[host]['private_ip'] }},{% endfor %}"
-    if cluster != None and cluster[-1] == '':
+    if cluster != None and len(cluster) > 1 and cluster[-1] == '':
         cluster = cluster[0:-1]
+
+    if cluster == None or cluster[0] == '':
+        cluster = [myhostname]
 
     if brick_paths != None and "," in brick_paths:
         brick_paths = brick_paths.split(",")
