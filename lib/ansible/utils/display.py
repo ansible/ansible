@@ -145,7 +145,7 @@ class Display:
                 # characters that are invalid in the user's locale
                 msg2 = to_unicode(msg2, self._output_encoding(stderr=stderr))
 
-            if color == 'red':
+            if color == C.COLOR_ERROR:
                 logger.error(msg2)
             else:
                 logger.info(msg2)
@@ -168,7 +168,7 @@ class Display:
     def debug(self, msg):
         if C.DEFAULT_DEBUG:
             debug_lock.acquire()
-            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color='dark gray')
+            self.display("%6d %0.5f: %s" % (os.getpid(), time.time(), msg), color=C.COLOR_DEBUG)
             debug_lock.release()
 
     def verbose(self, msg, host=None, caplevel=2):
@@ -176,9 +176,9 @@ class Display:
         #msg = utils.sanitize_output(msg)
         if self.verbosity > caplevel:
             if host is None:
-                self.display(msg, color='blue')
+                self.display(msg, color=C.COLOR_VERBOSE)
             else:
-                self.display("<%s> %s" % (host, msg), color='blue', screen_only=True)
+                self.display("<%s> %s" % (host, msg), color=C.COLOR_VERBOSE, screen_only=True)
 
     def deprecated(self, msg, version=None, removed=False):
         ''' used to print out a deprecation message.'''
@@ -199,7 +199,7 @@ class Display:
         new_msg = "\n".join(wrapped) + "\n"
 
         if new_msg not in self._deprecations:
-            self.display(new_msg.strip(), color='purple', stderr=True)
+            self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[new_msg] = 1
 
     def warning(self, msg):
@@ -207,7 +207,7 @@ class Display:
         wrapped = textwrap.wrap(new_msg, self.columns)
         new_msg = "\n".join(wrapped) + "\n"
         if new_msg not in self._warns:
-            self.display(new_msg, color='bright purple', stderr=True)
+            self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
 
     def system_warning(self, msg):
@@ -258,7 +258,7 @@ class Display:
         else:
             new_msg = msg
         if new_msg not in self._errors:
-            self.display(new_msg, color='red', stderr=True)
+            self.display(new_msg, color=C.COLOR_ERROR, stderr=True)
             self._errors[new_msg] = 1
 
     @staticmethod
