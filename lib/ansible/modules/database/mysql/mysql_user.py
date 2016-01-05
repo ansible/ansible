@@ -249,34 +249,29 @@ def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
                     if old_user_mgmt:
                         cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
                     else:
-                        cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
+                        cursor.execute("ALTER USER %s@%s IDENTIFIED BY %s", (user, host, password))
                     changed = True
-            else:
-                module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
-        else:
-            if old_user_mgmt:
-                cursor.execute("SELECT PASSWORD(%s)", (password,))
-            else:
-                cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
-            new_pass_hash = cursor.fetchone()
-            if current_pass_hash[0] != new_pass_hash[0]:
-                cursor.execute("SET PASSWORD FOR %s@%s = PASSWORD(%s)", (user,host,password))
-                changed = True
+    
+        # Handle privileges
+        if new_priv is not None:
+            curr_priv = privileges_get(cursor, user,host)
 
+            # If the user has privileges on a db.table that doesn't appear at all in
+            # the new specification, then revoke all privileges on it.
+            for db_table, priv in curr_priv.iteritems():
+                # If the user has the GRANT OPTION on a db.table, revoke it first.
+                if "GRANT" in priv:
+                    grant_option = True
+                if db_table not in new_priv:
+                    if user != "root" and "PROXY" not in priv and not append_privs:
+                        privileges_revoke(cursor, user,host,db_table,priv,grant_option)
+                        changed = True
 
-    # Handle privileges
-    if new_priv is not None:
-        curr_priv = privileges_get(cursor, user,host)
-
-        # If the user has privileges on a db.table that doesn't appear at all in
-        # the new specification, then revoke all privileges on it.
-        for db_table, priv in curr_priv.iteritems():
-            # If the user has the GRANT OPTION on a db.table, revoke it first.
-            if "GRANT" in priv:
-                grant_option = True
-            if db_table not in new_priv:
-                if user != "root" and "PROXY" not in priv and not append_privs:
-                    privileges_revoke(cursor, user,host,db_table,priv,grant_option)
+            # If the user doesn't currently have any privileges on a db.table, then
+            # we can perform a straight grant operation.
+            for db_table, priv in new_priv.iteritems():
+                if db_table not in curr_priv:
+                    privileges_grant(cursor, user,host,db_table,priv)
                     changed = True
 
             # If the db.table specification exists in both the user's current privileges
