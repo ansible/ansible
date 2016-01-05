@@ -137,11 +137,8 @@ class CallbackModule(CallbackBase):
     def v2_on_file_diff(self, result):
         if result._task.loop and 'results' in result._result:
             for res in result._result['results']:
-                newres = self._copy_result(result)
-                res['item'] = self._get_item(res)
-                newres._result = res
-
-                self.v2_on_file_diff(newres)
+                if 'diff' in res:
+                    self._display.display(self._get_diff(res['diff']))
         elif 'diff' in result._result and result._result['diff']:
             self._display.display(self._get_diff(result._result['diff']))
 
