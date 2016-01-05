@@ -102,7 +102,7 @@ def main():
         argument_spec = dict(
             host = dict(required=True, aliases=[ 'hostname' ]),
             login = dict(required=True, aliases=[ 'username' ]),
-            password = dict(required=True),
+            password = dict(required=True, no_log=True),
             src = dict(required=True, aliases=[ 'name' ]),
             datacenter = dict(required=True),
             datastore = dict(required=True),
