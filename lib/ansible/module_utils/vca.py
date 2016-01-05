@@ -35,8 +35,8 @@ class VcaError(Exception):
 
 def vca_argument_spec():
     return dict(
-        username=dict(),
-        password=dict(),
+        username=dict(type='str', aliases=['user'], required=True),
+        password=dict(type='str', aliases=['pass','passwd'], required=True, no_log=True),
         org=dict(),
         service_id=dict(),
         instance_id=dict(),
