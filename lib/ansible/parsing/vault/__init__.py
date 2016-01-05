@@ -22,6 +22,7 @@ import shlex
 import shutil
 import sys
 import tempfile
+import random
 from io import BytesIO
 from subprocess import call
 from ansible.errors import AnsibleError
@@ -235,20 +236,21 @@ class VaultEditor:
         """
         
         file_len = os.path.getsize(tmp_path)
+        max_chunk_len = min(1024*1024*2, file_len)
         
         passes = 3
         with open(tmp_path,  "wb") as fh:
             for _ in range(passes):
                 fh.seek(0,  0)
-                # get a random chunk of data 
-                data = os.urandom(min(1024*1024*2, file_len)) 
-                bytes_todo = file_len
-                while bytes_todo > 0:
-                    chunk = data[:bytes_todo]
-                    fh.write(chunk)
-                    bytes_todo -= len(chunk)
-                    
-                assert(fh.tell() == file_len)
+                # get a random chunk of data, each pass with other length
+                chunk_len = random.randint(max_chunk_len/2, max_chunk_len)
+                data = os.urandom(chunk_len)
+                
+                for _ in range(0, file_len // chunk_len):
+                    fh.write(data)
+                fh.write(data[:file_len % chunk_len])
+                
+                assert(fh.tell() == file_len) # FIXME remove this assert once we have unittests to check its accuracy
                 os.fsync(fh)
         
             
@@ -273,13 +275,12 @@ class VaultEditor:
             r = call(['shred', tmp_path])
         except OSError as e:
             # shred is not available on this system, or some other error occured. 
-            self._shred_file_custom(tmp_path)
-            r = 0
+            r = 1
         
         if r != 0:
             # we could not successfully execute unix shred; therefore, do custom shred. 
             self._shred_file_custom(tmp_path)
-            
+        
         os.remove(tmp_path)
         
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
