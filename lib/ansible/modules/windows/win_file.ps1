@@ -17,6 +17,8 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
+$ErrorActionPreference = "Stop"
+
 $params = Parse-Args $args
 
 # path
