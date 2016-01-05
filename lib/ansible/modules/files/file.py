@@ -190,6 +190,7 @@ def main():
 
     prev_state = get_state(path)
 
+
     # state should default to file, but since that creates many conflicts,
     # default to 'current' when it exists.
     if state is None:
@@ -226,10 +227,23 @@ def main():
         module.fail_json(path=path, msg="recurse option requires state to be 'directory'")
 
     file_args = module.load_file_common_arguments(params)
+
     changed = False
+    diff = {'before':
+                {'path': path}
+            ,
+            'after':
+                {'path': path}
+            }
+
+    state_change = False
+    if prev_state != state:
+        diff['before']['state'] = prev_state
+        diff['after']['state'] = state
+        state_change = True
 
     if state == 'absent':
-        if state != prev_state:
+        if state_change:
             if not module.check_mode:
                 if prev_state == 'directory':
                     try:
@@ -241,13 +255,13 @@ def main():
                         os.unlink(path)
                     except Exception, e:
                         module.fail_json(path=path, msg="unlinking failed: %s " % str(e))
-            module.exit_json(path=path, changed=True)
+            module.exit_json(path=path, changed=True, diff=diff)
         else:
             module.exit_json(path=path, changed=False)
 
     elif state == 'file':
 
-        if state != prev_state:
+        if state_change:
             if follow and prev_state == 'link':
                 # follow symlink and operate on original
                 path = os.path.realpath(path)
@@ -258,8 +272,8 @@ def main():
             # file is not absent and any other state is a conflict
             module.fail_json(path=path, msg='file (%s) is %s, cannot continue' % (path, prev_state))
 
-        changed = module.set_fs_attributes_if_different(file_args, changed)
-        module.exit_json(path=path, changed=changed)
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
+        module.exit_json(path=path, changed=changed, diff=diff)
 
     elif state == 'directory':
         if follow and prev_state == 'link':
@@ -268,7 +282,7 @@ def main():
 
         if prev_state == 'absent':
             if module.check_mode:
-                module.exit_json(changed=True)
+                module.exit_json(changed=True, diff=diff)
             changed = True
             curpath = ''
 
@@ -292,7 +306,7 @@ def main():
                                 raise
                         tmp_file_args = file_args.copy()
                         tmp_file_args['path']=curpath
-                        changed = module.set_fs_attributes_if_different(tmp_file_args, changed)
+                        changed = module.set_fs_attributes_if_different(tmp_file_args, changed, diff)
             except Exception, e:
                 module.fail_json(path=path, msg='There was an issue creating %s as requested: %s' % (curpath, str(e)))
 
@@ -300,12 +314,12 @@ def main():
         elif prev_state != 'directory':
             module.fail_json(path=path, msg='%s already exists as a %s' % (path, prev_state))
 
-        changed = module.set_fs_attributes_if_different(file_args, changed)
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
 
         if recurse:
             changed |= recursive_set_attributes(module, file_args['path'], follow, file_args)
 
-        module.exit_json(path=path, changed=changed)
+        module.exit_json(path=path, changed=changed, diff=diff)
 
     elif state in ['link','hard']:
 
@@ -374,10 +388,10 @@ def main():
                     module.fail_json(path=path, msg='Error while linking: %s' % str(e))
 
         if module.check_mode and not os.path.exists(path):
-            module.exit_json(dest=path, src=src, changed=changed)
+            module.exit_json(dest=path, src=src, changed=changed, diff=diff)
 
-        changed = module.set_fs_attributes_if_different(file_args, changed)
-        module.exit_json(dest=path, src=src, changed=changed)
+        changed = module.set_fs_attributes_if_different(file_args, changed, diff)
+        module.exit_json(dest=path, src=src, changed=changed, diff=diff)
 
     elif state == 'touch':
         if not module.check_mode:
@@ -395,7 +409,7 @@ def main():
             else:
                 module.fail_json(msg='Cannot touch other than files, directories, and hardlinks (%s is %s)' % (path, prev_state))
             try:
-                module.set_fs_attributes_if_different(file_args, True)
+                module.set_fs_attributes_if_different(file_args, True, diff)
             except SystemExit, e:
                 if e.code:
                     # We take this to mean that fail_json() was called from
@@ -405,7 +419,7 @@ def main():
                         os.remove(path)
                 raise e
 
-        module.exit_json(dest=path, changed=True)
+        module.exit_json(dest=path, changed=True, diff=diff)
 
     module.fail_json(path=path, msg='unexpected position reached')
 
