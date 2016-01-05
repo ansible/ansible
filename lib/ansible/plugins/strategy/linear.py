@@ -62,19 +62,32 @@ class StrategyModule(StrategyBase):
         num_rescue = 0
         num_always = 0
 
-        lowest_cur_block = len(iterator._blocks)
-
         display.debug("counting tasks in each state of execution")
-        for (k, v) in iteritems(host_tasks):
-            if v is None:
-                continue
+        host_tasks_to_run = [(host, state_task)
+                             for host, state_task in iteritems(host_tasks)
+                             if state_task and state_task[1]]
+        # Drop noops
+        host_tasks_to_run = [
+            (host, (state, task))
+            for host, (state, task) in host_tasks_to_run
+            if task.action != 'meta' or task.args.get('_raw_params') != 'noop'
+        ]
 
+        if host_tasks_to_run:
+            lowest_cur_block = min(
+                (s.cur_block for h, (s, t) in host_tasks_to_run
+                if s.run_state != PlayIterator.ITERATING_COMPLETE))
+        else:
+            # empty host_tasks_to_run will just run till the end of the function
+            # without ever touching lowest_cur_block
+            lowest_cur_block = None
+
+        for (k, v) in host_tasks_to_run:
             (s, t) = v
-            if t is None:
-                continue
 
-            if s.cur_block < lowest_cur_block and s.run_state != PlayIterator.ITERATING_COMPLETE:
-                lowest_cur_block = s.cur_block
+            if s.cur_block > lowest_cur_block:
+                # Not the current block, ignore it
+                continue
 
             if s.run_state == PlayIterator.ITERATING_SETUP:
                 num_setups += 1
