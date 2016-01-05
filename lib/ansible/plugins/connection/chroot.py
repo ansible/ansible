@@ -30,6 +30,7 @@ from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
 from ansible.module_utils.basic import is_executable
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -90,6 +91,7 @@ class Connection(ConnectionBase):
         local_cmd = [self.chroot_cmd, self.chroot, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd), host=self.chroot)
+        local_cmd = map(to_bytes, local_cmd)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

@@ -31,6 +31,7 @@ import traceback
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils import to_bytes
 
 try:
     from __main__ import display
@@ -56,8 +57,8 @@ class Connection(ConnectionBase):
         if os.geteuid() != 0:
             raise AnsibleError("zone connection requires running as root")
 
-        self.zoneadm_cmd = self._search_executable('zoneadm')
-        self.zlogin_cmd = self._search_executable('zlogin')
+        self.zoneadm_cmd = to_bytes(self._search_executable('zoneadm'))
+        self.zlogin_cmd = to_bytes(self._search_executable('zlogin'))
 
         if self.zone not in self.list_zones():
             raise AnsibleError("incorrect zone name %s" % self.zone)
@@ -86,7 +87,7 @@ class Connection(ConnectionBase):
     def get_zone_path(self):
         #solaris10vm# zoneadm -z cswbuild list -p
         #-:cswbuild:installed:/zones/cswbuild:479f3c4b-d0c6-e97b-cd04-fd58f2c0238e:native:shared
-        process = subprocess.Popen([self.zoneadm_cmd, '-z', self.zone, 'list', '-p'],
+        process = subprocess.Popen([self.zoneadm_cmd, '-z', to_bytes(self.zone), 'list', '-p'],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -113,6 +114,7 @@ class Connection(ConnectionBase):
         # this through /bin/sh -c here.  Instead it goes through the shell
         # that zlogin selects.
         local_cmd = [self.zlogin_cmd, self.zone, cmd]
+        local_cmd = map(to_bytes, local_cmd)
 
         display.vvv("EXEC %s" % (local_cmd), host=self.zone)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
