@@ -267,29 +267,6 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
                         cursor.execute("ALTER USER %s@%s IDENTIFIED BY %s", (user, host, password))
                     changed = True
     
-    
-        # Handle privileges
-        if new_priv is not None:
-            curr_priv = privileges_get(cursor, user,host)
-    
-            # If the user has privileges on a db.table that doesn't appear at all in
-            # the new specification, then revoke all privileges on it.
-            for db_table, priv in curr_priv.iteritems():
-                # If the user has the GRANT OPTION on a db.table, revoke it first.
-                if "GRANT" in priv:
-                    grant_option = True
-                if db_table not in new_priv:
-                    if user != "root" and "PROXY" not in priv and not append_privs:
-                        privileges_revoke(cursor, user,host,db_table,priv,grant_option)
-                        changed = True
-    
-            # If the user doesn't currently have any privileges on a db.table, then
-            # we can perform a straight grant operation.
-            for db_table, priv in new_priv.iteritems():
-                if db_table not in curr_priv:
-                    privileges_grant(cursor, user,host,db_table,priv)
-                    changed = True
-
         # Handle privileges
         if new_priv is not None:
             curr_priv = privileges_get(cursor, user,host)
