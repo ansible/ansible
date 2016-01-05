@@ -488,6 +488,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             verbatim, then this won't work.  May have to use some sort of
             replacement strategy (python3 could use surrogateescape)
         '''
+
         if executable is not None:
             cmd = executable + ' -c ' + cmd
 
@@ -504,7 +505,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
-        rc, stdout, stderr = self._connection.exec_command(to_bytes(cmd, errors='strict'), in_data=in_data, sudoable=sudoable)
+        rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
