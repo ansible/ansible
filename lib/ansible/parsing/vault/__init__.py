@@ -219,41 +219,67 @@ class VaultEditor:
 
     def __init__(self, password):
         self.vault = VaultLib(password)
+    
+    def _shred_file_custom(self, tmp_path):
+        """"Destroy a file, when shred (core-utils) is not available
         
-    def _shred_file(self, tmp_path):
-        """Securely destroy a decrypted file
+        Unix `shred' destroys files "so that they can be recovered only with great difficulty with 
+        specialised hardware, if at all". It is based on the method from the paper 
+        "Secure Deletion of Data from Magnetic and Solid-State Memory", 
+        Proceedings of the Sixth USENIX Security Symposium (San Jose, California, July 22-25, 1996).
         
-        Inspired by unix `shred', try to destroy the secrets "so that they can be 
-        recovered only with great difficulty with specialised hardware, if at all".
+        We do not go to that length to re-implement shred in Python; instead, overwriting with a block
+        of random data should suffice. 
         
         See https://github.com/ansible/ansible/pull/13700 .
-        
-        Note that:
-        - For flash: overwriting would have no effect (due to wear leveling). But the
-          added disk wear is considered insignificant. 
-        - For other storage systems: the filesystem lies to the vfs (kernel), the disk 
-          driver lies to the filesystem and the disk lies to the driver. But it's better
-          than nothing.
-        - most tmp dirs are now tmpfs (ramdisks), for which this is a non-issue.
         """
         
-        def generate_data(length):
-            import string, random
-            chars = string.ascii_lowercase + string.ascii_uppercase + string.digits
-            return ''.join(random.SystemRandom().choice(chars) for _ in range(length))
+        file_len = os.path.getsize(tmp_path)
+        
+        passes = 3
+        with open(tmp_path,  "wb") as fh:
+            for _ in range(passes):
+                fh.seek(0,  0)
+                # get a random chunk of data 
+                data = os.urandom(min(1024*1024*2, file_len)) 
+                bytes_todo = file_len
+                while bytes_todo > 0:
+                    chunk = data[:bytes_todo]
+                    fh.write(chunk)
+                    bytes_todo -= len(chunk)
+                    
+                assert(fh.tell() == file_len)
+                os.fsync(fh)
+        
+            
+    def _shred_file(self, tmp_path):
+        """Securely destroy a decrypted file
+
+        Note standard limitations of GNU shred apply (For flash, overwriting would have no effect 
+        due to wear leveling; for other storage systems, the async kernel->filesystem->disk calls never
+        guarantee data hits the disk; etc). Furthermore, if your tmp dirs is on tmpfs (ramdisks), 
+        it is a non-issue. 
+        
+        Nevertheless, some form of overwriting the data (instead of just removing the fs index entry) is 
+        a good idea. If shred is not available (e.g. on windows, or no core-utils installed), fall back on 
+        a custom shredding method.
+        """
         
         if not os.path.isfile(tmp_path):
             # file is already gone
             return 
+        
+        try:
+            r = call(['shred', tmp_path])
+        except OSError as e:
+            # shred is not available on this system, or some other error occured. 
+            self._shred_file_custom(tmp_path)
+            r = 0
+        
+        if r != 0:
+            # we could not successfully execute unix shred; therefore, do custom shred. 
+            self._shred_file_custom(tmp_path)
             
-        ld = os.path.getsize(tmp_path)
-        passes = 3
-        with open(tmp_path,  "w") as fh:
-            for _ in range(passes):
-                fh.seek(0,  0)
-                data = generate_data(ld)
-                fh.write(data)
-                os.fsync(fh)
         os.remove(tmp_path)
         
     def _edit_file_helper(self, filename, existing_data=None, force_save=False):
@@ -262,7 +288,7 @@ class VaultEditor:
         _, tmp_path = tempfile.mkstemp()
 
         if existing_data:
-            self.write_data(existing_data, tmp_path)
+            self.write_data(existing_data, tmp_path, shred=False)
 
         # drop the user into an editor on the tmp file
         try:
@@ -300,7 +326,7 @@ class VaultEditor:
 
         ciphertext = self.read_data(filename)
         plaintext = self.vault.decrypt(ciphertext)
-        self.write_data(plaintext, output_file or filename)
+        self.write_data(plaintext, output_file or filename, shred=False)
 
     def create_file(self, filename):
         """ create a new encrypted file """
@@ -365,13 +391,21 @@ class VaultEditor:
 
         return data
 
-    def write_data(self, data, filename):
+    def write_data(self, data, filename, shred=True):
+        """write data to given path
+        
+        if shred==True, make sure that the original data is first shredded so 
+        that is cannot be recovered
+        """
         bytes = to_bytes(data, errors='strict')
         if filename == '-':
             sys.stdout.write(bytes)
         else:
             if os.path.isfile(filename):
-                self._shred_file(filename)
+                if shred:
+                    self._shred_file(filename)
+                else:
+                    os.remove(filename)
             with open(filename, "wb") as fh:
                 fh.write(bytes)
 
