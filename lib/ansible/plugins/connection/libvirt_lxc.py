@@ -30,6 +30,7 @@ import traceback
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -65,7 +66,7 @@ class Connection(ConnectionBase):
         return cmd
 
     def _check_domain(self, domain):
-        p = subprocess.Popen([self.virsh, '-q', '-c', 'lxc:///', 'dominfo', domain],
+        p = subprocess.Popen([self.virsh, '-q', '-c', 'lxc:///', 'dominfo', to_bytes(domain)],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.communicate()
         if p.returncode:
@@ -89,7 +90,8 @@ class Connection(ConnectionBase):
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
         local_cmd = [self.virsh, '-q', '-c', 'lxc:///', 'lxc-enter-namespace', self.lxc, '--', executable , '-c', cmd]
 
-        display.vvv("EXEC %s" % (local_cmd), host=self.lxc)
+        display.vvv("EXEC %s" % (local_cmd,), host=self.lxc)
+        local_cmd = map(to_bytes, local_cmd)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
