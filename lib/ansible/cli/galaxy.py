@@ -514,7 +514,7 @@ class GalaxyCLI(CLI):
             tags=self.options.tags, author=self.options.author, page_size=page_size)
 
         if response['count'] == 0:
-            display.display("No roles match your search.", color="yellow")
+            display.display("No roles match your search.", color=C.COLOR_ERROR)
             return True
 
         data = ''
@@ -570,10 +570,10 @@ class GalaxyCLI(CLI):
 
         colors = {
             'INFO':    'normal',
-            'WARNING': 'yellow',
-            'ERROR':   'red',
-            'SUCCESS': 'green',
-            'FAILED':  'red'
+            'WARNING': C.COLOR_WARN,
+            'ERROR':   C.COLOR_ERROR,
+            'SUCCESS': C.COLOR_OK,
+            'FAILED': C.COLOR_ERROR,
         }
 
         if len(self.args) < 2:
@@ -592,11 +592,10 @@ class GalaxyCLI(CLI):
                 # found multiple roles associated with github_user/github_repo
                 display.display("WARNING: More than one Galaxy role associated with Github repo %s/%s." % (github_user,github_repo),
                     color='yellow')
-                display.display("The following Galaxy roles are being updated:" + u'\n', color='yellow')
+                display.display("The following Galaxy roles are being updated:" + u'\n', color=C.COLOR_CHANGED)
                 for t in task:
-                    display.display('%s.%s' % (t['summary_fields']['role']['namespace'],t['summary_fields']['role']['name']), color='yellow')
-                display.display(u'\n' + "To properly namespace this role, remove each of the above and re-import %s/%s from scratch" % (github_user,github_repo),
-                    color='yellow')
+                    display.display('%s.%s' % (t['summary_fields']['role']['namespace'],t['summary_fields']['role']['name']), color=C.COLOR_CHANGED)
+                display.display(u'\n' + "To properly namespace this role, remove each of the above and re-import %s/%s from scratch" % (github_user,github_repo), color=C.COLOR_CHANGED)
                 return 0
             # found a single role as expected
             display.display("Successfully submitted import request %d" % task[0]['id'])
@@ -633,17 +632,17 @@ class GalaxyCLI(CLI):
                 # None found
                 display.display("No integrations found.")
                 return 0
-            display.display(u'\n' + "ID         Source     Repo", color="green")
-            display.display("---------- ---------- ----------", color="green")
+            display.display(u'\n' + "ID         Source     Repo", color=C.COLOR_OK)
+            display.display("---------- ---------- ----------", color=C.COLOR_OK)
             for secret in secrets:
                 display.display("%-10s %-10s %s/%s" % (secret['id'], secret['source'], secret['github_user'],
-                    secret['github_repo']),color="green")
+                    secret['github_repo']),color=C.COLOR_OK)
             return 0
 
         if self.options.remove_id:
             # Remove a secret
             self.api.remove_secret(self.options.remove_id)
-            display.display("Secret removed. Integrations using this secret will not longer work.", color="green")
+            display.display("Secret removed. Integrations using this secret will not longer work.", color=C.COLOR_OK)
             return 0
 
         if len(self.args) < 4:
