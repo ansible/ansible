@@ -30,6 +30,7 @@ import traceback
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -83,7 +84,7 @@ class Connection(ConnectionBase):
         return stdout.split()
 
     def get_jail_path(self):
-        p = subprocess.Popen([self.jls_cmd, '-j', self.jail, '-q', 'path'],
+        p = subprocess.Popen([self.jls_cmd, '-j', to_bytes(self.jail), '-q', 'path'],
                              stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -109,7 +110,8 @@ class Connection(ConnectionBase):
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
         local_cmd = [self.jexec_cmd, self.jail, executable, '-c', cmd]
 
-        display.vvv("EXEC %s" % (local_cmd), host=self.jail)
+        display.vvv("EXEC %s" % (local_cmd,), host=self.jail)
+        local_cmd = map(to_bytes, local_cmd)
         p = subprocess.Popen(local_cmd, shell=False, stdin=stdin,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

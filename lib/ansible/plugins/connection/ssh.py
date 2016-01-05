@@ -33,6 +33,7 @@ from ansible.errors import AnsibleError, AnsibleConnectionFailure, AnsibleFileNo
 from ansible.plugins.connection import ConnectionBase
 from ansible.utils.path import unfrackpath, makedirs_safe
 from ansible.utils.unicode import to_bytes, to_unicode
+from ansible.compat.six import text_type, binary_type
 
 try:
     from __main__ import display
@@ -320,7 +321,7 @@ class Connection(ConnectionBase):
         '''
 
         display_cmd = map(pipes.quote, cmd)
-        display.vvv('SSH: EXEC {0}'.format(' '.join(display_cmd)), host=self.host)
+        display.vvv(u'SSH: EXEC {0}'.format(u' '.join(display_cmd)), host=self.host)
 
         # Start the given command. If we don't need to pipeline data, we can try
         # to use a pseudo-tty (ssh will have been invoked with -tt). If we are
@@ -328,6 +329,12 @@ class Connection(ConnectionBase):
         # old pipes.
 
         p = None
+
+        if isinstance(cmd, (text_type, binary_type)):
+            cmd = to_bytes(cmd)
+        else:
+            cmd = map(to_bytes, cmd)
+
         if not in_data:
             try:
                 # Make sure stdin is a proper pty to avoid tcgetattr errors
@@ -365,7 +372,7 @@ class Connection(ConnectionBase):
         # only when using ssh. Otherwise we can send initial data straightaway.
 
         state = states.index('ready_to_send')
-        if 'ssh' in cmd:
+        if b'ssh' in cmd:
             if self._play_context.prompt:
                 # We're requesting escalation with a password, so we have to
                 # wait for a password prompt.
@@ -538,7 +545,7 @@ class Connection(ConnectionBase):
         stdin.close()
 
         if C.HOST_KEY_CHECKING:
-            if cmd[0] == "sshpass" and p.returncode == 6:
+            if cmd[0] == b"sshpass" and p.returncode == 6:
                 raise AnsibleError('Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host\'s fingerprint to your known_hosts file to manage this host.')
 
         controlpersisterror = 'Bad configuration option: ControlPersist' in stderr or 'unknown configuration option: ControlPersist' in stderr
@@ -600,7 +607,7 @@ class Connection(ConnectionBase):
                     raise AnsibleConnectionFailure("Failed to connect to the host via ssh.")
             except (AnsibleConnectionFailure, Exception) as e:
                 if attempt == remaining_tries - 1:
-                    raise e
+                    raise
                 else:
                     pause = 2 ** attempt - 1
                     if pause > 30:
@@ -674,6 +681,8 @@ class Connection(ConnectionBase):
         # temporarily disabled as we are forced to currently close connections after every task because of winrm
         # if self._connected and self._persistent:
         #     cmd = self._build_command('ssh', '-O', 'stop', self.host)
+        #
+        #     cmd = map(to_bytes, cmd)
         #     p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         #     stdout, stderr = p.communicate()
 
