@@ -22,6 +22,7 @@
 import tempfile
 import re
 import os
+import sys
 
 DOCUMENTATION = '''
 ---
@@ -114,6 +115,17 @@ options:
     version_added: "1.3"
     required: false
     default: null
+  umask:
+    description:
+      - The system umask to apply before installing the pip package. This is
+        useful, for example, when installing on systems that have a very
+        restrictive umask by default (e.g., 0077) and you want to pip install
+        packages which are to be used by all users. Note that this requires you
+        to specify desired umask mode in octal, with a leading 0 (e.g., 0077).
+    version_added: "2.1"
+    required: false
+    default: null
+
 notes:
    - Please note that virtualenv (U(http://www.virtualenv.org/)) must be installed on the remote host if the virtualenv parameter is specified and the virtualenv needs to be initialized.
 requirements: [ "virtualenv", "pip" ]
@@ -159,6 +171,10 @@ EXAMPLES = '''
 
 # Install (Bottle), forcing reinstallation if it's already installed
 - pip: name=bottle state=forcereinstall
+
+# Install (Bottle) while ensuring the umask is 0022 (to ensure other users can use it)
+- pip: name=bottle umask=0022
+  become: True
 '''
 
 def _get_cmd_options(module, cmd):
@@ -258,6 +274,7 @@ def main():
             editable=dict(default='yes', type='bool', required=False),
             chdir=dict(default=None, required=False, type='path'),
             executable=dict(default=None, required=False),
+            umask=dict(reqiured=False,default=None),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements']],
@@ -271,129 +288,148 @@ def main():
     extra_args = module.params['extra_args']
     virtualenv_python = module.params['virtualenv_python']
     chdir = module.params['chdir']
+    umask = module.params['umask']
 
-    if state == 'latest' and version is not None:
-        module.fail_json(msg='version is incompatible with state=latest')
+    if umask and not isinstance(umask, int):
+        try:
+            umask = int(umask, 8)
+        except Exception:
+            module.fail_json(msg="umask must be an octal integer",
+                    details=str(sys.exc_info()[1]))
 
-    if chdir is None:
-        # this is done to avoid permissions issues with privilege escalation and virtualenvs
-        chdir =  tempfile.gettempdir()
 
-    err = ''
-    out = ''
+    old_umask = None
+    if umask != None:
+        old_umask = os.umask(umask)
+    try:
+        if state == 'latest' and version is not None:
+            module.fail_json(msg='version is incompatible with state=latest')
 
-    env = module.params['virtualenv']
-    virtualenv_command = module.params['virtualenv_command']
+        if chdir is None:
+            # this is done to avoid permissions issues with privilege escalation and virtualenvs
+            chdir =  tempfile.gettempdir()
 
-    if env:
-        env = os.path.expanduser(env)
-        if not os.path.exists(os.path.join(env, 'bin', 'activate')):
-            if module.check_mode:
+        err = ''
+        out = ''
+
+        env = module.params['virtualenv']
+        virtualenv_command = module.params['virtualenv_command']
+
+        if env:
+            env = os.path.expanduser(env)
+            if not os.path.exists(os.path.join(env, 'bin', 'activate')):
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                cmd = os.path.expanduser(virtualenv_command)
+                if os.path.basename(cmd) == cmd:
+                    cmd = module.get_bin_path(virtualenv_command, True)
+
+                if module.params['virtualenv_site_packages']:
+                    cmd += ' --system-site-packages'
+                else:
+                    cmd_opts = _get_cmd_options(module, cmd)
+                    if '--no-site-packages' in cmd_opts:
+                        cmd += ' --no-site-packages'
+
+                if virtualenv_python:
+                    cmd += ' -p%s' % virtualenv_python
+
+                cmd = "%s %s" % (cmd, env)
+                rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
+                out += out_venv
+                err += err_venv
+                if rc != 0:
+                    _fail(module, cmd, out, err)
+
+        pip = _get_pip(module, env, module.params['executable'])
+
+        cmd = '%s %s' % (pip, state_map[state])
+
+        # If there's a virtualenv we want things we install to be able to use other
+        # installations that exist as binaries within this virtualenv. Example: we
+        # install cython and then gevent -- gevent needs to use the cython binary,
+        # not just a python package that will be found by calling the right python.
+        # So if there's a virtualenv, we add that bin/ to the beginning of the PATH
+        # in run_command by setting path_prefix here.
+        path_prefix = None
+        if env:
+            path_prefix = "/".join(pip.split('/')[:-1])
+
+        # Automatically apply -e option to extra_args when source is a VCS url. VCS
+        # includes those beginning with svn+, git+, hg+ or bzr+
+        has_vcs = bool(name and re.match(r'(svn|git|hg|bzr)\+', name))
+        if has_vcs and module.params['editable']:
+            args_list = []  # used if extra_args is not used at all
+            if extra_args:
+                args_list = extra_args.split(' ')
+            if '-e' not in args_list:
+                args_list.append('-e')
+                # Ok, we will reconstruct the option string
+                extra_args = ' '.join(args_list)
+
+        if extra_args:
+            cmd += ' %s' % extra_args
+        if name:
+            cmd += ' %s' % _get_full_name(name, version)
+        elif requirements:
+            cmd += ' -r %s' % requirements
+
+
+        if module.check_mode:
+            if extra_args or requirements or state == 'latest' or not name:
+                module.exit_json(changed=True)
+            elif has_vcs:
                 module.exit_json(changed=True)
 
-            cmd = os.path.expanduser(virtualenv_command)
-            if os.path.basename(cmd) == cmd:
-                cmd = module.get_bin_path(virtualenv_command, True)
+            freeze_cmd = '%s freeze' % pip
 
-            if module.params['virtualenv_site_packages']:
-                cmd += ' --system-site-packages'
-            else:
-                cmd_opts = _get_cmd_options(module, cmd)
-                if '--no-site-packages' in cmd_opts:
-                    cmd += ' --no-site-packages'
+            rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=chdir)
 
-            if virtualenv_python:
-                cmd += ' -p%s' % virtualenv_python
-
-            cmd = "%s %s" % (cmd, env)
-            rc, out_venv, err_venv = module.run_command(cmd, cwd=chdir)
-            out += out_venv
-            err += err_venv
             if rc != 0:
-                _fail(module, cmd, out, err)
+                module.exit_json(changed=True)
 
-    pip = _get_pip(module, env, module.params['executable'])
+            out += out_pip
+            err += err_pip
 
-    cmd = '%s %s' % (pip, state_map[state])
+            is_present = _is_present(name, version, out.split())
 
-    # If there's a virtualenv we want things we install to be able to use other
-    # installations that exist as binaries within this virtualenv. Example: we
-    # install cython and then gevent -- gevent needs to use the cython binary,
-    # not just a python package that will be found by calling the right python.
-    # So if there's a virtualenv, we add that bin/ to the beginning of the PATH
-    # in run_command by setting path_prefix here.
-    path_prefix = None
-    if env:
-        path_prefix = "/".join(pip.split('/')[:-1])
+            changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
+            module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
-    # Automatically apply -e option to extra_args when source is a VCS url. VCS
-    # includes those beginning with svn+, git+, hg+ or bzr+
-    has_vcs = bool(name and re.match(r'(svn|git|hg|bzr)\+', name))
-    if has_vcs and module.params['editable']:
-        args_list = []  # used if extra_args is not used at all
-        if extra_args:
-            args_list = extra_args.split(' ')
-        if '-e' not in args_list:
-            args_list.append('-e')
-            # Ok, we will reconstruct the option string
-            extra_args = ' '.join(args_list)
+        if requirements or has_vcs:
+            freeze_cmd = '%s freeze' % pip
+            out_freeze_before = module.run_command(freeze_cmd, cwd=chdir)[1]
+        else:
+            out_freeze_before = None
 
-    if extra_args:
-        cmd += ' %s' % extra_args
-    if name:
-        cmd += ' %s' % _get_full_name(name, version)
-    elif requirements:
-        cmd += ' -r %s' % requirements
-
-
-    if module.check_mode:
-        if extra_args or requirements or state == 'latest' or not name:
-            module.exit_json(changed=True)
-        elif has_vcs:
-            module.exit_json(changed=True)
-
-        freeze_cmd = '%s freeze' % pip
-
-        rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=chdir)
-
-        if rc != 0:
-            module.exit_json(changed=True)
-
+        rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
         out += out_pip
         err += err_pip
+        if rc == 1 and state == 'absent' and \
+           ('not installed' in out_pip or 'not installed' in err_pip):
+            pass  # rc is 1 when attempting to uninstall non-installed package
+        elif rc != 0:
+            _fail(module, cmd, out, err)
 
-        is_present = _is_present(name, version, out.split())
-
-        changed = (state == 'present' and not is_present) or (state == 'absent' and is_present) or (state == 'forcereinstall' and is_present)
-        module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
-
-    if requirements or has_vcs:
-        freeze_cmd = '%s freeze' % pip
-        out_freeze_before = module.run_command(freeze_cmd, cwd=chdir)[1]
-    else:
-        out_freeze_before = None
-
-    rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
-    out += out_pip
-    err += err_pip
-    if rc == 1 and state == 'absent' and \
-       ('not installed' in out_pip or 'not installed' in err_pip):
-        pass  # rc is 1 when attempting to uninstall non-installed package
-    elif rc != 0:
-        _fail(module, cmd, out, err)
-
-    if state == 'absent':
-        changed = 'Successfully uninstalled' in out_pip
-    else:
-        if out_freeze_before is None:
-            changed = 'Successfully installed' in out_pip
+        if state == 'absent':
+            changed = 'Successfully uninstalled' in out_pip
         else:
-            out_freeze_after = module.run_command(freeze_cmd, cwd=chdir)[1]
-            changed = out_freeze_before != out_freeze_after
+            if out_freeze_before is None:
+                changed = 'Successfully installed' in out_pip
+            else:
+                if out_freeze_before is None:
+                    changed = 'Successfully installed' in out_pip
+                else:
+                    out_freeze_after = module.run_command(freeze_cmd, cwd=chdir)[1]
+                    changed = out_freeze_before != out_freeze_after
 
-    module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
-                     state=state, requirements=requirements, virtualenv=env,
-                     stdout=out, stderr=err)
+            module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
+                             state=state, requirements=requirements, virtualenv=env,
+                             stdout=out, stderr=err)
+    finally:
+        if old_umask != None:
+            os.umask(old_umask)
 
 # import module snippets
 from ansible.module_utils.basic import *
