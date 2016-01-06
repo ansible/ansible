@@ -74,7 +74,9 @@ options:
     choices: [ "present", "absent" ]
   cron_file:
     description:
-      - If specified, uses this file in cron.d instead of an individual user's crontab.
+      - If specified, uses this file instead of an individual user's crontab.
+        If this is a relative path, it is interpreted with respect to
+        /etc/cron.d. (If it is absolute, it will typically be /etc/crontab).
         To use the C(cron_file) parameter you must specify the C(user) as well.
     required: false
     default: null
@@ -211,7 +213,7 @@ class CronTab(object):
         CronTab object to write time based crontab file
 
         user      - the user of the crontab (defaults to root)
-        cron_file - a cron file under /etc/cron.d
+        cron_file - a cron file under /etc/cron.d, or an absolute path
     """
     def __init__(self, module, user=None, cron_file=None):
         self.module    = module
@@ -221,7 +223,10 @@ class CronTab(object):
         self.ansible   = "#Ansible: "
 
         if cron_file:
-            self.cron_file = '/etc/cron.d/%s' % cron_file
+            if os.path.isabs(cron_file):
+                self.cron_file = cron_file
+            else:
+                self.cron_file = os.path.join('/etc/cron.d', cron_file)
         else:
             self.cron_file = None
 
