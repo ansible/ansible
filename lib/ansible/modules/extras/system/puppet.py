@@ -49,9 +49,7 @@ options:
     default: None
   show_diff:
     description:
-      - >
-       Should puppet return diffs of changes applied. Defaults to off to
-       avoid leaking secret changes by default.
+      - Should puppet return diffs of changes applied. Defaults to off to avoid leaking secret changes by default.
     required: false
     default: no
     choices: [ "yes", "no" ]
