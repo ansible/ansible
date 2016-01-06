@@ -674,6 +674,4 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             ),
         )
 
-    # execute the unarchive module now, with the updated args
-    result.update(self._execute_module(module_args=new_module_args, task_vars=task_vars))
     return result
