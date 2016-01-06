@@ -31,6 +31,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
+from ansible.utils.unicode import to_str
 
 
 class InventoryScript:
@@ -72,11 +73,11 @@ class InventoryScript:
             self.raw = self._loader.load(self.data)
         except Exception as e:
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(self.filename, str(e)))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(to_str(self.filename_, to_str(e)))
 
         if not isinstance(self.raw, Mapping):
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(self.filename))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(to_str(self.filename)))
 
         self.raw  = json_dict_bytes_to_unicode(self.raw)
 

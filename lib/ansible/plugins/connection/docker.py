@@ -113,7 +113,7 @@ class Connection(ConnectionBase):
         """ Connect to the container. Nothing to do """
         super(Connection, self)._connect()
         if not self._connected:
-            display.vvv("ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
+            display.vvv(u"ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
                 self._play_context.remote_user, host=self._play_context.remote_addr)
             )
             self._connected = True
@@ -172,7 +172,7 @@ class Connection(ConnectionBase):
             # running containers, so we use docker exec to implement this
             executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
             args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, executable, "-c",
-                    "dd of={0} bs={1}".format(out_path, BUFSIZE)]
+                    "dd of=%s bs=%s" % (out_path, BUFSIZE)]
             args = map(to_bytes, args)
             with open(in_path, 'rb') as in_file:
                 try:
