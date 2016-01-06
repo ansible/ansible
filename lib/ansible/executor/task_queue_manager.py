@@ -290,8 +290,13 @@ class TaskQueueManager:
                     try:
                         method(*args, **kwargs)
                     except Exception as e:
+                        import traceback
+                        orig_tb = traceback.format_exc()
                         try:
                             v1_method = method.replace('v2_','')
                             v1_method(*args, **kwargs)
                         except Exception:
-                            display.warning('Error when using %s: %s' % (method, str(e)))
+                            if display.verbosity >= 3:
+                                display.warning(orig_tb, formatted=True)
+                            else:
+                                display.warning('Error when using %s: %s' % (method, str(e)))
