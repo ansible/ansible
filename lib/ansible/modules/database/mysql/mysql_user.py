@@ -191,6 +191,16 @@ def server_version_check(cursor):
     else:
         return False
 
+def get_mode(cursor):
+    cursor.execute('SELECT @@GLOBAL.sql_mode')
+    result = cursor.fetchone()
+    mode_str = result[0]
+    if 'ANSI' in mode_str:
+        mode = 'ANSI'
+    else:
+        mode = 'NOTANSI'
+    return mode
+
 def user_exists(cursor, user, host, host_all):
     if host_all:
         cursor.execute("SELECT count(*) FROM user WHERE user = %s", user)
@@ -380,7 +390,7 @@ def privileges_get(cursor, user,host):
         output[db] = privileges
     return output
 
-def privileges_unpack(priv):
+def privileges_unpack(priv, mode):
     """ Take a privileges string, typically passed as a parameter, and unserialize
     it into a dictionary, the same format as privileges_get() above. We have this
     custom format to avoid using YAML/JSON strings inside YAML playbooks. Example
@@ -391,6 +401,10 @@ def privileges_unpack(priv):
     The privilege USAGE stands for no privileges, so we add that in on *.* if it's
     not specified in the string, as MySQL will always provide this by default.
     """
+    if mode == 'ANSI':
+        quote = '"'
+    else:
+        quote = '`'
     output = {}
     privs = []
     for item in priv.strip().split('/'):
@@ -398,7 +412,7 @@ def privileges_unpack(priv):
         dbpriv = pieces[0].rsplit(".", 1)
         # Do not escape if privilege is for database '*' (all databases)
         if dbpriv[0].strip('`') != '*':
-            pieces[0] = "`%s`.%s" % (dbpriv[0].strip('`'), dbpriv[1])
+            pieces[0] = '%s%s%s.%s' % (quote, dbpriv[0].strip('`'), quote, dbpriv[1])
 
         if '(' in pieces[1]:
             output[pieces[0]] = re.split(r',\s*(?=[^)]*(?:\(|$))', pieces[1].upper())
@@ -425,12 +439,12 @@ def privileges_revoke(cursor, user,host,db_table,priv,grant_option):
     # Escape '%' since mysql db.execute() uses a format string
     db_table = db_table.replace('%', '%%')
     if grant_option:
-        query = ["REVOKE GRANT OPTION ON %s" % mysql_quote_identifier(db_table, 'table')]
+        query = ["REVOKE GRANT OPTION ON %s" % db_table]
         query.append("FROM %s@%s")
         query = ' '.join(query)
         cursor.execute(query, (user, host))
     priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
-    query = ["REVOKE %s ON %s" % (priv_string, mysql_quote_identifier(db_table, 'table'))]
+    query = ["REVOKE %s ON %s" % (priv_string, db_table)]
     query.append("FROM %s@%s")
     query = ' '.join(query)
     cursor.execute(query, (user, host))
@@ -440,7 +454,7 @@ def privileges_grant(cursor, user,host,db_table,priv):
     # specification of db and table often use a % (SQL wildcard)
     db_table = db_table.replace('%', '%%')
     priv_string = ",".join([p for p in priv if p not in ('GRANT', 'REQUIRESSL')])
-    query = ["GRANT %s ON %s" % (priv_string, mysql_quote_identifier(db_table, 'table'))]
+    query = ["GRANT %s ON %s" % (priv_string, db_table)]
     query.append("TO %s@%s")
     if 'REQUIRESSL' in priv:
         query.append("REQUIRE SSL")
@@ -500,12 +514,6 @@ def main():
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
 
-    if priv is not None:
-        try:
-            priv = privileges_unpack(priv)
-        except Exception, e:
-            module.fail_json(msg="invalid privileges string: %s" % str(e))
-
     cursor = None
     try:
         if check_implicit_admin:
@@ -518,6 +526,16 @@ def main():
             cursor = mysql_connect(module, login_user, login_password, config_file, ssl_cert, ssl_key, ssl_ca, db)
     except Exception, e:
         module.fail_json(msg="unable to connect to database, check login_user and login_password are correct or %s has the credentials. Exception message: %s" % (config_file, e))
+
+    if priv is not None:
+        try:
+            mode = get_mode(cursor)
+        except Exception, e:
+            module.fail_json(msg=str(e))
+        try:
+            priv = privileges_unpack(priv, mode)
+        except Exception, e:
+            module.fail_json(msg="invalid privileges string: %s" % str(e))
 
     if state == "present":
         if user_exists(cursor, user, host):
