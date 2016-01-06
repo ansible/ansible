@@ -500,7 +500,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             instances = self.cs.listVirtualMachines(**args)
             if instances:
                 for v in instances['virtualmachine']:
-                    if instance_name in [ v['name'], v['displayname'], v['id'] ]:
+                    if instance_name.lower() in [ v['name'].lower(), v['displayname'].lower(), v['id'] ]:
                         self.instance = v
                         break
         return self.instance
@@ -668,12 +668,6 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         if self.module.params.get('ssh_key'):
             args_ssh_key['keypair'] = self.module.params.get('ssh_key')
 
-        # SSH key data
-        args_ssh_key = {}
-        args_ssh_key['id'] = instance['id']
-        args_ssh_key['projectid'] = self.get_project(key='id')
-        if self.module.params.get('ssh_key'):
-            args_ssh_key['keypair'] = self.module.params.get('ssh_key')
 
         if self._has_changed(args_service_offering, instance) or \
            self._has_changed(args_instance_update, instance) or \
