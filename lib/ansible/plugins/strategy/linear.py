@@ -66,12 +66,6 @@ class StrategyModule(StrategyBase):
         host_tasks_to_run = [(host, state_task)
                              for host, state_task in iteritems(host_tasks)
                              if state_task and state_task[1]]
-        # Drop noops
-        host_tasks_to_run = [
-            (host, (state, task))
-            for host, (state, task) in host_tasks_to_run
-            if task.action != 'meta' or task.args.get('_raw_params') != 'noop'
-        ]
 
         if host_tasks_to_run:
             lowest_cur_block = min(
