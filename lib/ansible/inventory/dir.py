@@ -34,7 +34,7 @@ from ansible.inventory.script import InventoryScript
 
 __all__ = ['get_file_parser']
 
-def get_file_parser(hostsfile, groups, loader):
+def get_file_parser(hostsfile, groups, loader,limit=None):
     # check to see if the specified file starts with a
     # shebang (#!/), so if an error is raised by the parser
     # class we can show a more apropos error
@@ -55,7 +55,7 @@ def get_file_parser(hostsfile, groups, loader):
 
     if loader.is_executable(hostsfile):
         try:
-            parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile)
+            parser = InventoryScript(loader=loader, groups=groups, filename=hostsfile, limit=limit)
             processed = True
         except Exception as e:
             myerr.append("The file %s is marked as executable, but failed to execute correctly. " % hostsfile + \
