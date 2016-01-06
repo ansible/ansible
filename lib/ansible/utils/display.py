@@ -202,10 +202,15 @@ class Display:
             self.display(new_msg.strip(), color=C.COLOR_DEPRECATE, stderr=True)
             self._deprecations[new_msg] = 1
 
-    def warning(self, msg):
-        new_msg = "\n[WARNING]: %s" % msg
-        wrapped = textwrap.wrap(new_msg, self.columns)
-        new_msg = "\n".join(wrapped) + "\n"
+    def warning(self, msg, formatted=False):
+
+        if not formatted:
+            new_msg = "\n[WARNING]: %s" % msg
+            wrapped = textwrap.wrap(new_msg, self.columns)
+            new_msg = "\n".join(wrapped) + "\n"
+        else:
+            new_msg = "\n[WARNING]: \n%s" % msg
+
         if new_msg not in self._warns:
             self.display(new_msg, color=C.COLOR_WARN, stderr=True)
             self._warns[new_msg] = 1
