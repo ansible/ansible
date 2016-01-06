@@ -443,6 +443,9 @@ def install_deb(m, debs, cache, force, install_recommends, dpkg_options):
         if force:
             options += " --force-all"
 
+        for (k,v) in APT_ENV_VARS.iteritems():
+            os.environ[k] = v
+
         cmd = "dpkg %s -i %s" % (options, " ".join(pkgs_to_install))
         rc, out, err = m.run_command(cmd)
         if "stdout" in retvals:
