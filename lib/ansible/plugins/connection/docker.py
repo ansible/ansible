@@ -124,7 +124,7 @@ class Connection(ConnectionBase):
 
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
         # -i is needed to keep stdin open which allows pipelining to work
-        local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
+        local_cmd = [self.docker_cmd, "exec", '-u', self._play_context.remote_user, '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
         display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
         local_cmd = map(to_bytes, local_cmd)
@@ -171,7 +171,7 @@ class Connection(ConnectionBase):
             # Older docker doesn't have native support for copying files into
             # running containers, so we use docker exec to implement this
             executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
-            args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, executable, "-c",
+            args = [self.docker_cmd, "exec", '-u', self._play_context.remote_user, "-i", self._play_context.remote_addr, executable, "-c",
                     "dd of={0} bs={1}".format(out_path, BUFSIZE)]
             args = map(to_bytes, args)
             with open(in_path, 'rb') as in_file:
