@@ -430,7 +430,7 @@ def privileges_unpack(priv, mode):
 
     # if we are only specifying something like REQUIRESSL and/or GRANT (=WITH GRANT OPTION) in *.*
     # we still need to add USAGE as a privilege to avoid syntax errors
-    if 'REQUIRESSL' in priv and not set(output['*.*']).difference(set('GRANT', 'REQUIRESSL')):
+    if 'REQUIRESSL' in priv and not set(output['*.*']).difference(set(['GRANT', 'REQUIRESSL'])):
         output['*.*'].append('USAGE')
 
     return output
