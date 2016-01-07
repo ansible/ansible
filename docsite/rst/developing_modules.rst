@@ -191,7 +191,7 @@ a lot shorter than this::
 
 Let's test that module::
 
-    ansible/hacking/test-module -m ./time -a "time=\"March 14 12:23\""
+    ansible/hacking/test-module -m ./timetest.py -a "time=\"March 14 12:23\""
 
 This should return something like::
 
