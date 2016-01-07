@@ -11,12 +11,16 @@ except ImportError:
             " install setuptools).")
     sys.exit(1)
 
+<<<<<<< 15c7288ab9d943e90dda40ea20920674799d052b
 with open('requirements.txt') as requirements_file:
     install_requirements = requirements_file.read().splitlines()
     if not install_requirements:
         print("Unable to read requirements from the requirements.txt file"
                 "That indicates this copy of the source code is incomplete.")
         sys.exit(2)
+
+if os.path.exists('README.txt'):
+      long_description = open('README.txt').read()
 
 setup(
     name='ansible',
@@ -67,4 +71,50 @@ setup(
         'bin/ansible-vault',
     ],
     data_files=[],
+=======
+long_description = '''Ansible is a radically simple IT automation system. It handles configuration-management, application deployment, cloud provisioning, ad-hoc task-execution, and multinode orchestration - including trivializing things like zero downtime rolling updates with load balancers.
+
+Read the documentation and more at http://ansible.com/'''
+
+setup(name='ansible',
+      version=__version__,
+      description='Radically simple IT automation',
+      long_description=long_description,
+      author=__author__,
+      author_email='support@ansible.com',
+      url='http://ansible.com/',
+      license='GPLv3',
+      # Ansible will also make use of a system copy of python-six if installed but use a
+      # Bundled copy if it's not.
+      install_requires=['paramiko', 'jinja2', "PyYAML", 'setuptools', 'pycrypto >= 2.6'],
+      package_dir={ '': 'lib' },
+      packages=find_packages('lib'),
+      package_data={
+         '': ['module_utils/*.ps1', 'modules/core/windows/*.ps1', 'modules/extras/windows/*.ps1', 'galaxy/data/*'],
+      },
+      classifiers=[
+          'Development Status :: 5 - Production/Stable',
+          'Environment :: Console',
+          'Intended Audience :: Developers',
+          'Intended Audience :: Information Technology',
+          'Intended Audience :: System Administrators',
+          'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
+          'Natural Language :: English',
+          'Operating System :: POSIX',
+          'Programming Language :: Python :: 2.6',
+          'Programming Language :: Python :: 2.7',
+          'Topic :: System :: Installation/Setup',
+          'Topic :: System :: Systems Administration',
+          'Topic :: Utilities',
+      ],
+      scripts=[
+         'bin/ansible',
+         'bin/ansible-playbook',
+         'bin/ansible-pull',
+         'bin/ansible-doc',
+         'bin/ansible-galaxy',
+         'bin/ansible-vault',
+      ],
+      data_files=[],
+>>>>>>> Add long_description to setup.py
 )
