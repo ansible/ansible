@@ -200,12 +200,19 @@ def user_exists(cursor, user, host, host_all):
     count = cursor.fetchone()
     return count[0] > 0
 
-def user_add(cursor, user, host, host_all, password, new_priv):
+def user_add(cursor, user, host, host_all, password, encrypted, new_priv, check_mode):
     # we cannot create users without a proper hostname
     if host_all:
         return False
 
-    cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
+    if check_mode:
+        return True
+
+    if password and encrypted:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY PASSWORD %s", (user,host,password))
+    elif password and not encrypted:
+        cursor.execute("CREATE USER %s@%s IDENTIFIED BY %s", (user,host,password))
+
     if new_priv is not None:
         for db_table, priv in new_priv.iteritems():
             privileges_grant(cursor, user,host,db_table,priv)
@@ -218,7 +225,7 @@ def is_hash(password):
             ishash = True
     return ishash
 
-def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
+def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append_privs, check_mode):
     changed = False
     grant_option = False
 
@@ -235,17 +242,39 @@ def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
         hostnames = [host]
 
     for host in hostnames:
-        # Handle passwords
-        if password is not None:
-            cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
-        else:
-            cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user,host))
-        current_pass_hash = cursor.fetchone()
-
-        if encrypted:
-            encrypted_string = (password)
-            if is_hash(password):
-                if current_pass_hash[0] != encrypted_string:
+        # Handle clear text and hashed passwords.
+        if bool(password):
+            # Determine what user management method server uses
+            old_user_mgmt = server_version_check(cursor)
+    
+            if old_user_mgmt:
+                cursor.execute("SELECT password FROM user WHERE user = %s AND host = %s", (user,host))
+            else:
+                cursor.execute("SELECT authentication_string FROM user WHERE user = %s AND host = %s", (user,host))
+            current_pass_hash = cursor.fetchone()
+    
+            if encrypted:
+                encrypted_string = (password)
+                if is_hash(password):
+                    if current_pass_hash[0] != encrypted_string:
+                        if check_mode:
+                            return True
+                        if old_user_mgmt:
+                            cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
+                        else:
+                            cursor.execute("ALTER USER %s@%s IDENTIFIED WITH mysql_native_password AS %s", (user, host, password))
+                        changed = True
+                else:
+                    module.fail_json(msg="encrypted was specified however it does not appear to be a valid hash expecting: *SHA1(SHA1(your_password))")
+            else:
+                if old_user_mgmt:
+                    cursor.execute("SELECT PASSWORD(%s)", (password,))
+                else:
+                    cursor.execute("SELECT CONCAT('*', UCASE(SHA1(UNHEX(SHA1(%s)))))", (password,))
+                new_pass_hash = cursor.fetchone()
+                if current_pass_hash[0] != new_pass_hash[0]:
+                    if check_mode:
+                        return True
                     if old_user_mgmt:
                         cursor.execute("SET PASSWORD FOR %s@%s = %s", (user, host, password))
                     else:
@@ -264,6 +293,8 @@ def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
                     grant_option = True
                 if db_table not in new_priv:
                     if user != "root" and "PROXY" not in priv and not append_privs:
+                        if check_mode:
+                            return True
                         privileges_revoke(cursor, user,host,db_table,priv,grant_option)
                         changed = True
 
@@ -271,6 +302,8 @@ def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
             # we can perform a straight grant operation.
             for db_table, priv in new_priv.iteritems():
                 if db_table not in curr_priv:
+                    if check_mode:
+                        return True
                     privileges_grant(cursor, user,host,db_table,priv)
                     changed = True
 
@@ -280,6 +313,8 @@ def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
             for db_table in db_table_intersect:
                 priv_diff = set(new_priv[db_table]) ^ set(curr_priv[db_table])
                 if (len(priv_diff) > 0):
+                    if check_mode:
+                        return True
                     if not append_privs:
                         privileges_revoke(cursor, user,host,db_table,curr_priv[db_table],grant_option)
                     privileges_grant(cursor, user,host,db_table,new_priv[db_table])
@@ -287,7 +322,10 @@ def user_mod(cursor, user, host, password, encrypted, new_priv, append_privs):
 
     return changed
 
-def user_delete(cursor, user, host, host_all):
+def user_delete(cursor, user, host, host_all, check_mode):
+    if module.check_mode:
+        changed = True
+
     if host_all:
         hostnames = user_get_hostnames(cursor, user)
 
@@ -437,7 +475,8 @@ def main():
             ssl_cert=dict(default=None),
             ssl_key=dict(default=None),
             ssl_ca=dict(default=None),
-        )
+        ),
+        supports_check_mode=True
     )
     login_user = module.params["login_user"]
     login_password = module.params["login_password"]
@@ -484,9 +523,9 @@ def main():
         if user_exists(cursor, user, host):
             try:
                 if update_password == 'always':
-                    changed = user_mod(cursor, user, host, password, encrypted, priv, append_privs)
+                    changed = user_mod(cursor, user, host, host_all, password, encrypted, priv, append_privs, module.check_mode)
                 else:
-                    changed = user_mod(cursor, user, host, None, encrypted, priv, append_privs)
+                    changed = user_mod(cursor, user, host, host_all, None, encrypted, priv, append_privs, module.check_mode)
 
             except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
@@ -496,12 +535,12 @@ def main():
             if host_all:
                 module.fail_json(msg="host_all parameter cannot be used when adding a user")
             try:
-                changed = user_add(cursor, user, host, host_all, password, priv)
+                changed = user_add(cursor, user, host, host_all, password, encrypted, priv, module.check_mode)
             except (SQLParseError, InvalidPrivsError, MySQLdb.Error), e:
                 module.fail_json(msg=str(e))
     elif state == "absent":
         if user_exists(cursor, user, host, host_all):
-            changed = user_delete(cursor, user, host, host_all)
+            changed = user_delete(cursor, user, host, host_all, module.check_mode)
         else:
             changed = False
     module.exit_json(changed=changed, user=user)
