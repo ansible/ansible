@@ -28,6 +28,7 @@ $result = New-Object PSObject -Property @{
 }
 
 $name = Get-Attr $params "name" -failifempty $true
+
 $name = $name -split ',' | % { $_.Trim() }
 
 $state = Get-Attr $params "state" "present"
@@ -39,14 +40,46 @@ If (($state -ne 'present') -and ($state -ne 'absent')) {
 $restart = Get-Attr $params "restart" $false | ConvertTo-Bool
 $includesubfeatures = Get-Attr $params "include_sub_features" $false | ConvertTo-Bool
 $includemanagementtools = Get-Attr $params "include_management_tools" $false | ConvertTo-Bool
+$source = Get-Attr $params "source" $false
 
 If ($state -eq "present") {
+    if ($source)
+    {
+        if (!(test-path $source))
+        {
+            Fail-Json $result "Failed to find source path $source"
+        }
+    }
+    
+    $InstallParams = @{
+        "Name"=$name;
+        "Restart"=$Restart;
+        "IncludeAllSubFeature"=$includesubfeatures;
+        "ErrorAction"="SilentlyContinue"
+    }
+    
+    if ($IncludeManagementTools -eq $true)
+    {
+        $InstallParams.add("IncludeManagementTools";$includemanagementtools)
+    }
+    
+    if ($source -ne $null)
+    {
+        $InstallParams.add("Source";$source)
+    }
+    
+    
+    
     try {
         If (Get-Command "Install-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Install-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -IncludeManagementTools:$includemanagementtools -ErrorAction SilentlyContinue
+            $featureresult = Install-WindowsFeature @Params
         }
         ElseIf (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Add-WindowsFeature -Name $name -Restart:$restart -IncludeAllSubFeature:$includesubfeatures -ErrorAction SilentlyContinue
+            if ($IncludeManagementTools)
+            {
+                $Params.Remove("IncludeManagementTools")
+            }
+            $featureresult = Add-WindowsFeature @Params
         }
         Else {
             Fail-Json $result "Not supported on this version of Windows"
