@@ -600,13 +600,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return diff
 
-    def _copy(self,tmp=None):
-        result = []
+    def _copy(self,tmp=None,task_vars=None):
+        result = { }
 
         source  = self._task.args.get('src', None)
         dest    = self._task.args.get('dest', None)
-        #copy    = boolean(self._task.args.get('copy', True))
-        creates = self._task.args.get('creates', None)
+#        creates = self._task.args.get('creates', None)
 
         if source is None or dest is None:
             result['failed'] = True
@@ -616,21 +615,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not tmp:
             tmp = self._make_tmp_path()
 
-        if creates:
-            # do not run the command if the line contains creates=filename
-            # and the filename already exists. This allows idempotence
-            # of command executions.
-            result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars)
-            stat = result.get('stat', None)
-            if stat and stat.get('exists', False):
-                result['skipped'] = True
-                result['msg'] = "skipped, since %s exists" % creates
-                return result
+        #if creates:
+#             # do not run the command if the line contains creates=filename
+#             # and the filename already exists. This allows idempotence
+#             # of command executions.
+#             result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars)
+#             stat = result.get('stat', None)
+#             if stat and stat.get('exists', False):
+#                 result['skipped'] = True
+#                 result['msg'] = "skipped, since %s exists" % creates
+#                 return result
 
         dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
         source = os.path.expanduser(source)
 
-        #if copy:
         if self._task._role is not None:
             source = self._loader.path_dwim_relative(self._task._role._role_path, 'files', source)
         else:
@@ -656,22 +654,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if self._play_context.become and self._play_context.become_user != 'root':
             if not self._play_context.check_mode:
                 self._remote_chmod('a+r', tmp_src)
-
-        # Build temporary module_args.
-        new_module_args = self._task.args.copy()
-        new_module_args.update(
-            dict(
-                src=tmp_src,
-                original_basename=os.path.basename(source),
-            ),
-        )
-
-    else:
-        new_module_args = self._task.args.copy()
-        new_module_args.update(
-            dict(
-                original_basename=os.path.basename(source),
-            ),
-        )
-
-    return result
+    
+        result['passback'] = {
+            'tmp_src': tmp_src,
+            'source': source
+        }
+        return result
