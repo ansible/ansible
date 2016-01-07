@@ -165,10 +165,10 @@ class PlaybookExecutor:
                             self._unreachable_hosts.update(self._tqm._unreachable_hosts)
                             self._tqm.clear_failed_hosts()
 
-                        # if the last result wasn't zero or 3 (some hosts were unreachable),
-                        # break out of the serial batch loop
-                        if result not in (0, 3):
-                            break
+                            # if the last result wasn't zero or 3 (some hosts were unreachable),
+                            # break out of the serial batch loop
+                            if result not in (0, 3):
+                                break
 
                     i = i + 1 # per play
 
