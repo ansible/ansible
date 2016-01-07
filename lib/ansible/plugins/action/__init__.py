@@ -605,7 +605,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         source  = self._task.args.get('src', None)
         dest    = self._task.args.get('dest', None)
-#        creates = self._task.args.get('creates', None)
 
         if source is None or dest is None:
             result['failed'] = True
@@ -615,16 +614,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if not tmp:
             tmp = self._make_tmp_path()
 
-        #if creates:
-#             # do not run the command if the line contains creates=filename
-#             # and the filename already exists. This allows idempotence
-#             # of command executions.
-#             result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars)
-#             stat = result.get('stat', None)
-#             if stat and stat.get('exists', False):
-#                 result['skipped'] = True
-#                 result['msg'] = "skipped, since %s exists" % creates
-#                 return result
 
         dest = self._remote_expand_user(dest) # CCTODO: Fix path for Windows hosts.
         source = os.path.expanduser(source)

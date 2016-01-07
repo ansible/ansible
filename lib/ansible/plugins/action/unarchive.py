@@ -37,6 +37,18 @@ class ActionModule(ActionBase):
 
         source  = self._task.args.get('src', None)
         copy    = boolean(self._task.args.get('copy', True))
+        creates = self._task.args.get('creates', None)
+
+        if creates:
+            # do not run the command if the line contains creates=filename
+            # and the filename already exists. This allows idempotence
+            # of command executions.
+            result = self._execute_module(module_name='stat', module_args=dict(path=creates), task_vars=task_vars)
+            stat = result.get('stat', None)
+            if stat and stat.get('exists', False):
+                result['skipped'] = True
+                result['msg'] = "skipped, since %s exists" % creates
+                return result
 
         if tmp is None:
             tmp = self._make_tmp_path()
