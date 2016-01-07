@@ -31,6 +31,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
+from ansible.utils.unicode import to_str
 
 
 class InventoryScript:
@@ -62,7 +63,6 @@ class InventoryScript:
         self.host_vars_from_top = None
         self._parse(stderr)
 
-
     def _parse(self, err):
 
         all_hosts = {}
@@ -72,11 +72,11 @@ class InventoryScript:
             self.raw = self._loader.load(self.data)
         except Exception as e:
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(self.filename, str(e)))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(to_str(self.filename), to_str(e)))
 
         if not isinstance(self.raw, Mapping):
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(self.filename))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(to_str(self.filename)))
 
         self.raw  = json_dict_bytes_to_unicode(self.raw)
 
@@ -112,7 +112,7 @@ class InventoryScript:
                         "data for the host list:\n %s" % (group_name, data))
 
                 for hostname in data['hosts']:
-                    if not hostname in all_hosts:
+                    if hostname not in all_hosts:
                         all_hosts[hostname] = Host(hostname)
                     host = all_hosts[hostname]
                     group.add_host(host)
@@ -148,7 +148,6 @@ class InventoryScript:
             got = self.host_vars_from_top.get(host.name, {})
             return got
 
-
         cmd = [self.filename, "--host", host.name]
         try:
             sp = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -161,4 +160,3 @@ class InventoryScript:
             return json_dict_bytes_to_unicode(self._loader.load(out))
         except ValueError:
             raise AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
-

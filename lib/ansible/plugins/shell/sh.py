@@ -33,6 +33,12 @@ class ShellModule(object):
     # How to end lines in a python script one-liner
     _SHELL_EMBEDDED_PY_EOL = '\n'
     _SHELL_REDIRECT_ALLNULL = '> /dev/null 2>&1'
+    _SHELL_AND = '&&'
+    _SHELL_OR = '||'
+    _SHELL_SUB_LEFT = '"$('
+    _SHELL_SUB_RIGHT = ')"'
+    _SHELL_GROUP_LEFT = '('
+    _SHELL_GROUP_RIGHT = ')'
 
     def env_prefix(self, **kwargs):
         '''Build command prefix with environment variables.'''
@@ -46,6 +52,10 @@ class ShellModule(object):
 
     def join_path(self, *args):
         return os.path.join(*args)
+
+    # some shells (eg, powershell) are snooty about filenames/extensions, this lets the shell plugin have a say
+    def get_remote_filename(self, base_name):
+        return base_name.strip()
 
     def path_has_trailing_slash(self, path):
         return path.endswith('/')
@@ -67,14 +77,14 @@ class ShellModule(object):
         basetmp = self.join_path(C.DEFAULT_REMOTE_TMP, basefile)
         if system and (basetmp.startswith('$HOME') or basetmp.startswith('~/')):
             basetmp = self.join_path('/tmp', basefile)
-        cmd = 'mkdir -p "`echo %s`"' % basetmp
-        cmd += ' && echo "`echo %s`"' % basetmp
+        cmd = 'mkdir -p %s echo %s %s' % (self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
+        cmd += ' %s echo %s echo %s %s' % (self._SHELL_AND, self._SHELL_SUB_LEFT, basetmp, self._SHELL_SUB_RIGHT)
 
         # change the umask in a subshell to achieve the desired mode
         # also for directories created with `mkdir -p`
         if mode:
             tmp_umask = 0o777 & ~mode
-            cmd = '(umask %o && %s)' % (tmp_umask, cmd)
+            cmd = '%s umask %o %s %s %s' % (self._SHELL_GROUP_LEFT, tmp_umask, self._SHELL_AND, cmd, self._SHELL_GROUP_RIGHT)
 
         return cmd
 
@@ -124,14 +134,14 @@ class ShellModule(object):
         # used by a variety of shells on the remote host to invoke a python
         # "one-liner".
         shell_escaped_path = pipes.quote(path)
-        test = "rc=flag; [ -r %(p)s ] || rc=2; [ -f %(p)s ] || rc=1; [ -d %(p)s ] && rc=3; %(i)s -V 2>/dev/null || rc=4; [ x\"$rc\" != \"xflag\" ] && echo \"${rc}  \"%(p)s && exit 0" % dict(p=shell_escaped_path, i=python_interp)
+        test = "rc=flag; [ -r %(p)s ] %(shell_or)s rc=2; [ -f %(p)s ] %(shell_or)s rc=1; [ -d %(p)s ] %(shell_and)s rc=3; %(i)s -V 2>/dev/null %(shell_or)s rc=4; [ x\"$rc\" != \"xflag\" ] %(shell_and)s echo \"${rc}  \"%(p)s %(shell_and)s exit 0" % dict(p=shell_escaped_path, i=python_interp, shell_and=self._SHELL_AND, shell_or=self._SHELL_OR)
         csums = [
-            "({0} -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python > 2.4 (including python3)
-            "({0} -c 'import sha; BLOCKSIZE = 65536; hasher = sha.sha();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python == 2.4
+            u"({0} -c 'import hashlib; BLOCKSIZE = 65536; hasher = hashlib.sha1();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python > 2.4 (including python3)
+            u"({0} -c 'import sha; BLOCKSIZE = 65536; hasher = sha.sha();{2}afile = open(\"'{1}'\", \"rb\"){2}buf = afile.read(BLOCKSIZE){2}while len(buf) > 0:{2}\thasher.update(buf){2}\tbuf = afile.read(BLOCKSIZE){2}afile.close(){2}print(hasher.hexdigest())' 2>/dev/null)".format(python_interp, shell_escaped_path, self._SHELL_EMBEDDED_PY_EOL),      # Python == 2.4
         ]
 
-        cmd = " || ".join(csums)
-        cmd = "%s; %s || (echo \'0  \'%s)" % (test, cmd, shell_escaped_path)
+        cmd = (" %s " % self._SHELL_OR).join(csums)
+        cmd = "%s; %s %s (echo \'0  \'%s)" % (test, cmd, self._SHELL_OR, shell_escaped_path)
         return cmd
 
     def build_module_command(self, env_string, shebang, cmd, arg_path=None, rm_tmp=None):

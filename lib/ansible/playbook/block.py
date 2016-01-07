@@ -34,6 +34,7 @@ class Block(Base, Become, Conditional, Taggable):
     _rescue = FieldAttribute(isa='list', default=[])
     _always = FieldAttribute(isa='list', default=[])
     _delegate_to = FieldAttribute(isa='list')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions

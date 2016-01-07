@@ -36,6 +36,7 @@ from distutils.version import LooseVersion
 import ansible.constants as C
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.unicode import to_bytes
 
 try:
     from __main__ import display
@@ -112,7 +113,7 @@ class Connection(ConnectionBase):
         """ Connect to the container. Nothing to do """
         super(Connection, self)._connect()
         if not self._connected:
-            display.vvv("ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
+            display.vvv(u"ESTABLISH DOCKER CONNECTION FOR USER: {0}".format(
                 self._play_context.remote_user, host=self._play_context.remote_addr)
             )
             self._connected = True
@@ -125,7 +126,8 @@ class Connection(ConnectionBase):
         # -i is needed to keep stdin open which allows pipelining to work
         local_cmd = [self.docker_cmd, "exec", '-i', self._play_context.remote_addr, executable, '-c', cmd]
 
-        display.vvv("EXEC %s" % (local_cmd), host=self._play_context.remote_addr)
+        display.vvv("EXEC %s" % (local_cmd,), host=self._play_context.remote_addr)
+        local_cmd = map(to_bytes, local_cmd)
         p = subprocess.Popen(local_cmd, shell=False, stdin=subprocess.PIPE,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -159,6 +161,7 @@ class Connection(ConnectionBase):
         if self.can_copy_bothways:
             # only docker >= 1.8.1 can do this natively
             args = [ self.docker_cmd, "cp", in_path, "%s:%s" % (self._play_context.remote_addr, out_path) ]
+            args = map(to_bytes, args)
             p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             if p.returncode != 0:
@@ -169,7 +172,8 @@ class Connection(ConnectionBase):
             # running containers, so we use docker exec to implement this
             executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else '/bin/sh'
             args = [self.docker_cmd, "exec", "-i", self._play_context.remote_addr, executable, "-c",
-                    "dd of={0} bs={1}".format(out_path, BUFSIZE)]
+                    "dd of=%s bs=%s" % (out_path, BUFSIZE)]
+            args = map(to_bytes, args)
             with open(in_path, 'rb') as in_file:
                 try:
                     p = subprocess.Popen(args, stdin=in_file,
@@ -192,6 +196,7 @@ class Connection(ConnectionBase):
         out_dir = os.path.dirname(out_path)
 
         args = [self.docker_cmd, "cp", "%s:%s" % (self._play_context.remote_addr, in_path), out_dir]
+        args = map(to_bytes, args)
 
         p = subprocess.Popen(args, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)

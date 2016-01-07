@@ -301,11 +301,6 @@ class Connection(ConnectionBase):
             }}
         '''
 
-        # FUTURE: this sucks- why can't the module/shell stuff do this?
-        with open(in_path, 'r') as temp_file:
-            if temp_file.read(15).lower().startswith('#!powershell') and not out_path.lower().endswith('.ps1'):
-                out_path = out_path + '.ps1'
-
         script = script_template.format(self._shell._escape(out_path))
         cmd_parts = self._shell._encode_script(script, as_list=True, strict_mode=False)
 
@@ -323,7 +318,7 @@ class Connection(ConnectionBase):
         local_sha1 = secure_hash(in_path)
 
         if not remote_sha1 == local_sha1:
-            raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(remote_sha1, local_sha1))
+            raise AnsibleError("Remote sha1 hash {0} does not match local hash {1}".format(to_str(remote_sha1), to_str(local_sha1)))
 
 
     def fetch_file(self, in_path, out_path):

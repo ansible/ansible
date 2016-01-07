@@ -119,7 +119,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_path = self._shared_loader_obj.module_loader.find_plugin(module_name, mod_type)
             if module_path:
                 break
-        else:
+        else:  # This is a for-else: http://bit.ly/1ElPkyg
             # Use Windows version of ping module to check module paths when
             # using a connection that supports .ps1 suffixes. We check specifically
             # for win_ping here, otherwise the code would look for ping.ps1
@@ -151,14 +151,19 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if not isinstance(environments, list):
                 environments = [ environments ]
 
+            # the environments as inherited need to be reversed, to make
+            # sure we merge in the parent's values first so those in the
+            # block then task 'win' in precedence
+            environments.reverse()
             for environment in environments:
                 if environment is None:
                     continue
-                if not isinstance(environment, dict):
-                    raise AnsibleError("environment must be a dictionary, received %s (%s)" % (environment, type(environment)))
+                temp_environment = self._templar.template(environment)
+                if not isinstance(temp_environment, dict):
+                    raise AnsibleError("environment must be a dictionary, received %s (%s)" % (temp_environment, type(temp_environment)))
                 # very deliberately using update here instead of combine_vars, as
                 # these environment settings should not need to merge sub-dicts
-                final_environment.update(environment)
+                final_environment.update(temp_environment)
 
         final_environment = self._templar.template(final_environment)
         return self._connection._shell.env_prefix(**final_environment)
@@ -202,9 +207,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmp_mode = 0o755
 
         cmd = self._connection._shell.mkdtemp(basefile, use_system_tmp, tmp_mode)
-        display.debug("executing _low_level_execute_command to create the tmp path")
         result = self._low_level_execute_command(cmd, sudoable=False)
-        display.debug("done with creation of tmp path")
 
         # error handling on this seems a little aggressive?
         if result['rc'] != 0:
@@ -249,9 +252,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             cmd = self._connection._shell.remove(tmp_path, recurse=True)
             # If we have gotten here we have a working ssh configuration.
             # If ssh breaks we could leave tmp directories out on the remote system.
-            display.debug("calling _low_level_execute_command to remove the tmp path")
             self._low_level_execute_command(cmd, sudoable=False)
-            display.debug("done removing the tmp path")
 
     def _transfer_data(self, remote_path, data):
         '''
@@ -286,9 +287,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         cmd = self._connection._shell.chmod(mode, path)
-        display.debug("calling _low_level_execute_command to chmod the remote path")
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
-        display.debug("done with chmod call")
         return res
 
     def _remote_checksum(self, path, all_vars):
@@ -299,9 +298,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         python_interp = all_vars.get('ansible_python_interpreter', 'python')
 
         cmd = self._connection._shell.checksum(path, python_interp)
-        display.debug("calling _low_level_execute_command to get the remote checksum")
         data = self._low_level_execute_command(cmd, sudoable=True)
-        display.debug("done getting the remote checksum")
         try:
             data2 = data['stdout'].strip().splitlines()[-1]
             if data2 == u'':
@@ -329,9 +326,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 expand_path = '~%s' % self._play_context.become_user
 
         cmd = self._connection._shell.expand_user(expand_path)
-        display.debug("calling _low_level_execute_command to expand the remote user path")
         data = self._low_level_execute_command(cmd, sudoable=False)
-        display.debug("done expanding the remote user path")
         #initial_fragment = utils.last_non_blank_line(data['stdout'])
         initial_fragment = data['stdout'].strip().splitlines()[-1]
 
@@ -382,7 +377,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args['_ansible_check_mode'] = True
 
         # set no log in the module arguments, if required
-        if self._play_context.no_log or not C.DEFAULT_NO_TARGET_SYSLOG:
+        if self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG:
             module_args['_ansible_no_log'] = True
 
         # set debug in the module arguments, if required
@@ -400,7 +395,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmp = self._make_tmp_path()
 
         if tmp:
-            remote_module_path = self._connection._shell.join_path(tmp, module_name)
+            remote_module_filename = self._connection._shell.get_remote_filename(module_name)
+            remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
             if module_style == 'old':
                 # we'll also need a temp file to hold our module arguments
                 args_file_path = self._connection._shell.join_path(tmp, 'args')
@@ -447,9 +443,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             # specified in the play, not the sudo_user
             sudoable = False
 
-        display.debug("calling _low_level_execute_command() for command %s" % cmd)
         res = self._low_level_execute_command(cmd, sudoable=sudoable, in_data=in_data)
-        display.debug("_low_level_execute_command returned ok")
 
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES and not persist_files and delete_remote_tmp:
             if self._play_context.become and self._play_context.become_user != 'root':
@@ -466,9 +460,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if 'stderr' in res and res['stderr'].startswith(u'Traceback'):
                 data['exception'] = res['stderr']
             else:
-                data['msg'] = res.get('stdout', u'')
+                data['msg'] = "MODULE FAILURE"
+                data['module_stdout'] = res.get('stdout', u'')
                 if 'stderr' in res:
-                    data['msg'] += res['stderr']
+                    data['module_stderr'] = res['stderr']
 
         # pre-split stdout into lines, if stdout is in the data and there
         # isn't already a stdout_lines value there
@@ -497,21 +492,20 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if executable is not None:
             cmd = executable + ' -c ' + cmd
 
-        display.debug("in _low_level_execute_command() (%s)" % (cmd,))
+        display.debug("_low_level_execute_command(): starting")
         if not cmd:
             # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
-            display.debug("no command, exiting _low_level_execute_command()")
+            display.debug("_low_level_execute_command(): no command, exiting")
             return dict(stdout='', stderr='')
 
         allow_same_user = C.BECOME_ALLOW_SAME_USER
         same_user = self._play_context.become_user == self._play_context.remote_user
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
-            display.debug("using become for this command")
+            display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
 
-        display.debug("executing the command %s through the connection" % cmd)
+        display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
-        display.debug("command execution done: rc=%s" % (rc))
 
         # stdout and stderr may be either a file-like or a bytes object.
         # Convert either one to a text type
@@ -529,10 +523,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         else:
             err = stderr
 
-        display.debug("stdout=%s, stderr=%s" % (stdout, stderr))
-        display.debug("done with _low_level_execute_command() (%s)" % (cmd,))
         if rc is None:
             rc = 0
+
+        display.debug("_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, stdout, stderr))
 
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
 

@@ -132,7 +132,7 @@ Note that you cannot do variable substitution when including one playbook
 inside another.
 
 .. note::
-   You can not conditionally path the location to an include file,
+   You can not conditionally pass the location to an include file,
    like you can with 'vars_files'.  If you find yourself needing to do
    this, consider how you can restructure your playbook to be more
    class/role oriented.  This is to say you cannot use a 'fact' to
@@ -191,11 +191,8 @@ This designates the following behaviors, for each role 'x':
 - If roles/x/handlers/main.yml exists, handlers listed therein will be added to the play
 - If roles/x/vars/main.yml exists, variables listed therein will be added to the play
 - If roles/x/meta/main.yml exists, any role dependencies listed therein will be added to the list of roles (1.3 and later)
-- Any copy tasks can reference files in roles/x/files/ without having to path them relatively or absolutely
-- Any script tasks can reference scripts in roles/x/files/ without having to path them relatively or absolutely
-- Any template tasks can reference files in roles/x/templates/ without having to path them relatively or absolutely
-- Any include tasks can reference files in roles/x/tasks/ without having to path them relatively or absolutely
-   
+- Any copy, script, template or include tasks (in the role) can reference files in roles/x/files/ without having to path them relatively or absolutely
+
 In Ansible 1.4 and later you can configure a roles_path to search for roles.  Use this to check all of your common roles out to one location, and share
 them easily between multiple playbook projects.  See :doc:`intro_configuration` for details about how to set this up in ansible.cfg.
 

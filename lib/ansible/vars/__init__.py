@@ -43,7 +43,6 @@ from ansible.template import Templar
 from ansible.utils.debug import debug
 from ansible.utils.listify import listify_lookup_plugin_terms
 from ansible.utils.vars import combine_vars
-from ansible.vars.hostvars import HostVars
 from ansible.vars.unsafe_proxy import wrap_var
 
 try:
@@ -171,7 +170,8 @@ class VariableManager:
 
         return data
 
-
+    # FIXME: include_hostvars is no longer used, and should be removed, but
+    #        all other areas of code calling get_vars need to be fixed too
     def get_vars(self, loader, play=None, host=None, task=None, include_hostvars=True, include_delegate_to=True, use_cache=True):
         '''
         Returns the variables, with optional "context" given via the parameters
@@ -234,7 +234,7 @@ class VariableManager:
                 for item in data:
                     all_vars = combine_vars(all_vars, item)
 
-            for group in host.get_groups():
+            for group in sorted(host.get_groups(), key=lambda g: g.depth):
                 if group.name in self._group_vars_files and group.name != 'all':
                     for data in self._group_vars_files[group.name]:
                         data = preprocess_vars(data)
@@ -258,8 +258,6 @@ class VariableManager:
                 all_vars = combine_vars(all_vars, host_facts)
             except KeyError:
                 pass
-
-        all_vars['vars'] = all_vars.copy()
 
         if play:
             all_vars = combine_vars(all_vars, play.get_vars())
@@ -308,6 +306,7 @@ class VariableManager:
 
             if not C.DEFAULT_PRIVATE_ROLE_VARS:
                 for role in play.get_roles():
+                    all_vars = combine_vars(all_vars, role.get_role_params())
                     all_vars = combine_vars(all_vars, role.get_vars(include_params=False))
 
         if task:
@@ -342,6 +341,8 @@ class VariableManager:
             all_vars['ansible_delegated_vars'] = self._get_delegated_vars(loader, play, task, all_vars)
 
         #VARIABLE_CACHE[cache_entry] = all_vars
+        if task or play:
+            all_vars['vars'] = all_vars.copy()
 
         debug("done with get_vars()")
         return all_vars
@@ -367,17 +368,6 @@ class VariableManager:
                 variables['groups']  = dict()
                 for (group_name, group) in iteritems(self._inventory.groups):
                     variables['groups'][group_name] = [h.name for h in group.get_hosts()]
-
-                #if include_hostvars:
-                #    hostvars_cache_entry = self._get_cache_entry(play=play)
-                #    if hostvars_cache_entry in HOSTVARS_CACHE:
-                #        hostvars = HOSTVARS_CACHE[hostvars_cache_entry]
-                #    else:
-                #        hostvars = HostVars(play=play, inventory=self._inventory, loader=loader, variable_manager=self)
-                #        HOSTVARS_CACHE[hostvars_cache_entry] = hostvars
-                #    variables['hostvars'] = hostvars
-                #    variables['vars'] = hostvars[host.get_name()]
-
         if play:
             variables['role_names'] = [r._role_name for r in play.roles]
 
@@ -415,7 +405,7 @@ class VariableManager:
         items = []
         if task.loop is not None:
             if task.loop in lookup_loader:
-                #TODO: remove convert_bare true and deprecate this in with_ 
+                #TODO: remove convert_bare true and deprecate this in with_
                 try:
                     loop_terms = listify_lookup_plugin_terms(terms=task.loop_args, templar=templar, loader=loader, fail_on_undefined=True, convert_bare=True)
                 except AnsibleUndefinedVariable as e:
@@ -615,4 +605,3 @@ class VariableManager:
         if host_name not in self._vars_cache:
             self._vars_cache[host_name] = dict()
         self._vars_cache[host_name][varname] = value
-

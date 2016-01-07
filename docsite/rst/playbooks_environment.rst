@@ -31,7 +31,7 @@ The environment can also be stored in a variable, and accessed like so::
       tasks:
 
         - apt: name=cobbler state=installed
-          environment: proxy_env
+          environment: "{{proxy_env}}"
 
 You can also use it at a playbook level::
 

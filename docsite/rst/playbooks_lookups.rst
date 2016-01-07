@@ -240,6 +240,112 @@ If you're not using 2.0 yet, you can do something similar with the credstash too
 
     debug: msg="Poor man's credstash lookup! {{ lookup('pipe', 'credstash -r us-west-1 get my-other-password') }}"
 
+.. _dns_lookup:
+
+The DNS Lookup (dig)
+````````````````````
+.. versionadded:: 1.9.0
+
+.. warning:: This lookup depends on the `dnspython <http://www.dnspython.org/>`_
+             library.
+
+The ``dig`` lookup runs queries against DNS servers to retrieve DNS records for
+a specific name (*FQDN* - fully qualified domain name). It is possible to lookup any DNS record in this manner.
+
+There is a couple of different syntaxes that can be used to specify what record
+should be retrieved, and for which name. It is also possible to explicitly
+specify the DNS server(s) to use for lookups.
+
+In its simplest form, the ``dig`` lookup plugin can be used to retrieve an IPv4
+address (DNS ``A`` record) associated with *FQDN*:
+
+.. note:: If you need to obtain the ``AAAA`` record (IPv6 address), you must
+          specify the record type explicitly. Syntax for specifying the record
+          type is described below.
+
+.. note:: The trailing dot in most of the examples listed is purely optional,
+          but is specified for completeness/correctness sake.
+
+::
+
+      - debug: msg="The IPv4 address for example.com. is {{ lookup('dig', 'example.com.')}}"
+
+In addition to (default) ``A`` record, it is also possible to specify a different
+record type that should be queried. This can be done by either passing-in
+additional parameter of format ``qtype=TYPE`` to the ``dig`` lookup, or by
+appending ``/TYPE`` to the *FQDN* being queried. For example::
+
+  - debug: msg="The TXT record for gmail.com. is {{ lookup('dig', 'gmail.com.', 'qtype=TXT') }}"
+  - debug: msg="The TXT record for gmail.com. is {{ lookup('dig', 'gmail.com./TXT') }}"
+
+If multiple values are associated with the requested record, the results will be
+returned as a comma-separated list. In such cases you may want to pass option
+``wantlist=True`` to the plugin, which will result in the record values being
+returned as a list over which you can iterate later on::
+
+  - debug: msg="One of the MX records for gmail.com. is {{ item }}"
+    with_items: "{{ lookup('dig', 'gmail.com./MX', wantlist=True) }}"
+
+In case of reverse DNS lookups (``PTR`` records), you can also use a convenience
+syntax of format ``IP_ADDRESS/PTR``. The following three lines would produce the
+same output::
+
+  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8/PTR') }}"
+  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8.in-addr.arpa./PTR') }}"
+  - debug: msg="Reverse DNS for 8.8.8.8 is {{ lookup('dig', '8.8.8.8.in-addr.arpa.', 'qtype=PTR') }}"
+
+By default, the lookup will rely on system-wide configured DNS servers for
+performing the query. It is also possible to explicitly specify DNS servers to
+query using the ``@DNS_SERVER_1,DNS_SERVER_2,...,DNS_SERVER_N`` notation. This
+needs to be passed-in as an additional parameter to the lookup. For example::
+
+  - debug: msg="Querying 8.8.8.8 for IPv4 address for example.com. produces {{ lookup('dig', 'example.com', '@8.8.8.8') }}"
+
+In some cases the DNS records may hold a more complex data structure, or it may
+be useful to obtain the results in a form of a dictionary for future
+processing. The ``dig`` lookup supports parsing of a number of such records,
+with the result being returned as a dictionary. This way it is possible to
+easily access such nested data. This return format can be requested by
+passing-in the ``flat=0`` option to the lookup. For example::
+
+  - debug: msg="XMPP service for gmail.com. is available at {{ item.target }} on port {{ item.port }}"
+    with_items: "{{ lookup('dig', '_xmpp-server._tcp.gmail.com./SRV', 'flat=0', wantlist=True) }}"
+
+Take note that due to the way Ansible lookups work, you must pass the
+``wantlist=True`` argument to the lookup, otherwise Ansible will report errors.
+
+Currently the dictionary results are supported for the following records:
+
+.. note:: *ALL* is not a record per-se, merely the listed fields are available
+          for any record results you retrieve in the form of a dictionary.
+
+==========   =============================================================================
+Record       Fields
+----------   -----------------------------------------------------------------------------
+*ALL*        owner, ttl, type
+A            address
+AAAA         address
+CNAME        target
+DNAME        target
+DLV          algorithm, digest_type, key_tag, digest
+DNSKEY       flags, algorithm, protocol, key
+DS           algorithm, digest_type, key_tag, digest
+HINFO        cpu, os
+LOC          latitude, longitude, altitude, size, horizontal_precision, vertical_precision
+MX           preference, exchange
+NAPTR        order, preference, flags, service, regexp, replacement
+NS           target
+NSEC3PARAM   algorithm, flags, iterations, salt
+PTR          target
+RP           mbox, txt
+SOA          mname, rname, serial, refresh, retry, expire, minimum
+SPF          strings
+SRV          priority, weight, port, target
+SSHFP        algorithm, fp_type, fingerprint
+TLSA         usage, selector, mtype, cert
+TXT          strings
+==========   =============================================================================
+
 .. _more_lookups:
 
 More Lookups

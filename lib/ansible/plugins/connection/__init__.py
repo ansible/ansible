@@ -91,6 +91,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
 
     @property
     def connected(self):
+        '''Read-only property holding whether the connection to the remote host is active or closed.'''
         return self._connected
 
     def _become_method_supported(self):

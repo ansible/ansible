@@ -34,6 +34,7 @@ from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
+from ansible.plugins.callback import CallbackBase
 
 try:
     from __main__ import display
@@ -56,7 +57,7 @@ class TaskQueueManager:
     which dispatches the Play's tasks to hosts.
     '''
 
-    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None):
+    def __init__(self, inventory, variable_manager, loader, options, passwords, stdout_callback=None, run_additional_callbacks=True, run_tree=False):
 
         self._inventory        = inventory
         self._variable_manager = variable_manager
@@ -65,6 +66,8 @@ class TaskQueueManager:
         self._stats            = AggregateStats()
         self.passwords         = passwords
         self._stdout_callback  = stdout_callback
+        self._run_additional_callbacks = run_additional_callbacks
+        self._run_tree         = run_tree
 
         self._callbacks_loaded = False
         self._callback_plugins = []
@@ -96,14 +99,10 @@ class TaskQueueManager:
     def _initialize_processes(self, num):
         self._workers = []
 
-        for i in xrange(num):
+        for i in range(num):
             main_q = multiprocessing.Queue()
             rslt_q = multiprocessing.Queue()
-
-            prc = WorkerProcess(self, main_q, rslt_q, self._hostvars_manager, self._loader)
-            prc.start()
-
-            self._workers.append((prc, main_q, rslt_q))
+            self._workers.append([None, main_q, rslt_q])
 
         self._result_prc = ResultProcess(self._final_q, self._workers)
         self._result_prc.start()
@@ -144,8 +143,14 @@ class TaskQueueManager:
         if self._stdout_callback is None:
             self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
 
-        if self._stdout_callback not in callback_loader:
-            raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+        if isinstance(self._stdout_callback, CallbackBase):
+            self._callback_plugins.append(self._stdout_callback)
+            stdout_callback_loaded = True
+        elif isinstance(self._stdout_callback, basestring):
+            if self._stdout_callback not in callback_loader:
+                raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+        else:
+            raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
         for callback_plugin in callback_loader.all(class_only=True):
             if hasattr(callback_plugin, 'CALLBACK_VERSION') and callback_plugin.CALLBACK_VERSION >= 2.0:
@@ -159,7 +164,9 @@ class TaskQueueManager:
                     if callback_name != self._stdout_callback or stdout_callback_loaded:
                         continue
                     stdout_callback_loaded = True
-                elif callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST):
+                elif callback_name == 'tree' and self._run_tree:
+                    pass
+                elif not self._run_additional_callbacks or (callback_needs_whitelist and (C.DEFAULT_CALLBACK_WHITELIST is None or callback_name not in C.DEFAULT_CALLBACK_WHITELIST)):
                     continue
 
             self._callback_plugins.append(callback_plugin())
@@ -184,31 +191,11 @@ class TaskQueueManager:
         new_play = play.copy()
         new_play.post_validate(templar)
 
-        class HostVarsManager(SyncManager):
-            pass
-
-        hostvars = HostVars(
-            play=new_play,
+        self.hostvars = HostVars(
             inventory=self._inventory,
             variable_manager=self._variable_manager,
             loader=self._loader,
         )
-
-        HostVarsManager.register(
-            'hostvars',
-            callable=lambda: hostvars,
-            # FIXME: this is the list of exposed methods to the DictProxy object, plus our
-            #        special ones (set_variable_manager/set_inventory). There's probably a better way
-            #        to do this with a proper BaseProxy/DictProxy derivative
-            exposed=(
-                'set_variable_manager', 'set_inventory', '__contains__', '__delitem__',
-                'set_nonpersistent_facts', 'set_host_facts', 'set_host_variable',
-                '__getitem__', '__len__', '__setitem__', 'clear', 'copy', 'get', 'has_key',
-                'items', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values'
-            ),
-        )
-        self._hostvars_manager = HostVarsManager()
-        self._hostvars_manager.start()
 
         # Fork # of forks, # of hosts or serial, whichever is lowest
         contenders =  [self._options.forks, play.serial, len(self._inventory.get_hosts(new_play.hosts))]
@@ -249,7 +236,6 @@ class TaskQueueManager:
         # and run the play using the strategy and cleanup on way out
         play_return = strategy.run(iterator, play_context)
         self._cleanup_processes()
-        self._hostvars_manager.shutdown()
         return play_return
 
     def cleanup(self):
@@ -265,7 +251,8 @@ class TaskQueueManager:
             for (worker_prc, main_q, rslt_q) in self._workers:
                 rslt_q.close()
                 main_q.close()
-                worker_prc.terminate()
+                if worker_prc and worker_prc.is_alive():
+                    worker_prc.terminate()
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()

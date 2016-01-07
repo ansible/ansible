@@ -516,10 +516,37 @@ Subsequent loops over the registered variable to inspect the results may look li
 
 
 
+.. _looping_over_the_inventory:
+
+Looping over the inventory
+``````````````````````````
+
+If you wish to loop over the inventory, or just a subset of it, there is multiple ways.
+One can use a regular ``with_items`` with the ``play_hosts`` or ``groups`` variables, like this::
+
+    # show all the hosts in the inventory
+    - debug: msg={{ item }}
+      with_items: "{{groups['all']}}"
+
+    # show all the hosts in the current play
+    - debug: msg={{ item }}
+      with_items: play_hosts
+
+There is also a specific lookup plugin ``inventory_hostname`` that can be used like this::
+
+    # show all the hosts in the inventory
+    - debug: msg={{ item }}
+      with_inventory_hostname: all
+
+    # show all the hosts matching the pattern, ie all but the group www
+    - debug: msg={{ item }}
+      with_inventory_hostname: all:!www
+
+More information on the patterns can be found on :doc:`intro_patterns`
+
 .. _loops_and_includes:
 
 Loops and Includes
-
 ``````````````````
 
 In 2.0 you are able to use `with_` loops and task includes (but not playbook includes), this adds the ability to loop over the set of tasks in one shot.

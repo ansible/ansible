@@ -57,14 +57,32 @@ class HostState:
         self.always_child_state = None
 
     def __repr__(self):
-        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%d, fail_state=%d, pending_setup=%s, tasks child state? %s, rescue child state? %s, always child state? %s" % (
+        def _run_state_to_string(n):
+            states = ["ITERATING_SETUP", "ITERATING_TASKS", "ITERATING_RESCUE", "ITERATING_ALWAYS", "ITERATING_COMPLETE"]
+            try:
+                return states[n]
+            except IndexError:
+                return "UNKNOWN STATE"
+
+        def _failed_state_to_string(n):
+            states = {1:"FAILED_SETUP", 2:"FAILED_TASKS", 4:"FAILED_RESCUE", 8:"FAILED_ALWAYS"}
+            if n == 0:
+                return "FAILED_NONE"
+            else:
+                ret = []
+                for i in (1, 2, 4, 8):
+                    if n & i:
+                        ret.append(states[i])
+                return "|".join(ret)
+
+        return "HOST STATE: block=%d, task=%d, rescue=%d, always=%d, role=%s, run_state=%s, fail_state=%s, pending_setup=%s, tasks child state? %s, rescue child state? %s, always child state? %s" % (
             self.cur_block,
             self.cur_regular_task,
             self.cur_rescue_task,
             self.cur_always_task,
             self.cur_role,
-            self.run_state,
-            self.fail_state,
+            _run_state_to_string(self.run_state),
+            _failed_state_to_string(self.fail_state),
             self.pending_setup,
             self.tasks_child_state,
             self.rescue_child_state,
@@ -347,6 +365,28 @@ class PlayIterator:
     def get_failed_hosts(self):
         return dict((host, True) for (host, state) in iteritems(self._host_states) if state.run_state == self.ITERATING_COMPLETE and state.fail_state != self.FAILED_NONE)
 
+    def _check_failed_state(self, state):
+        if state is None:
+            return False
+        elif state.run_state == self.ITERATING_TASKS and self._check_failed_state(state.tasks_child_state):
+            return True
+        elif state.run_state == self.ITERATING_RESCUE and self._check_failed_state(state.rescue_child_state):
+            return True
+        elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
+            return True
+        elif state.run_state == self.ITERATING_COMPLETE and state.fail_state != self.FAILED_NONE:
+            if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0:
+                return False
+            elif state.run_state == self.ITERATING_ALWAYS and state.fail_state&self.FAILED_ALWAYS == 0:
+                return False
+            else:
+                return True
+        return False
+
+    def is_failed(self, host):
+        s = self.get_host_state(host)
+        return self._check_failed_state(s)
+
     def get_original_task(self, host, task):
         '''
         Finds the task in the task list which matches the UUID of the given task.
@@ -396,7 +436,8 @@ class PlayIterator:
         return None
 
     def _insert_tasks_into_state(self, state, task_list):
-        if state.fail_state != self.FAILED_NONE:
+        # if we've failed at all, or if the task list is empty, just return the current state
+        if state.fail_state != self.FAILED_NONE and state.run_state not in (self.ITERATING_RESCUE, self.ITERATING_ALWAYS) or not task_list:
             return state
 
         if state.run_state == self.ITERATING_TASKS:

@@ -34,8 +34,8 @@ ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
+BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1, True]
+BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
@@ -369,7 +369,12 @@ def return_values(obj):
     sensitive values pre-jsonification."""
     if isinstance(obj, basestring):
         if obj:
-            yield obj
+            if isinstance(obj, bytes):
+                yield obj
+            else:
+                # Unicode objects should all convert to utf-8
+                # (still must deal with surrogateescape on python3)
+                yield obj.encode('utf-8')
         return
     elif isinstance(obj, Sequence):
         for element in obj:
@@ -391,10 +396,22 @@ def remove_values(value, no_log_strings):
     """ Remove strings in no_log_strings from value.  If value is a container
     type, then remove a lot more"""
     if isinstance(value, basestring):
-        if value in no_log_strings:
+        if isinstance(value, unicode):
+            # This should work everywhere on python2. Need to check
+            # surrogateescape on python3
+            bytes_value = value.encode('utf-8')
+            value_is_unicode = True
+        else:
+            bytes_value = value
+            value_is_unicode = False
+        if bytes_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
         for omit_me in no_log_strings:
-            value = value.replace(omit_me, '*' * 8)
+            bytes_value = bytes_value.replace(omit_me, '*' * 8)
+        if value_is_unicode:
+            value = unicode(bytes_value, 'utf-8', errors='replace')
+        else:
+            value = bytes_value
     elif isinstance(value, Sequence):
         return [remove_values(elem, no_log_strings) for elem in value]
     elif isinstance(value, Mapping):
@@ -499,6 +516,7 @@ class AnsibleModule(object):
         self._debug = False
 
         self.aliases = {}
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -506,6 +524,15 @@ class AnsibleModule(object):
                     self.argument_spec[k] = v
 
         self.params = self._load_params()
+
+        # append to legal_inputs and then possibly check against them
+        try:
+            self.aliases = self._handle_aliases()
+        except Exception:
+            e = get_exception()
+            # use exceptions here cause its not safe to call vail json until no_log is processed
+            print('{"failed": true, "msg": "Module alias error: %s"}' % str(e))
+            sys.exit(1)
 
         # Save parameter values that should never be logged
         self.no_log_values = set()
@@ -521,10 +548,6 @@ class AnsibleModule(object):
         # reset to LANG=C if it's an invalid/unavailable locale
         self._check_locale()
 
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
-
-        # append to legal_inputs and then possibly check against them
-        self.aliases = self._handle_aliases()
 
         self._check_arguments(check_invalid_arguments)
 
@@ -728,7 +751,7 @@ class AnsibleModule(object):
         context = self.selinux_default_context(path)
         return self.set_context_if_different(path, context, False)
 
-    def set_context_if_different(self, path, context, changed):
+    def set_context_if_different(self, path, context, changed, diff=None):
 
         if not HAVE_SELINUX or not self.selinux_enabled():
             return changed
@@ -749,6 +772,14 @@ class AnsibleModule(object):
                         new_context[i] = cur_context[i]
 
         if cur_context != new_context:
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['secontext'] = cur_context
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['secontext'] = new_context
+
             try:
                 if self.check_mode:
                     return True
@@ -762,7 +793,7 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_owner_if_different(self, path, owner, changed):
+    def set_owner_if_different(self, path, owner, changed, diff=None):
         path = os.path.expanduser(path)
         if owner is None:
             return changed
@@ -775,6 +806,15 @@ class AnsibleModule(object):
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
         if orig_uid != uid:
+
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['owner'] = orig_uid
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['owner'] = uid
+
             if self.check_mode:
                 return True
             try:
@@ -784,7 +824,7 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_group_if_different(self, path, group, changed):
+    def set_group_if_different(self, path, group, changed, diff=None):
         path = os.path.expanduser(path)
         if group is None:
             return changed
@@ -797,6 +837,15 @@ class AnsibleModule(object):
             except KeyError:
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
         if orig_gid != gid:
+
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['group'] = orig_gid
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['group'] = gid
+
             if self.check_mode:
                 return True
             try:
@@ -806,7 +855,7 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_mode_if_different(self, path, mode, changed):
+    def set_mode_if_different(self, path, mode, changed, diff=None):
         path = os.path.expanduser(path)
         path_stat = os.lstat(path)
 
@@ -828,6 +877,15 @@ class AnsibleModule(object):
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         if prev_mode != mode:
+
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['mode'] = prev_mode
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['mode'] = mode
+
             if self.check_mode:
                 return True
             # FIXME: comparison against string above will cause this to be executed
@@ -961,27 +1019,27 @@ class AnsibleModule(object):
         or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
         return reduce(or_reduce, perms, 0)
 
-    def set_fs_attributes_if_different(self, file_args, changed):
+    def set_fs_attributes_if_different(self, file_args, changed, diff=None):
         # set modes owners and context as needed
         changed = self.set_context_if_different(
-            file_args['path'], file_args['secontext'], changed
+            file_args['path'], file_args['secontext'], changed, diff
         )
         changed = self.set_owner_if_different(
-            file_args['path'], file_args['owner'], changed
+            file_args['path'], file_args['owner'], changed, diff
         )
         changed = self.set_group_if_different(
-            file_args['path'], file_args['group'], changed
+            file_args['path'], file_args['group'], changed, diff
         )
         changed = self.set_mode_if_different(
-            file_args['path'], file_args['mode'], changed
+            file_args['path'], file_args['mode'], changed, diff
         )
         return changed
 
-    def set_directory_attributes_if_different(self, file_args, changed):
-        return self.set_fs_attributes_if_different(file_args, changed)
+    def set_directory_attributes_if_different(self, file_args, changed, diff=None):
+        return self.set_fs_attributes_if_different(file_args, changed, diff)
 
-    def set_file_attributes_if_different(self, file_args, changed):
-        return self.set_fs_attributes_if_different(file_args, changed)
+    def set_file_attributes_if_different(self, file_args, changed, diff=None):
+        return self.set_fs_attributes_if_different(file_args, changed, diff)
 
     def add_path_info(self, kwargs):
         '''
@@ -1047,6 +1105,7 @@ class AnsibleModule(object):
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
     def _handle_aliases(self):
+        # this uses exceptions as it happens before we can safely call fail_json
         aliases_results = {} #alias:canon
         for (k,v) in self.argument_spec.items():
             self._legal_inputs.append(k)
@@ -1055,11 +1114,11 @@ class AnsibleModule(object):
             required = v.get('required', False)
             if default is not None and required:
                 # not alias specific but this is a good place to check this
-                self.fail_json(msg="internal error: required and default are mutually exclusive for %s" % k)
+                raise Exception("internal error: required and default are mutually exclusive for %s" % k)
             if aliases is None:
                 continue
             if type(aliases) != list:
-                self.fail_json(msg='internal error: aliases must be a list')
+                raise Exception('internal error: aliases must be a list')
             for alias in aliases:
                 self._legal_inputs.append(alias)
                 aliases_results[alias] = k
@@ -1257,7 +1316,7 @@ class AnsibleModule(object):
         if isinstance(value, bool):
             return value
 
-        if isinstance(value, basestring):
+        if isinstance(value, basestring) or isinstance(value, int):
             return self.boolean(value)
 
         raise TypeError('%s cannot be converted to a bool' % type(value))
@@ -1414,7 +1473,6 @@ class AnsibleModule(object):
         self.log(msg, log_args=log_args)
 
 
-
     def _set_cwd(self):
         try:
             cwd = os.getcwd()
@@ -1507,6 +1565,8 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         if not 'changed' in kwargs:
             kwargs['changed'] = False
+        if 'invocation' not in kwargs:
+            kwargs['invocation'] = {'module_args': self.params}
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
@@ -1517,6 +1577,8 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+        if 'invocation' not in kwargs:
+            kwargs['invocation'] = {'module_args': self.params}
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))

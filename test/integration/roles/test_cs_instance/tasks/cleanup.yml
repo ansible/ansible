@@ -28,9 +28,3 @@
   assert:
     that:
     - sg|success
-
-# force expunge, only works with admin permissions
-- cs_instance:
-    name: "{{ cs_resource_prefix }}-vm-{{ instance_number }}"
-    state: expunged
-  failed_when: false

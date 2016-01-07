@@ -22,6 +22,7 @@
   always_run: True
   tags:
     - prepare
+  when: clean_working_dir|default("yes")|bool
 
 - name: create the test directory
   file: name={{output_dir}} state=directory

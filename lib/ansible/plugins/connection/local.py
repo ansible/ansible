@@ -25,10 +25,13 @@ import select
 import fcntl
 import getpass
 
+from ansible.compat.six import text_type, binary_type
+
 import ansible.constants as C
 
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.plugins.connection import ConnectionBase
+from ansible.utils.unicode import to_bytes, to_str
 
 try:
     from __main__ import display
@@ -54,7 +57,7 @@ class Connection(ConnectionBase):
         self._play_context.remote_user = getpass.getuser()
 
         if not self._connected:
-            display.vvv("ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user, host=self._play_context.remote_addr))
+            display.vvv(u"ESTABLISH LOCAL CONNECTION FOR USER: {0}".format(self._play_context.remote_user, host=self._play_context.remote_addr))
             self._connected = True
         return self
 
@@ -69,9 +72,15 @@ class Connection(ConnectionBase):
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")
         executable = C.DEFAULT_EXECUTABLE.split()[0] if C.DEFAULT_EXECUTABLE else None
 
-        display.vvv("{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
+        display.vvv(u"{0} EXEC {1}".format(self._play_context.remote_addr, cmd))
         # FIXME: cwd= needs to be set to the basedir of the playbook
         display.debug("opening command with Popen()")
+
+        if isinstance(cmd, (text_type, binary_type)):
+            cmd = to_bytes(cmd)
+        else:
+            cmd = map(to_bytes, cmd)
+
         p = subprocess.Popen(
             cmd,
             shell=isinstance(cmd, basestring),
@@ -117,22 +126,22 @@ class Connection(ConnectionBase):
 
         super(Connection, self).put_file(in_path, out_path)
 
-        display.vvv("{0} PUT {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
+        display.vvv(u"{0} PUT {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
         if not os.path.exists(in_path):
-            raise AnsibleFileNotFound("file or module does not exist: {0}".format(in_path))
+            raise AnsibleFileNotFound("file or module does not exist: {0}".format(to_str(in_path)))
         try:
             shutil.copyfile(in_path, out_path)
         except shutil.Error:
-            raise AnsibleError("failed to copy: {0} and {1} are the same".format(in_path, out_path))
+            raise AnsibleError("failed to copy: {0} and {1} are the same".format(to_str(in_path), to_str(out_path)))
         except IOError as e:
-            raise AnsibleError("failed to transfer file to {0}: {1}".format(out_path, e))
+            raise AnsibleError("failed to transfer file to {0}: {1}".format(to_str(out_path), to_str(e)))
 
     def fetch_file(self, in_path, out_path):
         ''' fetch a file from local to local -- for copatibility '''
 
         super(Connection, self).fetch_file(in_path, out_path)
 
-        display.vvv("{0} FETCH {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
+        display.vvv(u"{0} FETCH {1} TO {2}".format(self._play_context.remote_addr, in_path, out_path))
         self.put_file(in_path, out_path)
 
     def close(self):

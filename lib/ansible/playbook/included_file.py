@@ -49,8 +49,14 @@ class IncludedFile:
         return "%s (%s): %s" % (self._filename, self._args, self._hosts)
 
     @staticmethod
-    def process_include_results(results, tqm, iterator, loader, variable_manager):
+    def process_include_results(results, tqm, iterator, inventory, loader, variable_manager):
         included_files = []
+
+        def get_original_host(host):
+            if host.name in inventory._hosts_cache:
+                return inventory._hosts_cache[host.name]
+            else:
+                return inventory.get_host(host.name)
 
         for res in results:
 
@@ -67,9 +73,10 @@ class IncludedFile:
                     if 'skipped' in include_result and include_result['skipped'] or 'failed' in include_result:
                         continue
 
-                    original_task = iterator.get_original_task(res._host, res._task)
+                    original_host = get_original_host(res._host)
+                    original_task = iterator.get_original_task(original_host, res._task)
 
-                    task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=res._host, task=original_task)
+                    task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=original_host, task=original_task)
                     templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())
@@ -81,14 +88,19 @@ class IncludedFile:
                             # handle relative includes by walking up the list of parent include
                             # tasks and checking the relative result to see if it exists
                             parent_include = original_task._task_include
+                            cumulative_path = None
                             while parent_include is not None:
                                 parent_include_dir = templar.template(os.path.dirname(parent_include.args.get('_raw_params')))
+                                if cumulative_path is None:
+                                    cumulative_path = parent_include_dir
+                                elif not os.path.isabs(cumulative_path):
+                                    cumulative_path = os.path.join(parent_include_dir, cumulative_path)
                                 include_target = templar.template(include_result['include'])
                                 if original_task._role:
-                                    new_basedir = os.path.join(original_task._role._role_path, 'tasks', parent_include_dir)
+                                    new_basedir = os.path.join(original_task._role._role_path, 'tasks', cumulative_path)
                                     include_file = loader.path_dwim_relative(new_basedir, 'tasks', include_target)
                                 else:
-                                    include_file = loader.path_dwim_relative(loader.get_basedir(), parent_include_dir, include_target)
+                                    include_file = loader.path_dwim_relative(loader.get_basedir(), cumulative_path, include_target)
 
                                 if os.path.exists(include_file):
                                     break
@@ -111,6 +123,6 @@ class IncludedFile:
                     except ValueError:
                         included_files.append(inc_file)
 
-                    inc_file.add_host(res._host)
+                    inc_file.add_host(original_host)
 
         return included_files

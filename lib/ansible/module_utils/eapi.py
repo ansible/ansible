@@ -32,59 +32,75 @@ from ansible.module_utils.eapi import *
 
 The eapi module provides the following common argument spec:
 
-    * host (str) - [Required] The IPv4 address or FQDN of the network device
-
+    * host (str) - The IPv4 address or FQDN of the network device
     * port (str) - Overrides the default port to use for the HTTP/S
         connection.  The default values are 80 for HTTP and
         443 for HTTPS
-
-    * url_username (str) - [Required] The username to use to authenticate
-        the HTTP/S connection.  Aliases: username
-
-    * url_password (str) - [Required] The password to use to authenticate
-        the HTTP/S connection.  Aliases: password
-
+    * username (str) - The username to use to authenticate the HTTP/S
+        connection.
+    * password (str) - The password to use to authenticate the HTTP/S
+        connection.
     * use_ssl (bool) - Specifies whether or not to use an encrypted (HTTPS)
         connection or not.  The default value is False.
-
     * enable_mode (bool) - Specifies whether or not to enter `enable` mode
         prior to executing the command list.  The default value is True
-
     * enable_password (str) - The password for entering `enable` mode
         on the switch if configured.
+    * device (dict) - Used to send the entire set of connectin parameters
+        as a dict object.  This argument is mutually exclusive with the
+        host argument
 
 In order to communicate with Arista EOS devices, the eAPI feature
 must be enabled and configured on the device.
 
 """
-def eapi_argument_spec(spec=None):
-    """Creates an argument spec for working with eAPI
-    """
-    arg_spec = url_argument_spec()
-    arg_spec.update(dict(
-        host=dict(required=True),
-        port=dict(),
-        url_username=dict(required=True, aliases=['username']),
-        url_password=dict(required=True, aliases=['password']),
-        use_ssl=dict(default=True, type='bool'),
-        enable_mode=dict(default=True, type='bool'),
-        enable_password=dict()
-    ))
-    if spec:
-        arg_spec.update(spec)
-    return arg_spec
+EAPI_COMMON_ARGS = dict(
+    host=dict(),
+    port=dict(),
+    username=dict(),
+    password=dict(no_log=True),
+    use_ssl=dict(default=True, type='bool'),
+    enable_mode=dict(default=True, type='bool'),
+    enable_password=dict(no_log=True),
+    device=dict()
+)
 
-def eapi_url(module):
-    """Construct a valid Arist eAPI URL
+def eapi_module(**kwargs):
+    """Append the common args to the argument_spec
     """
-    if module.params['use_ssl']:
+    spec = kwargs.get('argument_spec') or dict()
+
+    argument_spec = url_argument_spec()
+    argument_spec.update(EAPI_COMMON_ARGS)
+    if kwargs.get('argument_spec'):
+        argument_spec.update(kwargs['argument_spec'])
+    kwargs['argument_spec'] = argument_spec
+
+    module = AnsibleModule(**kwargs)
+
+    device = module.params.get('device') or dict()
+    for key, value in device.iteritems():
+        if key in EAPI_COMMON_ARGS:
+            module.params[key] = value
+
+    params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
+    for key, value in params.iteritems():
+        if key != 'device':
+            module.params[key] = value
+
+    return module
+
+def eapi_url(params):
+    """Construct a valid Arista eAPI URL
+    """
+    if params['use_ssl']:
         proto = 'https'
     else:
         proto = 'http'
-    host = module.params['host']
+    host = params['host']
     url = '{}://{}'.format(proto, host)
-    if module.params['port']:
-        url = '{}:{}'.format(url, module.params['port'])
+    if params['port']:
+        url = '{}:{}'.format(url, params['port'])
     return '{}/command-api'.format(url)
 
 def to_list(arg):
@@ -103,11 +119,11 @@ def eapi_body(commands, encoding, reqid=None):
     params = dict(version=1, cmds=to_list(commands), format=encoding)
     return dict(jsonrpc='2.0', id=reqid, method='runCmds', params=params)
 
-def eapi_enable_mode(module):
+def eapi_enable_mode(params):
     """Build commands for entering `enable` mode on the switch
     """
-    if module.params['enable_mode']:
-        passwd = module.params['enable_password']
+    if params['enable_mode']:
+        passwd = params['enable_password']
         if passwd:
             return dict(cmd='enable', input=passwd)
         else:
@@ -117,9 +133,9 @@ def eapi_command(module, commands, encoding='json'):
     """Send an ordered list of commands to the device over eAPI
     """
     commands = to_list(commands)
-    url = eapi_url(module)
+    url = eapi_url(module.params)
 
-    enable = eapi_enable_mode(module)
+    enable = eapi_enable_mode(module.params)
     if enable:
         commands.insert(0, enable)
 
@@ -127,6 +143,9 @@ def eapi_command(module, commands, encoding='json'):
     data = module.jsonify(data)
 
     headers = {'Content-Type': 'application/json-rpc'}
+
+    module.params['url_username'] = module.params['username']
+    module.params['url_password'] = module.params['password']
 
     response, headers = fetch_url(module, url, data=data, headers=headers,
                                   method='POST')

@@ -78,7 +78,7 @@ class StrategyModule(StrategyBase):
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
                 display.debug("free host state: %s" % state)
                 display.debug("free host task: %s" % task)
-                if host_name not in self._tqm._failed_hosts and host_name not in self._tqm._unreachable_hosts and task:
+                if not iterator.is_failed(host) and host_name not in self._tqm._unreachable_hosts and task:
 
                     # set the flag so the outer loop knows we've still found
                     # some work which needs to be done
@@ -135,19 +135,25 @@ class StrategyModule(StrategyBase):
                 if last_host == starting_host:
                     break
 
-            results = self._process_pending_results(iterator)
+            results = self._wait_on_pending_results(iterator)
             host_results.extend(results)
 
             try:
-                included_files = IncludedFile.process_include_results(host_results, self._tqm, iterator=iterator,
-                        loader=self._loader, variable_manager=self._variable_manager)
+                included_files = IncludedFile.process_include_results(
+                    host_results,
+                    self._tqm,
+                    iterator=iterator,
+                    inventory=self._inventory,
+                    loader=self._loader,
+                    variable_manager=self._variable_manager
+                )
             except AnsibleError as e:
                 return False
 
             if len(included_files) > 0:
+                all_blocks = dict((host, []) for host in hosts_left)
                 for included_file in included_files:
-                    # included hosts get the task list while those excluded get an equal-length
-                    # list of noop tasks, to make sure that they continue running in lock-step
+                    display.debug("collecting new blocks for %s" % included_file)
                     try:
                         new_blocks = self._load_included_file(included_file, iterator=iterator)
                     except AnsibleError as e:
@@ -156,27 +162,21 @@ class StrategyModule(StrategyBase):
                         display.warning(str(e))
                         continue
 
-                    display.debug("generating all_blocks data")
-                    all_blocks = dict((host, []) for host in hosts_left)
-                    display.debug("done generating all_blocks data")
                     for new_block in new_blocks:
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, task=included_file._task)
                         final_block = new_block.filter_tagged_tasks(play_context, task_vars)
                         for host in hosts_left:
                             if host in included_file._hosts:
                                 all_blocks[host].append(final_block)
+                    display.debug("done collecting new blocks for %s" % included_file)
 
+                display.debug("adding all collected blocks from %d included file(s) to iterator" % len(included_files))
                 for host in hosts_left:
                     iterator.add_tasks(host, all_blocks[host])
+                display.debug("done adding collected blocks to iterator")
 
             # pause briefly so we don't spin lock
-            time.sleep(0.05)
-
-        try:
-            results = self._wait_on_pending_results(iterator)
-            host_results.extend(results)
-        except Exception as e:
-            pass
+            time.sleep(0.001)
 
         # run the base class run() method, which executes the cleanup function
         # and runs any outstanding handlers which have been triggered

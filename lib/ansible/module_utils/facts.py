@@ -524,7 +524,10 @@ class Facts(object):
         keytypes = ('dsa', 'rsa', 'ecdsa', 'ed25519')
 
         if self.facts['system'] == 'Darwin':
-            keydir = '/etc'
+            if self.facts['distribution'] == 'MacOSX' and LooseVersion(self.facts['distribution_version']) >= LooseVersion('10.11') :
+                keydir = '/etc/ssh'
+            else:
+                keydir = '/etc'
         else:
             keydir = '/etc/ssh'
 
@@ -552,8 +555,8 @@ class Facts(object):
         if proc_1 is None:
             rc, proc_1, err = module.run_command("ps -p 1 -o comm|tail -n 1", use_unsafe_shell=True)
 
-        if proc_1 in ['init', '/sbin/init']:
-            # many systems return init, so this cannot be trusted
+        if proc_1 in ['init', '/sbin/init', 'bash']:
+            # many systems return init, so this cannot be trusted, bash is from docker
             proc_1 = None
 
         # if not init/None it should be an identifiable or custom init, so we are done!
