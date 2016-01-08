@@ -100,6 +100,12 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             return True
         return False
 
+    def _is_binary(self, module_path):
+        textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
+
+        with open(module_path, 'rb') as f:
+            start = f.read(1024)
+
     def _configure_module(self, module_name, module_args, task_vars=None):
         '''
         Handles the loading and templating of the module code through the
@@ -147,7 +153,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # insert shared code and arguments into the module
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
 
-        return (module_style, module_shebang, module_data)
+        if self._is_binary(module_path):
+            return ('non_native_want_json', None, module_path, True)
+
+        return (module_style, module_shebang, module_data, False)
 
     def _compute_environment_string(self):
         '''
@@ -569,8 +578,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
 
-        (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
-        if not shebang:
+        (module_style, shebang, module_data, is_binary) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+
+        if not shebang and not is_binary:
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
 
         # a remote tmp path may be necessary and not already created
@@ -588,7 +598,11 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote")
-            self._transfer_data(remote_module_path, module_data)
+            if is_binary:
+                # If is_binary module_data is the path to the module to transfer
+                self._transfer_file(module_data, remote_module_path)
+            else:
+                self._transfer_data(remote_module_path, module_data, is_path=is_binary)
             if module_style == 'old':
                 # we need to dump the module args to a k=v string in a file on
                 # the remote system, which can be read and parsed by the module
@@ -604,7 +618,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         # Fix permissions of the tmp path and tmp files.  This should be
         # called after all files have been transferred.
-        self._fixup_perms(tmp, remote_user, recursive=True)
+        self._fixup_perms(tmp, remote_user, recursive=True, execute=is_binary)
 
         cmd = ""
         in_data = None
