@@ -13,16 +13,9 @@ except ImportError:
             " install setuptools).")
     sys.exit(1)
 
-long_description = '''Ansible is a radically simple IT automation system. It handles configuration-management, application deployment, cloud provisioning, ad-hoc task-execution, and multinode orchestration - including trivializing things like zero downtime rolling updates with load balancers.
-
-Read the documentation and more at http://ansible.com/'''
-if os.path.exists('README.txt'):
-      long_description = open('README.txt').read()
-
 setup(name='ansible',
       version=__version__,
       description='Radically simple IT automation',
-      long_description=long_description,
       author=__author__,
       author_email='support@ansible.com',
       url='http://ansible.com/',
