@@ -280,12 +280,12 @@ class Display:
             return input(prompt_string)
 
     @classmethod
-    def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
+    def do_var_prompt(cls, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
         result = None
         if sys.__stdin__.isatty():
 
-            do_prompt = self.prompt
+            do_prompt = cls.prompt
 
             if prompt and default is not None:
                 msg = "%s [%s]: " % (prompt, default)
