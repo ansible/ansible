@@ -60,26 +60,26 @@ If ($state -eq "present") {
     
     if ($IncludeManagementTools -eq $true)
     {
-        $InstallParams.add("IncludeManagementTools";$includemanagementtools)
+        $InstallParams.add("IncludeManagementTools",$includemanagementtools)
     }
     
     if ($source -ne $null)
     {
-        $InstallParams.add("Source";$source)
+        $InstallParams.add("Source",$source)
     }
     
     
     
     try {
         If (Get-Command "Install-WindowsFeature" -ErrorAction SilentlyContinue) {
-            $featureresult = Install-WindowsFeature @Params
+            $featureresult = Install-WindowsFeature @InstallParams
         }
         ElseIf (Get-Command "Add-WindowsFeature" -ErrorAction SilentlyContinue) {
             if ($IncludeManagementTools)
             {
                 $Params.Remove("IncludeManagementTools")
             }
-            $featureresult = Add-WindowsFeature @Params
+            $featureresult = Add-WindowsFeature @InstallParams
         }
         Else {
             Fail-Json $result "Not supported on this version of Windows"
