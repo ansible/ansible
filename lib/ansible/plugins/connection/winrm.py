@@ -271,7 +271,7 @@ class Connection(ConnectionBase):
         if not os.path.exists(in_path):
             raise AnsibleFileNotFound('file or module does not exist: "%s"' % in_path)
 
-        script_template = '''
+        script_template = u'''
             begin {{
                 $path = "{0}"
 
