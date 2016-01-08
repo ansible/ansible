@@ -547,7 +547,7 @@ To match strings against a regex, use the "match" or "search" filter::
 
 To replace text in a string with regex, use the "regex_replace" filter::
 
-    # convert "ansible" to "able"    
+    # convert "ansible" to "able"
     {{ 'ansible' | regex_replace('^a.*i(.*)$', 'a\\1') }}
 
     # convert "foobar" to "bar"
@@ -559,11 +559,13 @@ To replace text in a string with regex, use the "regex_replace" filter::
 .. note:: Prior to ansible 2.0, if "regex_replace" filter was used with variables inside YAML arguments (as opposed to simpler 'key=value' arguments),
    then you needed to escape backreferences (e.g. ``\\1``) with 4 backslashes (``\\\\``) instead of 2 (``\\``).
 
+.. versionadded:: 2.0
+
 To escape special characters within a regex, use the "regex_escape" filter::
 
     # convert '^f.*o(.*)$' to '\^f\.\*o\(\.\*\)\$'
     {{ '^f.*o(.*)$' | regex_escape() }}
-    
+
 To make use of one attribute from each item in a list of complex variables, use the "map" filter (see the `Jinja2 map() docs`_ for more)::
 
     # get a comma-separated list of the mount points (e.g. "/,/mnt/stuff") on a host
