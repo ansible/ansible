@@ -111,13 +111,12 @@ class PlaybookExecutor:
                             salt_size = var.get("salt_size", None)
                             salt      = var.get("salt", None)
 
-                            if vname not in play.vars:
+                            if vname not in self._variable_manager.extra_vars:
+                                self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
                                 if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                if self._options.syntax:
+                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                                else: # we are either in --list-<option> or syntax check
                                     play.vars[vname] = default
-                                else:
-                                    play.vars[vname] = self._do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
 
                     # Create a temporary copy of the play here, so we can run post_validate
                     # on it without the templating changes affecting the original object.
@@ -237,48 +236,3 @@ class PlaybookExecutor:
 
             return serialized_batches
 
-    def _do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
-
-        if sys.__stdin__.isatty():
-            if prompt and default is not None:
-                msg = "%s [%s]: " % (prompt, default)
-            elif prompt:
-                msg = "%s: " % prompt
-            else:
-                msg = 'input for %s: ' % varname
-
-            def do_prompt(prompt, private):
-                if sys.stdout.encoding:
-                    msg = prompt.encode(sys.stdout.encoding)
-                else:
-                    # when piping the output, or at other times when stdout
-                    # may not be the standard file descriptor, the stdout
-                    # encoding may not be set, so default to something sane
-                    msg = prompt.encode(locale.getpreferredencoding())
-                if private:
-                    return getpass.getpass(msg)
-                return raw_input(msg)
-
-            if confirm:
-                while True:
-                    result = do_prompt(msg, private)
-                    second = do_prompt("confirm " + msg, private)
-                    if result == second:
-                        break
-                    display.display("***** VALUES ENTERED DO NOT MATCH ****")
-            else:
-                result = do_prompt(msg, private)
-        else:
-            result = None
-            display.warning("Not prompting as we are not in interactive mode")
-
-        # if result is false and default is not None
-        if not result and default is not None:
-            result = default
-
-        if encrypt:
-            result = do_encrypt(result, encrypt, salt_size, salt)
-
-        # handle utf-8 chars
-        result = to_unicode(result, errors='strict')
-        return result
