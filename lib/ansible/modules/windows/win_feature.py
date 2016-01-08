@@ -81,6 +81,7 @@ EXAMPLES = '''
 # PS C:\Users\Administrator> Import-Module ServerManager; Get-WindowsFeature
 $ ansible -i hosts -m win_feature -a "name=Web-Server" all
 $ ansible -i hosts -m win_feature -a "name=Web-Server,Web-Common-Http" all
+ansible -m "win_feature" -a "name=NET-Framework-Core source=C:/Temp/iso/sources/sxs" windows
 
 
 # Playbook example
