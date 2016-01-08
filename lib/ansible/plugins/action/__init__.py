@@ -397,7 +397,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if tmp:
             remote_module_filename = self._connection._shell.get_remote_filename(module_name)
             remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
-            if module_style == 'old':
+            if module_style in ['old', 'non_native_want_json']:
                 # we'll also need a temp file to hold our module arguments
                 args_file_path = self._connection._shell.join_path(tmp, 'args')
 
@@ -411,6 +411,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 for k,v in iteritems(module_args):
                     args_data += '%s="%s" ' % (k, pipes.quote(text_type(v)))
                 self._transfer_data(args_file_path, args_data)
+            elif module_style == 'non_native_want_json':
+                self._transfer_data(args_file_path, json.dumps(module_args))
             display.debug("done transferring module to remote")
 
         environment_string = self._compute_environment_string()
