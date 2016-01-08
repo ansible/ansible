@@ -303,10 +303,11 @@ def main():
           pdoc = json.dumps(json.load(json_data))
           json_data.close()
   elif module.params.get('policy_json') != None:
+      pdoc = module.params.get('policy_json')
       # if its a string, assume it is already JSON
       if not isinstance(pdoc, basestring):
         try:
-          pdoc = json.dumps(module.params.get('policy_json'))
+          pdoc = json.dumps(pdoc)
         except Exception as e:
           module.fail_json(msg='Failed to convert the policy into valid JSON: %s' % str(e))
   else:
