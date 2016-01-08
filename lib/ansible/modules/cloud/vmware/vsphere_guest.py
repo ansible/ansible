@@ -880,6 +880,13 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     # Resize hard drives
     if vm_disk:
         spec = spec_singleton(spec, request, vm)
+
+        # Get a list of the VM's hard drives
+        dev_list = [d for d in vm.properties.config.hardware.device if d._type=='VirtualDisk']
+        if len(vm_disk) > len(dev_list):
+            vsphere_client.disconnect()
+            module.fail_json(msg="Error in vm_disk definition. Too many disks defined in comparison to the VM's disk profile.")
+
         disk_num = 0
         dev_changes = []
         disks_changed = {}
@@ -891,12 +898,6 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             except (KeyError, ValueError):
                 vsphere_client.disconnect()
                 module.fail_json(msg="Error in '%s' definition. Size needs to be specified as an integer." % disk)
-
-            # Get a list of the hard drives 
-            dev_list = [d for d in vm.properties.config.hardware.device if d._type=='VirtualDisk']
-            if disk_num >= len(dev_list):
-                vsphere_client.disconnect()
-                module.fail_json(msg="Error in '%s' definition. Too many disks defined in comparison to the VM's disk profile." % disk)
             
             # Make sure the new disk size is higher than the current value
             dev = dev_list[disk_num]
@@ -920,7 +921,7 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             spec.set_element_deviceChange(dev_changes)
             changes['disks'] = disks_changed
 
-            
+
     if len(changes):
 
         if shutdown and vm.is_powered_on():
