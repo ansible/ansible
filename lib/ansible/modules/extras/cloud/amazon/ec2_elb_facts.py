@@ -155,7 +155,7 @@ def list_elb(connection, module):
     try:
         all_elbs = connection.get_all_load_balancers(elb_names)
     except BotoServerError as e:
-        module.fail_json(msg=get_error_message(e.args[2]))
+        module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
 
     elb_array = []
     for elb in all_elbs:
