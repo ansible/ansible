@@ -208,7 +208,7 @@ def create_peer_connection(client, module):
             module.fail_json(msg=str(e))                   
 
 
-def accept_reject_delete(state, client, resource, module):
+def accept_reject_delete(state, client, module):
     changed = False
     params = dict()
     params['VpcPeeringConnectionId'] = module.params.get('peering_id')
@@ -246,7 +246,6 @@ def main():
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
         client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
-        resource = boto3_conn(module, conn_type='resource', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
     except botocore.exceptions.NoCredentialsError, e:
         module.fail_json(msg="Can't authorize connection - "+str(e))
 
@@ -254,7 +253,7 @@ def main():
         (changed, results) = create_peer_connection(client, module)
         module.exit_json(changed=changed, peering_id=results)
     else:
-        (changed, results) = accept_reject_delete(state, client, resource, module)
+        (changed, results) = accept_reject_delete(state, client, module)
         module.exit_json(changed=changed, peering_id=results)
 
 
