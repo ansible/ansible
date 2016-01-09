@@ -505,6 +505,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
+            # Updating connection context to share same success_key
+            self._connection._play_context.success_key = self._play_context.success_key
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
