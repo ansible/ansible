@@ -200,12 +200,19 @@ def create_peer_connection(client, module):
             return (changed, peering_conn['VpcPeeringConnectionId'])
         if is_pending(peering_conn):
             return (changed, peering_conn['VpcPeeringConnectionId'])
-        try:
-            peering_conn = client.create_vpc_peering_connection(**params)
-            changed = True
-            return (changed, peering_conn['VpcPeeringConnection']['VpcPeeringConnectionId'])
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))                   
+    try:
+        peering_conn = client.create_vpc_peering_connection(**params)
+        changed = True
+        return (changed, peering_conn['VpcPeeringConnection']['VpcPeeringConnectionId'])
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))                   
+
+
+def peer_status(client, module):
+    params = dict()
+    params['VpcPeeringConnectionIds'] = [module.params.get('peering_id')]
+    vpc_peering_connection = client.describe_vpc_peering_connections(**params)
+    return vpc_peering_connection['VpcPeeringConnections'][0]['Status']['Code']
 
 
 def accept_reject_delete(state, client, module):
@@ -218,12 +225,13 @@ def accept_reject_delete(state, client, module):
         'reject': client.reject_vpc_peering_connection,
         'absent': client.delete_vpc_peering_connection
     }
-    try:
-        invocations[state](**params)
-        changed = True
-    except botocore.exceptions.ClientError as e:
-        module.fail_json(msg=str(e))
-
+    if state == 'absent' or peer_status(client, module) != 'active':
+        try:
+            invocations[state](**params)
+            changed = True
+        except botocore.exceptions.ClientError as e:
+            module.fail_json(msg=str(e))
+    
     return changed, params['VpcPeeringConnectionId']
 
 
@@ -241,11 +249,11 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec)
 
     if not HAS_BOTO3:
-        module.fail_json(msg='json and boto/boto3 is required.')
+        module.fail_json(msg='json and boto3 is required.')
     state = module.params.get('state').lower()
     try:
         region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module, boto3=True)
-        client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)
+        client = boto3_conn(module, conn_type='client', resource='ec2', region=region, endpoint=ec2_url, **aws_connect_kwargs)       
     except botocore.exceptions.NoCredentialsError, e:
         module.fail_json(msg="Can't authorize connection - "+str(e))
 
