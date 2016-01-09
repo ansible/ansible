@@ -182,12 +182,6 @@ def is_pending(peering_conn):
     return peering_conn['Status']['Code'] == 'pending-acceptance'
 
 
-def peer_status(resource, module):
-    peer_id = module.params.get('peering_id')
-    vpc_peering_connection = resource.VpcPeeringConnection(peer_id)
-    return vpc_peering_connection.status['Message']
-
-
 def create_peer_connection(client, module):
     changed = False
     params = dict()
@@ -203,12 +197,13 @@ def create_peer_connection(client, module):
     peering_conns = describe_peering_connections(vpc_id, peer_vpc_id, client)
     for peering_conn in peering_conns['VpcPeeringConnections']:
         if is_active(peering_conn):
-            return (False, peering_conn['VpcPeeringConnectionId'])
+            return (changed, peering_conn['VpcPeeringConnectionId'])
         if is_pending(peering_conn):
-            return (False, peering_conn['VpcPeeringConnectionId'])
+            return (changed, peering_conn['VpcPeeringConnectionId'])
         try:
             peering_conn = client.create_vpc_peering_connection(**params)
-            return (True, peering_conn['VpcPeeringConnection']['VpcPeeringConnectionId'])
+            changed = True
+            return (changed, peering_conn['VpcPeeringConnection']['VpcPeeringConnectionId'])
         except botocore.exceptions.ClientError as e:
             module.fail_json(msg=str(e))                   
 
@@ -218,32 +213,18 @@ def accept_reject_delete(state, client, resource, module):
     params = dict()
     params['VpcPeeringConnectionId'] = module.params.get('peering_id')
     params['DryRun'] = module.check_mode
+    invocations = {
+        'accept': client.accept_vpc_peering_connection,
+        'reject': client.reject_vpc_peering_connection,
+        'absent': client.delete_vpc_peering_connection
+    }
+    try:
+        invocations[state](**params)
+        changed = True
+    except botocore.exceptions.ClientError as e:
+        module.fail_json(msg=str(e))
 
-    peer_id = module.params.get('peering_id')
-    if state == "accept":
-        if peer_status(resource, module) == "Active":
-            return (False, peer_id)
-        try:
-            client.accept_vpc_peering_connection(**params)
-            return (True, peer_id)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))            
-    if state == "reject":
-        if peer_status(resource, module) != "Active":
-            try:
-                client.reject_vpc_peering_connection(**params)
-                return (True, peer_id)
-            except botocore.exceptions.ClientError as e:
-                module.fail_json(msg=str(e))
-        else:
-            return (False, peer_id)
-    if state == "absent":
-        try:
-            client.delete_vpc_peering_connection(**params)
-            return (True, peer_id)
-        except botocore.exceptions.ClientError as e:
-            module.fail_json(msg=str(e))            
-    return (changed, "")
+    return changed, params['VpcPeeringConnectionId']
 
 
 def main():
