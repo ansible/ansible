@@ -328,7 +328,7 @@ This only removes the role from Galaxy. It does not impact the actual GitHub rep
     `https://galaxy-qa.ansible.com <https://galaxy-qa.ansible.com>`_. You can also add a *server* definition in the [galaxy] 
     section of your ansible.cfg file.
 
-Setup Travis Integerations
+Setup Travis Integrations
 --------------------------
 
 Using the setup command you can enable notifications from `travis <http://travis-ci.org>`_. The setup command expects that the user previously authenticated with Galaxy using the login command.
