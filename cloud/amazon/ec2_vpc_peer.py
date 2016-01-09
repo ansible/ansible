@@ -161,10 +161,10 @@ except ImportError:
     HAS_BOTO3 = False
 
 
-def describe_peering_connections(vpc_id, peer_vpc_id, client):
+def describe_peering_connections(params, client):
     result = client.describe_vpc_peering_connections(Filters=[
-        {'Name': 'requester-vpc-info.vpc-id', 'Values': [vpc_id]},
-        {'Name': 'accepter-vpc-info.vpc-id', 'Values': [peer_vpc_id]}
+        {'Name': 'requester-vpc-info.vpc-id', 'Values': [params['VpcId']]},
+        {'Name': 'accepter-vpc-info.vpc-id', 'Values': [params['PeerVpcId']]}
         ])
     if result['VpcPeeringConnections'] == []:
         result = client.describe_vpc_peering_connections(Filters=[
@@ -190,11 +190,7 @@ def create_peer_connection(client, module):
     if module.params.get('peer_owner_id'):
         params['PeerOwnerId'] = str(module.params.get('peer_owner_id'))
     params['DryRun'] = module.check_mode
-
-    vpc_id = module.params.get('vpc_id')
-    peer_vpc_id = module.params.get('peer_vpc_id')
-    peer_owner_id = module.params.get('peer_owner_id', False)
-    peering_conns = describe_peering_connections(vpc_id, peer_vpc_id, client)
+    peering_conns = describe_peering_connections(params, client)
     for peering_conn in peering_conns['VpcPeeringConnections']:
         if is_active(peering_conn):
             return (changed, peering_conn['VpcPeeringConnectionId'])
