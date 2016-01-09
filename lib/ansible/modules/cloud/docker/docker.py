@@ -359,6 +359,12 @@ options:
     required: false
     default: 10
     version_added: "2.0"
+  timeout:
+    description:
+      - Docker daemon response timeout in seconds.
+    required: false
+    default: 60
+    version_added: "2.1"
 author:
     - "Cove Schneider (@cove)"
     - "Joshua Conner (@joshuaconner)"
@@ -485,6 +491,7 @@ EXAMPLES = '''
 
 HAS_DOCKER_PY = True
 DEFAULT_DOCKER_API_VERSION = None
+DEFAULT_TIMEOUT_SECONDS = 60
 
 import sys
 import json
@@ -508,9 +515,11 @@ if HAS_DOCKER_PY:
         # docker-py 1.2+
         import docker.constants
         DEFAULT_DOCKER_API_VERSION = docker.constants.DEFAULT_DOCKER_API_VERSION
+        DEFAULT_TIMEOUT_SECONDS = docker.constants.DEFAULT_TIMEOUT_SECONDS
     except (ImportError, AttributeError):
         # docker-py less than 1.2
         DEFAULT_DOCKER_API_VERSION = docker.client.DEFAULT_DOCKER_API_VERSION
+        DEFAULT_TIMEOUT_SECONDS = docker.client.DEFAULT_TIMEOUT_SECONDS
 
 
 def _human_to_bytes(number):
@@ -714,6 +723,7 @@ class DockerManager(object):
                 docker_url = 'unix://var/run/docker.sock'
 
         docker_api_version = module.params.get('docker_api_version')
+        timeout = module.params.get('timeout')
 
         tls_client_cert = module.params.get('tls_client_cert', None)
         if not tls_client_cert and env_cert_path:
@@ -778,7 +788,8 @@ class DockerManager(object):
 
         self.client = docker.Client(base_url=docker_url,
                                     version=docker_api_version,
-                                    tls=tls_config)
+                                    tls=tls_config,
+                                    timeout=timeout)
 
         self.docker_py_versioninfo = get_docker_py_versioninfo()
 
@@ -1795,6 +1806,7 @@ def main():
             read_only       = dict(default=None, type='bool'),
             labels          = dict(default={}, type='dict'),
             stop_timeout    = dict(default=10, type='int'),
+            timeout         = dict(required=False, default=DEFAULT_TIMEOUT_SECONDS, type='int'),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
