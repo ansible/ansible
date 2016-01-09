@@ -168,8 +168,8 @@ def describe_peering_connections(params, client):
         ])
     if result['VpcPeeringConnections'] == []:
         result = client.describe_vpc_peering_connections(Filters=[
-            {'Name': 'requester-vpc-info.vpc-id', 'Values': [peer_vpc_id]},
-            {'Name': 'accepter-vpc-info.vpc-id', 'Values': [vpc_id]}
+            {'Name': 'requester-vpc-info.vpc-id', 'Values': [params['PeerVpcId']]},
+            {'Name': 'accepter-vpc-info.vpc-id', 'Values': [params['VpcId']]}
             ])
     return result
 
