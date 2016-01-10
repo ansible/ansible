@@ -47,6 +47,11 @@ options:
     required: false
     default: null
     version_added: "2.0"
+  interface:
+    description:
+      - 'The interface you would like to add/remove to/from a zone in firewalld - zone must be specified'
+    required: false
+    default: null
   zone:
     description:
       - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
@@ -87,6 +92,8 @@ EXAMPLES = '''
 - firewalld: port=161-162/udp permanent=true state=enabled
 - firewalld: zone=dmz service=http permanent=true state=enabled
 - firewalld: rich_rule='rule service name="ftp" audit limit value="1/m" accept' permanent=true state=enabled
+- firewalld: source='192.168.1.0/24' zone=internal state=enabled
+- firewalld: zone=trusted interface=eth2 permanent=true state=enabled
 '''
 
 import os
@@ -162,6 +169,29 @@ def remove_source(zone, source):
     fw_zone = fw.config().getZoneByName(zone)
     fw_settings = fw_zone.getSettings()
     fw_settings.removeSource(source)
+    fw_zone.update(fw_settings)
+
+####################
+# interface handling
+#
+def get_interface(zone, interface):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    if interface in fw_settings.getInterfaces():
+       return True
+    else:
+        return False
+
+def add_interface(zone, interface):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.addInterface(interface)
+    fw_zone.update(fw_settings)
+
+def remove_interface(zone, interface):
+    fw_zone = fw.config().getZoneByName(zone)
+    fw_settings = fw_zone.getSettings()
+    fw_settings.removeInterface(interface)
     fw_zone.update(fw_settings)
 
 ####################
@@ -254,11 +284,15 @@ def main():
             immediate=dict(type='bool',default=False),
             state=dict(choices=['enabled', 'disabled'], required=True),
             timeout=dict(type='int',required=False,default=0),
+            interface=dict(required=False,default=None),
         ),
         supports_check_mode=True
     )
     if module.params['source'] == None and module.params['permanent'] == None:
         module.fail_json(msg='permanent is a required parameter')
+
+    if module.params['interface'] != None and module.params['zone'] == None:
+        module.fail(msg='zone is a required parameter')
 
     if not HAS_FIREWALLD:
         module.fail_json(msg='firewalld and its python 2 module are required for this module')
@@ -289,6 +323,7 @@ def main():
     desired_state = module.params['state']
     immediate = module.params['immediate']
     timeout = module.params['timeout']
+    interface = module.params['interface']
 
     ## Check for firewalld running
     try:
@@ -305,9 +340,11 @@ def main():
         modification_count += 1
     if rich_rule != None:
         modification_count += 1
+    if interface != None:
+        modification_count += 1
 
     if modification_count > 1:
-        module.fail_json(msg='can only operate on port, service or rich_rule at once')
+        module.fail_json(msg='can only operate on port, service, rich_rule or interface at once')
 
     if service != None:
         if permanent:
@@ -369,6 +406,7 @@ def main():
                 remove_source(zone, source)
                 changed=True
                 msgs.append("Removed %s from zone %s" % (source, zone))
+
     if port != None:
         if permanent:
             is_enabled = get_port_enabled_permanent(zone, [port, protocol])
@@ -451,6 +489,25 @@ def main():
 
         if changed == True:
             msgs.append("Changed rich_rule %s to %s" % (rich_rule, desired_state))
+
+    if interface != None:
+        is_enabled = get_interface(zone, interface)
+        if desired_state == "enabled":
+            if is_enabled == False:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                add_interface(zone, interface)
+                changed=True
+                msgs.append("Added %s to zone %s" % (interface, zone))
+        elif desired_state == "disabled":
+            if is_enabled == True:
+                if module.check_mode:
+                    module.exit_json(changed=True)
+
+                remove_interface(zone, interface)
+                changed=True
+                msgs.append("Removed %s from zone %s" % (interface, zone))
 
     module.exit_json(changed=changed, msg=', '.join(msgs))
 
