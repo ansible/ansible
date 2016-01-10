@@ -61,6 +61,30 @@ class PlaybookExecutor:
         else:
             self._tqm = TaskQueueManager(inventory=inventory, variable_manager=variable_manager, loader=loader, options=options, passwords=self.passwords)
 
+    def prompt_vars(self, scope):
+        '''
+        Prompt for the value of any vars_prompt item in scope that
+        is not already set.
+        '''
+
+        if scope.vars_prompt:
+            for var in scope.vars_prompt:
+                vname     = var['name']
+                prompt    = var.get("prompt", vname)
+                default   = var.get("default", None)
+                private   = var.get("private", True)
+                confirm   = var.get("confirm", False)
+                encrypt   = var.get("encrypt", None)
+                salt_size = var.get("salt_size", None)
+                salt      = var.get("salt", None)
+
+                if vname not in self._variable_manager.extra_vars:
+                    if self._tqm:
+                        self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                        scope.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
+                    else: # we are either in --list-<option> or syntax check
+                        scope.vars[vname] = default
+
     def run(self):
 
         '''
@@ -86,6 +110,8 @@ class PlaybookExecutor:
                     self._tqm.load_callbacks()
                     self._tqm.send_callback('v2_playbook_on_start', pb)
 
+                self.prompt_vars(pb)
+
                 i = 1
                 plays = pb.get_plays()
                 display.vv('%d plays in %s' % (len(plays), playbook_path))
@@ -99,23 +125,8 @@ class PlaybookExecutor:
                     # clear any filters which may have been applied to the inventory
                     self._inventory.remove_restriction()
 
-                    if play.vars_prompt:
-                        for var in play.vars_prompt:
-                            vname     = var['name']
-                            prompt    = var.get("prompt", vname)
-                            default   = var.get("default", None)
-                            private   = var.get("private", True)
-                            confirm   = var.get("confirm", False)
-                            encrypt   = var.get("encrypt", None)
-                            salt_size = var.get("salt_size", None)
-                            salt      = var.get("salt", None)
-
-                            if vname not in self._variable_manager.extra_vars:
-                                if self._tqm:
-                                    self._tqm.send_callback('v2_playbook_on_vars_prompt', vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                    play.vars[vname] = display.do_var_prompt(vname, private, prompt, encrypt, confirm, salt_size, salt, default)
-                                else: # we are either in --list-<option> or syntax check
-                                    play.vars[vname] = default
+                    # prompt users for play-level variables
+                    self.prompt_vars(play)
 
                     # Create a temporary copy of the play here, so we can run post_validate
                     # on it without the templating changes affecting the original object.

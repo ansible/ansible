@@ -30,7 +30,7 @@ from ansible.playbook.block import Block
 from ansible.playbook.helpers import load_list_of_blocks, load_list_of_roles
 from ansible.playbook.role import Role
 from ansible.playbook.taggable import Taggable
-from ansible.vars import preprocess_vars
+from ansible.playbook.vars_scope import VarsScope
 
 try:
     from __main__ import display
@@ -42,7 +42,7 @@ except ImportError:
 __all__ = ['Play']
 
 
-class Play(Base, Taggable, Become):
+class Play(VarsScope, Taggable, Become):
 
     """
     A play is a language feature that represents a list of roles and/or
@@ -67,11 +67,6 @@ class Play(Base, Taggable, Become):
     _hosts               = FieldAttribute(isa='list', required=True, listof=string_types, always_post_validate=True)
     _name                = FieldAttribute(isa='string', default='', always_post_validate=True)
 
-    # Variable Attributes
-    _vars_files          = FieldAttribute(isa='list', default=[], priority=99)
-    _vars_prompt         = FieldAttribute(isa='list', default=[], always_post_validate=True)
-    _vault_password      = FieldAttribute(isa='string', always_post_validate=True)
-
     # Role Attributes
     _roles               = FieldAttribute(isa='list', default=[], priority=90)
 
@@ -90,10 +85,11 @@ class Play(Base, Taggable, Become):
 
     # =================================================================================
 
-    def __init__(self):
+    def __init__(self, playbook=None):
         super(Play, self).__init__()
 
         self._included_path = None
+        self._playbook = playbook
         self.ROLE_CACHE = {}
 
     def __repr__(self):
@@ -104,8 +100,8 @@ class Play(Base, Taggable, Become):
         return self._attributes.get('name')
 
     @staticmethod
-    def load(data, variable_manager=None, loader=None):
-        p = Play()
+    def load(data, playbook=None, variable_manager=None, loader=None):
+        p = Play(playbook)
         return p.load_data(data, variable_manager=variable_manager, loader=loader)
 
     def preprocess_data(self, ds):
@@ -211,27 +207,6 @@ class Play(Base, Taggable, Become):
             roles.append(Role.load(ri, play=self))
         return roles
 
-    def _load_vars_prompt(self, attr, ds):
-        new_ds = preprocess_vars(ds)
-        vars_prompts = []
-        for prompt_data in new_ds:
-            if 'name' not in prompt_data:
-                display.deprecated("Using the 'short form' for vars_prompt has been deprecated")
-                for vname, prompt in prompt_data.iteritems():
-                    vars_prompts.append(dict(
-                        name      = vname,
-                        prompt    = prompt,
-                        default   = None,
-                        private   = None,
-                        confirm   = None,
-                        encrypt   = None,
-                        salt_size = None,
-                        salt      = None,
-                    ))
-            else:
-                vars_prompts.append(prompt_data)
-        return vars_prompts
-
     def _compile_roles(self):
         '''
         Handles the role compilation step, returning a flat list of tasks
@@ -292,12 +267,6 @@ class Play(Base, Taggable, Become):
 
         return block_list
 
-    def get_vars(self):
-        return self.vars.copy()
-
-    def get_vars_files(self):
-        return self.vars_files
-
     def get_handlers(self):
         return self.handlers[:]
 
@@ -343,4 +312,5 @@ class Play(Base, Taggable, Become):
         new_me = super(Play, self).copy()
         new_me.ROLE_CACHE = self.ROLE_CACHE.copy()
         new_me._included_path = self._included_path
+        new_me._playbook = self._playbook
         return new_me

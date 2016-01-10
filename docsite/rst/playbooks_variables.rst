@@ -75,13 +75,25 @@ See the :doc:`intro_inventory` document for multiple ways on how to define varia
 Variables Defined in a Playbook
 ```````````````````````````````
 
-In a playbook, it's possible to define variables directly inline like so::
+In a playbook, it's possible to define variables directly inline within
+a play like so::
 
    - hosts: webservers
      vars:
        http_port: 80
 
-This can be nice as it's right there when you are reading the playbook.
+This can be nice as it's right there when you are reading the playbook. Such variables are local to the play in which they
+are defined.
+
+Variables visible to the whole playbook can also be defined using vars, vars_files, or vars_prompt
+outside of a play:
+
+   - vars:
+       project_name: Foo
+   - vars_prompt:
+       - name: userid
+         prompt: User id
+         private: no
 
 .. _included_variables:
 
@@ -781,6 +793,9 @@ In 2.x we have made the order of precedence more specific (last listed wins):
   * host facts
   * registered vars
   * set_facts
+  * playbook vars
+  * playbook vars_prompt
+  * playbook vars_files
   * play vars
   * play vars_prompt
   * play vars_files
