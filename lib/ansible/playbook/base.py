@@ -153,7 +153,7 @@ class Base:
             setattr(Base, name, property(getter, setter, deleter))
 
             # Place the value into the instance so that the property can
-            # process and hold that value/
+            # process and hold that value.
             setattr(self, name, value.default)
 
     def preprocess_data(self, ds):
