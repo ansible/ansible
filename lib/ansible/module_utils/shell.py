@@ -16,57 +16,43 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 #
-"""
-Ansible shared module for building modules that require an interactive
-SSH Shell such as those for command line driven devices.  This module
-provides a native SSH transport using paramiko and builds a base Shell
-class for creating shell driven modules.
-
-In order to use this module, include it as part of a custom
-module as shown below and create and subclass Shell.
-
-** Note: The order of the import statements does matter. **
-
-from ansible.module_utils.basic import *
-from ansible.module_utils.ssh import *
-
-This module provides the following common argument spec for creating
-shell connections:
-
-    * host (str) - [Required]  The IPv4 address or FQDN of the device
-
-    * port (int) - Overrides the default SSH port.
-
-    * username (str) - [Required] The username to use to authenticate
-        the SSH session.
-
-    * password (str) - [Required] The password to use to authenticate
-        the SSH session
-
-    * connect_timeout (int) - Specifies the connection timeout in seconds
-
-"""
 import re
 import socket
 
 from StringIO import StringIO
 
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
 
-def shell_argument_spec(spec=None):
-    """ Generates an argument spec for the Shell class
-    """
-    arg_spec = dict(
-        host=dict(required=True),
-        port=dict(default=22, type='int'),
-        username=dict(required=True),
-        password=dict(required=True),
-        connect_timeout=dict(default=10, type='int'),
-    )
-    if spec:
-        arg_spec.update(spec)
-    return arg_spec
 
+ANSI_RE = re.compile(r'(\x1b\[\?1h\x1b=)')
+
+CLI_PROMPTS_RE = [
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#](?:\s*)$'),
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
+]
+
+CLI_ERRORS_RE = [
+    re.compile(r"% ?Error"),
+    re.compile(r"^% \w+", re.M),
+    re.compile(r"% ?Bad secret"),
+    re.compile(r"invalid input", re.I),
+    re.compile(r"(?:incomplete|ambiguous) command", re.I),
+    re.compile(r"connection timed out", re.I),
+    re.compile(r"[^\r\n]+ not found", re.I),
+    re.compile(r"'[^']' +returned error code: ?\d+"),
+]
+
+def to_list(val):
+    if isinstance(val, (list, tuple)):
+        return list(val)
+    elif val is not None:
+        return [val]
+    else:
+        return list()
 
 class ShellError(Exception):
 
@@ -74,7 +60,6 @@ class ShellError(Exception):
         super(ShellError, self).__init__(msg)
         self.message = msg
         self.command = command
-
 
 class Command(object):
 
@@ -86,59 +71,47 @@ class Command(object):
     def __str__(self):
         return self.command
 
-class Ssh(object):
+class Shell(object):
 
     def __init__(self):
-        self.client = None
+        self.ssh = None
+        self.shell = None
+
+        self.prompts = list()
+        self.prompts.extend(CLI_PROMPTS_RE)
+
+        self.errors = list()
+        self.errors.extend(CLI_ERRORS_RE)
 
     def open(self, host, port=22, username=None, password=None,
             timeout=10, key_filename=None):
 
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self.ssh = paramiko.SSHClient()
+        self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         use_keys = password is None
 
-        ssh.connect(host, port=port, username=username, password=password,
+        self.ssh.connect(host, port=port, username=username, password=password,
                     timeout=timeout, allow_agent=use_keys, look_for_keys=use_keys,
                     key_filename=key_filename)
 
-        self.client = ssh
-        return self.on_open()
-
-    def on_open(self):
-        pass
-
-    def close(self):
-        self.client.close()
-        return self.on_close()
-
-    def on_close(self):
-        pass
-
-
-class Shell(Ssh):
-
-    def __init__(self):
-        super(Shell, self).__init__()
-        self.shell = None
-
-        self.prompts = list()
-        self.errors = list()
-
-    def on_open(self):
-        self.shell = self.client.invoke_shell()
+        self.shell = self.ssh.invoke_shell()
         self.shell.settimeout(10)
         self.receive()
+
+    def strip(self, data):
+        return ANSI_RE.sub('', data)
 
     def receive(self, cmd=None):
         recv = StringIO()
 
         while True:
-            recv.write(self.shell.recv(200))
+            data = self.shell.recv(200)
+
+            recv.write(data)
             recv.seek(recv.tell() - 200)
 
-            window = recv.read()
+            window = self.strip(recv.read())
 
             if isinstance(cmd, Command):
                 self.handle_input(window, prompt=cmd.prompt,
@@ -146,19 +119,25 @@ class Shell(Ssh):
 
             try:
                 if self.read(window):
-                    resp = recv.getvalue()
+                    resp = self.strip(recv.getvalue())
                     return self.sanitize(cmd, resp)
             except ShellError, exc:
                 exc.command = cmd
                 raise
 
-    def send(self, command):
+    def send(self, commands):
+        responses = list()
         try:
-            cmd = '%s\r' % str(command)
-            self.shell.sendall(cmd)
-            return self.receive(command)
+            for command in to_list(commands):
+                cmd = '%s\r' % str(command)
+                self.shell.sendall(cmd)
+                responses.append(self.receive(command))
         except socket.timeout, exc:
             raise ShellError("timeout trying to send command", cmd)
+        return responses
+
+    def close(self):
+        self.shell.close()
 
     def handle_input(self, resp, prompt, response):
         if not prompt or not response:
@@ -184,11 +163,31 @@ class Shell(Ssh):
     def read(self, response):
         for regex in self.errors:
             if regex.search(response):
-                raise ShellError('{}'.format(response))
+                raise ShellError('%s' % response)
 
         for regex in self.prompts:
             if regex.search(response):
                 return True
 
+def get_cli_connection(module):
+    host = module.params['host']
+    port = module.params['port']
+    if not port:
+        port = 22
 
+    username = module.params['username']
+    password = module.params['password']
+
+    try:
+        cli = Cli()
+        cli.open(host, port=port, username=username, password=password)
+    except paramiko.ssh_exception.AuthenticationException, exc:
+        module.fail_json(msg=exc.message)
+    except socket.error, exc:
+        host = '%s:%s' % (host, port)
+        module.fail_json(msg=exc.strerror, errno=exc.errno, host=host)
+    except socket.timeout:
+        module.fail_json(msg='socket timed out')
+
+    return cli
 
