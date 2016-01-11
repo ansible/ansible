@@ -209,6 +209,8 @@ def build_option_parser(action):
         parser.add_option(
             '-s', '--server', dest='api_server', default="galaxy.ansible.com",
             help='The API server destination')
+        parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=False,
+                          help='Ignore SSL certificate validation errors.')
 
     if action in ("init","install"):
         parser.add_option(
@@ -245,15 +247,18 @@ def exit_without_ignore(options, rc=1):
 # Galaxy API functions
 #-------------------------------------------------------------------------------------
 
-def api_get_config(api_server):
+def api_get_config(api_server, ignore_certs=False):
     """
     Fetches the Galaxy API current version to ensure
     the API server is up and reachable.
     """
+    validate_certs = True
+    if ignore_certs:
+        validate_certs = False
 
     try:
         url = 'https://%s/api/' % api_server
-        data = json.load(open_url(url))
+        data = json.load(open_url(url, validate_certs=validate_certs))
         if not data.get("current_version",None):
             return None
         else:
@@ -261,10 +266,14 @@ def api_get_config(api_server):
     except:
         return None
 
-def api_lookup_role_by_name(api_server, role_name, parser, notify=True):
+def api_lookup_role_by_name(api_server, role_name, parser, notify=True, ignore_certs=False):
     """
     Uses the Galaxy API to do a lookup on the role owner/name.
     """
+
+    validate_certs = True
+    if ignore_certs:
+        validate_certs = False
 
     role_name = urllib.quote(role_name)
 
@@ -281,7 +290,7 @@ def api_lookup_role_by_name(api_server, role_name, parser, notify=True):
 
     url = 'https://%s/api/v1/roles/?owner__username=%s&name=%s' % (api_server,user_name,role_name)
     try:
-        data = json.load(open_url(url))
+        data = json.load(open_url(url, validate_certs=validate_certs))
         if len(data["results"]) == 0:
             return None
         else:
@@ -289,16 +298,19 @@ def api_lookup_role_by_name(api_server, role_name, parser, notify=True):
     except:
         return None
 
-def api_fetch_role_related(api_server, related, role_id):
+def api_fetch_role_related(api_server, related, role_id, ignore_certs=False):
     """
     Uses the Galaxy API to fetch the list of related items for
     the given role. The url comes from the 'related' field of 
     the role. 
     """
+    validate_certs = True
+    if ignore_certs:
+        validate_certs = False
 
     try:
         url = 'https://%s/api/v1/roles/%d/%s/?page_size=50' % (api_server, int(role_id), related)
-        data = json.load(open_url(url))
+        data = json.load(open_url(url, validate_certs=validate_certs))
         results = data['results']
         done = (data.get('next', None) == None)
         while not done:
@@ -311,14 +323,18 @@ def api_fetch_role_related(api_server, related, role_id):
     except:
         return None
 
-def api_get_list(api_server, what):
+def api_get_list(api_server, what, ignore_certs=False):
     """
     Uses the Galaxy API to fetch the list of items specified.
     """
 
+    validate_certs = True
+    if ignore_certs:
+        validate_certs = False
+
     try:
         url = 'https://%s/api/v1/%s/?page_size' % (api_server, what)
-        data = json.load(open_url(url))
+        data = json.load(open_url(url, validate_certs=validate_certs))
         if "results" in data:
             results = data['results']
         else:
@@ -474,6 +490,11 @@ def fetch_role(role_name, target, role_data, options):
     Downloads the archived role from github to a temp location, extracts
     it, and then copies the extracted role to the role library path.
     """
+    ignore_certs = get_opt(options, "ignore_certs")
+
+    validate_certs = True
+    if ignore_certs:
+        validate_certs = False
 
     # first grab the file and save it to a temp location
     if '://' in role_name:
@@ -483,7 +504,7 @@ def fetch_role(role_name, target, role_data, options):
     print "- downloading role from %s" % archive_url
 
     try:
-        url_file = open_url(archive_url)
+        url_file = open_url(archive_url, validate_certs=validate_certs)
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         data = url_file.read()
         while data:
@@ -584,13 +605,14 @@ def execute_init(args, options, parser):
     of a role that complies with the galaxy metadata format.
     """
 
-    init_path  = get_opt(options, 'init_path', './')
-    api_server = get_opt(options, "api_server", "galaxy.ansible.com")
-    force      = get_opt(options, 'force', False)
-    offline    = get_opt(options, 'offline', False)
+    init_path    = get_opt(options, 'init_path', './')
+    api_server   = get_opt(options, "api_server", "galaxy.ansible.com")
+    force        = get_opt(options, 'force', False)
+    offline      = get_opt(options, 'offline', False)
+    ignore_certs = get_opt(options, 'ignore_certs', False)
 
     if not offline:
-        api_config = api_get_config(api_server)
+        api_config = api_get_config(api_server, ignore_certs)
         if not api_config:
             print "- the API server (%s) is not responding, please try again later." % api_server
             sys.exit(1)
@@ -640,10 +662,10 @@ def execute_init(args, options, parser):
             # dependencies section
             platforms = []
             if not offline:
-                platforms = api_get_list(api_server, "platforms") or []
+                platforms = api_get_list(api_server, "platforms", ignore_certs) or []
             categories = []
             if not offline:
-                categories = api_get_list(api_server, "categories") or []
+                categories = api_get_list(api_server, "categories", ignore_certs) or []
 
             # group the list of platforms from the api based
             # on their names, with the release field being 
@@ -687,9 +709,10 @@ def execute_info(args, options, parser):
         print "- you must specify a user/role name"
         sys.exit(1)
 
-    api_server = get_opt(options, "api_server", "galaxy.ansible.com")
-    api_config = api_get_config(api_server)
-    roles_path = get_opt(options, "roles_path")
+    api_server   = get_opt(options, "api_server", "galaxy.ansible.com")
+    api_config   = api_get_config(api_server)
+    roles_path   = get_opt(options, "roles_path")
+    ignore_certs = get_opt(options, "ignore_certs", False)
 
     for role in args:
 
@@ -702,7 +725,7 @@ def execute_info(args, options, parser):
                 del install_info['version']
             role_info.update(install_info)
 
-        remote_data = api_lookup_role_by_name(api_server, role, parser, False)
+        remote_data = api_lookup_role_by_name(api_server, role, parser, False, ignore_certs)
         if remote_data:
             role_info.update(remote_data)
 
@@ -755,9 +778,10 @@ def execute_install(args, options, parser):
         print "- please specify a user/role name, or a roles file, but not both"
         sys.exit(1)
 
-    api_server = get_opt(options, "api_server", "galaxy.ansible.com")
-    no_deps    = get_opt(options, "no_deps", False)
-    roles_path = get_opt(options, "roles_path")
+    api_server   = get_opt(options, "api_server", "galaxy.ansible.com")
+    no_deps      = get_opt(options, "no_deps", False)
+    roles_path   = get_opt(options, "roles_path")
+    ignore_certs = get_opt(options, "ignore_certs")
 
     if role_file:
         f = open(role_file, 'r')
@@ -797,18 +821,18 @@ def execute_install(args, options, parser):
                 tmp_file = fetch_role(role_src, None, None, options)
             else:
                 # installing from galaxy
-                api_config = api_get_config(api_server)
+                api_config = api_get_config(api_server, ignore_certs)
                 if not api_config:
                     print "- the API server (%s) is not responding, please try again later." % api_server
                     sys.exit(1)
 
-                role_data = api_lookup_role_by_name(api_server, role_src, parser)
+                role_data = api_lookup_role_by_name(api_server, role_src, parser, True, ignore_certs)
                 if not role_data:
                     print "- sorry, %s was not found on %s." % (role_src, api_server)
                     exit_without_ignore(options)
                     continue
 
-                role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'])
+                role_versions = api_fetch_role_related(api_server, 'versions', role_data['id'], ignore_certs)
                 if "version" not in role or role['version'] == '':
                     # convert the version names to LooseVersion objects
                     # and sort them to get the latest version. If there
@@ -842,7 +866,8 @@ def execute_install(args, options, parser):
                     role_data = get_role_metadata(role.get("name"), options)
                     role_dependencies = role_data.get('dependencies',[])
                 else:
-                    role_dependencies = role_data['summary_fields'].get('dependencies',[]) # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
+                    role_dependencies = role_data['summary_fields'].get('dependencies',[])
+                    # api_fetch_role_related(api_server, 'dependencies', role_data['id'])
                 if not role_dependencies:
                     role_dependencies = []
                 for dep in role_dependencies:
