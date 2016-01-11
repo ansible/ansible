@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # (c) 2012, Jan-Piet Mens <jpmens () gmail.com>
+# (c) 2015, Ales Nosek <anosek.nosek () gmail.com>
 #
 # This file is part of Ansible
 #
@@ -28,8 +29,7 @@ description:
      - Manage (add, remove, change) individual settings in an INI-style file without having
        to manage the file as a whole with, say, M(template) or M(assemble). Adds missing
        sections if they don't exist.
-     - Comments are discarded when the source file is read, and therefore will not 
-       show up in the destination file.
+     - Before version 2.0, comments are discarded when the source file is read, and therefore will not show up in the destination file.
 version_added: "0.9"
 options:
   dest:
@@ -65,6 +65,12 @@ options:
      description:
        - all arguments accepted by the M(file) module also work here
      required: false
+  state:
+     description:
+       - If set to C(absent) the option or section will be removed if present instead of created.
+     required: false
+     default: "present"
+     choices: [ "present", "absent" ]
 notes:
    - While it is possible to add an I(option) without specifying a I(value), this makes
      no sense.
@@ -73,7 +79,9 @@ notes:
      Either use M(template) to create a base INI file with a C([default]) section, or use
      M(lineinfile) to add the missing line.
 requirements: [ ConfigParser ]
-author: "Jan-Piet Mens (@jpmens)"
+author:
+    - "Jan-Piet Mens (@jpmens)"
+    - "Ales Nosek (@noseka1)"
 '''
 
 EXAMPLES = '''
@@ -89,91 +97,108 @@ EXAMPLES = '''
 
 import ConfigParser
 import sys
+import os
+
+# ==============================================================
+# match_opt
+
+def match_opt(option, line):
+  option = re.escape(option)
+  return re.match('%s *=' % option, line) \
+    or re.match('# *%s *=' % option, line) \
+    or re.match('; *%s *=' % option, line)
+
+# ==============================================================
+# match_active_opt
+
+def match_active_opt(option, line):
+  option = re.escape(option)
+  return re.match('%s *=' % option, line)
 
 # ==============================================================
 # do_ini
 
 def do_ini(module, filename, section=None, option=None, value=None, state='present', backup=False):
 
-    changed = False
-    if (sys.version_info[0] == 2 and sys.version_info[1] >= 7) or sys.version_info[0] >= 3: 
-        cp = ConfigParser.ConfigParser(allow_no_value=True)
-    else:
-        cp = ConfigParser.ConfigParser()
-    cp.optionxform = identity
 
+    if not os.path.exists(filename):
+      try:
+        open(filename,'w').close()
+      except:
+        module.fail_json(msg="Destination file %s not writable" % filename)
+    ini_file = open(filename, 'r')
     try:
-        f = open(filename)
-        cp.readfp(f)
-    except IOError:
-        pass
+        ini_lines = ini_file.readlines()
+        # append a fake section line to simplify the logic
+        ini_lines.append('[')
+    finally:
+        ini_file.close()
 
+    within_section = not section
+    section_start = 0
+    changed = False
 
-    if state == 'absent':
-        if option is None and value is None:
-            if cp.has_section(section):
-                cp.remove_section(section)
-                changed = True
+    for index, line in enumerate(ini_lines):
+        if line.startswith('[%s]' % section):
+            within_section = True
+            section_start = index
+        elif line.startswith('['):
+            if within_section:
+                if state == 'present':
+                    # insert missing option line at the end of the section
+                    ini_lines.insert(index, '%s = %s\n' % (option, value))
+                    changed = True
+                elif state == 'absent' and not option:
+                    # remove the entire section
+                    del ini_lines[section_start:index]
+                    changed = True
+                break
         else:
-            if option is not None:
-                try:
-                    if cp.get(section, option):
-                        cp.remove_option(section, option)
+            if within_section and option:
+                if state == 'present':
+                    # change the existing option line
+                    if match_opt(option, line):
+                        newline = '%s = %s\n' % (option, value)
+                        changed = ini_lines[index] != newline
+                        ini_lines[index] = newline
+                        if changed:
+                            # remove all possible option occurences from the rest of the section
+                            index = index + 1
+                            while index < len(ini_lines):
+                                line = ini_lines[index]
+                                if line.startswith('['):
+                                    break
+                                if match_active_opt(option, line):
+                                    del ini_lines[index]
+                                else:
+                                    index = index + 1
+                        break
+                else:
+                    # comment out the existing option line
+                    if match_active_opt(option, line):
+                        ini_lines[index] = '#%s' % ini_lines[index]
                         changed = True
-                except ConfigParser.InterpolationError:
-                    cp.remove_option(section, option)
-                    changed = True
-                except:
-                    pass
+                        break
 
-    if state == 'present':
+    # remove the fake section line
+    del ini_lines[-1:]
 
-        # DEFAULT section is always there by DEFAULT, so never try to add it.
-        if not cp.has_section(section) and section.upper() != 'DEFAULT':
+    if not within_section and option and state == 'present':
+        ini_lines.append('[%s]\n' % section)
+        ini_lines.append('%s = %s\n' % (option, value))
+        changed = True
 
-            cp.add_section(section)
-            changed = True
-
-        if option is not None and value is not None:
-            try:
-                oldvalue = cp.get(section, option)
-                if str(value) != str(oldvalue):
-                    cp.set(section, option, value)
-                    changed = True
-            except ConfigParser.NoSectionError:
-                cp.set(section, option, value)
-                changed = True
-            except ConfigParser.NoOptionError:
-                cp.set(section, option, value)
-                changed = True
-            except ConfigParser.InterpolationError:
-                cp.set(section, option, value)
-                changed = True
 
     if changed and not module.check_mode:
         if backup:
             module.backup_local(filename)
-
+        ini_file = open(filename, 'w')
         try:
-            f = open(filename, 'w')
-            cp.write(f)
-        except:
-            module.fail_json(msg="Can't create %s" % filename)
+            ini_file.writelines(ini_lines)
+        finally:
+            ini_file.close()
 
     return changed
-
-# ==============================================================
-# identity
-
-def identity(arg):
-    """
-    This function simply returns its argument. It serves as a
-    replacement for ConfigParser.optionxform, which by default
-    changes arguments to lower case. The identity function is a
-    better choice than str() or unicode(), because it is
-    encoding-agnostic.
-    """
-    return arg
 
 # ==============================================================
 # main
@@ -212,4 +237,5 @@ def main():
 
 # import module snippets
 from ansible.module_utils.basic import *
-main()
+if __name__ == '__main__':
+    main()

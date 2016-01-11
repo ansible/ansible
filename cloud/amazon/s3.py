@@ -146,7 +146,6 @@ options:
 requirements: [ "boto" ]
 author:
     - "Lester Wade (@lwade)"
-    - "Ralph Tice (@ralph-tice)"
 extends_documentation_fragment: aws
 '''
 

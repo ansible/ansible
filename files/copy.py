@@ -19,7 +19,7 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import time
+import tempfile
 
 DOCUMENTATION = '''
 ---
@@ -27,7 +27,7 @@ module: copy
 version_added: "historical"
 short_description: Copies files to remote locations.
 description:
-     - The M(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box.
+     - The M(copy) module copies a file on the local box to remote locations. Use the M(fetch) module to copy files from remote locations to the local box. If you need variable interpolation in copied files, use the M(template) module.
 options:
   src:
     description:
@@ -214,7 +214,8 @@ def main():
             backup            = dict(default=False, type='bool'),
             force             = dict(default=True, aliases=['thirsty'], type='bool'),
             validate          = dict(required=False, type='str'),
-            directory_mode    = dict(required=False)
+            directory_mode    = dict(required=False),
+            remote_src        = dict(required=False, type='bool'),
         ),
         add_file_common_args=True,
         supports_check_mode=True,
@@ -228,6 +229,7 @@ def main():
     validate = module.params.get('validate',None)
     follow = module.params['follow']
     mode   = module.params['mode']
+    remote_src = module.params['remote_src']
 
     if not os.path.exists(src):
         module.fail_json(msg="Source %s failed to transfer" % (src))
@@ -307,7 +309,12 @@ def main():
                 (rc,out,err) = module.run_command(validate % src)
                 if rc != 0:
                     module.fail_json(msg="failed to validate: rc:%s error:%s" % (rc,err))
-            module.atomic_move(src, dest)
+            if remote_src:
+                _, tmpdest = tempfile.mkstemp(dir=os.path.dirname(dest))
+                shutil.copy2(src, tmpdest)
+                module.atomic_move(tmpdest, dest)
+            else:
+                module.atomic_move(src, dest)
         except IOError:
             module.fail_json(msg="failed to copy: %s to %s" % (src, dest))
         changed = True

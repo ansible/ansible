@@ -107,8 +107,14 @@ options:
     description:
       - Wait a specified timeout allowing connections to drain before terminating an instance
     required: false
+    default: "None"
     aliases: []
     version_added: "1.8"
+  idle_timeout:
+    description:
+      - ELB connections from clients and to servers are timed out after this amount of time
+    required: false
+    version_added: "2.0"
   cross_az_load_balancing:
     description:
       - Distribute load across all configured Availability Zones
@@ -243,13 +249,14 @@ EXAMPLES = """
         load_balancer_port: 80
         instance_port: 80
 
-# Create an ELB with connection draining and cross availability
+# Create an ELB with connection draining, increased idle timeout and cross availability
 # zone load balancing
 - local_action:
     module: ec2_elb_lb
     name: "New ELB"
     state: present
     connection_draining_timeout: 60
+    idle_timeout: 300
     cross_az_load_balancing: "yes"
     region: us-east-1
     zones:
@@ -316,6 +323,7 @@ class ElbManager(object):
                  zones=None, purge_zones=None, security_group_ids=None,
                  health_check=None, subnets=None, purge_subnets=None,
                  scheme="internet-facing", connection_draining_timeout=None,
+                 idle_timeout=None,
                  cross_az_load_balancing=None, access_logs=None,
                  stickiness=None, region=None, **aws_connect_params):
 
@@ -331,6 +339,7 @@ class ElbManager(object):
         self.purge_subnets = purge_subnets
         self.scheme = scheme
         self.connection_draining_timeout = connection_draining_timeout
+        self.idle_timeout = idle_timeout
         self.cross_az_load_balancing = cross_az_load_balancing
         self.access_logs = access_logs
         self.stickiness = stickiness
@@ -359,6 +368,8 @@ class ElbManager(object):
         # set them to avoid errors
         if self._check_attribute_support('connection_draining'):
             self._set_connection_draining_timeout()
+        if self._check_attribute_support('connecting_settings'):
+            self._set_idle_timeout()
         if self._check_attribute_support('cross_zone_load_balancing'):
             self._set_cross_az_load_balancing()
         if self._check_attribute_support('access_log'):
@@ -456,6 +467,9 @@ class ElbManager(object):
             if self._check_attribute_support('connection_draining'):
                 info['connection_draining_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectionDraining').timeout
 
+            if self._check_attribute_support('connecting_settings'):
+                info['idle_timeout'] = self.elb_conn.get_lb_attribute(self.name, 'ConnectingSettings').idle_timeout
+
             if self._check_attribute_support('cross_zone_load_balancing'):
                 is_cross_az_lb_enabled = self.elb_conn.get_lb_attribute(self.name, 'CrossZoneLoadBalancing')
                 if is_cross_az_lb_enabled:
@@ -478,7 +492,7 @@ class ElbManager(object):
         try:
             return connect_to_aws(boto.ec2.elb, self.region,
                                   **self.aws_connect_params)
-        except (boto.exception.NoAuthHandlerFound, StandardError), e:
+        except (boto.exception.NoAuthHandlerFound, AnsibleAWSError), e:
             self.module.fail_json(msg=str(e))
 
     def _delete_elb(self):
@@ -745,6 +759,12 @@ class ElbManager(object):
             attributes.connection_draining.enabled = False
             self.elb_conn.modify_lb_attribute(self.name, 'ConnectionDraining', attributes.connection_draining)
 
+    def _set_idle_timeout(self):
+        attributes = self.elb.get_attributes()
+        if self.idle_timeout is not None:
+            attributes.connecting_settings.idle_timeout = self.idle_timeout
+            self.elb_conn.modify_lb_attribute(self.name, 'ConnectingSettings', attributes.connecting_settings)
+
     def _policy_name(self, policy_type):
         return __file__.split('/')[-1].replace('_', '-')  + '-' + policy_type
 
@@ -792,21 +812,25 @@ class ElbManager(object):
             if self.stickiness['type'] == 'loadbalancer':
                 policy = []
                 policy_type = 'LBCookieStickinessPolicyType'
-                if self.stickiness['enabled'] == True:
+
+                if self.module.boolean(self.stickiness['enabled']) == True:
 
                     if 'expiration' not in self.stickiness:
                         self.module.fail_json(msg='expiration must be set when type is loadbalancer')
+
+                    expiration = self.stickiness['expiration'] if self.stickiness['expiration'] is not 0 else None
 
                     policy_attrs = {
                         'type': policy_type,
                         'attr': 'lb_cookie_stickiness_policies',
                         'method': 'create_lb_cookie_stickiness_policy',
                         'dict_key': 'cookie_expiration_period',
-                        'param_value': self.stickiness['expiration']
+                        'param_value': expiration
                     }
                     policy.append(self._policy_name(policy_attrs['type']))
+
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.stickiness['enabled'] == False:
+                elif self.module.boolean(self.stickiness['enabled']) == False:
                     if len(elb_info.policies.lb_cookie_stickiness_policies):
                         if elb_info.policies.lb_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -818,7 +842,7 @@ class ElbManager(object):
             elif self.stickiness['type'] == 'application':
                 policy = []
                 policy_type = 'AppCookieStickinessPolicyType'
-                if self.stickiness['enabled'] == True:
+                if self.module.boolean(self.stickiness['enabled']) == True:
 
                     if 'cookie' not in self.stickiness:
                         self.module.fail_json(msg='cookie must be set when type is application')
@@ -832,7 +856,7 @@ class ElbManager(object):
                     }
                     policy.append(self._policy_name(policy_attrs['type']))
                     self._set_stickiness_policy(elb_info, listeners_dict, policy, **policy_attrs)
-                elif self.stickiness['enabled'] == False:
+                elif self.module.boolean(self.stickiness['enabled']) == False:
                     if len(elb_info.policies.app_cookie_stickiness_policies):
                         if elb_info.policies.app_cookie_stickiness_policies[0].policy_name == self._policy_name(policy_type):
                             self.changed = True
@@ -869,6 +893,7 @@ def main():
             purge_subnets={'default': False, 'required': False, 'type': 'bool'},
             scheme={'default': 'internet-facing', 'required': False},
             connection_draining_timeout={'default': None, 'required': False},
+            idle_timeout={'default': None, 'required': False},
             cross_az_load_balancing={'default': None, 'required': False},
             stickiness={'default': None, 'required': False, 'type': 'dict'},
             access_logs={'default': None, 'required': False, 'type': 'dict'}
@@ -901,6 +926,7 @@ def main():
     purge_subnets = module.params['purge_subnets']
     scheme = module.params['scheme']
     connection_draining_timeout = module.params['connection_draining_timeout']
+    idle_timeout = module.params['idle_timeout']
     cross_az_load_balancing = module.params['cross_az_load_balancing']
     stickiness = module.params['stickiness']
 
@@ -928,7 +954,8 @@ def main():
     elb_man = ElbManager(module, name, listeners, purge_listeners, zones,
                          purge_zones, security_group_ids, health_check,
                          subnets, purge_subnets, scheme,
-                         connection_draining_timeout, cross_az_load_balancing,
+                         connection_draining_timeout, idle_timeout,
+                         cross_az_load_balancing,
                          access_logs, stickiness,
                          region=region, **aws_connect_params)
 
@@ -938,6 +965,9 @@ def main():
 
     if connection_draining_timeout and not elb_man._check_attribute_support('connection_draining'):
         module.fail_json(msg="You must install boto >= 2.28.0 to use the connection_draining_timeout attribute")
+
+    if idle_timeout and not elb_man._check_attribute_support('connecting_settings'):
+        module.fail_json(msg="You must install boto >= 2.33.0 to use the idle_timeout attribute")
 
     if state == 'present':
         elb_man.ensure_ok()
@@ -955,4 +985,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()

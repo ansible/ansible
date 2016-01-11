@@ -64,9 +64,9 @@ extends_documentation_fragment:
 '''
 
 EXAMPLES = '''
-# Create and policy with the name of 'Admin' to the group 'administrators'
+# Create a policy with the name of 'Admin' to the group 'administrators'
 tasks:
-- name: Create two new IAM users with API keys
+- name: Assign a policy called Admin to the administrators group
   iam_policy:
     iam_type: group
     iam_name: administrators
@@ -87,7 +87,7 @@ task:
      - Luigi
   register: new_groups
 
-- name:
+- name: Apply READ-ONLY policy to new groups that have been recently created
   iam_policy:
     iam_type: group
     iam_name: "{{ item.created_group.group_name }}"
@@ -146,9 +146,7 @@ def user_action(module, iam, name, policy_name, skip, pdoc, state):
       if urllib.unquote(iam.get_user_policy(name, pol).
                         get_user_policy_result.policy_document) == pdoc:
         policy_match = True
-        if policy_match:
-          msg=("The policy document you specified already exists "
-               "under the name %s." % pol)
+
     if state == 'present':
       # If policy document does not already exist (either it's changed
       # or the policy is not present) or if we're not skipping dupes then
@@ -183,13 +181,19 @@ def role_action(module, iam, name, policy_name, skip, pdoc, state):
     current_policies = [cp for cp in iam.list_role_policies(name).
                                         list_role_policies_result.
                                         policy_names]
+  except boto.exception.BotoServerError as e:
+    if e.error_code == "NoSuchEntity":
+      # Role doesn't exist so it's safe to assume the policy doesn't either
+      module.exit_json(changed=False)
+    else:
+      module.fail_json(msg=e.message)
+
+  try:
     for pol in current_policies:
       if urllib.unquote(iam.get_role_policy(name, pol).
                         get_role_policy_result.policy_document) == pdoc:
         policy_match = True
-        if policy_match:
-          msg=("The policy document you specified already exists "
-               "under the name %s." % pol)
+
     if state == 'present':
       # If policy document does not already exist (either it's changed
       # or the policy is not present) or if we're not skipping dupes then
@@ -297,10 +301,12 @@ def main():
           pdoc = json.dumps(json.load(json_data))
           json_data.close()
   elif module.params.get('policy_json') != None:
-      try:
-        pdoc = json.dumps(module.params.get('policy_json'))
-      except Exception as e:
-        module.fail_json(msg=str(e) + '\n' + module.params.get('policy_json'))
+      # if its a string, assume it is already JSON
+      if not isinstance(pdoc, basestring):
+        try:
+          pdoc = json.dumps(module.params.get('policy_json'))
+        except Exception as e:
+          module.fail_json(msg='Failed to convert the policy into valid JSON: %s' % str(e))
   else:
     pdoc=None
 

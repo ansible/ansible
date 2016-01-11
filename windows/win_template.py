@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-DOCUMENTATION = '''
+DOCUMENTATION = r'''
 ---
 module: win_template
 version_added: "1.9.2"
@@ -47,8 +47,8 @@ notes:
   - "templates are loaded with C(trim_blocks=True)."
   - By default, windows line endings are not created in the generated file.
   - "In order to ensure windows line endings are in the generated file, add the following header
-    as the first line of your template: #jinja2: newline_sequence:'\r\n' and ensure each line
-    of the template ends with \r\n"
+    as the first line of your template: #jinja2: newline_sequence:'\\\\r\\\\n' and ensure each line
+    of the template ends with \\\\r\\\\n"
   - Beware fetching files from windows machines when creating templates
     because certain tools, such as Powershell ISE,  and regedit's export facility
     add a Byte Order Mark as the first character of the file, which can cause tracebacks.

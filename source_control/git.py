@@ -33,7 +33,7 @@ options:
         required: true
         aliases: [ name ]
         description:
-            - git, SSH, or HTTP protocol address of the git repository.
+            - git, SSH, or HTTP(S) protocol address of the git repository.
     dest:
         required: true
         description:
@@ -55,7 +55,7 @@ options:
         version_added: "1.5"
         description:
             - if C(yes), adds the hostkey for the repo url if not already 
-              added. If ssh_args contains "-o StrictHostKeyChecking=no", 
+              added. If ssh_opts contains "-o StrictHostKeyChecking=no", 
               this parameter is ignored.
     ssh_opts:
         required: false

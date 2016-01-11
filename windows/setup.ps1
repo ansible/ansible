@@ -26,11 +26,9 @@ $result = New-Object psobject @{
 };
 
 $win32_os = Get-CimInstance Win32_OperatingSystem
+$win32_cs = Get-CimInstance Win32_ComputerSystem
 $osversion = [Environment]::OSVersion
-$memory = @()
-$memory += Get-WmiObject win32_Physicalmemory
-$capacity = 0
-$memory | foreach {$capacity += $_.Capacity}
+$capacity = $win32_cs.TotalPhysicalMemory # Win32_PhysicalMemory is empty on some virtual platforms
 $netcfg = Get-WmiObject win32_NetworkAdapterConfiguration
 
 $ActiveNetcfg = @(); $ActiveNetcfg+= $netcfg | where {$_.ipaddress -ne $null}
@@ -70,6 +68,7 @@ Set-Attr $date "year" (Get-Date -format yyyy)
 Set-Attr $date "month" (Get-Date -format MM)
 Set-Attr $date "day" (Get-Date -format dd)
 Set-Attr $date "hour" (Get-Date -format HH)
+Set-Attr $date "minute" (Get-Date -format mm)
 Set-Attr $date "iso8601" (Get-Date -format s)
 Set-Attr $result.ansible_facts "ansible_date_time" $date
 

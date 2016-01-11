@@ -267,6 +267,7 @@ def main():
             get_checksum  = dict(default="False", type='bool'),
             use_regex     = dict(default="False", type='bool'),
         ),
+        supports_check_mode=True,
     )
 
     params = module.params

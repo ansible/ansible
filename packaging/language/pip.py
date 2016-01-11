@@ -20,6 +20,7 @@
 #
 
 import tempfile
+import re
 import os
 
 DOCUMENTATION = '''
@@ -43,7 +44,8 @@ options:
     default: null
   requirements:
     description:
-      - The path to a pip requirements file
+      - The path to a pip requirements file, which should be local to the remote system. 
+        File can be specified as a relative path if using the chdir option.  
     required: false
     default: null
   virtualenv:
@@ -90,6 +92,12 @@ options:
     required: false
     default: null
     version_added: "1.0"
+  editable:
+    description:
+      - Pass the editable flag for versioning URLs.
+    required: false
+    default: yes
+    version_added: "2.0"
   chdir:
     description:
       - cd into this directory before running the command
@@ -120,6 +128,9 @@ EXAMPLES = '''
 
 # Install (MyApp) using one of the remote protocols (bzr+,hg+,git+,svn+). You do not have to supply '-e' option in extra_args.
 - pip: name='svn+http://myrepo/svn/MyApp#egg=MyApp'
+
+# Install MyApp using one of the remote protocols (bzr+,hg+,git+) in a non editable way.
+- pip: name='git+http://myrepo/app/MyApp' editable=false
 
 # Install (MyApp) from local tarball
 - pip: name='file:///path/to/MyApp.tar.gz'
@@ -239,6 +250,7 @@ def main():
             virtualenv_python=dict(default=None, required=False, type='str'),
             use_mirrors=dict(default='yes', type='bool'),
             extra_args=dict(default=None, required=False),
+            editable=dict(default='yes', type='bool', required=False),
             chdir=dict(default=None, required=False, type='path'),
             executable=dict(default=None, required=False),
         ),
@@ -311,16 +323,15 @@ def main():
 
     # Automatically apply -e option to extra_args when source is a VCS url. VCS
     # includes those beginning with svn+, git+, hg+ or bzr+
-    if name:
-        if name.startswith('svn+') or name.startswith('git+') or \
-                name.startswith('hg+') or name.startswith('bzr+'):
-            args_list = []  # used if extra_args is not used at all
-            if extra_args:
-                args_list = extra_args.split(' ')
-            if '-e' not in args_list:
-                args_list.append('-e')
-                # Ok, we will reconstruct the option string
-                extra_args = ' '.join(args_list)
+    has_vcs = bool(name and re.match(r'(svn|git|hg|bzr)\+', name))
+    if has_vcs and module.params['editable']:
+        args_list = []  # used if extra_args is not used at all
+        if extra_args:
+            args_list = extra_args.split(' ')
+        if '-e' not in args_list:
+            args_list.append('-e')
+            # Ok, we will reconstruct the option string
+            extra_args = ' '.join(args_list)
 
     if extra_args:
         cmd += ' %s' % extra_args
@@ -333,8 +344,7 @@ def main():
     if module.check_mode:
         if extra_args or requirements or state == 'latest' or not name:
             module.exit_json(changed=True)
-        elif name.startswith('svn+') or name.startswith('git+') or \
-                name.startswith('hg+') or name.startswith('bzr+'):
+        elif has_vcs:
             module.exit_json(changed=True)
 
         freeze_cmd = '%s freeze' % pip
@@ -352,6 +362,12 @@ def main():
         changed = (state == 'present' and not is_present) or (state == 'absent' and is_present)
         module.exit_json(changed=changed, cmd=freeze_cmd, stdout=out, stderr=err)
 
+    if requirements or has_vcs:
+        freeze_cmd = '%s freeze' % pip
+        out_freeze_before = module.run_command(freeze_cmd, cwd=chdir)[1]
+    else:
+        out_freeze_before = None
+
     rc, out_pip, err_pip = module.run_command(cmd, path_prefix=path_prefix, cwd=chdir)
     out += out_pip
     err += err_pip
@@ -364,7 +380,11 @@ def main():
     if state == 'absent':
         changed = 'Successfully uninstalled' in out_pip
     else:
-        changed = 'Successfully installed' in out_pip
+        if out_freeze_before is None:
+            changed = 'Successfully installed' in out_pip
+        else:
+            out_freeze_after = module.run_command(freeze_cmd, cwd=chdir)[1]
+            changed = out_freeze_before != out_freeze_after
 
     module.exit_json(changed=changed, cmd=cmd, name=name, version=version,
                      state=state, requirements=requirements, virtualenv=env,

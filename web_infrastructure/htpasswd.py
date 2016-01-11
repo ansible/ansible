@@ -69,7 +69,7 @@ notes:
   - "On Debian, Ubuntu, or Fedora: install I(python-passlib)."
   - "On RHEL or CentOS: Enable EPEL, then install I(python-passlib)."
 requires: [ passlib>=1.6 ]
-author: "Lorin Hochstein (@lorin)"
+author: "Ansible Core Team"
 """
 
 EXAMPLES = """
@@ -96,6 +96,7 @@ else:
     passlib_installed = True
 
 apache_hashes = ["apr_md5_crypt", "des_crypt", "ldap_sha1", "plaintext"]
+
 
 def create_missing_directories(dest):
     destpath = os.path.dirname(dest)
@@ -155,9 +156,6 @@ def absent(dest, username, check_mode):
     """ Ensures user is absent
 
     Returns (msg, changed) """
-    if not os.path.exists(dest):
-        raise ValueError("%s does not exists" % dest)
-
     if StrictVersion(passlib.__version__) >= StrictVersion('1.6'):
         ht = HtpasswdFile(dest, new=False)
     else:
@@ -244,6 +242,9 @@ def main():
         if state == 'present':
             (msg, changed) = present(path, username, password, crypt_scheme, create, check_mode)
         elif state == 'absent':
+            if not os.path.exists(path):
+                module.exit_json(msg="%s not present" % username,
+                        warnings="%s does not exist" % path, changed=False)
             (msg, changed) = absent(path, username, check_mode)
         else:
             module.fail_json(msg="Invalid state: %s" % state)

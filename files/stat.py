@@ -42,11 +42,28 @@ options:
     aliases: []
   get_checksum:
     description:
-      - Whether to return a checksum of the file (currently sha1)
+      - Whether to return a checksum of the file (default sha1)
     required: false
     default: yes
     aliases: []
     version_added: "1.8"
+  checksum_algorithm:
+    description:
+      - Algorithm to determine checksum of file. Will throw an error if the host is unable to use specified algorithm.
+    required: false
+    choices: [ 'sha1', 'sha224', 'sha256', 'sha384', 'sha512' ]
+    default: sha1
+    aliases: [ 'checksum_algo' ]
+    version_added: "2.0"
+  mime:
+    description:
+      - Use file magic and return data about the nature of the file. this uses the 'file' utility found on most Linux/Unix systems.
+      - This will add both `mime_type` and 'charset' fields to the return, if possible.
+    required: false
+    choices: [ Yes, No ]
+    default: No
+    version_added: "2.1"
+    aliases: [ 'mime_type', 'mime-type' ]
 author: "Bruce Pennypacker (@bpennypacker)"
 '''
 
@@ -84,6 +101,9 @@ EXAMPLES = '''
 
 # Don't do md5 checksum
 - stat: path=/path/to/myhugefile get_md5=no
+
+# Use sha256 to calculate checksum
+- stat: path=/path/to/something checksum_algorithm=sha256
 '''
 
 RETURN = '''
@@ -100,7 +120,7 @@ stat:
         path:
             description: The full path of the file/object to get the facts of
             returned: success and if path exists
-            type: boolean
+            type: string
             sample: '/path/to/file'
         mode:
             description: Unix permissions of the file in octal
@@ -254,7 +274,7 @@ stat:
             sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
         checksum:
             description: hash of the path
-            returned: success, path exists and user can read stats and path supports hashing
+            returned: success, path exists, user can read stats, path supports hashing and supplied checksum algorithm is available
             type: string
             sample: 50ba294cdf28c0d5bcde25708df53346825a429f
         pw_name:
@@ -267,6 +287,16 @@ stat:
             returned: success, path exists and user can read stats and installed python supports it
             type: string
             sample: www-data
+        mime_type:
+            description: file magic data or mime-type
+            returned: success, path exists and user can read stats and installed python supports it and the `mime` option was true, will return 'unknown' on error.
+            type: string
+            sample: PDF document, version 1.2
+        charset:
+            description: file character set or encoding
+            returned: success, path exists and user can read stats and installed python supports it and the `mime` option was true, will return 'unknown' on error.
+            type: string
+            sample: us-ascii
 '''
 
 import os
@@ -281,7 +311,9 @@ def main():
             path = dict(required=True),
             follow = dict(default='no', type='bool'),
             get_md5 = dict(default='yes', type='bool'),
-            get_checksum = dict(default='yes', type='bool')
+            get_checksum = dict(default='yes', type='bool'),
+            checksum_algorithm = dict(default='sha1', type='str', choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'], aliases=['checksum_algo']),
+            mime = dict(default=False, type='bool', aliases=['mime_type', 'mime-type']),
         ),
         supports_check_mode = True
     )
@@ -291,6 +323,7 @@ def main():
     follow = module.params.get('follow')
     get_md5 = module.params.get('get_md5')
     get_checksum = module.params.get('get_checksum')
+    checksum_algorithm = module.params.get('checksum_algorithm')
 
     try:
         if follow:
@@ -351,8 +384,7 @@ def main():
             d['md5']       = None
 
     if S_ISREG(mode) and get_checksum and os.access(path,os.R_OK):
-        d['checksum']       = module.sha1(path)
-
+        d['checksum']      = module.digest_from_file(path, checksum_algorithm)
 
     try:
         pw = pwd.getpwuid(st.st_uid)
@@ -364,6 +396,19 @@ def main():
     except:
         pass
 
+    if module.params.get('mime'):
+        d['mime_type'] = 'unknown'
+        d['charset'] = 'unknown'
+
+        filecmd = [module.get_bin_path('file', True),'-i', path]
+        try:
+            rc, out, err = module.run_command(filecmd)
+            if rc == 0:
+                mtype, chset = out.split(':')[1].split(';')
+                d['mime_type'] = mtype.strip()
+                d['charset'] = chset.split('=')[1].strip()
+        except:
+            pass
 
     module.exit_json(changed=False, stat=d)
 

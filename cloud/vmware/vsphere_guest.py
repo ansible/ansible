@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 # -*- coding: utf-8 -*-
 # This file is part of Ansible
@@ -170,11 +170,16 @@ EXAMPLES = '''
       vcpu.hotadd: yes
       mem.hotadd:  yes
       notes: This is a test VM
+      folder: MyFolder
     vm_disk:
       disk1:
         size_gb: 10
         type: thin
         datastore: storage001
+        # VMs can be put into folders. The value given here is either the full path
+        # to the folder (e.g. production/customerA/lamp) or just the last component
+        # of the path (e.g. lamp):
+        folder: production/customerA/lamp
     vm_nic:
       nic1:
         type: vmxnet3
@@ -241,6 +246,8 @@ EXAMPLES = '''
     template_src: centosTemplate
     cluster: MainCluster
     resource_pool: "/Resources"
+    vm_extra_config:
+      folder: MyFolder
 
 # Task to gather facts from a vSphere cluster only if the system is a VMWare guest
 
@@ -597,7 +604,7 @@ def vmdisk_id(vm, current_datastore_name):
     return id_list
 
 
-def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone, power_on_after_clone):
+def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, module, cluster_name, snapshot_to_clone, power_on_after_clone, vm_extra_config):
     vmTemplate = vsphere_client.get_vm_by_name(template_src)
     vmTarget = None
 
@@ -653,7 +660,7 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
     elif resource_pool:
         try:
             cluster = [k for k,
-                       v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+                       v in vsphere_client.get_clusters().items() if v == cluster_name][0] if cluster_name else None
         except IndexError, e:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find Cluster named: %s" %
@@ -689,6 +696,10 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
                 cloneArgs["linked"] = True
                 cloneArgs["snapshot"] = snapshot_to_clone
 
+            if vm_extra_config.get("folder") is not None:
+                # if a folder is specified, clone the VM into it
+                cloneArgs["folder"] = vm_extra_config.get("folder")
+
             vmTemplate.clone(guest, **cloneArgs)
             changed = True
         else:
@@ -701,18 +712,87 @@ def deploy_template(vsphere_client, guest, resource_pool, template_src, esxi, mo
             msg="Could not clone selected machine: %s" % e
         )
 
+# example from https://github.com/kalazzerx/pysphere/blob/master/examples/pysphere_create_disk_and_add_to_vm.py
+# was used.
+def update_disks(vsphere_client, vm, module, vm_disk, changes):
+    request = VI.ReconfigVM_TaskRequestMsg()
+    changed = False
+
+    for cnf_disk in vm_disk:
+        disk_id = re.sub("disk", "", cnf_disk)
+        found = False
+        for dev_key in vm._devices:
+            if vm._devices[dev_key]['type'] == 'VirtualDisk':
+                hdd_id = vm._devices[dev_key]['label'].split()[2]
+                if disk_id == hdd_id:
+                    found = True
+                    continue
+        if not found:
+            it = VI.ReconfigVM_TaskRequestMsg()
+            _this = request.new__this(vm._mor)
+            _this.set_attribute_type(vm._mor.get_attribute_type())
+            request.set_element__this(_this)
+
+            spec = request.new_spec()
+
+            dc = spec.new_deviceChange()
+            dc.Operation = "add"
+            dc.FileOperation = "create"
+
+            hd = VI.ns0.VirtualDisk_Def("hd").pyclass()
+            hd.Key = -100
+            hd.UnitNumber = int(disk_id)
+            hd.CapacityInKB = int(vm_disk[cnf_disk]['size_gb']) * 1024 * 1024
+            hd.ControllerKey = 1000
+
+            # module.fail_json(msg="peos : %s" % vm_disk[cnf_disk])
+            backing = VI.ns0.VirtualDiskFlatVer2BackingInfo_Def("backing").pyclass()
+            backing.FileName = "[%s]" % vm_disk[cnf_disk]['datastore']
+            backing.DiskMode = "persistent"
+            backing.Split = False
+            backing.WriteThrough = False
+            backing.ThinProvisioned = False
+            backing.EagerlyScrub = False
+            hd.Backing = backing
+
+            dc.Device = hd
+
+            spec.DeviceChange = [dc]
+            request.set_element_spec(spec)
+
+            ret = vsphere_client._proxy.ReconfigVM_Task(request)._returnval
+
+            # Wait for the task to finish
+            task = VITask(ret, vsphere_client)
+            status = task.wait_for_state([task.STATE_SUCCESS,
+                                          task.STATE_ERROR])
+
+            if status == task.STATE_SUCCESS:
+                changed = True
+                changes[cnf_disk] = vm_disk[cnf_disk]
+            elif status == task.STATE_ERROR:
+                module.fail_json(
+                    msg="Error reconfiguring vm: %s, [%s]" % (
+                        task.get_error_message(),
+                        vm_disk[cnf_disk]))
+    return changed, changes
+
 
 def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, state, force):
     spec = None
     changed = False
     changes = {}
-    request = VI.ReconfigVM_TaskRequestMsg()
+    request = None
     shutdown = False
     poweron = vm.is_powered_on()
 
     memoryHotAddEnabled = bool(vm.properties.config.memoryHotAddEnabled)
     cpuHotAddEnabled = bool(vm.properties.config.cpuHotAddEnabled)
     cpuHotRemoveEnabled = bool(vm.properties.config.cpuHotRemoveEnabled)
+
+    changed, changes = update_disks(vsphere_client, vm,
+                                    module, vm_disk, changes)
+    request = VI.ReconfigVM_TaskRequestMsg()
 
     # Change Memory
     if 'memory_mb' in vm_hardware:
@@ -743,6 +823,9 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
             # set the new RAM size
             spec.set_element_memoryMB(int(vm_hardware['memory_mb']))
             changes['memory'] = vm_hardware['memory_mb']
+    # ===( Reconfigure Network )====#
+    if vm_nic:
+        changed = reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_nic, cluster_name)
 
     # ====( Config Memory )====#
     if 'num_cpus' in vm_hardware:
@@ -814,6 +897,146 @@ def reconfigure_vm(vsphere_client, vm, module, esxi, resource_pool, cluster_name
     module.exit_json(changed=False)
 
 
+def reconfigure_net(vsphere_client, vm, module, esxi, resource_pool, guest, vm_nic, cluster_name=None):
+        s = vsphere_client
+        nics = {}
+        request = VI.ReconfigVM_TaskRequestMsg()
+        _this = request.new__this(vm._mor)
+        _this.set_attribute_type(vm._mor.get_attribute_type())
+        request.set_element__this(_this)
+        nic_changes = []
+        datacenter = esxi['datacenter']
+        # Datacenter managed object reference
+        dclist = [k for k,
+             v in vsphere_client.get_datacenters().items() if v == datacenter]
+        if dclist:
+            dcmor=dclist[0]
+        else:
+            vsphere_client.disconnect()
+            module.fail_json(msg="Cannot find datacenter named: %s" % datacenter)
+        dcprops = VIProperty(vsphere_client, dcmor)
+        nfmor = dcprops.networkFolder._obj
+        for k,v in vm_nic.iteritems():
+            nicNum = k[len(k) -1]
+            if vm_nic[k]['network_type'] == 'dvs':
+                portgroupKey = find_portgroup_key(module, s, nfmor, vm_nic[k]['network'])
+                todvs = True
+            elif vm_nic[k]['network_type'] == 'standard':
+                todvs = False
+            # Detect cards that need to be changed and network type (and act accordingly)
+            for dev in vm.properties.config.hardware.device:
+                if dev._type in ["VirtualE1000", "VirtualE1000e",
+                                 "VirtualPCNet32", "VirtualVmxnet",
+                                 "VirtualNmxnet2", "VirtualVmxnet3"]:
+                    devNum = dev.deviceInfo.label[len(dev.deviceInfo.label) - 1]
+                    if devNum == nicNum:
+                        fromdvs = dev.deviceInfo.summary.split(':')[0] == 'DVSwitch'
+                        if todvs and fromdvs:
+                            if dev.backing.port._obj.get_element_portgroupKey() != portgroupKey:
+                                nics[k] = (dev, portgroupKey, 1)
+                        elif fromdvs and not todvs:
+                            nics[k] = (dev, '', 2)
+                        elif not fromdvs and todvs:
+                            nics[k] = (dev, portgroupKey, 3)
+                        elif not fromdvs and not todvs:
+                            if dev.backing._obj.get_element_deviceName() != vm_nic[k]['network']:
+                                nics[k] = (dev, '', 2)
+                            else:
+                                pass
+                        else:
+                            module.exit_json()
+
+        if len(nics) > 0:
+            for nic, obj in nics.iteritems():
+                """
+                1,2 and 3 are used to mark which action should be taken
+                1 = from a distributed switch to a distributed switch
+                2 = to a standard switch
+                3 = to a distributed switch
+                """
+                dev = obj[0]
+                pgKey = obj[1]
+                dvsKey = obj[2]
+                if dvsKey == 1:
+                    dev.backing.port._obj.set_element_portgroupKey(pgKey)
+                    dev.backing.port._obj.set_element_portKey('')
+                if dvsKey == 3:
+                    dvswitch_uuid = find_dvswitch_uuid(module, s, nfmor, pgKey)
+                    nic_backing_port = VI.ns0.DistributedVirtualSwitchPortConnection_Def(
+                        "nic_backing_port").pyclass()
+                    nic_backing_port.set_element_switchUuid(dvswitch_uuid)
+                    nic_backing_port.set_element_portgroupKey(pgKey)
+                    nic_backing_port.set_element_portKey('')
+                    nic_backing = VI.ns0.VirtualEthernetCardDistributedVirtualPortBackingInfo_Def(
+                        "nic_backing").pyclass()
+                    nic_backing.set_element_port(nic_backing_port)
+                    dev._obj.set_element_backing(nic_backing)
+                if dvsKey == 2:
+                    nic_backing = VI.ns0.VirtualEthernetCardNetworkBackingInfo_Def(
+                        "nic_backing").pyclass()
+                    nic_backing.set_element_deviceName(vm_nic[nic]['network'])
+                    dev._obj.set_element_backing(nic_backing)
+            for nic, obj in nics.iteritems():
+                dev = obj[0]
+                spec = request.new_spec()
+                nic_change = spec.new_deviceChange()
+                nic_change.set_element_device(dev._obj)
+                nic_change.set_element_operation("edit")
+                nic_changes.append(nic_change)
+            spec.set_element_deviceChange(nic_changes)
+            request.set_element_spec(spec)
+            ret = vsphere_client._proxy.ReconfigVM_Task(request)._returnval
+            task = VITask(ret, vsphere_client)
+            status = task.wait_for_state([task.STATE_SUCCESS, task.STATE_ERROR])
+            if status == task.STATE_SUCCESS:
+                return(True)
+            elif status == task.STATE_ERROR:
+                module.fail_json(msg="Could not change network %s" % task.get_error_message())
+        elif len(nics) == 0:
+            return(False)
+
+
+def _build_folder_tree(nodes, parent):
+    tree = {}
+
+    for node in nodes:
+        if node['parent'] == parent:
+            tree[node['name']] = dict.copy(node)
+            tree[node['name']]['subfolders'] = _build_folder_tree(nodes, node['id'])
+            del tree[node['name']]['parent']
+
+    return tree
+
+
+def _find_path_in_tree(tree, path):
+    for name, o in tree.iteritems():
+        if name == path[0]:
+            if len(path) == 1:
+                return o
+            else:
+                return _find_path_in_tree(o['subfolders'], path[1:])
+
+    return None
+
+
+def _get_folderid_for_path(vsphere_client, datacenter, path):
+    content = vsphere_client._retrieve_properties_traversal(property_names=['name', 'parent'], obj_type=MORTypes.Folder)
+    if not content: return {}
+
+    node_list = [
+        {
+            'id': o.Obj,
+            'name': o.PropSet[0].Val,
+            'parent': (o.PropSet[1].Val if len(o.PropSet) > 1 else None)
+        } for o in content
+    ]
+
+    tree = _build_folder_tree(node_list, datacenter)
+    tree = _find_path_in_tree(tree, ['vm'])['subfolders']
+    folder = _find_path_in_tree(tree, path.split('/'))
+    return folder['id'] if folder else None
+
+
 def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, vm_extra_config, vm_hardware, vm_disk, vm_nic, vm_hw_version, state):
 
     datacenter = esxi['datacenter']
@@ -834,13 +1057,19 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
 
     # virtualmachineFolder managed object reference
     if vm_extra_config.get('folder'):
-        if vm_extra_config['folder'] not in vsphere_client._get_managed_objects(MORTypes.Folder).values():
+        # try to find the folder by its full path, e.g. 'production/customerA/lamp'
+        vmfmor = _get_folderid_for_path(vsphere_client, dcmor, vm_extra_config.get('folder'))
+
+        # try the legacy behaviour of just matching the folder name, so 'lamp' alone matches 'production/customerA/lamp'
+        if vmfmor is None:
+            for mor, name in vsphere_client._get_managed_objects(MORTypes.Folder).iteritems():
+                if name == vm_extra_config['folder']:
+                    vmfmor = mor
+
+        # if neither of strategies worked, bail out
+        if vmfmor is None:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find folder named: %s" % vm_extra_config['folder'])
-
-        for mor, name in vsphere_client._get_managed_objects(MORTypes.Folder).iteritems():
-            if name == vm_extra_config['folder']:
-                vmfmor = mor
     else:
         vmfmor = dcprops.vmFolder._obj
 
@@ -882,7 +1111,7 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
     if resource_pool:
         try:
             cluster = [k for k,
-                       v in vsphere_client.get_clusters().items() if v == cluster_name][0]
+                       v in vsphere_client.get_clusters().items() if v == cluster_name][0] if cluster_name else None
         except IndexError, e:
             vsphere_client.disconnect()
             module.fail_json(msg="Cannot find Cluster named: %s" %
@@ -1306,7 +1535,7 @@ def main():
         argument_spec=dict(
             vcenter_hostname=dict(required=True, type='str'),
             username=dict(required=True, type='str'),
-            password=dict(required=True, type='str'),
+            password=dict(required=True, type='str', no_log=True),
             state=dict(
                 required=False,
                 choices=[
@@ -1455,7 +1684,8 @@ def main():
                 module=module,
                 cluster_name=cluster,
                 snapshot_to_clone=snapshot_to_clone,
-                power_on_after_clone=power_on_after_clone
+                power_on_after_clone=power_on_after_clone,
+                vm_extra_config=vm_extra_config
             )
 
         if state in ['restarted', 'reconfigured']:
