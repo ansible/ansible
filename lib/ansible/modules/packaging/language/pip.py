@@ -83,6 +83,7 @@ options:
   state:
     description:
       - The state of module
+      - The 'forcereinstall' option is only available in Ansible 2.1 and above.
     required: false
     default: present
     choices: [ "present", "absent", "latest", "forcereinstall" ]
