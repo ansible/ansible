@@ -144,9 +144,13 @@ class Connection(ConnectionBase):
     def _parse_proxy_command(self, port=22):
         proxy_command = None
         # Parse ansible_ssh_common_args, specifically looking for ProxyCommand
-        ssh_common_args = getattr(self._play_context, 'ssh_common_args', None)
+        ssh_args = [
+            getattr(self._play_context, 'ssh_extra_args', ''),
+            getattr(self._play_context, 'ssh_common_args', ''),
+            getattr(self._play_context, 'ssh_args', ''),
+        ]
         if ssh_common_args is not None:
-            args = self._split_ssh_args(ssh_common_args)
+            args = self._split_ssh_args(' '.join(ssh_args))
             for i, arg in enumerate(args):
                 if arg.lower() == 'proxycommand':
                     # _split_ssh_args split ProxyCommand from the command itself
