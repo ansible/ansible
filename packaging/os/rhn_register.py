@@ -62,6 +62,18 @@ options:
         required: False
         default: null
         version_added: "2.0"
+    sslcacert:
+        description:
+            - supply a custom ssl CA certificate file for use with registration
+        required: False
+        default: None
+        version_added: "2.0"
+    systemorgid:
+        description:
+            - supply an organizational id for use with registration
+        required: False
+        default: None
+        version_added: "2.0"
     channels:
         description:
             - Optionally specify a list of comma-separated channels to subscribe to upon successful registration.
@@ -218,7 +230,7 @@ class Rhn(RegistrationBase):
         self.update_plugin_conf('rhnplugin', True)
         self.update_plugin_conf('subscription-manager', False)
 
-    def register(self, enable_eus=False, activationkey=None, profilename=None):
+    def register(self, enable_eus=False, activationkey=None, profilename=None, sslcacert=None, systemorgid=None):
         '''
             Register system to RHN.  If enable_eus=True, extended update
             support will be requested.
@@ -232,7 +244,10 @@ class Rhn(RegistrationBase):
             register_cmd += " --activationkey '%s'" % activationkey
         if profilename is not None:
             register_cmd += " --profilename '%s'" % profilename
-        # FIXME - support --systemorgid
+        if sslcacert is not None:
+            register_cmd += " --sslCACert '%s'" % sslcacert
+        if systemorgid is not None:
+            register_cmd += " --systemorgid '%s'" % systemorgid
         rc, stdout, stderr = self.module.run_command(register_cmd, check_rc=True, use_unsafe_shell=True)
 
     def api(self, method, *args):
@@ -296,6 +311,8 @@ def main():
                     server_url = dict(default=rhn.config.get_option('serverURL'), required=False),
                     activationkey = dict(default=None, required=False),
                     profilename = dict(default=None, required=False),
+                    sslcacert = dict(default=None, required=False),
+                    systemorgid = dict(default=None, required=False),
                     enable_eus = dict(default=False, type='bool'),
                     channels = dict(default=[], type='list'),
                 )
@@ -307,6 +324,8 @@ def main():
     rhn.configure(module.params['server_url'])
     activationkey = module.params['activationkey']
     profilename = module.params['profilename']
+    sslcacert = module.params['sslcacert']
+    systemorgid = module.params['systemorgid']
     channels = module.params['channels']
     rhn.module = module
 
