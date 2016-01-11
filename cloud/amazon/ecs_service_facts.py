@@ -22,7 +22,7 @@ notes:
     - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
 description:
     - Lists or describes services in ecs.
-version_added: "2.0"
+version_added: "2.1"
 author: Mark Chance (@java1guy)
 options:
     details:
@@ -55,7 +55,11 @@ EXAMPLES = '''
 - ecs_service_facts:
     cluster: test-cluster
 '''
-RETURN = '''
+
+# Disabled the RETURN as it was breaking docs building.  Someone needs to fix
+# this
+RETURN = ''' '''
+'''
 services: When details is false, returns an array of service ARNs, else an array of these fields
     clusterArn: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
     desiredCount: The desired number of instantiations of the task definition to keep running on the service.
@@ -71,7 +75,6 @@ services: When details is false, returns an array of service ARNs, else an array
     taskDefinition: The ARN of a task definition to use for tasks in the service.
 '''
 try:
-    import json, os
     import boto
     import botocore
     HAS_BOTO = True
