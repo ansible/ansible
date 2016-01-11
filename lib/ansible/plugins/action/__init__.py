@@ -105,6 +105,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         with open(module_path, 'rb') as f:
             start = f.read(1024)
+        return bool(start.translate(None, textchars))
 
     def _configure_module(self, module_name, module_args, task_vars=None):
         '''
@@ -154,9 +155,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         (module_data, module_style, module_shebang) = modify_module(module_name, module_path, module_args, task_vars=task_vars, module_compression=self._play_context.module_compression)
 
         if self._is_binary(module_path):
-            return ('non_native_want_json', None, module_path, True)
+            return ('non_native_want_json', None, None, module_path, True)
 
-        return (module_style, module_shebang, module_data, False)
+        return (module_style, module_shebang, module_data, module_path, False)
 
     def _compute_environment_string(self):
         '''
@@ -578,7 +579,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         # let module know our verbosity
         module_args['_ansible_verbosity'] = display.verbosity
 
-        (module_style, shebang, module_data, is_binary) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
+        (module_style, shebang, module_data, module_path, is_binary) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
 
         if not shebang and not is_binary:
             raise AnsibleError("module (%s) is missing interpreter line" % module_name)
@@ -590,7 +591,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             tmp = self._make_tmp_path(remote_user)
 
         if tmp:
-            remote_module_filename = self._connection._shell.get_remote_filename(module_name)
+            remote_module_filename = self._connection._shell.get_remote_filename(module_path)
             remote_module_path = self._connection._shell.join_path(tmp, remote_module_filename)
             if module_style in ['old', 'non_native_want_json']:
                 # we'll also need a temp file to hold our module arguments
@@ -599,10 +600,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if remote_module_path or module_style != 'new':
             display.debug("transferring module to remote")
             if is_binary:
-                # If is_binary module_data is the path to the module to transfer
-                self._transfer_file(module_data, remote_module_path)
+                self._transfer_file(module_path, remote_module_path)
             else:
-                self._transfer_data(remote_module_path, module_data, is_path=is_binary)
+                self._transfer_data(remote_module_path, module_data)
             if module_style == 'old':
                 # we need to dump the module args to a k=v string in a file on
                 # the remote system, which can be read and parsed by the module
