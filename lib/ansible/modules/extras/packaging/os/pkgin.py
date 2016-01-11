@@ -63,7 +63,6 @@ EXAMPLES = '''
 '''
 
 
-import json
 import shlex
 import os
 import sys

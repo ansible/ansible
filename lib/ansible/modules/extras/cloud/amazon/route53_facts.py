@@ -160,7 +160,6 @@ EXAMPLES = '''
 
 '''
 try:
-    import json
     import boto
     import botocore
     HAS_BOTO = True
