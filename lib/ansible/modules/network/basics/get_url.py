@@ -75,6 +75,13 @@ options:
     choices: [ "yes", "no" ]
     default: "no"
     aliases: [ "thirsty" ]
+  backup:
+    description:
+      - Create a backup file including the timestamp information so you can get
+        the original file back if you somehow clobbered it incorrectly.
+    required: false
+    choices: [ "yes", "no" ]
+    default: "no"
   sha256sum:
     description:
       - If a SHA-256 checksum is passed to this parameter, the digest of the
@@ -251,6 +258,7 @@ def main():
     argument_spec.update(
         url = dict(required=True),
         dest = dict(required=True),
+        backup = dict(default=False, type='bool'),
         sha256sum = dict(default=''),
         checksum = dict(default=''),
         timeout = dict(required=False, type='int', default=10),
@@ -266,6 +274,7 @@ def main():
 
     url  = module.params['url']
     dest = os.path.expanduser(module.params['dest'])
+    backup = module.params['backup']
     force = module.params['force']
     sha256sum = module.params['sha256sum']
     checksum = module.params['checksum']
@@ -366,8 +375,12 @@ def main():
             os.remove(tmpsrc)
             module.fail_json( msg="Destination %s not writable" % (os.path.dirname(dest)))
 
+    backup_file = None
     if checksum_src != checksum_dest:
         try:
+            if backup:
+                if os.path.exists(dest):
+                    backup_file = module.backup_local(dest)
             shutil.copyfile(tmpsrc, dest)
         except Exception, err:
             os.remove(tmpsrc)
@@ -397,9 +410,15 @@ def main():
     except ValueError:
         md5sum = None
 
+    res_args = dict(
+        url = url, dest = dest, src = tmpsrc, md5sum = md5sum, checksum_src = checksum_src,
+        checksum_dest = checksum_dest, changed = changed, msg = info.get('msg', '')
+    )
+    if backup_file:
+        res_args['backup_file'] = backup_file
+
     # Mission complete
-    module.exit_json(url=url, dest=dest, src=tmpsrc, md5sum=md5sum, checksum_src=checksum_src,
-        checksum_dest=checksum_dest, changed=changed, msg=info.get('msg', ''))
+    module.exit_json(**res_args)
 
 # import module snippets
 from ansible.module_utils.basic import *
