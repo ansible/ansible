@@ -78,6 +78,12 @@ options:
     default: false
     version_added: "2.0"
     aliases: ['use_sudo']
+  executable:
+    description:
+      - Override the path to the cpanm executable
+    required: false
+    default: null
+    version_added: "2.1"
 notes:
    - Please note that U(http://search.cpan.org/dist/App-cpanminus/bin/cpanm, cpanm) must be installed on the remote host.
 author: "Franck Cuny (@franckcuny)"
@@ -154,6 +160,13 @@ def _build_cmd_line(name, from_path, notest, locallib, mirror, mirror_only, inst
     return cmd
 
 
+def _get_cpanm_path(module):
+    if module.params['executable']:
+        return module.params['executable']
+    else:
+        return module.get_bin_path('cpanm', True)
+
+
 def main():
     arg_spec = dict(
         name=dict(default=None, required=False, aliases=['pkg']),
@@ -165,6 +178,7 @@ def main():
         installdeps=dict(default=False, type='bool'),
         system_lib=dict(default=False, type='bool', aliases=['use_sudo']),
         version=dict(default=None, required=False),
+        executable=dict(required=False, type='str'),
     )
 
     module = AnsibleModule(
@@ -172,7 +186,7 @@ def main():
         required_one_of=[['name', 'from_path']],
     )
 
-    cpanm       = module.get_bin_path('cpanm', True)
+    cpanm       = _get_cpanm_path(module)
     name        = module.params['name']
     from_path   = module.params['from_path']
     notest      = module.boolean(module.params.get('notest', False))
