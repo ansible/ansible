@@ -38,7 +38,7 @@ options:
     description:
       - State of the features or roles on the system
     required: false
-    choices: 
+    choices:
       - present
       - absent
     default: present
@@ -67,10 +67,11 @@ options:
     description:
       - Specify a source to install the feature from
     required: false
-    choices: 
-      - {driveletter}:\sources\sxs
-      - \\{IP}\Share\sources\sxs
-author: 
+    choices:
+      - "{driveletter}:\sources\sxs"
+      - "{IP}\Share\sources\sxs"
+    version_added: "2.1"
+author:
     - "Paul Durivage (@angstwad)"
     - "Trond Hindenes (@trondhindenes)"
 '''
