@@ -58,7 +58,7 @@ EXAMPLES = '''
 
 # Disabled the RETURN as it was breaking docs building.  Someone needs to fix
 # this
-RETURN = ''' '''
+RETURN = '''# '''
 '''
 services: When details is false, returns an array of service ARNs, else an array of these fields
     clusterArn: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.

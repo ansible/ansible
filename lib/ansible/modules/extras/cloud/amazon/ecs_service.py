@@ -98,7 +98,7 @@ EXAMPLES = '''
 
 # Disabled the RETURN as it was breaking docs building.  Someone needs to fix
 # this
-RETURN = ''' '''
+RETURN = '''# '''
 '''
 # Create service
 service: On create service, it returns the new values; on delete service, it returns the values for the service being deleted.
@@ -146,7 +146,7 @@ class EcsServiceManager:
             self.module.fail_json(msg="Can't authorize connection - "+str(e))
 
     # def list_clusters(self):
-    # 	return self.client.list_clusters()
+    #     return self.client.list_clusters()
     # {'failures=[],
     # 'ResponseMetadata={'HTTPStatusCode=200, 'RequestId='ce7b5880-1c41-11e5-8a31-47a93a8a98eb'},
     # 'clusters=[{'activeServicesCount=0, 'clusterArn='arn:aws:ecs:us-west-2:777110527155:cluster/default', 'status='ACTIVE', 'pendingTasksCount=0, 'runningTasksCount=0, 'registeredContainerInstancesCount=0, 'clusterName='default'}]}
