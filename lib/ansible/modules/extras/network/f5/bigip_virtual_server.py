@@ -171,6 +171,14 @@ EXAMPLES = '''
         name: myvirtualserver
 '''
 
+RETURN = '''
+---
+deleted:
+  description: Name of a virtual server that was deleted
+  returned: virtual server was successfully deleted on state=absent
+  type: string
+'''
+
 
 # ==========================
 # bigip_virtual_server module specific
