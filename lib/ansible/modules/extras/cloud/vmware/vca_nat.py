@@ -130,7 +130,6 @@ EXAMPLES = '''
 '''
 
 import time
-import json
 import xmltodict
 
 VALID_RULE_KEYS = ['rule_type', 'original_ip', 'original_port',

@@ -92,10 +92,16 @@ EXAMPLES = '''
 # ===========================================
 # Stackdriver module specific support methods.
 #
+
 try:
-  import json
+    import json
 except ImportError:
-  import simplejson as json
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
+
 
 def send_deploy_event(module, key, revision_id, deployed_by='Ansible', deployed_to=None, repository=None):
     """Send a deploy event to Stackdriver"""

@@ -174,15 +174,19 @@ EXAMPLES = '''
   sensu_check: name=check_disk_capacity state=absent
 '''
 
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
+
 
 def sensu_check(module, path, name, state='present', backup=False):
     changed = False
     reasons = []
-
-    try:
-        import json
-    except ImportError:
-        import simplejson as json
 
     stream = None
     try:

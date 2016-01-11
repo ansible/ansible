@@ -123,11 +123,6 @@ EXAMPLES = '''
 import sys
 
 try:
-    import json
-except ImportError:
-    import simplejson as json
-
-try:
     import consul
     from requests.exceptions import ConnectionError
     python_consul_installed = True
