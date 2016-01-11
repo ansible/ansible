@@ -61,7 +61,7 @@ class ActionModule(ActionBase):
             self._transfer_data(remote_module_path, module_data)
 
         # configure, upload, and chmod the async_wrapper module
-        (async_module_style, shebang, async_module_data, async_module_path, is_binary) = self._configure_module(module_name='async_wrapper', module_args=dict(), task_vars=task_vars)
+        (async_module_style, shebang, async_module_data, _, _) = self._configure_module(module_name='async_wrapper', module_args=dict(), task_vars=task_vars)
         self._transfer_data(async_module_path, async_module_data)
 
         argsfile = None
