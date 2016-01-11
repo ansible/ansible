@@ -309,6 +309,7 @@ options:
   restart_policy:
     description:
       - Container restart policy.
+      - The 'unless-stopped' choice is only available starting in Ansible 2.1 and for Docker 1.9 and above.
     choices: ["no", "on-failure", "always", "unless-stopped"]
     default: null
     version_added: "1.9"
