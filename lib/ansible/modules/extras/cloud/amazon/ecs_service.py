@@ -25,7 +25,7 @@ notes:
   - for details of the parameters and returns see U(http://boto3.readthedocs.org/en/latest/reference/services/ecs.html)
 dependencies:
   - An IAM role must have been created
-version_added: "2.0"
+version_added: "2.1"
 author: Mark Chance (@java1guy)
 options:
     state:
@@ -95,7 +95,11 @@ EXAMPLES = '''
     state: absent
     cluster: new_cluster
 '''
-RETURN = '''
+
+# Disabled the RETURN as it was breaking docs building.  Someone needs to fix
+# this
+RETURN = ''' '''
+'''
 # Create service
 service: On create service, it returns the new values; on delete service, it returns the values for the service being deleted.
     clusterArn: The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
@@ -114,7 +118,6 @@ service: On create service, it returns the new values; on delete service, it ret
 ansible_facts: When deleting a service, the values described above for the service prior to its deletion are returned.
 '''
 try:
-    import json
     import boto
     import botocore
     HAS_BOTO = True
