@@ -206,6 +206,77 @@ explicitly clear the cache, you can run the ec2.py script with the ``--refresh-c
 
     # ./ec2.py --refresh-cache
 
+.. _openstack_example:
+
+Example: OpenStack External Inventory Script
+````````````````````````````````````````````
+
+If you use an OpenStack based cloud, instead of manually maintaining your own inventory file, you can use the openstack.py dynamic inventory to pull information about your compute instances directly from OpenStack.
+
+You can download the latest version of the OpenStack inventory script at: https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
+
+You can use the inventory script explicitly (by passing the `-i openstack.py` argument to Ansible) or implicitly (by placing the script at `/etc/ansible/hosts`).
+
+Explicit use of inventory script
+++++++++++++++++++++++++++++++++
+
+Download the latest version of the OpenStack dynamic inventory script and make it executable::
+
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
+    chmod +x openstack.py
+
+Source an OpenStack RC file::
+
+    source openstack.rc
+
+.. note::
+
+    An OpenStack RC file contains the environment variables required by the client tools to establish a connection with the cloud provider, such as the authentication URL, user name, password and region name. For more information on how to download, create or source an OpenStack RC file, please refer to http://docs.openstack.org/cli-reference/content/cli_openrc.html.
+
+You can confirm the file has been successfully sourced by running a simple command, such as `nova list` and ensuring it return no errors.
+
+.. note::
+
+    The OpenStack command line clients are required to run the `nova list` command. For more information on how to install them, please refer to http://docs.openstack.org/cli-reference/content/install_clients.html.
+
+You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
+
+    ./openstack.py --list
+
+After a few moments you should see some JSON output with information about your compute instances. 
+
+Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack.py` script as an inventory file, as illustrated below::
+
+ansible -i openstack.py all -m ping
+
+Implicit use of inventory script
+++++++++++++++++++++++++++++++++
+
+Download the latest version of the OpenStack dynamic inventory script, make it executable and copy it to `/etc/ansible/hosts`::
+
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.py
+    chmod +x openstack.py
+    sudo cp openstack.py /etc/ansible/hosts
+
+Download the sample configuration file, modify it to suit your needs and copy it to /etc/ansible/openstack.yml
+
+    wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.yml
+    vi openstack.yml
+    sudo cp openstack.yml /etc/ansible/
+
+You can test the OpenStack dynamic inventory script manually to confirm it is working as expected::
+
+    /etc/ansible/hosts --list
+
+After a few moments you should see some JSON output with information about your compute instances.
+
+Refresh the cache
++++++++++++++++++
+
+Note that the OpenStack dynamic inventory script will cache results to avoid repeated API calls. To explicitly clear the cache, you can run the openstack.py (or hosts) script with the --refresh parameter:
+
+    ./openstack.py --refresh
+
 .. _other_inventory_scripts:
 
 Other inventory scripts
