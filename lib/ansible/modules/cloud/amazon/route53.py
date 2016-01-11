@@ -150,6 +150,12 @@ options:
     required: false
     default: null
     version_added: "2.0"
+  wait:
+    description:
+      - Wait until the changes have been replicated to all Amazon Route 53 DNS servers.
+    required: false
+    default: no
+    version_added: "2.0"
 author: 
   - "Bruce Pennypacker (@bpennypacker)"
   - "Mike Buzzetti <mike.buzzetti@gmail.com>"
@@ -159,7 +165,7 @@ extends_documentation_fragment: aws
 # FIXME: the command stuff should have a more state like configuration alias -- MPD
 
 EXAMPLES = '''
-# Add new.foo.com as an A record with 3 IPs
+# Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
 - route53:
       command: create
       zone: foo.com
@@ -167,6 +173,7 @@ EXAMPLES = '''
       type: A
       ttl: 7200
       value: 1.1.1.1,2.2.2.2,3.3.3.3
+      wait: yes
 
 # Retrieve the details for new.foo.com
 - route53:
@@ -231,14 +238,11 @@ EXAMPLES = '''
 - route53:
       command: "create"
       zone: "foo.com"
-      record: "www.foo.com"
-      type: "CNAME"
-      value: "host1.foo.com"
-      ttl: 30
-      # Routing policy
-      identifier: "host1@www"
-      weight: 100
-      health_check: "d994b780-3150-49fd-9205-356abdd42e75"
+      hosted_zone_id: "Z2AABBCCDDEEFF"
+      record: "localhost.foo.com"
+      type: "AAAA"
+      ttl: "7200"
+      value: "::1"
 
 # Add an AAAA record with Hosted Zone ID.  Note that because there are colons in the value
 # that the entire parameter list must be quoted:
@@ -251,7 +255,22 @@ EXAMPLES = '''
       ttl: "7200"
       value: "::1"
 
+# Use a routing policy to distribute traffic:
+- route53:
+      command: "create"
+      zone: "foo.com"
+      record: "www.foo.com"
+      type: "CNAME"
+      value: "host1.foo.com"
+      ttl: 30
+      # Routing policy
+      identifier: "host1@www"
+      weight: 100
+      health_check: "d994b780-3150-49fd-9205-356abdd42e75"
+
 '''
+
+WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
 
 import time
 
@@ -260,6 +279,7 @@ try:
     from boto import route53
     from boto.route53 import Route53Connection
     from boto.route53.record import Record, ResourceRecordSets
+    from boto.route53.status import Status
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -287,19 +307,30 @@ def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id
     return None
 
 
-def commit(changes, retry_interval):
+def commit(changes, retry_interval, wait):
     """Commit changes, but retry PriorRequestNotComplete errors."""
+    result = None
     retry = 10
     while True:
         try:
             retry -= 1
-            return changes.commit()
+            result = changes.commit()
+            break
         except boto.route53.exception.DNSServerError, e:
             code = e.body.split("<Code>")[1]
             code = code.split("</Code>")[0]
             if code != 'PriorRequestNotComplete' or retry < 0:
                 raise e
             time.sleep(float(retry_interval))
+
+    if wait:
+      connection = changes.connection
+      change = result['ChangeResourceRecordSetsResponse']['ChangeInfo']
+      status = Status(connection, change)
+      while status.status != 'INSYNC':
+        time.sleep(WAIT_RETRY_SLEEP)
+        status.update()
+    return result
 
 def main():
     argument_spec = ec2_argument_spec()
@@ -323,6 +354,7 @@ def main():
             health_check                 = dict(required=False),
             failover                    = dict(required=False),
             vpc_id                      = dict(required=False),
+            wait                        = dict(required=False, type='bool'),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -348,6 +380,7 @@ def main():
     health_check_in                 = module.params.get('health_check')
     failover_in                     = module.params.get('failover')
     vpc_id_in                       = module.params.get('vpc_id')
+    wait_in                         = module.params.get('wait')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -379,7 +412,7 @@ def main():
             " 'vpc_id'")
 
 
-    # connect to the route53 endpoint 
+    # connect to the route53 endpoint
     try:
         conn = Route53Connection(**aws_connect_kwargs)
     except boto.exception.BotoServerError, e:
@@ -409,7 +442,7 @@ def main():
         module.fail_json(msg = errmsg)
 
     record = {}
-    
+
     found_record = False
     wanted_rset = Record(name=record_in, type=type_in, ttl=ttl_in,
         identifier=identifier_in, weight=weight_in, region=region_in,
@@ -482,7 +515,7 @@ def main():
         changes.add_change_record(command, wanted_rset)
 
     try:
-        result = commit(changes, retry_interval_in)
+        result = commit(changes, retry_interval_in, wait_in)
     except boto.route53.exception.DNSServerError, e:
         txt = e.body.split("<Message>")[1]
         txt = txt.split("</Message>")[0]
