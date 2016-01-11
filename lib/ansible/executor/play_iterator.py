@@ -342,13 +342,21 @@ class PlayIterator:
                 state.tasks_child_state = self._set_failed_state(state.tasks_child_state)
             else:
                 state.fail_state |= self.FAILED_TASKS
-                state.run_state = self.ITERATING_RESCUE
+                if state._blocks[state.cur_block].rescue:
+                    state.run_state = self.ITERATING_RESCUE
+                elif state._blocks[state.cur_block].always:
+                    state.run_state = self.ITERATING_ALWAYS
+                else:
+                    state.run_state = self.ITERATING_COMPLETE
         elif state.run_state == self.ITERATING_RESCUE:
             if state.rescue_child_state is not None:
                 state.rescue_child_state = self._set_failed_state(state.rescue_child_state)
             else:
                 state.fail_state |= self.FAILED_RESCUE
-                state.run_state = self.ITERATING_ALWAYS
+                if state._blocks[state.cur_block].always:
+                    state.run_state = self.ITERATING_ALWAYS
+                else:
+                    state.run_state = self.ITERATING_COMPLETE
         elif state.run_state == self.ITERATING_ALWAYS:
             if state.always_child_state is not None:
                 state.always_child_state = self._set_failed_state(state.always_child_state)
