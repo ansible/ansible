@@ -273,8 +273,22 @@ EXAMPLES = '''
   hw_guest_id: "rhel6_64Guest"
   hw_memtotal_mb: 2048
   hw_name: "centos64Guest"
+  hw_power_status: "POWERED ON",
   hw_processor_count: 2
   hw_product_uuid: "ef50bac8-2845-40ff-81d9-675315501dac"
+
+hw_power_status will be one of the following values:
+  - POWERED ON
+  - POWERED OFF
+  - SUSPENDED
+  - POWERING ON
+  - POWERING OFF
+  - SUSPENDING
+  - RESETTING
+  - BLOCKED ON MSG
+  - REVERTING TO SNAPSHOT
+  - UNKNOWN
+as seen in the VMPowerState-Class of PySphere: http://git.io/vlwOq
 
 # Remove a vm from vSphere
 # The VM must be powered_off or you need to use force to force a shutdown
@@ -1308,9 +1322,10 @@ def create_vm(vsphere_client, module, esxi, resource_pool, cluster_name, guest, 
         # Power on the VM if it was requested
         power_state(vm, state, True)
 
+        vmfacts=gather_facts(vm)
         vsphere_client.disconnect()
         module.exit_json(
-            ansible_facts=gather_facts(vm),
+            ansible_facts=vmfacts,
             changed=True,
             changes="Created VM %s" % guest)
 
@@ -1404,6 +1419,7 @@ def gather_facts(vm):
     facts = {
         'module_hw': True,
         'hw_name': vm.properties.name,
+        'hw_power_status': vm.get_status(),
         'hw_guest_full_name':  vm.properties.config.guestFullName,
         'hw_guest_id': vm.properties.config.guestId,
         'hw_product_uuid': vm.properties.config.uuid,
