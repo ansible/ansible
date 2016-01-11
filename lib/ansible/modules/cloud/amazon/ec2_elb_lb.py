@@ -134,14 +134,14 @@ options:
     required: false
     default: no
     choices: ["yes", "no"]
-    version_added: 2.0
+    version_added: "2.1"
   wait_timeout:
     description:
       - Used in conjunction with wait. Number of seconds to wait for the elb to be terminated.
         A maximum of 600 seconds (10 minutes) is allowed.
     required: false
     default: 60
-    version_added: 2.0
+    version_added: "2.1"
 
 extends_documentation_fragment: aws
 """
