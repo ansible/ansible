@@ -110,13 +110,6 @@ options:
     required: false
     default: 'present'
     aliases: []
-  reset_pass_atlogon:
-    description:
-      - Reset the admin password on first logon for windows hosts
-    required: false
-    default: "no"
-    version_added: "2.0"
-    choices: [ "yes", "no" ]
   auto_updates:
     description:
       - Enable Auto Updates on Windows Machines
@@ -369,8 +362,7 @@ def create_virtual_machine(module, azure):
             vm_config = LinuxConfigurationSet(hostname, user, password, disable_ssh_password_authentication)
         else:
             #Create Windows Config
-            vm_config = WindowsConfigurationSet(hostname, password, module.params.get('reset_pass_atlogon'),\
-                                                 module.params.get('auto_updates'), None, user)
+            vm_config = WindowsConfigurationSet(hostname, password, None, module.params.get('auto_updates'), None, user)
             vm_config.domain_join = None
             if module.params.get('enable_winrm'):
                 listener = Listener('Http')
@@ -541,7 +533,6 @@ def main():
             wait=dict(type='bool', default=False),
             wait_timeout=dict(default=600),
             wait_timeout_redirects=dict(default=300),
-            reset_pass_atlogon=dict(type='bool', default=False),
             auto_updates=dict(type='bool', default=False),
             enable_winrm=dict(type='bool', default=True),
         )
