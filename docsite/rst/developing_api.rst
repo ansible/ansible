@@ -53,7 +53,7 @@ In 2.0 things get a bit more complicated to start, but you end up with much more
             name = "Ansible Play",
             hosts = 'localhost',
             gather_facts = 'no',
-            tasks = [ dict(action=dict(module='debug', args=(msg='Hello Galaxy!'))) ]
+            tasks = [ dict(action=dict(module='debug', args=dict(msg='Hello Galaxy!'))) ]
         )
     play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
 
