@@ -156,6 +156,13 @@ options:
     required: false
     default: no
     version_added: "2.0"
+  wait_timeout:
+    description:
+      - How long to wait for the changes to be replicated, in seconds.
+    required: false
+    default: 300
+    version_added: "2.0"
+author: "Bruce Pennypacker (@bpennypacker)"
 author: 
   - "Bruce Pennypacker (@bpennypacker)"
   - "Mike Buzzetti <mike.buzzetti@gmail.com>"
@@ -272,6 +279,7 @@ EXAMPLES = '''
 
 WAIT_RETRY_SLEEP = 5  # how many seconds to wait between propagation status polls
 
+
 import time
 
 try:
@@ -283,6 +291,11 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+
+class TimeoutError(Exception):
+    pass
+
 
 def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id):
     """Finds a zone by name or zone_id"""
@@ -307,7 +320,7 @@ def get_zone_by_name(conn, module, zone_name, want_private, zone_id, want_vpc_id
     return None
 
 
-def commit(changes, retry_interval, wait):
+def commit(changes, retry_interval, wait, wait_timeout):
     """Commit changes, but retry PriorRequestNotComplete errors."""
     result = None
     retry = 10
@@ -324,12 +337,15 @@ def commit(changes, retry_interval, wait):
             time.sleep(float(retry_interval))
 
     if wait:
+      timeout_time = time.time() + wait_timeout
       connection = changes.connection
       change = result['ChangeResourceRecordSetsResponse']['ChangeInfo']
       status = Status(connection, change)
-      while status.status != 'INSYNC':
+      while status.status != 'INSYNC' and time.time() < timeout_time:
         time.sleep(WAIT_RETRY_SLEEP)
         status.update()
+      if time.time() >= timeout_time:
+        raise TimeoutError()
     return result
 
 def main():
@@ -352,9 +368,10 @@ def main():
             weight                       = dict(required=False, type='int'),
             region                       = dict(required=False),
             health_check                 = dict(required=False),
-            failover                    = dict(required=False),
-            vpc_id                      = dict(required=False),
-            wait                        = dict(required=False, type='bool'),
+            failover                     = dict(required=False),
+            vpc_id                       = dict(required=False),
+            wait                         = dict(required=False, type='bool', default=False),
+            wait_timeout                 = dict(required=False, type='int', default=300),
         )
     )
     module = AnsibleModule(argument_spec=argument_spec)
@@ -381,6 +398,7 @@ def main():
     failover_in                     = module.params.get('failover')
     vpc_id_in                       = module.params.get('vpc_id')
     wait_in                         = module.params.get('wait')
+    wait_timeout_in                 = module.params.get('wait_timeout')
 
     region, ec2_url, aws_connect_kwargs = get_aws_connection_info(module)
 
@@ -515,11 +533,13 @@ def main():
         changes.add_change_record(command, wanted_rset)
 
     try:
-        result = commit(changes, retry_interval_in, wait_in)
+        result = commit(changes, retry_interval_in, wait_in, wait_timeout_in)
     except boto.route53.exception.DNSServerError, e:
         txt = e.body.split("<Message>")[1]
         txt = txt.split("</Message>")[0]
         module.fail_json(msg = txt)
+    except TimeoutError:
+        module.fail_json(msg='Timeout waiting for changes to replicate')
 
     module.exit_json(changed=True)
 
