@@ -68,9 +68,9 @@ options:
         required: false
         default: present
         description:
-            - Absent : delete the VS if present
-            - present (and its synonym enabled) : create if needed the VS and set state to enabled
-            - absent : create if needed the VS and set state to disabled
+            - Absent, delete the VS if present
+            - present (and its synonym enabled), create if needed the VS and set state to enabled
+            - disabled, create if needed the VS and set state to disabled
         choices: ['present', 'absent', 'enabled', 'disabled']
         aliases: []
     partition:
@@ -84,9 +84,7 @@ options:
         description:
             - "Virtual server name."
         required: true
-        default: null
-        choices: []
-        aliases: ['vs']
+        aliases: ['vs']
     destination:
         description:
             - "Destination IP of the virtual server (only host is currently supported) . Required when state=present and vs does not exist."
