@@ -24,7 +24,7 @@ module: bigip_virtual_server
 short_description: "Manages F5 BIG-IP LTM virtual servers"
 description:
     - "Manages F5 BIG-IP LTM virtual servers via iControl SOAP API"
-version_added: "2.0"
+version_added: "2.1"
 author: Etienne Carriere (@Etienne-Carriere)
 notes:
     - "Requires BIG-IP software version >= 11"
