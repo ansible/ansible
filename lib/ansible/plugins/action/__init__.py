@@ -101,7 +101,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         return False
 
     def _is_binary(self, module_path):
-        textchars = bytearray({7,8,9,10,12,13,27} | set(range(0x20, 0x100)) - {0x7f})
+        textchars = bytearray(set([7, 8, 9, 10, 12, 13, 27]) | set(range(0x20, 0x100)) - set([0x7f]))
 
         with open(module_path, 'rb') as f:
             start = f.read(1024)
