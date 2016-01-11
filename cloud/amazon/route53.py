@@ -68,7 +68,7 @@ options:
     description:
       - Whether or not to evaluate an alias target health. Useful for aliases to Elastic Load Balancers.
     required: false
-    version_added: "2.0"
+    version_added: "2.1"
     default: false
   value:
     description:
