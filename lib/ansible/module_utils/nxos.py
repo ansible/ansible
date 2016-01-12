@@ -180,7 +180,7 @@ class NxosModule(AnsibleModule):
 
     def get_config(self):
         cmd = 'show running-config'
-        if self.params['include_defaults']:
+        if self.params.get('include_defaults'):
             cmd += ' all'
         if self.params['transport'] == 'cli':
             return self.execute(cmd)[0]
