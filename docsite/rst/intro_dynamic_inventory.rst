@@ -247,7 +247,7 @@ After a few moments you should see some JSON output with information about your 
 
 Once you confirm the dynamic inventory script is working as expected, you can tell Ansible to use the `openstack.py` script as an inventory file, as illustrated below::
 
-ansible -i openstack.py all -m ping
+    ansible -i openstack.py all -m ping
 
 Implicit use of inventory script
 ++++++++++++++++++++++++++++++++
