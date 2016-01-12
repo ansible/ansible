@@ -155,13 +155,13 @@ options:
       - Wait until the changes have been replicated to all Amazon Route 53 DNS servers.
     required: false
     default: no
-    version_added: "2.0"
+    version_added: "2.1"
   wait_timeout:
     description:
       - How long to wait for the changes to be replicated, in seconds.
     required: false
     default: 300
-    version_added: "2.0"
+    version_added: "2.1"
 author: "Bruce Pennypacker (@bpennypacker)"
 author: 
   - "Bruce Pennypacker (@bpennypacker)"
