@@ -6,7 +6,7 @@ Python API
 There are several interesting ways to use Ansible from an API perspective.   You can use
 the Ansible python API to control nodes, you can extend Ansible to respond to various python events, you can
 write various plugins, and you can plug in inventory data from external data sources.  This document
-covers the Runner and Playbook API at a basic level.
+covers the execution and Playbook API at a basic level.
 
 If you are looking to use Ansible programmatically from something other than Python, trigger events asynchronously, 
 or have access control and logging demands, take a look at :doc:`tower` 
@@ -17,8 +17,10 @@ This chapter discusses the Python API.
 
 .. _python_api:
 
-The Python API is very powerful, and is how the ansible CLI and ansible-playbook
-are implemented. In version 2.0 the core ansible got rewritten and the API was mostly rewritten.
+The Python API is very powerful, and is how the all the ansible CLI tools are implemented.
+In version 2.0 the core ansible got rewritten and the API was mostly rewritten.
+
+:.. note:: Ansible relies on forking processes, as such teh API is not thread safe.
 
 .. _python_api_20:
 
