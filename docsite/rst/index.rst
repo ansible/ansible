@@ -40,5 +40,5 @@ Ansible, Inc. releases a new major release of Ansible approximately every two mo
    faq
    glossary
    YAMLSyntax
-   porting_guide
+   porting_guide_2.0
 
