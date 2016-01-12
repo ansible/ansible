@@ -289,8 +289,9 @@ def stop_volume(name):
 def set_volume_option(name, option, parameter):
     run_gluster([ 'volume', 'set', name, option, parameter ])
 
-def add_brick(name, brick, force):
-    args = [ 'volume', 'add-brick', name, brick ]
+def add_bricks(name, new_bricks, force):
+    args = [ 'volume', 'add-brick', name ]
+    args.extend(new_bricks)
     if force:
         args.append('force')
     run_gluster(args)
@@ -411,8 +412,8 @@ def main():
                 if brick not in all_bricks:
                     removed_bricks.append(brick)
 
-            for brick in new_bricks:
-                add_brick(volume_name, brick, force)
+            if new_bricks:
+                add_bricks(volume_name, new_bricks, force)
                 changed = True
 
             # handle quotas
