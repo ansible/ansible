@@ -31,20 +31,6 @@ requirements:
     - Tested on ESXi 5.5
     - PyVmomi installed
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the vSphere vCenter
-        required: True
-    username:
-        description:
-            - The username of the vSphere vCenter
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of the vSphere vCenter
-        required: True
-        aliases: ['pass', 'pwd']
     datacenter_name:
         description:
             - The name of the datacenter the cluster will be created in.
@@ -68,6 +54,7 @@ options:
             - If set to True will enable vSAN when the cluster is created.
         required: False
         default: False
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''

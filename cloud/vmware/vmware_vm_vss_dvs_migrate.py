@@ -32,20 +32,6 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the vSphere vCenter API server
-        required: True
-    username:
-        description:
-            - The username of the vSphere vCenter
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of the vSphere vCenter
-        required: True
-        aliases: ['pass', 'pwd']
     vm_name:
         description:
             - Name of the virtual machine to migrate to a dvSwitch
@@ -54,6 +40,7 @@ options:
         description:
             - Name of the portgroup to migrate to the virtual machine to
         required: True
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
