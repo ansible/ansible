@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_share
-version_added: "2.0"
+version_added: "2.1"
 short_description: Manage Windows shares
 description:
      - Add, modify or remove Windows share and set share permissions.
@@ -80,7 +80,7 @@ options:
       - Specify user list that should get no access, regardless of implied access on share, separated by comma.
     required: no
     default: none
-Hans-Joachim Kliemeck (@h0nIg)
+author: Hans-Joachim Kliemeck (@h0nIg)
 '''
 
 EXAMPLES = '''
@@ -110,4 +110,8 @@ EXAMPLES = '''
   win_share:
     name: internal
     state: absent
+'''
+
+RETURN = '''
+
 '''
