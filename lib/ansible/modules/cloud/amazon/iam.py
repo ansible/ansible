@@ -672,7 +672,7 @@ def main():
 
         elif state == 'update' and not user_exists:
             module.fail_json(
-                msg="The user %s does not exit. No update made." % name)
+                msg="The user %s does not exist. No update made." % name)
 
         elif state == 'absent':
             if user_exists:
