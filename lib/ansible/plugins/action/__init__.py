@@ -371,18 +371,24 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             module_args = self._task.args
 
         # set check mode in the module arguments, if required
-        if self._play_context.check_mode and not self._task.always_run:
+        if self._play_context.check_mode:
             if not self._supports_check_mode:
                 raise AnsibleError("check mode is not supported for this operation")
             module_args['_ansible_check_mode'] = True
+        else:
+            module_args['_ansible_check_mode'] = False
 
         # set no log in the module arguments, if required
-        if self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG:
-            module_args['_ansible_no_log'] = True
+        module_args['_ansible_no_log'] = self._play_context.no_log or C.DEFAULT_NO_TARGET_SYSLOG
 
         # set debug in the module arguments, if required
-        if C.DEFAULT_DEBUG:
-            module_args['_ansible_debug'] = True
+        module_args['_ansible_debug'] = C.DEFAULT_DEBUG
+
+        # let module know we are in diff mode
+        module_args['_ansible_diff'] = self._play_context.diff
+
+        # let module know our verbosity
+        module_args['_ansible_verbosity'] = self._display.verbosity
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang:
