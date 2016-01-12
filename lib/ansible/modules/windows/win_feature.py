@@ -67,9 +67,7 @@ options:
     description:
       - Specify a source to install the feature from
     required: false
-    choices:
-      - "{driveletter}:\sources\sxs"
-      - "{IP}\Share\sources\sxs"
+    choices: [ ' {driveletter}:\sources\sxs', ' {IP}\Share\sources\sxs' ]
     version_added: "2.1"
 author:
     - "Paul Durivage (@angstwad)"
