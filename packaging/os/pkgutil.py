@@ -56,6 +56,7 @@ options:
     required: false
     choices: ["yes", "no"]
     default: no
+    version_added: "2.1"
 '''
 
 EXAMPLES = '''
