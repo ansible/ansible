@@ -357,7 +357,7 @@ setting in `ansible.cfg`.
 Extracting values from containers
 ---------------------------------
 
-.. versionadded:: 2.0
+.. versionadded:: 2.1
 
 The `extract` filter is used to map from a list of indices to a list of
 values from a container (hash or array)::
