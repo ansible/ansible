@@ -204,16 +204,17 @@ class DME2:
         if not self.all_records:
             self.all_records = self.getRecords()
 
-        # TODO SRV type not yet implemented
         if record_type in ["A", "AAAA", "CNAME", "HTTPRED", "PTR"]:
             for result in self.all_records:
                 if result['name'] == record_name and result['type'] == record_type:
                     return result
             return False
-        elif record_type in ["MX", "NS", "TXT"]:
+        elif record_type in ["MX", "NS", "TXT", "SRV"]:
             for result in self.all_records:
                 if record_type == "MX":
                     value = record_value.split(" ")[1]
+                elif record_type == "SRV":
+                    value = record_value.split(" ")[3]
                 else:
                     value = record_value
                 if result['name'] == record_name and result['type'] == record_type and result['value'] == value:
@@ -308,6 +309,13 @@ def main():
     if new_record["type"] == "MX":
         new_record["mxLevel"] = new_record["value"].split(" ")[0]
         new_record["value"] = new_record["value"].split(" ")[1]
+
+    # Special handling for SRV records
+    if new_record["type"] == "SRV":
+        new_record["priority"] = new_record["value"].split(" ")[0]
+        new_record["weight"] = new_record["value"].split(" ")[1]
+        new_record["port"] = new_record["value"].split(" ")[2]
+        new_record["value"] = new_record["value"].split(" ")[3]
 
     # Compare new record against existing one
     changed = False
