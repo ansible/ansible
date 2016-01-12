@@ -33,20 +33,6 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the vSphere vCenter API server
-        required: True
-    username:
-        description:
-            - The username of the vSphere vCenter
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of the vSphere vCenter
-        required: True
-        aliases: ['pass', 'pwd']
     datacenter:
         description:
             - The datacenter hosting the VM
@@ -92,6 +78,7 @@ options:
             - The current working directory of the application from which it will be run
         required: False
         default: None
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''

@@ -32,20 +32,6 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the vSphere vCenter API server
-        required: True
-    username:
-        description:
-            - The username of the vSphere vCenter
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of the vSphere vCenter
-        required: True
-        aliases: ['pass', 'pwd']
     esxi_hostname:
         description:
             - ESXi hostname to be managed
@@ -70,6 +56,7 @@ options:
         description:
             - Portgroup name to migrate VMK interface to
         required: True
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
