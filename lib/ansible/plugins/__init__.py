@@ -26,6 +26,7 @@ import inspect
 import os
 import os.path
 import sys
+import threading
 import warnings
 
 from collections import defaultdict
@@ -42,6 +43,7 @@ except ImportError:
 MODULE_CACHE = {}
 PATH_CACHE = {}
 PLUGIN_PATH_CACHE = {}
+MODULE_LOADER_LOCK = threading.Lock()
 
 def get_all_plugin_loaders():
     return [(name, obj) for (name, obj) in inspect.getmembers(sys.modules[__name__]) if isinstance(obj, PluginLoader)]
@@ -304,14 +306,15 @@ class PluginLoader:
     __contains__ = has_plugin
 
     def _load_module_source(self, name, path):
-        if name in sys.modules:
-            # See https://github.com/ansible/ansible/issues/13110
-            return sys.modules[name]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", RuntimeWarning)
-            with open(path, 'r') as module_file:
-                module = imp.load_source(name, path, module_file)
-        return module
+        with MODULE_LOADER_LOCK:
+            if name in sys.modules:
+                # See https://github.com/ansible/ansible/issues/13110
+                return sys.modules[name]
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                with open(path, 'r') as module_file:
+                    module = imp.load_source(name, path, module_file)
+            return module
 
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
