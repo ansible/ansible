@@ -386,7 +386,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         (module_style, shebang, module_data) = self._configure_module(module_name=module_name, module_args=module_args, task_vars=task_vars)
         if not shebang:
-            raise AnsibleError("module is missing interpreter line")
+            raise AnsibleError("module '%s' is missing interpreter line" % module_name)
 
         # a remote tmp path may be necessary and not already created
         remote_module_path = None
