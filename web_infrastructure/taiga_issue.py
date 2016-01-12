@@ -119,6 +119,7 @@ EXAMPLES = '''
     state: absent
 '''
 
+RETURN = '''# '''
 from os import getenv
 from os.path import isfile
 
