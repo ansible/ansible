@@ -49,11 +49,34 @@ class Galaxy(object):
         this_dir, this_filename = os.path.split(__file__)
         self.DATA_PATH = os.path.join(this_dir, "data")
 
-        #TODO: move to getter for lazy loading
-        self.default_readme = self._str_from_data_file('readme')
-        self.default_meta = self._str_from_data_file('metadata_template.j2')
-        self.default_test = self._str_from_data_file('test_playbook.j2')
-        self.default_travis = self._str_from_data_file('travis.j2')
+        self._default_readme = None
+        self._default_meta = None
+        self._default_test = None
+        self._default_travis = None
+
+    @property
+    def default_readme(self):
+        if self._default_readme is None:
+            self._default_readme = self._str_from_data_file('readme')
+        return self._default_readme
+
+    @property
+    def default_meta(self):
+        if self._default_meta is None:
+            self._default_meta = self._str_from_data_file('metadata_template.j2')
+        return self._default_meta
+
+    @property
+    def default_test(self):
+        if self._default_test is None:
+            self._default_test = self._str_from_data_file('test_playbook.j2')
+        return self._default_test
+
+    @property
+    def default_travis(self):
+        if self._default_travis is None:
+            self._default_travis = self._str_from_data_file('travis.j2')
+        return self._default_travis
 
     def add_role(self, role):
         self.roles[role.name] = role
