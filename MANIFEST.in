@@ -9,6 +9,7 @@ include examples/hosts
 include examples/ansible.cfg
 include lib/ansible/module_utils/powershell.ps1
 recursive-include lib/ansible/modules *
+recursive-include lib/ansible/galaxy/data *
 recursive-include docs *
 recursive-include packaging *
 include Makefile
