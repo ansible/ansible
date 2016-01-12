@@ -179,13 +179,13 @@ class EosModule(AnsibleModule):
 
     def get_config(self):
         cmd = 'show running-config'
-        if self.params['include_defaults']:
+        if self.params.get('include_defaults'):
             cmd += ' all'
         if self.params['transport'] == 'cli':
             return self.execute(cmd)[0]
         else:
             resp = self.execute(cmd, encoding='text')
-            return resp[0]['output']
+            return resp[0]
 
 
 def get_module(**kwargs):
