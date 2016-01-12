@@ -362,6 +362,13 @@ options:
     required: false
     default: 60
     version_added: "2.1"
+  cpu_shares:
+    description:
+      - CPU shares (relative weight). Requires docker-py >= 0.6.0.
+    required: false
+    default: 0
+    version_added: "2.0"
+
 author:
     - "Cove Schneider (@cove)"
     - "Joshua Conner (@joshuaconner)"
@@ -1155,6 +1162,16 @@ class DockerManager(object):
                 differing.append(container)
                 continue
 
+            # CPU_SHARES
+
+            expected_cpu_shares = self.module.params.get('cpu_shares')
+            actual_cpu_shares = container['HostConfig']['CpuShares']
+
+            if expected_cpu_shares and actual_cpu_shares != expected_cpu_shares:
+                self.reload_reasons.append('cpu_shares ({0} => {1})'.format(actual_cpu_shares, expected_cpu_shares))
+                differing.append(container)
+                continue
+
             # MEM_LIMIT
 
             try:
@@ -1534,6 +1551,7 @@ class DockerManager(object):
                   'stdin_open':   self.module.params.get('stdin_open'),
                   'tty':          self.module.params.get('tty'),
                   'cpuset':       self.module.params.get('cpu_set'),
+                  'cpu_shares':   self.module.params.get('cpu_shares'),
                   'user':         self.module.params.get('docker_user'),
                   }
         if self.ensure_capability('host_config', fail=False):
@@ -1751,6 +1769,7 @@ def main():
             devices         = dict(default=None, type='list'),
             memory_limit    = dict(default=0),
             memory_swap     = dict(default=0),
+            cpu_shares      = dict(default=0),
             docker_url      = dict(),
             use_tls         = dict(default=None, choices=['no', 'encrypt', 'verify']),
             tls_client_cert = dict(required=False, default=None, type='str'),
