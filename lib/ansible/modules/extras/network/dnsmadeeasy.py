@@ -204,7 +204,6 @@ class DME2:
         if not self.all_records:
             self.all_records = self.getRecords()
 
-        # TODO SRV type not yet implemented
         if record_type in ["A", "AAAA", "CNAME", "HTTPRED", "PTR"]:
             for result in self.all_records:
                 if result['name'] == record_name and result['type'] == record_type:
