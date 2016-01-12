@@ -57,8 +57,16 @@ if($state -eq "present") {
     {
         if (Test-RegistryValueData -Path $registryKey -Value $registryValue)
         {
+            if ($registryValue.ToLower() -eq "(default)") {
+                # Special case handling for the key's default property. Because .GetValueKind() doesn't work for the (default) key property
+                $oldRegistryDataType = "String"
+            }
+            else {
+                $oldRegistryDataType = (Get-Item $registryKey).GetValueKind($registryValue)
+            }
+
             # Changes Data and DataType
-            if ((Get-Item $registryKey).GetValueKind($registryValue) -ne $registryDataType)
+            if ($registryDataType -ne $oldRegistryDataType)
             {
                 Try
                 {
