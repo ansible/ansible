@@ -50,7 +50,7 @@ options:
             - Path to a file created by installing the MSI to prevent from
               attempting to reinstall the package on every run
     wait:
-        version_added: ""
+        version_added: "2.1"
         description:
             - Specify whether to wait for install or uninstall to complete before continuing.
         choices:
