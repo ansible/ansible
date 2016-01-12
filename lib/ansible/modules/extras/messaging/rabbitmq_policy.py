@@ -44,6 +44,7 @@ options:
     required: false
     default: all
     choices: [all, exchanges, queues]
+    version_added: "2.1"
   pattern:
     description:
       - A regex of queues to apply the policy to.
