@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_owner
-version_added: "2.0"
+version_added: "2.1"
 short_description: Set owner
 description:
     - Set owner of files or directories
@@ -62,4 +62,8 @@ EXAMPLES = '''
     path: 'C:\\apache\\'
     user: SYSTEM
     recurse: no
+'''
+
+RETURN = '''
+
 '''
