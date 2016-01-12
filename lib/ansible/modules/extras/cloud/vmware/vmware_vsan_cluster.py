@@ -32,24 +32,11 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the ESXi Server
-        required: True
-    username:
-        description:
-            - The username of the ESXi Server
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of ESXi Server
-        required: True
-        aliases: ['pass', 'pwd']
     cluster_uuid:
         description:
             - Desired cluster UUID
         required: False
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''

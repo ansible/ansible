@@ -32,20 +32,6 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the ESXi Server
-        required: True
-    username:
-        description:
-            - The username of the ESXi Server
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of ESXi Server
-        required: True
-        aliases: ['pass', 'pwd']
     vswitch_name:
         description:
             - The name of the vswitch where to add the VMK interface
@@ -86,6 +72,7 @@ options:
         description:
             - Enable the VMK interface for Fault Tolerance traffic
         required: False
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''

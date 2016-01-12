@@ -31,24 +31,11 @@ requirements:
     - Tested on vSphere 5.5
     - PyVmomi installed
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the vSphere vCenter
-        required: True
-    username:
-        description:
-            - The username of the vSphere vCenter
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of the vSphere vCenter
-        required: True
-        aliases: ['pass', 'pwd']
     target_id:
         description:
             - The target id based on order of scsi device
         required: True
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''

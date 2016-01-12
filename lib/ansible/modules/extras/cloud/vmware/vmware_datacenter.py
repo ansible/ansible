@@ -55,6 +55,7 @@ options:
             - If the datacenter should be present or absent
         choices: ['present', 'absent']
         required: True
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
