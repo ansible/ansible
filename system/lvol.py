@@ -62,6 +62,11 @@ options:
     version_added: "2.0"
     description:
     - Free-form options to be passed to the lvcreate command
+  snapshot:
+    version_added: "2.1"
+    description:
+    - The name of the snapshot volume
+    required: false
 notes:
   - Filesystems on top of the volume are not resized.
 '''
@@ -87,6 +92,9 @@ EXAMPLES = '''
 
 # Remove the logical volume.
 - lvol: vg=firefly lv=test state=absent force=yes
+
+# Create a snapshot volume of the test logical volume.
+- lvol: vg=firefly lv=test snapshot=snap1 size=100m
 '''
 
 import re
@@ -128,6 +136,7 @@ def main():
             opts=dict(type='str'),
             state=dict(choices=["absent", "present"], default='present'),
             force=dict(type='bool', default='no'),
+            snapshot=dict(type='str', default=None),
         ),
         supports_check_mode=True,
     )
@@ -150,6 +159,7 @@ def main():
     force = module.boolean(module.params['force'])
     size_opt = 'L'
     size_unit = 'm'
+    snapshot = module.params['snapshot']
 
     if opts is None:
         opts = ""
@@ -201,8 +211,12 @@ def main():
 
     lvs = parse_lvs(current_lvs)
 
+    if snapshot is None:
+        check_lv = lv
+    else:
+        check_lv = snapshot
     for test_lv in lvs:
-        if test_lv['name'] == lv:
+        if test_lv['name'] == check_lv:
             this_lv = test_lv
             break
     else:
@@ -222,7 +236,10 @@ def main():
                 changed = True
             else:
                 lvcreate_cmd = module.get_bin_path("lvcreate", required=True)
-                cmd = "%s %s -n %s -%s %s%s %s %s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg)
+                if snapshot is not None:
+                    cmd = "%s %s -%s %s%s -s -n %s %s %s/%s" % (lvcreate_cmd, yesopt, size_opt, size, size_unit, snapshot, opts, vg, lv)
+                else:
+                    cmd = "%s %s -n %s -%s %s%s %s %s" % (lvcreate_cmd, yesopt, lv, size_opt, size, size_unit, opts, vg)
                 rc, _, err = module.run_command(cmd)
                 if rc == 0:
                     changed = True
@@ -247,9 +264,9 @@ def main():
         else:
             ### resize LV
             tool = None
-            if size > this_lv['size']:
+            if int(size) > this_lv['size']:
                 tool = module.get_bin_path("lvextend", required=True)
-            elif size < this_lv['size']:
+            elif int(size) < this_lv['size']:
                 if not force:
                     module.fail_json(msg="Sorry, no shrinking of %s without force=yes." % (this_lv['name']))
                 tool = module.get_bin_path("lvreduce", required=True)
@@ -259,8 +276,11 @@ def main():
                 if module.check_mode:
                     changed = True
                 else:
-                    rc, _, err = module.run_command("%s -%s %s%s %s/%s" % (tool, size_opt, size, size_unit, vg, this_lv['name']))
-                    if rc == 0:
+                    cmd = "%s -%s %s%s %s/%s" % (tool, size_opt, size, size_unit, vg, this_lv['name'])
+                    rc, out, err = module.run_command(cmd)
+                    if "Reached maximum COW size" in out:
+                        module.fail_json(msg="Unable to resize %s to %s%s" % (lv, size, size_unit), rc=rc, err=err, out=out)
+                    elif rc == 0:
                         changed = True
                     elif "matches existing size" in err:
                         module.exit_json(changed=False, vg=vg, lv=this_lv['name'], size=this_lv['size'])
