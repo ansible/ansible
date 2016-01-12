@@ -367,7 +367,7 @@ options:
       - CPU shares (relative weight). Requires docker-py >= 0.6.0.
     required: false
     default: 0
-    version_added: "2.0"
+    version_added: "2.1"
 
 author:
     - "Cove Schneider (@cove)"
