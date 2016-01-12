@@ -64,7 +64,15 @@ EXAMPLES = '''
 
 '''
 
-import json
+try:
+    import json
+except ImportError:
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
+
 import urllib
 import time
 

@@ -128,7 +128,12 @@ import re
 try:
     import json
 except ImportError:
-    import simplejson as json
+    try:
+        import simplejson as json
+    except ImportError:
+        # Let snippet from module_utils/basic.py return a proper error in this case
+        pass
+
 
 def parse_out(string):
     return re.sub("\s+", " ", string).strip()

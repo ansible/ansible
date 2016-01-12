@@ -109,7 +109,6 @@ EXAMPLES = '''
 - pacman: name=baz state=absent force=yes
 '''
 
-import json
 import shlex
 import os
 import re
