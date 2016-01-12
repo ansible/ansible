@@ -49,7 +49,9 @@ options:
         required: true
         choices: ['present', 'absent', 'muted', 'unmuted']
     type:
-        description: ["The type of the monitor."]
+        description:
+            - "The type of the monitor."
+            - The 'event alert'is available starting at Ansible 2.1
         required: false
         default: null
         choices: ['metric alert', 'service check', 'event alert']
