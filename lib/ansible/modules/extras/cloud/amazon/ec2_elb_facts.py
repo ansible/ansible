@@ -129,7 +129,7 @@ def get_health_check(health_check):
     return health_check_dict
 
 
-def get_elb_info(elb):
+def get_elb_info(connection,elb):
     elb_info = {
         'name': elb.name,
         'zones': elb.availability_zones,
@@ -140,9 +140,23 @@ def get_elb_info(elb):
         'security_groups': elb.security_groups,
         'health_check': get_health_check(elb.health_check),
         'subnets': elb.subnets,
+        'instances_inservice': [],
+        'instances_inservice_count': 0,
+        'instances_outofservice': [],
+        'instances_outofservice_count': 0,
+        'instances_inservice_percent': 0.0,
     }
     if elb.vpc_id:
         elb_info['vpc_id'] = elb.vpc_id
+    if elb.instances:
+        instance_health = connection.describe_instance_health(elb.name)
+        elb_info['instances_inservice'] = [inst.instance_id for inst in instance_health if inst.state == 'InService']
+        elb_info['instances_inservice_count'] = len(elb_info['instances_inservice'])
+        elb_info['instances_outofservice'] = [inst.instance_id for inst in instance_health if inst.state == 'OutOfService']
+        elb_info['instances_outofservice_count'] = len(elb_info['instances_outofservice'])
+        elb_info['instances_inservice_percent'] = float(elb_info['instances_inservice_count'])/(
+                    float(elb_info['instances_inservice_count']) + 
+                    float(elb_info['instances_outofservice_count']))
 
     return elb_info
 
@@ -159,7 +173,7 @@ def list_elb(connection, module):
 
     elb_array = []
     for elb in all_elbs:
-        elb_array.append(get_elb_info(elb))
+        elb_array.append(get_elb_info(connection,elb))
 
     module.exit_json(elbs=elb_array)
 
