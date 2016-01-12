@@ -514,9 +514,11 @@ class AnsibleModule(object):
         self.no_log = no_log
         self.cleanup_files = []
         self._debug = False
+        self._diff = False
+        self._verbosity = 0
 
         self.aliases = {}
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -1140,6 +1142,12 @@ class AnsibleModule(object):
 
             elif k == '_ansible_debug':
                 self._debug = self.boolean(v)
+
+            elif k == '_ansible_diff':
+                self._diff = self.boolean(v)
+
+            elif k == '_ansible_verbosity':
+                self._verbosity = v
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
