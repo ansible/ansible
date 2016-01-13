@@ -131,7 +131,7 @@ class Npm(object):
             self.executable = [module.get_bin_path('npm', True)]
 
         if kwargs['version']:
-            self.name_version = self.name + '@' + self.version
+            self.name_version = self.name + '@' + str(self.version)
         else:
             self.name_version = self.name
 
