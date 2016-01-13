@@ -43,7 +43,7 @@ options:
     description:
       - The version number of the cache engine
     required: false
-    default: none
+    default: None
   node_type:
     description:
       - The compute and memory capacity of the nodes in the cache cluster
@@ -57,7 +57,7 @@ options:
     description:
       - The port number on which each of the cache nodes will accept connections
     required: false
-    default: none
+    default: None
   cache_parameter_group:
     description:
       - The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the specified engine will be used.
@@ -75,13 +75,13 @@ options:
     description:
       - A list of vpc security group names to associate with this cache cluster. Only use if inside a vpc
     required: false
-    default: ['default']
+    default: None
     version_added: "1.6"
   cache_security_groups:
     description:
       - A list of cache security group names to associate with this cache cluster. Must be an empty list if inside a vpc
     required: false
-    default: ['default']
+    default: None
   zone:
     description:
       - The EC2 Availability Zone in which the cache cluster will be created
@@ -481,28 +481,24 @@ class ElastiCacheManager(object):
         return cache_node_ids[-num_nodes_to_remove:]
 
 
-
 def main():
     argument_spec = ec2_argument_spec()
-    default = object()
     argument_spec.update(dict(
-            state={'required': True, 'choices': ['present', 'absent', 'rebooted']},
-            name={'required': True},
-            engine={'required': False, 'choices': ['redis', 'memcached'], 'default': 'memcached'},
-            cache_engine_version={'required': False},
-            node_type={'required': False, 'default': 'cache.m1.small'},
-            num_nodes={'required': False, 'default': None, 'type': 'int'},
+            state                 ={'required': True, 'choices': ['present', 'absent', 'rebooted']},
+            name                  ={'required': True},
+            engine                ={'required': False, 'default': 'memcached'},
+            cache_engine_version  ={'required': False},
+            node_type             ={'required': False, 'default': 'cache.m1.small'},
+            num_nodes             ={'required': False, 'default': None, 'type': 'int'},
             # alias for compat with the original PR 1950
-            cache_parameter_group={'required': False, 'default': None, 'aliases': ['parameter_group']},
-            cache_port={'required': False, 'type': 'int'},
-            cache_subnet_group={'required': False, 'default': None},
-            cache_security_groups={'required': False, 'default': [default],
-                                'type': 'list'},
-            security_group_ids={'required': False, 'default': [],
-                                'type': 'list'},
-            zone={'required': False, 'default': None},
-            wait={'required': False, 'type' : 'bool', 'default': True},
-            hard_modify={'required': False, 'type': 'bool', 'default': False}
+            cache_parameter_group ={'required': False, 'default': None, 'aliases': ['parameter_group']},
+            cache_port            ={'required': False, 'type': 'int'},
+            cache_subnet_group    ={'required': False, 'default': None},
+            cache_security_groups ={'required': False, 'default': [], 'type': 'list'},
+            security_group_ids    ={'required': False, 'default': [], 'type': 'list'},
+            zone                  ={'required': False, 'default': None},
+            wait                  ={'required': False, 'type' : 'bool', 'default': True},
+            hard_modify           ={'required': False, 'type': 'bool', 'default': False}
         )
     )
 
@@ -530,13 +526,8 @@ def main():
     hard_modify = module.params['hard_modify']
     cache_parameter_group = module.params['cache_parameter_group']
 
-    if cache_subnet_group and cache_security_groups == [default]:
-        cache_security_groups = []
     if cache_subnet_group and cache_security_groups:
         module.fail_json(msg="Can't specify both cache_subnet_group and cache_security_groups")
-
-    if cache_security_groups == [default]:
-        cache_security_groups = ['default']
 
     if state == 'present' and not num_nodes:
         module.fail_json(msg="'num_nodes' is a required parameter. Please specify num_nodes > 0")
