@@ -24,7 +24,7 @@
 DOCUMENTATION = '''
 ---
 module: win_acl_inheritance
-version_added: "2.0"
+version_added: "2.1"
 short_description: Change ACL inheritance
 description:
     - Change ACL (Access Control List) inheritance and optionally copy inherited ACE's (Access Control Entry) to dedicated ACE's or vice versa.
@@ -71,4 +71,8 @@ EXAMPLES = '''
     path: 'C:\\apache\\'
     state: present
     reorganize: yes
+'''
+
+RETURN = '''
+
 '''
