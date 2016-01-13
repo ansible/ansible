@@ -35,7 +35,6 @@ from multiprocessing import Lock
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
-from ansible.utils.encrypt import do_encrypt
 from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
@@ -313,6 +312,8 @@ class Display:
             result = default
 
         if encrypt:
+            # Circular import because encrypt needs a display class
+            from ansible.utils.encrypt import do_encrypt
             result = do_encrypt(result, encrypt, salt_size, salt)
 
         # handle utf-8 chars
