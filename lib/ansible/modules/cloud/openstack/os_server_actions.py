@@ -204,7 +204,7 @@ def main():
             module.exit_json(changed=True)
 
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=e.message, extra_data=e.extra_data)
+        module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *

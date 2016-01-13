@@ -57,7 +57,7 @@ def main():
               auth_token=cloud.auth_token,
               service_catalog=cloud.service_catalog))
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=e.message)
+        module.fail_json(msg=str(e))
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
