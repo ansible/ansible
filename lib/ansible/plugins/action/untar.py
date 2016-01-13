@@ -23,13 +23,12 @@ import os
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 
-
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for unarchive operations '''
+        ''' handler for untar operations '''
         if task_vars is None:
             task_vars = dict()
 
@@ -39,6 +38,9 @@ class ActionModule(ActionBase):
         copy    = boolean(self._task.args.get('copy', True))
         creates = self._task.args.get('creates', None)
 
+
+        # we need this is untar is called directly, but not if unarchive already checked
+        # it's inefficent but dependable for now
         if creates:
             # do not run the command if the line contains creates=filename
             # and the filename already exists. This allows idempotence

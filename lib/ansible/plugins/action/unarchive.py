@@ -23,13 +23,12 @@ import os
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 
-
 class ActionModule(ActionBase):
 
     TRANSFERS_FILES = True
 
     def run(self, tmp=None, task_vars=None):
-        ''' handler for unarchive operations '''
+        ''' orchestrates determining appropriate unarchive module and calling it '''
         if task_vars is None:
             task_vars = dict()
 
