@@ -31,7 +31,6 @@ from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
 
-from ansible.utils.encrypt import do_encrypt
 from ansible.utils.unicode import to_unicode
 
 try:

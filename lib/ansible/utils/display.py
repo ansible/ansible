@@ -35,6 +35,7 @@ from multiprocessing import Lock
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.utils.color import stringc
+from ansible.utils.encrypt import do_encrypt
 from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
