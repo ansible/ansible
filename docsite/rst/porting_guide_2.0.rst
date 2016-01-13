@@ -56,7 +56,7 @@ uses key=value escaping which has not changed.  The other option is to check for
     "msg": "Testing some things"
 
 * When specifying complex args as a variable, the variable must use the full jinja2
-  variable syntax ('{{var_name}}') - bare variable names there are no longer accepted.
+  variable syntax (```{{var_name}}```) - bare variable names there are no longer accepted.
   In fact, even specifying args with variables has been deprecated, and will not be
   allowed in future versions::
 
@@ -100,7 +100,14 @@ While all items listed here will show a deprecation warning message, they still 
         debug_params:
           msg: "hello there"
       tasks:
+        # These are both deprecated:
         - debug: "{{debug_params}}"
+        - debug:
+          args: "{{debug_params}}"
+
+        # Use this instead:
+        - debug:
+            msg: "{{debug_params['msg']}}"
 
 * Host patterns should use a comma (,) or colon (:) instead of a semicolon (;) to separate hosts/groups in the pattern.
 * Ranges specified in host patterns should use the [x:y] syntax, instead of [x-y].
