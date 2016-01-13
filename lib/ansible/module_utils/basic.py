@@ -579,7 +579,7 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=False)
 
-        if not self.no_log:
+        if not self.no_log and self._verbosity >= 3:
             self._log_invocation()
 
         # finally, make sure we're in a sane working dir
