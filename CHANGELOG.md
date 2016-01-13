@@ -82,6 +82,11 @@ newline being stripped you can change your playbook like this:
     "msg": "Testing some things"
     ```
 
+* In 1.9.x, newlines in templates were converted to Unix EOL conventions.  If
+  someone wanted a templated file to end up with Windows or Mac EOL
+  conventions, this could cause problems for them.  In 2.x newlines now remain
+  as specified in the template file.
+
 * When specifying complex args as a variable, the variable must use the full jinja2
 variable syntax ('{{var_name}}') - bare variable names there are no longer accepted.
 In fact, even specifying args with variables has been deprecated, and will not be
