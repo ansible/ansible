@@ -71,6 +71,7 @@ options:
   start_on_create:
     choices: [ 'yes', 'no']
     required: false
+    default: 'yes'
     description:
       - Controls whether the volume is started after creation or not, defaults to yes
   rebalance:
