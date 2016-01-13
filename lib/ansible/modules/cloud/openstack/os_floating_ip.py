@@ -176,7 +176,7 @@ def main():
             module.exit_json(changed=True, floating_ip=f_ip)
 
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=e.message, extra_data=e.extra_data)
+        module.fail_json(msg=str(e), extra_data=e.extra_data)
 
 
 # this is magic, see lib/ansible/module_common.py
