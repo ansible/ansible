@@ -741,6 +741,8 @@ class Inventory(object):
                 # same for hostvars in dir/host_vars/name_of_host
                 base_path = os.path.realpath(os.path.join(basedir, "host_vars/%s" % host.name))
                 results = self._variable_manager.add_host_vars_file(base_path, self._loader)
+                # Make sure to grub runtime vars
+                results.update(host.vars)
 
         # all done, results is a dictionary of variables for this particular host.
         return results
