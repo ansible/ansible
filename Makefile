@@ -167,6 +167,9 @@ install:
 sdist: clean docs
 	$(PYTHON) setup.py sdist
 
+sdist_upload: clean docs
+	$(PYTHON) setup.py sdist upload 2>&1 |tee upload.log
+
 rpmcommon: $(MANPAGES) sdist
 	@mkdir -p rpm-build
 	@cp dist/*.gz rpm-build/
