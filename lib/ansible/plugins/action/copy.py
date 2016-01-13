@@ -24,6 +24,7 @@ import os
 import tempfile
 
 from ansible import constants as C
+from ansible.parsing.vault import VaultLib
 from ansible.plugins.action import ActionBase
 from ansible.utils.boolean import boolean
 from ansible.utils.hashing import checksum
@@ -147,9 +148,30 @@ class ActionModule(ActionBase):
         # expand any user home dir specifier
         dest = self._remote_expand_user(dest)
 
+        vault = VaultLib(password=self._loader._vault_password)
         diffs = []
         for source_full, source_rel in source_files:
+            
+            vault_temp_file = None
+            data = None
 
+            try:
+                data = open(source_full).read()
+            except IOError:
+                raise errors.AnsibleError("file could not read: %s" % source_full)
+
+            if vault.is_encrypted(data):
+                # if the file is encrypted and no password was specified,
+                # the decrypt call would throw an error, but we check first
+                # since the decrypt function doesn't know the file name
+                if self._loader._vault_password is None:
+                    raise errors.AnsibleError("A vault password must be specified to decrypt %s" % source_full)
+                    
+                data = vault.decrypt(data)
+                # Make a temp file
+                vault_temp_file = self._create_content_tempfile(data)
+                source_full = vault_temp_file;
+                
             # Generate a hash of the local file.
             local_checksum = checksum(source_full)
 
@@ -217,6 +239,11 @@ class ActionModule(ActionBase):
                 # We have copied the file remotely and no longer require our content_tempfile
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
+                # Remove the vault tempfile if we have one
+                if vault_temp_file:
+                    os.remove(vault_temp_file);
+                    vault_temp_file = None
+
                 # fix file permissions when the copy is done as a different user
                 if self._play_context.become and self._play_context.become_user != 'root':
                     self._remote_chmod('a+r', tmp_src)
@@ -246,6 +273,11 @@ class ActionModule(ActionBase):
                 # the file module in case we want to change attributes
                 self._remove_tempfile_if_content_defined(content, content_tempfile)
 
+                # Remove the vault tempfile if we have one
+                if vault_temp_file:
+                    os.remove(vault_temp_file);
+                    vault_temp_file = None
+                    
                 if raw:
                     # Continue to next iteration if raw is defined.
                     self._remove_tmp_path(tmp)
