@@ -35,6 +35,7 @@ import getpass
 import pwd
 import ConfigParser
 import StringIO
+import grp
 
 from string import maketrans
 
@@ -165,6 +166,7 @@ class Facts(object):
             self.get_local_facts()
             self.get_env_facts()
             self.get_dns_facts()
+            self.get_groups_facts()
 
     def populate(self):
         return self.facts
@@ -758,6 +760,16 @@ class Facts(object):
                         continue
                     val = len(option_tokens) == 2 and option_tokens[1] or True
                     self.facts['dns']['options'][option_tokens[0]] = val
+
+    def get_groups_facts(self):
+        self.facts['groups'] = {}
+        for i in grp.getgrall():
+            self.facts['groups'][i.gr_name] = {
+                'name': i.gr_name,
+                'passwd': i.gr_passwd,
+                'gid': i.gr_gid,
+                'members': i.gr_mem
+            }
 
 class Hardware(Facts):
     """
