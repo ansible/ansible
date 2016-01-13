@@ -92,7 +92,7 @@ While all items listed here will show a deprecation warning message, they still 
 * Bare variables in `with_` loops should instead use the “{{var}}” syntax, which helps eliminate ambiguity.
 * The ansible-galaxy text format requirements file. Users should use the YAML format for requirements instead.
 * Undefined variables within a `with_` loop’s list currently do not interrupt the loop, but they do issue a warning; in the future, they will issue an error.
-* Using variables for task parameters is unsafe and will be removed in a future version. For example::
+* Using dictionary variables to set all task parameters is unsafe and will be removed in a future version. For example::
 
     - hosts: localhost
       gather_facts: no
