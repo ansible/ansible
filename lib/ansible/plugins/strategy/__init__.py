@@ -40,6 +40,7 @@ from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
 from ansible.vars.unsafe_proxy import wrap_var
+from ansible.vars import combine_vars
 
 try:
     from __main__ import display
@@ -372,9 +373,8 @@ class StrategyBase:
             allgroup.add_host(new_host)
 
         # Set/update the vars for this host
-        new_vars = host_info.get('host_vars', dict())
-        new_host.vars = self._inventory.get_host_vars(new_host)
-        new_host.vars.update(new_vars)
+        new_host.vars = combine_vars(new_host.vars, self._inventory.get_host_vars(new_host))
+        new_host.vars = combine_vars(new_host.vars,  host_info.get('host_vars', dict()))
 
         new_groups = host_info.get('groups', [])
         for group_name in new_groups:
