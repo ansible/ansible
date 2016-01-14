@@ -333,8 +333,8 @@ def user_mod(cursor, user, host, host_all, password, encrypted, new_priv, append
     return changed
 
 def user_delete(cursor, user, host, host_all, check_mode):
-    if module.check_mode:
-        changed = True
+    if check_mode:
+        return True
 
     if host_all:
         hostnames = user_get_hostnames(cursor, user)
