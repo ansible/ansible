@@ -151,11 +151,13 @@ class Connection(ConnectionBase):
         self.keyfile = os.path.expanduser("~/.ssh/known_hosts")
 
         if C.HOST_KEY_CHECKING:
-            try:
-                #TODO: check if we need to look at several possible locations, possible for loop
-                ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
-            except IOError:
-                pass # file was not found, but not required to function
+            for ssh_known_hosts in ("/etc/ssh/ssh_known_hosts", "/etc/openssh/ssh_known_hosts"):
+                try:
+                    #TODO: check if we need to look at several possible locations, possible for loop
+                    ssh.load_system_host_keys(ssh_known_hosts)
+                    break
+                except IOError:
+                    pass # file was not found, but not required to function
             ssh.load_system_host_keys()
 
         ssh.set_missing_host_key_policy(MyAddPolicy(self._new_stdin, self))
