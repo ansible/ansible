@@ -234,7 +234,7 @@ def main():
     if not selinux.is_selinux_enabled():
         module.fail_json(msg="SELinux is disabled on this host.")
 
-    ports = [x.strip() for x in module.params['ports'].split(',')]
+    ports = [x.strip() for x in str(module.params['ports']).split(',')]
     proto = module.params['proto']
     setype = module.params['setype']
     state = module.params['state']
