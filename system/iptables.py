@@ -51,13 +51,13 @@ options:
     default: filter
     choices: [ "filter", "nat", "mangle", "raw", "security" ]
   state:
-    description: 
+    description:
       - Whether the rule should be absent or present.
     required: false
     default: present
     choices: [ "present", "absent" ]
   ip_version:
-    description: 
+    description:
       - Which version of the IP protocol this rule should apply to.
     required: false
     default: ipv4
@@ -236,21 +236,15 @@ def append_param(rule, param, flag, is_list):
         if param is not None:
             rule.extend([flag, param])
 
-def append_comm(rule, param):
-    if param:
-        rule.extend(['-m'])
-        rule.extend(['comment'])
+
+def append_csv(rule, param, flag):
+    if param is not None:
+        rule.extend([flag, ','.join(param)])
 
 
-def append_conntrack(rule, param):
+def append_match(rule, param, match):
     if param:
-        rule.extend(['-m'])
-        rule.extend(['state'])
-
-def append_limit(rule, param):
-    if param:
-        rule.extend(['-m'])
-        rule.extend(['limit'])
+        rule.extend(['-m', match])
 
 
 def construct_rule(params):
@@ -268,12 +262,11 @@ def construct_rule(params):
     append_param(rule, params['source_port'], '--source-port', False)
     append_param(rule, params['destination_port'], '--destination-port', False)
     append_param(rule, params['to_ports'], '--to-ports', False)
-    append_comm(rule, params['comment'])
+    append_match(rule, params['comment'], 'comment')
     append_param(rule, params['comment'], '--comment', False)
-    if params['ctstate']:
-        append_conntrack(rule, params['ctstate'])
-        append_param(rule, ','.join(params['ctstate']), '--state', False)
-    append_limit(rule, params['limit'])
+    append_match(rule, params['ctstate'], 'state')
+    append_csv(rule, params['ctstate'], '--state')
+    append_match(rule, params['limit'], 'limit')
     append_param(rule, params['limit'], '--limit', False)
     return rule
 
