@@ -58,11 +58,16 @@ The following tasks are illustrative of how filters can be used with conditional
       - debug: msg="it changed"
         when: result|changed
 
+      - debug: msg="it succeeded in Ansible >= 2.1"
+        when: result|succeeded
+
       - debug: msg="it succeeded"
         when: result|success
 
       - debug: msg="it was skipped"
         when: result|skipped
+
+.. note:: From 2.1 You can also use success, failure, change, skip so the grammer matches, for those that want to be strict about it.
 
 .. _forcing_variables_to_be_defined:
 
