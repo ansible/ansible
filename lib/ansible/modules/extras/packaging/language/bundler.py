@@ -163,7 +163,7 @@ def main():
     local = module.params.get('local')
     deployment_mode = module.params.get('deployment_mode')
     user_install = module.params.get('user_install')
-    gem_path = module.params.get('gem_install_path')
+    gem_path = module.params.get('gem_path')
     binstub_directory = module.params.get('binstub_directory')
     extra_args = module.params.get('extra_args')
 
