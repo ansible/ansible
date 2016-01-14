@@ -225,7 +225,11 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
     if hashtype in cryptmethod:
         if salt is None:
             r = SystemRandom()
-            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(16)])
+            if hashtype in ['md5']:
+                saltsize = 8
+            else:
+                saltsize = 16
+            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(saltsize)])
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
