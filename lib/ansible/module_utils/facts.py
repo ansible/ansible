@@ -536,6 +536,8 @@ class Facts(object):
                 keydir = '/etc/ssh'
             else:
                 keydir = '/etc'
+        if self.facts['distribution'] == 'Altlinux':
+            keydir = '/etc/openssh'
         else:
             keydir = '/etc/ssh'
 
