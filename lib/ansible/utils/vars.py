@@ -20,7 +20,7 @@ from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import ast
-from json import JSONEncoder
+from json import dumps
 from collections import MutableMapping
 
 from ansible.compat.six import iteritems, string_types
@@ -43,9 +43,9 @@ def _validate_mutable_mappings(a, b):
     # a variable number of arguments instead.
 
     if not (isinstance(a, MutableMapping) and isinstance(b, MutableMapping)):
-        raise AnsibleError("failed to combine variables, expected dicts but"
-                " got a '{0}' and a '{1}'".format(
-                    a.__class__.__name__, b.__class__.__name__))
+        raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
+            a.__class__.__name__, b.__class__.__name__, dumps(a), dumps(b))
+        )
 
 def combine_vars(a, b):
     """
