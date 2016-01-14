@@ -293,8 +293,6 @@ def get_block_device_mapping(image):
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-            region = dict(required=True,
-                aliases = ['aws_region', 'ec2_region']),
             owner = dict(required=False, default=None),
             ami_id = dict(required=False),
             ami_tags = dict(required=False, type='dict',
