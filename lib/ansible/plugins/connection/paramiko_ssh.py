@@ -155,7 +155,7 @@ class Connection(ConnectionBase):
                 try:
                     #TODO: check if we need to look at several possible locations, possible for loop
                     ssh.load_system_host_keys(ssh_known_hosts)
-                break
+                    break
                 except IOError:
                     pass # file was not found, but not required to function
             ssh.load_system_host_keys()
