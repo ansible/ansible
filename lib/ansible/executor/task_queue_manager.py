@@ -296,7 +296,7 @@ class TaskQueueManager:
                         if method_name == 'v2_playbook_on_start':
                             import inspect
                             (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
-                            if 'playbook' in args:
+                            if 'playbook' in f_args:
                                 method(*args, **kwargs)
                             else:
                                 method()
