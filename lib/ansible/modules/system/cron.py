@@ -45,7 +45,7 @@ version_added: "0.9"
 options:
   name:
     description:
-      - Description of a crontab entry.
+      - Description of a crontab entry. Required if state=absent
     default: null
     required: false
   user:
