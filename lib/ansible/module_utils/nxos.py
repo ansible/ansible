@@ -191,7 +191,7 @@ class NxosModule(AnsibleModule):
             return resp['ins_api']['outputs']['output']['body']
 
 def get_module(**kwargs):
-    """Return instance of EosModule
+    """Return instance of NxosModule
     """
 
     argument_spec = NET_COMMON_ARGS.copy()
