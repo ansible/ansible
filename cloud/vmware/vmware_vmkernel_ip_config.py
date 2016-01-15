@@ -32,20 +32,6 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the ESXi server
-        required: True
-    username:
-        description:
-            - The username of the ESXi server
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of the ESXi server
-        required: True
-        aliases: ['pass', 'pwd']
     vmk_name:
         description:
             - VMkernel interface name
@@ -58,6 +44,7 @@ options:
         description:
             - Subnet Mask to assign to VMkernel interface
         required: True
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''

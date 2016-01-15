@@ -32,20 +32,6 @@ requirements:
     - "python >= 2.6"
     - PyVmomi
 options:
-    hostname:
-        description:
-            - The hostname or IP address of the vSphere vCenter API server
-        required: True
-    username:
-        description:
-            - The username of the vSphere vCenter
-        required: True
-        aliases: ['user', 'admin']
-    password:
-        description:
-            - The password of the vSphere vCenter
-        required: True
-        aliases: ['pass', 'pwd']
     esxi_hostname:
         description:
             - The ESXi hostname
@@ -63,6 +49,7 @@ options:
             - If the host should be present or absent attached to the vSwitch
         choices: ['present', 'absent']
         required: True
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
