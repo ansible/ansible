@@ -319,6 +319,14 @@ Running individual commands uses the 'raw' module, as opposed to the shell or co
           register: ipconfig
         - debug: var=ipconfig
 
+Running common DOS commands like 'del", 'move', or 'copy" is unlikely to work on a remote Windows Server using Powershell, but they can work by prefacing the commands with "CMD /C" and enclosing the command in double quotes as in this example::
+
+    - name: another raw module example
+      hosts: windows
+      tasks:
+         - name: Move file on remote Windows Server from one location to another
+           raw: CMD /C "MOVE /Y C:\teststuff\myfile.conf C:\builds\smtp.conf"
+
 And for a final example, here's how to use the win_stat module to test for file existence.  Note that the data returned by the win_stat module is slightly different than what is provided by the Linux equivalent::
 
     - name: test stat module
