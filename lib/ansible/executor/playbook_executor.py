@@ -151,9 +151,7 @@ class PlaybookExecutor:
                             # conditions are met, we break out, otherwise we only break out if the entire
                             # batch failed
                             failed_hosts_count = len(self._tqm._failed_hosts) + len(self._tqm._unreachable_hosts)
-                            if new_play.any_errors_fatal and failed_hosts_count > 0:
-                                break
-                            elif new_play.max_fail_percentage is not None and \
+                            if new_play.max_fail_percentage is not None and \
                                int((new_play.max_fail_percentage)/100.0 * len(batch)) > int((len(batch) - failed_hosts_count) / len(batch) * 100.0):
                                 break
                             elif len(batch) == failed_hosts_count:

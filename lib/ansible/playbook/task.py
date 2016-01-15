@@ -216,14 +216,6 @@ class Task(Base, Conditional, Taggable, Become):
 
         return super(Task, self).preprocess_data(new_ds)
 
-    def _load_any_errors_fatal(self, attr, value):
-        '''
-        Exists only to show a deprecation warning, as this attribute is not valid
-        at the task level.
-        '''
-        display.deprecated("Setting any_errors_fatal on a task is no longer supported. This should be set at the play level only")
-        return None
-
     def post_validate(self, templar):
         '''
         Override of base class post_validate, to also do final validation on
@@ -422,3 +414,14 @@ class Task(Base, Conditional, Taggable, Become):
         if parent_environment is not None:
             environment = self._extend_value(environment, parent_environment)
         return environment
+
+    def _get_attr_any_errors_fatal(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        any_errors_fatal = self._attributes['any_errors_fatal']
+        if hasattr(self, '_get_parent_attribute'):
+            if self._get_parent_attribute('any_errors_fatal'):
+                any_errors_fatal = True
+        return any_errors_fatal
+
