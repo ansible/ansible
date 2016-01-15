@@ -41,18 +41,18 @@ foreach ($adapter in $ActiveNetcfg)
     default_gateway = $null
     interface_index = $adapter.InterfaceIndex
     }
-    
+
     if ($adapter.defaultIPGateway)
     {
         $thisadapter.default_gateway = $adapter.DefaultIPGateway[0].ToString()
     }
-    
+
     $formattednetcfg += $thisadapter;$thisadapter = $null
 }
 
 Set-Attr $result.ansible_facts "ansible_interfaces" $formattednetcfg
 
-Set-Attr $result.ansible_facts "ansible_architecture" $win32_os.OSArchitecture 
+Set-Attr $result.ansible_facts "ansible_architecture" $win32_os.OSArchitecture
 
 Set-Attr $result.ansible_facts "ansible_hostname" $env:COMPUTERNAME;
 Set-Attr $result.ansible_facts "ansible_fqdn" "$([System.Net.Dns]::GetHostByName((hostname)).HostName)"
@@ -111,9 +111,28 @@ if ($winrm_cert_thumbprint)
 
 $winrm_cert_expiry = Get-ChildItem -Path Cert:\LocalMachine\My | where Thumbprint -EQ $uppercase_cert_thumbprint | select NotAfter
 
-if ($winrm_cert_expiry) 
+if ($winrm_cert_expiry)
 {
     Set-Attr $result.ansible_facts "ansible_winrm_certificate_expires" $winrm_cert_expiry.NotAfter.ToString("yyyy-MM-dd HH:mm:ss")
+}
+
+# See if Facter is on the System Path
+Try {
+    $facter_exe = Get-Command facter -ErrorAction Stop
+    $facter_installed = $true
+}
+Catch {
+    $facter_installed = $false
+}
+
+# Get JSON from Facter, and parse it out.
+if ($facter_installed) {
+    &facter -j | Tee-Object  -Variable facter_output | Out-Null
+    $facts = "$facter_output" | ConvertFrom-Json
+    ForEach($fact in $facts.PSObject.Properties) {
+        $fact_name = $fact.Name
+        Set-Attr $result.ansible_facts "facter_$fact_name" $fact.Value
+    }
 }
 
 Exit-Json $result;
