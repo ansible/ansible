@@ -84,10 +84,9 @@ options:
     version_added: "1.6"
   mode:
     description:
-      - Switches the module behaviour between put (upload), get (download), geturl (return download url (Ansible 1.3+), getstr (download object as string (1.3+)), list (list keys (2.0+)), create (bucket), delete (bucket), and delobj (delete object).
+      - Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+), getstr (download object as string (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket), and delobj (delete object, Ansible 2.0+).
     required: true
-    default: null
-    aliases: []
+    choices: ['get', 'put', 'delete', 'create', 'geturl', 'getstr', 'delobj', 'list']
   object:
     description:
       - Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
