@@ -424,7 +424,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         cmd = ""
         in_data = None
 
-        if self._connection.has_pipelining and self._play_context.pipelining and not C.DEFAULT_KEEP_REMOTE_FILES:
+        if self._connection.has_pipelining and self._play_context.pipelining and not C.DEFAULT_KEEP_REMOTE_FILES and module_style == 'new':
             in_data = module_data
         else:
             if remote_module_path:
