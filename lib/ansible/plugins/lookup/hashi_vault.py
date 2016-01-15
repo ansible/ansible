@@ -18,52 +18,57 @@
 # USAGE: {{ lookup('hashi_vault', 'secret=secret/hello token=c975b780-d1be-8016-866b-01d0f9b688a5 url=http://myvault:8200')}}
 #
 # You can skip setting the url if you set the VAULT_ADDR environment variable
-# or if you want it to default to localhost:8200
+# or if you want it to default to http://localhost:8200
 #
-# NOTE: Due to a current limitation in the HVAC library there won't
-# necessarily be an error if a bad endpoint is specified.
-#
-# Requires hvac library. Install with pip.
-#
+# You can skip setting the token if you set the VAULT_TOKEN environment variable
 
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
 import os
+import urllib2
+import json
+from urlparse import urljoin
 
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
 
-ANSIBLE_HASHI_VAULT_ADDR = 'http://127.0.0.1:8200'
-
-if os.getenv('VAULT_ADDR') is not None:
-    ANSIBLE_HASHI_VAULT_ADDR = os.environ['VAULT_ADDR']
-
 class HashiVault:
     def __init__(self, **kwargs):
         try:
-            import hvac
-        except ImportError:
-            AnsibleError("Please pip install hvac to use this module")
+            self.url = kwargs.pop('url')
+        except:
+            if os.getenv('VAULT_ADDR'):
+                self.url = os.getenv('VAULT_ADDR')
+            else:
+                raise AnsibleError("VAULT_ADDR environment variable must be specified to acccess Hashicorp Vault")
 
-        self.url = kwargs.pop('url')
+        try:
+            self.token = kwargs.pop('token')
+        except:
+            if os.environ['VAULT_TOKEN']:
+                self.token = os.environ['VAULT_TOKEN']
+            else:
+                raise AnsibleError("VAULT_TOKEN environment variable must be specified to access Hashicorp Vault")
+
         self.secret = kwargs.pop('secret')
-        self.token = kwargs.pop('token')
-
-        self.client = hvac.Client(url=self.url, token=self.token)
-
-        if self.client.is_authenticated():
-            pass
-        else:
-            raise AnsibleError("Invalid Hashicorp Vault Token Specified")
 
     def get(self):
-        data = self.client.read(self.secret)
-        if data is None:
-            raise AnsibleError("The secret %s doesn't seem to exist" % self.secret)
-        else:
-            return data['data']['value']
+        request_url = urljoin(self.url, "v1/%s" % (self.secret))
+
+        try:
+            headers = { 'X-Vault-Token' : self.token }
+            req = urllib2.Request(request_url, None, headers)
+            response = urllib2.urlopen(req)
+        except urllib2.HTTPError as e:
+            raise AnsibleError('Unable to read %s from Hashicorp Vault: %s' % (self.secret, e))
+        except:
+            raise AnsibleError('Unable to read %s from Hashicorp Vault' % self.secret)
+
+        result = json.loads(response.read())
+
+        return result['data']['value']
 
 
 class LookupModule(LookupBase):
