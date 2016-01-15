@@ -557,18 +557,18 @@ class Facts(object):
                 self.facts['pkg_mgr'] = 'openbsd_pkg'
 
     def get_service_mgr_facts(self):
-        #TODO: detect more custom init setups like bootscripts, dmd, s6, etc
+        #TODO: detect more custom init setups like bootscripts, dmd, s6, Epoch, runit, etc
         # also other OSs other than linux might need to check across several possible candidates
 
         # try various forms of querying pid 1
-        proc_1 = get_file_content('/proc/1/comm')
+        proc_1 = os.path.basename(get_file_content('/proc/1/comm'))
         if proc_1 is None:
             rc, proc_1, err = module.run_command("ps -p 1 -o comm|tail -n 1", use_unsafe_shell=True)
         else:
             proc_1 = os.path.basename(proc_1)
 
-        if proc_1 in ['init', '/sbin/init', 'bash']:
-            # many systems return init, so this cannot be trusted, bash is from docker
+        if proc_1 == 'init' or proc_1.endswith('sh'):
+            # many systems return init, so this cannot be trusted, if it ends in 'sh' it probalby is a shell in a container
             proc_1 = None
 
         # if not init/None it should be an identifiable or custom init, so we are done!
@@ -582,7 +582,7 @@ class Facts(object):
                 self.facts['service_mgr'] = 'launchd'
             else:
                 self.facts['service_mgr'] = 'systemstarter'
-        elif self.facts['system'].endswith('BSD') or self.facts['system'] in ['Bitrig', 'DragonFly']:
+        elif 'BSD' in self.facts['system'] or self.facts['system'] in ['Bitrig', 'DragonFly']:
             #FIXME: we might want to break out to individual BSDs
             self.facts['service_mgr'] = 'bsdinit'
         elif self.facts['system'] == 'AIX':
@@ -591,12 +591,11 @@ class Facts(object):
             #FIXME: smf?
             self.facts['service_mgr'] = 'svcs'
         elif self.facts['system'] == 'Linux':
-
             if self._check_systemd():
                 self.facts['service_mgr'] = 'systemd'
             elif module.get_bin_path('initctl') and os.path.exists("/etc/init/"):
                 self.facts['service_mgr'] = 'upstart'
-            elif module.get_bin_path('rc-service'):
+            elif os.path.realpath('/sbin/rc') == '/sbin/openrc':
                 self.facts['service_mgr'] = 'openrc'
             elif os.path.exists('/etc/init.d/'):
                 self.facts['service_mgr'] = 'sysvinit'
