@@ -96,7 +96,7 @@ Show help page and exit
 *-i* 'PATH', *--inventory=*'PATH'::
 
 The 'PATH' to the inventory, which defaults to '/etc/ansible/hosts'.
-Alternatively you can use a comma separated list of hosts or single host with traling comma 'host,'.
+Alternatively, you can use a comma-separated list of hosts or a single host with a trailing comma 'host,'.
 
 *-l* 'SUBSET', *--limit=*'SUBSET'::
 
