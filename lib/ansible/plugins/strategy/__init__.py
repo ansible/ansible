@@ -373,7 +373,7 @@ class StrategyBase:
 
         # Set/update the vars for this host
         new_vars = host_info.get('host_vars', dict())
-        new_host.vars = self._inventory.get_host_vars(new_host)
+        new_host.vars.update(self._inventory.get_host_vars(new_host))
         new_host.vars.update(new_vars)
 
         new_groups = host_info.get('groups', [])
