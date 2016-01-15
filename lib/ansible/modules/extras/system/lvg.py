@@ -183,7 +183,7 @@ def main():
                 ### create PV
                 pvcreate_cmd = module.get_bin_path('pvcreate', True)
                 for current_dev in dev_list:
-                    rc,_,err = module.run_command("%s %s" % (pvcreate_cmd,current_dev))
+                    rc,_,err = module.run_command("%s -f %s" % (pvcreate_cmd,current_dev))
                     if rc == 0:
                         changed = True
                     else:
@@ -224,7 +224,7 @@ def main():
                     ### create PV
                     pvcreate_cmd = module.get_bin_path('pvcreate', True)
                     for current_dev in devs_to_add:
-                        rc,_,err = module.run_command("%s %s" % (pvcreate_cmd, current_dev))
+                        rc,_,err = module.run_command("%s -f %s" % (pvcreate_cmd, current_dev))
                         if rc == 0:
                             changed = True
                         else:
