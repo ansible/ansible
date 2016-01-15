@@ -33,6 +33,7 @@ options:
     aliases: [ name, destfile ]
     description:
       - The path of the file to modify.
+      - Note that the Windows path delimiter '\' must be escaped as '\\' (see examples below)
   regexp:
     required: false
     description:
