@@ -280,6 +280,7 @@ class StrategyModule(StrategyBase):
                 except AnsibleError as e:
                     return False
 
+                include_failure = False
                 if len(included_files) > 0:
                     display.debug("we have included files to process")
                     noop_task = Task()
@@ -325,6 +326,7 @@ class StrategyModule(StrategyBase):
                                 self._tqm._failed_hosts[host.name] = True
                                 iterator.mark_host_failed(host)
                             display.error(e, wrap_text=False)
+                            include_failure = True
                             continue
 
                     # finally go through all of the hosts and append the
@@ -338,6 +340,16 @@ class StrategyModule(StrategyBase):
                     display.debug("done processing included files")
 
                 display.debug("results queue empty")
+
+                display.debug("checking for any_errors_fatal")
+                had_failure = include_failure
+                for res in results:
+                    if res.is_failed() or res.is_unreachable():
+                        had_failure = True
+                        break
+                if task and task.any_errors_fatal and had_failure:
+                    return False
+
             except (IOError, EOFError) as e:
                 display.debug("got IOError/EOFError in task loop: %s" % e)
                 # most likely an abort, return failed

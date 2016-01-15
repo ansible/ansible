@@ -35,6 +35,7 @@ class Block(Base, Become, Conditional, Taggable):
     _always = FieldAttribute(isa='list', default=[])
     _delegate_to = FieldAttribute(isa='list')
     _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _any_errors_fatal = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -329,6 +330,16 @@ class Block(Base, Become, Conditional, Taggable):
             environment = self._extend_value(environment, parent_environment)
 
         return environment
+
+    def _get_attr_any_errors_fatal(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        any_errors_fatal = self._attributes['any_errors_fatal']
+        if hasattr(self, '_get_parent_attribute'):
+            if self._get_parent_attribute('any_errors_fatal'):
+                any_errors_fatal = True
+        return any_errors_fatal
 
     def filter_tagged_tasks(self, play_context, all_vars):
         '''
