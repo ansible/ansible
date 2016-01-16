@@ -67,7 +67,7 @@ EXAMPLES = '''
 # Assume an existing role (more details: http://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
 sts_assume_role:
   role_arn: "arn:aws:iam::123456789012:role/someRole"
-  session_name: "someRoleSession"
+  role_session_name: "someRoleSession"
 register: assumed_role
 
 # Use the assumed role above to tag an instance in account 123456789012
