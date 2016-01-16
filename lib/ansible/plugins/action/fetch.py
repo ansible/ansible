@@ -70,7 +70,7 @@ class ActionModule(ActionBase):
         if remote_checksum in ('1', '2', None):
             slurpres = self._execute_module(module_name='slurp', module_args=dict(src=source), task_vars=task_vars, tmp=tmp)
             if slurpres.get('failed'):
-                if remote_checksum == '1' and not fail_on_missing:
+                if not fail_on_missing and (slurpres.get('msg').startswith('file not found') or remote_checksum == '1'):
                     result['msg'] = "the remote file does not exist, not transferring, ignored"
                     result['file'] = source
                     result['changed'] = False
@@ -171,7 +171,9 @@ class ActionModule(ActionBase):
                 new_md5 = None
 
             if validate_checksum and new_checksum != remote_checksum:
-                result.update(dict(failed=True, md5sum=new_md5, msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
+                result.update(dict(failed=True, md5sum=new_md5,
+                    msg="checksum mismatch", file=source, dest=dest, remote_md5sum=None,
+                    checksum=new_checksum, remote_checksum=remote_checksum))
             else:
                 result.update(dict(changed=True, md5sum=new_md5, dest=dest, remote_md5sum=None, checksum=new_checksum, remote_checksum=remote_checksum))
         else:
