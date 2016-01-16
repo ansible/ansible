@@ -49,9 +49,10 @@ options:
     version_added: "2.0"
   interface:
     description:
-      - 'The interface you would like to add/remove to/from a zone in firewalld - zone must be specified'
+      - 'The interface you would like to add/remove to/from a zone in firewalld'
     required: false
     default: null
+    version_added: "2.1"
   zone:
     description:
       - 'The firewalld zone to add/remove to/from (NOTE: default zone can be configured per system but "public" is default from upstream. Available choices can be extended based on per-system configs, listed here are "out of the box" defaults).'
