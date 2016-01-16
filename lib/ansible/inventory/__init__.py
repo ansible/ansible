@@ -30,6 +30,7 @@ from ansible.compat.six import string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
 
+from ansible.inventory.ini import InventoryParser as InventoryINIParser
 from ansible.inventory.dir import InventoryDirectory, get_file_parser
 from ansible.inventory.group import Group
 from ansible.inventory.host import Host
@@ -89,11 +90,6 @@ class Inventory(object):
 
     def parse_inventory(self, host_list):
 
-        if isinstance(host_list, string_types):
-            if "," in host_list:
-                host_list = host_list.split(",")
-                host_list = [ h for h in host_list if h and h.strip() ]
-
         self.parser = None
 
         # Always create the 'all' and 'ungrouped' groups, even if host_list is
@@ -107,15 +103,9 @@ class Inventory(object):
 
         if host_list is None:
             pass
-        elif isinstance(host_list, list):
-            for h in host_list:
-                try:
-                    (host, port) = parse_address(h, allow_ranges=False)
-                except AnsibleError as e:
-                    display.vvv("Unable to parse address from hostname, leaving unchanged: %s" % to_unicode(e))
-                    host = h
-                    port = None
-                all.add_host(Host(host, port))
+        elif isinstance(host_list, string_types) and "," in host_list:
+            StringDataLoader = type('StringDataLoader', (object,), dict(_get_file_contents=lambda self, str: ("\n".join(str.split(",")), True)))
+            self.parser = InventoryINIParser(loader=StringDataLoader(), groups=self.groups, filename=host_list)
         elif self._loader.path_exists(host_list):
             #TODO: switch this to a plugin loader and a 'condition' per plugin on which it should be tried, restoring 'inventory pllugins'
             if self.is_directory(host_list):
