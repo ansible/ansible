@@ -268,9 +268,6 @@ def main():
     if not HAS_BOTO:
         module.fail_json(msg='boto required for this module')
 
-    if module.params['template'] is None and module.params['template_url'] is None:
-        module.fail_json(msg='Either template or template_url expected')
-
     state = module.params['state']
     stack_name = module.params['stack_name']
 
