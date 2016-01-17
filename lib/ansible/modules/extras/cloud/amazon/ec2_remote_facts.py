@@ -128,7 +128,7 @@ def get_instance_info(instance):
                     'region': instance.region.name,
                     'persistent': instance.persistent,
                     'private_ip_address': instance.private_ip_address,
-                    'public_ip_adress': instance.ip_address,
+                    'public_ip_address': instance.ip_address,
                     'state': instance._state.name,
                     'vpc_id': instance.vpc_id,
                     'block_device_mapping': bdm_dict,
