@@ -63,6 +63,12 @@
       - "copy_result.md5sum == 'c47397529fe81ab62ba3f85e9f4c71f2'"
   when: ansible_fips != True
 
+- name: create a hardlink to the file
+  file: src={{ output_file }} dest={{ output_dir }}/hard.lnk state=hard
+
+- name: copy the same file to the same place
+  copy: src=foo.txt dest={{output_file}} mode=0444
+
 - name: check the stat results of the file
   stat: path={{output_file}}
   register: stat_results
