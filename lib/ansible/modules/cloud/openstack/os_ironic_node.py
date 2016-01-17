@@ -22,6 +22,8 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from distutils.version import StrictVersion
+
 DOCUMENTATION = '''
 ---
 module: os_ironic_node
@@ -93,8 +95,16 @@ options:
           maintenance mode.
       required: false
       default: None
-
-requirements: ["shade"]
+    wait:
+      description:
+        - A boolean value instructing the module to wait for node
+          activation or deactivation to complete before returning.
+      required: false
+      default: False
+    timeout:
+      description:
+        - An integer value representing the number of seconds to
+          wait for the node activation or deactivation to complete.
 '''
 
 EXAMPLES = '''
@@ -183,7 +193,7 @@ def _check_set_maintenance(module, cloud, node):
 def _check_set_power_state(module, cloud, node):
     if 'power on' in str(node['power_state']):
         if _is_false(module.params['power']):
-        # User has requested the node be powered off.
+            # User has requested the node be powered off.
             cloud.set_machine_power_off(node['uuid'])
             module.exit_json(changed=True, msg="Power requested off")
     if 'power off' in str(node['power_state']):
@@ -221,11 +231,19 @@ def main():
         maintenance_reason=dict(required=False),
         power=dict(required=False, default='present'),
         deploy=dict(required=False, default=True),
+        wait=dict(type='bool', required=False, default=False),
+        timeout=dict(required=False, default=1800),
     )
     module_kwargs = openstack_module_kwargs()
     module = AnsibleModule(argument_spec, **module_kwargs)
     if not HAS_SHADE:
         module.fail_json(msg='shade is required for this module')
+
+    if (module.params['wait'] and
+            StrictVersion(shade.__version__) < StrictVersion('1.4.0')):
+        module.fail_json(msg="To utilize wait, the installed version of"
+                             "the shade library MUST be >=1.4.0")
+
     if (module.params['auth_type'] in [None, 'None'] and
             module.params['ironic_url'] is None):
         module.fail_json(msg="Authentication appears disabled, Please "
@@ -252,6 +270,8 @@ def main():
         uuid = node['uuid']
         instance_info = module.params['instance_info']
         changed = False
+        wait = module.params['wait']
+        timeout = module.params['timeout']
 
         # User has reqeusted desired state to be in maintenance state.
         if module.params['state'] is 'maintenance':
@@ -304,17 +324,28 @@ def main():
             patch = _prepare_instance_info_patch(instance_info)
             cloud.set_node_instance_info(uuid, patch)
             cloud.validate_node(uuid)
-            cloud.activate_node(uuid, module.params['config_drive'])
-            # TODO(TheJulia): Add more error checking and a wait option.
-            # We will need to loop, or just add the logic to shade,
-            # although this could be a very long running process as
-            # baremetal deployments are not a "quick" task.
+            if not wait:
+                cloud.activate_node(uuid, module.params['config_drive'])
+            else:
+                cloud.activate_node(
+                    uuid,
+                    configdrive=module.params['config_drive'],
+                    wait=wait,
+                    timeout=timeout)
+            # TODO(TheJulia): Add more error checking..
             module.exit_json(changed=changed, result="node activated")
 
         elif _is_false(module.params['state']):
             if node['provision_state'] not in "deleted":
                 cloud.purge_node_instance_info(uuid)
-                cloud.deactivate_node(uuid)
+                if not wait:
+                    cloud.deactivate_node(uuid)
+                else:
+                    cloud.deactivate_node(
+                        uuid,
+                        wait=wait,
+                        timeout=timeout)
+
                 module.exit_json(changed=True, result="deleted")
             else:
                 module.exit_json(changed=False, result="node not found")
