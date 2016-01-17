@@ -156,6 +156,18 @@
        - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "stat_results.stat.mode == '0700'"
 
+- name: Create a hardlink to the file
+  file:
+    src: '{{ remote_file }}'
+    dest: '{{ output_dir }}/hard.lnk'
+    state: hard
+
+- name: copy the same contents into place
+  copy:
+    content: 'modified'
+    dest: '{{ remote_file }}'
+    mode: 0404
+
 - name: Try invalid copy input location fails
   copy:
     src: invalid_file_location_does_not_exist
@@ -1071,6 +1083,34 @@
        - "'content' not in copy_results"
        - "stat_results.stat.checksum == ('modified'|hash('sha1'))"
        - "not stat_results.stat.islnk"
+
+- name: setup directory for test
+  file: state=directory dest={{remote_dir }}/directory mode=0755
+
+- name: set file mode when the destination is a directory
+  copy: src=foo.txt dest={{remote_dir}}/directory/ mode=0705
+
+- name: set file mode when the destination is a directory
+  copy: src=foo.txt dest={{remote_dir}}/directory/ mode=0604
+  register: file_result
+
+- name: check that the file has the correct attributes
+  stat: path={{ remote_dir }}/directory/foo.txt
+  register: file_attrs
+
+- assert:
+    that:
+      - "file_attrs.stat.uid == 0"
+      - "file_attrs.stat.pw_name == 'root'"
+      - "file_attrs.stat.mode == '0604'"
+
+- name: check that the containing directory did not change attributes
+  stat: path={{ remote_dir }}/directory/
+  register: dir_attrs
+
+- assert:
+    that:
+      - "dir_attrs.stat.mode == '0755'"
 
 #
 # I believe the below section is now covered in the recursive copying section.
