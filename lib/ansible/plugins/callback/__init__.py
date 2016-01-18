@@ -81,14 +81,14 @@ class CallbackBase:
         if not indent and '_ansible_verbose_always' in result and result['_ansible_verbose_always']:
             indent = 4
 
-        # All result keys stating with _ansible_ are internal, so remove them from the result before we output anything.
+        # All result keys starting with _ansible_ are internal, so remove them from the result before we output anything.
         abridged_result = strip_internal_keys(result)
 
         # remove invocation unless specifically wanting it
         if not keep_invocation and self._display.verbosity < 3 and 'invocation' in result:
             del abridged_result['invocation']
 
-        return json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys)
+        return to_unicode(json.dumps(abridged_result, indent=indent, ensure_ascii=False, sort_keys=sort_keys))
 
     def _handle_warnings(self, res):
         ''' display warnings, if enabled and any exist in the result '''
