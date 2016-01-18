@@ -222,18 +222,21 @@ class ModuleArgsParser:
         action = None
         args = None
 
+        actions_allowing_raw = ('command', 'shell', 'script', 'raw')
         if isinstance(thing, dict):
             # form is like:  copy: { src: 'a', dest: 'b' } ... common for structured (aka "complex") args
             thing = thing.copy()
             if 'module' in thing:
-                action = thing['module']
+                action, module_args = self._split_module_string(thing['module'])
                 args = thing.copy()
+                check_raw = action in actions_allowing_raw
+                args.update(parse_kv(module_args, check_raw=check_raw))
                 del args['module']
 
         elif isinstance(thing, string_types):
             # form is like:  copy: src=a dest=b ... common shorthand throughout ansible
             (action, args) = self._split_module_string(thing)
-            check_raw = action in ('command', 'shell', 'script', 'raw')
+            check_raw = action in actions_allowing_raw
             args = parse_kv(args, check_raw=check_raw)
 
         else:
