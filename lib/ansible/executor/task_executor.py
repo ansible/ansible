@@ -365,6 +365,9 @@ class TaskExecutor:
         if not self._connection or not getattr(self._connection, 'connected', False):
             self._connection = self._get_connection(variables=variables, templar=templar)
             self._connection.set_host_overrides(host=self._host)
+        #If connection is reused, its _play_context is no longer valid and needs to be replaced
+        #This fixes issues with tasks running sudo in a loop and having the success_key incorrect in the second iteration
+        self._connection._play_context = self._play_context
 
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
