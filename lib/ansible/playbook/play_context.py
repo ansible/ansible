@@ -366,12 +366,17 @@ class PlayContext(Base):
         else:
             delegated_vars = dict()
 
+        attrs_considered = []
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
+                if attr in attrs_considered:
+                    continue
                 if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
                     setattr(new_info, attr, delegated_vars[variable_name])
+                    attrs_considered.append(attr)
                 elif variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
+                    attrs_considered.append(attr)
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
