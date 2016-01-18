@@ -2987,6 +2987,9 @@ def get_file_content(path, default=None, strip=True):
                 data = data.strip()
             if len(data) == 0:
                 data = default
+        except:
+            # todo: issue warning about unreadable file?
+            pass
         finally:
             datafile.close()
     return data
