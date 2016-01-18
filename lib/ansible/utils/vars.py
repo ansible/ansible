@@ -28,7 +28,8 @@ from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.parsing.splitter import parse_kv
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_str
+
 
 def _validate_mutable_mappings(a, b):
     """
@@ -43,8 +44,14 @@ def _validate_mutable_mappings(a, b):
     # a variable number of arguments instead.
 
     if not (isinstance(a, MutableMapping) and isinstance(b, MutableMapping)):
+        myvars = []
+        for x in [a, b]:
+            try:
+                myvars.append(dumps(x))
+            except:
+                myvars.append(to_str(x))
         raise AnsibleError("failed to combine variables, expected dicts but got a '{0}' and a '{1}': \n{2}\n{3}".format(
-            a.__class__.__name__, b.__class__.__name__, dumps(a), dumps(b))
+            a.__class__.__name__, b.__class__.__name__, myvars[0], myvars[1])
         )
 
 def combine_vars(a, b):
