@@ -98,6 +98,7 @@ function getFirewallRule ($fwsettings) {
             $msg += @("No rule could be found");
         };
         $result = @{
+            failed = $false
             exists = $exists
             identical = $correct
             multiple = $multi
@@ -137,6 +138,7 @@ function createFireWallRule ($fwsettings) {
         $msg+=@("Created firewall rule $name");
 
         $result=@{
+            failed = $false
             output=$output
             changed=$true
             msg=$msg
