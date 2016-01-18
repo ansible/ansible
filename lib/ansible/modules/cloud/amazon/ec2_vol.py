@@ -208,11 +208,11 @@ volume:
     returned: when success
     type: string
     sample: {
-	"attachment_set": {
-    	    "attach_time": "2015-10-23T00:22:29.000Z",
-    	    "deleteOnTermination": "false",
-    	    "device": "/dev/sdf",
-    	    "instance_id": "i-8356263c",
+        "attachment_set": {
+            "attach_time": "2015-10-23T00:22:29.000Z",
+            "deleteOnTermination": "false",
+            "device": "/dev/sdf",
+            "instance_id": "i-8356263c",
             "status": "attached"
         },
         "create_time": "2015-10-21T14:36:08.870Z",
