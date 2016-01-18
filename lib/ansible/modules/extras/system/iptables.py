@@ -238,7 +238,7 @@ def append_param(rule, param, flag, is_list):
 
 
 def append_csv(rule, param, flag):
-    if param is not None:
+    if param:
         rule.extend([flag, ','.join(param)])
 
 
