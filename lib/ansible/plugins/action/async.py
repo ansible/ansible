@@ -74,5 +74,9 @@ class ActionModule(ActionBase):
             self._remove_tmp_path(tmp)
 
         result['changed'] = True
-
+        
+        # Similar fix as in https://github.com/ansible/ansible/commit/3102469b94272954d02f99b64fe7d321679d3bf3
+        if result.get('stdout','').strip().startswith('BECOME-SUCCESS-'):
+            import re
+	        result['stdout'] = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', result['stdout'])
         return result
