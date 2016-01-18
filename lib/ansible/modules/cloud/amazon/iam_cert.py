@@ -65,7 +65,7 @@ options:
       - The path to the private key of the certificate in PEM encoded format.
   dup_ok:
     description:
-      - By default the module will not upload a certifcate that is already uploaded into AWS. If set to True, it will upload the certifcate as long as the name is unique.
+      - By default the module will not upload a certificate that is already uploaded into AWS. If set to True, it will upload the certificate as long as the name is unique.
     required: false
     default: False
     aliases: []
@@ -91,7 +91,7 @@ extends_documentation_fragment: aws
 EXAMPLES = '''
 # Basic server certificate upload
 tasks:
-- name: Upload Certifcate
+- name: Upload Certificate
   iam_cert:
     name: very_ssl
     state: present
@@ -162,7 +162,7 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                     elif orig_cert_bodies[c_index] != cert:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
                                                            ' has a different certificate body associated'
-                                                           ' with it. Certifcates cannot have the same name')
+                                                           ' with it. Certificates cannot have the same name')
             else:
                 update=True
                 break
@@ -216,7 +216,7 @@ def cert_action(module, iam, name, cpath, new_name, new_path, state,
             module.exit_json(changed=changed, deleted_cert=name)
         else:
             changed=False
-            module.exit_json(changed=changed, msg='Certifcate with the name %s already absent' % name)
+            module.exit_json(changed=changed, msg='Certificate with the name %s already absent' % name)
 
 def main():
     argument_spec = ec2_argument_spec()
