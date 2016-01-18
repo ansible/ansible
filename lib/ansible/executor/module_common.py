@@ -40,6 +40,7 @@ REPLACER_WINARGS  = "<<INCLUDE_ANSIBLE_MODULE_WINDOWS_ARGS>>"
 REPLACER_JSONARGS = "<<INCLUDE_ANSIBLE_MODULE_JSON_ARGS>>"
 REPLACER_VERSION  = "\"<<ANSIBLE_VERSION>>\""
 REPLACER_SELINUX  = "<<SELINUX_SPECIAL_FILESYSTEMS>>"
+REPLACER_CONNECTION  = "\"<<INCLUDE_ANSIBLE_MODULE_CONNECTION_ARGS>>\""
 
 # We could end up writing out parameters with unicode characters so we need to
 # specify an encoding for the python source file
@@ -118,6 +119,18 @@ def _find_snippet_imports(module_data, module_path, strip_comments):
 
     return (output.getvalue(), module_style)
 
+def _build_connection_args(task_vars):
+    """
+    Collect connection task vars and return them as a json string to be
+    used to merge into the basic module
+    """
+    args = dict(inventory_hostname=task_vars['inventory_hostname'])
+    for k, v in task_vars.items():
+        if k.startswith('ansible_connection_'):
+            key = str(k).replace('ansible_connection_', '')
+            args[key] = v
+    return json.dumps(args).encode('utf-8')
+
 # ******************************************************************************
 
 def modify_module(module_path, module_args, task_vars=dict(), strip_comments=False):
@@ -167,6 +180,7 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
 
     module_args_json = json.dumps(module_args).encode('utf-8')
     python_repred_args = repr(module_args_json)
+    connection_args_json = repr(_build_connection_args(task_vars))
 
     # these strings should be part of the 'basic' snippet which is required to be included
     module_data = module_data.replace(REPLACER_VERSION, repr(__version__))
@@ -174,6 +188,7 @@ def modify_module(module_path, module_args, task_vars=dict(), strip_comments=Fal
     module_data = module_data.replace(REPLACER_WINARGS, module_args_json)
     module_data = module_data.replace(REPLACER_JSONARGS, module_args_json)
     module_data = module_data.replace(REPLACER_SELINUX, ','.join(C.DEFAULT_SELINUX_SPECIAL_FS))
+    module_data = module_data.replace(REPLACER_CONNECTION, connection_args_json)
 
     if module_style == 'new':
         facility = C.DEFAULT_SYSLOG_FACILITY
