@@ -39,6 +39,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
+from ansible.utils.unicode import to_unicode
 from ansible.vars.unsafe_proxy import wrap_var
 from ansible.vars import combine_vars
 
@@ -465,7 +466,7 @@ class StrategyBase:
             # mark all of the hosts including this file as failed, send callbacks,
             # and increment the stats for this host
             for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=str(e)))
+                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=to_unicode(e)))
                 iterator.mark_host_failed(host)
                 self._tqm._failed_hosts[host.name] = True
                 self._tqm._stats.increment('failures', host.name)
