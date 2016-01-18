@@ -309,23 +309,23 @@ class StrategyBase:
                     else:
                         actual_host = host
 
+                    if task.run_once:
+                        host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                    else:
+                        host_list = [actual_host]
+
                     if result[0] == 'set_host_var':
                         var_name  = result[4]
                         var_value = result[5]
-
-                        if task.run_once:
-                            host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                        else:
-                            host_list = [actual_host]
-
                         for target_host in host_list:
                             self._variable_manager.set_host_variable(target_host, var_name, var_value)
                     elif result[0] == 'set_host_facts':
                         facts = result[4]
-                        if task.action == 'set_fact':
-                            self._variable_manager.set_nonpersistent_facts(actual_host, facts)
-                        else:
-                            self._variable_manager.set_host_facts(actual_host, facts)
+                        for target_host in host_list:
+                            if task.action == 'set_fact':
+                                self._variable_manager.set_nonpersistent_facts(target_host, facts)
+                            else:
+                                self._variable_manager.set_host_facts(target_host, facts)
 
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
