@@ -31,6 +31,7 @@ version_added: "1.1"
 short_description: Manage packages on OpenBSD.
 description:
     - Manage packages on OpenBSD using the pkg tools.
+requirements: [ "python >= 2.5" ]
 options:
     name:
         required: true
@@ -52,12 +53,14 @@ options:
             a binary. Requires that the port source tree is already installed.
             Automatically builds and installs the 'sqlports' package, if it is
             not already installed.
+        version_added: "2.1"
     ports_dir:
         required: false
         default: /usr/ports
         description:
           - When used in combination with the 'build' option, allows overriding
             the default ports source directory.
+        version_added: "2.1"
 '''
 
 EXAMPLES = '''
