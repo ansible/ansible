@@ -367,7 +367,7 @@ class TaskExecutor:
                 self._task.args = variable_params
 
         # get the connection and the handler for this execution
-        if not self._connection or not getattr(self._connection, 'connected', False):
+        if not self._connection or not getattr(self._connection, 'connected', False) or self._play_context.remote_addr != self._connection._play_context.remote_addr:
             self._connection = self._get_connection(variables=variables, templar=templar)
             self._connection.set_host_overrides(host=self._host)
         else:
