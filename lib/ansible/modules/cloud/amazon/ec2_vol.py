@@ -73,6 +73,7 @@ options:
     required: false
     default: "no"
     choices: ["yes", "no"]
+    version_added: "2.1"
   zone:
     description:
       - zone in which to create the volume, if unset uses the zone the instance is in (if set)
