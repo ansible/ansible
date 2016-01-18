@@ -121,7 +121,7 @@ options:
         "journald" Journald logging driver for Docker. Writes log messages to "journald".
         "gelf" Graylog Extended Log Format (GELF) logging driver for Docker. Writes log messages to a GELF endpoint likeGraylog or Logstash.
         "fluentd" Fluentd logging driver for Docker. Writes log messages to "fluentd" (forward input).
-        "awslogs" Awslogs logging driver for Docker. Writes log messages to AWS Cloudwatch Logs.
+        "awslogs" (added in 2.1) Awslogs logging driver for Docker. Writes log messages to AWS Cloudwatch Logs.
         If not defined explicitly, the Docker daemon's default ("json-file") will apply.
         Requires docker >= 1.6.0.
     required: false
