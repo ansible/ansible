@@ -316,6 +316,11 @@ class TaskExecutor:
             # do the same kind of post validation step on it here before we use it.
             self._play_context.post_validate(templar=templar)
 
+            # now that the play context is finalized, if the remote_addr is not set
+            # default to using the host's address field as the remote address
+            if not self._play_context.remote_addr:
+                self._play_context.remote_addr = self._host.address
+
             # We also add "magic" variables back into the variables dict to make sure
             # a certain subset of variables exist.
             self._play_context.update_vars(variables)
@@ -365,6 +370,10 @@ class TaskExecutor:
         if not self._connection or not getattr(self._connection, 'connected', False):
             self._connection = self._get_connection(variables=variables, templar=templar)
             self._connection.set_host_overrides(host=self._host)
+        else:
+            # if connection is reused, its _play_context is no longer valid and needs
+            # to be replaced with the one templated above, in case other data changed
+            self._connection._play_context = self._play_context
 
         self._handler = self._get_action_handler(connection=self._connection, templar=templar)
 
@@ -543,9 +552,6 @@ class TaskExecutor:
         Reads the connection property for the host, and returns the
         correct connection object from the list of connection plugins
         '''
-
-        if not self._play_context.remote_addr:
-            self._play_context.remote_addr = self._host.address
 
         if self._task.delegate_to is not None:
             # since we're delegating, we don't want to use interpreter values
