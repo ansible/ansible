@@ -21,7 +21,8 @@ NET_COMMON_ARGS = dict(
     host=dict(required=True),
     port=dict(default=22, type='int'),
     username=dict(required=True),
-    password=dict(no_log=True)
+    password=dict(no_log=True),
+    provider=dict()
 )
 
 def to_list(val):
@@ -52,10 +53,10 @@ class Cli(object):
         return self.shell.send(commands)
 
 
-class JunosModule(AnsibleModule):
+class NetworkModule(AnsibleModule):
 
     def __init__(self, *args, **kwargs):
-        super(JunosModule, self).__init__(*args, **kwargs)
+        super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
 
@@ -65,14 +66,19 @@ class JunosModule(AnsibleModule):
             self._config = self.get_config()
         return self._config
 
+    def _load_params(self):
+        params = super(NetworkModule, self)._load_params()
+        provider = params.get('provider') or dict()
+        for key, value in provider.items():
+            if key in NET_COMMON_ARGS.keys():
+                params[key] = value
+        return params
+
     def connect(self):
-        try:
-            self.connection = Cli(self)
-            self.connection.connect()
-            self.execute('cli')
-            self.execute('set cli screen-length 0')
-        except ShellErrror, exc:
-            self.fail_json(msg=str(exc))
+        self.connection = Cli(self)
+        self.connection.connect()
+        self.execute('cli')
+        self.execute('set cli screen-length 0')
 
     def configure(self, commands):
         commands = to_list(commands)
@@ -84,10 +90,7 @@ class JunosModule(AnsibleModule):
         return responses
 
     def execute(self, commands, **kwargs):
-        try:
-            return self.connection.send(commands)
-        except ShellError, exc:
-            self.fail_json(msg=exc.message)
+        return self.connection.send(commands)
 
     def disconnect(self):
         self.connection.close()
@@ -100,27 +103,20 @@ class JunosModule(AnsibleModule):
         return self.execute(cmd)[0]
 
 def get_module(**kwargs):
-    """Return instance of JunosModule
+    """Return instance of NetworkModule
     """
-
     argument_spec = NET_COMMON_ARGS.copy()
     if kwargs.get('argument_spec'):
         argument_spec.update(kwargs['argument_spec'])
     kwargs['argument_spec'] = argument_spec
     kwargs['check_invalid_arguments'] = False
 
-    module = JunosModule(**kwargs)
+    module = NetworkModule(**kwargs)
 
     # HAS_PARAMIKO is set by module_utils/shell.py
     if not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
-    # copy in values from local action.
-    params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
-    for key, value in params.iteritems():
-        module.params[key] = value
-
     module.connect()
-
     return module
 
