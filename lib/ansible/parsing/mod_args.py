@@ -148,13 +148,13 @@ class ModuleArgsParser:
                 raise AnsibleParserError('Complex args must be a dictionary or variable string ("{{var}}").')
 
         # how we normalize depends if we figured out what the module name is
-        # yet.  If we have already figured it out, it's an 'old style' invocation.
+        # yet.  If we have already figured it out, it's a 'new style' invocation.
         # otherwise, it's not
 
         if action is not None:
-            args = self._normalize_old_style_args(thing, action)
+            args = self._normalize_new_style_args(thing, action)
         else:
-            (action, args) = self._normalize_new_style_args(thing)
+            (action, args) = self._normalize_old_style_args(thing)
 
             # this can occasionally happen, simplify
             if args and 'args' in args:
@@ -178,15 +178,15 @@ class ModuleArgsParser:
 
         return (action, final_args)
 
-    def _normalize_old_style_args(self, thing, action):
+    def _normalize_new_style_args(self, thing, action):
         '''
-        deals with fuzziness in old-style (action/local_action) module invocations
+        deals with fuzziness in new style module invocations
+        accepting key=value pairs and dictionaries, and always returning dictionaries
         returns tuple of (module_name, dictionary_args)
 
         possible example inputs:
-            { 'local_action' : 'shell echo hi' }
-            { 'action'       : 'shell echo hi' }
-            { 'local_action' : { 'module' : 'ec2', 'x' : 1, 'y': 2 }}
+            'echo hi', 'shell'
+            {'region': 'xyz'}, 'ec2'
         standardized outputs like:
             ( 'command', { _raw_params: 'echo hi', _uses_shell: True }
         '''
@@ -205,18 +205,17 @@ class ModuleArgsParser:
             raise AnsibleParserError("unexpected parameter type in action: %s" % type(thing), obj=self._task_ds)
         return args
 
-    def _normalize_new_style_args(self, thing):
+    def _normalize_old_style_args(self, thing):
         '''
-        deals with fuzziness in new style module invocations
-        accepting key=value pairs and dictionaries, and always returning dictionaries
+        deals with fuzziness in old-style (action/local_action) module invocations
         returns tuple of (module_name, dictionary_args)
 
         possible example inputs:
            { 'shell' : 'echo hi' }
-           { 'ec2'   : { 'region' : 'xyz' }
-           { 'ec2'   : 'region=xyz' }
+           'shell echo hi'
+           {'module': 'ec2', 'x': 1 }
         standardized outputs like:
-           ('ec2', { region: 'xyz'} )
+           ('ec2', { 'x': 1} )
         '''
 
         action = None
