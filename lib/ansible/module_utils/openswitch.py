@@ -35,7 +35,9 @@ NET_COMMON_ARGS = dict(
     port=dict(type='int'),
     username=dict(),
     password=dict(no_log=True),
+    use_ssl=dict(default=True, type='int'),
     transport=dict(default='ssh', choices=['ssh', 'cli', 'rest']),
+    provider=dict()
 )
 
 def to_list(val):
@@ -150,10 +152,10 @@ class Cli(object):
     def send(self, commands, encoding='text'):
         return self.shell.send(commands)
 
-class OpsModule(AnsibleModule):
+class NetworkModule(AnsibleModule):
 
     def __init__(self, *args, **kwargs):
-        super(OpsModule, self).__init__(*args, **kwargs)
+        super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
         self._runconfig = None
@@ -164,16 +166,21 @@ class OpsModule(AnsibleModule):
             self._config = self.get_config()
         return self._config
 
+    def _load_params(self):
+        params = super(NetworkModule, self)._load_params()
+        provider = params.get('provider') or dict()
+        for key, value in provider.items():
+            if key in NET_COMMON_ARGS.keys():
+                params[key] = value
+        return params
+
     def connect(self):
         if self.params['transport'] == 'rest':
             self.connection = Rest(self)
         elif self.params['transport'] == 'cli':
             self.connection = Cli(self)
 
-        try:
-            self.connection.connect()
-        except Exception, exc:
-            self.fail_json(msg=exc.message)
+        self.connection.connect()
 
     def configure(self, config):
         if self.params['transport'] == 'cli':
@@ -217,15 +224,14 @@ class OpsModule(AnsibleModule):
 
 
 def get_module(**kwargs):
-    """Return instance of OpsModule
+    """Return instance of NetworkModule
     """
     argument_spec = NET_COMMON_ARGS.copy()
     if kwargs.get('argument_spec'):
         argument_spec.update(kwargs['argument_spec'])
     kwargs['argument_spec'] = argument_spec
-    kwargs['check_invalid_arguments'] = False
 
-    module = OpsModule(**kwargs)
+    module = NetworkModule(**kwargs)
 
     if not HAS_OPS and module.params['transport'] == 'ssh':
         module.fail_json(msg='could not import ops library')
@@ -233,11 +239,6 @@ def get_module(**kwargs):
     # HAS_PARAMIKO is set by module_utils/shell.py
     if module.params['transport'] == 'cli' and not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
-
-    # copy in values from local action.
-    params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
-    for key, value in params.iteritems():
-        module.params[key] = value
 
     if module.params['transport'] in ['cli', 'rest']:
         module.connect()
