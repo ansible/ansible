@@ -62,5 +62,21 @@ options:
     required: true
     default: ssh
     choices: ['ssh', 'cli', 'rest']
+  use_ssl:
+    description:
+      - Configures the I(transport) to use SSL if set to true only when the
+        I(transport) argument is configured as rest.  If the transport
+        argument is not rest, this value is ignored
+    required: false
+    default: true
+    choices: BOOLEANS
+  provider:
+    description:
+      - Convience method that allows all M(openswitch) arguments to be passed as
+        a dict object.  All constraints (required, choices, etc) must be
+        met either by individual arguments or values in this dict.
+    required: false
+    default: null
+
 
 """
