@@ -462,7 +462,7 @@ EXAMPLES = '''
         wait: True
         vpc_subnet_id: subnet-29e63245
         assign_public_ip: yes
-  role:
+  roles:
     - do_neat_stuff
     - do_more_neat_stuff
 
