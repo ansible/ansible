@@ -106,10 +106,11 @@ class Become:
         '''
         Override for the 'become' getattr fetcher, used from Base.
         '''
+        value = self._attributes['become']
         if hasattr(self, '_get_parent_attribute'):
-            return self._get_parent_attribute('become')
-        else:
-            return self._attributes['become']
+            if self._get_parent_attribute('become'):
+                return True
+        return value
 
     def _get_attr_become_method(self):
         '''
