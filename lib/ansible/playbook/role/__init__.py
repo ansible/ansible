@@ -43,7 +43,10 @@ __all__ = ['Role', 'hash_params']
 #       strategies (ansible/plugins/strategy/__init__.py)
 def hash_params(params):
     if not isinstance(params, dict):
-        return params
+        if isinstance(params, list):
+            return frozenset(params)
+        else:
+            return params
     else:
         s = set()
         for k,v in iteritems(params):
