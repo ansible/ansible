@@ -1,6 +1,6 @@
 package:
   name: ansible
-  version: "1.9.4-1"
+  version: "1.9.4.1"
 
 build:
   number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
@@ -49,106 +49,6 @@ test:
   # Python imports
   imports:
     - ansible
-    - ansible.cli
-    - ansible.compat
-    - ansible.compat.six
-    - ansible.compat.tests
-    - ansible.config
-    - ansible.errors
-    - ansible.executor
-    - ansible.executor.process
-    - ansible.galaxy
-    - ansible.inventory
-    - ansible.inventory.vars_plugins
-    - ansible.module_utils
-    - ansible.modules
-    - ansible.modules.core
-    - ansible.modules.core.cloud
-    - ansible.modules.core.cloud.amazon
-    - ansible.modules.core.cloud.azure
-    - ansible.modules.core.cloud.digital_ocean
-    - ansible.modules.core.cloud.docker
-    - ansible.modules.core.cloud.google
-    - ansible.modules.core.cloud.linode
-    - ansible.modules.core.cloud.openstack
-    - ansible.modules.core.cloud.rackspace
-    - ansible.modules.core.cloud.vmware
-    - ansible.modules.core.commands
-    - ansible.modules.core.database
-    - ansible.modules.core.database.mysql
-    - ansible.modules.core.database.postgresql
-    - ansible.modules.core.files
-    - ansible.modules.core.inventory
-    - ansible.modules.core.network
-    - ansible.modules.core.network.basics
-    - ansible.modules.core.packaging
-    - ansible.modules.core.packaging.language
-    - ansible.modules.core.packaging.os
-    - ansible.modules.core.source_control
-    - ansible.modules.core.system
-    - ansible.modules.core.utilities
-    - ansible.modules.core.utilities.helper
-    - ansible.modules.core.utilities.logic
-    - ansible.modules.core.web_infrastructure
-    - ansible.modules.core.windows
-    - ansible.modules.extras
-    - ansible.modules.extras.cloud
-    - ansible.modules.extras.cloud.amazon
-    - ansible.modules.extras.cloud.centurylink
-    - ansible.modules.extras.cloud.cloudstack
-    - ansible.modules.extras.cloud.docker
-    - ansible.modules.extras.cloud.google
-    - ansible.modules.extras.cloud.lxc
-    - ansible.modules.extras.cloud.misc
-    - ansible.modules.extras.cloud.openstack
-    - ansible.modules.extras.cloud.profitbricks
-    - ansible.modules.extras.cloud.rackspace
-    - ansible.modules.extras.cloud.vmware
-    - ansible.modules.extras.cloud.webfaction
-    - ansible.modules.extras.clustering
-    - ansible.modules.extras.commands
-    - ansible.modules.extras.database
-    - ansible.modules.extras.database.misc
-    - ansible.modules.extras.database.mysql
-    - ansible.modules.extras.database.postgresql
-    - ansible.modules.extras.database.vertica
-    - ansible.modules.extras.files
-    - ansible.modules.extras.messaging
-    - ansible.modules.extras.monitoring
-    - ansible.modules.extras.network
-    - ansible.modules.extras.network.a10
-    - ansible.modules.extras.network.citrix
-    - ansible.modules.extras.network.f5
-    - ansible.modules.extras.notification
-    - ansible.modules.extras.packaging
-    - ansible.modules.extras.packaging.language
-    - ansible.modules.extras.packaging.os
-    - ansible.modules.extras.source_control
-    - ansible.modules.extras.system
-    - ansible.modules.extras.web_infrastructure
-    - ansible.modules.extras.windows
-    - ansible.parsing
-    - ansible.parsing.utils
-    - ansible.parsing.vault
-    - ansible.parsing.yaml
-    - ansible.playbook
-    - ansible.playbook.role
-    - ansible.plugins
-    - ansible.plugins.action
-    - ansible.plugins.cache
-    - ansible.plugins.callback
-    - ansible.plugins.connection
-    - ansible.plugins.filter
-    - ansible.plugins.inventory
-    - ansible.plugins.lookup
-    - ansible.plugins.shell
-    - ansible.plugins.strategy
-    - ansible.plugins.test
-    - ansible.plugins.vars
-    - ansible.template
-    - ansible.utils
-    - ansible.utils.module_docs_fragments
-    - ansible.vars
 
   # commands:
     # You can put test commands to be run here.  Use this to test that the
