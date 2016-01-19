@@ -23,7 +23,7 @@ import ast
 import re
 
 from ansible import constants as C
-from ansible.errors import AnsibleError, AnsibleParserError
+from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.inventory.expand_hosts import detect_range
@@ -124,6 +124,9 @@ class InventoryParser(object):
                     del pending_declarations[groupname]
 
                 continue
+            elif line.startswith('['):
+                self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces" % line + \
+                                  "in the section entry, and that there are no other invalid characters")
 
             # It's not a section, so the current state tells us what kind of
             # definition it must be. The individual parsers will raise an
