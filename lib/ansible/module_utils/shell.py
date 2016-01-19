@@ -31,7 +31,7 @@ except ImportError:
 ANSI_RE = re.compile(r'(\x1b\[\?1h\x1b=)')
 
 CLI_PROMPTS_RE = [
-    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#](?:\s*)$'),
+    re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*[>|#|%](?:\s*)$'),
     re.compile(r'[\r\n]?[a-zA-Z]{1}[a-zA-Z0-9-]*\(.+\)#(?:\s*)$')
 ]
 
@@ -84,15 +84,18 @@ class Shell(object):
         self.errors.extend(CLI_ERRORS_RE)
 
     def open(self, host, port=22, username=None, password=None,
-            timeout=10, key_filename=None):
+            timeout=10, key_filename=None, pkey=None, look_for_keys=None):
 
         self.ssh = paramiko.SSHClient()
         self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-        use_keys = password is None
+        # unless explicitly set, disable look for keys if a password is
+        # present. this changes the default search order paramiko implements
+        if not look_for_keys:
+            look_for_keys = password is None
 
         self.ssh.connect(host, port=port, username=username, password=password,
-                    timeout=timeout, allow_agent=use_keys, look_for_keys=use_keys,
+                    timeout=timeout, look_for_keys=look_for_keys, pkey=pkey,
                     key_filename=key_filename)
 
         self.shell = self.ssh.invoke_shell()
