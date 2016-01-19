@@ -2,10 +2,15 @@ package:
   name: ansible
   version: "2.0.0.2"
 
+build:
+  number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+  string: py{{ environ.get('PY_VER').replace('.', '') }}_{{ environ.get('GIT_BUILD_STR', '0') }}
+
 source:
-  fn: ansible-2.0.0.2.tar.gz
-  url: https://pypi.python.org/packages/source/a/ansible/ansible-2.0.0.2.tar.gz
-  md5: 816d0c49e084383e47a725c761a0e413
+  path: ../
+#  fn: ansible-2.0.0.2.tar.gz
+#  url: https://pypi.python.org/packages/source/a/ansible/ansible-2.0.0.2.tar.gz
+#  md5: 816d0c49e084383e47a725c761a0e413
 #  patches:
    # List any patch files here
    # - fix.patch
