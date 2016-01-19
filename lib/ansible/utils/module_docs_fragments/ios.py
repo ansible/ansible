@@ -63,5 +63,12 @@ options:
         does nothing
     required: false
     default: none
+  provider:
+    description:
+      - Convience method that allows all M(ios) arguments to be passed as
+        a dict object.  All constraints (required, choices, etc) must be
+        met either by individual arguments or values in this dict.
+    required: false
+    default: null
 
 """
