@@ -256,7 +256,7 @@ class Display:
             wrapped = textwrap.wrap(new_msg, self.columns)
             new_msg = u"\n".join(wrapped) + u"\n"
         else:
-            new_msg = msg
+            new_msg = u"ERROR! " + msg
         if new_msg not in self._errors:
             self.display(new_msg, color='red', stderr=True)
             self._errors[new_msg] = 1
