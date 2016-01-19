@@ -137,30 +137,35 @@ class PlayIterator:
                 self._blocks.append(new_block)
 
         self._host_states = {}
+        start_at_matched = False
         for host in inventory.get_hosts(self._play.hosts):
-             self._host_states[host.name] = HostState(blocks=self._blocks)
-             # if the host's name is in the variable manager's fact cache, then set
-             # its _gathered_facts flag to true for smart gathering tests later
-             if host.name in variable_manager._fact_cache:
-                 host._gathered_facts = True
-             # if we're looking to start at a specific task, iterate through
-             # the tasks for this host until we find the specified task
-             if play_context.start_at_task is not None and not start_at_done:
-                 while True:
-                     (s, task) = self.get_next_task_for_host(host, peek=True)
-                     if s.run_state == self.ITERATING_COMPLETE:
-                         break
-                     if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task) or \
-                        task.get_name() == play_context.start_at_task or fnmatch.fnmatch(task.get_name(), play_context.start_at_task):
-                         # we have our match, so clear the start_at_task field on the
-                         # play context to flag that we've started at a task (and future
-                         # plays won't try to advance)
-                         play_context.start_at_task = None
-                         break
-                     else:
-                         self.get_next_task_for_host(host)
-                 # finally, reset the host's state to ITERATING_SETUP
-                 self._host_states[host.name].run_state = self.ITERATING_SETUP
+            self._host_states[host.name] = HostState(blocks=self._blocks)
+            # if the host's name is in the variable manager's fact cache, then set
+            # its _gathered_facts flag to true for smart gathering tests later
+            if host.name in variable_manager._fact_cache:
+                host._gathered_facts = True
+            # if we're looking to start at a specific task, iterate through
+            # the tasks for this host until we find the specified task
+            if play_context.start_at_task is not None and not start_at_done:
+                while True:
+                    (s, task) = self.get_next_task_for_host(host, peek=True)
+                    if s.run_state == self.ITERATING_COMPLETE:
+                        break
+                    if task.name == play_context.start_at_task or fnmatch.fnmatch(task.name, play_context.start_at_task) or \
+                       task.get_name() == play_context.start_at_task or fnmatch.fnmatch(task.get_name(), play_context.start_at_task):
+                        start_at_matched = True
+                        break
+                    else:
+                        self.get_next_task_for_host(host)
+
+                # finally, reset the host's state to ITERATING_SETUP
+                self._host_states[host.name].run_state = self.ITERATING_SETUP
+
+        if start_at_matched:
+            # we have our match, so clear the start_at_task field on the
+            # play context to flag that we've started at a task (and future
+            # plays won't try to advance)
+            play_context.start_at_task = None
 
         # Extend the play handlers list to include the handlers defined in roles
         self._play.handlers.extend(play.compile_roles_handlers())
