@@ -56,7 +56,7 @@ class AnsibleError(Exception):
             if extended_error:
                 self.message = 'ERROR! %s\n\n%s' % (to_str(message), to_str(extended_error))
         else:
-            self.message = 'ERROR! %s' % message
+            self.message = 'ERROR! %s' % to_str(message)
 
     def __str__(self):
         return self.message
