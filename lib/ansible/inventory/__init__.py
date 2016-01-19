@@ -735,11 +735,11 @@ class Inventory(object):
 
             if group and host is None:
                 # load vars in dir/group_vars/name_of_group
-                base_path = os.path.realpath(os.path.join(to_unicode(basedir), "group_vars/%s" % group.name))
+                base_path = os.path.realpath(os.path.join(to_unicode(basedir, errors='strict'), "group_vars/%s" % group.name))
                 results = combine_vars(results, self._variable_manager.add_group_vars_file(base_path, self._loader))
             elif host and group is None:
                 # same for hostvars in dir/host_vars/name_of_host
-                base_path = os.path.realpath(os.path.join(to_unicode(basedir), "host_vars/%s" % host.name))
+                base_path = os.path.realpath(os.path.join(to_unicode(basedir, errors='strict'), "host_vars/%s" % host.name))
                 results = combine_vars(results, self._variable_manager.add_host_vars_file(base_path, self._loader))
 
         # all done, results is a dictionary of variables for this particular host.
