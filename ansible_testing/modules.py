@@ -337,8 +337,9 @@ class ModuleValidator(Validator):
         try:
             version_added = StrictVersion(str(doc.get('version_added', '0.0')))
         except ValueError:
+            version_added = doc.get('version_added', '0.0')
             self.errors.append('version_added is not a valid version '
-                               'number: %s' % version_added)
+                               'number: %r' % version_added)
             return
 
         strict_ansible_version = StrictVersion(ansible_version)
