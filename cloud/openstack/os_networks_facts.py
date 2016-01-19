@@ -132,7 +132,7 @@ def main():
             openstack_networks=networks))
 
     except shade.OpenStackCloudException as e:
-        module.fail_json(msg=e.message)
+        module.fail_json(msg=str(e))
 
 # this is magic, see lib/ansible/module_common.py
 from ansible.module_utils.basic import *
