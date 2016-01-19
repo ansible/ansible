@@ -105,6 +105,8 @@ class ActionModule(ActionBase):
         result['start'] = str(datetime.datetime.now())
         result['user_input'] = ''
 
+        fd = None
+        old_settings = None
         try:
             if seconds is not None:
                 # setup the alarm handler
@@ -159,7 +161,7 @@ class ActionModule(ActionBase):
         finally:
             # cleanup and save some information
             # restore the old settings for the duped stdin fd
-            if isatty(fd):
+            if not(None in (fd, old_settings)) and isatty(fd):
                 termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
             duration = time.time() - start
