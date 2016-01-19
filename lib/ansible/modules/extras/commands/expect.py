@@ -56,7 +56,9 @@ options:
     required: false
   responses:
     description:
-      - Mapping of expected string and string to respond with
+      - Mapping of expected string/regex and string to respond with. If the
+        response is a list, successive matches return successive
+        responses. List functionality is new in 2.1.
     required: true
   timeout:
     description:
@@ -73,15 +75,46 @@ notes:
   - If you want to run a command through the shell (say you are using C(<),
     C(>), C(|), etc), you must specify a shell in the command such as
     C(/bin/bash -c "/path/to/something | grep else")
+  - The question, or key, under I(responses) is a python regex match. Case
+    insensitive searches are indicated with a prefix of C(?i)
+  - By default, if a question is encountered multiple times, it's string
+    response will be repeated. If you need different responses for successive
+    question matches, instead of a string response, use a list of strings as
+    the response. The list functionality is new in 2.1
 author: "Matt Martz (@sivel)"
 '''
 
 EXAMPLES = '''
+# Case insensitve password string match
 - expect:
     command: passwd username
     responses:
       (?i)password: "MySekretPa$$word"
+
+# Generic question with multiple different responses
+- expect:
+    command: /path/to/custom/command
+    responses:
+      Question:
+        - response1
+        - response2
+        - response3
 '''
+
+
+def response_closure(module, question, responses):
+    resp_gen = (u'%s\n' % r.rstrip('\n').decode() for r in responses)
+
+    def wrapped(info):
+        try:
+            return resp_gen.next()
+        except StopIteration:
+            module.fail_json(msg="No remaining responses for '%s', "
+                                 "output was '%s'" %
+                                 (question,
+                                  info['child_result_list'][-1]))
+
+    return wrapped
 
 
 def main():
@@ -110,7 +143,12 @@ def main():
 
     events = dict()
     for key, value in responses.iteritems():
-        events[key.decode()] = u'%s\n' % value.rstrip('\n').decode()
+        if isinstance(value, list):
+            response = response_closure(module, key, value)
+        else:
+            response = u'%s\n' % value.rstrip('\n').decode()
+
+        events[key.decode()] = response
 
     if args.strip() == '':
         module.fail_json(rc=256, msg="no command given")
