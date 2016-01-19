@@ -65,5 +65,12 @@ options:
     required: false
     default: false
     choices: BOOLEANS
+  provider:
+    description:
+      - Convience method that allows all M(nxos) arguments to be passed as
+        a dict object.  All constraints (required, choices, etc) must be
+        met either by individual arguments or values in this dict.
+    required: false
+    default: null
 
 """
