@@ -417,7 +417,7 @@ class Task(Base, Conditional, Taggable, Become):
 
     def _get_attr_any_errors_fatal(self):
         '''
-        Override for the 'tags' getattr fetcher, used from Base.
+        Override for the 'any_errors_fatal' getattr fetcher, used from Base.
         '''
         any_errors_fatal = self._attributes['any_errors_fatal']
         if hasattr(self, '_get_parent_attribute'):
