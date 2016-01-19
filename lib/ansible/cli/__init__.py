@@ -32,7 +32,7 @@ import subprocess
 from ansible import __version__
 from ansible import constants as C
 from ansible.errors import AnsibleError, AnsibleOptionsError
-from ansible.utils.unicode import to_bytes
+from ansible.utils.unicode import to_bytes, to_unicode
 
 try:
     from __main__ import display
@@ -105,9 +105,9 @@ class CLI(object):
 
         if self.options.verbosity > 0:
             if C.CONFIG_FILE:
-                display.display("Using %s as config file" % C.CONFIG_FILE)
+                display.display(u"Using %s as config file" % to_unicode(C.CONFIG_FILE))
             else:
-                display.display("No config file found; using defaults")
+                display.display(u"No config file found; using defaults")
 
     @staticmethod
     def ask_vault_passwords(ask_new_vault_pass=False, rekey=False):
