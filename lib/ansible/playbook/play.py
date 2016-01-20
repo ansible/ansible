@@ -43,7 +43,7 @@ class Play(object):
     __slots__ = _pb_common + [
         '_ds', '_handlers', '_play_hosts', '_tasks', 'any_errors_fatal', 'basedir',
         'default_vars', 'included_roles', 'max_fail_pct', 'playbook', 'remote_port',
-        'role_vars', 'transport', 'vars_file_vars',
+        'role_vars', 'transport', 'vars_file_vars', '_load_vars'
     ]
 
     # to catch typos and so forth -- these are userland names
@@ -84,12 +84,12 @@ class Play(object):
 
         # make sure we have some special internal variables set, which
         # we use later when loading tasks and handlers
-        load_vars = dict()
-        load_vars['playbook_dir'] = os.path.abspath(self.basedir)
+        self._load_vars = dict()
+        self._load_vars['playbook_dir'] = os.path.abspath(self.basedir)
         if self.playbook.inventory.basedir() is not None:
-            load_vars['inventory_dir'] = self.playbook.inventory.basedir()
+            self._load_vars['inventory_dir'] = self.playbook.inventory.basedir()
         if self.playbook.inventory.src() is not None:
-            load_vars['inventory_file'] = self.playbook.inventory.src()
+            self._load_vars['inventory_file'] = self.playbook.inventory.src()
 
         # We first load the vars files from the datastructure
         # so we have the default variables to pass into the roles
@@ -189,10 +189,10 @@ class Play(object):
         if self.gather_facts is not None:
             self.gather_facts = utils.boolean(self.gather_facts)
 
-        load_vars['role_names'] = ds.get('role_names', [])
+        self._load_vars['role_names'] = ds.get('role_names', [])
 
-        self._tasks      = self._load_tasks(self._ds.get('tasks', []), load_vars)
-        self._handlers   = self._load_tasks(self._ds.get('handlers', []), load_vars)
+        self._tasks      = self._load_tasks(self._ds.get('tasks', []), self._load_vars)
+        self._handlers   = self._load_tasks(self._ds.get('handlers', []), self._load_vars)
 
         # apply any missing tags to role tasks
         self._late_merge_role_tags()
@@ -844,7 +844,6 @@ class Play(object):
     # *************************************************
 
     def _update_vars_files_for_host(self, host, vault_password=None):
-
         def generate_filenames(host, inject, filename):
 
             """ Render the raw filename into 3 forms """
@@ -859,13 +858,17 @@ class Play(object):
             # name is templated with the injected variables
             filename3 = filename2
             if host is not None:
-                filename3 = template(self.basedir, filename2, inject)
+                env = self._load_vars.copy()
+                env.update(inject)
+                filename3 = template(self.basedir, filename2, env)
 
             # filename4 is the dwim'd path, but may also be mixed-scope, so we use
             # both play scoped vars and host scoped vars to template the filepath
             if utils.contains_vars(filename3) and host is not None:
-                inject.update(self.vars)
-                filename4 = template(self.basedir, filename3, inject)
+                env = self._load_vars.copy()
+                env.update(inject)
+                env.update(self.vars)
+                filename4 = template(self.basedir, filename3, env)
                 filename4 = utils.path_dwim(self.basedir, filename4)
             else:
                 filename4 = utils.path_dwim(self.basedir, filename3)
