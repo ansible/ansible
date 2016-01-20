@@ -125,16 +125,18 @@ class Connection(ConnectionBase):
         '''
 
         self._command = []
-        self._command_env = dict(LC_CTYPE="C")
+        self._command_env = dict(os.environ)
 
         ## First, the command name.
 
-        # If we want to use password authentication, we have to set up a pipe to
-        # write the password to sshpass.
+        # Set the DISPLAY and SSH_ASKPASS variables so that Openssh will
+        # read the password using the ansible-pwecho helper
 
         if self._play_context.password:
-            self._command_env = dict(DISPLAY=(os.getenv("DISPLAY") or ""), SSH_ASKPASS="/usr/bin/ansible-pwecho", ANSIBLE_SSH_PASS=self._play_context.password)
-            self.sshpass_pipe = os.pipe()
+            self._command_env.update(dict(
+              DISPLAY=(os.getenv("DISPLAY", ""),
+              SSH_ASKPASS="/usr/bin/ansible-pwecho",
+              ANSIBLE_SSH_PASS=self._play_context.password)))
 
         self._command += [binary]
 
@@ -347,13 +349,6 @@ class Connection(ConnectionBase):
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdin = p.stdin
 
-        # If we are using SSH password authentication, write the password into
-        # the pipe we opened in _build_command.
-
-        if self._play_context.password:
-            os.close(self.sshpass_pipe[0])
-            os.write(self.sshpass_pipe[1], "{0}\n".format(to_bytes(self._play_context.password)))
-            os.close(self.sshpass_pipe[1])
 
         ## SSH state machine
         #
