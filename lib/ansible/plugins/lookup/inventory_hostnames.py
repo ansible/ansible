@@ -26,10 +26,15 @@ class LookupModule(LookupBase):
 
     def get_hosts(self, variables, pattern):
         hosts = []
-        if pattern in variables['groups']:
-            hosts = variables['groups'][pattern]
-        elif pattern in variables['groups']['all']:
-            hosts = [pattern]
+        if pattern[0] in ('!','&'):
+            obj = pattern[1:]
+        else:
+            obj = pattern
+
+        if obj in variables['groups']:
+            hosts = variables['groups'][obj]
+        elif obj in variables['groups']['all']:
+            hosts = [obj]
         return hosts
 
     def run(self, terms, variables=None, **kwargs):
