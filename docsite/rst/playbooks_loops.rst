@@ -96,7 +96,7 @@ And you want to print every user's name and phone number.  You can loop through 
 Looping over Files
 ``````````````````
 
-``with_file`` iterates over a list of files, setting `item` to the content of each file in sequence.  It can be used like this::
+``with_file`` iterates over the content of a list of files, `item` will be set to the content of each file in sequence.  It can be used like this::
 
     ---
     - hosts: all
