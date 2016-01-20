@@ -256,7 +256,10 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
             rpmbin = module.get_bin_path('rpm', required=True)
 
         cmd = [rpmbin, '-q', '--qf', qf, pkgspec]
-        rc, out, err = module.run_command(cmd)
+        # rpm localizes messages and we're screen scraping so make sure we use
+        # the C locale
+        lang_env = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C')
+        rc, out, err = module.run_command(cmd, environ_update=lang_env)
         if rc != 0 and 'is not installed' not in out:
             module.fail_json(msg='Error from rpm: %s: %s' % (cmd, err))
         if 'is not installed' in out:
@@ -265,7 +268,7 @@ def is_installed(module, repoq, pkgspec, conf_file, qf=def_qf, en_repos=None, di
         pkgs = [p for p in out.replace('(none)', '0').split('\n') if p.strip()]
         if not pkgs and not is_pkg:
             cmd = [rpmbin, '-q', '--qf', qf, '--whatprovides', pkgspec]
-            rc2, out2, err2 = module.run_command(cmd)
+            rc2, out2, err2 = module.run_command(cmd, environ_update=lang_env)
         else:
             rc2, out2, err2 = (0, '', '')
 
