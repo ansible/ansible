@@ -50,6 +50,7 @@ setup(name='ansible',
          'bin/ansible-doc',
          'bin/ansible-galaxy',
          'bin/ansible-vault',
+         'bin/ansible-pwecho',
       ],
       data_files=[],
 )
