@@ -24,6 +24,7 @@ import json
 import os
 import pipes
 import random
+import re
 import stat
 import tempfile
 import time
@@ -355,6 +356,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             idx = idx + len(line)
 
         return data[idx:]
+
+    def _strip_success_message(self, data):
+        '''
+        Removes the BECOME-SUCCESS message from the data.
+        '''
+        if data.strip().startswith('BECOME-SUCCESS-'):
+            data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
+        return data
 
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True):
         '''
