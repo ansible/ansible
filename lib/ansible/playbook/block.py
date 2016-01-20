@@ -44,11 +44,16 @@ class Block(Base, Become, Conditional, Taggable):
     def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
         self._play         = play
         self._role         = role
-        self._task_include = task_include
-        self._parent_block = parent_block
+        self._task_include = None
+        self._parent_block = None
         self._use_handlers = use_handlers
         self._implicit     = implicit
         self._dep_chain    = []
+
+        if task_include:
+            self._task_include = task_include
+        elif parent_block:
+            self._parent_block = parent_block
 
         super(Block, self).__init__()
 
