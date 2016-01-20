@@ -103,13 +103,12 @@ Ansible modules are in separate repositories, which are managed as Git submodule
 1. git clone https://github.com/ansible/ansible.git
 2. cd ansible
 3. git submodule init
-4. git submodule update --recursive
+4. git submodule update --recursive [ fetches the submodules ]
 5. cd lib/ansible/modules/extras
-6. git fetch origin pull/1234/head:pr/1234
-7. git checkout pr/1234
-8. [ Do your tests here ]
-9. cd /path/to/ansible/clone
-10. git submodule update --recursive
+6. git fetch origin pull/1234/head:pr/1234 [ fetches the specific PR ]
+7. git checkout pr/1234 [ do your testing here ]
+8. cd /path/to/ansible/clone
+9. git submodule update --recursive
 
 For Those About To Test, We Salute You
 ++++++++++++++++++++++++++++++++++++++
