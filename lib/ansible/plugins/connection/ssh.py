@@ -125,6 +125,7 @@ class Connection(ConnectionBase):
         '''
 
         self._command = []
+        self._command_env = dict(LC_CTYPE="C")
 
         ## First, the command name.
 
@@ -132,11 +133,8 @@ class Connection(ConnectionBase):
         # write the password to sshpass.
 
         if self._play_context.password:
-            if not self._sshpass_available():
-                raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
-
+            self._command_env = dict(DISPLAY=(os.getenv("DISPLAY") or ""), SSH_ASKPASS="/usr/bin/ansible-pwecho", ANSIBLE_SSH_PASS=self._play_context.password)
             self.sshpass_pipe = os.pipe()
-            self._command += ['sshpass', '-d{0}'.format(self.sshpass_pipe[0])]
 
         self._command += [binary]
 
@@ -339,7 +337,7 @@ class Connection(ConnectionBase):
             try:
                 # Make sure stdin is a proper pty to avoid tcgetattr errors
                 master, slave = pty.openpty()
-                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(cmd, stdin=slave, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._command_env, preexec_fn=os.setsid)
                 stdin = os.fdopen(master, 'w', 0)
                 os.close(slave)
             except (OSError, IOError):
