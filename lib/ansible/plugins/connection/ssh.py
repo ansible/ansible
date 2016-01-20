@@ -134,9 +134,9 @@ class Connection(ConnectionBase):
 
         if self._play_context.password:
             self._command_env.update(dict(
-              DISPLAY=(os.getenv("DISPLAY", ""),
+              DISPLAY=os.getenv("DISPLAY", ""),
               SSH_ASKPASS="/usr/bin/ansible-pwecho",
-              ANSIBLE_SSH_PASS=self._play_context.password)))
+              ANSIBLE_SSH_PASS=self._play_context.password))
 
         self._command += [binary]
 
