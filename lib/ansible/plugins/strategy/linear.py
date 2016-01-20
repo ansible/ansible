@@ -342,13 +342,20 @@ class StrategyModule(StrategyBase):
                 display.debug("results queue empty")
 
                 display.debug("checking for any_errors_fatal")
-                had_failure = include_failure
+                failed_hosts = []
                 for res in results:
                     if res.is_failed() or res.is_unreachable():
-                        had_failure = True
-                        break
-                if task and task.any_errors_fatal and had_failure:
-                    return False
+                        failed_hosts.append(res._host.name)
+
+                # if any_errors_fatal and we had an error, mark all hosts as failed
+                if task and task.any_errors_fatal and len(failed_hosts) > 0:
+                    for host in hosts_left:
+                        # don't double-mark hosts, or the iterator will potentially
+                        # fail them out of the rescue/always states
+                        if host.name not in failed_hosts:
+                            self._tqm._failed_hosts[host.name] = True
+                            iterator.mark_host_failed(host)
+                display.debug("done checking for any_errors_fatal")
 
             except (IOError, EOFError) as e:
                 display.debug("got IOError/EOFError in task loop: %s" % e)
