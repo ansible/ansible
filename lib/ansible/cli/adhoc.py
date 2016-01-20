@@ -32,6 +32,7 @@ from ansible.parsing.splitter import parse_kv
 from ansible.playbook.play import Play
 from ansible.plugins import get_all_plugin_loaders
 from ansible.utils.vars import load_extra_vars
+from ansible.utils.vars import load_options_vars
 from ansible.utils.unicode import to_unicode
 from ansible.vars import VariableManager
 
@@ -122,6 +123,8 @@ class AdHocCLI(CLI):
 
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
+
+        variable_manager.options_vars = load_options_vars(self.options)
 
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)
         variable_manager.set_inventory(inventory)

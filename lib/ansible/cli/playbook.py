@@ -33,6 +33,7 @@ from ansible.parsing.dataloader import DataLoader
 from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.utils.vars import load_extra_vars
+from ansible.utils.vars import load_options_vars
 from ansible.vars import VariableManager
 
 try:
@@ -124,6 +125,8 @@ class PlaybookCLI(CLI):
         # the code, ensuring a consistent view of global variables
         variable_manager = VariableManager()
         variable_manager.extra_vars = load_extra_vars(loader=loader, options=self.options)
+
+        variable_manager.options_vars = load_options_vars(self.options)
 
         # create the inventory, and filter it based on the subset specified (if any)
         inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=self.options.inventory)

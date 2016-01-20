@@ -99,6 +99,7 @@ class VariableManager:
         self._inventory = None
         self._hostvars = None
         self._omit_token = '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest()
+        self._options_vars = defaultdict(dict)
 
     def __getstate__(self):
         data = dict(
@@ -109,6 +110,7 @@ class VariableManager:
             host_vars_files = self._host_vars_files,
             group_vars_files = self._group_vars_files,
             omit_token = self._omit_token,
+            options_vars = self._options_vars,
             #inventory = self._inventory,
         )
         return data
@@ -122,6 +124,7 @@ class VariableManager:
         self._group_vars_files = data.get('group_vars_files', defaultdict(dict))
         self._omit_token = data.get('omit_token', '__omit_place_holder__%s' % sha1(os.urandom(64)).hexdigest())
         self._inventory = data.get('inventory', None)
+        self._options_vars = data.get('options_vars', dict())
 
     def _get_cache_entry(self, play=None, host=None, task=None):
         play_id = "NONE"
@@ -151,6 +154,17 @@ class VariableManager:
 
     def set_inventory(self, inventory):
         self._inventory = inventory
+
+    @property
+    def options_vars(self):
+        ''' ensures a clean copy of the options_vars are made '''
+        return self._options_vars.copy()
+
+    @options_vars.setter
+    def options_vars(self, value):
+        ''' ensures a clean copy of the options_vars are used to set the value '''
+        assert isinstance(value, dict)
+        self._options_vars = value.copy()
 
     def _preprocess_vars(self, a):
         '''
@@ -392,6 +406,9 @@ class VariableManager:
         # the 'omit' value alows params to be left out if the variable they are based on is undefined
         variables['omit'] = self._omit_token
         variables['ansible_version'] = CLI.version_info(gitinfo=False)
+        # Set options vars
+        for option, option_value in self._options_vars.iteritems():
+            variables[option] = option_value
 
         if self._hostvars is not None and include_hostvars:
             variables['hostvars'] = self._hostvars
