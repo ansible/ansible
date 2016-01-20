@@ -562,6 +562,8 @@ class Facts(object):
         proc_1 = get_file_content('/proc/1/comm')
         if proc_1 is None:
             rc, proc_1, err = module.run_command("ps -p 1 -o comm|tail -n 1", use_unsafe_shell=True)
+        else:
+            proc_1 = os.path.basename(proc_1)
 
         if proc_1 in ['init', '/sbin/init', 'bash']:
             # many systems return init, so this cannot be trusted, bash is from docker
@@ -569,7 +571,7 @@ class Facts(object):
 
         # if not init/None it should be an identifiable or custom init, so we are done!
         if proc_1 is not None:
-            self.facts['service_mgr'] = proc_1
+            self.facts['service_mgr'] = proc_1.strip()
 
         # start with the easy ones
         elif  self.facts['distribution'] == 'MacOSX':
