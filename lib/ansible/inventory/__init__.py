@@ -78,6 +78,10 @@ class Inventory(object):
         self._restriction = None
         self._subset = None
 
+        # clear the cache here, which is only useful if more than
+        # one Inventory objects are created when using the API directly
+        self.clear_pattern_cache()
+
         self.parse_inventory(host_list)
 
     def serialize(self):
