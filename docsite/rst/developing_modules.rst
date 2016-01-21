@@ -479,7 +479,7 @@ Module checklist
 ````````````````
 
 * The shebang should always be #!/usr/bin/python, this allows ansible_python_interpreter to work
-* Modules must be written to support Python 2.4. 
+* Modules must be written to support Python 2.4. If this is not possible, required minimum python version and rationale should be explained in the requirements section in DOCUMENTATION.
 * Documentation: Make sure it exists
     * `required` should always be present, be it true or false
     * If `required` is false you need to document `default`, even if the default is 'null' (which is the default if no parameter is supplied). Make sure default parameter in docs matches default parameter in code.
