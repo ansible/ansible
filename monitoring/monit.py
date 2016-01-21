@@ -127,9 +127,8 @@ def main():
                 module.exit_json(changed=True)
             status = run_command('reload')
             if status == '':
-                module.fail_json(msg='%s process not configured with monit' % name, name=name, state=state)
-            else:
-                module.exit_json(changed=True, name=name, state=state)
+                wait_for_monit_to_stop_pending()
+            module.exit_json(changed=True, name=name, state=state)
         module.exit_json(changed=False, name=name, state=state)
 
     wait_for_monit_to_stop_pending()
