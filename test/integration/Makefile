@@ -168,7 +168,7 @@ else
 	@echo "Consul agent is not running locally. To run a cluster locally see http://github.com/sgargan/consul-vagrant"
 endif
 
-test_galaxy: test_galaxy_spec test_galaxy_yaml
+test_galaxy: test_galaxy_spec test_galaxy_yaml test_galaxy_git
 
 test_galaxy_spec:
 	mytmpdir=$(MYTMPDIR) ; \
@@ -188,10 +188,18 @@ test_galaxy_yaml:
     rm -rf $$mytmpdir ; \
     exit $$RC
 
+test_galaxy_git:
+	mytmpdir=$(MYTMPDIR) ; \
+	ansible-galaxy install git+https://bitbucket.org/willthames/git-ansible-galaxy,v1.6 -p $$mytmpdir/roles -vvvv; \
+    cp galaxy_playbook_git.yml $$mytmpdir ; \
+    ansible-playbook -i $(INVENTORY) $$mytmpdir/galaxy_playbook_git.yml -v $(TEST_FLAGS) ; \
+    RC=$$? ; \
+    rm -rf $$mytmpdir ; \
+    exit $$RC
+
 test_lookup_paths:
 	ansible-playbook lookup_paths/play.yml -i $(INVENTORY) -v $(TEST_FLAGS)
 
 no_log:
 	# This test expects 7 loggable vars and 0 non loggable ones, if either mismatches it fails, run the ansible-playbook command to debug
 	[ "$$(ansible-playbook no_log_local.yml -i $(INVENTORY) -vvvvv | awk --source 'BEGIN { logme = 0; nolog = 0; } /LOG_ME/ { logme += 1;} /DO_NOT_LOG/ { nolog += 1;} END { printf "%d/%d", logme, nolog; }')" = "6/0" ]
-
