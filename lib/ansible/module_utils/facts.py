@@ -559,9 +559,11 @@ class Facts(object):
         # also other OSs other than linux might need to check across several possible candidates
 
         # try various forms of querying pid 1
-        proc_1 = os.path.basename(get_file_content('/proc/1/comm'))
+        proc_1 = get_file_content('/proc/1/comm')
         if proc_1 is None:
             rc, proc_1, err = module.run_command("ps -p 1 -o comm|tail -n 1", use_unsafe_shell=True)
+        else:
+            proc_1 = os.path.basename(proc_1)
 
         if proc_1 == 'init' or proc_1.endswith('sh'):
             # many systems return init, so this cannot be trusted, if it ends in 'sh' it probalby is a shell in a container
@@ -569,7 +571,7 @@ class Facts(object):
 
         # if not init/None it should be an identifiable or custom init, so we are done!
         if proc_1 is not None:
-            self.facts['service_mgr'] = proc_1
+            self.facts['service_mgr'] = proc_1.strip()
 
         # start with the easy ones
         elif  self.facts['distribution'] == 'MacOSX':

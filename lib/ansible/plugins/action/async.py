@@ -75,4 +75,8 @@ class ActionModule(ActionBase):
 
         result['changed'] = True
 
+        # be sure to strip out the BECOME-SUCCESS message, which may
+        # be there depending on the output of the module
+        result['stdout'] = self._strip_success_message(result.get('stdout', ''))
+
         return result
