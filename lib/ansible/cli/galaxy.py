@@ -385,7 +385,8 @@ class GalaxyCLI(CLI):
             # roles were specified directly, so we'll just go out grab them
             # (and their dependencies, unless the user doesn't want us to).
             for rname in self.args:
-                roles_left.append(GalaxyRole(self.galaxy, rname.strip()))
+                role = RoleRequirement.role_yaml_parse(rname.strip())
+                roles_left.append(GalaxyRole(self.galaxy, **role))
 
         for role in roles_left:
             display.vvv('Installing role %s ' % role.name)
@@ -682,4 +683,3 @@ class GalaxyCLI(CLI):
         display.display(resp['status'])
 
         return True
-
