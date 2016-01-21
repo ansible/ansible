@@ -31,7 +31,7 @@ description:
     - Set system's hostname.
     - Currently implemented on Debian, Ubuntu, Fedora, RedHat, openSUSE, Linaro, ScientificLinux, Arch, CentOS, AMI.
     - Any distribution that uses systemd as their init system.
-    - NOTE: This module does NOT modify /etc/hosts. You need to modify it yourself using other modules like template or replace.
+    - Note, this module does *NOT* modify /etc/hosts. You need to modify it yourself using other modules like template or replace.
 options:
     name:
         required: true
