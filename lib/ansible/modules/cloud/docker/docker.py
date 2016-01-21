@@ -1548,10 +1548,17 @@ class DockerManager(object):
 
                 image_matches = running_image in repo_tags
 
-                command_matches = command == details['Config']['Cmd']
-                entrypoint_matches = (
-                    entrypoint == details['Config']['Entrypoint']
-                )
+                if command == None:
+                    command_matches = True
+                else:
+                    command_matches = (command == details['Config']['Cmd'])
+
+                if entrypoint == None:
+                    entrypoint_matches = True
+                else:
+                    entrypoint_matches = (
+                        entrypoint == details['Config']['Entrypoint']
+                    )
 
                 matches = (image_matches and command_matches and
                            entrypoint_matches)
