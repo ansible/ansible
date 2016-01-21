@@ -587,11 +587,12 @@ the sudo implementation is matching CLI flags with the standard sudo::
 sudo_flags
 ==========
 
-Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the $HOME environment variable
-of the original user.  In some situations you may wish to add or remove flags, but in general most users
-will not need to change this setting::
+Additional flags to pass to sudo when engaging sudo support. The default is '-H -S -n' which sets the HOME environment
+variable, prompts for passwords via STDIN, and avoids prompting the user for input of any kind. Note that '-n' will conflict
+with using password-less sudo auth, such as pam_ssh_agent_auth. In some situations you may wish to add or remove flags, but
+in general most users will not need to change this setting:::
 
-   sudo_flags=-H
+   sudo_flags=-H -S -n
 
 .. _sudo_user:
 

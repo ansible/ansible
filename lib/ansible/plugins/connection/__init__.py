@@ -206,7 +206,10 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         pass
 
     def check_become_success(self, output):
-        return self._play_context.success_key == output.rstrip()
+        for line in output.splitlines(True):
+            if self._play_context.success_key == line.rstrip():
+                return True
+        return False
 
     def check_password_prompt(self, output):
         if self._play_context.prompt is None:

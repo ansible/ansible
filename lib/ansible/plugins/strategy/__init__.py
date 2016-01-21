@@ -39,6 +39,7 @@ from ansible.playbook.helpers import load_list_of_blocks
 from ansible.playbook.included_file import IncludedFile
 from ansible.plugins import action_loader, connection_loader, filter_loader, lookup_loader, module_loader, test_loader
 from ansible.template import Templar
+from ansible.utils.unicode import to_unicode
 from ansible.vars.unsafe_proxy import wrap_var
 from ansible.vars import combine_vars
 
@@ -309,23 +310,23 @@ class StrategyBase:
                     else:
                         actual_host = host
 
+                    if task.run_once:
+                        host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
+                    else:
+                        host_list = [actual_host]
+
                     if result[0] == 'set_host_var':
                         var_name  = result[4]
                         var_value = result[5]
-
-                        if task.run_once:
-                            host_list = [host for host in self._inventory.get_hosts(iterator._play.hosts) if host.name not in self._tqm._unreachable_hosts]
-                        else:
-                            host_list = [actual_host]
-
                         for target_host in host_list:
                             self._variable_manager.set_host_variable(target_host, var_name, var_value)
                     elif result[0] == 'set_host_facts':
                         facts = result[4]
-                        if task.action == 'set_fact':
-                            self._variable_manager.set_nonpersistent_facts(actual_host, facts)
-                        else:
-                            self._variable_manager.set_host_facts(actual_host, facts)
+                        for target_host in host_list:
+                            if task.action == 'set_fact':
+                                self._variable_manager.set_nonpersistent_facts(target_host, facts)
+                            else:
+                                self._variable_manager.set_host_facts(target_host, facts)
 
                 else:
                     raise AnsibleError("unknown result message received: %s" % result[0])
@@ -465,7 +466,7 @@ class StrategyBase:
             # mark all of the hosts including this file as failed, send callbacks,
             # and increment the stats for this host
             for host in included_file._hosts:
-                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=str(e)))
+                tr = TaskResult(host=host, task=included_file._task, return_data=dict(failed=True, reason=to_unicode(e)))
                 iterator.mark_host_failed(host)
                 self._tqm._failed_hosts[host.name] = True
                 self._tqm._stats.increment('failures', host.name)
@@ -491,7 +492,7 @@ class StrategyBase:
                 tags = [ tags ]
             if len(tags) > 0:
                 if len(b._task_include.tags) > 0:
-                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task)",
+                    raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
                             obj=included_file._task._ds)
                 display.deprecated("You should not specify tags in the include parameters. All tags should be specified using the task-level option")
                 b._task_include.tags = tags

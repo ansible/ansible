@@ -24,6 +24,7 @@ import json
 import os
 import pipes
 import random
+import re
 import stat
 import tempfile
 import time
@@ -356,6 +357,14 @@ class ActionBase(with_metaclass(ABCMeta, object)):
 
         return data[idx:]
 
+    def _strip_success_message(self, data):
+        '''
+        Removes the BECOME-SUCCESS message from the data.
+        '''
+        if data.strip().startswith('BECOME-SUCCESS-'):
+            data = re.sub(r'^((\r)?\n)?BECOME-SUCCESS.*(\r)?\n', '', data)
+        return data
+
     def _execute_module(self, module_name=None, module_args=None, tmp=None, task_vars=None, persist_files=False, delete_remote_tmp=True):
         '''
         Transfer and run a module along with its arguments.
@@ -481,8 +490,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         display.debug("done with _execute_module (%s, %s)" % (module_name, module_args))
         return data
 
-    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None,
-            executable=None, encoding_errors='replace'):
+    def _low_level_execute_command(self, cmd, sudoable=True, in_data=None, executable=C.DEFAULT_EXECUTABLE, encoding_errors='replace'):
         '''
         This is the function which executes the low level shell command, which
         may be commands to create/remove directories for temporary files, or to
@@ -498,7 +506,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         '''
 
         if executable is not None:
-            cmd = executable + ' -c ' + cmd
+            cmd = executable + ' -c ' + pipes.quote(cmd)
 
         display.debug("_low_level_execute_command(): starting")
         if not cmd:

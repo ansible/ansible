@@ -88,7 +88,7 @@ The ``-f 10`` in the above specifies the usage of 10 simultaneous
 processes to use.   You can also set this in :doc:`intro_configuration` to avoid setting it again.  The default is actually 5, which
 is really small and conservative.  You are probably going to want to talk to a lot more simultaneous hosts so feel free
 to crank this up.  If you have more hosts than the value set for the fork count, Ansible will talk to them, but it will
-take a little longer.  Feel free to push this value as high as your system can handle it!
+take a little longer.  Feel free to push this value as high as your system can handle!
 
 You can also select what Ansible "module" you want to run.  Normally commands also take a ``-m`` for module name, but
 the default module name is 'command', so we didn't need to
@@ -170,7 +170,7 @@ Ensure a package is not installed::
 
 Ansible has modules for managing packages under many platforms.  If your package manager
 does not have a module available for it, you can install
-for other packages using the command module or (better!) contribute a module
+packages using the command module or (better!) contribute a module
 for other package managers.  Stop by the mailing list for info/details.
 
 .. _users_and_groups:
@@ -249,7 +249,7 @@ very quickly. After the time limit (in seconds) runs out (``-B``), the process o
 the remote nodes will be terminated.
 
 Typically you'll only be backgrounding long-running
-shell commands or software upgrades only.  Backgrounding the copy module does not do a background file transfer.  :doc:`Playbooks <playbooks>` also support polling, and have a simplified syntax for this.
+shell commands or software upgrades.  Backgrounding the copy module does not do a background file transfer.  :doc:`Playbooks <playbooks>` also support polling, and have a simplified syntax for this.
 
 .. _checking_facts:
 
