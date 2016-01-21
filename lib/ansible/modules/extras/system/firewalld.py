@@ -56,7 +56,8 @@ options:
   permanent:
     description:
       - "Should this configuration be in the running firewalld configuration or persist across reboots."
-    required: true
+    required: false
+    default: null
   immediate:
     description:
       - "Should this configuration be applied immediately, if set as permanent"
