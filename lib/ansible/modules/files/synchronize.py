@@ -167,8 +167,10 @@ options:
 notes:
    - rsync must be installed on both the local and remote host.
    - For the C(synchronize) module, the "local host" is the host `the synchronize task originates on`, and the "destination host" is the host `synchronize is connecting to`.
-   - "The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host, or the `become_user` if `become: yes` is active. synchronize will attempt to escalate privileges to the become_user `on the local host`."
-   - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host. If you require permissions `other` than those of the remote_user, you must specify this with a sudo command inside the C(rsync_path) option in the task; for example, `rsync_path="sudo rsync"`.
+   - The "local host" can be changed to a different host by using `delegate_to:`.  This enables copying between two remote hosts or entirely on one remote machine.
+   - "The user and permissions for the synchronize `src` are those of the user running the Ansible task on the local host (or the remote_user for a delegate_to host when delegate_to is used).
+   - The user and permissions for the synchronize `dest` are those of the `remote_user` on the destination host or the `become_user` if `become: yes` is active.
+   - In 2.0.0.0 a bug in the synchronize module made become occur on the "local host".  This was fixed in 2.0.1.
    - Expect that dest=~/x will be ~<remote_user>/x even if using sudo.
    - Inspect the verbose output to validate the destination user/host/path
      are what was expected.
@@ -198,24 +200,27 @@ synchronize: src=some/relative/path dest=/some/absolute/path archive=no links=ye
 # Synchronization of two paths both on the control machine
 local_action: synchronize src=some/relative/path dest=/some/absolute/path
 
-# Synchronization of src on the inventory host to the dest on the localhost in
-pull mode
+# Synchronization of src on the inventory host to the dest on the localhost in pull mode
 synchronize: mode=pull src=some/relative/path dest=/some/absolute/path
 
 # Synchronization of src on delegate host to dest on the current inventory host.
-# If delegate_to is set to the current inventory host, this can be used to synchronize
-# two directories on that host.
 synchronize:
-    src: some/relative/path
-    dest: /some/absolute/path
+    src: /first/absolute/path
+    dest: /second/absolute/path
 delegate_to: delegate.host
+
+# Synchronize two directories on one remote host.
+synchronize:
+    src: /first/absolute/path
+    dest: /second/absolute/path
+delegate_to: "{{ inventory_hostname }}"
 
 # Synchronize and delete files in dest on the remote host that are not found in src of localhost.
 synchronize: src=some/relative/path dest=/some/absolute/path delete=yes
 
 # Synchronize using an alternate rsync command
-# This specific command is granted sudo privileges on the destination
-synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="sudo rsync"
+# This specific command is granted su privileges on the destination
+synchronize: src=some/relative/path dest=/some/absolute/path rsync_path="su -c rsync"
 
 # Example .rsync-filter file in the source directory
 - var       # exclude any path whose last part is 'var'
