@@ -177,6 +177,9 @@ class StrategyModule(StrategyBase):
                 skip_rest   = False
                 choose_step = True
 
+                # flag set if task is set to any_errors_fatal
+                any_errors_fatal = False
+
                 results = []
                 for (host, task) in host_tasks:
                     if not task:
@@ -187,6 +190,9 @@ class StrategyModule(StrategyBase):
 
                     run_once = False
                     work_to_do = True
+
+                    if task.any_errors_fatal:
+                        any_errors_fatal = True
 
                     # test to see if the task across all hosts points to an action plugin which
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
@@ -348,7 +354,7 @@ class StrategyModule(StrategyBase):
                         failed_hosts.append(res._host.name)
 
                 # if any_errors_fatal and we had an error, mark all hosts as failed
-                if task and task.any_errors_fatal and len(failed_hosts) > 0:
+                if any_errors_fatal and len(failed_hosts) > 0:
                     for host in hosts_left:
                         # don't double-mark hosts, or the iterator will potentially
                         # fail them out of the rescue/always states
