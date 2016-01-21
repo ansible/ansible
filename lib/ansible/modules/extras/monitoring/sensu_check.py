@@ -149,6 +149,11 @@ options:
       - The low threshhold for flap detection
     required: false
     default: null
+  custom:
+    description:
+      - JSON mixin to add to the configuration
+    required: false
+    default: "{}"
 requirements: [ ]
 author: "Anders Ingemann (@andsens)"
 '''
@@ -183,6 +188,7 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
+import ast
 
 def sensu_check(module, path, name, state='present', backup=False):
     changed = False
@@ -257,6 +263,36 @@ def sensu_check(module, path, name, state='present', backup=False):
                     changed = True
                     reasons.append('`{opt}\' was removed'.format(opt=opt))
 
+        if module.params['custom']:
+          # Convert to json
+          try:
+            custom_params = ast.literal_eval(module.params['custom'])
+          except:
+            msg = 'Module parameter "custom" contains invalid JSON. Example: custom=\'{"JSON": "here"}\''
+            module.fail_json(msg=msg)
+
+          overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue'])
+          if overwrited_fields:
+            msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {of}'.format(of=list(overwrited_fields))
+            module.fail_json(msg=msg)
+
+          for k,v in custom_params.items():
+            if k in config['checks'][name].keys():
+              if not config['checks'][name][k] == v:
+                changed = True
+                reasons.append('`custom param {k}\' was changed'.format(k=k))
+            else:
+              changed = True
+              reasons.append('`custom param {k}\' was added'.format(k=k))
+            check[k] = v
+          simple_opts += custom_params.keys()
+
+        # Remove obsolete custom params
+        for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type','subdue']):
+          changed = True
+          reasons.append('`custom param {opt}\' was deleted'.format(opt=opt))
+          del check[opt]
+
         if module.params['metric']:
             if 'type' not in check or check['type'] != 'metric':
                 check['type'] = 'metric'
@@ -320,6 +356,7 @@ def main():
                 'aggregate':    {'type': 'bool'},
                 'low_flap_threshold':  {'type': 'int'},
                 'high_flap_threshold': {'type': 'int'},
+                'custom':   {'type': 'str'},
                 }
 
     required_together = [['subdue_begin', 'subdue_end']]
