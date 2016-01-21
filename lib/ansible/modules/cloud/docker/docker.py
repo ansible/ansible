@@ -573,6 +573,8 @@ def get_split_image_tag(image):
         resource, tag = resource.split(':', 1)
         if registry:
             resource = '/'.join((registry, resource))
+        if tag == "":
+            tag = "latest"
     else:
         tag = "latest"
         resource = image
