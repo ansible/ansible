@@ -194,8 +194,6 @@ class StrategyModule(StrategyBase):
 
                     try:
                         action = action_loader.get(task.action, class_only=True)
-                        if task.run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
-                            run_once = True
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
@@ -227,6 +225,8 @@ class StrategyModule(StrategyBase):
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
 
+                        run_once = templar.template(task.run_once)
+
                         if not callback_sent:
                             display.debug("sending task start callback, copying the task so we can template it temporarily")
                             saved_name = task.name
@@ -249,7 +249,7 @@ class StrategyModule(StrategyBase):
                         self._queue_task(host, task, task_vars, play_context)
 
                     # if we're bypassing the host loop, break out now
-                    if run_once:
+                    if run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
                         break
 
                     results += self._process_pending_results(iterator, one_pass=True)
