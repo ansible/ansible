@@ -225,11 +225,16 @@ def main():
         nf.write(new_limit)
 
     f.close()
-    nf.close()
+    nf.flush()
 
     # Copy tempfile to newfile
     module.atomic_move(nf.name, f.name)
 
+    try:
+        nf.close()
+    except:
+        pass
+   
     res_args = dict(
         changed = changed, msg = message
     )
