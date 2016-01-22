@@ -79,10 +79,10 @@ test_var_precedence:
 	ansible-playbook test_var_precedence.yml -i $(INVENTORY) $(CREDENTIALS_ARG) $(TEST_FLAGS) -v -e 'extra_var=extra_var' -e 'extra_var_override=extra_var_override'
 
 test_vault:
-	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-tasks
-	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-hosts
-	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --syntax-check
-	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE)
+	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -e @$(VARS_FILE) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-tasks
+	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -e @$(VARS_FILE) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --list-hosts
+	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -e @$(VARS_FILE) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE) --syntax-check
+	ansible-playbook test_vault.yml -i $(INVENTORY) $(CREDENTIALS_ARG) -e @$(VARS_FILE) -v $(TEST_FLAGS) --vault-password-file $(VAULT_PASSWORD_FILE)
 
 # test_delegate_to does not work unless we have permission to ssh to localhost.
 # Would take some more effort on our test systems to implement that -- probably

@@ -8,4 +8,6 @@
     - assert:
         that:
           - 'secret_var == "secret"'
+          
+    - copy: src=vault-secret.txt dest={{output_dir}}/secret.txt
 
