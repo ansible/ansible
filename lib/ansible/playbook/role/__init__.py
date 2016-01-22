@@ -323,7 +323,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         return host.name in self._completed and not self._metadata.allow_duplicates
 
-    def compile(self, play, dep_chain=[]):
+    def compile(self, play, dep_chain=None):
         '''
         Returns the task list for this role, which is created by first
         recursively compiling the tasks for all direct dependencies, and
@@ -337,18 +337,20 @@ class Role(Base, Become, Conditional, Taggable):
         block_list = []
 
         # update the dependency chain here
+        if dep_chain is None:
+            dep_chain = []
         new_dep_chain = dep_chain + [self]
 
         deps = self.get_direct_dependencies()
         for dep in deps:
             dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
-            for dep_block in dep_blocks:
-                new_dep_block = dep_block.copy()
-                new_dep_block._dep_chain = new_dep_chain
-                new_dep_block._play = play
-                block_list.append(new_dep_block)
+            block_list.extend(dep_blocks)
 
-        block_list.extend(self._task_blocks)
+        for task_block in self._task_blocks:
+            new_task_block = task_block.copy()
+            new_task_block._dep_chain = new_dep_chain
+            new_task_block._play = play
+            block_list.append(new_task_block)
 
         return block_list
 

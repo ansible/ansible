@@ -49,6 +49,7 @@ class HostState:
         self.cur_rescue_task    = 0
         self.cur_always_task    = 0
         self.cur_role           = None
+        self.cur_dep_chain      = None
         self.run_state          = PlayIterator.ITERATING_SETUP
         self.fail_state         = PlayIterator.FAILED_NONE
         self.pending_setup      = False
@@ -102,6 +103,8 @@ class HostState:
         new_state.run_state        = self.run_state
         new_state.fail_state       = self.fail_state
         new_state.pending_setup    = self.pending_setup
+        if self.cur_dep_chain is not None:
+            new_state.cur_dep_chain = self.cur_dep_chain[:]
         if self.tasks_child_state is not None:
             new_state.tasks_child_state = self.tasks_child_state.copy()
         if self.rescue_child_state is not None:
@@ -212,13 +215,21 @@ class PlayIterator:
                 s.pending_setup = False
 
         if not task:
+            old_s = s
             (s, task) = self._get_next_task_from_state(s, peek=peek)
+
+        def _roles_are_different(ra, rb):
+            if ra != rb:
+                return True
+            else:
+                return old_s.cur_dep_chain != task._block._dep_chain
 
         if task and task._role:
             # if we had a current role, mark that role as completed
-            if s.cur_role and task._role != s.cur_role and host.name in s.cur_role._had_task_run and not peek:
+            if s.cur_role and _roles_are_different(task._role, s.cur_role) and host.name in s.cur_role._had_task_run and not peek:
                 s.cur_role._completed[host.name] = True
             s.cur_role = task._role
+            s.cur_dep_chain = task._block._dep_chain
 
         if not peek:
             self._host_states[host.name] = s

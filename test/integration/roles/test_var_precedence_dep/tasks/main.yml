@@ -7,7 +7,7 @@
 - assert:
     that:
       - 'extra_var == "extra_var"'
-      - 'param_var == "param_var"'
+      - 'param_var == "param_var_role1"'
       - 'vars_var == "vars_var"'
       - 'vars_files_var == "vars_files_var"'
       - 'vars_files_var_role == "vars_files_var_dep"'
