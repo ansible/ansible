@@ -68,6 +68,13 @@ requirements: []
 author: 
     - "Ansible Core Team"
     - "Michael DeHaan"
+notes:
+    - When running fetch with C(become), the M(slurp) module will also be
+      used to fetch the contents of the file for determining the remote
+      checksum. This effectively doubles the transfer size, and
+      depending on the file size can consume all available memory on the
+      remote or local hosts causing a C(MemoryError). Due to this it is
+      advisable to run this module without C(become) whenever possible.
 '''
 
 EXAMPLES = '''
