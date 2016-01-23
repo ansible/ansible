@@ -545,7 +545,10 @@ class StrategyBase:
         #    self._tqm.send_callback('v2_playbook_on_no_hosts_remaining')
         #    result = False
         #    break
+        saved_name = handler.name
+        handler.name = handler_name
         self._tqm.send_callback('v2_playbook_on_handler_task_start', handler)
+        handler.name = saved_name
 
         if notified_hosts is None:
             notified_hosts = self._notified_handlers[handler_name]
