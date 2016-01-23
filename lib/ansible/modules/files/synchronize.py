@@ -235,6 +235,27 @@ synchronize:
       - "--no-motd"
       - "--exclude=.git"
 '''
+client_addr = None
+
+
+def substitute_controller(path):
+    global client_addr
+    if not client_addr:
+        ssh_env_string = os.environ.get('SSH_CLIENT', None)
+        try:
+            client_addr, _ = ssh_env_string.split(None, 1)
+        except AttributeError:
+            ssh_env_string = os.environ.get('SSH_CONNECTION', None)
+            try:
+                client_addr, _ = ssh_env_string.split(None, 1)
+            except AttributeError:
+                pass
+        if not client_addr:
+            raise ValueError
+
+    if path.startswith('localhost:'):
+        path = path.replace('localhost', client_addr, 1)
+    return path
 
 
 def main():
@@ -247,6 +268,7 @@ def main():
             private_key = dict(default=None),
             rsync_path = dict(default=None),
             _local_rsync_path = dict(default='rsync', type='path'),
+            _substitute_controller = dict(default='no', type='bool'),
             archive = dict(default='yes', type='bool'),
             checksum = dict(default='no', type='bool'),
             compress = dict(default='yes', type='bool'),
@@ -270,8 +292,15 @@ def main():
         supports_check_mode = True
     )
 
-    source = '"' + module.params['src'] + '"'
-    dest = '"' + module.params['dest'] + '"'
+    if module.params['_substitute_controller']:
+        try:
+            source = '"' + substitute_controller(module.params['src']) + '"'
+            dest = '"' + substitute_controller(module.params['dest']) + '"'
+        except ValueError:
+            module.fail_json(msg='Could not determine controller hostname for rsync to send to')
+    else:
+        source = '"' + module.params['src'] + '"'
+        dest = '"' + module.params['dest'] + '"'
     dest_port = module.params['dest_port']
     delete = module.params['delete']
     private_key = module.params['private_key']
