@@ -90,8 +90,9 @@ notes:
    - I(virtualenv) (U(http://www.virtualenv.org)) must be installed on the remote host if the virtualenv parameter is specified.
    - This module will create a virtualenv if the virtualenv parameter is specified and a virtualenv does not already exist at the given location.
    - This module assumes English error messages for the 'createcachetable' command to detect table existence, unfortunately.
-   - To be able to use the migrate command with django versions < 1.7, you must have south installed and added as an app in your settings
-   - To be able to use the collectstatic command, you must have enabled staticfiles in your settings
+   - To be able to use the migrate command with django versions < 1.7, you must have south installed and added as an app in your settings.
+   - To be able to use the collectstatic command, you must have enabled staticfiles in your settings.
+   - As of ansible 2.x, your I(manage.py) application must be executable (rwxr-xr-x), and must have a valid I(shebang), i.e. "#!/usr/bin/env python", for invoking the appropriate Python interpreter.
 requirements: [ "virtualenv", "django" ]
 author: "Scott Anderson (@tastychutney)"
 '''
