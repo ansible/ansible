@@ -40,6 +40,9 @@ options:
         description:
             - The service to get details for (required if details is true)
         required: false
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''

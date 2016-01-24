@@ -51,7 +51,9 @@ options:
             - A list of names of volumes to be attached
         required: False
         type: list of name
-
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
