@@ -72,6 +72,9 @@ options:
           - The number of times to check that the service is available
         required: false
         default: 10
+extends_documentation_fragment:
+    - aws
+    - ec2
 '''
 
 EXAMPLES = '''
