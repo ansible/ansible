@@ -175,7 +175,10 @@ def main_list(options):
                 metadata = json.loads(description)
             except TypeError:
                 metadata = {}
-            # print metadata
+            except ValueError:
+                metadata = {
+                    'notes': description
+                }
 
             if 'groups' in metadata:
                 # print metadata
