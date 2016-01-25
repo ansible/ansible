@@ -144,11 +144,13 @@ class TaskQueueManager:
             self._stdout_callback = C.DEFAULT_STDOUT_CALLBACK
 
         if isinstance(self._stdout_callback, CallbackBase):
-            self._callback_plugins.append(self._stdout_callback)
             stdout_callback_loaded = True
         elif isinstance(self._stdout_callback, basestring):
             if self._stdout_callback not in callback_loader:
                 raise AnsibleError("Invalid callback for stdout specified: %s" % self._stdout_callback)
+            else:
+                self._stdout_callback = callback_loader.get(self._stdout_callback)
+                stdout_callback_loaded = True
         else:
             raise AnsibleError("callback must be an instance of CallbackBase or the name of a callback plugin")
 
@@ -276,7 +278,7 @@ class TaskQueueManager:
         self._terminated = True
 
     def send_callback(self, method_name, *args, **kwargs):
-        for callback_plugin in self._callback_plugins:
+        for callback_plugin in [self._stdout_callback] + self._callback_plugins:
             # a plugin that set self.disabled to True will not be called
             # see osx_say.py example for such a plugin
             if getattr(callback_plugin, 'disabled', False):
