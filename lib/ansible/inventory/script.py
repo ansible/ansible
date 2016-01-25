@@ -31,6 +31,7 @@ from ansible.errors import AnsibleError
 from ansible.inventory.host import Host
 from ansible.inventory.group import Group
 from ansible.module_utils.basic import json_dict_bytes_to_unicode
+from ansible.utils.unicode import to_str, to_unicode
 
 
 class InventoryScript:
@@ -57,11 +58,16 @@ class InventoryScript:
         if sp.returncode != 0:
             raise AnsibleError("Inventory script (%s) had an execution error: %s " % (filename,stderr))
 
-        self.data = stdout
+        # make sure script output is unicode so that json loader will output
+        # unicode strings itself
+        try:
+            self.data = to_unicode(stdout, errors="strict")
+        except Exception as e:
+            raise AnsibleError("inventory data from {0} contained characters that cannot be interpreted as UTF-8: {1}".format(to_str(self.filename), to_str(e)))
+
         # see comment about _meta below
         self.host_vars_from_top = None
         self._parse(stderr)
-
 
     def _parse(self, err):
 
@@ -72,13 +78,11 @@ class InventoryScript:
             self.raw = self._loader.load(self.data)
         except Exception as e:
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(self.filename, str(e)))
+            raise AnsibleError("failed to parse executable inventory script results from {0}: {1}".format(to_str(self.filename), to_str(e)))
 
         if not isinstance(self.raw, Mapping):
             sys.stderr.write(err + "\n")
-            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(self.filename))
-
-        self.raw  = json_dict_bytes_to_unicode(self.raw)
+            raise AnsibleError("failed to parse executable inventory script results from {0}: data needs to be formatted as a json dict".format(to_str(self.filename)))
 
         group = None
         for (group_name, data) in self.raw.items():
@@ -103,7 +107,7 @@ class InventoryScript:
             if not isinstance(data, dict):
                 data = {'hosts': data}
             # is not those subkeys, then simplified syntax, host with vars
-            elif not any(k in data for k in ('hosts','vars')):
+            elif not any(k in data for k in ('hosts','vars','children')):
                 data = {'hosts': [group_name], 'vars': data}
 
             if 'hosts' in data:
@@ -112,7 +116,7 @@ class InventoryScript:
                         "data for the host list:\n %s" % (group_name, data))
 
                 for hostname in data['hosts']:
-                    if not hostname in all_hosts:
+                    if hostname not in all_hosts:
                         all_hosts[hostname] = Host(hostname)
                     host = all_hosts[hostname]
                     group.add_host(host)
@@ -145,9 +149,11 @@ class InventoryScript:
     def get_host_variables(self, host):
         """ Runs <script> --host <hostname> to determine additional host variables """
         if self.host_vars_from_top is not None:
-            got = self.host_vars_from_top.get(host.name, {})
+            try:
+                got = self.host_vars_from_top.get(host.name, {})
+            except AttributeError as e:
+                raise AnsibleError("Improperly formated host information for %s: %s" % (host.name,to_str(e)))
             return got
-
 
         cmd = [self.filename, "--host", host.name]
         try:
@@ -161,4 +167,3 @@ class InventoryScript:
             return json_dict_bytes_to_unicode(self._loader.load(out))
         except ValueError:
             raise AnsibleError("could not parse post variable response: %s, %s" % (cmd, out))
-

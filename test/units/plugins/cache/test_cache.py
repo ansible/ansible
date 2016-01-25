@@ -26,7 +26,7 @@ from ansible.plugins.cache.memory import CacheModule as MemoryCache
 
 HAVE_MEMCACHED = True
 try:
-    import memcached
+    import memcache
 except ImportError:
     HAVE_MEMCACHED = False
 else:
@@ -110,6 +110,6 @@ class TestAbstractClass(unittest.TestCase):
     def test_memory_cachemodule(self):
         self.assertIsInstance(MemoryCache(), MemoryCache)
 
-    @unittest.skipUnless(HAVE_REDIS, 'Redis pyhton module not installed')
+    @unittest.skipUnless(HAVE_REDIS, 'Redis python module not installed')
     def test_redis_cachemodule(self):
         self.assertIsInstance(RedisCache(), RedisCache)

@@ -28,7 +28,11 @@
 
 import os
 import hmac
-import urlparse
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 try:
     from hashlib import sha1
@@ -74,12 +78,12 @@ def get_fqdn(repo_url):
     if "@" in repo_url and "://" not in repo_url:
         # most likely an user@host:path or user@host/path type URL
         repo_url = repo_url.split("@", 1)[1]
-        if ":" in repo_url:
-            repo_url = repo_url.split(":")[0]
-            result = repo_url
+        if repo_url.startswith('['):
+            result = repo_url.split(']', 1)[0] + ']'
+        elif ":" in repo_url:
+            result = repo_url.split(":")[0]
         elif "/" in repo_url:
-            repo_url = repo_url.split("/")[0]
-            result = repo_url
+            result = repo_url.split("/")[0]
     elif "://" in repo_url:
         # this should be something we can parse with urlparse
         parts = urlparse.urlparse(repo_url)
@@ -87,11 +91,13 @@ def get_fqdn(repo_url):
         # ensure we actually have a parts[1] before continuing.
         if parts[1] != '':
             result = parts[1]
-            if ":" in result:
-                result = result.split(":")[0]
             if "@" in result:
                 result = result.split("@", 1)[1]
 
+            if result[0].startswith('['):
+                result = result.split(']', 1)[0] + ']'
+            elif ":" in result:
+                result = result.split(":")[0]
     return result
 
 def check_hostkey(module, fqdn):
@@ -169,7 +175,7 @@ def add_host_key(module, fqdn, key_type="rsa", create_dir=False):
     if not os.path.exists(user_ssh_dir):
         if create_dir:
             try:
-                os.makedirs(user_ssh_dir, 0700)
+                os.makedirs(user_ssh_dir, int('700', 8))
             except:
                 module.fail_json(msg="failed to create host key directory: %s" % user_ssh_dir)
         else:

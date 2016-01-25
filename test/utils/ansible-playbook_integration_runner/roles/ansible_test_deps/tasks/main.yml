@@ -1,0 +1,102 @@
+---
+
+- apt: update_cache=yes
+  when: ansible_os_family == 'Debian'
+
+- name: Install sudo
+  package: name=sudo state=installed
+  ignore_errors: true
+
+- name: Install RH epel
+  yum: name="epel-release" state=installed
+  sudo: true
+  when: ansible_distribution in ('CentOS', 'RedHat')
+
+- name: Install RH ansible dependencies
+  package: name="{{ item }}" state=installed
+  sudo: true
+  with_items:
+    - python-pip
+    - python-httplib2
+    - rsync
+    - subversion
+    - mercurial
+    - git
+    - rubygems
+    - unzip
+    - openssl
+    - make
+    - gcc
+    - gawk
+    - python-devel
+    - libselinux-python
+    - python-virtualenv
+    - yum
+    - yum-metadata-parser
+    - redhat-rpm-config
+  when: ansible_os_family == 'RedHat'
+
+- name: Install Debian ansible dependencies
+  apt: name="{{ item }}" state=installed update_cache=yes
+  sudo: true
+  with_items:
+    - python-pip
+    - python-httplib2
+    - rsync
+    - subversion
+    - mercurial
+    - git
+    - unzip
+    - gawk
+    - python-dev
+    - python-virtualenv
+  when: ansible_os_family == 'Debian'
+
+- name: update ca certificates
+  sudo: true
+  yum: name=ca-certificates state=latest
+  when: ansible_os_family == 'RedHat'
+
+- name: Install ubuntu 12.04 ansible dependencies
+  apt: name="{{ item }}" state=installed update_cache=yes
+  sudo: true
+  with_items:
+    - rubygems
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == "12.04"
+
+- name: Install ubuntu 14.04 ansible dependencies
+  apt: name="{{ item }}" state=installed update_cache=yes
+  sudo: true
+  with_items:
+    - rubygems-integration
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == "14.04"
+
+# Not sure why CentOS 6 is working without this....
+#- name: Install Red Hat 6 ansible dependencies
+#  yum: name="{{ item }}" state=installed
+#  sudo: true
+#  with_items:
+#    - python-crypto2.6
+#  when: ansible_distribution in ('CentOS', 'RedHat') and ansible_distribution_major_version == "6"
+
+- name: Install ansible pip deps
+  sudo: true
+  pip: name="{{ item }}"
+  with_items:
+    - PyYAML
+    - Jinja2
+    - paramiko
+
+- name: Install ubuntu 12.04 ansible pip deps
+  sudo: true
+  pip: name="{{ item }}" state=latest
+  with_items:
+    - pycrypto
+  when: ansible_distribution == 'Ubuntu' and ansible_distribution_version == "12.04"
+
+- name: Remove tty sudo requirement
+  sudo: true
+  lineinfile: "dest=/etc/sudoers regexp='^Defaults[ ,       ]*requiretty'  line='#Defaults    requiretty'"
+  when: ansible_os_family == 'RedHat'
+
+

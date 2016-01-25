@@ -178,8 +178,8 @@ Now to the fun part. We create a playbook to create our infrastructure we call i
 
         - name: ensure firewall ports opened
           cs_firewall:
-            ip_address: {{ public_ip }}
-            port: {{ item.port }}
+            ip_address: "{{ public_ip }}"
+            port: "{{ item.port }}"
             cidr: "{{ item.cidr | default('0.0.0.0/0') }}"
           with_items: cs_firewall
           when: public_ip is defined

@@ -36,7 +36,7 @@ def failed(*a, **kw):
 
 def success(*a, **kw):
     ''' Test if task result yields success '''
-    return not failed(*a, **kw) and not skipped(*a, **kw)
+    return not failed(*a, **kw)
 
 def changed(*a, **kw):
     ''' Test if task result yields changed '''
@@ -89,14 +89,18 @@ class TestModule(object):
     def tests(self):
         return {
             # failure testing
-            'failed'  : failed,
-            'success' : success,
+            'failed'    : failed,
+            'failure'   : failed,
+            'success'   : success,
+            'succeeded' : success,
 
             # changed testing
             'changed' : changed,
+            'change'  : changed,
 
             # skip testing
             'skipped' : skipped,
+            'skip'    : skipped,
 
             # regex
             'match': match,

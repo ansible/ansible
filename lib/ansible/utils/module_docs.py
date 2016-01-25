@@ -67,7 +67,7 @@ def get_docstring(filename, verbose=False):
                         theid = t.id
                     except AttributeError as e:
                         # skip errors can happen when trying to use the normal code
-                        display.warning("Failed to assign id for %t on %s, skipping" % (t, filename))
+                        display.warning("Failed to assign id for %s on %s, skipping" % (t, filename))
                         continue
 
                     if 'DOCUMENTATION' in theid:

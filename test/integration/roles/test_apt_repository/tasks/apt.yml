@@ -2,6 +2,7 @@
 
 - set_fact:
     test_ppa_name: 'ppa:menulibre-dev/devel'
+    test_ppa_filename: 'menulibre-dev'
     test_ppa_spec: 'deb http://ppa.launchpad.net/menulibre-dev/devel/ubuntu {{ansible_distribution_release}} main'
     test_ppa_key: 'A7AD98A1' # http://keyserver.ubuntu.com:11371/pks/lookup?search=0xD06AAF4C11DAB86DF421421EFE6B20ECA7AD98A1&op=index
 
@@ -130,6 +131,47 @@
       - 'result.changed'
       - 'result.state == "present"'
       - 'result.repo == "{{test_ppa_spec}}"'
+
+- name: 'examine apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_after
+
+- name: 'assert the apt cache did change'
+  assert:
+    that:
+      - 'cache_before.stat.mtime != cache_after.stat.mtime'
+
+# When installing a repo with the spec, the key is *NOT* added
+- name: 'ensure ppa key is absent (expect: pass)'
+  apt_key: id='{{test_ppa_key}}' state=absent
+
+#
+# TEST: apt_repository: repo=<spec> filename=<filename>
+#
+- include: 'cleanup.yml'
+
+- name: 'record apt cache mtime'
+  stat: path='/var/cache/apt/pkgcache.bin'
+  register: cache_before
+
+- name: 'name=<spec> filename=<filename> (expect: pass)'
+  apt_repository: repo='{{test_ppa_spec}}' filename='{{test_ppa_filename}}' state=present
+  register: result
+
+- assert:
+    that:
+      - 'result.changed'
+      - 'result.state == "present"'
+      - 'result.repo == "{{test_ppa_spec}}"'
+
+- name: 'examine source file'
+  stat: path='/etc/apt/sources.list.d/{{test_ppa_filename}}.list'
+  register: source_file
+
+- name: 'assert source file exists'
+  assert:
+    that:
+      - 'source_file.stat.exists == True'
 
 - name: 'examine apt cache mtime'
   stat: path='/var/cache/apt/pkgcache.bin'

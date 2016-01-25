@@ -36,12 +36,13 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'tree'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self, display):
-        super(CallbackModule, self).__init__(display)
+    def __init__(self):
+        super(CallbackModule, self).__init__()
 
         self.tree = TREE_DIR
         if not self.tree:
-            self._display.warnings("Disabling tree callback, invalid directory provided to tree option: %s" % self.tree)
+            self.tree = os.path.expanduser("~/.ansible/tree")
+            self._display.warning("The tree callback is defaulting to ~/.ansible/tree, as an invalid directory was provided: %s" % self.tree)
 
     def write_tree_file(self, hostname, buf):
         ''' write something into treedir/hostname '''
@@ -53,7 +54,7 @@ class CallbackModule(CallbackBase):
             with open(path, 'wb+') as fd:
                 fd.write(buf)
         except (OSError, IOError) as e:
-            self._display.warnings("Unable to write to %s's file: %s" % (hostname, str(e)))
+            self._display.warning("Unable to write to %s's file: %s" % (hostname, str(e)))
 
     def result_to_tree(self, result):
         if self.tree:

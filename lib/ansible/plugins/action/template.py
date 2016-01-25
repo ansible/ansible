@@ -63,8 +63,13 @@ class ActionModule(ActionBase):
         dest   = self._task.args.get('dest', None)
         faf    = self._task.first_available_file
         force  = boolean(self._task.args.get('force', True))
+        state  = self._task.args.get('state', None)
 
-        if (source is None and faf is not None) or dest is None:
+        if state is not None:
+            result['failed'] = True
+            result['msg'] = "'state' cannot be specified on a template"
+            return result
+        elif (source is None and faf is not None) or dest is None:
             result['failed'] = True
             result['msg'] = "src and dest are required"
             return result
@@ -150,7 +155,7 @@ class ActionModule(ActionBase):
         diff = {}
         new_module_args = self._task.args.copy()
 
-        if force and local_checksum != remote_checksum:
+        if (remote_checksum == '1') or (force and local_checksum != remote_checksum):
 
             result['changed'] = True
             # if showing diffs, we need to get the remote value

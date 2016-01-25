@@ -68,3 +68,12 @@
         - '"0.10 GB" == 102400000|human_readable(unit="G")'
         - '"0.10 Gb" == 102400000|human_readable(isbits=True, unit="G")'
 
+- name: Container lookups with extract
+  assert:
+    that:
+        - "'x' == [0]|map('extract',['x','y'])|list|first"
+        - "'y' == [1]|map('extract',['x','y'])|list|first"
+        - "42 == ['x']|map('extract',{'x':42,'y':31})|list|first"
+        - "31 == ['x','y']|map('extract',{'x':42,'y':31})|list|last"
+        - "'local' == ['localhost']|map('extract',hostvars,'ansible_connection')|list|first"
+        - "'local' == ['localhost']|map('extract',hostvars,['ansible_connection'])|list|first"

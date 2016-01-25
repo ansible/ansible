@@ -15,6 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import print_function
 
 __docformat__ = 'restructuredtext'
 
@@ -24,9 +25,9 @@ import traceback
 try:
     from sphinx.application import Sphinx
 except ImportError:
-    print "#################################"
-    print "Dependency missing: Python Sphinx"
-    print "#################################"
+    print("#################################")
+    print("Dependency missing: Python Sphinx")
+    print("#################################")
     sys.exit(1)
 import os
 
@@ -40,7 +41,7 @@ class SphinxBuilder(object):
         """
         Run the DocCommand.
         """
-        print "Creating html documentation ..."
+        print("Creating html documentation ...")
 
         try:
             buildername = 'html'
@@ -69,10 +70,10 @@ class SphinxBuilder(object):
 
             app.builder.build_all()
 
-        except ImportError, ie:
+        except ImportError:
             traceback.print_exc()
-        except Exception, ex:
-            print >> sys.stderr, "FAIL! exiting ... (%s)" % ex
+        except Exception as ex:
+            print("FAIL! exiting ... (%s)" % ex, file=sys.stderr)
 
     def build_docs(self):
         self.app.builder.build_all()
@@ -83,9 +84,9 @@ def build_rst_docs():
 
 if __name__ == '__main__':
     if '-h' in sys.argv or '--help' in sys.argv:
-        print "This script builds the html documentation from rst/asciidoc sources.\n"
-        print "    Run 'make docs' to build everything."
-        print "    Run 'make viewdocs' to build and then preview in a web browser."
+        print("This script builds the html documentation from rst/asciidoc sources.\n")
+        print("    Run 'make docs' to build everything.")
+        print("    Run 'make viewdocs' to build and then preview in a web browser.")
         sys.exit(0)
 
     build_rst_docs()
@@ -93,4 +94,4 @@ if __name__ == '__main__':
     if "view" in sys.argv:
         import webbrowser
         if not webbrowser.open('htmlout/index.html'):
-            print >> sys.stderr, "Could not open on your webbrowser."
+            print("Could not open on your webbrowser.", file=sys.stderr)

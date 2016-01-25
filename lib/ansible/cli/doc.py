@@ -62,7 +62,7 @@ class DocCLI(CLI):
         self.parser.add_option("-s", "--snippet", action="store_true", default=False, dest='show_snippet',
                 help='Show playbook snippet for specified module(s)')
 
-        self.options, self.args = self.parser.parse_args()
+        self.options, self.args = self.parser.parse_args(self.args[1:])
         display.verbosity = self.options.verbosity
 
     def run(self):
@@ -90,7 +90,8 @@ class DocCLI(CLI):
         for module in self.args:
 
             try:
-                filename = module_loader.find_plugin(module)
+                # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+                filename = module_loader.find_plugin(module, mod_type='.py')
                 if filename is None:
                     display.warning("module %s not found in %s\n" % (module, DocCLI.print_paths(module_loader)))
                     continue
@@ -167,7 +168,8 @@ class DocCLI(CLI):
             if module in module_docs.BLACKLIST_MODULES:
                 continue
 
-            filename = module_loader.find_plugin(module)
+            # if the module lives in a non-python file (eg, win_X.ps1), require the corresponding python file for docs
+            filename = module_loader.find_plugin(module, mod_type='.py')
 
             if filename is None:
                 continue

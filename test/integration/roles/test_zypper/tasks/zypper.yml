@@ -1,0 +1,194 @@
+# UNINSTALL
+- name: uninstall hello
+  zypper: name=hello state=removed
+  register: zypper_result
+
+- name: check hello with rpm
+  shell: rpm -q hello
+  failed_when: False
+  register: rpm_result
+
+- debug: var=zypper_result
+- debug: var=rpm_result
+
+- name: verify uninstallation of hello
+  assert:
+    that:
+        - "zypper_result.rc == 0"
+        - "rpm_result.rc == 1"
+
+# UNINSTALL AGAIN
+- name: uninstall hello again
+  zypper: name=hello state=removed
+  register: zypper_result
+
+- name: verify no change on re-uninstall
+  assert:
+    that:
+        - "not zypper_result.changed"
+
+# INSTALL
+- name: install hello
+  zypper: name=hello state=present
+  register: zypper_result
+
+- name: check hello with rpm
+  shell: rpm -q hello
+  failed_when: False
+  register: rpm_result
+
+- debug: var=zypper_result
+- debug: var=rpm_result
+
+- name: verify installation of hello
+  assert:
+    that:
+        - "zypper_result.rc == 0"
+        - "zypper_result.changed"
+        - "rpm_result.rc == 0"
+
+# INSTALL AGAIN
+- name: install hello again
+  zypper: name=hello state=present
+  register: zypper_result
+
+- name: verify no change on second install
+  assert:
+    that:
+        - "not zypper_result.changed"
+
+# Multiple packages
+- name: uninstall hello and metamail
+  zypper:
+    name:
+      - hello
+      - metamail
+    state: removed
+  register: zypper_result
+
+- name: check hello with rpm
+  shell: rpm -q hello
+  failed_when: False
+  register: rpm_hello_result
+
+- name: check metamail with rpm
+  shell: rpm -q metamail
+  failed_when: False
+  register: rpm_metamail_result
+
+- name: verify packages uninstalled
+  assert:
+    that:
+        - "rpm_hello_result.rc != 0"
+        - "rpm_metamail_result.rc != 0"
+
+- name: install hello and metamail
+  zypper:
+    name:
+      - hello
+      - metamail
+    state: present
+  register: zypper_result
+
+- name: check hello with rpm
+  shell: rpm -q hello
+  failed_when: False
+  register: rpm_hello_result
+
+- name: check metamail with rpm
+  shell: rpm -q metamail
+  failed_when: False
+  register: rpm_metamail_result
+
+- name: verify packages installed
+  assert:
+    that:
+        - "zypper_result.rc == 0"
+        - "zypper_result.changed"
+        - "rpm_hello_result.rc == 0"
+        - "rpm_metamail_result.rc == 0"
+
+- name: uninstall hello and metamail
+  zypper:
+    name:
+      - hello
+      - metamail
+    state: removed
+
+# INSTALL nonexistent package
+- name: install hello from url
+  zypper: name=doesnotexist state=present
+  register: zypper_result
+  ignore_errors: yes
+
+- name: verify package installation failed
+  assert:
+    that:
+      - "zypper_result.rc == 104"
+      - "zypper_result.msg.startswith('No provider of')"
+
+# INSTALL broken local package
+- name: create directory
+  file:
+    path: "{{output_dir | expanduser}}/zypper"
+    state: directory
+
+- name: fake rpm package
+  file:
+    path: "{{output_dir | expanduser}}/zypper/broken.rpm"
+    state: touch
+
+- name: install broken rpm
+  zypper:
+    name="{{output_dir | expanduser}}/zypper/broken.rpm"
+    state=present
+  register: zypper_result
+  ignore_errors: yes
+
+- debug: var=zypper_result
+
+- name: verify we failed installation of broken rpm
+  assert:
+    that:
+      - "zypper_result.rc == 1"
+      - "'broken.rpm: not an rpm package' in zypper_result.msg"
+
+# Build and install an empty rpm
+- name: copy spec file
+  copy:
+    src: empty.spec
+    dest: "{{ output_dir | expanduser }}/zypper/empty.spec"
+
+- name: build rpm
+  command: |
+    rpmbuild -bb \
+    --define "_topdir {{output_dir | expanduser }}/zypper/rpm-build"
+    --define "_builddir %{_topdir}" \
+    --define "_rpmdir %{_topdir}" \
+    --define "_srcrpmdir %{_topdir}" \
+    --define "_specdir {{output_dir | expanduser}}/zypper" \
+    --define "_sourcedir %{_topdir}" \
+    {{ output_dir }}/zypper/empty.spec
+  register: rpm_build_result
+
+- name: install empty rpm
+  zypper:
+    name: "{{ output_dir | expanduser }}/zypper/rpm-build/noarch/empty-1-0.noarch.rpm"
+  register: zypper_result
+
+- name: check empty with rpm
+  shell: rpm -q empty
+  failed_when: False
+  register: rpm_result
+
+- name: verify installation of empty
+  assert:
+    that:
+        - "zypper_result.rc == 0"
+        - "zypper_result.changed"
+        - "rpm_result.rc == 0"
+
+- name: uninstall empry
+  zypper:
+    name: empty
+    state: removed

@@ -53,9 +53,13 @@ class ActionModule(ActionBase):
         new_name = self._task.args.get('name', self._task.args.get('hostname', None))
         display.vv("creating host via 'add_host': hostname=%s" % new_name)
 
-        name, port = parse_address(new_name, allow_ranges=False)
-        if not name:
-            raise AnsibleError("Invalid inventory hostname: %s" % new_name)
+        try:
+            name, port = parse_address(new_name, allow_ranges=False)
+        except:
+            # not a parsable hostname, but might still be usable
+            name = new_name
+            port = None
+
         if port:
             self._task.args['ansible_ssh_port'] = port
 

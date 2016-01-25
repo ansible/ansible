@@ -34,6 +34,8 @@ class Block(Base, Become, Conditional, Taggable):
     _rescue = FieldAttribute(isa='list', default=[])
     _always = FieldAttribute(isa='list', default=[])
     _delegate_to = FieldAttribute(isa='list')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
+    _any_errors_fatal = FieldAttribute(isa='bool')
 
     # for future consideration? this would be functionally
     # similar to the 'else' clause for exceptions
@@ -42,11 +44,20 @@ class Block(Base, Become, Conditional, Taggable):
     def __init__(self, play=None, parent_block=None, role=None, task_include=None, use_handlers=False, implicit=False):
         self._play         = play
         self._role         = role
-        self._task_include = task_include
-        self._parent_block = parent_block
+        self._task_include = None
+        self._parent_block = None
         self._use_handlers = use_handlers
         self._implicit     = implicit
-        self._dep_chain    = []
+
+        if task_include:
+            self._task_include = task_include
+        elif parent_block:
+            self._parent_block = parent_block
+
+        if parent_block:
+            self._dep_chain = parent_block._dep_chain[:]
+        else:
+            self._dep_chain = []
 
         super(Block, self).__init__()
 
@@ -329,6 +340,16 @@ class Block(Base, Become, Conditional, Taggable):
 
         return environment
 
+    def _get_attr_any_errors_fatal(self):
+        '''
+        Override for the 'tags' getattr fetcher, used from Base.
+        '''
+        any_errors_fatal = self._attributes['any_errors_fatal']
+        if hasattr(self, '_get_parent_attribute'):
+            if self._get_parent_attribute('any_errors_fatal'):
+                any_errors_fatal = True
+        return any_errors_fatal
+
     def filter_tagged_tasks(self, play_context, all_vars):
         '''
         Creates a new block, with task lists filtered based on the tags contained
@@ -340,7 +361,9 @@ class Block(Base, Become, Conditional, Taggable):
             for task in target:
                 if isinstance(task, Block):
                     tmp_list.append(evaluate_block(task))
-                elif task.action in ('meta', 'include') or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
+                elif task.action == 'meta' \
+                or (task.action == 'include' and task.evaluate_tags([], play_context.skip_tags, all_vars=all_vars)) \
+                or task.evaluate_tags(play_context.only_tags, play_context.skip_tags, all_vars=all_vars):
                     tmp_list.append(task)
             return tmp_list
 
@@ -355,3 +378,4 @@ class Block(Base, Become, Conditional, Taggable):
 
     def has_tasks(self):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
+

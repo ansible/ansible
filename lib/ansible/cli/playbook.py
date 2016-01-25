@@ -30,6 +30,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError
 from ansible.executor.playbook_executor import PlaybookExecutor
 from ansible.inventory import Inventory
 from ansible.parsing.dataloader import DataLoader
+from ansible.playbook.play_context import PlayContext
 from ansible.utils.vars import load_extra_vars
 from ansible.vars import VariableManager
 
@@ -72,7 +73,7 @@ class PlaybookCLI(CLI):
         parser.add_option('--start-at-task', dest='start_at_task',
             help="start the playbook at the task matching this name")
 
-        self.options, self.args = parser.parse_args()
+        self.options, self.args = parser.parse_args(self.args[1:])
 
 
         self.parser = parser
@@ -152,18 +153,10 @@ class PlaybookCLI(CLI):
             for p in results:
 
                 display.display('\nplaybook: %s' % p['playbook'])
-                i = 1
-                for play in p['plays']:
-                    if play.name:
-                        playname = play.name
-                    else:
-                        playname = '#' + str(i)
-
-                    msg = "\n  PLAY: %s" % (playname)
-                    mytags = set()
-                    if self.options.listtags and play.tags:
-                        mytags = mytags.union(set(play.tags))
-                        msg += '    TAGS: [%s]' % (','.join(mytags))
+                for idx, play in enumerate(p['plays']):
+                    msg = "\n  play #%d (%s): %s" % (idx + 1, ','.join(play.hosts), play.name)
+                    mytags = set(play.tags)
+                    msg += '\tTAGS: [%s]' % (','.join(mytags))
 
                     if self.options.listhosts:
                         playhosts = set(inventory.get_hosts(play.hosts))
@@ -173,23 +166,40 @@ class PlaybookCLI(CLI):
 
                     display.display(msg)
 
+                    all_tags = set()
                     if self.options.listtags or self.options.listtasks:
-                        taskmsg = '    tasks:'
+                        taskmsg = ''
+                        if self.options.listtasks:
+                            taskmsg = '    tasks:\n'
 
+                        all_vars = variable_manager.get_vars(loader=loader, play=play)
+                        play_context = PlayContext(play=play, options=self.options)
                         for block in play.compile():
+                            block = block.filter_tagged_tasks(play_context, all_vars)
                             if not block.has_tasks():
                                 continue
 
-                            j = 1
                             for task in block.block:
-                                taskmsg += "\n      %s" % task
-                                if self.options.listtags and task.tags:
-                                    taskmsg += "    TAGS: [%s]" % ','.join(mytags.union(set(task.tags)))
-                                j = j + 1
+                                if task.action == 'meta':
+                                    continue
+
+                                all_tags.update(task.tags)
+                                if self.options.listtasks:
+                                    cur_tags = list(mytags.union(set(task.tags)))
+                                    cur_tags.sort()
+                                    if task.name:
+                                        taskmsg += "      %s" % task.get_name()
+                                    else:
+                                        taskmsg += "      %s" % task.action
+                                    taskmsg += "\tTAGS: [%s]\n" % ', '.join(cur_tags)
+
+                        if self.options.listtags:
+                            cur_tags = list(mytags.union(all_tags))
+                            cur_tags.sort()
+                            taskmsg += "      TASK TAGS: [%s]\n" % ', '.join(cur_tags)
 
                         display.display(taskmsg)
 
-                    i = i + 1
             return 0
         else:
             return results

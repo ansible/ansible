@@ -1,0 +1,43 @@
+---
+- name: Sync ansible repo to ec2 instance
+  synchronize: 
+    src: "{{ sync_dir }}/"
+    dest: "~/ansible"
+  no_log: true
+
+- name: Get ansible source dir
+  sudo: false
+  shell: "cd ~/ansible && pwd"
+  register: results
+
+- shell: "ls -la && . hacking/env-setup && cd test/integration && TEST_FLAGS='-e clean_working_dir=no' make {{ run_integration_make_target }}"
+  args:
+    chdir: "{{ results.stdout }}"
+  async: 3600
+  poll: 0
+  register: async_test_results
+  sudo: true
+  environment:
+    TEST_FLAGS: "{{ run_integration_test_flags|default(lookup('env', 'TEST_FLAGS')) }}"
+    CREDENTIALS_FILE: "{{ run_integration_credentials_file|default(lookup('env', 'CREDENTIALS_FILE')) }}"
+
+- name: poll for test results
+  async_status: jid="{{async_test_results.ansible_job_id}}"
+  register: test_results
+  until: test_results.finished
+  retries: 120
+  delay: 30
+  ignore_errors: true
+  no_log: true
+
+- name: save stdout test results for each host
+  local_action: copy
+  args:
+    dest: "{{sync_dir}}/{{inventory_hostname}}.stdout_results.txt"
+    content: "{{test_results.stdout}}"
+
+- name: save stderr test results for each host
+  local_action: copy
+  args:
+    dest: "{{sync_dir}}/{{inventory_hostname}}.stderr_results.txt"
+    content: "{{test_results.stderr}}"

@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+from copy import deepcopy
 
 class Attribute:
 
@@ -31,6 +32,11 @@ class Attribute:
         self.listof = listof
         self.priority = priority
         self.always_post_validate = always_post_validate
+
+        if default is not None and self.isa in ('list', 'dict', 'set'):
+            self.default = deepcopy(default)
+        else:
+            self.default = default
 
     def __eq__(self, other):
         return other.priority == self.priority

@@ -38,7 +38,11 @@ class Taggable:
         if isinstance(ds, list):
             return ds
         elif isinstance(ds, basestring):
-            return [ ds ]
+            value = ds.split(',')
+            if isinstance(value, list):
+                return [ x.strip() for x in value ]
+            else:
+                return [ ds ]
         else:
             raise AnsibleError('tags must be specified as a list', obj=ds)
 

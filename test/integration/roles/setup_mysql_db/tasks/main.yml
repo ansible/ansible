@@ -31,6 +31,11 @@
   with_items: mysql_packages
   when: ansible_pkg_mgr  ==  'yum'
 
+- name: install mysqldb_test rpm dependencies
+  dnf: name={{ item }} state=latest
+  with_items: mysql_packages
+  when: ansible_pkg_mgr  ==  'dnf'
+
 - name: install mysqldb_test debian dependencies
   apt: name={{ item }} state=latest
   with_items:  mysql_packages

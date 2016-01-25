@@ -71,7 +71,12 @@ class TestParseAddress(unittest.TestCase):
         for t in self.tests:
             test = self.tests[t]
 
-            (host, port) = parse_address(t)
+            try:
+                (host, port) = parse_address(t)
+            except:
+                host = None
+                port = None
+
             assert host == test[0]
             assert port == test[1]
 
@@ -79,6 +84,11 @@ class TestParseAddress(unittest.TestCase):
         for t in self.range_tests:
             test = self.range_tests[t]
 
-            (host, port) = parse_address(t, allow_ranges=True)
+            try:
+                (host, port) = parse_address(t, allow_ranges=True)
+            except:
+                host = None
+                port = None
+
             assert host == test[0]
             assert port == test[1]

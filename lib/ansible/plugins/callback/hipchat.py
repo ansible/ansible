@@ -50,9 +50,9 @@ class CallbackModule(CallbackBase):
     CALLBACK_NAME = 'hipchat'
     CALLBACK_NEEDS_WHITELIST = True
 
-    def __init__(self, display):
+    def __init__(self):
 
-        super(CallbackModule, self).__init__(display)
+        super(CallbackModule, self).__init__()
 
         if not HAS_PRETTYTABLE:
             self.disabled = True

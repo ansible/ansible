@@ -192,6 +192,8 @@ class InventoryDirectory(object):
         if group.name not in self.groups:
             # it's brand new, add him!
             self.groups[group.name] = group
+        # the Group class does not (yet) implement __eq__/__ne__,
+        # so unlike Host we do a regular comparison here
         if self.groups[group.name] != group:
             # different object, merge
             self._merge_groups(self.groups[group.name], group)
@@ -200,6 +202,9 @@ class InventoryDirectory(object):
         if host.name not in self.hosts:
             # Papa's got a brand new host
             self.hosts[host.name] = host
+        # because the __eq__/__ne__ methods in Host() compare the
+        # name fields rather than references, we use id() here to
+        # do the object comparison for merges
         if self.hosts[host.name] != host:
             # different object, merge
             self._merge_hosts(self.hosts[host.name], host)

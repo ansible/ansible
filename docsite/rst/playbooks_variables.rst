@@ -793,10 +793,10 @@ Basically, anything that goes into "role defaults" (the defaults folder inside t
 
 .. rubric:: Footnotes
 
-.. [1] Tasks in each role will see their own role's defaults tasks outside of roles will the last role's defaults
-.. [2] Variables defined in inventory file or provided by dynamic inventory
+.. [1] Tasks in each role will see their own role's defaults. Tasks defined outside of a role will see the last role's defaults.
+.. [2] Variables defined in inventory file or provided by dynamic inventory.
 
-.. note:: Within a any section, redefining a var will overwrite the previous instance.
+.. note:: Within any section, redefining a var will overwrite the previous instance.
           If multiple groups have the same variable, the last one loaded wins.
           If you define a variable twice in a play's vars: section, the 2nd one wins.
 .. note:: the previous describes the default config `hash_behavior=replace`, switch to 'merge' to only partially overwrite.

@@ -131,7 +131,10 @@ class ActionModule(ActionBase):
         src_host = '127.0.0.1'
         inventory_hostname = task_vars.get('inventory_hostname')
         dest_host_inventory_vars = task_vars['hostvars'].get(inventory_hostname)
-        dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
+        try:
+            dest_host = dest_host_inventory_vars['ansible_host']
+        except KeyError:
+            dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
 
         dest_is_local = dest_host in C.LOCALHOST
 

@@ -51,19 +51,35 @@ def f5_argument_spec():
 def f5_parse_arguments(module):
     if not bigsuds_found:
         module.fail_json(msg="the python bigsuds module is required")
-    if not module.params['validate_certs']:
-        disable_ssl_cert_validation()
+
+    if module.params['validate_certs']:
+        import ssl
+        if not hasattr(ssl, 'SSLContext'):
+            module.fail_json(msg='bigsuds does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+
     return (module.params['server'],module.params['user'],module.params['password'],module.params['state'],module.params['partition'],module.params['validate_certs'])
 
-def bigip_api(bigip, user, password):
-    api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
-    return api
+def bigip_api(bigip, user, password, validate_certs):
+    try:
+        # bigsuds >= 1.0.3
+        api = bigsuds.BIGIP(hostname=bigip, username=user, password=password, verify=validate_certs)
+    except TypeError:
+        # bigsuds < 1.0.3, no verify param
+        if validate_certs:
+            # Note: verified we have SSLContext when we parsed params
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
+        else:
+            import ssl
+            if hasattr(ssl, 'SSLContext'):
+                # Really, you should never do this.  It disables certificate
+                # verification *globally*.  But since older bigip libraries
+                # don't give us a way to toggle verification we need to
+                # disable it at the global level.
+                # From https://www.python.org/dev/peps/pep-0476/#id29
+                ssl._create_default_https_context = ssl._create_unverified_context
+            api = bigsuds.BIGIP(hostname=bigip, username=user, password=password)
 
-def disable_ssl_cert_validation():
-    # You probably only want to do this for testing and never in production.
-    # From https://www.python.org/dev/peps/pep-0476/#id29
-    import ssl
-    ssl._create_default_https_context = ssl._create_unverified_context
+    return api
 
 # Fully Qualified name (with the partition)
 def fq_name(partition,name):

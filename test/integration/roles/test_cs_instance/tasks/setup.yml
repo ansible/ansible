@@ -22,11 +22,3 @@
   assert:
     that:
     - sg|success
-
-- name: setup instance to be absent
-  cs_instance: name={{ cs_resource_prefix }}-vm-{{ instance_number }} state=absent
-  register: instance
-- name: verify instance to be absent
-  assert:
-    that:
-    - instance|success

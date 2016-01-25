@@ -38,7 +38,7 @@ You can also dictate the connection type to be used, if you want::
     foo.example.com
     bar.example.com 
 
-You may also wish to keep these in group variables instead, or file in them in a group_vars/<groupname> file.
+You may also wish to keep these in group variables instead, or file them in a group_vars/<groupname> file.
 See the rest of the documentation for more information about how to organize variables.
 
 .. _use_ssh:

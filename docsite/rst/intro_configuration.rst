@@ -587,11 +587,12 @@ the sudo implementation is matching CLI flags with the standard sudo::
 sudo_flags
 ==========
 
-Additional flags to pass to sudo when engaging sudo support.  The default is '-H' which preserves the $HOME environment variable
-of the original user.  In some situations you may wish to add or remove flags, but in general most users
-will not need to change this setting::
+Additional flags to pass to sudo when engaging sudo support. The default is '-H -S -n' which sets the HOME environment
+variable, prompts for passwords via STDIN, and avoids prompting the user for input of any kind. Note that '-n' will conflict
+with using password-less sudo auth, such as pam_ssh_agent_auth. In some situations you may wish to add or remove flags, but
+in general most users will not need to change this setting:::
 
-   sudo_flags=-H
+   sudo_flags=-H -S -n
 
 .. _sudo_user:
 
@@ -897,3 +898,19 @@ The normal behaviour is for operations to copy the existing context or use the u
 The default list is: nfs,vboxsf,fuse,ramfs::
 
     special_context_filesystems = nfs,vboxsf,fuse,ramfs,myspecialfs
+
+Galaxy Settings
+---------------
+
+The following options can be set in the [galaxy] section of ansible.cfg:
+
+server
+======
+
+Override the default Galaxy server value of https://galaxy.ansible.com. Useful if you have a hosted version of the Galaxy web app or want to point to the testing site https://galaxy-qa.ansible.com. It does not work against private, hosted repos, which Galaxy can use for fetching and installing roles.
+
+ignore_certs
+============
+
+If set to *yes*, ansible-galaxy will not validate TLS certificates. Handy for testing against a server with a self-signed certificate
+.

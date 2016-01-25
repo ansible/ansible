@@ -44,7 +44,7 @@ class AnsibleError(Exception):
     which should be returned by the DataLoader() class.
     '''
 
-    def __init__(self, message, obj=None, show_content=True):
+    def __init__(self, message="", obj=None, show_content=True):
         # we import this here to prevent an import loop problem,
         # since the objects code also imports ansible.errors
         from ansible.parsing.yaml.objects import AnsibleBaseYAMLObject
@@ -54,9 +54,9 @@ class AnsibleError(Exception):
         if obj and isinstance(obj, AnsibleBaseYAMLObject):
             extended_error = self._get_extended_error()
             if extended_error:
-                self.message = 'ERROR! %s\n\n%s' % (message, to_str(extended_error))
+                self.message = '%s\n\n%s' % (to_str(message), to_str(extended_error))
         else:
-            self.message = 'ERROR! %s' % message
+            self.message = '%s' % to_str(message)
 
     def __str__(self):
         return self.message

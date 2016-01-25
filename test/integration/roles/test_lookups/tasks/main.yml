@@ -177,7 +177,7 @@
 
 - name: Test that retrieving a url with invalid cert fails
   set_fact:
-    web_data: "{{ lookup('url', 'https://kennethreitz.org/') }}"
+    web_data: "{{ lookup('url', 'https://www.kennethreitz.org/') }}"
   ignore_errors: True
   register: url_invalid_cert
 
@@ -188,9 +188,9 @@
 
 - name: Test that retrieving a url with invalid cert with validate_certs=False works
   set_fact:
-    web_data: "{{ lookup('url', 'https://kennethreitz.org/', validate_certs=False) }}"
+    web_data: "{{ lookup('url', 'https://www.kennethreitz.org/', validate_certs=False) }}"
   register: url_no_validate_cert
 
 - assert:
     that:
-      - "'kennethreitz.org' in web_data"
+      - "'www.kennethreitz.org' in web_data"
