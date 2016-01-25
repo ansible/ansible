@@ -247,9 +247,9 @@ def main():
         mutually_exclusive = [['file','copy_from']],
     )
 
-    if not HAVE_GLANCECLIENT:
+    if not HAS_GLANCECLIENT:
         module.fail_json(msg='python-glanceclient is required for this module')
-    if not HAVE_KEYSTONECLIENT:
+    if not HAS_KEYSTONECLIENT:
         module.fail_json(msg='python-keystoneclient is required for this module')
 
     if module.params['state'] == 'present':
