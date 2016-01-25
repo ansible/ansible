@@ -48,12 +48,16 @@ class Block(Base, Become, Conditional, Taggable):
         self._parent_block = None
         self._use_handlers = use_handlers
         self._implicit     = implicit
-        self._dep_chain    = []
 
         if task_include:
             self._task_include = task_include
         elif parent_block:
             self._parent_block = parent_block
+
+        if parent_block:
+            self._dep_chain = parent_block._dep_chain[:]
+        else:
+            self._dep_chain = []
 
         super(Block, self).__init__()
 
@@ -374,3 +378,4 @@ class Block(Base, Become, Conditional, Taggable):
 
     def has_tasks(self):
         return len(self.block) > 0 or len(self.rescue) > 0 or len(self.always) > 0
+
