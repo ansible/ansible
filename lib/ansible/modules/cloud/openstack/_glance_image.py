@@ -238,6 +238,12 @@ def main():
         argument_spec=argument_spec,
         mutually_exclusive = [['file','copy_from']],
     )
+
+    if not HAS_GLANCECLIENT:
+        module.fail_json(msg='python-glanceclient is required for this module')
+    if not HAS_KEYSTONECLIENT:
+        module.fail_json(msg='python-keystoneclient is required for this module')
+
     if module.params['state'] == 'present':
         if not module.params['file'] and not module.params['copy_from']:
             module.fail_json(msg="Either file or copy_from variable should be set to create the image")
