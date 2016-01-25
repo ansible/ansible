@@ -125,6 +125,18 @@ TASK_ATTRIBUTE_OVERRIDES = (
     'remote_user',
 )
 
+RESET_VARS = (
+    'ansible_connection',
+    'ansible_ssh_host',
+    'ansible_ssh_pass',
+    'ansible_ssh_port',
+    'ansible_ssh_user',
+    'ansible_ssh_private_key_file',
+    'ansible_ssh_pipelining',
+    'ansible_user',
+    'ansible_host',
+    'ansible_port',
+)
 
 class PlayContext(Base):
 
@@ -316,6 +328,13 @@ class PlayContext(Base):
             # the host name in the delegated variable dictionary here
             delegated_host_name = templar.template(task.delegate_to)
             delegated_vars = variables.get('ansible_delegated_vars', dict()).get(delegated_host_name, dict())
+
+            delegated_transport = C.DEFAULT_TRANSPORT
+            for transport_var in MAGIC_VARIABLE_MAPPING.get('connection'):
+                if transport_var in delegated_vars:
+                    delegated_transport = delegated_vars[transport_var]
+                    break
+
             # make sure this delegated_to host has something set for its remote
             # address, otherwise we default to connecting to it by name. This
             # may happen when users put an IP entry into their inventory, or if
@@ -326,15 +345,38 @@ class PlayContext(Base):
             else:
                 display.debug("no remote address found for delegated host %s\nusing its name, so success depends on DNS resolution" % delegated_host_name)
                 delegated_vars['ansible_host'] = delegated_host_name
+
+            # reset the port back to the default if none was specified, to prevent
+            # the delegated host from inheriting the original host's setting
+            for port_var in MAGIC_VARIABLE_MAPPING.get('port'):
+                if port_var in delegated_vars:
+                    break
+            else:
+                if delegated_transport == 'winrm':
+                    delegated_vars['ansible_port'] = 5986
+                else:
+                    delegated_vars['ansible_port'] = C.DEFAULT_REMOTE_PORT
+
+            # and likewise for the remote user
+            for user_var in MAGIC_VARIABLE_MAPPING.get('remote_user'):
+                if user_var in delegated_vars:
+                    break
+            else:
+                delegated_vars['ansible_user'] = task.remote_user or self.remote_user
         else:
             delegated_vars = dict()
 
+        attrs_considered = []
         for (attr, variable_names) in iteritems(MAGIC_VARIABLE_MAPPING):
             for variable_name in variable_names:
+                if attr in attrs_considered:
+                    continue
                 if isinstance(delegated_vars, dict) and variable_name in delegated_vars:
                     setattr(new_info, attr, delegated_vars[variable_name])
+                    attrs_considered.append(attr)
                 elif variable_name in variables:
                     setattr(new_info, attr, variables[variable_name])
+                    attrs_considered.append(attr)
 
         # make sure we get port defaults if needed
         if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
@@ -366,6 +408,13 @@ class PlayContext(Base):
         # set no_log to default if it was not previouslly set
         if new_info.no_log is None:
             new_info.no_log = C.DEFAULT_NO_LOG
+
+        # set become defaults if not previouslly set
+        task.set_become_defaults(new_info.become, new_info.become_method, new_info.become_user)
+
+        # have always_run override check mode
+        if task.always_run:
+            new_info.check_mode = False
 
         return new_info
 
@@ -473,7 +522,8 @@ class PlayContext(Base):
 
         # TODO: should we be setting the more generic values here rather than
         #       the more specific _ssh_ ones?
-        for special_var in  ['ansible_connection', 'ansible_ssh_host', 'ansible_ssh_pass', 'ansible_ssh_port', 'ansible_ssh_user', 'ansible_ssh_private_key_file', 'ansible_ssh_pipelining']:
+        for special_var in RESET_VARS:
+
             if special_var not in variables:
                 for prop, varnames in MAGIC_VARIABLE_MAPPING.items():
                     if special_var in varnames:

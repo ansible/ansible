@@ -4,7 +4,7 @@ Ansible Releases at a Glance
 Active Development
 ++++++++++++++++++
 
-2.0    "TBD" - in progress
+2.0    "Over the Hills and Far Away" - in progress
 
 Released
 ++++++++

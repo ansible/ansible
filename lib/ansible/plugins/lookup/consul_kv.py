@@ -75,7 +75,7 @@ class LookupModule(LookupBase):
 
     def __init__(self, loader=None, templar=None, **kwargs):
 
-        super(LookupBase, self).__init__(loader, templar, **kwargs)
+        super(LookupModule, self).__init__(loader, templar, **kwargs)
 
         self.agent_url = 'http://localhost:8500'
         if os.getenv('ANSIBLE_CONSUL_URL') is not None:

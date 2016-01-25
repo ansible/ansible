@@ -41,7 +41,7 @@ Each playbook is composed of one or more 'plays' in a list.
 
 The goal of a play is to map a group of hosts to some well defined roles, represented by
 things ansible calls tasks.  At a basic level, a task is nothing more than a call
-to an ansible module, which you should have learned about in earlier chapters.
+to an ansible module (see :doc:`Modules`).
 
 By composing a playbook of multiple 'plays', it is possible to
 orchestrate multi-machine deployments, running certain steps on all
@@ -386,6 +386,7 @@ won't need them for much else.
    * Handler names live in a global namespace.
    * If two handler tasks have the same name, only one will run.
      `* <https://github.com/ansible/ansible/issues/4943>`_
+   * You cannot notify a handler that is defined inside of an include
 
 Roles are described later on, but it's worthwhile to point out that:
 

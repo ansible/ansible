@@ -8,7 +8,6 @@
     image: busybox
     state: present
     pull: missing
-    docker_api_version: "1.14"
 
 - name: Run a small script in busybox
   docker:
@@ -17,22 +16,12 @@
     pull: always
     command: "nc -l -p 2000 -e xargs -n1 echo hello"
     detach: True
-    docker_api_version: "1.14"
-
-- name: Get the docker container id
-  shell: "docker ps | grep busybox | awk '{ print $1 }'"
-  register: container_id
 
 - name: Get the docker container ip
-  shell: "docker inspect {{ container_id.stdout_lines[0] }} | grep IPAddress | awk -F '\"' '{ print $4 }'"
-  register: container_ip
-
-- name: Pause a few moments because docker is not reliable
-  pause:
-    seconds: 40
+  set_fact: container_ip="{{docker_containers[0].NetworkSettings.IPAddress}}"
 
 - name: Try to access the server
-  shell: "echo 'world' | nc {{ container_ip.stdout_lines[0] }} 2000"
+  shell: "echo 'world' | nc {{ container_ip }} 2000"
   register: docker_output
 
 - name: check that the script ran
@@ -49,22 +38,12 @@
       TEST: hello
     command: '/bin/sh -c "nc -l -p 2000 -e xargs -n1 echo $TEST"'
     detach: True
-    docker_api_version: "1.14"
-
-- name: Get the docker container id
-  shell: "docker ps | grep busybox | awk '{ print $1 }'"
-  register: container_id
 
 - name: Get the docker container ip
-  shell: "docker inspect {{ container_id.stdout_lines[0] }} | grep IPAddress | awk -F '\"' '{ print $4 }'"
-  register: container_ip
-
-- name: Pause a few moments because docker is not reliable
-  pause:
-    seconds: 40
+  set_fact: container_ip="{{docker_containers[0].NetworkSettings.IPAddress}}"
 
 - name: Try to access the server
-  shell: "echo 'world' | nc {{ container_ip.stdout_lines[0] }} 2000"
+  shell: "echo 'world' | nc {{ container_ip }} 2000"
   register: docker_output
 
 - name: check that the script ran
@@ -73,7 +52,7 @@
       - "'hello world' in docker_output.stdout_lines"
 
 - name: Remove containers
-  shell: "docker rm $(docker ps -aq)"
+  shell: "docker rm -f $(docker ps -aq)"
 
 - name: Remove all images from the local docker
   shell: "docker rmi -f $(docker images -q)"

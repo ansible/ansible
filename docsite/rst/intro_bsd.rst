@@ -30,7 +30,7 @@ Bootstrapping BSD
 For Ansible to effectively manage your machine, we need to install Python along with a json library, in this case we are using Python 2.7 which already has json included.
 On your control machine you can simply execute the following for most versions of FreeBSD::
 
-    ansible -m raw -a “pkg_add -r python27” mybsdhost1
+    ansible -m raw -a “pkg install -y python27” mybsdhost1
 
 Once this is done you can now use other Ansible modules aside from the ``raw`` module.
 

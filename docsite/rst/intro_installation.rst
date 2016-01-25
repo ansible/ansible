@@ -27,12 +27,11 @@ What Version To Pick?
 `````````````````````
 
 Because it runs so easily from source and does not require any installation of software on remote
-machines, many users will actually track the development version.  
+machines, many users will actually track the development version.
 
-Ansible's release cycles are usually about two months long.  Due to this
-short release cycle, minor bugs will generally be fixed in the next release versus maintaining 
-backports on the stable branch.  Major bugs will still have maintenance releases when needed, though
-these are infrequent.
+Ansible's release cycles are usually about four months long. Due to this short release cycle,
+minor bugs will generally be fixed in the next release versus maintaining backports on the stable branch.
+Major bugs will still have maintenance releases when needed, though these are infrequent.
 
 If you are wishing to run the latest released version of Ansible and you are running Red Hat Enterprise Linux (TM), CentOS, Fedora, Debian, or Ubuntu, we recommend using the OS package manager.
 
@@ -52,8 +51,8 @@ This includes Red Hat, Debian, CentOS, OS X, any of the BSDs, and so on.
 
 .. note::
 
-    As of 2.0 ansible uses a few more file handles to manage it's forks, OS X has a very low setting so if you want to use 15 or more forks
-    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 2048``. Or just any time you see a "Too many open files" error.
+    As of 2.0 ansible uses a few more file handles to manage its forks, OS X has a very low setting so if you want to use 15 or more forks
+    you'll need to raise the ulimit, like so ``sudo launchctl limit maxfiles 1024 unlimited``. Or just any time you see a "Too many open files" error.
 
 
 .. _managed_node_requirements:

@@ -3,6 +3,7 @@ templated_var_loaded
 {
     "bool": true,
     "multi_part": "1Foo",
+    "null_type": null,
     "number": 5,
     "string_num": "5"
 }

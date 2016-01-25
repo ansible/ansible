@@ -43,7 +43,10 @@ __all__ = ['Role', 'hash_params']
 #       strategies (ansible/plugins/strategy/__init__.py)
 def hash_params(params):
     if not isinstance(params, dict):
-        return params
+        if isinstance(params, list):
+            return frozenset(params)
+        else:
+            return params
     else:
         s = set()
         for k,v in iteritems(params):
@@ -61,6 +64,7 @@ def hash_params(params):
 class Role(Base, Become, Conditional, Taggable):
 
     _delegate_to = FieldAttribute(isa='string')
+    _delegate_facts = FieldAttribute(isa='bool', default=False)
 
     def __init__(self, play=None):
         self._role_name        = None
@@ -149,7 +153,7 @@ class Role(Base, Become, Conditional, Taggable):
         current_when = getattr(self, 'when')[:]
         current_when.extend(role_include.when)
         setattr(self, 'when', current_when)
-        
+
         current_tags = getattr(self, 'tags')[:]
         current_tags.extend(role_include.tags)
         setattr(self, 'tags', current_tags)
@@ -171,11 +175,17 @@ class Role(Base, Become, Conditional, Taggable):
 
         task_data = self._load_role_yaml('tasks')
         if task_data:
-            self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader)
+            try:
+                self._task_blocks = load_list_of_blocks(task_data, play=self._play, role=self, loader=self._loader)
+            except AssertionError:
+                raise AnsibleParserError("The tasks/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=task_data)
 
         handler_data = self._load_role_yaml('handlers')
         if handler_data:
-            self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader)
+            try:
+                self._handler_blocks = load_list_of_blocks(handler_data, play=self._play, role=self, use_handlers=True, loader=self._loader)
+            except:
+                raise AnsibleParserError("The handlers/main.yml file for role '%s' must contain a list of tasks" % self._role_name , obj=task_data)
 
         # vars and default vars are regular dictionaries
         self._role_vars  = self._load_role_yaml('vars')
@@ -258,6 +268,12 @@ class Role(Base, Become, Conditional, Taggable):
                 inherited_vars = combine_vars(inherited_vars, parent._role_params)
         return inherited_vars
 
+    def get_role_params(self):
+        params = {}
+        for dep in self.get_all_dependencies():
+            params = combine_vars(params, dep._role_params)
+        return params
+
     def get_vars(self, dep_chain=[], include_params=True):
         all_vars = self.get_inherited_vars(dep_chain, include_params=include_params)
 
@@ -307,7 +323,7 @@ class Role(Base, Become, Conditional, Taggable):
 
         return host.name in self._completed and not self._metadata.allow_duplicates
 
-    def compile(self, play, dep_chain=[]):
+    def compile(self, play, dep_chain=None):
         '''
         Returns the task list for this role, which is created by first
         recursively compiling the tasks for all direct dependencies, and
@@ -321,18 +337,20 @@ class Role(Base, Become, Conditional, Taggable):
         block_list = []
 
         # update the dependency chain here
+        if dep_chain is None:
+            dep_chain = []
         new_dep_chain = dep_chain + [self]
 
         deps = self.get_direct_dependencies()
         for dep in deps:
             dep_blocks = dep.compile(play=play, dep_chain=new_dep_chain)
-            for dep_block in dep_blocks:
-                new_dep_block = dep_block.copy()
-                new_dep_block._dep_chain = new_dep_chain
-                new_dep_block._play = play
-                block_list.append(new_dep_block)
+            block_list.extend(dep_blocks)
 
-        block_list.extend(self._task_blocks)
+        for task_block in self._task_blocks:
+            new_task_block = task_block.copy()
+            new_task_block._dep_chain = new_dep_chain
+            new_task_block._play = play
+            block_list.append(new_task_block)
 
         return block_list
 

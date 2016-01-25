@@ -94,10 +94,16 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
-    url: "https://kennethreitz.org/"
+    url: "https://www.kennethreitz.org/"
     dest: "{{ output_dir }}/shouldnotexist.html"
   ignore_errors: True
   register: result
+  # kennethreitz having trouble staying up.  Eventually need to install our own
+  # certs & web server to test this... also need to install and test it with
+  # a proxy so the complications are inevitable
+  until: "'read operation timed out' not in result.msg"
+  retries: 30
+  delay: 10
 
 - stat:
     path: "{{ output_dir }}/shouldnotexist.html"
@@ -117,10 +123,13 @@
 
 - name: test https fetch to a site with mismatched hostname and certificate and validate_certs=no
   get_url:
-    url: "https://kennethreitz.org/"
+    url: "https://www.kennethreitz.org/"
     dest: "{{ output_dir }}/kreitz.html"
     validate_certs: no
   register: result
+  until: "'read operation timed out' not in result.msg"
+  retries: 30
+  delay: 10
 
 - stat:
     path: "{{ output_dir }}/kreitz.html"

@@ -46,43 +46,29 @@ __all__ = ['HostVars']
 class HostVars(collections.Mapping):
     ''' A special view of vars_cache that adds values from the inventory when needed. '''
 
-    def __init__(self, play, inventory, variable_manager, loader):
+    def __init__(self, inventory, variable_manager, loader):
         self._lookup = dict()
+        self._inventory = inventory
         self._loader = loader
-        self._play = play
         self._variable_manager = variable_manager
         self._cached_result = dict()
 
-        hosts = inventory.get_hosts(ignore_limits_and_restrictions=True)
+    def set_variable_manager(self, variable_manager):
+        self._variable_manager = variable_manager
 
-        # check to see if localhost is in the hosts list, as we
-        # may have it referenced via hostvars but if created implicitly
-        # it doesn't sow up in the hosts list
-        has_localhost = False
-        for host in hosts:
-            if host.name in C.LOCALHOST:
-                has_localhost = True
-                break
+    def set_inventory(self, inventory):
+        self._inventory = inventory
 
-        if not has_localhost:
-            new_host =  Host(name='localhost')
-            new_host.set_variable("ansible_python_interpreter", sys.executable)
-            new_host.set_variable("ansible_connection", "local")
-            new_host.address = '127.0.0.1'
-            hosts.append(new_host)
-
-        for host in hosts:
-            self._lookup[host.name] = host
+    def _find_host(self, host_name):
+        return self._inventory.get_host(host_name)
 
     def __getitem__(self, host_name):
+        host = self._find_host(host_name)
+        if host is None:
+            raise j2undefined
 
-        if host_name not in self._lookup:
-            return j2undefined
+        data = self._variable_manager.get_vars(loader=self._loader, host=host, include_hostvars=False)
 
-        host = self._lookup.get(host_name)
-        data = self._variable_manager.get_vars(loader=self._loader, host=host, play=self._play, include_hostvars=False)
-
-        # Using cache in order to avoid template call
         sha1_hash = sha1(str(data).encode('utf-8')).hexdigest()
         if sha1_hash in self._cached_result:
             result = self._cached_result[sha1_hash]
@@ -92,30 +78,22 @@ class HostVars(collections.Mapping):
             self._cached_result[sha1_hash] = result
         return result
 
+    def set_host_variable(self, host, varname, value):
+        self._variable_manager.set_host_variable(host, varname, value)
+
+    def set_nonpersistent_facts(self, host, facts):
+        self._variable_manager.set_nonpersistent_facts(host, facts)
+
+    def set_host_facts(self, host, facts):
+        self._variable_manager.set_host_facts(host, facts)
+
     def __contains__(self, host_name):
-        item = self.get(host_name)
-        if item and item is not j2undefined:
-            return True
-        return False
+        return self._find_host(host_name) is not None
 
     def __iter__(self):
-        for host in self._lookup:
+        for host in self._inventory.get_hosts(ignore_limits_and_restrictions=True):
             yield host
 
     def __len__(self):
-        return len(self._lookup)
+        return len(self._inventory.get_hosts(ignore_limits_and_restrictions=True))
 
-    def __getstate__(self):
-        return dict(
-            loader=self._loader,
-            lookup=self._lookup,
-            play=self._play,
-            var_manager=self._variable_manager,
-        )
-
-    def __setstate__(self, data):
-        self._play = data.get('play')
-        self._loader = data.get('loader')
-        self._lookup = data.get('lookup')
-        self._variable_manager = data.get('var_manager')
-        self._cached_result = dict()

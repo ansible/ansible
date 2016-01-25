@@ -21,5 +21,12 @@ from ansible.plugins.shell.sh import ShellModule as ShModule
 
 class ShellModule(ShModule):
 
+    _SHELL_AND = '; and'
+    _SHELL_OR = '; or'
+    _SHELL_SUB_LEFT = '('
+    _SHELL_SUB_RIGHT = ')'
+    _SHELL_GROUP_LEFT = ''
+    _SHELL_GROUP_RIGHT = ''
+
     def env_prefix(self, **kwargs):
         return 'env %s' % super(ShellModule, self).env_prefix(**kwargs)

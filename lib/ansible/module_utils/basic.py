@@ -34,8 +34,8 @@ ANSIBLE_VERSION = "<<ANSIBLE_VERSION>>"
 MODULE_ARGS = "<<INCLUDE_ANSIBLE_MODULE_ARGS>>"
 MODULE_COMPLEX_ARGS = "<<INCLUDE_ANSIBLE_MODULE_COMPLEX_ARGS>>"
 
-BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1]
-BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0]
+BOOLEANS_TRUE = ['yes', 'on', '1', 'true', 1, True]
+BOOLEANS_FALSE = ['no', 'off', '0', 'false', 0, False]
 BOOLEANS = BOOLEANS_TRUE + BOOLEANS_FALSE
 
 SELINUX_SPECIAL_FS="<<SELINUX_SPECIAL_FILESYSTEMS>>"
@@ -213,7 +213,7 @@ except ImportError:
             elif isinstance(node, ast.List):
                 return list(map(_convert, node.nodes))
             elif isinstance(node, ast.Dict):
-                return dict((_convert(k), _convert(v)) for k, v in node.items)
+                return dict((_convert(k), _convert(v)) for k, v in node.items())
             elif isinstance(node, ast.Name):
                 if node.name in _safe_names:
                     return _safe_names[node.name]
@@ -369,7 +369,12 @@ def return_values(obj):
     sensitive values pre-jsonification."""
     if isinstance(obj, basestring):
         if obj:
-            yield obj
+            if isinstance(obj, bytes):
+                yield obj
+            else:
+                # Unicode objects should all convert to utf-8
+                # (still must deal with surrogateescape on python3)
+                yield obj.encode('utf-8')
         return
     elif isinstance(obj, Sequence):
         for element in obj:
@@ -391,10 +396,22 @@ def remove_values(value, no_log_strings):
     """ Remove strings in no_log_strings from value.  If value is a container
     type, then remove a lot more"""
     if isinstance(value, basestring):
-        if value in no_log_strings:
+        if isinstance(value, unicode):
+            # This should work everywhere on python2. Need to check
+            # surrogateescape on python3
+            bytes_value = value.encode('utf-8')
+            value_is_unicode = True
+        else:
+            bytes_value = value
+            value_is_unicode = False
+        if bytes_value in no_log_strings:
             return 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER'
         for omit_me in no_log_strings:
-            value = value.replace(omit_me, '*' * 8)
+            bytes_value = bytes_value.replace(omit_me, '*' * 8)
+        if value_is_unicode:
+            value = unicode(bytes_value, 'utf-8', errors='replace')
+        else:
+            value = bytes_value
     elif isinstance(value, Sequence):
         return [remove_values(elem, no_log_strings) for elem in value]
     elif isinstance(value, Mapping):
@@ -497,8 +514,11 @@ class AnsibleModule(object):
         self.no_log = no_log
         self.cleanup_files = []
         self._debug = False
+        self._diff = False
+        self._verbosity = 0
 
         self.aliases = {}
+        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug', '_ansible_diff', '_ansible_verbosity']
 
         if add_file_common_args:
             for k, v in FILE_COMMON_ARGUMENTS.items():
@@ -506,6 +526,15 @@ class AnsibleModule(object):
                     self.argument_spec[k] = v
 
         self.params = self._load_params()
+
+        # append to legal_inputs and then possibly check against them
+        try:
+            self.aliases = self._handle_aliases()
+        except Exception:
+            e = get_exception()
+            # use exceptions here cause its not safe to call vail json until no_log is processed
+            print('{"failed": true, "msg": "Module alias error: %s"}' % str(e))
+            sys.exit(1)
 
         # Save parameter values that should never be logged
         self.no_log_values = set()
@@ -517,14 +546,9 @@ class AnsibleModule(object):
                 if no_log_object:
                     self.no_log_values.update(return_values(no_log_object))
 
-        # check the locale as set by the current environment, and
-        # reset to LANG=C if it's an invalid/unavailable locale
+        # check the locale as set by the current environment, and reset to
+        # a known valid (LANG=C) if it's an invalid/unavailable locale
         self._check_locale()
-
-        self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
-
-        # append to legal_inputs and then possibly check against them
-        self.aliases = self._handle_aliases()
 
         self._check_arguments(check_invalid_arguments)
 
@@ -554,7 +578,7 @@ class AnsibleModule(object):
 
         self._set_defaults(pre=False)
 
-        if not self.no_log:
+        if not self.no_log and self._verbosity >= 3:
             self._log_invocation()
 
         # finally, make sure we're in a sane working dir
@@ -728,7 +752,7 @@ class AnsibleModule(object):
         context = self.selinux_default_context(path)
         return self.set_context_if_different(path, context, False)
 
-    def set_context_if_different(self, path, context, changed):
+    def set_context_if_different(self, path, context, changed, diff=None):
 
         if not HAVE_SELINUX or not self.selinux_enabled():
             return changed
@@ -749,6 +773,14 @@ class AnsibleModule(object):
                         new_context[i] = cur_context[i]
 
         if cur_context != new_context:
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['secontext'] = cur_context
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['secontext'] = new_context
+
             try:
                 if self.check_mode:
                     return True
@@ -762,7 +794,7 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_owner_if_different(self, path, owner, changed):
+    def set_owner_if_different(self, path, owner, changed, diff=None):
         path = os.path.expanduser(path)
         if owner is None:
             return changed
@@ -775,6 +807,15 @@ class AnsibleModule(object):
             except KeyError:
                 self.fail_json(path=path, msg='chown failed: failed to look up user %s' % owner)
         if orig_uid != uid:
+
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['owner'] = orig_uid
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['owner'] = uid
+
             if self.check_mode:
                 return True
             try:
@@ -784,7 +825,7 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_group_if_different(self, path, group, changed):
+    def set_group_if_different(self, path, group, changed, diff=None):
         path = os.path.expanduser(path)
         if group is None:
             return changed
@@ -797,6 +838,15 @@ class AnsibleModule(object):
             except KeyError:
                 self.fail_json(path=path, msg='chgrp failed: failed to look up group %s' % group)
         if orig_gid != gid:
+
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['group'] = orig_gid
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['group'] = gid
+
             if self.check_mode:
                 return True
             try:
@@ -806,7 +856,7 @@ class AnsibleModule(object):
             changed = True
         return changed
 
-    def set_mode_if_different(self, path, mode, changed):
+    def set_mode_if_different(self, path, mode, changed, diff=None):
         path = os.path.expanduser(path)
         path_stat = os.lstat(path)
 
@@ -828,6 +878,15 @@ class AnsibleModule(object):
         prev_mode = stat.S_IMODE(path_stat.st_mode)
 
         if prev_mode != mode:
+
+            if diff is not None:
+                if 'before' not in diff:
+                    diff['before'] = {}
+                diff['before']['mode'] = oct(prev_mode)
+                if 'after' not in diff:
+                    diff['after'] = {}
+                diff['after']['mode'] = oct(mode)
+
             if self.check_mode:
                 return True
             # FIXME: comparison against string above will cause this to be executed
@@ -961,27 +1020,27 @@ class AnsibleModule(object):
         or_reduce = lambda mode, perm: mode | user_perms_to_modes[user][perm]
         return reduce(or_reduce, perms, 0)
 
-    def set_fs_attributes_if_different(self, file_args, changed):
+    def set_fs_attributes_if_different(self, file_args, changed, diff=None):
         # set modes owners and context as needed
         changed = self.set_context_if_different(
-            file_args['path'], file_args['secontext'], changed
+            file_args['path'], file_args['secontext'], changed, diff
         )
         changed = self.set_owner_if_different(
-            file_args['path'], file_args['owner'], changed
+            file_args['path'], file_args['owner'], changed, diff
         )
         changed = self.set_group_if_different(
-            file_args['path'], file_args['group'], changed
+            file_args['path'], file_args['group'], changed, diff
         )
         changed = self.set_mode_if_different(
-            file_args['path'], file_args['mode'], changed
+            file_args['path'], file_args['mode'], changed, diff
         )
         return changed
 
-    def set_directory_attributes_if_different(self, file_args, changed):
-        return self.set_fs_attributes_if_different(file_args, changed)
+    def set_directory_attributes_if_different(self, file_args, changed, diff=None):
+        return self.set_fs_attributes_if_different(file_args, changed, diff)
 
-    def set_file_attributes_if_different(self, file_args, changed):
-        return self.set_fs_attributes_if_different(file_args, changed)
+    def set_file_attributes_if_different(self, file_args, changed, diff=None):
+        return self.set_fs_attributes_if_different(file_args, changed, diff)
 
     def add_path_info(self, kwargs):
         '''
@@ -1034,7 +1093,6 @@ class AnsibleModule(object):
             # as it would be returned by locale.getdefaultlocale()
             locale.setlocale(locale.LC_ALL, '')
         except locale.Error:
-            e = get_exception()
             # fallback to the 'C' locale, which may cause unicode
             # issues but is preferable to simply failing because
             # of an unknown locale
@@ -1047,6 +1105,7 @@ class AnsibleModule(object):
             self.fail_json(msg="An unknown error was encountered while attempting to validate the locale: %s" % e)
 
     def _handle_aliases(self):
+        # this uses exceptions as it happens before we can safely call fail_json
         aliases_results = {} #alias:canon
         for (k,v) in self.argument_spec.items():
             self._legal_inputs.append(k)
@@ -1055,11 +1114,11 @@ class AnsibleModule(object):
             required = v.get('required', False)
             if default is not None and required:
                 # not alias specific but this is a good place to check this
-                self.fail_json(msg="internal error: required and default are mutually exclusive for %s" % k)
+                raise Exception("internal error: required and default are mutually exclusive for %s" % k)
             if aliases is None:
                 continue
             if type(aliases) != list:
-                self.fail_json(msg='internal error: aliases must be a list')
+                raise Exception('internal error: aliases must be a list')
             for alias in aliases:
                 self._legal_inputs.append(alias)
                 aliases_results[alias] = k
@@ -1081,6 +1140,12 @@ class AnsibleModule(object):
 
             elif k == '_ansible_debug':
                 self._debug = self.boolean(v)
+
+            elif k == '_ansible_diff':
+                self._diff = self.boolean(v)
+
+            elif k == '_ansible_verbosity':
+                self._verbosity = v
 
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
@@ -1257,7 +1322,7 @@ class AnsibleModule(object):
         if isinstance(value, bool):
             return value
 
-        if isinstance(value, basestring):
+        if isinstance(value, basestring) or isinstance(value, int):
             return self.boolean(value)
 
         raise TypeError('%s cannot be converted to a bool' % type(value))
@@ -1414,7 +1479,6 @@ class AnsibleModule(object):
         self.log(msg, log_args=log_args)
 
 
-
     def _set_cwd(self):
         try:
             cwd = os.getcwd()
@@ -1507,6 +1571,8 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         if not 'changed' in kwargs:
             kwargs['changed'] = False
+        if 'invocation' not in kwargs:
+            kwargs['invocation'] = {'module_args': self.params}
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
@@ -1517,6 +1583,8 @@ class AnsibleModule(object):
         self.add_path_info(kwargs)
         assert 'msg' in kwargs, "implementation error -- msg to explain the error is required"
         kwargs['failed'] = True
+        if 'invocation' not in kwargs:
+            kwargs['invocation'] = {'module_args': self.params}
         kwargs = remove_values(kwargs, self.no_log_values)
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
@@ -1687,25 +1755,29 @@ class AnsibleModule(object):
             # rename might not preserve context
             self.set_context_if_different(dest, context, False)
 
-    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None):
+    def run_command(self, args, check_rc=False, close_fds=True, executable=None, data=None, binary_data=False, path_prefix=None, cwd=None, use_unsafe_shell=False, prompt_regex=None, environ_update=None):
         '''
         Execute a command, returns rc, stdout, and stderr.
-        args is the command to run
-        If args is a list, the command will be run with shell=False.
-        If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
-        If args is a string and use_unsafe_shell=True it run with shell=True.
-        Other arguments:
-        - check_rc (boolean)    Whether to call fail_json in case of
-                                non zero RC.  Default is False.
-        - close_fds (boolean)   See documentation for subprocess.Popen().
-                                Default is True.
-        - executable (string)   See documentation for subprocess.Popen().
-                                Default is None.
-        - prompt_regex (string) A regex string (not a compiled regex) which
-                                can be used to detect prompts in the stdout
-                                which would otherwise cause the execution
-                                to hang (especially if no input data is
-                                specified)
+
+        :arg args: is the command to run
+            * If args is a list, the command will be run with shell=False.
+            * If args is a string and use_unsafe_shell=False it will split args to a list and run with shell=False
+            * If args is a string and use_unsafe_shell=True it runs with shell=True.
+        :kw check_rc: Whether to call fail_json in case of non zero RC.
+            Default False
+        :kw close_fds: See documentation for subprocess.Popen(). Default True
+        :kw executable: See documentation for subprocess.Popen(). Default None
+        :kw data: If given, information to write to the stdin of the command
+        :kw binary_data: If False, append a newline to the data.  Default False
+        :kw path_prefix: If given, additional path to find the command in.
+            This adds to the PATH environment vairable so helper commands in
+            the same directory can also be found
+        :kw cwd: iIf given, working directory to run the command inside
+        :kw use_unsafe_shell: See `args` parameter.  Default False
+        :kw prompt_regex: Regex string (not a compiled regex) which can be
+            used to detect prompts in the stdout which would otherwise cause
+            the execution to hang (especially if no input data is specified)
+        :kwarg environ_update: dictionary to *update* os.environ with
         '''
 
         shell = False
@@ -1736,10 +1808,15 @@ class AnsibleModule(object):
         msg = None
         st_in = None
 
-        # Set a temporary env path if a prefix is passed
-        env=os.environ
+        # Manipulate the environ we'll send to the new process
+        old_env_vals = {}
+        if environ_update:
+            for key, val in environ_update.items():
+                old_env_vals[key] = os.environ.get(key, None)
+                os.environ[key] = val
         if path_prefix:
-            env['PATH']="%s:%s" % (path_prefix, env['PATH'])
+            old_env_vals['PATH'] = os.environ['PATH']
+            os.environ['PATH'] = "%s:%s" % (path_prefix, os.environ['PATH'])
 
         # create a printable version of the command for use
         # in reporting later, which strips out things like
@@ -1781,11 +1858,10 @@ class AnsibleModule(object):
             close_fds=close_fds,
             stdin=st_in,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            env=os.environ,
         )
 
-        if path_prefix:
-            kwargs['env'] = env
         if cwd and os.path.isdir(cwd):
             kwargs['cwd'] = cwd
 
@@ -1863,6 +1939,13 @@ class AnsibleModule(object):
             self.fail_json(rc=e.errno, msg=str(e), cmd=clean_args)
         except:
             self.fail_json(rc=257, msg=traceback.format_exc(), cmd=clean_args)
+
+        # Restore env settings
+        for key, val in old_env_vals.items():
+            if val is None:
+                del os.environ[key]
+            else:
+                os.environ[key] = val
 
         if rc != 0 and check_rc:
             msg = heuristic_log_sanitize(stderr.rstrip(), self.no_log_values)

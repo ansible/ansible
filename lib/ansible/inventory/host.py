@@ -19,6 +19,8 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import uuid
+
 from ansible.inventory.group import Group
 from ansible.utils.vars import combine_vars
 
@@ -38,7 +40,7 @@ class Host:
     def __eq__(self, other):
         if not isinstance(other, Host):
             return False
-        return self.name == other.name
+        return self._uuid == other._uuid
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -55,6 +57,7 @@ class Host:
             name=self.name,
             vars=self.vars.copy(),
             address=self.address,
+            uuid=self._uuid,
             gathered_facts=self._gathered_facts,
             groups=groups,
         )
@@ -65,6 +68,7 @@ class Host:
         self.name    = data.get('name')
         self.vars    = data.get('vars', dict())
         self.address = data.get('address', '')
+        self._uuid   = data.get('uuid', uuid.uuid4())
 
         groups = data.get('groups', [])
         for group_data in groups:
@@ -84,6 +88,7 @@ class Host:
             self.set_variable('ansible_port', int(port))
 
         self._gathered_facts = False
+        self._uuid = uuid.uuid4()
 
     def __repr__(self):
         return self.get_name()

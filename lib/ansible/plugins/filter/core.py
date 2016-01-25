@@ -100,9 +100,11 @@ def to_nice_json(a, *args, **kw):
             else:
                 if major >= 2:
                     return simplejson.dumps(a, indent=4, sort_keys=True, *args, **kw)
+    try:
+        return json.dumps(a, indent=4, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
+    except:
         # Fallback to the to_json filter
         return to_json(a, *args, **kw)
-    return json.dumps(a, indent=4, sort_keys=True, cls=AnsibleJSONEncoder, *args, **kw)
 
 def bool(a):
     ''' return a bool for the arg '''
@@ -223,7 +225,11 @@ def get_encrypted_password(password, hashtype='sha512', salt=None):
     if hashtype in cryptmethod:
         if salt is None:
             r = SystemRandom()
-            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(16)])
+            if hashtype in ['md5']:
+                saltsize = 8
+            else:
+                saltsize = 16
+            salt = ''.join([r.choice(string.ascii_letters + string.digits) for _ in range(saltsize)])
 
         if not HAS_PASSLIB:
             if sys.platform.startswith('darwin'):
@@ -339,6 +345,18 @@ def comment(text, style='plain', **kw):
         str_postfix,
         str_end)
 
+def extract(item, container, morekeys=None):
+    from jinja2.runtime import Undefined
+
+    value = container[item]
+
+    if value is not Undefined and morekeys is not None:
+        if not isinstance(morekeys, list):
+            morekeys = [morekeys]
+
+        value = reduce(lambda d, k: d[k], morekeys, value)
+
+    return value
 
 class FilterModule(object):
     ''' Ansible core jinja2 filters '''
@@ -415,4 +433,7 @@ class FilterModule(object):
 
             # comment-style decoration
             'comment': comment,
+
+            # array and dict lookups
+            'extract': extract,
         }

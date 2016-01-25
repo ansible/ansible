@@ -52,9 +52,7 @@ class DataLoader():
     Usage:
 
         dl = DataLoader()
-        (or)
-        dl = DataLoader(vault_password='foo')
-
+        # optionally: dl.set_vault_password('foo')
         ds = dl.load('...')
         ds = dl.load_from_file('/path/to/file')
     '''

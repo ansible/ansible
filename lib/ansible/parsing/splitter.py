@@ -65,8 +65,8 @@ def parse_kv(args, check_raw=False):
                 raise
 
         raw_params = []
-        for x in vargs:
-            x = _decode_escapes(x)
+        for orig_x in vargs:
+            x = _decode_escapes(orig_x)
             if "=" in x:
                 pos = 0
                 try:
@@ -83,19 +83,14 @@ def parse_kv(args, check_raw=False):
                 k = x[:pos]
                 v = x[pos + 1:]
 
-                # only internal variables can start with an underscore, so
-                # we don't allow users to set them directy in arguments
-                if k.startswith('_'):
-                    raise AnsibleError("invalid parameter specified: '%s'" % k)
-
                 # FIXME: make the retrieval of this list of shell/command
                 #        options a function, so the list is centralized
                 if check_raw and k not in ('creates', 'removes', 'chdir', 'executable', 'warn'):
-                    raw_params.append(x)
+                    raw_params.append(orig_x)
                 else:
                     options[k.strip()] = unquote(v.strip())
             else:
-                raw_params.append(x)
+                raw_params.append(orig_x)
 
         # recombine the free-form params, if any were found, and assign
         # them to a special option for use later by the shell/command module
