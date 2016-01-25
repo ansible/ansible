@@ -28,6 +28,7 @@ from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
+from ansible.playbook.block import Block
 from ansible.playbook.play_context import PlayContext
 from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
@@ -118,11 +119,18 @@ class TaskQueueManager:
         for key in self._notified_handlers.keys():
             del self._notified_handlers[key]
 
-        # FIXME: there is a block compile helper for this...
+        def _process_block(b):
+            temp_list = []
+            for t in b.block:
+                if isinstance(t, Block):
+                    temp_list.extend(_process_block(t))
+                else:
+                    temp_list.append(t)
+            return temp_list
+
         handler_list = []
         for handler_block in handlers:
-            for handler in handler_block.block:
-                handler_list.append(handler)
+            handler_list.extend(_process_block(handler_block))
 
         # then initialize it with the handler names from the handler list
         for handler in handler_list:
