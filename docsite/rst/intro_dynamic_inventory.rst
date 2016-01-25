@@ -258,7 +258,7 @@ Download the latest version of the OpenStack dynamic inventory script, make it e
     chmod +x openstack.py
     sudo cp openstack.py /etc/ansible/hosts
 
-Download the sample configuration file, modify it to suit your needs and copy it to /etc/ansible/openstack.yml
+Download the sample configuration file, modify it to suit your needs and copy it to `/etc/ansible/openstack.yml`::
 
     wget https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/openstack.yml
     vi openstack.yml
