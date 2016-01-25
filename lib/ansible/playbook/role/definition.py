@@ -188,7 +188,12 @@ class RoleDefinition(Base, Become, Conditional, Taggable):
         for (key, value) in iteritems(ds):
             # use the list of FieldAttribute values to determine what is and is not
             # an extra parameter for this role (or sub-class of this role)
-            if key not in base_attribute_names:
+            # FIXME: hard-coded list of exception key names here corresponds to the
+            #        connection fields in the Base class. There may need to be some
+            #        other mechanism where we exclude certain kinds of field attributes,
+            #        or make this list more automatic in some way so we don't have to
+            #        remember to update it manually.
+            if key not in base_attribute_names or key in ('connection', 'port', 'remote_user'):
                 # this key does not match a field attribute, so it must be a role param
                 role_params[key] = value
             else:
