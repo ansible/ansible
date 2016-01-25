@@ -84,6 +84,9 @@ class IncludedFile:
                         task_vars['item'] = include_variables['item'] = include_result['item']
 
                     if original_task:
+                        if original_task.static:
+                            continue
+
                         if original_task._task_include:
                             # handle relative includes by walking up the list of parent include
                             # tasks and checking the relative result to see if it exists
