@@ -131,6 +131,8 @@ class CallbackBase:
                         differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
                         ret.extend(list(differ))
                         ret.append('\n')
+                    if 'prepared' in diff:
+                        ret.append(to_unicode(diff['prepared']))
                     return u"".join(ret)
             except UnicodeDecodeError:
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
