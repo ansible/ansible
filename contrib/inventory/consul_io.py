@@ -191,9 +191,18 @@ class ConsulInventory(object):
       for service_name, service in iteritems(node['Services']):
         for node in self.consul_api.health.service(service_name)[1]:
             for check in node['Checks']:
+                index, all_node_checks = self.consul_api.health.node(node['Node']['Node'])
+
+                node_ok = True
+
+                for _check in all_node_checks:
+                  if _check['CheckID'] == 'serfHealth' and _check['Status'] != 'passing':
+                    node_ok = False
+                    break
+
                 if check['ServiceName'] == service_name:
-                      ok = 'passing' == check['Status']
-                      if ok:
+                      service_ok = 'passing' == check['Status']
+                      if service_ok and node_ok:
                         suffix = self.config.get_availability_suffix(
                                     'available_suffix', '_available')
                       else:
