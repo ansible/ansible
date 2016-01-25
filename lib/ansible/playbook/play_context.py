@@ -425,8 +425,7 @@ class PlayContext(Base):
         success_key = None
         self.prompt = None
 
-        if executable is None:
-            executable = C.DEFAULT_EXECUTABLE
+        shell = executable or C.DEFAULT_EXECUTABLE
 
         if self.become:
 
@@ -461,9 +460,9 @@ class PlayContext(Base):
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
                     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, shell, success_cmd)
                 else:
-                    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
+                    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, shell, success_cmd)
 
 
             elif self.become_method == 'su':
@@ -473,7 +472,7 @@ class PlayContext(Base):
                     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
 
                 prompt = detect_su_prompt
-                becomecmd = '%s %s %s -c "%s -c %s"' % (exe, flags, self.become_user, executable, success_cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote("%s -c %s" % (shell, success_cmd)))
 
             elif self.become_method == 'pbrun':
 
@@ -483,13 +482,13 @@ class PlayContext(Base):
             elif self.become_method == 'pfexec':
 
                 # No user as it uses it's own exec_attr to figure it out
-                becomecmd = '%s %s "%s"' % (exe, flags, success_cmd)
+                becomecmd = '%s %s %s' % (exe, flags, success_cmd)
 
             elif self.become_method == 'runas':
                 raise AnsibleError("'runas' is not yet implemented")
                 #TODO: figure out prompt
                 # this is not for use with winrm plugin but if they ever get ssh native on windoez
-                becomecmd = '%s %s /user:%s "%s"' % (exe, flags, self.become_user, success_cmd)
+                becomecmd = '%s %s /user:%s %s' % (exe, flags, self.become_user, success_cmd)
 
             elif self.become_method == 'doas':
 
@@ -502,7 +501,7 @@ class PlayContext(Base):
                 if self.become_user:
                     flags += ' -u %s ' % self.become_user
 
-                becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
+                becomecmd = '%s %s %s -c %s' % (exe, flags, shell, success_cmd)
 
             else:
                 raise AnsibleError("Privilege escalation method not found: %s" % self.become_method)
@@ -510,7 +509,7 @@ class PlayContext(Base):
             if self.become_pass:
                 self.prompt = prompt
             self.success_key = success_key
-            return ('%s -c %s' % (executable, pipes.quote(becomecmd)))
+            return ('%s -c %s' % (shell, pipes.quote(becomecmd)))
 
         return cmd
 
