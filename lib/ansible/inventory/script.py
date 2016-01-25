@@ -149,7 +149,10 @@ class InventoryScript:
     def get_host_variables(self, host):
         """ Runs <script> --host <hostname> to determine additional host variables """
         if self.host_vars_from_top is not None:
-            got = self.host_vars_from_top.get(host.name, {})
+            try:
+                got = self.host_vars_from_top.get(host.name, {})
+            except AttributeError as e:
+                raise AnsibleError("Improperly formated host information for %s: %s" % (host.name,to_str(e)))
             return got
 
         cmd = [self.filename, "--host", host.name]
