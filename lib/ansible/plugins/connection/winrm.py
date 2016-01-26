@@ -137,20 +137,20 @@ class Connection(ConnectionBase):
                 protocol.send_message('')
                 return protocol
             except Exception as e:
-                err_msg = (str(e) or repr(e)).strip()
-                if re.search(r'Operation\s+?timed\s+?out', err_msg, re.I):
+                err_msg = to_unicode(e).strip()
+                if re.search(ur'Operation\s+?timed\s+?out', err_msg, re.I):
                     raise AnsibleError('the connection attempt timed out')
-                m = re.search(r'Code\s+?(\d{3})', err_msg)
+                m = re.search(ur'Code\s+?(\d{3})', err_msg)
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
                         err_msg = 'the username/password specified for this server was incorrect'
                     elif code == 411:
                         return protocol
-                errors.append('%s: %s' % (transport, err_msg))
-                display.vvvvv('WINRM CONNECTION ERROR: %s\n%s' % (err_msg, traceback.format_exc()), host=self._winrm_host)
+                errors.append(u'%s: %s' % (transport, err_msg))
+                display.vvvvv(u'WINRM CONNECTION ERROR: %s\n%s' % (err_msg, to_unicode(traceback.format_exc())), host=self._winrm_host)
         if errors:
-            raise AnsibleError(', '.join(errors))
+            raise AnsibleError(', '.join(to_str(errors)))
         else:
             raise AnsibleError('No transport found for WinRM connection')
 

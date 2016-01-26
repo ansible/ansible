@@ -35,6 +35,7 @@ from ansible.plugins import callback_loader, strategy_loader, module_loader
 from ansible.template import Templar
 from ansible.vars.hostvars import HostVars
 from ansible.plugins.callback import CallbackBase
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -306,7 +307,7 @@ class TaskQueueManager:
                             method(*args, **kwargs)
                     except Exception as e:
                         import traceback
-                        orig_tb = traceback.format_exc()
+                        orig_tb = to_unicode(traceback.format_exc())
                         try:
                             v1_method = method.replace('v2_','')
                             v1_method(*args, **kwargs)
