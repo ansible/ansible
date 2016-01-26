@@ -60,8 +60,9 @@ from suds.sudsobject import Object as SudsObject
 
 class VMwareInventory(object):
 
-    def __init__(self, guests_only=None):
+    def __init__(self, guests_only=None, refresh_cache=False):
         self.config = ConfigParser.SafeConfigParser()
+        self.refresh_cache = refresh_cache
         if os.environ.get('VMWARE_INI', ''):
             config_files = [os.environ['VMWARE_INI']]
         else:
@@ -110,9 +111,12 @@ class VMwareInventory(object):
         '''
         Retrieves the value from cache for the given name.
         '''
+
+        if self.refresh_cache:
+            return default
         if self.config.has_option('defaults', 'cache_dir'):
             cache_dir = self.config.get('defaults', 'cache_dir')
-            cache_file = os.path.join(cache_dir, name)
+            cache_file = os.path.join(os.path.expanduser(cache_dir), name)
             if os.path.exists(cache_file):
                 if self.config.has_option('defaults', 'cache_max_age'):
                     cache_max_age = self.config.getint('defaults', 'cache_max_age')
@@ -313,7 +317,12 @@ class VMwareInventory(object):
             prefix_filter = self.config.get('defaults', 'prefix_filter')
         else:
             prefix_filter = None
-
+        if self.config.has_option('defaults', 'instance_filters'):
+            instance_filters = self.config.get('defaults', 'instance_filters')
+            instance_filters = instance_filters.split(',')
+        else:
+            instance_filters = None
+        
         # Loop through physical hosts:
         for host in HostSystem.all(self.client):
 
@@ -330,6 +339,13 @@ class VMwareInventory(object):
                 if prefix_filter:
                     if vm.name.startswith( prefix_filter ):
                         continue
+                if instance_filters:
+                    included = False
+                    for instance_filter in instance_filters:
+                        if vm.name.startswith( instance_filter ):
+                            included = True
+                if not included:
+                    continue
                 self._add_host(inv, 'all', vm.name)
                 self._add_host(inv, vm_group, vm.name)
                 vm_info = self._get_vm_info(vm)
@@ -415,12 +431,15 @@ def main():
     parser.add_option('--no-meta-hostvars', action='store_false',
                       dest='meta_hostvars', default=True,
                       help='Exclude [\'_meta\'][\'hostvars\'] with --list')
+    parser.add_option('--refresh-cache', action='store_true',
+                      dest='refresh_cache', default=False,
+                      help='Do not use the cache.  Refresh from source')
     options, args = parser.parse_args()
 
     if options.include_host_systems:
-        vmware_inventory = VMwareInventory(guests_only=False)
+        vmware_inventory = VMwareInventory(guests_only=False, refresh_cache=options.refresh_cache)
     else:
-        vmware_inventory = VMwareInventory()
+        vmware_inventory = VMwareInventory(refresh_cache=options.refresh_cache)
     if options.host is not None:
         inventory = vmware_inventory.get_host(options.host)
     else:
