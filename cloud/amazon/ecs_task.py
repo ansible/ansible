@@ -57,6 +57,7 @@ options:
             - A value showing who or what started the task (for informational purposes)
         required: False
 extends_documentation_fragment:
+    - aws
     - ec2
 '''
 

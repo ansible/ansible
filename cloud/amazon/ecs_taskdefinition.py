@@ -53,6 +53,7 @@ options:
         required: False
         type: list of name
 extends_documentation_fragment:
+    - aws
     - ec2
 '''
 
