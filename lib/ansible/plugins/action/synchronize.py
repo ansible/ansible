@@ -68,10 +68,21 @@ class ActionModule(ActionBase):
             path = self._get_absolute_path(path=path)
         return path
 
-    def _process_remote(self, host, path, user):
+    def _process_remote(self, host, path, user, port_matches_localhost_port):
+        """
+        :arg host: hostname for the path
+        :arg path: file path
+        :arg user: username for the transfer
+        :arg port_matches_localhost_port: boolean whether the remote port
+            matches the port used by localhost's sshd.  This is used in
+            conjunction with seeing whether the host is localhost to know
+            if we need to have the module substitute the pathname or if it
+            is a different host (for instance, an ssh tunnelled port or an
+            alternative ssh port to a vagrant host.)
+        """
         transport = self._play_context.connection
         if host not in C.LOCALHOST or transport != "local":
-            if host in C.LOCALHOST:
+            if port_matches_localhost_port and host in C.LOCALHOST:
                 self._task.args['_substitute_controller'] = True
             return self._format_rsync_rsh_target(host, path, user)
 
@@ -164,6 +175,17 @@ class ActionModule(ActionBase):
         except KeyError:
             dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
 
+        localhost_ports = set()
+        for host in C.LOCALHOST:
+            localhost_vars = task_vars['hostvars'].get(host, {})
+            for port_var in ('ansible_port', 'ansible_ssh_port'):
+                port = localhost_vars.get(port_var, None)
+                if port:
+                    break
+            else:
+                port = C.DEFAULT_REMOTE_PORT
+            localhost_ports.add(port)
+
         # dest_is_local tells us if the host rsync runs on is the same as the
         # host rsync puts the files on.  This is about *rsync's connection*,
         # not about the ansible connection to run the module.
@@ -236,12 +258,12 @@ class ActionModule(ActionBase):
             # use the mode to define src and dest's url
             if self._task.args.get('mode', 'push') == 'pull':
                 # src is a remote path: <user>@<host>, dest is a local path
-                src = self._process_remote(src_host, src, user)
+                src = self._process_remote(src_host, src, user, inv_port in localhost_ports)
                 dest = self._process_origin(dest_host, dest, user)
             else:
                 # src is a local path, dest is a remote path: <user>@<host>
                 src = self._process_origin(src_host, src, user)
-                dest = self._process_remote(dest_host, dest, user)
+                dest = self._process_remote(dest_host, dest, user, inv_port in localhost_ports)
         else:
             # Still need to munge paths (to account for roles) even if we aren't
             # copying files between hosts
