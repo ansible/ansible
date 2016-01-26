@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import StringIO
 import getpass
 import locale
 import os
@@ -256,14 +255,10 @@ class PlaybookExecutor:
         information in group_vars/host_vars but that is ok, and expected.
         '''
 
-        buf = StringIO.StringIO()
-        for x in replay_hosts:
-            buf.write("%s\n" % x)
-
         try:
-            fd = open(retry_path, 'w')
-            fd.write(buf.getvalue())
-            fd.close()
+            with open(retry_path, 'w') as fd:
+                for x in replay_hosts:
+                    fd.write("%s\n" % x)
         except Exception as e:
             display.error("Could not create retry file '%s'. The error was: %s" % (retry_path, e))
             return False
