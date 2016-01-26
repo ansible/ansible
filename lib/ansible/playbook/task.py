@@ -419,9 +419,5 @@ class Task(Base, Conditional, Taggable, Become):
         '''
         Override for the 'tags' getattr fetcher, used from Base.
         '''
-        any_errors_fatal = self._attributes['any_errors_fatal']
-        if hasattr(self, '_get_parent_attribute'):
-            if self._get_parent_attribute('any_errors_fatal'):
-                any_errors_fatal = True
-        return any_errors_fatal
+        return self._get_parent_attribute('any_errors_fatal')
 
