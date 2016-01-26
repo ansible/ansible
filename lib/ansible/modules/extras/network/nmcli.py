@@ -360,7 +360,7 @@ tenant_ip: "192.168.200.21/23"
 - nmcli: ctype=ethernet name=my-eth1 ifname="*" state=present
 
 # To change the property of a setting e.g. MTU, issue a command as follows:
-- nmcli: conn_name=my-eth1 mtu=9000 state=present
+- nmcli: conn_name=my-eth1 mtu=9000 type=ethernet state=present
 
     Exit Status's:
         - nmcli exits with status 0 if it succeeds, a value greater than 0 is
