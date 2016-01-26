@@ -82,6 +82,7 @@ options:
           IP completely, or only detach it from the server. Default is to detach only.
      required: false
      default: false
+     version_added: "2.1"
 requirements: ["shade"]
 '''
 
