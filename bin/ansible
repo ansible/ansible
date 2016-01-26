@@ -40,6 +40,7 @@ from ansible.errors import AnsibleError, AnsibleOptionsError, AnsibleParserError
 from ansible.utils.display import Display
 from ansible.utils.unicode import to_unicode
 
+
 ########################################
 ### OUTPUT OF LAST RESORT ###
 class LastResort(object):
@@ -108,7 +109,7 @@ if __name__ == '__main__':
         have_cli_options = cli is not None and cli.options is not None
         display.error("Unexpected Exception: %s" % to_unicode(e), wrap_text=False)
         if not have_cli_options or have_cli_options and cli.options.verbosity > 2:
-            display.display("the full traceback was:\n\n%s" % traceback.format_exc())
+            display.display(u"the full traceback was:\n\n%s" % to_unicode(traceback.format_exc()))
         else:
             display.display("to see the full traceback, use -vvv")
         sys.exit(250)
