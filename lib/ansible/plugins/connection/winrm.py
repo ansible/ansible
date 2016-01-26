@@ -138,9 +138,9 @@ class Connection(ConnectionBase):
                 return protocol
             except Exception as e:
                 err_msg = to_unicode(e).strip()
-                if re.search(ur'Operation\s+?timed\s+?out', err_msg, re.I):
+                if re.search(to_unicode(r'Operation\s+?timed\s+?out'), err_msg, re.I):
                     raise AnsibleError('the connection attempt timed out')
-                m = re.search(ur'Code\s+?(\d{3})', err_msg)
+                m = re.search(to_unicode(r'Code\s+?(\d{3})'), err_msg)
                 if m:
                     code = int(m.groups()[0])
                     if code == 401:
