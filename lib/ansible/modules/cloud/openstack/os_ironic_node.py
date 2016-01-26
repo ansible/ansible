@@ -101,10 +101,12 @@ options:
           activation or deactivation to complete before returning.
       required: false
       default: False
+      version_added: "2.1"
     timeout:
       description:
         - An integer value representing the number of seconds to
           wait for the node activation or deactivation to complete.
+      version_added: "2.1"
 '''
 
 EXAMPLES = '''
