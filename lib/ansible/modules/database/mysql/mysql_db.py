@@ -225,7 +225,8 @@ def main():
             ssl_key=dict(default=None),
             ssl_ca=dict(default=None),
             config_file=dict(default="~/.my.cnf"),
-        )
+        ),
+        supports_check_mode=True
     )
 
     if not mysqldb_found:
@@ -277,32 +278,44 @@ def main():
         config_file = None
     if db_exists(cursor, db):
         if state == "absent":
-            try:
-                changed = db_delete(cursor, db)
-            except Exception, e:
-                module.fail_json(msg="error deleting database: " + str(e))
+            if module.check_mode:
+                changed = True
+            else:
+                try:
+                    changed = db_delete(cursor, db)
+                except Exception, e:
+                    module.fail_json(msg="error deleting database: " + str(e))
         elif state == "dump":
-            rc, stdout, stderr = db_dump(module, login_host, login_user,
-                                        login_password, db, target, all_databases,
-                                        login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
-            if rc != 0:
-                module.fail_json(msg="%s" % stderr)
+            if module.check_mode:
+                module.exit_json(changed=True, db=db)
             else:
-                module.exit_json(changed=True, db=db, msg=stdout)
+                rc, stdout, stderr = db_dump(module, login_host, login_user,
+                                            login_password, db, target, all_databases,
+                                            login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
+                if rc != 0:
+                    module.fail_json(msg="%s" % stderr)
+                else:
+                    module.exit_json(changed=True, db=db, msg=stdout)
         elif state == "import":
-            rc, stdout, stderr = db_import(module, login_host, login_user,
-                                        login_password, db, target, all_databases,
-                                        login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
-            if rc != 0:
-                module.fail_json(msg="%s" % stderr)
+            if module.check_mode:
+                module.exit_json(changed=True, db=db)
             else:
-                module.exit_json(changed=True, db=db, msg=stdout)
+                rc, stdout, stderr = db_import(module, login_host, login_user,
+                                            login_password, db, target, all_databases,
+                                            login_port, config_file, socket, ssl_cert, ssl_key, ssl_ca)
+                if rc != 0:
+                    module.fail_json(msg="%s" % stderr)
+                else:
+                    module.exit_json(changed=True, db=db, msg=stdout)
     else:
         if state == "present":
-            try:
-                changed = db_create(cursor, db, encoding, collation)
-            except Exception, e:
-                module.fail_json(msg="error creating database: " + str(e))
+            if module.check_mode:
+                changed = True
+            else:
+                try:
+                    changed = db_create(cursor, db, encoding, collation)
+                except Exception, e:
+                    module.fail_json(msg="error creating database: " + str(e))
 
     module.exit_json(changed=changed, db=db)
 
