@@ -48,18 +48,17 @@ except NameError:
 # These are module level as we currently fork and serialize the whole process and locks in the objects don't play well with that
 debug_lock = Lock()
 
+logger = None
 #TODO: make this a logging callback instead
 if C.DEFAULT_LOG_PATH:
     path = C.DEFAULT_LOG_PATH
-    if (os.path.exists(path) and not os.access(path, os.W_OK)) or not os.access(os.path.dirname(path), os.W_OK):
-        print("[WARNING]: log file at %s is not writeable, aborting\n" % path, file=sys.stderr)
-
-    logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
-    mypid = str(os.getpid())
-    user = getpass.getuser()
-    logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
-else:
-    logger = None
+    if (os.path.exists(path) and os.access(path, os.W_OK)) or os.access(os.path.dirname(path), os.W_OK):
+        logging.basicConfig(filename=path, level=logging.DEBUG, format='%(asctime)s %(name)s %(message)s')
+        mypid = str(os.getpid())
+        user = getpass.getuser()
+        logger = logging.getLogger("p=%s u=%s | " % (mypid, user))
+    else:
+        print("[WARNING]: log file at %s is not writeable and we cannot create it, aborting\n" % path, file=sys.stderr)
 
 
 class Display:
