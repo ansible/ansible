@@ -256,6 +256,6 @@ def split_args(args):
     # If we're done and things are not at zero depth or we're still inside quotes,
     # raise an error to indicate that the args were unbalanced
     if print_depth or block_depth or comment_depth or inside_quotes:
-        raise Exception("error while splitting arguments, either an unbalanced jinja2 block or quotes")
+        raise AnsibleError("error while splitting arguments, either an unbalanced jinja2 block or quotes")
 
     return params
