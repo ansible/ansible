@@ -418,8 +418,14 @@ def main():
         out_lines=out_clean.split('\n')
         while '' in out_lines: 
             out_lines.remove('')
-        return module.exit_json(changed=changed, msg=out_clean,
-                                rc=rc, cmd=cmdstr, stdout_lines=out_lines)
+        if module._diff:
+            diff = {'prepared': out_clean}
+            return module.exit_json(changed=changed, msg=out_clean,
+                                    rc=rc, cmd=cmdstr, stdout_lines=out_lines,
+                                    diff=diff)
+        else:
+            return module.exit_json(changed=changed, msg=out_clean,
+                                    rc=rc, cmd=cmdstr, stdout_lines=out_lines)
 
 # import module snippets
 from ansible.module_utils.basic import *
