@@ -191,7 +191,7 @@ def main():
     rc,raw_fs,err = module.run_command("%s -c /dev/null -o value -s TYPE %s" % (cmd, dev))
     fs = raw_fs.strip()
 
-    if fs == fstype and resizefs == False:
+    if fs == fstype and resizefs == False and not force:
         module.exit_json(changed=False)
     elif fs == fstype and resizefs == True:
         # Get dev and fs size and compare
