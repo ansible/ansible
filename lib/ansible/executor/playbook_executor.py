@@ -19,6 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
+import StringIO
 import getpass
 import locale
 import os
@@ -27,6 +28,7 @@ import sys
 
 from ansible.compat.six import string_types
 
+from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
@@ -171,6 +173,20 @@ class PlaybookExecutor:
                 if entry:
                     entrylist.append(entry) # per playbook
 
+                if C.RETRY_FILES_ENABLED:
+                    retries = list(set(self._tqm._failed_hosts.keys() + self._tqm._unreachable_hosts.keys()))
+                    retries.sort()
+                    if len(retries) > 0:
+                        if C.RETRY_FILES_SAVE_PATH:
+                            basedir = C.shell_expand(C.RETRY_FILES_SAVE_PATH)
+                        else:
+                            basedir = os.path.dirname(playbook_path)
+
+                        (retry_name, _) = os.path.splitext(os.path.basename(playbook_path))
+                        filename = os.path.join(basedir, "%s.retry" % retry_name)
+                        if self._generate_retry_inventory(filename, retries):
+                            display.display("\tto retry, use: --limit @%s\n" % filename)
+
                 # send the stats callback for this playbook
                 if self._tqm is not None:
                     self._tqm.send_callback('v2_playbook_on_stats', self._tqm._stats)
@@ -233,3 +249,23 @@ class PlaybookExecutor:
 
             return serialized_batches
 
+    def _generate_retry_inventory(self, retry_path, replay_hosts):
+        '''
+        Called when a playbook run fails. It generates an inventory which allows
+        re-running on ONLY the failed hosts.  This may duplicate some variable
+        information in group_vars/host_vars but that is ok, and expected.
+        '''
+
+        buf = StringIO.StringIO()
+        for x in replay_hosts:
+            buf.write("%s\n" % x)
+
+        try:
+            fd = open(retry_path, 'w')
+            fd.write(buf.getvalue())
+            fd.close()
+        except Exception as e:
+            display.error("Could not create retry file '%s'. The error was: %s" % (retry_path, e))
+            return False
+
+        return True
