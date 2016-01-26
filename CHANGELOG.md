@@ -10,7 +10,23 @@ Ansible Changes By Release
 ####New Filters:
 * extract
 
-## 2.0 "Over the Hills and Far Away"
+## 2.0.1 "Over the Hills and Far Away"
+
+* Fixes a major compatibility break in the synchronize module shipped with
+  2.0.0.x.  That version of synchronize ran sudo on the controller prior to
+  running rsync.  In 1.9.x and previous, sudo was run on the host that rsync
+  connected to.  2.0.1 restores the 1.9.x behaviour.
+* Additionally, several other problems with where synchronize chose to run when
+  combined with delegate_to were fixed.  In particular, if a playbook targetted
+  localhost and then delegated_to a remote host the prior behavior (in 1.9.x
+  and 2.0.0.x) was to copy files between the src and destination directories on
+  the delegated host.  This has now been fixed to copy between localhost and
+  the delegated host.
+* Fix a regression where synchronize was unable to deal with unicode paths.
+* Fix tracebacks when playbooks or ansible itself were located in directories
+  with unicode characters.
+
+## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
 ###Major Changes:
 
