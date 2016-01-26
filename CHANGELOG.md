@@ -23,6 +23,8 @@ Ansible Changes By Release
   the delegated host.  This has now been fixed to copy between localhost and
   the delegated host.
 * Fix a regression where synchronize was unable to deal with unicode paths.
+* Fix a regression where synchronize deals with inventory hosts that use
+  localhost but with an alternate port.
 * Fix tracebacks when playbooks or ansible itself were located in directories
   with unicode characters.
 
