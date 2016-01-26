@@ -325,6 +325,11 @@ def main():
     ssh_args = module.params['ssh_args']
     verify_host = module.params['verify_host']
 
+    if '/' not in rsync:
+        rsync = module.get_bin_path(rsync, required=True)
+
+    ssh = module.get_bin_path('ssh', required=True)
+
     cmd = '%s --delay-updates -F' % rsync
     if compress:
         cmd = cmd + ' --compress'
@@ -385,9 +390,9 @@ def main():
       ssh_opts = '%s %s' % (ssh_opts, ssh_args)
 
     if dest_port != 22:
-        cmd += " --rsh 'ssh %s %s -o Port=%s'" % (private_key, ssh_opts, dest_port)
+        cmd += " --rsh '%s %s %s -o Port=%s'" % (ssh, private_key, ssh_opts, dest_port)
     else:
-        cmd += " --rsh 'ssh %s %s'" % (private_key, ssh_opts)  # need ssh param
+        cmd += " --rsh '%s %s %s'" % (ssh, private_key, ssh_opts)  # need ssh param
 
     if rsync_path:
         cmd = cmd + " --rsync-path=%s" % (rsync_path)
