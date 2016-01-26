@@ -71,6 +71,8 @@ class ActionModule(ActionBase):
     def _process_remote(self, host, path, user):
         transport = self._play_context.connection
         if host not in C.LOCALHOST or transport != "local":
+            if host in C.LOCALHOST:
+                self._task.args['_substitute_controller'] = True
             return self._format_rsync_rsh_target(host, path, user)
 
         if ':' not in path and not path.startswith('/'):
@@ -103,14 +105,40 @@ class ActionModule(ActionBase):
 
     def run(self, tmp=None, task_vars=None):
         ''' generates params and passes them on to the rsync module '''
+        # When modifying this function be aware of the tricky convolutions
+        # your thoughts have to go through:
+        #
+        # In normal ansible, we connect from controller to inventory_hostname
+        # (playbook's hosts: field) or controller to delegate_to host and run
+        # a module on one of those hosts.
+        #
+        # So things that are directly related to the core of ansible are in
+        # terms of that sort of connection that always originate on the
+        # controller.
+        #
+        # In synchronize we use ansible to connect to either the controller or
+        # to the delegate_to host and then run rsync which makes its own
+        # connection from controller to inventory_hostname or delegate_to to
+        # inventory_hostname.
+        #
+        # That means synchronize needs to have some knowledge of the
+        # controller to inventory_host/delegate host that ansible typically
+        # establishes and use those to construct a command line for rsync to
+        # connect from the inventory_host to the controller/delegate.  The
+        # challenge for coders is remembering which leg of the trip is
+        # associated with the conditions that you're checking at any one time.
         if task_vars is None:
             task_vars = dict()
 
         result = super(ActionModule, self).run(tmp, task_vars)
 
-        original_transport = task_vars.get('ansible_connection') or self._play_context.connection
+        # self._play_context.connection accounts for delegate_to so
+        # remote_transport is the transport ansible thought it would need
+        # between the controller and the delegate_to host or the controller
+        # and the remote_host if delegate_to isn't set.
+
         remote_transport = False
-        if original_transport != 'local':
+        if self._play_context.connection != 'local':
             remote_transport = True
 
         try:
@@ -136,7 +164,14 @@ class ActionModule(ActionBase):
         except KeyError:
             dest_host = dest_host_inventory_vars.get('ansible_ssh_host', inventory_hostname)
 
-        dest_is_local = dest_host in C.LOCALHOST
+        # dest_is_local tells us if the host rsync runs on is the same as the
+        # host rsync puts the files on.  This is about *rsync's connection*,
+        # not about the ansible connection to run the module.
+        dest_is_local = False
+        if not delegate_to and remote_transport is False:
+            dest_is_local = True
+        elif delegate_to and delegate_to == dest_host:
+            dest_is_local = True
 
         # CHECK FOR NON-DEFAULT SSH PORT
         if self._task.args.get('dest_port', None) is None:
@@ -161,22 +196,12 @@ class ActionModule(ActionBase):
         # Delegate to localhost as the source of the rsync unless we've been
         # told (via delegate_to) that a different host is the source of the
         # rsync
-        transport_overridden = False
         if not use_delegate and remote_transport:
             # Create a connection to localhost to run rsync on
             new_stdin = self._connection._new_stdin
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
-            transport_overridden = True
             self._override_module_replaced_vars(task_vars)
-
-        # COMPARE DELEGATE, HOST AND TRANSPORT
-        between_multiple_hosts = False
-        if dest_host != src_host and remote_transport:
-            # We're not copying two filesystem trees on the same host so we
-            # need to correctly format the paths for rsync (like
-            # user@host:path/to/tree
-            between_multiple_hosts = True
 
         # SWITCH SRC AND DEST HOST PER MODE
         if self._task.args.get('mode', 'push') == 'pull':
@@ -185,7 +210,7 @@ class ActionModule(ActionBase):
         # MUNGE SRC AND DEST PER REMOTE_HOST INFO
         src = self._task.args.get('src', None)
         dest = self._task.args.get('dest', None)
-        if between_multiple_hosts:
+        if not dest_is_local:
             # Private key handling
             if use_delegate:
                 private_key = task_vars.get('ansible_ssh_private_key_file') or self._play_context.private_key_file
@@ -231,9 +256,18 @@ class ActionModule(ActionBase):
         # Allow custom rsync path argument
         rsync_path = self._task.args.get('rsync_path', None)
 
-        # If no rsync_path is set, sudo was originally set, and dest is remote then add 'sudo rsync' argument
-        if not rsync_path and transport_overridden and self._play_context.become and self._play_context.become_method == 'sudo' and not dest_is_local:
-            rsync_path = 'sudo rsync'
+        if not dest_is_local:
+            if self._play_context.become and not rsync_path:
+                # If no rsync_path is set, become was originally set, and dest is
+                # remote then add privilege escalation here.
+                if self._play_context.become_method == 'sudo':
+                    rsync_path = 'sudo rsync'
+                # TODO: have to add in the rest of the become methods here
+
+            # We cannot use privilege escalation on the machine running the
+            # module.  Instead we run it on the machine rsync is connecting
+            # to.
+            self._play_context.become = False
 
         # make sure rsync path is quoted.
         if rsync_path:
@@ -245,7 +279,7 @@ class ActionModule(ActionBase):
         # run the module and store the result
         result.update(self._execute_module('synchronize', task_vars=task_vars))
 
-        if 'SyntaxError' in result['msg']:
+        if 'SyntaxError' in result.get('exception', result.get('msg', '')):
             # Emit a warning about using python3 because synchronize is
             # somewhat unique in running on localhost
             result['traceback'] = result['msg']
