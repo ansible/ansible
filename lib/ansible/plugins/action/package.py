@@ -39,6 +39,8 @@ class ActionModule(ActionBase):
 
         module = self._task.args.get('use', 'auto')
 
+        extra_args = self._task.args.get('pkg_args', {})
+
         if module == 'auto':
             try:
                 module = self._templar.template('{{ansible_pkg_mgr}}')
@@ -60,8 +62,11 @@ class ActionModule(ActionBase):
 
             # run the 'package' module
             new_module_args = self._task.args.copy()
-            if 'use' in new_module_args:
-                del new_module_args['use']
+            for k,v in extra_args.iteritems():
+                new_module_args[k] = v
+            for rm_args in ['use', 'pkg_args']:
+                if rm_args in new_module_args:
+                    del new_module_args[rm_args]
 
             display.vvvv("Running %s" % module)
             result.update(self._execute_module(module_name=module, module_args=new_module_args, task_vars=task_vars))
