@@ -283,6 +283,7 @@ tenant_ip: "192.168.200.21/23"
 - name: install needed network manager libs
   yum: name={{ item }} state=installed
   with_items:
+    - NetworkManager-glib
     - libnm-qt-devel.x86_64
     - nm-connection-editor.x86_64
     - libsemanage-python
