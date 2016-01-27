@@ -148,7 +148,8 @@ class NetworkModule(AnsibleModule):
         provider = params.get('provider') or dict()
         for key, value in provider.items():
             if key in NET_COMMON_ARGS.keys():
-                params[key] = value
+                if not params.get(key) and value is not None:
+                    params[key] = value
         return params
 
     def connect(self):
