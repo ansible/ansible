@@ -23,7 +23,7 @@ NET_COMMON_ARGS = dict(
     port=dict(type='int'),
     username=dict(required=True),
     password=dict(no_log=True),
-    transport=dict(choices=['cli', 'nxapi']),
+    transport=dict(default='cli', choices=['cli', 'nxapi']),
     use_ssl=dict(default=False, type='bool'),
     provider=dict()
 )
@@ -107,11 +107,24 @@ class Nxapi(object):
             self.module.fail_json(**headers)
 
         response = self.module.from_json(response.read())
-        if 'error' in response:
-            err = response['error']
-            self.module.fail_json(msg='json-rpc error % ' % str(err))
+        result = list()
 
-        return response
+        output = response['ins_api']['outputs']['output']
+        if isinstance(output, list):
+            for item in response['ins_api']['outputs']['output']:
+                if item['code'] != '200':
+                    self.module.fail_json(msg=item['msg'], command=item['input'],
+                            code=item['code'])
+                else:
+                    result.append(item['body'])
+        elif output['code'] != '200':
+            self.module.fail_json(msg=item['msg'], command=item['input'],
+                    code=item['code'])
+        else:
+            result.append(output['body'])
+
+
+        return result
 
 class Cli(object):
 
@@ -150,7 +163,8 @@ class NetworkModule(AnsibleModule):
         provider = params.get('provider') or dict()
         for key, value in provider.items():
             if key in NET_COMMON_ARGS.keys():
-                params[key] = value
+                if not params.get(key) and value is not None:
+                    params[key] = value
         return params
 
     def connect(self):
@@ -159,11 +173,9 @@ class NetworkModule(AnsibleModule):
         else:
             self.connection = Cli(self)
 
-        try:
-            self.connection.connect()
+        self.connection.connect()
+        if self.params['transport'] == 'cli':
             self.execute('terminal length 0')
-        except Exception, exc:
-            self.fail_json(msg=exc.message)
 
     def configure(self, commands):
         commands = to_list(commands)
@@ -176,10 +188,7 @@ class NetworkModule(AnsibleModule):
         return responses
 
     def execute(self, commands, **kwargs):
-        try:
-            return self.connection.send(commands, **kwargs)
-        except Exception, exc:
-            self.fail_json(msg=exc.message)
+        return self.connection.send(commands, **kwargs)
 
     def disconnect(self):
         self.connection.close()
@@ -194,10 +203,7 @@ class NetworkModule(AnsibleModule):
         if self.params['transport'] == 'cli':
             return self.execute(cmd)[0]
         else:
-            resp = self.execute(cmd)
-            if not resp.get('ins_api').get('outputs').get('output').get('body'):
-                self.fail_json(msg="Unrecognized response: %s" % str(resp))
-            return resp['ins_api']['outputs']['output']['body']
+            return self.execute(cmd)
 
 def get_module(**kwargs):
     """Return instance of NetworkModule
