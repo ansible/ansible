@@ -106,7 +106,6 @@ class CallbackBase:
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
-                    ret = []
                     if 'dst_binary' in diff:
                         ret.append("diff skipped: destination file appears to be binary\n")
                     if 'src_binary' in diff:
@@ -133,9 +132,9 @@ class CallbackBase:
                         ret.append('\n')
                     if 'prepared' in diff:
                         ret.append(to_unicode(diff['prepared']))
-                    return u"".join(ret)
             except UnicodeDecodeError:
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
+        return u"".join(ret)
 
     def _get_item(self, result):
         if result.get('_ansible_no_log', False):
