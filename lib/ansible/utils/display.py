@@ -273,7 +273,6 @@ class Display:
         else:
             return input(prompt_string)
 
-    @classmethod
     def do_var_prompt(self, varname, private=True, prompt=None, encrypt=None, confirm=False, salt_size=None, salt=None, default=None):
 
         result = None
@@ -294,12 +293,12 @@ class Display:
                     second = do_prompt("confirm " + msg, private)
                     if result == second:
                         break
-                    display.display("***** VALUES ENTERED DO NOT MATCH ****")
+                    self.display("***** VALUES ENTERED DO NOT MATCH ****")
             else:
                 result = do_prompt(msg, private)
         else:
             result = None
-            display.warning("Not prompting as we are not in interactive mode")
+            self.warning("Not prompting as we are not in interactive mode")
 
         # if result is false and default is not None
         if not result and default is not None:
