@@ -149,7 +149,7 @@ class TestPlayContext(unittest.TestCase):
 
         play_context.become_method = 'su'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
-        self.assertEqual(cmd, """%s -c '%s  %s -c "%s -c '"'"'echo %s; %s'"'"'"'""" % (default_exe, su_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
+        self.assertEqual(cmd, """%s -c '%s  %s -c %s -c '"'"'echo %s; %s'"'"''""" % (default_exe, su_exe, play_context.become_user, default_exe, play_context.success_key, default_cmd))
 
         play_context.become_method = 'pbrun'
         cmd = play_context.make_become_cmd(cmd=default_cmd, executable="/bin/bash")
