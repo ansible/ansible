@@ -222,6 +222,7 @@ To configure the PPA on your machine and install ansible run these commands:
     $ sudo apt-get update
     $ sudo apt-get install ansible
 
+.. note:: For the older version 1.9 we use this ppa:ansible/ansible-1.9
 .. note:: On older Ubuntu distributions, "software-properties-common" is called "python-software-properties".
 
 Debian/Ubuntu packages can also be built from the source checkout, run:
