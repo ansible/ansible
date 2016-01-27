@@ -21,6 +21,7 @@
 try:
     import atexit
     import time
+    import ssl
     # requests is required for exception handling of the ConnectionError
     import requests
     from pyVim import connect
@@ -104,6 +105,7 @@ def vmware_argument_spec():
         hostname=dict(type='str', required=True),
         username=dict(type='str', aliases=['user', 'admin'], required=True),
         password=dict(type='str', aliases=['pass', 'pwd'], required=True, no_log=True),
+        skip_ssl=dict(type='bool', required=False, default=False),
     )
 
 
@@ -112,8 +114,15 @@ def connect_to_api(module, disconnect_atexit=True):
     hostname = module.params['hostname']
     username = module.params['username']
     password = module.params['password']
+    skip_ssl = module.params['skip_ssl']
+
     try:
-        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
+        if skip_ssl:
+            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            context.verify_mode = ssl.CERT_NONE
+            service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
+	else:
+            service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
 
         # Disabling atexit should be used in special cases only.
         # Such as IP change of the ESXi host which removes the connection anyway.
