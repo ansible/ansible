@@ -198,21 +198,47 @@ class TestTaskExecutor(unittest.TestCase):
             shared_loader_obj = mock_shared_loader,
         )
 
+        #
+        # No replacement
+        #
+        mock_task.action = 'yum'
+        new_items = te._squash_items(items=items, variables=job_vars)
+        self.assertEqual(new_items, ['a', 'b', 'c'])
+
         mock_task.action = 'foo'
+        mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
 
         mock_task.action = 'yum'
+        mock_task.args={'name': 'static'}
+        new_items = te._squash_items(items=items, variables=job_vars)
+        self.assertEqual(new_items, ['a', 'b', 'c'])
+
+        mock_task.action = 'yum'
+        mock_task.args={'name': '{{pkg_mgr}}'}
+        new_items = te._squash_items(items=items, variables=job_vars)
+        self.assertEqual(new_items, ['a', 'b', 'c'])
+
+        #
+        # Replaces
+        #
+        mock_task.action = 'yum'
+        mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, variables=job_vars)
         self.assertEqual(new_items, [['a','c']])
 
         mock_task.action = '{{pkg_mgr}}'
+        mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, variables=job_vars)
         self.assertEqual(new_items, [['a', 'c']])
 
+        #
         # Smoketests -- these won't optimize but make sure that they don't
         # traceback either
+        #
         mock_task.action = '{{unknown}}'
+        mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, variables=job_vars)
         self.assertEqual(new_items, ['a', 'b', 'c'])
 
@@ -220,6 +246,7 @@ class TestTaskExecutor(unittest.TestCase):
                 dict(name='b', state='present'),
                 dict(name='c', state='present')]
         mock_task.action = 'yum'
+        mock_task.args={'name': '{{item}}'}
         new_items = te._squash_items(items=items, variables=job_vars)
         self.assertEqual(new_items, items)
 
