@@ -195,10 +195,9 @@ class NetworkModule(AnsibleModule):
 
     def parse_config(self, cfg):
         try:
-            result = parse(cfg, indent=2)
-            return result
-        except Exception:
-            raise
+            return parse(cfg, indent=2)
+        except Exception, exc:
+            self.fail_json(msg=exc.message)
 
     def get_config(self):
         cmd = 'show running-config'
