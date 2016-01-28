@@ -1,7 +1,6 @@
 Ansible Changes By Release
 ==========================
 
-## 2.0 "Over the Hills and Far Away" - ACTIVE DEVELOPMENT
 ## 2.1 TBD - ACTIVE DEVELOPMENT
 
 ####New Modules:
@@ -25,6 +24,10 @@ Ansible Changes By Release
 * Fix a regression where synchronize was unable to deal with unicode paths.
 * Fix a regression where synchronize deals with inventory hosts that use
   localhost but with an alternate port.
+* Fixes a regression where the retry files feature was not implemented.
+* Fixes a regression where the any_errors_fatal option was implemented in 2.0
+  incorrectly, and also adds a feature where any_errors_fatal can be set at
+  the block level.
 * Fix tracebacks when playbooks or ansible itself were located in directories
   with unicode characters.
 * Fix bug when sending unicode characters to an external pager for display.
