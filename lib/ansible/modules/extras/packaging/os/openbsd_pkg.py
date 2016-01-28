@@ -77,7 +77,7 @@ EXAMPLES = '''
 - openbsd_pkg: name=nmap state=present build=yes
 
 # Specify a pkg flavour with '--'
-- openbsd_pkg: name=vim--nox11 state=present
+- openbsd_pkg: name=vim--no_x11 state=present
 
 # Specify the default flavour to avoid ambiguity errors
 - openbsd_pkg: name=vim-- state=present
