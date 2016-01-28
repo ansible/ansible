@@ -269,28 +269,39 @@ class TaskExecutor:
             if all(isinstance(o, string_types) for o in items):
                 final_items = []
                 name = self._task.args.pop('name', None) or self._task.args.pop('pkg', None)
-                # The user is doing an upgrade or some other operation
-                # that doesn't take name or pkg.
-                if name:
+
+                # This gets the information to check whether the name field
+                # contains a template that we can squash for
+                template_no_item = template_with_item = None
+                if templar._contains_vars(name):
+                    variables['item'] = '\0$'
+                    template_no_item = templar.template(name, variables, cache=False)
+                    variables['item'] = '\0@'
+                    template_with_item = templar.template(name, variables, cache=False)
+                    del variables['item']
+
+                # Check if the user is doing some operation that doesn't take
+                # name/pkg or the name/pkg field doesn't have any variables
+                # and thus the items can't be squashed
+                if name and (template_no_item != template_with_item):
                     for item in items:
                         variables['item'] = item
                         if self._task.evaluate_conditional(templar, variables):
-                            if templar._contains_vars(name):
-                                new_item = templar.template(name, cache=False)
-                                final_items.append(new_item)
-                            else:
-                                final_items.append(item)
+                            new_item = templar.template(name, cache=False)
+                            final_items.append(new_item)
                     self._task.args['name'] = final_items
+                    # Wrap this in a list so that the calling function loop
+                    # executes exactly once
                     return [final_items]
+                else:
+                    # Restore the name parameter
+                    self._task.args['name'] = name
             #elif:
                 # Right now we only optimize single entries.  In the future we
                 # could optimize more types:
                 # * lists can be squashed together
                 # * dicts could squash entries that match in all cases except the
                 #   name or pkg field.
-                # Note: we really should be checking that the name or pkg field
-                # contains a template that expands with our with_items values.
-                # If it doesn't then we may break things
         return items
 
     def _execute(self, variables=None):
