@@ -249,6 +249,14 @@ options:
       - "Specifies the maximum burst before the above limit kicks in."
     required: false
     default: null
+  uid_owner:
+    description:
+      - "Specifies the UID or username to use in match by owner rule."
+    required: false
+  reject_with:
+    description:
+      - "Specifies the error packet type to return while rejecting."
+    required: false
 '''
 
 EXAMPLES = '''
