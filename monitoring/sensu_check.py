@@ -151,9 +151,10 @@ options:
     default: null
   custom:
     description:
-      - JSON mixin to add to the configuration
+      - A hash/dictionary of custom parameters for mixing to the configuration. 
+      - You can't rewrite others module parameters using this
     required: false
-    default: "{}"
+    default: {}
 requirements: [ ]
 author: "Anders Ingemann (@andsens)"
 '''
@@ -187,8 +188,6 @@ except ImportError:
     except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
-
-import ast
 
 def sensu_check(module, path, name, state='present', backup=False):
     changed = False
@@ -265,30 +264,25 @@ def sensu_check(module, path, name, state='present', backup=False):
 
         if module.params['custom']:
           # Convert to json
-          try:
-            custom_params = ast.literal_eval(module.params['custom'])
-          except:
-            msg = 'Module parameter "custom" contains invalid JSON. Example: custom=\'{"JSON": "here"}\''
-            module.fail_json(msg=msg)
-
-          overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue'])
+          custom_params = module.params['custom']
+          overwrited_fields = set(custom_params.keys()) & set(simple_opts + ['type','subdue','subdue_begin','subdue_end'])
           if overwrited_fields:
-            msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {of}'.format(of=list(overwrited_fields))
+            msg = 'You can\'t overwriting standard module parameters via "custom". You are trying overwrite: {opt}'.format(opt=list(overwrited_fields))
             module.fail_json(msg=msg)
 
           for k,v in custom_params.items():
-            if k in config['checks'][name].keys():
+            if k in config['checks'][name]:
               if not config['checks'][name][k] == v:
                 changed = True
-                reasons.append('`custom param {k}\' was changed'.format(k=k))
+                reasons.append('`custom param {opt}\' was changed'.format(opt=k))
             else:
               changed = True
-              reasons.append('`custom param {k}\' was added'.format(k=k))
+              reasons.append('`custom param {opt}\' was added'.format(opt=k))
             check[k] = v
           simple_opts += custom_params.keys()
 
         # Remove obsolete custom params
-        for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type','subdue']):
+        for opt in set(config['checks'][name].keys()) - set(simple_opts + ['type','subdue','subdue_begin','subdue_end']):
           changed = True
           reasons.append('`custom param {opt}\' was deleted'.format(opt=opt))
           del check[opt]
@@ -356,7 +350,7 @@ def main():
                 'aggregate':    {'type': 'bool'},
                 'low_flap_threshold':  {'type': 'int'},
                 'high_flap_threshold': {'type': 'int'},
-                'custom':   {'type': 'str'},
+                'custom':   {'type': 'dict'},
                 }
 
     required_together = [['subdue_begin', 'subdue_end']]
