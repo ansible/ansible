@@ -46,11 +46,6 @@ options:
     required: false
     choices: [ 'source', 'roundrobin', 'leastconn' ]
     default: 'source'
-  protocol:
-    description:
-      - Protocol for the load balancer rule.
-    required: false
-    default: null
   private_port:
     description:
       - The private port of the private ip address/virtual machine where the network traffic will be load balanced to.

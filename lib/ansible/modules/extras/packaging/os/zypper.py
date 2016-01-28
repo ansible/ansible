@@ -79,7 +79,6 @@ options:
 notes: []
 # informational: requirements for nodes
 requirements: [ zypper, rpm ]
-author: Patrick Callahan
 '''
 
 EXAMPLES = '''

@@ -71,7 +71,6 @@ options:
       - Password of an account with access to the package if its located on a file share. Only needed if the winrm user doesn't have access to the package. Also specify user_name for this to function properly.
     default: null
     aliases: []
-author: Trond Hindenes
 '''
 
 EXAMPLES = '''
