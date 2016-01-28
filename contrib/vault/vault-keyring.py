@@ -68,7 +68,7 @@ def main():
             sys.stderr.write('Passwords do not match\n')
             sys.exit(1)
     else:
-        sys.stdout.write(keyring.get_password('ansible', username))
+        sys.stdout.write('%s\n' % keyring.get_password('ansible', username))
 
     sys.exit(0)
 
