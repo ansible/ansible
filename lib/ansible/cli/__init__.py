@@ -459,7 +459,7 @@ class CLI(object):
             os.environ['LESS'] = CLI.LESS_OPTS
         try:
             cmd = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=sys.stdout)
-            cmd.communicate(input=text.encode(sys.stdout.encoding))
+            cmd.communicate(input=text.decode('utf-8').encode(sys.stdout.encoding))
         except IOError:
             pass
         except KeyboardInterrupt:
