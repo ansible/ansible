@@ -28,7 +28,9 @@ version_added: "1.7"
 short_description: Fetches a file from a given URL
 description:
  - Fetches a file from a URL and saves to locally
-author: "Paul Durivage (@angstwad)"
+author:
+    - "Paul Durivage (@angstwad)"
+    - "Takeshi Kuramochi (tksarah)"
 options:
   url:
     description:
@@ -80,9 +82,6 @@ options:
       - Proxy authentication password
     version_added: "2.0"
     required: false
-author:
-    - "Paul Durivage (@angstwad)"
-    - "Takeshi Kuramochi (tksarah)"
 '''
 
 EXAMPLES = '''

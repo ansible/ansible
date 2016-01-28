@@ -162,8 +162,7 @@ options:
     required: false
     default: 300
     version_added: "2.1"
-author: "Bruce Pennypacker (@bpennypacker)"
-author: 
+author:
   - "Bruce Pennypacker (@bpennypacker)"
   - "Mike Buzzetti <mike.buzzetti@gmail.com>"
 extends_documentation_fragment: aws

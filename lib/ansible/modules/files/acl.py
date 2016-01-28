@@ -22,8 +22,6 @@ version_added: "1.4"
 short_description: Sets and retrieves file ACL information.
 description:
     - Sets and retrieves file ACL information.
-notes:
-    - As of Ansible 2.0, this module only supports Linux distributions.
 options:
   name:
     required: true
@@ -94,6 +92,7 @@ author:
     - "Jérémie Astori (@astorije)"
 notes:
     - The "acl" module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
+    - As of Ansible 2.0, this module only supports Linux distributions.
 '''
 
 EXAMPLES = '''
