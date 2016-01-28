@@ -82,7 +82,6 @@ options:
     description:
       - Validation to run before copying into place.  Use %s in the command to indicate the current file to validate.
       - The command is passed securely so shell features like expansion and pipes won't work.
-    required: false
     default: None
   encoding:
     required: false
