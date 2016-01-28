@@ -27,6 +27,7 @@ Ansible Changes By Release
   localhost but with an alternate port.
 * Fix tracebacks when playbooks or ansible itself were located in directories
   with unicode characters.
+* Fix bug when sending unicode characters to an external pager for display.
 * Fix a bug with squashing loops for special modules (mostly package managers).
   The optimization was squashing when the loop did not apply to the selection
   of packages.  This has now been fixed.
