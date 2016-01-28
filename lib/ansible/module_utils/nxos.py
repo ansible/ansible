@@ -194,7 +194,11 @@ class NetworkModule(AnsibleModule):
         self.connection.close()
 
     def parse_config(self, cfg):
-        return parse(cfg, indent=2)
+        try:
+            result = parse(cfg, indent=2)
+            return result
+        except Exception:
+            raise
 
     def get_config(self):
         cmd = 'show running-config'

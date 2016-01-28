@@ -39,47 +39,58 @@ class ConfigLine(object):
         return not self.__eq__(other)
 
 def parse(lines, indent):
-        toplevel = re.compile(r'\S')
-        childline = re.compile(r'^\s*(.+)$')
-        repl = r'([{|}|;])'
+    toplevel = re.compile(r'\S')
+    childline = re.compile(r'^\s*(.+)$')
+    repl = r'([{|}|;])'
 
-        ancestors = list()
-        config = list()
+    ancestors = list()
+    config = list()
+    first_child = False
 
-        for line in str(lines).split('\n'):
-            text = str(re.sub(repl, '', line)).strip()
+    for line in str(lines).split('\n'):
+        text = str(re.sub(repl, '', line)).strip()
 
-            cfg = ConfigLine(text)
-            cfg.raw = line
+        cfg = ConfigLine(text)
+        cfg.raw = line
 
-            if not text or text[0] in ['!', '#']:
+        if not text or text[0] in ['!', '#']:
+            continue
+
+        # handle top level commands
+        if toplevel.match(line):
+            ancestors = [cfg]
+
+        # handle sub level commands
+        else:
+            match = childline.match(line)
+            line_indent = match.start(1)
+
+            if not first_child:
+                # let the first child occurrence determine indentation width.
+                first_child = True
+                if line_indent > 0:
+                    indent = line_indent
+
+            if line_indent % indent > 0:
+                raise Exception("Expected indentation to be a multiple of {0:d}.".format(indent))
+
+            level = int(line_indent / indent)
+            parent_level = level - 1
+
+            cfg.parents = ancestors[:level]
+
+            if level > len(ancestors):
+                config.append(cfg)
                 continue
 
-            # handle top level commands
-            if toplevel.match(line):
-                ancestors = [cfg]
+            for i in range(level, len(ancestors)):
+                ancestors.pop()
 
-            # handle sub level commands
-            else:
-                match = childline.match(line)
-                line_indent = match.start(1)
-                level = int(line_indent / indent)
-                parent_level = level - 1
+            ancestors.append(cfg)
+            ancestors[parent_level].children.append(cfg)
 
-                cfg.parents = ancestors[:level]
+        config.append(cfg)
 
-                if level > len(ancestors):
-                    config.append(cfg)
-                    continue
-
-                for i in range(level, len(ancestors)):
-                    ancestors.pop()
-
-                ancestors.append(cfg)
-                ancestors[parent_level].children.append(cfg)
-
-            config.append(cfg)
-
-        return config
+    return config
 
 
