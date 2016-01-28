@@ -24,7 +24,7 @@ short_description: Send Amazon Simple Notification Service (SNS) messages
 description:
     - The M(sns) module sends notifications to a topic on your Amazon SNS account
 version_added: 1.6
-author: "Michael J. Schultz (@mjschultz)" 
+author: "Michael J. Schultz (@mjschultz)"
 options:
   msg:
     description:
@@ -78,7 +78,6 @@ options:
     aliases: ['aws_region', 'ec2_region']
 
 requirements: [ "boto" ]
-author: Michael J. Schultz
 """
 
 EXAMPLES = """

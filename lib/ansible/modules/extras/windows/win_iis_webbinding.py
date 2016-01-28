@@ -66,12 +66,6 @@ options:
     required: false
     default: null
     aliases: []
-  protocol:
-    description:
-      - The protocol to be used for the Web binding (usually HTTP, HTTPS, or FTP).
-    required: false
-    default: null
-    aliases: []
   certificate_hash:
     description:
       - Certificate hash for the SSL binding. The certificate hash is the unique identifier for the certificate.
