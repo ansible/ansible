@@ -31,6 +31,13 @@ Ansible Changes By Release
 * Fix a bug with squashing loops for special modules (mostly package managers).
   The optimization was squashing when the loop did not apply to the selection
   of packages.  This has now been fixed.
+* Temp files created when using vault are now "shredded" using the unix shred
+  program which overwrites the file with random data.
+* Some fixes to cloudstack modules for case sensitivity
+* Fix non-newstyle modules (non-python modules and old-style modules) to
+  disabled pipelining.
+* Fix fetch module failing even if fail_on_missing is set to False
+* Fix for cornercase when local connections, sudo, and raw were used together.
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
