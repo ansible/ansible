@@ -23,7 +23,6 @@ short_description: Send a message to Campfire
 description:
    - Send a message to Campfire.
    - Messages with newlines will result in a "Paste" message being sent.
-version_added: "1.2"
 options:
   subscription:
     description:
