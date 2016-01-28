@@ -43,6 +43,7 @@ except ImportError:
 
 SSHPASS_AVAILABLE = None
 
+SSH_ASKPASS_HELPER = "ansible-pwecho"
 
 class Connection(ConnectionBase):
     ''' ssh based connections '''
@@ -125,7 +126,7 @@ class Connection(ConnectionBase):
         '''
 
         self._command = []
-        self._command_env = dict(os.environ)
+        self._command_env = dict(os.environ.copy())
 
         ## First, the command name.
 
@@ -133,10 +134,19 @@ class Connection(ConnectionBase):
         # read the password using the ansible-pwecho helper
 
         if self._play_context.password:
-            self._command_env.update(dict(
-              DISPLAY=os.getenv("DISPLAY", ""),
-              SSH_ASKPASS="/usr/bin/ansible-pwecho",
-              ANSIBLE_SSH_PASS=self._play_context.password))
+            if C.ANSIBLE_SSH_USE_ASKPASS:
+                display.vvvv('SSH: using askpass, setting DISPLAY, SSH_ASKPASS and ANSIBLE_SSH_PASS environment variables', host=self._play_context.remote_addr)
+                self._command_env.update(dict(
+                  DISPLAY=os.getenv("DISPLAY", ""),
+                  SSH_ASKPASS=SSH_ASKPASS_HELPER,
+                  ANSIBLE_SSH_PASS=self._play_context.password))
+            else:
+                display.vvvv('SSH: using sshpass program', host=self._play_context.remote_addr)
+                if not self._sshpass_available():
+                    raise AnsibleError("to use the 'ssh' connection type with passwords, you must install the sshpass program")
+
+                self.sshpass_pipe = os.pipe()
+                self._command += ['sshpass', '-d{0}'.format(self.sshpass_pipe[0])]
 
         self._command += [binary]
 
@@ -346,9 +356,16 @@ class Connection(ConnectionBase):
                 p = None
 
         if not p:
-            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self._command_env, preexec_fn=os.setsid)
             stdin = p.stdin
 
+
+        # If we are using SSH password authentication, write the password into
+        # the pipe we opened in _build_command.
+        if self._play_context.password and not C.ANSIBLE_SSH_USE_ASKPASS:
+            os.close(self.sshpass_pipe[0])
+            os.write(self.sshpass_pipe[1], "{0}\n".format(to_bytes(self._play_context.password)))
+            os.close(self.sshpass_pipe[1])
 
         ## SSH state machine
         #

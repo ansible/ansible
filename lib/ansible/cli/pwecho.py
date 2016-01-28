@@ -27,12 +27,15 @@ from ansible.cli import CLI
 
 class PwechoCLI(CLI):
 
-    def __init__(self, args):
-        super(PwechoCLI, self).__init__(args)
-
     def run(self):
-        sys.stdout.write(os.getenv("ANSIBLE_SSH_PASS", ""))
+        pw = os.getenv("ANSIBLE_SSH_PASS")
+        if not pw:
+            sys.stderr.write("Environment variable ANSIBLE_SSH_PASS not set\n")
+            sys.stderr.flush()
+            sys.exit(1)
+        sys.stdout.write(pw)
         sys.stdout.flush()
+        sys.exit(0)
 
     def parse(self):
         return
