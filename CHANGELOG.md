@@ -27,6 +27,9 @@ Ansible Changes By Release
   localhost but with an alternate port.
 * Fix tracebacks when playbooks or ansible itself were located in directories
   with unicode characters.
+* Fix a bug with squashing loops for special modules (mostly package managers).
+  The optimization was squashing when the loop did not apply to the selection
+  of packages.  This has now been fixed.
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
