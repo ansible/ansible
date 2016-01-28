@@ -189,6 +189,7 @@ except ImportError:
         # Let snippet from module_utils/basic.py return a proper error in this case
         pass
 
+
 def sensu_check(module, path, name, state='present', backup=False):
     changed = False
     reasons = []
