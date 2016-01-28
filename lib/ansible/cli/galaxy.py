@@ -39,6 +39,7 @@ from ansible.galaxy.role import GalaxyRole
 from ansible.galaxy.login import GalaxyLogin
 from ansible.galaxy.token import GalaxyToken
 from ansible.playbook.role.requirement import RoleRequirement
+from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -161,8 +162,8 @@ class GalaxyCLI(CLI):
 
     def _display_role_info(self, role_info):
 
-        text = "\nRole: %s \n" % role_info['name']
-        text += "\tdescription: %s \n" % role_info.get('description', '')
+        text = [u"", u"Role: %s" % to_unicode(role_info['name'])]
+        text.append(u"\tdescription: %s" % role_info.get('description', ''))
 
         for k in sorted(role_info.keys()):
 
@@ -171,14 +172,15 @@ class GalaxyCLI(CLI):
 
             if isinstance(role_info[k], dict):
                 text += "\t%s: \n" % (k)
+                text.append(u"\t%s:" % (k))
                 for key in sorted(role_info[k].keys()):
                     if key in self.SKIP_INFO_KEYS:
                         continue
-                    text += "\t\t%s: %s\n" % (key, role_info[k][key])
+                    text.append(u"\t\t%s: %s" % (key, role_info[k][key]))
             else:
-                text += "\t%s: %s\n" % (k, role_info[k])
+                text.append(u"\t%s: %s" % (k, role_info[k]))
 
-        return text
+        return u'\n'.join(text)
 
 ############################
 # execute actions
@@ -322,9 +324,11 @@ class GalaxyCLI(CLI):
             if role_spec:
                 role_info.update(role_spec)
 
-            data += self._display_role_info(role_info)
+            data = self._display_role_info(role_info)
+            ### FIXME: This is broken in both 1.9 and 2.0 as
+            # _display_role_info() always returns something
             if not data:
-                data += "\n- the role %s was not found" % role
+                data = u"\n- the role %s was not found" % role
 
         self.pager(data)
 
@@ -518,24 +522,25 @@ class GalaxyCLI(CLI):
             display.display("No roles match your search.", color="yellow")
             return True
 
-        data = ''
+        data = [u'']
 
         if response['count'] > page_size:
-            data += ("\nFound %d roles matching your search. Showing first %s.\n" % (response['count'], page_size))
+            data.append(u"Found %d roles matching your search. Showing first %s." % (response['count'], page_size))
         else:
-            data += ("\nFound %d roles matching your search:\n" % response['count'])
+            data.append(u"Found %d roles matching your search:" % response['count'])
 
         max_len = []
         for role in response['results']:
             max_len.append(len(role['username'] + '.' + role['name']))
         name_len = max(max_len)
-        format_str = " %%-%ds %%s\n" % name_len
-        data +='\n'
-        data += (format_str % ("Name", "Description"))
-        data += (format_str % ("----", "-----------"))
+        format_str = u" %%-%ds %%s" % name_len
+        data.append(u'')
+        data.append(format_str % (u"Name", u"Description"))
+        data.append(format_str % (u"----", u"-----------"))
         for role in response['results']:
-            data += (format_str % (role['username'] + '.' + role['name'],role['description']))
+            data.append(format_str % (u'%s.%s' % (role['username'], role['name']), role['description']))
 
+        data = u'\n'.join(data)
         self.pager(data)
 
         return True
