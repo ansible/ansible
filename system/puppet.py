@@ -175,7 +175,7 @@ def main():
         if p['puppetmaster']:
             cmd += " --server %s" % pipes.quote(p['puppetmaster'])
         if p['show_diff']:
-            cmd += " --show-diff"
+            cmd += " --show_diff"
         if p['environment']:
             cmd += " --environment '%s'" % p['environment']
         if module.check_mode:
