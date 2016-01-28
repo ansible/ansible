@@ -69,11 +69,6 @@ options:
       - Encoding of the database
     required: false
     default: null
-  encoding:
-    description:
-      - Encoding of the database
-    required: false
-    default: null
   lc_collate:
     description:
       - Collation order (LC_COLLATE) to use in the database. Must match collation order of template database unless C(template0) is used as template.

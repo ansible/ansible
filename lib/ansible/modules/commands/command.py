@@ -76,7 +76,6 @@ options:
     description:
       - if command warnings are on in ansible.cfg, do not warn about this particular line if set to no/false.
     required: false
-    default: True
 notes:
     -  If you want to run a command through the shell (say you are using C(<),
        C(>), C(|), etc), you actually want the M(shell) module instead. The
