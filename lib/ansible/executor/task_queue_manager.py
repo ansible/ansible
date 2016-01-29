@@ -19,7 +19,6 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-from multiprocessing.managers import SyncManager, DictProxy
 import multiprocessing
 import os
 import tempfile
@@ -27,7 +26,6 @@ import tempfile
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.executor.play_iterator import PlayIterator
-from ansible.executor.process.worker import WorkerProcess
 from ansible.executor.process.result import ResultProcess
 from ansible.executor.stats import AggregateStats
 from ansible.playbook.play_context import PlayContext
@@ -284,35 +282,31 @@ class TaskQueueManager:
             # see osx_say.py example for such a plugin
             if getattr(callback_plugin, 'disabled', False):
                 continue
-            methods = [
-                getattr(callback_plugin, method_name, None),
-                getattr(callback_plugin, 'v2_on_any', None)
-            ]
+
+            # try to find v2 method, fallback to v1 method, ignore callback if no method found
+            methods = []
+            for possible in [method_name, 'v2_on_any']:
+                gotit =  getattr(callback_plugin, possible, None)
+                if gotit is None:
+                    gotit = getattr(callback_plugin, possible.replace('v2_',''), None)
+                if gotit is not None:
+                    methods.append(gotit)
+
             for method in methods:
-                if method is not None:
-                    try:
-                        # temporary hack, required due to a change in the callback API, so
-                        # we don't break backwards compatibility with callbacks which were
-                        # designed to use the original API
-                        # FIXME: target for removal and revert to the original code here
-                        #        after a year (2017-01-14)
-                        if method_name == 'v2_playbook_on_start':
-                            import inspect
-                            (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
-                            if 'playbook' in f_args:
-                                method(*args, **kwargs)
-                            else:
-                                method()
-                        else:
+                try:
+                    # temporary hack, required due to a change in the callback API, so
+                    # we don't break backwards compatibility with callbacks which were
+                    # designed to use the original API
+                    # FIXME: target for removal and revert to the original code here after a year (2017-01-14)
+                    if method_name == 'v2_playbook_on_start':
+                        import inspect
+                        (f_args, f_varargs, f_keywords, f_defaults) = inspect.getargspec(method)
+                        if 'playbook' in f_args:
                             method(*args, **kwargs)
-                    except Exception as e:
-                        import traceback
-                        orig_tb = to_unicode(traceback.format_exc())
-                        try:
-                            v1_method = method.replace('v2_','')
-                            v1_method(*args, **kwargs)
-                        except Exception:
-                            if display.verbosity >= 3:
-                                display.warning(orig_tb, formatted=True)
-                            else:
-                                display.warning('Error when using %s: %s' % (method, str(e)))
+                        else:
+                            method()
+                    else:
+                        method(*args, **kwargs)
+                except Exception as e:
+                    #TODO: add config toggle to make this fatal or not?
+                    display.warning(u"Failure when attempting to use callback plugin (%s): %s" % (to_unicode(callback_plugin), to_unicode(e)))
