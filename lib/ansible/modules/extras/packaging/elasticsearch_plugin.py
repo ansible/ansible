@@ -61,6 +61,16 @@ options:
             - Your configured plugin directory specified in Elasticsearch
         required: False
         default: /usr/share/elasticsearch/plugins/
+    proxy_host:
+        description:
+            - Proxy host to use during plugin installation
+        required: False
+        default: None
+    proxy_port:
+        description:
+            - Proxy port to use during plugin installation
+        required: False
+        default: None        
     version:
         description: 
             - Version of the plugin to be installed.  
