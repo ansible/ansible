@@ -11,12 +11,11 @@ ad hoc tasks.
 What's an ad-hoc command?
 
 An ad-hoc command is something that you might type in to do something really
-quick, but don't want to save for later.   
+quick, but don't want to save for later.
 
 This is a good place to start to understand the basics of what Ansible can do
 prior to learning the playbooks language -- ad-hoc commands can also be used
-to do quick things that you might not necessarily want to write a full playbook 
-for.  
+to do quick things that you might not necessarily want to write a full playbook for.
 
 Generally speaking, the true power of Ansible lies in playbooks.
 Why would you use ad-hoc tasks versus playbooks?
@@ -25,7 +24,7 @@ For instance, if you wanted to power off all of your lab for Christmas vacation,
 you could execute a quick one-liner in Ansible without writing a playbook.
 
 For configuration management and deployments, though, you'll want to pick up on
-using '/usr/bin/ansible-playbook' -- the concepts you will learn here will 
+using '/usr/bin/ansible-playbook' -- the concepts you will learn here will
 port over directly to the playbook language.
 
 (See :doc:`playbooks` for more information about those)
@@ -60,25 +59,24 @@ behavior, pass in "-u username".  If you want to run commands as a different use
 
     $ ansible atlanta -a "/usr/bin/foo" -u username
 
-Often you'll not want to just do things from your user account.  If you want to run commands through sudo::
+Often you'll not want to just do things from your user account.  If you want to run commands through privilege escalation::
 
-    $ ansible atlanta -a "/usr/bin/foo" -u username --sudo [--ask-sudo-pass]
+    $ ansible atlanta -a "/usr/bin/foo" -u username --become [--ask-become-pass]
 
-Use ``--ask-sudo-pass`` (``-K``) if you are not using passwordless
-sudo.  This will interactively prompt you for the password to use.
-Use of passwordless sudo makes things easier to automate, but it's not
-required.
+Use ``--ask-become-pass`` (``-K``) if you are not using a passwordless privilege escalation method (sudo/su/pfexec/doas/etc).
+This will interactively prompt you for the password to use.
+Use of a passwordless setup makes things easier to automate, but it's not required.
 
-It is also possible to sudo to a user other than root using
-``--sudo-user`` (``-U``)::
+It is also possible to become a user other than root using
+``--become-user``::
 
-    $ ansible atlanta -a "/usr/bin/foo" -u username -U otheruser [--ask-sudo-pass]
+    $ ansible atlanta -a "/usr/bin/foo" -u username --become-user otheruser [--ask-become-pass]
 
 .. note::
-   
-    Rarely, some users have security rules where they constrain their sudo environment to running specific command paths only.  
+
+    Rarely, some users have security rules where they constrain their sudo/pbrun/doas environment to running specific command paths only.
     This does not work with ansible's no-bootstrapping philosophy and hundreds of different modules.
-    If doing this, use Ansible from a special account that does not have this constraint.  
+    If doing this, use Ansible from a special account that does not have this constraint.
     One way of doing this without sharing access to unauthorized users would be gating Ansible with :doc:`tower`, which
     can hold on to an SSH credential and let members of certain organizations use it on their behalf without having direct access.
 
