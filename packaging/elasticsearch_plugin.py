@@ -124,16 +124,20 @@ def main():
             timeout=dict(default="1m"),
             plugin_bin=dict(default="/usr/share/elasticsearch/bin/plugin"),
             plugin_dir=dict(default="/usr/share/elasticsearch/plugins/"),
+            proxy_host=dict(default=None),
+            proxy_port=dict(default=None),
             version=dict(default=None)
         )
     )
 
-    plugin_bin = module.params["plugin_bin"]
-    plugin_dir = module.params["plugin_dir"]
     name = module.params["name"]
     state = module.params["state"]
     url = module.params["url"]
     timeout = module.params["timeout"]
+    plugin_bin = module.params["plugin_bin"]
+    plugin_dir = module.params["plugin_dir"]
+    proxy_host = module.params["proxy_host"]
+    proxy_port = module.params["proxy_port"]
     version = module.params["version"]
 
     present = is_plugin_present(parse_plugin_repo(name), plugin_dir)
@@ -146,6 +150,9 @@ def main():
        name = name + '/' + version
 
     cmd_args = [plugin_bin, package_state_map[state], name]
+
+    if proxy_host and proxy_port:
+        cmd_args.append("-DproxyHost=%s -DproxyPort=%s" % proxy_host, proxy_port)
 
     if url:
         cmd_args.append("--url %s" % url)
