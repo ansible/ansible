@@ -20,6 +20,7 @@ __metaclass__ = type
 
 import os.path
 
+from ansible.playbook.play_context import MAGIC_VARIABLE_MAPPING
 from ansible.plugins.action import ActionBase
 from ansible.plugins import connection_loader
 from ansible.utils.boolean import boolean
@@ -185,7 +186,7 @@ class ActionModule(ActionBase):
         localhost_ports = set()
         for host in C.LOCALHOST:
             localhost_vars = task_vars['hostvars'].get(host, {})
-            for port_var in ('ansible_port', 'ansible_ssh_port'):
+            for port_var in MAGIC_VARIABLE_MAPPING['port']:
                 port = localhost_vars.get(port_var, None)
                 if port:
                     break
@@ -228,6 +229,21 @@ class ActionModule(ActionBase):
         if not use_delegate and remote_transport:
             # Create a connection to localhost to run rsync on
             new_stdin = self._connection._new_stdin
+
+            # Unike port, there can be only one shell
+            localhost_shell = None
+            for host in C.LOCALHOST:
+                localhost_vars = task_vars['hostvars'].get(host, {})
+                for shell_var in MAGIC_VARIABLE_MAPPING['shell']:
+                    localhost_shell = localhost_vars.get(shell_var, None)
+                    if localhost_shell:
+                        break
+                if localhost_shell:
+                    break
+            else:
+                localhost_shell = os.path.basename(C.DEFAULT_EXECUTABLE)
+            self._play_context.shell = localhost_shell
+
             new_connection = connection_loader.get('local', self._play_context, new_stdin)
             self._connection = new_connection
             self._override_module_replaced_vars(task_vars)
