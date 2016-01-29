@@ -313,6 +313,10 @@ class PluginLoader:
                 module = imp.load_source(name, path, module_file)
         return module
 
+    def _get_base_class(self):
+        module_name, class_name = self.base_class.rsplit('.', 1)
+        return getattr(__import__(module_name, globals(), locals(), [class_name], 0), class_name)
+
     def get(self, name, *args, **kwargs):
         ''' instantiates a plugin of the given name using arguments '''
 
@@ -329,7 +333,8 @@ class PluginLoader:
             obj = getattr(self._module_cache[path], self.class_name)
         else:
             obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
-            if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__bases__]:
+
+            if self.base_class and not isinstance(obj, self._get_base_class()):
                 return None
 
         return obj
@@ -353,7 +358,7 @@ class PluginLoader:
                 else:
                     obj = getattr(self._module_cache[path], self.class_name)(*args, **kwargs)
 
-                    if self.base_class and self.base_class not in [base.__name__ for base in obj.__class__.__bases__]:
+                    if self.base_class and not isinstance(obj, self._get_base_class()):
                         continue
 
                 # set extra info on the module, in case we want it later
@@ -365,7 +370,7 @@ action_loader = PluginLoader(
     'ansible.plugins.action',
     C.DEFAULT_ACTION_PLUGIN_PATH,
     'action_plugins',
-    required_base_class='ActionBase',
+    required_base_class='ansible.plugins.action.ActionBase',
 )
 
 cache_loader = PluginLoader(
@@ -388,7 +393,7 @@ connection_loader = PluginLoader(
     C.DEFAULT_CONNECTION_PLUGIN_PATH,
     'connection_plugins',
     aliases={'paramiko': 'paramiko_ssh'},
-    required_base_class='ConnectionBase',
+    required_base_class='ansible.plugins.connection.ConnectionBase',
 )
 
 shell_loader = PluginLoader(
@@ -410,7 +415,7 @@ lookup_loader = PluginLoader(
     'ansible.plugins.lookup',
     C.DEFAULT_LOOKUP_PLUGIN_PATH,
     'lookup_plugins',
-    required_base_class='LookupBase',
+    required_base_class='ansible.plugins.lookup.LookupBase',
 )
 
 vars_loader = PluginLoader(
@@ -446,5 +451,5 @@ strategy_loader = PluginLoader(
     'ansible.plugins.strategy',
     None,
     'strategy_plugins',
-    required_base_class='StrategyBase',
+    required_base_class='ansible.plugins.strategy.StrategyBase',
 )
