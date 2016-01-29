@@ -33,7 +33,7 @@ author: Mathew Davies (@ThePixelDeveloper)
 options:
     name:
         description:
-            - Name of the plugin to install
+            - Name of the plugin to install. In ES 2.x, the name can be an url or file location
         required: True
     state:
         description:
@@ -43,7 +43,7 @@ options:
         default: present
     url:
         description:
-            - Set exact URL to download the plugin from
+            - Set exact URL to download the plugin from (Only works for ES 1.x)
         required: False
         default: None
     timeout:
@@ -124,8 +124,8 @@ def parse_error(string):
 def main():
 
     package_state_map = dict(
-        present="--install",
-        absent="--remove"
+        present="install",
+        absent="remove"
     )
 
     module = AnsibleModule(
