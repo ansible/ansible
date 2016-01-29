@@ -47,7 +47,7 @@ decide to do something conditionally based on success or failure::
       - command: /bin/something
         when: result|failed
       - command: /bin/something_else
-        when: result|succeeded
+        when: result|success
       - command: /bin/still/something_else
         when: result|skipped
 
