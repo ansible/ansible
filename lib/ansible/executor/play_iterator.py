@@ -132,8 +132,18 @@ class PlayIterator:
 
     def __init__(self, inventory, play, play_context, variable_manager, all_vars, start_at_done=False):
         self._play = play
-
         self._blocks = []
+
+        setup_block = Block(play=self._play)
+        setup_task = Task(block=setup_block)
+        setup_task.action = 'setup'
+        setup_task.args   = {}
+        setup_task.set_loader(self._play._loader)
+        setup_block.block = [setup_task]
+
+        setup_block = setup_block.filter_tagged_tasks(play_context, all_vars)
+        self._blocks.append(setup_block)
+
         for block in self._play.compile():
             new_block = block.filter_tagged_tasks(play_context, all_vars)
             if new_block.has_tasks():
@@ -188,35 +198,9 @@ class PlayIterator:
         if s.run_state == self.ITERATING_COMPLETE:
             display.debug("host %s is done iterating, returning" % host.name)
             return (None, None)
-        elif s.run_state == self.ITERATING_SETUP:
-            s.run_state = self.ITERATING_TASKS
-            s.pending_setup = True
 
-            # Gather facts if the default is 'smart' and we have not yet
-            # done it for this host; or if 'explicit' and the play sets
-            # gather_facts to True; or if 'implicit' and the play does
-            # NOT explicitly set gather_facts to False.
-
-            gathering = C.DEFAULT_GATHERING
-            implied = self._play.gather_facts is None or boolean(self._play.gather_facts)
-
-            if (gathering == 'implicit' and implied) or \
-               (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
-               (gathering == 'smart' and implied and not host._gathered_facts):
-                if not peek:
-                    # mark the host as having gathered facts
-                    host.set_gathered_facts(True)
-
-                task = Task()
-                task.action = 'setup'
-                task.args   = {}
-                task.set_loader(self._play._loader)
-            else:
-                s.pending_setup = False
-
-        if not task:
-            old_s = s
-            (s, task) = self._get_next_task_from_state(s, peek=peek)
+        old_s = s
+        (s, task) = self._get_next_task_from_state(s, host=host, peek=peek)
 
         def _roles_are_different(ra, rb):
             if ra != rb:
@@ -240,7 +224,7 @@ class PlayIterator:
         return (s, task)
 
 
-    def _get_next_task_from_state(self, state, peek):
+    def _get_next_task_from_state(self, state, host, peek):
 
         task = None
 
@@ -255,7 +239,37 @@ class PlayIterator:
                 state.run_state = self.ITERATING_COMPLETE
                 return (state, None)
 
-            if state.run_state == self.ITERATING_TASKS:
+            if state.run_state == self.ITERATING_SETUP:
+                if not state.pending_setup:
+                    state.pending_setup = True
+
+                    # Gather facts if the default is 'smart' and we have not yet
+                    # done it for this host; or if 'explicit' and the play sets
+                    # gather_facts to True; or if 'implicit' and the play does
+                    # NOT explicitly set gather_facts to False.
+
+                    gathering = C.DEFAULT_GATHERING
+                    implied = self._play.gather_facts is None or boolean(self._play.gather_facts)
+
+                    if (gathering == 'implicit' and implied) or \
+                       (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
+                       (gathering == 'smart' and implied and not host._gathered_facts):
+                        # mark the host as having gathered facts
+                        host.set_gathered_facts(True)
+                        setup_block = self._blocks[0]
+                        if setup_block.has_tasks() and len(setup_block.block) > 0:
+                            task = setup_block.block[0]
+                else:
+                    state.pending_setup = False
+
+                    state.cur_block += 1
+                    state.cur_regular_task = 0
+                    state.cur_rescue_task  = 0
+                    state.cur_always_task  = 0
+                    state.run_state = self.ITERATING_TASKS
+                    state.child_state = None
+
+            elif state.run_state == self.ITERATING_TASKS:
                 # clear the pending setup flag, since we're past that and it didn't fail
                 if state.pending_setup:
                     state.pending_setup = False
@@ -272,7 +286,7 @@ class PlayIterator:
                             state.tasks_child_state = HostState(blocks=[task])
                             state.tasks_child_state.run_state = self.ITERATING_TASKS
                             state.tasks_child_state.cur_role = state.cur_role
-                        (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, peek=peek)
+                        (state.tasks_child_state, task) = self._get_next_task_from_state(state.tasks_child_state, host=host, peek=peek)
                         if task is None:
                             # check to see if the child state was failed, if so we need to
                             # fail here too so we don't continue iterating tasks
@@ -298,7 +312,7 @@ class PlayIterator:
                             state.rescue_child_state = HostState(blocks=[task])
                             state.rescue_child_state.run_state = self.ITERATING_TASKS
                             state.rescue_child_state.cur_role = state.cur_role
-                        (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, peek=peek)
+                        (state.rescue_child_state, task) = self._get_next_task_from_state(state.rescue_child_state, host=host, peek=peek)
                         if task is None:
                             # check to see if the child state was failed, if so we need to
                             # fail here too so we don't continue iterating rescue
@@ -328,7 +342,7 @@ class PlayIterator:
                             state.always_child_state = HostState(blocks=[task])
                             state.always_child_state.run_state = self.ITERATING_TASKS
                             state.always_child_state.cur_role = state.cur_role
-                        (state.always_child_state, task) = self._get_next_task_from_state(state.always_child_state, peek=peek)
+                        (state.always_child_state, task) = self._get_next_task_from_state(state.always_child_state, host=host, peek=peek)
                         if task is None:
                             # check to see if the child state was failed, if so we need to
                             # fail here too so we don't continue iterating always
