@@ -152,8 +152,7 @@ def get_aws_connection_info(module, boto3=False):
         boto_params = dict(aws_access_key_id=access_key,
                            aws_secret_access_key=secret_key,
                            aws_session_token=security_token)
-        if validate_certs:
-            boto_params['verify'] = validate_certs
+        boto_params['verify'] = validate_certs
 
         if profile_name:
             boto_params['profile_name'] = profile_name
@@ -170,7 +169,7 @@ def get_aws_connection_info(module, boto3=False):
                 module.fail_json("boto does not support profile_name before 2.24")
             boto_params['profile_name'] = profile_name
 
-        if validate_certs and HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
+        if HAS_LOOSE_VERSION and LooseVersion(boto.Version) >= LooseVersion("2.6.0"):
             boto_params['validate_certs'] = validate_certs
 
     return region, ec2_url, boto_params
