@@ -160,15 +160,13 @@ class PullCLI(CLI):
             if not self.options.fullclone:
                 repo_opts += ' depth=1'
 
-
         path = module_loader.find_plugin(self.options.module_name)
         if path is None:
             raise AnsibleOptionsError(("module '%s' not found.\n" % self.options.module_name))
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-        cmd = '%s/ansible -i "%s" %s -m %s -a "%s" "%s"' % (
-            bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts
-        )
+        # hardcode local and inventory/host as this is just meant to fetch the repo
+        cmd = '%s/ansible -i "localhost," -c local %s -m %s -a "%s" all' % (bin_path, base_opts, self.options.module_name, repo_opts)
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
