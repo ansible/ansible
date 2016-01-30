@@ -110,7 +110,7 @@ class InventoryParser(object):
                     continue
                 hostname = tokens[0]
                 port = C.DEFAULT_REMOTE_PORT
-                hostname_norange = re.sub(r'\[(.+:)+.+\]', '', hostname)
+                hostname_norange = re.sub(r'\[.+\]', '', hostname)
                 # Three cases to check:
                 # 0. A hostname that contains a range pesudo-code and a port
                 # 1. A hostname that contains just a port

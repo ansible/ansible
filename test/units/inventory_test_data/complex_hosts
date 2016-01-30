@@ -94,3 +94,5 @@ blade-[a:c]-[1:16]
 blade-[d:z]-[01:16].example.com
 blade-[1:10]-[1:16]
 host-e-[10:16].example.net:1234
+server-[01:09].dc1
+server-[01:09].dc1:5678
