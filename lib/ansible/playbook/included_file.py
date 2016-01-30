@@ -77,12 +77,19 @@ class IncludedFile:
                     original_task = iterator.get_original_task(original_host, res._task)
 
                     task_vars = variable_manager.get_vars(loader=loader, play=iterator._play, host=original_host, task=original_task)
-                    templar = Templar(loader=loader, variables=task_vars)
 
                     include_variables = include_result.get('include_variables', dict())
                     if 'item' in include_result:
                         task_vars['item'] = include_variables['item'] = include_result['item']
 
+                        # We need to ensure that any variables coming down the included file chain are finalized before
+                        # calling into the child tasks for instance where we are nesting with_* loops between include
+                        # file levels
+                        templar = Templar(loader=loader, variables=include_variables)
+                        for k in include_variables.keys():
+                            include_variables[k] = templar.template(include_variables[k])
+
+                    templar = Templar(loader=loader, variables=task_vars)
                     if original_task:
                         if original_task._task_include:
                             # handle relative includes by walking up the list of parent include
