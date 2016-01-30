@@ -168,7 +168,33 @@ Action plugins
 Callback plugins
 ----------------
 
-* callback plugins
+Although Ansible 2.0 provides a new callback API the old one continues to work
+for most callback plugins.  However, if your callback plugin makes use of
+:attr:`self.playbook`, :attr:`self.play`, or :attr:`self.task` then you will
+have to store the values for these yourself as ansible no longer automatically
+populates the callback with them.  Here's a short snippet that shows you how::
+
+    from ansible.plugins.callback import CallbackBase
+
+    class CallbackModule(CallbackBase):
+        def __init__(self):
+            self.playbook = None
+            self.play = None
+            self.task = None
+
+        def v2_playbook_on_start(self, playbook):
+            self.playbook = playbook
+
+        def v2_playbook_on_play_start(self, play):
+            self.play = play
+
+        def v2_playbook_on_task_start(self, task, is_conditional):
+            self.task = task
+
+        def v2_on_any(self, *args, **kwargs):
+            self._display.display('%s: %s: %s' % (self.playbook.name,
+            self.play.name, self.task))
+
 
 Connection plugins
 ------------------
