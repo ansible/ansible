@@ -407,7 +407,7 @@ class Ec2Inventory(object):
                            help='Get all the variables about a specific instance')
         parser.add_argument('--refresh-cache', action='store_true', default=False,
                            help='Force refresh of cache by making API requests to EC2 (default: False - use cache files)')
-        parser.add_argument('--boto-profile', action='store',
+        parser.add_argument('--profile', '--boto-profile', action='store', dest='boto_profile',
                            help='Use boto profile for connections to EC2')
         self.args = parser.parse_args()
 
