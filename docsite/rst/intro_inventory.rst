@@ -74,8 +74,8 @@ You can also select the connection type and user on a per host basis:
    [targets]
 
    localhost              ansible_connection=local
-   other1.example.com     ansible_connection=ssh        ansible_user=mpdehaan
-   other2.example.com     ansible_connection=ssh        ansible_user=mdehaan
+   other1.example.com     ansible_connection=ssh        ansible_ssh_user=mpdehaan
+   other2.example.com     ansible_connection=ssh        ansible_ssh_user=mpdehaan
 
 As mentioned above, setting these in the inventory file is only a shorthand, and we'll discuss how to store them in individual files
 in the 'host_vars' directory a bit later on.
@@ -214,7 +214,7 @@ SSH connection::
       The name of the host to connect to, if different from the alias you wish to give to it.
     ansible_port
       The ssh port number, if not 22
-    ansible_user
+    ansible_ssh_user
       The default ssh user name to use.
     ansible_ssh_pass
       The ssh password to use (this is insecure, we strongly recommend using --ask-pass or SSH keys)
@@ -261,7 +261,7 @@ Remote host environment parameters::
 
 Examples from a host file::
 
-  some_host         ansible_port=2222     ansible_user=manager
+  some_host         ansible_port=2222     ansible_ssh_user=manager
   aws_host          ansible_ssh_private_key_file=/home/example/.ssh/aws.pem
   freebsd_host      ansible_python_interpreter=/usr/local/bin/python
   ruby_module_host  ansible_ruby_interpreter=/usr/bin/ruby.1.9.3
