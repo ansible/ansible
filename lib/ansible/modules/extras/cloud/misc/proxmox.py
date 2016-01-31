@@ -20,7 +20,7 @@ module: proxmox
 short_description: management of instances in Proxmox VE cluster
 description:
   - allows you to create/delete/stop instances in Proxmox VE cluster
-  - Starting in Ansible 2.1, it automatically detects conainerization type (lxc for PVE 4, openvz for older)
+  - Starting in Ansible 2.1, it automatically detects containerization type (lxc for PVE 4, openvz for older)
 version_added: "2.0"
 options:
   api_host:
