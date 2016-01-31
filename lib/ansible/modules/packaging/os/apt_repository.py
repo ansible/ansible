@@ -129,6 +129,8 @@ def install_python_apt(module):
                 HAVE_PYTHON_APT = True
             else:
                 module.fail_json(msg="Failed to auto-install python-apt. Error was: '%s'" % se.strip())
+    else:
+        module.fail_json(msg="python-apt must be installed to use check mode")
 
 class InvalidSource(Exception):
     pass
