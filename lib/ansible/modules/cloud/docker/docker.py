@@ -227,6 +227,15 @@ options:
     description:
       - Pass a dict of environment variables to the container.
     default: null
+  env_file:
+    version_added: "2.1"
+    description:
+      - Pass in a path to a file with environment variable (FOO=BAR).
+        If a key value is present in both explicitly presented (i.e. as 'env')
+        and in the environment file, the explicit value will override.
+        Requires docker-py >= 1.4.0.
+    default: null
+    required: false
   dns:
     description:
       - List of custom DNS servers for the container.
@@ -677,7 +686,8 @@ class DockerManager(object):
             'stop_timeout': ((0, 5, 0), '1.0'),
             'ulimits': ((1, 2, 0), '1.18'),
             # Clientside only
-            'insecure_registry': ((0, 5, 0), '0.0')
+            'insecure_registry': ((0, 5, 0), '0.0'),
+            'env_file': ((1, 4, 0), '0.0')
             }
 
     def __init__(self, module):
@@ -728,7 +738,9 @@ class DockerManager(object):
         if self.module.params.get('links'):
             self.links = self.get_links(self.module.params.get('links'))
 
-        self.env = self.module.params.get('env', None)
+        env = self.module.params.get('env', None)
+        env_file = self.module.params.get('env_file', None)
+        self.environment = self.get_environment(env, env_file)
 
         self.ulimits = None
         if self.module.params.get('ulimits'):
@@ -866,6 +878,25 @@ class DockerManager(object):
                     self._cap_ver_req[capability][1],
                     '.'.join(map(str, self.docker_py_versioninfo)),
                     api_version))
+
+    def get_environment(self, env, env_file):
+        """
+        If environment files are combined with explicit environment variables, the explicit environment variables will override the key from the env file.
+        """
+        final_env = {}
+
+        if env_file:
+            self.ensure_capability('env_file')
+            parsed_env_file = docker.utils.parse_env_file(env_file)
+
+            for name, value in parsed_env_file.iteritems():
+                final_env[name] = str(value)
+
+        if env:
+            for name, value in env.iteritems():
+                final_env[name] = str(value)
+
+        return final_env
 
     def get_links(self, links):
         """
@@ -1242,8 +1273,8 @@ class DockerManager(object):
                 name, value = image_env.split('=', 1)
                 expected_env[name] = value
 
-            if self.env:
-                for name, value in self.env.iteritems():
+            if self.environment:
+                for name, value in self.environment.iteritems():
                     expected_env[name] = str(value)
 
             actual_env = {}
@@ -1584,7 +1615,7 @@ class DockerManager(object):
                   'command':      self.module.params.get('command'),
                   'ports':        self.exposed_ports,
                   'volumes':      self.volumes,
-                  'environment':  self.env,
+                  'environment':  self.environment,
                   'labels':       self.module.params.get('labels'),
                   'hostname':     self.module.params.get('hostname'),
                   'domainname':   self.module.params.get('domainname'),
@@ -1845,6 +1876,7 @@ def main():
             hostname        = dict(default=None),
             domainname      = dict(default=None),
             env             = dict(type='dict'),
+            env_file        = dict(default=None),
             dns             = dict(),
             detach          = dict(default=True, type='bool'),
             state           = dict(default='started', choices=['present', 'started', 'reloaded', 'restarted', 'stopped', 'killed', 'absent', 'running']),
