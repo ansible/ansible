@@ -78,28 +78,39 @@ options:
     description:
       - port number to poll
     required: false
+    default: null
   state:
     description:
       - either C(present), C(started), or C(stopped), C(absent), or C(drained)
       - When checking a port C(started) will ensure the port is open, C(stopped) will check that it is closed, C(drained) will check for active connections
       - When checking for a file or a search string C(present) or C(started) will ensure that the file or string is present before continuing, C(absent) will check that file is absent or removed
     choices: [ "present", "started", "stopped", "absent", "drained" ]
+    required: False
     default: "started"
   path:
     version_added: "1.4"
     required: false
+    default: null
     description:
       - path to a file on the filesytem that must exist before continuing
   search_regex:
     version_added: "1.4"
     required: false
+    default: null
     description:
       - Can be used to match a string in either a file or a socket connection. Defaults to a multiline regex.
   exclude_hosts:
     version_added: "1.8"
     required: false
+    default: null
     description:
       - list of hosts or IPs to ignore when looking for active TCP connections for C(drained) state
+  sleep:
+    version_added: "2.1"
+    required: false
+    default: 1
+    description:
+      - Number of seconds to sleep between checks, before 2.1 this was hardcoded to 1 second.
 notes:
   - The ability to use search_regex with a port connection was added in 1.7.
 requirements: []
@@ -362,7 +373,8 @@ def main():
             path=dict(default=None, type='path'),
             search_regex=dict(default=None),
             state=dict(default='started', choices=['started', 'stopped', 'present', 'absent', 'drained']),
-            exclude_hosts=dict(default=None, type='list')
+            exclude_hosts=dict(default=None, type='list'),
+            sleep=dict(default=1, type='int')
         ),
     )
 
@@ -407,8 +419,6 @@ def main():
                 try:
                     f = open(path)
                     f.close()
-                    time.sleep(1)
-                    pass
                 except IOError:
                     break
             elif port:
@@ -416,11 +426,10 @@ def main():
                     s = _create_connection(host, port, connect_timeout)
                     s.shutdown(socket.SHUT_RDWR)
                     s.close()
-                    time.sleep(1)
                 except:
                     break
-            else:
-                time.sleep(1)
+            # Conditions not yet met, wait and try again
+            time.sleep(params['sleep'])
         else:
             elapsed = datetime.datetime.now() - start
             if port:
@@ -498,7 +507,7 @@ def main():
                         break
 
             # Conditions not yet met, wait and try again
-            time.sleep(1)
+            time.sleep(params['sleep'])
 
         else:   # while-else
             # Timeout expired
@@ -524,7 +533,8 @@ def main():
                     break
             except IOError:
                 pass
-            time.sleep(1)
+            # Conditions not yet met, wait and try again
+            time.sleep(params['sleep'])
         else:
             elapsed = datetime.datetime.now() - start
             module.fail_json(msg="Timeout when waiting for %s:%s to drain" % (host, port), elapsed=elapsed.seconds)
