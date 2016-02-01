@@ -49,7 +49,7 @@ options:
       - 'A dictionary array of subnets to add of the form: { cidr: ..., az: ... , resource_tags: ... }. Where az is the desired availability zone of the subnet, but it is not required. Tags (i.e.: resource_tags) is also optional and use dictionary form: { "Environment":"Dev", "Tier":"Web", ...}. All VPC subnets not in this list will be removed as well. As of 1.8, if the subnets parameter is not specified, no existing subnets will be modified.'
     required: false
     default: null
-    resource_tags: See resource_tags for VPC below. The main difference is subnet tags not specified here will be deleted. 
+    resource_tags: See resource_tags for VPC below. The main difference is subnet tags not specified here will be deleted.
   vpc_id:
     description:
       - A VPC id to terminate when state=absent
@@ -217,13 +217,13 @@ def routes_match(rt_list=None, rt=None, igw=None):
 
     """
     Check if the route table has all routes as in given list
-    
-    rt_list      : A list if routes provided in the module 
+
+    rt_list      : A list if routes provided in the module
     rt           : The Remote route table object
     igw          : The internet gateway object for this vpc
 
     Returns:
-        True when there provided routes and remote routes are the same. 
+        True when there provided routes and remote routes are the same.
         False when provided routes and remote routes are different.
     """
 
@@ -276,7 +276,7 @@ def rtb_changed(route_tables=None, vpc_conn=None, module=None, vpc=None, igw=Non
     Returns:
         True when there is difference between the provided routes and remote routes and if subnet associations are different.
         False when both routes and subnet associations matched.
- 
+
     """
     #We add a one for the main table
     rtb_len = len(route_tables) + 1
@@ -408,35 +408,36 @@ def create_vpc(module, vpc_conn):
             subnet_tags_current = True
             new_subnet_tags = subnet.get('resource_tags', None)
             subnet_tags_delete = []
-            
+
             for csn in current_subnets:
                 if subnet['cidr'] == csn.cidr_block:
                     add_subnet = False
 
-                # Check if AWS subnet tags are in playbook subnet tags
-                subnet_tags_extra = (set(csn.tags.items()).issubset(set(new_subnet_tags.items())))
-                # Check if subnet tags in playbook are in AWS subnet tags 
-                subnet_tags_current = (set(new_subnet_tags.items()).issubset(set(csn.tags.items())))
-                if subnet_tags_extra is False:
-                    try:
-                        for item in csn.tags.items():
-                            if item not in new_subnet_tags.items():
-                                subnet_tags_delete.append(item)
+                    # Check if AWS subnet tags are in playbook subnet tags
+                    existing_tags_subset_of_new_tags = (set(csn.tags.items()).issubset(set(new_subnet_tags.items())))
+                    # Check if subnet tags in playbook are in AWS subnet tags
+                    new_tags_subset_of_existing_tags = (set(new_subnet_tags.items()).issubset(set(csn.tags.items())))
 
-                        subnet_tags_delete = [key[0] for key in subnet_tags_delete]
-                        delete_subnet_tag = vpc_conn.delete_tags(csn.id, subnet_tags_delete)
-                        changed = True
-                    except EC2ResponseError, e:
-                        module.fail_json(msg='Unable to delete resource tag, error {0}'.format(e))
-                # Add new subnet tags if not current
-                subnet_tags_current = (set(new_subnet_tags.items()).issubset(set(csn.tags.items())))
-                if subnet_tags_current is not True:
-                    try:
-                        changed = True
-                        create_subnet_tag = vpc_conn.create_tags(csn.id, new_subnet_tags)
+                    if existing_tags_subset_of_new_tags is False:
+                        try:
+                            for item in csn.tags.items():
+                                if item not in new_subnet_tags.items():
+                                    subnet_tags_delete.append(item)
 
-                    except EC2ResponseError, e:
-                        module.fail_json(msg='Unable to create resource tag, error: {0}'.format(e))
+                            subnet_tags_delete = [key[0] for key in subnet_tags_delete]
+                            delete_subnet_tag = vpc_conn.delete_tags(csn.id, subnet_tags_delete)
+                            changed = True
+                        except EC2ResponseError, e:
+                            module.fail_json(msg='Unable to delete resource tag, error {0}'.format(e))
+                    # Add new subnet tags if not current
+
+                    if new_tags_subset_of_existing_tags is False:
+                        try:
+                            changed = True
+                            create_subnet_tag = vpc_conn.create_tags(csn.id, new_subnet_tags)
+
+                        except EC2ResponseError, e:
+                            module.fail_json(msg='Unable to create resource tag, error: {0}'.format(e))
 
             if add_subnet:
                 try:
