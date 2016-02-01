@@ -25,6 +25,7 @@ import pipes
 import pty
 import select
 import shlex
+import socket
 import subprocess
 import time
 
@@ -172,10 +173,17 @@ class Connection(ConnectionBase):
             )
 
         if self._play_context.port is not None:
-            self._add_args(
-                "ANSIBLE_REMOTE_PORT/remote_port/ansible_port set",
-                ("-o", "Port={0}".format(self._play_context.port))
-            )
+            test_port_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            test_port_result = test_port_socket.connect_ex( (self.host, self._play_context.port) )
+            test_port_socket.close()
+
+            if test_port_result == 0:
+                self._add_args(
+                    "ANSIBLE_REMOTE_PORT/remote_port/ansible_port set",
+                    ("-o", "Port={0}".format(self._play_context.port))
+                )
+            else:
+                display.warning('SSH unable to connect to %s:%d, reverting to default port' % (self.host, self._play_context.port))
 
         key = self._play_context.private_key_file
         if key:
