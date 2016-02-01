@@ -450,7 +450,7 @@ def _create_server(module, cloud):
         config_drive=module.params['config_drive'],
     )
     for optional_param in (
-            'region_name', 'key_name', 'availability_zone', 'network',
+            'key_name', 'availability_zone', 'network',
             'volume_size', 'volumes'):
         if module.params[optional_param]:
             bootkwargs[optional_param] = module.params[optional_param]
