@@ -66,8 +66,8 @@ uses key=value escaping which has not changed.  The other option is to check for
       gather_facts: false
       vars:
         my_dirs:
-          - { path: /tmp/3a, state: directory, mode: 0755 }
-          - { path: /tmp/3b, state: directory, mode: 0700 }
+          - { path: /tmp/3a, state: directory, mode: '0755' }
+          - { path: /tmp/3b, state: directory, mode: '0700' }
       tasks:
         - file:
           args: "{{item}}" # <- args here uses the full variable syntax

@@ -691,7 +691,7 @@ Using Ansible Pull
             state: touch
             owner: root
             group: root
-            mode: 0400
+            mode: '0400'
     
     - name: Base Configure Servers
       hosts: all
@@ -761,7 +761,7 @@ Using Ansible Pull with XenStore
             state: touch
             owner: root
             group: root
-            mode: 0400
+            mode: '0400'
     
     - name: Base Configure Servers
       hosts: all

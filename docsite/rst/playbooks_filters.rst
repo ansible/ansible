@@ -110,7 +110,7 @@ As of Ansible 1.8, it is possible to use the default filter to omit variables an
         - path: /tmp/foo
         - path: /tmp/bar
         - path: /tmp/baz
-          mode: "0444"
+          mode: '0444'
 
 For the first two files in the list, the default mode will be determined by the umask of the system as the `mode=`
 parameter will not be sent to the file module while the final file will receive the `mode=0444` option.

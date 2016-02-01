@@ -308,7 +308,7 @@
 - name: Change the mode of the toplevel dir
   file:
     path: "{{ output_dir }}/test-unarchive-tar-gz/unarchive-dir"
-    mode: 0701
+    mode: "0701"
 
 - name: Remove a file from the extraction point
   file:
