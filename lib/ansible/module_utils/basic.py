@@ -1114,6 +1114,10 @@ class AnsibleModule(object):
             elif check_invalid_arguments and k not in self._legal_inputs:
                 self.fail_json(msg="unsupported parameter for module: %s" % k)
 
+            #clean up internal params:
+            if k.startswith('_ansible_'):
+                del self.params[k]
+
     def _count_terms(self, check):
         count = 0
         for term in check:
