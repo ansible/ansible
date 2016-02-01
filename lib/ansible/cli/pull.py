@@ -30,6 +30,7 @@ import time
 
 from ansible.errors import AnsibleOptionsError
 from ansible.cli import CLI
+from ansible import constants as C
 from ansible.plugins import module_loader
 from ansible.utils.cmd_functions import run_cmd
 
@@ -130,17 +131,14 @@ class PullCLI(CLI):
         # Now construct the ansible command
         node = platform.node()
         host = socket.getfqdn()
-        limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
+	# C.LOCALHOST is 'localhost', '127.0.0.1', '::1'
+        aliases = set(C.LOCALHOST)
+        aliases |= set([host, node, host.split('.')[0], node.split('.')[0]])
+	# limit_opts contains limit for ansible-playbook that has all possible names of local machine
+        limit_opts = ','.join(aliases)
         base_opts = '-c local '
         if self.options.verbosity > 0:
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
-
-        # Attempt to use the inventory passed in as an argument
-        # It might not yet have been downloaded so use localhost if note
-        if not self.options.inventory or not os.path.exists(self.options.inventory):
-            inv_opts = 'localhost,'
-        else:
-            inv_opts = self.options.inventory
 
         #FIXME: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
@@ -166,7 +164,7 @@ class PullCLI(CLI):
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
         # hardcode local and inventory/host as this is just meant to fetch the repo
-        cmd = '%s/ansible -i "localhost," -c local %s -m %s -a "%s" all' % (bin_path, base_opts, self.options.module_name, repo_opts)
+        cmd = '%s/ansible -i "localhost," %s -m %s -a "%s" all' % (bin_path, base_opts, self.options.module_name, repo_opts)
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
@@ -198,7 +196,7 @@ class PullCLI(CLI):
         cmd = '%s/ansible-playbook %s %s' % (bin_path, base_opts, playbook)
         if self.options.vault_password_file:
             cmd += " --vault-password-file=%s" % self.options.vault_password_file
-        if self.options.inventory:
+        if self.options.inventory != C.DEFAULT_HOST_LIST:
             cmd += ' -i "%s"' % self.options.inventory
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
@@ -208,6 +206,8 @@ class PullCLI(CLI):
             cmd += ' -t "%s"' % self.options.tags
         if self.options.subset:
             cmd += ' -l "%s"' % self.options.subset
+        else:
+            cmd += ' -l "%s"' % limit_opts
 
         os.chdir(self.options.dest)
 
