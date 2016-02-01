@@ -203,10 +203,8 @@ class NetworkModule(AnsibleModule):
         if self.params.get('include_defaults'):
             cmd += ' all'
 
-        if self.params['transport'] == 'cli':
-            return self.execute(cmd)[0]
-        else:
-            return self.execute(cmd)
+        response = self.execute(cmd)
+        return response[0]
 
 def get_module(**kwargs):
     """Return instance of NetworkModule
