@@ -51,6 +51,7 @@ _ssh_to_ansible = [('user', 'ansible_ssh_user'),
                    ('hostname', 'ansible_ssh_host'),
                    ('identityfile', 'ansible_ssh_private_key_file'),
                    ('port', 'ansible_ssh_port')]
+host_to_group_re = '(.*?)(?:-[0-9]+)?$' #host name to group convention (Name: <BLA>-N => Group: <BLA>)
 
 # Options
 # ------------------------------
@@ -109,11 +110,29 @@ def get_a_ssh_config(box_name):
 if options.list:
     ssh_config = get_ssh_config()
     meta = defaultdict(dict)
+    groups = defaultdict(dict)
+
+    groups[_group] = []
 
     for host in ssh_config:
         meta['hostvars'][host] = ssh_config[host]
+        # set groups according to host name convention (see comment about `host_to_group_re`)
+        host_group = ''
+        match = re.match(host_to_group_re, host)
+        if match is None:
+            host_group = host
+        else:
+            host_group = match.groups()[0]
 
-    print(json.dumps({_group: list(ssh_config.keys()), '_meta': meta}))
+        if groups.get(host_group, None) is None:
+            groups[host_group] = []
+
+        groups[_group].append(host)
+        groups[host_group].append(host)
+
+    groups['_meta'] = meta
+
+    print(json.dumps(groups))
     sys.exit(0)
 
 # Get out the host details
