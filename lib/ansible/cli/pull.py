@@ -128,19 +128,9 @@ class PullCLI(CLI):
 
         # Build Checkout command
         # Now construct the ansible command
-        node = platform.node()
-        host = socket.getfqdn()
-        limit_opts = 'localhost,%s,127.0.0.1' % ','.join(set([host, node, host.split('.')[0], node.split('.')[0]]))
-        base_opts = '-c local '
+        base_opts = ''
         if self.options.verbosity > 0:
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
-
-        # Attempt to use the inventory passed in as an argument
-        # It might not yet have been downloaded so use localhost if note
-        if not self.options.inventory or not os.path.exists(self.options.inventory):
-            inv_opts = 'localhost,'
-        else:
-            inv_opts = self.options.inventory
 
         #FIXME: enable more repo modules hg/svn?
         if self.options.module_name == 'git':
