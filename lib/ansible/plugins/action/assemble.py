@@ -109,6 +109,11 @@ class ActionModule(ActionBase):
         if regexp is not None:
             _re = re.compile(regexp)
 
+        if not os.path.isdir(src):
+            result['failed'] = True
+            result['msg'] = "Source (%s) is not a directory" % src
+            return result
+
         # Does all work assembling the file
         path = self._assemble_from_fragments(src, delimiter, _re, ignore_hidden)
 
