@@ -255,10 +255,11 @@ class PlayIterator:
                        (gathering == 'explicit' and boolean(self._play.gather_facts)) or \
                        (gathering == 'smart' and implied and not host._gathered_facts):
                         # mark the host as having gathered facts
-                        host.set_gathered_facts(True)
                         setup_block = self._blocks[0]
                         if setup_block.has_tasks() and len(setup_block.block) > 0:
                             task = setup_block.block[0]
+                        if not peek:
+                            host.set_gathered_facts(True)
                 else:
                     state.pending_setup = False
 
