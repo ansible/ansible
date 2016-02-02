@@ -55,6 +55,10 @@ EXAMPLES = '''
 
 '''
 
+# TODO: Disabled the RETURN as it was breaking docs building. Someone needs to
+# fix this
+RETURN = '''# '''
+
 try:
     import boto.ec2
     from boto.exception import BotoServerError
