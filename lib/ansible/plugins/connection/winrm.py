@@ -63,6 +63,7 @@ class Connection(ConnectionBase):
 
     module_implementation_preferences = ('.ps1', '')
     become_methods = []
+    allow_executable = False
 
     def __init__(self,  *args, **kwargs):
 

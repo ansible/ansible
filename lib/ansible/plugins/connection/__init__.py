@@ -60,6 +60,7 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
     # as discovered by the specified file extension.  An empty string as the
     # language means any language.
     module_implementation_preferences = ('',)
+    allow_executable = True
 
     def __init__(self, play_context, new_stdin, *args, **kwargs):
         # All these hasattrs allow subclasses to override these parameters
