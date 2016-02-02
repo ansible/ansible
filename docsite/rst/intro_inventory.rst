@@ -248,7 +248,9 @@ Privilege escalation (see :doc:`Ansible Privilege Escalation<become>` for furthe
 Remote host environment parameters::
 
     ansible_shell_type
-      The shell type of the target system. Commands are formatted using 'sh'-style syntax by default. Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
+      The shell type of the target system. You should not use this setting unless you have set the 'executable' to a non sh compatible shell.
+      By default commands are formatted using 'sh'-style syntax.
+      Setting this to 'csh' or 'fish' will cause commands executed on target systems to follow those shell's syntax instead.
     ansible_python_interpreter
       The target host python path. This is useful for systems with more
       than one Python or not located at "/usr/bin/python" such as \*BSD, or where /usr/bin/python
