@@ -892,7 +892,7 @@ def main():
         disk_size = dict(type='int', default=None),
         root_disk_size = dict(type='int', default=None),
         keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
-        hypervisor = dict(choices=['KVM', 'VMware', 'BareMetal', 'XenServer', 'LXC', 'HyperV', 'UCS', 'OVM', 'Simulator'], default=None),
+        hypervisor = dict(choices=CS_HYPERVISORS, default=None),
         security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
         affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
         domain = dict(default=None),
