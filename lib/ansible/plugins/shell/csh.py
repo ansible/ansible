@@ -21,6 +21,11 @@ from ansible.plugins.shell.sh import ShellModule as ShModule
 
 class ShellModule(ShModule):
 
+    # Common shell filenames that this plugin handles
+    COMPATIBLE_SHELLS = frozenset(('csh', 'tcsh'))
+    # Family of shells this has.  Must match the filename without extension
+    SHELL_FAMILY = 'csh'
+
     # How to end lines in a python script one-liner
     _SHELL_EMBEDDED_PY_EOL = '\\\n'
     _SHELL_REDIRECT_ALLNULL = '>& /dev/null'

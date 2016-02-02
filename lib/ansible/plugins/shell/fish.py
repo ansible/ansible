@@ -21,6 +21,11 @@ from ansible.plugins.shell.sh import ShellModule as ShModule
 
 class ShellModule(ShModule):
 
+    # Common shell filenames that this plugin handles
+    COMPATIBLE_SHELLS = frozenset(('fish',))
+    # Family of shells this has.  Must match the filename without extension
+    SHELL_FAMILY = 'fish'
+
     _SHELL_AND = '; and'
     _SHELL_OR = '; or'
     _SHELL_SUB_LEFT = '('
