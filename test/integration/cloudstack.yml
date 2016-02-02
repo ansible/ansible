@@ -23,5 +23,6 @@
     - { role: test_cs_firewall,             tags: test_cs_firewall }
     - { role: test_cs_loadbalancer_rule,    tags: test_cs_loadbalancer_rule }
     - { role: test_cs_volume,               tags: test_cs_volume }
+    - { role: test_cs_instance_facts,       tags: test_cs_instance_facts }
     - { role: test_cs_configuration,        tags: test_cs_configuration }
 
