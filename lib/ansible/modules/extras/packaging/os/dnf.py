@@ -241,6 +241,7 @@ def _mark_package_install(module, base, pkg_spec):
 
 
 def ensure(module, base, state, names):
+    allow_erasing = False
     if names == ['*'] and state == 'latest':
         base.upgrade_all()
     else:
@@ -287,6 +288,7 @@ def ensure(module, base, state, names):
                     _mark_package_install(module, base, pkg_spec)
 
         else:
+            # state == absent
             if filenames:
                 module.fail_json(
                     msg="Cannot remove paths -- please specify package name.")
@@ -298,8 +300,11 @@ def ensure(module, base, state, names):
             for pkg_spec in pkg_specs:
                 if installed.filter(name=pkg_spec):
                     base.remove(pkg_spec)
+            # Like the dnf CLI we want to allow recursive removal of dependent
+            # packages
+            allow_erasing = True
 
-    if not base.resolve():
+    if not base.resolve(allow_erasing=allow_erasing):
         module.exit_json(msg="Nothing to do")
     else:
         if module.check_mode:
