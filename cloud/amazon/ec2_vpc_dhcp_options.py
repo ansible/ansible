@@ -20,61 +20,61 @@ short_description: Ensures the DHCP options for the given VPC match what's
   requested
 description:
   - Converges the DHCP option set for the given VPC to the variables requested.
-      If any of the optional values are missing, they will either be treated
-      as a no-op (i.e., inherit what already exists for the VPC) or a purge of
-      existing options. Most of the options should be self-explanatory.
+    If any of the optional values are missing, they will either be treated
+    as a no-op (i.e., inherit what already exists for the VPC) or a purge of
+    existing options. Most of the options should be self-explanatory.
 author: "Joel Thompson (@joelthompson)"
 version_added: 2.1
 options:
-  - domain_name:
-      description:
-        - The domain name to set in the DHCP option sets
-      required:
-        - false
-      default: ""
-  - dns_servers:
-      description:
-        - A list of hosts to set the DNS servers for the VPC to. (Should be a
-          list of IP addresses rather than host names.)
-      required: false
-      default: []
-  - ntp_servers:
-      description:
-        - List of hosts to advertise as NTP servers for the VPC.
-      required: false
-      default: []
-  - netbios_name_servers:
-      description:
-        - List of hosts to advertise as NetBIOS servers.
-      required: false
-      default: []
-  - netbios_node_type:
-      description:
-        - NetBIOS node type to advertise in the DHCP options. The
-          default is 2, per AWS recommendation
-          http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html
-      required: false
-      default: 2
-  - vpc_id:
-      description:
-        - VPC ID to associate with the requested DHCP option set
-      required: true
-  - delete_old:
-      description:
-        - Whether to delete the old VPC DHCP option set when creating a new one.
-          This is primarily useful for debugging/development purposes when you
-          want to quickly roll back to the old option set. Note that this setting
-          will be ignored, and the old DHCP option set will be preserved, if it
-          is in use by any other VPC. (Otherwise, AWS will return an error.)
-      required: false
-      default: true
-  - inherit_existing:
-      description:
-        - For any DHCP options not specified in these parameters, whether to
-          inherit them from the options set already applied to vpc_id, or to
-          reset them to be empty.
-      required: false
-      default: false
+  domain_name:
+    description:
+      - The domain name to set in the DHCP option sets
+    required:
+      - false
+    default: ""
+  dns_servers:
+    description:
+      - A list of hosts to set the DNS servers for the VPC to. (Should be a
+        list of IP addresses rather than host names.)
+    required: false
+    default: []
+  ntp_servers:
+    description:
+      - List of hosts to advertise as NTP servers for the VPC.
+    required: false
+    default: []
+  netbios_name_servers:
+    description:
+      - List of hosts to advertise as NetBIOS servers.
+    required: false
+    default: []
+  netbios_node_type:
+    description:
+      - NetBIOS node type to advertise in the DHCP options. The
+        default is 2, per AWS recommendation
+        http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_DHCP_Options.html
+    required: false
+    default: 2
+  vpc_id:
+    description:
+      - VPC ID to associate with the requested DHCP option set
+    required: true
+  delete_old:
+    description:
+      - Whether to delete the old VPC DHCP option set when creating a new one.
+        This is primarily useful for debugging/development purposes when you
+        want to quickly roll back to the old option set. Note that this setting
+        will be ignored, and the old DHCP option set will be preserved, if it
+        is in use by any other VPC. (Otherwise, AWS will return an error.)
+    required: false
+    default: true
+  inherit_existing:
+    description:
+      - For any DHCP options not specified in these parameters, whether to
+        inherit them from the options set already applied to vpc_id, or to
+        reset them to be empty.
+    required: false
+    default: false
 extends_documentation_fragment: aws
 requirements:
     - boto
