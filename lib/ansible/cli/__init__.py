@@ -266,52 +266,63 @@ class CLI(object):
             parser.add_option('-t', '--tree', dest='tree', default=None,
                 help='log output to this directory')
 
+        if connect_opts:
+            connect_group = optparse.OptionGroup(parser, "Connection Options", "control as whom and how to connect to hosts")
+            connect_group.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
+                help='ask for connection password')
+            connect_group.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
+                help='use this file to authenticate the connection')
+            connect_group.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
+                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
+            connect_group.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
+                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
+            connect_group.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
+                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
+            connect_group.add_option('--ssh-common-args', default='', dest='ssh_common_args',
+                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
+            connect_group.add_option('--sftp-extra-args', default='', dest='sftp_extra_args',
+                help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
+            connect_group.add_option('--scp-extra-args', default='', dest='scp_extra_args',
+                help="specify extra arguments to pass to scp only (e.g. -l)")
+            connect_group.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
+                help="specify extra arguments to pass to ssh only (e.g. -R)")
+
+            parser.add_option_group(connect_group)
+
+        runas_group = None
+        rg = optparse.OptionGroup(parser, "Privilege Escalation Options", "control how and which user you become as on target hosts")
         if runas_opts:
+            runas_group = rg
             # priv user defaults to root later on to enable detecting when this option was given here
-            parser.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
+            runas_group.add_option("-s", "--sudo", default=C.DEFAULT_SUDO, action="store_true", dest='sudo',
                 help="run operations with sudo (nopasswd) (deprecated, use become)")
-            parser.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
+            runas_group.add_option('-U', '--sudo-user', dest='sudo_user', default=None,
                               help='desired sudo user (default=root) (deprecated, use become)')
-            parser.add_option('-S', '--su', default=C.DEFAULT_SU, action='store_true',
+            runas_group.add_option('-S', '--su', default=C.DEFAULT_SU, action='store_true',
                 help='run operations with su (deprecated, use become)')
-            parser.add_option('-R', '--su-user', default=None,
+            runas_group.add_option('-R', '--su-user', default=None,
                 help='run operations with su as this user (default=%s) (deprecated, use become)' % C.DEFAULT_SU_USER)
 
             # consolidated privilege escalation (become)
-            parser.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
-                help="run operations with become (nopasswd implied)")
-            parser.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='string',
+            runas_group.add_option("-b", "--become", default=C.DEFAULT_BECOME, action="store_true", dest='become',
+                help="run operations with become (does not imply password prompting)")
+            runas_group.add_option('--become-method', dest='become_method', default=C.DEFAULT_BECOME_METHOD, type='choice', choices=C.BECOME_METHODS,
                 help="privilege escalation method to use (default=%s), valid choices: [ %s ]" % (C.DEFAULT_BECOME_METHOD, ' | '.join(C.BECOME_METHODS)))
-            parser.add_option('--become-user', default=None, dest='become_user', type='string',
+            runas_group.add_option('--become-user', default=None, dest='become_user', type='string',
                 help='run operations as this user (default=%s)' % C.DEFAULT_BECOME_USER)
 
         if runas_opts or runas_prompt_opts:
-            parser.add_option('-K', '--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
+            if not runas_group:
+                runas_group = rg
+            runas_group.add_option('--ask-sudo-pass', default=C.DEFAULT_ASK_SUDO_PASS, dest='ask_sudo_pass', action='store_true',
                 help='ask for sudo password (deprecated, use become)')
-            parser.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
+            runas_group.add_option('--ask-su-pass', default=C.DEFAULT_ASK_SU_PASS, dest='ask_su_pass', action='store_true',
                 help='ask for su password (deprecated, use become)')
-            parser.add_option('--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
+            runas_group.add_option('-K', '--ask-become-pass', default=False, dest='become_ask_pass', action='store_true',
                 help='ask for privilege escalation password')
 
-        if connect_opts:
-            parser.add_option('-k', '--ask-pass', default=C.DEFAULT_ASK_PASS, dest='ask_pass', action='store_true',
-                help='ask for connection password')
-            parser.add_option('--private-key','--key-file', default=C.DEFAULT_PRIVATE_KEY_FILE, dest='private_key_file',
-                help='use this file to authenticate the connection')
-            parser.add_option('-u', '--user', default=C.DEFAULT_REMOTE_USER, dest='remote_user',
-                help='connect as this user (default=%s)' % C.DEFAULT_REMOTE_USER)
-            parser.add_option('-c', '--connection', dest='connection', default=C.DEFAULT_TRANSPORT,
-                help="connection type to use (default=%s)" % C.DEFAULT_TRANSPORT)
-            parser.add_option('-T', '--timeout', default=C.DEFAULT_TIMEOUT, type='int', dest='timeout',
-                help="override the connection timeout in seconds (default=%s)" % C.DEFAULT_TIMEOUT)
-            parser.add_option('--ssh-common-args', default='', dest='ssh_common_args',
-                help="specify common arguments to pass to sftp/scp/ssh (e.g. ProxyCommand)")
-            parser.add_option('--sftp-extra-args', default='', dest='sftp_extra_args',
-                help="specify extra arguments to pass to sftp only (e.g. -f, -l)")
-            parser.add_option('--scp-extra-args', default='', dest='scp_extra_args',
-                help="specify extra arguments to pass to scp only (e.g. -l)")
-            parser.add_option('--ssh-extra-args', default='', dest='ssh_extra_args',
-                help="specify extra arguments to pass to ssh only (e.g. -R)")
+        if runas_group:
+            parser.add_option_group(runas_group)
 
         if async_opts:
             parser.add_option('-P', '--poll', default=C.DEFAULT_POLL_INTERVAL, type='int', dest='poll_interval',
