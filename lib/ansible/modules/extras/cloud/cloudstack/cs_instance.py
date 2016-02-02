@@ -144,7 +144,7 @@ options:
     description:
       - List of security groups the instance to be applied to.
     required: false
-    default: []
+    default: null
     aliases: [ 'security_group' ]
   domain:
     description:
@@ -522,6 +522,27 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         return res
 
 
+    def security_groups_has_changed(self):
+        security_groups = self.module.params.get('security_groups')
+        if security_groups is None:
+            return False
+
+        security_groups = [s.lower() for s in security_groups]
+        instance_security_groups = self.instance.get('securitygroup',[])
+
+        instance_security_group_names = []
+        for instance_security_group in instance_security_groups:
+            if instance_security_group['name'].lower() not in security_groups:
+                return True
+            else:
+                instance_security_group_names.append(instance_security_group['name'].lower())
+
+        for security_group in security_groups:
+            if security_group not in instance_security_group_names:
+                return True
+        return False
+
+
     def get_network_ids(self, network_names=None):
         if network_names is None:
             network_names = self.module.params.get('networks')
@@ -623,9 +644,12 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args['size']                = self.module.params.get('disk_size')
         args['startvm']             = start_vm
         args['rootdisksize']        = self.module.params.get('root_disk_size')
-        args['securitygroupnames']  = ','.join(self.module.params.get('security_groups'))
         args['affinitygroupnames']  = ','.join(self.module.params.get('affinity_groups'))
         args['details']             = self.get_details()
+
+        security_groups = self.module.params.get('security_groups')
+        if security_groups is not None:
+            args['securitygroupnames']  = ','.join(security_groups)
 
         template_iso = self.get_template_or_iso()
         if 'hypervisor' not in template_iso:
@@ -650,6 +674,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_service_offering['id'] = instance['id']
         if self.module.params.get('service_offering'):
             args_service_offering['serviceofferingid'] = self.get_service_offering_id()
+        service_offering_changed = self._has_changed(args_service_offering, instance)
 
         # Instance data
         args_instance_update = {}
@@ -660,6 +685,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
             args_instance_update['group'] = self.module.params.get('group')
         if self.module.params.get('display_name'):
             args_instance_update['displayname'] = self.module.params.get('display_name')
+        instance_changed = self._has_changed(args_instance_update, instance)
 
         # SSH key data
         args_ssh_key = {}
@@ -667,12 +693,18 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
         args_ssh_key['projectid'] = self.get_project(key='id')
         if self.module.params.get('ssh_key'):
             args_ssh_key['keypair'] = self.module.params.get('ssh_key')
+        ssh_key_changed = self._has_changed(args_ssh_key, instance)
 
+        security_groups_changed = self.security_groups_has_changed()
 
-        if self._has_changed(args_service_offering, instance) or \
-           self._has_changed(args_instance_update, instance) or \
-           self._has_changed(args_ssh_key, instance):
+        changed = [
+            service_offering_changed,
+            instance_changed,
+            security_groups_changed,
+            ssh_key_changed,
+        ]
 
+        if True in changed:
             force = self.module.params.get('force')
             instance_state = instance['state'].lower()
             if instance_state == 'stopped' or force:
@@ -685,7 +717,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                     self.instance = instance
 
                     # Change service offering
-                    if self._has_changed(args_service_offering, instance):
+                    if service_offering_changed:
                         res = self.cs.changeServiceForVirtualMachine(**args_service_offering)
                         if 'errortext' in res:
                             self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
@@ -693,7 +725,9 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                         self.instance = instance
 
                     # Update VM
-                    if self._has_changed(args_instance_update, instance):
+                    if instance_changed or security_groups_changed:
+                        if security_groups_changed:
+                            args_instance_update['securitygroupnames'] = ','.join(self.module.params.get('security_groups'))
                         res = self.cs.updateVirtualMachine(**args_instance_update)
                         if 'errortext' in res:
                             self.module.fail_json(msg="Failed: '%s'" % res['errortext'])
@@ -701,7 +735,7 @@ class AnsibleCloudStackInstance(AnsibleCloudStack):
                         self.instance = instance
 
                     # Reset SSH key
-                    if self._has_changed(args_ssh_key, instance):
+                    if ssh_key_changed:
                         instance = self.cs.resetSSHKeyForVirtualMachine(**args_ssh_key)
                         if 'errortext' in instance:
                             self.module.fail_json(msg="Failed: '%s'" % instance['errortext'])
@@ -893,7 +927,7 @@ def main():
         root_disk_size = dict(type='int', default=None),
         keyboard = dict(choices=['de', 'de-ch', 'es', 'fi', 'fr', 'fr-be', 'fr-ch', 'is', 'it', 'jp', 'nl-be', 'no', 'pt', 'uk', 'us'], default=None),
         hypervisor = dict(choices=CS_HYPERVISORS, default=None),
-        security_groups = dict(type='list', aliases=[ 'security_group' ], default=[]),
+        security_groups = dict(type='list', aliases=[ 'security_group' ], default=None),
         affinity_groups = dict(type='list', aliases=[ 'affinity_group' ], default=[]),
         domain = dict(default=None),
         account = dict(default=None),
