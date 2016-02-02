@@ -26,3 +26,4 @@
     - { role: test_cs_instance_facts,       tags: test_cs_instance_facts }
     - { role: test_cs_configuration,        tags: test_cs_configuration }
     - { role: test_cs_pod,                  tags: test_cs_pod }
+    - { role: test_cs_cluster,              tags: test_cs_cluster }
