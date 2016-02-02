@@ -212,6 +212,7 @@ options:
       - "Specifies the maximum average number of matches to allow per second. The number can specify units explicitly, using `/second', `/minute', `/hour' or `/day', or parts of them (so `5/second' is the same as `5/s')."
     required: false
   limit_burst:
+    version_added: "2.1"
     description:
       - "Specifies the maximum burst before the above limit kicks in."
     required: false
