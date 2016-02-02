@@ -9,6 +9,7 @@ Ansible Changes By Release
 
 ####New Modules:
 * aws: ec2_vpc_net_facts
+* aws: ec2_vol_facts
 * cloudstack: cs_volume
 
 ####New Filters:
