@@ -42,8 +42,8 @@ class ShellModule(object):
     _SHELL_REDIRECT_ALLNULL = '> /dev/null 2>&1'
     _SHELL_AND = '&&'
     _SHELL_OR = '||'
-    _SHELL_SUB_LEFT = '"$('
-    _SHELL_SUB_RIGHT = ')"'
+    _SHELL_SUB_LEFT = '"`'
+    _SHELL_SUB_RIGHT = '`"'
     _SHELL_GROUP_LEFT = '('
     _SHELL_GROUP_RIGHT = ')'
 
