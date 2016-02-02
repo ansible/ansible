@@ -84,7 +84,12 @@ class ConnectionBase(with_metaclass(ABCMeta, object)):
         elif hasattr(self, '_shell_type'):
             shell_type = getattr(self, '_shell_type')
         else:
-            shell_type = os.path.basename(C.DEFAULT_EXECUTABLE)
+            shell_type = 'sh'
+            shell_filename = os.path.basename(C.DEFAULT_EXECUTABLE)
+            for shell in shell_loader.all():
+                if shell_filename in shell.COMPATIBLE_SHELLS:
+                    shell_type = shell.SHELL_FAMILY
+                    break
 
         self._shell = shell_loader.get(shell_type)
         if not self._shell:
