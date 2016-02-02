@@ -36,6 +36,13 @@ if _powershell_version:
 
 class ShellModule(object):
 
+    # Common shell filenames that this plugin handles
+    # Powershell is handled differently.  It's selected when winrm is the
+    # connection
+    COMPATIBLE_SHELLS = frozenset()
+    # Family of shells this has.  Must match the filename without extension
+    SHELL_FAMILY = 'powershell'
+
     def env_prefix(self, **kwargs):
         return ''
 
