@@ -20,7 +20,7 @@ This chapter discusses the Python API.
 The Python API is very powerful, and is how the all the ansible CLI tools are implemented.
 In version 2.0 the core ansible got rewritten and the API was mostly rewritten.
 
-:.. note:: Ansible relies on forking processes, as such the API is not thread safe.
+.. note:: Ansible relies on forking processes, as such the API is not thread safe.
 
 .. _python_api_20:
 
