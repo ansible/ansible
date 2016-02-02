@@ -92,6 +92,9 @@ class PullCLI(CLI):
             help='verify GPG signature of checked out commit, if it fails abort running the playbook.'
                  ' This needs the corresponding VCS module to support such an operation')
 
+        # for pull we don't wan't a default
+        self.parser.set_defaults(inventory=None)
+
         self.options, self.args = self.parser.parse_args(self.args[1:])
 
         if not self.options.dest:
@@ -136,8 +139,8 @@ class PullCLI(CLI):
             base_opts += ' -%s' % ''.join([ "v" for x in range(0, self.options.verbosity) ])
 
         # Attempt to use the inventory passed in as an argument
-        # It might not yet have been downloaded so use localhost if note
-        if not self.options.inventory or not os.path.exists(self.options.inventory):
+        # It might not yet have been downloaded so use localhost as default
+        if not self.options.inventory or ( ',' not in self.options.inventory and not os.path.exists(self.options.inventory)):
             inv_opts = 'localhost,'
         else:
             inv_opts = self.options.inventory
@@ -166,7 +169,7 @@ class PullCLI(CLI):
 
         bin_path = os.path.dirname(os.path.abspath(sys.argv[0]))
         # hardcode local and inventory/host as this is just meant to fetch the repo
-        cmd = '%s/ansible -i "localhost," -c local %s -m %s -a "%s" all' % (bin_path, base_opts, self.options.module_name, repo_opts)
+        cmd = '%s/ansible -i "%s" %s -m %s -a "%s" all -l "%s"' % (bin_path, inv_opts, base_opts, self.options.module_name, repo_opts, limit_opts)
 
         for ev in self.options.extra_vars:
             cmd += ' -e "%s"' % ev
@@ -208,6 +211,8 @@ class PullCLI(CLI):
             cmd += ' -t "%s"' % self.options.tags
         if self.options.subset:
             cmd += ' -l "%s"' % self.options.subset
+        else:
+            cmd += ' -l "%s"' % limit_opts
 
         os.chdir(self.options.dest)
 
