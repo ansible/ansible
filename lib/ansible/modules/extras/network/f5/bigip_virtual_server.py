@@ -406,7 +406,7 @@ def main():
         module.fail_json(msg="valid ports must be in range 1 - 65535")
   
     try:
-        api = bigip_api(server, user, password)
+        api = bigip_api(server, user, password, validate_certs)
         result = {'changed': False}  # default
 
         if state == 'absent':
