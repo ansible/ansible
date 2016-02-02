@@ -19,6 +19,7 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
+
 $params = Parse-Args $args;
 
 $result = New-Object psobject @{
@@ -26,64 +27,46 @@ $result = New-Object psobject @{
     changed = $false
 }
 
-If ($params.creates) {
+$creates = Get-AnsibleParam -obj $params -name "creates"
+If ($creates -ne $null) {
     If (Test-Path $params.creates) {
         Exit-Json $result "The 'creates' file or directory already exists."
     }
-
 }
 
-If ($params.src) {
-    $src = $params.src.toString()
+$src = Get-AnsibleParam -obj $params -name "src" -failifempty $true
+If (-Not (Test-Path -path $src)){
+    Fail-Json $result "src file: $src does not exist."
+}
 
-    If (-Not (Test-Path -path $src)){
-        Fail-Json $result "src file: $src does not exist."
+$ext = [System.IO.Path]::GetExtension($src)
+
+
+$dest = Get-AnsibleParam -obj $params -name "dest" -failifempty $true
+If (-Not (Test-Path $dest -PathType Container)){
+    Try{
+        New-Item -itemtype directory -path $dest
     }
-
-    $ext = [System.IO.Path]::GetExtension($src)
-}
-Else {
-    Fail-Json $result "missing required argument: src"
-}
-
-If (-Not($params.dest -eq $null)) {
-    $dest = $params.dest.toString()
-
-    If (-Not (Test-Path $dest -PathType Container)){
-        Try{
-            New-Item -itemtype directory -path $dest
-        }
-        Catch {
-            Fail-Json $result "Error creating $dest directory"
-        }
+    Catch {
+        $err_msg = $_.Exception.Message
+        Fail-Json $result "Error creating $dest directory! Msg: $err_msg"
     }
 }
-Else {
-    Fail-Json $result "missing required argument: dest"
-}
 
-If ($params.recurse) {
-   $recurse = ConvertTo-Bool ($params.recurse)
-}
-Else {
-    $recurse = $false
-}
-
-If ($params.rm) { 
-    $rm = ConvertTo-Bool ($params.rm) 
-} 
-Else { 
-    $rm = $false 
-}
+$recurse = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "recurse" -default "false")
+$rm = ConvertTo-Bool (Get-AnsibleParam -obj $params -name "rm" -default "false")
 
 If ($ext -eq ".zip" -And $recurse -eq $false) {
     Try {
         $shell = New-Object -ComObject Shell.Application
-        $shell.NameSpace($dest).copyhere(($shell.NameSpace($src)).items(), 20)
+        $zipPkg = $shell.NameSpace($src)
+        $destPath = $shell.NameSpace($dest)
+        $destPath.CopyHere($zipPkg.Items())
         $result.changed = $true
     }
     Catch {
-        Fail-Json $result "Error unzipping $src to $dest"
+        $err_msg = $_.Exception.Message
+        Fail-Json $result "Error unzipping $src to $dest! Msg: $err_msg"
     }
 }
 # Requires PSCX
@@ -127,11 +110,12 @@ Else {
         }
     }
     Catch {
+        $err_msg = $_.Exception.Message
         If ($recurse) {
-            Fail-Json $result "Error recursively expanding $src to $dest"
+            Fail-Json $result "Error recursively expanding $src to $dest! Msg: $err_msg"
         }
         Else {
-            Fail-Json $result "Error expanding $src to $dest"
+            Fail-Json $result "Error expanding $src to $dest! Msg: $err_msg"
         }
     }
 }
