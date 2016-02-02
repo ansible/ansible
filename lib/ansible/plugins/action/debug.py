@@ -46,7 +46,7 @@ class ActionModule(ActionBase):
 
         elif 'var' in self._task.args:
             try:
-                results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True)
+                results = self._templar.template(self._task.args['var'], convert_bare=True, fail_on_undefined=True, bare_deprecated=False)
                 if results == self._task.args['var']:
                     raise AnsibleUndefinedVariable
             except AnsibleUndefinedVariable:
