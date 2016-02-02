@@ -244,11 +244,21 @@ class Task(Base, Conditional, Taggable, Become):
         if value is None:
             return dict()
 
-        for env_item in value:
-            if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
-                display.deprecated("Using bare variables for environment is deprecated."
-                        " Update your playbooks so that the environment value uses the full variable syntax ('{{foo}}')")
-                break
+        elif isinstance(value, list):
+            if  len(value) == 1:
+                return templar.template(value[0], convert_bare=True)
+            else:
+                env = []
+                for env_item in value:
+                    if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
+                        env[env_item] =  templar.template(env_item, convert_bare=True)
+        elif isinstance(value, dict):
+            env = dict()
+            for env_item in value:
+                if isinstance(env_item, (string_types, AnsibleUnicode)) and env_item in templar._available_variables.keys():
+                    env[env_item] =  templar.template(value[env_item], convert_bare=True)
+
+        # at this point it should be a simple string
         return templar.template(value, convert_bare=True)
 
     def _post_validate_changed_when(self, attr, value, templar):
