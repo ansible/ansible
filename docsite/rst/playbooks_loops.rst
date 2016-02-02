@@ -536,11 +536,11 @@ There is also a specific lookup plugin ``inventory_hostname`` that can be used l
 
     # show all the hosts in the inventory
     - debug: msg={{ item }}
-      with_inventory_hostname: all
+      with_inventory_hostnames: all
 
     # show all the hosts matching the pattern, ie all but the group www
     - debug: msg={{ item }}
-      with_inventory_hostname: all:!www
+      with_inventory_hostnames: all:!www
 
 More information on the patterns can be found on :doc:`intro_patterns`
 
