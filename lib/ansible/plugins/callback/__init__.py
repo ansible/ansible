@@ -106,7 +106,6 @@ class CallbackBase:
             try:
                 with warnings.catch_warnings():
                     warnings.simplefilter('ignore')
-                    ret = []
                     if 'dst_binary' in diff:
                         ret.append("diff skipped: destination file appears to be binary\n")
                     if 'src_binary' in diff:
@@ -128,14 +127,22 @@ class CallbackBase:
                             after_header = "after: %s" % diff['after_header']
                         else:
                             after_header = 'after'
-                        differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True), to_unicode(diff['after']).splitlines(True), before_header, after_header, '', '', 10)
-                        ret.extend(list(differ))
-                        ret.append('\n')
+                        differ = difflib.unified_diff(to_unicode(diff['before']).splitlines(True),
+                                                      to_unicode(diff['after']).splitlines(True),
+                                                      fromfile=before_header,
+                                                      tofile=after_header,
+                                                      fromfiledate='',
+                                                      tofiledate='',
+                                                      n=10)
+                        difflines = list(differ)
+                        if difflines:
+                            ret.extend(difflines)
+                            ret.append('\n')
                     if 'prepared' in diff:
                         ret.append(to_unicode(diff['prepared']))
-                    return u"".join(ret)
             except UnicodeDecodeError:
                 ret.append(">> the files are different, but the diff library cannot compare unicode strings\n\n")
+        return u''.join(ret)
 
     def _get_item(self, result):
         if result.get('_ansible_no_log', False):
