@@ -130,9 +130,13 @@ test_tags:
 blocks:
 	# remove old output log
 	rm -f block_test.out
-	# run test
+	# run the test and check to make sure the right number of completions was logged
 	ansible-playbook -vv test_blocks/main.yml | tee block_test.out
-	# ensure each test ran
+	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" == "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
+	# cleanup the output log again, to make sure the test is clean
+	rm -f block_test.out
+	# run test with free strategy and again count the completions
+	ansible-playbook -vv test_blocks/main.yml -e test_strategy=free | tee block_test.out
 	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" == "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
 
 cloud: amazon rackspace azure
