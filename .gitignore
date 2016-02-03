@@ -48,6 +48,7 @@ deb-build
 credentials.yml
 # test output
 *.retry
+*.out
 .coverage
 .tox
 results.xml
