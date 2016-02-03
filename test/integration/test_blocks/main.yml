@@ -1,6 +1,7 @@
 - name: simple block test
   hosts: localhost
   gather_facts: yes
+  strategy: "{{test_strategy|default('linear')}}"
   vars:
     block_tasks_run: false
     block_rescue_run: false
@@ -60,6 +61,7 @@
 - name: block with includes
   hosts: localhost
   gather_facts: yes
+  strategy: "{{test_strategy|default('linear')}}"
   vars:
     rescue_run_after_include_fail: false
     always_run_after_include_fail_in_rescue: false
