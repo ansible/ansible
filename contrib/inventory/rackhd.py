@@ -5,9 +5,9 @@ import os
 import argparse
 import types
 
-MONORAIL_URL = 'http://localhost:8080'
+RACKHD_URL = 'http://localhost:8080'
 
-class OnRackInventory(object):
+class RackhdInventory(object):
     def __init__(self, nodeids):
         self._inventory = {}
         for nodeid in nodeids:
@@ -18,12 +18,12 @@ class OnRackInventory(object):
             output += ',\n'
         output = output[:-2]
         output += '}\n'
-        print output
+        print (output)
 
     def _load_inventory_data(self, nodeid):
         info = {}
-        info['ohai'] = MONORAIL_URL + '/api/common/nodes/{0}/catalogs/ohai'.format(nodeid )
-        info['lookup'] = MONORAIL_URL + '/api/common/lookups/?q={0}'.format(nodeid)
+        info['ohai'] = RACKHD_URL + '/api/common/nodes/{0}/catalogs/ohai'.format(nodeid )
+        info['lookup'] = RACKHD_URL + '/api/common/lookups/?q={0}'.format(nodeid)
 
         results = {}
         for key,url in info.iteritems():
@@ -52,8 +52,8 @@ class OnRackInventory(object):
         return output
 
 try:
-    #check if monorail url(ie:10.1.1.45:8080) is specified in the environment
-    MONORAIL_URL = 'http://' + str(os.environ['MONORAIL'])
+    #check if rackhd url(ie:10.1.1.45:8080) is specified in the environment
+    RACKHD_URL = 'http://' + str(os.environ['RACKHD_URL'])
 except:
     #use default values
     pass
@@ -64,10 +64,10 @@ nodeids = []
 try:
     nodeids += os.environ['nodeid'].split(',')
 except KeyError:
-    url = MONORAIL_URL + '/api/common/nodes'
+    url = RACKHD_URL + '/api/common/nodes'
     r = requests.get( url, verify=False)
     data = json.loads(r.text)
     for entry in data:
         if entry['type'] == 'compute':
             nodeids.append(entry['id'])
-OnRackInventory(nodeids)
+RackhdInventory(nodeids)
