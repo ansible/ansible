@@ -27,8 +27,9 @@ to the tasks.
         become_user: root
 
 
-In the example above the 3 tasks will be executed only when the block's when condition is met and enables
-privilege escalation for all the enclosed tasks.
+In the example above the each of the 3 tasks will be executed after appending the `when` condition from the block
+and evaluating it in the task's context. Also they inherit the privilege escalation directives enabling "become to root"
+for all the enclosed tasks.
 
 
 .. _block_error_handling:
