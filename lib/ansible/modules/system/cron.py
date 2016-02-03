@@ -586,7 +586,7 @@ def main():
     if job is None and do_install:
         module.fail_json(msg="You must specify 'job' to install a new cron job or variable")
 
-    if (insertafter or insertafter) and not env and do_install:
+    if (insertafter or insertbefore) and not env and do_install:
         module.fail_json(msg="Insertafter and insertbefore parameters are valid only with env=yes")
 
     if reboot:
