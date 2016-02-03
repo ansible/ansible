@@ -2,7 +2,7 @@ Blocks
 ======
 
 In 2.0 we added a block feature to allow for logical grouping of tasks and even
-in play error handling. Most of what you can apply to a single task can be applied
+in-play error handling. Most of what you can apply to a single task can be applied
 at the block level, which also makes it much easier to set data or directives common
 to the tasks.
 
@@ -27,8 +27,8 @@ to the tasks.
         become_user: root
 
 
-In the example above the 3 tasks will be executed only when the block's when condition is met and enables
-privilege escalation for all the enclosed tasks.
+In the example above, the 3 tasks will be executed only when the block's when condition is met.
+Privilege escalation is enabled for all of the enclosed tasks.
 
 
 .. _block_error_handling:
@@ -55,9 +55,10 @@ Blocks also introduce the ability to handle errors in a way similar to exception
        - debug: msg="this always executes"
 
 
-The tasks in the ``block`` would execute normally, if there is any error the ``rescue`` section would get executed
-with whatever you need to do to recover from the previous error. The ``always`` section runs no matter what previous
-error did or did not occur in the ``block`` and ``rescue`` sections.
+Tasks in the ``block`` section will execute normally.  If an error
+occurs whilst running the ``block`` section, the ``rescue`` section will
+be executed.  The ``always`` section runs regardless of any errors in
+the ``block`` and ``rescue`` sections.
 
 
 
