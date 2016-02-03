@@ -16,9 +16,9 @@
 DOCUMENTATION = '''
 ---
 module: s3_bucket
-short_description: Manage s3 buckets in AWS
+short_description: Manage S3 buckets in AWS, Ceph, Walrus and FakeS3
 description:
-    - Manage s3 buckets in AWS
+    - Manage S3 buckets in AWS, Ceph, Walrus and FakeS3
 version_added: "2.0"
 author: "Rob White (@wimnat)"
 options:
@@ -45,9 +45,13 @@ options:
     default: null
   s3_url:
     description:
-      - S3 URL endpoint for usage with Eucalypus, fakes3, etc.  Otherwise assumes AWS
+      - S3 URL endpoint for usage with Ceph, Eucalypus, fakes3, etc. Otherwise assumes AWS
     default: null
     aliases: [ S3_URL ]
+  ceph:
+    description:
+      - Enable API compatibility with Ceph. It takes into account the S3 API subset working with Ceph in order to provide the same module behaviour where possible.
+    version_added: "2.2"
   requester_pays:
     description:
       - With Requester Pays buckets, the requester instead of the bucket owner pays the cost of the request and the data download from the bucket.
@@ -81,6 +85,12 @@ EXAMPLES = '''
 # Create a simple s3 bucket
 - s3_bucket:
     name: mys3bucket
+
+# Create a simple s3 bucket on Ceph Rados Gateway
+- s3_bucket:
+    name: mys3bucket
+    s3_url: http://your-ceph-rados-gateway-server.xxx
+    ceph: true
 
 # Remove an s3 bucket and any keys it contains
 - s3_bucket:
@@ -134,8 +144,8 @@ def create_tags_container(tags):
     tags_obj.add_tag_set(tag_set)
     return tags_obj
 
-def create_bucket(connection, module, location):
-    
+def _create_bucket(connection, module, location):
+
     policy = module.params.get("policy")
     name = module.params.get("name")
     requester_pays = module.params.get("requester_pays")
@@ -262,7 +272,7 @@ def create_bucket(connection, module, location):
 
     module.exit_json(changed=changed, name=bucket.name, versioning=versioning_status, requester_pays=requester_pays_status, policy=current_policy, tags=current_tags_dict)
     
-def destroy_bucket(connection, module):
+def _destroy_bucket(connection, module):
     
     force = module.params.get("force")
     name = module.params.get("name")
@@ -294,6 +304,39 @@ def destroy_bucket(connection, module):
         
     module.exit_json(changed=changed)
 
+def _create_bucket_ceph(connection, module, location):
+
+    name = module.params.get("name")
+
+    changed = False
+
+    try:
+        bucket = connection.get_bucket(name)
+    except S3ResponseError, e:
+        try:
+            bucket = connection.create_bucket(name, location=location)
+            changed = True
+        except S3CreateError, e:
+            module.fail_json(msg=e.message)
+
+    module.exit_json(changed=changed)
+
+def _destroy_bucket_ceph(connection, module):
+
+    _destroy_bucket(connection, module)
+
+def create_bucket(connection, module, location, flavour='aws'):
+    if flavour == 'ceph':
+        _create_bucket_ceph(connection, module, location)
+    else:
+        _create_bucket(connection, module, location)
+
+def destroy_bucket(connection, module, flavour='aws'):
+    if flavour == 'ceph':
+        _destroy_bucket_ceph(connection, module)
+    else:
+        _destroy_bucket(connection, module)
+
 def is_fakes3(s3_url):
     """ Return True if s3_url has scheme fakes3:// """
     if s3_url is not None:
@@ -323,7 +366,8 @@ def main():
             s3_url = dict(aliases=['S3_URL']),
             state = dict(default='present', choices=['present', 'absent']),
             tags = dict(required=None, default={}, type='dict'),
-            versioning = dict(default='no', type='bool')
+            versioning = dict(default='no', type='bool'),
+            ceph = dict(default='no', type='bool')
         )
     )
     
@@ -348,10 +392,27 @@ def main():
     if not s3_url and 'S3_URL' in os.environ:
         s3_url = os.environ['S3_URL']
 
+    ceph = module.params.get('ceph')
+
+    if ceph and not s3_url:
+        module.fail_json(msg='ceph flavour requires s3_url')
+
+    flavour = 'aws'
+
     # Look at s3_url and tweak connection settings
     # if connecting to Walrus or fakes3
     try:
-        if is_fakes3(s3_url):
+        if s3_url and ceph:
+            ceph = urlparse.urlparse(s3_url)
+            connection = boto.connect_s3(
+                host=ceph.hostname,
+                port=ceph.port,
+                is_secure=ceph.scheme == 'https',
+                calling_format=OrdinaryCallingFormat(),
+                **aws_connect_params
+            )
+            flavour = 'ceph'
+        elif is_fakes3(s3_url):
             fakes3 = urlparse.urlparse(s3_url)
             connection = S3Connection(
                 is_secure=fakes3.scheme == 'fakes3s',
@@ -380,12 +441,13 @@ def main():
     state = module.params.get("state")
 
     if state == 'present':
-        create_bucket(connection, module, location)
+        create_bucket(connection, module, location, flavour=flavour)
     elif state == 'absent':
-        destroy_bucket(connection, module)
+        destroy_bucket(connection, module, flavour=flavour)
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
+import urlparse
 
 if __name__ == '__main__':
     main()
