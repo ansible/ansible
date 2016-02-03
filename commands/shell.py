@@ -92,4 +92,10 @@ EXAMPLES = '''
   args:
     chdir: somedir/
     creates: somelog.txt
+
+# Run a command that uses non-posix shell-isms (in this example /bin/sh
+# doesn't handle redirection and wildcards together but bash does)
+- shell: cat < /tmp/*txt
+  args:
+    executable: /bin/bash
 '''
