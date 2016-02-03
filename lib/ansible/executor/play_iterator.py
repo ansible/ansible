@@ -276,7 +276,7 @@ class PlayIterator:
                 if state.pending_setup:
                     state.pending_setup = False
 
-                if state.fail_state & self.FAILED_TASKS == self.FAILED_TASKS:
+                if self._check_failed_state(state):
                     state.run_state = self.ITERATING_RESCUE
                 elif state.cur_regular_task >= len(block.block):
                     state.run_state = self.ITERATING_ALWAYS
@@ -336,7 +336,9 @@ class PlayIterator:
                         state.cur_rescue_task  = 0
                         state.cur_always_task  = 0
                         state.run_state = self.ITERATING_TASKS
-                        state.child_state = None
+                        state.tasks_child_state = None
+                        state.rescue_child_state = None
+                        state.always_child_state = None
                 else:
                     task = block.always[state.cur_always_task]
                     if isinstance(task, Block) or state.always_child_state is not None:
@@ -366,7 +368,7 @@ class PlayIterator:
         return (state, task)
 
     def _set_failed_state(self, state):
-        if state.pending_setup:
+        if state.run_state == self.ITERATING_SETUP:
             state.fail_state |= self.FAILED_SETUP
             state.run_state = self.ITERATING_COMPLETE
         elif state.run_state == self.ITERATING_TASKS:
@@ -408,6 +410,12 @@ class PlayIterator:
     def _check_failed_state(self, state):
         if state is None:
             return False
+        elif state.fail_state != self.FAILED_NONE:
+            if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0 or \
+               state.run_state == self.ITERATING_ALWAYS and state.fail_state&self.FAILED_ALWAYS == 0:
+                return False
+            else:
+                return True
         elif state.run_state == self.ITERATING_TASKS and self._check_failed_state(state.tasks_child_state):
             cur_block = self._blocks[state.cur_block]
             if len(cur_block.rescue) > 0 and state.fail_state & self.FAILED_RESCUE == 0:
@@ -418,13 +426,6 @@ class PlayIterator:
             return True
         elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):
             return True
-        elif state.run_state == self.ITERATING_COMPLETE and state.fail_state != self.FAILED_NONE:
-            if state.run_state == self.ITERATING_RESCUE and state.fail_state&self.FAILED_RESCUE == 0:
-                return False
-            elif state.run_state == self.ITERATING_ALWAYS and state.fail_state&self.FAILED_ALWAYS == 0:
-                return False
-            else:
-                return True
         return False
 
     def is_failed(self, host):
