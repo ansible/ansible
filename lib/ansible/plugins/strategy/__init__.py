@@ -656,5 +656,10 @@ class StrategyBase:
             self._inventory.refresh_inventory()
         #elif meta_action == 'reset_connection':
         #    connection_info.connection.close()
+        elif meta_action == 'clear_host_errors':
+            self._tqm._failed_hosts = dict()
+            self._tqm._unreachable_hosts = dict()
+            for host in iterator._host_states:
+                iterator._host_states[host].fail_state = iterator.FAILED_NONE
         else:
             raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
