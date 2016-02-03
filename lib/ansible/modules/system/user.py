@@ -863,6 +863,8 @@ class FreeBsdUser(User):
 
         # modify the user if cmd will do anything
         if cmd_len != len(cmd):
+            if self.module.check_mode:
+                return (0, '', '')
             (rc, out, err) = self.execute_command(cmd)
             if rc is not None and rc != 0:
                 self.module.fail_json(name=self.name, msg=err, rc=rc)
@@ -871,6 +873,8 @@ class FreeBsdUser(User):
 
         # we have to set the password in a second command
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            if self.module.check_mode:
+                return (0, '', '')
             cmd = [
                 self.module.get_bin_path('chpass', True),
                 '-p',
