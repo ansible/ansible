@@ -47,6 +47,7 @@ deb-build
 *.swo
 credentials.yml
 # test output
+*.retry
 .coverage
 .tox
 results.xml
