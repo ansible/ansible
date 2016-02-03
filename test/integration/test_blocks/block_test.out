@@ -1,0 +1,57 @@
+Using /etc/ansible/ansible.cfg as config file
+2 plays in test.yml
+
+PLAY [simple block test] *******************************************************
+
+TASK [setup] *******************************************************************
+ok: [localhost]
+
+TASK [set block tasks run flag] ************************************************
+ok: [localhost] => {"ansible_facts": {"block_tasks_run": true}, "changed": false}
+
+TASK [fail in tasks] ***********************************************************
+fatal: [localhost]: FAILED! => {"changed": false, "failed": true, "msg": "Failed as requested from task"}
+
+TASK [set block rescue run flag] ***********************************************
+ok: [localhost] => {"ansible_facts": {"block_rescue_run": true}, "changed": false}
+
+TASK [fail in rescue] **********************************************************
+fatal: [localhost]: FAILED! => {"changed": false, "failed": true, "msg": "Failed as requested from task"}
+
+TASK [set block always run flag] ***********************************************
+ok: [localhost] => {"ansible_facts": {"block_always_run": true}, "changed": false}
+
+TASK [set nested block always run flag] ****************************************
+ok: [localhost] => {"ansible_facts": {"nested_block_always_run": true}, "changed": false}
+
+TASK [fail in always] **********************************************************
+fatal: [localhost]: FAILED! => {"changed": false, "failed": true, "msg": "Failed as requested from task"}
+
+TASK [assert] ******************************************************************
+ok: [localhost] => {"changed": false, "msg": "all assertions passed"}
+
+TASK [debug] *******************************************************************
+ok: [localhost] => {
+    "msg": "TEST COMPLETE"
+}
+
+PLAY [block with includes] *****************************************************
+
+TASK [setup] *******************************************************************
+ok: [localhost]
+
+TASK [include fail.yml in tasks] ***********************************************
+included: /root/testing/test_blocks/fail.yml for localhost
+
+TASK [fail] ********************************************************************
+fatal: [localhost]: FAILED! => {"changed": false, "failed": true, "msg": "failed from tasks"}
+
+TASK [set_fact] ****************************************************************
+ok: [localhost] => {"ansible_facts": {"rescue_run_after_include_fail": true}, "changed": false}
+
+TASK [set_fact] ****************************************************************
+ok: [localhost] => {"ansible_facts": {"always_run_after_include_fail_in_rescue": true}, "changed": false}
+
+PLAY RECAP *********************************************************************
+localhost                  : ok=11   changed=0    unreachable=0    failed=2   
+
