@@ -78,7 +78,7 @@ class StrategyModule(StrategyBase):
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
                 display.debug("free host state: %s" % state)
                 display.debug("free host task: %s" % task)
-                if not iterator.is_failed(host) and host_name not in self._tqm._unreachable_hosts and task:
+                if host_name not in self._tqm._unreachable_hosts and task:
 
                     # set the flag so the outer loop knows we've still found
                     # some work which needs to be done
@@ -106,18 +106,7 @@ class StrategyModule(StrategyBase):
                                 continue
 
                         if task.action == 'meta':
-                            # meta tasks store their args in the _raw_params field of args,
-                            # since they do not use k=v pairs, so get that
-                            meta_action = task.args.get('_raw_params')
-                            if meta_action == 'noop':
-                                continue
-                            elif meta_action == 'flush_handlers':
-                                # FIXME: in the 'free' mode, flushing handlers should result in
-                                #        only those handlers notified for the host doing the flush
-                                self.run_handlers(iterator, play_context)
-                            else:
-                                raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
-
+                            self._execute_meta(task, play_context, iterator)
                             self._blocked_hosts[host_name] = False
                         else:
                             # handle step if needed, skip meta actions as they are used internally
@@ -126,6 +115,8 @@ class StrategyModule(StrategyBase):
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
+                    else:
+                        display.debug("%s is blocked, skipping for now" % host_name)
 
                 # move on to the next host and make sure we
                 # haven't gone past the end of our hosts list

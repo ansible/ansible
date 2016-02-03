@@ -54,8 +54,7 @@ class StrategyModule(StrategyBase):
         host_tasks = {}
         display.debug("building list of next tasks for hosts")
         for host in hosts:
-            if not iterator.is_failed(host):
-                host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
+            host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
         display.debug("done building task lists")
 
         num_setups = 0
