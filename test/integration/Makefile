@@ -21,7 +21,7 @@ VAULT_PASSWORD_FILE = vault-password
 
 CONSUL_RUNNING := $(shell python consul_running.py)
 
-all: parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log
+all: parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes blocks check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5
@@ -104,6 +104,13 @@ test_tags:
 	# Skip one tag
 	[ "$$(ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
 
+blocks:
+	# remove old output log
+	rm -f block_test.out
+	# run test
+	ansible-playbook -vv test_blocks/main.yml | tee block_test.out
+	# ensure each test ran
+	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" == "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
 
 cloud: amazon rackspace azure
 
