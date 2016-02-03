@@ -111,6 +111,7 @@ class Display:
 
         # FIXME: this needs to be implemented
         #msg = utils.sanitize_output(msg)
+        nocolor = msg
         if color:
             msg = stringc(msg, color)
 
@@ -135,7 +136,7 @@ class Display:
                 sys.stderr.flush()
 
         if logger and not screen_only:
-            msg2 = msg.lstrip(u'\n')
+            msg2 = nocolor.lstrip(u'\n')
 
             msg2 = to_bytes(msg2)
             if sys.version_info >= (3,):
