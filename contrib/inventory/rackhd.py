@@ -1,4 +1,5 @@
 #!/usr/bin/python
+
 import json
 import requests
 import os
@@ -12,13 +13,8 @@ class RackhdInventory(object):
         self._inventory = {}
         for nodeid in nodeids:
             self._load_inventory_data(nodeid)
-        output = '{\n'
         for nodeid,info in self._inventory.iteritems():
-            output += self._format_output(nodeid, info)
-            output += ',\n'
-        output = output[:-2]
-        output += '}\n'
-        print (output)
+            print(json.dumps(self._format_output(nodeid, info)))
 
     def _load_inventory_data(self, nodeid):
         info = {}
@@ -29,27 +25,28 @@ class RackhdInventory(object):
         for key,url in info.iteritems():
             r = requests.get( url, verify=False)
             results[key] = r.text
-
         self._inventory[nodeid] = results
 
     def _format_output(self, nodeid, info):
-        output = ''
         try:
             node_info = json.loads(info['lookup'])
             ipaddress = ''
             if len(node_info) > 0:
-                ipaddress = node_info[0]["ipAddress"]
-            output += '  "' + nodeid + '" : {\n'
-            output += '    "hosts": [ "' + ipaddress + '" ],\n'
-            output += '    "vars" : {\n'
+                ipaddress = node_info[0]['ipAddress']
+            output = {nodeid:{ 'hosts':[ipaddress],'vars':{}}}
             for key,result in info.iteritems():
-                output += '      "' + key + '": ' + json.dumps(json.loads(result), sort_keys=True, indent=2) + ',\n'
-            output += '      "ansible_ssh_user": "renasar"\n'
-            output += '    }\n'
-            output += '  }\n'
+                output[nodeid]['vars'][key] = json.loads(result)
+            output[nodeid]['vars']['ansible_ssh_user'] = 'monorail'
         except KeyError:
             pass
         return output
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--host')
+    parser.add_argument('--list', action='store_true')
+    return parser.parse_args()
 
 try:
     #check if rackhd url(ie:10.1.1.45:8080) is specified in the environment
@@ -61,13 +58,21 @@ except:
 # Use the nodeid specified in the environment to limit the data returned
 # or return data for all available nodes
 nodeids = []
-try:
-    nodeids += os.environ['nodeid'].split(',')
-except KeyError:
-    url = RACKHD_URL + '/api/common/nodes'
-    r = requests.get( url, verify=False)
-    data = json.loads(r.text)
-    for entry in data:
-        if entry['type'] == 'compute':
-            nodeids.append(entry['id'])
-RackhdInventory(nodeids)
+
+if (parse_args().host):
+    try:
+        nodeids += parse_args().host.split(',')
+        RackhdInventory(nodeids)
+    except:
+        pass
+if (parse_args().list):
+    try:
+        url = RACKHD_URL + '/api/common/nodes'
+        r = requests.get( url, verify=False)
+        data = json.loads(r.text)
+        for entry in data:
+            if entry['type'] == 'compute':
+                nodeids.append(entry['id'])
+        RackhdInventory(nodeids)
+    except:
+        pass
