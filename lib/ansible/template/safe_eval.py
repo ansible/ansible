@@ -45,6 +45,7 @@ def safe_eval(expr, locals={}, include_exceptions=False):
     # eg. JSON booleans are unknown to python eval()
     JSON_TYPES = {
         'false': False,
+        'null': None,
         'true': True,
     }
 
