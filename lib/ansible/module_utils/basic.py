@@ -1842,7 +1842,7 @@ class AnsibleModule(object):
 
         # expand things like $HOME and ~
         if not shell:
-            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args ]
+            args = [ os.path.expandvars(os.path.expanduser(x)) for x in args if x ]
 
         rc = 0
         msg = None
