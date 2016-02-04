@@ -22,6 +22,7 @@ DOCUMENTATION = '''
 ---
 module: fireball
 short_description: Enable fireball mode on remote node
+version_added: "0.9"
 deprecated: "in favor of SSH with ControlPersist"
 description:
     - Modern SSH clients support ControlPersist which is just as fast as
