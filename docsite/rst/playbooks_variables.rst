@@ -932,6 +932,11 @@ how all of these things can work together.
 .. _ansible-examples: https://github.com/ansible/ansible-examples
 .. _builtin filters: http://jinja.pocoo.org/docs/templates/#builtin-filters
 
+Advanced Syntax
+```````````````
+
+For information about advanced YAML syntax used to declare variables and have more control over the data placed in YAML files used by Ansible, see `playbooks_advanced_syntax`_
+
 .. seealso::
 
    :doc:`playbooks`
