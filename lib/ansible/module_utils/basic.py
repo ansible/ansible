@@ -3,27 +3,27 @@
 # Modules you write using this snippet, which is embedded dynamically by Ansible
 # still belong to the author of the module, and may assign their own license
 # to the complete work.
-# 
+#
 # Copyright (c), Michael DeHaan <michael.dehaan@gmail.com>, 2012-2013
 # All rights reserved.
 #
-# Redistribution and use in source and binary forms, with or without modification, 
+# Redistribution and use in source and binary forms, with or without modification,
 # are permitted provided that the following conditions are met:
 #
-#    * Redistributions of source code must retain the above copyright 
+#    * Redistributions of source code must retain the above copyright
 #      notice, this list of conditions and the following disclaimer.
-#    * Redistributions in binary form must reproduce the above copyright notice, 
-#      this list of conditions and the following disclaimer in the documentation 
+#    * Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
 #      and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. 
-# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, 
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
@@ -186,7 +186,7 @@ except ImportError:
 try:
     from ast import literal_eval as _literal_eval
 except ImportError:
-    # a replacement for literal_eval that works with python 2.4. from: 
+    # a replacement for literal_eval that works with python 2.4. from:
     # https://mail.python.org/pipermail/python-list/2009-September/551880.html
     # which is essentially a cut/paste from an earlier (2.6) version of python's
     # ast.py
@@ -944,14 +944,14 @@ class AnsibleModule(object):
             else:
                 raise ValueError("bad symbolic permission for mode: %s" % mode)
         return new_mode
-    
+
     def _apply_operation_to_mode(self, user, operator, mode_to_apply, current_mode):
         if operator  ==  '=':
             if user == 'u': mask = stat.S_IRWXU | stat.S_ISUID
             elif user == 'g': mask = stat.S_IRWXG | stat.S_ISGID
             elif user == 'o': mask = stat.S_IRWXO | stat.S_ISVTX
-            
-            # mask out u, g, or o permissions from current_mode and apply new permissions   
+
+            # mask out u, g, or o permissions from current_mode and apply new permissions
             inverse_mask = mask ^ PERM_BITS
             new_mode = (current_mode & inverse_mask) | mode_to_apply
         elif operator == '+':
@@ -959,10 +959,10 @@ class AnsibleModule(object):
         elif operator == '-':
             new_mode = current_mode - (current_mode & mode_to_apply)
         return new_mode
-        
+
     def _get_octal_mode_from_symbolic_perms(self, path_stat, user, perms):
         prev_mode = stat.S_IMODE(path_stat.st_mode)
-        
+
         is_directory = stat.S_ISDIR(path_stat.st_mode)
         has_x_permissions = (prev_mode & EXEC_PERM_BITS) > 0
         apply_X_permission = is_directory or has_x_permissions
@@ -1480,7 +1480,7 @@ class AnsibleModule(object):
                 raise
             return cwd
         except:
-            # we don't have access to the cwd, probably because of sudo. 
+            # we don't have access to the cwd, probably because of sudo.
             # Try and move to a neutral location to prevent errors
             for cwd in [os.path.expandvars('$HOME'), tempfile.gettempdir()]:
                 try:
@@ -1489,9 +1489,9 @@ class AnsibleModule(object):
                         return cwd
                 except:
                     pass
-        # we won't error here, as it may *not* be a problem, 
+        # we won't error here, as it may *not* be a problem,
         # and we don't want to break modules unnecessarily
-        return None    
+        return None
 
     def get_bin_path(self, arg, required=False, opt_dirs=[]):
         '''
@@ -1583,6 +1583,19 @@ class AnsibleModule(object):
         self.do_cleanup_files()
         print(self.jsonify(kwargs))
         sys.exit(1)
+
+    def fail_on_missing_params(self, required_params=None):
+        ''' This is for checking for required params when we can not check via argspec because we
+        need more information than is simply given in the argspec.
+        '''
+        if not required_params:
+            return
+        missing_params = []
+        for required_param in required_params:
+            if not self.params.get(required_param):
+                missing_params.append(required_param)
+        if missing_params:
+            self.fail_json(msg="missing required arguments: %s" % ','.join(missing_params))
 
     def digest_from_file(self, filename, algorithm):
         ''' Return hex digest of local file for a digest_method specified by name, or None if file is not present. '''
