@@ -40,13 +40,17 @@ from ansible.utils.unicode import to_unicode
 
 BASE_ATTRIBUTES = {}
 
+class Undefined:
+    def __len__(self):
+        return 0
+UNDEFINED = Undefined()
 
 class Base:
 
     # connection/transport
     _connection          = FieldAttribute(isa='string')
-    _port                = FieldAttribute(isa='int')
-    _remote_user         = FieldAttribute(isa='string')
+    _port                = FieldAttribute(isa='int', default=UNDEFINED)
+    _remote_user         = FieldAttribute(isa='string', default=UNDEFINED)
 
     # variables
     _vars                = FieldAttribute(isa='dict', priority=100)
@@ -107,7 +111,7 @@ class Base:
             return getattr(self, method)()
 
         value = self._attributes[prop_name]
-        if value is None and hasattr(self, '_get_parent_attribute'):
+        if value in [None, UNDEFINED] and hasattr(self, '_get_parent_attribute'):
             value = self._get_parent_attribute(prop_name)
         return value
 
@@ -313,7 +317,7 @@ class Base:
                     continue
 
                 # and make sure the attribute is of the type it should be
-                if value is not None:
+                if value not in [None, UNDEFINED]:
                     if attribute.isa == 'string':
                         value = to_unicode(value)
                     elif attribute.isa == 'int':

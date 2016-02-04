@@ -27,7 +27,7 @@ from ansible.compat.tests.mock import patch, MagicMock
 from ansible import constants as C
 from ansible.cli import CLI
 from ansible.errors import AnsibleError, AnsibleParserError
-from ansible.playbook.play_context import PlayContext
+from ansible.playbook.play_context import PlayContext, UNDEFINED
 
 from units.mock.loader import DictDataLoader
 
@@ -53,10 +53,10 @@ class TestPlayContext(unittest.TestCase):
         (options, args) = self._parser.parse_args(['-vv', '--check'])
         play_context = PlayContext(options=options)
         self.assertEqual(play_context.connection, 'smart')
-        self.assertEqual(play_context.remote_addr, None)
-        self.assertEqual(play_context.remote_user, None)
-        self.assertEqual(play_context.password, '')
-        self.assertEqual(play_context.port, None)
+        self.assertEqual(play_context.remote_addr, UNDEFINED)
+        self.assertEqual(play_context.remote_user, UNDEFINED)
+        self.assertEqual(play_context.password, UNDEFINED)
+        self.assertEqual(play_context.port, UNDEFINED)
         self.assertEqual(play_context.private_key_file, C.DEFAULT_PRIVATE_KEY_FILE)
         self.assertEqual(play_context.timeout, C.DEFAULT_TIMEOUT)
         self.assertEqual(play_context.shell, None)
