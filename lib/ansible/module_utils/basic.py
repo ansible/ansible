@@ -1722,8 +1722,9 @@ class AnsibleModule(object):
                             out_dest.close()
                         if in_src:
                             in_src.close()
-                except (shutil.Error, OSError, IOError), e:
-                     self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
+                except (shutil.Error, OSError, IOError):
+                    e = get_exception()
+                    self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
             elif e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY]:
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
