@@ -47,7 +47,9 @@ class ActionModule(ActionBase):
         result.update(self._execute_module(module_name=self._task.action,
             module_args=self._task.args, task_vars=task_vars))
 
-        if self._task.args.get('backup'):
+        if self._task.args.get('backup') and result.get('_backup'):
+            # User requested backup and no error occurred in module.
+            # NOTE: If there is a parameter error, _backup key may not be in results.
             self._write_backup(task_vars['inventory_hostname'], result['_backup'])
 
         if '_backup' in result:
