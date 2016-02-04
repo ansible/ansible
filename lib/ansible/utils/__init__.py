@@ -47,7 +47,6 @@ import difflib
 import warnings
 import traceback
 import getpass
-import sys
 import subprocess
 import contextlib
 
