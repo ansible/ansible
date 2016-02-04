@@ -524,11 +524,9 @@ class PlayContext(Base):
         In case users need to access from the play, this is a legacy from runner.
         '''
 
-        # TODO: should we be setting the more generic values here rather than
-        #       the more specific _ssh_ ones?
-        for special_var in RESET_VARS:
-
-            if special_var not in variables:
-                for prop, varnames in MAGIC_VARIABLE_MAPPING.items():
-                    if special_var in varnames:
-                        variables[special_var] = getattr(self, prop)
+        for prop, var_list in MAGIC_VARIABLE_MAPPING.items():
+            var_val = getattr(self, prop, None)
+            if var_val is not None:
+                for var_opt in var_list:
+                    if var_opt not in variables:
+                        variables[var_opt] = var_val
