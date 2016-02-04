@@ -66,7 +66,6 @@ import grp
 import pwd
 import platform
 import errno
-import tempfile
 
 try:
     import json
