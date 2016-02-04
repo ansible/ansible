@@ -1880,13 +1880,15 @@ class AIX(User):
         if len(cmd) == 1:
             (rc, out, err) = (None, '', '')
         elif self.module.check_mode:
-            return (True, '', '')
+            return (0, '', '')
         else:
             cmd.append(self.name)
             (rc, out, err) = self.execute_command(cmd)
 
         # set password with chpasswd
         if self.update_password == 'always' and self.password is not None and info[1] != self.password:
+            if self.module.check_mode:
+                return (0, '', '')
             cmd = []
             cmd.append(self.module.get_bin_path('chpasswd', True))
             cmd.append('-e')
