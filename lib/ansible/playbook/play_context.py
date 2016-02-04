@@ -30,7 +30,7 @@ from ansible.compat.six import iteritems, string_types
 from ansible import constants as C
 from ansible.errors import AnsibleError
 from ansible.playbook.attribute import Attribute, FieldAttribute
-from ansible.playbook.base import Base
+from ansible.playbook.base import Base, UNDEFINED
 from ansible.template import Templar
 from ansible.utils.boolean import boolean
 from ansible.utils.unicode import to_unicode
@@ -148,8 +148,8 @@ class PlayContext(Base):
 
     # connection fields, some are inherited from Base:
     # (connection, port, remote_user, environment, no_log)
-    _remote_addr      = FieldAttribute(isa='string')
-    _password         = FieldAttribute(isa='string')
+    _remote_addr      = FieldAttribute(isa='string', default=UNDEFINED)
+    _password         = FieldAttribute(isa='string', default=UNDEFINED)
     _private_key_file = FieldAttribute(isa='string', default=C.DEFAULT_PRIVATE_KEY_FILE)
     _timeout          = FieldAttribute(isa='int', default=C.DEFAULT_TIMEOUT)
     _shell            = FieldAttribute(isa='string')
@@ -531,4 +531,6 @@ class PlayContext(Base):
             if special_var not in variables:
                 for prop, varnames in MAGIC_VARIABLE_MAPPING.items():
                     if special_var in varnames:
-                        variables[special_var] = getattr(self, prop)
+                        value = getattr(self, prop)
+                        if value is not UNDEFINED:
+                            variables[special_var] = getattr(self, prop)
