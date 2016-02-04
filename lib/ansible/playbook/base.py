@@ -111,7 +111,7 @@ class Base:
             return getattr(self, method)()
 
         value = self._attributes[prop_name]
-        if value is None and hasattr(self, '_get_parent_attribute'):
+        if value in [None, UNDEFINED] and hasattr(self, '_get_parent_attribute'):
             value = self._get_parent_attribute(prop_name)
         return value
 

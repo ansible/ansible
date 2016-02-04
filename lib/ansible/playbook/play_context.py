@@ -379,7 +379,7 @@ class PlayContext(Base):
                     attrs_considered.append(attr)
 
         # make sure we get port defaults if needed
-        if new_info.port is None and C.DEFAULT_REMOTE_PORT is not None:
+        if new_info.port in [None, UNDEFINED] and C.DEFAULT_REMOTE_PORT is not None:
             new_info.port = int(C.DEFAULT_REMOTE_PORT)
 
         # become legacy updates
