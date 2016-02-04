@@ -1668,7 +1668,7 @@ class AnsibleModule(object):
                 e = get_exception()
                 sys.stderr.write("could not cleanup %s: %s" % (tmpfile, e))
 
-    def atomic_move(self, src, dest):
+    def atomic_move(self, src, dest, unsafe_writes=False):
         '''atomically move src to dest, copying attributes from dest, returns true on success
         it uses os.rename to ensure this as it is an atomic operation, rest of the function is
         to work around limitations, corner cases and ensure selinux context is saved if possible'''
@@ -1708,9 +1708,25 @@ class AnsibleModule(object):
             os.rename(src, dest)
         except (IOError, OSError):
             e = get_exception()
-            # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
-            # and 26 (text file busy) which happens on vagrant synced folders
-            if e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY]:
+            # sadly there are some situations where we cannot ensure atomicity, but only if
+            # the user insists and we get the appropriate error we update the file unsafely
+            if unsafe_writes and e.errno == errno.EBUSY:
+                #TODO: issue warning that this is an unsafe operation, but doing it cause user insists
+                try:
+                    try:
+                        out_dest = open(dest, 'wb')
+                        in_src = open(src, 'rb')
+                        shutil.copyfileobj(in_src, out_dest)
+                    finally: # assuring closed files in 2.4 compatible way
+                        if out_dest:
+                            out_dest.close()
+                        if in_src:
+                            in_src.close()
+                except (shutil.Error, OSError, IOError), e:
+                     self.fail_json(msg='Could not write data to file (%s) from (%s): %s' % (dest, src, e))
+            elif e.errno not in [errno.EPERM, errno.EXDEV, errno.EACCES, errno.ETXTBSY]:
+                # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
+                # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
             dest_dir = os.path.dirname(dest)
