@@ -152,7 +152,7 @@ Once the files are in place, you can run the provided playbook (if there is one)
 
    ansible-playbook -vvv playbook_name.yml
 
-If there's not a playbook, you may have to copy and paste playbook snippets or run a ad-hoc command that was pasted in.
+If there's no playbook, you may have to copy and paste playbook snippets or run an ad-hoc command that was pasted in.
 
 Our issue template also included sections for "Expected Output" and "Actual Output", which should be used to gauge the output
 from the provided examples.
