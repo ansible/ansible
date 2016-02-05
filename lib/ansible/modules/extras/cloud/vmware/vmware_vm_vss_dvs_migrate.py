@@ -40,6 +40,7 @@ options:
         description:
             - Name of the portgroup to migrate to the virtual machine to
         required: True
+extends_documentation_fragment: vmware.documentation
 '''
 
 EXAMPLES = '''
