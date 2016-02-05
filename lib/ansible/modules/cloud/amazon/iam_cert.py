@@ -162,7 +162,7 @@ def dup_check(module, iam, name, new_name, cert, orig_cert_names, orig_cert_bodi
                     elif orig_cert_bodies[c_index] != cert:
                         module.fail_json(changed=False, msg='A cert with the name %s already exists and'
                                                            ' has a different certificate body associated'
-                                                           ' with it. Certificates cannot have the same name')
+                                                           ' with it. Certificates cannot have the same name' % i_name)
             else:
                 update=True
                 break
