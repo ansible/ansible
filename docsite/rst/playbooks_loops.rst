@@ -550,8 +550,8 @@ Loops and Includes
 ``````````````````
 
 In 2.0 you are able to use `with_` loops and task includes (but not playbook includes), this adds the ability to loop over the set of tasks in one shot.
-There are a couple of things that you need to keep in mind, a included task that has its own `with_` loop will overwrite the value of the special `item` variable.
-So if you want access to both the include's `item` and the current task's `item` you should use `set_fact` to create a alias to the outer one.::
+There are a couple of things that you need to keep in mind, an included task that has its own `with_` loop will overwrite the value of the special `item` variable.
+So if you want access to both the include's `item` and the current task's `item` you should use `set_fact` to create an alias to the outer one.::
 
 
     - include: test.yml
