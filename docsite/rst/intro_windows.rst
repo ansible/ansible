@@ -256,7 +256,7 @@ Developers: Supported modules and how it works
 Developing Ansible modules are covered in a `later section of the documentation <http://docs.ansible.com/developing_modules.html>`_, with a focus on Linux/Unix.
 What if you want to write Windows modules for Ansible though?
 
-For Windows, Ansible modules are implemented in PowerShell.  Skim those Linux/Unix module development chapters before proceeding. Windows modules in the core and extras repo live in a "windows/" subdir. Custom modules can go directly into the Ansible "library/" directories or those added in ansible.cfg. Documentation lives in a a `.py` file with the same name. For example, if a module is named "win_ping", there will be embedded documentation in the "win_ping.py" file, and the actual PowerShell code will live in a "win_ping.ps1" file. Take a look at the sources and this will make more sense.
+For Windows, Ansible modules are implemented in PowerShell.  Skim those Linux/Unix module development chapters before proceeding. Windows modules in the core and extras repo live in a "windows/" subdir. Custom modules can go directly into the Ansible "library/" directories or those added in ansible.cfg. Documentation lives in a `.py` file with the same name. For example, if a module is named "win_ping", there will be embedded documentation in the "win_ping.py" file, and the actual PowerShell code will live in a "win_ping.ps1" file. Take a look at the sources and this will make more sense.
 
 Modules (ps1 files) should start as follows::
 
