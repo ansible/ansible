@@ -95,78 +95,93 @@ try:
 except ImportError:
     HAS_PYVMOMI = False
 
+class VMwareDVSwitch(object):
+    def __init__(self, module):
+        self.module = module
+        self.dvs = None
+        self.switch_name = self.module.params['switch_name']
+        self.datacenter_name = self.module.params['datacenter_name']
+        self.mtu = self.module.params['mtu']
+        self.uplink_quantity = self.module.params['uplink_quantity']
+        self.discovery_proto = self.module.params['discovery_proto']
+        self.discovery_operation = self.module.params['discovery_operation']
+        self.switch_name = self.module.params['switch_name']
+        self.state = self.module.params['state']
+        self.content = connect_to_api(module)
 
-def create_dvswitch(network_folder, switch_name, mtu, uplink_quantity, discovery_proto, discovery_operation):
-
-    result = None
-    changed = False
-
-    spec = vim.DistributedVirtualSwitch.CreateSpec()
-    spec.configSpec = vim.dvs.VmwareDistributedVirtualSwitch.ConfigSpec()
-    spec.configSpec.uplinkPortPolicy = vim.DistributedVirtualSwitch.NameArrayUplinkPortPolicy()
-    spec.configSpec.linkDiscoveryProtocolConfig = vim.host.LinkDiscoveryProtocolConfig()
-
-    spec.configSpec.name = switch_name
-    spec.configSpec.maxMtu = mtu
-    spec.configSpec.linkDiscoveryProtocolConfig.protocol = discovery_proto
-    spec.configSpec.linkDiscoveryProtocolConfig.operation = discovery_operation
-    spec.productInfo = vim.dvs.ProductSpec()
-    spec.productInfo.name = "DVS"
-    spec.productInfo.vendor = "VMware"
-
-    for count in range(1, uplink_quantity+1):
-        spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
-
-    task = network_folder.CreateDVS_Task(spec)
-    changed, result = wait_for_task(task)
-    return changed, result
-
-
-def state_exit_unchanged(module):
-    module.exit_json(changed=False)
-
-
-def state_destroy_dvs(module):
-    dvs = module.params['dvs']
-    task = dvs.Destroy_Task()
-    changed, result = wait_for_task(task)
-    module.exit_json(changed=changed, result=str(result))
+    def process_state(self):
+        try:
+            dvs_states = {
+                'absent': {
+                    'present': self.state_destroy_dvs,
+                    'absent': self.state_exit_unchanged,
+                },
+                'present': {
+                    'update': self.state_update_dvs,
+                    'present': self.state_exit_unchanged,
+                    'absent': self.state_create_dvs,
+                }
+            }
+            dvs_states[self.state][self.check_dvs_configuration()]()
+        except vmodl.RuntimeFault as runtime_fault:
+            self.module.fail_json(msg=runtime_fault.msg)
+        except vmodl.MethodFault as method_fault:
+            self.module.fail_json(msg=method_fault.msg)
+        except Exception as e:
+            self.module.fail_json(msg=str(e))
 
 
-def state_update_dvs(module):
-    module.exit_json(changed=False, msg="Currently not implemented.")
+    def create_dvswitch(self, network_folder):
+        result = None
+        changed = False
 
+        spec = vim.DistributedVirtualSwitch.CreateSpec()
+        spec.configSpec = vim.dvs.VmwareDistributedVirtualSwitch.ConfigSpec()
+        spec.configSpec.uplinkPortPolicy = vim.DistributedVirtualSwitch.NameArrayUplinkPortPolicy()
+        spec.configSpec.linkDiscoveryProtocolConfig = vim.host.LinkDiscoveryProtocolConfig()
 
-def state_create_dvs(module):
-    switch_name = module.params['switch_name']
-    datacenter_name = module.params['datacenter_name']
-    content = module.params['content']
-    mtu = module.params['mtu']
-    uplink_quantity = module.params['uplink_quantity']
-    discovery_proto = module.params['discovery_proto']
-    discovery_operation = module.params['discovery_operation']
+        spec.configSpec.name = self.switch_name
+        spec.configSpec.maxMtu = self.mtu
+        spec.configSpec.linkDiscoveryProtocolConfig.protocol = self.discovery_proto
+        spec.configSpec.linkDiscoveryProtocolConfig.operation = self.discovery_operation
+        spec.productInfo = vim.dvs.ProductSpec()
+        spec.productInfo.name = "DVS"
+        spec.productInfo.vendor = "VMware"
 
-    changed = True
-    result = None
+        for count in range(1, self.uplink_quantity+1):
+            spec.configSpec.uplinkPortPolicy.uplinkPortName.append("uplink%d" % count)
 
-    if not module.check_mode:
-        dc = find_datacenter_by_name(content, datacenter_name)
-        changed, result = create_dvswitch(dc.networkFolder, switch_name,
-                                          mtu, uplink_quantity, discovery_proto,
-                                          discovery_operation)
-        module.exit_json(changed=changed, result=str(result))
+        task = network_folder.CreateDVS_Task(spec)
+        changed, result = wait_for_task(task)
+        return changed, result
 
+    def state_exit_unchanged(self):
+        self.module.exit_json(changed=False)
 
-def check_dvs_configuration(module):
-    switch_name = module.params['switch_name']
-    content = connect_to_api(module)
-    module.params['content'] = content
-    dvs = find_dvs_by_name(content, switch_name)
-    if dvs is None:
-        return 'absent'
-    else:
-        module.params['dvs'] = dvs
-        return 'present'
+    def state_destroy_dvs(self):
+        task = self.dvs.Destroy_Task()
+        changed, result = wait_for_task(task)
+        self.module.exit_json(changed=changed, result=str(result))
+
+    def state_update_dvs(self):
+        self.module.exit_json(changed=False, msg="Currently not implemented.")
+
+    def state_create_dvs(self):
+        changed = True
+        result = None
+
+        if not self.module.check_mode:
+            dc = find_datacenter_by_name(self.content, self.datacenter_name)
+            changed, result = self.create_dvswitch(dc.networkFolder)
+
+        self.module.exit_json(changed=changed, result=str(result))
+
+    def check_dvs_configuration(self):
+        self.dvs = find_dvs_by_name(self.content, self.switch_name)
+        if self.dvs is None:
+            return 'absent'
+        else:
+            return 'present'
 
 
 def main():
@@ -184,26 +199,8 @@ def main():
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
 
-    try:
-        # Currently state_update_dvs is not implemented.
-        dvs_states = {
-            'absent': {
-                'present': state_destroy_dvs,
-                'absent': state_exit_unchanged,
-            },
-            'present': {
-                'update': state_update_dvs,
-                'present': state_exit_unchanged,
-                'absent': state_create_dvs,
-            }
-        }
-        dvs_states[module.params['state']][check_dvs_configuration(module)](module)
-    except vmodl.RuntimeFault as runtime_fault:
-        module.fail_json(msg=runtime_fault.msg)
-    except vmodl.MethodFault as method_fault:
-        module.fail_json(msg=method_fault.msg)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    vmware_dvswitch = VMwareDVSwitch(module)
+    vmware_dvswitch.process_state()
 
 from ansible.module_utils.vmware import *
 from ansible.module_utils.basic import *
