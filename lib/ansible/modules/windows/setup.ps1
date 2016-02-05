@@ -17,13 +17,40 @@
 # WANT_JSON
 # POWERSHELL_COMMON
 
-# $params is not currently used in this module
-# $params = Parse-Args $args;
+# enabled $params (David O'Brien, 06/08/2015)
+$params = Parse-Args $args;
+
+
+Function Get-CustomFacts {
+  [cmdletBinding()]
+  param (
+    [Parameter(mandatory=$false)]
+    $factpath = $null
+  )
+
+  if (-not (Test-Path -Path $factpath)) {
+    Fail-Json $result "The path $factpath does not exist. Typo?"
+  }
+
+  $FactsFiles = Get-ChildItem -Path $factpath | Where-Object -FilterScript {($PSItem.PSIsContainer -eq $false) -and ($PSItem.Extension -eq '.ps1')}
+
+  foreach ($FactsFile in $FactsFiles) {
+      $out = . $($FactsFile.FullName)
+      Set-Attr $result.ansible_facts "ansible_$(($FactsFile.Name).Split('.')[0])" $out
+  }
+}
 
 $result = New-Object psobject @{
     ansible_facts = New-Object psobject
     changed = $false
 };
+
+# failifempty = $false is default and thus implied
+$factpath = Get-AnsibleParam -obj $params -name fact_path
+if ($factpath -ne $null) {
+  # Get any custom facts
+  Get-CustomFacts -factpath $factpath
+}
 
 $win32_os = Get-CimInstance Win32_OperatingSystem
 $win32_cs = Get-CimInstance Win32_ComputerSystem
