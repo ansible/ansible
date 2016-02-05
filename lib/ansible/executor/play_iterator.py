@@ -137,6 +137,7 @@ class PlayIterator:
         setup_block = Block(play=self._play)
         setup_task = Task(block=setup_block)
         setup_task.action = 'setup'
+        setup_task.tags   = ['always']
         setup_task.args   = {}
         setup_task.set_loader(self._play._loader)
         setup_block.block = [setup_task]
