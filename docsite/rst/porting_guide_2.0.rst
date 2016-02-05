@@ -157,12 +157,12 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
     with_items: "{{vars['myvar_' + res_of_name]}}"
 
-  Or `hostvasrs[inventory_hostname]['myvar_' + rest_of_name]` if appropriate.
+  Or `hostvars[inventory_hostname]['myvar_' + rest_of_name]` if appropriate.
 
-* Mispelled directives::
+* Misspelled directives::
 
     - task: dostuf
-      became: yes
+      becom: yes
   The task always ran without using privilege escalation (for that you need `become`) but was also silently ignored so the play 'ran' even though it should not, now this is a parsing error.
 
 
@@ -194,7 +194,7 @@ Here are some corner cases encountered when updating, these are mostly caused by
 
     with_items: "{{var1 + var2}}"
 
-  The bare feature itself is deprecated as an undefined variable is indistiguishable from a string which makes it dificult to display a proper error.
+  The bare feature itself is deprecated as an undefined variable is indistiguishable from a string which makes it difficult to display a proper error.
 
 Porting plugins
 ===============
