@@ -20,9 +20,7 @@ __metaclass__ = type
 import base64
 import os
 import re
-import random
 import shlex
-import time
 
 from ansible.utils.unicode import to_bytes, to_unicode
 
