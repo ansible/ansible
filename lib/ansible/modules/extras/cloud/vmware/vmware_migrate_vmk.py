@@ -75,8 +75,6 @@ Example from Ansible playbook
         migrate_switch_name: dvSwitch
         migrate_portgroup_name: Management
 '''
-
-
 try:
     from pyVmomi import vim, vmodl
     HAS_PYVMOMI = True
@@ -84,88 +82,93 @@ except ImportError:
     HAS_PYVMOMI = False
 
 
-def state_exit_unchanged(module):
-    module.exit_json(changed=False)
+class VMwareMigrateVmk(object):
+    def __init__(self, module):
+        self.module = module
+        self.host_system = None
+        self.migrate_switch_name = self.module.params['migrate_switch_name']
+        self.migrate_portgroup_name = self.module.params['migrate_portgroup_name']
+        self.device = self.module.params['device']
+        self.esxi_hostname = self.module.params['esxi_hostname']
+        self.current_portgroup_name = self.module.params['current_portgroup_name']
+        self.current_switch_name = self.module.params['current_switch_name']
+        self.content = connect_to_api(module)
 
+    def process_state(self):
+        try:
+            vmk_migration_states = {
+                'migrate_vss_vds': self.state_migrate_vss_vds,
+                'migrate_vds_vss': self.state_migrate_vds_vss,
+                'migrated': self.state_exit_unchanged
+            }
 
-def state_migrate_vds_vss(module):
-    module.exit_json(changed=False, msg="Currently Not Implemented")
+            vmk_migration_states[self.check_vmk_current_state()]()
 
+        except vmodl.RuntimeFault as runtime_fault:
+            self.module.fail_json(msg=runtime_fault.msg)
+        except vmodl.MethodFault as method_fault:
+            self.module.fail_json(msg=method_fault.msg)
+        except Exception as e:
+            self.module.fail_json(msg=str(e))
 
-def create_host_vnic_config(dv_switch_uuid, portgroup_key, device):
+    def state_exit_unchanged(self):
+        self.module.exit_json(changed=False)
 
-    host_vnic_config = vim.host.VirtualNic.Config()
-    host_vnic_config.spec = vim.host.VirtualNic.Specification()
-    host_vnic_config.changeOperation = "edit"
-    host_vnic_config.device = device
-    host_vnic_config.portgroup = ""
-    host_vnic_config.spec.distributedVirtualPort = vim.dvs.PortConnection()
-    host_vnic_config.spec.distributedVirtualPort.switchUuid = dv_switch_uuid
-    host_vnic_config.spec.distributedVirtualPort.portgroupKey = portgroup_key
+    def state_migrate_vds_vss(self):
+        self.module.exit_json(changed=False, msg="Currently Not Implemented")
 
-    return host_vnic_config
+    def create_host_vnic_config(self, dv_switch_uuid, portgroup_key):
+        host_vnic_config = vim.host.VirtualNic.Config()
+        host_vnic_config.spec = vim.host.VirtualNic.Specification()
 
+        host_vnic_config.changeOperation = "edit"
+        host_vnic_config.device = self.device
+        host_vnic_config.portgroup = ""
+        host_vnic_config.spec.distributedVirtualPort = vim.dvs.PortConnection()
+        host_vnic_config.spec.distributedVirtualPort.switchUuid = dv_switch_uuid
+        host_vnic_config.spec.distributedVirtualPort.portgroupKey = portgroup_key
 
-def create_port_group_config(switch_name, portgroup_name):
-    port_group_config = vim.host.PortGroup.Config()
-    port_group_config.spec = vim.host.PortGroup.Specification()
+        return host_vnic_config
 
-    port_group_config.changeOperation = "remove"
-    port_group_config.spec.name = portgroup_name
-    port_group_config.spec.vlanId = -1
-    port_group_config.spec.vswitchName = switch_name
-    port_group_config.spec.policy = vim.host.NetworkPolicy()
+    def create_port_group_config(self):
+        port_group_config = vim.host.PortGroup.Config()
+        port_group_config.spec = vim.host.PortGroup.Specification()
 
-    return port_group_config
+        port_group_config.changeOperation = "remove"
+        port_group_config.spec.name = self.current_portgroup_name
+        port_group_config.spec.vlanId = -1
+        port_group_config.spec.vswitchName = self.current_switch_name
+        port_group_config.spec.policy = vim.host.NetworkPolicy()
 
+        return port_group_config
 
-def state_migrate_vss_vds(module):
-    content = module.params['content']
-    host_system = module.params['host_system']
-    migrate_switch_name = module.params['migrate_switch_name']
-    migrate_portgroup_name = module.params['migrate_portgroup_name']
-    current_portgroup_name = module.params['current_portgroup_name']
-    current_switch_name = module.params['current_switch_name']
-    device = module.params['device']
+    def state_migrate_vss_vds(self):
+        host_network_system = self.host_system.configManager.networkSystem
 
-    host_network_system = host_system.configManager.networkSystem
+        dv_switch = find_dvs_by_name(self.content, self.migrate_switch_name)
+        pg = find_dvspg_by_name(dv_switch, self.migrate_portgroup_name)
 
-    dv_switch = find_dvs_by_name(content, migrate_switch_name)
-    pg = find_dvspg_by_name(dv_switch, migrate_portgroup_name)
+        config = vim.host.NetworkConfig()
+        config.portgroup = [self.create_port_group_config()]
+        config.vnic = [self.create_host_vnic_config(dv_switch.uuid, pg.key)]
+        host_network_system.UpdateNetworkConfig(config, "modify")
+        self.module.exit_json(changed=True)
 
-    config = vim.host.NetworkConfig()
-    config.portgroup = [create_port_group_config(current_switch_name, current_portgroup_name)]
-    config.vnic = [create_host_vnic_config(dv_switch.uuid, pg.key, device)]
-    host_network_system.UpdateNetworkConfig(config, "modify")
-    module.exit_json(changed=True)
+    def check_vmk_current_state(self):
+        self.host_system = find_hostsystem_by_name(self.content, self.esxi_hostname)
 
-
-def check_vmk_current_state(module):
-
-    device = module.params['device']
-    esxi_hostname = module.params['esxi_hostname']
-    current_portgroup_name = module.params['current_portgroup_name']
-    current_switch_name = module.params['current_switch_name']
-
-    content = connect_to_api(module)
-
-    host_system = find_hostsystem_by_name(content, esxi_hostname)
-
-    module.params['content'] = content
-    module.params['host_system'] = host_system
-
-    for vnic in host_system.configManager.networkSystem.networkInfo.vnic:
-        if vnic.device == device:
-            module.params['vnic'] = vnic
-            if vnic.spec.distributedVirtualPort is None:
-                if vnic.portgroup == current_portgroup_name:
-                    return "migrate_vss_vds"
-            else:
-                dvs = find_dvs_by_name(content, current_switch_name)
-                if dvs is None:
-                    return "migrated"
-                if vnic.spec.distributedVirtualPort.switchUuid == dvs.uuid:
-                    return "migrate_vds_vss"
+        for vnic in self.host_system.configManager.networkSystem.networkInfo.vnic:
+            if vnic.device == self.device:
+                #self.vnic = vnic
+                if vnic.spec.distributedVirtualPort is None:
+                    if vnic.portgroup == self.current_portgroup_name:
+                        return "migrate_vss_vds"
+                else:
+                    dvs = find_dvs_by_name(self.content, self.current_switch_name)
+                    if dvs is None:
+                        return "migrated"
+                    if vnic.spec.distributedVirtualPort.switchUuid == dvs.uuid:
+                        return "migrate_vds_vss"
 
 
 def main():
@@ -181,23 +184,10 @@ def main():
     module = AnsibleModule(argument_spec=argument_spec, supports_check_mode=False)
 
     if not HAS_PYVMOMI:
-        module.fail_json(msg='pyvmomi required for this module')
+        self.module.fail_json(msg='pyvmomi required for this module')
 
-    try:
-        vmk_migration_states = {
-            'migrate_vss_vds': state_migrate_vss_vds,
-            'migrate_vds_vss': state_migrate_vds_vss,
-            'migrated': state_exit_unchanged
-        }
-
-        vmk_migration_states[check_vmk_current_state(module)](module)
-
-    except vmodl.RuntimeFault as runtime_fault:
-        module.fail_json(msg=runtime_fault.msg)
-    except vmodl.MethodFault as method_fault:
-        module.fail_json(msg=method_fault.msg)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    vmware_migrate_vmk = VMwareMigrateVmk(module)
+    vmware_migrate_vmk.process_state()
 
 from ansible.module_utils.vmware import *
 from ansible.module_utils.basic import *
