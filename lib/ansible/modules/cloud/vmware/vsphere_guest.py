@@ -52,10 +52,15 @@ options:
     aliases: []
   validate_certs:
     description:
-      - Validate SSL certs.
+      - Validate SSL certs.  Note, if running on python without SSLContext
+        support (typically, python < 2.7.9) you will have to set this to C(no)
+        as pysphere does not support validating certificates on older python.
+        Prior to 2.1, this module would always validate on python >= 2.7.9 and
+        never validate on python <= 2.7.8.
     required: false
     default: yes
     choices: ['yes', 'no']
+    version_added: 2.1
   guest:
     description:
       - The virtual server name you wish to manage.
@@ -1674,15 +1679,21 @@ def main():
 
     # CONNECT TO THE SERVER
     viserver = VIServer()
+    if validate_certs and not hasattr(ssl, 'SSLContext') and not vcenter_hostname.startswith('http://'):
+        module.fail_json(msg='pysphere does not support verifying certificates with python < 2.7.9.  Either update python or set validate_certs=False on the task')
+
     try:
         viserver.connect(vcenter_hostname, username, password)
     except ssl.SSLError as sslerr:
-        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror and not validate_certs:
-            default_context = ssl._create_default_https_context
-            ssl._create_default_https_context = ssl._create_unverified_context
-            viserver.connect(vcenter_hostname, username, password)
+        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in sslerr.strerror:
+            if not validate_certs:
+                default_context = ssl._create_default_https_context
+                ssl._create_default_https_context = ssl._create_unverified_context
+                viserver.connect(vcenter_hostname, username, password)
+            else:
+                module.fail_json(msg='Unable to validate the certificate of the vcenter host %s' % vcenter_hostname)
         else:
-            raise Exception(sslerr)
+            raise
     except VIApiException, err:
         module.fail_json(msg="Cannot connect to %s: %s" %
                          (vcenter_hostname, err))
