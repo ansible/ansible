@@ -346,6 +346,7 @@ PARAMIKO_LOOK_FOR_KEYS         = get_config(p, 'paramiko_connection', 'look_for_
 PERSISTENT_CONNECT_TIMEOUT     = get_config(p, 'persistent_connection', 'connect_timeout', 'ANSIBLE_PERSISTENT_CONNECT_TIMEOUT', 30, value_type='integer')
 PERSISTENT_CONNECT_RETRIES     = get_config(p, 'persistent_connection', 'connect_retries', 'ANSIBLE_PERSISTENT_CONNECT_RETRIES', 10, value_type='integer')
 PERSISTENT_CONNECT_INTERVAL    = get_config(p, 'persistent_connection', 'connect_interval', 'ANSIBLE_PERSISTENT_CONNECT_INTERVAL', 1, value_type='integer')
+ANSIBLE_NSPAWN_ARGS            = get_config(p, 'nspawn_connection', 'nspawn_args', 'ANSIBLE_NSPAWN_ARGS', '-q')
 
 # obsolete -- will be formally removed
 ACCELERATE_PORT                = get_config(p, 'accelerate', 'accelerate_port', 'ACCELERATE_PORT', 5099, value_type='integer')
