@@ -47,7 +47,9 @@ class ActionModule(ActionBase):
         result.update(self._execute_module(module_name=self._task.action,
             module_args=self._task.args, task_vars=task_vars))
 
-        if self._task.args.get('backup'):
+        if self._task.args.get('backup') and result.get('_backup'):
+            # User requested backup and no error occurred in module.
+            # NOTE: If there is a parameter error, _backup key may not be in results.
             self._write_backup(task_vars['inventory_hostname'], result['_backup'])
 
         if '_backup' in result:
@@ -55,29 +57,32 @@ class ActionModule(ActionBase):
 
         return result
 
+    def _get_working_path(self):
+        cwd = self._loader.get_basedir()
+        if self._task._role is not None:
+            cwd = self._task._role._role_path
+        return cwd
+
     def _write_backup(self, host, contents):
-        if not os.path.exists('backup'):
-            os.mkdir('backup')
-        for fn in glob.glob('backup/%s*' % host):
+        backup_path = self._get_working_path() + '/backup'
+        if not os.path.exists(backup_path):
+            os.mkdir(backup_path)
+        for fn in glob.glob('%s/%s*' % (backup_path, host)):
             os.remove(fn)
         tstamp = time.strftime("%Y-%m-%d@%H:%M:%S", time.localtime(time.time()))
-        filename = 'backup/%s_config.%s' % (host, tstamp)
+        filename = '%s/%s_config.%s' % (backup_path, host, tstamp)
         open(filename, 'w').write(contents)
 
     def _handle_template(self):
         src = self._task.args.get('src')
+        working_path = self._get_working_path()
 
         if os.path.isabs(src) or urlparse.urlsplit('src').scheme:
             source = src
-
-        elif self._task._role is not None:
-            source = self._loader.path_dwim_relative(self._task._role._role_path, 'templates', src)
-            if not source:
-                source = self._loader.path_dwim_relative(self._task._role._role_path, src)
         else:
-            source = self._loader.path_dwim_relative(self._loader.get_basedir(), 'templates', src)
+            source = self._loader.path_dwim_relative(working_path, 'templates', src)
             if not source:
-                source = self._loader.path_dwim_relative(self._loader.get_basedir(), src)
+                source = self._loader.path_dwim_relative(working_path, src)
 
         if not os.path.exists(source):
             return
