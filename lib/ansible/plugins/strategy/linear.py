@@ -190,9 +190,6 @@ class StrategyModule(StrategyBase):
                     run_once = False
                     work_to_do = True
 
-                    if task.any_errors_fatal:
-                        any_errors_fatal = True
-
                     # test to see if the task across all hosts points to an action plugin which
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
@@ -230,7 +227,10 @@ class StrategyModule(StrategyBase):
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
 
-                        run_once = templar.template(task.run_once)
+                        run_once = templar.template(task.run_once) or getattr(action, 'BYPASS_HOST_LOOP', False)
+
+                        if task.any_errors_fatal or run_once:
+                            any_errors_fatal = True
 
                         if not callback_sent:
                             display.debug("sending task start callback, copying the task so we can template it temporarily")
@@ -254,7 +254,7 @@ class StrategyModule(StrategyBase):
                         self._queue_task(host, task, task_vars, play_context)
 
                     # if we're bypassing the host loop, break out now
-                    if run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
+                    if run_once:
                         break
 
                     results += self._process_pending_results(iterator, one_pass=True)
