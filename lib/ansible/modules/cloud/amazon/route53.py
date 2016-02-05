@@ -345,6 +345,21 @@ def commit(changes, retry_interval, wait, wait_timeout):
         raise TimeoutError()
     return result
 
+# Shamelessly copied over from https://git.io/vgmDG
+IGNORE_CODE = 'Throttling'
+MAX_RETRIES=5
+def invoke_with_throttling_retries(function_ref, *argv):
+    retries=0
+    while True:
+        try:
+            retval=function_ref(*argv)
+            return retval
+        except boto.exception.BotoServerError, e:
+            if e.code != IGNORE_CODE or retries==MAX_RETRIES:
+                raise e
+        time.sleep(5 * (2**retries))
+        retries += 1
+
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
@@ -530,7 +545,7 @@ def main():
         changes.add_change_record(command, wanted_rset)
 
     try:
-        result = commit(changes, retry_interval_in, wait_in, wait_timeout_in)
+        result = invoke_with_throttling_retries(commit, changes, retry_interval_in, wait_in, wait_timeout_in)
     except boto.route53.exception.DNSServerError, e:
         txt = e.body.split("<Message>")[1]
         txt = txt.split("</Message>")[0]
