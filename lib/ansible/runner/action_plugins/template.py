@@ -146,10 +146,14 @@ class ActionModule(object):
             module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
             if self.runner.noop_on_check(inject):
+                if self.runner.no_log:
+                    resultant = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))
             else:
                 res = self.runner._execute_module(conn, tmp, 'copy', module_args_tmp, inject=inject, complex_args=complex_args)
                 if res.result.get('changed', False):
+                    if self.runner.no_log:
+                        resultant = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
                     res.diff = dict(before=dest_contents, after=resultant)
                 return res
         else:

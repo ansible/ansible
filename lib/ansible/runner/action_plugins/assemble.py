@@ -136,6 +136,9 @@ class ActionModule(object):
             )
             module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
+            if self.runner.no_log:
+                resultant = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
+
             if self.runner.noop_on_check(inject):
                 return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=src, after=resultant))
             else:
