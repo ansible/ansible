@@ -166,7 +166,7 @@
 #  register: failed_copy
 
 - name: copy already copied directory again
-  copy: src=subdir dest={{output_subdir | expanduser}} owner={{ansible_ssh_user}}
+  copy: src=subdir dest={{output_subdir | expanduser}} owner={{ansible_ssh_user|default(omit)}}
   register: copy_result5
 
 - name: assert that the directory was not changed
