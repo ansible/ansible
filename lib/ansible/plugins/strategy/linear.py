@@ -199,7 +199,7 @@ class StrategyModule(StrategyBase):
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
-                        pass
+                        action = None
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
@@ -227,7 +227,7 @@ class StrategyModule(StrategyBase):
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
 
-                        run_once = templar.template(task.run_once) or getattr(action, 'BYPASS_HOST_LOOP', False)
+                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
 
                         if task.any_errors_fatal or run_once:
                             any_errors_fatal = True

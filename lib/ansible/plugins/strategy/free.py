@@ -23,7 +23,9 @@ import time
 
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
+from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
+from ansible.template import Templar
 
 try:
     from __main__ import display
@@ -92,9 +94,27 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host_name] = True
                         (state, task) = iterator.get_next_task_for_host(host)
 
+                        try:
+                            action = action_loader.get(task.action, class_only=True)
+                        except KeyError:
+                            # we don't care here, because the action may simply not have a
+                            # corresponding action plugin
+                            action = None
+
                         display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        self.add_tqm_variables(task_vars, play=iterator._play)
+                        templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
+
+                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                        if run_once:
+                            if action and getattr(action, 'BYPASS_HOST_LOOP', False):
+                                raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy " \
+                                                   "and would instead execute for every host in the inventory list." % task.action, obj=task._ds)
+                            else:
+                                display.warning("Using run_once with the free strategy is not currently supported. This task will still be " \
+                                                "executed for every host in the inventory list.")
 
                         # check to see if this task should be skipped, due to it being a member of a
                         # role which has already run (and whether that role allows duplicate execution)
