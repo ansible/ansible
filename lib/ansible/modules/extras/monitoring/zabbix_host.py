@@ -200,7 +200,9 @@ class Host(object):
         try:
             if self._module.check_mode:
                 self._module.exit_json(changed=True)
-            parameters = {'hostid': host_id, 'groups': group_ids, 'status': status, 'proxy_hostid': proxy_id}
+            parameters = {'hostid': host_id, 'groups': group_ids, 'status': status}
+            if proxy_id:
+                parameters['proxy_hostid'] = proxy_id
             self._zapi.host.update(parameters)
             interface_list_copy = exist_interface_list
             if interfaces:
@@ -424,15 +426,16 @@ def main():
             if interface['type'] == 1:
                 ip = interface['ip']
 
-    proxy_id = "0"
-
-    if proxy:
-        proxy_id = host.get_proxyid_by_proxy_name(proxy)
-
     # check if host exist
     is_host_exist = host.is_host_exist(host_name)
 
     if is_host_exist:
+        # Use proxy specified, or set to None when updating host
+        if proxy:
+            proxy_id = host.get_proxyid_by_proxy_name(proxy)
+        else:
+            proxy_id = None
+        
         # get host id by host name
         zabbix_host_obj = host.get_host_by_host_name(host_name)
         host_id = zabbix_host_obj['hostid']
@@ -477,6 +480,12 @@ def main():
                 else:
                     module.exit_json(changed=False)
     else:
+        # Use proxy specified, or set to 0 when adding new host
+        if proxy:
+            proxy_id = host.get_proxyid_by_proxy_name(proxy)
+        else:
+            proxy_id = 0
+
         if not group_ids:
             module.fail_json(msg="Specify at least one group for creating host '%s'." % host_name)
 
