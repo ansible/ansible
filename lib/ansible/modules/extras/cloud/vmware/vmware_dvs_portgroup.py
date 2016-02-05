@@ -81,91 +81,100 @@ except ImportError:
     HAS_PYVMOMI = False
 
 
-def create_port_group(dv_switch, portgroup_name, vlan_id, num_ports, portgroup_type):
-    config = vim.dvs.DistributedVirtualPortgroup.ConfigSpec()
+class VMwareDvsPortgroup(object):
+    def __init__(self, module):
+        self.module = module
+        self.dvs_portgroup = None
+        self.switch_name = self.module.params['switch_name']
+        self.portgroup_name = self.module.params['portgroup_name']
+        self.vlan_id = self.module.params['vlan_id']
+        self.num_ports = self.module.params['num_ports']
+        self.portgroup_type = self.module.params['portgroup_type']
+        self.dv_switch = None
+        self.state = self.module.params['state']
+        self.content = connect_to_api(module)
+        
+    def process_state(self):
+        try:
+            dvspg_states = {
+                'absent': {
+                    'present': self.state_destroy_dvspg,
+                    'absent': self.state_exit_unchanged,
+                },
+                'present': {
+                    'update': self.state_update_dvspg,
+                    'present': self.state_exit_unchanged,
+                    'absent': self.state_create_dvspg,
+                }
+            }
+            dvspg_states[self.state][self.check_dvspg_state()]()
+        except vmodl.RuntimeFault as runtime_fault:
+            self.module.fail_json(msg=runtime_fault.msg)
+        except vmodl.MethodFault as method_fault:
+            self.module.fail_json(msg=method_fault.msg)
+        except Exception as e:
+            self.module.fail_json(msg=str(e))
 
-    config.name = portgroup_name
-    config.numPorts = num_ports
+    def create_port_group(self):
+        config = vim.dvs.DistributedVirtualPortgroup.ConfigSpec()
 
-    # vim.VMwareDVSPortSetting() does not exist in the pyvmomi documentation
-    # but this is the correct managed object type.
+        config.name = self.portgroup_name
+        config.numPorts = self.num_ports
 
-    config.defaultPortConfig = vim.VMwareDVSPortSetting()
+        # vim.VMwareDVSPortSetting() does not exist in the pyvmomi documentation
+        # but this is the correct managed object type.
 
-    # vim.VmwareDistributedVirtualSwitchVlanIdSpec() does not exist in the
-    # pyvmomi documentation but this is the correct managed object type
-    config.defaultPortConfig.vlan = vim.VmwareDistributedVirtualSwitchVlanIdSpec()
-    config.defaultPortConfig.vlan.inherited = False
-    config.defaultPortConfig.vlan.vlanId = vlan_id
-    config.type = portgroup_type
+        config.defaultPortConfig = vim.VMwareDVSPortSetting()
 
-    spec = [config]
-    task = dv_switch.AddDVPortgroup_Task(spec)
-    changed, result = wait_for_task(task)
-    return changed, result
+        # vim.VmwareDistributedVirtualSwitchVlanIdSpec() does not exist in the
+        # pyvmomi documentation but this is the correct managed object type
+        config.defaultPortConfig.vlan = vim.VmwareDistributedVirtualSwitchVlanIdSpec()
+        config.defaultPortConfig.vlan.inherited = False
+        config.defaultPortConfig.vlan.vlanId = self.vlan_id
+        config.type = self.portgroup_type
 
-
-def state_destroy_dvspg(module):
-    dvs_portgroup = module.params['dvs_portgroup']
-    changed = True
-    result = None
-
-    if not module.check_mode:
-        task = dvs_portgroup.Destroy_Task()
+        spec = [config]
+        task = self.dv_switch.AddDVPortgroup_Task(spec)
         changed, result = wait_for_task(task)
-    module.exit_json(changed=changed, result=str(result))
+        return changed, result
 
+    def state_destroy_dvspg(self):
+        changed = True
+        result = None
 
-def state_exit_unchanged(module):
-    module.exit_json(changed=False)
+        if not self.module.check_mode:
+            task = dvs_portgroup.Destroy_Task()
+            changed, result = wait_for_task(task)
+        self.module.exit_json(changed=changed, result=str(result))
 
+    def state_exit_unchanged(self):
+        self.module.exit_json(changed=False)
 
-def state_update_dvspg(module):
-    module.exit_json(changed=False, msg="Currently not implemented.")
-    return
+    def state_update_dvspg(self):
+        self.module.exit_json(changed=False, msg="Currently not implemented.")
 
+    def state_create_dvspg(self):
+        changed = True
+        result = None
 
-def state_create_dvspg(module):
+        if not self.module.check_mode:
+            changed, result = self.create_port_group()
+        self.module.exit_json(changed=changed, result=str(result))
 
-    switch_name = module.params['switch_name']
-    portgroup_name = module.params['portgroup_name']
-    dv_switch = module.params['dv_switch']
-    vlan_id = module.params['vlan_id']
-    num_ports = module.params['num_ports']
-    portgroup_type = module.params['portgroup_type']
-    changed = True
-    result = None
+    def check_dvspg_state(self):
+        self.dv_switch = find_dvs_by_name(self.content, self.switch_name)
 
-    if not module.check_mode:
-        changed, result = create_port_group(dv_switch, portgroup_name, vlan_id, num_ports, portgroup_type)
-    module.exit_json(changed=changed, result=str(result))
+        if self.dv_switch is None:
+            raise Exception("A distributed virtual switch with name %s does not exist" % self.switch_name)
+        self.dvs_portgroup = find_dvspg_by_name(self.dv_switch, self.portgroup_name)
 
-
-def check_dvspg_state(module):
-
-    switch_name = module.params['switch_name']
-    portgroup_name = module.params['portgroup_name']
-
-    content = connect_to_api(module)
-    module.params['content'] = content
-
-    dv_switch = find_dvs_by_name(content, switch_name)
-
-    if dv_switch is None:
-        raise Exception("A distributed virtual switch with name %s does not exist" % switch_name)
-
-    module.params['dv_switch'] = dv_switch
-    dvs_portgroup = find_dvspg_by_name(dv_switch, portgroup_name)
-
-    if dvs_portgroup is None:
-        return 'absent'
-    else:
-        module.params['dvs_portgroup'] = dvs_portgroup
-        return 'present'
+        if self.dvs_portgroup is None:
+            return 'absent'
+        else:
+            return 'present'
 
 
 def main():
-
     argument_spec = vmware_argument_spec()
     argument_spec.update(dict(portgroup_name=dict(required=True, type='str'),
                          switch_name=dict(required=True, type='str'),
@@ -179,25 +188,8 @@ def main():
     if not HAS_PYVMOMI:
         module.fail_json(msg='pyvmomi is required for this module')
 
-    try:
-        dvspg_states = {
-            'absent': {
-                'present': state_destroy_dvspg,
-                'absent': state_exit_unchanged,
-            },
-            'present': {
-                'update': state_update_dvspg,
-                'present': state_exit_unchanged,
-                'absent': state_create_dvspg,
-            }
-        }
-        dvspg_states[module.params['state']][check_dvspg_state(module)](module)
-    except vmodl.RuntimeFault as runtime_fault:
-        module.fail_json(msg=runtime_fault.msg)
-    except vmodl.MethodFault as method_fault:
-        module.fail_json(msg=method_fault.msg)
-    except Exception as e:
-        module.fail_json(msg=str(e))
+    vmware_dvs_portgroup = VMwareDvsPortgroup(module)
+    vmware_dvs_portgroup.process_state()
 
 from ansible.module_utils.vmware import *
 from ansible.module_utils.basic import *
