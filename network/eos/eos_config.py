@@ -1,0 +1,279 @@
+#!/usr/bin/python
+#
+# This file is part of Ansible
+#
+# Ansible is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ansible is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
+#
+DOCUMENTATION = """
+---
+module: eos_config
+version_added: "2.1"
+author: "Peter sprygada (@privateip)"
+short_description: Manage Arista EOS configuration sections
+description:
+  - Arista EOS configurations use a simple block indent file sytanx
+    for segementing configuration into sections.  This module provides
+    an implementation for working with eos configuration sections in
+    a deterministic way.  This module works with either CLI or eapi
+    transports.
+extends_documentation_fragment: eos
+options:
+  lines:
+    description:
+      - The ordered set of commands that should be configured in the
+        section.  The commands must be the exact same commands as found
+        in the device running-config.  Be sure to note the configuration
+        command syntanx as some commands are automatically modified by the
+        device config parser.
+    required: true
+  parents:
+    description:
+      - The ordered set of parents that uniquely identify the section
+        the commands should be checked against.  If the parents argument
+        is omitted, the commands are checked against the set of top
+        level or global commands.
+    required: false
+    default: null
+  before:
+    description:
+      - The ordered set of commands to push on to the command stack if
+        a change needs to be made.  This allows the playbook designer
+        the opportunity to perform configuration commands prior to pushing
+        any changes without affecting how the set of commands are matched
+        against the system
+    required: false
+    default: null
+  after:
+    description:
+      - The ordered set of commands to append to the end of the command
+        stack if a changed needs to be made.  Just like with I(before) this
+        allows the playbook designer to append a set of commands to be
+        executed after the command set.
+    required: false
+    default: null
+  match:
+    description:
+      - Instructs the module on the way to perform the matching of
+        the set of commands against the current device config.  If
+        match is set to I(line), commands are matched line by line.  If
+        match is set to I(strict), command lines are matched with respect
+        to position.  Finally if match is set to I(exact), command lines
+        must be an equal match.
+    required: false
+    default: line
+    choices: ['line', 'strict', 'exact']
+  replace:
+    description:
+      - Instructs the module on the way to perform the configuration
+        on the device.  If the replace argument is set to I(line) then
+        the modified lines are pushed to the device in configuration
+        mode.  If the replace argument is set to I(block) then the entire
+        command block is pushed to the device in configuration mode if any
+        line is not correct
+    required: false
+    default: line
+    choices: ['line', 'block']
+  force:
+    description:
+      - The force argument instructs the module to not consider the
+        current devices running-config.  When set to true, this will
+        cause the module to push the contents of I(src) into the device
+        without first checking if already configured.
+    required: false
+    default: false
+    choices: BOOLEANS
+  config:
+    description:
+      - The module, by default, will connect to the remote device and
+        retrieve the current running-config to use as a base for comparing
+        against the contents of source.  There are times when it is not
+        desirable to have the task get the current running-config for
+        every task in a playbook.  The I(config) argument allows the
+        implementer to pass in the configuruation to use as the base
+        config for comparision.
+    required: false
+    default: null
+"""
+
+EXAMPLES = """
+- eos_config:
+    lines: ['hostname {{ inventory_hostname }}']
+    force: yes
+
+- eos_config:
+    lines:
+      - 10 permit ip 1.1.1.1/32 any log
+      - 20 permit ip 2.2.2.2/32 any log
+      - 30 permit ip 3.3.3.3/32 any log
+      - 40 permit ip 4.4.4.4/32 any log
+      - 50 permit ip 5.5.5.5/32 any log
+    parents: ['ip access-list test']
+    before: ['no ip access-list test']
+    match: exact
+
+- eos_config:
+    lines:
+      - 10 permit ip 1.1.1.1/32 any log
+      - 20 permit ip 2.2.2.2/32 any log
+      - 30 permit ip 3.3.3.3/32 any log
+      - 40 permit ip 4.4.4.4/32 any log
+    parents: ['ip access-list test']
+    before: ['no ip access-list test']
+    replace: block
+
+- eos_config:
+    commands: "{{lookup('file', 'datcenter1.txt'}}"
+    parents: ['ip access-list test']
+    before: ['no ip access-list test']
+    replace: block
+
+"""
+
+RETURN = """
+
+lines:
+  description: The set of commands that will be pushed to the remote device
+  returned: always
+  type: list
+  sample: ['...', '...']
+
+response:
+  description: The set of responses from issuing the commands on the device
+  retured: always
+  type: list
+  sample: ['...', '...']
+
+"""
+import re
+import itertools
+
+def get_config(module):
+    config = module.params['config'] or dict()
+    if not config and not module.params['force']:
+        config = module.config
+    return config
+
+def build_candidate(lines, parents, config, strategy):
+    candidate = list()
+
+    if strategy == 'strict':
+        if len(lines) != len(config):
+            candidate = list(lines)
+        else:
+            for index, cmd in enumerate(lines):
+                try:
+                    if cmd != config[index]:
+                        candidate.append(cmd)
+                except IndexError:
+                    candidate.append(cmd)
+
+    elif strategy == 'exact':
+        if len(lines) != len(config):
+            candidate = list(lines)
+        else:
+            for cmd, cfg in itertools.izip(lines, config):
+                if cmd != cfg:
+                    candidate = list(lines)
+                    break
+
+    else:
+        for cmd in lines:
+            if cmd not in config:
+                candidate.append(cmd)
+
+    return candidate
+
+
+def main():
+    """ main entry point for module execution
+    """
+
+    argument_spec = dict(
+        lines=dict(aliases=['commands'], required=True, type='list'),
+        parents=dict(type='list'),
+        before=dict(type='list'),
+        after=dict(type='list'),
+        match=dict(default='line', choices=['line', 'strict', 'exact']),
+        replace=dict(default='line', choices=['line', 'block']),
+        force=dict(default=False, type='bool'),
+        config=dict()
+    )
+
+    module = get_module(argument_spec=argument_spec,
+                        mutually_exclusive=mutually_exclusive,
+                        supports_check_mode=True)
+
+    lines = module.params['lines']
+    parents = module.params['parents'] or list()
+
+    result = dict(changed=False)
+
+    match = module.params['match']
+    replace = module.params['replace']
+
+    contents = get_config(module)
+    config = module.parse_config(contents)
+
+    if parents:
+        for parent in parents:
+            for item in config:
+                if item.text == parent:
+                    config = item
+
+        try:
+            children = [c.text for c in config.children]
+        except AttributeError:
+            children = [c.text for c in config]
+
+    else:
+        children = [c.text for c in config if not c.parents]
+
+    result = dict(changed=False)
+
+    candidate = build_candidate(lines, parents, children, match)
+
+    if candidate:
+        if replace == 'line':
+            candidate[:0] = parents
+        else:
+            candidate = list(parents)
+            candidate.extend(lines)
+
+        if not line.parents:
+            if line.text not in toplevel:
+                expand(line, commands)
+        else:
+            item = compare(line, config, ignore_missing)
+            if item:
+                expand(item, commands)
+
+    commands = flatten(commands, list())
+
+    if commands:
+        if not module.check_mode:
+            response = module.configure(candidate)
+            result['response'] = response
+        result['changed'] = True
+
+    result['lines'] = candidate
+    return module.exit_json(**result)
+
+from ansible.module_utils.basic import *
+from ansible.module_utils.urls import *
+from ansible.module_utils.shell import *
+from ansible.module_utils.netcfg import *
+from ansible.module_utils.eos import *
+if __name__ == '__main__':
+    main()
+
