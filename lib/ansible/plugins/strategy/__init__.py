@@ -489,7 +489,7 @@ class StrategyBase:
             # error so that users know not to specify them both ways
             tags = temp_vars.pop('tags', [])
             if isinstance(tags, string_types):
-                tags = [ tags ]
+                tags = tags.split(',')
             if len(tags) > 0:
                 if len(b._task_include.tags) > 0:
                     raise AnsibleParserError("Include tasks should not specify tags in more than one way (both via args and directly on the task). Mixing tag specify styles is prohibited for whole import hierarchy, not only for single import statement",
