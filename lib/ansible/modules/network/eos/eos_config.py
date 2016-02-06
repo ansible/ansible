@@ -211,7 +211,6 @@ def main():
     )
 
     module = get_module(argument_spec=argument_spec,
-                        mutually_exclusive=mutually_exclusive,
                         supports_check_mode=True)
 
     lines = module.params['lines']
