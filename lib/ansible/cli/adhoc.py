@@ -21,6 +21,7 @@ __metaclass__ = type
 ########################################################
 
 import os
+import signal
 
 from ansible import constants as C
 from ansible.cli import CLI
@@ -87,6 +88,10 @@ class AdHocCLI(CLI):
             gather_facts = 'no',
             tasks = [ dict(action=dict(module=self.options.module_name, args=parse_kv(self.options.module_args)), async=async, poll=poll) ]
         )
+
+    def _terminate(self, signum=None, framenum=None):
+        if signum is not None:
+            raise SystemExit("Interrupt detected, shutting down gracefully")
 
     def run(self):
         ''' use Runner lib to do SSH things '''
@@ -170,6 +175,9 @@ class AdHocCLI(CLI):
         # now create a task queue manager to execute the play
         self._tqm = None
         try:
+            # Manage user interruptions
+            signal.signal(signal.SIGTERM, self._terminate)
+
             self._tqm = TaskQueueManager(
                     inventory=inventory,
                     variable_manager=variable_manager,
@@ -180,6 +188,7 @@ class AdHocCLI(CLI):
                     run_additional_callbacks=C.DEFAULT_LOAD_CALLBACK_PLUGINS,
                     run_tree=run_tree,
                 )
+
             result = self._tqm.run(play)
         finally:
             if self._tqm:
