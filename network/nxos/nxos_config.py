@@ -74,7 +74,7 @@ options:
     required: false
     default: line
     choices: ['line', 'strict', 'exact']
-  replace
+  replace:
     description:
       - Instructs the module on the way to perform the configuration
         on the device.  If the replace argument is set to I(line) then
