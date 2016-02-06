@@ -122,7 +122,7 @@ def get_subnet_info(subnet):
 def subnet_exists(vpc_conn, subnet_id):
     filters = {'subnet-id': subnet_id}
     subnet = vpc_conn.get_all_subnets(filters=filters)
-    if subnet[0].state == "available":
+    if subnet and subnet[0].state == "available":
         return subnet[0]
     else:
         return False
