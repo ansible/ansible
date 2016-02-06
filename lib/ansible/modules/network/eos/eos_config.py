@@ -216,7 +216,8 @@ def main():
     lines = module.params['lines']
     parents = module.params['parents'] or list()
 
-    result = dict(changed=False)
+    before = module.params['before']
+    after = module.params['after']
 
     match = module.params['match']
     replace = module.params['replace']
@@ -249,17 +250,12 @@ def main():
             candidate = list(parents)
             candidate.extend(lines)
 
-        if not line.parents:
-            if line.text not in toplevel:
-                expand(line, commands)
-        else:
-            item = compare(line, config, ignore_missing)
-            if item:
-                expand(item, commands)
+        if before:
+            candidate[:0] = before
 
-    commands = flatten(commands, list())
+        if after:
+            candidate.extend(after)
 
-    if commands:
         if not module.check_mode:
             response = module.configure(candidate)
             result['response'] = response
