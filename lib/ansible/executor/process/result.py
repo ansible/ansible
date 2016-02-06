@@ -163,7 +163,7 @@ class ResultProcess(multiprocessing.Process):
 
             except queue.Empty:
                 pass
-            except (KeyboardInterrupt, IOError, EOFError):
+            except (KeyboardInterrupt, SystemExit, IOError, EOFError):
                 break
             except:
                 # TODO: we should probably send a proper callback here instead of
