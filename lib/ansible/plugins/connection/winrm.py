@@ -213,6 +213,11 @@ class Connection(ConnectionBase):
             self._connected = True
         return self
 
+    def _reset(self): # used by win_reboot (and any other action that might need to bounce the state)
+        self.protocol = None
+        self.shell_id = None
+        self._connect()
+
     def exec_command(self, cmd, in_data=None, sudoable=True):
         super(Connection, self).exec_command(cmd, in_data=in_data, sudoable=sudoable)
         cmd_parts = shlex.split(to_bytes(cmd), posix=False)
