@@ -132,7 +132,7 @@ class WorkerProcess(multiprocessing.Process):
             self._rslt_q.put(task_result, block=False)
 
         except Exception as e:
-            if not isinstance(e, (IOError, EOFError, KeyboardInterrupt)) or isinstance(e, TemplateNotFound):
+            if not isinstance(e, (IOError, EOFError, KeyboardInterrupt, SystemExit)) or isinstance(e, TemplateNotFound):
                 try:
                     self._host.vars = dict()
                     self._host.groups = []
@@ -140,7 +140,7 @@ class WorkerProcess(multiprocessing.Process):
                     self._rslt_q.put(task_result, block=False)
                 except:
                     debug(u"WORKER EXCEPTION: %s" % to_unicode(e))
-                    debug(u"WORKER EXCEPTION: %s" % to_unicode(traceback.format_exc()))
+                    debug(u"WORKER TRACEBACK: %s" % to_unicode(traceback.format_exc()))
 
         debug("WORKER PROCESS EXITING")
 
