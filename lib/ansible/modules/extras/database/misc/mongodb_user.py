@@ -166,7 +166,7 @@ def user_find(client, user):
     return False
 
 def user_add(module, client, db_name, user, password, roles):
-    #pymono's user_add is a _create_or_update_user so we won't know if it was changed or updated
+    #pymongo's user_add is a _create_or_update_user so we won't know if it was changed or updated
     #without reproducing a lot of the logic in database.py of pymongo
     db = client[db_name]
     if roles is None:
