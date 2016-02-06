@@ -253,7 +253,10 @@ class TaskQueueManager:
                 rslt_q.close()
                 main_q.close()
                 if worker_prc and worker_prc.is_alive():
-                    worker_prc.terminate()
+                    try:
+                        worker_prc.terminate()
+                    except AttributeError:
+                        pass
 
     def clear_failed_hosts(self):
         self._failed_hosts = dict()
