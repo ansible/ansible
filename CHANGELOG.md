@@ -22,6 +22,7 @@ Other Notable Changes:
   when the proxy fails to forward server certificates.
 * Fixed bug where tasks marked no_log were showing hidden values in output if
   ansible's --diff option was used.
+* Fix bug with non-english locales in git module
 
 ## 1.9.4 "Dancing In the Street" - Oct 10, 2015
 
