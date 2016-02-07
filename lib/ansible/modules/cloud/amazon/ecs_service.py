@@ -24,7 +24,7 @@ DOCUMENTATION = '''
 module: ecs_service
 short_description: create, terminate, start or stop a service in ecs
 description:
-  - Creates or terminates ecs services.
+  - Creates, updates or terminates ecs services.
 notes:
   - the service role specified must be assumable (i.e. have a trust relationship for the ecs service, ecs.amazonaws.com)
   - for details of the parameters and returns see U(https://boto3.readthedocs.io/en/latest/reference/services/ecs.html)
@@ -35,6 +35,7 @@ author:
     - "Darek Kaczynski (@kaczynskid)"
     - "Stephane Maarek (@simplesteph)"
     - "Zac Blazic (@zacblazic)"
+    - "Nikhil Owalekar (@nikhilo)"
 
 requirements: [ json, botocore, boto3 ]
 options:
@@ -42,7 +43,7 @@ options:
         description:
           - The desired state of the service
         required: true
-        choices: ["present", "absent", "deleting"]
+        choices: ["present", "absent", "deleting", "deployed"]
     name:
         description:
           - The name of the service
@@ -205,6 +206,14 @@ EXAMPLES = '''
     placement_strategy:
       - type: binpack
         field: memory
+    state: present
+
+# Checking whether service is deployed
+- ecs_service:
+    state: deployed
+    name: console-test-service
+    cluster: new_cluster
+    task_definition: new_cluster-task:2"
 '''
 
 RETURN = '''
@@ -501,7 +510,7 @@ class EcsServiceManager:
 def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
-        state=dict(required=True, choices=['present', 'absent', 'deleting']),
+        state=dict(required=True, choices=['present', 'absent', 'deleting', 'deployed']),
         name=dict(required=True, type='str'),
         cluster=dict(required=False, type='str'),
         task_definition=dict(required=False, type='str'),
@@ -691,6 +700,34 @@ def main():
         if i is repeat - 1:
             module.fail_json(msg="Service still not deleted after " + str(repeat) + " tries of " + str(delay) + " seconds each.")
             return
+
+    elif module.params['state'] == 'deployed':
+        if not existing:
+            module.fail_json(msg="Service '"+module.params['name']+" not found.")
+        # it exists, so we should check if desiredCount and runningCount of the PRIMARY deployment matches
+        # in case of successful deploy, return info about the cluster deployed
+        # in case if deploy is failed, return the message from latest event
+        delay = module.params['delay']
+        repeat = module.params['repeat']
+        successful = False
+        if not module.check_mode:
+            for i in range(repeat):
+                existing = service_mgr.describe_service(module.params['cluster'], module.params['name'])
+                status = existing['status']
+                for deployment in existing['deployments']:
+                    if deployment['status'] == 'PRIMARY':
+                        desired_count = deployment['desiredCount']
+                        running_count = deployment['runningCount']
+                        break
+                if status == "ACTIVE" and desired_count == running_count:
+                    results['service'] = service_mgr.jsonize(existing)
+                    successful = True
+                    break
+                time.sleep(delay)
+            if not successful:
+                module.fail_json(
+                    msg="Service still not deployed after " + str(repeat) + " tries of " + str(delay) +
+                    " seconds each. Failure message: "+existing['events'][0]['message'])
 
     module.exit_json(**results)
 
