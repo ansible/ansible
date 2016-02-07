@@ -505,7 +505,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             replacement strategy (python3 could use surrogateescape)
         '''
 
-        if executable is not None:
+        if executable is not None and self._connection.allow_executable:
             cmd = executable + ' -c ' + pipes.quote(cmd)
 
         display.debug("_low_level_execute_command(): starting")
@@ -614,5 +614,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 display.debug("source of file passed in")
                 diff['after_header'] = 'dynamically generated'
                 diff['after'] = source
+
+        if self._play_context.no_log and 'after' in diff:
+            diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
 
         return diff

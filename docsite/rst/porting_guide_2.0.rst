@@ -71,7 +71,7 @@ uses key=value escaping which has not changed.  The other option is to check for
       tasks:
         - file:
           args: "{{item}}" # <- args here uses the full variable syntax
-          with_items: my_dirs
+          with_items: "{{my_dirs}}"
 
 * porting task includes
 * More dynamic. Corner-case formats that were not supposed to work now do not, as expected.
@@ -126,12 +126,12 @@ While all items listed here will show a deprecation warning message, they still 
 Should now be::
 
     - include: foo.yml
-      args:
+      vars:
         a: 1
 
 * Setting any_errors_fatal on a task is no longer supported. This should be set at the play level only.
 * Bare variables in the `environment` dictionary (for plays/tasks/etc.) are no longer supported. Variables specified there should use the full variable syntax: ‘{{foo}}’.
-* Tags should no longer be specified with other parameters in a task include. Instead, they should be specified as an option on the task.
+* Tags (or any directive) should no longer be specified with other parameters in a task include. Instead, they should be specified as an option on the task.
   For example::
 
     - include: foo.yml tags=a,b,c
@@ -143,6 +143,58 @@ Should now be::
 
 * The first_available_file option on tasks has been deprecated. Users should use the with_first_found option or lookup (‘first_found’, …) plugin.
 
+
+Other caveats
+-------------
+
+Here are some corner cases encountered when updating, these are mostly caused by the more stringent parser validation and the capture of errors that were previouslly ignored.
+
+* Bad variable composition::
+
+    with_items: myvar_{{rest_of_name}}
+
+  This worked 'by accident' as the errors were retemplated and ended up resolving the variable, it was never intended as valid syntax and now properly returns an error, use the following instead.::
+
+    with_items: "{{vars['myvar_' + res_of_name]}}"
+
+  Or `hostvars[inventory_hostname]['myvar_' + rest_of_name]` if appropriate.
+
+* Misspelled directives::
+
+    - task: dostuf
+      becom: yes
+  The task always ran without using privilege escalation (for that you need `become`) but was also silently ignored so the play 'ran' even though it should not, now this is a parsing error.
+
+
+* Duplicate directives::
+
+    - task: dostuf
+      when: True
+      when: False
+
+  The first `when` was ignored and only the 2nd one was used as the play ran w/o warning it was ignoring one of the directives, now this produces a parsing error.
+
+* Conflating variables and directives::
+
+    - role: {name=rosy, port=435 }
+
+    # in tasks/main.yml
+    - wait_for: port={{port}}
+
+  The `port` variable is reserved as a play/task directive for overriding the connection port, in previous versions this got conflated with a variable named `port` and was usable
+  later in the play, this created issues if a host tried to reconnect or was using a non caching connection. Now it will be correctly identified as a directive and the `port` variable
+  will appear as undefined, this now forces the use of non conflicting names and removes ambiguity when adding settings and varaibles to a role invocation..
+
+* Bare operations on `with_`::
+
+    with_items: var1 + var2
+
+  An issue with the 'bare variable' features, which was supposed only tempate a single variable without the need of braces ({{ )}}, would in some versions of Ansible template full expressions.
+  Now you need to use proper templating and braces for all expressions everywhere except condtionals (`when`)::
+
+    with_items: "{{var1 + var2}}"
+
+  The bare feature itself is deprecated as an undefined variable is indistiguishable from a string which makes it difficult to display a proper error.
 
 Porting plugins
 ===============
@@ -207,3 +259,4 @@ Porting custom scripts
 
 Custom scripts that used the ``ansible.runner.Runner`` API in 1.x have to be ported in 2.x.  Please refer to:
 https://github.com/ansible/ansible/blob/devel/docsite/rst/developing_api.rst
+

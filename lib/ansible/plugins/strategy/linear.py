@@ -54,8 +54,7 @@ class StrategyModule(StrategyBase):
         host_tasks = {}
         display.debug("building list of next tasks for hosts")
         for host in hosts:
-            if not iterator.is_failed(host):
-                host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
+            host_tasks[host.name] = iterator.get_next_task_for_host(host, peek=True)
         display.debug("done building task lists")
 
         num_setups = 0
@@ -191,9 +190,6 @@ class StrategyModule(StrategyBase):
                     run_once = False
                     work_to_do = True
 
-                    if task.any_errors_fatal:
-                        any_errors_fatal = True
-
                     # test to see if the task across all hosts points to an action plugin which
                     # sets BYPASS_HOST_LOOP to true, or if it has run_once enabled. If so, we
                     # will only send this task to the first host in the list.
@@ -203,7 +199,7 @@ class StrategyModule(StrategyBase):
                     except KeyError:
                         # we don't care here, because the action may simply not have a
                         # corresponding action plugin
-                        pass
+                        action = None
 
                     # check to see if this task should be skipped, due to it being a member of a
                     # role which has already run (and whether that role allows duplicate execution)
@@ -231,7 +227,10 @@ class StrategyModule(StrategyBase):
                         templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
 
-                        run_once = templar.template(task.run_once)
+                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+
+                        if task.any_errors_fatal or run_once:
+                            any_errors_fatal = True
 
                         if not callback_sent:
                             display.debug("sending task start callback, copying the task so we can template it temporarily")
@@ -255,7 +254,7 @@ class StrategyModule(StrategyBase):
                         self._queue_task(host, task, task_vars, play_context)
 
                     # if we're bypassing the host loop, break out now
-                    if run_once or getattr(action, 'BYPASS_HOST_LOOP', False):
+                    if run_once:
                         break
 
                     results += self._process_pending_results(iterator, one_pass=True)

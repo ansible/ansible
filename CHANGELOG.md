@@ -8,8 +8,11 @@ Ansible Changes By Release
 * added facility for modules to send back 'diff' for display when ansible is called with --diff, file, puppet and other module already implement this
 
 ####New Modules:
+* aws: ec2_vol_facts
+* aws: ec2_vpc_dhcp_options.py
 * aws: ec2_vpc_net_facts
 * cloudstack: cs_volume
+* yumrepo
 
 ####New Filters:
 * extract

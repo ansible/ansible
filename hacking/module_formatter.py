@@ -38,6 +38,7 @@ from six import iteritems
 
 from ansible.utils import module_docs
 from ansible.utils.vars import merge_hash
+from ansible.utils.unicode import to_bytes
 from ansible.errors import AnsibleError
 
 #####################################################################################
@@ -343,7 +344,7 @@ def print_modules(module, category_file, deprecated, core, options, env, templat
     result = process_module(modname, options, env, template, outputname, module_map, aliases)
 
     if result != "SKIPPED":
-        category_file.write("  %s - %s <%s_module>\n" % (modstring, rst_ify(result), module))
+        category_file.write("  %s - %s <%s_module>\n" % (to_bytes(modstring), to_bytes(rst_ify(result)), to_bytes(module)))
 
 def process_category(category, categories, options, env, template, outputname):
 

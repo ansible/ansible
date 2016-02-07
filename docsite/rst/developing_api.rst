@@ -3,6 +3,13 @@ Python API
 
 .. contents:: Topics
 
+Please note that while we make this API available it is not intended for direct consumption, it is here
+for the support of the Ansible command line tools. We try not to make breaking changes but we reserve the
+right to do so at any time if it makes sense for the Ansible toolset.
+
+
+The following documentation is provided for those that still want to use the API directly, but be mindful this is not something the Ansible team supports.
+
 There are several interesting ways to use Ansible from an API perspective.   You can use
 the Ansible python API to control nodes, you can extend Ansible to respond to various python events, you can
 write various plugins, and you can plug in inventory data from external data sources.  This document
@@ -20,7 +27,7 @@ This chapter discusses the Python API.
 The Python API is very powerful, and is how the all the ansible CLI tools are implemented.
 In version 2.0 the core ansible got rewritten and the API was mostly rewritten.
 
-:.. note:: Ansible relies on forking processes, as such the API is not thread safe.
+.. note:: Ansible relies on forking processes, as such the API is not thread safe.
 
 .. _python_api_20:
 
