@@ -114,6 +114,59 @@ And you want to print every user's name and phone number.  You can loop through 
           msg: "User {{ item.key }} is {{ item.value.name }} ({{ item.value.telephone }})"
         with_dict: "{{ users }}"
 
+.. _nested_hashes:
+
+Nested Hashes
+`````````````
+
+.. versionadded:: 2.0
+
+Working with nested hashes is also possible. Suppose you have holidays, nested by year and then month and then day::
+
+    ---
+    holidays_by_year_month_day:
+      2016:
+        January:
+          1: New Years Day
+          19: Martin Luther King Day
+        February:
+          14: Valentines Day
+          16: Presidents Day
+        #...
+      #...
+
+You can print every holiday in a given month using ``with_nested_dict`` like this::
+
+    - debug:
+        msg:              "Remember {{value}} on {{key_1}} {{'%02d'|format(key_2)}}, {{key_0}}"
+      when:               key_1 == current_month
+      with_nested_dict:   holidays_by_year_month_day
+
+This lookup flattens nested hashes, with each flattened key denoted by its nesting level. The above would be the equivalent of::
+
+    ---
+    -
+      key_0: 2016
+      key_1: January
+      key_2: 1
+      value: New Years Day
+    -
+      key_0: 2016
+      key_1: January
+      key_2: 19
+      value: Martin Luther King Day
+    -
+      key_0: 2016
+      key_1: February
+      key_2: 14
+      value: Valentines Day
+    -
+      key_0: 2016
+      key_1: February
+      key_2: 16
+      value: Presidents Day
+    #...
+
 .. _looping_over_fileglobs:
 
 Looping over Files
