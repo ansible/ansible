@@ -64,6 +64,41 @@ class InventoryParser(object):
     def _raise_error(self, message):
         raise AnsibleError("%s:%d: " % (self.filename, self.lineno) + message)
 
+    def _extendlines(self, lines):
+        '''Iterate over the physical lines in a file and return
+        logical lines by permitting lines to be extended as in
+        https://docs.python.org/3/library/configparser.html#supported-ini-file-structure'''
+
+        acc = []
+
+        for line in lines:
+            self.lineno += 1
+
+            if self.patterns['extend'].match(line):
+                if not acc:
+                    self._raise_error('Found unexpected indent')
+
+                acc.append(line.strip())
+            else:
+                if acc:
+                    yield ' '.join(acc)
+                    acc = []
+
+                # skip comments and blank lines
+                if not line or line.startswith(';') or line.startswith('#'):
+                    continue
+
+                # return anything that looks like a section heading
+                # verbatim.
+                if line.startswith('['):
+                    yield line
+
+                acc.append(line)
+
+        # Dump anything left over in the accumulator.
+        if acc:
+            yield ' '.join(acc)
+
     def _parse(self, lines):
         '''
         Populates self.groups from the given array of lines. Raises an error on
@@ -82,15 +117,7 @@ class InventoryParser(object):
         state = 'hosts'
 
         self.lineno = 0
-        for line in lines:
-            self.lineno += 1
-
-            line = line.strip()
-
-            # Skip empty lines and comments
-            if line == '' or line.startswith(";") or line.startswith("#"):
-                continue
-
+        for line in self._extendlines(lines):
             # Is this a [section] header? That tells us what group we're parsing
             # definitions for, and what kind of definitions to expect.
 
@@ -125,7 +152,7 @@ class InventoryParser(object):
 
                 continue
             elif line.startswith('['):
-                self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces" % line + \
+                self._raise_error("Invalid section entry: '%s'. Please make sure that there are no spaces " % line + \
                                   "in the section entry, and that there are no other invalid characters")
 
             # It's not a section, so the current state tells us what kind of
@@ -363,4 +390,8 @@ class InventoryParser(object):
                 (?:\#.*)?                   # and/or a comment till the
                 $                           # end of the line
             ''', re.X
+        )
+
+        self.patterns['extend'] = re.compile(
+            r'''^\s+'''
         )

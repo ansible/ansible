@@ -189,8 +189,10 @@ class TestVariableManager(unittest.TestCase):
         v._fact_cache = defaultdict(dict)
 
         fake_loader = DictDataLoader({
-            # inventory1
-            '/etc/ansible/inventory1': """
+            # inventory1 (we need to remove the indenting here
+            # in order to support the line extension feature
+            # implemented in #14358).
+            '/etc/ansible/inventory1': '\n'.join(x.strip() for x in """
             [group2:children]
             group1
 
@@ -202,7 +204,7 @@ class TestVariableManager(unittest.TestCase):
 
             [group2:vars]
             group_var = group_var_from_inventory_group2
-            """,
+            """.splitlines()),
 
             # role defaults_only1
             '/etc/ansible/roles/defaults_only1/defaults/main.yml': """
