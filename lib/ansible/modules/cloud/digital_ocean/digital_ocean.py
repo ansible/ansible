@@ -83,7 +83,7 @@ options:
   user_data:
     description:
       - opaque blob of data which is made available to the droplet
-    version_added: "1.10"
+    version_added: "2.0"
     required: false
     default: None
   wait:
