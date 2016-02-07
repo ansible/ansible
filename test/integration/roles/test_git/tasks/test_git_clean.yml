@@ -1,0 +1,68 @@
+---
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: Clone example git repo that were going to modify
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+
+- name: add untracked and ignored file
+  file: path='{{ checkout_dir }}/repo/{{ item }}' state=touch
+  with_items:
+    - untracked_file1
+    - ignoreme
+
+- name: update README.md file
+  copy: content='BLAH' dest='{{ checkout_dir }}/repo/README.md'
+
+- name: add gitignore file
+  copy: content='ignoreme' dest='{{ checkout_dir }}/repo/.gitignore'
+
+- name: try git clone now with local changes
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+  ignore_errors: yes
+  register: git_clone
+
+- assert:
+    that:
+      - git_clone.failed
+
+- name: now clone using force
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+    force: yes
+  ignore_errors: yes
+  register: git_clone
+
+- assert:
+    that:
+      - git_clone|changed
+      - git_clone.local_mod_files
+
+- name: clean ignored files
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+    clean: ignored
+  register: git_clean_ignored
+
+- assert:
+    that:
+      - git_clean_ignored|changed
+      - git_clean_ignored.ignored_files
+
+- name: clean untracked files
+  git:
+    repo: '{{ repo_format1 }}'
+    dest: '{{ checkout_dir }}/repo'
+    clean: untracked
+  register: git_clean_untracked
+
+- assert:
+    that:
+      - git_clean_untracked|changed
+      - git_clean_untracked.untracked_files
