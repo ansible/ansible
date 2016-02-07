@@ -514,6 +514,9 @@ class AnsibleModule(object):
         self.no_log = no_log
         self.cleanup_files = []
         self._debug = False
+        # May be used to set modifications to the environment for any
+        # run_command invocation
+        self.run_command_environ_update = {}
 
         self.aliases = {}
         self._legal_inputs = ['_ansible_check_mode', '_ansible_no_log', '_ansible_debug']
@@ -1769,6 +1772,10 @@ class AnsibleModule(object):
 
         # Manipulate the environ we'll send to the new process
         old_env_vals = {}
+        # We can set this from both an attribute and per call
+        for key, val in self.run_command_environ_update.items():
+            old_env_vals[key] = os.environ.get(key, None)
+            os.environ[key] = val
         if environ_update:
             for key, val in environ_update.items():
                 old_env_vals[key] = os.environ.get(key, None)
@@ -1843,7 +1850,6 @@ class AnsibleModule(object):
                 else:
                     running = args
                 self.log('Executing: ' + running)
-
             cmd = subprocess.Popen(args, **kwargs)
 
             # the communication logic here is essentially taken from that
