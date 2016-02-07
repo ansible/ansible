@@ -20,6 +20,46 @@ __metaclass__ = type
 from ansible.errors import AnsibleError
 from ansible.plugins.lookup import LookupBase
 
+"""
+Lookup plugin to flatten nested dictionaries for linear iteration
+=================================================================
+
+For example, a collection of holidays nested by year, month, and day:
+
+    {
+        '2016': {
+            'January': {
+                '1':  'New Years Day',
+                '19': 'Martin Luther King Day',
+            },
+            'February': {
+                '14': 'Valentines Day',
+                '16': 'Presidents Day',
+            },
+            ...
+        },
+        ...
+    }
+
+Would be flattened into an array of shallow dicts, with each original key denoted by its nesting level:
+
+    [
+        { 'key_0': '2016', 'key_1': 'January',  'key_2': '1',  'val': 'New Years Day' },
+        { 'key_0': '2016', 'key_1': 'January',  'key_2': '19', 'val': 'Martin Luther King Day' },
+        { 'key_0': '2016', 'key_1': 'February', 'key_2': '14', 'val': 'Valentines Day' },
+        { 'key_0': '2016', 'key_1': 'February', 'key_2': '16', 'val': 'Presidents Day' },
+        ...
+    ]
+
+The nested keys and value of each are then exposed to an iterative task:
+
+    - name:               "Remind us what holidays are this month"
+      debug:
+        msg:              "Remember {{val}} on {{key_1}} {{'%02d'|format(key_2)}} in the year {{key_0}}"
+      when:               key_1 == current_month
+      with_nested_dict:   holidays_by_year_month_day
+
+"""
 class LookupModule(LookupBase):
 
     @staticmethod
