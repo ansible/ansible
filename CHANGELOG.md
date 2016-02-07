@@ -44,6 +44,7 @@ Ansible Changes By Release
 * Fix dnf module to remove dependent packages when state=absent is specified.
   This was a feature of the 1.9.x version that was left out by mistake when the
   module was rewritten for 2.0.
+* Fix bugs with non-english locales in yum, git, and apt modules
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
