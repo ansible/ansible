@@ -698,6 +698,10 @@ def main():
     key_file  = module.params['key_file']
     ssh_opts  = module.params['ssh_opts']
 
+    # We screenscrape a huge amount of git commands so use C locale anytime we
+    # call run_command()
+    module.run_command_environ_update = dict(LANG='C', LC_ALL='C', LC_MESSAGES='C', LC_CTYPE='C')
+
     gitconfig = None
     if not dest and allow_clone:
         module.fail_json(msg="the destination directory must be specified unless clone=no")
@@ -826,4 +830,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.known_hosts import *
 
-main()
+if __name__ == '__main__':
+    main()
