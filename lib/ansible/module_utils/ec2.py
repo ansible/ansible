@@ -100,6 +100,10 @@ def boto3_conn(module, conn_type=None, resource=None, region=None, endpoint=None
 
 def _boto3_conn(conn_type=None, resource=None, region=None, endpoint=None, **params):
     profile = params.pop('profile_name', None)
+    if 'aws_session_token' not in params:
+        params['aws_session_token'] = params.pop('security_token', None)
+    if 'verify' not in params:
+        params['verify'] = params.pop('validate_certs', None)
 
     if conn_type not in ['both', 'resource', 'client']:
         raise ValueError('There is an issue in the calling code. You '
