@@ -355,7 +355,10 @@ class AnsibleModule(object):
         self.check_mode = False
         self.no_log = no_log
         self.cleanup_files = []
-        
+        # May be used to set modifications to the environment for any
+        # run_command invocation
+        self.run_command_environ_update = {}
+
         self.aliases = {}
         
         if add_file_common_args:
@@ -1467,6 +1470,10 @@ class AnsibleModule(object):
 
         # Manipulate the environ we'll send to the new process
         old_env_vals = {}
+        # We can set this from both an attribute and per call
+        for key, val in self.run_command_environ_update.items():
+            old_env_vals[key] = os.environ.get(key, None)
+            os.environ[key] = val
         if environ_update:
             for key, val in environ_update.items():
                 old_env_vals[key] = os.environ.get(key, None)
