@@ -41,17 +41,21 @@ from paramiko import SSHConfig
 from cStringIO import StringIO
 from optparse import OptionParser
 from collections import defaultdict
+import six
+
+from six.moves import configparser
+
 try:
     import json
 except:
     import simplejson as json
 
 _group = 'vagrant'  # a default group
+_group_matching_config_file = 'vagrant.ini'
 _ssh_to_ansible = [('user', 'ansible_ssh_user'),
                    ('hostname', 'ansible_ssh_host'),
                    ('identityfile', 'ansible_ssh_private_key_file'),
                    ('port', 'ansible_ssh_port')]
-host_to_group_re = '(.*?)(?:-[0-9]+)?$' #host name to group convention (Name: <BLA>-N => Group: <BLA>)
 
 # Options
 # ------------------------------
@@ -62,6 +66,23 @@ parser.add_option('--list', default=False, dest="list", action="store_true",
 parser.add_option('--host', default=None, dest="host",
                   help="Generate additional host specific details for given host for Ansible")
 (options, args) = parser.parse_args()
+
+# Optional Host Grouping according to naming convention
+# Reads an ini file ('vagrant.ini') which should include a 'vagrant' section with an option called 'host_match_regex'.
+# If they exists, then the hosts will also be grouped according to the regex naming convention. See attached 'vagrant.ini' for an example.
+
+host_to_group_re = None
+vagrant_host_to_group_ini_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), _group_matching_config_file)
+if os.path.exists(vagrant_host_to_group_ini_path):
+    if six.PY3:
+        config = configparser.ConfigParser()
+    else:
+        config = configparser.SafeConfigParser()
+
+    config.read(vagrant_host_to_group_ini_path)
+
+    if config.has_option('vagrant', 'host_match_regex'):
+        host_to_group_re = config.get('vagrant', 'host_match_regex')
 
 #
 # helper functions
@@ -111,24 +132,26 @@ if options.list:
     ssh_config = get_ssh_config()
     meta = defaultdict(dict)
     groups = defaultdict(dict)
-
     groups[_group] = []
 
     for host in ssh_config:
         meta['hostvars'][host] = ssh_config[host]
-        # set groups according to host name convention (see comment about `host_to_group_re`)
-        host_group = ''
-        match = re.match(host_to_group_re, host)
-        if match is None:
-            host_group = host
-        else:
-            host_group = match.groups()[0]
+        if host_to_group_re:
+            # set groups according to host name convention (see comment at 'Host Grouping according to naming convention')
+            host_group = ''
+            match = re.match(host_to_group_re, host)
+            host_groups = []
+            if match is None:
+                host_groups = [host]
+            else:
+                host_groups = match.groups()
 
-        if groups.get(host_group, None) is None:
-            groups[host_group] = []
+            for host_group in host_groups:
+                if groups.get(host_group, None) is None:
+                    groups[host_group] = []
+                groups[host_group].append(host)
 
         groups[_group].append(host)
-        groups[host_group].append(host)
 
     groups['_meta'] = meta
 
