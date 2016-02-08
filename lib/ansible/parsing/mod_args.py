@@ -301,7 +301,7 @@ class ModuleArgsParser:
                         obj=self._task_ds)
 
             else:
-                raise AnsibleParserError("no action detected in task", obj=self._task_ds)
+                raise AnsibleParserError("no action detected in task. This often indicates a misspelled module name, or incorrect module path.", obj=self._task_ds)
         elif args.get('_raw_params', '') != '' and action not in RAW_PARAM_MODULES:
             templar = Templar(loader=None)
             raw_params = args.pop('_raw_params')
