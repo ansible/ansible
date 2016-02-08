@@ -69,7 +69,7 @@ class PlaybookExecutor:
         may limit the runs to serialized groups, etc.
         '''
 
-        signal.signal(signal.SIGINT, self._cleanup)
+        signal.signal(signal.SIGTERM, self._terminate)
 
         result = 0
         entrylist = []
@@ -199,7 +199,7 @@ class PlaybookExecutor:
 
         finally:
             if self._tqm is not None:
-                self._cleanup()
+                self._tqm.cleanup()
 
         if self._options.syntax:
             display.display("No issues encountered")
@@ -207,8 +207,9 @@ class PlaybookExecutor:
 
         return result
 
-    def _cleanup(self, signum=None, framenum=None):
-        return self._tqm.cleanup()
+    def _terminate(self, signum=None, framenum=None):
+        display.debug(framenum)
+        raise SystemExit("Terminating run due to external signal")
 
     def _get_serialized_batches(self, play):
         '''
