@@ -28,7 +28,7 @@ options:
     description:
       - Brief description of the domain. Maximum length of 160 characters
   email:
-    desctiption:
+    description:
       - Email address of the domain administrator
   name:
     description:
