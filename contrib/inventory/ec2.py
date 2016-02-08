@@ -339,6 +339,12 @@ class Ec2Inventory(object):
         else:
             self.replace_dash_in_groups = True
 
+        # Get parent/child tags for creating groups based on joined tags
+        if config.has_option('ec2', 'joined_parent_tag'):
+            self.joined_parent_tag = config.get('ec2', 'joined_parent_tag')
+        if config.has_option('ec2', 'joined_child_tag'):
+            self.joined_child_tag = config.get('ec2', 'joined_child_tag')
+
         # Configure which groups should be created.
         group_by_options = [
             'group_by_instance_id',
@@ -350,6 +356,7 @@ class Ec2Inventory(object):
             'group_by_vpc_id',
             'group_by_security_group',
             'group_by_tag_keys',
+            'group_by_joined_tags',
             'group_by_tag_none',
             'group_by_route53_names',
             'group_by_rds_engine',
@@ -717,6 +724,22 @@ class Ec2Inventory(object):
                         self.push_group(self.inventory, 'tags', self.to_safe("tag_" + k))
                         if v:
                             self.push_group(self.inventory, self.to_safe("tag_" + k), key)
+
+        # Inventory: Group by joined tags
+        if self.group_by_joined_tags:
+            parent_name = self.joined_parent_tag
+            child_name = self.joined_child_tag
+            parent_val = ''
+            child_val = ''
+            for k, v in instance.tags.items():
+                if v and k == parent_name:
+                    parent_val = v
+                if v and k == child_name:
+                    child_val = v
+
+            if parent_val and child_val:
+                key = self.to_safe("tags_" + parent_name + '_' + parent_val + '_' + child_name + "=" + child_val)
+                self.push(self.inventory, key, dest)
 
         # Inventory: Group by Route53 domain names if enabled
         if self.route53_enabled and self.group_by_route53_names:
