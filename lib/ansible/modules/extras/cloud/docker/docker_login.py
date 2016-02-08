@@ -60,7 +60,7 @@ options:
     required: false
     default: ~/.docker/config.json
   docker_url:
-    descriptions:
+    description:
        - Refers to the protocol+hostname+port where the Docker server is hosted
     required: false
     default: unix://var/run/docker.sock
