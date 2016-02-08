@@ -11,7 +11,7 @@ Mashup of 2 excellent original works:
 Usage
 -----
 
-Add ``profile_taks`` to the ``callback_whitelist`` in ``ansible.cfg``.
+Add ``profile_tasks`` to the ``callback_whitelist`` in ``ansible.cfg``.
 
 Run playbooks as normal.
 
