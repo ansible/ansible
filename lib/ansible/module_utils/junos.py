@@ -77,7 +77,8 @@ class NetworkModule(AnsibleModule):
     def connect(self):
         self.connection = Cli(self)
         self.connection.connect()
-        self.execute('cli')
+        if self.connection.shell._matched_prompt.strip().endswith('%'):
+            self.execute('cli')
         self.execute('set cli screen-length 0')
 
     def configure(self, commands):
