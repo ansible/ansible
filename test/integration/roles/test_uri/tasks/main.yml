@@ -69,8 +69,8 @@
       - '"json" in item.1'
       - item.0.stat.checksum == item.1.content | checksum
   with_together:
-    - pass_checksum.results
-    - pass.results
+    - "{{pass_checksum.results}}"
+    - "{{pass.results}}"
 
 
 - name: checksum fail_json
@@ -89,8 +89,8 @@
       - item.0.stat.checksum == item.1.content | checksum
       - '"json" not in item.1'
   with_together:
-    - fail_checksum.results
-    - fail.results
+    - "{{fail_checksum.results}}"
+    - "{{fail.results}}"
 
 - name: test https fetch to a site with mismatched hostname and certificate
   uri:
