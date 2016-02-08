@@ -23,14 +23,9 @@ import os
 import glob
 import sys
 import yaml
-import codecs
-import json
-import ast
 import re
 import optparse
-import time
 import datetime
-import subprocess
 import cgi
 import warnings
 from jinja2 import Environment, FileSystemLoader
@@ -302,6 +297,11 @@ def process_module(module, options, env, template, outputname, module_map, alias
             # don't show version added information if it's too old to be called out
             if 'version_added' in doc['options'][k] and too_old(doc['options'][k]['version_added']):
                 del doc['options'][k]['version_added']
+            if not 'description' in doc['options'][k]:
+                raise AnsibleError("Missing required description for option %s in %s " % (k, module))
+            if not isinstance(doc['options'][k]['description'],list):
+                doc['options'][k]['description'] = [doc['options'][k]['description']]
+
             all_keys.append(k)
 
     all_keys = sorted(all_keys)
@@ -451,7 +451,6 @@ def main():
     env, template, outputname = jinja2_environment(options.template_dir, options.type)
 
     categories = list_modules(options.module_dir)
-    last_category = None
     category_names = list(categories.keys())
     category_names.sort()
 
