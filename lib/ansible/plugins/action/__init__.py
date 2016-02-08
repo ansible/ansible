@@ -429,6 +429,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if tmp and "tmp" in tmp and self._play_context.become and self._play_context.become_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
             self._remote_chmod('a+r', remote_module_path)
+            if args_file_path is not None:
+                self._remote_chmod('a+r', args_file_path)
 
         cmd = ""
         in_data = None
