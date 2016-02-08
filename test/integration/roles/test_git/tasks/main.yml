@@ -88,7 +88,7 @@
 
 - name: remove known_host files
   file: state=absent path={{ item }}
-  with_items: known_host_files
+  with_items: "{{known_host_files}}"
 
 - name: checkout ssh://git@github.com repo without accept_hostkey (expected fail)
   git: repo={{ repo_format2 }} dest={{ checkout_dir }}
