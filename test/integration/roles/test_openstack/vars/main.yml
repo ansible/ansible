@@ -1,0 +1,5 @@
+openstack_auth:
+  auth_url: "{{openstack_auth_url}}"
+  username: "{{openstack_username}}"
+  password: "{{openstack_password}}"
+  project_name: "{{openstack_project_name}}"

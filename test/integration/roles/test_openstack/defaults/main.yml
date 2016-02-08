@@ -1,0 +1,14 @@
+resource_prefix: ansible-testing-
+openstack_private_cidr: 192.13.17.0/24
+openstack_dns_nameservers:
+  - 8.8.8.8
+  - 8.8.4.4
+openstack_cirros_url: http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
+openstack_tmpdir: /tmp
+openstack_debug: False
+openstack_flavor: m1.small
+openstack_tests:
+  - basic
+  - cinder
+openstack_private_network: private
+openstack_volume_size: 1

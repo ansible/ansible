@@ -1,0 +1,6 @@
+- include: test_basic.yml
+  when: "'basic' in openstack_tests"
+- include: test_neutron.yml
+  when: "'neutron' in openstack_tests"
+- include: test_admin.yml
+  when: "'admin' in openstack_tests"

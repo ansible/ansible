@@ -1,0 +1,53 @@
+- block:
+
+# ========================================================================
+
+    - include: common_setup.yml
+
+# ========================================================================
+
+    - name: create a user
+      os_user:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}user"
+        state: present
+        password: "{{lookup('password', openstack_tmpdir + '/' + resource_prefix + 'user-password')}}"
+
+    - name: create a flavor
+      os_nova_flavor:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}flavor"
+        state: present
+        ram: 256
+        disk: 1
+        vcpus: 1
+      register: test_flavor
+
+    - debug:
+        var: test_flavor
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_flavor|changed
+          - test_flavor.id
+
+# ========================================================================
+
+  always:
+
+    - os_user:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}user"
+        state: absent
+
+    - os_nova_flavor:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}flavor"
+        state: absent
+
+# ========================================================================
+
+    - include: common_teardown.yml
+
+# ========================================================================

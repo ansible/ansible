@@ -1,0 +1,218 @@
+- block:
+
+# ========================================================================
+
+    - include: common_setup.yml
+
+# ========================================================================
+
+    - name: create private network
+      os_network:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}net"
+        state: present
+      register: test_net
+
+    - debug:
+        var: test_net
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_net|changed
+          - test_net.id
+          - test_net.network.name == "{{resource_prefix}}net"
+          - test_net.network.status == 'ACTIVE'
+
+# ========================================================================
+
+    - name: create private subnet
+      os_subnet:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}subnet"
+        state: present
+        network_name: "{{test_net.id}}"
+        cidr: "{{openstack_private_cidr}}"
+        dns_nameservers: "{{openstack_dns_nameservers}}"
+      register: test_subnet
+
+    - debug:
+        var: test_subnet
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_subnet|changed
+          - test_subnet.id
+          - test_subnet.subnet.network_id == test_net.id
+          - test_subnet.subnet.cidr == openstack_private_cidr
+          - >
+            test_subnet.subnet.dns_nameservers|sort ==
+            openstack_dns_nameservers|sort
+
+# ========================================================================
+
+    - name: create a security group
+      os_security_group:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}secgroup"
+        state: present
+      register: test_secgroup
+    - debug:
+        var: test_secgroup
+      when: openstack_debug
+    - assert:
+        that:
+          - test_secgroup|changed
+          - test_secgroup.id
+
+# ========================================================================
+
+    - name: add a security group rule
+      os_security_group_rule:
+        auth: "{{openstack_auth}}"
+        security_group: "{{test_secgroup.id}}"
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+      register: test_secgroup_rule
+
+    - debug:
+        var: test_secgroup_rule
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_secgroup_rule|changed
+          - test_secgroup_rule.id
+
+# ========================================================================
+
+    - name: create a port
+      os_port:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}port"
+        state: present
+        network: "{{resource_prefix}}net"
+        no_security_groups: true
+      register: test_port
+
+    - debug:
+        var: test_port
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_port|changed
+          - test_port.id
+          - test_port.port.network_id == test_net.id
+          - test_port.port.security_groups == []
+
+# ========================================================================
+
+    - name: update a port
+      os_port:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}port"
+        state: present
+        network: "{{resource_prefix}}net"
+        security_groups:
+          - "{{test_secgroup.id}}"
+      register: test_port
+
+    - debug:
+        var: test_port
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_port|changed
+          - test_port.id
+          - test_port.port.security_groups == [test_secgroup.id]
+
+# ========================================================================
+
+    - name: create a router
+      os_router:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}router"
+        state: present
+        interfaces:
+          - "{{test_subnet.id}}"
+      register: test_router
+
+    - debug:
+        var: test_router
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_router|changed
+          - test_router.id
+          - test_router.router.status == 'ACTIVE'
+
+# ========================================================================
+
+    - name: create a nova server
+      os_server:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}server"
+        state: present
+        nics:
+          - net-name: "{{resource_prefix}}net"
+        security_groups:
+          - "{{resource_prefix}}secgroup"
+        image: "{{resource_prefix}}cirros"
+        flavor: "{{openstack_flavor}}"
+        key_name: "{{resource_prefix}}ssh_key"
+      register: test_server
+
+    - debug:
+        var: test_server
+      when: openstack_debug
+
+    - assert:
+        that:
+          - test_server|changed
+          - test_server.server.image.id == cirros_image.id
+          - test_server.server.status == 'ACTIVE'
+
+# ========================================================================
+
+  always:
+
+    - os_server:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}server"
+        state: absent
+
+    - os_port:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}port"
+        state: absent
+
+    - os_router:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}router"
+        state: absent
+
+    - os_security_group:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}secgroup"
+        state: absent
+
+    - os_subnet:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}subnet"
+        state: absent
+
+    - os_network:
+        auth: "{{openstack_auth}}"
+        name: "{{resource_prefix}}net"
+        state: absent
+
+# ========================================================================
+
+    - include: common_teardown.yml
+
+# ========================================================================
