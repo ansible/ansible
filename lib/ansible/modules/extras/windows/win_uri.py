@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# (c) 2015, Corwin Brown <blakfeld@gmail.com>
+# (c) 2015, Corwin Brown <corwin.brown@maxpoint.com>
 #
 # This file is part of Ansible
 #
@@ -24,7 +24,7 @@
 DOCUMENTATION = """
 ---
 module: win_uri
-version_added: "2.0"
+version_added: "2.1"
 short_description: Interacts with webservices.
 description:
   - Interacts with HTTP and HTTPS services.
@@ -32,12 +32,10 @@ options:
   url:
     description:
       - HTTP or HTTPS URL in the form of (http|https)://host.domain:port/path
-    required: true
   method:
     description:
       - The HTTP Method of the request or response.
     default: GET
-    required: false
     choices:
       - GET
       - POST
@@ -55,17 +53,20 @@ options:
   body:
     description:
       - The body of the HTTP request/response to the web service.
-    required: false
-    default: None
   headers:
     description:
       - Key Value pairs for headers. Example "Host: www.somesite.com"
-    required: false
-    default: None
+  use_basic_parsing:
+    description:
+      - This module relies upon 'Invoke-WebRequest', which by default uses the Internet Explorer Engine to parse a webpage. There's an edge-case where if a user hasn't run IE before, this will fail. The only advantage to using the Internet Explorer praser is that you can traverse the DOM in a powershell script. That isn't useful for Ansible, so by default we toggle 'UseBasicParsing'. However, you can toggle that off here.
+    choices:
+      - True
+      - False
+    default: True
 author: Corwin Brown (@blakfeld)
 """
 
-Examples = """
+EXAMPLES = """
 # Send a GET request and store the output:
 ---
 - name: Perform a GET and Store Output
@@ -96,19 +97,52 @@ Examples = """
     url: http://www.somesite.com
     method: POST
     body: "{ 'some': 'json' }"
+"""
 
-# Check if a file is available on a webserver
----
-- name: Ensure Build is Available on Fileserver
-  when: ensure_build
-  win_uri:
-    url: "http://www.somesite.com"
-    method: HEAD
-    headers:
-      test: one
-      another: two
-  register: build_check_output
-  until: build_check_output.StatusCode == 200
-  retries: 30
-  delay: 10
+RETURN = """
+url:
+  description: The Target URL
+  returned: always
+  type: string
+  sample: "http://www.ansible.com"
+method:
+  description: The HTTP method used.
+  returned: always
+  type: string
+  sample: "GET"
+content_type:
+  description: The "content-type" header used.
+  returned: always
+  type: string
+  sample: "application/json"
+use_basic_parsing:
+  description: The state of the "use_basic_parsing" flag.
+  returned: always
+  type: bool
+  sample: True
+StatusCode:
+  description: The HTTP Status Code of the response.
+  returned: success
+  type: int
+  sample: 200
+StatusDescription:
+  description: A summery of the status.
+  returned: success
+  type: string
+  stample: "OK"
+RawContent:
+  description: The raw content of the HTTP response.
+  returned: success
+  type: string
+  sample: 'HTTP/1.1 200 OK\nX-XSS-Protection: 1; mode=block\nX-Frame-Options: SAMEORIGIN\nAlternate-Protocol: 443:quic,p=1\nAlt-Svc: quic="www.google.com:443"; ma=2592000; v="30,29,28,27,26,25",quic=":443"; ma=2...'
+Headers:
+  description: The Headers of the response.
+  returned: success
+  type: dict
+  sample: {"Content-Type": "application/json"}
+RawContentLength:
+  description: The byte size of the response.
+  returned: success
+  type: int
+  sample: 54447
 """
