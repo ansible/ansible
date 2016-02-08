@@ -23,7 +23,9 @@ import time
 
 from ansible.errors import AnsibleError
 from ansible.playbook.included_file import IncludedFile
+from ansible.plugins import action_loader
 from ansible.plugins.strategy import StrategyBase
+from ansible.template import Templar
 
 try:
     from __main__ import display
@@ -78,7 +80,7 @@ class StrategyModule(StrategyBase):
                 (state, task) = iterator.get_next_task_for_host(host, peek=True)
                 display.debug("free host state: %s" % state)
                 display.debug("free host task: %s" % task)
-                if not iterator.is_failed(host) and host_name not in self._tqm._unreachable_hosts and task:
+                if host_name not in self._tqm._unreachable_hosts and task:
 
                     # set the flag so the outer loop knows we've still found
                     # some work which needs to be done
@@ -92,9 +94,27 @@ class StrategyModule(StrategyBase):
                         self._blocked_hosts[host_name] = True
                         (state, task) = iterator.get_next_task_for_host(host)
 
+                        try:
+                            action = action_loader.get(task.action, class_only=True)
+                        except KeyError:
+                            # we don't care here, because the action may simply not have a
+                            # corresponding action plugin
+                            action = None
+
                         display.debug("getting variables")
                         task_vars = self._variable_manager.get_vars(loader=self._loader, play=iterator._play, host=host, task=task)
+                        self.add_tqm_variables(task_vars, play=iterator._play)
+                        templar = Templar(loader=self._loader, variables=task_vars)
                         display.debug("done getting variables")
+
+                        run_once = templar.template(task.run_once) or action and getattr(action, 'BYPASS_HOST_LOOP', False)
+                        if run_once:
+                            if action and getattr(action, 'BYPASS_HOST_LOOP', False):
+                                raise AnsibleError("The '%s' module bypasses the host loop, which is currently not supported in the free strategy " \
+                                                   "and would instead execute for every host in the inventory list." % task.action, obj=task._ds)
+                            else:
+                                display.warning("Using run_once with the free strategy is not currently supported. This task will still be " \
+                                                "executed for every host in the inventory list.")
 
                         # check to see if this task should be skipped, due to it being a member of a
                         # role which has already run (and whether that role allows duplicate execution)
@@ -106,18 +126,7 @@ class StrategyModule(StrategyBase):
                                 continue
 
                         if task.action == 'meta':
-                            # meta tasks store their args in the _raw_params field of args,
-                            # since they do not use k=v pairs, so get that
-                            meta_action = task.args.get('_raw_params')
-                            if meta_action == 'noop':
-                                continue
-                            elif meta_action == 'flush_handlers':
-                                # FIXME: in the 'free' mode, flushing handlers should result in
-                                #        only those handlers notified for the host doing the flush
-                                self.run_handlers(iterator, play_context)
-                            else:
-                                raise AnsibleError("invalid meta action requested: %s" % meta_action, obj=task._ds)
-
+                            self._execute_meta(task, play_context, iterator)
                             self._blocked_hosts[host_name] = False
                         else:
                             # handle step if needed, skip meta actions as they are used internally
@@ -126,6 +135,8 @@ class StrategyModule(StrategyBase):
                                     display.warning("Using any_errors_fatal with the free strategy is not supported, as tasks are executed independently on each host")
                                 self._tqm.send_callback('v2_playbook_on_task_start', task, is_conditional=False)
                                 self._queue_task(host, task, task_vars, play_context)
+                    else:
+                        display.debug("%s is blocked, skipping for now" % host_name)
 
                 # move on to the next host and make sure we
                 # haven't gone past the end of our hosts list

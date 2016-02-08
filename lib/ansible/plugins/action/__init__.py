@@ -435,6 +435,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if tmp and "tmp" in tmp and self._play_context.become and self._play_context.become_user != 'root':
             # deal with possible umask issues once sudo'ed to other user
             self._remote_chmod('a+r', remote_module_path)
+            if args_file_path is not None:
+                self._remote_chmod('a+r', args_file_path)
 
         cmd = ""
         in_data = None
@@ -505,7 +507,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             replacement strategy (python3 could use surrogateescape)
         '''
 
-        if executable is not None:
+        if executable is not None and self._connection.allow_executable:
             cmd = executable + ' -c ' + pipes.quote(cmd)
 
         display.debug("_low_level_execute_command(): starting")
@@ -614,5 +616,8 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 display.debug("source of file passed in")
                 diff['after_header'] = 'dynamically generated'
                 diff['after'] = source
+
+        if self._play_context.no_log and 'after' in diff:
+            diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
 
         return diff

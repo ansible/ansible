@@ -21,7 +21,7 @@ VAULT_PASSWORD_FILE = vault-password
 
 CONSUL_RUNNING := $(shell python consul_running.py)
 
-all: parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log
+all: parsing test_var_precedence unicode test_templating_settings environment non_destructive destructive includes blocks pull check_mode test_hash test_handlers test_group_by test_vault test_tags test_lookup_paths no_log
 
 parsing:
 	ansible-playbook bad_parsing.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -vvv $(TEST_FLAGS) --tags prepare,common,scenario5
@@ -29,6 +29,29 @@ parsing:
 
 includes:
 	ansible-playbook test_includes.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) $(TEST_FLAGS)
+
+pull: 	pull_run pull_no_127 pull_limit_inventory
+
+pull_run:
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep MAGICKEYWORD; \
+    RC=$$? ; \
+	rm -rf $(MYTMPDIR); \
+    exit $$RC
+
+# test for https://github.com/ansible/ansible/issues/13681
+pull_no_127:
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git | grep -v 127\.0\.0\.1; \
+    RC=$$? ; \
+	rm -rf $(MYTMPDIR); \
+    exit $$RC
+
+# test for https://github.com/ansible/ansible/issues/13688
+pull_limit_inventory:
+	ansible-pull -d $(MYTMPDIR) -U https://github.com/ansible-test-robinro/pull-integration-test.git; \
+    RC=$$? ; \
+	rm -rf $(MYTMPDIR); \
+    exit $$RC
+
 
 unicode:
 	ansible-playbook unicode.yml -i $(INVENTORY) -e @$(VARS_FILE) -v $(TEST_FLAGS) -e 'extra_var=café'
@@ -104,6 +127,17 @@ test_tags:
 	# Skip one tag
 	[ "$$(ansible-playbook --list-tasks --skip-tags tag test_tags.yml -i $(INVENTORY) -e @$(VARS_FILE) $(CREDENTIALS_ARG) -v $(TEST_FLAGS) | fgrep Task_with | xargs)" = "Task_with_always_tag TAGS: [always] Task_without_tag TAGS: []" ]
 
+blocks:
+	# remove old output log
+	rm -f block_test.out
+	# run the test and check to make sure the right number of completions was logged
+	ansible-playbook -vv test_blocks/main.yml | tee block_test.out
+	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" == "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
+	# cleanup the output log again, to make sure the test is clean
+	rm -f block_test.out
+	# run test with free strategy and again count the completions
+	ansible-playbook -vv test_blocks/main.yml -e test_strategy=free | tee block_test.out
+	[ "$$(grep 'TEST COMPLETE' block_test.out | wc -l)" == "$$(egrep '^[0-9]+ plays in' block_test.out | cut -f1 -d' ')" ]
 
 cloud: amazon rackspace azure
 

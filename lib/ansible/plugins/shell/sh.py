@@ -30,13 +30,20 @@ _USER_HOME_PATH_RE = re.compile(r'^~[_.A-Za-z0-9][-_.A-Za-z0-9]*$')
 
 class ShellModule(object):
 
+    # Common shell filenames that this plugin handles.
+    # Note: sh is the default shell plugin so this plugin may also be selected
+    # if the filename is not listed in any Shell plugin.
+    COMPATIBLE_SHELLS = frozenset(('sh', 'zsh', 'bash', 'dash', 'ksh'))
+    # Family of shells this has.  Must match the filename without extension
+    SHELL_FAMILY = 'sh'
+
     # How to end lines in a python script one-liner
     _SHELL_EMBEDDED_PY_EOL = '\n'
     _SHELL_REDIRECT_ALLNULL = '> /dev/null 2>&1'
     _SHELL_AND = '&&'
     _SHELL_OR = '||'
-    _SHELL_SUB_LEFT = '"$('
-    _SHELL_SUB_RIGHT = ')"'
+    _SHELL_SUB_LEFT = '"`'
+    _SHELL_SUB_RIGHT = '`"'
     _SHELL_GROUP_LEFT = '('
     _SHELL_GROUP_RIGHT = ')'
 

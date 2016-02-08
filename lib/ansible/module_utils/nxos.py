@@ -100,8 +100,8 @@ class Nxapi(object):
 
         headers = {'Content-Type': 'application/json'}
 
-        response, headers = fetch_url(self.module, self.url, data=data, headers=headers,
-                                      method='POST')
+        response, headers = fetch_url(self.module, self.url, data=data,
+                headers=headers, method='POST')
 
         if headers['status'] != 200:
             self.module.fail_json(**headers)
@@ -109,20 +109,22 @@ class Nxapi(object):
         response = self.module.from_json(response.read())
         result = list()
 
-        output = response['ins_api']['outputs']['output']
-        if isinstance(output, list):
-            for item in response['ins_api']['outputs']['output']:
-                if item['code'] != '200':
-                    self.module.fail_json(msg=item['msg'], command=item['input'],
-                            code=item['code'])
-                else:
-                    result.append(item['body'])
-        elif output['code'] != '200':
-            self.module.fail_json(msg=item['msg'], command=item['input'],
-                    code=item['code'])
-        else:
-            result.append(output['body'])
-
+        try:
+            output = response['ins_api']['outputs']['output']
+            if isinstance(output, list):
+                for item in response['ins_api']['outputs']['output']:
+                    if item['code'] != '200':
+                        self.module.fail_json(msg=item['msg'], command=item['input'],
+                                code=item['code'])
+                    else:
+                        result.append(item['body'])
+            elif output['code'] != '200':
+                self.module.fail_json(msg=item['msg'], command=item['input'],
+                        code=item['code'])
+            else:
+                result.append(output['body'])
+        except Exception:
+            self.module.fail_json(**headers)
 
         return result
 
@@ -200,10 +202,9 @@ class NetworkModule(AnsibleModule):
         cmd = 'show running-config'
         if self.params.get('include_defaults'):
             cmd += ' all'
-        if self.params['transport'] == 'cli':
-            return self.execute(cmd)[0]
-        else:
-            return self.execute(cmd)
+
+        response = self.execute(cmd)
+        return response[0]
 
 def get_module(**kwargs):
     """Return instance of NetworkModule
