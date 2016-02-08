@@ -70,7 +70,7 @@ def ismount(path):
         return False
     else:
         # A symlink can never be a mount point
-        if os.stat.S_ISLNK(s1.st_mode):
+        if os.path.stat.S_ISLNK(s1.st_mode):
             return False
 
     parent = os.path.join(path, os.path.pardir)
