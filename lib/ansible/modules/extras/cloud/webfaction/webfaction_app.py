@@ -69,7 +69,9 @@ options:
         required: false
         default: null
 
-    open_port:
+    port_open:
+        description:
+            - IF the port should be opened
         required: false
         default: false
 
