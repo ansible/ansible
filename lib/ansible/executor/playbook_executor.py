@@ -22,7 +22,6 @@ __metaclass__ = type
 import getpass
 import locale
 import os
-import signal
 import sys
 
 from ansible.compat.six import string_types
@@ -68,8 +67,6 @@ class PlaybookExecutor:
         Run the given playbook, based on the settings in the play which
         may limit the runs to serialized groups, etc.
         '''
-
-        signal.signal(signal.SIGTERM, self._terminate)
 
         result = 0
         entrylist = []
@@ -206,10 +203,6 @@ class PlaybookExecutor:
             return result
 
         return result
-
-    def _terminate(self, signum=None, framenum=None):
-        display.debug("Termination signal detected, shutting down gracefully")
-        raise SystemExit
 
     def _get_serialized_batches(self, play):
         '''
