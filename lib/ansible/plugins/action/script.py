@@ -97,7 +97,6 @@ class ActionModule(ActionBase):
         if tmp and "tmp" in tmp and not C.DEFAULT_KEEP_REMOTE_FILES:
             self._remove_tmp_path(tmp)
 
-        result['stdout'] = self._strip_success_message(result.get('stdout', ''))
         result['changed'] = True
 
         return result
