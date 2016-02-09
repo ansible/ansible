@@ -208,8 +208,8 @@ class PlaybookExecutor:
         return result
 
     def _terminate(self, signum=None, framenum=None):
-        display.debug(framenum)
-        raise SystemExit("Terminating run due to external signal")
+        display.debug("Termination signal detected, shutting down gracefully")
+        raise SystemExit
 
     def _get_serialized_batches(self, play):
         '''

@@ -91,7 +91,8 @@ class AdHocCLI(CLI):
 
     def _terminate(self, signum=None, framenum=None):
         if signum is not None:
-            raise SystemExit("Interrupt detected, shutting down gracefully")
+            display.debug("Termination signal detected, shutting down gracefully")
+            raise SystemExit
 
     def run(self):
         ''' use Runner lib to do SSH things '''
