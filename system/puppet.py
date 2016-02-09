@@ -73,6 +73,7 @@ options:
     required: false
     default: stdout
     choices: [ 'stdout', 'syslog' ]
+    version_added: "2.1"
 requirements: [ puppet ]
 author: "Monty Taylor (@emonty)"
 '''
