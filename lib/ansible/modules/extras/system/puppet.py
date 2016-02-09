@@ -74,6 +74,12 @@ options:
     default: stdout
     choices: [ 'stdout', 'syslog' ]
     version_added: "2.1"
+  certname:
+    description:
+      - The name to use when handling certificates.
+    required: false
+    default: None
+    version_added: "2.1"
 requirements: [ puppet ]
 author: "Monty Taylor (@emonty)"
 '''
@@ -87,6 +93,9 @@ EXAMPLES = '''
 
 # Run puppet using a different environment
 - puppet: environment=testing
+
+# Run puppet using a specific certname
+- puppet: certname=agent01.example.com
 '''
 
 
@@ -127,6 +136,7 @@ def main():
             facts=dict(default=None),
             facter_basename=dict(default='ansible'),
             environment=dict(required=False, default=None),
+            certname=dict(required=False, default=None),
         ),
         supports_check_mode=True,
         mutually_exclusive=[
@@ -189,6 +199,8 @@ def main():
             cmd += " --show_diff"
         if p['environment']:
             cmd += " --environment '%s'" % p['environment']
+        if p['certname']:
+            cmd += " --certname='%s'" % p['certname']
         if module.check_mode:
             cmd += " --noop"
         else:
@@ -199,6 +211,8 @@ def main():
             cmd += "--logdest syslog "
         if p['environment']:
             cmd += "--environment '%s' " % p['environment']
+        if p['certname']:
+            cmd += " --certname='%s'" % p['certname']
         if module.check_mode:
             cmd += "--noop "
         else:
