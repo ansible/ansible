@@ -67,6 +67,12 @@ options:
       - Puppet environment to be used.
     required: false
     default: None
+  logdest:
+    description:
+      - Where the puppet logs should go, if puppet apply is being used
+    required: false
+    default: stdout
+    choices: [ 'stdout', 'syslog' ]
 requirements: [ puppet ]
 author: "Monty Taylor (@emonty)"
 '''
@@ -111,8 +117,12 @@ def main():
             timeout=dict(default="30m"),
             puppetmaster=dict(required=False, default=None),
             manifest=dict(required=False, default=None),
+            logdest=dict(
+                required=False, default=['stdout'],
+                choices=['stdout', 'syslog']),
             show_diff=dict(
-                default=False, aliases=['show-diff'], type='bool'), # internal code to work with --diff, do not use
+                # internal code to work with --diff, do not use
+                default=False, aliases=['show-diff'], type='bool'),
             facts=dict(default=None),
             facter_basename=dict(default='ansible'),
             environment=dict(required=False, default=None),
@@ -184,6 +194,8 @@ def main():
             cmd += " --no-noop"
     else:
         cmd = "%s apply --detailed-exitcodes " % base_cmd
+        if p['logdest'] == 'syslog':
+            cmd += "--logdest syslog "
         if p['environment']:
             cmd += "--environment '%s' " % p['environment']
         if module.check_mode:
