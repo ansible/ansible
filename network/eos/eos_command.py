@@ -23,7 +23,7 @@ version_added: "2.1"
 author: "Peter sprygada (@privateip)"
 short_description: Run arbitrary command on EOS device
 description:
-  - Sends an aribtrary command to and EOS node and returns the results
+  - Sends an aribtrary set of commands to and EOS node and returns the results
     read from the device.  The M(eos_command) modulule includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
@@ -66,11 +66,13 @@ options:
 """
 
 EXAMPLES = """
+- eos_command:
+    commands: "{{ lookup('file', 'commands.txt') }}"
 
 - eos_command:
     commands:
-      - show version
-  register: output
+        - show interface {{ item }}
+  with_items: interfaces
 
 - eos_command:
     commands:
@@ -87,23 +89,26 @@ EXAMPLES = """
     - "result[2] contains '4.15.0F'"
     - "result[1].interfaces.Management1.interfaceAddress[0].primaryIp.maskLen eq 24"
     - "result[0].modelName == 'vEOS'"
-
 """
 
 RETURN = """
-
-result:
+stdout:
   description: the set of responses from the commands
   returned: always
   type: list
   sample: ['...', '...']
 
-failed_conditionals:
+stdout_lines:
+  description: The value of stdout split into a list
+  returned: always
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
+
+failed_conditions:
   description: the conditionals that failed
   retured: failed
   type: list
   sample: ['...', '...']
-
 """
 
 import time
@@ -113,12 +118,11 @@ import json
 
 INDEX_RE = re.compile(r'(\[\d+\])')
 
-def get_response(data):
-    try:
-        json_data = json.loads(data)
-    except ValueError:
-        json_data = None
-    return dict(data=data, json=json_data)
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, basestring):
+            item = str(item).split('\n')
+        yield item
 
 class Conditional(object):
 
@@ -216,11 +220,11 @@ def main():
     except AttributeError, exc:
         module.fail_json(msg=exc.message)
 
-    result = dict(changed=False, result=list())
+    result = dict(changed=False)
 
     while retries > 0:
         response = module.execute(commands)
-        result['result'] = response
+        result['stdout'] = response
 
         for index, cmd in enumerate(commands):
             if cmd.endswith('json'):
@@ -239,6 +243,7 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
+    result['stdout_lines'] = list(to_lines(result['stdout']))
     return module.exit_json(**result)
 
 
