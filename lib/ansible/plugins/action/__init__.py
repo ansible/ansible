@@ -538,8 +538,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if rc is None:
             rc = 0
 
-        display.debug("_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, stdout, stderr))
+        # be sure to remove the BECOME-SUCCESS message now
+        out = self._strip_success_message(out)
 
+        display.debug("_low_level_execute_command() done: rc=%d, stdout=%s, stderr=%s" % (rc, stdout, stderr))
         return dict(rc=rc, stdout=out, stdout_lines=out.splitlines(), stderr=err)
 
     def _get_first_available_file(self, faf, of=None, searchdir='files'):
