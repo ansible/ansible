@@ -112,6 +112,7 @@ class Nxapi(object):
 
         return response
 
+
 class Cli(object):
 
     def __init__(self, module):
@@ -126,12 +127,16 @@ class Cli(object):
         password = self.module.params['password']
 
         self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password)
+
+        try:
+            self.shell.open(host, port=port, username=username, password=password)
+        except Exception, exc:
+            self.module.fail_json('Failed to connect to {0}:{1} - {2}'.format(host, port, str(exc)))
 
     def send(self, commands, encoding='text'):
         return self.shell.send(commands)
 
-class NxosModule(AnsibleModule):
+class NetworkModule(AnsibleModule):
 
     def __init__(self, *args, **kwargs):
         super(NxosModule, self).__init__(*args, **kwargs)
@@ -170,7 +175,7 @@ class NxosModule(AnsibleModule):
         try:
             return self.connection.send(commands, **kwargs)
         except Exception, exc:
-            self.fail_json(msg=exc.message)
+            self.fail_json(msg=exc.message, commands=commands)
 
     def disconnect(self):
         self.connection.close()
@@ -189,6 +194,7 @@ class NxosModule(AnsibleModule):
             if not resp.get('ins_api').get('outputs').get('output').get('body'):
                 self.fail_json(msg="Unrecognized response: %s" % str(resp))
             return resp['ins_api']['outputs']['output']['body']
+
 
 def get_module(**kwargs):
     """Return instance of EosModule

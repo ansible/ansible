@@ -37,6 +37,7 @@ def to_list(val):
     else:
         return list()
 
+
 class Eapi(object):
 
     def __init__(self, module):
@@ -106,6 +107,7 @@ class Eapi(object):
 
         return response['result']
 
+
 class Cli(object):
 
     def __init__(self, module):
@@ -120,16 +122,20 @@ class Cli(object):
         password = self.module.params['password']
 
         self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password)
+
+        try:
+            self.shell.open(host, port=port, username=username, password=password)
+        except Exception, exc:
+            self.module.fail_json('Failed to connect to {0}:{1} - {2}'.format(host, port, str(exc)))
 
     def authorize(self):
         passwd = self.module.params['auth_pass']
         self.send(Command('enable', prompt=NET_PASSWD_RE, response=passwd))
 
-    def send(self, commands, encoding='text'):
+    def send(self, commands):
         return self.shell.send(commands)
 
-class EosModule(AnsibleModule):
+class NetworkModule(AnsibleModule):
 
     def __init__(self, *args, **kwargs):
         super(EosModule, self).__init__(*args, **kwargs)
