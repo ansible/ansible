@@ -80,7 +80,6 @@ options:
 """
 
 EXAMPLES = """
-
 - name: push a configuration onto the device
   nxos_template:
     src: config.j2
@@ -94,17 +93,20 @@ EXAMPLES = """
   nxos_template:
     src: candidate_config.txt
     config: current_config.txt
-
 """
 
 RETURN = """
-
-commands:
+updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: [...]
+  sample: ['...', '...']
 
+responses:
+  description: The set of responses from issuing the commands on the device
+  retured: when not check_mode
+  type: list
+  sample: ['...', '...']
 """
 
 def compare(this, other):
@@ -184,9 +186,10 @@ def main():
         if not module.check_mode:
             commands = [str(c).strip() for c in commands]
             response = module.configure(commands)
+            result['responses'] = response
         result['changed'] = True
 
-    result['commands'] = commands
+    result['updates'] = commands
     return module.exit_json(**result)
 
 from ansible.module_utils.basic import *
