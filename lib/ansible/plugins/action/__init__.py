@@ -611,7 +611,10 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                 diff['after_header'] = 'dynamically generated'
                 diff['after'] = source
 
-        if self._play_context.no_log and 'after' in diff:
-            diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
+        if self._play_context.no_log:
+            if 'before' in diff:
+                diff["before"] = ""
+            if 'after' in diff:
+                diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
 
         return diff
