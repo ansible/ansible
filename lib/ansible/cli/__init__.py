@@ -27,6 +27,7 @@ import time
 import yaml
 import re
 import getpass
+import signal
 import subprocess
 
 from ansible import __version__
@@ -77,6 +78,11 @@ class CLI(object):
         self.action = None
         self.callback = callback
 
+    def _terminate(self, signum=None, framenum=None):
+        if signum is not None:
+            display.debug("Termination signal detected, shutting down gracefully: %d" % os.getpid() )
+            raise SystemExit
+
     def set_action(self):
         """
         Get the action the user wants to execute from the sys argv list.
@@ -108,6 +114,9 @@ class CLI(object):
                 display.display(u"Using %s as config file" % to_unicode(C.CONFIG_FILE))
             else:
                 display.display(u"No config file found; using defaults")
+
+        # Manage user interruptions
+        signal.signal(signal.SIGTERM, self._terminate)
 
     @staticmethod
     def ask_vault_passwords(ask_new_vault_pass=False, rekey=False):
