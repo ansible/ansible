@@ -66,11 +66,17 @@ options:
 """
 
 EXAMPLES = """
+- nxos_command:
+    commands: ["show version"]
+
+- nxos_command:
+    commands: "{{ lookup('file', 'commands.txt') }}"
 
 - nxos_command:
     commands:
-      - show version
-  register: output
+        - "show interface {{ item }}"
+  with_items: interfaces
+
 
 - nxos_command:
     commands:
@@ -90,19 +96,23 @@ EXAMPLES = """
 """
 
 RETURN = """
-
-result:
+stdout:
   description: the set of responses from the commands
   returned: always
   type: list
   sample: ['...', '...']
 
-failed_conditionals:
+stdout_lines:
+  description: The value of stdout split into a list
+  returned: always
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
+
+failed_conditions:
   description: the conditionals that failed
   retured: failed
   type: list
   sample: ['...', '...']
-
 """
 
 import time
@@ -112,12 +122,11 @@ import json
 
 INDEX_RE = re.compile(r'(\[\d+\])')
 
-def get_response(data):
-    try:
-        json_data = json.loads(data)
-    except ValueError:
-        json_data = None
-    return dict(data=data, json=json_data)
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, basestring):
+            item = str(item).split('\n')
+        yield item
 
 class Conditional(object):
 
@@ -225,7 +234,7 @@ def main():
     while retries > 0:
         try:
             response = module.execute(commands, **kwargs)
-            result['result'] = response
+            result['stdout'] = response
         except ShellError:
             module.fail_json(msg='failed to run commands')
 
@@ -246,6 +255,7 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
+    result['stdout_lines'] = list(to_lines(result['stdout']))
     return module.exit_json(**result)
 
 
