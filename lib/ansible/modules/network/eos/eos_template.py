@@ -47,16 +47,6 @@ options:
     required: false
     default: false
     choices: BOOLEANS
-  include_defaults:
-    description:
-      - The module, by default, will collect the current device
-        running-config to use as a base for comparision to the commands
-        in I(src).  Setting this value to true will cause the module
-        to issue the command `show running-config all` to include all
-        device settings.
-    required: false
-    default: false
-    choices: BOOLEANS
   backup:
     description:
       - When this argument is configured true, the module will backup
@@ -90,7 +80,6 @@ options:
 """
 
 EXAMPLES = """
-
 - name: push a configuration onto the device
   eos_template:
     src: config.j2
@@ -104,34 +93,20 @@ EXAMPLES = """
   eos_template:
     src: candidate_config.txt
     config: current_config.txt
-
-
-# The example below shows how to use ignore_missing.  In the example,
-# the device running config is already configured with 'no shutdown' but
-# the value does not show up in the running-config as it is the default.  The
-# ignore_missing argument will not cause the task to try to reconfigure the
-# same command since the source value is ignored.
-
-vars:
-  candidate_config:
-    interface Ethernet1
-       no shutdown
-tasks:
-  - name: configure interface administrative state
-    eos_template:
-      src: candidate_config.txt
-      ignore_missing: yes
-
 """
 
 RETURN = """
-
-commands:
+updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
-  sample: [...]
+  sample: ['...', '...']
 
+responses:
+  description: The set of responses from issuing the commands on the device
+  retured: when not check_mode
+  type: list
+  sample: ['...', '...']
 """
 
 def compare(this, other):
@@ -220,9 +195,10 @@ def main():
                 response = module.config_replace(commands)
             else:
                 response = module.configure(commands)
+            result['responses'] = response
         result['changed'] = True
 
-    result['commands'] = commands
+    result['updates'] = commands
     return module.exit_json(**result)
 
 from ansible.module_utils.basic import *
