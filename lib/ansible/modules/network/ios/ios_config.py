@@ -26,8 +26,7 @@ description:
   - Cisco IOS configurations use a simple block indent file sytanx
     for segementing configuration into sections.  This module provides
     an implementation for working with IOS configuration sections in
-    a deterministic way.  This module works with either CLI or NXAPI
-    transports.
+    a deterministic way.
 extends_documentation_fragment: ios
 options:
   lines:
@@ -93,7 +92,7 @@ options:
         without first checking if already configured.
     required: false
     default: false
-    choices: BOOLEANS
+    choices: ['yes', 'no']
   config:
     description:
       - The module, by default, will connect to the remote device and
@@ -142,19 +141,17 @@ EXAMPLES = """
 """
 
 RETURN = """
-
-lines:
+updates:
   description: The set of commands that will be pushed to the remote device
   returned: always
   type: list
   sample: ['...', '...']
 
-response:
+responses:
   description: The set of responses from issuing the commands on the device
-  retured: always
+  retured: when not check_mode
   type: list
   sample: ['...', '...']
-
 """
 import re
 import itertools
@@ -164,7 +161,6 @@ def get_config(module):
     if not config and not module.params['force']:
         config = module.config
     return config
-
 
 def build_candidate(lines, parents, config, strategy):
     candidate = list()
@@ -258,10 +254,10 @@ def main():
 
         if not module.check_mode:
             response = module.configure(candidate)
-            result['response'] = response
+            result['responses'] = response
         result['changed'] = True
 
-    result['lines'] = candidate
+    result['updates'] = candidate
     return module.exit_json(**result)
 
 from ansible.module_utils.basic import *
