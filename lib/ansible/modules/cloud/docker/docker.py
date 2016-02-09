@@ -373,7 +373,15 @@ options:
       - CPU shares (relative weight). Requires docker-py >= 0.6.0.
     required: false
     default: 0
-    version_added: "2.0"
+    version_added: "2.1"
+  ulimits:
+    description:
+      - ulimits, list ulimits with name, soft and optionally
+        hard limit separated by colons. e.g. nofile:1024:2048
+        Requires docker-py >= 1.2.0 and docker >= 1.6.0
+    required: false
+    default: null
+    version_added: "2.1"
 
 author:
     - "Cove Schneider (@cove)"
@@ -382,6 +390,7 @@ author:
     - "Ash Wilson (@smashwilson)"
     - "Thomas Steinbach (@ThomasSteinbach)"
     - "Philippe Jandot (@zfil)"
+    - "Daan Oosterveld (@dusdanig)
 requirements:
     - "python >= 2.6"
     - "docker-py >= 0.3.0"
@@ -666,6 +675,7 @@ class DockerManager(object):
             'read_only': ((1, 0, 0), '1.17'),
             'labels': ((1, 2, 0), '1.18'),
             'stop_timeout': ((0, 5, 0), '1.0'),
+            'ulimits': ((1, 2, 0), '1.18'),
             # Clientside only
             'insecure_registry': ((0, 5, 0), '0.0')
             }
@@ -719,6 +729,19 @@ class DockerManager(object):
             self.links = self.get_links(self.module.params.get('links'))
 
         self.env = self.module.params.get('env', None)
+
+        self.ulimits = None
+        if self.module.params.get('ulimits'):
+            self.ulimits = []
+            ulimits = self.module.params.get('ulimits')
+            for ulimit in ulimits:
+                parts = ulimit.split(":")
+                if len(parts) == 2:
+                    self.ulimits.append({'name': parts[0], 'soft': int(parts[1]), 'hard': int(parts[1])})
+                elif len(parts) == 3:
+                    self.ulimits.append({'name': parts[0], 'soft': int(parts[1]), 'hard': int(parts[2])})
+                else:
+                    self.module.fail_json(msg='ulimits support 2 to 3 arguments')
 
         # Connect to the docker server using any configured host and TLS settings.
 
@@ -1171,6 +1194,16 @@ class DockerManager(object):
                 differing.append(container)
                 continue
 
+            # ULIMITS
+
+            expected_ulimit_keys = set(map(lambda x: '%s:%s:%s' % (x['name'],x['soft'],x['hard']), self.ulimits or []))
+            actual_ulimit_keys = set(map(lambda x: '%s:%s:%s' % (x['Name'],x['Soft'],x['Hard']), (container['HostConfig']['Ulimits'] or [])))
+
+            if actual_ulimit_keys != expected_ulimit_keys:
+                self.reload_reasons.append('ulimits ({0} => {1})'.format(actual_ulimit_keys, expected_ulimit_keys))
+                differing.append(container)
+                continue
+
             # CPU_SHARES
 
             expected_cpu_shares = self.module.params.get('cpu_shares')
@@ -1585,6 +1618,9 @@ class DockerManager(object):
         else:
             params['host_config']['Memory'] = mem_limit
 
+        if self.ulimits is not None:
+            self.ensure_capability('ulimits')
+            params['host_config']['ulimits'] = self.ulimits
 
         def do_create(count, params):
             results = []
@@ -1832,6 +1868,7 @@ def main():
             labels          = dict(default={}, type='dict'),
             stop_timeout    = dict(default=10, type='int'),
             timeout         = dict(required=False, default=DEFAULT_TIMEOUT_SECONDS, type='int'),
+            ulimits         = dict(default=None, type='list'),
         ),
         required_together = (
             ['tls_client_cert', 'tls_client_key'],
