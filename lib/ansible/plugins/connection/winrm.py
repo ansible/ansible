@@ -151,7 +151,7 @@ class Connection(ConnectionBase):
                 errors.append(u'%s: %s' % (transport, err_msg))
                 display.vvvvv(u'WINRM CONNECTION ERROR: %s\n%s' % (err_msg, to_unicode(traceback.format_exc())), host=self._winrm_host)
         if errors:
-            raise AnsibleError(', '.join(to_str(errors)))
+            raise AnsibleError(to_str(u', '.join((errors))))
         else:
             raise AnsibleError('No transport found for WinRM connection')
 
