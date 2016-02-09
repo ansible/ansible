@@ -116,26 +116,27 @@ def connect_to_api(module, disconnect_atexit=True):
     password = module.params['password']
     validate_certs = module.params['validate_certs']
 
+    if validate_certs and not hasattr(ssl, 'SSLContext'):
+        module.fail_json(msg='pyVim does not support changing verification mode with python < 2.7.9. Either update python or or use validate_certs=false')
+
     try:
-        if validate_certs:
-            service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
-	else:
-            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-            context.verify_mode = ssl.CERT_NONE
-            service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
-
-        # Disabling atexit should be used in special cases only.
-        # Such as IP change of the ESXi host which removes the connection anyway.
-        # Also removal significantly speeds up the return of the module
-
-        if disconnect_atexit:
-            atexit.register(connect.Disconnect, service_instance)
-        return service_instance.RetrieveContent()
+        service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password)
     except vim.fault.InvalidLogin, invalid_login:
         module.fail_json(msg=invalid_login.msg, apierror=str(invalid_login))
     except requests.ConnectionError, connection_error:
-        module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
+        if '[SSL: CERTIFICATE_VERIFY_FAILED]' in str(connection_error) and not validate_certs:
+            context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            context.verify_mode = ssl.CERT_NONE
+            service_instance = connect.SmartConnect(host=hostname, user=username, pwd=password, sslContext=context)
+        else:
+            module.fail_json(msg="Unable to connect to vCenter or ESXi API on TCP/443.", apierror=str(connection_error))
 
+    # Disabling atexit should be used in special cases only.
+    # Such as IP change of the ESXi host which removes the connection anyway.
+    # Also removal significantly speeds up the return of the module
+    if disconnect_atexit:
+        atexit.register(connect.Disconnect, service_instance)
+    return service_instance.RetrieveContent()
 
 def get_all_objs(content, vimtype):
 
