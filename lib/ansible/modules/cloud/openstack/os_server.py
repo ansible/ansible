@@ -545,7 +545,7 @@ def main():
         network                         = dict(default=None),
         nics                            = dict(default=[], type='list'),
         meta                            = dict(default=None),
-        userdata                        = dict(default=None),
+        userdata                        = dict(default=None, aliases=['user_data']),
         config_drive                    = dict(default=False, type='bool'),
         auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
         floating_ips                    = dict(default=None),
