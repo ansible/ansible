@@ -608,7 +608,7 @@ class User(object):
             cmd.append('')
 
         (rc, out, err) = self.execute_command(cmd)
-        if rc == 0:
+        if rc == 0 and not self.module.check_mode:
             # If the keys were successfully created, we should be able
             # to tweak ownership.
             os.chown(ssh_key_file, info[2], info[3])
