@@ -59,12 +59,12 @@ EXAMPLES = '''
 # If a key matches this name, will return the ssh key id and changed = False
 # If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
 
-- digital_ocean_sshkey: >
-      state=present
-      name=my_ssh_key
-      ssh_pub_key='ssh-rsa AAAA...'
-      client_id=XXX
-      api_key=XXX
+- digital_ocean_sshkey:
+    state: present
+    name: my_ssh_key
+    ssh_pub_key: 'ssh-rsa AAAA...'
+    client_id: XXX
+    api_key: XXX
 
 '''
 
