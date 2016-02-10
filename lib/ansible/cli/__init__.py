@@ -27,6 +27,7 @@ import time
 import yaml
 import re
 import getpass
+import signal
 import subprocess
 
 from ansible import __version__
@@ -44,7 +45,7 @@ except ImportError:
 class SortedOptParser(optparse.OptionParser):
     '''Optparser which sorts the options by opt before outputting --help'''
 
-    # TODO: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
+    #FIXME: epilog parsing: OptionParser.format_epilog = lambda self, formatter: self.epilog
 
     def format_help(self, formatter=None, epilog=None):
         self.option_list.sort(key=operator.methodcaller('get_opt_string'))
@@ -77,6 +78,20 @@ class CLI(object):
         self.action = None
         self.callback = callback
 
+    def _terminate(self, signum=None, framenum=None):
+        if signum == signal.SIGTERM:
+            if hasattr(os, 'getppid'):
+                display.debug("Termination requested in parent, shutting down gracefully")
+                signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            else:
+                display.debug("Term signal in child, harakiri!")
+                signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
+            raise SystemExit
+
+        #NOTE: if ever want to make this immediately kill children use on parent:
+        #os.killpg(os.getpgid(0), signal.SIGTERM)
+
     def set_action(self):
         """
         Get the action the user wants to execute from the sys argv list.
@@ -108,6 +123,9 @@ class CLI(object):
                 display.display(u"Using %s as config file" % to_unicode(C.CONFIG_FILE))
             else:
                 display.display(u"No config file found; using defaults")
+
+        # Manage user interruptions
+        signal.signal(signal.SIGTERM, self._terminate)
 
     @staticmethod
     def ask_vault_passwords(ask_new_vault_pass=False, rekey=False):
