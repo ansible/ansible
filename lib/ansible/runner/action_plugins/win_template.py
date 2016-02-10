@@ -93,18 +93,21 @@ class ActionModule(object):
 
             # template is different from the remote value
 
-            # if showing diffs, we need to get the remote value
-            dest_contents = ''
-
+            diff = {}
             if self.runner.diff:
                 # using persist_files to keep the temp directory around to avoid needing to grab another
                 dest_result = self.runner._execute_module(conn, tmp, 'slurp', "path=%s" % dest, inject=inject, persist_files=True)
+                diff["before"] = ""
                 if 'content' in dest_result.result:
                     dest_contents = dest_result.result['content']
                     if dest_result.result['encoding'] == 'base64':
                         dest_contents = base64.b64decode(dest_contents)
                     else:
                         raise Exception("unknown encoding, failed: %s" % dest_result.result)
+                    diff["before"] = dest_contents
+                diff["before_header"] = dest
+                diff["after"] = resultant
+                diff["after_header"] = resultant
 
             xfered = self.runner._transfer_str(conn, tmp, 'source', resultant)
 
@@ -121,16 +124,15 @@ class ActionModule(object):
             )
             module_args_tmp = utils.merge_module_args(module_args, new_module_args)
 
+            if self.runner.no_log:
+                diff["before"] = ""
+                diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
             if self.runner.noop_on_check(inject):
-                if self.runner.no_log and resultant:
-                    resultant = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
-                return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=dict(before_header=dest, after_header=source, before=dest_contents, after=resultant))
+                return ReturnData(conn=conn, comm_ok=True, result=dict(changed=True), diff=diff)
             else:
                 res = self.runner._execute_module(conn, tmp, 'win_copy', module_args_tmp, inject=inject, complex_args=complex_args)
                 if res.result.get('changed', False):
-                    if self.runner.no_log and resultant:
-                        resultant = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
-                    res.diff = dict(before=dest_contents, after=resultant)
+                    res.diff = diff
                 return res
         else:
             # when running the file module based on the template data, we do
