@@ -19,11 +19,7 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import getpass
-import locale
 import os
-import signal
-import sys
 
 from ansible.compat.six import string_types
 
@@ -31,8 +27,6 @@ from ansible import constants as C
 from ansible.executor.task_queue_manager import TaskQueueManager
 from ansible.playbook import Playbook
 from ansible.template import Templar
-
-from ansible.utils.unicode import to_unicode
 
 try:
     from __main__ import display
@@ -68,8 +62,6 @@ class PlaybookExecutor:
         Run the given playbook, based on the settings in the play which
         may limit the runs to serialized groups, etc.
         '''
-
-        signal.signal(signal.SIGTERM, self._terminate)
 
         result = 0
         entrylist = []
@@ -206,10 +198,6 @@ class PlaybookExecutor:
             return result
 
         return result
-
-    def _terminate(self, signum=None, framenum=None):
-        display.debug("Termination signal detected, shutting down gracefully")
-        raise SystemExit
 
     def _get_serialized_batches(self, play):
         '''
