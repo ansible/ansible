@@ -24,6 +24,7 @@ import json
 import subprocess
 import sys
 import time
+import traceback
 
 from ansible.compat.six import iteritems, string_types
 
@@ -140,6 +141,8 @@ class TaskExecutor:
             return res
         except AnsibleError as e:
             return dict(failed=True, msg=to_unicode(e, nonstring='simplerepr'))
+        except Exception as e:
+            return dict(failed=True, msg='Unexpected failure during module execution.', exception=to_unicode(traceback.format_exc()), stdout='')
         finally:
             try:
                 self._connection.close()
