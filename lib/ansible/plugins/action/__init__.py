@@ -613,7 +613,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
                 else:
                     diff['after_header'] = source
-                    diff['after'] = src_contents
+                    diff['after'] = src_contents + src.read()
             else:
                 display.debug("source of file passed in")
                 diff['after_header'] = 'dynamically generated'
