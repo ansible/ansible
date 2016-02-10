@@ -464,8 +464,7 @@ class PlayContext(Base):
                     return bool(SU_PROMPT_LOCALIZATIONS_RE.match(data))
                 prompt = detect_su_prompt
 
-                su_success_cmd =  '%s -c %s' % (executable, success_cmd) # this is here cause su too succeptible to overquoting
-                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, su_success_cmd) #works with sh
+                becomecmd = '%s %s %s -c %s' % (exe, flags, self.become_user, pipes.quote('%s -c %s' % (executable, success_cmd)))
 
             elif self.become_method == 'pbrun':
 
@@ -479,7 +478,7 @@ class PlayContext(Base):
 
             elif self.become_method == 'runas':
                 raise AnsibleError("'runas' is not yet implemented")
-                #TODO: figure out prompt
+                #FIXME: figure out prompt
                 # this is not for use with winrm plugin but if they ever get ssh native on windoez
                 becomecmd = '%s %s /user:%s "%s"' % (exe, flags, self.become_user, success_cmd)
 
@@ -494,6 +493,7 @@ class PlayContext(Base):
                 if self.become_user:
                     flags += ' -u %s ' % self.become_user
 
+                #FIXME: make shell independant
                 becomecmd = '%s %s echo %s && %s %s env ANSIBLE=true %s' % (exe, flags, success_key, exe, flags, cmd)
 
             else:
@@ -502,7 +502,7 @@ class PlayContext(Base):
             if self.become_pass:
                 self.prompt = prompt
             self.success_key = success_key
-            return ('%s -c %s' % (executable, pipes.quote(becomecmd)))
+            return becomecmd
 
         return cmd
 
