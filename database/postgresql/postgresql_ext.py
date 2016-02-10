@@ -22,7 +22,7 @@ module: postgresql_ext
 short_description: Add or remove PostgreSQL extensions from a database.
 description:
    - Add or remove PostgreSQL extensions from a database.
-version_added: "0.1"
+version_added: "1.9"
 options:
   name:
     description:
