@@ -594,20 +594,21 @@ class ActionBase(with_metaclass(ABCMeta, object)):
                     diff['before'] = dest_contents
 
             if source_file:
-                display.debug("Reading local copy of the file %s" % source)
-                try:
-                    src = open(source)
-                    src_contents = src.read(8192)
-                    st = os.stat(source)
-                except Exception as e:
-                    raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
-                if "\x00" in src_contents:
-                    diff['src_binary'] = 1
-                elif st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
+                st = os.stat(source)
+                if st[stat.ST_SIZE] > C.MAX_FILE_SIZE_FOR_DIFF:
                     diff['src_larger'] = C.MAX_FILE_SIZE_FOR_DIFF
                 else:
-                    diff['after_header'] = source
-                    diff['after'] = src_contents
+                    display.debug("Reading local copy of the file %s" % source)
+                    try:
+                        src = open(source)
+                        src_contents = src.read()
+                    except Exception as e:
+                        raise AnsibleError("Unexpected error while reading source (%s) for diff: %s " % (source, str(e)))
+                    if "\x00" in src_contents:
+                        diff['src_binary'] = 1
+                    else:
+                        diff['after_header'] = source
+                        diff['after'] = src_contents
             else:
                 display.debug("source of file passed in")
                 diff['after_header'] = 'dynamically generated'
