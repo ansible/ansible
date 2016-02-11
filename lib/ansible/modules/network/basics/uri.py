@@ -63,12 +63,12 @@ options:
     default: null
   body:
     description:
-      - The body of the http request/response to the web service.
+      - The body of the http request/response to the web service. If C(body_format) is set to 'json' it will take an already formated JSON string or convert a data structure into JSON.
     required: false
     default: null
   body_format:
     description:
-      - The serialization format of the body. Either raw, or json. When set to json, encodes the body argument and automatically sets the Content-Type header accordingly.
+      - The serialization format of the body. When set to json, encodes the body argument, if needed, and automatically sets the Content-Type header accordingly.
     required: false
     default: raw
     version_added: "2.0"
@@ -368,7 +368,7 @@ def main():
     module = AnsibleModule(
         argument_spec = dict(
             url = dict(required=True),
-            dest = dict(required=False, default=None),
+            dest = dict(required=False, default=None, type='path'),
             user = dict(required=False, default=None),
             password = dict(required=False, default=None),
             body = dict(required=False, default=None),
@@ -377,8 +377,8 @@ def main():
             return_content = dict(required=False, default='no', type='bool'),
             force_basic_auth = dict(required=False, default='no', type='bool'),
             follow_redirects = dict(required=False, default='safe', choices=['all', 'safe', 'none', 'yes', 'no']),
-            creates = dict(required=False, default=None),
-            removes = dict(required=False, default=None),
+            creates = dict(required=False, default=None, type='path'),
+            removes = dict(required=False, default=None, type='path'),
             status_code = dict(required=False, default=[200], type='list'),
             timeout = dict(required=False, default=30, type='int'),
             validate_certs = dict(required=False, default=True, type='bool'),
@@ -396,7 +396,7 @@ def main():
     user = module.params['user']
     password = module.params['password']
     body = module.params['body']
-    body_format = module.params['body_format']
+    body_format = module.params['body_format'].lower()
     method = module.params['method']
     dest = module.params['dest']
     return_content = module.params['return_content']
@@ -410,9 +410,10 @@ def main():
 
     dict_headers = {}
 
-    # If body_format is json, encodes the body (wich can be a dict or a list) and automatically sets the Content-Type header
     if body_format == 'json':
-        body = json.dumps(body)
+        # Encode the body unless its a string, then assume it is preformatted JSON
+        if not isinstance(body, basestring):
+            body = json.dumps(body)
         dict_headers['Content-Type'] = 'application/json'
 
 
@@ -427,7 +428,6 @@ def main():
         # do not run the command if the line contains creates=filename
         # and the filename already exists.  This allows idempotence
         # of uri executions.
-        creates = os.path.expanduser(creates)
         if os.path.exists(creates):
             module.exit_json(stdout="skipped, since %s exists" % creates, changed=False, stderr=False, rc=0)
 
@@ -435,7 +435,6 @@ def main():
         # do not run the command if the line contains removes=filename
         # and the filename do not exists.  This allows idempotence
         # of uri executions.
-        v = os.path.expanduser(removes)
         if not os.path.exists(removes):
             module.exit_json(stdout="skipped, since %s does not exist" % removes, changed=False, stderr=False, rc=0)
 
