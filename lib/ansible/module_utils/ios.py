@@ -29,6 +29,7 @@ NET_COMMON_ARGS = dict(
     provider=dict()
 )
 
+
 def to_list(val):
     if isinstance(val, (list, tuple)):
         return list(val)
@@ -36,6 +37,7 @@ def to_list(val):
         return [val]
     else:
         return list()
+
 
 class Cli(object):
 
@@ -51,7 +53,11 @@ class Cli(object):
         password = self.module.params['password']
 
         self.shell = Shell()
-        self.shell.open(host, port=port, username=username, password=password)
+
+        try:
+            self.shell.open(host, port=port, username=username, password=password)
+        except Exception, exc:
+            self.module.fail_json('Failed to connect to {0}:{1} - {2}'.format(host, port, str(exc)))
 
     def authorize(self):
         passwd = self.module.params['auth_pass']
@@ -59,6 +65,7 @@ class Cli(object):
 
     def send(self, commands):
         return self.shell.send(commands)
+
 
 class NetworkModule(AnsibleModule):
 
@@ -101,7 +108,10 @@ class NetworkModule(AnsibleModule):
         return responses
 
     def execute(self, commands, **kwargs):
-        return self.connection.send(commands)
+        try:
+            return self.connection.send(commands, **kwargs)
+        except Exception, exc:
+            self.fail_json(msg=exc.message, commands=commands)
 
     def disconnect(self):
         self.connection.close()
@@ -114,6 +124,7 @@ class NetworkModule(AnsibleModule):
         if self.params.get('include_defaults'):
             cmd += ' all'
         return self.execute(cmd)[0]
+
 
 def get_module(**kwargs):
     """Return instance of NetworkModule
