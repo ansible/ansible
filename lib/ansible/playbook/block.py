@@ -153,8 +153,6 @@ class Block(Base, Become, Conditional, Taggable):
         if self._dep_chain is None:
             if self._parent_block:
                 return self._parent_block.get_dep_chain()
-            elif self._task_include:
-                return self._task_include._block.get_dep_chain()
             else:
                 return None
         else:
