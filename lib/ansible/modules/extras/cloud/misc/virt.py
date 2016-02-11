@@ -128,6 +128,9 @@ class LibvirtConnection(object):
 
         if "xen" in stdout:
             conn = libvirt.open(None)
+        elif "esx" in uri:
+            auth = [[libvirt.VIR_CRED_AUTHNAME, libvirt.VIR_CRED_NOECHOPROMPT], [], None]
+            conn = libvirt.openAuth(uri, auth)
         else:
             conn = libvirt.open(uri)
 
