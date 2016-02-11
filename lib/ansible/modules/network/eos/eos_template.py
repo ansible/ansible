@@ -109,6 +109,8 @@ responses:
   sample: ['...', '...']
 """
 
+import re
+
 def compare(this, other):
     parents = [item.text for item in this.parents]
     for entry in other:
@@ -188,6 +190,30 @@ def main():
 
     commands = flatten(commands, list())
 
+    # Filter out configuration mode commands followed immediately by an
+    # exit command indented by one level only, e.g.
+    #     - route-map map01 permit 10
+    #     -    exit
+    #
+    # Build a temporary list as we filter, then copy the temp list
+    # back onto the commands list.
+    temp = []
+    ind_prev = 999
+    count = 0
+    for c in commands:
+        ind_this = c.count('   ')
+        if re.search(r"^\s*exit$", c) and ind_this == ind_prev + 1:
+            temp.pop()
+            count -= 1
+            if count != 0:
+                ind_prev = temp[-1].count('   ')
+            continue
+        temp.append(c)
+        ind_prev = ind_this
+        count += 1
+
+    commands = temp
+
     if commands:
         if not module.check_mode:
             commands = [str(c).strip() for c in commands]
@@ -208,4 +234,3 @@ from ansible.module_utils.netcfg import *
 from ansible.module_utils.eos import *
 if __name__ == '__main__':
     main()
-
