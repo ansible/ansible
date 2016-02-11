@@ -198,7 +198,7 @@ class PlayIterator:
         task = None
         if s.run_state == self.ITERATING_COMPLETE:
             display.debug("host %s is done iterating, returning" % host.name)
-            return (None, None)
+            return (s, None)
 
         old_s = s
         (s, task) = self._get_next_task_from_state(s, host=host, peek=peek)
@@ -207,14 +207,14 @@ class PlayIterator:
             if ra != rb:
                 return True
             else:
-                return old_s.cur_dep_chain != task._block._dep_chain
+                return old_s.cur_dep_chain != task._block.get_dep_chain()
 
         if task and task._role:
             # if we had a current role, mark that role as completed
             if s.cur_role and _roles_are_different(task._role, s.cur_role) and host.name in s.cur_role._had_task_run and not peek:
                 s.cur_role._completed[host.name] = True
             s.cur_role = task._role
-            s.cur_dep_chain = task._block._dep_chain
+            s.cur_dep_chain = task._block.get_dep_chain()
 
         if not peek:
             self._host_states[host.name] = s
@@ -417,7 +417,11 @@ class PlayIterator:
             else:
                 return True
         elif state.run_state == self.ITERATING_TASKS and self._check_failed_state(state.tasks_child_state):
-            return True
+            cur_block = self._blocks[state.cur_block]
+            if len(cur_block.rescue) > 0 and state.fail_state & self.FAILED_RESCUE == 0:
+                return False
+            else:
+                return True
         elif state.run_state == self.ITERATING_RESCUE and self._check_failed_state(state.rescue_child_state):
             return True
         elif state.run_state == self.ITERATING_ALWAYS and self._check_failed_state(state.always_child_state):

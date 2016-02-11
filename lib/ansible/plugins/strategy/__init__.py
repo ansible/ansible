@@ -210,8 +210,10 @@ class StrategyBase:
                                 [iterator.mark_host_failed(h) for h in self._inventory.get_hosts(iterator._play.hosts) if h.name not in self._tqm._unreachable_hosts]
                             else:
                                 iterator.mark_host_failed(host)
-                            (state, tmp_task) = iterator.get_next_task_for_host(host, peek=True)
-                            if not state or state.run_state != PlayIterator.ITERATING_RESCUE:
+
+                            # only add the host to the failed list officially if it has
+                            # been failed by the iterator
+                            if iterator.is_failed(host):
                                 self._tqm._failed_hosts[host.name] = True
                                 self._tqm._stats.increment('failures', host.name)
                         else:
