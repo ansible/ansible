@@ -226,7 +226,7 @@ except ImportError:
 
 FILE_COMMON_ARGUMENTS=dict(
     src = dict(),
-    mode = dict(type='raw'),
+    mode = dict(),
     owner = dict(),
     group = dict(),
     seuser = dict(),
@@ -572,7 +572,6 @@ class AnsibleModule(object):
                 'int': self._check_type_int,
                 'float': self._check_type_float,
                 'path': self._check_type_path,
-                'raw': self._check_type_raw,
             }
         if not bypass_checks:
             self._check_required_arguments()
@@ -1314,23 +1313,15 @@ class AnsibleModule(object):
         value = self._check_type_str(value)
         return os.path.expanduser(os.path.expandvars(value))
 
-    def _check_type_raw(self, value):
-        return value
-
 
     def _check_argument_types(self):
         ''' ensure all arguments have the requested type '''
         for (k, v) in self.argument_spec.items():
             wanted = v.get('type', None)
+            if wanted is None:
+                continue
             if k not in self.params:
                 continue
-            if wanted is None:
-                # Mostly we want to default to str.
-                # For values set to None explicitly, return None instead as
-                # that allows a user to unset a parameter
-                if self.params[k] is None:
-                    continue
-                wanted = 'str'
 
             value = self.params[k]
 
