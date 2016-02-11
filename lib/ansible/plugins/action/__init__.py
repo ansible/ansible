@@ -864,7 +864,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             if 'before' in diff:
                 diff["before"] = ""
             if 'after' in diff:
-                diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]"
+                diff["after"] = " [[ Diff output has been hidden because 'no_log: true' was specified for this result ]]\n"
 
         return diff
 
