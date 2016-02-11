@@ -12,7 +12,7 @@ These are our *best guess* roadmaps based on our own experience and based on req
   *  Ansible Fest conferences.  
   * IRC: Our freenode channel #ansible (this one may have things lost in lots of conversation, so a caution).
 
-2.1 Roadmap
+2.1 Roadmap, Targeted to End of April
 ==========
 ## Windows, General
 * Figuring out privilege escalation (runas w/ username/password)
