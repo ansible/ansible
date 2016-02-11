@@ -15,6 +15,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# Updated 2016 by Matt Harris <matthaeus.harris@gmail.com>
+#
+# Added support for Proxmox VE 4.x
+# Added support for using the Notes field of a VM to define groups and variables:
+# A well-formatted JSON object in the Notes field will be added to the _meta
+# section for that VM.  In addition, the "groups" key of this JSON object may be
+# used to specify group membership:
+#
+# { "groups": ["utility", "databases"], "a": false, "b": true }
+
 import urllib
 try:
     import json
@@ -32,29 +42,29 @@ class ProxmoxNodeList(list):
     def get_names(self):
         return [node['node'] for node in self]
 
-class ProxmoxQemu(dict):
+class ProxmoxVM(dict):
     def get_variables(self):
         variables = {}
         for key, value in iteritems(self):
             variables['proxmox_' + key] = value
         return variables
 
-class ProxmoxQemuList(list):
+class ProxmoxVMList(list):
     def __init__(self, data=[]):
         for item in data:
-            self.append(ProxmoxQemu(item))
+            self.append(ProxmoxVM(item))
 
     def get_names(self):
-        return [qemu['name'] for qemu in self if qemu['template'] != 1]
+        return [vm['name'] for vm in self if vm['template'] != 1]
 
     def get_by_name(self, name):
-        results = [qemu for qemu in self if qemu['name'] == name]
+        results = [vm for vm in self if vm['name'] == name]
         return results[0] if len(results) > 0 else None
 
     def get_variables(self):
         variables = {}
-        for qemu in self:
-            variables[qemu['name']] = qemu.get_variables()
+        for vm in self:
+            variables[vm['name']] = vm.get_variables()
 
         return variables
 
@@ -105,8 +115,23 @@ class ProxmoxAPI(object):
     def nodes(self):
         return ProxmoxNodeList(self.get('api2/json/nodes'))
 
+    def vms_by_type(self, node, type):
+        return ProxmoxVMList(self.get('api2/json/nodes/{}/{}'.format(node, type)))
+
+    def vm_description_by_type(self, node, vm, type):
+        return self.get('api2/json/nodes/{}/{}/{}/config'.format(node, type, vm))
+
     def node_qemu(self, node):
-        return ProxmoxQemuList(self.get('api2/json/nodes/{}/qemu'.format(node)))
+        return self.vms_by_type(node, 'qemu')
+
+    def node_qemu_description(self, node, vm):
+        return self.vm_description_by_type(node, vm, 'qemu')
+
+    def node_lxc(self, node):
+        return self.vms_by_type(node, 'lxc')
+
+    def node_lxc_description(self, node, vm):
+        return self.vm_description_by_type(node, vm, 'lxc')
 
     def pools(self):
         return ProxmoxPoolList(self.get('api2/json/pools'))
@@ -131,6 +156,40 @@ def main_list(options):
         qemu_list = proxmox_api.node_qemu(node)
         results['all']['hosts'] += qemu_list.get_names()
         results['_meta']['hostvars'].update(qemu_list.get_variables())
+        lxc_list = proxmox_api.node_lxc(node)
+        results['all']['hosts'] += lxc_list.get_names()
+        results['_meta']['hostvars'].update(lxc_list.get_variables())
+
+        for vm in results['_meta']['hostvars']:
+            vmid = results['_meta']['hostvars'][vm]['proxmox_vmid']
+            try:
+                type = results['_meta']['hostvars'][vm]['proxmox_type']
+            except KeyError:
+                type = 'qemu'
+            try:
+                description = proxmox_api.vm_description_by_type(node, vmid, type)['description']
+            except KeyError:
+                description = None
+
+            try:
+                metadata = json.loads(description)
+            except TypeError:
+                metadata = {}
+            except ValueError:
+                metadata = {
+                    'notes': description
+                }
+
+            if 'groups' in metadata:
+                # print metadata
+                for group in metadata['groups']:
+                    if group not in results:
+                        results[group] = {
+                            'hosts': []
+                        }
+                    results[group]['hosts'] += [vm]
+
+            results['_meta']['hostvars'][vm].update(metadata)
 
     # pools
     for pool in proxmox_api.pools().get_names():
