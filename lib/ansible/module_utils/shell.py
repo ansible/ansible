@@ -44,6 +44,8 @@ CLI_ERRORS_RE = [
     re.compile(r"connection timed out", re.I),
     re.compile(r"[^\r\n]+ not found", re.I),
     re.compile(r"'[^']' +returned error code: ?\d+"),
+    re.compile(r"syntax error"),
+    re.compile(r"unknown command")
 ]
 
 def to_list(val):
@@ -76,6 +78,8 @@ class Shell(object):
     def __init__(self):
         self.ssh = None
         self.shell = None
+
+        self._matched_prompt = None
 
         self.prompts = list()
         self.prompts.extend(CLI_PROMPTS_RE)
@@ -166,7 +170,9 @@ class Shell(object):
                 raise ShellError('%s' % response)
 
         for regex in self.prompts:
-            if regex.search(response):
+            match = regex.search(response)
+            if match:
+                self._matched_prompt = match.group()
                 return True
 
 def get_cli_connection(module):
