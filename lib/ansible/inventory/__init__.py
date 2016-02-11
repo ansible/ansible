@@ -759,3 +759,12 @@ class Inventory(object):
         self.groups          = {}
 
         self.parse_inventory(self.host_list)
+
+        # refresh plain host list
+        new_hosts = []
+        for host in self._restriction:
+            name = host.get_name()
+            new_host = self.get_host(name)
+            new_hosts.append(new_host)
+
+        self._restriction = new_hosts
