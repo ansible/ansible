@@ -53,7 +53,7 @@ class ActionModule(ActionBase):
 
         user_prefix = ''
 
-        if 'rsync://' in path:
+        if path.startswith('rsync://'):
             return path
 
         if user:
