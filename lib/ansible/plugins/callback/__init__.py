@@ -19,8 +19,9 @@
 from __future__ import (absolute_import, division, print_function)
 __metaclass__ = type
 
-import json
 import difflib
+import json
+import sys
 import warnings
 from copy import deepcopy
 
@@ -124,7 +125,7 @@ class CallbackBase:
                         # format complex structures into 'files'
                         for x in ['before', 'after']:
                             if isinstance(diff[x], dict):
-                                diff[x] = json.dumps(diff[x], sort_keys=True, indent=4)
+                                diff[x] = json.dumps(diff[x], sort_keys=True, indent=4, separators=(',', ': ')) + '\n'
                         if 'before_header' in diff:
                             before_header = "before: %s" % diff['before_header']
                         else:
@@ -133,15 +134,29 @@ class CallbackBase:
                             after_header = "after: %s" % diff['after_header']
                         else:
                             after_header = 'after'
-                        differ = difflib.unified_diff(to_text(diff['before']).splitlines(True),
-                                                      to_text(diff['after']).splitlines(True),
+                        before_lines = to_text(diff['before']).splitlines(True)
+                        after_lines = to_text(diff['after']).splitlines(True)
+                        if before_lines and not before_lines[-1].endswith('\n'):
+                            before_lines[-1] += '\n\\ No newline at end of file\n'
+                        if after_lines and not after_lines[-1].endswith('\n'):
+                            after_lines[-1] += '\n\\ No newline at end of file\n'
+                        differ = difflib.unified_diff(before_lines,
+                                                      after_lines,
                                                       fromfile=before_header,
                                                       tofile=after_header,
                                                       fromfiledate='',
                                                       tofiledate='',
                                                       n=C.DIFF_CONTEXT)
+                        difflines = list(differ)
+                        if len(difflines) >= 3 and sys.version_info[:2] == (2, 6):
+                            # difflib in Python 2.6 adds trailing spaces after
+                            # filenames in the -- before/++ after headers.
+                            difflines[0] = difflines[0].replace(' \n', '\n')
+                            difflines[1] = difflines[1].replace(' \n', '\n')
+                            # it also treats empty files differently
+                            difflines[2] = difflines[2].replace('-1,0', '-0,0').replace('+1,0', '+0,0')
                         has_diff = False
-                        for line in differ:
+                        for line in difflines:
                             has_diff = True
                             if line.startswith('+'):
                                 line = stringc(line, C.COLOR_DIFF_ADD)
