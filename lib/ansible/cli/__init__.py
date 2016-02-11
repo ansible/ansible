@@ -125,7 +125,7 @@ class CLI(object):
                 display.display(u"No config file found; using defaults")
 
         # Manage user interruptions
-        signal.signal(signal.SIGTERM, self._terminate)
+        #signal.signal(signal.SIGTERM, self._terminate)
 
     @staticmethod
     def ask_vault_passwords(ask_new_vault_pass=False, rekey=False):
