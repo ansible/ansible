@@ -178,21 +178,15 @@ class TaskExecutor:
                     # first_found loops are special.  If the item is undefined
                     # then we want to fall through to the next value rather
                     # than failing.
-                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
-                            loader=self._loader, fail_on_undefined=False, convert_bare=True)
+                    loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=False, convert_bare=True)
                     loop_terms = [t for t in loop_terms if not templar._contains_vars(t)]
                 else:
                     try:
-                        loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar,
-                                loader=self._loader, fail_on_undefined=True, convert_bare=True)
+                        loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=True)
                     except AnsibleUndefinedVariable as e:
-                        if u'has no attribute' in to_unicode(e):
-                            loop_terms = []
-                            display.deprecated("Skipping task due to undefined attribute, in the future this will be a fatal error.")
-                        else:
-                            raise
-                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader,
-                        templar=templar).run(terms=loop_terms, variables=self._job_vars)
+                        loop_terms = []
+                        display.deprecated("Skipping task due to undefined Error, in the future this will be a fatal error.")
+                items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=self._job_vars)
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
 
