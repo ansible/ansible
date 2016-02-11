@@ -262,10 +262,11 @@ class Role(Base, Become, Conditional, Taggable):
     def get_inherited_vars(self, dep_chain=[], include_params=True):
         inherited_vars = dict()
 
-        for parent in dep_chain:
-            inherited_vars = combine_vars(inherited_vars, parent._role_vars)
-            if include_params:
-                inherited_vars = combine_vars(inherited_vars, parent._role_params)
+        if dep_chain:
+            for parent in dep_chain:
+                inherited_vars = combine_vars(inherited_vars, parent._role_vars)
+                if include_params:
+                    inherited_vars = combine_vars(inherited_vars, parent._role_params)
         return inherited_vars
 
     def get_role_params(self):
