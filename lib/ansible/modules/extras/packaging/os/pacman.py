@@ -267,6 +267,25 @@ def check_packages(module, pacman_path, packages, state):
         module.exit_json(changed=False, msg="package(s) already %s" % state)
 
 
+def expand_package_groups(module, pacman_path, pkgs):
+    expanded = []
+
+    for pkg in pkgs:
+        cmd = "%s -Sgq %s" % (pacman_path, pkg)
+        rc, stdout, stderr = module.run_command(cmd, check_rc=False)
+
+        if rc == 0:
+            # A group was found matching the name, so expand it
+            for name in stdout.split('\n'):
+                name = name.strip()
+                if name:
+                    expanded.append(name)
+        else:
+            expanded.append(pkg)
+
+    return expanded
+
+
 def main():
     module = AnsibleModule(
         argument_spec    = dict(
@@ -305,7 +324,7 @@ def main():
         upgrade(module, pacman_path)
 
     if p['name']:
-        pkgs = p['name']
+        pkgs = expand_package_groups(module, pacman_path, p['name'])
 
         pkg_files = []
         for i, pkg in enumerate(pkgs):
