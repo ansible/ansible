@@ -281,11 +281,10 @@ def ensure(module, base, state, names):
                     # If not already installed, try to install.
                     base.group_install(group, const.GROUP_PACKAGE_TYPES)
             for pkg_spec in pkg_specs:
-                try:
-                    base.upgrade(pkg_spec)
-                except dnf.exceptions.MarkingError:
-                    # If not already installed, try to install.
-                    _mark_package_install(module, base, pkg_spec)
+                # best effort causes to install the latest package
+                # even if not previously installed
+                base.conf.best = True
+                base.install(pkg_spec)
 
         else:
             # state == absent
