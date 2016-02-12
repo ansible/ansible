@@ -18,47 +18,47 @@
 
 DOCUMENTATION = """
 ---
-module: nxos_command
+module: ios_command
 version_added: "2.1"
 author: "Peter sprygada (@privateip)"
-short_description: Run arbitrary command on Cisco NXOS devices
+short_description: Run arbitrary commands on ios devices.
 description:
-  - Sends an aribtrary command to an NXOS node and returns the results
-    read from the device.  The M(nxos_command) modulule includes an
+  - Sends arbitrary commands to an ios node and returns the results
+    read from the device. The M(ios_command) module includes an
     argument that will cause the module to wait for a specific condition
     before returning or timing out if the condition is not met.
-extends_documentation_fragment: nxos
+extends_documentation_fragment: ios
 options:
   commands:
     description:
-      - The commands to send to the remote NXOS device over the
-        configured provider.  The resulting output from the command
-        is returned.  If the I(waitfor) argument is provided, the
+      - List of commands to send to the remote ios device over the
+        configured provider. The resulting output from the command
+        is returned. If the I(waitfor) argument is provided, the
         module is not returned until the condition is satisfied or
         the number of retires as expired.
     required: true
   waitfor:
     description:
-      - Specifies what to evaluate from the output of the command
-        and what conditionals to apply.  This argument will cause
-        the task to wait for a particular conditional to be true
-        before moving forward.   If the conditional is not true
-        by the configured retries, the task fails.  See examples.
+      - List of conditions to evaluate against the output of the
+        command. The task will wait for a each condition to be true
+        before moving forward. If the conditional is not true
+        within the configured number of retries, the task fails.
+        See examples.
     required: false
     default: null
   retries:
     description:
       - Specifies the number of retries a command should by tried
-        before it is considered failed.  The command is run on the
-        target device every retry and evaluated against the waitfor
-        conditionals
+        before it is considered failed. The command is run on the
+        target device every retry and evaluated against the
+        waitfor conditions.
     required: false
     default: 10
   interval:
     description:
       - Configures the interval in seconds to wait between retries
-        of the command.  If the command does not pass the specified
-        conditional, the interval indicates how to long to wait before
+        of the command. If the command does not pass the specified
+        conditions, the interval indicates how long to wait before
         trying the command again.
     required: false
     default: 1
@@ -66,53 +66,44 @@ options:
 """
 
 EXAMPLES = """
-- nxos_command:
-    commands: ["show version"]
 
-- nxos_command:
-    commands: "{{ lookup('file', 'commands.txt') }}"
-
-- nxos_command:
+- ios_command:
     commands:
-        - "show interface {{ item }}"
-  with_items: interfaces
+      - show version
+  register: output
 
-
-- nxos_command:
+- ios_command:
     commands:
       - show version
     waitfor:
-      - "result[0] contains 7.2(0)D1(1)"
+      - "result[0] contains 4.15.0F"
 
-- nxos_command:
+- ios_command:
   commands:
-    - show version | json
-    - show interface Ethernet2/1 | json
+    - show version
+    - show interfaces
     - show version
   waitfor:
-    - "result[1].TABLE_interface.ROW_interface.state eq up"
-    - "result[2] contains 'version 7.2(0)D1(1)'"
-    - "result[0].sys_ver_str == 7.2(0)D1(1)"
+    - "result[2] contains '4.15.0F'"
+    - "result[1].interfaces.Management1.interfaceAddress[0].primaryIp.maskLen eq 24"
+    - "result[0].modelName == 'vios'"
+
 """
 
 RETURN = """
-stdout:
+
+result:
   description: the set of responses from the commands
   returned: always
   type: list
   sample: ['...', '...']
 
-stdout_lines:
-  description: The value of stdout split into a list
-  returned: always
-  type: list
-  sample: [['...', '...'], ['...'], ['...']]
-
-failed_conditions:
+failed_conditionals:
   description: the conditionals that failed
   retured: failed
   type: list
   sample: ['...', '...']
+
 """
 
 import time
@@ -122,17 +113,14 @@ import json
 
 INDEX_RE = re.compile(r'(\[\d+\])')
 
-def to_lines(stdout):
-    for item in stdout:
-        if isinstance(item, basestring):
-            item = str(item).split('\n')
-        yield item
+
 def get_response(data):
     try:
         json_data = json.loads(data)
     except ValueError:
         json_data = None
     return dict(data=data, json=json_data)
+
 
 def main():
     spec = dict(
@@ -144,7 +132,6 @@ def main():
 
     module = get_module(argument_spec=spec,
                         supports_check_mode=True)
-
 
     commands = module.params['commands']
 
@@ -160,16 +147,9 @@ def main():
 
     result = dict(changed=False, result=list())
 
-    kwargs = dict()
-    if module.params['transport'] == 'nxapi':
-        kwargs['command_type'] = 'cli_show'
-
     while retries > 0:
-        try:
-            response = module.execute(commands, **kwargs)
-            result['stdout'] = response
-        except ShellError:
-            module.fail_json(msg='failed to run commands')
+        response = module.execute(commands)
+        result['result'] = response
 
         for index, cmd in enumerate(commands):
             if cmd.endswith('json'):
@@ -188,7 +168,6 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
-    result['stdout_lines'] = list(to_lines(result['stdout']))
     return module.exit_json(**result)
 
 
@@ -196,7 +175,7 @@ from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
 from ansible.module_utils.shell import *
 from ansible.module_utils.netcfg import *
-from ansible.module_utils.nxos import *
+from ansible.module_utils.ios import *
 if __name__ == '__main__':
         main()
 
