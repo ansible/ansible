@@ -5,8 +5,8 @@ Ansible plugin for timing individual tasks and overall execution time.
 
 Mashup of 2 excellent original works:
 
--  (https://github.com/jlafon/ansible-profile)
--  (https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old)
+-  https://github.com/jlafon/ansible-profile
+-  https://github.com/junaid18183/ansible_home/blob/master/ansible_plugins/callback_plugins/timestamp.py.old
 
 Usage
 -----
