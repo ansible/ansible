@@ -350,6 +350,41 @@ class ModuleValidator(Validator):
             self.errors.append('version_added should be %s. Currently %s' %
                                (should_be, version_added))
 
+    def _check_for_new_args(self, doc):
+        if self._is_new_module():
+            return
+
+        existing = module_loader.find_plugin(self.name)
+        existing_doc, _, _ = get_docstring(existing, verbose=True)
+        existing_options = existing_doc.get('options', {})
+
+        options = doc.get('options', {})
+
+        strict_ansible_version = StrictVersion(ansible_version)
+        should_be = '.'.join(ansible_version.split('.')[:2])
+
+        for option, details in options.iteritems():
+            new = not bool(existing_options.get(option))
+            if not new:
+                continue
+
+            try:
+                version_added = StrictVersion(
+                    str(details.get('version_added', '0.0'))
+                )
+            except ValueError:
+                version_added = details.get('version_added', '0.0')
+                self.errors.append('version_added for new option (%s) '
+                                   'is not a valid version number: %r' %
+                                   (option, version_added))
+                continue
+
+            if (version_added < strict_ansible_version or
+                    strict_ansible_version < version_added):
+                self.errors.append('version_added for new option (%s) should '
+                                   'be %s. Currently %s' %
+                                   (option, should_be, version_added))
+
     def validate(self):
         super(ModuleValidator, self).validate()
 
@@ -378,7 +413,7 @@ class ModuleValidator(Validator):
         if self._python_module():
             sys_stdout = sys.stdout
             sys_stderr = sys.stderr
-            sys.stdout = sys.stderr = StringIO()
+            sys.stdout = sys.stderr = buf = StringIO()
             setattr(sys.stdout, 'encoding', sys_stdout.encoding)
             setattr(sys.stderr, 'encoding', sys_stderr.encoding)
             try:
@@ -397,6 +432,7 @@ class ModuleValidator(Validator):
                 self.errors.append('Invalid or no DOCUMENTATION provided')
             else:
                 self._check_version_added(doc)
+                self._check_for_new_args(doc)
             if not bool(examples):
                 self.errors.append('No EXAMPLES provided')
             if not bool(ret):
