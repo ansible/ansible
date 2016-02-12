@@ -21,6 +21,7 @@ import base64
 import socket
 import struct
 import time
+import threading
 from ansible.callbacks import vvv, vvvv
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.runner.connection_plugins.ssh import Connection as SSHConnection
@@ -34,6 +35,8 @@ from ansible import constants
 # which leaves room for the TCP/IP header. We set this to a 
 # multiple of the value to speed up file reads.
 CHUNK_SIZE=1044*20
+
+_LOCK = threading.Lock()
 
 class Connection(object):
     ''' raw socket accelerated connection '''
@@ -111,6 +114,15 @@ class Connection(object):
     def connect(self, allow_ssh=True):
         ''' activates the connection object '''
 
+        # ensure only one fork tries to setup the connection, in case the
+        # first task for multiple hosts is delegated to the same host.
+        if not self.is_connected:
+            with(_LOCK):
+                return self._connect(allow_ssh)
+
+        return self
+
+    def _connect(self, allow_ssh=True):
         try:
             if not self.is_connected:
                 wrong_user = False
@@ -150,7 +162,7 @@ class Connection(object):
                 res = self._execute_accelerate_module()
                 if not res.is_successful():
                     raise AnsibleError("Failed to launch the accelerated daemon on %s (reason: %s)" % (self.host,res.result.get('msg')))
-                return self.connect(allow_ssh=False)
+                return self._connect(allow_ssh=False)
             else:
                 raise AnsibleError("Failed to connect to %s:%s" % (self.host,self.accport))
         self.is_connected = True
