@@ -76,34 +76,33 @@ EXAMPLES = """
     commands:
       - show version
     waitfor:
-      - "result[0] contains 4.15.0F"
+      - "result[0] contains IOS"
 
 - ios_command:
   commands:
     - show version
     - show interfaces
-    - show version
-  waitfor:
-    - "result[2] contains '4.15.0F'"
-    - "result[1].interfaces.Management1.interfaceAddress[0].primaryIp.maskLen eq 24"
-    - "result[0].modelName == 'vios'"
 
 """
 
 RETURN = """
-
-result:
+stdout:
   description: the set of responses from the commands
   returned: always
   type: list
   sample: ['...', '...']
 
-failed_conditionals:
+stdout_lines:
+  description: The value of stdout split into a list
+  returned: always
+  type: list
+  sample: [['...', '...'], ['...'], ['...']]
+
+failed_conditions:
   description: the conditionals that failed
   retured: failed
   type: list
   sample: ['...', '...']
-
 """
 
 import time
@@ -145,15 +144,11 @@ def main():
     except AttributeError, exc:
         module.fail_json(msg=exc.message)
 
-    result = dict(changed=False, result=list())
+    result = dict(changed=False)
 
     while retries > 0:
         response = module.execute(commands)
-        result['result'] = response
-
-        for index, cmd in enumerate(commands):
-            if cmd.endswith('json'):
-                response[index] = json.loads(response[index])
+        result['stdout'] = response
 
         for item in list(queue):
             if item(response):
@@ -168,8 +163,8 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
+    result['stdout_lines'] = list(to_lines(result['stdout']))
     return module.exit_json(**result)
-
 
 from ansible.module_utils.basic import *
 from ansible.module_utils.urls import *
