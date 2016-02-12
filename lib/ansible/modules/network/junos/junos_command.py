@@ -205,6 +205,12 @@ def parse_response(module, responses):
             result['stdout_lines'].append(resp.split('\n'))
     return result
 
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, basestring):
+            item = str(item).split('\n')
+        yield item
+
 def main():
     spec = dict(
         commands=dict(type='list'),
@@ -229,23 +235,21 @@ def main():
     except AttributeError, exc:
         module.fail_json(msg=exc.message)
 
-    result = dict(changed=False, stdout=list(), stdout_lines=list())
+    result = dict(changed=False)
 
     while retries > 0:
         try:
             response = module.execute(commands)
+            result['stdout'] = response
         except ShellError:
             module.fail_json(msg='failed to run commands')
 
-        values = list()
         for index, cmd in enumerate(commands):
             if cmd.endswith('json'):
-                values.append(module.from_json(response[index]))
-            else:
-                values.append(response[index])
+                response[index] = json.loads(response[index])
 
         for item in list(queue):
-            if item(values):
+            if item(response):
                 queue.remove(item)
 
         if not queue:
@@ -257,7 +261,7 @@ def main():
         failed_conditions = [item.raw for item in queue]
         module.fail_json(msg='timeout waiting for value', failed_conditions=failed_conditions)
 
-    result.update(parse_response(module, response))
+    result['stdout_lines'] = list(to_lines(result['stdout']))
     return module.exit_json(**result)
 
 
