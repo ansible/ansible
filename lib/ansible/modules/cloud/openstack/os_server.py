@@ -112,7 +112,7 @@ options:
      default: None
    floating_ip_pools:
      description:
-        - list of floating IP pools from which to choose a floating IP
+        - Name of floating IP pool from which to choose a floating IP
      required: false
      default: None
    meta:
@@ -544,11 +544,11 @@ def main():
         security_groups                 = dict(default=['default'], type='list'),
         network                         = dict(default=None),
         nics                            = dict(default=[], type='list'),
-        meta                            = dict(default=None),
+        meta                            = dict(default=None, type='raw'),
         userdata                        = dict(default=None, aliases=['user_data']),
         config_drive                    = dict(default=False, type='bool'),
         auto_ip                         = dict(default=True, type='bool', aliases=['auto_floating_ip', 'public_ip']),
-        floating_ips                    = dict(default=None),
+        floating_ips                    = dict(default=None, type='list'),
         floating_ip_pools               = dict(default=None),
         volume_size                     = dict(default=False, type='int'),
         boot_from_volume                = dict(default=False, type='bool'),
