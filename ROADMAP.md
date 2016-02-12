@@ -1,16 +1,16 @@
-Ansible Roadmap
+Roadmap For Ansible by RedHat
 =============
 This document is now the location for published Ansible Core roadmaps.     
 
 The roadmap will be updated by version. Based on team and community feedback, an initial roadmap will be published for a major or minor version (2.0, 2.1).  Subminor versions will generally not have roadmaps published.
 
-This is the first time we've published this and asked for feedback in this manner.  So feedback on the roadmap and the new process is quite welcome.  We are aiming for further transparency and better inclusion of both community desires and submissions.  
+This is the first time Ansible has published this and asked for feedback in this manner.  So feedback on the roadmap and the new process is quite welcome.  The team is aiming for further transparency and better inclusion of both community desires and submissions.  
 
-These are our *best guess* roadmaps based on our own experience and based on requests and feedback from the community.  There are things that may not make it on due to time constraints, lack of community maintainers, etc.  And there may be things we missed, so each roadmap is published both as an idea of what is upcoming in Ansible, and as a medium for seeking further feedback from the community. Here are the good places for you to submit feedback:
+These roadmaps are the team's *best guess* roadmaps based on the Ansible team's experience and are also based on requests and feedback from the community.  There are things that may not make it on due to time constraints, lack of community maintainers, etc.  And there may be things that got missed, so each roadmap is published both as an idea of what is upcoming in Ansible, and as a medium for seeking further feedback from the community. Here are the good places for you to submit feedback:
 
-  * Our google-group: ansible-devel
+  * Ansible's google-group: ansible-devel
   *  Ansible Fest conferences.  
-  * IRC: Our freenode channel #ansible (this one may have things lost in lots of conversation, so a caution).
+  * IRC freenode channel: #ansible-devel (this one may have things lost in lots of conversation, so a caution).
 
 2.1 Roadmap, Targeted for the End of April
 ==========
@@ -41,7 +41,7 @@ These are our *best guess* roadmaps based on our own experience and based on req
   * vsphere\_guest brought to parity with other vmware modules (vs Viasat and 'whereismyjetpack' provided modules)
   * VMware modules moved to official pyvmomi bindings
   * VMware inventory script updates for pyvmomi, adding tagging support
-* Azure (Notes: This is on hold until microsoft releases a working code generator.  We have basic modules working against all of these resources.  Could ship it against current SDK, but may break. Or should we pin the version?)
+* Azure (Notes: This is on hold until Microsoft swaps out the code generator on the Azure Python SDK, which may introduce breaking changes. We have basic modules working against all of these resources at this time. Could ship it against current SDK, but may break. Or should the version be pinned?)
   * Minimal Azure coverage using new ARM api
   * Resource Group
   * Virtual Network
@@ -72,11 +72,11 @@ These are our *best guess* roadmaps based on our own experience and based on req
 * Expand module diff support (already in progress in devel)
   * Framework done. Need to add to modules, test etc. 
   * Coordinate with community to update their modules 
-* Things we are kicking down the road that we said we’d do
+* Things being kicking down the road that we said we’d do
   * NOT remerging core with ansible/ansible this release cycle
 * Community stuff
   * Define the process/ETA for reviewing PR’s from community
-  * Publish better docs and how-tos for submitting code/freatures/fixes
+  * Publish better docs and how-tos for submitting code/features/fixes
 
 
 
