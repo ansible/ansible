@@ -15,13 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import os
 import base64
 import socket
 import struct
 import time
-import threading
+from multiprocessing import Lock
 from ansible.callbacks import vvv, vvvv
 from ansible.errors import AnsibleError, AnsibleFileNotFound
 from ansible.runner.connection_plugins.ssh import Connection as SSHConnection
@@ -36,7 +35,7 @@ from ansible import constants
 # multiple of the value to speed up file reads.
 CHUNK_SIZE=1044*20
 
-_LOCK = threading.Lock()
+_LOCK = Lock()
 
 class Connection(object):
     ''' raw socket accelerated connection '''
@@ -243,7 +242,7 @@ class Connection(object):
         ''' run a command on the remote host '''
 
         if sudoable and self.runner.become and self.runner.become_method not in self.become_methods_supported:
-            raise errors.AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
+            raise AnsibleError("Internal Error: this module does not support running commands via %s" % self.runner.become_method)
 
         if in_data:
             raise AnsibleError("Internal Error: this module does not support optimized module pipelining")

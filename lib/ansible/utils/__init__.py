@@ -19,9 +19,7 @@ import errno
 import sys
 import re
 import os
-import shlex
 import yaml
-import copy
 import optparse
 import operator
 from ansible import errors
@@ -29,8 +27,7 @@ from ansible import __version__
 from ansible.utils.display_functions import *
 from ansible.utils.plugins import *
 from ansible.utils.su_prompts import *
-from ansible.utils.hashing import secure_hash, secure_hash_s, checksum, checksum_s, md5, md5s
-from ansible.callbacks import display
+from ansible.utils.hashing import secure_hash, secure_hash_s, checksum, checksum_s, md5, md5s #unused here but 'reexported'
 from ansible.module_utils.splitter import split_args, unquote
 from ansible.module_utils.basic import heuristic_log_sanitize
 from ansible.utils.unicode import to_bytes, to_unicode
@@ -45,12 +42,11 @@ import pipes
 import random
 import difflib
 import warnings
-import traceback
 import getpass
 import subprocess
 import contextlib
-import threading
 import tempfile
+from multiprocessing import Lock
 
 from vault import VaultLib
 
@@ -64,7 +60,7 @@ LOOKUP_REGEX = re.compile(r'lookup\s*\(')
 PRINT_CODE_REGEX = re.compile(r'(?:{[{%]|[%}]})')
 CODE_REGEX = re.compile(r'(?:{%|%})')
 
-_LOCK = threading.Lock()
+_LOCK = Lock()
 
 try:
     # simplejson can be much faster if it's available
@@ -357,9 +353,6 @@ def path_dwim_relative(original, dirname, source, playbook_base, check=True):
     ''' find one file in a directory one level up in a dir named dirname relative to current '''
     # (used by roles code)
 
-    from ansible.utils import template
-
-
     basedir = os.path.dirname(original)
     if os.path.islink(basedir):
         basedir = unfrackpath(basedir)
@@ -551,8 +544,6 @@ def _clean_data_struct(orig_data, from_remote=False, from_inventory=False):
 
 def parse_json(raw_data, from_remote=False, from_inventory=False, no_exceptions=False):
     ''' this version for module return data only '''
-
-    orig_data = raw_data
 
     # ignore stuff like tcgetattr spewage or other warnings
     data = filter_leading_non_json_lines(raw_data)
