@@ -464,7 +464,7 @@ class Templar:
             try:
                 t = myenv.from_string(data)
             except TemplateSyntaxError as e:
-                raise AnsibleError("template error while templating string: %s" % str(e))
+                raise AnsibleError("template error while templating string: %s. String: %s" % (str(e), data))
             except Exception as e:
                 if 'recursion' in str(e):
                     raise AnsibleError("recursive loop detected in template string: %s" % data)
