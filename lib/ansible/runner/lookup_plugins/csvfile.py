@@ -16,7 +16,6 @@
 # along with Ansible.  If not, see <http://www.gnu.org/licenses/>.
 
 from ansible import utils, errors
-import os
 import codecs
 import csv
 
@@ -29,7 +28,7 @@ class LookupModule(object):
 
         try:
             f = codecs.open(filename, 'r', encoding='utf-8')
-            creader = csv.reader(f, delimiter=delimiter)
+            creader = csv.reader(f, delimiter=str(delimiter))
 
             for row in creader:
                 if row[0] == key:
@@ -72,7 +71,7 @@ class LookupModule(object):
 
             path = utils.path_dwim(self.basedir, paramvals['file'])
 
-            var = self.read_csv(path, key, paramvals['delimiter'], paramvals['default'], paramvals['col'])
+            var = self.read_csv(path, key, str(paramvals['delimiter']), paramvals['default'], paramvals['col'])
             if var is not None:
                 if type(var) is list:
                     for v in var:
