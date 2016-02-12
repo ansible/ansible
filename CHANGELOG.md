@@ -43,7 +43,7 @@ Ansible Changes By Release
 * New delegate_facts directive, a boolean that allows you to apply facts to the delegated host (true/yes) instead of the inventory_hostname (no/false) which is the default and previous behaviour.
 * local connections now work with 'su' as a privilege escalation method
 * Ansible 2.0 has deprecated the “ssh” from ansible_ssh_user, ansible_ssh_host, and ansible_ssh_port to become ansible_user, ansible_host, and ansible_port.
-* New ssh configuration variables(`ansible_ssh_common_args`, `ansible_ssh_extra_args`) can be used to configure a
+* New ssh configuration variables (`ansible_ssh_common_args`, `ansible_ssh_extra_args`) can be used to configure a
   per-group or per-host ssh ProxyCommand or set any other ssh options.
   `ansible_ssh_extra_args` is used to set options that are accepted only by ssh (not sftp or scp, which have their own analogous settings).
 * ansible-pull can now verify the code it runs when using git as a source repository, using git's code signing and verification features.
@@ -364,7 +364,7 @@ allowed in future versions:
 * Consolidated code from modules using urllib2 to normalize features, TLS and SNI support.
 * synchronize module's dest_port parameter now takes precedence over the ansible_ssh_port inventory setting.
 * Play output is now dynamically sized to terminal with a minimum of 80 coluumns (old default).
-* vars_prompt and pause are now skipped with a warning if the play is called non interactively (i.e. pull from cron).
+* vars_prompt and pause are now skipped with a warning if the play is called noninteractively (i.e. pull from cron).
 * Support for OpenBSD's 'doas' privilege escalation method.
 * Most vault operations can now be done over multilple files.
 * ansible-vault encrypt/decrypt read from stdin if no other input file is given, and can write to a given ``--output file`` (including stdout, '-').
@@ -375,15 +375,15 @@ allowed in future versions:
 * Many fixes and new options added to modules, too many to list here.
 * Now you can see task file and line number when using verbosity of 3 or above.
 * The ``[x-y]`` host range syntax is no longer supported. Note that ``[0:1]`` matches two hosts, i.e. the range is inclusive of its endpoints.
-* We now recommend the Use `pattern1,pattern2` to combine host matching patterns.
+* We now recommend the use of `pattern1,pattern2` to combine host matching patterns.
   * The use of ':' as a separator conflicts with IPv6 addresses and host ranges. It will be deprecated in the future.
   * The undocumented use of ';' as a separator is now deprecated.
 * modules and callbacks have been extended to support no_log to avoid data disclosure.
-* new managed_syslog option has been added to control output to syslog on managed machines, no_log supercsedes this settings.
+* new managed_syslog option has been added to control output to syslog on managed machines, no_log supersedes this settings.
 * Lookup, vars and action plugin pathing has been normalized, all now follow the same sequence to find relative files.
 * We do not ignore the explicitly set login user for ssh when it matches the 'current user' anymore, this allows overriding .ssh/config when it is set
   explicitly. Leaving it unset will still use the same user and respect .ssh/config. This also means ansible_ssh_user can now return a None value.
-* environment variables passed to remote shells now default to 'controller' settings, with fallback to en_us.UTF8 which was the previous default.
+* environment variables passed to remote shells now default to 'controller' settings, with fallback to en_US.UTF8 which was the previous default.
 * add_hosts is much stricter about host name and will prevent invalid names from being added.
 * ansible-pull now defaults to doing shallow checkouts with git, use `--full` to return to previous behaviour.
 * random cows are more random
