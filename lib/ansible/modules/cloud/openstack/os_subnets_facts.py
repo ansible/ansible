@@ -130,7 +130,7 @@ def main():
 
     argument_spec = openstack_full_argument_spec(
         name=dict(required=False, default=None),
-        filters=dict(required=False, default=None)
+        filters=dict(required=False, type='dict', default=None)
     )
     module = AnsibleModule(argument_spec)
 
