@@ -64,6 +64,7 @@ Ansible Changes By Release
   This was a feature of the 1.9.x version that was left out by mistake when the
   module was rewritten for 2.0.
 * Fix bugs with non-english locales in yum, git, and apt modules
+* Fix a bug with the dnf module where state=latest could only upgrade, not install.
 
 ## 2.0 "Over the Hills and Far Away" - Jan 12, 2016
 
