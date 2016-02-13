@@ -131,7 +131,7 @@ def main():
         filename          = dict(default=None),
         ramdisk           = dict(default=None),
         kernel            = dict(default=None),
-        properties        = dict(default={}),
+        properties        = dict(type='dict', default={}),
         state             = dict(default='present', choices=['absent', 'present']),
     )
     module_kwargs = openstack_module_kwargs()
