@@ -153,6 +153,8 @@ class Block(Base, Become, Conditional, Taggable):
         if self._dep_chain is None:
             if self._parent_block:
                 return self._parent_block.get_dep_chain()
+            elif self._task_include:
+                return self._task_include._block.get_dep_chain()
             else:
                 return None
         else:
@@ -193,7 +195,8 @@ class Block(Base, Become, Conditional, Taggable):
 
         new_me._task_include = None
         if self._task_include:
-            new_me._task_include = self._task_include.copy()
+            new_me._task_include = self._task_include.copy(exclude_block=True)
+            new_me._task_include._block = self._task_include._block.copy(exclude_tasks=True)
 
         return new_me
 
@@ -374,7 +377,7 @@ class Block(Base, Become, Conditional, Taggable):
             return tmp_list
 
         def evaluate_block(block):
-            new_block = self.copy()
+            new_block = self.copy(exclude_tasks=True)
             new_block.block  = evaluate_and_append_task(block.block)
             new_block.rescue = evaluate_and_append_task(block.rescue)
             new_block.always = evaluate_and_append_task(block.always)
