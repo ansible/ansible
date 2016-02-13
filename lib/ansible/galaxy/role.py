@@ -219,6 +219,10 @@ class GalaxyRole(object):
                     if role_versions and self.version not in [a.get('name', None) for a in role_versions]:
                         raise AnsibleError("- the specified version (%s) of %s was not found in the list of available versions (%s)." % (self.version, self.name, role_versions))
 
+                matched_version = filter( lambda v : v['name'] == self.version , role_versions )
+                if len(matched_version) == 1 :
+                    self.src = matched_version[0].get('url', self.src) or self.src
+
                 tmp_file = self.fetch(role_data)
 
         else:
