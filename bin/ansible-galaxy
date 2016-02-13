@@ -851,6 +851,10 @@ def execute_install(args, options, parser):
                         exit_without_ignore(options)
                         continue
 
+                matched_version = filter( lambda v : v['name'] == role['version'] , role_versions )
+                if len(matched_version) == 1 :
+                    role_src = matched_version[0].get('url', role_src) or role_src
+
                 # download the role. if --no-deps was specified, we stop here, 
                 # otherwise we recursively grab roles and all of their deps.
                 tmp_file = fetch_role(role_src, role["version"], role_data, options)
