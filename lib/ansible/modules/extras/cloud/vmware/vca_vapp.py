@@ -32,10 +32,6 @@ options:
     description:
       - The name of the vCloud Air vApp instance
     required: yes
-  vdc_name:
-    description:
-      - The name of the virtual data center (VDC) that contains the vAPP
-    required: yes
   template_name:
     description:
       - The name of the vApp template to use to create the vApp instance.  If
@@ -89,47 +85,47 @@ options:
     required: no
     default: present
     choices: ['present', 'absent', 'deployed', 'undeployed']
-    username:
-      description:
-        - The vCloud Air username to use during authentication
-      required: false
-      default: None
-    password:
-      description:
-        - The vCloud Air password to use during authentication
-      required: false
-      default: None
-    org:
-      description:
-        - The org to login to for creating vapp, mostly set when the service_type is vdc.
-      required: false
-      default: None
-    instance_id:
-      description:
-        - The instance id in a vchs environment to be used for creating the vapp
-      required: false
-      default: None
-    host:
-      description:
-        - The authentication host to be used when service type  is vcd.
-      required: false
-      default: None
-    api_version:
-      description:
-        - The api version to be used with the vca
-      required: false
-      default: "5.7"
-    service_type:
-      description:
-        - The type of service we are authenticating against
-      required: false
-      default: vca
-      choices: [ "vca", "vchs", "vcd" ]
-    vdc_name:
-      description:
-        - The name of the vdc where the vm should be created.
-      required: false
-      default: None
+  username:
+    description:
+      - The vCloud Air username to use during authentication
+    required: false
+    default: None
+  password:
+    description:
+      - The vCloud Air password to use during authentication
+    required: false
+    default: None
+  org:
+    description:
+      - The org to login to for creating vapp, mostly set when the service_type is vdc.
+    required: false
+    default: None
+  instance_id:
+    description:
+      - The instance id in a vchs environment to be used for creating the vapp
+    required: false
+    default: None
+  host:
+    description:
+      - The authentication host to be used when service type  is vcd.
+    required: false
+    default: None
+  api_version:
+    description:
+      - The api version to be used with the vca
+    required: false
+    default: "5.7"
+  service_type:
+    description:
+      - The type of service we are authenticating against
+    required: false
+    default: vca
+    choices: [ "vca", "vchs", "vcd" ]
+  vdc_name:
+    description:
+      - The name of the virtual data center (VDC) where the vm should be created or contains the vAPP.
+    required: false
+    default: None
 '''
 
 EXAMPLES = '''
