@@ -32,10 +32,6 @@ options:
     description:
       - The name of the vCloud Air vApp instance
     required: yes
-  vdc_name:
-    description:
-      - The name of the virtual data center (VDC) that contains the vAPP
-    required: yes
   template_name:
     description:
       - The name of the vApp template to use to create the vApp instance.  If
@@ -127,7 +123,7 @@ options:
     choices: [ "vca", "vchs", "vcd" ]
   vdc_name:
     description:
-      - The name of the vdc where the vm should be created.
+      - The name of the virtual data center (VDC) where the vm should be created or contains the vAPP.
     required: false
     default: None
 '''
