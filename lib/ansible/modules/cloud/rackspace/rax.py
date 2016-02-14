@@ -285,7 +285,7 @@ def create(module, names=[], flavor=None, image=None, meta={}, key_name=None,
     if user_data:
         config_drive = True
 
-    if user_data and os.path.isfile(os.path.expanduser('user_data')):
+    if user_data and os.path.isfile(os.path.expanduser(user_data)):
         try:
             user_data = os.path.expanduser('user_data')
             f = open(user_data)
