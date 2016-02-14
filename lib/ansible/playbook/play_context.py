@@ -251,35 +251,23 @@ class PlayContext(Base):
         options specified by the user on the command line. These have a
         lower precedence than those set on the play or host.
         '''
-
-        if options.connection:
-            self.connection = options.connection
-
-        self.remote_user = options.remote_user
-        self.private_key_file = options.private_key_file
-        self.ssh_common_args = options.ssh_common_args
-        self.sftp_extra_args = options.sftp_extra_args
-        self.scp_extra_args = options.scp_extra_args
-        self.ssh_extra_args = options.ssh_extra_args
-
         # privilege escalation
         self.become        = options.become
         self.become_method = options.become_method
         self.become_user   = options.become_user
 
+        self.check_mode = boolean(options.check)
+
+        # get ssh options FIXME: make these common to all connections
+        for flag in ['ssh_common_args', 'sftp_extra_args', 'scp_extra_args', 'ssh_extra_args']:
+            setattr(self, flag, getattr(options,flag, ''))
+
         # general flags (should we move out?)
-        if options.verbosity:
-            self.verbosity  = options.verbosity
-        if options.check:
-            self.check_mode = boolean(options.check)
-        if hasattr(options, 'force_handlers') and options.force_handlers:
-            self.force_handlers = boolean(options.force_handlers)
-        if hasattr(options, 'step') and options.step:
-            self.step = boolean(options.step)
-        if hasattr(options, 'start_at_task') and options.start_at_task:
-            self.start_at_task = to_unicode(options.start_at_task)
-        if hasattr(options, 'diff') and options.diff:
-            self.diff = boolean(options.diff)
+        for flag in ['connection','remote_user', 'private_key_file', 'verbosity', 'force_handlers', 'step', 'start_at_task', 'diff']:
+            attribute = getattr(options, flag, False)
+            if attribute:
+                setattr(self, flag, attribute)
+
         if hasattr(options, 'timeout') and options.timeout:
             self.timeout = int(options.timeout)
 
