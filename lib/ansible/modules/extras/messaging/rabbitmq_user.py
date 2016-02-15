@@ -228,7 +228,7 @@ def main():
         user=dict(required=True, aliases=['username', 'name']),
         password=dict(default=None),
         tags=dict(default=None),
-        permissions=dict(default=list()),
+        permissions=dict(default=list(), type='list'),
         vhost=dict(default='/'),
         configure_priv=dict(default='^$'),
         write_priv=dict(default='^$'),
