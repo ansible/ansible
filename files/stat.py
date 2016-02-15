@@ -49,7 +49,7 @@ options:
     required: false
     choices: [ 'sha1', 'sha224', 'sha256', 'sha384', 'sha512' ]
     default: sha1
-    aliases: [ 'checksum_algo' ]
+    aliases: [ 'checksum_algo', 'checksum' ]
     version_added: "2.0"
   mime:
     description:
