@@ -70,21 +70,15 @@ options:
     required: false
     default: EOF
     description:
-      - Used with C(state=present). If specified, the line will be inserted
-        after the last match of specified regular expression. A special value is
-        available; C(EOF) for inserting the line at the end of the file. 
-        If specified regular expresion has no matches, EOF will be used instead.
-        May not be used with C(backrefs).
+      - Used with C(state=present). If specified, the line will be inserted after the last match of specified regular expression. A special value is available; C(EOF) for inserting the line at the end of the file.
+      - If specified regular expression has no matches, EOF will be used instead.  May not be used with C(backrefs).
     choices: [ 'EOF', '*regex*' ]
   insertbefore:
     required: false
     version_added: "1.1"
     description:
-      - Used with C(state=present). If specified, the line will be inserted
-        before the last match of specified regular expression. A value is 
-        available; C(BOF) for inserting the line at the beginning of the file.
-        If specified regular expresion has no matches, the line will be
-        inserted at the end of the file.  May not be used with C(backrefs).
+      - Used with C(state=present). If specified, the line will be inserted before the last match of specified regular expression. A value is available; C(BOF) for inserting the line at the beginning of the file.
+      - If specified regular expression has no matches, the line will be inserted at the end of the file.  May not be used with C(backrefs).
     choices: [ 'BOF', '*regex*' ]
   create:
     required: false
