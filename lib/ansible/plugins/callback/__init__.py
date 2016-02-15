@@ -28,6 +28,7 @@ from ansible.compat.six import string_types
 
 from ansible import constants as C
 from ansible.vars import strip_internal_keys
+from ansible.utils.color import stringc
 from ansible.utils.unicode import to_unicode
 
 try:
@@ -134,9 +135,17 @@ class CallbackBase:
                                                       fromfiledate='',
                                                       tofiledate='',
                                                       n=10)
-                        difflines = list(differ)
-                        if difflines:
-                            ret.extend(difflines)
+                        has_diff = False
+                        for line in differ:
+                            has_diff = True
+                            if line.startswith('-'):
+                                line = stringc(line, 'red')
+                            elif line.startswith('+'):
+                                line = stringc(line, 'green')
+                            elif line.startswith('@@'):
+                                line = stringc(line, 'cyan')
+                            ret.append(line)
+                        if has_diff:
                             ret.append('\n')
                     if 'prepared' in diff:
                         ret.append(to_unicode(diff['prepared']))
