@@ -291,28 +291,54 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         res = self._low_level_execute_command(cmd, sudoable=sudoable)
         return res
 
+    def _execute_remote_stat(self, path, all_vars, follow):
+        '''
+        Get information from remote file.
+        '''
+        module_args=dict(
+           path=path,
+           follow=follow,
+           get_md5=False,
+           get_checksum=True,
+           checksum_algo='sha1',
+        )
+        mystat = self._execute_module(module_name='stat', module_args=module_args, task_vars=all_vars)
+
+        if 'failed' in mystat and mystat['failed']:
+            raise AnsibleError('Failed to get information on remote file (%s): %s' % (path, mystat['msg']))
+
+        if not mystat['stat']['exists']:
+            # empty might be matched, 1 should never match, also backwards compatible
+            mystat['stat']['checksum'] = '1'
+
+        return mystat['stat']
+
     def _remote_checksum(self, path, all_vars):
         '''
-        Takes a remote checksum and returns 1 if no file
+        Produces a remote checksum given a path,
+        Returns a number 0-4 for specific errors instead of checksum, also ensures it is different
+        0 = unknown error
+        1 = file does not exist, this might not be an error
+        2 = permissions issue
+        3 = its a directory, not a file
+        4 = stat module failed, likely due to not finding python
         '''
-
-        python_interp = all_vars.get('ansible_python_interpreter', 'python')
-
-        cmd = self._connection._shell.checksum(path, python_interp)
-        data = self._low_level_execute_command(cmd, sudoable=True)
+        x = "0" # unknown error has occured
         try:
-            data2 = data['stdout'].strip().splitlines()[-1]
-            if data2 == u'':
-                # this may happen if the connection to the remote server
-                # failed, so just return "INVALIDCHECKSUM" to avoid errors
-                return "INVALIDCHECKSUM"
+            remote_stat = self._execute_remote_stat(path, all_vars, follow=False)
+            if remote_stat['exists'] and remote_stat['isdir']:
+                x = "3" # its a directory not a file
             else:
-                return data2.split()[0]
-        except IndexError:
-            display.warning(u"Calculating checksum failed unusually, please report this to "
-                u"the list so it can be fixed\ncommand: %s\n----\noutput: %s\n----\n" % (to_unicode(cmd), data))
-            # this will signal that it changed and allow things to keep going
-            return "INVALIDCHECKSUM"
+                x = remote_stat['checksum'] # if 1, file is missing
+        except AnsibleError as e:
+            errormsg = to_bytes(e)
+            if errormsg.endswith('Permission denied'):
+                x = "2" # cannot read file
+            elif errormsg.endswith('MODULE FAILURE'):
+                x = "4" # python not found or module uncaught exception
+        finally:
+            return x
+
 
     def _remote_expand_user(self, path):
         ''' takes a remote path and performs tilde expansion on the remote host '''
