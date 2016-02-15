@@ -60,12 +60,4 @@ options:
       - level part of the SELinux file context. This is the MLS/MCS attribute,
         sometimes known as the C(range). C(_default) feature works as for
         I(seuser).
-  follow:
-    required: false
-    default: "no"
-    choices: [ "yes", "no" ]
-    version_added: "1.8"
-    description:
-      - 'This flag indicates that filesystem links, if they exist, should be followed.'
-
 """
