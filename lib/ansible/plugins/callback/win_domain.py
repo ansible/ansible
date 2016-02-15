@@ -1,6 +1,10 @@
 # This plugin for ansible is intended to manage acquiring and destroying
 # kerberos / windows domain credentials.
 
+# Make coding more python3-ish
+from __future__ import (absolute_import, division, print_function)
+__metaclass__ = type
+
 import os
 import json
 import subprocess
