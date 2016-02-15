@@ -27,25 +27,21 @@ options:
       - The full path of the file/object to get the facts of
     required: true
     default: null
-    aliases: []
   follow:
     description:
       - Whether to follow symlinks
     required: false
     default: no
-    aliases: []
   get_md5:
     description:
       - Whether to return the md5 sum of the file.  Will return None if we're unable to use md5 (Common for FIPS-140 compliant systems)
     required: false
     default: yes
-    aliases: []
   get_checksum:
     description:
       - Whether to return a checksum of the file (default sha1)
     required: false
     default: yes
-    aliases: []
     version_added: "1.8"
   checksum_algorithm:
     description:
@@ -272,11 +268,12 @@ stat:
             returned: success, path exists and user can read stats and path supports hashing and md5 is supported
             type: string
             sample: f88fa92d8cf2eeecf4c0a50ccc96d0c0
-        checksum:
+        checksum_algorithm:
             description: hash of the path
             returned: success, path exists, user can read stats, path supports hashing and supplied checksum algorithm is available
             type: string
             sample: 50ba294cdf28c0d5bcde25708df53346825a429f
+            aliases: ['checksum', 'checksum_algo']
         pw_name:
             description: User name of owner
             returned: success, path exists and user can read stats and installed python supports it
@@ -312,7 +309,7 @@ def main():
             follow = dict(default='no', type='bool'),
             get_md5 = dict(default='yes', type='bool'),
             get_checksum = dict(default='yes', type='bool'),
-            checksum_algorithm = dict(default='sha1', type='str', choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'], aliases=['checksum_algo']),
+            checksum_algorithm = dict(default='sha1', type='str', choices=['sha1', 'sha224', 'sha256', 'sha384', 'sha512'], aliases=['checksum_algo', 'checksum']),
             mime = dict(default=False, type='bool', aliases=['mime_type', 'mime-type']),
         ),
         supports_check_mode = True
