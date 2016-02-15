@@ -236,7 +236,7 @@ def main():
     if not os.access(src, os.R_OK):
         module.fail_json(msg="Source %s not readable" % (src))
     if os.path.isdir(src):
-        module.fail_json(msg="Remote copy does not support recurisive copy of direcory: %s" % (src))
+        module.fail_json(msg="Remote copy does not support recursive copy of directory: %s" % (src))
 
     checksum_src = module.sha1(src)
     checksum_dest = None
