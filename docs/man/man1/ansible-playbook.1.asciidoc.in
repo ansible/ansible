@@ -204,6 +204,24 @@ up to three times for more output.
 
 Show program's version number and exit.
 
+EXIT STATUS
+-----------
+
+*0* -- OK or no hosts matched
+
+*1* -- Error
+
+*2* -- One or more hosts failed
+
+*3* -- One or more hosts were unreachable
+
+*4* -- Parser error
+
+*5* -- Bad or incomplete options
+
+*99* -- User interrupted execution
+
+*250* -- Unexpected error
 
 ENVIRONMENT
 -----------
