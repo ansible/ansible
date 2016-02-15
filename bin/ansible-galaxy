@@ -257,7 +257,7 @@ def api_get_config(api_server, ignore_certs=False):
         validate_certs = False
 
     try:
-        url = 'https://%s/api/' % api_server
+        url = '%s/api/' % api_server
         data = json.load(open_url(url, validate_certs=validate_certs))
         if not data.get("current_version",None):
             return None
@@ -288,7 +288,7 @@ def api_lookup_role_by_name(api_server, role_name, parser, notify=True, ignore_c
         print "- invalid role name (%s). Specify role as format: username.rolename" % role_name
         sys.exit(1)
 
-    url = 'https://%s/api/v1/roles/?owner__username=%s&name=%s' % (api_server,user_name,role_name)
+    url = '%s/api/v1/roles/?owner__username=%s&name=%s' % (api_server,user_name,role_name)
     try:
         data = json.load(open_url(url, validate_certs=validate_certs))
         if len(data["results"]) == 0:
@@ -309,12 +309,12 @@ def api_fetch_role_related(api_server, related, role_id, ignore_certs=False):
         validate_certs = False
 
     try:
-        url = 'https://%s/api/v1/roles/%d/%s/?page_size=50' % (api_server, int(role_id), related)
+        url = '%s/api/v1/roles/%d/%s/?page_size=50' % (api_server, int(role_id), related)
         data = json.load(open_url(url, validate_certs=validate_certs))
         results = data['results']
         done = (data.get('next_link', None) == None)
         while not done:
-            url = 'https://%s%s' % (api_server, data['next_link'])
+            url = '%s%s' % (api_server, data['next_link'])
             print url
             data = json.load(open_url(url))
             results += data['results']
@@ -333,7 +333,7 @@ def api_get_list(api_server, what, ignore_certs=False):
         validate_certs = False
 
     try:
-        url = 'https://%s/api/v1/%s/?page_size' % (api_server, what)
+        url = '%s/api/v1/%s/?page_size' % (api_server, what)
         data = json.load(open_url(url, validate_certs=validate_certs))
         if "results" in data:
             results = data['results']
@@ -343,7 +343,7 @@ def api_get_list(api_server, what, ignore_certs=False):
         if "next_link" in data:
             done = (data.get('next_link', None) == None)
         while not done:
-            url = 'https://%s%s' % (api_server, data['next_link'])
+            url = '%s%s' % (api_server, data['next_link'])
             print url
             data = json.load(open_url(url))
             results += data['results']
