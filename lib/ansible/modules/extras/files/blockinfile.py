@@ -96,6 +96,12 @@ options:
     description:
       - Create a backup file including the timestamp information so you can
         get the original file back if you somehow clobbered it incorrectly.
+  follow:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    description:
+      - 'This flag indicates that filesystem links, if they exist, should be followed.'
 """
 
 EXAMPLES = r"""
