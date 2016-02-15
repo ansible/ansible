@@ -34,23 +34,18 @@ class ActionModule(ActionBase):
     TRANSFERS_FILES = True
 
     def get_checksum(self, dest, all_vars, try_directory=False, source=None):
-        remote_checksum = self._remote_checksum(dest, all_vars=all_vars)
+        try:
+            dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False)
 
-        if remote_checksum in ('0', '2', '3', '4'):
-            # Note: 1 means the file is not present which is fine; template
-            # will create it.  3 means directory was specified instead of file
-            if try_directory and remote_checksum == '3' and source:
+            if dest_stat['exists'] and dest_stat['isdir'] and try_directory and source:
                 base = os.path.basename(source)
                 dest = os.path.join(dest, base)
-                remote_checksum = self.get_checksum(dest, all_vars=all_vars, try_directory=False)
-                if remote_checksum not in ('0', '2', '3', '4'):
-                    return remote_checksum
+                dest_stat = self._execute_remote_stat(dest, all_vars=all_vars, follow=False)
 
-            result = dict(failed=True, msg="failed to checksum remote file."
-                        " Checksum error code: %s" % remote_checksum)
-            return result
+        except Exception as e:
+            return dict(failed=True, msg=to_bytes(e))
 
-        return remote_checksum
+        return dest_stat['checksum']
 
     def run(self, tmp=None, task_vars=None):
         ''' handler for template operations '''
