@@ -87,6 +87,13 @@ options:
       - 'force the creation of the symlinks in two cases: the source file does 
         not exist (but will appear later); the destination exists and is a file (so, we need to unlink the
         "path" file and create symlink to the "src" file in place of it).'
+  follow:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "1.8"
+    description:
+      - 'This flag indicates that filesystem links, if they exist, should be followed.'
 '''
 
 EXAMPLES = '''

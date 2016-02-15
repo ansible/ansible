@@ -66,6 +66,13 @@ options:
     description:
       - All arguments accepted by the M(file) module also work here.
     required: false
+  follow:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "1.9"
+    description:
+      - 'This flag indicates that filesystem links, if they exist, should be followed.'
 """
 
 EXAMPLES = r"""

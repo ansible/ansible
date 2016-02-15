@@ -85,6 +85,13 @@ options:
     required: false
     default: "no"
     version_added: "2.0"
+  follow:
+    required: false
+    default: "no"
+    choices: [ "yes", "no" ]
+    version_added: "1.8"
+    description:
+      - 'This flag indicates that filesystem links, if they exist, should be followed.'
 extends_documentation_fragment:
     - files
     - validate
