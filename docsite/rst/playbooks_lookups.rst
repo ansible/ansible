@@ -25,6 +25,7 @@ The file lookup is the most basic lookup type.
 
 Contents can be read off the filesystem as follows::
 
+    ---
     - hosts: all
       vars:
          contents: "{{ lookup('file', '/etc/foo.txt') }}"
