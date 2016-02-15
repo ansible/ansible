@@ -1758,39 +1758,39 @@ class AnsibleModule(object):
                 # only try workarounds for errno 18 (cross device), 1 (not permitted),  13 (permission denied)
                 # and 26 (text file busy) which happens on vagrant synced folders and other 'exotic' non posix file systems
                 self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
-
-            dest_dir = os.path.dirname(dest)
-            dest_file = os.path.basename(dest)
-            try:
-                tmp_dest = tempfile.NamedTemporaryFile(
-                    prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
-            except (OSError, IOError):
-                e = get_exception()
-                self.fail_json(msg='The destination directory (%s) is not writable by the current user.' % dest_dir)
-
-            try: # leaves tmp file behind when sudo and  not root
-                if switched_user and os.getuid() != 0:
-                    # cleanup will happen by 'rm' of tempdir
-                    # copy2 will preserve some metadata
-                    shutil.copy2(src, tmp_dest.name)
-                else:
-                    shutil.move(src, tmp_dest.name)
-                if self.selinux_enabled():
-                    self.set_context_if_different(
-                        tmp_dest.name, context, False)
+            else:
+                dest_dir = os.path.dirname(dest)
+                dest_file = os.path.basename(dest)
                 try:
-                    tmp_stat = os.stat(tmp_dest.name)
-                    if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
-                        os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
-                except OSError:
+                    tmp_dest = tempfile.NamedTemporaryFile(
+                        prefix=".ansible_tmp", dir=dest_dir, suffix=dest_file)
+                except (OSError, IOError):
                     e = get_exception()
-                    if e.errno != errno.EPERM:
-                        raise
-                os.rename(tmp_dest.name, dest)
-            except (shutil.Error, OSError, IOError):
-                e = get_exception()
-                self.cleanup(tmp_dest.name)
-                self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
+                    self.fail_json(msg='The destination directory (%s) is not writable by the current user.' % dest_dir)
+
+                try: # leaves tmp file behind when sudo and  not root
+                    if switched_user and os.getuid() != 0:
+                        # cleanup will happen by 'rm' of tempdir
+                        # copy2 will preserve some metadata
+                        shutil.copy2(src, tmp_dest.name)
+                    else:
+                        shutil.move(src, tmp_dest.name)
+                    if self.selinux_enabled():
+                        self.set_context_if_different(
+                            tmp_dest.name, context, False)
+                    try:
+                        tmp_stat = os.stat(tmp_dest.name)
+                        if dest_stat and (tmp_stat.st_uid != dest_stat.st_uid or tmp_stat.st_gid != dest_stat.st_gid):
+                            os.chown(tmp_dest.name, dest_stat.st_uid, dest_stat.st_gid)
+                    except OSError:
+                        e = get_exception()
+                        if e.errno != errno.EPERM:
+                            raise
+                    os.rename(tmp_dest.name, dest)
+                except (shutil.Error, OSError, IOError):
+                    e = get_exception()
+                    self.cleanup(tmp_dest.name)
+                    self.fail_json(msg='Could not replace file: %s to %s: %s' % (src, dest, e))
 
         if creating:
             # make sure the file has the correct permissions
