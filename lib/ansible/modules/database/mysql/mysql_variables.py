@@ -146,7 +146,7 @@ def main():
     if mysqlvar is None:
         module.fail_json(msg="Cannot run without variable to operate with")
     if match('^[0-9a-z_]+$', mysqlvar) is None:
-	    module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
+        module.fail_json(msg="invalid variable name \"%s\"" % mysqlvar)
     if not mysqldb_found:
         module.fail_json(msg="the python mysqldb module is required")
     else:

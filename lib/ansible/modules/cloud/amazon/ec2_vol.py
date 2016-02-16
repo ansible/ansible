@@ -404,7 +404,7 @@ def modify_dot_attribute(module, ec2, instance, device_name):
         dot = instance.block_device_mapping[device_name].delete_on_termination
     except boto.exception.BotoServerError, e:
         module.fail_json(msg = "%s: %s" % (e.error_code, e.error_message))
-  
+
     if delete_on_termination != dot:
         try:
             bdt = BlockDeviceType(delete_on_termination=delete_on_termination)
@@ -413,7 +413,7 @@ def modify_dot_attribute(module, ec2, instance, device_name):
 
             ec2.modify_instance_attribute(instance_id=instance.id, attribute='blockDeviceMapping', value=bdm)
 
-	    while instance.block_device_mapping[device_name].delete_on_termination != delete_on_termination:
+            while instance.block_device_mapping[device_name].delete_on_termination != delete_on_termination:
                 time.sleep(3)
                 instance.update()
             changed = True
