@@ -520,7 +520,6 @@ def main():
 
         # Use this snippet to debug through conditionals:
 #       module.exit_json(msg="Bucket return %s"%bucketrtn)
-#       sys.exit(0)
 
         # Lets check the src path.
         pathrtn = path_check(src)

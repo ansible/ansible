@@ -235,7 +235,6 @@ def create_image(module, ec2):
             for img in images:
                 if img.name == name:
                     module.exit_json(msg="AMI name already present", image_id=img.id, state=img.state, changed=False)
-                    sys.exit(0)
             else:
                 module.fail_json(msg="Error in retrieving duplicate AMI details")
         else:
@@ -313,7 +312,6 @@ def deregister_image(module, ec2):
         module.fail_json(msg = "timed out waiting for image to be reregistered/deleted")
 
     module.exit_json(msg="AMI deregister/delete operation complete", changed=True)
-    sys.exit(0)
 
 
 def update_image(module, ec2):

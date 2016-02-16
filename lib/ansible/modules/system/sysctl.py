@@ -356,7 +356,6 @@ def main():
     result = SysctlModule(module)    
 
     module.exit_json(changed=result.changed)
-    sys.exit(0)
 
 # import module snippets
 from ansible.module_utils.basic import *
