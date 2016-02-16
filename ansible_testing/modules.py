@@ -27,7 +27,7 @@ from utils import find_globals
 import yaml
 
 
-BLACKLIST_DIRS = frozenset(('.git',))
+BLACKLIST_DIRS = frozenset(('.git', 'test'))
 INDENT_REGEX = re.compile(r'([\t]*)')
 BASIC_RESERVED = frozenset((r for r in dir(module_utils_basic) if r[0] != '_'))
 
@@ -89,7 +89,7 @@ class Validator(object):
 
 
 class ModuleValidator(Validator):
-    BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md')
+    BLACKLIST_PATTERNS = ('.git*', '*.pyc', '*.pyo', '.*', '*.md', '*.txt')
     BLACKLIST_FILES = frozenset(('.git', '.gitignore', '.travis.yml',
                                  '.gitattributes', '.gitmodules', 'COPYING',
                                  '__init__.py', 'VERSION', 'test-docs.sh'))
