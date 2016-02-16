@@ -285,6 +285,9 @@ COLOR_DIFF_ADD    = get_config(p, 'colors', 'diff_add', 'ANSIBLE_COLOR_DIFF_ADD'
 COLOR_DIFF_REMOVE = get_config(p, 'colors', 'diff_remove', 'ANSIBLE_COLOR_DIFF_REMOVE', 'red')
 COLOR_DIFF_LINES  = get_config(p, 'colors', 'diff_lines', 'ANSIBLE_COLOR_DIFF_LINES', 'cyan')
 
+# diff
+DIFF_CONTEXT = get_config(p, 'diff', 'context', 'ANSIBLE_DIFF_CONTEXT', 3, integer=True)
+
 # non-configurable things
 MODULE_REQUIRE_ARGS       = ['command', 'shell', 'raw', 'script']
 MODULE_NO_JSON            = ['command', 'shell', 'raw']
