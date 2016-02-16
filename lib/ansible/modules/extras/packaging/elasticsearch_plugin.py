@@ -66,11 +66,13 @@ options:
             - Proxy host to use during plugin installation
         required: False
         default: None
+        version_added: "2.1"
     proxy_port:
         description:
             - Proxy port to use during plugin installation
         required: False
-        default: None        
+        default: None
+        version_added: "2.1"
     version:
         description: 
             - Version of the plugin to be installed.  
