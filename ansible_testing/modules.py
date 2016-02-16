@@ -414,6 +414,8 @@ class ModuleValidator(Validator):
             sys_stdout = sys.stdout
             sys_stderr = sys.stderr
             sys.stdout = sys.stderr = buf = StringIO()
+            # instead of adding noqa to the above, do something with buf
+            assert buf
             setattr(sys.stdout, 'encoding', sys_stdout.encoding)
             setattr(sys.stderr, 'encoding', sys_stderr.encoding)
             try:
