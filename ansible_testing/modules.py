@@ -437,7 +437,7 @@ class ModuleValidator(Validator):
                 self.errors.append('No EXAMPLES provided')
             if not bool(ret):
                 if self._is_new_module():
-                    self.errors.append('No RETURN provided')
+                    self.errors.append('No RETURN documentation provided')
                 else:
                     self.warnings.append('No RETURN provided')
             else:
