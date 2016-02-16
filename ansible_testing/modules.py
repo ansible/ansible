@@ -2,29 +2,29 @@
 
 from __future__ import print_function
 
+import abc
+import argparse
+import ast
 import os
 import re
-import abc
-import ast
 import sys
-import yaml
-import argparse
 import traceback
-
-from fnmatch import fnmatch
-from distutils.version import StrictVersion
-
-from utils import find_globals
-
-from ansible.plugins import module_loader
-from ansible.executor.module_common import REPLACER_WINDOWS
-from ansible.utils.module_docs import get_docstring, BLACKLIST_MODULES
-
-from ansible import __version__ as ansible_version
-from ansible.module_utils import basic as module_utils_basic
 
 # We only use StringIO, since we cannot setattr on cStringIO
 from StringIO import StringIO
+
+from distutils.version import StrictVersion
+from fnmatch import fnmatch
+
+from ansible import __version__ as ansible_version
+from ansible.executor.module_common import REPLACER_WINDOWS
+from ansible.module_utils import basic as module_utils_basic
+from ansible.plugins import module_loader
+from ansible.utils.module_docs import BLACKLIST_MODULES, get_docstring
+
+from utils import find_globals
+
+import yaml
 
 
 BLACKLIST_DIRS = frozenset(('.git',))
