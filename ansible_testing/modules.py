@@ -354,7 +354,7 @@ class ModuleValidator(Validator):
         if self._is_new_module():
             return
 
-        existing = module_loader.find_plugin(self.name)
+        existing = module_loader.find_plugin(self.name, mod_type='.py')
         existing_doc, _, _ = get_docstring(existing, verbose=True)
         existing_options = existing_doc.get('options', {})
 
