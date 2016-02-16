@@ -380,7 +380,6 @@ def main():
         module.exit_json(changed=changed, **args)
 
     module.fail_json(msg='Unexpected position reached')
-    sys.exit(0)
 
 # import module snippets
 from ansible.module_utils.basic import *
