@@ -264,7 +264,7 @@ And failures are just as simple (where 'msg' is a required parameter to explain 
     module.fail_json(msg="Something fatal happened")
 
 There are also other useful functions in the module class, such as module.sha1(path).  See
-lib/ansible/module_common.py in the source checkout for implementation details.
+lib/ansible/module_utils/basic.py in the source checkout for implementation details.
 
 Again, modules developed this way are best tested with the hacking/test-module script in the git
 source checkout.  Because of the magic involved, this is really the only way the scripts
