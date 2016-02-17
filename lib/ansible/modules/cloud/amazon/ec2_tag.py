@@ -109,7 +109,6 @@ tasks:
     - volumes
 '''
 
-import sys
 
 try:
     import boto.ec2
@@ -122,7 +121,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
             resource = dict(required=True),
-            tags = dict(),
+            tags = dict(type='dict'),
             state = dict(default='present', choices=['present', 'absent', 'list']),
         )
     )
@@ -184,4 +183,5 @@ def main():
 from ansible.module_utils.basic import *
 from ansible.module_utils.ec2 import *
 
-main()
+if __name__ == '__main__':
+    main()
