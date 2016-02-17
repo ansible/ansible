@@ -108,18 +108,12 @@ failed_conditions:
 import time
 import shlex
 import re
-import json
 
-INDEX_RE = re.compile(r'(\[\d+\])')
-
-
-def get_response(data):
-    try:
-        json_data = json.loads(data)
-    except ValueError:
-        json_data = None
-    return dict(data=data, json=json_data)
-
+def to_lines(stdout):
+    for item in stdout:
+        if isinstance(item, basestring):
+            item = str(item).split('\n')
+        yield item
 
 def main():
     spec = dict(
