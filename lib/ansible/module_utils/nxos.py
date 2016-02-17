@@ -147,7 +147,8 @@ class Cli(object):
         try:
             self.shell.open(host, port=port, username=username, password=password)
         except Exception, exc:
-            self.module.fail_json('Failed to connect to {0}:{1} - {2}'.format(host, port, str(exc)))
+            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
+            self.module.fail_json(msg=msg)
 
     def send(self, commands, encoding='text'):
         return self.shell.send(commands)
@@ -188,7 +189,7 @@ class NetworkModule(AnsibleModule):
     def configure(self, commands):
         commands = to_list(commands)
         if self.params['transport'] == 'cli':
-            commands.insert(0, 'configure terminal')
+            commands.insert(0, 'configure')
             responses = self.execute(commands)
             responses.pop(0)
         else:
