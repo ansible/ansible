@@ -127,7 +127,8 @@ class Cli(object):
         try:
             self.shell.open(host, port=port, username=username, password=password)
         except Exception, exc:
-            self.module.fail_json('Failed to connect to {0}:{1} - {2}'.format(host, port, str(exc)))
+            msg = 'failed to connecto to %s:%s - %s' % (host, port, str(exc))
+            self.module.fail_json(msg=msg)
 
     def authorize(self):
         passwd = self.module.params['auth_pass']
