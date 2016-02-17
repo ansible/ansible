@@ -138,12 +138,12 @@ class CallbackBase:
                         has_diff = False
                         for line in differ:
                             has_diff = True
-                            if line.startswith('-'):
-                                line = stringc(line, 'red')
-                            elif line.startswith('+'):
-                                line = stringc(line, 'green')
+                            if line.startswith('+'):
+                                line = stringc(line, C.COLOR_DIFF_ADD)
+                            elif line.startswith('-'):
+                                line = stringc(line, C.COLOR_DIFF_REMOVE)
                             elif line.startswith('@@'):
-                                line = stringc(line, 'cyan')
+                                line = stringc(line, C.COLOR_DIFF_LINES)
                             ret.append(line)
                         if has_diff:
                             ret.append('\n')
