@@ -57,9 +57,7 @@ options:
     description:
       - The type of DNS record to create
     required: true
-    default: null
-    aliases: []
-    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS' ]
+    choices: [ 'A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS', 'SOA' ]
   alias:
     description:
       - Indicates if this is an alias record.
@@ -355,7 +353,7 @@ def main():
             hosted_zone_id               = dict(required=False, default=None),
             record                       = dict(required=True),
             ttl                          = dict(required=False, type='int', default=3600),
-            type                         = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS'], required=True),
+            type                         = dict(choices=['A', 'CNAME', 'MX', 'AAAA', 'TXT', 'PTR', 'SRV', 'SPF', 'NS', 'SOA'], required=True),
             alias                        = dict(required=False, type='bool'),
             alias_hosted_zone_id         = dict(required=False),
             alias_evaluate_target_health = dict(required=False, type='bool', default=False),
