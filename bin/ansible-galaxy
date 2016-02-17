@@ -207,7 +207,7 @@ def build_option_parser(action):
 
     if action in ("info","init","install"):
         parser.add_option(
-            '-s', '--server', dest='api_server', default=C.DEFAULT_API_SERVER,
+            '-s', '--server', dest='api_server', default=C.GALAXY_SERVER,
             help='The API server destination')
         parser.add_option('-c', '--ignore-certs', action='store_true', dest='ignore_certs', default=False,
                           help='Ignore SSL certificate validation errors.')
@@ -606,7 +606,7 @@ def execute_init(args, options, parser):
     """
 
     init_path    = get_opt(options, 'init_path', './')
-    api_server   = get_opt(options, "api_server", C.DEFAULT_API_SERVER)
+    api_server   = get_opt(options, "api_server", C.GALAXY_SERVER)
     force        = get_opt(options, 'force', False)
     offline      = get_opt(options, 'offline', False)
     ignore_certs = get_opt(options, 'ignore_certs', False)
@@ -709,7 +709,7 @@ def execute_info(args, options, parser):
         print "- you must specify a user/role name"
         sys.exit(1)
 
-    api_server   = get_opt(options, "api_server", C.DEFAULT_API_SERVER)
+    api_server   = get_opt(options, "api_server", C.GALAXY_SERVER)
     api_config   = api_get_config(api_server)
     roles_path   = get_opt(options, "roles_path")
     ignore_certs = get_opt(options, "ignore_certs", False)
@@ -778,7 +778,7 @@ def execute_install(args, options, parser):
         print "- please specify a user/role name, or a roles file, but not both"
         sys.exit(1)
 
-    api_server   = get_opt(options, "api_server", C.DEFAULT_API_SERVER)
+    api_server   = get_opt(options, "api_server", C.GALAXY_SERVER)
     no_deps      = get_opt(options, "no_deps", False)
     roles_path   = get_opt(options, "roles_path")
     ignore_certs = get_opt(options, "ignore_certs")
