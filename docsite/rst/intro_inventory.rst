@@ -186,7 +186,7 @@ available to them. This can be very useful to keep your variables organized when
 file starts to be too big, or when you want to use :doc:`Ansible Vault<playbooks_vault>` on a part of a group's
 variables. Note that this only works on Ansible 1.4 or later.
 
-Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in either 
+Tip: In Ansible 1.2 or later the group_vars/ and host_vars/ directories can exist in
 the playbook directory OR the inventory directory. If both paths exist, variables in the playbook
 directory will override variables set in the inventory directory.
 
