@@ -46,6 +46,7 @@ class ActionModule(ActionBase):
         force   = boolean(self._task.args.get('force', 'yes'))
         faf     = self._task.first_available_file
         remote_src = boolean(self._task.args.get('remote_src', False))
+        follow  = boolean(self._task.args.get('follow', False))
 
         if (source is None and content is None and faf is None) or dest is None:
             result['failed'] = True
@@ -167,11 +168,11 @@ class ActionModule(ActionBase):
             else:
                 dest_file = self._connection._shell.join_path(dest)
 
-            # Attempt to get the remote checksum
-            remote_checksum = self._remote_checksum(dest_file, all_vars=task_vars)
+            # Attempt to get remote file info
+            dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow)
 
-            if remote_checksum == '3':
-                # The remote_checksum was executed on a directory.
+            if dest_status['exists'] and dest_status['isdir']:
+                # The dest is a directory.
                 if content is not None:
                     # If source was defined as content remove the temporary file and fail out.
                     self._remove_tempfile_if_content_defined(content, content_tempfile)
@@ -179,15 +180,15 @@ class ActionModule(ActionBase):
                     result['msg'] = "can not use content with a dir as dest"
                     return result
                 else:
-                    # Append the relative source location to the destination and retry remote_checksum
+                    # Append the relative source location to the destination and get remote stats again
                     dest_file = self._connection._shell.join_path(dest, source_rel)
-                    remote_checksum = self._remote_checksum(dest_file, all_vars=task_vars)
+                    dest_status = self._execute_remote_stat(dest_file, all_vars=task_vars, follow=follow)
 
-            if remote_checksum != '1' and not force:
+            if not dest_status['exists'] and not force:
                 # remote_file does not exist so continue to next iteration.
                 continue
 
-            if local_checksum != remote_checksum:
+            if local_checksum != dest_status['checksum']:
                 # The checksums don't match and we will change or error out.
                 changed = True
 
