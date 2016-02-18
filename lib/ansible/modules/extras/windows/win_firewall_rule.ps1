@@ -23,8 +23,8 @@
 function getFirewallRule ($fwsettings) {
     try {
 
-        #$output = Get-NetFirewallRule -name $($fwsettings.name);
-        $rawoutput=@(netsh advfirewall firewall show rule name="$($fwsettings.Name)")
+        #$output = Get-NetFirewallRule -name $($fwsettings.'Rule Name');
+        $rawoutput=@(netsh advfirewall firewall show rule name="$($fwsettings.'Rule Name')")
         if (!($rawoutput -eq 'No rules match the specified criteria.')){
             $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
                     $FirstRun = $true;
@@ -51,10 +51,10 @@ function getFirewallRule ($fwsettings) {
         $msg=@();
         if ($($output|measure).count -gt 0) {
             $exists=$true;
-            $msg += @("The rule '" + $fwsettings.name + "' exists.");
+            $msg += @("The rule '" + $fwsettings.'Rule Name' + "' exists.");
             if ($($output|measure).count -gt 1) {
                 $multi=$true
-                $msg += @("The rule '" + $fwsettings.name + "' has multiple entries.");
+                $msg += @("The rule '" + $fwsettings.'Rule Name' + "' has multiple entries.");
                 ForEach($rule in $output.GetEnumerator()) {
                     ForEach($fwsetting in $fwsettings.GetEnumerator()) {
                         if ( $rule.$fwsetting -ne $fwsettings.$fwsetting) {
@@ -73,11 +73,7 @@ function getFirewallRule ($fwsettings) {
 
                         if (($fwsetting.Key -eq 'RemoteIP') -and ($output.$($fwsetting.Key) -eq ($fwsettings.$($fwsetting.Key)+'-'+$fwsettings.$($fwsetting.Key)))) {
                             $donothing=$false
-                        } elseif ((($fwsetting.Key -eq 'Name') -or ($fwsetting.Key -eq 'DisplayName')) -and ($output."Rule Name" -eq $fwsettings.$($fwsetting.Key))) {
-                            $donothing=$false
-                        } elseif (($fwsetting.Key -eq 'Profile') -and ($output."Profiles" -eq $fwsettings.$($fwsetting.Key))) {
-                            $donothing=$false
-                        } elseif (($fwsetting.Key -eq 'Enable') -and ($output."Enabled" -eq $fwsettings.$($fwsetting.Key))) {
+                        } elseif (($fwsetting.Key -eq 'DisplayName') -and ($output."Rule Name" -eq $fwsettings.$($fwsetting.Key))) {
                             $donothing=$false
                         } else {
                             $diff=$true;
@@ -117,11 +113,17 @@ function getFirewallRule ($fwsettings) {
 
 function createFireWallRule ($fwsettings) {
     $msg=@()
-    $execString="netsh advfirewall firewall add rule "
+    $execString="netsh advfirewall firewall add rule"
 
     ForEach ($fwsetting in $fwsettings.GetEnumerator()) {
         if ($fwsetting.key -eq 'Direction') {
             $key='dir'
+        } elseif ($fwsetting.key -eq 'Rule Name') {
+            $key='name'
+        } elseif ($fwsetting.key -eq 'Enabled') {
+            $key='enable'
+        } elseif ($fwsetting.key -eq 'Profiles') {
+            $key='profile'
         } else {
             $key=$($fwsetting.key).ToLower()
         };
@@ -159,7 +161,7 @@ function createFireWallRule ($fwsettings) {
 function removeFireWallRule ($fwsettings) {
     $msg=@()
     try {
-        $rawoutput=@(netsh advfirewall firewall delete rule name="$($fwsettings.name)")
+        $rawoutput=@(netsh advfirewall firewall delete rule name="$($fwsettings.'Rule Name')")
         $rawoutput | Where {$_ -match '^([^:]+):\s*(\S.*)$'} | Foreach -Begin {
                 $FirstRun = $true;
                 $HashProps = @{};
@@ -211,9 +213,9 @@ $misArg = ''
 # Check the arguments
 if ($enable -ne $null) {
     if ($enable -eq $true) {
-        $fwsettings.Add("Enable", "yes");
+        $fwsettings.Add("Enabled", "yes");
     } elseif ($enable -eq $false) {
-        $fwsettings.Add("Enable", "no");
+        $fwsettings.Add("Enabled", "no");
     } else {
         $misArg+="enable";
         $msg+=@("for the enable parameter only yes and no is allowed");
@@ -229,7 +231,7 @@ if ($name -eq ""){
     $misArg+="Name";
     $msg+=@("name is a required argument");
 } else {
-    $fwsettings.Add("Name", $name)
+    $fwsettings.Add("Rule Name", $name)
     #$fwsettings.Add("displayname", $name)
 };
 if ((($direction.ToLower() -ne "In") -And ($direction.ToLower() -ne "Out")) -And ($state -eq "present")){
@@ -263,7 +265,7 @@ foreach ($arg in $args){
 };
 
 $winprofile=Get-Attr $params "profile" "current";
-$fwsettings.Add("profile", $winprofile)
+$fwsettings.Add("Profiles", $winprofile)
 
 if ($misArg){
     $result=New-Object psobject @{
