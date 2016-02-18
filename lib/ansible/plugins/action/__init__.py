@@ -507,9 +507,6 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             replacement strategy (python3 could use surrogateescape)
         '''
 
-        if executable is not None and self._connection.allow_executable:
-            cmd = executable + ' -c ' + pipes.quote(cmd)
-
         display.debug("_low_level_execute_command(): starting")
         if not cmd:
             # this can happen with powershell modules when there is no analog to a Windows command (like chmod)
@@ -521,6 +518,9 @@ class ActionBase(with_metaclass(ABCMeta, object)):
         if sudoable and self._play_context.become and (allow_same_user or not same_user):
             display.debug("_low_level_execute_command(): using become for this command")
             cmd = self._play_context.make_become_cmd(cmd, executable=executable)
+
+        if executable is not None and self._connection.allow_executable:
+            cmd = executable + ' -c ' + pipes.quote(cmd)
 
         display.debug("_low_level_execute_command(): executing: %s" % (cmd,))
         rc, stdout, stderr = self._connection.exec_command(cmd, in_data=in_data, sudoable=sudoable)
