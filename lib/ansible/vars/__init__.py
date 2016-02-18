@@ -600,8 +600,10 @@ class VariableManager:
         '''
         Sets a value in the vars_cache for a host.
         '''
-
         host_name = host.get_name()
         if host_name not in self._vars_cache:
             self._vars_cache[host_name] = dict()
-        self._vars_cache[host_name][varname] = value
+        if varname in self._vars_cache[host_name]:
+            self._vars_cache[host_name][varname] = combine_vars(self._vars_cache[host_name][varname], value)
+        else:
+            self._vars_cache[host_name][varname] = value
