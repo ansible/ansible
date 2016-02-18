@@ -36,42 +36,32 @@ options:
     description:
       - hostname or ip of your A10 Networks device
     required: true
-    default: null
-    aliases: []
-    choices: []
   username:
     description:
       - admin account of your A10 Networks device
     required: true
-    default: null
     aliases: ['user', 'admin']
-    choices: []
   password:
     description:
       - admin password of your A10 Networks device
     required: true
-    default: null
     aliases: ['pass', 'pwd']
-    choices: []
   server_name:
     description:
       - slb server name
     required: true
-    default: null
     aliases: ['server']
-    choices: []
   server_ip:
     description:
       - slb server IP address
     required: false
     default: null
     aliases: ['ip', 'address']
-    choices: []
   server_status:
     description:
       - slb virtual server status
     required: false
-    default: enable
+    default: enabled
     aliases: ['status']
     choices: ['enabled', 'disabled']
   server_ports:
@@ -82,14 +72,11 @@ options:
         required when C(state) is C(present).
     required: false
     default: null
-    aliases: []
-    choices: []
   state:
     description:
       - create, update or remove slb server
     required: false
     default: present
-    aliases: []
     choices: ['present', 'absent']
 '''
 
