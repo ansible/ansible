@@ -5,7 +5,7 @@ Ansible Changes By Release
 
 ###Major Changes:
 
-* added facility for modules to send back 'diff' for display when ansible is called with --diff, file, puppet and other module already implement this
+* added facility for modules to send back 'diff' for display when ansible is called with --diff, updated several modules to return this info
 
 ####New Modules:
 * aws: ec2_vol_facts
@@ -16,6 +16,13 @@ Ansible Changes By Release
 
 ####New Filters:
 * extract
+
+####New Callbacks:
+* slack
+
+###Minor Changes:
+
+* callbacks now have access to the options with which the CLI was called
 
 ## 2.0 "Over the Hills and Far Away"
 
