@@ -237,6 +237,7 @@ DEFAULT_CALLBACK_WHITELIST     = get_config(p, DEFAULTS, 'callback_whitelist', '
 RETRY_FILES_ENABLED            = get_config(p, DEFAULTS, 'retry_files_enabled', 'ANSIBLE_RETRY_FILES_ENABLED', True, boolean=True)
 RETRY_FILES_SAVE_PATH          = get_config(p, DEFAULTS, 'retry_files_save_path', 'ANSIBLE_RETRY_FILES_SAVE_PATH', None, ispath=True)
 DEFAULT_NULL_REPRESENTATION    = get_config(p, DEFAULTS, 'null_representation', 'ANSIBLE_NULL_REPRESENTATION', None, isnone=True)
+DISPLAY_ARGS_TO_STDOUT         = get_config(p, DEFAULTS, 'display_args_to_stdout', 'ANSIBLE_DISPLAY_ARGS_TO_STDOUT', False, boolean=True)
 
 # CONNECTION RELATED
 ANSIBLE_SSH_ARGS               = get_config(p, 'ssh_connection', 'ssh_args', 'ANSIBLE_SSH_ARGS', '-o ControlMaster=auto -o ControlPersist=60s')
