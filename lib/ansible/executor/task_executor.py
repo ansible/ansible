@@ -35,7 +35,7 @@ from ansible.playbook.task import Task
 from ansible.template import Templar
 from ansible.utils.encrypt import key_for_hostname
 from ansible.utils.listify import listify_lookup_plugin_terms
-from ansible.utils.unicode import to_unicode
+from ansible.utils.unicode import to_unicode, to_bytes
 from ansible.vars.unsafe_proxy import UnsafeProxy, wrap_var
 
 try:
@@ -185,7 +185,7 @@ class TaskExecutor:
                         loop_terms = listify_lookup_plugin_terms(terms=self._task.loop_args, templar=templar, loader=self._loader, fail_on_undefined=True, convert_bare=True)
                     except AnsibleUndefinedVariable as e:
                         loop_terms = []
-                        display.deprecated("Skipping task due to undefined Error, in the future this will be a fatal error.")
+                        display.deprecated("Skipping task due to undefined Error, in the future this will be a fatal error.: %s" % to_bytes(e))
                 items = self._shared_loader_obj.lookup_loader.get(self._task.loop, loader=self._loader, templar=templar).run(terms=loop_terms, variables=self._job_vars)
             else:
                 raise AnsibleError("Unexpected failure in finding the lookup named '%s' in the available lookup plugins" % self._task.loop)
