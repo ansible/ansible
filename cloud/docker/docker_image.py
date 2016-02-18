@@ -129,7 +129,7 @@ EXAMPLES = '''
 Build docker image if required. Path should contains Dockerfile to build image:
 
 - hosts: web
-  sudo: yes
+  become: yes
   tasks:
   - name: check or build image
     docker_image: path="/path/to/build/dir" name="my/app" state=present
@@ -137,7 +137,7 @@ Build docker image if required. Path should contains Dockerfile to build image:
 Build new version of image:
 
 - hosts: web
-  sudo: yes
+  become: yes
   tasks:
   - name: check or build image
     docker_image: path="/path/to/build/dir" name="my/app" state=build
@@ -145,7 +145,7 @@ Build new version of image:
 Remove image from local docker storage:
 
 - hosts: web
-  sudo: yes
+  become: yes
   tasks:
   - name: remove image
     docker_image: name="my/app" state=absent
