@@ -201,7 +201,7 @@ EXAMPLES = '''
 
 - name: Configure instance(s)
   hosts: launched
-  sudo: True
+  become: True
   roles:
     - my_awesome_role
     - my_awesome_tasks
