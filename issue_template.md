@@ -3,11 +3,7 @@
 Please pick one and delete the rest:
  - Bug Report
  - Feature Idea
- - Feature Pull Request
- - New Module Pull Request
- - Bugfix Pull Request
  - Documentation Report
- - Docs Pull Request
 
 ##### Ansible Version:
 
