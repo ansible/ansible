@@ -8,7 +8,9 @@ Please pick one and delete the rest:
 
 ##### Ansible Version:
 
-Please paste the verbatim output from running “ansible --version”.
+```
+(Paste verbatim output from “ansible --version” here)
+```
 
 ##### Summary:
 
@@ -20,4 +22,6 @@ the change does.)
 
 ##### Example output:
 
-If necessary, paste example output (indented by four spaces) here.
+```
+(Paste verbatim command output here if necessary)
+```
