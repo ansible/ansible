@@ -18,6 +18,7 @@ Ansible Changes By Release
 * extract
 
 ####New Callbacks:
+* actionable (only shows changed and failed)
 * slack
 
 ###Minor Changes:
