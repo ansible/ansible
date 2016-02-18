@@ -448,12 +448,14 @@ class PlayContext(Base):
                 # directly doesn't work, so we shellquote it with pipes.quote()
                 # and pass the quoted string to the user's shell.
 
+                # don't allow sudo to cache credentials
+                becomecmd = '%s -k;' % exe
                 # force quick error if password is required but not supplied, should prevent sudo hangs.
                 if self.become_pass:
                     prompt = '[sudo via ansible, key=%s] password: ' % randbits
-                    becomecmd = '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, executable, success_cmd)
+                    becomecmd += '%s %s -p "%s" -u %s %s -c %s' % (exe,  flags.replace('-n',''), prompt, self.become_user, executable, success_cmd)
                 else:
-                    becomecmd = '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
+                    becomecmd += '%s %s -u %s %s -c %s' % (exe, flags, self.become_user, executable, success_cmd)
 
 
             elif self.become_method == 'su':
