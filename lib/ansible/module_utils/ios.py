@@ -26,6 +26,7 @@ NET_COMMON_ARGS = dict(
     password=dict(no_log=True),
     authorize=dict(default=False, type='bool'),
     auth_pass=dict(no_log=True),
+    provider=dict()
 )
 
 
@@ -66,10 +67,11 @@ class Cli(object):
     def send(self, commands):
         return self.shell.send(commands)
 
+
 class NetworkModule(AnsibleModule):
 
     def __init__(self, *args, **kwargs):
-        super(IosModule, self).__init__(*args, **kwargs)
+        super(NetworkModule, self).__init__(*args, **kwargs)
         self.connection = None
         self._config = None
 
@@ -78,6 +80,14 @@ class NetworkModule(AnsibleModule):
         if not self._config:
             self._config = self.get_config()
         return self._config
+
+    def _load_params(self):
+        params = super(NetworkModule, self)._load_params()
+        provider = params.get('provider') or dict()
+        for key, value in provider.items():
+            if key in NET_COMMON_ARGS.keys():
+                params[key] = value
+        return params
 
     def connect(self):
         try:
@@ -118,27 +128,19 @@ class NetworkModule(AnsibleModule):
 
 
 def get_module(**kwargs):
-    """Return instance of IosModule
+    """Return instance of NetworkModule
     """
-
     argument_spec = NET_COMMON_ARGS.copy()
     if kwargs.get('argument_spec'):
         argument_spec.update(kwargs['argument_spec'])
     kwargs['argument_spec'] = argument_spec
-    kwargs['check_invalid_arguments'] = False
 
-    module = IosModule(**kwargs)
+    module = NetworkModule(**kwargs)
 
     # HAS_PARAMIKO is set by module_utils/shell.py
     if not HAS_PARAMIKO:
         module.fail_json(msg='paramiko is required but does not appear to be installed')
 
-    # copy in values from local action.
-    params = json_dict_unicode_to_bytes(json.loads(MODULE_COMPLEX_ARGS))
-    for key, value in params.iteritems():
-        module.params[key] = value
-
     module.connect()
-
     return module
 
