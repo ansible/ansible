@@ -102,6 +102,7 @@ options:
     choices: [ "yes", "no" ]
     description:
       - 'This flag indicates that filesystem links, if they exist, should be followed.'
+    version_added: "2.1"
 """
 
 EXAMPLES = r"""
