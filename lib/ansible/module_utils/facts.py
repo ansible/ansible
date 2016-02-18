@@ -1038,6 +1038,7 @@ class LinuxHardware(Hardware):
 
     @timeout(10)
     def get_mount_facts(self):
+        uuids = dict()
         self.facts['mounts'] = []
         mtab = get_file_content('/etc/mtab', '')
         for line in mtab.split('\n'):
@@ -1053,13 +1054,17 @@ class LinuxHardware(Hardware):
                     except OSError:
                         continue
 
-                    uuid = 'NA'
-                    lsblkPath = module.get_bin_path("lsblk")
-                    if lsblkPath:
-                        rc, out, err = module.run_command("%s -ln --output UUID %s" % (lsblkPath, fields[0]), use_unsafe_shell=True)
+                    if fields[0] in uuids:
+                        uuid = uuids[fields[0]]
+                    else:
+                        uuid = 'NA'
+                        lsblkPath = module.get_bin_path("lsblk")
+                        if lsblkPath:
+                            rc, out, err = module.run_command("%s -ln --output UUID %s" % (lsblkPath, fields[0]), use_unsafe_shell=True)
 
-                        if rc == 0:
-                            uuid = out.strip()
+                            if rc == 0:
+                                uuid = out.strip()
+                                uuids[fields[0]] = uuid
 
                     self.facts['mounts'].append(
                         {'mount': fields[1],
