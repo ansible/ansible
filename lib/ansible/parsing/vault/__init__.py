@@ -328,7 +328,10 @@ class VaultEditor:
         check_prereqs()
 
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+        try:
+            plaintext = self.vault.decrypt(ciphertext)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
         self.write_data(plaintext, output_file or filename, shred=False)
 
     def create_file(self, filename):
@@ -348,7 +351,10 @@ class VaultEditor:
         check_prereqs()
 
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+        try:
+            plaintext = self.vault.decrypt(ciphertext)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
         if self.vault.cipher_name not in CIPHER_WRITE_WHITELIST:
             # we want to get rid of files encrypted with the AES cipher
@@ -359,9 +365,12 @@ class VaultEditor:
     def plaintext(self, filename):
 
         check_prereqs()
-
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+
+        try:
+            plaintext = self.vault.decrypt(ciphertext)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
         return plaintext
 
@@ -371,7 +380,10 @@ class VaultEditor:
 
         prev = os.stat(filename)
         ciphertext = self.read_data(filename)
-        plaintext = self.vault.decrypt(ciphertext)
+        try:
+            plaintext = self.vault.decrypt(ciphertext)
+        except AnsibleError as e:
+            raise AnsibleError("%s for %s" % (to_bytes(e),to_bytes(filename)))
 
         new_vault = VaultLib(new_password)
         new_ciphertext = new_vault.encrypt(plaintext)
@@ -383,6 +395,7 @@ class VaultEditor:
         os.chown(filename, prev.st_uid, prev.st_gid)
 
     def read_data(self, filename):
+
         try:
             if filename == '-':
                 data = sys.stdin.read()
@@ -471,7 +484,7 @@ class VaultFile(object):
             this_vault = VaultLib(self.password)
             dec_data = this_vault.decrypt(tmpdata)
             if dec_data is None:
-                raise AnsibleError("Decryption failed")
+                raise AnsibleError("Failed to decrypt: %s" % self.filename)
             else:
                 self.tmpfile.write(dec_data)
                 return self.tmpfile
