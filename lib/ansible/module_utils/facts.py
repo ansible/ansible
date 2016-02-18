@@ -274,7 +274,7 @@ class Facts(object):
             Archlinux = 'Archlinux', Manjaro = 'Archlinux', Mandriva = 'Mandrake', Mandrake = 'Mandrake', Altlinux = 'Altlinux',
             Solaris = 'Solaris', Nexenta = 'Solaris', OmniOS = 'Solaris', OpenIndiana = 'Solaris',
             SmartOS = 'Solaris', AIX = 'AIX', Alpine = 'Alpine', MacOSX = 'Darwin',
-            FreeBSD = 'FreeBSD', HPUX = 'HP-UX'
+            FreeBSD = 'FreeBSD', HPUX = 'HP-UX', openSUSE_Leap = 'Suse'
         )
 
         # TODO: Rewrite this to use the function references in a dict pattern
@@ -511,8 +511,9 @@ class Facts(object):
             machine_id = machine_id.split('\n')[0]
             self.facts["machine_id"] = machine_id
         self.facts['os_family'] = self.facts['distribution']
-        if self.facts['distribution'] in OS_FAMILY:
-            self.facts['os_family'] = OS_FAMILY[self.facts['distribution']]
+        distro = self.facts['distribution'].replace(' ', '_')
+        if distro in OS_FAMILY:
+            self.facts['os_family'] = OS_FAMILY[distro]
 
     def get_cmdline(self):
         data = get_file_content('/proc/cmdline')
