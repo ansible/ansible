@@ -331,7 +331,7 @@ class ActionBase(with_metaclass(ABCMeta, object)):
             else:
                 x = remote_stat['checksum'] # if 1, file is missing
         except AnsibleError as e:
-            errormsg = to_bytes(e)
+            errormsg = to_unicode(e)
             if errormsg.endswith('Permission denied'):
                 x = "2" # cannot read file
             elif errormsg.endswith('MODULE FAILURE'):
