@@ -156,6 +156,12 @@ options:
       - You can't rewrite others module parameters using this
     required: false
     default: {}
+  source:
+    version_added: "2.1"
+    description:
+      - The check source, used to create a JIT Sensu client for an external resource (e.g. a network switch).
+    required: false
+    default: null
 requirements: [ ]
 author: "Anders Ingemann (@andsens)"
 '''
@@ -251,6 +257,7 @@ def sensu_check(module, path, name, state='present', backup=False):
                        'aggregate',
                        'low_flap_threshold',
                        'high_flap_threshold',
+                       'source',
                        ]
         for opt in simple_opts:
             if module.params[opt] is not None:
@@ -353,6 +360,7 @@ def main():
                 'low_flap_threshold':  {'type': 'int'},
                 'high_flap_threshold': {'type': 'int'},
                 'custom':   {'type': 'dict'},
+                'source':   {'type': 'str'},
                 }
 
     required_together = [['subdue_begin', 'subdue_end']]
