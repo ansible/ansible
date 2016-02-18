@@ -806,23 +806,27 @@ def merge_hash(a, b):
     ''' recursively merges hash b into a
     keys from b take precedence over keys from a '''
 
-    result = {}
-
     # we check here as well as in combine_vars() since this
     # function can work recursively with nested dicts
     _validate_both_dicts(a, b)
 
-    for dicts in a, b:
-        # next, iterate over b keys and values
-        for k, v in dicts.iteritems():
-            # if there's already such key in a
-            # and that key contains dict
-            if k in result and isinstance(result[k], dict):
-                # merge those dicts recursively
-                result[k] = merge_hash(a[k], v)
-            else:
-                # otherwise, just copy a value from b to a
-                result[k] = v
+    # if a is empty or equal to b, return b
+    if a == {} or a == b:
+        return b.copy()
+
+    # if b is empty the below unfolds quickly
+    result = a.copy()
+
+    # next, iterate over b keys and values
+    for k, v in b.iteritems():
+        # if there's already such key in a
+        # and that key contains dict
+        if k in result and isinstance(result[k], dict):
+            # merge those dicts recursively
+            result[k] = merge_hash(result[k], v)
+        else:
+            # otherwise, just copy a value from b to a
+            result[k] = v
 
     return result
 
