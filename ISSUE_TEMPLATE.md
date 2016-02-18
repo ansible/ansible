@@ -7,7 +7,9 @@ Please pick one and delete the rest:
 
 ##### Ansible Version:
 
-Please paste the verbatim output from running “ansible --version”.
+```
+(Paste verbatim output from “ansible --version” here)
+```
 
 ##### Ansible Configuration:
 
@@ -28,8 +30,11 @@ Please explain the problem briefly.
 For bugs, please show exactly how to reproduce the problem. For new
 features, show how the feature would be used.
 
-You can include example playbooks inline (indented by four spaces) or
-upload larger ones to gist.github.com and paste a link here.
+```
+(Paste example playbooks or commands here)
+```
+
+You can also paste gist.github.com links for larger files.
 
 ##### Expected Results:
 
@@ -39,5 +44,6 @@ What did you expect to happen when running the steps above?
 
 What actually happened?
 
-(If you're pasting verbatim command output, remember to indent it by
-four spaces so it will render correctly in Github.)
+```
+(Paste verbatim command output here)
+```
