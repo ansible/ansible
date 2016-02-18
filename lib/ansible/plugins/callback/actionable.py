@@ -25,7 +25,7 @@ class CallbackModule(CallbackModule_default):
 
     CALLBACK_VERSION = 2.0
     CALLBACK_TYPE = 'stdout'
-    CALLBACK_NAME = 'filtered'
+    CALLBACK_NAME = 'actionable'
 
     def __init__(self):
         self.super_ref = super(CallbackModule, self)
