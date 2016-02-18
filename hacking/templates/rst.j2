@@ -45,8 +45,9 @@ Aliases: @{ ','.join(aliases) }@
 {% endif %}
 
 {% if requirements %}
-Requirements (on machine that executes the module)
+Requirements
 ------------
+These requirements should be present on the machine that executes the module.
 
 {% for req in requirements %}
   * @{ req | convert_symbols_to_format }@
