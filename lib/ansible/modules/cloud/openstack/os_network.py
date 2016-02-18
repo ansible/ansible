@@ -22,6 +22,9 @@ try:
 except ImportError:
     HAS_SHADE = False
 
+from distutils.version import StrictVersion
+
+
 DOCUMENTATION = '''
 ---
 module: os_network
@@ -57,6 +60,25 @@ options:
      choices: ['present', 'absent']
      required: false
      default: present
+   provider_physical_network:
+     description:
+        - The physical network where this network object is implemented.
+     required: false
+     default: None
+   provider_network_type:
+     description:
+        - The type of physical network that maps to this network resource.
+     choices: ['flat', 'vlan', 'vxlan', 'gre']
+     required: false
+     default: None
+   provider_segmentation_id:
+     description:
+        - An isolated segment on the physical network. The I(network_type)
+          attribute defines the segmentation model. For example, if the
+          I(network_type) value is vlan, this ID is a vlan identifier. If
+          the I(network_type) value is gre, this ID is a gre key.
+     required: false
+     default: None
 requirements: ["shade"]
 '''
 
@@ -115,6 +137,18 @@ network:
             description: The associated subnets.
             type: list
             sample: []
+        "provider:physical_network":
+            description: The physical network where this network object is implemented.
+            type: string
+            sample: my_vlan_net
+        "provider:network_type":
+            description: The type of physical network that maps to this network resource.
+            type: string
+            sample: vlan
+        "provider:segmentation_id":
+            description: An isolated segment on the physical network.
+            type: string
+            sample: 101
 '''
 
 
@@ -124,6 +158,10 @@ def main():
         shared=dict(default=False, type='bool'),
         admin_state_up=dict(default=True, type='bool'),
         external=dict(default=False, type='bool'),
+        provider_physical_network=dict(required=False),
+        provider_network_type=dict(required=False, default=None,
+                                   choices=['flat', 'vlan', 'vxlan', 'gre']),
+        provider_segmentation_id=dict(required=False),
         state=dict(default='present', choices=['absent', 'present']),
     )
 
@@ -138,6 +176,9 @@ def main():
     shared = module.params['shared']
     admin_state_up = module.params['admin_state_up']
     external = module.params['external']
+    provider_physical_network = module.params['provider_physical_network']
+    provider_network_type = module.params['provider_network_type']
+    provider_segmentation_id = module.params['provider_segmentation_id']
 
     try:
         cloud = shade.openstack_cloud(**module.params)
@@ -145,7 +186,19 @@ def main():
 
         if state == 'present':
             if not net:
-                net = cloud.create_network(name, shared, admin_state_up, external)
+                provider = {}
+                if provider_physical_network:
+                    provider['physical_network'] = provider_physical_network
+                if provider_network_type:
+                    provider['network_type'] = provider_network_type
+                if provider_segmentation_id:
+                    provider['segmentation_id'] = provider_segmentation_id
+
+                if provider and StrictVersion(shade.__version__) < StrictVersion('1.5.0'):
+                    module.fail_json(msg="Shade >= 1.5.0 required to use provider options")
+
+                net = cloud.create_network(name, shared, admin_state_up,
+                                           external, provider)
                 changed = True
             else:
                 changed = False
