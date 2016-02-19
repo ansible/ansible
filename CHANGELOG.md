@@ -20,6 +20,7 @@ Ansible Changes By Release
 ####New Callbacks:
 * actionable (only shows changed and failed)
 * slack
+* json
 
 ###Minor Changes:
 
