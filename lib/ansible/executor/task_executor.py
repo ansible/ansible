@@ -477,8 +477,11 @@ class TaskExecutor:
                 # no conditional check, or it failed, so sleep for the specified time
                 time.sleep(delay)
 
-            elif 'failed' not in result:
-                break
+            elif self._task.until is not None:
+                cond = Conditional(loader=self._loader)
+                cond.when = [ self._task.until ]
+                if not cond.evaluate_conditional(templar, vars_copy):
+                    result['failed'] = True
 
         # do the final update of the local variables here, for both registered
         # values and any facts which may have been created
