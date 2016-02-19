@@ -103,6 +103,13 @@ options:
     choices: [ "yes", "no" ]
     aliases: [ 'autoclean']
     version_added: "2.1"
+  only_upgrade:
+    description:
+     - Only install/upgrade a package it it is already installed.
+     required: false
+     default: false
+     version_added: "2.1"
+
 requirements: [ python-apt, aptitude ]
 author: "Matthew Williams (@mgwilliams)"
 notes:
@@ -359,7 +366,7 @@ def expand_pkgspec_from_fnmatches(m, pkgspec, cache):
 def install(m, pkgspec, cache, upgrade=False, default_release=None,
             install_recommends=None, force=False,
             dpkg_options=expand_dpkg_options(DPKG_OPTIONS),
-            build_dep=False, autoremove=False):
+            build_dep=False, autoremove=False, only_upgrade=False):
     pkg_list = []
     packages = ""
     pkgspec = expand_pkgspec_from_fnmatches(m, pkgspec, cache)
@@ -398,10 +405,15 @@ def install(m, pkgspec, cache, upgrade=False, default_release=None,
         else:
             autoremove = ''
 
+        if only_upgrade:
+            only_upgrade = '--only-upgrade'
+        else:
+            only_upgrade = ''
+
         if build_dep:
             cmd = "%s -y %s %s %s build-dep %s" % (APT_GET_CMD, dpkg_options, force_yes, check_arg, packages)
         else:
-            cmd = "%s -y %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, force_yes, autoremove, check_arg, packages)
+            cmd = "%s -y %s %s %s %s %s install %s" % (APT_GET_CMD, dpkg_options, only_upgrade, force_yes, autoremove, check_arg, packages)
 
         if default_release:
             cmd += " -t '%s'" % (default_release,)
@@ -599,7 +611,8 @@ def main():
             force = dict(default='no', type='bool'),
             upgrade = dict(choices=['no', 'yes', 'safe', 'full', 'dist']),
             dpkg_options = dict(default=DPKG_OPTIONS),
-            autoremove = dict(type='bool', default=False, aliases=['autoclean'])
+            autoremove = dict(type='bool', default=False, aliases=['autoclean']),
+            only_upgrade = dict(type='bool', default=False)
         ),
         mutually_exclusive = [['package', 'upgrade', 'deb']],
         required_one_of = [['package', 'upgrade', 'update_cache', 'deb']],
@@ -723,7 +736,8 @@ def main():
                     default_release=p['default_release'],
                     install_recommends=install_recommends,
                     force=force_yes, dpkg_options=dpkg_options,
-                    build_dep=state_builddep, autoremove=autoremove)
+                    build_dep=state_builddep, autoremove=autoremove,
+                    only_upgrade=p['only_upgrade'])
             (success, retvals) = result
             retvals['cache_updated']=updated_cache
             retvals['cache_update_time']=updated_cache_time
