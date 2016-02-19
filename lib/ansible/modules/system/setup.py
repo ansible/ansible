@@ -87,7 +87,7 @@ def run_setup(module):
 
     # Look for the path to the facter and ohai binary and set
     # the variable to that path.
-    facter_path = module.get_bin_path('facter')
+    facter_path = module.get_bin_path('facter', opt_dirs=['/opt/puppetlabs/bin'])
     ohai_path = module.get_bin_path('ohai')
 
     # if facter is installed, and we can use --json because
