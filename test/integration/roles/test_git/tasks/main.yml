@@ -22,6 +22,8 @@
     repo_format1: 'https://github.com/jimi-c/test_role'
     repo_format2: 'git@github.com:jimi-c/test_role.git'
     repo_format3: 'ssh://git@github.com/jimi-c/test_role.git'
+    repo_format4: 'git@[ssh.github.com:443]:jimi-c/test_role.git'
+    repo_format5: 'git+ssh://git@ssh.github.com:443/jimi-c/test_role.git'
     repo_submodules: 'https://github.com/abadger/test_submodules.git'
     repo_submodules_newer: 'https://github.com/abadger/test_submodules_newer.git'
     repo_submodule1: 'https://github.com/abadger/test_submodules_subm1.git'
@@ -125,6 +127,50 @@
 - name: checkout ssh://git@github.com repo with accept_hostkey (expected pass)
   git:
     repo: '{{ repo_format3 }}'
+    dest: '{{ checkout_dir }}'
+    version: 'master'
+    accept_hostkey: false # should already have been accepted
+    key_file: '{{ github_ssh_private_key }}'
+  register: git_result
+  when: github_ssh_private_key is defined
+
+- assert:
+    that:
+      - 'git_result.changed'
+  when: not git_result|skipped
+
+# Test checkout with non-standard port
+# requires prior acceptance of ssh.github.com hostkey for port 443, and requires
+# that no hostkey was accepted for ssh.github.com port 22
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: checkout git@[ssh.github.com:443] repo with accept_hostkey (expected pass)
+  git:
+    repo: '{{ repo_format4 }}'
+    dest: '{{ checkout_dir }}'
+    version: 'master'
+    accept_hostkey: false # should already have been accepted
+    key_file: '{{ github_ssh_private_key }}'
+  register: git_result
+  when: github_ssh_private_key is defined
+
+- assert:
+    that:
+      - 'git_result.changed'
+  when: not git_result|skipped
+
+# Test checkout with non-standard port (alternate URL format)
+# requires prior acceptance of ssh.github.com hostkey for port 443, and requires
+# that no hostkey was accepted for ssh.github.com port 22
+
+- name: clear checkout_dir
+  file: state=absent path={{ checkout_dir }}
+
+- name: checkout git+ssh://git@ssh.github.com:443 repo with accept_hostkey (expected pass)
+  git:
+    repo: '{{ repo_format5 }}'
     dest: '{{ checkout_dir }}'
     version: 'master'
     accept_hostkey: false # should already have been accepted
