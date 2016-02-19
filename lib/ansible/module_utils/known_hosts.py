@@ -48,8 +48,11 @@ def add_git_host_key(module, url, accept_hostkey=True, create_dir=True):
     if is_ssh_url(url):
 
         fqdn = get_fqdn(url)
+        port = get_port(url)
 
         if fqdn:
+            if port is not None:
+                fqdn = "[%s]:%s" % (fqdn, port)
             known_host = check_hostkey(module, fqdn)
             if not known_host:
                 if accept_hostkey:
@@ -80,6 +83,10 @@ def get_fqdn(repo_url):
         repo_url = repo_url.split("@", 1)[1]
         if repo_url.startswith('['):
             result = repo_url.split(']', 1)[0] + ']'
+            parts = result.split(':')
+            if len(parts) == 2:
+                # not an ipv6 address, but [host:port]
+                result = parts[0].lstrip("[")
         elif ":" in repo_url:
             result = repo_url.split(":")[0]
         elif "/" in repo_url:
@@ -96,9 +103,63 @@ def get_fqdn(repo_url):
 
             if result[0].startswith('['):
                 result = result.split(']', 1)[0] + ']'
+                if ':' in result:
+                    parts = result.split(":")
+                    if len(parts) == 2:
+                        # host:port
+                        result = parts[0].strip("[]")
+                else:
+                    result = result.strip("[]")
             elif ":" in result:
                 result = result.split(":")[0]
     return result
+
+
+def get_port(repo_url):
+    if ':' not in repo_url:
+        return None
+    result = None
+    if "@" in repo_url and "://" not in repo_url:
+        # most likely an user@host:path or user@host/path type URL
+        repo_url = repo_url.split("@", 1)[1]
+        if repo_url.startswith('['):
+            result = repo_url.split(']', 1)[0] + ']'
+            parts = result.split(':')
+            if len(parts) == 2:
+                # not an ipv6 address, but [host:port]
+                result = parts[1].rstrip("]")
+            else:
+                # [ipv6 address]
+                result = None
+        return result
+    elif "://" in repo_url:
+        # this should be something we can parse with urlparse
+        parts = urlparse.urlparse(repo_url)
+        # parts[1] will be empty on python2.4 on ssh:// or git:// urls, so
+        # ensure we actually have a parts[1] before continuing.
+        if parts[1] != '':
+            result = parts[1]
+            if "@" in result:
+                result = result.split("@")[1]
+            if result.startswith("["):
+                parts = result.split(":")
+                if len(parts) == 2:
+                    # [host:port]
+                    result = result.strip("[]").split(":")[1]
+                else:
+                    # either [ipv6]:port or [ipv6]
+                    if parts[-1].endswith("]"):
+                        result = None
+                    else:
+                        result = parts[-1]
+            else:
+                # host:port or host
+                if ':' in result:
+                    result = result.split(":")[1]
+                else:
+                    result = None
+    return result
+
 
 def check_hostkey(module, fqdn):
    return not not_in_host_file(module, fqdn)

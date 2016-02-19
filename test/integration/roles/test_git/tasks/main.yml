@@ -140,13 +140,21 @@
   when: not git_result|skipped
 
 # Test checkout with non-standard port
-# requires prior acceptance of ssh.github.com hostkey for port 443, and requires
-# that no hostkey was accepted for ssh.github.com port 22
+
+- name: checkout git@[ssh.github.com:443] repo (expected pass)
+  git:
+    repo: '{{ repo_format4 }}'
+    dest: '{{ checkout_dir }}'
+    version: 'master'
+    accept_hostkey: true
+    key_file: '{{ github_ssh_private_key }}'
+  register: git_result
+  when: github_ssh_private_key is defined
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
 
-- name: checkout git@[ssh.github.com:443] repo with accept_hostkey (expected pass)
+- name: checkout git@[ssh.github.com:443] repo (expected pass)
   git:
     repo: '{{ repo_format4 }}'
     dest: '{{ checkout_dir }}'
@@ -162,8 +170,6 @@
   when: not git_result|skipped
 
 # Test checkout with non-standard port (alternate URL format)
-# requires prior acceptance of ssh.github.com hostkey for port 443, and requires
-# that no hostkey was accepted for ssh.github.com port 22
 
 - name: clear checkout_dir
   file: state=absent path={{ checkout_dir }}
