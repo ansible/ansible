@@ -26,7 +26,7 @@ module: mssql_db
 short_description: Add or remove MSSQL databases from a remote host.
 description:
    - Add or remove MSSQL databases from a remote host.
-version_added: "2.1"
+version_added: "2.2"
 options:
   name:
     description:
@@ -64,6 +64,12 @@ options:
       - Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL
         files (C(.sql)) files are supported.
     required: false
+  autocommit:
+    description:
+      - Automatically commit the change only if the import succeed. Sometimes it is necessary to use autocommit=true, since some content can't be changed within a transaction.
+    required: false
+    default: false
+    choices: [ "false", "true" ]
 notes:
    - Requires the pymssql Python package on the remote host. For Ubuntu, this
      is as easy as pip install pymssql (See M(pip).)
@@ -79,6 +85,10 @@ EXAMPLES = '''
 - mssql_db: name=my_db state=import target=/tmp/dump.sql
 '''
 
+RETURN  = '''
+#
+'''
+
 import os
 try:
     import pymssql
@@ -89,44 +99,41 @@ else:
 
 
 def db_exists(conn, cursor, db):
-    cursor.execute("SELECT name FROM master.sys.databases WHERE name = N'%s'", db)
+    cursor.execute("SELECT name FROM master.sys.databases WHERE name = %s", db)
     conn.commit()
     return bool(cursor.rowcount)
 
 
 def db_create(conn, cursor, db):
-    conn.autocommit(True)
-    cursor.execute("CREATE DATABASE %s", db)
-    conn.autocommit(False)
+    cursor.execute("CREATE DATABASE [%s]" % db)
     return db_exists(conn, cursor, db)
 
 
 def db_delete(conn, cursor, db):
-    conn.autocommit(True)
     try:
-        single_user = "alter database %s set single_user with rollback immediate" % db
-        cursor.execute(single_user)
+        cursor.execute("ALTER DATABASE [%s] SET single_user WITH ROLLBACK IMMEDIATE" % db)
     except:
         pass
-    cursor.execute("DROP DATABASE %s", db)
-    conn.autocommit(False)
+    cursor.execute("DROP DATABASE [%s]" % db)
     return not db_exists(conn, cursor, db)
-
 
 def db_import(conn, cursor, module, db, target):
     if os.path.isfile(target):
-        with open(target, 'r') as backup:
-            sqlQuery = "USE %s\n"
+        backup = open(target, 'r')
+        try:
+            sqlQuery = "USE [%s]\n" % db
             for line in backup:
                 if line is None:
                     break
                 elif line.startswith('GO'):
-                    cursor.execute(sqlQuery, db)
-                    sqlQuery = "USE %s\n"
+                    cursor.execute(sqlQuery)
+                    sqlQuery = "USE [%s]\n" % db
                 else:
                     sqlQuery += line
-            cursor.execute(sqlQuery, db)
+            cursor.execute(sqlQuery)
             conn.commit()
+        finally:
+            backup.close()
         return 0, "import successful", ""
     else:
         return 1, "cannot find target file", "cannot find target file"
@@ -136,11 +143,12 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             name=dict(required=True, aliases=['db']),
-            login_user=dict(required=True),
-            login_password=dict(required=True),
+            login_user=dict(default=''),
+            login_password=dict(default=''),
             login_host=dict(required=True),
-            login_port=dict(default="1433"),
+            login_port=dict(default='1433'),
             target=dict(default=None),
+            autocommit=dict(type='bool', default=False),
             state=dict(
                 default='present', choices=['present', 'absent', 'import'])
         )
@@ -151,16 +159,20 @@ def main():
 
     db = module.params['name']
     state = module.params['state']
+    autocommit = module.params['autocommit']
     target = module.params["target"]
 
     login_user = module.params['login_user']
     login_password = module.params['login_password']
     login_host = module.params['login_host']
     login_port = module.params['login_port']
-    login_querystring = "%s:%s" % (login_host, login_port)
+    
+    login_querystring = login_host
+    if login_port != "1433":
+        login_querystring = "%s:%s" % (login_host, login_port)
 
-    if login_password is None or login_user is None:
-        module.fail_json(msg="when supplying login arguments, both login_user and login_password must be provided")
+    if login_user != "" and login_password == "":
+        module.fail_json(msg="when supplying login_user arguments login_password must be provided")
 
     try:
         conn = pymssql.connect(user=login_user, password=login_password, host=login_querystring, database='master')
@@ -170,9 +182,11 @@ def main():
                 errno, errstr = e.args
                 module.fail_json(msg="ERROR: %s %s" % (errno, errstr))
         else:
-                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check ~/.my.cnf contains credentials")
+                module.fail_json(msg="unable to connect, check login_user and login_password are correct, or alternatively check your @sysconfdir@/freetds.conf / ${HOME}/.freetds.conf")
 
+    conn.autocommit(True)
     changed = False
+
     if db_exists(conn, cursor, db):
         if state == "absent":
             try:
@@ -180,7 +194,9 @@ def main():
             except Exception, e:
                 module.fail_json(msg="error deleting database: " + str(e))
         elif state == "import":
+            conn.autocommit(autocommit)
             rc, stdout, stderr = db_import(conn, cursor, module, db, target)
+
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)
             else:
@@ -196,7 +212,10 @@ def main():
                 changed = db_create(conn, cursor, db)
             except Exception, e:
                 module.fail_json(msg="error creating database: " + str(e))
+
+            conn.autocommit(autocommit)
             rc, stdout, stderr = db_import(conn, cursor, module, db, target)
+
             if rc != 0:
                 module.fail_json(msg="%s" % stderr)
             else:
