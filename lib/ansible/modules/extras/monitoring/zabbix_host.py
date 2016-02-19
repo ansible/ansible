@@ -159,13 +159,13 @@ class Host(object):
 
     # exist host
     def is_host_exist(self, host_name):
-        result = self._zapi.host.exists({'host': host_name})
+        result = self._zapi.host.get({'filter': {'host': host_name}})
         return result
 
     # check if host group exists
     def check_host_group_exist(self, group_names):
         for group_name in group_names:
-            result = self._zapi.hostgroup.exists({'name': group_name})
+            result = self._zapi.hostgroup.get({'filter': {'name': group_name}})
             if not result:
                 self._module.fail_json(msg="Hostgroup not found: %s" % group_name)
         return True
