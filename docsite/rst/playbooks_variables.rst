@@ -771,7 +771,7 @@ In 1.x, the precedence is as follows (with the last listed variables winning pri
 
     In versions prior to 1.5.4, facts discovered about a system were in the "most everything else" category above.
 
-In 2.x, we have made the order of precedence more specific (with last listed variables winning prioritization):
+In 2.x, we have made the order of precedence more specific (with the last listed variables winning prioritization):
 
   * role defaults [1]_
   * inventory vars [2]_
