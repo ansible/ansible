@@ -144,7 +144,7 @@ class CallbackBase:
                                                       tofile=after_header,
                                                       fromfiledate='',
                                                       tofiledate='',
-                                                      n=10)
+                                                      n=C.DIFF_CONTEXT)
                         has_diff = False
                         for line in differ:
                             has_diff = True
