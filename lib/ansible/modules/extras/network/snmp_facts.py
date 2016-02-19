@@ -21,7 +21,7 @@ DOCUMENTATION = '''
 module: snmp_facts
 version_added: "1.9"
 author: "Patrick Ogenstad (@ogenstad)"
-short_description: Retrive facts for a device using SNMP.
+short_description: Retrieve facts for a device using SNMP.
 description:
     - Retrieve facts for a device using SNMP, the facts will be
       inserted to the ansible_facts key.
