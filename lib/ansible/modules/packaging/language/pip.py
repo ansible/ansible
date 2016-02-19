@@ -51,7 +51,8 @@ options:
     default: null
   virtualenv:
     description:
-      - An optional path to a I(virtualenv) directory to install into
+      - An optional path to a I(virtualenv) directory to install into.
+        It cannot be specified together with the 'executable' parameter (added in 2.1).
     required: false
     default: null
   virtualenv_site_packages:
@@ -112,6 +113,7 @@ options:
         run pip for a specific version of Python installed in the system. For
         example C(pip-3.3), if there are both Python 2.7 and 3.3 installations
         in the system and you want to run pip for the Python 3.3 installation.
+        It cannot be specified together with the 'virtualenv' parameter (added in 2.1).
     version_added: "1.3"
     required: false
     default: null
@@ -277,7 +279,7 @@ def main():
             umask=dict(reqiured=False,default=None),
         ),
         required_one_of=[['name', 'requirements']],
-        mutually_exclusive=[['name', 'requirements']],
+        mutually_exclusive=[['name', 'requirements'], ['executable', 'virtualenv']],
         supports_check_mode=True
     )
 
