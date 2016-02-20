@@ -74,7 +74,7 @@ class Validator(object):
 
         for trace in self.traces:
             print('TRACE:')
-            print(trace)
+            print('\n    '.join(('    %s' % trace).splitlines()))
         for error in self.errors:
             print('ERROR: %s' % error)
             ret.append(1)
@@ -339,53 +339,59 @@ class ModuleValidator(Validator):
         return docs
 
     def _validate_docs(self):
-        sys_stdout = sys.stdout
-        sys_stderr = sys.stderr
-        sys.stdout = sys.stderr = buf = StringIO()
-        # instead of adding noqa to the above, do something with buf
-        assert buf
-        setattr(sys.stdout, 'encoding', sys_stdout.encoding)
-        setattr(sys.stderr, 'encoding', sys_stderr.encoding)
         doc_info = self._get_docs()
         try:
-            doc, examples, ret = get_docstring(self.path, verbose=True)
-            trace = None
+            doc = yaml.safe_load(doc_info['DOCUMENTATION']['value'])
         except yaml.YAMLError as e:
             doc = None
-            examples = doc_info['EXAMPLES']['value']
-            ret = doc_info['RETURN']['value']
-            trace = e
-        finally:
-            sys.stdout = sys_stdout
-            sys.stderr = sys_stderr
-        if trace:
             # This offsets the error line number to where the
             # DOCUMENTATION starts so we can just go to that line in the
             # module
-            trace.problem_mark.line += (
+            e.problem_mark.line += (
                 doc_info['DOCUMENTATION']['lineno'] - 1
             )
-            trace.problem_mark.name = '%s.DOCUMENTATION' % self.name
-            self.traces.append(trace)
+            e.problem_mark.name = '%s.DOCUMENTATION' % self.name
+            self.traces.append(e)
             self.errors.append('DOCUMENTATION is not valid YAML. Line %d '
                                'column %d' %
-                               (trace.problem_mark.line + 1,
-                                trace.problem_mark.column + 1))
-        if not bool(doc):
+                               (e.problem_mark.line + 1,
+                                e.problem_mark.column + 1))
+        except AttributeError:
             self.errors.append('No DOCUMENTATION provided')
         else:
+            sys_stdout = sys.stdout
+            sys_stderr = sys.stderr
+            sys.stdout = sys.stderr = buf = StringIO()
+            # instead of adding noqa to the above, do something with buf
+            assert buf
+            setattr(sys.stdout, 'encoding', sys_stdout.encoding)
+            setattr(sys.stderr, 'encoding', sys_stderr.encoding)
+            try:
+                get_docstring(self.path, verbose=True)
+            except AssertionError:
+                fragment = doc['extends_documentation_fragment']
+                self.errors.append('DOCUMENTATION fragment missing: %s' % fragment)
+            except Exception as e:
+                self.traces.append(e)
+                self.errors.append('Unknown DOCUMENTATION error, see TRACE')
+            finally:
+                sys.stdout = sys_stdout
+                sys.stderr = sys_stderr
+
             self._check_version_added(doc)
             self._check_for_new_args(doc)
-        if not bool(examples):
+
+        if not bool(doc_info['EXAMPLES']['value']):
             self.errors.append('No EXAMPLES provided')
-        if not bool(ret):
+
+        if not bool(doc_info['RETURN']['value']):
             if self._is_new_module():
                 self.errors.append('No RETURN documentation provided')
             else:
                 self.warnings.append('No RETURN provided')
         else:
             try:
-                yaml.safe_load(ret)
+                yaml.safe_load(doc_info['RETURN']['value'])
             except yaml.YAMLError as e:
                 e.problem_mark.line += (
                     doc_info['RETURN']['lineno'] - 1
@@ -429,9 +435,30 @@ class ModuleValidator(Validator):
         if self._is_new_module():
             return
 
-        existing = module_loader.find_plugin(self.name, mod_type='.py')
-        existing_doc, _, _ = get_docstring(existing, verbose=True)
-        existing_options = existing_doc.get('options', {})
+        sys_stdout = sys.stdout
+        sys_stderr = sys.stderr
+        sys.stdout = sys.stderr = buf = StringIO()
+        # instead of adding noqa to the above, do something with buf
+        assert buf
+        setattr(sys.stdout, 'encoding', sys_stdout.encoding)
+        setattr(sys.stderr, 'encoding', sys_stderr.encoding)
+        try:
+            existing = module_loader.find_plugin(self.name, mod_type='.py')
+            existing_doc, _, _ = get_docstring(existing, verbose=True)
+            existing_options = existing_doc.get('options', {})
+        except AssertionError:
+            fragment = doc['extends_documentation_fragment']
+            self.errors.append('Existing DOCUMENTATION fragment missing: %s' %
+                               fragment)
+            return
+        except Exception as e:
+            self.traces.append(e)
+            self.errors.append('Unknown existing DOCUMENTATION error, see '
+                               'TRACE')
+            return
+        finally:
+            sys.stdout = sys_stdout
+            sys.stderr = sys_stderr
 
         options = doc.get('options', {})
 
