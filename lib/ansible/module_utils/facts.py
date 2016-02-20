@@ -1056,7 +1056,7 @@ class LinuxHardware(Hardware):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
                 if(fields[2] != 'none'):
-                    size_total, size_available = self._get_mount_size_facts(fields[2])
+                    size_total, size_available = self._get_mount_size_facts(fields[1])
                     if fields[0] in uuids:
                         uuid = uuids[fields[0]]
                     else:
