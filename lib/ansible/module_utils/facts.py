@@ -771,6 +771,17 @@ class Facts(object):
                     val = len(option_tokens) == 2 and option_tokens[1] or True
                     self.facts['dns']['options'][option_tokens[0]] = val
 
+    def _get_mount_size_facts(self, mountpoint):
+        size_total = None
+        size_available = None
+        try:
+            statvfs_result = os.statvfs(mountpoint)
+            size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
+            size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
+        except OSError:
+            pass
+        return size_total, size_available
+
 class Hardware(Facts):
     """
     This is a generic Hardware subclass of Facts.  This should be further
@@ -1045,15 +1056,7 @@ class LinuxHardware(Hardware):
             if line.startswith('/'):
                 fields = line.rstrip('\n').split()
                 if(fields[2] != 'none'):
-                    size_total = None
-                    size_available = None
-                    try:
-                        statvfs_result = os.statvfs(fields[1])
-                        size_total = statvfs_result.f_bsize * statvfs_result.f_blocks
-                        size_available = statvfs_result.f_bsize * (statvfs_result.f_bavail)
-                    except OSError:
-                        continue
-
+                    size_total, size_available = self._get_mount_size_facts(fields[2])
                     if fields[0] in uuids:
                         uuid = uuids[fields[0]]
                     else:
@@ -1300,7 +1303,9 @@ class SunOSHardware(Hardware):
         if fstab:
             for line in fstab.split('\n'):
                 fields = line.rstrip('\n').split('\t')
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4]})
+                size_total, size_available = self._get_mount_size_facts(fields[1])
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'time': fields[4], 'size_total': size_total, 'size_available': size_available})
+
 
 class OpenBSDHardware(Hardware):
     """
@@ -1350,7 +1355,9 @@ class OpenBSDHardware(Hardware):
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
                 if fields[1] == 'none' or fields[3] == 'xx':
                     continue
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                size_total, size_available = self._get_mount_size_facts(fields[1])
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
+
 
     def get_memory_facts(self):
         # Get free memory. vmstat output looks like:
@@ -1473,7 +1480,8 @@ class FreeBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                size_total, size_available = self._get_mount_size_facts(fields[1])
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
 
     def get_device_facts(self):
         sysdir = '/dev'
@@ -1602,7 +1610,8 @@ class NetBSDHardware(Hardware):
                 if line.startswith('#') or line.strip() == '':
                     continue
                 fields = re.sub(r'\s+',' ',line.rstrip('\n')).split()
-                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3]})
+                size_total, size_available = self._get_mount_size_facts(fields[1])
+                self.facts['mounts'].append({'mount': fields[1], 'device': fields[0], 'fstype' : fields[2], 'options': fields[3], 'size_total': size_total, 'size_available': size_available})
 
 class AIX(Hardware):
     """
